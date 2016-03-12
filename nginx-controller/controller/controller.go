@@ -263,14 +263,25 @@ func (lbc *LoadBalancerController) updateNGINX(name string, ing *extensions.Ingr
 	}
 
 	var upstreams []nginx.Upstream
+	var servers []nginx.Server
 
 	for _, rule := range ing.Spec.Rules {
 		if rule.IngressRuleValue.HTTP == nil {
 			continue
 		}
 
+		server := nginx.Server{Name: rule.Host}
+
+		if pemFile, ok := pems[rule.Host]; ok {
+			server.SSL = true
+			server.SSLCertificate = pemFile
+			server.SSLCertificateKey = pemFile
+		}
+
+		var locations []nginx.Location
+
 		for _, path := range rule.HTTP.Paths {
-			name := ing.Name + "-" + path.Backend.ServiceName
+			name := path.Backend.ServiceName + "-Ingress-" + rule.Host + "-" + strings.Replace(path.Path, "/", "-", -1)
 			ups := nginx.NewUpstreamWithDefaultServer(name)
 
 			svcKey := ing.Namespace + "/" + path.Backend.ServiceName
@@ -297,32 +308,9 @@ func (lbc *LoadBalancerController) updateNGINX(name string, ing *extensions.Ingr
 				}
 			}
 
-			upstreams = append(upstreams, ups)
-		}
-	}
-
-	var servers []nginx.Server
-	for _, rule := range ing.Spec.Rules {
-		server := nginx.Server{Name: rule.Host}
-
-		if pemFile, ok := pems[rule.Host]; ok {
-			server.SSL = true
-			server.SSLCertificate = pemFile
-			server.SSLCertificateKey = pemFile
-		}
-
-		var locations []nginx.Location
-
-		for _, path := range rule.HTTP.Paths {
-			loc := nginx.Location{Path: path.Path}
-			upsName := ing.GetName() + "-" + path.Backend.ServiceName
-
-			for _, ups := range upstreams {
-				if upsName == ups.Name {
-					loc.Upstream = ups
-				}
-			}
+			loc := nginx.Location{Path: path.Path, Upstream: ups}
 			locations = append(locations, loc)
+			upstreams = append(upstreams, ups)
 		}
 
 		server.Locations = locations
