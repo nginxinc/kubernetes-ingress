@@ -270,7 +270,7 @@ func (lbc *LoadBalancerController) updateNGINX(name string, ing *extensions.Ingr
 		}
 
 		for _, path := range rule.HTTP.Paths {
-			name := ing.Name + "-" + path.Backend.ServiceName
+			name := path.Backend.ServiceName + "-Ingress-" + rule.Host + "-" + strings.Replace(path.Path, "/", "-", -1)
 			ups := nginx.NewUpstreamWithDefaultServer(name)
 
 			svcKey := ing.Namespace + "/" + path.Backend.ServiceName
