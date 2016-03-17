@@ -22,6 +22,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/net/context"
+
 	"github.com/golang/glog"
 
 	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx"
@@ -45,7 +47,6 @@ type LoadBalancerController struct {
 	svcLister      cache.StoreToServiceLister
 	endpLister     cache.StoreToEndpointsLister
 	ingQueue       *taskQueue
-	stopCh         chan struct{}
 	nginx          *nginx.NGINXController
 }
 
@@ -55,7 +56,6 @@ var keyFunc = framework.DeletionHandlingMetaNamespaceKeyFunc
 func NewLoadBalancerController(kubeClient *client.Client, resyncPeriod time.Duration, namespace string, nginx *nginx.NGINXController) (*LoadBalancerController, error) {
 	lbc := LoadBalancerController{
 		client: kubeClient,
-		stopCh: make(chan struct{}),
 		nginx:  nginx,
 	}
 
@@ -143,12 +143,11 @@ func NewLoadBalancerController(kubeClient *client.Client, resyncPeriod time.Dura
 }
 
 // Run starts the loadbalancer controller
-func (lbc *LoadBalancerController) Run() {
-	go lbc.ingController.Run(lbc.stopCh)
-	go lbc.svcController.Run(lbc.stopCh)
-	go lbc.endpController.Run(lbc.stopCh)
-	go lbc.ingQueue.run(time.Second, lbc.stopCh)
-	<-lbc.stopCh
+func (lbc *LoadBalancerController) Run(ctx context.Context) {
+	go lbc.ingController.Run(ctx.Done())
+	go lbc.svcController.Run(ctx.Done())
+	go lbc.endpController.Run(ctx.Done())
+	go lbc.ingQueue.run(time.Second, ctx.Done())
 }
 
 func ingressListFunc(c *client.Client, ns string) func(api.ListOptions) (runtime.Object, error) {
