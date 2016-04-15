@@ -170,7 +170,17 @@ func (nginx *NGINXController) Reload() {
 // Start starts NGINX
 func (nginx *NGINXController) Start() {
 	if !nginx.local {
-		shellOut("nginx")
+		command := exec.Command("nginx")
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
+		err := command.Start()
+		if err != nil {
+			glog.Fatalf("Error while starting nginx: %v", err)
+		}
+		err = command.Wait()
+		if err != nil {
+			glog.Fatalf("Error while waiting for nginx: %v", err)
+		}
 	}
 }
 
