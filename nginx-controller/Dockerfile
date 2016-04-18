@@ -18,10 +18,4 @@ COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 RUN rm /etc/nginx/conf.d/*
 
-# This works only if the nginx master process is started from the process which is the Docker entrypoint, and has its
-# stdout and stderr set to the stdout and stderr of its parent (entrypoint). nginx must also run with `daemon off`,
-# otherwise it will detach its stdout.
-RUN ln -sf /dev/stdout /var/log/nginx/access.log
-RUN ln -sf /dev/stderr /var/log/nginx/error.log
-
 CMD ["/nginx-ingress"]
