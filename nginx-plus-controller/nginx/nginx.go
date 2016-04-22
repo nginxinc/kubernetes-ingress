@@ -1,6 +1,7 @@
 package nginx
 
 import (
+	"bytes"
 	"html/template"
 	"os"
 	"os/exec"
@@ -219,9 +220,15 @@ func (nginx *NGINXController) createCertsDir() {
 }
 
 func shellOut(cmd string) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
 	glog.Infof("executing %s", cmd)
 
 	command := exec.Command("sh", "-c", cmd)
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+
 	err := command.Start()
 	if err != nil {
 		glog.Fatalf("Failed to execute %v, err: %v", cmd, err)
@@ -229,6 +236,8 @@ func shellOut(cmd string) {
 
 	err = command.Wait()
 	if err != nil {
+		glog.Errorf("Command %v stdout: %q", cmd, stdout.String())
+		glog.Errorf("Command %v stderr: %q", cmd, stderr.String())
 		glog.Fatalf("Command %v finished with error: %v", cmd, err)
 	}
 }

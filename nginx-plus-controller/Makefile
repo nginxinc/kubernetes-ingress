@@ -6,7 +6,10 @@ PREFIX = gcr.io/nginx-ingress/nginx-plus-ingress
 nginx-plus-ingress:
 	CGO_ENABLED=0 GOOS=linux godep go build -a -installsuffix cgo -ldflags '-w' -o nginx-plus-ingress *.go
 
-container: nginx-plus-ingress
+test:
+	godep go test ./...
+
+container: nginx-plus-ingress test
 	docker build -t $(PREFIX):$(TAG) .
 
 push: container
