@@ -45,7 +45,7 @@ func main() {
 
 	resolver := getKubeDNSIP(kubeClient)
 	ngxc, _ := nginx.NewNGINXController(resolver, "/etc/nginx/", local)
-	ngxc.Start()
+	go ngxc.Start()
 	lbc, _ := controller.NewLoadBalancerController(kubeClient, 30*time.Second, *watchNamespace, ngxc)
 	lbc.Run()
 }

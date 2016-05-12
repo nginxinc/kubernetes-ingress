@@ -7,6 +7,7 @@ RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
 
 COPY nginx-ingress /
 COPY nginx/ingress.tmpl /
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 RUN rm /etc/nginx/conf.d/*
 
