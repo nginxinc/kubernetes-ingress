@@ -81,7 +81,11 @@ func NewNginxController(nginxConfPath string, local bool) (*NginxController, err
 		ngxc.createCertsDir()
 	}
 
-	cfg := &NginxMainConfig{ServerNamesHashMaxSize: NewDefaultConfig().MainServerNamesHashMaxSize}
+	cfg := &NginxMainConfig{
+		ServerNamesHashMaxSize: NewDefaultConfig().MainServerNamesHashMaxSize,
+		ServerNamesHashBucketSize: NewDefaultConfig().MainServerNamesHashBucketSize,
+	}
+
 	ngxc.UpdateMainConfigFile(cfg)
 
 	return &ngxc, nil
