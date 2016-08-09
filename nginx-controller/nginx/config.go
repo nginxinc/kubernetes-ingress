@@ -16,5 +16,6 @@ func NewDefaultConfig() *Config {
 		ProxyReadTimeout:           "60s",
 		ClientMaxBodySize:          "1m",
 		MainServerNamesHashMaxSize: "512",
+		MainServerNamesHashBucketSize: "32",
 	}
 }
