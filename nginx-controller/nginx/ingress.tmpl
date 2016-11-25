@@ -6,9 +6,9 @@ upstream {{$upstream.Name}} {
 
 {{range $server := .Servers}}
 server {
-	listen 80;
+	listen 80{{if not $server.Name}} default_server{{end}};
 	{{if $server.SSL}}
-	listen 443 ssl{{if $server.HTTP2}} http2{{end}};
+	listen 443 ssl{{if $server.HTTP2}} http2{{end}}{{if not $server.Name}} default_server{{end}};
 	ssl_certificate {{$server.SSLCertificate}};
 	ssl_certificate_key {{$server.SSLCertificateKey}};
 	{{end}}
