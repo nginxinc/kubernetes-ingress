@@ -23,7 +23,7 @@ type NginxController struct {
 // IngressNginxConfig describes an NGINX configuration
 type IngressNginxConfig struct {
 	Upstreams []Upstream
-	Servers   []Server
+	Server    Server
 }
 
 // Upstream describes an NGINX upstream
@@ -115,9 +115,9 @@ func NewNginxController(nginxConfPath string, local bool) (*NginxController, err
 	return &ngxc, nil
 }
 
-// DeleteIngress deletes the configuration file, which corresponds for the
+// DeleteConfig deletes the configuration file, which corresponds for the
 // specified ingress from NGINX conf directory
-func (nginx *NginxController) DeleteIngress(name string) {
+func (nginx *NginxController) DeleteConfig(name string) {
 	filename := nginx.getIngressNginxConfigFileName(name)
 	glog.V(3).Infof("deleting %v", filename)
 
@@ -128,9 +128,9 @@ func (nginx *NginxController) DeleteIngress(name string) {
 	}
 }
 
-// AddOrUpdateIngress creates or updates a file with
-// the specified configuration for the specified ingress
-func (nginx *NginxController) AddOrUpdateIngress(name string, config IngressNginxConfig) {
+// AddOrUpdateConfig creates or updates a file with
+// the specified configuration
+func (nginx *NginxController) AddOrUpdateConfig(name string, config IngressNginxConfig) {
 	glog.V(3).Infof("Updating NGINX configuration")
 	filename := nginx.getIngressNginxConfigFileName(name)
 	nginx.templateIt(config, filename)

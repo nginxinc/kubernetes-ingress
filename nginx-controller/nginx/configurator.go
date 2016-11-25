@@ -39,8 +39,9 @@ func (cnf *Configurator) AddOrUpdateIngress(name string, ingEx *IngressEx) {
 	defer cnf.lock.Unlock()
 
 	pems := cnf.updateCertificates(ingEx)
-	nginxCfg := cnf.generateNginxCfg(ingEx, pems)
-	cnf.nginx.AddOrUpdateIngress(name, nginxCfg)
+	for _, nginxCfg := range cnf.generateNginxCfg(ingEx, pems) {
+		cnf.nginx.AddOrUpdateConfig(nginxCfg.Server.Name, nginxCfg)
+	}
 	if err := cnf.nginx.Reload(); err != nil {
 		glog.Errorf("Error when adding or updating ingress %q: %q", name, err)
 	}
@@ -79,7 +80,8 @@ func (cnf *Configurator) updateCertificates(ingEx *IngressEx) map[string]string 
 
 	return pems
 }
-func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]string) IngressNginxConfig {
+
+func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]string) []IngressNginxConfig {
 	ingCfg := cnf.createConfig(ingEx)
 
 	upstreams := make(map[string]Upstream)
@@ -188,7 +190,18 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 		servers = append(servers, server)
 	}
 
-	return IngressNginxConfig{Upstreams: upstreamMapToSlice(upstreams), Servers: servers}
+	result := []IngressNginxConfig{}
+	for _, server := range servers {
+		upstreams := []Upstream{}
+		for _, location := range server.Locations {
+			upstreams = append(upstreams, location.Upstream)
+		}
+		result = append(result, IngressNginxConfig{
+			Upstreams: upstreams,
+			Server:    server,
+		})
+	}
+	return result
 }
 
 func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
@@ -397,7 +410,7 @@ func (cnf *Configurator) DeleteIngress(name string) {
 	cnf.lock.Lock()
 	defer cnf.lock.Unlock()
 
-	cnf.nginx.DeleteIngress(name)
+	cnf.nginx.DeleteConfig(name)
 	if err := cnf.nginx.Reload(); err != nil {
 		glog.Errorf("Error when removing ingress %q: %q", name, err)
 	}
