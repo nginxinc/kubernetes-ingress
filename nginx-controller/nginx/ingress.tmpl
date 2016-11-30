@@ -21,6 +21,9 @@ server {
 	server_name {{$server.Name}};
 	{{end}}
 
+	{{range $proxyHideHeader := $server.ProxyHideHeaders}}
+	proxy_hide_header {{$proxyHideHeader}};{{end}}
+
 	{{if $server.SSL}}
 	if ($scheme = http) {
 		return 301 https://$host$request_uri;

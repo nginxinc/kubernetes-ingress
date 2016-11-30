@@ -1,14 +1,14 @@
 all: push
 
-VERSION = 0.6.0
+VERSION = 0.6.3-merged
 TAG = $(VERSION)
-PREFIX = nginxdemos/nginx-ingress
+PREFIX = quay.io/nico_schieder/nginxinc-kubernetes-ingress
 
-DOCKER_RUN = docker run --rm -v $(shell pwd)/../:/go/src/github.com/nginxinc/kubernetes-ingress -w /go/src/github.com/nginxinc/kubernetes-ingress/nginx-controller/
+DOCKER_RUN = docker run --rm -v $(shell pwd)/../:/go/src/github.com/nginxinc/kubernetes-ingress:Z -w /go/src/github.com/nginxinc/kubernetes-ingress/nginx-controller/
 GOLANG_CONTAINER = golang:1.6
 DOCKERFILE = Dockerfile
 
-BUILD_IN_CONTAINER = 1
+BUILD_IN_CONTAINER = 0
 PUSH_TO_GCR =
 
 ifeq ($(PUSH_TO_GCR),1)

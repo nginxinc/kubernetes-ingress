@@ -315,6 +315,13 @@ func (lbc *LoadBalancerController) syncCfgm(key string) {
 		if proxyReadTimeout, exists := cfgm.Data["proxy-read-timeout"]; exists {
 			cfg.ProxyReadTimeout = proxyReadTimeout
 		}
+		if proxyHideHeaders, exists, err := nginx.GetMapKeyAsStringSlice(cfgm.Data, "proxy-hide-headers", cfgm); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				cfg.ProxyHideHeaders = proxyHideHeaders
+			}
+		}
 		if clientMaxBodySize, exists := cfgm.Data["client-max-body-size"]; exists {
 			cfg.ClientMaxBodySize = clientMaxBodySize
 		}
