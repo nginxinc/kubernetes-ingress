@@ -117,6 +117,11 @@ func (s *StoreToIngressLister) GetServiceIngress(svc *api.Service) (ings []exten
 		if ing.Namespace != svc.Namespace {
 			continue
 		}
+		if ing.Spec.Backend != nil {
+			if ing.Spec.Backend.ServiceName == svc.Name {
+				ings = append(ings, ing)
+			}
+		}
 		for _, rules := range ing.Spec.Rules {
 			if rules.IngressRuleValue.HTTP == nil {
 				continue
