@@ -20,10 +20,10 @@ server {
 	{{if $server.Name}}
 	server_name {{$server.Name}};
 	{{end}}
-
 	{{range $proxyHideHeader := $server.ProxyHideHeaders}}
 	proxy_hide_header {{$proxyHideHeader}};{{end}}
-
+	{{range $proxyPassHeader := $server.ProxyPassHeaders}}
+	proxy_pass_header {{$proxyPassHeader}};{{end}}
 	{{if $server.SSL}}
 	if ($scheme = http) {
 		return 301 https://$host$request_uri;

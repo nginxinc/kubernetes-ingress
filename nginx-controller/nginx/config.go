@@ -15,6 +15,7 @@ type Config struct {
 	ProxyMaxTempFileSize          string
 	ProxyProtocol                 bool
 	ProxyHideHeaders              []string
+	ProxyPassHeaders              []string
 	HSTS                          bool
 	HSTSMaxAge                    int64
 	HSTSIncludeSubdomains         bool

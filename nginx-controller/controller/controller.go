@@ -322,6 +322,13 @@ func (lbc *LoadBalancerController) syncCfgm(key string) {
 				cfg.ProxyHideHeaders = proxyHideHeaders
 			}
 		}
+		if proxyPassHeaders, exists, err := nginx.GetMapKeyAsStringSlice(cfgm.Data, "proxy-pass-headers", cfgm); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				cfg.ProxyPassHeaders = proxyPassHeaders
+			}
+		}
 		if clientMaxBodySize, exists := cfgm.Data["client-max-body-size"]; exists {
 			cfg.ClientMaxBodySize = clientMaxBodySize
 		}
