@@ -1,8 +1,6 @@
 package nginx
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestPathOrDefaultReturnDefault(t *testing.T) {
 	path := ""

@@ -39,8 +39,8 @@ func (cnf *Configurator) AddOrUpdateIngress(name string, ingEx *IngressEx) {
 	defer cnf.lock.Unlock()
 
 	pems := cnf.updateCertificates(ingEx)
-	for _, nginxCfg := range cnf.generateNginxCfg(ingEx, pems) {
-		cnf.nginx.AddOrUpdateConfig(nginxCfg.Server.Name, nginxCfg)
+	for _, server := range cnf.generateNginxCfg(ingEx, pems) {
+		cnf.nginx.AddOrUpdateConfig(server.Name, server)
 	}
 	if err := cnf.nginx.Reload(); err != nil {
 		glog.Errorf("Error when adding or updating ingress %q: %q", name, err)
@@ -81,20 +81,12 @@ func (cnf *Configurator) updateCertificates(ingEx *IngressEx) map[string]string 
 	return pems
 }
 
-func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]string) []IngressNginxConfig {
+func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]string) []Server {
 	ingCfg := cnf.createConfig(ingEx)
-
-	upstreams := make(map[string]Upstream)
 
 	wsServices := getWebsocketServices(ingEx)
 	rewrites := getRewrites(ingEx)
 	sslServices := getSSLServices(ingEx)
-
-	if ingEx.Ingress.Spec.Backend != nil {
-		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
-		upstream := cnf.createUpstream(ingEx, name, ingEx.Ingress.Spec.Backend, ingEx.Ingress.Namespace)
-		upstreams[name] = upstream
-	}
 
 	var servers []Server
 
@@ -109,27 +101,8 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			glog.Warningf("Host field of ingress rule in %v/%v is empty", ingEx.Ingress.Namespace, ingEx.Ingress.Name)
 		}
 
-		server := Server{
-			Name:                  serverName,
-			HTTP2:                 ingCfg.HTTP2,
-			ProxyProtocol:         ingCfg.ProxyProtocol,
-			HSTS:                  ingCfg.HSTS,
-			HSTSMaxAge:            ingCfg.HSTSMaxAge,
-			HSTSIncludeSubdomains: ingCfg.HSTSIncludeSubdomains,
-			RealIPHeader:          ingCfg.RealIPHeader,
-			SetRealIPFrom:         ingCfg.SetRealIPFrom,
-			RealIPRecursive:       ingCfg.RealIPRecursive,
-			ProxyHideHeaders:      ingCfg.ProxyHideHeaders,
-			ProxyPassHeaders:      ingCfg.ProxyPassHeaders,
-		}
-
-		if pemFile, ok := pems[serverName]; ok {
-			server.SSL = true
-			server.SSLCertificate = pemFile
-			server.SSLCertificateKey = pemFile
-		}
-
 		var locations []Location
+		var upstreams map[string]Upstream
 		rootLocation := false
 
 		for _, path := range rule.HTTP.Paths {
@@ -154,13 +127,41 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			locations = append(locations, loc)
 		}
 
-		server.Locations = locations
+		server := Server{
+			Name:                  serverName,
+			Locations:             locations,
+			HTTP2:                 ingCfg.HTTP2,
+			ProxyProtocol:         ingCfg.ProxyProtocol,
+			HSTS:                  ingCfg.HSTS,
+			HSTSMaxAge:            ingCfg.HSTSMaxAge,
+			HSTSIncludeSubdomains: ingCfg.HSTSIncludeSubdomains,
+			RealIPHeader:          ingCfg.RealIPHeader,
+			SetRealIPFrom:         ingCfg.SetRealIPFrom,
+			RealIPRecursive:       ingCfg.RealIPRecursive,
+			ProxyHideHeaders:      ingCfg.ProxyHideHeaders,
+			ProxyPassHeaders:      ingCfg.ProxyPassHeaders,
+		}
+
+		if pemFile, ok := pems[serverName]; ok {
+			server.SSL = true
+			server.SSLCertificate = pemFile
+			server.SSLCertificateKey = pemFile
+		}
+
+		// server.Locations = locations
+		// server.Upstreams = upstreamMapToSlice(upstreams)
 		servers = append(servers, server)
 	}
 
 	if len(ingEx.Ingress.Spec.Rules) == 0 && ingEx.Ingress.Spec.Backend != nil {
+		upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
+		upstream := cnf.createUpstream(ingEx, upsName, ingEx.Ingress.Spec.Backend, ingEx.Ingress.Namespace)
+		location := createLocation(pathOrDefault("/"), upstream, &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName])
+
 		server := Server{
 			Name:                  emptyHost,
+			Upstreams:             []Upstream{upstream},
+			Locations:             []Location{location},
 			HTTP2:                 ingCfg.HTTP2,
 			ProxyProtocol:         ingCfg.ProxyProtocol,
 			HSTS:                  ingCfg.HSTS,
@@ -179,29 +180,10 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			server.SSLCertificateKey = pemFile
 		}
 
-		var locations []Location
-
-		upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
-
-		loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName])
-		locations = append(locations, loc)
-
-		server.Locations = locations
 		servers = append(servers, server)
 	}
 
-	result := []IngressNginxConfig{}
-	for _, server := range servers {
-		upstreams := []Upstream{}
-		for _, location := range server.Locations {
-			upstreams = append(upstreams, location.Upstream)
-		}
-		result = append(result, IngressNginxConfig{
-			Upstreams: upstreams,
-			Server:    server,
-		})
-	}
-	return result
+	return servers
 }
 
 func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
