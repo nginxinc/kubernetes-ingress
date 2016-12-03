@@ -16,14 +16,16 @@ const emptyHost = ""
 type Configurator struct {
 	nginx  *NginxController
 	config *Config
+	merger Merger
 	lock   sync.Mutex
 }
 
 // NewConfigurator creates a new Configurator
-func NewConfigurator(nginx *NginxController, config *Config) *Configurator {
+func NewConfigurator(nginx *NginxController, merger Merger, config *Config) *Configurator {
 	cnf := Configurator{
 		nginx:  nginx,
 		config: config,
+		merger: merger,
 	}
 
 	return &cnf
@@ -39,8 +41,9 @@ func (cnf *Configurator) AddOrUpdateIngress(name string, ingEx *IngressEx) {
 	defer cnf.lock.Unlock()
 
 	pems := cnf.updateCertificates(ingEx)
-	for _, server := range cnf.generateNginxCfg(ingEx, pems) {
-		cnf.nginx.AddOrUpdateConfig(server.Name, server)
+	generatedConfigs := cnf.generateNginxCfg(ingEx, pems)
+	for _, nginxCfg := range cnf.merger.Merge(ingEx.Ingress, generatedConfigs) {
+		cnf.nginx.AddOrUpdateConfig(nginxCfg.Server.Name, nginxCfg)
 	}
 	if err := cnf.nginx.Reload(); err != nil {
 		glog.Errorf("Error when adding or updating ingress %q: %q", name, err)
@@ -392,7 +395,13 @@ func (cnf *Configurator) DeleteIngress(name string) {
 	cnf.lock.Lock()
 	defer cnf.lock.Unlock()
 
-	cnf.nginx.DeleteConfig(name)
+	changedConfigs, deletedConfigNames := cnf.merger.Separate(name)
+	for _, config := range changedConfigs {
+		cnf.nginx.AddOrUpdateConfig(config.Server.Name, config)
+	}
+	for _, deletedConfig := range deletedConfigNames {
+		cnf.nginx.DeleteConfig(deletedConfig)
+	}
 	if err := cnf.nginx.Reload(); err != nil {
 		glog.Errorf("Error when removing ingress %q: %q", name, err)
 	}

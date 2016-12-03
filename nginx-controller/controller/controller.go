@@ -293,8 +293,8 @@ func (lbc *LoadBalancerController) syncEndp(key string) {
 				continue
 			}
 			glog.V(3).Infof("Updating Endpoints for %v/%v", ing.Name, ing.Namespace)
-			name := ing.Namespace + "-" + ing.Name
-			lbc.cnf.UpdateEndpoints(name, ingEx)
+			name := ing.Namespace + "/" + ing.Name
+			lbc.cnf.UpdateEndpoints(name, &ingEx)
 		}
 	}
 
@@ -473,12 +473,9 @@ func (lbc *LoadBalancerController) syncIng(key string) {
 		return
 	}
 
-	// defaut/some-ingress -> default-some-ingress
-	name := strings.Replace(key, "/", "-", -1)
-
 	if !ingExists {
 		glog.V(2).Infof("Deleting Ingress: %v\n", key)
-		lbc.cnf.DeleteIngress(name)
+		lbc.cnf.DeleteIngress(key)
 	} else {
 		glog.V(2).Infof("Adding or Updating Ingress: %v\n", key)
 

@@ -23,6 +23,7 @@ server {
 	proxy_hide_header {{$proxyHideHeader}};{{end}}
 	{{range $proxyPassHeader := .Server.ProxyPassHeaders}}
 	proxy_pass_header {{$proxyPassHeader}};{{end}}
+
 	{{if .Server.SSL}}
 	if ($scheme = http) {
 		return 301 https://$host$request_uri;
