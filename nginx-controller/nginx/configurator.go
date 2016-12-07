@@ -14,18 +14,18 @@ const emptyHost = ""
 
 // Configurator transforms an Ingress resource into NGINX Configuration
 type Configurator struct {
-	nginx  *NginxController
-	config *Config
-	merger Merger
-	lock   sync.Mutex
+	nginx            *NginxController
+	config           *Config
+	collisionHandler CollisionHandler
+	lock             sync.Mutex
 }
 
 // NewConfigurator creates a new Configurator
-func NewConfigurator(nginx *NginxController, merger Merger, config *Config) *Configurator {
+func NewConfigurator(nginx *NginxController, collisionHandler CollisionHandler, config *Config) *Configurator {
 	cnf := Configurator{
-		nginx:  nginx,
-		config: config,
-		merger: merger,
+		nginx:            nginx,
+		config:           config,
+		collisionHandler: collisionHandler,
 	}
 
 	return &cnf
@@ -41,9 +41,14 @@ func (cnf *Configurator) AddOrUpdateIngress(name string, ingEx *IngressEx) {
 	defer cnf.lock.Unlock()
 
 	pems := cnf.updateCertificates(ingEx)
-	generatedConfigs := cnf.generateNginxCfg(ingEx, pems)
-	for _, nginxCfg := range cnf.merger.Merge(ingEx.Ingress, generatedConfigs) {
-		cnf.nginx.AddOrUpdateConfig(nginxCfg.Server.Name, nginxCfg)
+	generatedServers := cnf.generateNginxCfg(ingEx, pems)
+	servers, err := cnf.collisionHandler.AddConfigs(ingEx.Ingress, generatedServers)
+	if err != nil {
+		glog.Errorf("Error when checking generated servers for collisions: %v", err)
+		return
+	}
+	for _, server := range servers {
+		cnf.nginx.AddOrUpdateConfig(server.Name, server)
 	}
 	if err := cnf.nginx.Reload(); err != nil {
 		glog.Errorf("Error when adding or updating ingress %q: %q", name, err)
@@ -395,12 +400,15 @@ func (cnf *Configurator) DeleteIngress(name string) {
 	cnf.lock.Lock()
 	defer cnf.lock.Unlock()
 
-	changedConfigs, deletedConfigNames := cnf.merger.Separate(name)
-	for _, config := range changedConfigs {
-		cnf.nginx.AddOrUpdateConfig(config.Server.Name, config)
+	changedServers, deletedServers, err := cnf.collisionHandler.RemoveConfigs(name)
+	if err != nil {
+		glog.Errorf("Error when removing ingress %q from collision handler: %v", name, err)
 	}
-	for _, deletedConfig := range deletedConfigNames {
-		cnf.nginx.DeleteConfig(deletedConfig)
+	for _, server := range changedServers {
+		cnf.nginx.AddOrUpdateConfig(server.Name, server)
+	}
+	for _, server := range deletedServers {
+		cnf.nginx.DeleteConfig(server.Name)
 	}
 	if err := cnf.nginx.Reload(); err != nil {
 		glog.Errorf("Error when removing ingress %q: %q", name, err)

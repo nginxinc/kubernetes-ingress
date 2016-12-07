@@ -22,11 +22,12 @@ var (
 	ingress1Server1 = Server{
 		Name:      "one.example.com",
 		Locations: []Location{ingress1Location1},
-	}
-	ingress1Config1 = IngressNginxConfig{
 		Upstreams: []Upstream{ingress1Upstream1},
-		Server:    ingress1Server1,
 	}
+	// ingress1Config1 = IngressNginxConfig{
+	// 	Upstreams: []Upstream{ingress1Upstream1},
+	// 	Server:    ingress1Server1,
+	// }
 	ingress1 = extensions.Ingress{
 		ObjectMeta: api.ObjectMeta{
 			Name:              "ing1",
@@ -58,20 +59,22 @@ var (
 	}
 	ingress2Server1 = Server{
 		Name:      "one.example.com",
+		Upstreams: []Upstream{ingress2Upstream1},
 		Locations: []Location{ingress2Location1, ingress2Location2},
 	}
 	ingress2Server2 = Server{
 		Name:      "two.example.com",
+		Upstreams: []Upstream{ingress2Upstream2},
 		Locations: []Location{ingress2Location3},
 	}
-	ingress2Config1 = IngressNginxConfig{
-		Upstreams: []Upstream{ingress2Upstream1},
-		Server:    ingress2Server1,
-	}
-	ingress2Config2 = IngressNginxConfig{
-		Upstreams: []Upstream{ingress2Upstream2},
-		Server:    ingress2Server2,
-	}
+	// ingress2Config1 = IngressNginxConfig{
+	// 	Upstreams: []Upstream{ingress2Upstream1},
+	// 	Server:    ingress2Server1,
+	// }
+	// ingress2Config2 = IngressNginxConfig{
+	// 	Upstreams: []Upstream{ingress2Upstream2},
+	// 	Server:    ingress2Server2,
+	// }
 	ingress2 = extensions.Ingress{
 		ObjectMeta: api.ObjectMeta{
 			Name:      "ing2",
@@ -106,10 +109,10 @@ var (
 		HSTSMaxAge:            2000,
 		HSTSIncludeSubdomains: true,
 	}
-	ingress3Config1 = IngressNginxConfig{
-		Upstreams: []Upstream{ingress3Upstream1},
-		Server:    ingress3Server1,
-	}
+	// ingress3Config1 = IngressNginxConfig{
+	// 	Upstreams: []Upstream{ingress3Upstream1},
+	// 	Server:    ingress3Server1,
+	// }
 	ingress3 = extensions.Ingress{
 		ObjectMeta: api.ObjectMeta{
 			Name:              "ing3",

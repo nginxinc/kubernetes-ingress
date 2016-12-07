@@ -294,7 +294,7 @@ func (lbc *LoadBalancerController) syncEndp(key string) {
 			}
 			glog.V(3).Infof("Updating Endpoints for %v/%v", ing.Name, ing.Namespace)
 			name := ing.Namespace + "/" + ing.Name
-			lbc.cnf.UpdateEndpoints(name, &ingEx)
+			lbc.cnf.UpdateEndpoints(name, ingEx)
 		}
 	}
 
@@ -485,7 +485,7 @@ func (lbc *LoadBalancerController) syncIng(key string) {
 			lbc.ingQueue.requeueAfter(key, err, 5*time.Second)
 			return
 		}
-		lbc.cnf.AddOrUpdateIngress(name, ingEx)
+		lbc.cnf.AddOrUpdateIngress(key, ingEx)
 	}
 }
 

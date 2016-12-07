@@ -64,13 +64,13 @@ func main() {
 	ngxc, _ := nginx.NewNginxController("/etc/nginx/", local)
 	ngxc.Start()
 	config := nginx.NewDefaultConfig()
-	var merger nginx.Merger
+	var collisionHandler nginx.CollisionHandler
 	if *enableMerging {
-		merger = nginx.NewOldestFirstMerger()
+		collisionHandler = nginx.NewMergingCollisionHandler()
 	} else {
-		merger = nginx.NewNeverMerger()
+		collisionHandler = nginx.NewDenyCollisionHandler()
 	}
-	cnf := nginx.NewConfigurator(ngxc, merger, config)
+	cnf := nginx.NewConfigurator(ngxc, collisionHandler, config)
 	lbc, _ := controller.NewLoadBalancerController(kubeClient, 30*time.Second, *watchNamespace, cnf, *nginxConfigMaps)
 	lbc.Run()
 }
