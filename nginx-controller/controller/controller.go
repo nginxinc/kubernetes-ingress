@@ -127,7 +127,7 @@ func NewLoadBalancerController(kubeClient *client.Client, resyncPeriod time.Dura
 		AddFunc: func(obj interface{}) {
 			addSvc := obj.(*api.Service)
 			glog.V(3).Infof("Adding service: %v", addSvc.Name)
-			lbc.enqueueIngressForService(obj)
+			lbc.enqueueIngressForService(addSvc)
 		},
 		DeleteFunc: func(obj interface{}) {
 			remSvc, isSvc := obj.(*api.Service)
@@ -144,13 +144,13 @@ func NewLoadBalancerController(kubeClient *client.Client, resyncPeriod time.Dura
 				}
 			}
 			glog.V(3).Infof("Removing service: %v", remSvc.Name)
-			lbc.enqueueIngressForService(obj)
+			lbc.enqueueIngressForService(remSvc)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			if !reflect.DeepEqual(old, cur) {
 				glog.V(3).Infof("Service %v changed, syncing",
 					cur.(*api.Service).Name)
-				lbc.enqueueIngressForService(cur)
+				lbc.enqueueIngressForService(cur.(*api.Service))
 			}
 		},
 	}
@@ -540,8 +540,7 @@ func (lbc *LoadBalancerController) syncIng(key string) {
 	}
 }
 
-func (lbc *LoadBalancerController) enqueueIngressForService(obj interface{}) {
-	svc := obj.(*api.Service)
+func (lbc *LoadBalancerController) enqueueIngressForService(svc *api.Service) {
 	ings := lbc.getIngressesForService(svc)
 	for _, ing := range ings {
 		if !isNginxIngress(&ing) {
