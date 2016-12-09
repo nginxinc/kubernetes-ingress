@@ -110,7 +110,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 		}
 
 		var locations []Location
-		var upstreams map[string]Upstream
+		upstreams := map[string]Upstream{}
 		rootLocation := false
 
 		for _, path := range rule.HTTP.Paths {
