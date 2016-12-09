@@ -181,6 +181,9 @@ func (nginx *NginxController) AddOrUpdateCertAndKey(name string, cert string, ke
 }
 
 func (nginx *NginxController) getIngressNginxConfigFileName(name string) string {
+	if name == emptyHost {
+		name = "default"
+	}
 	return path.Join(nginx.nginxConfdPath, name+".conf")
 }
 
