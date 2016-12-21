@@ -29,7 +29,7 @@ RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
 	&& ln -sf /proc/1/fd/2 /var/log/nginx/error.log
 
 # nginx will store lists of upstream servers in this directory
-RUN mkdir -p /var/lib/nginx && chown -R nginx:nginx /var/lib/nginx
+RUN mkdir -p /var/lib/nginx/state && chown -R nginx:nginx /var/lib/nginx
 
 COPY nginx-plus-ingress nginx/ingress.tmpl nginx/nginx.conf.tmpl /
 

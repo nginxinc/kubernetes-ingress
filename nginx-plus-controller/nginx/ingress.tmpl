@@ -4,7 +4,7 @@ upstream {{$upstream.Name}} {
 	{{if $upstream.StickyCookie}}
 	sticky cookie {{$upstream.StickyCookie}};
 	{{end}}
-	state /var/lib/nginx/{{$upstream.Name}}.state;
+	state /var/lib/nginx/state/{{$upstream.Name}}.state;
 }{{end}}
 
 {{range $server := .Servers}}
