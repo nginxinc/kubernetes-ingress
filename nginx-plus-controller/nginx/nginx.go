@@ -11,27 +11,6 @@ import (
 	"github.com/golang/glog"
 )
 
-const statusAndUpstreamConfAPIsConf = `server {
-    listen 8080;
-
-    root /usr/share/nginx/html;
-
-		access_log off;
-
-    location = /status.html {
-    }
-
-    location /status {
-        status;
-    }
-
-		location /upstream_conf {
-				upstream_conf;
-				allow 127.0.0.1;
-				deny all;
-		}
-}`
-
 // NginxController Updates NGINX configuration, starts and reloads NGINX
 type NginxController struct {
 	nginxConfdPath string
@@ -106,27 +85,12 @@ func NewNginxController(nginxConfPath string, local bool, healthStatus bool) (*N
 
 	if !local {
 		ngxc.createCertsDir()
-		ngxc.writeStatusAndUpstreamConfAPIsConf()
 	}
 
 	cfg := &NginxMainConfig{ServerNamesHashMaxSize: NewDefaultConfig().MainServerNamesHashMaxSize, HealthStatus: healthStatus}
 	ngxc.UpdateMainConfigFile(cfg)
 
 	return &ngxc, nil
-}
-
-func (nginx *NginxController) writeStatusAndUpstreamConfAPIsConf() {
-	filename := nginx.getIngressNginxConfigFileName("status-and-upstream-conf.conf")
-	conf, err := os.Create(filename)
-	if err != nil {
-		glog.Fatalf("Couldn't create conf file %v: %v", filename, err)
-	}
-	defer conf.Close()
-
-	_, err = conf.WriteString(statusAndUpstreamConfAPIsConf)
-	if err != nil {
-		glog.Fatalf("Couldn't write to conf file %v: %v", filename, err)
-	}
 }
 
 // DeleteIngress deletes the configuration file, which corresponds for the
