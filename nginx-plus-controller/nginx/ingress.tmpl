@@ -1,6 +1,6 @@
 {{range $upstream := .Upstreams}}
 upstream {{$upstream.Name}} {
-	zone {{$upstream.Name}} 64k;
+	zone {{$upstream.Name}} 256k;
 	{{if $upstream.StickyCookie}}
 	sticky cookie {{$upstream.StickyCookie}};
 	{{end}}
