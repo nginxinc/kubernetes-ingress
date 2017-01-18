@@ -20,6 +20,8 @@ server {
 	{{if $server.Name}}
 	server_name {{$server.Name}};
 	{{end}}
+	{{range $proxyIgnoreHeader := $server.ProxyIgnoreHeaders}}
+	proxy_ignore_header {{$proxyIgnoreHeader}};{{end}}
 	{{range $proxyHideHeader := $server.ProxyHideHeaders}}
 	proxy_hide_header {{$proxyHideHeader}};{{end}}
 	{{range $proxyPassHeader := $server.ProxyPassHeaders}}
