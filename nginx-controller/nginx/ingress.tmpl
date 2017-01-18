@@ -4,36 +4,36 @@ upstream {{$upstream.Name}} {
 	server {{$server.Address}}:{{$server.Port}};{{end}}
 }{{end}}
 
-{{range $server := .Servers}}
 server {
-	listen 80{{if $server.ProxyProtocol}} proxy_protocol{{end}};
-	{{if $server.SSL}}
-	listen 443 ssl{{if $server.HTTP2}} http2{{end}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
-	ssl_certificate {{$server.SSLCertificate}};
-	ssl_certificate_key {{$server.SSLCertificateKey}};
+	listen 80{{if .ProxyProtocol}} proxy_protocol{{end}};
+	{{if .SSL}}
+	listen 443 ssl{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};
+	ssl_certificate {{.SSLCertificate}};
+	ssl_certificate_key {{.SSLCertificateKey}};
 	{{end}}
-	{{range $setRealIPFrom := $server.SetRealIPFrom}}
+	{{range $setRealIPFrom := .SetRealIPFrom}}
 	set_real_ip_from {{$setRealIPFrom}};{{end}}
-	{{if $server.RealIPHeader}}real_ip_header {{$server.RealIPHeader}};{{end}}
-	{{if $server.RealIPRecursive}}real_ip_recursive on;{{end}}
+	{{if .RealIPHeader}}real_ip_header {{.RealIPHeader}};{{end}}
+	{{if .RealIPRecursive}}real_ip_recursive on;{{end}}
 
-	{{if $server.Name}}
-	server_name {{$server.Name}};
+	{{if .Name}}
+	server_name {{.Name}};
 	{{end}}
-	{{range $proxyHideHeader := $server.ProxyHideHeaders}}
+	{{range $proxyHideHeader := .ProxyHideHeaders}}
 	proxy_hide_header {{$proxyHideHeader}};{{end}}
-	{{range $proxyPassHeader := $server.ProxyPassHeaders}}
+	{{range $proxyPassHeader := .ProxyPassHeaders}}
 	proxy_pass_header {{$proxyPassHeader}};{{end}}
-	{{if $server.SSL}}
+
+	{{if .SSL}}
 	if ($scheme = http) {
 		return 301 https://$host$request_uri;
 	}
-	{{- if $server.HSTS}}
+	{{- if .HSTS}}
 	proxy_hide_header Strict-Transport-Security;
-	add_header Strict-Transport-Security "max-age={{$server.HSTSMaxAge}}; {{if $server.HSTSIncludeSubdomains}}includeSubDomains; {{end}}preload" always;{{end}}
+	add_header Strict-Transport-Security "max-age={{.HSTSMaxAge}}; {{if .HSTSIncludeSubdomains}}includeSubDomains; {{end}}preload" always;{{end}}
 	{{- end}}
 
-	{{range $location := $server.Locations}}
+	{{range $location := .Locations}}
 	location {{$location.Path}} {
 		proxy_http_version 1.1;
 		{{if $location.Websocket}}
@@ -66,4 +66,4 @@ server {
 		proxy_pass http://{{$location.Upstream.Name}}{{$location.Rewrite}};
 		{{end}}
 	}{{end}}
-}{{end}}
+}
