@@ -119,6 +119,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			RealIPHeader:          ingCfg.RealIPHeader,
 			SetRealIPFrom:         ingCfg.SetRealIPFrom,
 			RealIPRecursive:       ingCfg.RealIPRecursive,
+			ProxyIgnoreHeaders:    ingCfg.ProxyIgnoreHeaders,
 			ProxyHideHeaders:      ingCfg.ProxyHideHeaders,
 			ProxyPassHeaders:      ingCfg.ProxyPassHeaders,
 		}
@@ -209,6 +210,13 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 	}
 	if proxyReadTimeout, exists := ingEx.Ingress.Annotations["nginx.org/proxy-read-timeout"]; exists {
 		ingCfg.ProxyReadTimeout = proxyReadTimeout
+	}
+	if proxyIgnoreHeaders, exists, err := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-ignore-headers", ingEx.Ingress); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			ingCfg.ProxyIgnoreHeaders = proxyIgnoreHeaders
+		}
 	}
 	if proxyHideHeaders, exists, err := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-hide-headers", ingEx.Ingress); exists {
 		if err != nil {
