@@ -32,7 +32,11 @@ container: test nginx-plus-ingress
 	docker build -t $(PREFIX):$(TAG) .
 
 push: container
-	$(GCLOUD) docker push $(PREFIX):$(TAG)
+ifeq ($(PUSH_TO_GCR),1)
+	$(GCLOUD) docker -- push $(PREFIX):$(TAG)
+else
+	docker push $(PREFIX):$(TAG)
+endif
 
 osx:
 ifeq ($(BUILD_IN_CONTAINER),1)
@@ -43,3 +47,4 @@ endif
 
 clean:
 	rm -f nginx-plus-ingress
+
