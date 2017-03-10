@@ -48,8 +48,16 @@ though these ports.
   ```
 
 ## 4. Test the Application
-
-1. Find out the external IP address of the node where the controller is running:
+1. Find out the external IP address of the node where the controller is. Only use one of these methods
+    1. **jq** method, if you don't have this package, [install](https://stedolan.github.io/jq/download/) it or skip to the next step, using grep
+```
+export INGRESS_IP=$(kubectl get node $(kubectl get pods -o json | jq '.items[] | select(.metadata.name | startswith("nginx-plus-ingress")).spec.nodeName' | tr -d \" ) -o json |  jq '.status.addresses[] | select(.type=="ExternalIP") | .address'| tr -d \")
+```
+    2. **grep** method 
+```
+export INGRESS_IP=$(kubectl get node kubernetes-minion-group-b31m -o json | grep -A 2 ExternalIP | grep address | awk '{print $2}' | tr -d \")
+```
+    3. **long** method: Here's an example of what the above commands are actually doing. Find the ingress pod and take note of the kubernetes node it's running on, and grep for the IP address of that node.
   ```
   $ kubectl get pods -o wide
   NAME                          READY     STATUS    RESTARTS   AGE       NODE
@@ -58,7 +66,6 @@ though these ports.
   nginx-plus-ingress-rc-86kkq   1/1       Running   0          1m        kubernetes-minion-iikt
   tea-rc-7w3fq                  1/1       Running   0          3m        kubernetes-minion-iikt
   ```
-
   ```
   $ kubectl get node kubernetes-minion-iikt -o json | grep -A 2 ExternalIP
       "type": "ExternalIP",
@@ -66,12 +73,12 @@ though these ports.
     }
   ```
 
-1. To see that the controller is working, let's curl the coffee and the tea services.
+2. To see that the controller is working, let's curl the coffee and the tea services.
 We'll use ```curl```'s --insecure option to turn off certificate verification of our self-signed
 certificate and the --resolve option to set the Host header of a request with ```cafe.example.com```
   To get coffee:
   ```
-  $ curl --resolve cafe.example.com:443:XXX.YYY.ZZZ.III https://cafe.example.com/coffee --insecure
+  $ curl --resolve cafe.example.com:443:$INGRESS_IP https://cafe.example.com/coffee --insecure
   <!DOCTYPE html>
   <html>
   <head>
@@ -94,7 +101,7 @@ certificate and the --resolve option to set the Host header of a request with ``
   ```
   If your rather prefer tea:
   ```
-  $ curl --resolve cafe.example.com:443:XXX.YYY.ZZZ.III https://cafe.example.com/tea --insecure
+  $ curl --resolve cafe.example.com:443:$INGRESS_IP https://cafe.example.com/tea --insecure
   <!DOCTYPE html>
   <html>
   <head>
@@ -116,5 +123,5 @@ certificate and the --resolve option to set the Host header of a request with ``
   </html>
   ```
 
-  1. If you're using the Plus controller, you can open the live activity monitoring dashboard, which is available at http://XXX.YYY.ZZZ.III:8080/status.html
-  If you go to the Upstream tab, you'll see: ![dashboard](dashboard.png)
+3. If you're using the Plus controller, you can open the live activity monitoring dashboard, which is available at http://XXX.YYY.ZZZ.III:8080/status.html
+If you go to the Upstream tab, you'll see: ![dashboard](dashboard.png)
