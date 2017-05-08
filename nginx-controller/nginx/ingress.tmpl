@@ -56,10 +56,6 @@ server {
 	}
 	{{- end}}
 
-	if ($cors = "false") {
-	    return 401;
-	}
-
 	set $corsmethod "${cors}nonoptions";
 
 	if ($request_method = 'OPTIONS') {
