@@ -48,9 +48,13 @@ server {
 	{{- if $server.CorsEnabled}}
 	set $cors "false";
 
+	{{- if eq $server.CorsDomains "*"}}
+	    set $cors "true";
+	{{- else}}
 	if ($http_origin ~* (https?://.*\.({{$server.CorsDomains}})(:[0-9]+)?)) {
 	    set $cors "true";
 	}
+	{{- end}}
 
 	if ($cors = "false") {
 	    return 401;
@@ -61,31 +65,7 @@ server {
 	if ($request_method = 'OPTIONS') {
 	    set $corsmethod "${cors}options";
 	}
-
-	if ($corsmethod = "truenonoptions") {
-	    add_header 'Access-Control-Allow-Origin' "$http_origin" always;
-	    add_header 'Access-Control-Allow-Credentials' 'true' always;
-	    add_header 'Access-Control-Allow-Methods' 'GET, POST, PATCH, PUT, DELETE, OPTIONS' always;
-	}
-
-	if ($corsmethod = "trueoptions") {
-	    add_header 'Access-Control-Allow-Origin' "$http_origin";
-	    add_header 'Access-Control-Allow-Credentials' 'true';
-	    add_header 'Access-Control-Max-Age' 1728000;
-	    add_header 'Access-Control-Allow-Methods' 'GET, POST, PATCH, PUT, DELETE, OPTIONS';
-	    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since';
-	    add_header 'Content-Length' 0;
-	    add_header 'Content-Type' 'text/plain charset=UTF-8';
-	    return 204;
-	}
 	{{- end}}
-
-
-
-
-
-
-
 
 
 
@@ -97,6 +77,25 @@ server {
 		{{if $location.Websocket}}
 		proxy_set_header Upgrade $http_upgrade;
 		proxy_set_header Connection $connection_upgrade;
+		{{end}}
+
+		{{if $server.CorsEnabled}}
+			if ($corsmethod = "truenonoptions") {
+			    add_header 'Access-Control-Allow-Origin' "$http_origin" always;
+			    add_header 'Access-Control-Allow-Credentials' 'true' always;
+			    add_header 'Access-Control-Allow-Methods' 'GET, POST, PATCH, PUT, DELETE, OPTIONS' always;
+			}
+
+			if ($corsmethod = "trueoptions") {
+			    add_header 'Access-Control-Allow-Origin' "$http_origin";
+			    add_header 'Access-Control-Allow-Credentials' 'true';
+			    add_header 'Access-Control-Max-Age' 1728000;
+			    add_header 'Access-Control-Allow-Methods' 'GET, POST, PATCH, PUT, DELETE, OPTIONS';
+			    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since';
+			    add_header 'Content-Length' 0;
+			    add_header 'Content-Type' 'text/plain charset=UTF-8';
+			    return 204;
+			}
 		{{end}}
 
 		{{- if $location.LocationSnippets}}

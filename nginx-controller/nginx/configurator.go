@@ -343,8 +343,8 @@ func getCorsDomains(ingEx *IngressEx) string {
 
 	// Whitelist certain domains
 	if domains, exists := ingEx.Ingress.Annotations["ingress.kubernetes.io/cors-domains"]; exists {
-		strings.Replace(domains, ",", "|", -1)
-		corsDomains = domains
+		parsed := strings.Replace(domains, ",", "|", -1)
+		corsDomains = parsed
 	}
 
 	return corsDomains
