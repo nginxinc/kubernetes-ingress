@@ -87,6 +87,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 	wsServices := getWebsocketServices(ingEx)
 	rewrites := getRewrites(ingEx)
 	sslServices := getSSLServices(ingEx)
+	cors := getCors(ingEx)
 
 	if ingEx.Ingress.Spec.Backend != nil {
 		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
@@ -141,7 +142,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 				upstreams[upsName] = upstream
 			}
 
-			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &ingCfg, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName], sslServices[path.Backend.ServiceName])
+			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &ingCfg, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName], sslServices[path.Backend.ServiceName], cors)
 			locations = append(locations, loc)
 
 			if loc.Path == "/" {
@@ -151,7 +152,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 
 		if rootLocation == false && ingEx.Ingress.Spec.Backend != nil {
 			upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
-			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName])
+			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName], cors)
 			locations = append(locations, loc)
 		}
 
@@ -187,7 +188,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 
 		upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
 
-		loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName])
+		loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName], cors)
 		locations = append(locations, loc)
 
 		server.Locations = locations
@@ -322,6 +323,25 @@ func getWebsocketServices(ingEx *IngressEx) map[string]bool {
 	return wsServices
 }
 
+func getCors(ingEx *IngressEx) map[string]bool {
+	cors := make(map[string]bool)
+
+  // If cors is enabled
+	if corsEnabled, exists := ingEx.Ingress.Annotations["nginx.org/cors-enabled"]; exists {
+
+		cors["enabled"] = true
+
+		// Set for specific domains
+		if domains, exists := ingEx.Ingress.Annotations["nginx.org/cors-domains"]; exists {
+			strings.Replace(domains, ",", "|", -1)
+			cors["domains"] = domains
+		} else {
+			cors["domains"] = "*"
+		}
+	}
+	return cors
+}
+
 func getRewrites(ingEx *IngressEx) map[string]string {
 	rewrites := make(map[string]string)
 
@@ -370,7 +390,7 @@ func getSSLServices(ingEx *IngressEx) map[string]bool {
 	return sslServices
 }
 
-func createLocation(path string, upstream Upstream, cfg *Config, websocket bool, rewrite string, ssl bool) Location {
+func createLocation(path string, upstream Upstream, cfg *Config, websocket bool, rewrite string, ssl bool, cors map) Location {
 	loc := Location{
 		Path:                 path,
 		Upstream:             upstream,
@@ -378,6 +398,7 @@ func createLocation(path string, upstream Upstream, cfg *Config, websocket bool,
 		ProxyReadTimeout:     cfg.ProxyReadTimeout,
 		ClientMaxBodySize:    cfg.ClientMaxBodySize,
 		Websocket:            websocket,
+		Cors:									cors,
 		Rewrite:              rewrite,
 		SSL:                  ssl,
 		ProxyBuffering:       cfg.ProxyBuffering,
