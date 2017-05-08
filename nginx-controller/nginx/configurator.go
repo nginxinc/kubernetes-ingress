@@ -29,6 +29,7 @@ func NewConfigurator(nginx *NginxController, config *Config) *Configurator {
 	return &cnf
 }
 
+// AddOrUpdateDHParam - @TODO
 func (cnf *Configurator) AddOrUpdateDHParam(content string) (string, error) {
 	return cnf.nginx.AddOrUpdateDHParam(content)
 }
@@ -87,7 +88,8 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 	wsServices := getWebsocketServices(ingEx)
 	rewrites := getRewrites(ingEx)
 	sslServices := getSSLServices(ingEx)
-	cors := getCors(ingEx)
+	corsEnabled := getCorsEnabled(ingEx)
+	corsDomains := getCorsDomains(ingEx)
 
 	if ingEx.Ingress.Spec.Backend != nil {
 		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
@@ -123,6 +125,8 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			ProxyHideHeaders:      ingCfg.ProxyHideHeaders,
 			ProxyPassHeaders:      ingCfg.ProxyPassHeaders,
 			ServerSnippets:        ingCfg.ServerSnippets,
+			CorsEnabled:           corsEnabled,
+			CorsDomains:           corsDomains,
 		}
 
 		if pemFile, ok := pems[serverName]; ok {
@@ -142,7 +146,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 				upstreams[upsName] = upstream
 			}
 
-			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &ingCfg, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName], sslServices[path.Backend.ServiceName], cors)
+			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &ingCfg, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName], sslServices[path.Backend.ServiceName])
 			locations = append(locations, loc)
 
 			if loc.Path == "/" {
@@ -152,7 +156,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 
 		if rootLocation == false && ingEx.Ingress.Spec.Backend != nil {
 			upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
-			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName], cors)
+			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName])
 			locations = append(locations, loc)
 		}
 
@@ -188,7 +192,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 
 		upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
 
-		loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName], cors)
+		loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName], sslServices[ingEx.Ingress.Spec.Backend.ServiceName])
 		locations = append(locations, loc)
 
 		server.Locations = locations
@@ -323,23 +327,27 @@ func getWebsocketServices(ingEx *IngressEx) map[string]bool {
 	return wsServices
 }
 
-func getCors(ingEx *IngressEx) map[string]bool {
-	cors := make(map[string]bool)
+func getCorsEnabled(ingEx *IngressEx) bool {
+	cors := false
 
-  // If cors is enabled
-	if corsEnabled, exists := ingEx.Ingress.Annotations["nginx.org/cors-enabled"]; exists {
-
-		cors["enabled"] = true
-
-		// Set for specific domains
-		if domains, exists := ingEx.Ingress.Annotations["nginx.org/cors-domains"]; exists {
-			strings.Replace(domains, ",", "|", -1)
-			cors["domains"] = domains
-		} else {
-			cors["domains"] = "*"
-		}
+	// If cors is enabled
+	if _, exists := ingEx.Ingress.Annotations["ingress.kubernetes.io/enable-cors"]; exists {
+		cors = true
 	}
 	return cors
+}
+
+func getCorsDomains(ingEx *IngressEx) string {
+	// Default to all Origins
+	corsDomains := "*"
+
+	// Whitelist certain domains
+	if domains, exists := ingEx.Ingress.Annotations["ingress.kubernetes.io/cors-domains"]; exists {
+		strings.Replace(domains, ",", "|", -1)
+		corsDomains = domains
+	}
+
+	return corsDomains
 }
 
 func getRewrites(ingEx *IngressEx) map[string]string {
@@ -390,7 +398,7 @@ func getSSLServices(ingEx *IngressEx) map[string]bool {
 	return sslServices
 }
 
-func createLocation(path string, upstream Upstream, cfg *Config, websocket bool, rewrite string, ssl bool, cors map) Location {
+func createLocation(path string, upstream Upstream, cfg *Config, websocket bool, rewrite string, ssl bool) Location {
 	loc := Location{
 		Path:                 path,
 		Upstream:             upstream,
@@ -398,7 +406,6 @@ func createLocation(path string, upstream Upstream, cfg *Config, websocket bool,
 		ProxyReadTimeout:     cfg.ProxyReadTimeout,
 		ClientMaxBodySize:    cfg.ClientMaxBodySize,
 		Websocket:            websocket,
-		Cors:									cors,
 		Rewrite:              rewrite,
 		SSL:                  ssl,
 		ProxyBuffering:       cfg.ProxyBuffering,
