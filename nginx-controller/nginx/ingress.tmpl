@@ -92,6 +92,10 @@ server {
 			    add_header 'Content-Type' 'text/plain charset=UTF-8';
 			    return 204;
 			}
+
+			if ($corsmethod = "falsenonoptions") {
+				return 401;
+			}
 		{{end}}
 
 		{{- if $location.LocationSnippets}}
