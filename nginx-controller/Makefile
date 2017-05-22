@@ -1,6 +1,6 @@
 all: push
 
-VERSION = 0.8.1
+VERSION = 0.8.2
 TAG = $(VERSION)
 PREFIX = registry.axialmarket.com/nginx-ingress
 

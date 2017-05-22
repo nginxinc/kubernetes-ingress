@@ -5,7 +5,7 @@ metadata:
   labels:
     app: nginx-ingress
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     app: nginx-ingress
   template:
@@ -14,7 +14,7 @@ spec:
         app: nginx-ingress
     spec:
       containers:
-      - image: registry.axialmarket.com/nginx-ingress:0.8.1
+      - image: nginxdemos/nginx-ingress:0.8.1
         imagePullPolicy: Always
         name: nginx-ingress
         ports:

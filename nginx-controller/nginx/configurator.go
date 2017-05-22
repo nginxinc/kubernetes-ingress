@@ -331,7 +331,7 @@ func getCorsEnabled(ingEx *IngressEx) bool {
 	cors := false
 
 	// If cors is enabled
-	if _, exists := ingEx.Ingress.Annotations["ingress.kubernetes.io/enable-cors"]; exists {
+	if _, exists := ingEx.Ingress.Annotations["nginx.org/enable-cors"]; exists {
 		cors = true
 	}
 	return cors
@@ -342,7 +342,7 @@ func getCorsDomains(ingEx *IngressEx) string {
 	corsDomains := "*"
 
 	// Whitelist certain domains
-	if domains, exists := ingEx.Ingress.Annotations["ingress.kubernetes.io/cors-domains"]; exists {
+	if domains, exists := ingEx.Ingress.Annotations["nginx.org/cors-domains"]; exists {
 		parsed := strings.Replace(domains, ",", "|", -1)
 		corsDomains = parsed
 	}
