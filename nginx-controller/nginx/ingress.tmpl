@@ -51,7 +51,7 @@ server {
 	{{- if eq $server.CorsDomains "*"}}
 	    set $cors "true";
 	{{- else}}
-	if ($http_origin ~* (https?://(.*\.)?({{$server.CorsDomains}})(:[0-9]+)?)) {
+	if ($http_origin ~* (https?:\/\/([a-zA-Z0-9]*\.)?({{$server.CorsDomains}})(:[0-9]+)?)) {
 	    set $cors "true";
 	}
 	{{- end}}
