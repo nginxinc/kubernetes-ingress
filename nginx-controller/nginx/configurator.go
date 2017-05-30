@@ -180,6 +180,8 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			ProxyHideHeaders:      ingCfg.ProxyHideHeaders,
 			ProxyPassHeaders:      ingCfg.ProxyPassHeaders,
 			ServerSnippets:        ingCfg.ServerSnippets,
+			CorsEnabled:           corsEnabled,
+			CorsDomains:           corsDomains,
 		}
 
 		if pemFile, ok := pems[emptyHost]; ok {
