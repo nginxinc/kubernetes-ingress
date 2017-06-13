@@ -29,6 +29,7 @@ func NewConfigurator(nginx *NginxController, config *Config) *Configurator {
 	return &cnf
 }
 
+// AddOrUpdateDHParam - @TODO
 func (cnf *Configurator) AddOrUpdateDHParam(content string) (string, error) {
 	return cnf.nginx.AddOrUpdateDHParam(content)
 }
@@ -87,6 +88,8 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 	wsServices := getWebsocketServices(ingEx)
 	rewrites := getRewrites(ingEx)
 	sslServices := getSSLServices(ingEx)
+	corsEnabled := getCorsEnabled(ingEx)
+	corsDomains := getCorsDomains(ingEx)
 
 	if ingEx.Ingress.Spec.Backend != nil {
 		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
@@ -122,6 +125,8 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			ProxyHideHeaders:      ingCfg.ProxyHideHeaders,
 			ProxyPassHeaders:      ingCfg.ProxyPassHeaders,
 			ServerSnippets:        ingCfg.ServerSnippets,
+			CorsEnabled:           corsEnabled,
+			CorsDomains:           corsDomains,
 		}
 
 		if pemFile, ok := pems[serverName]; ok {
@@ -175,6 +180,8 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			ProxyHideHeaders:      ingCfg.ProxyHideHeaders,
 			ProxyPassHeaders:      ingCfg.ProxyPassHeaders,
 			ServerSnippets:        ingCfg.ServerSnippets,
+			CorsEnabled:           corsEnabled,
+			CorsDomains:           corsDomains,
 		}
 
 		if pemFile, ok := pems[emptyHost]; ok {
@@ -320,6 +327,29 @@ func getWebsocketServices(ingEx *IngressEx) map[string]bool {
 	}
 
 	return wsServices
+}
+
+func getCorsEnabled(ingEx *IngressEx) bool {
+	cors := false
+
+	// If cors is enabled
+	if _, exists := ingEx.Ingress.Annotations["nginx.org/enable-cors"]; exists {
+		cors = true
+	}
+	return cors
+}
+
+func getCorsDomains(ingEx *IngressEx) string {
+	// Default to all Origins
+	corsDomains := "*"
+
+	// Whitelist certain domains
+	if domains, exists := ingEx.Ingress.Annotations["nginx.org/cors-domains"]; exists {
+		parsed := strings.Replace(domains, ",", "|", -1)
+		corsDomains = parsed
+	}
+
+	return corsDomains
 }
 
 func getRewrites(ingEx *IngressEx) map[string]string {

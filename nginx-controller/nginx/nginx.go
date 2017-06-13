@@ -56,6 +56,8 @@ type Server struct {
 	HSTSIncludeSubdomains bool
 	ProxyHideHeaders      []string
 	ProxyPassHeaders      []string
+	CorsEnabled           bool
+	CorsDomains           string
 
 	// http://nginx.org/en/docs/http/ngx_http_realip_module.html
 	RealIPHeader    string

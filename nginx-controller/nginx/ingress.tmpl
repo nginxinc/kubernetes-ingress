@@ -45,6 +45,26 @@ server {
 	{{$value}}{{end}}
 	{{- end}}
 
+	{{- if $server.CorsEnabled}}
+	set $cors "false";
+
+	{{- if eq $server.CorsDomains "*"}}
+	    set $cors "true";
+	{{- else}}
+	if ($http_origin ~* (https?:\/\/([a-zA-Z0-9]*\.)?({{$server.CorsDomains}})(:[0-9]+)?)) {
+	    set $cors "true";
+	}
+	{{- end}}
+
+	set $corsmethod "${cors}nonoptions";
+
+	if ($request_method = 'OPTIONS') {
+	    set $corsmethod "${cors}options";
+	}
+	{{- end}}
+
+
+
 	{{range $location := $server.Locations}}
 	location {{$location.Path}} {
 		proxy_http_version 1.1;
@@ -53,10 +73,32 @@ server {
 		proxy_set_header Connection $connection_upgrade;
 		{{end}}
 
+
 		{{- if $location.LocationSnippets}}
 		{{range $value := $location.LocationSnippets}}
 		{{$value}}{{end}}
 		{{- end}}
+
+		{{if $server.CorsEnabled}}
+		if ($corsmethod = "truenonoptions") {
+		    add_header 'Access-Control-Allow-Origin' "$http_origin" always;
+		    add_header 'Access-Control-Allow-Credentials' 'true' always;
+		    add_header 'Access-Control-Allow-Methods' 'GET, POST, PATCH, PUT, DELETE, OPTIONS' always;
+		    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since';
+		    add_header 'Access-Control-Expose-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range';
+		}
+
+		if ($corsmethod = "trueoptions") {
+		    add_header 'Access-Control-Allow-Origin' "$http_origin";
+		    add_header 'Access-Control-Allow-Credentials' 'true';
+		    add_header 'Access-Control-Max-Age' 1728000;
+		    add_header 'Access-Control-Allow-Methods' 'GET, POST, PATCH, PUT, DELETE, OPTIONS';
+		    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since';
+		    add_header 'Content-Length' 0;
+		    add_header 'Content-Type' 'text/plain charset=UTF-8';
+		    return 204;
+		}
+		{{end}}
 
 		proxy_connect_timeout {{$location.ProxyConnectTimeout}};
 		proxy_read_timeout {{$location.ProxyReadTimeout}};
