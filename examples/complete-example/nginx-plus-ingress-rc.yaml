@@ -24,6 +24,8 @@ spec:
           hostPort: 443
         - containerPort: 8080
           hostPort: 8080
+        securityContext:
+          privileged: true
         # Uncomment the lines below to enable extensive logging and/or customization of
         # NGINX configuration with configmaps
         args:
