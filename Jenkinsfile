@@ -1,10 +1,10 @@
 #!groovy
 pipeline {
   agent {
-    label "goBuilds"
+    label 'goBuilds'
   }
   stages {
-    stage("build") {
+    stage('build') {
       steps {
         timeout(20) {
           sh 'go build -a -installsuffix cgo -ldflags "-w -X main.version=${VERSION}" -o nginx-ingress *.go'
