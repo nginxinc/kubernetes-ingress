@@ -35,4 +35,5 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr:'3'))
     timeout(time: 60, unit: 'MINUTES')
   }
+ }
 }
