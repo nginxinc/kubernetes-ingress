@@ -1,5 +1,5 @@
+#!groovy
 pipeline {
-
   agent {
     label "goBuilds"
   }
