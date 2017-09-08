@@ -11,6 +11,7 @@ pipeline {
         }
       }
     }
+  }
   post {
     always {
       // Let's wipe out the workspace before we finish!
@@ -30,5 +31,4 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr:'3'))
     timeout(time: 60, unit: 'MINUTES')
   }
- }
 }
