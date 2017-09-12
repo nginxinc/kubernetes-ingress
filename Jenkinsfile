@@ -1,14 +1,11 @@
 #!groovy
 pipeline {
-  agent {
-    label 'goBuilds'
-  }
   stages {
-    stage('build') {
-      steps {
-        timeout(20) {
-          sh 'go build -a -installsuffix cgo -ldflags "-w -X main.version=${VERSION}" -o nginx-ingress *.go'
-        }
+    stage('buildIC'){
+      def golang = docker.image('golang')
+      def version = "0.9.0"
+      golang.inside {
+        sh('go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress *.go')
       }
     }
   }
