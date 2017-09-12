@@ -12,8 +12,7 @@ pipeline {
       }
       steps {
         sh ('go version')
-        sh ('cd nginx-controller')
-        sh('go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress *.go')
+        sh('cd nginx-controller && go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress *.go')
       }
     }
   }
