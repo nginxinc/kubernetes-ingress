@@ -7,9 +7,6 @@ pipeline {
       }
   }
   stages {
-    environment {
-      version = "0.9.0"   
-    }
     stage('buildIC'){
       environment {
         version = "0.9.0"   
