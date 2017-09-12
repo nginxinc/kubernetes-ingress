@@ -1,10 +1,18 @@
 #!groovy
 pipeline {
+  agent {
+      docker {
+          image 'golang:1.8'
+          label 'golang1_8'
+      }
+  }
   stages {
+    environment {
+      version = "0.9.0"   
+    }
     stage('buildIC'){
-      def golang = docker.image('golang')
-      def version = "0.9.0"
-      golang.inside {
+      steps {
+        sh ('go -v')
         sh('go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress *.go')
       }
     }
