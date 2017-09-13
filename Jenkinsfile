@@ -3,7 +3,7 @@ pipeline {
   agent {
       docker {
           image 'golang:1.8'
-          args "-v $(shell pwd):/go/src/github.com/nginxinc/kubernetes-ingress"
+          args " -v /opt/jenkins_home:$JENKINS_HOME -v /opt/jenkins_home/workspace/o_kubernetes-ingress_master-OIS5YGUQ3T477L3GSU4BI7TV5PN5UGTBD46SZTPNXV57WRDIHDDA:/go/src/github.com/nginxinc/kubernetes-ingress "
       }
   }
   stages {
@@ -14,7 +14,8 @@ pipeline {
       steps {
         sh 'go version'
         sh 'echo "GOROOT:$GOROOT GOPATH:$GOPATH"' 
-        sh 'go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress nginx-controller/*.go'
+        sh ' cd /go/src/github.com/nginxinc/kubernetes-ingress && go test ./...'
+        sh ' cd /go/src/github.com/nginxinc/kubernetes-ingress && go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress nginx-controller/*.go'
       }
     }
   }
