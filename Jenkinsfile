@@ -11,8 +11,9 @@ pipeline {
         version = "0.9.0"   
       }
       steps {
-        sh ('go version')
-        sh('go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress nginx-controller/*.go')
+        sh 'go version'
+        sh 'echo "GOROOT:$GOROOT GOPATH:$GOPATH"' 
+        sh 'go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress nginx-controller/*.go'
       }
     }
   }
