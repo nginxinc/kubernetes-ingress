@@ -3,7 +3,8 @@ pipeline {
   agent {
       docker {
           image 'golang:1.8'
-          args " -v /opt/jenkins_home:$JENKINS_HOME -v /opt/jenkins_home/workspace/o_kubernetes-ingress_master-OIS5YGUQ3T477L3GSU4BI7TV5PN5UGTBD46SZTPNXV57WRDIHDDA:/go/src/github.com/nginxinc/kubernetes-ingress "
+          args '-v $WORKSPACE:/go/src/github.com/nginxinc/kubernetes-ingress'
+
       }
   }
   stages {
@@ -13,7 +14,7 @@ pipeline {
       }
       steps {
         sh 'go version'
-        sh 'echo "GOROOT:$GOROOT GOPATH:$GOPATH"' 
+        sh 'echo "GOROOT:$GOROOT GOPATH:$GOPATH workspace $WORKSPACE"' 
         sh ' cd /go/src/github.com/nginxinc/kubernetes-ingress && go test ./...'
         sh ' cd /go/src/github.com/nginxinc/kubernetes-ingress && go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress nginx-controller/*.go'
       }
@@ -39,3 +40,4 @@ pipeline {
     timeout(time: 60, unit: 'MINUTES')
   }
 }
+
