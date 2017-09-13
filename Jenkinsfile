@@ -3,7 +3,7 @@ pipeline {
   agent {
       docker {
           image 'golang:1.8'
-          args "$WORKSPACE:/go/src/github.com/nginxinc/kubernetes-ingress"
+          args "env.$WORKSPACE:/go/src/github.com/nginxinc/kubernetes-ingress"
       }
   }
   stages {
