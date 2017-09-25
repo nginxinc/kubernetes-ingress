@@ -1,6 +1,7 @@
 language: go
+
 go:
- - 1.8
+- tip
 script:
  go test ./...
  go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress nginx-controller/*.go
