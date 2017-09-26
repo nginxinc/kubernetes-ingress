@@ -9,9 +9,9 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/nginxinc/kubernetes-ingress/nginx-controller/controller"
-	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx"
-	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx/plus"
+	"github.com/isserrano/kubernetes-ingress/nginx-controller/controller"
+	"github.com/isserrano/kubernetes-ingress/nginx-controller/nginx"
+	"github.com/isserrano/kubernetes-ingress/nginx-controller/nginx/plus"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api"
