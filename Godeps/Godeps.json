@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/nginxinc/kubernetes-ingress",
+	"ImportPath": "github.com/isserrano/kubernetes-ingress",
 	"GoVersion": "go1.8",
 	"GodepVersion": "v79",
 	"Packages": [
