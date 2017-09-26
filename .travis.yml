@@ -1,5 +1,8 @@
 language: go
 
+sudo: required
+services:
+ - docker
 env:
  - GO15VENDOREXPERIMENT=1
 go:
