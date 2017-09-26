@@ -5,5 +5,6 @@ env:
 go:
  - 1.8.3 
 script: 
+ - cd nginx-controller && go get ./...
  - cd nginx-controller && go test ./...
  - cd nginx-controller && go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress nginx-controller/*.go
