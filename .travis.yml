@@ -7,5 +7,6 @@ go:
 install:
     - export GOPATH="${TRAVIS_BUILD_DIR}/nginx-controller:$GOPATH"
 script: 
+ - go get ./...
  - cd nginx-controller && go test ./...
  - cd nginx-controller && go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress nginx-controller/*.go
