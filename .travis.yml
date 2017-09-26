@@ -5,7 +5,7 @@ env:
 go:
  - 1.8.3 
 install:
-    - export GOPATH="{TRAVIS_BUILD_DIR}/Godeps:${TRAVIS_BUILD_DIR}/nginx-controller:$GOPATH"
+    - export GOPATH="${TRAVIS_BUILD_DIR}/Godeps:${TRAVIS_BUILD_DIR}/nginx-controller:$GOPATH"
 script: 
  - go get ./...
  - cd nginx-controller && go test ./...
