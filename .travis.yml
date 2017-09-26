@@ -4,6 +4,11 @@ env:
  - GO15VENDOREXPERIMENT=1
 go:
  - 1.8.3 
+before_script:
+ - go vet ./...
+install:
+ - export GOPATH="${TRAVIS_BUILD_DIR}/Godeps/_workspace:$GOPATH"
+ - export PATH="${TRAVIS_BUILD_DIR}/Godeps/_workspace/bin:$PATH"
 script: 
  - cd nginx-controller && go get ./...
  - cd nginx-controller && go test ./...
