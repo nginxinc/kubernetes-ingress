@@ -8,6 +8,5 @@ install:
  - export GOPATH="${TRAVIS_BUILD_DIR}/Godeps/_workspace:$GOPATH"
  - export PATH="${TRAVIS_BUILD_DIR}/Godeps/_workspace/bin:$PATH"
 script: 
- - cd nginx-controller && go get ./...
  - cd nginx-controller && go test ./...
  - cd nginx-controller && go build -a -installsuffix cgo -ldflags "-w -X main.version=${version}" -o nginx-ingress nginx-controller/*.go
