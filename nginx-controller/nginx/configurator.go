@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx/plus"
+	"github.com/isserrano/kubernetes-ingress/nginx-controller/nginx/plus"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	api_v1 "k8s.io/client-go/pkg/api/v1"
 	extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
