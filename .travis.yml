@@ -5,7 +5,5 @@ services:
  - docker
 go:
  - 1.8.3 
-install:
- - export GOPATH="${TRAVIS_BUILD_DIR}/Godeps:${TRAVIS_BUILD_DIR}/nginx-controller:$GOPATH"
 script: 
  - cd nginx-controller && make clean && make PREFIX=gcr.io/nginx-ic-dev/nginx-ingress VERSION=0.9.0 BUILD_IN_CONTAINER=1 PUSH_TO_GCR=1
