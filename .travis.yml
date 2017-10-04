@@ -7,6 +7,7 @@ go:
 deploy:
   provider: gae
   project: nginx-ic-dev
+  keyfile: client-secret.json
 script:
 - cd nginx-controller && make clean && make PREFIX=gcr.io/nginx-ic-dev/nginx-ingress
   VERSION=0.9.0 BUILD_IN_CONTAINER=1 PUSH_TO_GCR=1
