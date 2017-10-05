@@ -5,7 +5,7 @@ import (
 	"testing"
 	"text/template"
 
-	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx"
+	"github.com/isserrano/kubernetes-ingress/nginx-controller/nginx"
 )
 
 const nginxIngressTmpl = "nginx.ingress.tmpl"
