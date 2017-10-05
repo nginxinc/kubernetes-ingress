@@ -5,10 +5,10 @@ services:
 go:
 - 1.8.3
 script:
-- if [ ${TRAVIS_PULL_REQUEST} ] ; then VERSION=${TRAVIS_PULL_REQUEST}; else VERSION=${TRAVIS_COMMIT} ;
-- echo "Building ingress controller VERSION:${VERSION}"
+- if [ $TRAVIS_PULL_REQUEST ] ; then VERSION=$TRAVIS_PULL_REQUEST; else VERSION=$TRAVIS_COMMIT ;
+- echo "Building ingress controller VERSION:$VERSION"
 - cd nginx-controller && make clean && make PREFIX=gcr.io/nginx-ic-dev/nginx-ingress
-  VERSION=${VERSION} BUILD_IN_CONTAINER=1 PUSH_TO_GCR=1
+  VERSION=$VERSION BUILD_IN_CONTAINER=1 PUSH_TO_GCR=1
 before_install:
 - openssl aes-256-cbc -K $encrypted_93342ace2b30_key -iv $encrypted_93342ace2b30_iv -in client-secret.json.enc -out client-secret.json -d
 - gcloud auth activate-service-account --key-file client-secret.json
