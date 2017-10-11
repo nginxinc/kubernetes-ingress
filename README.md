@@ -1,5 +1,5 @@
 
-[![Build Status](https://travis-ci.org/isserrano/kubernetes-ingress.svg?branch=master)](https://travis-ci.org/isserrano/kubernetes-ingress)
+[![Build Status](https://travis-ci.org/nginxinc/kubernetes-ingress.svg?branch=master)](https://travis-ci.org/isserrano/kubernetes-ingress)
 
 # NGINX Ingress Controller
 
