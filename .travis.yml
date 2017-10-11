@@ -5,15 +5,17 @@ services:
 go:
 - 1.8.3
 script:
-- if [ "${TRAVIS_PULL_REQUEST}" != "false" ] ; then export VERSION=pr-${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER};
+- if [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then 
+  export VERSION=pr-${TRAVIS_PULL_REQUEST}-${TRAVIS_BUILD_NUMBER};
   else export VERSION=${TRAVIS_COMMIT} ; fi
 - echo "Building ingress controller VERSION:${VERSION}"
-- if [ "${TRAVIS_REPO_SLUG}" == "nginxinc/kubernetes-ingress" ]; then  cd nginx-controller && make clean && 
+- if [ "${TRAVIS_REPO_SLUG}" == "nginxinc/kubernetes-ingress" ] || [ "${TRAVIS_REPO_SLUG}" == "" ]; then
+  cd nginx-controller && make clean && 
   make PREFIX=gcr.io/nginx-ic-dev/nginx-ingress VERSION=${VERSION} BUILD_IN_CONTAINER=0 PUSH_TO_GCR=1 ; 
   else echo "Not building PR from forks. Only testing" &&  make test BUILD_IN_CONTAINER=0 ; fi
 before_install:
 - echo "Repo Slug:${TRAVIS_REPO_SLUG}"
-- if [ "${TRAVIS_REPO_SLUG}" == "nginxinc/kubernetes-ingress" ]; then 
+- if [ "${TRAVIS_REPO_SLUG}" == "nginxinc/kubernetes-ingress" ] || [ "${TRAVIS_REPO_SLUG}" == "" ]; then 
   openssl aes-256-cbc -K $encrypted_6e02d569a8a7_key -iv $encrypted_6e02d569a8a7_iv 
   -in client-secret.json.enc -out client-secret.json -d && 
   gcloud auth activate-service-account --key-file client-secret.json &&
