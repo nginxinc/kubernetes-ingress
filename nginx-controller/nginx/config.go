@@ -22,6 +22,7 @@ type Config struct {
 	ProxyProtocol                 bool
 	ProxyHideHeaders              []string
 	ProxyPassHeaders              []string
+	ProxyTerminateAuthHeaders     bool
 	HSTS                          bool
 	HSTSMaxAge                    int64
 	HSTSIncludeSubdomains         bool

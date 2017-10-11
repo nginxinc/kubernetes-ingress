@@ -133,6 +133,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			RealIPRecursive:       ingCfg.RealIPRecursive,
 			ProxyHideHeaders:      ingCfg.ProxyHideHeaders,
 			ProxyPassHeaders:      ingCfg.ProxyPassHeaders,
+			ProxyTerminateAuthHeaders: ingCfg.ProxyTerminateAuthHeaders,
 			ServerSnippets:        ingCfg.ServerSnippets,
 			Ports:                 ingCfg.Ports,
 			SSLPorts:              ingCfg.SSLPorts,
@@ -248,6 +249,13 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 			glog.Error(err)
 		} else {
 			ingCfg.ProxyPassHeaders = proxyPassHeaders
+		}
+	}
+	if proxyTerminateAuthHeaders, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "nginx.org/proxy-terminate-auth-headers", ingEx.Ingress); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			ingCfg.ProxyTerminateAuthHeaders = proxyTerminateAuthHeaders
 		}
 	}
 	if clientMaxBodySize, exists := ingEx.Ingress.Annotations["nginx.org/client-max-body-size"]; exists {

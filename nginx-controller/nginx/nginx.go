@@ -68,6 +68,7 @@ type Server struct {
 	HSTSIncludeSubdomains bool
 	ProxyHideHeaders      []string
 	ProxyPassHeaders      []string
+	ProxyTerminateAuthHeaders bool
 
 	// http://nginx.org/en/docs/http/ngx_http_realip_module.html
 	RealIPHeader    string
