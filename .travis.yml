@@ -14,6 +14,6 @@ script:
 before_install:
 - if [ "${TRAVIS_REPO_SLUG}" == "nginxinc/kubernetes-ingress" ]; then 
   openssl aes-256-cbc -K $encrypted_6e02d569a8a7_key -iv $encrypted_6e02d569a8a7_iv 
-  -in client-secret.json.enc -out client-secret.json -d ; fi
-- gcloud auth activate-service-account --key-file client-secret.json
-- gcloud config set project nginx-ic-dev
+  -in client-secret.json.enc -out client-secret.json -d && 
+  gcloud auth activate-service-account --key-file client-secret.json &&
+  gcloud config set project nginx-ic-dev ; fi 
