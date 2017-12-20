@@ -12,9 +12,9 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/nginx-controller/controller"
 	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx"
 	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx/plus"
+	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -34,7 +34,7 @@ var (
     	are not written to the disk, instead they are printed to stdout. Also NGINX
     	is not getting invoked. This flag is for testing.`)
 
-	watchNamespace = flag.String("watch-namespace", api.NamespaceAll,
+	watchNamespace = flag.String("watch-namespace", api_v1.NamespaceAll,
 		`Namespace to watch for Ingress/Services/Endpoints. By default the controller
 		watches acrosss all namespaces`)
 

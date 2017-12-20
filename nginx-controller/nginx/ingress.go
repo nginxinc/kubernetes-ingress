@@ -1,8 +1,8 @@
 package nginx
 
 import (
-	api_v1 "k8s.io/client-go/pkg/api/v1"
-	extensions "k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	api_v1 "k8s.io/api/core/v1"
+	extensions "k8s.io/api/extensions/v1beta1"
 )
 
 // IngressEx holds an Ingress along with Secrets and Endpoints of the services
