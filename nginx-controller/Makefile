@@ -12,11 +12,13 @@ BUILD_IN_CONTAINER = 1
 PUSH_TO_GCR =
 GENERATE_DEFAULT_CERT_AND_KEY = 
 
+GIT_COMMIT=$(shell git rev-parse --short HEAD)
+
 nginx-ingress:
 ifeq ($(BUILD_IN_CONTAINER),1)
-	$(DOCKER_RUN) -e CGO_ENABLED=0 $(GOLANG_CONTAINER) go build -a -installsuffix cgo -ldflags "-w -X main.version=${VERSION}" -o nginx-ingress *.go
+	$(DOCKER_RUN) -e CGO_ENABLED=0 $(GOLANG_CONTAINER) go build -a -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o nginx-ingress *.go
 else
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags "-w -X main.version=${VERSION}" -o nginx-ingress *.go
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o nginx-ingress *.go
 endif
 
 test:
@@ -39,13 +41,6 @@ ifeq ($(PUSH_TO_GCR),1)
 	gcloud docker -- push $(PREFIX):$(TAG)
 else
 	docker push $(PREFIX):$(TAG)
-endif
-
-osx:
-ifeq ($(BUILD_IN_CONTAINER),1)
-	$(DOCKER_RUN) -e CGO_ENABLED=0 -e GOOS=darwin $(GOLANG_CONTAINER) go build -a -installsuffix cgo -ldflags "-w -X main.version=${VERSION}" -o osx-nginx-ingress *.go
-else
-	CGO_ENABLED=0 GOOS=darwin go build -a -installsuffix cgo -ldflags "-w -X main.version=${VERSION}" -o osx-nginx-ingress *.go
 endif
 
 clean:

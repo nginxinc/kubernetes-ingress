@@ -22,7 +22,8 @@ import (
 
 var (
 	// Set during build
-	version string
+	version   string
+	gitCommit string
 
 	healthStatus = flag.Bool("health-status", false,
 		`If present, the default server listening on port 80 with the health check
@@ -61,7 +62,7 @@ func main() {
 	flag.Parse()
 	flag.Lookup("logtostderr").Value.Set("true")
 
-	glog.Infof("Starting NGINX Ingress controller Version %v\n", version)
+	glog.Infof("Starting NGINX Ingress controller Version=%v GitCommit=%v\n", version, gitCommit)
 
 	var err error
 	var config *rest.Config
