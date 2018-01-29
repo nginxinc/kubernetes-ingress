@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y -q wget lsb-release apt-transport-https
 ADD nginx-repo.crt /etc/ssl/nginx/
 ADD nginx-repo.key /etc/ssl/nginx/
 
+# Make sure the certificate and key have correct permissions
+RUN chmod 644 /etc/ssl/nginx/*
+
 # Get other files required for installation
 RUN wget -q -O - http://nginx.org/keys/nginx_signing.key | apt-key add -
 RUN wget -q -O /etc/apt/apt.conf.d/90nginx https://cs.nginx.com/static/files/90nginx
