@@ -11,6 +11,7 @@ DOCKERFILE = Dockerfile
 BUILD_IN_CONTAINER = 1
 PUSH_TO_GCR =
 GENERATE_DEFAULT_CERT_AND_KEY = 
+DOCKER_BUILD_OPTIONS =
 
 GIT_COMMIT=$(shell git rev-parse --short HEAD)
 
@@ -34,7 +35,7 @@ ifeq ($(GENERATE_DEFAULT_CERT_AND_KEY),1)
 endif
 
 container: test nginx-ingress certificate-and-key
-	docker build -f $(DOCKERFILE) -t $(PREFIX):$(TAG) .
+	docker build $(DOCKER_BUILD_OPTIONS) -f $(DOCKERFILE) -t $(PREFIX):$(TAG) .
 
 push: container
 ifeq ($(PUSH_TO_GCR),1)

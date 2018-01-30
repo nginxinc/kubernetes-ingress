@@ -38,6 +38,7 @@ The **Makefile** contains the following main variables, which you should customi
   1. `DockerfileForAlpine`, for building an alpine-based image with NGINX.
   1. `DockerfileForPlus`, for building an ubuntu-based image with NGINX Plus.
 * **GENERATE_DEFAULT_CERT_AND_KEY** - The Ingress controller requires a certificate and a key for the default HTTP/HTTPS server. You can reference them in a TLS Secret in a command-line argument to the Ingress controller. As an alternative, you can add a file in the PEM format with your certificate and key to the image as `/etc/nginx/secrets/default`. Optionally, you can generate a self-signed certificate and a key during the build process. Set `GENERATE_DEFAULT_CERT_AND_KEY` to `1` to generate a certificate and a key in the `default.pem` file. Note that you must add the `ADD` instruction in the Dockerfile to copy the cert and the key to the image. The default value of `GENERATE_DEFAULT_CERT_AND_KEY` is `0`. 
+* **DOCKER_BUILD_OPTIONS** -- the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `docker build` command. For example, `--pull`.
 
 Let’s create the controller binary, build an image and push the image to the private registry. Make sure to run the `docker login` command first to login to the registry. If you’re using Google Container Registry, as we are in our example here, you don’t need to use the docker command to login. However, make sure you’re logged into the gcloud tool (using the `gcloud auth login` command).
 
