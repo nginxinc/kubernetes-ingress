@@ -14,7 +14,7 @@ RUN chmod 644 /etc/ssl/nginx/*
 
 # Install NGINX Plus
 RUN set -x \
-  && apt-get update && apt-get upgrade -y \
+  && apt-get update \
   && apt-get install --no-install-recommends --no-install-suggests -y apt-transport-https ca-certificates gnupg1 \
   && \
   NGINX_GPGKEY=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62; \
