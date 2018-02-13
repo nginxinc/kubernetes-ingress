@@ -86,7 +86,7 @@ http {
     }
   
 
-    # status and on-the-fly reconfiguration APIs
+    # NGINX Plus APIs
     server {
         listen 8080;
 
@@ -94,17 +94,15 @@ http {
 
         access_log off;
 
-        location = /status.html {
+        location  = /dashboard.html {
         }
 
-        location /status {
-            status;
-        }
-
-        location /upstream_conf {
-            upstream_conf;
-            allow 127.0.0.1;
-            deny all;
+        location /api {
+            limit_except GET {
+                allow 127.0.0.1;
+                deny all;
+            }
+            api write=on;
         }
     }
 

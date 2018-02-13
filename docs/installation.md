@@ -147,7 +147,7 @@ For NGINX Plus, you can access the live activity monitoring dashboard:
     ```
     $ kubectl port-forward <nginx-plus-ingress-pod> 8080:8080 --namespace=nginx-ingress 
     ```
-1. Open your browser at http://127.0.0.1:8080/status.html to access the dashboard. 
+1. Open your browser at http://127.0.0.1:8080/dashboard.html to access the dashboard. 
 
 ## Uninstall the Ingress Controller
 

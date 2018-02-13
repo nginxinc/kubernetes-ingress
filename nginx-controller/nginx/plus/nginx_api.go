@@ -1,14 +1,18 @@
 package plus
 
-import "github.com/golang/glog"
+import (
+	"net/http"
+
+	"github.com/golang/glog"
+)
 
 type NginxAPIController struct {
 	client *NginxClient
 	local  bool
 }
 
-func NewNginxAPIController(upstreamConfEndpoint string, statusEndpoint string, local bool) (*NginxAPIController, error) {
-	client, err := NewNginxClient(upstreamConfEndpoint, statusEndpoint)
+func NewNginxAPIController(httpClient *http.Client, endpoint string, local bool) (*NginxAPIController, error) {
+	client, err := NewNginxClient(httpClient, endpoint)
 	if !local && err != nil {
 		return nil, err
 	}

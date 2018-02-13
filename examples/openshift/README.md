@@ -13,7 +13,7 @@
 
 1. Avoid conflicts with the OpenShift Router.
     
-    NGINX Plus Ingress controller must be able to bind to ports 80 and 443 of the cluster node, where it is running, like the OpenShift Router. Thus, you need to make sure that the Ingress controller and the Router are running on separate nodes. Additionally, NGINX Plus binds to port 8080 to expose its built-in status API and the monitoring dashboard.
+    NGINX Plus Ingress controller must be able to bind to ports 80 and 443 of the cluster node, where it is running, like the OpenShift Router. Thus, you need to make sure that the Ingress controller and the Router are running on separate nodes. Additionally, NGINX Plus binds to port 8080 to expose its API and the monitoring dashboard.
 
     To quickly disable the Router you can run:
     ```

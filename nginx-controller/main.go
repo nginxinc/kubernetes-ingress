@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -128,7 +129,7 @@ func main() {
 	var nginxAPI *plus.NginxAPIController
 	if *nginxPlus {
 		time.Sleep(500 * time.Millisecond)
-		nginxAPI, err = plus.NewNginxAPIController("http://127.0.0.1:8080/upstream_conf", "http://127.0.0.1:8080/status", local)
+		nginxAPI, err = plus.NewNginxAPIController(&http.Client{}, "http://127.0.0.1:8080/api", local)
 		if err != nil {
 			glog.Fatalf("Failed to create NginxAPIController: %v", err)
 		}
