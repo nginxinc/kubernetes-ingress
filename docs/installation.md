@@ -96,7 +96,7 @@ Create a service with the type *NodePort*:
 ```
 $ kubectl create -f service/nodeport.yaml
 ```
-Kubernetes will allocate two ports on every node of the cluster. To access the Ingress controller, use an IP address of any node of the cluster along with two allocated ports. Read more about the type NodePort [here](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport).
+Kubernetes will allocate two ports on every node of the cluster. To access the Ingress controller, use an IP address of any node of the cluster along with the two randomly allocated ports. Read more about the type NodePort [here](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport).
 
 ### 4.2 Service with the Type LoadBalancer
 
