@@ -31,7 +31,7 @@ The installation manifests are located in the [install](../install) folder. In t
 
 ## 2. Configure RBAC
 
-If RBAC is enabled in your cluster, create a cluster role and bind it to the service account, created in Step 1:
+RBAC is enabled by default since v1.6. If it is enabled on your cluster, create a cluster role and bind it to the service account, created in Step 1:
 ```
 $ kubectl apply -f rbac/rbac.yaml
 ```
