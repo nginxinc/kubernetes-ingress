@@ -36,7 +36,7 @@ RBAC is enabled by default since v1.6. If it is enabled on your cluster, create 
 $ kubectl apply -f rbac/rbac.yaml
 ```
 
-**Note**: To perform this step you must be a cluster admin.
+**Note**: To perform this step you must be a cluster admin. On GCE you'll need to [assign yourself that role](https://github.com/coreos/prometheus-operator/blob/master/Documentation/troubleshooting.md)
 
 ## 3. Deploy the Ingress Controller
 
