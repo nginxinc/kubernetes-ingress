@@ -149,6 +149,20 @@ For NGINX Plus, you can access the live activity monitoring dashboard:
     ```
 1. Open your browser at http://127.0.0.1:8080/dashboard.html to access the dashboard. 
 
+## Support For Prometheus Monitoring
+
+If you are using [Prometheus](https://prometheus.io/), you can deploy the NGINX Plus Ingress controller with the prometheus exporter for NGINX Plus. The exporter will export NGINX Plus metrics into your Prometheus. To deploy the Ingress controller with the exporter, use the modified manifests:
+* For a deployment, run:
+    ```
+    $ kubectl apply -f deployment/nginx-plus-ingress-with-prometheus.yaml
+    ```
+* For a daemon set, run:
+    ```
+    $ kubectl apply -f daemon-set/nginx-plus-ingress-with-prometheus.yaml
+    ```
+
+**Note**: this is a preview version of the prometheus exporter for NGINX Plus. It is not suitable for using in production environments.
+
 ## Uninstall the Ingress Controller
 
 Delete the `nginx-ingress` namespace to uninstall the Ingress controller along with all the auxiliary resources that were created:

@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nginx-ingress
+  namespace: nginx-ingress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-ingress
+  template:
+    metadata:
+      labels:
+        app: nginx-ingress
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8090"
+    spec:
+      serviceAccountName: nginx-ingress
+      containers:
+      - image: nginx-plus-ingress:1.1.1
+        name: nginx-plus-ingress
+        ports:
+        - name: http
+          containerPort: 80
+        - name: https
+          containerPort: 443
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        args:
+          - -nginx-plus
+          - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
+          - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
+         #- -v=3 # Enables extensive logging. Useful for trooublshooting.
+      - image: nginxdemos/nginxplus-prometheus-exporter:0.1.0
+        name: nginxplus-prometheus-exporter
+        args:
+          - -listen-address
+          - :8090
+          - -plus
+          - -metric-endpoint
+          - http://127.0.0.1:8080/api
