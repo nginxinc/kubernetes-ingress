@@ -653,11 +653,13 @@ func (cnf *Configurator) UpdateEndpoints(ingEx *IngressEx) error {
 		}
 		glog.Warningf("Couldn't update the endpoints via the API: %v; reloading configuration instead", err)
 	}
-	if err := cnf.nginx.Reload(); err != nil {
-		return fmt.Errorf("Error reloading NGINX when updating endpoints for %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
-	}
 
 	return nil
+}
+
+// ReloadNginx apply NGINX configuration
+func (cnf *Configurator) ReloadNginx() error {
+	return cnf.nginx.Reload()
 }
 
 func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {

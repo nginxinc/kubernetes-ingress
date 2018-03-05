@@ -344,6 +344,7 @@ func (lbc *LoadBalancerController) syncEndp(task Task) {
 
 	if endpExists {
 		ings := lbc.getIngressForEndpoints(obj)
+		var hasNginxIngress = false
 
 		for _, ing := range ings {
 			if !lbc.isNginxIngress(&ing) {
@@ -352,15 +353,24 @@ func (lbc *LoadBalancerController) syncEndp(task Task) {
 			if !lbc.cnf.HasIngress(&ing) {
 				continue
 			}
+			hasNginxIngress = true
+
 			ingEx, err := lbc.createIngress(&ing)
 			if err != nil {
 				glog.Errorf("Error updating endpoints for %v/%v: %v, skipping", ing.Namespace, ing.Name, err)
 				continue
 			}
 			glog.V(3).Infof("Updating Endpoints for %v/%v", ing.Name, ing.Namespace)
-			lbc.cnf.UpdateEndpoints(ingEx)
+			err = lbc.cnf.UpdateEndpoints(ingEx)
 			if err != nil {
 				glog.Errorf("Error updating endpoints for %v/%v: %v", ing.Namespace, ing.Name, err)
+			}
+		}
+
+		if hasNginxIngress {
+			err = lbc.cnf.ReloadNginx()
+			if err != nil {
+				glog.Errorf("Error reloading NGINX when updating endpoints: %v", err)
 			}
 		}
 	}
