@@ -40,7 +40,7 @@ import (
 )
 
 const (
-	ingressClassKey   = "kubernetes.io/ingress.class"
+	ingressClassKey = "kubernetes.io/ingress.class"
 )
 
 // LoadBalancerController watches Kubernetes API and
@@ -345,23 +345,32 @@ func (lbc *LoadBalancerController) syncEndp(task Task) {
 	if endpExists {
 		ings := lbc.getIngressForEndpoints(obj)
 
-		for _, ing := range ings {
-			if !lbc.isNginxIngress(&ing) {
+		var ingExes []*nginx.IngressEx
+
+		for i := range ings {
+			if !lbc.isNginxIngress(&ings[i]) {
 				continue
 			}
-			if !lbc.cnf.HasIngress(&ing) {
+			if !lbc.cnf.HasIngress(&ings[i]) {
 				continue
 			}
-			ingEx, err := lbc.createIngress(&ing)
+			ingEx, err := lbc.createIngress(&ings[i])
 			if err != nil {
-				glog.Errorf("Error updating endpoints for %v/%v: %v, skipping", ing.Namespace, ing.Name, err)
+				glog.Errorf("Error updating endpoints for %v/%v: %v, skipping", &ings[i].Namespace, &ings[i].Name, err)
 				continue
 			}
-			glog.V(3).Infof("Updating Endpoints for %v/%v", ing.Name, ing.Namespace)
-			lbc.cnf.UpdateEndpoints(ingEx)
-			if err != nil {
-				glog.Errorf("Error updating endpoints for %v/%v: %v", ing.Namespace, ing.Name, err)
-			}
+
+			ingExes = append(ingExes, ingEx)
+		}
+
+		if len(ingExes) == 0 {
+			return
+		}
+
+		glog.V(3).Infof("Updating Endpoints for %v", ingExes)
+		lbc.cnf.UpdateEndpoints(ingExes)
+		if err != nil {
+			glog.Errorf("Error updating endpoints for %v: %v", ingExes, err)
 		}
 	}
 }
@@ -1047,7 +1056,7 @@ func (lbc *LoadBalancerController) isNginxIngress(ing *extensions.Ingress) bool 
 		}
 		return class == lbc.ingressClass || class == ""
 	} else {
-		return ! lbc.useIngressClassOnly
+		return !lbc.useIngressClassOnly
 	}
 }
 

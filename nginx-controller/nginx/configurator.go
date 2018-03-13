@@ -642,19 +642,28 @@ func (cnf *Configurator) DeleteIngress(key string) error {
 	return nil
 }
 
-// UpdateEndpoints updates endpoints in NGINX configuration for the Ingress resource
-func (cnf *Configurator) UpdateEndpoints(ingEx *IngressEx) error {
-	cnf.addOrUpdateIngress(ingEx)
+// UpdateEndpoints updates endpoints in NGINX configuration for the Ingress resources
+func (cnf *Configurator) UpdateEndpoints(ingExes []*IngressEx) error {
+	reloadPlus := false
 
-	if cnf.isPlus() {
-		err := cnf.updatePlusEndpoints(ingEx)
-		if err == nil {
-			return nil
+	for _, ingEx := range ingExes {
+		cnf.addOrUpdateIngress(ingEx)
+
+		if cnf.isPlus() {
+			err := cnf.updatePlusEndpoints(ingEx)
+			if err != nil {
+				glog.Warningf("Couldn't update the endpoints via the API: %v; reloading configuration instead", err)
+				reloadPlus = true
+			}
 		}
-		glog.Warningf("Couldn't update the endpoints via the API: %v; reloading configuration instead", err)
 	}
+
+	if cnf.isPlus() && !reloadPlus {
+		return nil
+	}
+
 	if err := cnf.nginx.Reload(); err != nil {
-		return fmt.Errorf("Error reloading NGINX when updating endpoints for %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
+		return fmt.Errorf("Error reloading NGINX when updating endpoints: %v", err)
 	}
 
 	return nil
@@ -710,7 +719,7 @@ func (cnf *Configurator) UpdateConfig(config *Config, ingExes []*IngressEx) erro
 		WorkerCPUAffinity:     config.MainWorkerCPUAffinity,
 		WorkerShutdownTimeout: config.MainWorkerShutdownTimeout,
 		WorkerConnections:     config.MainWorkerConnections,
-		WorkerRlimitNofile:     config.MainWorkerRlimitNofile,
+		WorkerRlimitNofile:    config.MainWorkerRlimitNofile,
 	}
 
 	cnf.nginx.UpdateMainConfigFile(mainCfg)
