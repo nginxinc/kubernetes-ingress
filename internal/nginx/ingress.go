@@ -1,6 +1,8 @@
 package nginx
 
 import (
+	"fmt"
+
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 )
@@ -59,4 +61,12 @@ var minionInheritanceList = map[string]bool{
 	"nginx.org/keepalive":                true,
 	"nginx.org/max-fails":                true,
 	"nginx.org/fail-timeout":             true,
+}
+
+func (ingEx *IngressEx) String() string {
+	if ingEx.Ingress == nil {
+		return "IngressEx has no Ingress"
+	}
+
+	return fmt.Sprintf("%v/%v", ingEx.Ingress.Namespace, ingEx.Ingress.Name)
 }
