@@ -10,7 +10,7 @@ data:
   client-max-body-size: "2m" # default is "1m". See http://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size
   server-names-hash-bucket-size: "64" # default value depends on the size of the processor’s cache line. See http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_bucket_size
   server-names-hash-max-size: "1024" # default is "512". See http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_max_size
-  http2: "True" # default is "False". Enables HTTP/2 in servers with SSL enabled. See https://nginx.org/en/docs/http/ngx_http_v2_module.html
+  use-http2: "False" # default is "True". Disables HTTP/2 in servers with SSL enabled. See https://nginx.org/en/docs/http/ngx_http_v2_module.html
   proxy-buffering: "False" # default is "True". Enables or disables buffering of responses from the proxied server. See http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering
   proxy-buffers: "16 8k" # default value depends on the platform. See http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers
   proxy-buffer-size: "2k" # default value depends on the platform. See http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size
