@@ -7,7 +7,7 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 ## Prerequisites
 
   - Kubernetes 1.6+.
-  - If you’d like to use NGINX Plus, you need to build your own Docker image and push it to your private registry by following the instructions from [here](https://github.com/nginxinc/kubernetes-ingress-internal/blob/master/nginx-controller/README.md).
+  - If you’d like to use NGINX Plus, you need to build your own Docker image and push it to your private registry by following the instructions from [here](../nginx-controller/README.md).
 
 ## Installing the Chart
 
