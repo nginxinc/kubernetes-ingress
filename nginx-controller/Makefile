@@ -2,7 +2,7 @@ all: push
 
 VERSION = 1.1.1
 TAG = $(VERSION)
-PREFIX = nginxdemos/nginx-ingress
+PREFIX = nginx/nginx-ingress
 
 DOCKER_RUN = docker run --rm -v $(shell pwd)/../:/go/src/github.com/nginxinc/kubernetes-ingress -w /go/src/github.com/nginxinc/kubernetes-ingress/nginx-controller/
 GOLANG_CONTAINER = golang:1.9

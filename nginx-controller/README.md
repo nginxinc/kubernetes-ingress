@@ -4,7 +4,7 @@ This is an implementation of a Kubernetes Ingress controller for NGINX and NGINX
 
 ## How to Use the Controller
 
-To find examples on how to deploy, configure and use the Ingress controller, please see [the examples folder](../examples). The examples require the Docker image of the controller to be available to your Kubernetes cluster. We provide such an image though [DockerHub](https://hub.docker.com/r/nginxdemos/nginx-ingress/) for NGINX. If you are using NGINX Plus, you need to build the image.
+To find examples on how to deploy, configure and use the Ingress controller, please see [the examples folder](../examples). The examples require the Docker image of the controller to be available to your Kubernetes cluster. We provide such an image though [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) for NGINX. If you are using NGINX Plus, you need to build the image.
 
 There are other cases when you need to build your own image. For example if you want to customize the controller, either by changing the NGINX configuration templates and/or modifying the controller logic. Please read the next section for instructions on how to build an image.
 
@@ -71,7 +71,7 @@ The **Makefile** we provide has the following targets:
 ### Makefile Variables
 
 The **Makefile** contains the following main variables for you to customize (either by changing the Makefile or by overriding the variables in the make command):
-* **PREFIX** -- the name of the image. The default is `nginxdemos/nginx-ingress`.
+* **PREFIX** -- the name of the image. The default is `nginx/nginx-ingress`.
 * **VERSION** -- the current version of the controller.
 * **TAG** -- the tag added to the image. It's set to the value of the `VERSION` variable by default.
 * **PUSH_TO_GCR**. If you’re running your Kubernetes in GCE and using Google Container Registry, make sure that `PUSH_TO_GCR = 1`. This means using the `gcloud docker push` command to push the image, which is convenient when pushing images to GCR. By default, the variable is unset and the regular `docker push` command is used to push the image to the registry.

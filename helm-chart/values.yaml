@@ -4,7 +4,7 @@ controller:
   nginxplus: "false"
   hostNetwork: "false"
   image:
-    repository: nginxdemos/nginx-ingress
+    repository: nginx/nginx-ingress
     tag: "1.1.1"
     pullPolicy: IfNotPresent
   config:
