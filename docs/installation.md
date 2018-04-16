@@ -4,7 +4,7 @@
 
 Make sure you have access to the Ingress controller image:
 
-* For NGINX Ingress controller, use the image `nginxdemos/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginxdemos/nginx-ingress/).
+* For NGINX Ingress controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
 * For NGINX Plus Ingress controller, build your own image and push it to your private Docker registry by following the instructions from [here](../nginx-controller).
 
 The installation manifests are located in the [install](../install) folder. In the steps below we assume that you will be running the commands from that folder.

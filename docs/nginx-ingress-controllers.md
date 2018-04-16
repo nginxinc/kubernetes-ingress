@@ -4,7 +4,7 @@ There are two NGINX-based Ingress controller implementations out there: the one 
 
 ## Which One Am I Using?
 
-If you are unsure about which implementation you are using, check the container image of the Ingress controller that is running. For the nginxinc/kubernetes-ingress Ingress controller its Docker image is published on [DockerHub](https://hub.docker.com/r/nginxdemos/nginx-ingress/) and available as *nginxdemos/nginx-ingress*.
+If you are unsure about which implementation you are using, check the container image of the Ingress controller that is running. For the nginxinc/kubernetes-ingress Ingress controller its Docker image is published on [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) and available as *nginx/nginx-ingress*.
 
 ## The Key Differences
 

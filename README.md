@@ -52,7 +52,7 @@ NGINX Plus provides you with [advanced statistics](https://www.nginx.com/product
 * **Support** Support from NGINX Inc is available for NGINX Plus Ingress controller.
 
 **Note**: Deployment of the Ingress controller for NGINX Plus requires you to do one extra step: build your own [Docker image](nginx-controller) using the certificate and key for your subscription.
-The Docker image of the Ingress controller for NGINX is [available on Docker Hub](https://hub.docker.com/r/nginxdemos/nginx-ingress/).
+The Docker image of the Ingress controller for NGINX is [available on Docker Hub](https://hub.docker.com/r/nginx/nginx-ingress/).
 
 ## Using Multiple Ingress Controllers
 
