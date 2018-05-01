@@ -5,7 +5,7 @@ controller:
   hostNetwork: "false"
   image:
     repository: mycluster.icp:8500/kube-system/nginx-plus-ingress
-    tag: "1.1.1"
+    tag: "1.2.0"
     pullPolicy: IfNotPresent
   defaultTLS:
     cert:

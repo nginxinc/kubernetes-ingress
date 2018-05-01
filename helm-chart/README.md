@@ -50,7 +50,7 @@ Parameter | Description | Default
 `controller.nginxplus` | Should NGINX Plus be deployed. | false
 `controller.hostNetwork` | If the nginx deployment / daemonset should run on the host's network namespace. | false
 `controller.image.repository` | The image repository of the Ingress controller. | nginx/nginx-ingress
-`controller.image.tag` | The tag of the Ingress controller image. | 1.1.1
+`controller.image.tag` | The tag of the Ingress controller image. | 1.2.0
 `controller.image.pullPolicy` | The pull policy for the Ingress controller image. | IfNotPresent
 `controller.config.entries` | The entries of the ConfigMap for customizing NGINX configuration. | { }
 `controller.defaultTLS.cert` | The TLS certificate for the default HTTPS server. | None

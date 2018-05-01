@@ -1,5 +1,34 @@
 # Changelog
 
+### 1.2.0
+
+* [279](https://github.com/nginxinc/kubernetes-ingress/pull/279): Update dependencies.
+* [278](https://github.com/nginxinc/kubernetes-ingress/pull/278): Fix mergeable Ingress types.
+* [277](https://github.com/nginxinc/kubernetes-ingress/pull/277): Support grpc error responses.
+* [276](https://github.com/nginxinc/kubernetes-ingress/pull/276): Add gRPC support.
+* [274](https://github.com/nginxinc/kubernetes-ingress/pull/274): Change the default load balancing method to least_conn. 
+* [272](https://github.com/nginxinc/kubernetes-ingress/pull/272): Move nginx-ingress image to the official nginx DockerHub.
+* [268](https://github.com/nginxinc/kubernetes-ingress/pull/268): Correct Mergeable Types misspelling and optimize blacklists. Thanks to [Fernando Diaz](https://github.com/diazjf). 
+* [266](https://github.com/nginxinc/kubernetes-ingress/pull/266): Add support for passive health checks.
+* [261](https://github.com/nginxinc/kubernetes-ingress/pull/261): Update Customization Example.
+* [258](https://github.com/nginxinc/kubernetes-ingress/pull/258): Handle annotations and conflicting paths for MergeableTypes. Thanks to [Fernando Diaz](https://github.com/diazjf).
+* [256](https://github.com/nginxinc/kubernetes-ingress/pull/256): Add helm chart support. 
+* [249](https://github.com/nginxinc/kubernetes-ingress/pull/249): Add support for prometheus for Plus.
+* [241](https://github.com/nginxinc/kubernetes-ingress/pull/241): Update the doc about building the Docker image.
+* [240](https://github.com/nginxinc/kubernetes-ingress/pull/240): Use new NGINX Plus API.
+* [239](https://github.com/nginxinc/kubernetes-ingress/pull/239): Fix a typo in a variable name. Thanks to [Tony Li](https://github.com/mysterytony).
+* [238](https://github.com/nginxinc/kubernetes-ingress/pull/238): Remove apt-get upgrade from Plus Dockerfile.
+* [237](https://github.com/nginxinc/kubernetes-ingress/pull/237): Add unit test for ingress-class handling.
+* [236](https://github.com/nginxinc/kubernetes-ingress/pull/236): Always respect `-ingress-class` option. Thanks to [Nick Novitski](https://github.com/nicknovitski).
+* [235](https://github.com/nginxinc/kubernetes-ingress/pull/235): Change the base image to Debian Stretch for Plus controller.
+* [234](https://github.com/nginxinc/kubernetes-ingress/pull/234): Update installation manifests and instructions.
+* [233](https://github.com/nginxinc/kubernetes-ingress/pull/233): Add docker build options to Makefile.
+* [231](https://github.com/nginxinc/kubernetes-ingress/pull/231): Prevent a possible failure of building Plus image.
+* Documentation Fixes: [248](https://github.com/nginxinc/kubernetes-ingress/pull/248), thanks to [zariye](https://github.com/zariye). [252](https://github.com/nginxinc/kubernetes-ingress/pull/252). [270](https://github.com/nginxinc/kubernetes-ingress/pull/270).
+* Update NGINX version to 1.13.12.
+* Update NGINX Plus version to R15 P1.
+
+
 ### 1.1.1
 
 * [228](https://github.com/nginxinc/kubernetes-ingress/pull/228): Add worker-rlimit-nofile configmap key. Thanks to [Aleksandr Lysenko](https://github.com/Sarga).
