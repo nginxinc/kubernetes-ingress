@@ -31,12 +31,12 @@ The installation manifests are located in the [install](../install) folder. In t
 
 ## 2. Configure RBAC
 
-If RBAC is enabled in your cluster, create a cluster role and bind it to the service account, created in Step 1:
+RBAC is enabled by default since v1.6. If it is enabled on your cluster, create a cluster role and bind it to the service account, created in Step 1:
 ```
 $ kubectl apply -f rbac/rbac.yaml
 ```
 
-**Note**: To perform this step you must be a cluster admin.
+**Note**: To perform this step you must be a cluster admin. On GCE you'll need to [assign yourself that role](https://github.com/coreos/prometheus-operator/blob/master/Documentation/troubleshooting.md)
 
 ## 3. Deploy the Ingress Controller
 
@@ -96,7 +96,7 @@ Create a service with the type *NodePort*:
 ```
 $ kubectl create -f service/nodeport.yaml
 ```
-Kubernetes will allocate two ports on every node of the cluster. To access the Ingress controller, use an IP address of any node of the cluster along with two allocated ports. Read more about the type NodePort [here](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport).
+Kubernetes will allocate two ports on every node of the cluster. To access the Ingress controller, use an IP address of any node of the cluster along with the two randomly allocated ports. Read more about the type NodePort [here](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport).
 
 ### 4.2 Service with the Type LoadBalancer
 
