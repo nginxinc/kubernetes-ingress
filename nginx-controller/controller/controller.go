@@ -1349,7 +1349,7 @@ func (lbc *LoadBalancerController) getMinionsForMaster(master *nginx.IngressEx) 
 			if val, ok := minionPaths[path.Path]; ok {
 				glog.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation set to 'minion' cannot contain the same path as another ingress resource, %v/%v.",
 					ings.Items[i].Namespace, ings.Items[i].Name, val.Namespace, val.Name)
-				glog.Errorf("Path %s for Ingress Resource %v/%v will be ignored", path.Path, val.Namespace, val.Name)
+				glog.Errorf("Path %s for Ingress Resource %v/%v will be ignored", path.Path, ings.Items[i].Namespace, ings.Items[i].Name)
 			} else {
 				minionPaths[path.Path] = &ings.Items[i]
 				uniquePaths = append(uniquePaths, path)
