@@ -60,6 +60,9 @@ The table below summarizes all of the options. For some of them, there are examp
 | `nginx.com/jwt-realm` | N/A | Specifies a realm. | N/A | [Support for JSON Web Tokens (JWTs)](../jwt). |
 | `nginx.com/jwt-token` | N/A | Specifies a variable that contains JSON Web Token. | By default, a JWT is expected in the `Authorization` header as a Bearer Token. | [Support for JSON Web Tokens (JWTs)](../jwt). |
 | `nginx.com/jwt-login-url` | N/A | Specifies a URL to which a client is redirected in case of an invalid or missing JWT. | N/A | [Support for JSON Web Tokens (JWTs)](../jwt). |
+| `nginx.com/health-checks` | N/A | Enables active health checks. | `False` | [Support for Active Health Checks](../health-checks). |
+| `nginx.com/health-checks-mandatory` | N/A | Configures active health checks as mandatory. | `False` | [Support for Active Health Checks](../health-checks). |
+| `nginx.com/health-checks-mandatory-queue` | N/A | When active health checks are mandatory, configures a queue for temporary storing incoming requests during the time when NGINX Plus is checking the health of the endpoints after a configuration reload. | `0` | [Support for Active Health Checks](../health-checks). |
 
 ## Using ConfigMaps
 

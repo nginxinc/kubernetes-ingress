@@ -15,6 +15,9 @@ Masters cannot contain the following annotations:
 * nginx.org/ssl-services
 * nginx.org/websocket-services
 * nginx.com/sticky-cookie-services
+* nginx.com/health-checks
+* nginx.com/health-checks-mandatory
+* nginx.com/health-checks-mandatory-queue
 
 A Minion is declared using `nginx.org/mergeable-ingress-type: minion`. A Minion will be used to append different
 locations to an ingress resource with the Master value. TLS configurations are not allowed. Multiple minions can be

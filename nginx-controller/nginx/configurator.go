@@ -82,6 +82,7 @@ func (cnf *Configurator) addOrUpdateMergableIngress(mergeableIngs *MergeableIngr
 	var masterServer Server
 	var locations []Location
 	var upstreams []Upstream
+	healthChecks := make(map[string]HealthCheck)
 	var keepalive string
 	var removedAnnotations []string
 
@@ -128,6 +129,9 @@ func (cnf *Configurator) addOrUpdateMergableIngress(mergeableIngs *MergeableIngr
 				loc.IngressResource = objectMetaToFileName(&minion.Ingress.ObjectMeta)
 				locations = append(locations, loc)
 			}
+			for hcName, healthCheck := range server.HealthChecks {
+				healthChecks[hcName] = healthCheck
+			}
 		}
 
 		for _, val := range nginxCfg.Upstreams {
@@ -135,6 +139,7 @@ func (cnf *Configurator) addOrUpdateMergableIngress(mergeableIngs *MergeableIngr
 		}
 	}
 
+	masterServer.HealthChecks = healthChecks
 	masterServer.Locations = locations
 
 	nginxCfg := IngressNginxConfig{
@@ -176,6 +181,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 	ingCfg := cnf.createConfig(ingEx)
 
 	upstreams := make(map[string]Upstream)
+	healthChecks := make(map[string]HealthCheck)
 
 	wsServices := getWebsocketServices(ingEx)
 	spServices := getSessionPersistenceServices(ingEx)
@@ -193,6 +199,12 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
 		upstream := cnf.createUpstream(ingEx, name, ingEx.Ingress.Spec.Backend, ingEx.Ingress.Namespace, spServices[ingEx.Ingress.Spec.Backend.ServiceName], &ingCfg)
 		upstreams[name] = upstream
+
+		if ingCfg.HealthCheckEnabled {
+			if hc, exists := ingEx.HealthChecks[ingEx.Ingress.Spec.Backend.ServiceName+ingEx.Ingress.Spec.Backend.ServicePort.String()]; exists {
+				healthChecks[name] = cnf.createHealthCheck(hc, name, &ingCfg)
+			}
+		}
 	}
 
 	var servers []Server
@@ -241,6 +253,8 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 		}
 
 		var locations []Location
+		healthChecks := make(map[string]HealthCheck)
+
 		rootLocation := false
 
 		grpcOnly := true
@@ -258,6 +272,12 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 		for _, path := range rule.HTTP.Paths {
 			upsName := getNameForUpstream(ingEx.Ingress, rule.Host, path.Backend.ServiceName)
 
+			if ingCfg.HealthCheckEnabled {
+				if hc, exists := ingEx.HealthChecks[path.Backend.ServiceName+path.Backend.ServicePort.String()]; exists {
+					healthChecks[upsName] = cnf.createHealthCheck(hc, upsName, &ingCfg)
+				}
+			}
+
 			if _, exists := upstreams[upsName]; !exists {
 				upstream := cnf.createUpstream(ingEx, upsName, &path.Backend, ingEx.Ingress.Namespace, spServices[path.Backend.ServiceName], &ingCfg)
 				upstreams[upsName] = upstream
@@ -274,10 +294,15 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 
 		if rootLocation == false && ingEx.Ingress.Spec.Backend != nil {
 			upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend.ServiceName)
-
 			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName],
 				sslServices[ingEx.Ingress.Spec.Backend.ServiceName], grpcServices[ingEx.Ingress.Spec.Backend.ServiceName])
 			locations = append(locations, loc)
+
+			if ingCfg.HealthCheckEnabled {
+				if hc, exists := ingEx.HealthChecks[ingEx.Ingress.Spec.Backend.ServiceName+ingEx.Ingress.Spec.Backend.ServicePort.String()]; exists {
+					healthChecks[upsName] = cnf.createHealthCheck(hc, upsName, &ingCfg)
+				}
+			}
 
 			if _, exists := grpcServices[ingEx.Ingress.Spec.Backend.ServiceName]; !exists {
 				grpcOnly = false
@@ -285,6 +310,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 		}
 
 		server.Locations = locations
+		server.HealthChecks = healthChecks
 		server.GRPCOnly = grpcOnly
 
 		servers = append(servers, server)
@@ -319,6 +345,29 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 			} else {
 				ingCfg.LBMethod = parsedMethod
 			}
+		}
+	}
+
+	if healthCheckEnabled, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "nginx.com/health-checks", ingEx.Ingress); exists {
+		if err != nil {
+			glog.Error(err)
+		}
+		if cnf.isPlus() {
+			ingCfg.HealthCheckEnabled = healthCheckEnabled
+			if healthCheckMandatory, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "nginx.com/health-checks-mandatory", ingEx.Ingress); exists {
+				if err != nil {
+					glog.Error(err)
+				}
+				ingCfg.HealthCheckMandatory = healthCheckMandatory
+				if healthCheckQueue, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.com/health-checks-mandatory-queue", ingEx.Ingress); exists {
+					if err != nil {
+						glog.Error(err)
+					}
+					ingCfg.HealthCheckMandatoryQueue = healthCheckQueue
+				}
+			}
+		} else {
+			glog.Warning("Annotation 'nginx.com/health-checks' requires NGINX Plus")
 		}
 	}
 
@@ -655,11 +704,25 @@ func createLocation(path string, upstream Upstream, cfg *Config, websocket bool,
 	return loc
 }
 
+// upstreamRequiresQueue checks if the upstream requires a queue.
+// Mandatory Health Checks can cause nginx to return errors on reload, since all Upstreams start
+// Unhealthy. By adding a queue to the Upstream we can avoid returning errors, at the cost of a short delay.
+func (cnf *Configurator) upstreamRequiresQueue(name string, ingEx *IngressEx, cfg *Config) (n int64, timeout int64) {
+	if cnf.isPlus() && cfg.HealthCheckEnabled && cfg.HealthCheckMandatory && cfg.HealthCheckMandatoryQueue > 0 {
+		if hc, exists := ingEx.HealthChecks[name]; exists {
+			return cfg.HealthCheckMandatoryQueue, int64(hc.TimeoutSeconds)
+		}
+	}
+	return 0, 0
+}
+
 func (cnf *Configurator) createUpstream(ingEx *IngressEx, name string, backend *extensions.IngressBackend, namespace string, stickyCookie string, cfg *Config) Upstream {
 	var ups Upstream
 
+	queue, timeout := cnf.upstreamRequiresQueue(backend.ServiceName+backend.ServicePort.String(), ingEx, cfg)
+
 	if cnf.isPlus() {
-		ups = Upstream{Name: name, StickyCookie: stickyCookie}
+		ups = Upstream{Name: name, StickyCookie: stickyCookie, Queue: queue, QueueTimeout: timeout}
 	} else {
 		ups = NewUpstreamWithDefaultServer(name)
 	}
@@ -682,6 +745,28 @@ func (cnf *Configurator) createUpstream(ingEx *IngressEx, name string, backend *
 	}
 	ups.LBMethod = cfg.LBMethod
 	return ups
+}
+
+func (cnf *Configurator) createHealthCheck(hc *api_v1.Probe, upstreamName string, cfg *Config) HealthCheck {
+	return HealthCheck{
+		UpstreamName:   upstreamName,
+		Fails:          hc.FailureThreshold,
+		Interval:       hc.PeriodSeconds,
+		Passes:         hc.SuccessThreshold,
+		URI:            hc.HTTPGet.Path,
+		Scheme:         strings.ToLower(string(hc.HTTPGet.Scheme)),
+		Mandatory:      cfg.HealthCheckMandatory,
+		Headers:        headersToString(hc.HTTPGet.HTTPHeaders),
+		TimeoutSeconds: int64(hc.TimeoutSeconds),
+	}
+}
+
+func headersToString(headers []api_v1.HTTPHeader) map[string]string {
+	m := make(map[string]string)
+	for _, header := range headers {
+		m[header.Name] = header.Value
+	}
+	return m
 }
 
 func pathOrDefault(path string) string {
