@@ -1040,6 +1040,8 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*ngin
 	}
 
 	ingEx.Endpoints = make(map[string][]string)
+	ingEx.HealthChecks = make(map[string]*api_v1.Probe)
+
 	if ing.Spec.Backend != nil {
 		endps, err := lbc.getEndpointsForIngressBackend(ing.Spec.Backend, ing.Namespace)
 		if err != nil {
@@ -1048,10 +1050,15 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*ngin
 		} else {
 			ingEx.Endpoints[ing.Spec.Backend.ServiceName+ing.Spec.Backend.ServicePort.String()] = endps
 		}
+		if lbc.nginxPlus && lbc.isHealthCheckEnabled(ing) {
+			healthCheck := lbc.getHealthChecksForIngressBackend(ing.Spec.Backend, ing.Namespace)
+			if healthCheck != nil {
+				ingEx.HealthChecks[ing.Spec.Backend.ServiceName+ing.Spec.Backend.ServicePort.String()] = healthCheck
+			}
+		}
 	}
 
 	validRules := 0
-
 	for _, rule := range ing.Spec.Rules {
 		if rule.IngressRuleValue.HTTP == nil {
 			continue
@@ -1069,8 +1076,14 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*ngin
 			} else {
 				ingEx.Endpoints[path.Backend.ServiceName+path.Backend.ServicePort.String()] = endps
 			}
+			if lbc.nginxPlus && lbc.isHealthCheckEnabled(ing) {
+				// Pull active health checks from k8 api
+				healthCheck := lbc.getHealthChecksForIngressBackend(&path.Backend, ing.Namespace)
+				if healthCheck != nil {
+					ingEx.HealthChecks[path.Backend.ServiceName+path.Backend.ServicePort.String()] = healthCheck
+				}
+			}
 		}
-
 		validRules++
 	}
 
@@ -1079,6 +1092,63 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*ngin
 	}
 
 	return ingEx, nil
+}
+
+func (lbc *LoadBalancerController) getPodsForIngressBackend(svc *api_v1.Service, namespace string) *api_v1.PodList {
+	pods, err := lbc.client.CoreV1().Pods(svc.Namespace).List(meta_v1.ListOptions{LabelSelector: labels.Set(svc.Spec.Selector).String()})
+	if err != nil {
+		glog.V(3).Infof("Error fetching pods for namespace %v: %v", svc.Namespace, err)
+		return nil
+	}
+	return pods
+}
+
+func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *extensions.IngressBackend, namespace string) *api_v1.Probe {
+	svc, err := lbc.getServiceForIngressBackend(backend, namespace)
+	if err != nil {
+		glog.V(3).Infof("Error getting service %v: %v", backend.ServiceName, err)
+		return nil
+	}
+	svcPort := lbc.getServicePortForIngressPort(backend.ServicePort, svc)
+	if svcPort == nil {
+		return nil
+	}
+	pods := lbc.getPodsForIngressBackend(svc, namespace)
+	if pods == nil {
+		return nil
+	}
+	return findProbeForPods(pods.Items, svcPort)
+}
+
+func findProbeForPods(pods []api_v1.Pod, svcPort *api_v1.ServicePort) *api_v1.Probe {
+	if len(pods) > 0 {
+		pod := pods[0]
+		for _, container := range pod.Spec.Containers {
+			for _, port := range container.Ports {
+				if compareContainerPortAndServicePort(port, *svcPort) {
+					// only http ReadinessProbes are useful for us
+					if container.ReadinessProbe.Handler.HTTPGet != nil && container.ReadinessProbe.PeriodSeconds > 0 {
+						return container.ReadinessProbe
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func compareContainerPortAndServicePort(containerPort api_v1.ContainerPort, svcPort api_v1.ServicePort) bool {
+	targetPort := svcPort.TargetPort
+	if (targetPort == intstr.IntOrString{}) {
+		return svcPort.Port > 0 && svcPort.Port == containerPort.ContainerPort
+	}
+	switch targetPort.Type {
+	case intstr.String:
+		return targetPort.StrVal == containerPort.Name && svcPort.Protocol == containerPort.Protocol
+	case intstr.Int:
+		return targetPort.IntVal > 0 && targetPort.IntVal == containerPort.ContainerPort
+	}
+	return false
 }
 
 func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *extensions.IngressBackend, namespace string) ([]string, error) {
@@ -1136,6 +1206,15 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, i
 	}
 
 	return nil, fmt.Errorf("No endpoints for target port %v in service %s", targetPort, svc.Name)
+}
+
+func (lbc *LoadBalancerController) getServicePortForIngressPort(ingSvcPort intstr.IntOrString, svc *api_v1.Service) *api_v1.ServicePort {
+	for _, port := range svc.Spec.Ports {
+		if (ingSvcPort.Type == intstr.Int && port.Port == int32(ingSvcPort.IntValue())) || (ingSvcPort.Type == intstr.String && port.Name == ingSvcPort.String()) {
+			return &port
+		}
+	}
+	return nil
 }
 
 func (lbc *LoadBalancerController) getTargetPort(svcPort *api_v1.ServicePort, svc *api_v1.Service) (int32, error) {
@@ -1201,6 +1280,17 @@ func (lbc *LoadBalancerController) isNginxIngress(ing *extensions.Ingress) bool 
 	} else {
 		return !lbc.useIngressClassOnly
 	}
+}
+
+// isHealthCheckEnabled checks if health checks are enabled so we can only query pods if enabled.
+func (lbc *LoadBalancerController) isHealthCheckEnabled(ing *extensions.Ingress) bool {
+	if healthCheckEnabled, exists, err := nginx.GetMapKeyAsBool(ing.Annotations, "nginx.com/health-checks", ing); exists {
+		if err != nil {
+			glog.Error(err)
+		}
+		return healthCheckEnabled
+	}
+	return false
 }
 
 // ValidateSecret validates that the secret follows the TLS Secret format.

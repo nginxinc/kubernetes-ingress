@@ -35,6 +35,9 @@ type Config struct {
 	Keepalive                     int64
 	MaxFails                      int64
 	FailTimeout                   string
+	HealthCheckEnabled            bool
+	HealthCheckMandatory          bool
+	HealthCheckMandatoryQueue     int64
 
 	// http://nginx.org/en/docs/http/ngx_http_realip_module.html
 	RealIPHeader    string

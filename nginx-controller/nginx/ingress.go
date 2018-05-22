@@ -8,10 +8,11 @@ import (
 // IngressEx holds an Ingress along with Secrets and Endpoints of the services
 // that are referenced in this Ingress
 type IngressEx struct {
-	Ingress    *extensions.Ingress
-	TLSSecrets map[string]*api_v1.Secret
-	JWTKey     *api_v1.Secret
-	Endpoints  map[string][]string
+	Ingress      *extensions.Ingress
+	TLSSecrets   map[string]*api_v1.Secret
+	JWTKey       *api_v1.Secret
+	Endpoints    map[string][]string
+	HealthChecks map[string]*api_v1.Probe
 }
 
 type MergeableIngresses struct {
@@ -20,10 +21,13 @@ type MergeableIngresses struct {
 }
 
 var masterBlacklist = map[string]bool{
-	"nginx.org/rewrites":               true,
-	"nginx.org/ssl-services":           true,
-	"nginx.org/websocket-services":     true,
-	"nginx.com/sticky-cookie-services": true,
+	"nginx.org/rewrites":                      true,
+	"nginx.org/ssl-services":                  true,
+	"nginx.org/websocket-services":            true,
+	"nginx.com/sticky-cookie-services":        true,
+	"nginx.com/health-checks":                 true,
+	"nginx.com/health-checks-mandatory":       true,
+	"nginx.com/health-checks-mandatory-queue": true,
 }
 
 var minionBlacklist = map[string]bool{

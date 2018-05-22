@@ -41,6 +41,8 @@ type Upstream struct {
 	UpstreamServers []UpstreamServer
 	StickyCookie    string
 	LBMethod        string
+	Queue           int64
+	QueueTimeout    int64
 }
 
 // UpstreamServer describes a server in an NGINX upstream
@@ -49,6 +51,19 @@ type UpstreamServer struct {
 	Port        string
 	MaxFails    int64
 	FailTimeout string
+}
+
+// HealthCheck describes an active HTTP health check
+type HealthCheck struct {
+	UpstreamName   string
+	URI            string
+	Interval       int32
+	Fails          int32
+	Passes         int32
+	Scheme         string
+	Mandatory      bool
+	Headers        map[string]string
+	TimeoutSeconds int64
 }
 
 // Server describes an NGINX server
@@ -71,6 +86,8 @@ type Server struct {
 	HSTSIncludeSubdomains bool
 	ProxyHideHeaders      []string
 	ProxyPassHeaders      []string
+
+	HealthChecks map[string]HealthCheck
 
 	// http://nginx.org/en/docs/http/ngx_http_realip_module.html
 	RealIPHeader    string

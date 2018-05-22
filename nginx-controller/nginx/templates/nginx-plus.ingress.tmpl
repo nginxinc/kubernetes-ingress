@@ -8,7 +8,13 @@ upstream {{$upstream.Name}} {
 	sticky cookie {{$upstream.StickyCookie}};
 	{{end}}
 	{{if $.Keepalive}}keepalive {{$.Keepalive}};{{end}}
-}{{end}}
+	{{- if $upstream.UpstreamServers -}}
+	{{- if $upstream.Queue }}
+	queue {{$upstream.Queue}} timeout={{$upstream.QueueTimeout}}s;
+	{{- end -}}
+	{{- end }}
+}
+{{- end}}
 
 {{range $server := .Servers}}
 server {
@@ -76,6 +82,20 @@ server {
 	{{range $value := $server.ServerSnippets}}
 	{{$value}}{{end}}
 	{{- end}}
+
+	{{- range $healthCheck := $server.HealthChecks}}
+	location @hc-{{$healthCheck.UpstreamName}} {
+		{{- range $name, $header := $healthCheck.Headers }}
+		proxy_set_header {{$name}} "{{$header}}";
+		{{- end }}
+		proxy_connect_timeout {{$healthCheck.TimeoutSeconds}}s;
+		proxy_read_timeout {{$healthCheck.TimeoutSeconds}}s;
+		proxy_send_timeout {{$healthCheck.TimeoutSeconds}}s;
+		proxy_pass {{$healthCheck.Scheme}}://{{$healthCheck.UpstreamName}};
+		health_check {{if $healthCheck.Mandatory}}mandatory {{end}}uri={{$healthCheck.URI}} interval=
+			{{- $healthCheck.Interval}}s fails={{$healthCheck.Fails}} passes={{$healthCheck.Passes}};
+	}
+	{{end -}}
 
 	{{range $location := $server.Locations}}
 	location {{$location.Path}} {

@@ -25,6 +25,15 @@ var testUps = nginx.Upstream{
 	},
 }
 
+var headers = map[string]string{"Test-Header": "test-header-value"}
+var healthCheck = nginx.HealthCheck{
+	UpstreamName: "test",
+	Fails:        1,
+	Interval:     1,
+	Passes:       1,
+	Headers:      headers,
+}
+
 var ingCfg = nginx.IngressNginxConfig{
 
 	Servers: []nginx.Server{
@@ -50,6 +59,7 @@ var ingCfg = nginx.IngressNginxConfig{
 					ClientMaxBodySize:   "2m",
 				},
 			},
+			HealthChecks: map[string]nginx.HealthCheck{"test": healthCheck},
 		},
 	},
 	Upstreams: []nginx.Upstream{testUps},
