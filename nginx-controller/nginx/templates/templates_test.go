@@ -39,13 +39,15 @@ var ingCfg = nginx.IngressNginxConfig{
 
 	Servers: []nginx.Server{
 		nginx.Server{
-			Name:              "test.example.com",
-			ServerTokens:      "off",
-			StatusZone:        "test.example.com",
-			JWTKey:            "/etc/nginx/secrets/key.jwk",
-			JWTRealm:          "closed site",
-			JWTToken:          "$cookie_auth_token",
-			JWTLoginURL:       "https://test.example.com/login",
+			Name:         "test.example.com",
+			ServerTokens: "off",
+			StatusZone:   "test.example.com",
+			JWTAuth: &nginx.JWTAuth{
+				Key:                  "/etc/nginx/secrets/key.jwk",
+				Realm:                "closed site",
+				Token:                "$cookie_auth_token",
+				RedirectLocationName: "@login_url-default-cafe-ingres",
+			},
 			SSL:               true,
 			SSLCertificate:    "secret.pem",
 			SSLCertificateKey: "secret.pem",
@@ -58,9 +60,20 @@ var ingCfg = nginx.IngressNginxConfig{
 					ProxyConnectTimeout: "10s",
 					ProxyReadTimeout:    "10s",
 					ClientMaxBodySize:   "2m",
+					JWTAuth: &nginx.JWTAuth{
+						Key:   "/etc/nginx/secrets/location-key.jwk",
+						Realm: "closed site",
+						Token: "$cookie_auth_token",
+					},
 				},
 			},
 			HealthChecks: map[string]nginx.HealthCheck{"test": healthCheck},
+			JWTRedirectLocations: []nginx.JWTRedirectLocation{
+				{
+					Name:     "@login_url-default-cafe-ingress",
+					LoginURL: "https://test.example.com/login",
+				},
+			},
 		},
 	},
 	Upstreams: []nginx.Upstream{testUps},

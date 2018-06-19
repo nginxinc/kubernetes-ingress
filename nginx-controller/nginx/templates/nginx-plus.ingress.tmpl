@@ -18,6 +18,7 @@ upstream {{$upstream.Name}} {
 {{- end}}
 
 {{range $server := .Servers}}
+{{if $server.IngressResource}} # *Master*, configured in Ingress Resource: {{$server.IngressResource}}{{end}}
 server {
 	{{if not $server.GRPCOnly}}
 	{{range $port := $server.Ports}}
@@ -66,18 +67,14 @@ server {
 	}
 	{{- end}}
 
-	{{ if $server.JWTKey}}
-	auth_jwt_key_file {{$server.JWTKey}};
-	auth_jwt "{{$server.JWTRealm}}"{{if $server.JWTToken}} token={{$server.JWTToken}}{{end}};
+	{{ with $jwt := $server.JWTAuth }}
+	auth_jwt_key_file {{$jwt.Key}};
+	auth_jwt "{{.Realm}}"{{if $jwt.Token}} token={{$jwt.Token}}{{end}};
 
-	{{- if $server.JWTLoginURL}}
-	error_page 401 @login_url;
-	location @login_url {
-		internal;
-		return 302 {{$server.JWTLoginURL}};
-	}
-	{{- end}}
-	{{- end}}
+	{{- if $jwt.RedirectLocationName}}
+	error_page 401 {{$jwt.RedirectLocationName}};
+	{{end}}
+	{{end}}
 
 	{{- if $server.ServerSnippets}}
 	{{range $value := $server.ServerSnippets}}
@@ -95,6 +92,13 @@ server {
 		proxy_pass {{$healthCheck.Scheme}}://{{$healthCheck.UpstreamName}};
 		health_check {{if $healthCheck.Mandatory}}mandatory {{end}}uri={{$healthCheck.URI}} interval=
 			{{- $healthCheck.Interval}}s fails={{$healthCheck.Fails}} passes={{$healthCheck.Passes}};
+	}
+	{{end -}}
+
+	{{- range $location := $server.JWTRedirectLocations}}
+	location {{$location.Name}} {
+		internal;
+		return 302 {{$location.LoginURL}};
 	}
 	{{end -}}
 
@@ -121,6 +125,11 @@ server {
 		{{range $value := $location.LocationSnippets}}
 		{{$value}}{{end}}
 		{{- end}}
+
+		{{ with $jwt := $location.JWTAuth }}
+		auth_jwt_key_file {{$jwt.Key}};
+		auth_jwt "{{.Realm}}"{{if $jwt.Token}} token={{$jwt.Token}}{{end}};
+		{{end}}
 
 		grpc_connect_timeout {{$location.ProxyConnectTimeout}};
 		grpc_read_timeout {{$location.ProxyReadTimeout}};
@@ -153,6 +162,14 @@ server {
 		{{range $value := $location.LocationSnippets}}
 		{{$value}}{{end}}
 		{{- end}}
+
+		{{ with $jwt := $location.JWTAuth }}
+		auth_jwt_key_file {{$jwt.Key}};
+		auth_jwt "{{.Realm}}"{{if $jwt.Token}} token={{$jwt.Token}}{{end}};
+		{{if $jwt.RedirectLocationName}}
+		error_page 401 {{$jwt.RedirectLocationName}};
+		{{end}}
+		{{end}}
 
 		proxy_connect_timeout {{$location.ProxyConnectTimeout}};
 		proxy_read_timeout {{$location.ProxyReadTimeout}};

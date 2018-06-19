@@ -36,10 +36,6 @@ Minions cannot contain the following annotations:
 * nginx.org/server-tokens
 * nginx.org/listen-ports
 * nginx.org/listen-ports-ssl
-* nginx.com/jwt-key
-* nginx.com/jwt-realm
-* nginx.com/jwt-token
-* nginx.com/jwt-login-url
 * nginx.org/server-snippets
 
 Minions inherent the following annotations from the master, unless they override them:

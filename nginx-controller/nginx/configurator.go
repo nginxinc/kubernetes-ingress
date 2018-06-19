@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -30,8 +31,9 @@ type Configurator struct {
 	nginx            *NginxController
 	config           *Config
 	nginxAPI         *plus.NginxAPIController
-	ingresses        map[string]*IngressEx
 	templateExecutor *TemplateExecutor
+	ingresses        map[string]*IngressEx
+	minions          map[string]map[string]bool
 }
 
 // NewConfigurator creates a new Configurator
@@ -42,6 +44,7 @@ func NewConfigurator(nginx *NginxController, config *Config, nginxAPI *plus.Ngin
 		nginxAPI:         nginxAPI,
 		ingresses:        make(map[string]*IngressEx),
 		templateExecutor: templateExecutor,
+		minions:          make(map[string]map[string]bool),
 	}
 
 	return &cnf
@@ -64,7 +67,8 @@ func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) error {
 
 func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
 	pems, jwtKeyFileName := cnf.updateSecrets(ingEx)
-	nginxCfg := cnf.generateNginxCfg(ingEx, pems, jwtKeyFileName)
+	isMinion := false
+	nginxCfg := cnf.generateNginxCfg(ingEx, pems, jwtKeyFileName, isMinion)
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
 	if err != nil {
@@ -94,6 +98,11 @@ func (cnf *Configurator) addOrUpdateMergableIngress(mergeableIngs *MergeableIngr
 	}
 	cnf.nginx.UpdateIngressConfigFile(name, content)
 	cnf.ingresses[name] = mergeableIngs.Master
+	cnf.minions[name] = make(map[string]bool)
+	for _, minion := range mergeableIngs.Minions {
+		minionName := objectMetaToFileName(&minion.Ingress.ObjectMeta)
+		cnf.minions[name][minionName] = true
+	}
 	return nil
 }
 
@@ -112,7 +121,8 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 	}
 
 	pems, jwtKeyFileName := cnf.updateSecrets(mergeableIngs.Master)
-	masterNginxCfg := cnf.generateNginxCfg(mergeableIngs.Master, pems, jwtKeyFileName)
+	isMinion := false
+	masterNginxCfg := cnf.generateNginxCfg(mergeableIngs.Master, pems, jwtKeyFileName, isMinion)
 
 	masterServer = masterNginxCfg.Servers[0]
 	masterServer.IngressResource = objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
@@ -140,7 +150,8 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 		}
 
 		pems, jwtKeyFileName := cnf.updateSecrets(minion)
-		nginxCfg := cnf.generateNginxCfg(minion, pems, jwtKeyFileName)
+		isMinion := true
+		nginxCfg := cnf.generateNginxCfg(minion, pems, jwtKeyFileName, isMinion)
 
 		for _, server := range nginxCfg.Servers {
 			for _, loc := range server.Locations {
@@ -150,6 +161,7 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 			for hcName, healthCheck := range server.HealthChecks {
 				healthChecks[hcName] = healthCheck
 			}
+			masterServer.JWTRedirectLocations = append(masterServer.JWTRedirectLocations, server.JWTRedirectLocations...)
 		}
 
 		for _, val := range nginxCfg.Upstreams {
@@ -192,7 +204,7 @@ func (cnf *Configurator) updateSecrets(ingEx *IngressEx) (map[string]string, str
 	return pems, jwtKeyFileName
 }
 
-func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]string, jwtKeyFileName string) IngressNginxConfig {
+func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]string, jwtKeyFileName string, isMinion bool) IngressNginxConfig {
 	ingCfg := cnf.createConfig(ingEx)
 
 	upstreams := make(map[string]Upstream)
@@ -260,11 +272,20 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			server.SSLCertificateKey = pemFile
 		}
 
-		if jwtKeyFileName != "" {
-			server.JWTKey = jwtKeyFileName
-			server.JWTRealm = ingCfg.JWTRealm
-			server.JWTToken = ingCfg.JWTToken
-			server.JWTLoginURL = ingCfg.JWTLoginURL
+		if !isMinion && jwtKeyFileName != "" {
+			server.JWTAuth = &JWTAuth{
+				Key:   jwtKeyFileName,
+				Realm: ingCfg.JWTRealm,
+				Token: ingCfg.JWTToken,
+			}
+
+			if ingCfg.JWTLoginURL != "" {
+				server.JWTAuth.RedirectLocationName = getNameForRedirectLocation(ingEx.Ingress)
+				server.JWTRedirectLocations = append(server.JWTRedirectLocations, JWTRedirectLocation{
+					Name:     server.JWTAuth.RedirectLocationName,
+					LoginURL: ingCfg.JWTLoginURL,
+				})
+			}
 		}
 
 		var locations []Location
@@ -300,6 +321,21 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 
 			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &ingCfg, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
 				sslServices[path.Backend.ServiceName], grpcServices[path.Backend.ServiceName])
+			if isMinion && jwtKeyFileName != "" {
+				loc.JWTAuth = &JWTAuth{
+					Key:   jwtKeyFileName,
+					Realm: ingCfg.JWTRealm,
+					Token: ingCfg.JWTToken,
+				}
+
+				if ingCfg.JWTLoginURL != "" {
+					loc.JWTAuth.RedirectLocationName = getNameForRedirectLocation(ingEx.Ingress)
+					server.JWTRedirectLocations = append(server.JWTRedirectLocations, JWTRedirectLocation{
+						Name:     loc.JWTAuth.RedirectLocationName,
+						LoginURL: ingCfg.JWTLoginURL,
+					})
+				}
+			}
 			locations = append(locations, loc)
 
 			if loc.Path == "/" {
@@ -813,11 +849,25 @@ func getNameForUpstream(ing *extensions.Ingress, host string, backend *extension
 	return fmt.Sprintf("%v-%v-%v-%v-%v", ing.Namespace, ing.Name, host, backend.ServiceName, backend.ServicePort.String())
 }
 
+func getNameForRedirectLocation(ing *extensions.Ingress) string {
+	return fmt.Sprintf("@login_url_%v-%v", ing.Namespace, ing.Name)
+}
+
 func upstreamMapToSlice(upstreams map[string]Upstream) []Upstream {
+	keys := make([]string, 0, len(upstreams))
+	for k := range upstreams {
+		keys = append(keys, k)
+	}
+
+	// this ensures that the slice 'result' is sorted, which preserves the order of upstream servers
+	// in the generated configuration file from one version to another and is also required for repeatable
+	// Unit test results
+	sort.Strings(keys)
+
 	result := make([]Upstream, 0, len(upstreams))
 
-	for _, ups := range upstreams {
-		result = append(result, ups)
+	for _, k := range keys {
+		result = append(result, upstreams[k])
 	}
 
 	return result
@@ -883,6 +933,7 @@ func (cnf *Configurator) DeleteSecret(key string, ings []extensions.Ingress) err
 		name := objectMetaToFileName(&ing.ObjectMeta)
 		cnf.nginx.DeleteIngress(name)
 		delete(cnf.ingresses, name)
+		delete(cnf.minions, name)
 	}
 
 	cnf.nginx.DeleteSecretFile(keyToFileName(key))
@@ -901,6 +952,7 @@ func (cnf *Configurator) DeleteIngress(key string) error {
 	name := keyToFileName(key)
 	cnf.nginx.DeleteIngress(name)
 	delete(cnf.ingresses, name)
+	delete(cnf.minions, name)
 
 	if err := cnf.nginx.Reload(); err != nil {
 		return fmt.Errorf("Error when removing ingress %v: %v", key, err)
@@ -1116,4 +1168,13 @@ func (cnf *Configurator) HasIngress(ing *extensions.Ingress) bool {
 	name := objectMetaToFileName(&ing.ObjectMeta)
 	_, exists := cnf.ingresses[name]
 	return exists
+}
+
+// HasMinion checks if the minion Ingress resource of the master is present in NGINX configuration
+func (cnf *Configurator) HasMinion(master *extensions.Ingress, minion *extensions.Ingress) bool {
+	masterName := objectMetaToFileName(&master.ObjectMeta)
+	if _, exists := cnf.minions[masterName]; !exists {
+		return false
+	}
+	return cnf.minions[masterName][objectMetaToFileName(&minion.ObjectMeta)]
 }

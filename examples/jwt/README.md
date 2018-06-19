@@ -9,9 +9,9 @@ The Ingress controller provides the following 4 annotations for configuring JWT 
 * Optional: ```nginx.com/jwt-token: "token"``` -- specifies a variable that contains JSON Web Token. By default, a JWT is expected in the `Authorization` header as a Bearer Token. 
 * Optional: ```nginx.com/jwt-login-url: "url"``` -- specifies a URL to which a client is redirected in case of an invalid or missing JWT.
 
-## Example
+## Example 1: the Same JWT Key for All Paths
 
-In the following example we enable JWT validation for the cafe-ingress Ingress:
+In the following example we enable JWT validation for the cafe-ingress Ingress for all paths using the same key `cafe-jwk`:
 ```yaml
 apiVersion: extensions/v1beta1
 kind: Ingress
@@ -44,3 +44,74 @@ spec:
 * The realm is  `Cafe App`.
 * The token is extracted from the `auth_token` cookie.
 * The login URL is `https://login.example.com`. 
+
+## Example 2: a Separate JWT Key Per Path
+
+In the following example we enable JWT validation for the [mergeable Ingresses](../mergeable-ingress-types) with a separate JWT key per path:
+
+* Master:
+  ```yaml
+  apiVersion: extensions/v1beta1
+  kind: Ingress
+  metadata:
+    name: cafe-ingress-master
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      nginx.org/mergeable-ingress-type: "master"
+  spec:
+    tls:
+    - hosts:
+      - cafe.example.com
+      secretName: cafe-secret
+    rules:
+    - host: cafe.example.com
+  ```
+
+* Tea minion:
+  ```yaml
+  apiVersion: extensions/v1beta1
+  kind: Ingress
+  metadata:
+    name: cafe-ingress-tea-minion
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      nginx.org/mergeable-ingress-type: "minion"
+      nginx.com/jwt-key: "tea-jwk" 
+      nginx.com/jwt-realm: "Tea"  
+      nginx.com/jwt-token: "$cookie_auth_token"
+      nginx.com/jwt-login-url: "https://login-tea.cafe.example.com"
+  spec:
+    rules:
+    - host: cafe.example.com
+      http:
+        paths:
+        - path: /tea
+          backend:
+            serviceName: tea-svc
+            servicePort: 80
+  ```
+
+* Coffee minion:
+  ```yaml
+  apiVersion: extensions/v1beta1
+  kind: Ingress
+  metadata:
+    name: cafe-ingress-coffee-minion
+    annotations:
+      kubernetes.io/ingress.class: "nginx"
+      nginx.org/mergeable-ingress-type: "minion"
+      nginx.com/jwt-key: "coffee-jwk" 
+      nginx.com/jwt-realm: "Coffee"  
+      nginx.com/jwt-token: "$cookie_auth_token"
+      nginx.com/jwt-login-url: "https://login-coffee.cafe.example.com"
+  spec:
+    rules:
+    - host: cafe.example.com
+      http:
+        paths:
+        - path: /coffee
+          backend:
+            serviceName: coffee-svc
+            servicePort: 80
+  ```
+

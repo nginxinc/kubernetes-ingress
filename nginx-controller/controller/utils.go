@@ -114,6 +114,8 @@ type Kind int
 const (
 	// Ingress resource
 	Ingress = iota
+	// IngressMinion resource, which is a Minion Ingress resource
+	IngressMinion
 	// Endpoints resource
 	Endpoints
 	// ConfigMap resource
@@ -135,7 +137,12 @@ func NewTask(key string, obj interface{}) (Task, error) {
 	var k Kind
 	switch t := obj.(type) {
 	case *extensions.Ingress:
-		k = Ingress
+		ing := obj.(*extensions.Ingress)
+		if isMinion(ing) {
+			k = IngressMinion
+		} else {
+			k = Ingress
+		}
 	case *api_v1.Endpoints:
 		k = Endpoints
 	case *api_v1.ConfigMap:

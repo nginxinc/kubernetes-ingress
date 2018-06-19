@@ -127,18 +127,8 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 				glog.Infof("Ignoring Ingress %v based on Annotation %v", addIng.Name, ingressClassKey)
 				return
 			}
-			if isMinion(addIng) {
-				master, err := lbc.findMasterForMinion(addIng)
-				if err != nil {
-					glog.Infof("Ignoring Ingress %v(Minion): %v", addIng.Name, err)
-					return
-				}
-				glog.V(3).Infof("Adding Ingress: %v(Minion) for %v(Master)", addIng.Name, master.Name)
-				lbc.syncQueue.enqueue(master)
-			} else {
-				glog.V(3).Infof("Adding Ingress: %v", addIng.Name)
-				lbc.syncQueue.enqueue(obj)
-			}
+			glog.V(3).Infof("Adding Ingress: %v", addIng.Name)
+			lbc.syncQueue.enqueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
 			remIng, isIng := obj.(*extensions.Ingress)
@@ -177,18 +167,8 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 				return
 			}
 			if hasChanges(oldIng, curIng) {
-				if isMinion(curIng) {
-					master, err := lbc.findMasterForMinion(curIng)
-					if err != nil {
-						glog.Infof("Ignoring Ingress %v(Minion): %v", curIng.Name, err)
-						return
-					}
-					glog.V(3).Infof("Ingress %v(Minion) for %v(Master) changed, syncing", curIng.Name, master.Name)
-					lbc.syncQueue.enqueue(master)
-				} else {
-					glog.V(3).Infof("Ingress %v changed, syncing", curIng.Name)
-					lbc.syncQueue.enqueue(cur)
-				}
+				glog.V(3).Infof("Ingress %v changed, syncing", curIng.Name)
+				lbc.syncQueue.enqueue(cur)
 			}
 		},
 	}
@@ -311,6 +291,9 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	secrHandlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			secr := obj.(*api_v1.Secret)
+			if err := lbc.ValidateSecret(secr); err != nil {
+				return
+			}
 			nsname := secr.Namespace + "/" + secr.Name
 			if nsname == lbc.defaultServerSecret {
 				glog.V(3).Infof("Adding default server Secret: %v", secr.Name)
@@ -616,6 +599,8 @@ func (lbc *LoadBalancerController) sync(task Task) {
 	switch task.Kind {
 	case Ingress:
 		lbc.syncIng(task)
+	case IngressMinion:
+		lbc.syncIngMinion(task)
 	case ConfigMap:
 		lbc.syncCfgm(task)
 		return
@@ -628,6 +613,39 @@ func (lbc *LoadBalancerController) sync(task Task) {
 	case Service:
 		lbc.syncExternalService(task)
 	}
+}
+
+func (lbc *LoadBalancerController) syncIngMinion(task Task) {
+	key := task.Key
+	obj, ingExists, err := lbc.ingLister.Store.GetByKey(key)
+	if err != nil {
+		lbc.syncQueue.requeue(task, err)
+		return
+	}
+
+	if !ingExists {
+		glog.V(2).Infof("Minion was deleted: %v\n", key)
+		return
+	}
+	glog.V(2).Infof("Adding or Updating Minion: %v\n", key)
+
+	minion := obj.(*extensions.Ingress)
+
+	master, err := lbc.findMasterForMinion(minion)
+	if err != nil {
+		lbc.syncQueue.requeueAfter(task, err, 5*time.Second)
+		return
+	}
+
+	_, err = lbc.createIngress(minion)
+	if err != nil {
+		lbc.syncQueue.requeueAfter(task, err, 5*time.Second)
+		if !lbc.cnf.HasMinion(master, minion) {
+			return
+		}
+	}
+
+	lbc.syncQueue.enqueue(master)
 }
 
 func (lbc *LoadBalancerController) syncIng(task Task) {
@@ -764,31 +782,51 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 		return
 	}
 
-	ings, err := lbc.findIngressesForSecret(namespace, name)
+	nonMinions, minions, err := lbc.findIngressesForSecret(namespace, name)
 	if err != nil {
 		glog.Warningf("Failed to find Ingress resources for Secret %v: %v", key, err)
 		lbc.syncQueue.requeueAfter(task, err, 5*time.Second)
 	}
 
-	glog.V(2).Infof("Found %v Ingress resources with Secret %v", len(ings), key)
+	glog.V(2).Infof("Found %v Non-Minion and %v Minion Ingress resources with Secret %v", len(nonMinions), len(minions), key)
 
 	if !secrExists {
 		glog.V(2).Infof("Deleting Secret: %v\n", key)
 
-		if err := lbc.cnf.DeleteSecret(key, ings); err != nil {
+		for _, minion := range minions {
+			master, err := lbc.findMasterForMinion(&minion)
+			if err != nil {
+				glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
+				continue
+			}
+			mergeableIngress, err := lbc.createMergableIngresses(master)
+			if err != nil {
+				glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
+				continue
+			}
+			err = lbc.cnf.AddOrUpdateMergableIngress(mergeableIngress)
+			if err != nil {
+				glog.Errorf("Failed to update Ingress %v(Master) of %v(Minion): %v", master.Name, minion.Name, err)
+			}
+			lbc.recorder.Eventf(&minion, api_v1.EventTypeWarning, "Rejected", "%v/%v was rejected due to deleted Secret %v: %v", minion.Namespace, minion.Name, key)
+			lbc.recorder.Eventf(master, api_v1.EventTypeWarning, "Rejected", "Minion %v/%v was rejected due to deleted Secret %v: %v", minion.Namespace, minion.Name, key)
+			lbc.syncQueue.enqueue(&minion)
+		}
+
+		if err := lbc.cnf.DeleteSecret(key, nonMinions); err != nil {
 			glog.Errorf("Error when deleting Secret: %v: %v", key, err)
 		}
 
-		for _, ing := range ings {
+		for _, ing := range nonMinions {
 			lbc.syncQueue.enqueue(&ing)
 			lbc.recorder.Eventf(&ing, api_v1.EventTypeWarning, "Rejected", "%v/%v was rejected due to deleted Secret %v", ing.Namespace, ing.Name, key)
 		}
 
 		if key == lbc.defaultServerSecret {
-			glog.Warningf("The default server Secret %v was removed. Retaining the Secret.")
+			glog.Warningf("The default server Secret %v was removed. Retaining the Secret.", key)
 		}
 	} else {
-		glog.V(2).Infof("Updating Secret: %v\n", key)
+		glog.V(2).Infof("Adding / Updating Secret: %v\n", key)
 
 		secret := obj.(*api_v1.Secret)
 
@@ -809,14 +847,36 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 			}
 		}
 
-		if len(ings) > 0 {
+		if len(nonMinions) > 0 || len(minions) > 0 {
 			err := lbc.ValidateSecret(secret)
 			if err != nil {
+				// Secret becomes Invalid
 				glog.Errorf("Couldn't validate secret %v: %v", key, err)
-				if err := lbc.cnf.DeleteSecret(key, ings); err != nil {
+
+				for _, minion := range minions {
+					master, err := lbc.findMasterForMinion(&minion)
+					if err != nil {
+						glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
+						continue
+					}
+					mergeableIngress, err := lbc.createMergableIngresses(master)
+					if err != nil {
+						glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
+						continue
+					}
+					err = lbc.cnf.AddOrUpdateMergableIngress(mergeableIngress)
+					if err != nil {
+						glog.Errorf("Failed to update Ingress %v(Master) of %v(Minion): %v", master.Name, minion.Name, err)
+					}
+					lbc.recorder.Eventf(&minion, api_v1.EventTypeWarning, "Rejected", "%v/%v was rejected due to invalid Secret %v: %v", minion.Namespace, minion.Name, key, err)
+					lbc.recorder.Eventf(master, api_v1.EventTypeWarning, "Rejected", "Minion %v/%v was rejected due to invalid Secret %v: %v", minion.Namespace, minion.Name, key, err)
+					lbc.syncQueue.enqueue(&minion)
+				}
+
+				if err := lbc.cnf.DeleteSecret(key, nonMinions); err != nil {
 					glog.Errorf("Error when deleting Secret: %v: %v", key, err)
 				}
-				for _, ing := range ings {
+				for _, ing := range nonMinions {
 					lbc.syncQueue.enqueue(&ing)
 					lbc.recorder.Eventf(&ing, api_v1.EventTypeWarning, "Rejected", "%v/%v was rejected due to invalid Secret %v: %v", ing.Namespace, ing.Name, key, err)
 				}
@@ -827,24 +887,41 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 			if err := lbc.cnf.AddOrUpdateSecret(secret); err != nil {
 				glog.Errorf("Error when updating Secret %v: %v", key, err)
 				lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", key, err)
-				for _, ing := range ings {
+				for _, ing := range nonMinions {
 					lbc.recorder.Eventf(&ing, api_v1.EventTypeWarning, "UpdatedWithError", "Configuration for %v/%v was updated, but not applied: %v", ing.Namespace, ing.Name, err)
+				}
+				for _, minion := range minions {
+					master, err := lbc.findMasterForMinion(&minion)
+					if err != nil {
+						glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
+						continue
+					}
+					lbc.recorder.Eventf(master, api_v1.EventTypeWarning, "UpdatedWithError", "Configuration for  minion %v/%v was updated, but not applied: %v", minion.Namespace, minion.Name, err)
+					lbc.recorder.Eventf(&minion, api_v1.EventTypeWarning, "UpdatedWithError", "Configuration for %v/%v was updated, but not applied: %v", minion.Namespace, minion.Name, err)
 				}
 			} else {
 				lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "%v was updated", key)
-				for _, ing := range ings {
+				for _, ing := range nonMinions {
 					lbc.recorder.Eventf(&ing, api_v1.EventTypeNormal, "Updated", "Configuration for %v/%v was updated", ing.Namespace, ing.Name)
+				}
+				for _, minion := range minions {
+					master, err := lbc.findMasterForMinion(&minion)
+					if err != nil {
+						glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
+						continue
+					}
+					lbc.recorder.Eventf(master, api_v1.EventTypeNormal, "Updated", "Configuration for minion %v/%v was updated", minion.Namespace, minion.Name)
+					lbc.recorder.Eventf(&minion, api_v1.EventTypeNormal, "Updated", "Configuration for %v/%v was updated", minion.Namespace, minion.Name)
 				}
 			}
 		}
 	}
 }
 
-func (lbc *LoadBalancerController) findIngressesForSecret(secretNamespace string, secretName string) ([]extensions.Ingress, error) {
-	res := []extensions.Ingress{}
+func (lbc *LoadBalancerController) findIngressesForSecret(secretNamespace string, secretName string) (nonMinions []extensions.Ingress, minions []extensions.Ingress, error error) {
 	ings, err := lbc.ingLister.List()
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't get the list of Ingress resources: %v", err)
+		return nil, nil, fmt.Errorf("Couldn't get the list of Ingress resources: %v", err)
 	}
 
 items:
@@ -856,25 +933,49 @@ items:
 		if !lbc.isNginxIngress(&ing) {
 			continue
 		}
-		if !lbc.cnf.HasIngress(&ing) {
+
+		if !isMinion(&ing) {
+			if !lbc.cnf.HasIngress(&ing) {
+				continue
+			}
+			for _, tls := range ing.Spec.TLS {
+				if tls.SecretName == secretName {
+					nonMinions = append(nonMinions, ing)
+					continue items
+				}
+			}
+			if lbc.nginxPlus {
+				if jwtKey, exists := ing.Annotations[nginx.JWTKeyAnnotation]; exists {
+					if jwtKey == secretName {
+						nonMinions = append(nonMinions, ing)
+					}
+				}
+			}
 			continue
 		}
-		for _, tls := range ing.Spec.TLS {
-			if tls.SecretName == secretName {
-				res = append(res, ing)
-				continue items
-			}
-		}
+
+		// we're dealing with a minion
+		// minions can only have JWT secrets
 		if lbc.nginxPlus {
+			master, err := lbc.findMasterForMinion(&ing)
+			if err != nil {
+				glog.Infof("Ignoring Ingress %v(Minion): %v", ing.Name, err)
+				continue
+			}
+
+			if !lbc.cnf.HasMinion(master, &ing) {
+				continue
+			}
+
 			if jwtKey, exists := ing.Annotations[nginx.JWTKeyAnnotation]; exists {
 				if jwtKey == secretName {
-					res = append(res, ing)
+					minions = append(minions, ing)
 				}
 			}
 		}
 	}
 
-	return res, nil
+	return nonMinions, minions, nil
 }
 
 func (lbc *LoadBalancerController) enqueueIngressForService(svc *api_v1.Service) {
@@ -1280,11 +1381,11 @@ func (lbc *LoadBalancerController) getMinionsForMaster(master *nginx.IngressEx) 
 
 		ingEx, err := lbc.createIngress(&ings.Items[i])
 		if err != nil {
-			glog.Errorf("Error creating ingress resource %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
+			glog.Errorf("Error creating ingress resource %v/%v: %v", ings.Items[i].Namespace, ings.Items[i].Name, err)
 			continue
 		}
-		if len(ingEx.TLSSecrets) > 0 || ingEx.JWTKey != nil {
-			glog.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation set to 'minion' cannot contain TLSSecrets or JWTKeys", ingEx.Ingress.Namespace, ingEx.Ingress.Name)
+		if len(ingEx.TLSSecrets) > 0 {
+			glog.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation set to 'minion' cannot contain TLS Secrets", ingEx.Ingress.Namespace, ingEx.Ingress.Name)
 			continue
 		}
 		minions = append(minions, ingEx)

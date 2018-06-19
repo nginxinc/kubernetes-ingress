@@ -928,15 +928,12 @@ func TestFindIngressesForSecret(t *testing.T) {
 
 			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true)
 			if err != nil {
-				t.Errorf("templateExecuter could not start: %v", err)
+				t.Fatalf("templateExecuter could not start: %v", err)
 			}
-			ngxc, err := nginx.NewNginxController("/etc/nginx", true, true, "../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl")
-			if err != nil {
-				t.Errorf("NGINX Controller could not start: %v", err)
-			}
+			ngxc := nginx.NewNginxController("/etc/nginx", true)
 			apiCtrl, err := plus.NewNginxAPIController(&http.Client{}, "", true)
 			if err != nil {
-				t.Errorf("NGINX API Controller could not start: %v", err)
+				t.Fatalf("NGINX API Controller could not start: %v", err)
 			}
 
 			cnf := nginx.NewConfigurator(ngxc, &nginx.Config{}, apiCtrl, templateExecutor)
@@ -964,26 +961,33 @@ func TestFindIngressesForSecret(t *testing.T) {
 
 			err = cnf.AddOrUpdateIngress(ngxIngress)
 			if err != nil {
-				t.Errorf("Ingress was not added: %v", err)
+				t.Fatalf("Ingress was not added: %v", err)
 			}
 
 			lbc.ingLister.Add(&test.ingress)
 			lbc.secrLister.Add(&test.secret)
 
-			ingresses, err := lbc.findIngressesForSecret(test.secret.ObjectMeta.Namespace, test.secret.ObjectMeta.Name)
+			nonMinions, minions, err := lbc.findIngressesForSecret(test.secret.ObjectMeta.Namespace, test.secret.ObjectMeta.Name)
 			if err != nil {
-				t.Errorf("Couldn't list Ingress resource: %v", err)
+				t.Fatalf("Couldn't find Ingress resource: %v", err)
 			}
 
-			if len(ingresses) > 0 {
+			if len(minions) > 0 {
+				t.Fatalf("Expected 0 minions. Got: %v", len(minions))
+			}
+
+			if len(nonMinions) > 0 {
 				if !test.expectedToFind {
-					t.Errorf("Expected no ingresses. Got: %v/%v", ingresses[0].Namespace, ingresses[0].Name)
+					t.Fatalf("Expected 0 non-Minions. Got: %v", len(nonMinions))
 				}
-				if ingresses[0].Name != test.ingress.ObjectMeta.Name || ingresses[0].Namespace != test.ingress.ObjectMeta.Namespace {
-					t.Errorf("Expected: %v/%v. Got: %v/%v.", test.ingress.ObjectMeta.Namespace, test.ingress.ObjectMeta.Name, ingresses[0].Namespace, ingresses[0].Name)
+				if len(nonMinions) != 1 {
+					t.Fatalf("Expected 1 non-Minion. Got: %v", len(nonMinions))
+				}
+				if nonMinions[0].Name != test.ingress.ObjectMeta.Name || nonMinions[0].Namespace != test.ingress.ObjectMeta.Namespace {
+					t.Fatalf("Expected: %v/%v. Got: %v/%v.", test.ingress.ObjectMeta.Namespace, test.ingress.ObjectMeta.Name, nonMinions[0].Namespace, nonMinions[0].Name)
 				}
 			} else if test.expectedToFind {
-				t.Errorf("Expected %v/%v. Got: No ingresses. %v", test.ingress.ObjectMeta.Namespace, test.ingress.ObjectMeta.Name, err)
+				t.Fatal("Expected 1 non-Minion. Got: 0")
 			}
 		})
 	}

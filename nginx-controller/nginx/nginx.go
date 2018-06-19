@@ -91,16 +91,28 @@ type Server struct {
 	SetRealIPFrom   []string
 	RealIPRecursive bool
 
-	JWTKey      string
-	JWTRealm    string
-	JWTToken    string
-	JWTLoginURL string
+	JWTAuth              *JWTAuth
+	JWTRedirectLocations []JWTRedirectLocation
 
 	Ports    []int
 	SSLPorts []int
 
 	// Used for mergeable types
 	IngressResource string
+}
+
+// JWTRedirectLocation describes a location for redirecting client requests to a login URL for JWT Authentication
+type JWTRedirectLocation struct {
+	Name     string
+	LoginURL string
+}
+
+// JWTAuth holds JWT authentication configuration
+type JWTAuth struct {
+	Key                  string
+	Realm                string
+	Token                string
+	RedirectLocationName string
 }
 
 // Location describes an NGINX location
@@ -119,6 +131,7 @@ type Location struct {
 	ProxyBuffers         string
 	ProxyBufferSize      string
 	ProxyMaxTempFileSize string
+	JWTAuth              *JWTAuth
 
 	// Used for mergeable types
 	IngressResource string
@@ -164,14 +177,14 @@ func NewUpstreamWithDefaultServer(name string) Upstream {
 }
 
 // NewNginxController creates a NGINX controller
-func NewNginxController(nginxConfPath string, local bool, healthStatus bool, nginxConfTemplatePath string, nginxIngressTemplatePath string) (*NginxController, error) {
+func NewNginxController(nginxConfPath string, local bool) *NginxController {
 	ngxc := NginxController{
 		nginxConfdPath:   path.Join(nginxConfPath, "conf.d"),
 		nginxSecretsPath: path.Join(nginxConfPath, "secrets"),
 		local:            local,
 	}
 
-	return &ngxc, nil
+	return &ngxc
 }
 
 // DeleteIngress deletes the configuration file, which corresponds for the
