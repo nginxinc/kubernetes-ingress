@@ -1,5 +1,5 @@
 
-[![Build Status](https://travis-ci.org/nginxinc/kubernetes-ingress.svg?branch=master)](https://travis-ci.org/nginxinc/kubernetes-ingress)
+[![Build Status](https://travis-ci.org/nginxinc/kubernetes-ingress.svg?branch=master)](https://travis-ci.org/nginxinc/kubernetes-ingress)  [![FOSSA Status](https://app.fossa.io/api/projects/custom%2B1062%2Fkubernetes-ingress%2F.svg?type=shield)](https://app.fossa.io/projects/custom%2B1062%2Fkubernetes-ingress%2F?ref=badge_shield)
 
 # NGINX Ingress Controller
 
