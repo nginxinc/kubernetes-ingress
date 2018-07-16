@@ -11,12 +11,11 @@ script:
 - echo "Building ingress controller VERSION:${VERSION}"
 - if [ "${TRAVIS_PULL_REQUEST_SLUG}" == "nginxinc/kubernetes-ingress" ] || [ "${TRAVIS_PULL_REQUEST_SLUG}" == "" ]; then
   cd nginx-controller && make clean && 
-  make PREFIX=gcr.io/nginx-ic-dev/nginx-ingress VERSION=${VERSION} BUILD_IN_CONTAINER=0 PUSH_TO_GCR=1 ; 
+  make PREFIX=gcr.io/nginx-ic-dev/nginx-ingress VERSION=${VERSION} BUILD_IN_CONTAINER=0 PUSH_TO_GCR=0  nginx-ingress test certificate-and-key container; 
   else echo "Not building PR from forks. Only testing" && cd nginx-controller && make test BUILD_IN_CONTAINER=0 ; fi
 before_install:
 - echo "Repo Slug:${TRAVIS_PULL_REQUEST_SLUG}"
-- if [ "${TRAVIS_PULL_REQUEST_SLUG}" == "nginxinc/kubernetes-ingress" ] || [ "${TRAVIS_PULL_REQUEST_SLUG}" == "" ]; then 
-  openssl aes-256-cbc -K $encrypted_6e02d569a8a7_key -iv $encrypted_6e02d569a8a7_iv 
-  -in client-secret.json.enc -out client-secret.json -d && 
-  gcloud auth activate-service-account --key-file client-secret.json &&
-  gcloud config set project nginx-ic-dev ; fi 
+- wget https://github.com/fossas/fossa-cli/releases/download/v0.7.0-beta.1/fossa-cli_0.7.0-beta.1_linux_amd64.tar.gz && tar xzf fossa-cli_0.7.0-beta.1_linux_amd64.tar.gz
+- ./fossa update || true
+- ./fossa init 
+- FOSSA_API_KEY=${fossa} ./fossa analyze -p kubernetes-ingress
