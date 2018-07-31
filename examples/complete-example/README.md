@@ -48,7 +48,7 @@ certificate and the --resolve option to set the Host header of a request with ``
     Server name: coffee-7586895968-r26zn
     ...
     ```
-    If your rather prefer tea:
+    If your prefer tea:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/tea --insecure
     Server address: 10.12.0.19:80
