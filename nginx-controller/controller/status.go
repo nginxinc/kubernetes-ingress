@@ -24,6 +24,8 @@ type StatusUpdater struct {
 	externalStatusAddress    string
 	externalServiceAddresses []string
 	status                   []api_v1.LoadBalancerIngress
+	keyFunc                  func(obj interface{}) (string, error)
+	ingLister                *StoreToIngressLister
 }
 
 // UpdateManagedAndMergeableIngresses handles the full return format of LoadBalancerController.getManagedIngresses
@@ -67,12 +69,29 @@ func (su *StatusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []a
 	if reflect.DeepEqual(ing.Status.LoadBalancer.Ingress, status) {
 		return nil
 	}
-	// Objects from the LoadBalancerController.ingLister.Store are retrieved by reference
-	// and are not safe to modify.
-	ingCopy := ing.DeepCopy()
+
+	// get a pristine ing with no annotation changes
+	key, err := su.keyFunc(&ing)
+	if err != nil {
+		glog.V(3).Infof("error getting key for ing: %v", err)
+		return err
+	}
+	obj, exists, err := su.ingLister.GetByKey(key)
+	if err != nil {
+		glog.V(3).Infof("error getting ing by key: %v", err)
+		return err
+	}
+	if !exists {
+		glog.V(3).Infof("ing doesn't exist in Store")
+		return nil
+	}
+
+	ingRef := obj.(*v1beta1.Ingress)
+	// items from the Store are not safe to modify
+	ingCopy := ingRef.DeepCopy()
 	ingCopy.Status.LoadBalancer.Ingress = status
 	clientIngress := su.client.ExtensionsV1beta1().Ingresses(ingCopy.Namespace)
-	_, err := clientIngress.UpdateStatus(ingCopy)
+	_, err = clientIngress.UpdateStatus(ingCopy)
 	if err != nil {
 		glog.V(3).Infof("error setting ingress status: %v", err)
 		err = su.retryStatusUpdate(clientIngress, ingCopy)

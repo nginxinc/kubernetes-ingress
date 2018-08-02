@@ -168,7 +168,8 @@ func (s *StoreToIngressLister) List() (ing extensions.IngressList, err error) {
 	for _, m := range s.Store.List() {
 		ing.Items = append(ing.Items, *(m.(*extensions.Ingress)))
 	}
-	return ing, nil
+	ingListCopy := ing.DeepCopy()
+	return *ingListCopy, nil
 }
 
 // GetServiceIngress gets all the Ingress' that have rules pointing to a service.

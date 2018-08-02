@@ -120,31 +120,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
-	lbc.statusUpdater = &StatusUpdater{
-		client:              input.KubeClient,
-		namespace:           input.ControllerNamespace,
-		externalServiceName: input.ExternalServiceName,
-	}
-
-	if input.ReportIngressStatus && input.LeaderElectionEnabled {
-		leaderCallbacks := leaderelection.LeaderCallbacks{
-			OnStartedLeading: func(stop <-chan struct{}) {
-				glog.V(3).Info("started leading, updating ingress status")
-				ingresses, mergeableIngresses := lbc.getManagedIngresses()
-				err := lbc.statusUpdater.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
-				if err != nil {
-					glog.V(3).Infof("error updating status when starting leading: %v", err)
-				}
-			},
-		}
-
-		var err error
-		lbc.leaderElector, err = NewLeaderElector(input.KubeClient, leaderCallbacks, input.ControllerNamespace)
-		if err != nil {
-			glog.V(3).Infof("Error starting LeaderElection: %v", err)
-		}
-	}
-
 	ingHandlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			addIng := obj.(*extensions.Ingress)
@@ -220,6 +195,34 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.ingLister.Store, lbc.ingController = cache.NewInformer(
 		cache.NewListWatchFromClient(lbc.client.Extensions().RESTClient(), "ingresses", input.Namespace, fields.Everything()),
 		&extensions.Ingress{}, input.ResyncPeriod, ingHandlers)
+
+	// statusUpdater requires ingLister to be instantiated, above.
+	lbc.statusUpdater = &StatusUpdater{
+		client:              input.KubeClient,
+		namespace:           input.ControllerNamespace,
+		externalServiceName: input.ExternalServiceName,
+		ingLister:           &lbc.ingLister,
+		keyFunc:             keyFunc,
+	}
+
+	if input.ReportIngressStatus && input.LeaderElectionEnabled {
+		leaderCallbacks := leaderelection.LeaderCallbacks{
+			OnStartedLeading: func(stop <-chan struct{}) {
+				glog.V(3).Info("started leading, updating ingress status")
+				ingresses, mergeableIngresses := lbc.getManagedIngresses()
+				err := lbc.statusUpdater.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
+				if err != nil {
+					glog.V(3).Infof("error updating status when starting leading: %v", err)
+				}
+			},
+		}
+
+		var err error
+		lbc.leaderElector, err = NewLeaderElector(input.KubeClient, leaderCallbacks, input.ControllerNamespace)
+		if err != nil {
+			glog.V(3).Infof("Error starting LeaderElection: %v", err)
+		}
+	}
 
 	svcHandlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
