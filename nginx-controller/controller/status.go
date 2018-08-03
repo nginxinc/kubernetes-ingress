@@ -76,7 +76,7 @@ func (su *StatusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []a
 		glog.V(3).Infof("error getting key for ing: %v", err)
 		return err
 	}
-	obj, exists, err := su.ingLister.GetByKey(key)
+	ingCopy, exists, err := su.ingLister.GetByKey(key)
 	if err != nil {
 		glog.V(3).Infof("error getting ing by key: %v", err)
 		return err
@@ -86,9 +86,6 @@ func (su *StatusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []a
 		return nil
 	}
 
-	ingRef := obj.(*v1beta1.Ingress)
-	// items from the Store are not safe to modify
-	ingCopy := ingRef.DeepCopy()
 	ingCopy.Status.LoadBalancer.Ingress = status
 	clientIngress := su.client.ExtensionsV1beta1().Ingresses(ingCopy.Namespace)
 	_, err = clientIngress.UpdateStatus(ingCopy)

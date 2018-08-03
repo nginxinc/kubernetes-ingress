@@ -163,6 +163,17 @@ type StoreToIngressLister struct {
 	cache.Store
 }
 
+// GetByKey calls Store.GetByKey and returns a copy of the ingress so it is
+// safe to modify.
+func (s *StoreToIngressLister) GetByKey(key string) (ing *extensions.Ingress, exists bool, err error) {
+	item, exists, err := s.Store.GetByKey(key)
+	if !exists || err != nil {
+		return nil, exists, err
+	}
+	ing = item.(*extensions.Ingress).DeepCopy()
+	return
+}
+
 // List lists all Ingress' in the store.
 func (s *StoreToIngressLister) List() (ing extensions.IngressList, err error) {
 	for _, m := range s.Store.List() {

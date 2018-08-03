@@ -632,7 +632,7 @@ func (lbc *LoadBalancerController) sync(task Task) {
 
 func (lbc *LoadBalancerController) syncIng(task Task) {
 	key := task.Key
-	obj, ingExists, err := lbc.ingLister.Store.GetByKey(key)
+	ing, ingExists, err := lbc.ingLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.requeue(task, err)
 		return
@@ -647,8 +647,6 @@ func (lbc *LoadBalancerController) syncIng(task Task) {
 		}
 	} else {
 		glog.V(2).Infof("Adding or Updating Ingress: %v\n", key)
-
-		ing := obj.(*extensions.Ingress)
 
 		if isMaster(ing) {
 			mergeableIngExs, err := lbc.createMergableIngresses(ing)
