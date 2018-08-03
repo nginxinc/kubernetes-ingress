@@ -993,7 +993,7 @@ func filterMasterAnnotations(annotations map[string]string) []string {
 	var removedAnnotations []string
 
 	for key, _ := range annotations {
-		if _, ok := masterBlacklist[key]; ok {
+		if _, notAllowed := masterBlacklist[key]; notAllowed {
 			removedAnnotations = append(removedAnnotations, key)
 			delete(annotations, key)
 		}
@@ -1006,7 +1006,7 @@ func filterMinionAnnotations(annotations map[string]string) []string {
 	var removedAnnotations []string
 
 	for key, _ := range annotations {
-		if _, ok := minionBlacklist[key]; ok {
+		if _, notAllowed := minionBlacklist[key]; notAllowed {
 			removedAnnotations = append(removedAnnotations, key)
 			delete(annotations, key)
 		}
@@ -1017,8 +1017,8 @@ func filterMinionAnnotations(annotations map[string]string) []string {
 
 func mergeMasterAnnotationsIntoMinion(minionAnnotations map[string]string, masterAnnotations map[string]string) {
 	for key, val := range masterAnnotations {
-		if _, ok := minionAnnotations[key]; !ok {
-			if _, ok := minionBlacklist[key]; !ok {
+		if _, exists := minionAnnotations[key]; !exists {
+			if _, allowed := minionInheritanceList[key]; allowed {
 				minionAnnotations[key] = val
 			}
 		}

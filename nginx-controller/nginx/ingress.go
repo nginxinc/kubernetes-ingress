@@ -23,6 +23,7 @@ type MergeableIngresses struct {
 var masterBlacklist = map[string]bool{
 	"nginx.org/rewrites":                      true,
 	"nginx.org/ssl-services":                  true,
+	"nginx.org/grpc-services":                 true,
 	"nginx.org/websocket-services":            true,
 	"nginx.com/sticky-cookie-services":        true,
 	"nginx.com/health-checks":                 true,
@@ -45,4 +46,20 @@ var minionBlacklist = map[string]bool{
 	"nginx.com/jwt-realm":                true,
 	"nginx.com/jwt-token":                true,
 	"nginx.com/jwt-login-url":            true,
+	"nginx.org/server-snippets":          true,
+}
+
+var minionInheritanceList = map[string]bool{
+	"nginx.org/proxy-connect-timeout":    true,
+	"nginx.org/proxy-read-timeout":       true,
+	"nginx.org/client-max-body-size":     true,
+	"nginx.org/proxy-buffering":          true,
+	"nginx.org/proxy-buffers":            true,
+	"nginx.org/proxy-buffer-size":        true,
+	"nginx.org/proxy-max-temp-file-size": true,
+	"nginx.org/location-snippets":        true,
+	"nginx.org/lb-method":                true,
+	"nginx.org/keepalive":                true,
+	"nginx.org/max-fails":                true,
+	"nginx.org/fail-timeout":             true,
 }

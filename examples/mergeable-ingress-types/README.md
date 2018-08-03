@@ -13,6 +13,7 @@ ingress resource.
 Masters cannot contain the following annotations:
 * nginx.org/rewrites
 * nginx.org/ssl-services
+* nginx.org/grpc-services
 * nginx.org/websocket-services
 * nginx.com/sticky-cookie-services
 * nginx.com/health-checks
@@ -39,6 +40,21 @@ Minions cannot contain the following annotations:
 * nginx.com/jwt-realm
 * nginx.com/jwt-token
 * nginx.com/jwt-login-url
+* nginx.org/server-snippets
+
+Minions inherent the following annotations from the master, unless they override them:
+* nginx.org/proxy-connect-timeout
+* nginx.org/proxy-read-timeout
+* nginx.org/client-max-body-size
+* nginx.org/proxy-buffering
+* nginx.org/proxy-buffers
+* nginx.org/proxy-buffer-size
+* nginx.org/proxy-max-temp-file-size
+* nginx.org/location-snippets
+* nginx.org/lb-method
+* nginx.org/keepalive
+* nginx.org/max-fails
+* nginx.org/fail-timeout
 
 Note: Ingress Resources with more than one host cannot be used.
 

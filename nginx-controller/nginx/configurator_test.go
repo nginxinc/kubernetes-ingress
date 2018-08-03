@@ -134,6 +134,7 @@ func TestMergeMasterAnnotationsIntoMinion(t *testing.T) {
 		"nginx.org/hsts":                  "True",
 		"nginx.org/hsts-max-age":          "2700000",
 		"nginx.org/proxy-connect-timeout": "50s",
+		"nginx.com/jwt-token":             "$cookie_auth_token",
 	}
 	minionAnnotations := map[string]string{
 		"nginx.org/client-max-body-size":  "2m",
