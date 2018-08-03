@@ -50,6 +50,7 @@ rules:
   verbs:
   - list
   - watch
+  - get
 - apiGroups:
   - "extensions"
   resources:
