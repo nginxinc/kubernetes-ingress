@@ -166,17 +166,16 @@ type StoreToIngressLister struct {
 // List lists all Ingress' in the store.
 func (s *StoreToIngressLister) List() (ing extensions.IngressList, err error) {
 	for _, m := range s.Store.List() {
-		ing.Items = append(ing.Items, *(m.(*extensions.Ingress)))
+		ing.Items = append(ing.Items, *(m.(*extensions.Ingress)).DeepCopy())
 	}
-	ingListCopy := ing.DeepCopy()
-	return *ingListCopy, nil
+	return ing, nil
 }
 
 // GetServiceIngress gets all the Ingress' that have rules pointing to a service.
 // Note that this ignores services without the right nodePorts.
 func (s *StoreToIngressLister) GetServiceIngress(svc *api_v1.Service) (ings []extensions.Ingress, err error) {
 	for _, m := range s.Store.List() {
-		ing := *m.(*extensions.Ingress)
+		ing := *m.(*extensions.Ingress).DeepCopy()
 		if ing.Namespace != svc.Namespace {
 			continue
 		}
