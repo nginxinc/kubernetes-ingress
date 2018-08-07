@@ -70,15 +70,16 @@ func (su *StatusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []a
 		return nil
 	}
 
-	// get a pristine ing with no annotation changes
+	// Get a pristine Ingress from the Store. Required because annotations can be modified
+	// for mergable Ingress objects and the update status API call will update annotations, not just status.
 	key, err := su.keyFunc(&ing)
 	if err != nil {
 		glog.V(3).Infof("error getting key for ing: %v", err)
 		return err
 	}
-	ingCopy, exists, err := su.ingLister.GetByKey(key)
+	ingCopy, exists, err := su.ingLister.GetByKeySafe(key)
 	if err != nil {
-		glog.V(3).Infof("error getting ing by key: %v", err)
+		glog.V(3).Infof("error getting ing from Store by key: %v", err)
 		return err
 	}
 	if !exists {

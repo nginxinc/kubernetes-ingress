@@ -632,7 +632,7 @@ func (lbc *LoadBalancerController) sync(task Task) {
 
 func (lbc *LoadBalancerController) syncIng(task Task) {
 	key := task.Key
-	ing, ingExists, err := lbc.ingLister.GetByKey(key)
+	ing, ingExists, err := lbc.ingLister.GetByKeySafe(key)
 	if err != nil {
 		lbc.syncQueue.requeue(task, err)
 		return
