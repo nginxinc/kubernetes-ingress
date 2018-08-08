@@ -1,5 +1,34 @@
 # Changelog
 
+### 1.3.0
+
+IMPROVEMENTS:
+* [325](https://github.com/nginxinc/kubernetes-ingress/pull/325): Report ingress status.
+* [311](https://github.com/nginxinc/kubernetes-ingress/pull/311): Support JWT auth in mergeable minions.
+* [310](https://github.com/nginxinc/kubernetes-ingress/pull/310): NGINX configuration template custom path support.
+* [308](https://github.com/nginxinc/kubernetes-ingress/pull/308): Add prometheus exporter support to helm chart.
+* [303](https://github.com/nginxinc/kubernetes-ingress/pull/303): Add fetch custom NGINX template from ConfigMap.
+* [301](https://github.com/nginxinc/kubernetes-ingress/pull/301): Update prometheus exporter image for Plus.
+* [298](https://github.com/nginxinc/kubernetes-ingress/pull/298): Prefetch ConfigMap before initial NGINX Config generation.
+* [296](https://github.com/nginxinc/kubernetes-ingress/pull/296): Improve Helm Chart.
+* [295](https://github.com/nginxinc/kubernetes-ingress/pull/295): Report version information.
+* [294](https://github.com/nginxinc/kubernetes-ingress/pull/294): Support dynamic reconfiguration in mergeable ingresses for Plus.
+* [287](https://github.com/nginxinc/kubernetes-ingress/pull/287): Support slow-start for Plus.
+* [286](https://github.com/nginxinc/kubernetes-ingress/pull/286): Add support for active health checks for Plus.
+
+CHANGES:
+* [330](https://github.com/nginxinc/kubernetes-ingress/pull/330): Update NGINX version to 1.15.2.
+* [329](https://github.com/nginxinc/kubernetes-ingress/pull/329): Enforce annotations inheritance in minions.
+
+BUGFIXES:
+* [326](https://github.com/nginxinc/kubernetes-ingress/pull/326): Fix find ingress for secret ns bug.
+* [284](https://github.com/nginxinc/kubernetes-ingress/pull/284): Correct Logs for Mergeable Types with Duplicate Location. Thanks to [Fernando Diaz](https://github.com/diazjf).
+
+
+UPGRADE:
+* For NGINX, use the 1.3.0 image from our DockerHub: `nginx/nginx-ingress:1.3.0`
+* For NGINX Plus, please build your own image using the 1.3.0 source code.
+
 ### 1.2.0
 
 * [279](https://github.com/nginxinc/kubernetes-ingress/pull/279): Update dependencies.

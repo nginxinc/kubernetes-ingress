@@ -62,7 +62,7 @@ Parameter | Description | Default
 `controller.nginxplus` | Deploys the Ingress controller for NGINX Plus. | false
 `controller.hostNetwork` | Enables the Ingress controller pods to use the host's network namespace. | false
 `controller.image.repository` | The image repository of the Ingress controller. | nginx/nginx-ingress
-`controller.image.tag` | The tag of the Ingress controller image. | 1.2.0
+`controller.image.tag` | The tag of the Ingress controller image. | 1.3.0
 `controller.image.pullPolicy` | The pull policy for the Ingress controller image. | IfNotPresent
 `controller.config.entries` | The entries of the ConfigMap for customizing NGINX configuration. | { }
 `controller.defaultTLS.cert` | The base64-encoded TLS certificate for the default HTTPS server. If not specified, a pre-generated self-signed certificate is used. **Note:** It is recommended that you specify your own certificate. | A pre-generated self-signed certificate.
