@@ -14,6 +14,7 @@ controller:
     secret: # <namespace>/<secret_name>
   config:
     entries: {}
+      # external-status-address: "external-status-test"
   nodeSelector: {}
   terminationGracePeriodSeconds: 30
   tolerations: ""
@@ -28,6 +29,11 @@ controller:
     externalTrafficPolicy: Local
     annotations: {}
   serviceAccountName: nginx-ingress
+  reportIngressStatus:
+    enable: false
+    externalAddress: fake-address
+    externalService: true
+  enableLeaderElection: true
 rbac:
   create: true
 prometheus:

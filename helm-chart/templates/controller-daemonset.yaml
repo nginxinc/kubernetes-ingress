@@ -83,6 +83,12 @@ spec:
 {{- if .Values.controller.healthStatus }}
           - -health-status
 {{- end }}
+{{- if and (.Values.controller.reportIngressStatus.enable) (.Values.controller.reportIngressStatus.externalService) }}
+          - -external-service
+{{- end }}
+{{ if .Values.controller.enableLeaderElection }}
+          - -enable-leader-election
+{{- end }}
 {{- if .Values.prometheus }}
 {{- if and (.Values.controller.nginxplus)  (.Values.prometheus.create) }}
       - image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.image.tag }}"
