@@ -230,19 +230,19 @@ func main() {
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	lbcInput := controller.NewLoadBalancerControllerInput{
-		KubeClient:            kubeClient,
-		ResyncPeriod:          30 * time.Second,
-		Namespace:             *watchNamespace,
-		CNF:                   cnf,
-		NginxConfigMaps:       *nginxConfigMaps,
-		DefaultServerSecret:   *defaultServerSecret,
-		NginxPlus:             *nginxPlus,
-		IngressClass:          *ingressClass,
-		UseIngressClassOnly:   *useIngressClassOnly,
-		ExternalServiceName:   *externalService,
-		ControllerNamespace:   controllerNamespace,
-		ReportIngressStatus:   *reportIngressStatus,
-		LeaderElectionEnabled: *leaderElectionEnabled,
+		KubeClient:              kubeClient,
+		ResyncPeriod:            30 * time.Second,
+		Namespace:               *watchNamespace,
+		NginxConfigurator:       cnf,
+		NginxConfigMaps:         *nginxConfigMaps,
+		DefaultServerSecret:     *defaultServerSecret,
+		IsNginxPlus:             *nginxPlus,
+		IngressClass:            *ingressClass,
+		UseIngressClassOnly:     *useIngressClassOnly,
+		ExternalServiceName:     *externalService,
+		ControllerNamespace:     controllerNamespace,
+		ReportIngressStatus:     *reportIngressStatus,
+		IsLeaderElectionEnabled: *leaderElectionEnabled,
 	}
 	lbc := controller.NewLoadBalancerController(lbcInput)
 	go handleTermination(lbc, ngxc, nginxDone)

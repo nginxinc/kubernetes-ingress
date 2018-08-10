@@ -159,9 +159,9 @@ func TestIsNginxIngress(t *testing.T) {
 func TestCreateMergableIngresses(t *testing.T) {
 	cafeMaster, coffeeMinion, teaMinion, lbc := getMergableDefaults()
 
-	lbc.ingLister.Add(&cafeMaster)
-	lbc.ingLister.Add(&coffeeMinion)
-	lbc.ingLister.Add(&teaMinion)
+	lbc.ingressLister.Add(&cafeMaster)
+	lbc.ingressLister.Add(&coffeeMinion)
+	lbc.ingressLister.Add(&teaMinion)
 
 	mergeableIngresses, err := lbc.createMergableIngresses(&cafeMaster)
 	if err != nil {
@@ -220,7 +220,7 @@ func TestCreateMergableIngressesInvalidMaster(t *testing.T) {
 			},
 		},
 	}
-	lbc.ingLister.Add(&cafeMaster)
+	lbc.ingressLister.Add(&cafeMaster)
 
 	expected := fmt.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation set to 'master' cannot contain Paths", cafeMaster.Namespace, cafeMaster.Name)
 	_, err := lbc.createMergableIngresses(&cafeMaster)
@@ -237,9 +237,9 @@ func TestFindMasterForMinion(t *testing.T) {
 		Paths: []extensions.HTTPIngressPath{},
 	}
 
-	lbc.ingLister.Add(&cafeMaster)
-	lbc.ingLister.Add(&coffeeMinion)
-	lbc.ingLister.Add(&teaMinion)
+	lbc.ingressLister.Add(&cafeMaster)
+	lbc.ingressLister.Add(&coffeeMinion)
+	lbc.ingressLister.Add(&teaMinion)
 
 	master, err := lbc.findMasterForMinion(&coffeeMinion)
 	if err != nil {
@@ -261,8 +261,8 @@ func TestFindMasterForMinion(t *testing.T) {
 func TestFindMasterForMinionNoMaster(t *testing.T) {
 	_, coffeeMinion, teaMinion, lbc := getMergableDefaults()
 
-	lbc.ingLister.Add(&coffeeMinion)
-	lbc.ingLister.Add(&teaMinion)
+	lbc.ingressLister.Add(&coffeeMinion)
+	lbc.ingressLister.Add(&teaMinion)
 
 	expected := fmt.Errorf("Could not find a Master for Minion: '%v/%v'", coffeeMinion.Namespace, coffeeMinion.Name)
 	_, err := lbc.findMasterForMinion(&coffeeMinion)
@@ -291,8 +291,8 @@ func TestFindMasterForMinionInvalidMinion(t *testing.T) {
 		},
 	}
 
-	lbc.ingLister.Add(&cafeMaster)
-	lbc.ingLister.Add(&coffeeMinion)
+	lbc.ingressLister.Add(&cafeMaster)
+	lbc.ingressLister.Add(&coffeeMinion)
 
 	master, err := lbc.findMasterForMinion(&coffeeMinion)
 	if err != nil {
@@ -311,9 +311,9 @@ func TestGetMinionsForMaster(t *testing.T) {
 		Paths: []extensions.HTTPIngressPath{},
 	}
 
-	lbc.ingLister.Add(&cafeMaster)
-	lbc.ingLister.Add(&coffeeMinion)
-	lbc.ingLister.Add(&teaMinion)
+	lbc.ingressLister.Add(&cafeMaster)
+	lbc.ingressLister.Add(&coffeeMinion)
+	lbc.ingressLister.Add(&teaMinion)
 
 	cafeMasterIngEx, err := lbc.createIngress(&cafeMaster)
 	if err != nil {
@@ -364,9 +364,9 @@ func TestGetMinionsForMasterInvalidMinion(t *testing.T) {
 		},
 	}
 
-	lbc.ingLister.Add(&cafeMaster)
-	lbc.ingLister.Add(&coffeeMinion)
-	lbc.ingLister.Add(&teaMinion)
+	lbc.ingressLister.Add(&cafeMaster)
+	lbc.ingressLister.Add(&coffeeMinion)
+	lbc.ingressLister.Add(&teaMinion)
 
 	cafeMasterIngEx, err := lbc.createIngress(&cafeMaster)
 	if err != nil {
@@ -421,9 +421,9 @@ func TestGetMinionsForMasterConflictingPaths(t *testing.T) {
 		},
 	})
 
-	lbc.ingLister.Add(&cafeMaster)
-	lbc.ingLister.Add(&coffeeMinion)
-	lbc.ingLister.Add(&teaMinion)
+	lbc.ingressLister.Add(&cafeMaster)
+	lbc.ingressLister.Add(&coffeeMinion)
+	lbc.ingressLister.Add(&teaMinion)
 
 	cafeMasterIngEx, err := lbc.createIngress(&cafeMaster)
 	if err != nil {
@@ -564,12 +564,12 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 	lbc = LoadBalancerController{
 		client:       fakeClient,
 		ingressClass: "nginx",
-		cnf:          cnf,
+		configurator: cnf,
 	}
 	lbc.svcLister, _ = cache.NewInformer(
 		cache.NewListWatchFromClient(lbc.client.ExtensionsV1beta1().RESTClient(), "services", "default", fields.Everything()),
 		&extensions.Ingress{}, time.Duration(1), nil)
-	lbc.ingLister.Store, _ = cache.NewInformer(
+	lbc.ingressLister.Store, _ = cache.NewInformer(
 		cache.NewListWatchFromClient(lbc.client.ExtensionsV1beta1().RESTClient(), "ingresses", "default", fields.Everything()),
 		&extensions.Ingress{}, time.Duration(1), nil)
 	coffeeService := v1.Service{
@@ -786,7 +786,7 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 	lbc := LoadBalancerController{
 		client:       fakeClient,
 		ingressClass: "nginx",
-		cnf:          cnf,
+		configurator: cnf,
 	}
 	svc := v1.Service{
 		TypeMeta: meta_v1.TypeMeta{},
@@ -940,15 +940,15 @@ func TestFindIngressesForSecret(t *testing.T) {
 			lbc := LoadBalancerController{
 				client:       fakeClient,
 				ingressClass: "nginx",
-				cnf:          cnf,
-				nginxPlus:    true,
+				configurator: cnf,
+				isNginxPlus:  true,
 			}
 
-			lbc.ingLister.Store, _ = cache.NewInformer(
+			lbc.ingressLister.Store, _ = cache.NewInformer(
 				cache.NewListWatchFromClient(lbc.client.ExtensionsV1beta1().RESTClient(), "ingresses", "default", fields.Everything()),
 				&extensions.Ingress{}, time.Duration(1), nil)
 
-			lbc.secrLister.Store, lbc.secrController = cache.NewInformer(
+			lbc.secretLister.Store, lbc.secretController = cache.NewInformer(
 				cache.NewListWatchFromClient(lbc.client.Core().RESTClient(), "secrets", "default", fields.Everything()),
 				&v1.Secret{}, time.Duration(1), nil)
 
@@ -964,8 +964,8 @@ func TestFindIngressesForSecret(t *testing.T) {
 				t.Fatalf("Ingress was not added: %v", err)
 			}
 
-			lbc.ingLister.Add(&test.ingress)
-			lbc.secrLister.Add(&test.secret)
+			lbc.ingressLister.Add(&test.ingress)
+			lbc.secretLister.Add(&test.secret)
 
 			nonMinions, minions, err := lbc.findIngressesForSecret(test.secret.ObjectMeta.Namespace, test.secret.ObjectMeta.Name)
 			if err != nil {

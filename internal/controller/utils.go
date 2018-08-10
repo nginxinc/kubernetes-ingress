@@ -31,9 +31,9 @@ import (
 	"github.com/golang/glog"
 )
 
-// taskQueue manages a work queue through an independent worker that
+// TaskQueue manages a work queue through an independent worker that
 // invokes the given sync function for every work item inserted.
-type taskQueue struct {
+type TaskQueue struct {
 	// queue is the work queue the worker polls
 	queue *workqueue.Type
 	// sync is called for each item in the queue
@@ -42,12 +42,12 @@ type taskQueue struct {
 	workerDone chan struct{}
 }
 
-func (t *taskQueue) run(period time.Duration, stopCh <-chan struct{}) {
+func (t *TaskQueue) run(period time.Duration, stopCh <-chan struct{}) {
 	wait.Until(t.worker, period, stopCh)
 }
 
 // enqueue enqueues ns/name of the given api object in the task queue.
-func (t *taskQueue) enqueue(obj interface{}) {
+func (t *TaskQueue) enqueue(obj interface{}) {
 	key, err := keyFunc(obj)
 	if err != nil {
 		glog.V(3).Infof("Couldn't get key for object %v: %v", obj, err)
@@ -65,12 +65,12 @@ func (t *taskQueue) enqueue(obj interface{}) {
 	t.queue.Add(task)
 }
 
-func (t *taskQueue) requeue(task Task, err error) {
+func (t *TaskQueue) requeue(task Task, err error) {
 	glog.Errorf("Requeuing %v, err %v", task.Key, err)
 	t.queue.Add(task)
 }
 
-func (t *taskQueue) requeueAfter(task Task, err error, after time.Duration) {
+func (t *TaskQueue) requeueAfter(task Task, err error, after time.Duration) {
 	glog.Errorf("Requeuing %v after %s, err %v", task.Key, after.String(), err)
 	go func(task Task, after time.Duration) {
 		time.Sleep(after)
@@ -79,7 +79,7 @@ func (t *taskQueue) requeueAfter(task Task, err error, after time.Duration) {
 }
 
 // worker processes work in the queue through sync.
-func (t *taskQueue) worker() {
+func (t *TaskQueue) worker() {
 	for {
 		task, quit := t.queue.Get()
 		if quit {
@@ -93,15 +93,15 @@ func (t *taskQueue) worker() {
 }
 
 // shutdown shuts down the work queue and waits for the worker to ACK
-func (t *taskQueue) shutdown() {
+func (t *TaskQueue) shutdown() {
 	t.queue.ShutDown()
 	<-t.workerDone
 }
 
 // NewTaskQueue creates a new task queue with the given sync function.
 // The sync function is called for every element inserted into the queue.
-func NewTaskQueue(syncFn func(Task)) *taskQueue {
-	return &taskQueue{
+func NewTaskQueue(syncFn func(Task)) *TaskQueue {
+	return &TaskQueue{
 		queue:      workqueue.New(),
 		sync:       syncFn,
 		workerDone: make(chan struct{}),
@@ -126,7 +126,7 @@ const (
 	Service
 )
 
-// Task is an element of a taskQueue
+// Task is an element of a TaskQueue
 type Task struct {
 	Kind Kind
 	Key  string
