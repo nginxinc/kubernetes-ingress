@@ -618,3 +618,42 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].JWTRedirectLocations, expected.Servers[0].JWTRedirectLocations)
 	}
 }
+
+func TestAddOrUpdateIngress(t *testing.T) {
+	cnf := createTestConfigurator()
+	validIngress := createCafeIngressEx()
+	err := cnf.AddOrUpdateIngress(&validIngress)
+	if err != nil {
+		t.Errorf("Adding ingress failed: %v", err)
+	}
+
+	expectedIng := cnf.ingresses["default-cafe-ingress"]
+	if !reflect.DeepEqual(&validIngress, expectedIng) {
+		t.Errorf("TestAddOrUpdateIngress returned: \n%v,  but expected: \n%v", validIngress, expectedIng)
+	}
+}
+
+func TestAddOrUpdateMIngress(t *testing.T) {
+	cnf := createTestConfigurator()
+	validMergeableIngress := createMergeableCafeIngress()
+	err := cnf.AddOrUpdateMergableIngress(validMergeableIngress)
+	if err != nil {
+		t.Errorf("Adding mergable ingress failed: %v", err)
+	}
+
+	expectedIng := cnf.ingresses["default-cafe-ingress-master"]
+	if !reflect.DeepEqual(validMergeableIngress.Master, expectedIng) {
+		t.Errorf("TestAddOrUpdateMergableIngress returned: \n%v,  but expected: \n%v", validMergeableIngress.Master, expectedIng)
+	}
+}
+
+func TestAddOrUpdateIngressFailsWithInvalidTemplate(t *testing.T) {
+	t.Skip() // Skip test until TODO is completed
+	cnf := createTestConfigurator()
+	validIngress := createCafeIngressEx()
+	// TODO: Alter template to be invalid
+	err := cnf.AddOrUpdateIngress(&validIngress)
+	if err == nil {
+		t.Errorf("TestAddOrUpdateIngressFailsWithInvalidTemplate returned: \n%v,  but expected \n  template execution error", err)
+	}
+}
