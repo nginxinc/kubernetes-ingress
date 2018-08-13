@@ -31,8 +31,7 @@ controller:
   serviceAccountName: nginx-ingress
   reportIngressStatus:
     enable: false
-    externalAddress: fake-address
-    externalService: true
+    externalService: "external-svc"
   enableLeaderElection: true
 rbac:
   create: true

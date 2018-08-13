@@ -70,7 +70,7 @@ spec:
           - -health-status
 {{- end }}
 {{- if and (.Values.controller.reportIngressStatus.enable) (.Values.controller.reportIngressStatus.externalService) }}
-          - -external-service
+          - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
 {{- end }}
 {{ if .Values.controller.enableLeaderElection }}
           - -enable-leader-election
