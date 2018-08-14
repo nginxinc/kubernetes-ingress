@@ -53,7 +53,7 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ## Configuration
 
-The following tables lists the configurable parameters of the NGINX Ingress controller  chart and their default values.
+The following tables lists the configurable parameters of the NGINX Ingress controller chart and their default values.
 
 Parameter | Description | Default
 --- | --- | ---
@@ -81,6 +81,9 @@ Parameter | Description | Default
 `controller.useIngressClassOnly` | Ignore Ingress resources without the `"kubernetes.io/ingress.class"` annotation. | false
 `controller.watchNamespace` | Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces. | ""
 `controller.healthStatus` | Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller. | false
+`controller.reportIngressStatus.enable` | Update the address field in the status of Ingresses resources. Requires `controller.reportIngressStatus.externalService`, or `controller.config.entries.external-status-address` to be set. **Note:** `controller.reportIngressStatus.externalService` takes preference if both are set. | false
+`controller.reportIngressStatus.externalService` | Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. The external address of the service is used when reporting the status of Ingress resources. `controller.reportIngressStatus.enable` must be set to `true`. | nginx-ingress
+`controller.reportIngressStatus.enableLeaderElection`. | Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources. `controller.reportIngressStatus.enable` must be set to `true`. | true
 `rbac.create` | Configures RBAC. | true
 `prometheues.create` | Deploys a Prometheus exporter container within the Ingress controller pod. Requires NGINX Plus. `controller.nginxplus` must be set to `true`. | false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
