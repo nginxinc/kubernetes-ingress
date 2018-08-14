@@ -86,7 +86,7 @@ spec:
 {{- if .Values.controller.reportIngressStatus.enable }}
           - -report-ingress-status
 {{- if .Values.controller.reportIngressStatus.externalService }}
-          - -external-service="{{ .Values.controller.reportIngressStatus.externalService }}"
+          - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
 {{- end }}
 {{ if .Values.controller.reportIngressStatus.enableLeaderElection }}
           - -enable-leader-election

@@ -14,7 +14,6 @@ controller:
     secret: # <namespace>/<secret_name>
   config:
     entries: {}
-      # external-status-address: "1.2.3.4"
   nodeSelector: {}
   terminationGracePeriodSeconds: 30
   tolerations: ""
