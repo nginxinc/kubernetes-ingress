@@ -81,6 +81,8 @@ Parameter | Description | Default
 `controller.useIngressClassOnly` | Ignore Ingress resources without the `"kubernetes.io/ingress.class"` annotation. | false
 `controller.watchNamespace` | Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces. | ""
 `controller.healthStatus` | Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller. | false
+`controller.stubStatus` | Add a location "/stub-status" to the default server. The location responds with the stats from stub status module for any request. Useful in tandem with nginx-prometheus-exporter for monitoring of the Ingress controller. | false
+`controller.statusAllowIp` | Define the IP the "/nginx-health" and "/stub-status" endpoints are allowed for. Defaults to open to everyone. | ""
 `rbac.create` | Configures RBAC. | true
 `prometheues.create` | Deploys a Prometheus exporter container within the Ingress controller pod. Requires NGINX Plus. `controller.nginxplus` must be set to `true`. | false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113

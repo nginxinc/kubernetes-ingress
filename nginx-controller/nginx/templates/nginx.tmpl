@@ -72,8 +72,22 @@ http {
 
         {{if .HealthStatus}}
         location /nginx-health {
+{{if ne .StatusAllowIp ""}}            access_log off;
+            allow {{.StatusAllowIp}};
+            deny all;{{end}}
+
             default_type text/plain;
             return 200 "healthy\n";
+        }
+        {{end}}
+
+        {{if .StubStatus}}
+        location /stub_status {
+            stub_status;
+
+{{if ne .StatusAllowIp ""}}            access_log off;
+            allow {{.StatusAllowIp}};
+            deny all;{{end}}
         }
         {{end}}
 

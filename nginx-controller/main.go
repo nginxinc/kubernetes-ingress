@@ -31,6 +31,15 @@ var (
 		`Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request.
 	Useful for external health-checking of the Ingress controller`)
 
+	stubStatus = flag.Bool("stub-status", false,
+		`Add a location "/stub_status" to the default server. The location responds with the stats from stub status
+    module for any request.
+	Useful in tandem with nginx-prometheus-exporter for monitoring of the Ingress controller`)
+
+	statusAllowIp = flag.String("status-allow-ip", "",
+	    `Define ip to allow while denying all others for stub_status and health_status endpoints. To close off status
+	    endpoints from the world set as an IP (such as "127.0.0.1"). Defaults to "" to be disabled.`)
+
 	proxyURL = flag.String("proxy", "",
 		`Use a proxy server to connect to Kubernetes API started by "kubectl proxy" command. For testing purposes only.
 	The Ingress controller does not start NGINX and does not write any generated NGINX configuration files to disk`)
@@ -131,7 +140,7 @@ func main() {
 		nginxIngressTemplatePath = *ingressTemplatePath
 	}
 
-	templateExecutor, err := nginx.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath, *healthStatus)
+	templateExecutor, err := nginx.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath, *healthStatus, *stubStatus, *statusAllowIp)
 	if err != nil {
 		glog.Fatalf("Error creating TemplateExecutor: %v", err)
 	}

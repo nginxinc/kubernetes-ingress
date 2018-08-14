@@ -22,6 +22,8 @@ controller:
   useIngressClassOnly: false
   watchNamespace: ""
   healthStatus: false
+  stubStatus: false
+  statusAllowIp: ""
   service:
     create: true
     type: LoadBalancer
