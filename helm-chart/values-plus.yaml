@@ -14,7 +14,7 @@ controller:
     secret: # <namespace>/<secret_name>
   config:
     entries: {}
-      # external-status-address: "external-status-test"
+      # external-status-address: "1.2.3.4"
   nodeSelector: {}
   terminationGracePeriodSeconds: 30
   tolerations: ""
@@ -31,7 +31,7 @@ controller:
   serviceAccountName: nginx-ingress
   reportIngressStatus:
     enable: false
-    externalService: "external-svc"
+    externalService: nginx-ingress
     enableLeaderElection: true
 rbac:
   create: true
