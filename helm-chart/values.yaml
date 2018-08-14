@@ -32,6 +32,6 @@ controller:
   reportIngressStatus:
     enable: false
     externalService: "external-svc"
-  enableLeaderElection: true
+    enableLeaderElection: true
 rbac:
   create: true

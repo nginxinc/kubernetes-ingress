@@ -83,11 +83,14 @@ spec:
 {{- if .Values.controller.healthStatus }}
           - -health-status
 {{- end }}
-{{- if and (.Values.controller.reportIngressStatus.enable) (.Values.controller.reportIngressStatus.externalService) }}
+{{- if .Values.controller.reportIngressStatus.enable }}
+          - -report-ingress-status
+{{- if .Values.controller.reportIngressStatus.externalService }}
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
 {{- end }}
-{{ if .Values.controller.enableLeaderElection }}
+{{ if .Values.controller.reportIngressStatus.enableLeaderElection }}
           - -enable-leader-election
+{{- end }}
 {{- end }}
 {{- if .Values.prometheus }}
 {{- if and (.Values.controller.nginxplus)  (.Values.prometheus.create) }}
