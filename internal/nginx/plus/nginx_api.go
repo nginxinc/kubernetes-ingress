@@ -1,6 +1,7 @@
 package plus
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -29,12 +30,38 @@ func NewNginxAPIController(httpClient *http.Client, endpoint string, local bool)
 	return nginx, nil
 }
 
+// verifyConfigVersion is used to check if the worker process that the API client is connected
+// to is using the latest version of nginx config. This way we avoid making changes on
+// a worker processes that is being shut down.
+func verifyConfigVersion(httpClient *http.Client, configVersion int) error {
+	req, err := http.NewRequest("GET", "http://nginx-plus-api/configVersionCheck", nil)
+	if err != nil {
+		return fmt.Errorf("error creating request: %v", err)
+	}
+	req.Header.Set("x-expected-config-version", fmt.Sprintf("%v", configVersion))
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error doing request: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("API returned non-success status: %v", resp.StatusCode)
+	}
+	return nil
+}
+
 // UpdateServers updates upstream servers
-func (nginx *NginxAPIController) UpdateServers(upstream string, servers []string, config ServerConfig) error {
+func (nginx *NginxAPIController) UpdateServers(upstream string, servers []string, config ServerConfig, configVersion int) error {
 	if nginx.local {
 		glog.V(3).Infof("Updating endpoints of %v: %v\n", upstream, servers)
 		return nil
 	}
+
+	err := verifyConfigVersion(nginx.client.httpClient, configVersion)
+	if err != nil {
+		return fmt.Errorf("error verifying config version: %v", err)
+	}
+	glog.V(3).Infof("API has the correct config version: %v.", configVersion)
 
 	var upsServers []UpstreamServer
 	for _, s := range servers {
@@ -49,7 +76,7 @@ func (nginx *NginxAPIController) UpdateServers(upstream string, servers []string
 	added, removed, err := nginx.client.UpdateHTTPServers(upstream, upsServers)
 	if err != nil {
 		glog.V(3).Infof("Couldn't update servers of %v upstream: %v", upstream, err)
-		return err
+		return fmt.Errorf("error updating servers of %v upstream: %v", upstream, err)
 	}
 
 	glog.V(3).Infof("Updated servers of %v; Added: %v, Removed: %v", upstream, added, removed)

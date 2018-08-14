@@ -111,11 +111,20 @@ http {
         listen unix:/var/run/nginx-plus-api.sock;
         access_log off;
 
+        # $config_version_mismatch is defined in /etc/nginx/config-version.conf
+        location /configVersionCheck {
+            if ($config_version_mismatch) {
+                return 503;
+            }
+            return 200;
+        }
+
         location /api {
             api write=on;
         }
     }
 
+    include /etc/nginx/config-version.conf;
     include /etc/nginx/conf.d/*.conf;
 }
 

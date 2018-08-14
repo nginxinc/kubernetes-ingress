@@ -1041,7 +1041,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
 		endps, exists := ingEx.Endpoints[ingEx.Ingress.Spec.Backend.ServiceName+ingEx.Ingress.Spec.Backend.ServicePort.String()]
 		if exists {
-			err := cnf.nginxAPI.UpdateServers(name, endps, cfg)
+			err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.configVersion)
 			if err != nil {
 				return fmt.Errorf("Couldn't update the endpoints for %v: %v", name, err)
 			}
@@ -1055,7 +1055,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 			name := getNameForUpstream(ingEx.Ingress, rule.Host, &path.Backend)
 			endps, exists := ingEx.Endpoints[path.Backend.ServiceName+path.Backend.ServicePort.String()]
 			if exists {
-				err := cnf.nginxAPI.UpdateServers(name, endps, cfg)
+				err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.configVersion)
 				if err != nil {
 					return fmt.Errorf("Couldn't update the endpoints for %v: %v", name, err)
 				}
@@ -1117,14 +1117,14 @@ func GenerateNginxMainConfig(config *Config) *MainConfig {
 		SSLCiphers:                config.MainServerSSLCiphers,
 		SSLDHParam:                config.MainServerSSLDHParam,
 		SSLPreferServerCiphers:    config.MainServerSSLPreferServerCiphers,
-		HTTP2:                 config.HTTP2,
-		ServerTokens:          config.ServerTokens,
-		ProxyProtocol:         config.ProxyProtocol,
-		WorkerProcesses:       config.MainWorkerProcesses,
-		WorkerCPUAffinity:     config.MainWorkerCPUAffinity,
-		WorkerShutdownTimeout: config.MainWorkerShutdownTimeout,
-		WorkerConnections:     config.MainWorkerConnections,
-		WorkerRlimitNofile:    config.MainWorkerRlimitNofile,
+		HTTP2:                     config.HTTP2,
+		ServerTokens:              config.ServerTokens,
+		ProxyProtocol:             config.ProxyProtocol,
+		WorkerProcesses:           config.MainWorkerProcesses,
+		WorkerCPUAffinity:         config.MainWorkerCPUAffinity,
+		WorkerShutdownTimeout:     config.MainWorkerShutdownTimeout,
+		WorkerConnections:         config.MainWorkerConnections,
+		WorkerRlimitNofile:        config.MainWorkerRlimitNofile,
 	}
 	return nginxCfg
 }

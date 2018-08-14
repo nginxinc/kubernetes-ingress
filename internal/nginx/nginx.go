@@ -9,6 +9,7 @@ import (
 	"path"
 
 	"github.com/golang/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx/verify"
 )
 
 const dhparamFilename = "dhparam.pem"
@@ -19,9 +20,12 @@ const jwkSecretFileMode = 0644
 
 // Controller updates NGINX configuration, starts and reloads NGINX
 type Controller struct {
-	nginxConfdPath   string
-	nginxSecretsPath string
-	local            bool
+	nginxConfdPath        string
+	nginxSecretsPath      string
+	local                 bool
+	verifyConfigGenerator *verify.ConfigGenerator
+	verifyClient          *verify.Client
+	configVersion         int
 }
 
 // IngressNginxConfig describes an NGINX configuration
@@ -187,10 +191,18 @@ func NewUpstreamWithDefaultServer(name string) Upstream {
 
 // NewNginxController creates a NGINX controller
 func NewNginxController(nginxConfPath string, local bool) *Controller {
+	verifyConfigGenerator, err := verify.NewConfigGenerator()
+	if err != nil {
+		glog.Fatalf("error instantiating a verify.ConfigGenerator: %v", err)
+	}
+
 	ngxc := Controller{
-		nginxConfdPath:   path.Join(nginxConfPath, "conf.d"),
-		nginxSecretsPath: path.Join(nginxConfPath, "secrets"),
-		local:            local,
+		nginxConfdPath:        path.Join(nginxConfPath, "conf.d"),
+		nginxSecretsPath:      path.Join(nginxConfPath, "secrets"),
+		local:                 local,
+		verifyConfigGenerator: verifyConfigGenerator,
+		configVersion:         0,
+		verifyClient:          verify.NewClient(),
 	}
 
 	return &ngxc
@@ -271,7 +283,6 @@ func (nginx *Controller) DeleteSecretFile(name string) {
 			glog.Warningf("Failed to delete %v: %v", filename, err)
 		}
 	}
-
 }
 
 func (nginx *Controller) getIngressNginxConfigFileName(name string) string {
@@ -284,16 +295,23 @@ func (nginx *Controller) getSecretFileName(name string) string {
 
 // Reload reloads NGINX
 func (nginx *Controller) Reload() error {
-	if !nginx.local {
-		if err := shellOut("nginx -t"); err != nil {
-			return fmt.Errorf("Invalid nginx configuration detected, not reloading: %s", err)
-		}
-		if err := shellOut("nginx -s reload"); err != nil {
-			return fmt.Errorf("Reloading NGINX failed: %s", err)
-		}
-	} else {
-		glog.V(3).Info("Reloading nginx")
+	if nginx.local {
+		glog.V(3).Info("local - skipping nginx reload")
+		return nil
 	}
+	// write a new config version
+	nginx.configVersion++
+	nginx.UpdateConfigVersionFile()
+
+	glog.V(3).Infof("Reloading nginx. configVersion: %v", nginx.configVersion)
+	if err := shellOut("nginx -s reload"); err != nil {
+		return fmt.Errorf("nginx reload failed: %v", err)
+	}
+	err := nginx.verifyClient.WaitForCorrectVersion(nginx.configVersion)
+	if err != nil {
+		return fmt.Errorf("could not get newest config version: %v", err)
+	}
+
 	return nil
 }
 
@@ -398,4 +416,38 @@ func (nginx *Controller) UpdateIngressConfigFile(name string, cfg []byte) {
 		defer w.Close()
 	}
 	glog.V(3).Infof("The Ingress config file has been updated")
+}
+
+// UpdateConfigVersionFile writes the config version file.
+func (nginx *Controller) UpdateConfigVersionFile() {
+	cfg, err := nginx.verifyConfigGenerator.GenerateVersionConfig(nginx.configVersion)
+	if err != nil {
+		glog.Fatalf("Error generating config version content: %v", err)
+	}
+
+	filename := "/etc/nginx/config-version.conf"
+	tempname := "/etc/nginx/config-version.conf.tmp"
+	glog.V(3).Infof("Writing config version to %v", filename)
+
+	if bool(glog.V(3)) || nginx.local {
+		glog.Info(string(cfg))
+	}
+
+	if !nginx.local {
+		w, err := os.Create(tempname)
+		if err != nil {
+			glog.Fatalf("Failed to open %v: %v", filename, err)
+		}
+		_, err = w.Write(cfg)
+		if err != nil {
+			glog.Fatalf("Failed to write to %v: %v", filename, err)
+		}
+		w.Close()
+
+		err = os.Rename(tempname, filename)
+		if err != nil {
+			glog.Fatalf("failed to rename version config file: %v", err)
+		}
+	}
+	glog.V(3).Infof("The config version file has been updated.")
 }

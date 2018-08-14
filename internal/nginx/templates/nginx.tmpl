@@ -96,7 +96,7 @@ http {
     }
     {{- end }}
 
-
+    include /etc/nginx/config-version.conf;
     include /etc/nginx/conf.d/*.conf;
 }
 

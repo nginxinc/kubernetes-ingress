@@ -214,6 +214,7 @@ func main() {
 		glog.Fatalf("Error generating NGINX main config: %v", err)
 	}
 	ngxc.UpdateMainConfigFile(content)
+	ngxc.UpdateConfigVersionFile()
 
 	nginxDone := make(chan error, 1)
 	ngxc.Start(nginxDone)

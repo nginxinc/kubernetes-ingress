@@ -1,0 +1,75 @@
+package verify
+
+import (
+	"context"
+	"fmt"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/golang/glog"
+)
+
+// Client is a client for verifying the config version.
+type Client struct {
+	client *http.Client
+}
+
+// NewClient returns a new client pointed at the config version socket.
+func NewClient() *Client {
+	return &Client{
+		client: &http.Client{
+			Transport: &http.Transport{
+				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+					return net.Dial("unix", "/var/run/nginx-config-version.sock")
+				},
+			},
+		},
+	}
+}
+
+// GetConfigVersion get version number that we put in the nginx config to verify that we're using
+// the correct config.
+func (c *Client) GetConfigVersion() (int, error) {
+	resp, err := c.client.Get("http://config-version/configVersion")
+	if err != nil {
+		return 0, fmt.Errorf("error getting client: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("non-200 response: %v", resp.StatusCode)
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, fmt.Errorf("failed to read the response body: %v", err)
+	}
+	v, err := strconv.Atoi(string(body))
+	if err != nil {
+		return 0, fmt.Errorf("error converting string to int: %v", err)
+	}
+	return v, nil
+}
+
+// WaitForCorrectVersion calls the config version endpoint until it gets the expectedVersion,
+// which ensures that a new worker process has been started for that config version.
+func (c *Client) WaitForCorrectVersion(expectedVersion int) error {
+	// This value needs tuning.
+	maxRetries := 160
+	sleep := 25 * time.Millisecond
+	for i := 0; i < maxRetries; i++ {
+		version, err := c.GetConfigVersion()
+		if err != nil {
+			return fmt.Errorf("unable to fetch version: %v", err)
+		}
+		if version == expectedVersion {
+			glog.V(3).Infof("success, version %v ensured. iterations: %v. took: %v", expectedVersion, i, time.Duration(i)*sleep)
+			return nil
+		}
+		time.Sleep(sleep)
+	}
+	return fmt.Errorf("could not get expected version: %v", expectedVersion)
+}
