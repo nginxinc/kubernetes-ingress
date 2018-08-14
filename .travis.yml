@@ -9,8 +9,8 @@ script:
 - cd nginx-controller && 
   make  BUILD_IN_CONTAINER=0 container;
 before_install:
-- echo "Repo Slug:${TRAVIS_REPO_SLUG}"
-- if [ "${TRAVIS_REPO_SLUG}" == "nginxinc/kubernetes-ingress" ]; then
+- echo "PR Slug:${TRAVIS_PULL_REQUEST_SLUG}"
+- if [[ "${TRAVIS_PULL_REQUEST_SLUG}" == "nginxinc/kubernetes-ingress" || "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
   wget https://${fossalocation}/${fossafile} && tar xzf ${fossafile}
   && ./fossa init
   && ./fossa analyze -t kubernetes-ingress -b ${TRAVIS_BRANCH}; fi
