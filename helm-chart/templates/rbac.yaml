@@ -56,12 +56,14 @@ rules:
   verbs:
   - list
   - watch
+{{- if .Values.controller.reportIngressStatus.enable }}
 - apiGroups:
   - "extensions"
   resources:
   - ingresses/status
   verbs:
   - update
+{{- end }}
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
