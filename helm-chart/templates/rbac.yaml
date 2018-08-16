@@ -54,6 +54,7 @@ rules:
   resources:
   - ingresses
   verbs:
+  - get
   - list
   - watch
 {{- if .Values.controller.reportIngressStatus.enable }}

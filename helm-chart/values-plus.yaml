@@ -29,7 +29,7 @@ controller:
     annotations: {}
   serviceAccountName: nginx-ingress
   reportIngressStatus:
-    enable: false
+    enable: true
     externalService: nginx-ingress
     enableLeaderElection: true
 rbac:
