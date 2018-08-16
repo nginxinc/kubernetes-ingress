@@ -57,3 +57,12 @@ data:
   keepalive: "32" # default is 0. When > 0, sets the value of the keepalive directive and adds 'proxy_set_header Connection "";' to a location block. See http://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive
   max-fails: "0" # default is 1. Sets the value of the max_fails parameter of the `server` directive. See https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails
   fail-timeout: "5s" # default is 10s. Sets the value of the fail_timeout parameter of the `server` directive. See https://nginx.org/en/docs/http/ngx_http_upstream_module.html#fail_timeout
+  stream-log-format: "$remote_addr $protocol" # stream-log-format default is set in the nginx.conf.tmpl file. Also see http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format 
+  stream-snippets: |
+    upstream tcp-coffee {
+      server tcp-coffee-svc.default.svc.cluster.local:9944;
+    }
+    server {
+      listen 4456;
+      proxy_pass tcp-coffee;
+    }

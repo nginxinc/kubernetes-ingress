@@ -67,6 +67,8 @@ The table below summarizes all of the options. For some of them, there are examp
 | `nginx.com/health-checks-mandatory-queue` | N/A | When active health checks are mandatory, configures a queue for temporary storing incoming requests during the time when NGINX Plus is checking the health of the endpoints after a configuration reload. | `0` | [Support for Active Health Checks](../health-checks). |
 | `nginx.com/slow-start` | N/A | Sets the upstream server [slow-start period](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#server-slow-start). By default, slow-start is activated after a server becomes [available](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#passive-health-checks) or [healthy](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#active-health-checks). To enable slow-start for newly added servers, configure [mandatory active health checks](../health-checks). | `"0s"` | |
 | N/A | `external-status-address` | Sets the address to be reported in the status of Ingress resources. Requires the `-report-status` command-line argument. Overrides the `-external-service` argument. | N/A | [Report Ingress Status](../../docs/report-ingress-status.md). |
+| N/A | `stream-snippets` | Sets a custom snippet in stream context. | N/A | |
+| N/A | `stream-log-format` | Sets the custom [log format](http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format) for TCP/UDP load balancing.  | See the [template file](../../nginx-controller/nginx/nginx.conf.tmpl). | |
 
 ## Using ConfigMaps
 

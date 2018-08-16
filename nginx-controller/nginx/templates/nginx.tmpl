@@ -84,3 +84,19 @@ http {
 
     include /etc/nginx/conf.d/*.conf;
 }
+
+stream {
+    {{if .StreamLogFormat -}}
+    log_format  stream-main  '{{.StreamLogFormat}}';
+    {{- else -}}
+    log_format  stream-main  '$remote_addr [$time_local] '
+                      '$protocol $status $bytes_sent $bytes_received '
+                      '$session_time';
+    {{- end }}
+
+    access_log  /var/log/nginx/stream-access.log  stream-main;
+
+    {{range $value := .StreamSnippets}}
+    {{$value}}
+    {{end}} 
+}
