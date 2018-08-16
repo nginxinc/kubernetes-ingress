@@ -85,10 +85,13 @@ http {
         }
     }
   
-
     # NGINX Plus APIs
     server {
-        listen 8080;
+        {{- if .NginxStatus }}
+        listen {{.NginxStatusPort}};
+        {{- else }}
+        listen unix:/var/run/nginx.sock;
+        {{- end }}
 
         root /usr/share/nginx/html;
 
@@ -98,10 +101,12 @@ http {
         }
 
         location /api {
+            {{- if .NginxStatus }}
             limit_except GET {
                 allow 127.0.0.1;
                 deny all;
             }
+            {{- end }}
             api write=on;
         }
     }

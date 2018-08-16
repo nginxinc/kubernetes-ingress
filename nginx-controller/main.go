@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -78,6 +80,10 @@ The external address of the service is used when reporting the status of Ingress
 
 	leaderElectionEnabled = flag.Bool("enable-leader-election", false,
 		"Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources -- only one replica will report status. See -report-ingress-status flag.")
+	nginxStatusPort = flag.Int("nginx-status-port", 8080,
+		"Set the port where the NGINX stub_status API or the NGINX Plus API is exposed.")
+	nginxStatus = flag.Bool("nginx-status", true,
+		"Enable the NGINX stub_status, or the NGINX Plus API.")
 )
 
 func main() {
@@ -131,7 +137,7 @@ func main() {
 		nginxIngressTemplatePath = *ingressTemplatePath
 	}
 
-	templateExecutor, err := nginx.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath, *healthStatus)
+	templateExecutor, err := nginx.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath, *healthStatus, *nginxStatus, *nginxStatusPort)
 	if err != nil {
 		glog.Fatalf("Error creating TemplateExecutor: %v", err)
 	}
@@ -206,7 +212,9 @@ func main() {
 	var nginxAPI *plus.NginxAPIController
 	if *nginxPlus {
 		time.Sleep(500 * time.Millisecond)
-		nginxAPI, err = plus.NewNginxAPIController(&http.Client{}, "http://127.0.0.1:8080/api", local)
+		httpClient := getAPIClient(*nginxStatus)
+		apiURL := fmt.Sprintf("http://127.0.0.1:%v/api", *nginxStatusPort)
+		nginxAPI, err = plus.NewNginxAPIController(&httpClient, apiURL, local)
 		if err != nil {
 			glog.Fatalf("Failed to create NginxAPIController: %v", err)
 		}
@@ -271,4 +279,19 @@ func handleTermination(lbc *controller.LoadBalancerController, ngxc *nginx.Nginx
 
 	glog.Infof("Exiting with a status: %v", exitStatus)
 	os.Exit(exitStatus)
+}
+
+func getAPIClient(nginxStatus bool) http.Client {
+	if nginxStatus {
+		return http.Client{}
+	} else {
+		httpc := http.Client{
+			Transport: &http.Transport{
+				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
+					return net.Dial("unix", "/var/run/nginx.sock")
+				},
+			},
+		}
+		return httpc
+	}
 }

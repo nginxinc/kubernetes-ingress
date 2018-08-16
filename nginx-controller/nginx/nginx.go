@@ -145,6 +145,8 @@ type NginxMainConfig struct {
 	ErrorLogLevel             string
 	StreamLogFormat           string
 	HealthStatus              bool
+	NginxStatus               bool
+	NginxStatusPort           int
 	MainSnippets              []string
 	HTTPSnippets              []string
 	StreamSnippets            []string

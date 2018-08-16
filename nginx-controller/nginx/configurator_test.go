@@ -483,7 +483,7 @@ func createExpectedConfigForMergeableCafeIngress() IngressNginxConfig {
 }
 
 func createTestConfigurator() *Configurator {
-	templateExecutor, _ := NewTemplateExecutor("templates/nginx-plus.tmpl", "templates/nginx-plus.ingress.tmpl", true)
+	templateExecutor, _ := NewTemplateExecutor("templates/nginx-plus.tmpl", "templates/nginx-plus.ingress.tmpl", true, true, 8080)
 	ngxc := NewNginxController("/etc/nginx", true)
 	apiCtrl, _ := plus.NewNginxAPIController(&http.Client{}, "", true)
 	return NewConfigurator(ngxc, NewDefaultConfig(), apiCtrl, templateExecutor)

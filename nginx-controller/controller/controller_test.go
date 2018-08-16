@@ -926,7 +926,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			fakeClient := fake.NewSimpleClientset()
 
-			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true)
+			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true, true, 8080)
 			if err != nil {
 				t.Fatalf("templateExecuter could not start: %v", err)
 			}

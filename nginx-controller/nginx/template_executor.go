@@ -9,12 +9,14 @@ import (
 // TemplateExecutor executes NGINX configuration templates
 type TemplateExecutor struct {
 	HealthStatus    bool
+	NginxStatus     bool
+	NginxStatusPort int
 	mainTemplate    *template.Template
 	ingressTemplate *template.Template
 }
 
 // NewTemplateExecutor creates a TemplateExecutor
-func NewTemplateExecutor(mainTemplatePath string, ingressTemplatePath string, healthStatus bool) (*TemplateExecutor, error) {
+func NewTemplateExecutor(mainTemplatePath string, ingressTemplatePath string, healthStatus bool, nginxStatus bool, nginxStatusPort int) (*TemplateExecutor, error) {
 	// template name must be the base name of the template file https://golang.org/pkg/text/template/#Template.ParseFiles
 	nginxTemplate, err := template.New(path.Base(mainTemplatePath)).ParseFiles(mainTemplatePath)
 	if err != nil {
@@ -26,7 +28,13 @@ func NewTemplateExecutor(mainTemplatePath string, ingressTemplatePath string, he
 		return nil, err
 	}
 
-	return &TemplateExecutor{mainTemplate: nginxTemplate, ingressTemplate: ingressTemplate, HealthStatus: healthStatus}, nil
+	return &TemplateExecutor{
+		mainTemplate:    nginxTemplate,
+		ingressTemplate: ingressTemplate,
+		HealthStatus:    healthStatus,
+		NginxStatus:     nginxStatus,
+		NginxStatusPort: nginxStatusPort,
+	}, nil
 }
 
 // UpdateMainTemplate updates the main NGINX template
@@ -54,6 +62,8 @@ func (te *TemplateExecutor) UpdateIngressTemplate(templateString *string) error 
 // ExecuteMainConfigTemplate generates the content of the main NGINX configuration file
 func (te *TemplateExecutor) ExecuteMainConfigTemplate(cfg *NginxMainConfig) ([]byte, error) {
 	cfg.HealthStatus = te.HealthStatus
+	cfg.NginxStatus = te.NginxStatus
+	cfg.NginxStatusPort = te.NginxStatusPort
 
 	var configBuffer bytes.Buffer
 	err := te.mainTemplate.Execute(&configBuffer, cfg)
