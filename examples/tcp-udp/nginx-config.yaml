@@ -1,0 +1,25 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+    stream-snippets: |
+      upstream coredns-udp {
+          server coredns.default.svc.cluster.local:53;
+      }
+
+      server {
+          listen 5353 udp;
+          proxy_pass coredns-udp;
+          proxy_responses 1;
+      }
+
+      upstream coredns-tcp {
+          server coredns.default.svc.cluster.local:53;
+      }
+
+      server {
+          listen 5353;
+          proxy_pass coredns-tcp;
+      } 
