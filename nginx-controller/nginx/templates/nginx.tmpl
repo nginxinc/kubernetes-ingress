@@ -82,20 +82,18 @@ http {
         }
     }
 
+    {{- if .NginxStatus }}
     # stub_status
     server {
-        {{- if .NginxStatus }}
         listen {{.NginxStatusPort}};
-        {{- else }}
         listen unix:/var/run/nginx.sock;
-        {{- end }}
 
         location /nginx_status {
             stub_status;
-            allow 127.0.0.1;
-            deny all;
         }
     }
+    {{- end }}
+
 
     include /etc/nginx/conf.d/*.conf;
 }
