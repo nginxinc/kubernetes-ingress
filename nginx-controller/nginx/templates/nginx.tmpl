@@ -87,10 +87,11 @@ http {
     server {
         listen {{.NginxStatusPort}};
 
-        location /nginx_status {
+        allow 127.0.0.1;
+        deny all;
+
+        location /stub_status {
             limit_except GET {
-                allow 127.0.0.1;
-                deny all;
             }
             stub_status;
         }

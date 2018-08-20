@@ -97,10 +97,11 @@ http {
         location  = /dashboard.html {
         }
 
+        allow 127.0.0.1;
+        deny all;
+
         location /api {
             limit_except GET {
-                allow 127.0.0.1;
-                deny all;
             }
             api write=off;
         }

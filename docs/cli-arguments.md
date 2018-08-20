@@ -42,7 +42,7 @@ Usage of ./nginx-ingress:
   -nginx-status
     	Enable the NGINX stub_status, or the NGINX Plus API. (default true)
   -nginx-status-port int
-    	Set the port where the NGINX stub_status or the NGINX Plus API is exposed. Cannot be 80 or 443. (default 8080)
+    	Set the port where the NGINX stub_status or the NGINX Plus API is exposed. [1023 - 65535] (default 8080)
   -proxy string
         Use a proxy server to connect to Kubernetes API started by "kubectl proxy" command. For testing purposes only.
         The Ingress controller does not start NGINX and does not write any generated NGINX configuration files to disk
