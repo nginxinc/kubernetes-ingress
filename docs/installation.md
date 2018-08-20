@@ -144,10 +144,21 @@ The public IP can be reported in the status of an ingress resource. To enable:
 
 Read more about the type LoadBalancer [here](https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer).
 
-## 5. Access the Live Activity Monitoring Dashboard
+## 5. Access the Live Activity Monitoring Dashboard / Stub_status Page
+For NGINX, you can access the [stub_status page](http://nginx.org/en/docs/http/ngx_http_stub_status_module.html):
+1. Stub_status is enabled by default. Ensure that the `nginx-status` command-line argument is not set to false.
+2. Stub_status is available on port 8080 by default. It is customizable by the `nginx-status-port` command-line argument. If yours is not on 8080, modify the kubectl proxy command below.
+1. Use the `kubectl port-forward` command to forward connections to port 8080 on your local machine to port 8080 of an NGINX Ingress controller pod (replace `<nginx-ingress-pod>` with the actual name of a pod):.
+    ```
+    $ kuebctl port-forward <nginx-ingress-pod> 8080:8080 --namespace=nginx-ingress
+    ```
+Open your browser at http://127.0.0.1:8080/stub_status to access the status.
+
 
 For NGINX Plus, you can access the live activity monitoring dashboard:
-1. Use `kubectl port-forward` command to forward connections to port 8080 on your local machine to port 8080 of an NGINX Plus Ingress controller pod (replace <nginx-plus-ingress-pod> with the actual name of a pod):
+1. The dashboard is enabled by default. Ensure that the `nginx-status` command-line argument is not set to false.
+1. The dashboard is available on port 8080 by default. It is customizable by the `nginx-status-port` command-line argument. If yours is not on 8080, modify the kubectl proxy command below.
+1. Use the `kubectl port-forward` command to forward connections to port 8080 on your local machine to port 8080 of an NGINX Plus Ingress controller pod (replace `<nginx-plus-ingress-pod>` with the actual name of a pod):
     ```
     $ kubectl port-forward <nginx-plus-ingress-pod> 8080:8080 --namespace=nginx-ingress
     ```
