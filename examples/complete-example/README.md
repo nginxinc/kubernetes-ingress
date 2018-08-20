@@ -55,7 +55,7 @@ certificate and the --resolve option to set the Host header of a request with ``
     Server name: tea-7cd44fcb4d-xfw2x
     ...
     ```
-    
-1. If you're using NGINX Plus, you can open the live activity monitoring dashboard:
-    1. Follow the [instructions](../../docs/installation.md#5-access-the-live-activity-monitoring-dashboard) to access the dashboard. 
-    1. If you go to the Upstream tab, you'll see: ![dashboard](dashboard.png)
+
+1. You can view an NGINX status page, either stub_status for NGINX, or the Live Activity Monitoring Dashboard for NGINX Plus:
+    1. Follow the [instructions](../../docs/installation.md#5-access-the-live-activity-monitoring-dashboard--stub_status-page) to access the status page.
+    1. For NGINX Plus, If you go to the Upstream tab, you'll see: ![dashboard](dashboard.png)

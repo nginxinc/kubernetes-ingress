@@ -101,8 +101,6 @@ http {
         deny all;
 
         location /api {
-            limit_except GET {
-            }
             api write=off;
         }
     }

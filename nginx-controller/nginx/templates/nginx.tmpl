@@ -91,8 +91,6 @@ http {
         deny all;
 
         location /stub_status {
-            limit_except GET {
-            }
             stub_status;
         }
     }
