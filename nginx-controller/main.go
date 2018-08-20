@@ -82,7 +82,7 @@ The external address of the service is used when reporting the status of Ingress
 		"Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources -- only one replica will report status. See -report-ingress-status flag.")
 
 	nginxStatusPort = flag.Int("nginx-status-port", 8080,
-		"Set the port where the NGINX stub_status or the NGINX Plus API is exposed. Cannot be 80 or 443.")
+		"Set the port where the NGINX stub_status or the NGINX Plus API is exposed. [1023 - 65535]")
 
 	nginxStatus = flag.Bool("nginx-status", true,
 		"Enable the NGINX stub_status, or the NGINX Plus API.")
@@ -300,9 +300,6 @@ func getSocketClient() http.Client {
 }
 
 func validateStatusPort(nginxStatusPort int) error {
-	if nginxStatusPort == 80 || nginxStatusPort == 443 {
-		return fmt.Errorf("ports 80 and 443 are forbidden: %v", nginxStatusPort)
-	}
 	if nginxStatusPort < 1023 || nginxStatusPort > 65535 {
 		return fmt.Errorf("port outside of valid port range [1023 - 65535]: %v", nginxStatusPort)
 	}

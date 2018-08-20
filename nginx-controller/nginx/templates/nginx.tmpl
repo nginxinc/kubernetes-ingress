@@ -86,9 +86,12 @@ http {
     # stub_status
     server {
         listen {{.NginxStatusPort}};
-        listen unix:/var/run/nginx.sock;
 
         location /nginx_status {
+            limit_except GET {
+                allow 127.0.0.1;
+                deny all;
+            }
             stub_status;
         }
     }

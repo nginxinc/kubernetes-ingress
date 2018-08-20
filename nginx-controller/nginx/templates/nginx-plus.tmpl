@@ -98,6 +98,10 @@ http {
         }
 
         location /api {
+            limit_except GET {
+                allow 127.0.0.1;
+                deny all;
+            }
             api write=off;
         }
     }
@@ -106,7 +110,6 @@ http {
     # NGINX Plus API over unix socket
     server {
         listen unix:/var/run/nginx-plus-api.sock;
-        root /usr/share/nginx/html;
         access_log off;
 
         location /api {
