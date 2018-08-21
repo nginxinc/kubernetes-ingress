@@ -33,7 +33,7 @@ The table below summarizes the key difference between nginxinc/kubernetes-ingres
 | **Operational** |
 | Reporting the IP address(es) of the Ingress controller into Ingress resources | Supported | Supported | Supported |
 | Extended Status | Supported via a third-party module | Not supported | Supported |
-| Prometheus Integration | Supported | Not supported | Supported |
+| Prometheus Integration | Supported | Supported | Supported |
 | Dynamic reconfiguration of endpoints (no configuration reloading) | Supported with a third-party Lua module | Not supported | Supported |
 
 Notes:

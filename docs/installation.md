@@ -166,7 +166,19 @@ For NGINX Plus, you can access the live activity monitoring dashboard:
 
 ## Support For Prometheus Monitoring
 
-If you are using [Prometheus](https://prometheus.io/), you can deploy the NGINX Plus Ingress controller with the Prometheus exporter for NGINX Plus. The exporter will export NGINX Plus metrics into your Prometheus. To deploy the Ingress controller with the exporter, use the modified manifests:
+If you are using [Prometheus](https://prometheus.io/), you can deploy the NGINX Ingress controller with the [Prometheus exporter](https://github.com/nginxinc/nginx-prometheus-exporter) for NGINX. The exporter will export NGINX metrics into your Prometheus.
+
+To deploy the NGINX Ingress controller with the exporter, use the modified manifests:
+* For a deployment, run:
+    ```
+    $ kubectl apply -f deployment/nginx-ingress-with-prometheus.yaml
+    ```
+* For a daemonset, run:
+    ```
+    $ kubectl apply -f daemon-set/nginx-ingress-with-prometheus.yaml
+    ```
+
+To deploy the NGINX Plus Ingress controller with the exporter, use the modified manifests:
 * For a deployment, run:
     ```
     $ kubectl apply -f deployment/nginx-plus-ingress-with-prometheus.yaml
@@ -182,3 +194,4 @@ Delete the `nginx-ingress` namespace to uninstall the Ingress controller along w
 ```
 $ kubectl delete namespace nginx-ingress
 ```
+
