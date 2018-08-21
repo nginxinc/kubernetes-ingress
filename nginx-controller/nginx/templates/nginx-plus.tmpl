@@ -63,7 +63,7 @@ http {
 
  
     server {
-        listen 80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
+        listen 80 default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};
         listen 443 ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};
 
         ssl_certificate /etc/nginx/secrets/default;
