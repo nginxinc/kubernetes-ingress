@@ -5,7 +5,7 @@ controller:
   hostNetwork: false
   image:
     repository: nginx/nginx-ingress
-    tag: "1.3.0"
+    tag: "edge"
     pullPolicy: IfNotPresent
   config:
     entries: {}
