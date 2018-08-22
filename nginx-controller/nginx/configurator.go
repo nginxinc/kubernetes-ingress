@@ -57,11 +57,10 @@ func (cnf *Configurator) AddOrUpdateDHParam(content string) (string, error) {
 
 // AddOrUpdateIngress adds or updates NGINX configuration for the Ingress resource
 func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) error {
-	err := cnf.addOrUpdateIngress(ingEx)
-	if err != nil {
+	if err := cnf.addOrUpdateIngress(ingEx); err != nil {
 		return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 	}
-	if err = cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginx.Reload(); err != nil {
 		return fmt.Errorf("Error reloading NGINX for %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 	}
 	return nil
@@ -83,17 +82,16 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
 
 // AddOrUpdateMergableIngress adds or updates NGINX configuration for the Ingress resources with Mergeable Types
 func (cnf *Configurator) AddOrUpdateMergableIngress(mergeableIngs *MergeableIngresses) error {
-	err := cnf.addOrUpdateMergableIngress(mergeableIngs)
-	if err != nil {
+	if err := cnf.addOrUpdateMergeableIngress(mergeableIngs); err != nil {
 		return fmt.Errorf("Error when adding or updating ingress %v/%v: %v", mergeableIngs.Master.Ingress.Namespace, mergeableIngs.Master.Ingress.Name, err)
 	}
-	if err = cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginx.Reload(); err != nil {
 		return fmt.Errorf("Error reloading NGINX for %v/%v: %v", mergeableIngs.Master.Ingress.Namespace, mergeableIngs.Master.Ingress.Name, err)
 	}
 	return nil
 }
 
-func (cnf *Configurator) addOrUpdateMergableIngress(mergeableIngs *MergeableIngresses) error {
+func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIngresses) error {
 	nginxCfg := cnf.generateNginxCfgForMergeableIngresses(mergeableIngs)
 	name := objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
@@ -881,10 +879,7 @@ func upstreamMapToSlice(upstreams map[string]Upstream) []Upstream {
 func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) error {
 	cnf.addOrUpdateSecret(secret)
 
-	kind, err := GetSecretKind(secret)
-	if err != nil {
-		return fmt.Errorf("Error secret is unknown")
-	}
+	kind, _ := GetSecretKind(secret)
 	if cnf.isPlus() && kind == JWK {
 		return nil
 	}
@@ -990,7 +985,7 @@ func (cnf *Configurator) UpdateEndpoints(ingEx *IngressEx) error {
 
 // UpdateEndpointsMergeableIngress updates endpoints in NGINX configuration for a mergeable Ingress resource
 func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergeableIngs *MergeableIngresses) error {
-	err := cnf.addOrUpdateMergableIngress(mergeableIngs)
+	err := cnf.addOrUpdateMergeableIngress(mergeableIngs)
 	if err != nil {
 		return fmt.Errorf("Error adding or updating ingress %v/%v: %v", mergeableIngs.Master.Ingress.Namespace, mergeableIngs.Master.Ingress.Name, err)
 	}
@@ -1154,7 +1149,7 @@ func (cnf *Configurator) UpdateConfig(config *Config, ingExes []*IngressEx, merg
 		}
 	}
 	for _, mergeableIng := range mergeableIngs {
-		if err := cnf.addOrUpdateMergableIngress(mergeableIng); err != nil {
+		if err := cnf.addOrUpdateMergeableIngress(mergeableIng); err != nil {
 			return err
 		}
 	}
