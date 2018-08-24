@@ -668,20 +668,20 @@ func TestAddOrUpdateIngress(t *testing.T) {
 	}
 }
 
-func TestAddOrUpdateMergableIngress(t *testing.T) {
+func TestAddOrUpdateMergeableIngress(t *testing.T) {
 	cnf, err := createTestConfigurator()
 	if err != nil {
 		t.Errorf("Failed to create a test configurator: %v", err)
 	}
 	mergeableIngess := createMergeableCafeIngress()
-	err = cnf.AddOrUpdateMergableIngress(mergeableIngess)
+	err = cnf.AddOrUpdateMergeableIngress(mergeableIngess)
 	if err != nil {
-		t.Errorf("AddOrUpdateMergableIngress returned \n%v, expected \n%v", err, nil)
+		t.Errorf("AddOrUpdateMergeableIngress returned \n%v, expected \n%v", err, nil)
 	}
 
-	cnfHasMergableIngress := cnf.HasIngress(mergeableIngess.Master.Ingress)
-	if !cnfHasMergableIngress {
-		t.Errorf("AddOrUpdateMergableIngress didn't add mergable ingress successfully. HasIngress returned %v, expected %v", cnfHasMergableIngress, true)
+	cnfHasMergeableIngress := cnf.HasIngress(mergeableIngess.Master.Ingress)
+	if !cnfHasMergeableIngress {
+		t.Errorf("AddOrUpdateMergeableIngress didn't add mergeable ingress successfully. HasIngress returned %v, expected %v", cnfHasMergeableIngress, true)
 	}
 }
 
@@ -698,16 +698,16 @@ func TestAddOrUpdateIngressFailsWithInvalidIngressTemplate(t *testing.T) {
 	}
 }
 
-func TestAddOrUpdateMergableIngressFailsWithInvalidIngressTemplate(t *testing.T) {
+func TestAddOrUpdateMergeableIngressFailsWithInvalidIngressTemplate(t *testing.T) {
 	cnf, err := createTestConfiguratorInvalidIngressTemplate()
 	if err != nil {
 		t.Errorf("Failed to create a test configurator: %v", err)
 	}
 
 	mergeableIngess := createMergeableCafeIngress()
-	err = cnf.AddOrUpdateMergableIngress(mergeableIngess)
+	err = cnf.AddOrUpdateMergeableIngress(mergeableIngess)
 	if err == nil {
-		t.Errorf("AddOrUpdateMergableIngress returned \n%v, but expected \n%v", nil, "template execution error")
+		t.Errorf("AddOrUpdateMergeableIngress returned \n%v, but expected \n%v", nil, "template execution error")
 	}
 }
 

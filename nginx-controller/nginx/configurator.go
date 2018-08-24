@@ -80,8 +80,8 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
 	return nil
 }
 
-// AddOrUpdateMergableIngress adds or updates NGINX configuration for the Ingress resources with Mergeable Types
-func (cnf *Configurator) AddOrUpdateMergableIngress(mergeableIngs *MergeableIngresses) error {
+// AddOrUpdateMergeableIngress adds or updates NGINX configuration for the Ingress resources with Mergeable Types
+func (cnf *Configurator) AddOrUpdateMergeableIngress(mergeableIngs *MergeableIngresses) error {
 	if err := cnf.addOrUpdateMergeableIngress(mergeableIngs); err != nil {
 		return fmt.Errorf("Error when adding or updating ingress %v/%v: %v", mergeableIngs.Master.Ingress.Namespace, mergeableIngs.Master.Ingress.Name, err)
 	}

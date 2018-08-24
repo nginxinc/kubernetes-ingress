@@ -679,7 +679,7 @@ func (lbc *LoadBalancerController) syncIng(task Task) {
 				}
 				return
 			}
-			err = lbc.cnf.AddOrUpdateMergableIngress(mergeableIngExs)
+			err = lbc.cnf.AddOrUpdateMergeableIngress(mergeableIngExs)
 			if err != nil {
 				lbc.recorder.Eventf(ing, api_v1.EventTypeWarning, "AddedOrUpdatedWithError", "Configuration for %v(Master) was added or updated, but not applied: %v", key, err)
 				for _, minion := range mergeableIngExs.Minions {
@@ -804,7 +804,7 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 				glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
 				continue
 			}
-			err = lbc.cnf.AddOrUpdateMergableIngress(mergeableIngress)
+			err = lbc.cnf.AddOrUpdateMergeableIngress(mergeableIngress)
 			if err != nil {
 				glog.Errorf("Failed to update Ingress %v(Master) of %v(Minion): %v", master.Name, minion.Name, err)
 			}
@@ -864,7 +864,7 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 						glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
 						continue
 					}
-					err = lbc.cnf.AddOrUpdateMergableIngress(mergeableIngress)
+					err = lbc.cnf.AddOrUpdateMergeableIngress(mergeableIngress)
 					if err != nil {
 						glog.Errorf("Failed to update Ingress %v(Master) of %v(Minion): %v", master.Name, minion.Name, err)
 					}
