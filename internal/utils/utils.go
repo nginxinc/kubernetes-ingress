@@ -14,149 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package utils
 
 import (
 	"fmt"
-	"time"
+	"reflect"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
-
-	"github.com/golang/glog"
 )
-
-// TaskQueue manages a work queue through an independent worker that
-// invokes the given sync function for every work item inserted.
-type TaskQueue struct {
-	// queue is the work queue the worker polls
-	queue *workqueue.Type
-	// sync is called for each item in the queue
-	sync func(Task)
-	// workerDone is closed when the worker exits
-	workerDone chan struct{}
-}
-
-func (t *TaskQueue) run(period time.Duration, stopCh <-chan struct{}) {
-	wait.Until(t.worker, period, stopCh)
-}
-
-// enqueue enqueues ns/name of the given api object in the task queue.
-func (t *TaskQueue) enqueue(obj interface{}) {
-	key, err := keyFunc(obj)
-	if err != nil {
-		glog.V(3).Infof("Couldn't get key for object %v: %v", obj, err)
-		return
-	}
-
-	task, err := NewTask(key, obj)
-	if err != nil {
-		glog.V(3).Infof("Couldn't create a task for object %v: %v", obj, err)
-		return
-	}
-
-	glog.V(3).Infof("Adding an element with a key: %v", task.Key)
-
-	t.queue.Add(task)
-}
-
-func (t *TaskQueue) requeue(task Task, err error) {
-	glog.Errorf("Requeuing %v, err %v", task.Key, err)
-	t.queue.Add(task)
-}
-
-func (t *TaskQueue) requeueAfter(task Task, err error, after time.Duration) {
-	glog.Errorf("Requeuing %v after %s, err %v", task.Key, after.String(), err)
-	go func(task Task, after time.Duration) {
-		time.Sleep(after)
-		t.queue.Add(task)
-	}(task, after)
-}
-
-// worker processes work in the queue through sync.
-func (t *TaskQueue) worker() {
-	for {
-		task, quit := t.queue.Get()
-		if quit {
-			close(t.workerDone)
-			return
-		}
-		glog.V(3).Infof("Syncing %v", task.(Task).Key)
-		t.sync(task.(Task))
-		t.queue.Done(task)
-	}
-}
-
-// shutdown shuts down the work queue and waits for the worker to ACK
-func (t *TaskQueue) shutdown() {
-	t.queue.ShutDown()
-	<-t.workerDone
-}
-
-// NewTaskQueue creates a new task queue with the given sync function.
-// The sync function is called for every element inserted into the queue.
-func NewTaskQueue(syncFn func(Task)) *TaskQueue {
-	return &TaskQueue{
-		queue:      workqueue.New(),
-		sync:       syncFn,
-		workerDone: make(chan struct{}),
-	}
-}
-
-// Kind represents the kind of the Kubernetes resources of a task
-type Kind int
-
-const (
-	// Ingress resource
-	Ingress = iota
-	// IngressMinion resource, which is a Minion Ingress resource
-	IngressMinion
-	// Endpoints resource
-	Endpoints
-	// ConfigMap resource
-	ConfigMap
-	// Secret resource
-	Secret
-	// Service resource
-	Service
-)
-
-// Task is an element of a TaskQueue
-type Task struct {
-	Kind Kind
-	Key  string
-}
-
-// NewTask creates a new task
-func NewTask(key string, obj interface{}) (Task, error) {
-	var k Kind
-	switch t := obj.(type) {
-	case *extensions.Ingress:
-		ing := obj.(*extensions.Ingress)
-		if isMinion(ing) {
-			k = IngressMinion
-		} else {
-			k = Ingress
-		}
-	case *api_v1.Endpoints:
-		k = Endpoints
-	case *api_v1.ConfigMap:
-		k = ConfigMap
-	case *api_v1.Secret:
-		k = Secret
-	case *api_v1.Service:
-		k = Service
-	default:
-		return Task{}, fmt.Errorf("Unknow type: %v", t)
-	}
-
-	return Task{k, key}, nil
-}
 
 // compareLinks returns true if the 2 self links are equal.
 func compareLinks(l1, l2 string) bool {
@@ -275,4 +145,34 @@ func FindPort(pod *api_v1.Pod, svcPort *api_v1.ServicePort) (int32, error) {
 // StoreToSecretLister makes a Store that lists Secrets
 type StoreToSecretLister struct {
 	cache.Store
+}
+
+func IsMinion(ing *extensions.Ingress) bool {
+	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "minion" {
+		return true
+	}
+	return false
+}
+
+func IsMaster(ing *extensions.Ingress) bool {
+	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "master" {
+		return true
+	}
+	return false
+}
+
+func HasChanges(old *extensions.Ingress, current *extensions.Ingress) bool {
+	old.Status.LoadBalancer.Ingress = current.Status.LoadBalancer.Ingress
+	old.ResourceVersion = current.ResourceVersion
+	return !reflect.DeepEqual(old, current)
+}
+
+// ParseNamespaceName parses the string in the <namespace>/<name> format and returns the name and the namespace.
+// It returns an error in case the string does not follow the <namespace>/<name> format.
+func ParseNamespaceName(value string) (ns string, name string, err error) {
+	res := strings.Split(value, "/")
+	if len(res) != 2 {
+		return "", "", fmt.Errorf("%q must follow the format <namespace>/<name>", value)
+	}
+	return res[0], res[1], nil
 }

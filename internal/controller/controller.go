@@ -18,13 +18,14 @@ package controller
 
 import (
 	"fmt"
-	"reflect"
-	"strings"
 	"time"
 
 	"github.com/golang/glog"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	"github.com/nginxinc/kubernetes-ingress/internal/queue"
+	"github.com/nginxinc/kubernetes-ingress/internal/utils"
+	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -55,12 +56,12 @@ type LoadBalancerController struct {
 	endpointController      cache.Controller
 	configMapController     cache.Controller
 	secretController        cache.Controller
-	ingressLister           StoreToIngressLister
+	ingressLister           utils.StoreToIngressLister
 	svcLister               cache.Store
-	endpointLister          StoreToEndpointLister
-	configMapLister         StoreToConfigMapLister
-	secretLister            StoreToSecretLister
-	syncQueue               *TaskQueue
+	endpointLister          utils.StoreToEndpointLister
+	configMapLister         utils.StoreToConfigMapLister
+	secretLister            utils.StoreToSecretLister
+	syncQueue               *queue.TaskQueue
 	stop                    chan struct{}
 	configurator            *nginx.Configurator
 	watchNginxConfigMaps    bool
@@ -73,6 +74,9 @@ type LoadBalancerController struct {
 	leaderElector           *leaderelection.LeaderElector
 	reportIngressStatus     bool
 	isLeaderElectionEnabled bool
+	resync                  time.Duration
+	namespace               string
+	controllerNamespace     string
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -83,7 +87,6 @@ type NewLoadBalancerControllerInput struct {
 	ResyncPeriod            time.Duration
 	Namespace               string
 	NginxConfigurator       *nginx.Configurator
-	NginxConfigMaps         string
 	DefaultServerSecret     string
 	IsNginxPlus             bool
 	IngressClass            string
@@ -106,6 +109,9 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		useIngressClassOnly:     input.UseIngressClassOnly,
 		reportIngressStatus:     input.ReportIngressStatus,
 		isLeaderElectionEnabled: input.IsLeaderElectionEnabled,
+		resync:                  input.ResyncPeriod,
+		namespace:               input.Namespace,
+		controllerNamespace:     input.ControllerNamespace,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -116,289 +122,10 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.recorder = eventBroadcaster.NewRecorder(scheme.Scheme,
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
 
-	lbc.syncQueue = NewTaskQueue(lbc.sync)
+	lbc.syncQueue = queue.NewTaskQueue(lbc.sync)
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
-	ingressHandlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			ingress := obj.(*extensions.Ingress)
-			if !lbc.isNginxIngress(ingress) {
-				glog.Infof("Ignoring Ingress %v based on Annotation %v", ingress.Name, ingressClassKey)
-				return
-			}
-			glog.V(3).Infof("Adding Ingress: %v", ingress.Name)
-			lbc.syncQueue.enqueue(obj)
-		},
-		DeleteFunc: func(obj interface{}) {
-			ingress, isIng := obj.(*extensions.Ingress)
-			if !isIng {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				ingress, ok = deletedState.Obj.(*extensions.Ingress)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Ingress object: %v", deletedState.Obj)
-					return
-				}
-			}
-			if !lbc.isNginxIngress(ingress) {
-				return
-			}
-			if isMinion(ingress) {
-				master, err := lbc.findMasterForMinion(ingress)
-				if err != nil {
-					glog.Infof("Ignoring Ingress %v(Minion): %v", ingress.Name, err)
-					return
-				}
-				glog.V(3).Infof("Removing Ingress: %v(Minion) for %v(Master)", ingress.Name, master.Name)
-				lbc.syncQueue.enqueue(master)
-			} else {
-				glog.V(3).Infof("Removing Ingress: %v", ingress.Name)
-				lbc.syncQueue.enqueue(obj)
-			}
-		},
-		UpdateFunc: func(old, current interface{}) {
-			c := current.(*extensions.Ingress)
-			o := old.(*extensions.Ingress)
-			if !lbc.isNginxIngress(c) {
-				return
-			}
-			if hasChanges(o, c) {
-				glog.V(3).Infof("Ingress %v changed, syncing", c.Name)
-				lbc.syncQueue.enqueue(c)
-			}
-		},
-	}
-
-	lbc.ingressLister.Store, lbc.ingressController = cache.NewInformer(
-		cache.NewListWatchFromClient(
-			lbc.client.Extensions().RESTClient(),
-			"ingresses",
-			input.Namespace,
-			fields.Everything()),
-		&extensions.Ingress{},
-		input.ResyncPeriod,
-		ingressHandlers,
-	)
-
-	svcHandlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			svc := obj.(*api_v1.Service)
-			if lbc.isExternalServiceForStatus(svc) {
-				lbc.syncQueue.enqueue(svc)
-				return
-			}
-			glog.V(3).Infof("Adding service: %v", svc.Name)
-			lbc.enqueueIngressForService(svc)
-		},
-		DeleteFunc: func(obj interface{}) {
-			svc, isSvc := obj.(*api_v1.Service)
-			if !isSvc {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				svc, ok = deletedState.Obj.(*api_v1.Service)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Service object: %v", deletedState.Obj)
-					return
-				}
-			}
-			if lbc.isExternalServiceForStatus(svc) {
-				lbc.syncQueue.enqueue(svc)
-				return
-			}
-
-			glog.V(3).Infof("Removing service: %v", svc.Name)
-			lbc.enqueueIngressForService(svc)
-
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				svc := cur.(*api_v1.Service)
-				if lbc.isExternalServiceForStatus(svc) {
-					lbc.syncQueue.enqueue(svc)
-					return
-				}
-				glog.V(3).Infof("Service %v changed, syncing", svc.Name)
-				lbc.enqueueIngressForService(svc)
-			}
-		},
-	}
-	lbc.svcLister, lbc.svcController = cache.NewInformer(
-		cache.NewListWatchFromClient(
-			lbc.client.Core().RESTClient(),
-			"services",
-			input.Namespace,
-			fields.Everything()),
-		&api_v1.Service{},
-		input.ResyncPeriod,
-		svcHandlers,
-	)
-
-	endpointHandlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			endpoint := obj.(*api_v1.Endpoints)
-			glog.V(3).Infof("Adding endpoints: %v", endpoint.Name)
-			lbc.syncQueue.enqueue(obj)
-		},
-		DeleteFunc: func(obj interface{}) {
-			endpoint, isEndpoint := obj.(*api_v1.Endpoints)
-			if !isEndpoint {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				endpoint, ok = deletedState.Obj.(*api_v1.Endpoints)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Endpoints object: %v", deletedState.Obj)
-					return
-				}
-			}
-			glog.V(3).Infof("Removing endpoints: %v", endpoint.Name)
-			lbc.syncQueue.enqueue(obj)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("Endpoints %v changed, syncing", cur.(*api_v1.Endpoints).Name)
-				lbc.syncQueue.enqueue(cur)
-			}
-		},
-	}
-
-	lbc.endpointLister.Store, lbc.endpointController = cache.NewInformer(
-		cache.NewListWatchFromClient(
-			lbc.client.Core().RESTClient(),
-			"endpoints",
-			input.Namespace,
-			fields.Everything()),
-		&api_v1.Endpoints{},
-		input.ResyncPeriod,
-		endpointHandlers,
-	)
-
-	secretHandlers := cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			secret := obj.(*api_v1.Secret)
-			if err := lbc.ValidateSecret(secret); err != nil {
-				return
-			}
-			nsname := secret.Namespace + "/" + secret.Name
-			if nsname == lbc.defaultServerSecret {
-				glog.V(3).Infof("Adding default server Secret: %v", secret.Name)
-				lbc.syncQueue.enqueue(obj)
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			secret, isSecr := obj.(*api_v1.Secret)
-			if !isSecr {
-				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-				if !ok {
-					glog.V(3).Infof("Error received unexpected object: %v", obj)
-					return
-				}
-				secret, ok = deletedState.Obj.(*api_v1.Secret)
-				if !ok {
-					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Secret object: %v", deletedState.Obj)
-					return
-				}
-			}
-			if err := lbc.ValidateSecret(secret); err != nil {
-				return
-			}
-
-			glog.V(3).Infof("Removing Secret: %v", secret.Name)
-			lbc.syncQueue.enqueue(obj)
-		},
-		UpdateFunc: func(old, cur interface{}) {
-			errOld := lbc.ValidateSecret(old.(*api_v1.Secret))
-			errCur := lbc.ValidateSecret(cur.(*api_v1.Secret))
-			if errOld != nil && errCur != nil {
-				return
-			}
-
-			if !reflect.DeepEqual(old, cur) {
-				glog.V(3).Infof("Secret %v changed, syncing", cur.(*api_v1.Secret).Name)
-				lbc.syncQueue.enqueue(cur)
-			}
-		},
-	}
-
-	lbc.secretLister.Store, lbc.secretController = cache.NewInformer(
-		cache.NewListWatchFromClient(
-			lbc.client.Core().RESTClient(),
-			"secrets",
-			input.Namespace,
-			fields.Everything()),
-		&api_v1.Secret{},
-		input.ResyncPeriod,
-		secretHandlers,
-	)
-
-	if input.NginxConfigMaps != "" {
-		nginxConfigMapsNS, nginxConfigMapsName, err := ParseNamespaceName(input.NginxConfigMaps)
-		if err != nil {
-			glog.Warning(err)
-		} else {
-			lbc.watchNginxConfigMaps = true
-
-			configMapHandlers := cache.ResourceEventHandlerFuncs{
-				AddFunc: func(obj interface{}) {
-					configMap := obj.(*api_v1.ConfigMap)
-					if configMap.Name == nginxConfigMapsName {
-						glog.V(3).Infof("Adding ConfigMap: %v", configMap.Name)
-						lbc.syncQueue.enqueue(obj)
-					}
-				},
-				DeleteFunc: func(obj interface{}) {
-					configMap, isConfigMap := obj.(*api_v1.ConfigMap)
-					if !isConfigMap {
-						deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
-						if !ok {
-							glog.V(3).Infof("Error received unexpected object: %v", obj)
-							return
-						}
-						configMap, ok = deletedState.Obj.(*api_v1.ConfigMap)
-						if !ok {
-							glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-ConfigMap object: %v", deletedState.Obj)
-							return
-						}
-					}
-					if configMap.Name == nginxConfigMapsName {
-						glog.V(3).Infof("Removing ConfigMap: %v", configMap.Name)
-						lbc.syncQueue.enqueue(obj)
-					}
-				},
-				UpdateFunc: func(old, cur interface{}) {
-					if !reflect.DeepEqual(old, cur) {
-						configMap := cur.(*api_v1.ConfigMap)
-						if configMap.Name == nginxConfigMapsName {
-							glog.V(3).Infof("ConfigMap %v changed, syncing", cur.(*api_v1.ConfigMap).Name)
-							lbc.syncQueue.enqueue(cur)
-						}
-					}
-				},
-			}
-
-			lbc.configMapLister.Store, lbc.configMapController = cache.NewInformer(
-				cache.NewListWatchFromClient(
-					lbc.client.Core().RESTClient(),
-					"configmaps",
-					nginxConfigMapsNS,
-					fields.Everything()),
-				&api_v1.ConfigMap{},
-				input.ResyncPeriod,
-				configMapHandlers,
-			)
-		}
-	}
-
-	// statusUpdater requires ingLister to be instantiated, above.
 	lbc.statusUpdater = &StatusUpdater{
 		client:              input.KubeClient,
 		namespace:           input.ControllerNamespace,
@@ -407,33 +134,100 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		keyFunc:             keyFunc,
 	}
 
-	if input.ReportIngressStatus && input.IsLeaderElectionEnabled {
-		leaderCallbacks := leaderelection.LeaderCallbacks{
-			OnStartedLeading: func(stop <-chan struct{}) {
-				glog.V(3).Info("started leading, updating ingress status")
-				ingresses, mergeableIngresses := lbc.getManagedIngresses()
-				err := lbc.statusUpdater.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
-				if err != nil {
-					glog.V(3).Infof("error updating status when starting leading: %v", err)
-				}
-			},
-		}
-
-		var err error
-		lbc.leaderElector, err = NewLeaderElector(input.KubeClient, leaderCallbacks, input.ControllerNamespace)
-		if err != nil {
-			glog.V(3).Infof("Error starting LeaderElection: %v", err)
-		}
-	}
-
 	return &lbc
 }
 
-// hasChanges ignores Status or ResourceVersion changes
-func hasChanges(old *extensions.Ingress, current *extensions.Ingress) bool {
-	old.Status.LoadBalancer.Ingress = current.Status.LoadBalancer.Ingress
-	old.ResourceVersion = current.ResourceVersion
-	return !reflect.DeepEqual(old, current)
+func (lbc *LoadBalancerController) UpdateManagedAndMergeableIngresses(ingresses []v1beta1.Ingress, mergeableIngresses map[string]*nginx.MergeableIngresses) error {
+	return lbc.statusUpdater.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
+}
+
+func (lbc *LoadBalancerController) AddLeaderHandler(leaderHandler leaderelection.LeaderCallbacks) {
+	var err error
+	lbc.leaderElector, err = NewLeaderElector(lbc.client, leaderHandler, lbc.controllerNamespace)
+	if err != nil {
+		glog.V(3).Infof("Error starting LeaderElection: %v", err)
+	}
+}
+
+func (lbc *LoadBalancerController) GetIngressClassKey() string {
+	return ingressClassKey
+}
+
+func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
+	lbc.syncQueue.Enqueue(item)
+}
+
+func (lbc *LoadBalancerController) WatchNginxConfigMaps() {
+	lbc.watchNginxConfigMaps = true
+}
+
+func (lbc *LoadBalancerController) AddSecretHandler(handlers cache.ResourceEventHandlerFuncs) {
+	lbc.secretLister.Store, lbc.secretController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.client.Core().RESTClient(),
+			"secrets",
+			lbc.namespace,
+			fields.Everything()),
+		&api_v1.Secret{},
+		lbc.resync,
+		handlers,
+	)
+}
+
+func (lbc *LoadBalancerController) AddServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
+	lbc.svcLister, lbc.svcController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.client.Core().RESTClient(),
+			"services",
+			lbc.namespace,
+			fields.Everything()),
+		&api_v1.Service{},
+		lbc.resync,
+		handlers,
+	)
+}
+
+func (lbc *LoadBalancerController) AddIngressHandler(handlers cache.ResourceEventHandlerFuncs) {
+	lbc.ingressLister.Store, lbc.ingressController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.client.Extensions().RESTClient(),
+			"ingresses",
+			lbc.namespace,
+			fields.Everything()),
+		&extensions.Ingress{},
+		lbc.resync,
+		handlers,
+	)
+}
+
+func (lbc *LoadBalancerController) AddEndpointHandler(handlers cache.ResourceEventHandlerFuncs) {
+	lbc.endpointLister.Store, lbc.endpointController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.client.Core().RESTClient(),
+			"endpoints",
+			lbc.namespace,
+			fields.Everything()),
+		&api_v1.Endpoints{},
+		lbc.resync,
+		handlers,
+	)
+}
+
+func (lbc *LoadBalancerController) AddConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
+	lbc.configMapLister.Store, lbc.configMapController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.client.Core().RESTClient(),
+			"configmaps",
+			namespace,
+			fields.Everything()),
+		&api_v1.ConfigMap{},
+		lbc.resync,
+		handlers,
+	)
+}
+
+func (lbc *LoadBalancerController) GetDefaultServerSecret() string {
+	return lbc.defaultServerSecret
 }
 
 // Run starts the loadbalancer controller
@@ -448,7 +242,7 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.configMapController.Run(lbc.stop)
 	}
 	go lbc.ingressController.Run(lbc.stop)
-	go lbc.syncQueue.run(time.Second, lbc.stop)
+	go lbc.syncQueue.Run(time.Second, lbc.stop)
 	<-lbc.stop
 }
 
@@ -456,16 +250,16 @@ func (lbc *LoadBalancerController) Run() {
 func (lbc *LoadBalancerController) Stop() {
 	close(lbc.stop)
 
-	lbc.syncQueue.shutdown()
+	lbc.syncQueue.Shutdown()
 }
 
-func (lbc *LoadBalancerController) syncEndpoint(task Task) {
+func (lbc *LoadBalancerController) syncEndpoint(task queue.Task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing endpoints %v", key)
 
 	obj, endpExists, err := lbc.endpointLister.GetByKey(key)
 	if err != nil {
-		lbc.syncQueue.requeue(task, err)
+		lbc.syncQueue.Requeue(task, err)
 		return
 	}
 
@@ -473,11 +267,11 @@ func (lbc *LoadBalancerController) syncEndpoint(task Task) {
 		ings := lbc.getIngressForEndpoints(obj)
 
 		for _, ing := range ings {
-			if !lbc.isNginxIngress(&ing) {
+			if !lbc.IsNginxIngress(&ing) {
 				continue
 			}
-			if isMinion(&ing) {
-				master, err := lbc.findMasterForMinion(&ing)
+			if utils.IsMinion(&ing) {
+				master, err := lbc.FindMasterForMinion(&ing)
 				if err != nil {
 					glog.Errorf("Ignoring Ingress %v(Minion): %v", ing.Name, err)
 					continue
@@ -515,13 +309,13 @@ func (lbc *LoadBalancerController) syncEndpoint(task Task) {
 	}
 }
 
-func (lbc *LoadBalancerController) syncConfig(task Task) {
+func (lbc *LoadBalancerController) syncConfig(task queue.Task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing configmap %v", key)
 
 	obj, configExists, err := lbc.configMapLister.GetByKey(key)
 	if err != nil {
-		lbc.syncQueue.requeue(task, err)
+		lbc.syncQueue.Requeue(task, err)
 		return
 	}
 	cfg := nginx.NewDefaultConfig()
@@ -533,7 +327,7 @@ func (lbc *LoadBalancerController) syncConfig(task Task) {
 		lbc.statusUpdater.SaveStatusFromExternalStatus(cfgm.Data["external-status-address"])
 	}
 
-	ingresses, mergeableIngresses := lbc.getManagedIngresses()
+	ingresses, mergeableIngresses := lbc.GetManagedIngresses()
 	ingExes := lbc.ingressesToIngressExes(ingresses)
 
 	if lbc.reportStatusEnabled() {
@@ -572,18 +366,18 @@ func (lbc *LoadBalancerController) syncConfig(task Task) {
 	}
 }
 
-// getManagedIngresses gets Ingress resources that the IC is currently responsible for
-func (lbc *LoadBalancerController) getManagedIngresses() ([]extensions.Ingress, map[string]*nginx.MergeableIngresses) {
+// GetManagedIngresses gets Ingress resources that the IC is currently responsible for
+func (lbc *LoadBalancerController) GetManagedIngresses() ([]extensions.Ingress, map[string]*nginx.MergeableIngresses) {
 	mergeableIngresses := make(map[string]*nginx.MergeableIngresses)
 	var managedIngresses []extensions.Ingress
 	ings, _ := lbc.ingressLister.List()
 	for i := range ings.Items {
 		ing := ings.Items[i]
-		if !lbc.isNginxIngress(&ing) {
+		if !lbc.IsNginxIngress(&ing) {
 			continue
 		}
-		if isMinion(&ing) {
-			master, err := lbc.findMasterForMinion(&ing)
+		if utils.IsMinion(&ing) {
+			master, err := lbc.FindMasterForMinion(&ing)
 			if err != nil {
 				glog.Errorf("Ignoring Ingress %v(Minion): %v", ing, err)
 				continue
@@ -621,33 +415,33 @@ func (lbc *LoadBalancerController) ingressesToIngressExes(ings []extensions.Ingr
 	return ingExes
 }
 
-func (lbc *LoadBalancerController) sync(task Task) {
+func (lbc *LoadBalancerController) sync(task queue.Task) {
 	glog.V(3).Infof("Syncing %v", task.Key)
 
 	switch task.Kind {
-	case Ingress:
+	case queue.Ingress:
 		lbc.syncIng(task)
-	case IngressMinion:
+	case queue.IngressMinion:
 		lbc.syncIngMinion(task)
-	case ConfigMap:
+	case queue.ConfigMap:
 		lbc.syncConfig(task)
 		return
-	case Endpoints:
+	case queue.Endpoints:
 		lbc.syncEndpoint(task)
 		return
-	case Secret:
+	case queue.Secret:
 		lbc.syncSecret(task)
 		return
-	case Service:
+	case queue.Service:
 		lbc.syncExternalService(task)
 	}
 }
 
-func (lbc *LoadBalancerController) syncIngMinion(task Task) {
+func (lbc *LoadBalancerController) syncIngMinion(task queue.Task) {
 	key := task.Key
 	obj, ingExists, err := lbc.ingressLister.Store.GetByKey(key)
 	if err != nil {
-		lbc.syncQueue.requeue(task, err)
+		lbc.syncQueue.Requeue(task, err)
 		return
 	}
 
@@ -659,28 +453,28 @@ func (lbc *LoadBalancerController) syncIngMinion(task Task) {
 
 	minion := obj.(*extensions.Ingress)
 
-	master, err := lbc.findMasterForMinion(minion)
+	master, err := lbc.FindMasterForMinion(minion)
 	if err != nil {
-		lbc.syncQueue.requeueAfter(task, err, 5*time.Second)
+		lbc.syncQueue.RequeueAfter(task, err, 5*time.Second)
 		return
 	}
 
 	_, err = lbc.createIngress(minion)
 	if err != nil {
-		lbc.syncQueue.requeueAfter(task, err, 5*time.Second)
+		lbc.syncQueue.RequeueAfter(task, err, 5*time.Second)
 		if !lbc.configurator.HasMinion(master, minion) {
 			return
 		}
 	}
 
-	lbc.syncQueue.enqueue(master)
+	lbc.syncQueue.Enqueue(master)
 }
 
-func (lbc *LoadBalancerController) syncIng(task Task) {
+func (lbc *LoadBalancerController) syncIng(task queue.Task) {
 	key := task.Key
 	ing, ingExists, err := lbc.ingressLister.GetByKeySafe(key)
 	if err != nil {
-		lbc.syncQueue.requeue(task, err)
+		lbc.syncQueue.Requeue(task, err)
 		return
 	}
 
@@ -694,10 +488,10 @@ func (lbc *LoadBalancerController) syncIng(task Task) {
 	} else {
 		glog.V(2).Infof("Adding or Updating Ingress: %v\n", key)
 
-		if isMaster(ing) {
+		if utils.IsMaster(ing) {
 			mergeableIngExs, err := lbc.createMergableIngresses(ing)
 			if err != nil {
-				lbc.syncQueue.requeueAfter(task, err, 5*time.Second)
+				lbc.syncQueue.RequeueAfter(task, err, 5*time.Second)
 				lbc.recorder.Eventf(ing, api_v1.EventTypeWarning, "Rejected", "%v was rejected: %v", key, err)
 				if lbc.reportStatusEnabled() {
 					err = lbc.statusUpdater.ClearIngressStatus(*ing)
@@ -734,7 +528,7 @@ func (lbc *LoadBalancerController) syncIng(task Task) {
 		}
 		ingEx, err := lbc.createIngress(ing)
 		if err != nil {
-			lbc.syncQueue.requeueAfter(task, err, 5*time.Second)
+			lbc.syncQueue.RequeueAfter(task, err, 5*time.Second)
 			lbc.recorder.Eventf(ing, api_v1.EventTypeWarning, "Rejected", "%v was rejected: %v", key, err)
 			if lbc.reportStatusEnabled() {
 				err = lbc.statusUpdater.ClearIngressStatus(*ing)
@@ -762,14 +556,14 @@ func (lbc *LoadBalancerController) syncIng(task Task) {
 
 // syncExternalService does not sync all services.
 // We only watch the Service specified by the external-service flag.
-func (lbc *LoadBalancerController) syncExternalService(task Task) {
+func (lbc *LoadBalancerController) syncExternalService(task queue.Task) {
 	key := task.Key
 	obj, exists, err := lbc.svcLister.GetByKey(key)
 	if err != nil {
-		lbc.syncQueue.requeue(task, err)
+		lbc.syncQueue.Requeue(task, err)
 		return
 	}
-	statusIngs, mergableIngs := lbc.getManagedIngresses()
+	statusIngs, mergableIngs := lbc.GetManagedIngresses()
 	if !exists {
 		// service got removed
 		lbc.statusUpdater.ClearStatusFromExternalService()
@@ -786,7 +580,7 @@ func (lbc *LoadBalancerController) syncExternalService(task Task) {
 }
 
 // isExternalServiceForStatus matches the service specified by the external-service arg
-func (lbc *LoadBalancerController) isExternalServiceForStatus(svc *api_v1.Service) bool {
+func (lbc *LoadBalancerController) IsExternalServiceForStatus(svc *api_v1.Service) bool {
 	return lbc.statusUpdater.namespace == svc.Namespace && lbc.statusUpdater.externalServiceName == svc.Name
 }
 
@@ -801,15 +595,15 @@ func (lbc *LoadBalancerController) reportStatusEnabled() bool {
 	return false
 }
 
-func (lbc *LoadBalancerController) syncSecret(task Task) {
+func (lbc *LoadBalancerController) syncSecret(task queue.Task) {
 	key := task.Key
 	obj, secrExists, err := lbc.secretLister.Store.GetByKey(key)
 	if err != nil {
-		lbc.syncQueue.requeue(task, err)
+		lbc.syncQueue.Requeue(task, err)
 		return
 	}
 
-	namespace, name, err := ParseNamespaceName(key)
+	namespace, name, err := utils.ParseNamespaceName(key)
 	if err != nil {
 		glog.Warningf("Secret key %v is invalid: %v", key, err)
 		return
@@ -818,7 +612,7 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 	nonMinions, minions, err := lbc.findIngressesForSecret(namespace, name)
 	if err != nil {
 		glog.Warningf("Failed to find Ingress resources for Secret %v: %v", key, err)
-		lbc.syncQueue.requeueAfter(task, err, 5*time.Second)
+		lbc.syncQueue.RequeueAfter(task, err, 5*time.Second)
 	}
 
 	glog.V(2).Infof("Found %v Non-Minion and %v Minion Ingress resources with Secret %v", len(nonMinions), len(minions), key)
@@ -827,7 +621,7 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 		glog.V(2).Infof("Deleting Secret: %v\n", key)
 
 		for _, minion := range minions {
-			master, err := lbc.findMasterForMinion(&minion)
+			master, err := lbc.FindMasterForMinion(&minion)
 			if err != nil {
 				glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
 				continue
@@ -843,7 +637,7 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 			}
 			lbc.recorder.Eventf(&minion, api_v1.EventTypeWarning, "Rejected", "%v/%v was rejected due to deleted Secret %v: %v", minion.Namespace, minion.Name, key)
 			lbc.recorder.Eventf(master, api_v1.EventTypeWarning, "Rejected", "Minion %v/%v was rejected due to deleted Secret %v: %v", minion.Namespace, minion.Name, key)
-			lbc.syncQueue.enqueue(&minion)
+			lbc.syncQueue.Enqueue(&minion)
 		}
 
 		if err := lbc.configurator.DeleteSecret(key, nonMinions); err != nil {
@@ -851,7 +645,7 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 		}
 
 		for _, ing := range nonMinions {
-			lbc.syncQueue.enqueue(&ing)
+			lbc.syncQueue.Enqueue(&ing)
 			lbc.recorder.Eventf(&ing, api_v1.EventTypeWarning, "Rejected", "%v/%v was rejected due to deleted Secret %v", ing.Namespace, ing.Name, key)
 		}
 
@@ -887,7 +681,7 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 				glog.Errorf("Couldn't validate secret %v: %v", key, err)
 
 				for _, minion := range minions {
-					master, err := lbc.findMasterForMinion(&minion)
+					master, err := lbc.FindMasterForMinion(&minion)
 					if err != nil {
 						glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
 						continue
@@ -903,14 +697,14 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 					}
 					lbc.recorder.Eventf(&minion, api_v1.EventTypeWarning, "Rejected", "%v/%v was rejected due to invalid Secret %v: %v", minion.Namespace, minion.Name, key, err)
 					lbc.recorder.Eventf(master, api_v1.EventTypeWarning, "Rejected", "Minion %v/%v was rejected due to invalid Secret %v: %v", minion.Namespace, minion.Name, key, err)
-					lbc.syncQueue.enqueue(&minion)
+					lbc.syncQueue.Enqueue(&minion)
 				}
 
 				if err := lbc.configurator.DeleteSecret(key, nonMinions); err != nil {
 					glog.Errorf("Error when deleting Secret: %v: %v", key, err)
 				}
 				for _, ing := range nonMinions {
-					lbc.syncQueue.enqueue(&ing)
+					lbc.syncQueue.Enqueue(&ing)
 					lbc.recorder.Eventf(&ing, api_v1.EventTypeWarning, "Rejected", "%v/%v was rejected due to invalid Secret %v: %v", ing.Namespace, ing.Name, key, err)
 				}
 				lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "%v was rejected: %v", key, err)
@@ -924,7 +718,7 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 					lbc.recorder.Eventf(&ing, api_v1.EventTypeWarning, "UpdatedWithError", "Configuration for %v/%v was updated, but not applied: %v", ing.Namespace, ing.Name, err)
 				}
 				for _, minion := range minions {
-					master, err := lbc.findMasterForMinion(&minion)
+					master, err := lbc.FindMasterForMinion(&minion)
 					if err != nil {
 						glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
 						continue
@@ -938,7 +732,7 @@ func (lbc *LoadBalancerController) syncSecret(task Task) {
 					lbc.recorder.Eventf(&ing, api_v1.EventTypeNormal, "Updated", "Configuration for %v/%v was updated", ing.Namespace, ing.Name)
 				}
 				for _, minion := range minions {
-					master, err := lbc.findMasterForMinion(&minion)
+					master, err := lbc.FindMasterForMinion(&minion)
 					if err != nil {
 						glog.Errorf("Ignoring Ingress %v(Minion): %v", minion.Name, err)
 						continue
@@ -963,11 +757,11 @@ items:
 			continue
 		}
 
-		if !lbc.isNginxIngress(&ing) {
+		if !lbc.IsNginxIngress(&ing) {
 			continue
 		}
 
-		if !isMinion(&ing) {
+		if !utils.IsMinion(&ing) {
 			if !lbc.configurator.HasIngress(&ing) {
 				continue
 			}
@@ -990,7 +784,7 @@ items:
 		// we're dealing with a minion
 		// minions can only have JWT secrets
 		if lbc.isNginxPlus {
-			master, err := lbc.findMasterForMinion(&ing)
+			master, err := lbc.FindMasterForMinion(&ing)
 			if err != nil {
 				glog.Infof("Ignoring Ingress %v(Minion): %v", ing.Name, err)
 				continue
@@ -1011,14 +805,14 @@ items:
 	return nonMinions, minions, nil
 }
 
-func (lbc *LoadBalancerController) enqueueIngressForService(svc *api_v1.Service) {
+func (lbc *LoadBalancerController) EnqueueIngressForService(svc *api_v1.Service) {
 	ings := lbc.getIngressesForService(svc)
 	for _, ing := range ings {
-		if !lbc.isNginxIngress(&ing) {
+		if !lbc.IsNginxIngress(&ing) {
 			continue
 		}
-		if isMinion(&ing) {
-			master, err := lbc.findMasterForMinion(&ing)
+		if utils.IsMinion(&ing) {
+			master, err := lbc.FindMasterForMinion(&ing)
 			if err != nil {
 				glog.Errorf("Ignoring Ingress %v(Minion): %v", ing.Name, err)
 				continue
@@ -1028,7 +822,7 @@ func (lbc *LoadBalancerController) enqueueIngressForService(svc *api_v1.Service)
 		if !lbc.configurator.HasIngress(&ing) {
 			continue
 		}
-		lbc.syncQueue.enqueue(&ing)
+		lbc.syncQueue.Enqueue(&ing)
 
 	}
 }
@@ -1292,7 +1086,7 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort *api_v1.ServicePort, sv
 
 	pod := &pods.Items[0]
 
-	portNum, err := FindPort(pod, svcPort)
+	portNum, err := utils.FindPort(pod, svcPort)
 	if err != nil {
 		return 0, fmt.Errorf("Error finding named port %v in pod %s: %v", svcPort, pod.Name, err)
 	}
@@ -1314,19 +1108,9 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *extensio
 	return nil, fmt.Errorf("service %s doesn't exists", svcKey)
 }
 
-// ParseNamespaceName parses the string in the <namespace>/<name> format and returns the name and the namespace.
-// It returns an error in case the string does not follow the <namespace>/<name> format.
-func ParseNamespaceName(value string) (ns string, name string, err error) {
-	res := strings.Split(value, "/")
-	if len(res) != 2 {
-		return "", "", fmt.Errorf("%q must follow the format <namespace>/<name>", value)
-	}
-	return res[0], res[1], nil
-}
-
-// Check if resource ingress class annotation (if exists) is matching with ingress controller class
+// IsNginxIngress checks if resource ingress class annotation (if exists) is matching with ingress controller class
 // If annotation is absent and use-ingress-class-only enabled - ingress resource would ignore
-func (lbc *LoadBalancerController) isNginxIngress(ing *extensions.Ingress) bool {
+func (lbc *LoadBalancerController) IsNginxIngress(ing *extensions.Ingress) bool {
 	if class, exists := ing.Annotations[ingressClassKey]; exists {
 		if lbc.useIngressClassOnly {
 			return class == lbc.ingressClass
@@ -1381,10 +1165,10 @@ func (lbc *LoadBalancerController) getMinionsForMaster(master *nginx.IngressEx) 
 	var minionPaths = make(map[string]*extensions.Ingress)
 
 	for i := range ings.Items {
-		if !lbc.isNginxIngress(&ings.Items[i]) {
+		if !lbc.IsNginxIngress(&ings.Items[i]) {
 			continue
 		}
-		if !isMinion(&ings.Items[i]) {
+		if !utils.IsMinion(&ings.Items[i]) {
 			continue
 		}
 		if ings.Items[i].Spec.Rules[0].Host != master.Ingress.Spec.Rules[0].Host {
@@ -1427,21 +1211,21 @@ func (lbc *LoadBalancerController) getMinionsForMaster(master *nginx.IngressEx) 
 	return minions, nil
 }
 
-// findMasterForHost returns a master for a given minion
-func (lbc *LoadBalancerController) findMasterForMinion(minion *extensions.Ingress) (*extensions.Ingress, error) {
+// FindMasterForMinion returns a master for a given minion
+func (lbc *LoadBalancerController) FindMasterForMinion(minion *extensions.Ingress) (*extensions.Ingress, error) {
 	ings, err := lbc.ingressLister.List()
 	if err != nil {
 		return &extensions.Ingress{}, err
 	}
 
 	for i := range ings.Items {
-		if !lbc.isNginxIngress(&ings.Items[i]) {
+		if !lbc.IsNginxIngress(&ings.Items[i]) {
 			continue
 		}
 		if !lbc.configurator.HasIngress(&ings.Items[i]) {
 			continue
 		}
-		if !isMaster(&ings.Items[i]) {
+		if !utils.IsMaster(&ings.Items[i]) {
 			continue
 		}
 		if ings.Items[i].Spec.Rules[0].Host != minion.Spec.Rules[0].Host {
@@ -1492,18 +1276,4 @@ func (lbc *LoadBalancerController) createMergableIngresses(master *extensions.In
 	mergeableIngresses.Minions = minions
 
 	return &mergeableIngresses, nil
-}
-
-func isMinion(ing *extensions.Ingress) bool {
-	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "minion" {
-		return true
-	}
-	return false
-}
-
-func isMaster(ing *extensions.Ingress) bool {
-	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "master" {
-		return true
-	}
-	return false
 }

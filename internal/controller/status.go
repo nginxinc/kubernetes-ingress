@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	"github.com/nginxinc/kubernetes-ingress/internal/utils"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +26,7 @@ type StatusUpdater struct {
 	externalServiceAddresses []string
 	status                   []api_v1.LoadBalancerIngress
 	keyFunc                  func(obj interface{}) (string, error)
-	ingLister                *StoreToIngressLister
+	ingLister                *utils.StoreToIngressLister
 }
 
 // UpdateManagedAndMergeableIngresses handles the full return format of LoadBalancerController.getManagedIngresses
