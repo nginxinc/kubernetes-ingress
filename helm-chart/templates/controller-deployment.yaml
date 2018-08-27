@@ -18,7 +18,7 @@ spec:
       labels:
         app: {{ .Values.controller.name | trunc 63 }}
 {{- if .Values.prometheus }}
-{{- if and (.Values.controller.nginxplus)  (.Values.prometheus.create) }}
+{{- if .Values.prometheus.create }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ .Values.prometheus.port }}"
@@ -79,7 +79,7 @@ spec:
 {{- end }}
 {{- end }}
 {{- if .Values.prometheus }}
-{{- if and (.Values.controller.nginxplus)  (.Values.prometheus.create) }}
+{{- if .Values.prometheus.create }}
       - image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.image.tag }}"
         name: nginx-prometheus-exporter
         imagePullPolicy: "{{ .Values.prometheus.image.pullPolicy }}"
@@ -89,9 +89,13 @@ spec:
         args:
           - -web.listen-address
           - :{{ .Values.prometheus.port }}
+{{- if .Values.controller.nginxplus }}
           - -nginx.plus
-          - -nginx.scrape-uri
           - http://127.0.0.1:8080/api
+{{ else }}
+          - http://127.0.0.1:8080/stub_status
+{{- end }}
+          - -nginx.scrape-uri
 {{- end }}
 {{- end }}
 {{- end }}

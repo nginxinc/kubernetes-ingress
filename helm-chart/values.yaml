@@ -34,3 +34,10 @@ controller:
     enableLeaderElection: true
 rbac:
   create: true
+prometheus:
+  create: false
+  port: 9113
+  image:
+    repository: nginx/nginx-prometheus-exporter
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
