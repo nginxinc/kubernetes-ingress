@@ -150,7 +150,7 @@ For NGINX, you can access the [stub_status page](http://nginx.org/en/docs/http/n
 2. Stub_status is available on port 8080 by default. It is customizable by the `nginx-status-port` command-line argument. If yours is not on 8080, modify the kubectl proxy command below.
 1. Use the `kubectl port-forward` command to forward connections to port 8080 on your local machine to port 8080 of an NGINX Ingress controller pod (replace `<nginx-ingress-pod>` with the actual name of a pod):.
     ```
-    $ kuebctl port-forward <nginx-ingress-pod> 8080:8080 --namespace=nginx-ingress
+    $ kubectl port-forward <nginx-ingress-pod> 8080:8080 --namespace=nginx-ingress
     ```
 Open your browser at http://127.0.0.1:8080/stub_status to access the status.
 
