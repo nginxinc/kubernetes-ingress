@@ -91,11 +91,13 @@ spec:
           - :{{ .Values.prometheus.port }}
 {{- if .Values.controller.nginxplus }}
           - -nginx.plus
+{{- end }}
+          - -nginx.scrape-uri
+{{- if .Values.controller.nginxplus }}
           - http://127.0.0.1:8080/api
 {{ else }}
           - http://127.0.0.1:8080/stub_status
 {{- end }}
-          - -nginx.scrape-uri
 {{- end }}
 {{- end }}
 {{- end }}

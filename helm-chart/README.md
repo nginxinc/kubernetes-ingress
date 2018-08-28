@@ -89,7 +89,7 @@ Parameter | Description | Default
 `controller.reportIngressStatus.externalService` | Specifies the name of the service with the type LoadBalancer through which the Ingress controller is exposed externally. The external address of the service is used when reporting the status of Ingress resources. `controller.reportIngressStatus.enable` must be set to `true`. | nginx-ingress
 `controller.reportIngressStatus.enableLeaderElection` | Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources. `controller.reportIngressStatus.enable` must be set to `true`. | true
 `rbac.create` | Configures RBAC. | true
-`prometheues.create` | Deploys a Prometheus exporter container within the Ingress controller pod. Requires NGINX Plus. `controller.nginxplus` must be set to `true`. | false
+`prometheues.create` | Deploys a Prometheus exporter container within the Ingress controller pod. | false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
 `prometheus.image.repository` | The image repository of the Prometheus exporter. | nginx/nginx-prometheus-exporter
 `prometheus.image.tag` | The tag of the Prometheus exporter image. | 0.1.0
