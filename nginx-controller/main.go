@@ -220,8 +220,7 @@ func main() {
 	if *nginxPlus {
 		time.Sleep(500 * time.Millisecond)
 		httpClient := getSocketClient()
-		apiURL := fmt.Sprintf("http://127.0.0.1:%v/api", *nginxStatusPort)
-		nginxAPI, err = plus.NewNginxAPIController(&httpClient, apiURL, local)
+		nginxAPI, err = plus.NewNginxAPIController(&httpClient, "http://nginx-plus-api/api", local)
 		if err != nil {
 			glog.Fatalf("Failed to create NginxAPIController: %v", err)
 		}
