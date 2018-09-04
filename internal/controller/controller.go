@@ -278,7 +278,7 @@ func (lbc *LoadBalancerController) syncEndpoint(task queue.Task) {
 		ings := lbc.getIngressForEndpoints(obj)
 
 		var ingExes []*nginx.IngressEx
-		var mergableIngresses []*nginx.MergeableIngresses
+		var mergableIngressesBatch []*nginx.MergeableIngresses
 
 		for i := range ings {
 			if !lbc.isNginxIngress(&ings[i]) {
@@ -299,7 +299,7 @@ func (lbc *LoadBalancerController) syncEndpoint(task queue.Task) {
 					continue
 				}
 
-				mergableIngExes = append(mergableIngExes, mergableIngresses)
+				mergableIngressesBatch = append(mergableIngressesBatch, mergeableIngresses)
 				continue
 			}
 			if !lbc.cnf.HasIngress(&ings[i]) {
@@ -322,10 +322,10 @@ func (lbc *LoadBalancerController) syncEndpoint(task queue.Task) {
 		if err != nil {
 			glog.Errorf("Error updating endpoints for %v: %v", ingExes, err)
 		}
-		glog.V(3).Infof("Updating Endpoints for %v", mergableIngresses)
-		// TODO FIX err = lbc.cnf.UpdateEndpointsMergeableIngress(mergeableIngresses)
+		glog.V(3).Infof("Updating Endpoints for %v", mergableIngressesBatch)
+		err = lbc.cnf.UpdateEndpointsMergeableIngress(mergableIngressesBatch)
 		if err != nil {
-			glog.Errorf("Error updating endpoints for %v/%v: %v", ing.Namespace, ing.Name, err)
+			glog.Errorf("Error updating endpoints for %v: %v", mergableIngressesBatch, err)
 		}
 	}
 }

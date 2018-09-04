@@ -718,14 +718,15 @@ func TestUpdateEndpoints(t *testing.T) {
 	}
 
 	ingress := createCafeIngressEx()
-	err = cnf.UpdateEndpoints(&ingress)
+	ingresses := []*IngressEx{&ingress}
+	err = cnf.UpdateEndpoints(ingresses)
 	if err != nil {
 		t.Errorf("UpdateEndpoints returned\n%v, but expected \n%v", err, nil)
 	}
 
 	// test with OSS Configurator
 	cnf.nginxAPI = nil
-	err = cnf.UpdateEndpoints(&ingress)
+	err = cnf.UpdateEndpoints(ingresses)
 	if err != nil {
 		t.Errorf("UpdateEndpoints returned\n%v, but expected \n%v", err, nil)
 	}
@@ -738,14 +739,15 @@ func TestUpdateEndpointsMergeableIngress(t *testing.T) {
 	}
 
 	mergeableIngress := createMergeableCafeIngress()
-	err = cnf.UpdateEndpointsMergeableIngress(mergeableIngress)
+	mergeableIngresses := []*MergeableIngresses{mergeableIngress}
+	err = cnf.UpdateEndpointsMergeableIngress(mergeableIngresses)
 	if err != nil {
 		t.Errorf("UpdateEndpointsMergeableIngress returned \n%v, but expected \n%v", err, nil)
 	}
 
 	// test with OSS Configurator
 	cnf.nginxAPI = nil
-	err = cnf.UpdateEndpointsMergeableIngress(mergeableIngress)
+	err = cnf.UpdateEndpointsMergeableIngress(mergeableIngresses)
 	if err != nil {
 		t.Errorf("UpdateEndpointsMergeableIngress returned \n%v, but expected \n%v", err, nil)
 	}
@@ -758,7 +760,8 @@ func TestUpdateEndpointsFailsWithInvalidTemplate(t *testing.T) {
 	}
 
 	ingress := createCafeIngressEx()
-	err = cnf.UpdateEndpoints(&ingress)
+	ingresses := []*IngressEx{&ingress}
+	err = cnf.UpdateEndpoints(ingresses)
 	if err == nil {
 		t.Errorf("UpdateEndpoints returned\n%v, but expected \n%v", nil, "template execution error")
 	}
@@ -771,7 +774,8 @@ func TestUpdateEndpointsMergeableIngressFailsWithInvalidTemplate(t *testing.T) {
 	}
 
 	mergeableIngress := createMergeableCafeIngress()
-	err = cnf.UpdateEndpointsMergeableIngress(mergeableIngress)
+	mergeableIngresses := []*MergeableIngresses{mergeableIngress}
+	err = cnf.UpdateEndpointsMergeableIngress(mergeableIngresses)
 	if err == nil {
 		t.Errorf("UpdateEndpointsMergeableIngress returned \n%v, but expected \n%v", nil, "template execution error")
 	}
