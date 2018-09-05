@@ -994,48 +994,33 @@ func (cnf *Configurator) UpdateEndpoints(ingExes []*IngressEx) error {
 }
 
 // UpdateEndpointsMergeableIngress updates endpoints in NGINX configuration for a mergeable Ingress resource
-func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergableIngressesBatch []*MergeableIngresses) error {
+func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergableIngressesSlice []*MergeableIngresses) error {
 	reloadPlus := false
-	errors := []error{}
-	for i := range mergableIngressesBatch {
-		err := cnf.addOrUpdateMergeableIngress(mergableIngressesBatch[i])
+	for i := range mergableIngressesSlice {
+		err := cnf.addOrUpdateMergeableIngress(mergableIngressesSlice[i])
 		if err != nil {
-			glog.V(3).Infof("Error adding or updating ingress %v/%v: %v", mergableIngressesBatch[i].Master.Ingress.Namespace, mergableIngressesBatch[i].Master.Ingress.Name, err)
-			errors = append(errors, err)
-			continue
+			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergableIngressesSlice[i].Master.Ingress.Namespace, mergableIngressesSlice[i].Master.Ingress.Name, err)
 		}
 
 		if cnf.isPlus() {
-			for _, ing := range mergableIngressesBatch[i].Minions {
+			for _, ing := range mergableIngressesSlice[i].Minions {
 				err = cnf.updatePlusEndpoints(ing)
 				if err != nil {
 					glog.Warningf("Couldn't update the endpoints via the API: %v; reloading configuration instead", err)
-					errors = append(errors, err)
 					reloadPlus = true
-					break
 				}
 			}
 		}
 	}
 	if cnf.isPlus() && !reloadPlus {
-		return consolodiateErrors(errors)
+		glog.V(3).Info("No need to reload nginx")
+		return nil
 	}
 
 	if err := cnf.nginx.Reload(); err != nil {
-		return fmt.Errorf("Error reloading NGINX: %v. additional errors: %v", err, consolodiateErrors(errors))
+		return fmt.Errorf("Error reloading NGINX when updating endpoints for %v: %v", mergableIngressesSlice, err)
 	}
-	return consolodiateErrors(errors)
-}
-
-func consolodiateErrors(errors []error) error {
-	errorString := ""
-	if len(errors) == 0 {
-		return nil
-	}
-	for _, e := range errors {
-		errorString = errorString + e.Error()
-	}
-	return fmt.Errorf(errorString)
+	return nil
 }
 
 func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
