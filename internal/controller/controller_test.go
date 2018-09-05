@@ -133,23 +133,23 @@ func TestIsNginxIngress(t *testing.T) {
 	}
 
 	for _, test := range testsWithoutIngressClassOnly {
-		if result := test.lbc.isNginxIngress(test.ing); result != test.expected {
+		if result := test.lbc.IsNginxIngress(test.ing); result != test.expected {
 			classAnnotation := "N/A"
 			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
 				classAnnotation = class
 			}
-			t.Errorf("lbc.isNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
+			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
 				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
 		}
 	}
 
 	for _, test := range testsWithIngressClassOnly {
-		if result := test.lbc.isNginxIngress(test.ing); result != test.expected {
+		if result := test.lbc.IsNginxIngress(test.ing); result != test.expected {
 			classAnnotation := "N/A"
 			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
 				classAnnotation = class
 			}
-			t.Errorf("lbc.isNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
+			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
 				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
 		}
 	}
@@ -241,7 +241,7 @@ func TestFindMasterForMinion(t *testing.T) {
 	lbc.ingressLister.Add(&coffeeMinion)
 	lbc.ingressLister.Add(&teaMinion)
 
-	master, err := lbc.findMasterForMinion(&coffeeMinion)
+	master, err := lbc.FindMasterForMinion(&coffeeMinion)
 	if err != nil {
 		t.Errorf("Error finding master for %s(Minion): %v", coffeeMinion.Name, err)
 	}
@@ -249,7 +249,7 @@ func TestFindMasterForMinion(t *testing.T) {
 		t.Errorf("Invalid Master found. Obtained %+v, Expected %+v", master, cafeMaster)
 	}
 
-	master, err = lbc.findMasterForMinion(&teaMinion)
+	master, err = lbc.FindMasterForMinion(&teaMinion)
 	if err != nil {
 		t.Errorf("Error finding master for %s(Minion): %v", teaMinion.Name, err)
 	}
@@ -265,13 +265,13 @@ func TestFindMasterForMinionNoMaster(t *testing.T) {
 	lbc.ingressLister.Add(&teaMinion)
 
 	expected := fmt.Errorf("Could not find a Master for Minion: '%v/%v'", coffeeMinion.Namespace, coffeeMinion.Name)
-	_, err := lbc.findMasterForMinion(&coffeeMinion)
+	_, err := lbc.FindMasterForMinion(&coffeeMinion)
 	if !reflect.DeepEqual(err, expected) {
 		t.Errorf("Expected: %s \nObtained: %s", expected, err)
 	}
 
 	expected = fmt.Errorf("Could not find a Master for Minion: '%v/%v'", teaMinion.Namespace, teaMinion.Name)
-	_, err = lbc.findMasterForMinion(&teaMinion)
+	_, err = lbc.FindMasterForMinion(&teaMinion)
 	if !reflect.DeepEqual(err, expected) {
 		t.Errorf("Error master found for %s(Minion): %v", teaMinion.Name, err)
 	}
@@ -294,7 +294,7 @@ func TestFindMasterForMinionInvalidMinion(t *testing.T) {
 	lbc.ingressLister.Add(&cafeMaster)
 	lbc.ingressLister.Add(&coffeeMinion)
 
-	master, err := lbc.findMasterForMinion(&coffeeMinion)
+	master, err := lbc.FindMasterForMinion(&coffeeMinion)
 	if err != nil {
 		t.Errorf("Error finding master for %s(Minion): %v", coffeeMinion.Name, err)
 	}

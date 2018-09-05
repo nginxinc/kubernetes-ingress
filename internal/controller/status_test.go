@@ -3,6 +3,7 @@ package controller
 import (
 	"testing"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/utils"
 	"k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,7 +33,7 @@ func TestStatusUpdate(t *testing.T) {
 			ing,
 		}},
 	)
-	ingLister := StoreToIngressLister{}
+	ingLister := utils.StoreToIngressLister{}
 	ingLister.Store, _ = cache.NewInformer(
 		cache.NewListWatchFromClient(fakeClient.Extensions().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
 		&extensions.Ingress{}, 2, nil)
