@@ -71,7 +71,7 @@ NGINX Plus provides you with [advanced statistics](https://www.nginx.com/product
 * **JWTs** NGINX Plus can validate JSON Web Tokens (JWTs), providing a flexible authentication mechanism.
 * **Support** Support from NGINX Inc is available for NGINX Plus Ingress controller.
 
-**Note**: Deployment of the Ingress controller for NGINX Plus requires you to do one extra step: build your own [Docker image](nginx-controller) using the certificate and key for your subscription.
+**Note**: Deployment of the Ingress controller for NGINX Plus requires you to do one extra step: build your own [Docker image](build) using the certificate and key for your subscription.
 The Docker image of the Ingress controller for NGINX is [available on Docker Hub](https://hub.docker.com/r/nginx/nginx-ingress/).
 
 ## Using Multiple Ingress Controllers

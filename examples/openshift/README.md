@@ -2,17 +2,17 @@
 
 ## Prerequisites
 
-* A cluster with OpenShift Release 3.5 and above. 
+* A cluster with OpenShift Release 3.5 and above.
 * You must be the cluster administrator to deploy the Ingress controller.
 * For NGINX Plus:
-    * Build and make available in your cluster the [Ingress controller](../../nginx-controller) image.
+    * Build and make available in your cluster the [Ingress controller](../../build) image.
     * Update the container image field in the `nginx-plus-ingress-rc.yaml` file accordingly.
 
 
 ## Steps
 
 1. Avoid conflicts with the OpenShift Router.
-    
+
     NGINX Plus Ingress controller must be able to bind to ports 80 and 443 of the cluster node, where it is running, like the OpenShift Router. Thus, you need to make sure that the Ingress controller and the Router are running on separate nodes. Additionally, NGINX Plus binds to port 8080 to expose its API and the monitoring dashboard.
 
     To quickly disable the Router you can run:
@@ -27,7 +27,7 @@
 
 1. Create a service account for the Ingress controller with the name *nginx-ingress*:
     ```
-    $ oc create sa nginx-ingress 
+    $ oc create sa nginx-ingress
     ```
 1. Create a cluster role for the Ingress controller:
     ```
@@ -62,7 +62,7 @@
     $ oc create -f ingress-admin-role.yaml
     ```
 
-    Add this role to the users. As an example, we add this role for the user *developer* from the project *myproject*. 
+    Add this role to the users. As an example, we add this role for the user *developer* from the project *myproject*.
     ```
     $ oc policy add-role-to-user ingress-admin developer -n myproject
     ```

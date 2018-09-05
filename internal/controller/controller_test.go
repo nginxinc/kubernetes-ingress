@@ -8,8 +8,8 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx"
-	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx/plus"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx/plus"
 	"k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"

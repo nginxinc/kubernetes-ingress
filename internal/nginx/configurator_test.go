@@ -6,7 +6,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/nginx-controller/nginx/plus"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx/plus"
 
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"

@@ -23,14 +23,13 @@ Although the Ingress controller is written in golang, golang is not required, as
 
 ### Building the Image and Pushing It to the Private Registry
 
-We build the image using the make utility and the provided `Makefile`. Let’s create the controller binary, build an image and push the image to the private registry. 
+We build the image using the make utility and the provided `Makefile`. Let’s create the controller binary, build an image and push the image to the private registry.
 
 1. Make sure to run the `docker login` command first to login to the registry. If you’re using Google Container Registry, you don’t need to use the docker command to login -- make sure you’re logged into the gcloud tool (using the `gcloud auth login` command) and set the variable `PUSH_TO_GCR=1` when running the make command.
 
-1. Clone the Ingress controller repo and change your folder to `nginx-controller`: 
+1. Clone the Ingress controller repo:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
-    $ cd kubernetes-ingress/nginx-controller
     ```
 
 1. If you're using a stable release, check out the corresponding tag. For release 1.3.0, run:
@@ -84,10 +83,8 @@ The **Makefile** contains the following main variables for you to customize (eit
   1. `Dockerfile`, for building a debian-based image with NGINX. It's used by default.
   1. `DockerfileForAlpine`, for building an alpine-based image with NGINX.
   1. `DockerfileForPlus`, for building an debian-based image with NGINX Plus.
-* **GENERATE_DEFAULT_CERT_AND_KEY** - The Ingress controller requires a certificate and a key for the default HTTP/HTTPS server. You can reference them in a TLS Secret in a command-line argument to the Ingress controller. As an alternative, you can add a file in the PEM format with your certificate and key to the image as `/etc/nginx/secrets/default`. Optionally, you can generate a self-signed certificate and a key during the build process. Set `GENERATE_DEFAULT_CERT_AND_KEY` to `1` to generate a certificate and a key in the `default.pem` file. Note that you must add the `ADD` instruction in the Dockerfile to copy the cert and the key to the image. The default value of `GENERATE_DEFAULT_CERT_AND_KEY` is `0`. 
+* **GENERATE_DEFAULT_CERT_AND_KEY** - The Ingress controller requires a certificate and a key for the default HTTP/HTTPS server. You can reference them in a TLS Secret in a command-line argument to the Ingress controller. As an alternative, you can add a file in the PEM format with your certificate and key to the image as `/etc/nginx/secrets/default`. Optionally, you can generate a self-signed certificate and a key during the build process. Set `GENERATE_DEFAULT_CERT_AND_KEY` to `1` to generate a certificate and a key in the `default.pem` file. Note that you must add the `ADD` instruction in the Dockerfile to copy the cert and the key to the image. The default value of `GENERATE_DEFAULT_CERT_AND_KEY` is `0`.
 * **DOCKER_BUILD_OPTIONS** -- the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `docker build` command. For example, `--pull`.
 * **BUILD_IN_CONTAINER** -- By default, to compile the controller we use the [golang](https://hub.docker.com/_/golang/) container that we run as part of the building process. If you want to compile the controller using your local golang environment:
   1. Make sure that the Ingress controller repo is in your `$GOPATH`.
   1. Specify `BUILD_IN_CONTAINER=0` when you run the make command.
-
-

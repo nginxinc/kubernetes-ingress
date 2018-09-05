@@ -10,7 +10,7 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
   - Helm 2.8.x+.
   - Git.
   - If you’d like to use NGINX Plus:
-    - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](../nginx-controller/README.md).
+    - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](../../build/README.md).
     - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
 
 ## Installing the Chart

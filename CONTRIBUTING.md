@@ -30,8 +30,12 @@ Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/mas
 ### Project Structure
 
 * This Ingress Controller is written in Go and supports both the open source NGINX software and NGINX Plus.
-* The main code resides under `/nginx-controller`
-* The project dependencies reside in the `/vendor`. We use  [dep](https://github.com/golang/dep) for managing dependencies.
+* The project follows a standard Go project layout
+    * The main code is found at `cmd/nginx-ic/`
+    * The internal code is found at `internal/`
+    * Build files for Docker and CI are found under `build/`
+    * Deployment yaml files, and Helm files are found at `deployments/`
+    * The project dependencies are found at `vendor/`. We use  [dep](https://github.com/golang/dep) for managing dependencies.
 
 ## Contributing
 

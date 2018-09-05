@@ -6,7 +6,7 @@ RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
 	&& ln -sf /proc/1/fd/1 /var/log/nginx/stream-access.log \
 	&& ln -sf /proc/1/fd/2 /var/log/nginx/error.log
 
-COPY nginx-ingress nginx/templates/nginx.ingress.tmpl nginx/templates/nginx.tmpl /
+COPY nginx-ingress internal/nginx/templates/nginx.ingress.tmpl internal/nginx/templates/nginx.tmpl /
 
 RUN rm /etc/nginx/conf.d/*
 

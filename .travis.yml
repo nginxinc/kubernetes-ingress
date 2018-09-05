@@ -6,8 +6,7 @@ go:
 - "1.10"
 script:
 - echo "Building ingress controller commit:${TRAVIS_COMMIT}"
-- cd nginx-controller && 
-  make  BUILD_IN_CONTAINER=0 container;
+- make  BUILD_IN_CONTAINER=0 container;
 before_install:
 - echo "PR Slug:${TRAVIS_PULL_REQUEST_SLUG}"
 - if [[ "${TRAVIS_PULL_REQUEST_SLUG}" == "nginxinc/kubernetes-ingress" || "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
