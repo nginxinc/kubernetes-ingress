@@ -49,4 +49,4 @@ endif
 
 clean:
 	rm -f nginx-ingress
-	rm Dockerfile
+	rm -f Dockerfile
