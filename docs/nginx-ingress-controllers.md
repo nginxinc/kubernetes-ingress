@@ -25,7 +25,7 @@ The table below summarizes the key difference between nginxinc/kubernetes-ingres
 | TCP SSL Passthrough | Supported via a ConfigMap | Not supported | Not supported |
 | JWT validation | Not supported | Not supported | Supported |
 | Session persistence | Supported via a third-party module | Not supported | Supported |
-| Configuration templates *1 | See the [template](https://github.com/kubernetes/ingress-nginx/blob/master/rootfs/etc/nginx/template/nginx.tmpl) | See the [templates](https://github.com/nginxinc/kubernetes-ingress/tree/master/nginx-controller/nginx/templates) | See the [templates](https://github.com/nginxinc/kubernetes-ingress/tree/master/nginx-controller/nginx/templates) |
+| Configuration templates *1 | See the [template](https://github.com/kubernetes/ingress-nginx/blob/master/rootfs/etc/nginx/template/nginx.tmpl) | See the [templates](https://github.com/nginxinc/kubernetes-ingress/tree/master/internal/nginx/templates) | See the [templates](https://github.com/nginxinc/kubernetes-ingress/tree/master/internal/nginx/templates) |
 | **Deployment** |
 | Command-line arguments *2 | See the [arguments](https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/cli-arguments.md) | See the [arguments](cli-arguments.md) | See the [arguments](cli-arguments.md) |
 | TLS certificate and key for the default server | Required as a command-line argument/ auto-generated | Required as a command-line argument | Required as a command-line argument |

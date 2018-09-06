@@ -24,9 +24,10 @@ Session.vim
 # Ingress Controller binaries
 osx-nginx-ingress
 nginx-ingress
+!nginx-ingress/
 osx-nginx-plus-ingress
 nginx-plus-ingress
-nginx-controller/nginx-controller
+cmd/nginx-ingress/nginx-ingress
 
 # NGINX Plus license files
 *.crt
@@ -37,3 +38,6 @@ nginx-controller/nginx-controller
 
 # Default certificate and key
 default.pem
+
+# Dockerfiles for building
+Dockerfile

@@ -24,7 +24,7 @@ The table below summarizes all of the options. For some of them, there are examp
 | `nginx.org/redirect-to-https` | `redirect-to-https` | Sets the 301 redirect rule based on the value of the `http_x_forwarded_proto` header on the server block to force incoming traffic to be over HTTPS. Useful when terminating SSL in a load balancer in front of the Ingress controller — see [115](https://github.com/nginxinc/kubernetes-ingress/issues/115) | `False` | |
 | `ingress.kubernetes.io/ssl-redirect` | `ssl-redirect` | Sets an unconditional 301 redirect rule for all incoming HTTP traffic to force incoming traffic over HTTPS. | `True` | |
 | N/A | `error-log-level` | Sets the global [error log level](http://nginx.org/en/docs/ngx_core_module.html#error_log) for NGINX.  | `notice` | |
-| N/A | `log-format` | Sets the custom [log format](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).  | See the [template file](../../nginx-controller/nginx/nginx.conf.tmpl). | |
+| N/A | `log-format` | Sets the custom [log format](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).  | See the [template file](../../internal/nginx/templates/nginx.tmpl). | |
 | `nginx.org/hsts` | `hsts` | Enables [HTTP Strict Transport Security (HSTS)](https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/): the HSTS header is added to the responses from backends. The `preload` directive is included in the header. | `False` | |
 | `nginx.org/hsts-max-age` | `hsts-max-age` | Sets the value of the `max-age` directive of the HSTS header. | `2592000` (1 month) |
 | `nginx.org/hsts-include-subdomains` | `hsts-include-subdomains` | Adds the `includeSubDomains` directive to the HSTS header. | `False`| |
@@ -69,7 +69,7 @@ The table below summarizes all of the options. For some of them, there are examp
 | `nginx.com/slow-start` | N/A | Sets the upstream server [slow-start period](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#server-slow-start). By default, slow-start is activated after a server becomes [available](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#passive-health-checks) or [healthy](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#active-health-checks). To enable slow-start for newly added servers, configure [mandatory active health checks](../health-checks). | `"0s"` | |
 | N/A | `external-status-address` | Sets the address to be reported in the status of Ingress resources. Requires the `-report-status` command-line argument. Overrides the `-external-service` argument. | N/A | [Report Ingress Status](../../docs/report-ingress-status.md). |
 | N/A | `stream-snippets` | Sets a custom snippet in stream context. | N/A | [Support for  TCP/UDP Load Balancing](../tcp-udp). |
-| N/A | `stream-log-format` | Sets the custom [log format](http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format) for TCP/UDP load balancing.  | See the [template file](../../nginx-controller/nginx/nginx.conf.tmpl). | |
+| N/A | `stream-log-format` | Sets the custom [log format](http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format) for TCP/UDP load balancing.  | See the [template file](../../internal/nginx/templates/nginx.tmpl). | |
 
 ## Using ConfigMaps
 

@@ -55,7 +55,7 @@ The table below summarizes the options regarding the images, manifests, helm cha
 | Version | Description |  Image for NGINX | Image for NGINX Plus | Installation Manifests and Helm Chart | Documentation and Examples |
 | ------- | ----------- | --------------- | -------------------- | ---------------------------------------| -------------------------- |
 | Latest stable release | For production use | `nginx/nginx-ingress:1.3.0`, `nginx/nginx-ingress:1.3.0-alpine` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) or [build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/v1.3.0/nginx-controller). | [Build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/v1.3.0/nginx-controller). | [Manifests](https://github.com/nginxinc/kubernetes-ingress/tree/v1.3.0/install). [Helm chart](https://github.com/nginxinc/kubernetes-ingress/tree/v1.3.0/helm-chart). | [Documentation](https://github.com/nginxinc/kubernetes-ingress/tree/v1.3.0/docs). [Examples](https://github.com/nginxinc/kubernetes-ingress/tree/v1.3.0/examples). |
-| Edge | For testing and experimenting | `nginx/nginx-ingress:edge`, `nginx/nginx-ingress:edge-alpine` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) or [build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/master/nginx-controller). | [Build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/master/nginx-controller). | [Manifests](https://github.com/nginxinc/kubernetes-ingress/tree/master/install). [Helm chart](https://github.com/nginxinc/kubernetes-ingress/tree/master/helm-chart). | [Documentation](https://github.com/nginxinc/kubernetes-ingress/tree/master/docs). [Examples](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples). |
+| Edge | For testing and experimenting | `nginx/nginx-ingress:edge`, `nginx/nginx-ingress:edge-alpine` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) or [build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/master/build). | [Build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/master/build). | [Manifests](https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments). [Helm chart](https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments/helm-chart). | [Documentation](https://github.com/nginxinc/kubernetes-ingress/tree/master/docs). [Examples](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples). |
 
 ## Benefits of Using the Ingress Controller with NGINX Plus
 
@@ -71,7 +71,7 @@ NGINX Plus provides you with [advanced statistics](https://www.nginx.com/product
 * **JWTs** NGINX Plus can validate JSON Web Tokens (JWTs), providing a flexible authentication mechanism.
 * **Support** Support from NGINX Inc is available for NGINX Plus Ingress controller.
 
-**Note**: Deployment of the Ingress controller for NGINX Plus requires you to do one extra step: build your own [Docker image](nginx-controller) using the certificate and key for your subscription.
+**Note**: Deployment of the Ingress controller for NGINX Plus requires you to do one extra step: build your own [Docker image](build) using the certificate and key for your subscription.
 The Docker image of the Ingress controller for NGINX is [available on Docker Hub](https://hub.docker.com/r/nginx/nginx-ingress/).
 
 ## Using Multiple Ingress Controllers
