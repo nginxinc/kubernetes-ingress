@@ -6,8 +6,7 @@ go:
 - "1.10"
 script:
 - echo "Building ingress controller commit:${TRAVIS_COMMIT}"
-- cd nginx-controller && 
-  make  BUILD_IN_CONTAINER=0 container;
+- make  BUILD_IN_CONTAINER=0 container;
 - echo "Helm smoke test"
 - cd ${TRAVIS_BUILD_DIR} && wget -O helm.tar.gz ${helm_download} &&
   tar xzfv helm.tar.gz -C ./ --strip-components=1 linux-amd64/helm
