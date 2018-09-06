@@ -10,9 +10,9 @@ script:
 - echo "Helm smoke test"
 - cd ${TRAVIS_BUILD_DIR} && wget -O helm.tar.gz ${helm_download} &&
   tar xzfv helm.tar.gz -C ./ --strip-components=1 linux-amd64/helm
-- ./helm template ./helm-chart/ --name nginx-ingress
-- ./helm template ./helm-chart/ --name nginx-ingress -f helm-chart/values-plus.yaml
-- ./helm template ./helm-chart/ --name nginx-ingress -f helm-chart/values-icp.yaml
+- ./helm template deployments/helm-chart/ --name nginx-ingress
+- ./helm template deployments/helm-chart/ --name nginx-ingress -f deployments/helm-chart/values-plus.yaml
+- ./helm template deployments/helm-chart/ --name nginx-ingress -f deployments/helm-chart/values-icp.yaml
 before_install:
 - echo "PR Slug:${TRAVIS_PULL_REQUEST_SLUG}"
 - if [[ "${TRAVIS_PULL_REQUEST_SLUG}" == "nginxinc/kubernetes-ingress" || "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
