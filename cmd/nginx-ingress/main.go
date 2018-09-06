@@ -284,7 +284,7 @@ func main() {
 	}
 }
 
-func handleTermination(lbc *controller.LoadBalancerController, ngxc *nginx.NginxController, nginxDone chan error) {
+func handleTermination(lbc *controller.LoadBalancerController, ngxc *nginx.Controller, nginxDone chan error) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 

@@ -9,6 +9,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+// CreateSecretHandlers builds the handler funcs for secrets
 func CreateSecretHandlers(lbc *controller.LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {

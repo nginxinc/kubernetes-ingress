@@ -9,6 +9,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+// CreateEndpointHandlers builds the handler funcs for endpoints
 func CreateEndpointHandlers(lbc *controller.LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {

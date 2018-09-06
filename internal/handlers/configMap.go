@@ -9,6 +9,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+// CreateConfigMapHandlers builds the handler funcs for config maps
 func CreateConfigMapHandlers(lbc *controller.LoadBalancerController, name string) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {

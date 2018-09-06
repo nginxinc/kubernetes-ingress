@@ -10,6 +10,7 @@ import (
 	api_v1 "k8s.io/api/core/v1"
 )
 
+// CreateServiceHandlers builds the handler funcs for services
 func CreateServiceHandlers(lbc *controller.LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {

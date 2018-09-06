@@ -17,8 +17,8 @@ const dhparamFilename = "dhparam.pem"
 const TLSSecretFileMode = 0600
 const jwkSecretFileMode = 0644
 
-// NginxController updates NGINX configuration, starts and reloads NGINX
-type NginxController struct {
+// Controller updates NGINX configuration, starts and reloads NGINX
+type Controller struct {
 	nginxConfdPath   string
 	nginxSecretsPath string
 	local            bool
@@ -137,8 +137,8 @@ type Location struct {
 	IngressResource string
 }
 
-// NginxMainConfig describe the main NGINX configuration file
-type NginxMainConfig struct {
+// MainConfig describe the main NGINX configuration file
+type MainConfig struct {
 	ServerNamesHashBucketSize string
 	ServerNamesHashMaxSize    string
 	LogFormat                 string
@@ -182,8 +182,8 @@ func NewUpstreamWithDefaultServer(name string) Upstream {
 }
 
 // NewNginxController creates a NGINX controller
-func NewNginxController(nginxConfPath string, local bool) *NginxController {
-	ngxc := NginxController{
+func NewNginxController(nginxConfPath string, local bool) *Controller {
+	ngxc := Controller{
 		nginxConfdPath:   path.Join(nginxConfPath, "conf.d"),
 		nginxSecretsPath: path.Join(nginxConfPath, "secrets"),
 		local:            local,
@@ -194,7 +194,7 @@ func NewNginxController(nginxConfPath string, local bool) *NginxController {
 
 // DeleteIngress deletes the configuration file, which corresponds for the
 // specified ingress from NGINX conf directory
-func (nginx *NginxController) DeleteIngress(name string) {
+func (nginx *Controller) DeleteIngress(name string) {
 	filename := nginx.getIngressNginxConfigFileName(name)
 	glog.V(3).Infof("deleting %v", filename)
 
@@ -206,7 +206,7 @@ func (nginx *NginxController) DeleteIngress(name string) {
 }
 
 // AddOrUpdateDHParam creates the servers dhparam.pem file
-func (nginx *NginxController) AddOrUpdateDHParam(dhparam string) (string, error) {
+func (nginx *Controller) AddOrUpdateDHParam(dhparam string) (string, error) {
 	fileName := nginx.nginxSecretsPath + "/" + dhparamFilename
 	if !nginx.local {
 		pem, err := os.Create(fileName)
@@ -224,7 +224,7 @@ func (nginx *NginxController) AddOrUpdateDHParam(dhparam string) (string, error)
 }
 
 // AddOrUpdateSecretFile creates a file with the specified name, content and mode.
-func (nginx *NginxController) AddOrUpdateSecretFile(name string, content []byte, mode os.FileMode) string {
+func (nginx *Controller) AddOrUpdateSecretFile(name string, content []byte, mode os.FileMode) string {
 	filename := nginx.getSecretFileName(name)
 
 	if !nginx.local {
@@ -258,7 +258,7 @@ func (nginx *NginxController) AddOrUpdateSecretFile(name string, content []byte,
 }
 
 // DeleteSecretFile the file with a Secret
-func (nginx *NginxController) DeleteSecretFile(name string) {
+func (nginx *Controller) DeleteSecretFile(name string) {
 	filename := nginx.getSecretFileName(name)
 	glog.V(3).Infof("deleting %v", filename)
 
@@ -270,16 +270,16 @@ func (nginx *NginxController) DeleteSecretFile(name string) {
 
 }
 
-func (nginx *NginxController) getIngressNginxConfigFileName(name string) string {
+func (nginx *Controller) getIngressNginxConfigFileName(name string) string {
 	return path.Join(nginx.nginxConfdPath, name+".conf")
 }
 
-func (nginx *NginxController) getSecretFileName(name string) string {
+func (nginx *Controller) getSecretFileName(name string) string {
 	return path.Join(nginx.nginxSecretsPath, name)
 }
 
 // Reload reloads NGINX
-func (nginx *NginxController) Reload() error {
+func (nginx *Controller) Reload() error {
 	if !nginx.local {
 		if err := shellOut("nginx -t"); err != nil {
 			return fmt.Errorf("Invalid nginx configuration detected, not reloading: %s", err)
@@ -294,7 +294,7 @@ func (nginx *NginxController) Reload() error {
 }
 
 // Start starts NGINX
-func (nginx *NginxController) Start(done chan error) {
+func (nginx *Controller) Start(done chan error) {
 	if !nginx.local {
 		cmd := exec.Command("nginx")
 		cmd.Stdout = os.Stdout
@@ -311,7 +311,7 @@ func (nginx *NginxController) Start(done chan error) {
 }
 
 // Quit shutdowns NGINX gracefully
-func (nginx *NginxController) Quit() {
+func (nginx *Controller) Quit() {
 	if !nginx.local {
 		if err := shellOut("nginx -s quit"); err != nil {
 			glog.Fatalf("Failed to quit nginx: %v", err)
@@ -351,7 +351,7 @@ func shellOut(cmd string) (err error) {
 }
 
 // UpdateMainConfigFile writes the main NGINX configuration file to the filesystem
-func (nginx *NginxController) UpdateMainConfigFile(cfg []byte) {
+func (nginx *Controller) UpdateMainConfigFile(cfg []byte) {
 	filename := "/etc/nginx/nginx.conf"
 	glog.V(3).Infof("Writing NGINX conf to %v", filename)
 
@@ -374,7 +374,7 @@ func (nginx *NginxController) UpdateMainConfigFile(cfg []byte) {
 }
 
 // UpdateIngressConfigFile writes the Ingress configuration file to the filesystem
-func (nginx *NginxController) UpdateIngressConfigFile(name string, cfg []byte) {
+func (nginx *Controller) UpdateIngressConfigFile(name string, cfg []byte) {
 	filename := nginx.getIngressNginxConfigFileName(name)
 	glog.V(3).Infof("Writing Ingress conf to %v", filename)
 

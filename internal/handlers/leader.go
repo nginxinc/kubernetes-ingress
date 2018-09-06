@@ -6,6 +6,7 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 )
 
+// CreateLeaderHandler builds the handler funcs for leader handling
 func CreateLeaderHandler(lbc *controller.LoadBalancerController) leaderelection.LeaderCallbacks {
 	return leaderelection.LeaderCallbacks{
 		OnStartedLeading: func(stop <-chan struct{}) {

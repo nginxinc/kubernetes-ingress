@@ -7,7 +7,7 @@ Make sure you have access to the Ingress controller image:
 * For NGINX Ingress controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
 * For NGINX Plus Ingress controller, build your own image and push it to your private Docker registry by following the instructions from [here](../build/README.md).
 
-The installation manifests are located in the [install](../install) folder. In the steps below we assume that you will be running the commands from that folder.
+The installation manifests are located in the [deployments](../deployments) folder. In the steps below we assume that you will be running the commands from that folder.
 
 ## 1. Create a Namespace, a SA and the Default Secret.
 

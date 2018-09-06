@@ -6,17 +6,20 @@ import (
 	"github.com/golang/glog"
 )
 
+// NginxAPIController works with the NGINX API
 type NginxAPIController struct {
 	client *NginxClient
 	local  bool
 }
 
+// ServerConfig holds the config data
 type ServerConfig struct {
 	MaxFails    int64
 	FailTimeout string
 	SlowStart   string
 }
 
+// NewNginxAPIController creates an instance of NginxAPIController
 func NewNginxAPIController(httpClient *http.Client, endpoint string, local bool) (*NginxAPIController, error) {
 	client, err := NewNginxClient(httpClient, endpoint)
 	if !local && err != nil {
@@ -26,6 +29,7 @@ func NewNginxAPIController(httpClient *http.Client, endpoint string, local bool)
 	return nginx, nil
 }
 
+// UpdateServers updates upstream servers
 func (nginx *NginxAPIController) UpdateServers(upstream string, servers []string, config ServerConfig) error {
 	if nginx.local {
 		glog.V(3).Infof("Updating endpoints of %v: %v\n", upstream, servers)

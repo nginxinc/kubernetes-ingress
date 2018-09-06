@@ -147,6 +147,7 @@ type StoreToSecretLister struct {
 	cache.Store
 }
 
+// IsMinion determines is an ingress is a minion or not
 func IsMinion(ing *extensions.Ingress) bool {
 	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "minion" {
 		return true
@@ -154,6 +155,7 @@ func IsMinion(ing *extensions.Ingress) bool {
 	return false
 }
 
+// IsMaster determines is an ingress is a master or not
 func IsMaster(ing *extensions.Ingress) bool {
 	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "master" {
 		return true
@@ -161,6 +163,7 @@ func IsMaster(ing *extensions.Ingress) bool {
 	return false
 }
 
+// HasChanges determines if current ingress has changes compared to old ingress
 func HasChanges(old *extensions.Ingress, current *extensions.Ingress) bool {
 	old.Status.LoadBalancer.Ingress = current.Status.LoadBalancer.Ingress
 	old.ResourceVersion = current.ResourceVersion

@@ -20,6 +20,7 @@ type NginxClient struct {
 
 type versions []int
 
+// UpstreamServer holds the fields for an upstream server
 type UpstreamServer struct {
 	ID          int64  `json:"id,omitempty"`
 	Server      string `json:"server"`

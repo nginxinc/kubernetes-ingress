@@ -15,6 +15,7 @@ type IngressEx struct {
 	HealthChecks map[string]*api_v1.Probe
 }
 
+// MergeableIngresses is a mergeable ingress of a master and minions
 type MergeableIngresses struct {
 	Master  *IngressEx
 	Minions []*IngressEx

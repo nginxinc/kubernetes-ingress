@@ -8,6 +8,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+// CreateIngressHandlers builds the handler funcs for ingresses
 func CreateIngressHandlers(lbc *controller.LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {

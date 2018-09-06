@@ -549,7 +549,7 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 	cafeMasterIngEx, _ := lbc.createIngress(&cafeMaster)
 	ingExMap["default-cafe-master"] = cafeMasterIngEx
 
-	cnf := nginx.NewConfigurator(&nginx.NginxController{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{})
+	cnf := nginx.NewConfigurator(&nginx.Controller{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{})
 
 	// edit private field ingresses to use in testing
 	pointerVal := reflect.ValueOf(cnf)
@@ -782,7 +782,7 @@ func TestFindProbeForPods(t *testing.T) {
 
 func TestGetServicePortForIngressPort(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	cnf := nginx.NewConfigurator(&nginx.NginxController{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{})
+	cnf := nginx.NewConfigurator(&nginx.Controller{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{})
 	lbc := LoadBalancerController{
 		client:       fakeClient,
 		ingressClass: "nginx",

@@ -32,11 +32,6 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     ```
 
-1. If you're using a stable release, check out the corresponding tag. For release 1.3.0, run:
-    ```
-    $ git checkout v1.3.0
-    ```
-
 1. Build the image:
     * For NGINX:
       ```
@@ -47,7 +42,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       
       As the result, the image **myregistry.example.com/nginx-ingress:edge** is built and pushed to the registry. Note that the tag `edge` comes from the `VERSION` variable, defined in the Makefile.
 
-    * For NGINX Plus, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the `nginx-controller` folder:
+    * For NGINX Plus, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
       ```
       $ ls nginx-repo.*
       nginx-repo.crt  nginx-repo.key

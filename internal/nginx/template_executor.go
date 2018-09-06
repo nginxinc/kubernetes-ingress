@@ -60,7 +60,7 @@ func (te *TemplateExecutor) UpdateIngressTemplate(templateString *string) error 
 }
 
 // ExecuteMainConfigTemplate generates the content of the main NGINX configuration file
-func (te *TemplateExecutor) ExecuteMainConfigTemplate(cfg *NginxMainConfig) ([]byte, error) {
+func (te *TemplateExecutor) ExecuteMainConfigTemplate(cfg *MainConfig) ([]byte, error) {
 	cfg.HealthStatus = te.HealthStatus
 	cfg.NginxStatus = te.NginxStatus
 	cfg.NginxStatusPort = te.NginxStatusPort

@@ -137,10 +137,12 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	return &lbc
 }
 
+// UpdateManagedAndMergeableIngresses invokes the UpdateManagedAndMergeableIngresses method on the Status Updater
 func (lbc *LoadBalancerController) UpdateManagedAndMergeableIngresses(ingresses []v1beta1.Ingress, mergeableIngresses map[string]*nginx.MergeableIngresses) error {
 	return lbc.statusUpdater.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
 }
 
+// AddLeaderHandler adds the handler for leader election to the controller
 func (lbc *LoadBalancerController) AddLeaderHandler(leaderHandler leaderelection.LeaderCallbacks) {
 	var err error
 	lbc.leaderElector, err = NewLeaderElector(lbc.client, leaderHandler, lbc.controllerNamespace)
@@ -149,18 +151,22 @@ func (lbc *LoadBalancerController) AddLeaderHandler(leaderHandler leaderelection
 	}
 }
 
+// GetIngressClassKey returns the ingress class key
 func (lbc *LoadBalancerController) GetIngressClassKey() string {
 	return ingressClassKey
 }
 
+// AddSyncQueue enqueues the provided item on the sync queue
 func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 	lbc.syncQueue.Enqueue(item)
 }
 
+// WatchNginxConfigMaps sets the controller to watch config map changes
 func (lbc *LoadBalancerController) WatchNginxConfigMaps() {
 	lbc.watchNginxConfigMaps = true
 }
 
+// AddSecretHandler adds the handler for secrets to the controller
 func (lbc *LoadBalancerController) AddSecretHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.secretLister.Store, lbc.secretController = cache.NewInformer(
 		cache.NewListWatchFromClient(
@@ -174,6 +180,7 @@ func (lbc *LoadBalancerController) AddSecretHandler(handlers cache.ResourceEvent
 	)
 }
 
+// AddServiceHandler adds the handler for services to the controller
 func (lbc *LoadBalancerController) AddServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.svcLister, lbc.svcController = cache.NewInformer(
 		cache.NewListWatchFromClient(
@@ -187,6 +194,7 @@ func (lbc *LoadBalancerController) AddServiceHandler(handlers cache.ResourceEven
 	)
 }
 
+// AddIngressHandler adds the handler for ingresses to the controller
 func (lbc *LoadBalancerController) AddIngressHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.ingressLister.Store, lbc.ingressController = cache.NewInformer(
 		cache.NewListWatchFromClient(
@@ -200,6 +208,7 @@ func (lbc *LoadBalancerController) AddIngressHandler(handlers cache.ResourceEven
 	)
 }
 
+// AddEndpointHandler adds the handler for endpoints to the controller
 func (lbc *LoadBalancerController) AddEndpointHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.endpointLister.Store, lbc.endpointController = cache.NewInformer(
 		cache.NewListWatchFromClient(
@@ -213,6 +222,7 @@ func (lbc *LoadBalancerController) AddEndpointHandler(handlers cache.ResourceEve
 	)
 }
 
+// AddConfigMapHandler adds the handler for config maps to the controller
 func (lbc *LoadBalancerController) AddConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
 	lbc.configMapLister.Store, lbc.configMapController = cache.NewInformer(
 		cache.NewListWatchFromClient(
@@ -226,6 +236,7 @@ func (lbc *LoadBalancerController) AddConfigMapHandler(handlers cache.ResourceEv
 	)
 }
 
+// GetDefaultServerSecret returns the default server secret
 func (lbc *LoadBalancerController) GetDefaultServerSecret() string {
 	return lbc.defaultServerSecret
 }
@@ -579,7 +590,7 @@ func (lbc *LoadBalancerController) syncExternalService(task queue.Task) {
 	}
 }
 
-// isExternalServiceForStatus matches the service specified by the external-service arg
+// IsExternalServiceForStatus matches the service specified by the external-service arg
 func (lbc *LoadBalancerController) IsExternalServiceForStatus(svc *api_v1.Service) bool {
 	return lbc.statusUpdater.namespace == svc.Namespace && lbc.statusUpdater.externalServiceName == svc.Name
 }
@@ -805,6 +816,7 @@ items:
 	return nonMinions, minions, nil
 }
 
+// EnqueueIngressForService enqueues the ingress for the given service
 func (lbc *LoadBalancerController) EnqueueIngressForService(svc *api_v1.Service) {
 	ings := lbc.getIngressesForService(svc)
 	for _, ing := range ings {

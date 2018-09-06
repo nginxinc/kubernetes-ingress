@@ -3,7 +3,7 @@ version: 0.1.2
 appVersion: edge
 description: NGINX Ingress Controller
 sources:
-  - https://github.com/nginxinc/kubernetes-ingress/tree/master/helm-chart
+  - https://github.com/nginxinc/kubernetes-ingress/tree/master/deployment/helm-chart
 keywords:
   - ingress
   - nginx

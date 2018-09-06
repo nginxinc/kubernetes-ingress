@@ -32,6 +32,7 @@ func NewTaskQueue(syncFn func(Task)) *TaskQueue {
 	}
 }
 
+// Run begins running the worker for the given duration
 func (t *TaskQueue) Run(period time.Duration, stopCh <-chan struct{}) {
 	wait.Until(t.worker, period, stopCh)
 }
@@ -55,11 +56,13 @@ func (t *TaskQueue) Enqueue(obj interface{}) {
 	t.queue.Add(task)
 }
 
+// Requeue adds the task to the queue again and logs the given error
 func (t *TaskQueue) Requeue(task Task, err error) {
 	glog.Errorf("Requeuing %v, err %v", task.Key, err)
 	t.queue.Add(task)
 }
 
+// RequeueAfter adds the task to the queue after the given duration
 func (t *TaskQueue) RequeueAfter(task Task, err error, after time.Duration) {
 	glog.Errorf("Requeuing %v after %s, err %v", task.Key, after.String(), err)
 	go func(task Task, after time.Duration) {
@@ -68,7 +71,7 @@ func (t *TaskQueue) RequeueAfter(task Task, err error, after time.Duration) {
 	}(task, after)
 }
 
-// worker processes work in the queue through sync.
+// Worker processes work in the queue through sync.
 func (t *TaskQueue) worker() {
 	for {
 		task, quit := t.queue.Get()
@@ -82,7 +85,7 @@ func (t *TaskQueue) worker() {
 	}
 }
 
-// shutdown shuts down the work queue and waits for the worker to ACK
+// Shutdown shuts down the work queue and waits for the worker to ACK
 func (t *TaskQueue) Shutdown() {
 	t.queue.ShutDown()
 	<-t.workerDone

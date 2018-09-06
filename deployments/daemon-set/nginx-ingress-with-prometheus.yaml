@@ -1,10 +1,9 @@
 apiVersion: extensions/v1beta1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: nginx-ingress
   namespace: nginx-ingress
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: nginx-ingress
@@ -23,8 +22,10 @@ spec:
         ports:
         - name: http
           containerPort: 80
+          hostPort: 80
         - name: https
           containerPort: 443
+          hostPort: 443
         env:
         - name: POD_NAMESPACE
           valueFrom:
@@ -49,6 +50,5 @@ spec:
         args:
           - -web.listen-address
           - :9113
-          - nginx.scrape-uri
+          - -nginx.scrape-uri
           - http://127.0.0.1:8080/stub_status
-

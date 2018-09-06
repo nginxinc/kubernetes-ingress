@@ -27,7 +27,7 @@ nginx-ingress
 !nginx-ingress/
 osx-nginx-plus-ingress
 nginx-plus-ingress
-cmd/nginx-ic/nginx-ic
+cmd/nginx-ingress/nginx-ingress
 
 # NGINX Plus license files
 *.crt

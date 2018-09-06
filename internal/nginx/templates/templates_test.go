@@ -80,7 +80,7 @@ var ingCfg = nginx.IngressNginxConfig{
 	Keepalive: "16",
 }
 
-var mainCfg = nginx.NginxMainConfig{
+var mainCfg = nginx.MainConfig{
 	ServerNamesHashMaxSize: "512",
 	ServerTokens:           "off",
 	WorkerProcesses:        "auto",

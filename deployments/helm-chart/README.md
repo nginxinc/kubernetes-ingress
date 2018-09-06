@@ -19,13 +19,9 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     ```
-1.  If you're using a stable release, check out the corresponding tag. For release 1.3.0, run:
+2. Change your working directory to /deployments/helm-chart:
     ```
-    $ git checkout v1.3.0
-    ```
-2. Change your working directory to /helm-chart:
-    ```
-    $ cd kubernetes-ingress/helm-chart
+    $ cd kubernetes-ingress/deployments/helm-chart
     ```
 3. To install the chart with the release name my-release (my-release is the name that you choose):
 

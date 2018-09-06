@@ -28,7 +28,7 @@ const JWTKeyAnnotation = "nginx.com/jwt-key"
 
 // Configurator transforms an Ingress resource into NGINX Configuration
 type Configurator struct {
-	nginx            *NginxController
+	nginx            *Controller
 	config           *Config
 	nginxAPI         *plus.NginxAPIController
 	templateExecutor *TemplateExecutor
@@ -37,7 +37,7 @@ type Configurator struct {
 }
 
 // NewConfigurator creates a new Configurator
-func NewConfigurator(nginx *NginxController, config *Config, nginxAPI *plus.NginxAPIController, templateExecutor *TemplateExecutor) *Configurator {
+func NewConfigurator(nginx *Controller, config *Config, nginxAPI *plus.NginxAPIController, templateExecutor *TemplateExecutor) *Configurator {
 	cnf := Configurator{
 		nginx:            nginx,
 		config:           config,
@@ -738,7 +738,7 @@ func parsePort(value string) (int, error) {
 	port, err := strconv.ParseInt(value, 10, 16)
 	if err != nil {
 		return 0, fmt.Errorf(
-			"Unable to parse port as integer: %s\n",
+			"Unable to parse port as integer: %s",
 			err,
 		)
 	}
@@ -1051,7 +1051,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 func filterMasterAnnotations(annotations map[string]string) []string {
 	var removedAnnotations []string
 
-	for key, _ := range annotations {
+	for key := range annotations {
 		if _, notAllowed := masterBlacklist[key]; notAllowed {
 			removedAnnotations = append(removedAnnotations, key)
 			delete(annotations, key)
@@ -1064,7 +1064,7 @@ func filterMasterAnnotations(annotations map[string]string) []string {
 func filterMinionAnnotations(annotations map[string]string) []string {
 	var removedAnnotations []string
 
-	for key, _ := range annotations {
+	for key := range annotations {
 		if _, notAllowed := minionBlacklist[key]; notAllowed {
 			removedAnnotations = append(removedAnnotations, key)
 			delete(annotations, key)
@@ -1085,8 +1085,8 @@ func mergeMasterAnnotationsIntoMinion(minionAnnotations map[string]string, maste
 }
 
 // GenerateNginxMainConfig generate NginxMainConfig from Config
-func GenerateNginxMainConfig(config *Config) *NginxMainConfig {
-	nginxCfg := &NginxMainConfig{
+func GenerateNginxMainConfig(config *Config) *MainConfig {
+	nginxCfg := &MainConfig{
 		MainSnippets:              config.MainMainSnippets,
 		HTTPSnippets:              config.MainHTTPSnippets,
 		StreamSnippets:            config.MainStreamSnippets,
