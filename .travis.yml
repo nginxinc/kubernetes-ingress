@@ -9,7 +9,7 @@ script:
 - cd nginx-controller && 
   make  BUILD_IN_CONTAINER=0 container;
 - echo "Helm smoke test"
-- cd .. && wget -O helm.tar.gz ${helm_download} &&
+- cd ${TRAVIS_BUILD_DIR} && wget -O helm.tar.gz ${helm_download} &&
   tar xzfv helm.tar.gz -C ./ --strip-components=1 linux-amd64/helm
 - ./helm template ./helm-chart/ --name nginx-ingress
 - ./helm template ./helm-chart/ --name nginx-ingress -f helm-chart/values-plus.yaml
