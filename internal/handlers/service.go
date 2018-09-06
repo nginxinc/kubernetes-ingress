@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"reflect"
+	"sort"
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/controller"
@@ -47,14 +48,52 @@ func CreateServiceHandlers(lbc *controller.LoadBalancerController) cache.Resourc
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			if !reflect.DeepEqual(old, cur) {
-				svc := cur.(*api_v1.Service)
-				if lbc.IsExternalServiceForStatus(svc) {
-					lbc.AddSyncQueue(svc)
+				curSvc := cur.(*api_v1.Service)
+				if lbc.IsExternalServiceForStatus(curSvc) {
+					lbc.AddSyncQueue(curSvc)
 					return
 				}
-				glog.V(3).Infof("Service %v changed, syncing", svc.Name)
-				lbc.EnqueueIngressForService(svc)
+				oldSvc := old.(*api_v1.Service)
+				if hasServicePortChanges(oldSvc.Spec.Ports, curSvc.Spec.Ports) {
+					glog.V(3).Infof("Service %v changed, syncing", curSvc.Name)
+					lbc.EnqueueIngressForService(curSvc)
+				}
 			}
 		},
 	}
+}
+
+type portSort []api_v1.ServicePort
+
+func (a portSort) Len() int {
+	return len(a)
+}
+
+func (a portSort) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a portSort) Less(i, j int) bool {
+	if a[i].Name == a[j].Name {
+		return a[i].Port < a[j].Port
+	}
+	return a[i].Name < a[j].Name
+}
+
+// hasServicePortChanges only compares ServicePort.Name and .Port.
+func hasServicePortChanges(oldServicePorts []api_v1.ServicePort, curServicePorts []api_v1.ServicePort) bool {
+	if len(oldServicePorts) != len(curServicePorts) {
+		return true
+	}
+
+	sort.Sort(portSort(oldServicePorts))
+	sort.Sort(portSort(curServicePorts))
+
+	for i := range oldServicePorts {
+		if oldServicePorts[i].Port != curServicePorts[i].Port ||
+			oldServicePorts[i].Name != curServicePorts[i].Name {
+			return true
+		}
+	}
+	return false
 }
