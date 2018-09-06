@@ -8,7 +8,7 @@ DOCKER_RUN = docker run --rm -v $(shell pwd):/go/src/github.com/nginxinc/kuberne
 DOCKER_BUILD_RUN = docker run --rm -v $(shell pwd):/go/src/github.com/nginxinc/kubernetes-ingress -w /go/src/github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress/
 GOLANG_CONTAINER = golang:1.10
 DOCKERFILEPATH = build
-DOCKERFILE = Dockerfile
+DOCKERFILE = Dockerfile # note, this can be overwritten e.g. can be DOCKERFILE=DockerFileForPlus
 
 BUILD_IN_CONTAINER = 1
 PUSH_TO_GCR =
@@ -37,8 +37,8 @@ ifeq ($(GENERATE_DEFAULT_CERT_AND_KEY),1)
 endif
 
 container: test nginx-ingress certificate-and-key
-	cp $(DOCKERFILEPATH)/$(DOCKERFILE) .
-	docker build $(DOCKER_BUILD_OPTIONS) -f $(DOCKERFILE) -t $(PREFIX):$(TAG) .
+	cp $(DOCKERFILEPATH)/$(DOCKERFILE) ./Dockerfile
+	docker build $(DOCKER_BUILD_OPTIONS) -f Dockerfile -t $(PREFIX):$(TAG) .
 
 push: container
 ifeq ($(PUSH_TO_GCR),1)
@@ -49,4 +49,4 @@ endif
 
 clean:
 	rm -f nginx-ingress
-	rm $(DOCKERFILE)
+	rm Dockerfile
