@@ -139,9 +139,9 @@ func TestHasServicePortChanges(t *testing.T) {
 				Port: 80,
 			}},
 			[]v1.ServicePort{{
-				Name: "foo",
-			}, {
 				Port: 80,
+			}, {
+				Name: "foo",
 			}},
 			false,
 			"Some names some ports",
@@ -150,7 +150,7 @@ func TestHasServicePortChanges(t *testing.T) {
 
 	for _, c := range cases {
 		if c.result != hasServicePortChanges(c.a, c.b) {
-			t.Error(c.reason)
+			t.Errorf("hasServicePortChanges returned %v, but expected %v for %q case", c.result, !c.result, c.reason)
 		}
 	}
 }
