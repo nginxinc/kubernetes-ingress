@@ -55,7 +55,7 @@ var ingCfg = nginx.IngressNginxConfig{
 			SSLRedirect:       true,
 			Locations: []nginx.Location{
 				nginx.Location{
-					Path:                "/",
+					Path:                "/tea",
 					Upstream:            testUps,
 					ProxyConnectTimeout: "10s",
 					ProxyReadTimeout:    "10s",
@@ -64,6 +64,10 @@ var ingCfg = nginx.IngressNginxConfig{
 						Key:   "/etc/nginx/secrets/location-key.jwk",
 						Realm: "closed site",
 						Token: "$cookie_auth_token",
+					},
+					MinionIngress: &nginx.Ingress{
+						Name:      "tea-minion",
+						Namespace: "default",
 					},
 				},
 			},
@@ -78,6 +82,10 @@ var ingCfg = nginx.IngressNginxConfig{
 	},
 	Upstreams: []nginx.Upstream{testUps},
 	Keepalive: "16",
+	Ingress: nginx.Ingress{
+		Name:      "cafe-ingress",
+		Namespace: "default",
+	},
 }
 
 var mainCfg = nginx.MainConfig{

@@ -281,6 +281,13 @@ func createExpectedConfigForCafeIngressEx() IngressNginxConfig {
 				HealthChecks:      make(map[string]HealthCheck),
 			},
 		},
+		Ingress: Ingress{
+			Name:      "cafe-ingress",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class": "nginx",
+			},
+		},
 	}
 	return expected
 }
@@ -453,7 +460,14 @@ func createExpectedConfigForMergeableCafeIngress() IngressNginxConfig {
 						ProxyReadTimeout:    "60s",
 						ClientMaxBodySize:   "1m",
 						ProxyBuffering:      true,
-						IngressResource:     "default-cafe-ingress-coffee-minion",
+						MinionIngress: &Ingress{
+							Name:      "cafe-ingress-coffee-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
 					},
 					{
 						Path:                "/tea",
@@ -462,7 +476,14 @@ func createExpectedConfigForMergeableCafeIngress() IngressNginxConfig {
 						ProxyReadTimeout:    "60s",
 						ClientMaxBodySize:   "1m",
 						ProxyBuffering:      true,
-						IngressResource:     "default-cafe-ingress-tea-minion",
+						MinionIngress: &Ingress{
+							Name:      "cafe-ingress-tea-minion",
+							Namespace: "default",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
 					},
 				},
 				SSL:               true,
@@ -474,7 +495,14 @@ func createExpectedConfigForMergeableCafeIngress() IngressNginxConfig {
 				SSLPorts:          []int{443},
 				SSLRedirect:       true,
 				HealthChecks:      make(map[string]HealthCheck),
-				IngressResource:   "default-cafe-ingress-master",
+			},
+		},
+		Ingress: Ingress{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "master",
 			},
 		},
 	}

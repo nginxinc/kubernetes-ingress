@@ -127,7 +127,6 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 	masterNginxCfg := cnf.generateNginxCfg(mergeableIngs.Master, pems, jwtKeyFileName, isMinion)
 
 	masterServer = masterNginxCfg.Servers[0]
-	masterServer.IngressResource = objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
 	masterServer.Locations = []Location{}
 
 	for _, val := range masterNginxCfg.Upstreams {
@@ -157,7 +156,7 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 
 		for _, server := range nginxCfg.Servers {
 			for _, loc := range server.Locations {
-				loc.IngressResource = objectMetaToFileName(&minion.Ingress.ObjectMeta)
+				loc.MinionIngress = &nginxCfg.Ingress
 				locations = append(locations, loc)
 			}
 			for hcName, healthCheck := range server.HealthChecks {
@@ -178,6 +177,7 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 		Servers:   []Server{masterServer},
 		Upstreams: upstreams,
 		Keepalive: keepalive,
+		Ingress:   masterNginxCfg.Ingress,
 	}
 }
 
@@ -379,6 +379,11 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 		Upstreams: upstreamMapToSlice(upstreams),
 		Servers:   servers,
 		Keepalive: keepalive,
+		Ingress: Ingress{
+			Name:        ingEx.Ingress.Name,
+			Namespace:   ingEx.Ingress.Namespace,
+			Annotations: ingEx.Ingress.Annotations,
+		},
 	}
 }
 

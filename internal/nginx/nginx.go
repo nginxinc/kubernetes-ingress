@@ -29,6 +29,14 @@ type IngressNginxConfig struct {
 	Upstreams []Upstream
 	Servers   []Server
 	Keepalive string
+	Ingress   Ingress
+}
+
+// Ingress holds information about an Ingress resource
+type Ingress struct {
+	Name        string
+	Namespace   string
+	Annotations map[string]string
 }
 
 // Upstream describes an NGINX upstream
@@ -96,9 +104,6 @@ type Server struct {
 
 	Ports    []int
 	SSLPorts []int
-
-	// Used for mergeable types
-	IngressResource string
 }
 
 // JWTRedirectLocation describes a location for redirecting client requests to a login URL for JWT Authentication
@@ -133,8 +138,7 @@ type Location struct {
 	ProxyMaxTempFileSize string
 	JWTAuth              *JWTAuth
 
-	// Used for mergeable types
-	IngressResource string
+	MinionIngress *Ingress
 }
 
 // MainConfig describe the main NGINX configuration file

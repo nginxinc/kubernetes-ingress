@@ -1,3 +1,4 @@
+# configuration for {{.Ingress.Namespace}}/{{.Ingress.Name}}
 {{range $upstream := .Upstreams}}
 upstream {{$upstream.Name}} {
 	zone {{$upstream.Name}} 256k;
@@ -18,7 +19,6 @@ upstream {{$upstream.Name}} {
 {{- end}}
 
 {{range $server := .Servers}}
-{{if $server.IngressResource}} # *Master*, configured in Ingress Resource: {{$server.IngressResource}}{{end}}
 server {
 	{{if not $server.GRPCOnly}}
 	{{range $port := $server.Ports}}
@@ -104,6 +104,9 @@ server {
 
 	{{range $location := $server.Locations}}
 	location {{$location.Path}} {
+		{{with $location.MinionIngress}}
+		# location for minion {{$location.MinionIngress.Namespace}}/{{$location.MinionIngress.Name}}
+		{{end}}
 		{{if $location.GRPC}}
 		{{if not $server.GRPCOnly}}	
 		error_page 400 @grpcerror400;
