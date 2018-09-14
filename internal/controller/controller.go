@@ -882,10 +882,17 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*ngin
 	ingEx.TLSSecrets = make(map[string]*api_v1.Secret)
 	for _, tls := range ing.Spec.TLS {
 		secretName := tls.SecretName
-		secret, err := lbc.client.Core().Secrets(ing.Namespace).Get(secretName, meta_v1.GetOptions{})
+		secretKey := ing.Namespace + "/" + secretName
+
+		secretObject, secretExists, err := lbc.secretLister.GetByKey(secretKey)
 		if err != nil {
-			return nil, fmt.Errorf("Error retrieving secret %v for Ingress %v: %v", secretName, ing.Name, err)
+			return nil, fmt.Errorf("error getting secret %v from store: %v", secretKey, err)
 		}
+		if !secretExists {
+			return nil, fmt.Errorf("secret %v not found for Ingress %v", secretKey, ing.Name)
+		}
+		secret := secretObject.(*api_v1.Secret)
+
 		err = nginx.ValidateTLSSecret(secret)
 		if err != nil {
 			return nil, fmt.Errorf("Error validating secret %v for Ingress %v: %v", secretName, ing.Name, err)
