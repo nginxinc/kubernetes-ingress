@@ -18,21 +18,34 @@ func ParseLBMethod(method string) (string, error) {
 		return method, err
 	}
 
-	if method == "least_conn" || method == "ip_hash" {
+	if _, exists := nginxLBValidInput[method]; exists {
 		return method, nil
 	}
 	return "", fmt.Errorf("Invalid load balancing method: %q", method)
 }
 
+var nginxLBValidInput = map[string]bool{
+	"least_conn":                      true,
+	"ip_hash":                         true,
+	"random":                          true,
+	"random two":                      true,
+	"random two least_conn":           true,
+}
+
 var nginxPlusLBValidInput = map[string]bool{
-	"least_time":                    true,
-	"last_byte":                     true,
-	"least_conn":                    true,
-	"ip_hash":                       true,
-	"least_time header":             true,
-	"least_time last_byte":          true,
-	"least_time header inflight":    true,
-	"least_time last_byte inflight": true,
+	"least_time":                      true,
+	"last_byte":                       true,
+	"least_conn":                      true,
+	"ip_hash":                         true,
+	"random":                          true,
+	"random two":                      true,
+	"random two least_conn":           true,
+	"random two least_time=header":    true,
+	"random two least_time=last_byte": true,
+	"least_time header":               true,
+	"least_time last_byte":            true,
+	"least_time header inflight":      true,
+	"least_time last_byte inflight":   true,
 }
 
 // ParseLBMethodForPlus parses method and matches it to a corresponding load balancing method in NGINX Plus. An error is returned if method is not valid
