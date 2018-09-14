@@ -83,6 +83,10 @@ spec:
 {{- if .Values.controller.healthStatus }}
           - -health-status
 {{- end }}
+{{- if .Values.controller.nginxStatus }}
+          - -nginx-status={{ .Values.controller.nginxStatus.enable }}
+          - -nginx-status-port={{ .Values.controller.nginxStatus.port }}
+{{- end }}
 {{- if .Values.controller.reportIngressStatus.enable }}
           - -report-ingress-status
 {{- if .Values.controller.reportIngressStatus.externalService }}
@@ -92,7 +96,7 @@ spec:
           - -enable-leader-election
 {{- end }}
 {{- end }}
-{{- if .Values.prometheus }}
+{{- if and .Values.prometheus .Values.controller.nginxStatus }}
 {{- if .Values.prometheus.create }}
       - image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.image.tag }}"
         imagePullPolicy: "{{ .Values.prometheus.image.pullPolicy }}"
@@ -108,9 +112,9 @@ spec:
 {{- end }}
           - -nginx.scrape-uri
 {{- if .Values.controller.nginxplus }}
-          - http://127.0.0.1:8080/api
+          - http://127.0.0.1:{{ .Values.controller.nginxStatus.port }}/api
 {{ else }}
-          - http://127.0.0.1:8080/stub_status
+          - http://127.0.0.1:{{ .Values.controller.nginxStatus.port }}/stub_status
 {{- end }}
 {{- end }}
 {{- end }}

@@ -22,6 +22,9 @@ controller:
   useIngressClassOnly: false
   watchNamespace: ""
   healthStatus: false
+  nginxStatus:
+    enable: true
+    port: 8080
   service:
     create: true
     type: LoadBalancer
