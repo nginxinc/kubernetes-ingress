@@ -12,7 +12,7 @@ import (
 type IngressEx struct {
 	Ingress      *extensions.Ingress
 	TLSSecrets   map[string]*api_v1.Secret
-	JWTKey       *api_v1.Secret
+	JWTKey       JWTKey
 	Endpoints    map[string][]string
 	HealthChecks map[string]*api_v1.Probe
 }
@@ -21,6 +21,12 @@ type IngressEx struct {
 type MergeableIngresses struct {
 	Master  *IngressEx
 	Minions []*IngressEx
+}
+
+// JWTKey represents a secret that holds JSON Web Key
+type JWTKey struct {
+	Name   string
+	Secret *api_v1.Secret
 }
 
 var masterBlacklist = map[string]bool{

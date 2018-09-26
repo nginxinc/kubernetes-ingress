@@ -17,11 +17,8 @@ func CreateSecretHandlers(lbc *controller.LoadBalancerController) cache.Resource
 			if err := lbc.ValidateSecret(secret); err != nil {
 				return
 			}
-			nsname := secret.Namespace + "/" + secret.Name
-			if nsname == lbc.GetDefaultServerSecret() {
-				glog.V(3).Infof("Adding default server Secret: %v", secret.Name)
-				lbc.AddSyncQueue(obj)
-			}
+			glog.V(3).Infof("Adding Secret: %v", secret.Name)
+			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
 			secret, isSecr := obj.(*api_v1.Secret)

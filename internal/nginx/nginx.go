@@ -84,6 +84,7 @@ type Server struct {
 	SSL                   bool
 	SSLCertificate        string
 	SSLCertificateKey     string
+	SSLCiphers            string
 	GRPCOnly              bool
 	StatusZone            string
 	HTTP2                 bool

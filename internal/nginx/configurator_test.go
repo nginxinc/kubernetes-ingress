@@ -562,7 +562,7 @@ func TestGenerateNginxCfg(t *testing.T) {
 		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
 	}
 
-	result := cnf.generateNginxCfg(&cafeIngressEx, pems, "", false)
+	result := cnf.generateNginxCfg(&cafeIngressEx, pems, false)
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result, expected)
@@ -576,7 +576,12 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 	cafeIngressEx.Ingress.Annotations["nginx.com/jwt-realm"] = "Cafe App"
 	cafeIngressEx.Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token"
 	cafeIngressEx.Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.example.com"
-	cafeIngressEx.JWTKey = &api_v1.Secret{}
+	cafeIngressEx.JWTKey = JWTKey{"cafe-jwk", &api_v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe-jwk",
+			Namespace: "default",
+		},
+	}}
 
 	cnf, err := createTestConfigurator()
 	if err != nil {
@@ -600,7 +605,7 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
 	}
 
-	result := cnf.generateNginxCfg(&cafeIngressEx, pems, "/etc/nginx/secrets/default-cafe-jwk", false)
+	result := cnf.generateNginxCfg(&cafeIngressEx, pems, false)
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -632,10 +637,13 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	mergeableIngresses.Master.Ingress.Annotations["nginx.com/jwt-realm"] = "Cafe"
 	mergeableIngresses.Master.Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token"
 	mergeableIngresses.Master.Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.example.com"
-	mergeableIngresses.Master.JWTKey = &api_v1.Secret{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "cafe-jwk",
-			Namespace: "default",
+	mergeableIngresses.Master.JWTKey = JWTKey{
+		"cafe-jwk",
+		&api_v1.Secret{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe-jwk",
+				Namespace: "default",
+			},
 		},
 	}
 
@@ -643,10 +651,13 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-realm"] = "Coffee"
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token_coffee"
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.cofee.example.com"
-	mergeableIngresses.Minions[0].JWTKey = &api_v1.Secret{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "coffee-jwk",
-			Namespace: "default",
+	mergeableIngresses.Minions[0].JWTKey = JWTKey{
+		"coffee-jwk",
+		&api_v1.Secret{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "coffee-jwk",
+				Namespace: "default",
+			},
 		},
 	}
 
@@ -689,6 +700,26 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	}
 	if !reflect.DeepEqual(result.Servers[0].JWTRedirectLocations, expected.Servers[0].JWTRedirectLocations) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].JWTRedirectLocations, expected.Servers[0].JWTRedirectLocations)
+	}
+}
+
+func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
+	cafeIngressEx := createCafeIngressEx()
+	cnf, err := createTestConfigurator()
+	if err != nil {
+		t.Errorf("Failed to create a test configurator: %v", err)
+	}
+
+	pems := map[string]string{
+		"cafe.example.com": pemFileNameForMissingTLSSecret,
+	}
+
+	result := cnf.generateNginxCfg(&cafeIngressEx, pems, false)
+
+	expectedCiphers := "NULL"
+	resultCiphers := result.Servers[0].SSLCiphers
+	if !reflect.DeepEqual(resultCiphers, expectedCiphers) {
+		t.Errorf("generateNginxCfg returned SSLCiphers %v,  but expected %v", resultCiphers, expectedCiphers)
 	}
 }
 

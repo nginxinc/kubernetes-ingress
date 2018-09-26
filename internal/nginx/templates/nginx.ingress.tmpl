@@ -20,6 +20,9 @@ server {
 	{{- end}}
 	ssl_certificate {{$server.SSLCertificate}};
 	ssl_certificate_key {{$server.SSLCertificateKey}};
+	{{if $server.SSLCiphers}}
+	ssl_ciphers {{$server.SSLCiphers}};
+	{{end}}
 	{{end}}
 	{{range $setRealIPFrom := $server.SetRealIPFrom}}
 	set_real_ip_from {{$setRealIPFrom}};{{end}}

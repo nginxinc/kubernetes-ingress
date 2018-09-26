@@ -955,7 +955,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 			ngxIngress := &nginx.IngressEx{
 				Ingress: &test.ingress,
 				TLSSecrets: map[string]*v1.Secret{
-					test.secret.ObjectMeta.Name: &test.secret,
+					test.secret.Name: &test.secret,
 				},
 			}
 
@@ -967,28 +967,214 @@ func TestFindIngressesForSecret(t *testing.T) {
 			lbc.ingressLister.Add(&test.ingress)
 			lbc.secretLister.Add(&test.secret)
 
-			nonMinions, minions, err := lbc.findIngressesForSecret(test.secret.ObjectMeta.Namespace, test.secret.ObjectMeta.Name)
+			ings, err := lbc.findIngressesForSecret(test.secret.Namespace, test.secret.Name)
 			if err != nil {
 				t.Fatalf("Couldn't find Ingress resource: %v", err)
 			}
 
-			if len(minions) > 0 {
-				t.Fatalf("Expected 0 minions. Got: %v", len(minions))
-			}
-
-			if len(nonMinions) > 0 {
+			if len(ings) > 0 {
 				if !test.expectedToFind {
-					t.Fatalf("Expected 0 non-Minions. Got: %v", len(nonMinions))
+					t.Fatalf("Expected 0 ingresses. Got: %v", len(ings))
 				}
-				if len(nonMinions) != 1 {
-					t.Fatalf("Expected 1 non-Minion. Got: %v", len(nonMinions))
+				if len(ings) != 1 {
+					t.Fatalf("Expected 1 ingress. Got: %v", len(ings))
 				}
-				if nonMinions[0].Name != test.ingress.ObjectMeta.Name || nonMinions[0].Namespace != test.ingress.ObjectMeta.Namespace {
-					t.Fatalf("Expected: %v/%v. Got: %v/%v.", test.ingress.ObjectMeta.Namespace, test.ingress.ObjectMeta.Name, nonMinions[0].Namespace, nonMinions[0].Name)
+				if ings[0].Name != test.ingress.Name || ings[0].Namespace != test.ingress.Namespace {
+					t.Fatalf("Expected: %v/%v. Got: %v/%v.", test.ingress.Namespace, test.ingress.Name, ings[0].Namespace, ings[0].Name)
 				}
 			} else if test.expectedToFind {
-				t.Fatal("Expected 1 non-Minion. Got: 0")
+				t.Fatal("Expected 1 ingress. Got: 0")
 			}
 		})
 	}
+}
+
+func TestFindIngressesForSecretWithMinions(t *testing.T) {
+	testCases := []struct {
+		secret         v1.Secret
+		ingress        extensions.Ingress
+		expectedToFind bool
+		desc           string
+	}{
+		{
+			secret: v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "my-jwk-secret",
+					Namespace: "default",
+				},
+			},
+			ingress: extensions.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "cafe-ingress-tea-minion",
+					Namespace: "default",
+					Annotations: map[string]string{
+						"kubernetes.io/ingress.class":      "nginx",
+						"nginx.org/mergeable-ingress-type": "minion",
+						nginx.JWTKeyAnnotation:             "my-jwk-secret",
+					},
+				},
+				Spec: extensions.IngressSpec{
+					Rules: []extensions.IngressRule{
+						extensions.IngressRule{
+							Host: "cafe.example.com",
+							IngressRuleValue: extensions.IngressRuleValue{
+								HTTP: &extensions.HTTPIngressRuleValue{
+									Paths: []extensions.HTTPIngressPath{
+										extensions.HTTPIngressPath{
+											Path: "/tea",
+											Backend: extensions.IngressBackend{
+												ServiceName: "tea-svc",
+												ServicePort: intstr.FromString("80"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedToFind: true,
+			desc:           "a minion Ingress references a JWK Secret that exists in the Ingress namespace",
+		},
+		{
+			secret: v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "my-jwk-secret",
+					Namespace: "namespace-1",
+				},
+			},
+			ingress: extensions.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "cafe-ingress-tea-minion",
+					Namespace: "default",
+					Annotations: map[string]string{
+						"kubernetes.io/ingress.class":      "nginx",
+						"nginx.org/mergeable-ingress-type": "minion",
+						nginx.JWTKeyAnnotation:             "my-jwk-secret",
+					},
+				},
+				Spec: extensions.IngressSpec{
+					Rules: []extensions.IngressRule{
+						extensions.IngressRule{
+							Host: "cafe.example.com",
+							IngressRuleValue: extensions.IngressRuleValue{
+								HTTP: &extensions.HTTPIngressRuleValue{
+									Paths: []extensions.HTTPIngressPath{
+										extensions.HTTPIngressPath{
+											Path: "/tea",
+											Backend: extensions.IngressBackend{
+												ServiceName: "tea-svc",
+												ServicePort: intstr.FromString("80"),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedToFind: false,
+			desc:           "a Minion references a JWK secret that exists in a different namespace",
+		},
+	}
+
+	master := extensions.Ingress{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+		},
+		Spec: extensions.IngressSpec{
+			Rules: []extensions.IngressRule{
+				extensions.IngressRule{
+					Host: "cafe.example.com",
+					IngressRuleValue: extensions.IngressRuleValue{
+						HTTP: &extensions.HTTPIngressRuleValue{ // HTTP must not be nil for Master
+							Paths: []extensions.HTTPIngressPath{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.desc, func(t *testing.T) {
+			fakeClient := fake.NewSimpleClientset()
+
+			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080)
+			if err != nil {
+				t.Fatalf("templateExecuter could not start: %v", err)
+			}
+			ngxc := nginx.NewNginxController("/etc/nginx", true)
+			apiCtrl, err := plus.NewNginxAPIController(&http.Client{}, "", true)
+			if err != nil {
+				t.Fatalf("NGINX API Controller could not start: %v", err)
+			}
+
+			cnf := nginx.NewConfigurator(ngxc, &nginx.Config{}, apiCtrl, templateExecutor)
+			lbc := LoadBalancerController{
+				client:       fakeClient,
+				ingressClass: "nginx",
+				configurator: cnf,
+				isNginxPlus:  true,
+			}
+
+			lbc.ingressLister.Store, _ = cache.NewInformer(
+				cache.NewListWatchFromClient(lbc.client.ExtensionsV1beta1().RESTClient(), "ingresses", "default", fields.Everything()),
+				&extensions.Ingress{}, time.Duration(1), nil)
+
+			lbc.secretLister.Store, lbc.secretController = cache.NewInformer(
+				cache.NewListWatchFromClient(lbc.client.Core().RESTClient(), "secrets", "default", fields.Everything()),
+				&v1.Secret{}, time.Duration(1), nil)
+
+			mergeable := &nginx.MergeableIngresses{
+				Master: &nginx.IngressEx{
+					Ingress: &master,
+				},
+				Minions: []*nginx.IngressEx{
+					&nginx.IngressEx{
+						Ingress: &test.ingress,
+						JWTKey: nginx.JWTKey{
+							Name: test.secret.Name,
+						},
+					},
+				},
+			}
+
+			err = cnf.AddOrUpdateMergeableIngress(mergeable)
+			if err != nil {
+				t.Fatalf("Ingress was not added: %v", err)
+			}
+
+			lbc.ingressLister.Add(&master)
+			lbc.ingressLister.Add(&test.ingress)
+			lbc.secretLister.Add(&test.secret)
+
+			ings, err := lbc.findIngressesForSecret(test.secret.Namespace, test.secret.Name)
+			if err != nil {
+				t.Fatalf("Couldn't find Ingress resource: %v", err)
+			}
+
+			if len(ings) > 0 {
+				if !test.expectedToFind {
+					t.Fatalf("Expected 0 ingresses. Got: %v", len(ings))
+				}
+				if len(ings) != 1 {
+					t.Fatalf("Expected 1 ingress. Got: %v", len(ings))
+				}
+				if ings[0].Name != test.ingress.Name || ings[0].Namespace != test.ingress.Namespace {
+					t.Fatalf("Expected: %v/%v. Got: %v/%v.", test.ingress.Namespace, test.ingress.Name, ings[0].Namespace, ings[0].Name)
+				}
+			} else if test.expectedToFind {
+				t.Fatal("Expected 1 ingress. Got: 0")
+			}
+		})
+	}
+
 }

@@ -51,6 +51,7 @@ var ingCfg = nginx.IngressNginxConfig{
 			SSL:               true,
 			SSLCertificate:    "secret.pem",
 			SSLCertificateKey: "secret.pem",
+			SSLCiphers:        "NULL",
 			SSLPorts:          []int{443},
 			SSLRedirect:       true,
 			Locations: []nginx.Location{

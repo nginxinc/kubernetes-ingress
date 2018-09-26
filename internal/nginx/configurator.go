@@ -17,11 +17,13 @@ import (
 
 const emptyHost = ""
 
+const pemFileNameForMissingTLSSecret = "/etc/nginx/secrets/default"
+
 // DefaultServerSecretName is the filename of the Secret with a TLS cert and a key for the default server
 const DefaultServerSecretName = "default"
 
-// JWTKey is the key of the data field of a Secret where the JWK must be stored.
-const JWTKey = "jwk"
+// JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
+const JWTKeyKey = "jwk"
 
 // JWTKeyAnnotation is the annotation where the Secret with a JWK is specified.
 const JWTKeyAnnotation = "nginx.com/jwt-key"
@@ -67,9 +69,10 @@ func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) error {
 }
 
 func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
-	pems, jwtKeyFileName := cnf.updateSecrets(ingEx)
+	pems := cnf.updateTLSSecrets(ingEx)
+	cnf.updateJWTSecret(ingEx.JWTKey)
 	isMinion := false
-	nginxCfg := cnf.generateNginxCfg(ingEx, pems, jwtKeyFileName, isMinion)
+	nginxCfg := cnf.generateNginxCfg(ingEx, pems, isMinion)
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
 	if err != nil {
@@ -122,9 +125,11 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 			mergeableIngs.Master.Ingress.Namespace, mergeableIngs.Master.Ingress.Name, strings.Join(removedAnnotations, ","))
 	}
 
-	pems, jwtKeyFileName := cnf.updateSecrets(mergeableIngs.Master)
+	pems := cnf.updateTLSSecrets(mergeableIngs.Master)
+	cnf.updateJWTSecret(mergeableIngs.Master.JWTKey)
+
 	isMinion := false
-	masterNginxCfg := cnf.generateNginxCfg(mergeableIngs.Master, pems, jwtKeyFileName, isMinion)
+	masterNginxCfg := cnf.generateNginxCfg(mergeableIngs.Master, pems, isMinion)
 
 	masterServer = masterNginxCfg.Servers[0]
 	masterServer.Locations = []Location{}
@@ -150,9 +155,10 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 				minion.Ingress.Namespace, minion.Ingress.Name, strings.Join(removedAnnotations, ","))
 		}
 
-		pems, jwtKeyFileName := cnf.updateSecrets(minion)
+		pems := cnf.updateTLSSecrets(minion)
+		cnf.updateJWTSecret(minion.JWTKey)
 		isMinion := true
-		nginxCfg := cnf.generateNginxCfg(minion, pems, jwtKeyFileName, isMinion)
+		nginxCfg := cnf.generateNginxCfg(minion, pems, isMinion)
 
 		for _, server := range nginxCfg.Servers {
 			for _, loc := range server.Locations {
@@ -181,13 +187,16 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 	}
 }
 
-func (cnf *Configurator) updateSecrets(ingEx *IngressEx) (map[string]string, string) {
+func (cnf *Configurator) updateTLSSecrets(ingEx *IngressEx) map[string]string {
 	pems := make(map[string]string)
 
 	for _, tls := range ingEx.Ingress.Spec.TLS {
 		secretName := tls.SecretName
 
-		pemFileName := cnf.addOrUpdateSecret(ingEx.TLSSecrets[secretName])
+		pemFileName := pemFileNameForMissingTLSSecret
+		if secret, exists := ingEx.TLSSecrets[secretName]; exists {
+			pemFileName = cnf.addOrUpdateSecret(secret)
+		}
 
 		for _, host := range tls.Hosts {
 			pems[host] = pemFileName
@@ -197,16 +206,16 @@ func (cnf *Configurator) updateSecrets(ingEx *IngressEx) (map[string]string, str
 		}
 	}
 
-	jwtKeyFileName := ""
-
-	if cnf.isPlus() && ingEx.JWTKey != nil {
-		jwtKeyFileName = cnf.addOrUpdateSecret(ingEx.JWTKey)
-	}
-
-	return pems, jwtKeyFileName
+	return pems
 }
 
-func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]string, jwtKeyFileName string, isMinion bool) IngressNginxConfig {
+func (cnf *Configurator) updateJWTSecret(jwtKey JWTKey) {
+	if cnf.isPlus() && jwtKey.Secret != nil {
+		cnf.addOrUpdateSecret(jwtKey.Secret)
+	}
+}
+
+func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool) IngressNginxConfig {
 	ingCfg := cnf.createConfig(ingEx)
 
 	upstreams := make(map[string]Upstream)
@@ -272,9 +281,14 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			server.SSL = true
 			server.SSLCertificate = pemFile
 			server.SSLCertificateKey = pemFile
+			if pemFile == pemFileNameForMissingTLSSecret {
+				server.SSLCiphers = "NULL"
+			}
 		}
 
-		if !isMinion && jwtKeyFileName != "" {
+		if !isMinion && ingEx.JWTKey.Name != "" {
+			jwtKeyFileName := cnf.nginx.getSecretFileName(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
+
 			server.JWTAuth = &JWTAuth{
 				Key:   jwtKeyFileName,
 				Realm: ingCfg.JWTRealm,
@@ -323,7 +337,9 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 
 			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &ingCfg, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
 				sslServices[path.Backend.ServiceName], grpcServices[path.Backend.ServiceName])
-			if isMinion && jwtKeyFileName != "" {
+			if isMinion && ingEx.JWTKey.Name != "" {
+				jwtKeyFileName := cnf.nginx.getSecretFileName(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
+
 				loc.JWTAuth = &JWTAuth{
 					Key:   jwtKeyFileName,
 					Realm: ingCfg.JWTRealm,
@@ -881,12 +897,26 @@ func upstreamMapToSlice(upstreams map[string]Upstream) []Upstream {
 }
 
 // AddOrUpdateSecret creates or updates a file with the content of the secret
-func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) error {
+func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
 	cnf.addOrUpdateSecret(secret)
 
 	kind, _ := GetSecretKind(secret)
 	if cnf.isPlus() && kind == JWK {
 		return nil
+	}
+
+	for i := range ingExes {
+		err := cnf.addOrUpdateIngress(&ingExes[i])
+		if err != nil {
+			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingExes[i].Ingress.Namespace, ingExes[i].Ingress.Name, err)
+		}
+	}
+
+	for i := range mergeableIngresses {
+		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
+		if err != nil {
+			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+		}
 	}
 
 	if err := cnf.nginx.Reload(); err != nil {
@@ -904,7 +934,7 @@ func (cnf *Configurator) addOrUpdateSecret(secret *api_v1.Secret) string {
 	kind, _ := GetSecretKind(secret)
 	if cnf.isPlus() && kind == JWK {
 		mode = jwkSecretFileMode
-		data = []byte(secret.Data[JWTKey])
+		data = []byte(secret.Data[JWTKeyKey])
 	} else {
 		mode = TLSSecretFileMode
 		data = GenerateCertAndKeyFileContent(secret)
@@ -935,17 +965,24 @@ func GenerateCertAndKeyFileContent(secret *api_v1.Secret) []byte {
 }
 
 // DeleteSecret deletes the file associated with the secret and the configuration files for the Ingress resources. NGINX is reloaded only when len(ings) > 0
-func (cnf *Configurator) DeleteSecret(key string, ings []extensions.Ingress) error {
-	for _, ing := range ings {
-		name := objectMetaToFileName(&ing.ObjectMeta)
-		cnf.nginx.DeleteIngress(name)
-		delete(cnf.ingresses, name)
-		delete(cnf.minions, name)
-	}
-
+func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
 	cnf.nginx.DeleteSecretFile(keyToFileName(key))
 
-	if len(ings) > 0 {
+	for i := range ingExes {
+		err := cnf.addOrUpdateIngress(&ingExes[i])
+		if err != nil {
+			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingExes[i].Ingress.Namespace, ingExes[i].Ingress.Name, err)
+		}
+	}
+
+	for i := range mergeableIngresses {
+		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
+		if err != nil {
+			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+		}
+	}
+
+	if len(ingExes)+len(mergeableIngresses) > 0 {
 		if err := cnf.nginx.Reload(); err != nil {
 			return fmt.Errorf("Error when reloading NGINX when deleting Secret %v: %v", key, err)
 		}

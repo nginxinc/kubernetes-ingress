@@ -28,8 +28,8 @@ func ValidateTLSSecret(secret *api_v1.Secret) error {
 
 // ValidateJWKSecret validates the secret. If it is valid, the function returns nil.
 func ValidateJWKSecret(secret *api_v1.Secret) error {
-	if _, exists := secret.Data[JWTKey]; !exists {
-		return fmt.Errorf("Secret doesn't have %v", JWTKey)
+	if _, exists := secret.Data[JWTKeyKey]; !exists {
+		return fmt.Errorf("Secret doesn't have %v", JWTKeyKey)
 	}
 
 	return nil
