@@ -9,7 +9,7 @@ Make sure you have access to the Ingress controller image:
 
 The installation manifests are located in the [deployments](../deployments) folder. In the steps below we assume that you will be running the commands from that folder.
 
-## 1. Create a Namespace, a SA and the Default Secret.
+## 1. Create a Namespace, a SA, the Default Secret and the Customization Config Map.
 
 1. Create a namespace and a service account for the Ingress controller:
     ```
@@ -24,7 +24,7 @@ The installation manifests are located in the [deployments](../deployments) fold
 
     **Note**: The default server returns the Not Found page with the 404 status code for all requests for domains for which there are no Ingress rules defined. For testing purposes we include a self-signed certificate and key that we generated. However, we recommend that you use your own certificate and key.
 
-1. *Optional*. Create a config map for customizing NGINX configuration (read more about customization [here](../examples/customization)):
+1. Create a config map for customizing NGINX configuration (read more about customization [here](../examples/customization)):
     ```
     $ kubectl apply -f common/nginx-config.yaml
     ```
