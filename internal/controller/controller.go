@@ -427,8 +427,8 @@ func (lbc *LoadBalancerController) GetManagedIngresses() ([]extensions.Ingress, 
 
 func (lbc *LoadBalancerController) ingressesToIngressExes(ings []extensions.Ingress) []*nginx.IngressEx {
 	var ingExes []*nginx.IngressEx
-	for _, ing := range ings {
-		ingEx, err := lbc.createIngress(&ing)
+	for i := range ings {
+		ingEx, err := lbc.createIngress(&ings[i])
 		if err != nil {
 			continue
 		}
