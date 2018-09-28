@@ -363,27 +363,27 @@ func (lbc *LoadBalancerController) syncConfig(task queue.Task) {
 
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal
-	eventWarningMessageAndError := ""
+	eventWarningMessage := ""
 
 	if updateErr != nil {
 		eventTitle = "UpdatedWithError"
 		eventType = api_v1.EventTypeWarning
-		eventWarningMessageAndError = fmt.Sprintf("but was not applied: %v", updateErr)
+		eventWarningMessage = fmt.Sprintf("but was not applied: %v", updateErr)
 	}
 	if configExists {
 		cfgm := obj.(*api_v1.ConfigMap)
-		lbc.recorder.Eventf(cfgm, eventType, eventTitle, "Configuration from %v was updated %s", key, eventWarningMessageAndError)
+		lbc.recorder.Eventf(cfgm, eventType, eventTitle, "Configuration from %v was updated %s", key, eventWarningMessage)
 	}
 	for _, ingEx := range ingExes {
 		lbc.recorder.Eventf(ingEx.Ingress, eventType, eventTitle, "Configuration for %v/%v was updated %s",
-			ingEx.Ingress.Namespace, ingEx.Ingress.Name, eventWarningMessageAndError)
+			ingEx.Ingress.Namespace, ingEx.Ingress.Name, eventWarningMessage)
 	}
 	for _, mergeableIng := range mergeableIngresses {
 		master := mergeableIng.Master
-		lbc.recorder.Eventf(master.Ingress, eventType, eventTitle, "Configuration for %v/%v(Master) was updated %s", master.Ingress.Namespace, master.Ingress.Name, eventWarningMessageAndError)
+		lbc.recorder.Eventf(master.Ingress, eventType, eventTitle, "Configuration for %v/%v(Master) was updated %s", master.Ingress.Namespace, master.Ingress.Name, eventWarningMessage)
 		for _, minion := range mergeableIng.Minions {
 			lbc.recorder.Eventf(minion.Ingress, eventType, eventTitle, "Configuration for %v/%v(Minion) was updated %s",
-				minion.Ingress.Namespace, minion.Ingress.Name)
+				minion.Ingress.Namespace, minion.Ingress.Name, eventWarningMessage)
 		}
 	}
 }
@@ -528,16 +528,16 @@ func (lbc *LoadBalancerController) syncIng(task queue.Task) {
 			// record correct eventType and message depending on the error
 			eventTitle := "AddedOrUpdated"
 			eventType := api_v1.EventTypeNormal
-			eventWarningMessageAndError := ""
+			eventWarningMessage := ""
 
 			if addErr != nil {
 				eventTitle = "AddedOrUpdatedWithError"
 				eventType = api_v1.EventTypeWarning
-				eventWarningMessageAndError = fmt.Sprintf("but was not applied: %v", addErr)
+				eventWarningMessage = fmt.Sprintf("but was not applied: %v", addErr)
 			}
-			lbc.recorder.Eventf(ing, eventType, eventTitle, "Configuration for %v(Master) was added or updated %s: %v", key, eventWarningMessageAndError)
+			lbc.recorder.Eventf(ing, eventType, eventTitle, "Configuration for %v(Master) was added or updated %s", key, eventWarningMessage)
 			for _, minion := range mergeableIngExs.Minions {
-				lbc.recorder.Eventf(ing, eventType, eventTitle, "Configuration for %v/%v(Minion) was added or updated %s: %v", minion.Ingress.Namespace, minion.Ingress.Name, eventWarningMessageAndError)
+				lbc.recorder.Eventf(ing, eventType, eventTitle, "Configuration for %v/%v(Minion) was added or updated %s", minion.Ingress.Namespace, minion.Ingress.Name, eventWarningMessage)
 			}
 
 			if lbc.reportStatusEnabled() {
