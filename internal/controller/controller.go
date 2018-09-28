@@ -528,16 +528,16 @@ func (lbc *LoadBalancerController) syncIng(task queue.Task) {
 			// record correct eventType and message depending on the error
 			eventTitle := "AddedOrUpdated"
 			eventType := api_v1.EventTypeNormal
-			eventWarningMessage := ""
+			eventWarningMessageAndError := ""
 
 			if addErr != nil {
 				eventTitle = "AddedOrUpdatedWithError"
 				eventType = api_v1.EventTypeWarning
-				eventWarningMessage = "but was not applied"
+				eventWarningMessageAndError = fmt.Sprintf("but was not applied: %v", addErr)
 			}
-			lbc.recorder.Eventf(ing, eventType, eventTitle, "Configuration for %v(Master) was added or updated %s: %v", key, eventWarningMessage, err)
+			lbc.recorder.Eventf(ing, eventType, eventTitle, "Configuration for %v(Master) was added or updated %s: %v", key, eventWarningMessageAndError)
 			for _, minion := range mergeableIngExs.Minions {
-				lbc.recorder.Eventf(ing, eventType, eventTitle, "Configuration for %v/%v(Minion) was added or updated %s: %v", minion.Ingress.Namespace, minion.Ingress.Name, eventWarningMessage, err)
+				lbc.recorder.Eventf(ing, eventType, eventTitle, "Configuration for %v/%v(Minion) was added or updated %s: %v", minion.Ingress.Namespace, minion.Ingress.Name, eventWarningMessageAndError)
 			}
 
 			if lbc.reportStatusEnabled() {
