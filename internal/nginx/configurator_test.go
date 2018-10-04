@@ -42,6 +42,19 @@ func TestParseRewrites(t *testing.T) {
 	}
 }
 
+func TestParseRewritesWithLeadingAndTrailingWhitespace(t *testing.T) {
+	serviceName := "coffee-svc"
+	serviceNamePart := "serviceName=" + serviceName
+	rewritePath := "/beans/"
+	rewritePathPart := "rewrite=" + rewritePath
+	rewriteService := "\t\n " + serviceNamePart + " " + rewritePathPart + " \t\n"
+
+	serviceNameActual, rewritePathActual, err := parseRewrites(rewriteService)
+	if serviceName != serviceNameActual || rewritePath != rewritePathActual || err != nil {
+		t.Errorf("parseRewrites(%s) should return %q, %q, nil; got %q, %q, %v", rewriteService, serviceName, rewritePath, serviceNameActual, rewritePathActual, err)
+	}
+}
+
 func TestParseRewritesInvalidFormat(t *testing.T) {
 	rewriteService := "serviceNamecoffee-svc rewrite=/"
 

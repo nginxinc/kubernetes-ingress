@@ -637,7 +637,7 @@ func getRewrites(ingEx *IngressEx) map[string]string {
 }
 
 func parseRewrites(service string) (serviceName string, rewrite string, err error) {
-	parts := strings.SplitN(service, " ", 2)
+	parts := strings.SplitN(strings.TrimSpace(service), " ", 2)
 
 	if len(parts) != 2 {
 		return "", "", fmt.Errorf("Invalid rewrite format: %s", service)
