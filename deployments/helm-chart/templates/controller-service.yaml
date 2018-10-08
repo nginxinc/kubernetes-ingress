@@ -17,6 +17,9 @@ spec:
   {{- if .Values.controller.service.externalTrafficPolicy }}
   externalTrafficPolicy: {{ .Values.controller.service.externalTrafficPolicy }}
   {{- end }}
+  {{- if (eq .Values.controller.service.type "LoadBalancer") .Values.controller.service.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.controller.service.loadBalancerIP }}
+  {{- end }}
 {{- end }}
   type: {{ .Values.controller.service.type }}
   ports:

@@ -30,6 +30,7 @@ controller:
     type: LoadBalancer
     externalTrafficPolicy: Local
     annotations: {}
+    loadBalancerIP: ""
   serviceAccountName: nginx-ingress
   reportIngressStatus:
     enable: true
