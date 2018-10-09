@@ -45,7 +45,7 @@ data:
     if ($new_uri) {
         rewrite ^ $new_uri permanent;
     }
-  lb-method: "round_robin" # default is least_conn. Sets the load balancing method for upstreams. See https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method
+  lb-method: "round_robin" # default is random two least_conn. Sets the load balancing method for upstreams. See https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method
   location-snippets: | # No default. Pipe is used for multiple line snippets. Make sure the snippet is not a default value, in order to avoid duplication.
     proxy_temp_path  /var/nginx/proxy_temp;
     charset  koi8-r;
