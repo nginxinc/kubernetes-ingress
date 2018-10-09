@@ -74,7 +74,7 @@ The table below summarizes all of the options. For some of them, there are examp
 ## Using ConfigMaps
 
 1. Make sure that you specify the configmaps resource to use when you start an Ingress controller.
-For example, `-nginx-configmaps=default/nginx-config`, where we specify
+For example, `-configmap=default/nginx-config`, where we specify
 the config map to use with the following format: `<namespace>/<name>`.
 
 1. Create a configmaps file with the name *nginx-config.yaml* and set the values
