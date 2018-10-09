@@ -17,17 +17,13 @@ spec:
     metadata:
       labels:
         app: {{ .Values.controller.name | trunc 63 }}
-{{- if .Values.prometheus }}
 {{- if .Values.prometheus.create }}
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "{{ .Values.prometheus.port }}"
 {{- end }}
-{{- end }}
     spec:
-{{- if .Values.controller.serviceAccountName }}
       serviceAccountName: {{ .Values.controller.serviceAccountName }}
-{{- end }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:
       - image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
@@ -48,42 +44,29 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         args:
-{{- if .Values.controller.nginxplus }}
-          - -nginx-plus
-{{- end }}
+          - -nginx-plus={{ .Values.controller.nginxplus }}
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
 {{- if .Values.controller.defaultTLS.secret }}
           - -default-server-tls-secret={{ .Values.controller.defaultTLS.secret }}
 {{ else }}
           - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
 {{- end }}
-{{- if .Values.controller.ingressClass }}
           - -ingress-class={{ .Values.controller.ingressClass }}
-{{- end }}
-{{- if .Values.controller.useIngressClassOnly }}
           - -use-ingress-class-only={{ .Values.controller.useIngressClassOnly }}
-{{- end }}
 {{- if .Values.controller.watchNamespace }}
           - -watch-namespace={{ .Values.controller.watchNamespace }}
 {{- end }}
-{{- if .Values.controller.healthStatus }}
-          - -health-status
-{{- end }}
-{{- if .Values.controller.nginxStatus }}
-          - -nginx-status={{ .Values.controller.nginxStatus.enable }}
+          - -health-status={{ .Values.controller.healthStatus }}
+{{- if .Values.controller.nginxStatus.enable }}
+          - -nginx-status
           - -nginx-status-port={{ .Values.controller.nginxStatus.port }}
 {{- end }}
 {{- if .Values.controller.reportIngressStatus.enable }}
           - -report-ingress-status
-{{- if .Values.controller.reportIngressStatus.externalService }}
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
+          - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}
 {{- end }}
-{{- if .Values.controller.reportIngressStatus.enableLeaderElection }}
-          - -enable-leader-election
-{{- end }}
-{{- end }}
-{{- if and .Values.prometheus .Values.controller.nginxStatus }}
-{{- if .Values.prometheus.create }}
+{{- if and .Values.prometheus.create .Values.controller.nginxStatus.enable }}
       - image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.image.tag }}"
         name: nginx-prometheus-exporter
         imagePullPolicy: "{{ .Values.prometheus.image.pullPolicy }}"
@@ -95,13 +78,11 @@ spec:
           - :{{ .Values.prometheus.port }}
 {{- if .Values.controller.nginxplus }}
           - -nginx.plus
-{{- end }}
           - -nginx.scrape-uri
-{{- if .Values.controller.nginxplus }}
           - http://127.0.0.1:{{ .Values.controller.nginxStatus.port }}/api
 {{ else }}
-          - http://127.0.0.1:{{  .Values.controller.nginxStatus.port }}/stub_status
-{{- end }}
+          - -nginx.scrape-uri
+          - http://127.0.0.1:{{ .Values.controller.nginxStatus.port }}/stub_status
 {{- end }}
 {{- end }}
 {{- end }}
