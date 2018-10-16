@@ -33,4 +33,8 @@ spec:
     name: https
   selector:
     app: {{ .Values.controller.name | trunc 63 }}
+  {{- if .Values.controller.service.externalIPs }}
+  externalIPs:
+{{ toYaml .Values.controller.service.externalIPs | indent 4 }}
+  {{- end }}
 {{- end }}

@@ -31,11 +31,13 @@ controller:
     externalTrafficPolicy: Local
     annotations: {}
     loadBalancerIP: ""
+    externalIPs: []
   serviceAccountName: nginx-ingress
   reportIngressStatus:
     enable: true
     externalService: nginx-ingress
     enableLeaderElection: true
+  nginxStatusAllowCidrs: "127.0.0.1"
 rbac:
   create: true
 prometheus:
