@@ -77,16 +77,18 @@ Parameter | Description | Default
 `controller.service.externalTrafficPolicy` | The externalTrafficPolicy of the service. The value Local preserves the client source IP. | Local
 `controller.service.annotations` | The annotations of the Ingress controller service. | { }
 `controller.service.loadBalancerIP` | The static IP address for the load balancer. Requires `controller.service.type` set to `LoadBalancer`.  | None
+`controller.service.externalIPs` | Traffic that ingresses into the cluster with the external IP (as destination IP), on the service port, will be routed to the Ingress Controller service endpoints. externalIPs are not managed by Kubernetes and are the responsibility of the cluster administrator. | []
 `controller.serviceAccountName` | The serviceAccountName of the Ingress controller pods. Used for RBAC. | nginx-ingress
 `controller.ingressClass` | A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation `"kubernetes.io/ingress.class"` equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag. | nginx
 `controller.useIngressClassOnly` | Ignore Ingress resources without the `"kubernetes.io/ingress.class"` annotation. | false
 `controller.watchNamespace` | Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces. | ""
 `controller.healthStatus` | Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller. | false
-`controller.nginxStatus.enable` | Enable the NGINX stub_status, or the NGINX Plus API. | true 
+`controller.nginxStatus.enable` | Enable the NGINX stub_status, or the NGINX Plus API. | true
 `controller.nginxStatus.port` | Set the port where the NGINX stub_status or the NGINX Plus API is exposed. | 8080
 `controller.reportIngressStatus.enable` | Update the address field in the status of Ingresses resources with an external address of the Ingress controller. You must also specify the source of the external address either through an external service via `controller.reportIngressStatus.externalService` or the `external-status-address` entry in the ConfigMap via `controller.config.entries`. **Note:** `controller.config.entries.external-status-address` takes precedence if both are set. | true
 `controller.reportIngressStatus.externalService` | Specifies the name of the service with the type LoadBalancer through which the Ingress controller is exposed externally. The external address of the service is used when reporting the status of Ingress resources. `controller.reportIngressStatus.enable` must be set to `true`. | nginx-ingress
 `controller.reportIngressStatus.enableLeaderElection` | Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources. `controller.reportIngressStatus.enable` must be set to `true`. | true
+`controller.nginxStatusAllowCidrs` | Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas. | 127.0.0.1
 `rbac.create` | Configures RBAC. | true
 `prometheues.create` | Deploys a Prometheus exporter container within the Ingress controller pod. Requires NGINX status enabled via `controller.nginxStatus.enable`. Note: the exporter will use the port specified by `controller.nginxStatus.port`.| false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
