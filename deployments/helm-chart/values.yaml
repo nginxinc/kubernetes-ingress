@@ -25,6 +25,7 @@ controller:
   nginxStatus:
     enable: true
     port: 8080
+    allowCidrs: "127.0.0.1"
   service:
     create: true
     type: LoadBalancer
@@ -37,7 +38,6 @@ controller:
     enable: true
     externalService: nginx-ingress
     enableLeaderElection: true
-  nginxStatusAllowCidrs: "127.0.0.1"
 rbac:
   create: true
 prometheus:

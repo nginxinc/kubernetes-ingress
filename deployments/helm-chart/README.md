@@ -85,10 +85,10 @@ Parameter | Description | Default
 `controller.healthStatus` | Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller. | false
 `controller.nginxStatus.enable` | Enable the NGINX stub_status, or the NGINX Plus API. | true
 `controller.nginxStatus.port` | Set the port where the NGINX stub_status or the NGINX Plus API is exposed. | 8080
+`controller.nginxStatus.allowCidrs` | Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas. | 127.0.0.1
 `controller.reportIngressStatus.enable` | Update the address field in the status of Ingresses resources with an external address of the Ingress controller. You must also specify the source of the external address either through an external service via `controller.reportIngressStatus.externalService` or the `external-status-address` entry in the ConfigMap via `controller.config.entries`. **Note:** `controller.config.entries.external-status-address` takes precedence if both are set. | true
 `controller.reportIngressStatus.externalService` | Specifies the name of the service with the type LoadBalancer through which the Ingress controller is exposed externally. The external address of the service is used when reporting the status of Ingress resources. `controller.reportIngressStatus.enable` must be set to `true`. | nginx-ingress
 `controller.reportIngressStatus.enableLeaderElection` | Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources. `controller.reportIngressStatus.enable` must be set to `true`. | true
-`controller.nginxStatusAllowCidrs` | Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas. | 127.0.0.1
 `rbac.create` | Configures RBAC. | true
 `prometheues.create` | Deploys a Prometheus exporter container within the Ingress controller pod. Requires NGINX status enabled via `controller.nginxStatus.enable`. Note: the exporter will use the port specified by `controller.nginxStatus.port`.| false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
