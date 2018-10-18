@@ -1172,7 +1172,7 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *extensio
 		return svcObj.(*api_v1.Service), nil
 	}
 
-	return nil, fmt.Errorf("service %s doesn't exists", svcKey)
+	return nil, fmt.Errorf("service %s doesn't exist", svcKey)
 }
 
 // IsNginxIngress checks if resource ingress class annotation (if exists) is matching with ingress controller class
