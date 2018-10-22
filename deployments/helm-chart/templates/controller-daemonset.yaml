@@ -79,8 +79,6 @@ spec:
           - -report-ingress-status
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}
-{{- end }}
-{{- if .Values.controller.nginxStatus.allowCidrs }}
           - -nginx-status-allow-cidrs={{ .Values.controller.nginxStatus.allowCidrs }}
 {{- end }}
 {{- if and .Values.prometheus.create .Values.controller.nginxStatus.enable }}
