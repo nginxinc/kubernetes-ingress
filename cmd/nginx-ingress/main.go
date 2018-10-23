@@ -229,7 +229,6 @@ func main() {
 
 	var nginxAPI *plus.NginxAPIController
 	if *nginxPlus {
-		time.Sleep(500 * time.Millisecond)
 		httpClient := getSocketClient()
 		nginxAPI, err = plus.NewNginxAPIController(&httpClient, "http://nginx-plus-api/api", local)
 		if err != nil {

@@ -60,16 +60,18 @@ func (c *Client) WaitForCorrectVersion(expectedVersion int) error {
 	// This value needs tuning.
 	maxRetries := 160
 	sleep := 25 * time.Millisecond
-	for i := 0; i < maxRetries; i++ {
+	for i := 1; i <= maxRetries; i++ {
+		time.Sleep(sleep)
+
 		version, err := c.GetConfigVersion()
 		if err != nil {
-			return fmt.Errorf("unable to fetch version: %v", err)
+			glog.V(3).Infof("Unable to fetch version: %v", err)
+			continue
 		}
 		if version == expectedVersion {
 			glog.V(3).Infof("success, version %v ensured. iterations: %v. took: %v", expectedVersion, i, time.Duration(i)*sleep)
 			return nil
 		}
-		time.Sleep(sleep)
 	}
 	return fmt.Errorf("could not get expected version: %v", expectedVersion)
 }

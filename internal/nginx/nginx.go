@@ -319,18 +319,26 @@ func (nginx *Controller) Reload() error {
 
 // Start starts NGINX
 func (nginx *Controller) Start(done chan error) {
-	if !nginx.local {
-		cmd := exec.Command("nginx")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Start(); err != nil {
-			glog.Fatalf("Failed to start nginx: %v", err)
-		}
-		go func() {
-			done <- cmd.Wait()
-		}()
-	} else {
-		glog.V(3).Info("Starting nginx")
+	glog.V(3).Info("Starting nginx")
+
+	if nginx.local {
+		return
+	}
+
+	cmd := exec.Command("nginx")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		glog.Fatalf("Failed to start nginx: %v", err)
+	}
+
+	go func() {
+		done <- cmd.Wait()
+	}()
+
+	err := nginx.verifyClient.WaitForCorrectVersion(nginx.configVersion)
+	if err != nil {
+		glog.Fatalf("Could not get newest config version: %v", err)
 	}
 }
 
