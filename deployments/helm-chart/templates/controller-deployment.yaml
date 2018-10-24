@@ -60,12 +60,12 @@ spec:
 {{- if .Values.controller.nginxStatus.enable }}
           - -nginx-status
           - -nginx-status-port={{ .Values.controller.nginxStatus.port }}
+          - -nginx-status-allow-cidrs={{ .Values.controller.nginxStatus.allowCidrs }}
 {{- end }}
 {{- if .Values.controller.reportIngressStatus.enable }}
           - -report-ingress-status
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}
-          - -nginx-status-allow-cidrs={{ .Values.controller.nginxStatus.allowCidrs }}
 {{- end }}
 {{- if and .Values.prometheus.create .Values.controller.nginxStatus.enable }}
       - image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.image.tag }}"
