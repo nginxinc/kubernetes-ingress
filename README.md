@@ -35,7 +35,7 @@ We provide the following extensions to our Ingress controller:
 * [Session Persistence](examples/session-persistence) (NGINX Plus only), which guarantees that all the requests from the same client are always passed to the same backend container.
 * [Support for JWTs](examples/jwt) (NGINX Plus only), which allows NGINX Plus to authenticate requests by validating JSON Web Tokens (JWTs).
 
-Additional extensions as well as a mechanism to customize NGINX configuration are available. See [examples/customization](examples/customization).
+Additional extensions as well as a mechanism to customize NGINX configuration are available. See [ConfigMap and Annotations doc](docs/configmap-and-annotations.md).
 
 ## NGINX Ingress Controller Releases
 

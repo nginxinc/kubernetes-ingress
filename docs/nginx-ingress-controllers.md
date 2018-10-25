@@ -18,8 +18,8 @@ The table below summarizes the key difference between nginxinc/kubernetes-ingres
 | Commercial support | N/A | N/A | Included |
 | **Load balancing configuration** |
 | Merging Ingress rules with the same host | Supported | Supported | Supported |
-| HTTP load balancing extensions - Annotations | See the [supported annotations](https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/annotations.md) | See the [supported annotations](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization) | See the [supported annotations](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization)|
-| HTTP load balancing extensions -- ConfigMap | See the [supported ConfigMap keys](https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/configmap.md) | See the [supported ConfigMap keys](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization) | See the [supported ConfigMap keys](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/customization) |
+| HTTP load balancing extensions - Annotations | See the [supported annotations](https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/annotations.md) | See the [supported annotations](configmap-and-annotations.md) | See the [supported annotations](configmap-and-annotations.md)|
+| HTTP load balancing extensions -- ConfigMap | See the [supported ConfigMap keys](https://github.com/kubernetes/ingress-nginx/blob/master/docs/user-guide/configmap.md) | See the [supported ConfigMap keys](configmap-and-annotations.md) | See the [supported ConfigMap keys](configmap-and-annotations.md) |
 | TCP/UDP | Supported via a ConfigMap | Supported via a ConfigMap with native NGINX configuration | Supported via a ConfigMap with native NGINX configuration |
 | Websocket  | Supported | Supported via an [annotation](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/websocket) | Supported via an [annotation](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/websocket) |
 | TCP SSL Passthrough | Supported via a ConfigMap | Not supported | Not supported |
