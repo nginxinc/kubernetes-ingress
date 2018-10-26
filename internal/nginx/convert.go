@@ -28,8 +28,20 @@ func GetMapKeyAsBool(m map[string]string, key string, context apiObject) (bool, 
 	return false, false, nil
 }
 
-// GetMapKeyAsInt tries to find and parse a key in a map as int64
-func GetMapKeyAsInt(m map[string]string, key string, context apiObject) (int64, bool, error) {
+// GetMapKeyAsInt tries to find and parse a key in a map as int
+func GetMapKeyAsInt(m map[string]string, key string, context apiObject) (int, bool, error) {
+	if str, exists := m[key]; exists {
+		i, err := strconv.Atoi(str)
+		if err != nil {
+			return 0, exists, fmt.Errorf("%s %v/%v '%s' contains invalid integer: %v, ignoring", context.GetObjectKind().GroupVersionKind().Kind, context.GetNamespace(), context.GetName(), key, err)
+		}
+		return i, exists, nil
+	}
+	return 0, false, nil
+}
+
+// GetMapKeyAsInt64 tries to find and parse a key in a map as int64
+func GetMapKeyAsInt64(m map[string]string, key string, context apiObject) (int64, bool, error) {
 	if str, exists := m[key]; exists {
 		i, err := strconv.ParseInt(str, 10, 64)
 		if err != nil {

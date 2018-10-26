@@ -5,28 +5,30 @@ import (
 	"net/http"
 
 	"github.com/golang/glog"
+	plus "github.com/nginxinc/nginx-plus-go-sdk/client"
 )
 
 // NginxAPIController works with the NGINX API
 type NginxAPIController struct {
-	client *NginxClient
-	local  bool
+	client     *plus.NginxClient
+	httpClient *http.Client
+	local      bool
 }
 
 // ServerConfig holds the config data
 type ServerConfig struct {
-	MaxFails    int64
+	MaxFails    int
 	FailTimeout string
 	SlowStart   string
 }
 
 // NewNginxAPIController creates an instance of NginxAPIController
 func NewNginxAPIController(httpClient *http.Client, endpoint string, local bool) (*NginxAPIController, error) {
-	client, err := NewNginxClient(httpClient, endpoint)
+	client, err := plus.NewNginxClient(httpClient, endpoint)
 	if !local && err != nil {
 		return nil, err
 	}
-	nginx := &NginxAPIController{client: client, local: local}
+	nginx := &NginxAPIController{client: client, httpClient: httpClient, local: local}
 	return nginx, nil
 }
 
@@ -57,15 +59,15 @@ func (nginx *NginxAPIController) UpdateServers(upstream string, servers []string
 		return nil
 	}
 
-	err := verifyConfigVersion(nginx.client.httpClient, configVersion)
+	err := verifyConfigVersion(nginx.httpClient, configVersion)
 	if err != nil {
 		return fmt.Errorf("error verifying config version: %v", err)
 	}
 	glog.V(3).Infof("API has the correct config version: %v.", configVersion)
 
-	var upsServers []UpstreamServer
+	var upsServers []plus.UpstreamServer
 	for _, s := range servers {
-		upsServers = append(upsServers, UpstreamServer{
+		upsServers = append(upsServers, plus.UpstreamServer{
 			Server:      s,
 			MaxFails:    config.MaxFails,
 			FailTimeout: config.FailTimeout,

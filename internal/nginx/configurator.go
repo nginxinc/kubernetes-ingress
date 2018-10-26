@@ -442,7 +442,7 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 		}
 	}
 	if ingCfg.HealthCheckMandatory {
-		if healthCheckQueue, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.com/health-checks-mandatory-queue", ingEx.Ingress); exists {
+		if healthCheckQueue, exists, err := GetMapKeyAsInt64(ingEx.Ingress.Annotations, "nginx.com/health-checks-mandatory-queue", ingEx.Ingress); exists {
 			if err != nil {
 				glog.Error(err)
 			}
@@ -543,7 +543,7 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 		} else {
 			parsingErrors := false
 
-			hstsMaxAge, existsMA, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/hsts-max-age", ingEx.Ingress)
+			hstsMaxAge, existsMA, err := GetMapKeyAsInt64(ingEx.Ingress.Annotations, "nginx.org/hsts-max-age", ingEx.Ingress)
 			if existsMA && err != nil {
 				glog.Error(err)
 				parsingErrors = true
@@ -602,7 +602,7 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 		ingCfg.SSLPorts = sslPorts
 	}
 
-	if keepalive, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/keepalive", ingEx.Ingress); exists {
+	if keepalive, exists, err := GetMapKeyAsInt64(ingEx.Ingress.Annotations, "nginx.org/keepalive", ingEx.Ingress); exists {
 		if err != nil {
 			glog.Error(err)
 		} else {

@@ -58,7 +58,7 @@ type Upstream struct {
 type UpstreamServer struct {
 	Address     string
 	Port        string
-	MaxFails    int64
+	MaxFails    int
 	FailTimeout string
 	SlowStart   string
 }

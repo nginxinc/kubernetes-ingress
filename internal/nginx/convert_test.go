@@ -108,7 +108,7 @@ func TestGetMapKeyAsInt(t *testing.T) {
 	if !exists {
 		t.Errorf("The key 'key' must exist in the configMap")
 	}
-	var expected int64 = 123456789
+	expected := 123456789
 	if i != expected {
 		t.Errorf("Unexpected return value:\nGot: %v\nExpected: %v", i, expected)
 	}
@@ -135,7 +135,7 @@ func TestGetMapKeyAsIntErrorMessage(t *testing.T) {
 	if err == nil {
 		t.Error("An error was expected")
 	}
-	expected := `ConfigMap default/test 'key' contains invalid integer: strconv.ParseInt: parsing "string": invalid syntax, ignoring`
+	expected := `ConfigMap default/test 'key' contains invalid integer: strconv.Atoi: parsing "string": invalid syntax, ignoring`
 	if err.Error() != expected {
 		t.Errorf("The error message does not match expectations:\nGot: %v\nExpected: %v", err, expected)
 	}
@@ -146,6 +146,69 @@ func TestGetMapKeyAsIntErrorMessage(t *testing.T) {
 		"key": "other_string",
 	}
 	_, _, err = GetMapKeyAsInt(ingress.Annotations, "key", &ingress)
+	if err == nil {
+		t.Error("An error was expected")
+	}
+	expected = `Ingress kube-system/test 'key' contains invalid integer: strconv.Atoi: parsing "other_string": invalid syntax, ignoring`
+	if err.Error() != expected {
+		t.Errorf("The error message does not match expectations:\nGot: %v\nExpected: %v", err, expected)
+	}
+}
+
+//
+// GetMapKeyAsInt64
+//
+func TestGetMapKeyAsInt64(t *testing.T) {
+	configMap := configMap
+	configMap.Data = map[string]string{
+		"key": "123456789",
+	}
+
+	i, exists, err := GetMapKeyAsInt64(configMap.Data, "key", &configMap)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if !exists {
+		t.Errorf("The key 'key' must exist in the configMap")
+	}
+	var expected int64 = 123456789
+	if i != expected {
+		t.Errorf("Unexpected return value:\nGot: %v\nExpected: %v", i, expected)
+	}
+}
+
+func TestGetMapKeyAsInt64NotFound(t *testing.T) {
+	configMap := configMap
+	configMap.Data = map[string]string{}
+
+	_, exists, _ := GetMapKeyAsInt64(configMap.Data, "key", &configMap)
+	if exists {
+		t.Errorf("The key 'key' must not exist in the configMap")
+	}
+}
+
+func TestGetMapKeyAsInt64ErrorMessage(t *testing.T) {
+	cfgm := configMap
+	cfgm.Data = map[string]string{
+		"key": "string",
+	}
+
+	// Test with configmap
+	_, _, err := GetMapKeyAsInt64(cfgm.Data, "key", &cfgm)
+	if err == nil {
+		t.Error("An error was expected")
+	}
+	expected := `ConfigMap default/test 'key' contains invalid integer: strconv.ParseInt: parsing "string": invalid syntax, ignoring`
+	if err.Error() != expected {
+		t.Errorf("The error message does not match expectations:\nGot: %v\nExpected: %v", err, expected)
+	}
+
+	// Test with ingress object
+	ingress := ingress
+	ingress.Annotations = map[string]string{
+		"key": "other_string",
+	}
+	_, _, err = GetMapKeyAsInt64(ingress.Annotations, "key", &ingress)
 	if err == nil {
 		t.Error("An error was expected")
 	}
