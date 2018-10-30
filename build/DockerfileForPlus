@@ -2,7 +2,7 @@ FROM debian:stretch-slim
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV NGINX_PLUS_VERSION 16-1~stretch
+ENV NGINX_PLUS_VERSION 16-2~stretch
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
 # and copy to the build context
