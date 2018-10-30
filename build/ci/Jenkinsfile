@@ -4,5 +4,5 @@ node
      url: "${libsLocation}",
      credentialsId: "${githubCreds}"
   )
-  load 'ic/Jenkinsfile'
+  load 'ic/JenkinsfileRelease1-3'
 }
