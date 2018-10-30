@@ -1,5 +1,14 @@
 # Changelog
 
+### 1.3.1
+
+CHANGES:
+* Update NGINX Plus version to R15p2.
+
+UPGRADE:
+* For NGINX, use the 1.3.1 image from our DockerHub: `nginx/nginx-ingress:1.3.1` or `nginx/nginx-ingress:1.3.1-alpine`
+* For NGINX Plus, please build your own image using the 1.3.1 source code.
+
 ### 1.3.0
 
 IMPROVEMENTS:
