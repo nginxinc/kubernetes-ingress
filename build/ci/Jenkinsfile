@@ -1,4 +1,3 @@
-# just to test new jenkinsfile
 node
 {
   git(
