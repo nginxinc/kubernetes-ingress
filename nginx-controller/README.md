@@ -30,6 +30,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 1. Clone the Ingress controller repo and change your folder to `nginx-controller`: 
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    $ git checkout v1.3.2
     $ cd kubernetes-ingress/nginx-controller
     ```
 
@@ -41,7 +42,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
       
-      As the result, the image **myregistry.example.com/nginx-ingress:1.3.1** is built and pushed to the registry. Note that the tag `1.3.1` comes from the `VERSION` variable, defined in the Makefile.
+      As the result, the image **myregistry.example.com/nginx-ingress:1.3.2** is built and pushed to the registry. Note that the tag `1.3.2` comes from the `VERSION` variable, defined in the Makefile.
 
     * For NGINX Plus, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the `nginx-controller` folder:
       ```
@@ -55,7 +56,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
       
-      As the result, the image **myregistry.example.com/nginx-plus-ingress:1.3.1** is built and pushed to the registry. Note that the tag `1.3.1` comes from the `VERSION` variable, defined in the Makefile.
+      As the result, the image **myregistry.example.com/nginx-plus-ingress:1.3.2** is built and pushed to the registry. Note that the tag `1.3.2` comes from the `VERSION` variable, defined in the Makefile.
 
 Next you will find the details about available Makefile targets and variables.
 
