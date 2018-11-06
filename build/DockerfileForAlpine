@@ -1,4 +1,4 @@
-FROM nginx:1.15.5-alpine
+FROM nginx:1.15.6-alpine
 
 # forward nginx access and error logs to stdout and stderr of the ingress
 # controller process
