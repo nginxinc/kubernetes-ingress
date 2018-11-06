@@ -1,5 +1,14 @@
 # Changelog
 
+### 1.3.2
+
+CHANGES:
+* Update NGINX version to 1.15.6.
+
+UPGRADE:
+* For NGINX, use the 1.3.2 image from our DockerHub: `nginx/nginx-ingress:1.3.2` or `nginx/nginx-ingress:1.3.2-alpine`
+* For NGINX Plus, please build your own image using the 1.3.2 source code.
+
 ### 1.3.1
 
 CHANGES:
