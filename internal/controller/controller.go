@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -62,7 +63,8 @@ type LoadBalancerController struct {
 	configMapLister         utils.StoreToConfigMapLister
 	secretLister            utils.StoreToSecretLister
 	syncQueue               *queue.TaskQueue
-	stop                    chan struct{}
+	ctx                     context.Context
+	cancel                  context.CancelFunc
 	configurator            *nginx.Configurator
 	watchNginxConfigMaps    bool
 	isNginxPlus             bool
@@ -101,7 +103,6 @@ type NewLoadBalancerControllerInput struct {
 func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalancerController {
 	lbc := LoadBalancerController{
 		client:                  input.KubeClient,
-		stop:                    make(chan struct{}),
 		configurator:            input.NginxConfigurator,
 		defaultServerSecret:     input.DefaultServerSecret,
 		isNginxPlus:             input.IsNginxPlus,
@@ -243,23 +244,25 @@ func (lbc *LoadBalancerController) GetDefaultServerSecret() string {
 
 // Run starts the loadbalancer controller
 func (lbc *LoadBalancerController) Run() {
+	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
+
 	if lbc.leaderElector != nil {
-		go lbc.leaderElector.Run()
+		go lbc.leaderElector.Run(lbc.ctx)
 	}
-	go lbc.svcController.Run(lbc.stop)
-	go lbc.endpointController.Run(lbc.stop)
-	go lbc.secretController.Run(lbc.stop)
+	go lbc.svcController.Run(lbc.ctx.Done())
+	go lbc.endpointController.Run(lbc.ctx.Done())
+	go lbc.secretController.Run(lbc.ctx.Done())
 	if lbc.watchNginxConfigMaps {
-		go lbc.configMapController.Run(lbc.stop)
+		go lbc.configMapController.Run(lbc.ctx.Done())
 	}
-	go lbc.ingressController.Run(lbc.stop)
-	go lbc.syncQueue.Run(time.Second, lbc.stop)
-	<-lbc.stop
+	go lbc.ingressController.Run(lbc.ctx.Done())
+	go lbc.syncQueue.Run(time.Second, lbc.ctx.Done())
+	<-lbc.ctx.Done()
 }
 
 // Stop shutdowns the load balancer controller
 func (lbc *LoadBalancerController) Stop() {
-	close(lbc.stop)
+	lbc.cancel()
 
 	lbc.syncQueue.Shutdown()
 }
