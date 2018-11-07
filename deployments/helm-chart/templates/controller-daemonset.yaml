@@ -22,7 +22,7 @@ spec:
         prometheus.io/port: "{{ .Values.prometheus.port }}"
 {{- end }}
     spec:
-      serviceAccountName: {{ .Values.controller.serviceAccountName }}
+      serviceAccountName: {{ .Values.controller.serviceAccount.name }}
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:

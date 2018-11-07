@@ -23,7 +23,7 @@ spec:
         prometheus.io/port: "{{ .Values.prometheus.port }}"
 {{- end }}
     spec:
-      serviceAccountName: {{ .Values.controller.serviceAccountName }}
+      serviceAccountName: {{ .Values.controller.serviceAccount.name }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:
       - image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
