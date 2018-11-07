@@ -19,5 +19,8 @@ func CreateLeaderHandler(lbc *controller.LoadBalancerController) leaderelection.
 				glog.V(3).Infof("error updating status when starting leading: %v", err)
 			}
 		},
+		OnStoppedLeading: func() {
+			glog.V(3).Info("stopped leading")
+		},
 	}
 }
