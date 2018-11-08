@@ -1043,7 +1043,7 @@ func findProbeForPods(pods []api_v1.Pod, svcPort *api_v1.ServicePort) *api_v1.Pr
 			for _, port := range container.Ports {
 				if compareContainerPortAndServicePort(port, *svcPort) {
 					// only http ReadinessProbes are useful for us
-					if container.ReadinessProbe.Handler.HTTPGet != nil && container.ReadinessProbe.PeriodSeconds > 0 {
+					if container.ReadinessProbe != nil && container.ReadinessProbe.Handler.HTTPGet != nil && container.ReadinessProbe.PeriodSeconds > 0 {
 						return container.ReadinessProbe
 					}
 				}
