@@ -3,4 +3,3 @@ controller:
   image:
     repository: nginx-plus-ingress
     tag: "edge"
-    pullPolicy: IfNotPresent
