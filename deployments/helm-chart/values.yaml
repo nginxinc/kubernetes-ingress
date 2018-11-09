@@ -36,8 +36,8 @@ controller:
     externalIPs: []
   serviceAccount:
     name: nginx-ingress
-    imagePullSecrets:
-      name: ""
+    imagePullSecrets: []
+      # - name: secret_name
   reportIngressStatus:
     enable: true
     externalService: nginx-ingress
