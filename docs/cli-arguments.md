@@ -43,9 +43,9 @@ Usage of ./nginx-ingress:
     	Enable support for NGINX Plus
   -nginx-status
     	Enable the NGINX stub_status, or the NGINX Plus API. (default true)
-  -nginx-status-allow-cidrs
+  -nginx-status-allow-cidrs string
         Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API.
-        Separate multiple IP/CIDR by commas.
+	Separate multiple IP/CIDR by commas. (default "127.0.0.1")
   -nginx-status-port int
     	Set the port where the NGINX stub_status or the NGINX Plus API is exposed. [1023 - 65535] (default 8080)
   -proxy string
