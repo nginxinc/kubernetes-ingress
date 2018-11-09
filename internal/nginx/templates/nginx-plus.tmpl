@@ -22,7 +22,6 @@ events {
     worker_connections  {{.WorkerConnections}};
 }
 
-
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
@@ -38,7 +37,7 @@ http {
     log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
                       '$status $body_bytes_sent "$http_referer" '
                       '"$http_user_agent" "$http_x_forwarded_for"';
-    {{- end }}
+    {{- end}}
     access_log  /var/log/nginx/access.log  main;
 
     sendfile        on;
@@ -61,7 +60,6 @@ http {
     {{if .SSLPreferServerCiphers}}ssl_prefer_server_ciphers on;{{end}}
     {{if .SSLDHParam}}ssl_dhparam {{.SSLDHParam}};{{end}}
 
- 
     server {
         listen 80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
         listen 443 ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};
@@ -85,7 +83,7 @@ http {
         }
     }
 
-    {{- if .NginxStatus }}
+    {{- if .NginxStatus}}
     # NGINX Plus APIs
     server {
         listen {{.NginxStatusPort}};
@@ -96,15 +94,15 @@ http {
 
         location  = /dashboard.html {
         }
-        {{ range $value := .NginxStatusAllowCIDRs }}{{ if ne $value "" }}
-        allow {{$value}};{{ end }}
-        {{end}}
+        {{range $value := .NginxStatusAllowCIDRs}}
+        allow {{$value}};{{end}}
+
         deny all;
         location /api {
             api write=off;
         }
     }
-    {{- end }}
+    {{- end}}
 
     # NGINX Plus API over unix socket
     server {
@@ -135,11 +133,10 @@ stream {
     log_format  stream-main  '$remote_addr [$time_local] '
                       '$protocol $status $bytes_sent $bytes_received '
                       '$session_time';
-    {{- end }}
+    {{- end}}
 
     access_log  /var/log/nginx/stream-access.log  stream-main;
 
     {{range $value := .StreamSnippets}}
-    {{$value}}
-    {{end}} 
+    {{$value}}{{end}}
 }
