@@ -31,6 +31,8 @@ NGINX Ingress controller works with both NGINX and NGINX Plus and supports the s
 
 Additionally, several NGINX and NGINX Plus features are available as extensions to the Ingress resource via annotations and the ConfigMap resource. In addition to HTTP, NGINX Ingress controller supports load balancing Websocket, gRPC, TCP and UDP applications. See [ConfigMap and Annotations doc](docs/configmap-and-annotations.md) to learn more about the supported features and customization options.
 
+Read [this doc](docs/nginx-plus.md) to learn more about NGINX Ingress controller with NGINX Plus.
+
 ## Getting Started
 
 1. Install the NGINX Ingress controller using the Kubernetes [manifests](deployments) or the [helm chart](deployments/helm-chart).

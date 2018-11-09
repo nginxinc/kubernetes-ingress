@@ -8,7 +8,7 @@ If you are unsure about which implementation you are using, check the container 
 
 ## The Key Differences
 
-The table below summarizes the key difference between nginxinc/kubernetes-ingress and kubernetes/ingress-nginx Ingress controllers. Note that the table has two columns for the nginxinc/kubernetes-ingress Ingress controller, as it can be used both with NGINX and NGINX Plus
+The table below summarizes the key difference between nginxinc/kubernetes-ingress and kubernetes/ingress-nginx Ingress controllers. Note that the table has two columns for the nginxinc/kubernetes-ingress Ingress controller, as it can be used both with NGINX and NGINX Plus. For more information about nginxinc/kubernetes-ingress with NGINX Plus, read [here](nginx-plus.md). 
 
 | Aspect or Feature | kubernetes/ingress-nginx | nginxinc/kubernetes-ingress with NGINX | nginxinc/kubernetes-ingress with NGINX Plus |
 | --- | --- | --- | --- |
