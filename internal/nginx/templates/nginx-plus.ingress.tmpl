@@ -11,10 +11,10 @@ upstream {{$upstream.Name}} {
 	{{end}}
 	{{if $.Keepalive}}keepalive {{$.Keepalive}};{{end}}
 	{{- if $upstream.UpstreamServers -}}
-	{{- if $upstream.Queue }}
+	{{- if $upstream.Queue}}
 	queue {{$upstream.Queue}} timeout={{$upstream.QueueTimeout}}s;
 	{{- end -}}
-	{{- end }}
+	{{- end}}
 }
 {{- end}}
 
@@ -70,7 +70,7 @@ server {
 	}
 	{{- end}}
 
-	{{ with $jwt := $server.JWTAuth }}
+	{{with $jwt := $server.JWTAuth}}
 	auth_jwt_key_file {{$jwt.Key}};
 	auth_jwt "{{.Realm}}"{{if $jwt.Token}} token={{$jwt.Token}}{{end}};
 
@@ -86,7 +86,7 @@ server {
 
 	{{- range $healthCheck := $server.HealthChecks}}
 	location @hc-{{$healthCheck.UpstreamName}} {
-		{{- range $name, $header := $healthCheck.Headers }}
+		{{- range $name, $header := $healthCheck.Headers}}
 		proxy_set_header {{$name}} "{{$header}}";
 		{{- end }}
 		proxy_connect_timeout {{$healthCheck.TimeoutSeconds}}s;
@@ -111,7 +111,7 @@ server {
 		# location for minion {{$location.MinionIngress.Namespace}}/{{$location.MinionIngress.Name}}
 		{{end}}
 		{{if $location.GRPC}}
-		{{if not $server.GRPCOnly}}	
+		{{if not $server.GRPCOnly}}
 		error_page 400 @grpcerror400;
 		error_page 401 @grpcerror401;
 		error_page 403 @grpcerror403;
@@ -132,7 +132,7 @@ server {
 		{{$value}}{{end}}
 		{{- end}}
 
-		{{ with $jwt := $location.JWTAuth }}
+		{{with $jwt := $location.JWTAuth}}
 		auth_jwt_key_file {{$jwt.Key}};
 		auth_jwt "{{.Realm}}"{{if $jwt.Token}} token={{$jwt.Token}}{{end}};
 		{{end}}
