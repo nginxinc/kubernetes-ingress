@@ -79,7 +79,7 @@ Parameter | Description | Default
 `controller.service.annotations` | The annotations of the Ingress controller service. | { }
 `controller.service.loadBalancerIP` | The static IP address for the load balancer. Requires `controller.service.type` set to `LoadBalancer`.  | None
 `controller.service.externalIPs` | The list of external IPs for the Ingress controller service. | []
-`controller.serviceAccount.name` | The serviceAccountName of the Ingress controller pods. Used for RBAC. | nginx-ingress
+`controller.serviceAccount.name` | The name of the service account of the Ingress controller pods. Used for RBAC. | nginx-ingress
 `controller.serviceAccount.imagePullSecrets` | The names of the secrets containing docker registry credentials. | []
 `controller.ingressClass` | A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation `"kubernetes.io/ingress.class"` equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag. | nginx
 `controller.useIngressClassOnly` | Ignore Ingress resources without the `"kubernetes.io/ingress.class"` annotation. | false
