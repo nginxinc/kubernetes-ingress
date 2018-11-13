@@ -1,5 +1,65 @@
 # Changelog
 
+### 1.4.0
+
+FEATURES:
+* [401](https://github.com/nginxinc/kubernetes-ingress/pull/401): Add the `-nginx-debug` flag for enabling debugging of NGINX using the `nginx-debug` binary.
+* [387](https://github.com/nginxinc/kubernetes-ingress/pull/387): Add the `-nginx-status-allow-cidrs` command-line argument for white listing IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API. Thanks to [Jasmine Hegman](https://github.com/r4j4h).
+* [376](https://github.com/nginxinc/kubernetes-ingress/pull/376): Support the [random](http://nginx.org/en/docs/http/ngx_http_upstream_module.html#random) load balancing method.
+* [375](https://github.com/nginxinc/kubernetes-ingress/pull/375): Support custom annotations.
+* [346](https://github.com/nginxinc/kubernetes-ingress/pull/346): Support the Prometheus exporter for NGINX (the stub_status metrics).
+* [344](https://github.com/nginxinc/kubernetes-ingress/pull/344): Expose NGINX Plus API/NGINX stub_status on a custom port via the `-nginx-status-port` command-line argument. See also the CHANGES section.
+* [342](https://github.com/nginxinc/kubernetes-ingress/pull/342): Add the `error-log-level` configmap key. Thanks to [boran seref](https://github.com/boranx).
+* [320](https://github.com/nginxinc/kubernetes-ingress/pull/340): Support TCP/UDP load balancing via the `stream-snippets` configmap key.
+
+IMPROVEMENTS:
+* [434](https://github.com/nginxinc/kubernetes-ingress/pull/434): Improve consistency of templates.
+* [432](https://github.com/nginxinc/kubernetes-ingress/pull/432): Fix cli-docs and Improve main test.
+* [419](https://github.com/nginxinc/kubernetes-ingress/pull/419): Refactor config writing. Thanks to [feifeiiiiiiiiii](https://github.com/feifeiiiiiiiiiii).
+* [403](https://github.com/nginxinc/kubernetes-ingress/pull/403): Improve NGINX start.
+* [400](https://github.com/nginxinc/kubernetes-ingress/pull/400): Fix error message in internal/controller/controller.go. Thanks to [Alex O Regan](https://github.com/aaaaaaaalex).
+* [399](https://github.com/nginxinc/kubernetes-ingress/pull/399): Improve secret handling. See also the CHANGES section.
+* [391](https://github.com/nginxinc/kubernetes-ingress/pull/391): Update default lb-method to be random two least_conn. See also the CHANGES section.
+* [389](https://github.com/nginxinc/kubernetes-ingress/pull/389): Improve parsing nginx.org/rewrites annotation.
+* [380](https://github.com/nginxinc/kubernetes-ingress/pull/380): Verify reloads & cache secrets.
+* [362](https://github.com/nginxinc/kubernetes-ingress/pull/362): Reduce reloads.
+* [357](https://github.com/nginxinc/kubernetes-ingress/pull/357): Improve Project Layout and Refactor Controller Package. See also the CHANGES section.
+* [351](https://github.com/nginxinc/kubernetes-ingress/pull/351): Make socket address obvious.
+
+BUGFIXES:
+* [429](https://github.com/nginxinc/kubernetes-ingress/pull/429): Fix panic with health checks.
+* [386](https://github.com/nginxinc/kubernetes-ingress/pull/386): Fix Configmap/Mergeable Ingress Add/Update event logging.
+* [379](https://github.com/nginxinc/kubernetes-ingress/pull/379): Fix configmap update.
+* [365](https://github.com/nginxinc/kubernetes-ingress/pull/365): Don't enqueue ingress for some service changes.
+* [348](https://github.com/nginxinc/kubernetes-ingress/pull/348): Fix Configurator error check.
+
+HELM CHART:
+* [430](https://github.com/nginxinc/kubernetes-ingress/pull/430): Add the `controller.serviceAccount.imagePullSecrets` parameter to the helm chart. See also the CHANGES section.
+* [420](https://github.com/nginxinc/kubernetes-ingress/pull/420): Simplify values files for Helm Chart.
+* [398](https://github.com/nginxinc/kubernetes-ingress/pull/398): Add the `controller.nginxStatus.allowCidrs` and `controller.service.externalIPs` parameters to helm chart.
+* [393](https://github.com/nginxinc/kubernetes-ingress/pull/393): Refactor Helm Chart templates.
+* [390](https://github.com/nginxinc/kubernetes-ingress/pull/390): Add the `controller.service.loadBalancerIP` parameter to the helm chat.
+* [377](https://github.com/nginxinc/kubernetes-ingress/pull/377): Add the `controller.nginxStatus` parameters to the helm chart.
+* [335](https://github.com/nginxinc/kubernetes-ingress/pull/335): Add the `controller.reportIngressStatus` parameters to the helm chart.
+* The version of the Helm chart is now 0.2.0.
+
+CHANGES:
+* Update NGINX version to 1.15.6.   
+* Update NGINX Plus version to R16p1.
+* Update NGINX Prometheus Exporter to 0.2.0.
+* [430](https://github.com/nginxinc/kubernetes-ingress/pull/430): Add the `controller.serviceAccount.imagePullSecrets` parameter to the helm chart. **Note**: the `controller.serviceAccountName` parameter has been changed to `controller.serviceAccount.name`.
+* [399](https://github.com/nginxinc/kubernetes-ingress/pull/399): Improve secret handling. **Note**: the PR changed how the Ingress Controller processes Ingress resources with TLS termination enabled but without any referenced (or with invalid) secrets and Ingress resources with JWT validation enabled but without any referenced (or with invalid) JWK. Please read [here](https://github.com/nginxinc/kubernetes-ingress/pull/399) for more details.
+* [357](https://github.com/nginxinc/kubernetes-ingress/pull/357): Improve Project Layout and Refactor Controller Package. **Note**: the PR significantly changed the layout of the project to follow best practices.
+* [347](https://github.com/nginxinc/kubernetes-ingress/pull/347): Use edge version in manifests and Helm chart. **Note**: the manifests and the helm chart in the master branch now reference the edge version of the Ingress Controller instead of the latest stable version used previously.
+* [391](https://github.com/nginxinc/kubernetes-ingress/pull/391): Update default lb-method to be random two least_conn. **Note**: the default load balancing method is now the power of two choices as it better suits the Ingress Controller use case. Please read the [blog post](https://www.nginx.com/blog/nginx-power-of-two-choices-load-balancing-algorithm/) about the method for more details.
+* [344](https://github.com/nginxinc/kubernetes-ingress/pull/344): Expose NGINX Plus API/NGINX stub_status on a custom port via the `-nginx-status-port` command-line argument. **Note**: For NGINX the stub_status is now exposed on port 8080 at the /stub_status URL by default. Previously, the stub_status was not exposed on any port. The stub_status can be disabled via the `-nginx-status` flag.
+
+DOC AND EXAMPLES FIXES/IMPROVEMENTS: [435](https://github.com/nginxinc/kubernetes-ingress/pull/435), [433](https://github.com/nginxinc/kubernetes-ingress/pull/433), [432](https://github.com/nginxinc/kubernetes-ingress/pull/432), [418](https://github.com/nginxinc/kubernetes-ingress/pull/418) (Thanks to [Hal Deadman](https://github.com/hdeadman)), [406](https://github.com/nginxinc/kubernetes-ingress/pull/406),  [381](https://github.com/nginxinc/kubernetes-ingress/pull/381), [349](https://github.com/nginxinc/kubernetes-ingress/pull/349) (Thanks to [Artur Geraschenko](https://github.com/arturgspb)), [343](https://github.com/nginxinc/kubernetes-ingress/pull/343)
+
+UPGRADE:
+* For NGINX, use the 1.4.0 image from our DockerHub: `nginx/nginx-ingress:1.4.0` or `nginx/nginx-ingress:1.4.0-alpine`
+* For NGINX Plus, please build your own image using the 1.4.0 source code.
+
 ### 1.3.2
 
 CHANGES:
