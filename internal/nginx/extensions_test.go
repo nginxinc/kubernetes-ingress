@@ -72,6 +72,8 @@ func TestParseLBMethodForPlus(t *testing.T) {
 		"",
 		"blabla",
 		"hash123",
+		"least_time",
+		"last_byte",
 		"least_time inflight header",
 		"random one",
 		"random two ip_hash",
