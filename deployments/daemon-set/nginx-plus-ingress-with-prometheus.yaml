@@ -44,7 +44,7 @@ spec:
          #- -report-ingress-status
          #- -external-service=nginx-ingress
          #- -enable-leader-election
-      - image: nginx/nginx-prometheus-exporter:0.1.0
+      - image: nginx/nginx-prometheus-exporter:0.2.0
         name: nginx-prometheus-exporter
         ports:
         - name: prometheus

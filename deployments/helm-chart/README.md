@@ -95,7 +95,7 @@ Parameter | Description | Default
 `prometheues.create` | Deploys a Prometheus exporter container within the Ingress controller pod. Requires NGINX status enabled via `controller.nginxStatus.enable`. Note: the exporter will use the port specified by `controller.nginxStatus.port`.| false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
 `prometheus.image.repository` | The image repository of the Prometheus exporter. | nginx/nginx-prometheus-exporter
-`prometheus.image.tag` | The tag of the Prometheus exporter image. | 0.1.0
+`prometheus.image.tag` | The tag of the Prometheus exporter image. | 0.2.0
 `prometheus.image.pullPolicy` | The pull policy for the Prometheus exporter image. | IfNotPresent
 
 Example:

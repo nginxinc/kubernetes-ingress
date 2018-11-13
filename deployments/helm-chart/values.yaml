@@ -49,5 +49,5 @@ prometheus:
   port: 9113
   image:
     repository: nginx/nginx-prometheus-exporter
-    tag: "0.1.0"
+    tag: "0.2.0"
     pullPolicy: IfNotPresent
