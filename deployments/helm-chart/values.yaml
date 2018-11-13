@@ -6,7 +6,7 @@ controller:
   nginxDebug: false
   image:
     repository: nginx/nginx-ingress
-    tag: "edge"
+    tag: "1.4.0"
     pullPolicy: IfNotPresent
   config:
     entries: {}
