@@ -283,34 +283,34 @@ func (lbc *LoadBalancerController) syncEndpoint(task queue.Task) {
 		var ingExes []*nginx.IngressEx
 		var mergableIngressesSlice []*nginx.MergeableIngresses
 
-		for i := range ings {
-			if !lbc.IsNginxIngress(&ings[i]) {
+		for _, ing := range ings {
+			if !lbc.IsNginxIngress(&ing) {
 				continue
 			}
-			if utils.IsMinion(&ings[i]) {
-				master, err := lbc.FindMasterForMinion(&ings[i])
+			if utils.IsMinion(&ing) {
+				master, err := lbc.FindMasterForMinion(&ing)
 				if err != nil {
-					glog.Errorf("Ignoring Ingress %v(Minion): %v", ings[i].Name, err)
+					glog.Errorf("Ignoring Ingress %v(Minion): %v", ing.Name, err)
 					continue
 				}
-				if !lbc.configurator.HasMinion(master, &ings[i]) {
+				if !lbc.configurator.HasMinion(master, &ing) {
 					continue
 				}
 				mergeableIngresses, err := lbc.createMergableIngresses(master)
 				if err != nil {
-					glog.Errorf("Ignoring Ingress %v(Minion): %v", ings[i].Name, err)
+					glog.Errorf("Ignoring Ingress %v(Minion): %v", ing.Name, err)
 					continue
 				}
 
 				mergableIngressesSlice = append(mergableIngressesSlice, mergeableIngresses)
 				continue
 			}
-			if !lbc.configurator.HasIngress(&ings[i]) {
+			if !lbc.configurator.HasIngress(&ing) {
 				continue
 			}
-			ingEx, err := lbc.createIngress(&ings[i])
+			ingEx, err := lbc.createIngress(&ing)
 			if err != nil {
-				glog.Errorf("Error updating endpoints for %v/%v: %v, skipping", &ings[i].Namespace, &ings[i].Name, err)
+				glog.Errorf("Error updating endpoints for %v/%v: %v, skipping", &ing.Namespace, &ing.Name, err)
 				continue
 			}
 			ingExes = append(ingExes, ingEx)
@@ -396,8 +396,7 @@ func (lbc *LoadBalancerController) GetManagedIngresses() ([]extensions.Ingress, 
 	mergeableIngresses := make(map[string]*nginx.MergeableIngresses)
 	var managedIngresses []extensions.Ingress
 	ings, _ := lbc.ingressLister.List()
-	for i := range ings.Items {
-		ing := ings.Items[i]
+	for _, ing := range ings.Items {
 		if !lbc.IsNginxIngress(&ing) {
 			continue
 		}
@@ -430,8 +429,8 @@ func (lbc *LoadBalancerController) GetManagedIngresses() ([]extensions.Ingress, 
 
 func (lbc *LoadBalancerController) ingressesToIngressExes(ings []extensions.Ingress) []*nginx.IngressEx {
 	var ingExes []*nginx.IngressEx
-	for i := range ings {
-		ingEx, err := lbc.createIngress(&ings[i])
+	for _, ing := range ings {
+		ingEx, err := lbc.createIngress(&ing)
 		if err != nil {
 			continue
 		}
@@ -762,21 +761,21 @@ func (lbc *LoadBalancerController) emitEventForIngresses(eventType string, title
 }
 
 func (lbc *LoadBalancerController) createIngresses(ings []extensions.Ingress) (regular []nginx.IngressEx, mergeable []nginx.MergeableIngresses) {
-	for i := range ings {
-		if utils.IsMaster(&ings[i]) {
-			mergeableIng, err := lbc.createMergableIngresses(&ings[i])
+	for _, ing := range ings {
+		if utils.IsMaster(&ing) {
+			mergeableIng, err := lbc.createMergableIngresses(&ing)
 			if err != nil {
-				glog.Errorf("Ignoring Ingress %v(Master): %v", ings[i].Name, err)
+				glog.Errorf("Ignoring Ingress %v(Master): %v", ing.Name, err)
 				continue
 			}
 			mergeable = append(mergeable, *mergeableIng)
 			continue
 		}
 
-		if utils.IsMinion(&ings[i]) {
-			master, err := lbc.FindMasterForMinion(&ings[i])
+		if utils.IsMinion(&ing) {
+			master, err := lbc.FindMasterForMinion(&ing)
 			if err != nil {
-				glog.Errorf("Ignoring Ingress %v(Minion): %v", ings[i].Name, err)
+				glog.Errorf("Ignoring Ingress %v(Minion): %v", ing.Name, err)
 				continue
 			}
 			mergeableIng, err := lbc.createMergableIngresses(master)
@@ -789,9 +788,9 @@ func (lbc *LoadBalancerController) createIngresses(ings []extensions.Ingress) (r
 			continue
 		}
 
-		ingEx, err := lbc.createIngress(&ings[i])
+		ingEx, err := lbc.createIngress(&ing)
 		if err != nil {
-			glog.Errorf("Ignoring Ingress %v/%v: $%v", ings[i].Namespace, ings[i].Name, err)
+			glog.Errorf("Ignoring Ingress %v/%v: $%v", ing.Namespace, ing.Name, err)
 		}
 		regular = append(regular, *ingEx)
 	}
@@ -1234,40 +1233,41 @@ func (lbc *LoadBalancerController) getMinionsForMaster(master *nginx.IngressEx) 
 	var minionPaths = make(map[string]*extensions.Ingress)
 
 	for i := range ings.Items {
-		if !lbc.IsNginxIngress(&ings.Items[i]) {
+		ing := ings.Items[i]
+		if !lbc.IsNginxIngress(&ing) {
 			continue
 		}
-		if !utils.IsMinion(&ings.Items[i]) {
+		if !utils.IsMinion(&ing) {
 			continue
 		}
-		if ings.Items[i].Spec.Rules[0].Host != master.Ingress.Spec.Rules[0].Host {
+		if ing.Spec.Rules[0].Host != master.Ingress.Spec.Rules[0].Host {
 			continue
 		}
-		if len(ings.Items[i].Spec.Rules) != 1 {
-			glog.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation must contain only one host", ings.Items[i].Namespace, ings.Items[i].Name)
+		if len(ing.Spec.Rules) != 1 {
+			glog.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation must contain only one host", ing.Namespace, ing.Name)
 			continue
 		}
-		if ings.Items[i].Spec.Rules[0].HTTP == nil {
-			glog.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation set to 'minion' must contain a Path", ings.Items[i].Namespace, ings.Items[i].Name)
+		if ing.Spec.Rules[0].HTTP == nil {
+			glog.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation set to 'minion' must contain a Path", ing.Namespace, ing.Name)
 			continue
 		}
 
 		uniquePaths := []extensions.HTTPIngressPath{}
-		for _, path := range ings.Items[i].Spec.Rules[0].HTTP.Paths {
+		for _, path := range ing.Spec.Rules[0].HTTP.Paths {
 			if val, ok := minionPaths[path.Path]; ok {
 				glog.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation set to 'minion' cannot contain the same path as another ingress resource, %v/%v.",
-					ings.Items[i].Namespace, ings.Items[i].Name, val.Namespace, val.Name)
-				glog.Errorf("Path %s for Ingress Resource %v/%v will be ignored", path.Path, ings.Items[i].Namespace, ings.Items[i].Name)
+					ing.Namespace, ing.Name, val.Namespace, val.Name)
+				glog.Errorf("Path %s for Ingress Resource %v/%v will be ignored", path.Path, ing.Namespace, ing.Name)
 			} else {
-				minionPaths[path.Path] = &ings.Items[i]
+				minionPaths[path.Path] = &ing
 				uniquePaths = append(uniquePaths, path)
 			}
 		}
-		ings.Items[i].Spec.Rules[0].HTTP.Paths = uniquePaths
+		ing.Spec.Rules[0].HTTP.Paths = uniquePaths
 
-		ingEx, err := lbc.createIngress(&ings.Items[i])
+		ingEx, err := lbc.createIngress(&ing)
 		if err != nil {
-			glog.Errorf("Error creating ingress resource %v/%v: %v", ings.Items[i].Namespace, ings.Items[i].Name, err)
+			glog.Errorf("Error creating ingress resource %v/%v: %v", ing.Namespace, ing.Name, err)
 			continue
 		}
 		if len(ingEx.TLSSecrets) > 0 {
@@ -1287,20 +1287,20 @@ func (lbc *LoadBalancerController) FindMasterForMinion(minion *extensions.Ingres
 		return &extensions.Ingress{}, err
 	}
 
-	for i := range ings.Items {
-		if !lbc.IsNginxIngress(&ings.Items[i]) {
+	for _, ing := range ings.Items {
+		if !lbc.IsNginxIngress(&ing) {
 			continue
 		}
-		if !lbc.configurator.HasIngress(&ings.Items[i]) {
+		if !lbc.configurator.HasIngress(&ing) {
 			continue
 		}
-		if !utils.IsMaster(&ings.Items[i]) {
+		if !utils.IsMaster(&ing) {
 			continue
 		}
-		if ings.Items[i].Spec.Rules[0].Host != minion.Spec.Rules[0].Host {
+		if ing.Spec.Rules[0].Host != minion.Spec.Rules[0].Host {
 			continue
 		}
-		return &ings.Items[i], nil
+		return &ing, nil
 	}
 
 	err = fmt.Errorf("Could not find a Master for Minion: '%v/%v'", minion.Namespace, minion.Name)

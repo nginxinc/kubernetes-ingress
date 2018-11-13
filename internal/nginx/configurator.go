@@ -905,17 +905,17 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret, ingExes []Ingr
 		return nil
 	}
 
-	for i := range ingExes {
-		err := cnf.addOrUpdateIngress(&ingExes[i])
+	for _, ingEx := range ingExes {
+		err := cnf.addOrUpdateIngress(&ingEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingExes[i].Ingress.Namespace, ingExes[i].Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 		}
 	}
 
-	for i := range mergeableIngresses {
-		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
+	for _, mergeableIng := range mergeableIngresses {
+		err := cnf.addOrUpdateMergeableIngress(&mergeableIng)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIng.Master.Ingress.Namespace, mergeableIng.Master.Ingress.Name, err)
 		}
 	}
 
@@ -968,17 +968,17 @@ func GenerateCertAndKeyFileContent(secret *api_v1.Secret) []byte {
 func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
 	cnf.nginx.DeleteSecretFile(keyToFileName(key))
 
-	for i := range ingExes {
-		err := cnf.addOrUpdateIngress(&ingExes[i])
+	for _, ingEx := range ingExes {
+		err := cnf.addOrUpdateIngress(&ingEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingExes[i].Ingress.Namespace, ingExes[i].Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 		}
 	}
 
-	for i := range mergeableIngresses {
-		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
+	for _, mergeableIng := range mergeableIngresses {
+		err := cnf.addOrUpdateMergeableIngress(&mergeableIng)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIng.Master.Ingress.Namespace, mergeableIng.Master.Ingress.Name, err)
 		}
 	}
 
@@ -1038,14 +1038,14 @@ func (cnf *Configurator) UpdateEndpoints(ingExes []*IngressEx) error {
 // UpdateEndpointsMergeableIngress updates endpoints in NGINX configuration for a mergeable Ingress resource
 func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergableIngressesSlice []*MergeableIngresses) error {
 	reloadPlus := false
-	for i := range mergableIngressesSlice {
-		err := cnf.addOrUpdateMergeableIngress(mergableIngressesSlice[i])
+	for _, mergeableIng := range mergableIngressesSlice {
+		err := cnf.addOrUpdateMergeableIngress(mergeableIng)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergableIngressesSlice[i].Master.Ingress.Namespace, mergableIngressesSlice[i].Master.Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIng.Master.Ingress.Namespace, mergeableIng.Master.Ingress.Name, err)
 		}
 
 		if cnf.isPlus() {
-			for _, ing := range mergableIngressesSlice[i].Minions {
+			for _, ing := range mergeableIng.Minions {
 				err = cnf.updatePlusEndpoints(ing)
 				if err != nil {
 					glog.Warningf("Couldn't update the endpoints via the API: %v; reloading configuration instead", err)
@@ -1154,14 +1154,14 @@ func GenerateNginxMainConfig(config *Config) *MainConfig {
 		SSLCiphers:                config.MainServerSSLCiphers,
 		SSLDHParam:                config.MainServerSSLDHParam,
 		SSLPreferServerCiphers:    config.MainServerSSLPreferServerCiphers,
-		HTTP2:                     config.HTTP2,
-		ServerTokens:              config.ServerTokens,
-		ProxyProtocol:             config.ProxyProtocol,
-		WorkerProcesses:           config.MainWorkerProcesses,
-		WorkerCPUAffinity:         config.MainWorkerCPUAffinity,
-		WorkerShutdownTimeout:     config.MainWorkerShutdownTimeout,
-		WorkerConnections:         config.MainWorkerConnections,
-		WorkerRlimitNofile:        config.MainWorkerRlimitNofile,
+		HTTP2:                 config.HTTP2,
+		ServerTokens:          config.ServerTokens,
+		ProxyProtocol:         config.ProxyProtocol,
+		WorkerProcesses:       config.MainWorkerProcesses,
+		WorkerCPUAffinity:     config.MainWorkerCPUAffinity,
+		WorkerShutdownTimeout: config.MainWorkerShutdownTimeout,
+		WorkerConnections:     config.MainWorkerConnections,
+		WorkerRlimitNofile:    config.MainWorkerRlimitNofile,
 	}
 	return nginxCfg
 }
