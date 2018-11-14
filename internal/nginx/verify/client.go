@@ -14,7 +14,8 @@ import (
 
 // Client is a client for verifying the config version.
 type Client struct {
-	client *http.Client
+	client     *http.Client
+	maxRetries int
 }
 
 // NewClient returns a new client pointed at the config version socket.
@@ -27,6 +28,7 @@ func NewClient() *Client {
 				},
 			},
 		},
+		maxRetries: 160,
 	}
 }
 
@@ -57,10 +59,8 @@ func (c *Client) GetConfigVersion() (int, error) {
 // WaitForCorrectVersion calls the config version endpoint until it gets the expectedVersion,
 // which ensures that a new worker process has been started for that config version.
 func (c *Client) WaitForCorrectVersion(expectedVersion int) error {
-	// This value needs tuning.
-	maxRetries := 160
 	sleep := 25 * time.Millisecond
-	for i := 1; i <= maxRetries; i++ {
+	for i := 1; i <= c.maxRetries; i++ {
 		time.Sleep(sleep)
 
 		version, err := c.GetConfigVersion()
