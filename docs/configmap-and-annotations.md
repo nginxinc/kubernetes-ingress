@@ -150,8 +150,8 @@ spec:
 | Annotation | ConfigMap Key | Description | Default | Example |
 | ---------- | -------------- | ----------- | ------- | ------- |
 | `nginx.org/lb-method` | `lb-method` | Sets the [load balancing method](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method). To use the round-robin method, specify `"round_robin"`. | `"random two least_conn"` | |
-| `nginx.org/ssl-services` | N/A | Enables HTTPS when connecting to the endpoints of services. | N/A | [SSL Services Support](../examples/ssl-services). |
-| `nginx.org/grpc-services` | N/A | Enables gRPC for services. | N/A | [GRPC Services Support](../examples/grpc-services).|
+| `nginx.org/ssl-services` | N/A | Enables HTTPS or gRPC over SSL when connecting to the endpoints of services. | N/A | [SSL Services Support](../examples/ssl-services). |
+| `nginx.org/grpc-services` | N/A | Enables gRPC for services. Note: requires HTTP/2 (see `http2` ConfigMap key); only works for Ingresses with TLS termination enabled. | N/A | [GRPC Services Support](../examples/grpc-services).|
 | `nginx.org/websocket-services` | N/A | Enables WebSocket for services. | N/A | [WebSocket support](../examples/websocket). |
 | `nginx.org/max-fails` | `max-fails` | Sets the value of the [max_fails](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails) parameter of the `server` directive. | `1` | |
 | `nginx.org/fail-timeout` | `fail-timeout` | Sets the value of the [fail_timeout](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#fail_timeout) parameter of the `server` directive. | `10s` | |

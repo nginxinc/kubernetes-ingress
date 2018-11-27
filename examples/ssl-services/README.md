@@ -1,6 +1,7 @@
 # SSL Services Support
 
-To load balance an application that requires HTTPS with NGINX Ingress controllers, you need to add the **nginx.org/ssl-services** annotation to your Ingress resource definition. The annotation specifies which services are SSL services. The annotation syntax is as follows:
+To enable HTTPS or gRPC over SSL when connecting to the endpoints of services, you need to add the **nginx.org/ssl-services** annotation to your Ingress resource definition. The annotation specifies which services require SSL. The annotation syntax is as follows:
+
 ```
 nginx.org/ssl-services: "service1[,service2,...]"
 ```
