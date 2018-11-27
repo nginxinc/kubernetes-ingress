@@ -7,4 +7,9 @@ controller:
   nodeSelector: { beta.kubernetes.io/arch: "amd64",
                    proxy: "true" }
   terminationGracePeriodSeconds: 60
-  tolerations: "icp"
+  tolerations:
+    - key: "dedicated"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "CriticalAddonsOnly"
+      operator: "Exists"

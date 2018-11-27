@@ -26,15 +26,15 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.controller.nodeSelector | indent 8 }}
+{{ toYaml .Values.controller.nodeSelector | trimSuffix "\n" | indent 8 }}
 {{- end }}
-{{- if eq .Values.controller.tolerations "icp" }}
+{{- if .Values.controller.tolerations }}
       tolerations:
-      - key: "dedicated"
-        operator: "Exists"
-        effect: "NoSchedule"
-      - key: "CriticalAddonsOnly"
-        operator: "Exists"
+{{ toYaml .Values.controller.tolerations | trimSuffix "\n" | indent 6 }}
+{{- end }}
+{{- if .Values.controller.affinity }}
+      affinity:
+{{ toYaml .Values.controller.affinity | trimSuffix "\n" | indent 8 }}
 {{- end }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:

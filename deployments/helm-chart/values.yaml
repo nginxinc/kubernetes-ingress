@@ -17,7 +17,8 @@ controller:
     # secret: <namespace>/<secret_name>
   nodeSelector: {}
   terminationGracePeriodSeconds: 30
-  tolerations: ""
+  tolerations: []
+  affinity: {}
   replicaCount: 1
   ingressClass: nginx
   useIngressClassOnly: false
