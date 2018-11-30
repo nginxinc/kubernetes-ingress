@@ -71,7 +71,8 @@ Parameter | Description | Default
 `controller.defaultTLS.secret` | The secret with a TLS certificate and key for the default HTTPS server. The value must follow the following format: `<namespace>/<name>`. Used as an alternative to specifiying a certifcate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters. | None
 `controller.nodeSelector` | The node selector for pod assignment for the Ingress controller pods. | { }
 `controller.terminationGracePeriodSeconds` | The termination grace period of the Ingress controller pod. | 30
-`controller.tolerations` | The tolerations required for the IBM Cloud Private installation. | None
+`controller.tolerations` | The taints to tolerate for the Ingress controller pods. | []
+`controller.affinity` | The affinities of the ingress controller pods. | { }
 `controller.replicaCount` | The number of replicas of the Ingress controller deployment. | 1
 `controller.service.create` | Creates a service to expose the Ingress controller pods. | true
 `controller.service.type` | The type of service to create for the Ingress controller. | LoadBalancer
