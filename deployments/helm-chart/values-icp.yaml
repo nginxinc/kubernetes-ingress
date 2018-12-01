@@ -4,8 +4,9 @@ controller:
   image:
     repository: mycluster.icp:8500/kube-system/nginx-plus-ingress
     tag: "edge"
-  nodeSelector: { beta.kubernetes.io/arch: "amd64",
-                   proxy: "true" }
+  nodeSelector:
+    beta.kubernetes.io/arch: "amd64"
+    proxy: true
   terminationGracePeriodSeconds: 60
   tolerations:
     - key: "dedicated"
