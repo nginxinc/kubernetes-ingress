@@ -25,15 +25,15 @@ spec:
     spec:
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.controller.nodeSelector | trimSuffix "\n" | indent 8 }}
+{{ toYaml .Values.controller.nodeSelector | indent 8 }}
 {{- end }}
 {{- if .Values.controller.tolerations }}
       tolerations:
-{{ toYaml .Values.controller.tolerations | trimSuffix "\n" | indent 6 }}
+{{ toYaml .Values.controller.tolerations | indent 6 }}
 {{- end }}
 {{- if .Values.controller.affinity }}
       affinity:
-{{ toYaml .Values.controller.affinity | trimSuffix "\n" | indent 8 }}
+{{ toYaml .Values.controller.affinity | indent 8 }}
 {{- end }}
       serviceAccountName: {{ .Values.controller.serviceAccount.name }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
