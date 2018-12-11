@@ -1,6 +1,6 @@
 # ConfigMap and Annotations
 
-The Ingress resource only allows you to use basic NGINX features -- host and path-based routing and TLS termination. Thus, advanced features like rewriting the request URI or inserting additional response headers are not available. 
+The Ingress resource only allows you to use basic NGINX features -- host and path-based routing and TLS termination. Thus, advanced features like rewriting the request URI or inserting additional response headers are not available.
 
 In addition to using advanced features, often it is necessary to customize or fine tune NGINX behavior. For example, set the number of worker processes or customize the access log format.
 
@@ -49,7 +49,7 @@ metadata:
     nginx.org/client-max-body-size: "4m"
     nginx.org/server-snippets: |
       location / {
-        return 302 /coffee; 
+        return 302 /coffee;
       }
 spec:
   rules:
@@ -70,7 +70,7 @@ spec:
 ## Summary of ConfigMap and Annotations
 
 
-**Note**: The annotations that start with `nginx.com` are only supported with NGINX Plus.
+**Note**: The annotations that start with `nginx.org` are only supported with NGINX Plus.
 
 ### Ingress Controller (Not Related to NGINX Configuration)
 
@@ -102,7 +102,7 @@ spec:
 | N/A | `server-names-hash-bucket-size` | Sets the value of the [server_names_hash_bucket_size](http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_bucket_size) directive. | Depends on the size of the processor’s cache line. | |
 | N/A | `server-names-hash-max-size` | Sets the value of the [server_names_hash_max_size](http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_max_size) directive. | `512` | |
 
-### Logging 
+### Logging
 
 | Annotation | ConfigMap Key | Description | Default | Example |
 | ---------- | -------------- | ----------- | ------- | ------- |
