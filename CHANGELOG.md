@@ -1,5 +1,14 @@
 # Changelog
 
+### 1.4.2
+
+CHANGES:
+* Update NGINX Plus version to R17.
+
+UPGRADE:
+* For NGINX, use the 1.4.2 image from our DockerHub: `nginx/nginx-ingress:1.4.2` or `nginx/nginx-ingress:1.4.2-alpine`
+* For NGINX Plus, please build your own image using the 1.4.2 source code.
+
 ### 1.4.1
 
 CHANGES:
