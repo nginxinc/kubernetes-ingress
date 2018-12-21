@@ -78,7 +78,8 @@ Parameter | Description | Default
 `controller.service.type` | The type of service to create for the Ingress controller. | LoadBalancer
 `controller.service.externalTrafficPolicy` | The externalTrafficPolicy of the service. The value Local preserves the client source IP. | Local
 `controller.service.annotations` | The annotations of the Ingress controller service. | { }
-`controller.service.loadBalancerIP` | The static IP address for the load balancer. Requires `controller.service.type` set to `LoadBalancer`.  | None
+`controller.service.loadBalancerIP` | The static IP address for the load balancer. Requires `controller.service.type` set to `LoadBalancer`. The cloud provider must support this feature.  | None
+`controller.service.loadBalancerSourceRanges` | The IP ranges (CIDR) that are allowed to access the load balancer. Requires `controller.service.type` set to `LoadBalancer`. The cloud provider must support this feature. | []
 `controller.service.externalIPs` | The list of external IPs for the Ingress controller service. | []
 `controller.serviceAccount.name` | The name of the service account of the Ingress controller pods. Used for RBAC. | nginx-ingress
 `controller.serviceAccount.imagePullSecrets` | The names of the secrets containing docker registry credentials. | []

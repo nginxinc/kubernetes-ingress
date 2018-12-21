@@ -35,6 +35,7 @@ controller:
     annotations: {}
     loadBalancerIP: ""
     externalIPs: []
+    loadBalancerSourceRanges: []
   serviceAccount:
     name: nginx-ingress
     imagePullSecrets: []
