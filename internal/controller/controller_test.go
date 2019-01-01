@@ -201,12 +201,12 @@ func TestCreateMergableIngressesInvalidMaster(t *testing.T) {
 
 	// Test Error when Master has a Path
 	cafeMaster.Spec.Rules = []extensions.IngressRule{
-		extensions.IngressRule{
+		{
 			Host: "ok.com",
 			IngressRuleValue: extensions.IngressRuleValue{
 				HTTP: &extensions.HTTPIngressRuleValue{
 					Paths: []extensions.HTTPIngressPath{
-						extensions.HTTPIngressPath{
+						{
 							Path: "/coffee",
 							Backend: extensions.IngressBackend{
 								ServiceName: "coffee-svc",
@@ -286,7 +286,7 @@ func TestFindMasterForMinionInvalidMinion(t *testing.T) {
 	}
 
 	coffeeMinion.Spec.Rules = []extensions.IngressRule{
-		extensions.IngressRule{
+		{
 			Host: "ok.com",
 		},
 	}
@@ -359,7 +359,7 @@ func TestGetMinionsForMasterInvalidMinion(t *testing.T) {
 	}
 
 	teaMinion.Spec.Rules = []extensions.IngressRule{
-		extensions.IngressRule{
+		{
 			Host: "ok.com",
 		},
 	}
@@ -475,7 +475,7 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 		},
 		Spec: extensions.IngressSpec{
 			Rules: []extensions.IngressRule{
-				extensions.IngressRule{
+				{
 					Host: "ok.com",
 				},
 			},
@@ -494,12 +494,12 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 		},
 		Spec: extensions.IngressSpec{
 			Rules: []extensions.IngressRule{
-				extensions.IngressRule{
+				{
 					Host: "ok.com",
 					IngressRuleValue: extensions.IngressRuleValue{
 						HTTP: &extensions.HTTPIngressRuleValue{
 							Paths: []extensions.HTTPIngressPath{
-								extensions.HTTPIngressPath{
+								{
 									Path: "/coffee",
 									Backend: extensions.IngressBackend{
 										ServiceName: "coffee-svc",
@@ -528,12 +528,12 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 		},
 		Spec: extensions.IngressSpec{
 			Rules: []extensions.IngressRule{
-				extensions.IngressRule{
+				{
 					Host: "ok.com",
 					IngressRuleValue: extensions.IngressRuleValue{
 						HTTP: &extensions.HTTPIngressRuleValue{
 							Paths: []extensions.HTTPIngressPath{
-								extensions.HTTPIngressPath{
+								{
 									Path: "/tea",
 								},
 							},
@@ -691,10 +691,10 @@ func TestComparePorts(t *testing.T) {
 
 func TestFindProbeForPods(t *testing.T) {
 	pods := []v1.Pod{
-		v1.Pod{
+		{
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
-					v1.Container{
+					{
 						ReadinessProbe: &v1.Probe{
 							Handler: v1.Handler{
 								HTTPGet: &v1.HTTPGetAction{
@@ -708,7 +708,7 @@ func TestFindProbeForPods(t *testing.T) {
 							PeriodSeconds: 42,
 						},
 						Ports: []v1.ContainerPort{
-							v1.ContainerPort{
+							{
 								Name:          "name",
 								ContainerPort: 80,
 								Protocol:      v1.ProtocolTCP,
@@ -796,7 +796,7 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 		},
 		Spec: v1.ServiceSpec{
 			Ports: []v1.ServicePort{
-				v1.ServicePort{
+				{
 					Name:       "foo",
 					Port:       80,
 					TargetPort: intstr.FromInt(22),
@@ -850,7 +850,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 				},
 				Spec: extensions.IngressSpec{
 					TLS: []extensions.IngressTLS{
-						extensions.IngressTLS{
+						{
 							SecretName: "my-tls-secret",
 						},
 					},
@@ -873,7 +873,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 				},
 				Spec: extensions.IngressSpec{
 					TLS: []extensions.IngressTLS{
-						extensions.IngressTLS{
+						{
 							SecretName: "my-tls-secret",
 						},
 					},
@@ -1015,12 +1015,12 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 				},
 				Spec: extensions.IngressSpec{
 					Rules: []extensions.IngressRule{
-						extensions.IngressRule{
+						{
 							Host: "cafe.example.com",
 							IngressRuleValue: extensions.IngressRuleValue{
 								HTTP: &extensions.HTTPIngressRuleValue{
 									Paths: []extensions.HTTPIngressPath{
-										extensions.HTTPIngressPath{
+										{
 											Path: "/tea",
 											Backend: extensions.IngressBackend{
 												ServiceName: "tea-svc",
@@ -1056,12 +1056,12 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 				},
 				Spec: extensions.IngressSpec{
 					Rules: []extensions.IngressRule{
-						extensions.IngressRule{
+						{
 							Host: "cafe.example.com",
 							IngressRuleValue: extensions.IngressRuleValue{
 								HTTP: &extensions.HTTPIngressRuleValue{
 									Paths: []extensions.HTTPIngressPath{
-										extensions.HTTPIngressPath{
+										{
 											Path: "/tea",
 											Backend: extensions.IngressBackend{
 												ServiceName: "tea-svc",
@@ -1091,7 +1091,7 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 		},
 		Spec: extensions.IngressSpec{
 			Rules: []extensions.IngressRule{
-				extensions.IngressRule{
+				{
 					Host: "cafe.example.com",
 					IngressRuleValue: extensions.IngressRuleValue{
 						HTTP: &extensions.HTTPIngressRuleValue{ // HTTP must not be nil for Master
@@ -1138,7 +1138,7 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 					Ingress: &master,
 				},
 				Minions: []*nginx.IngressEx{
-					&nginx.IngressEx{
+					{
 						Ingress: &test.ingress,
 						JWTKey: nginx.JWTKey{
 							Name: test.secret.Name,

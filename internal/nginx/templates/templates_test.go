@@ -38,7 +38,7 @@ var healthCheck = nginx.HealthCheck{
 var ingCfg = nginx.IngressNginxConfig{
 
 	Servers: []nginx.Server{
-		nginx.Server{
+		{
 			Name:         "test.example.com",
 			ServerTokens: "off",
 			StatusZone:   "test.example.com",
@@ -55,7 +55,7 @@ var ingCfg = nginx.IngressNginxConfig{
 			SSLPorts:          []int{443},
 			SSLRedirect:       true,
 			Locations: []nginx.Location{
-				nginx.Location{
+				{
 					Path:                "/tea",
 					Upstream:            testUps,
 					ProxyConnectTimeout: "10s",

@@ -75,7 +75,7 @@ func TestStatusUpdate(t *testing.T) {
 		},
 		Status: v1.ServiceStatus{
 			LoadBalancer: v1.LoadBalancerStatus{
-				Ingress: []v1.LoadBalancerIngress{v1.LoadBalancerIngress{
+				Ingress: []v1.LoadBalancerIngress{{
 					IP: "2.2.2.2",
 				}},
 			},

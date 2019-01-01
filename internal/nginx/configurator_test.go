@@ -185,25 +185,25 @@ func createCafeIngressEx() IngressEx {
 		},
 		Spec: extensions.IngressSpec{
 			TLS: []extensions.IngressTLS{
-				extensions.IngressTLS{
+				{
 					Hosts:      []string{"cafe.example.com"},
 					SecretName: "cafe-secret",
 				},
 			},
 			Rules: []extensions.IngressRule{
-				extensions.IngressRule{
+				{
 					Host: "cafe.example.com",
 					IngressRuleValue: extensions.IngressRuleValue{
 						HTTP: &extensions.HTTPIngressRuleValue{
 							Paths: []extensions.HTTPIngressPath{
-								extensions.HTTPIngressPath{
+								{
 									Path: "/coffee",
 									Backend: extensions.IngressBackend{
 										ServiceName: "coffee-svc",
 										ServicePort: intstr.FromString("80"),
 									},
 								},
-								extensions.HTTPIngressPath{
+								{
 									Path: "/tea",
 									Backend: extensions.IngressBackend{
 										ServiceName: "tea-svc",
@@ -220,11 +220,11 @@ func createCafeIngressEx() IngressEx {
 	cafeIngressEx := IngressEx{
 		Ingress: &cafeIngress,
 		TLSSecrets: map[string]*api_v1.Secret{
-			"cafe-secret": &api_v1.Secret{},
+			"cafe-secret": {},
 		},
 		Endpoints: map[string][]string{
-			"coffee-svc80": []string{"10.0.0.1:80"},
-			"tea-svc80":    []string{"10.0.0.2:80"},
+			"coffee-svc80": {"10.0.0.1:80"},
+			"tea-svc80":    {"10.0.0.2:80"},
 		},
 	}
 	return cafeIngressEx
@@ -316,13 +316,13 @@ func createMergeableCafeIngress() *MergeableIngresses {
 		},
 		Spec: extensions.IngressSpec{
 			TLS: []extensions.IngressTLS{
-				extensions.IngressTLS{
+				{
 					Hosts:      []string{"cafe.example.com"},
 					SecretName: "cafe-secret",
 				},
 			},
 			Rules: []extensions.IngressRule{
-				extensions.IngressRule{
+				{
 					Host: "cafe.example.com",
 					IngressRuleValue: extensions.IngressRuleValue{
 						HTTP: &extensions.HTTPIngressRuleValue{ // HTTP must not be nil for Master
@@ -345,12 +345,12 @@ func createMergeableCafeIngress() *MergeableIngresses {
 		},
 		Spec: extensions.IngressSpec{
 			Rules: []extensions.IngressRule{
-				extensions.IngressRule{
+				{
 					Host: "cafe.example.com",
 					IngressRuleValue: extensions.IngressRuleValue{
 						HTTP: &extensions.HTTPIngressRuleValue{
 							Paths: []extensions.HTTPIngressPath{
-								extensions.HTTPIngressPath{
+								{
 									Path: "/coffee",
 									Backend: extensions.IngressBackend{
 										ServiceName: "coffee-svc",
@@ -376,12 +376,12 @@ func createMergeableCafeIngress() *MergeableIngresses {
 		},
 		Spec: extensions.IngressSpec{
 			Rules: []extensions.IngressRule{
-				extensions.IngressRule{
+				{
 					Host: "cafe.example.com",
 					IngressRuleValue: extensions.IngressRuleValue{
 						HTTP: &extensions.HTTPIngressRuleValue{
 							Paths: []extensions.HTTPIngressPath{
-								extensions.HTTPIngressPath{
+								{
 									Path: "/tea",
 									Backend: extensions.IngressBackend{
 										ServiceName: "tea-svc",
@@ -400,7 +400,7 @@ func createMergeableCafeIngress() *MergeableIngresses {
 		Master: &IngressEx{
 			Ingress: &master,
 			TLSSecrets: map[string]*api_v1.Secret{
-				"cafe-secret": &api_v1.Secret{
+				"cafe-secret": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "cafe-secret",
 						Namespace: "default",
@@ -408,21 +408,21 @@ func createMergeableCafeIngress() *MergeableIngresses {
 				},
 			},
 			Endpoints: map[string][]string{
-				"coffee-svc80": []string{"10.0.0.1:80"},
-				"tea-svc80":    []string{"10.0.0.2:80"},
+				"coffee-svc80": {"10.0.0.1:80"},
+				"tea-svc80":    {"10.0.0.2:80"},
 			},
 		},
 		Minions: []*IngressEx{
-			&IngressEx{
+			{
 				Ingress: &coffeeMinion,
 				Endpoints: map[string][]string{
-					"coffee-svc80": []string{"10.0.0.1:80"},
+					"coffee-svc80": {"10.0.0.1:80"},
 				},
 			},
-			&IngressEx{
+			{
 				Ingress: &teaMinion,
 				Endpoints: map[string][]string{
-					"tea-svc80": []string{"10.0.0.2:80"},
+					"tea-svc80": {"10.0.0.2:80"},
 				},
 			}},
 	}
