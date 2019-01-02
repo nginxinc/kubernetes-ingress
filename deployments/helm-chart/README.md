@@ -18,7 +18,7 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 1. Clone the Ingress controller repo:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
-    $ git checkout v1.4.2
+    $ git checkout v1.4.3
     ```
 2. Change your working directory to /deployments/helm-chart:
     ```
@@ -64,7 +64,7 @@ Parameter | Description | Default
 `controller.hostNetwork` | Enables the Ingress controller pods to use the host's network namespace. | false
 `controller.nginxDebug` | Enables debugging for NGINX. Uses the `nginx-debug` binary. Requires `error-log-level: debug` in the ConfigMap via `controller.config.entries`. | false
 `controller.image.repository` | The image repository of the Ingress controller. | nginx/nginx-ingress
-`controller.image.tag` | The tag of the Ingress controller image. | 1.4.2
+`controller.image.tag` | The tag of the Ingress controller image. | 1.4.3
 `controller.image.pullPolicy` | The pull policy for the Ingress controller image. | IfNotPresent
 `controller.config.entries` | The entries of the ConfigMap for customizing NGINX configuration. | { }
 `controller.defaultTLS.cert` | The base64-encoded TLS certificate for the default HTTPS server. If not specified, a pre-generated self-signed certificate is used. **Note:** It is recommended that you specify your own certificate. | A pre-generated self-signed certificate.
