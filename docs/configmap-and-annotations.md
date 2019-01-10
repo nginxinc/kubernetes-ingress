@@ -1,6 +1,6 @@
 # ConfigMap and Annotations
 
-The Ingress resource only allows you to use basic NGINX features -- host and path-based routing and TLS termination. Thus, advanced features like rewriting the request URI or inserting additional response headers are not available. 
+The Ingress resource only allows you to use basic NGINX features -- host and path-based routing and TLS termination. Thus, advanced features like rewriting the request URI or inserting additional response headers are not available.
 
 In addition to using advanced features, often it is necessary to customize or fine tune NGINX behavior. For example, set the number of worker processes or customize the access log format.
 
@@ -49,7 +49,7 @@ metadata:
     nginx.org/client-max-body-size: "4m"
     nginx.org/server-snippets: |
       location / {
-        return 302 /coffee; 
+        return 302 /coffee;
       }
 spec:
   rules:
@@ -102,7 +102,7 @@ spec:
 | N/A | `server-names-hash-bucket-size` | Sets the value of the [server_names_hash_bucket_size](http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_bucket_size) directive. | Depends on the size of the processor’s cache line. | |
 | N/A | `server-names-hash-max-size` | Sets the value of the [server_names_hash_max_size](http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_max_size) directive. | `512` | |
 
-### Logging 
+### Logging
 
 | Annotation | ConfigMap Key | Description | Default | Example |
 | ---------- | -------------- | ----------- | ------- | ------- |
@@ -127,6 +127,7 @@ spec:
 | `nginx.org/hsts` | `hsts` | Enables [HTTP Strict Transport Security (HSTS)](https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/): the HSTS header is added to the responses from backends. The `preload` directive is included in the header. | `False` | |
 | `nginx.org/hsts-max-age` | `hsts-max-age` | Sets the value of the `max-age` directive of the HSTS header. | `2592000` (1 month) |
 | `nginx.org/hsts-include-subdomains` | `hsts-include-subdomains` | Adds the `includeSubDomains` directive to the HSTS header. | `False`| |
+| `nginx.org/hsts-over-http` | `hsts-over-http` | Returns hsts headers over HTTP. Should only be used when TLS termination is done in a load balancer in front of the Ingress Controller. | `False` | |
 | N/A | `ssl-protocols` | Sets the value of the [ssl_protocols](http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_protocols) directive. | `TLSv1 TLSv1.1 TLSv1.2`| |
 | N/A | `ssl-prefer-server-ciphers` | Enables or disables the [ssl_prefer_server_ciphers](http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_prefer_server_ciphers) directive. | `False`| |
 | N/A | `ssl-ciphers` | Sets the value of the [ssl_ciphers](http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_ciphers) directive. | `HIGH:!aNULL:!MD5`| |
