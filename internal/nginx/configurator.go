@@ -266,6 +266,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			HSTS:                  ingCfg.HSTS,
 			HSTSMaxAge:            ingCfg.HSTSMaxAge,
 			HSTSIncludeSubdomains: ingCfg.HSTSIncludeSubdomains,
+			HSTSBehindProxy:       ingCfg.HSTSBehindProxy,
 			StatusZone:            statuzZone,
 			RealIPHeader:          ingCfg.RealIPHeader,
 			SetRealIPFrom:         ingCfg.SetRealIPFrom,
@@ -553,6 +554,11 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 				glog.Error(err)
 				parsingErrors = true
 			}
+			hstsBehindProxy, existsBP, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "nginx.org/hsts-behind-proxy", ingEx.Ingress)
+			if existsBP && err != nil {
+				glog.Error(err)
+				parsingErrors = true
+			}
 
 			if parsingErrors {
 				glog.Errorf("Ingress %s/%s: There are configuration issues with hsts annotations, skipping annotions for all hsts settings", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName())
@@ -563,6 +569,9 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 				}
 				if existsIS {
 					ingCfg.HSTSIncludeSubdomains = hstsIncludeSubdomains
+				}
+				if existsBP {
+					ingCfg.HSTSBehindProxy = hstsBehindProxy
 				}
 			}
 		}

@@ -95,6 +95,7 @@ type Server struct {
 	HSTS                  bool
 	HSTSMaxAge            int64
 	HSTSIncludeSubdomains bool
+	HSTSBehindProxy       bool
 	ProxyHideHeaders      []string
 	ProxyPassHeaders      []string
 
