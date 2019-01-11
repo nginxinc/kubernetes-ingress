@@ -81,6 +81,8 @@ Parameter | Description | Default
 `controller.service.loadBalancerIP` | The static IP address for the load balancer. Requires `controller.service.type` set to `LoadBalancer`. The cloud provider must support this feature.  | None
 `controller.service.loadBalancerSourceRanges` | The IP ranges (CIDR) that are allowed to access the load balancer. Requires `controller.service.type` set to `LoadBalancer`. The cloud provider must support this feature. | []
 `controller.service.externalIPs` | The list of external IPs for the Ingress controller service. | []
+`controller.service.NodePort.Http` | Custom NodePort number for http. Requires `controller.service.type` set to `NodePort`. | None
+`controller.service.NodePort.Https` | Custom NodePort number for https. Requires `controller.service.type` set to `NodePort`. | None
 `controller.serviceAccount.name` | The name of the service account of the Ingress controller pods. Used for RBAC. | nginx-ingress
 `controller.serviceAccount.imagePullSecrets` | The names of the secrets containing docker registry credentials. | []
 `controller.ingressClass` | A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation `"kubernetes.io/ingress.class"` equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag. | nginx

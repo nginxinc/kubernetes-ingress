@@ -33,10 +33,20 @@ spec:
     targetPort: 80
     protocol: TCP
     name: http
+  {{- if (eq .Values.controller.service.type "NodePort") }}
+    {{- if .Values.controller.service.NodePort.Http }}
+    nodePort: {{ .Values.controller.service.NodePort.Http }}
+    {{- end}}
+  {{- end}}
   - port: 443
     targetPort: 443
     protocol: TCP
     name: https
+  {{- if (eq .Values.controller.service.type "NodePort") }}
+    {{- if .Values.controller.service.NodePort.Https }}
+    nodePort: {{ .Values.controller.service.NodePort.Https }}
+    {{- end}}
+  {{- end}}
   selector:
     app: {{ .Values.controller.name | trunc 63 }}
   {{- if .Values.controller.service.externalIPs }}
