@@ -49,5 +49,5 @@ spec:
         args:
           - -web.listen-address
           - :9113
-          - nginx.scrape-uri
+          - -nginx.scrape-uri
           - http://127.0.0.1:8080/stub_status
