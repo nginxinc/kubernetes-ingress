@@ -36,6 +36,9 @@ controller:
     loadBalancerIP: ""
     externalIPs: []
     loadBalancerSourceRanges: []
+    NodePort:
+      Http: 32080
+      Https: 32443
   serviceAccount:
     name: nginx-ingress
     imagePullSecrets: []
