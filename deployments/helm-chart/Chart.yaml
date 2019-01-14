@@ -1,5 +1,5 @@
 name: nginx-ingress
-version: 0.3.1
+version: 0.3.2
 appVersion: edge
 description: NGINX Ingress Controller
 sources:
