@@ -1072,9 +1072,17 @@ func compareContainerPortAndServicePort(containerPort api_v1.ContainerPort, svcP
 
 func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *extensions.IngressBackend, namespace string) ([]string, error) {
 	svc, err := lbc.getServiceForIngressBackend(backend, namespace)
+
 	if err != nil {
 		glog.V(3).Infof("Error getting service %v: %v", backend.ServiceName, err)
 		return nil, err
+	}
+
+	if svc.Spec.Type == api_v1.ServiceTypeExternalName {
+		var endpoints []string
+		endpoint := fmt.Sprintf("%s:%d", backend.ServiceName, int32(backend.ServicePort.IntValue()) )
+		endpoints = append(endpoints, endpoint)
+		return endpoints, nil
 	}
 
 	endps, err := lbc.endpointLister.GetServiceEndpoints(svc)
