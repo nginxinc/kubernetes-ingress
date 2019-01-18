@@ -54,7 +54,7 @@ func CreateServiceHandlers(lbc *controller.LoadBalancerController) cache.Resourc
 					return
 				}
 				oldSvc := old.(*api_v1.Service)
-				if hasServicePortChanges(oldSvc.Spec.Ports, curSvc.Spec.Ports) {
+				if hasServiceChanges(oldSvc, curSvc) {
 					glog.V(3).Infof("Service %v changed, syncing", curSvc.Name)
 					lbc.EnqueueIngressForService(curSvc)
 				}
@@ -78,6 +78,22 @@ func (a portSort) Less(i, j int) bool {
 		return a[i].Port < a[j].Port
 	}
 	return a[i].Name < a[j].Name
+}
+
+// hasServicedChanged checks if the service has changed based on custom rules we define (eg. port).
+func hasServiceChanges(oldSvc, curSvc *api_v1.Service) bool {
+	if hasServicePortChanges(oldSvc.Spec.Ports, curSvc.Spec.Ports) {
+		return true
+	}
+	if hasServiceExternalNameChanges(oldSvc, curSvc) {
+		return true
+	}
+	return false
+}
+
+// hasServiceExternalNameChanges only compares Service.Spec.Externalname for Type ExternalName services.
+func hasServiceExternalNameChanges(oldSvc, curSvc *api_v1.Service) bool {
+	return curSvc.Spec.Type == api_v1.ServiceTypeExternalName && oldSvc.Spec.ExternalName != curSvc.Spec.ExternalName
 }
 
 // hasServicePortChanges only compares ServicePort.Name and .Port.

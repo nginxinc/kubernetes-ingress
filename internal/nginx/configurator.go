@@ -821,6 +821,13 @@ func (cnf *Configurator) createUpstream(ingEx *IngressEx, name string, backend *
 	endps, exists := ingEx.Endpoints[backend.ServiceName+backend.ServicePort.String()]
 	if exists {
 		var upsServers []UpstreamServer
+		// Always false for NGINX OSS
+		_, isExternalNameSvc := ingEx.ExternalNameSvcs[backend.ServiceName]
+		if isExternalNameSvc && !cnf.IsResolverConfigured() {
+			glog.Warningf("A resolver must be configured for Type ExternalName service %s, no upstream servers will be created", backend.ServiceName)
+			endps = []string{}
+		}
+
 		for _, endp := range endps {
 			addressport := strings.Split(endp, ":")
 			upsServers = append(upsServers, UpstreamServer{
@@ -829,6 +836,7 @@ func (cnf *Configurator) createUpstream(ingEx *IngressEx, name string, backend *
 				MaxFails:    cfg.MaxFails,
 				FailTimeout: cfg.FailTimeout,
 				SlowStart:   cfg.SlowStart,
+				Resolve:     isExternalNameSvc,
 			})
 		}
 		if len(upsServers) > 0 {
@@ -1078,9 +1086,13 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
 		endps, exists := ingEx.Endpoints[ingEx.Ingress.Spec.Backend.ServiceName+ingEx.Ingress.Spec.Backend.ServicePort.String()]
 		if exists {
-			err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.configVersion)
-			if err != nil {
-				return fmt.Errorf("Couldn't update the endpoints for %v: %v", name, err)
+			if _, isExternalName := ingEx.ExternalNameSvcs[ingEx.Ingress.Spec.Backend.ServiceName]; isExternalName {
+				glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", ingEx.Ingress.Spec.Backend.ServiceName)
+			} else {
+				err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.configVersion)
+				if err != nil {
+					return fmt.Errorf("Couldn't update the endpoints for %v: %v", name, err)
+				}
 			}
 		}
 	}
@@ -1092,6 +1104,10 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 			name := getNameForUpstream(ingEx.Ingress, rule.Host, &path.Backend)
 			endps, exists := ingEx.Endpoints[path.Backend.ServiceName+path.Backend.ServicePort.String()]
 			if exists {
+				if _, isExternalName := ingEx.ExternalNameSvcs[path.Backend.ServiceName]; isExternalName {
+					glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", path.Backend.ServiceName)
+					continue
+				}
 				err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.configVersion)
 				if err != nil {
 					return fmt.Errorf("Couldn't update the endpoints for %v: %v", name, err)
@@ -1162,6 +1178,10 @@ func GenerateNginxMainConfig(config *Config) *MainConfig {
 		WorkerShutdownTimeout:     config.MainWorkerShutdownTimeout,
 		WorkerConnections:         config.MainWorkerConnections,
 		WorkerRlimitNofile:        config.MainWorkerRlimitNofile,
+		ResolverAddresses:         config.ResolverAddresses,
+		ResolverIPV6:              config.ResolverIPV6,
+		ResolverValid:             config.ResolverValid,
+		ResolverTimeout:           config.ResolverTimeout,
 	}
 	return nginxCfg
 }
@@ -1242,4 +1262,9 @@ func (cnf *Configurator) HasMinion(master *extensions.Ingress, minion *extension
 		return false
 	}
 	return cnf.minions[masterName][objectMetaToFileName(&minion.ObjectMeta)]
+}
+
+// IsResolverConfigured checks if a DNS resolver is present in NGINX configuration
+func (cnf *Configurator) IsResolverConfigured() bool {
+	return len(cnf.config.ResolverAddresses) != 0
 }

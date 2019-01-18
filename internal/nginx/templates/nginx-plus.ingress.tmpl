@@ -5,7 +5,7 @@ upstream {{$upstream.Name}} {
 	{{if $upstream.LBMethod }}{{$upstream.LBMethod}};{{end}}
 	{{range $server := $upstream.UpstreamServers}}
 	server {{$server.Address}}:{{$server.Port}} max_fails={{$server.MaxFails}} fail_timeout={{$server.FailTimeout}}
-	    {{- if $server.SlowStart}} slow_start={{$server.SlowStart}}{{end}};{{end}}
+	    {{- if $server.SlowStart}} slow_start={{$server.SlowStart}}{{end}}{{if $server.Resolve}} resolve{{end}};{{end}}
 	{{if $upstream.StickyCookie}}
 	sticky cookie {{$upstream.StickyCookie}};
 	{{end}}

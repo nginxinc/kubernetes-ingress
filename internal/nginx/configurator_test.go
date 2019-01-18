@@ -226,6 +226,7 @@ func createCafeIngressEx() IngressEx {
 			"coffee-svc80": {"10.0.0.1:80"},
 			"tea-svc80":    {"10.0.0.2:80"},
 		},
+		ExternalNameSvcs: map[string]bool{},
 	}
 	return cafeIngressEx
 }

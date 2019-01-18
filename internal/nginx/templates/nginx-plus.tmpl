@@ -60,6 +60,11 @@ http {
     {{if .SSLPreferServerCiphers}}ssl_prefer_server_ciphers on;{{end}}
     {{if .SSLDHParam}}ssl_dhparam {{.SSLDHParam}};{{end}}
 
+    {{if .ResolverAddresses}}
+    resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
+    {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
+    {{end}}
+
     server {
         listen 80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
         listen 443 ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};

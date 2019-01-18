@@ -49,6 +49,10 @@ type Config struct {
 	HealthCheckMandatory          bool
 	HealthCheckMandatoryQueue     int64
 	SlowStart                     string
+	ResolverAddresses             []string
+	ResolverIPV6                  bool
+	ResolverValid                 string
+	ResolverTimeout               string
 
 	// http://nginx.org/en/docs/http/ngx_http_realip_module.html
 	RealIPHeader    string
@@ -93,6 +97,7 @@ func NewDefaultConfig() *Config {
 		FailTimeout:                "10s",
 		LBMethod:                   "random two least_conn",
 		MainErrorLogLevel:          "notice",
+		ResolverIPV6:               true,
 	}
 }
 
@@ -361,5 +366,46 @@ func ParseConfigMap(cfgm *api_v1.ConfigMap, nginxPlus bool) *Config {
 			cfg.MainStreamSnippets = mainStreamSnippets
 		}
 	}
+
+	if resolverAddresses, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "resolver-addresses", cfgm, ","); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			if nginxPlus {
+				cfg.ResolverAddresses = resolverAddresses
+			} else {
+				glog.Warning("ConfigMap key 'resolver-addresses' requires NGINX Plus")
+			}
+		}
+	}
+
+	if resolverIpv6, exists, err := GetMapKeyAsBool(cfgm.Data, "resolver-ipv6", cfgm); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			if nginxPlus {
+				cfg.ResolverIPV6 = resolverIpv6
+			} else {
+				glog.Warning("ConfigMap key 'resolver-ipv6' requires NGINX Plus")
+			}
+		}
+	}
+
+	if resolverValid, exists := cfgm.Data["resolver-valid"]; exists {
+		if nginxPlus {
+			cfg.ResolverValid = resolverValid
+		} else {
+			glog.Warning("ConfigMap key 'resolver-valid' requires NGINX Plus")
+		}
+	}
+
+	if resolverTimeout, exists := cfgm.Data["resolver-timeout"]; exists {
+		if nginxPlus {
+			cfg.ResolverTimeout = resolverTimeout
+		} else {
+			glog.Warning("ConfigMap key 'resolver-timeout' requires NGINX Plus")
+		}
+	}
+
 	return cfg
 }

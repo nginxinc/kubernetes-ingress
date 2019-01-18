@@ -10,11 +10,12 @@ import (
 // IngressEx holds an Ingress along with Secrets and Endpoints of the services
 // that are referenced in this Ingress
 type IngressEx struct {
-	Ingress      *extensions.Ingress
-	TLSSecrets   map[string]*api_v1.Secret
-	JWTKey       JWTKey
-	Endpoints    map[string][]string
-	HealthChecks map[string]*api_v1.Probe
+	Ingress          *extensions.Ingress
+	TLSSecrets       map[string]*api_v1.Secret
+	JWTKey           JWTKey
+	Endpoints        map[string][]string
+	HealthChecks     map[string]*api_v1.Probe
+	ExternalNameSvcs map[string]bool
 }
 
 // MergeableIngresses is a mergeable ingress of a master and minions

@@ -99,6 +99,10 @@ var mainCfg = nginx.MainConfig{
 	WorkerRlimitNofile:     "65536",
 	StreamSnippets:         []string{"# comment"},
 	StreamLogFormat:        "$remote_addr",
+	ResolverAddresses:      []string{"example.com", "127.0.0.1"},
+	ResolverIPV6:           false,
+	ResolverValid:          "10s",
+	ResolverTimeout:        "15s",
 }
 
 func TestIngressForNGINXPlus(t *testing.T) {

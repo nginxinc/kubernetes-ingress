@@ -61,6 +61,7 @@ type UpstreamServer struct {
 	MaxFails    int
 	FailTimeout string
 	SlowStart   string
+	Resolve     bool
 }
 
 // HealthCheck describes an active HTTP health check
@@ -174,6 +175,10 @@ type MainConfig struct {
 	WorkerShutdownTimeout  string
 	WorkerConnections      string
 	WorkerRlimitNofile     string
+	ResolverAddresses      []string
+	ResolverIPV6           bool
+	ResolverValid          string
+	ResolverTimeout        string
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

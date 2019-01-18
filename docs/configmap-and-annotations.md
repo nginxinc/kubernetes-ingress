@@ -101,6 +101,11 @@ spec:
 | N/A | `worker-shutdown-timeout` | Sets the value of the [worker_shutdown_timeout](http://nginx.org/en/docs/ngx_core_module.html#worker_shutdown_timeout) directive. | N/A | |
 | N/A | `server-names-hash-bucket-size` | Sets the value of the [server_names_hash_bucket_size](http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_bucket_size) directive. | Depends on the size of the processor’s cache line. | |
 | N/A | `server-names-hash-max-size` | Sets the value of the [server_names_hash_max_size](http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_max_size) directive. | `512` | |
+| N/A | `resolver-addresses` | Sets the value of the [resolver](http://nginx.org/en/docs/http/ngx_http_core_module.html#resolver) addresses. Note: If you use a DNS name (ex., `kube-dns.kube-system.svc.cluster.local`) as a resolver address, NGINX Plus will resolve it using the system resolver during the start and on every configuration reload. As a consequence, If the name cannot be resolved or the DNS server doesn't respond, NGINX Plus will fail to start or reload. To avoid this, consider using only IP addresses as resolver addresses. Supported in NGINX Plus only. | N/A | [Support for Type ExternalName Services](../examples/externalname-services). |
+| N/A | `resolver-ipv6` | Enables IPv6 resolution in the resolver. Supported in NGINX Plus only. | `True` | [Support for Type ExternalName Services](../examples/externalname-services). |
+| N/A | `resolver-valid` | Sets the time NGINX caches the resolved DNS records. Supported in NGINX Plus only. | TTL value of a DNS record | [Support for Type ExternalName Services](../examples/externalname-services). |
+| N/A | `resolver-timeout` | Sets the [resolver_timeout](http://nginx.org/en/docs/http/ngx_http_core_module.html#resolver_timeout) for name resolution. Supported in NGINX Plus only.  | `30s` | [Support for Type ExternalName Services](../examples/externalname-services). |
+
 
 ### Logging 
 
