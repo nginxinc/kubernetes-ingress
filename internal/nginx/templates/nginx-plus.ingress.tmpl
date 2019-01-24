@@ -75,12 +75,12 @@ server {
 		return 301 https://$host:{{index $server.SSLPorts 0}}$request_uri;
 	}
 	{{- end}}
+	{{- end}}
 
 	{{- if $server.RedirectToHTTPS}}
 	if ($http_x_forwarded_proto = 'http') {
 		return 301 https://$host$request_uri;
 	}
-	{{- end}}
 	{{- end}}
 
 	{{with $jwt := $server.JWTAuth}}
