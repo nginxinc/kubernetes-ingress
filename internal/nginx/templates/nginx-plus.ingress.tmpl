@@ -68,13 +68,13 @@ server {
 
 	add_header Strict-Transport-Security "$hsts_header_val" always;
 	{{end}}
-	{{end}}
 
 	{{- if $server.SSLRedirect}}
 	if ($scheme = http) {
 		return 301 https://$host:{{index $server.SSLPorts 0}}$request_uri;
 	}
 	{{- end}}
+	{{end}}
 	{{- end}}
 
 	{{- if $server.RedirectToHTTPS}}
