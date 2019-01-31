@@ -65,22 +65,22 @@ Parameter | Description | Default
 `controller.image.repository` | The image repository of the Ingress controller. | nginx/nginx-ingress
 `controller.image.tag` | The tag of the Ingress controller image. | edge
 `controller.image.pullPolicy` | The pull policy for the Ingress controller image. | IfNotPresent
-`controller.config.entries` | The entries of the ConfigMap for customizing NGINX configuration. | { }
+`controller.config.entries` | The entries of the ConfigMap for customizing NGINX configuration. | {}
 `controller.defaultTLS.cert` | The base64-encoded TLS certificate for the default HTTPS server. If not specified, a pre-generated self-signed certificate is used. **Note:** It is recommended that you specify your own certificate. | A pre-generated self-signed certificate.
 `controller.defaultTLS.key` | The base64-encoded TLS key for the default HTTPS server. **Note:** If not specified, a pre-generated key is used. It is recommended that you specify your own key. | A pre-generated key.
 `controller.defaultTLS.secret` | The secret with a TLS certificate and key for the default HTTPS server. The value must follow the following format: `<namespace>/<name>`. Used as an alternative to specifiying a certifcate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters. | None
 `controller.wildcardTLS.cert` | The base64-encoded TLS certificate for every Ingress host that has TLS enabled but no secret specified. If the parameter is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. | None
 `controller.wildcardTLS.key` | The base64-encoded TLS key for every Ingress host that has TLS enabled but no secret specified. If the parameter is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. | None
 `controller.wildcardTLS.secret` | The secret with a TLS certificate and key for every Ingress host that has TLS enabled but no secret specified. The value must follow the following format: `<namespace>/<name>`. Used as an alternative to specifying a certificate and key using `controller.wildcardTLS.cert` and `controller.wildcardTLS.key` parameters. | None
-`controller.nodeSelector` | The node selector for pod assignment for the Ingress controller pods. | { }
+`controller.nodeSelector` | The node selector for pod assignment for the Ingress controller pods. | {}
 `controller.terminationGracePeriodSeconds` | The termination grace period of the Ingress controller pod. | 30
 `controller.tolerations` | The tolerations of the Ingress controller pods. | []
-`controller.affinity` | The affinity of the Ingress controller pods. | { }
+`controller.affinity` | The affinity of the Ingress controller pods. | {}
 `controller.replicaCount` | The number of replicas of the Ingress controller deployment. | 1
 `controller.service.create` | Creates a service to expose the Ingress controller pods. | true
 `controller.service.type` | The type of service to create for the Ingress controller. | LoadBalancer
 `controller.service.externalTrafficPolicy` | The externalTrafficPolicy of the service. The value Local preserves the client source IP. | Local
-`controller.service.annotations` | The annotations of the Ingress controller service. | { }
+`controller.service.annotations` | The annotations of the Ingress controller service. | {}
 `controller.service.loadBalancerIP` | The static IP address for the load balancer. Requires `controller.service.type` set to `LoadBalancer`. The cloud provider must support this feature.  | None
 `controller.service.loadBalancerSourceRanges` | The IP ranges (CIDR) that are allowed to access the load balancer. Requires `controller.service.type` set to `LoadBalancer`. The cloud provider must support this feature. | []
 `controller.service.externalIPs` | The list of external IPs for the Ingress controller service. | []
