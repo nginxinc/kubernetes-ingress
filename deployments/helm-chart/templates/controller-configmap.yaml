@@ -3,10 +3,7 @@ kind: ConfigMap
 metadata:
   name: nginx-config
   labels:
-    app: {{ .Values.controller.name | trunc 63 }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    heritage: {{ .Release.Service }}
-    release: {{ .Release.Name }}
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
 data:
 {{- if .Values.controller.config.entries }}
 {{ toYaml .Values.controller.config.entries | indent 2 }}

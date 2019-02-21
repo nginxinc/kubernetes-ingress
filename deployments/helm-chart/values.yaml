@@ -1,67 +1,178 @@
 controller:
+  ## The name of the Ingress controller daemonset or deployment.
   name: nginx-ingress
+
+  ## The kind of the Ingress controller installation - deployment or daemonset.
   kind: deployment
+
+  ## Deploys the Ingress controller for NGINX Plus.
   nginxplus: false
-  hostNetwork: false
+
+  ## Enables debugging for NGINX. Uses the nginx-debug binary. Requires error-log-level: debug in the ConfigMap via `controller.config.entries`.
   nginxDebug: false
+
+  ## Enables the Ingress controller pods to use the host's network namespace.
+  hostNetwork: false
+
   image:
+    ## The image repository of the Ingress controller.
     repository: nginx/nginx-ingress
+
+    ## The tag of the Ingress controller image.
     tag: "edge"
+
+    ## The pull policy for the Ingress controller image.
+    ## Ref: http://kubernetes.io/docs/user-guide/images/#updating-images
     pullPolicy: IfNotPresent
+
   config:
+    ## The entries of the ConfigMap for customizing NGINX configuration.
     entries: {}
   # It is recommended to use your own TLS certificates and keys
   defaultTLS:
+    ## The base64-encoded TLS certificate for the default HTTPS server. If not specified, a pre-generated self-signed certificate is used.
+    ## Note: It is recommended that you specify your own certificate.
     cert: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN2akNDQWFZQ0NRREFPRjl0THNhWFhEQU5CZ2txaGtpRzl3MEJBUXNGQURBaE1SOHdIUVlEVlFRRERCWk8KUjBsT1dFbHVaM0psYzNORGIyNTBjbTlzYkdWeU1CNFhEVEU0TURreE1qRTRNRE16TlZvWERUSXpNRGt4TVRFNApNRE16TlZvd0lURWZNQjBHQTFVRUF3d1dUa2RKVGxoSmJtZHlaWE56UTI5dWRISnZiR3hsY2pDQ0FTSXdEUVlKCktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ0VCQUwvN2hIUEtFWGRMdjNyaUM3QlBrMTNpWkt5eTlyQ08KR2xZUXYyK2EzUDF0azIrS3YwVGF5aGRCbDRrcnNUcTZzZm8vWUk1Y2Vhbkw4WGM3U1pyQkVRYm9EN2REbWs1Qgo4eDZLS2xHWU5IWlg0Rm5UZ0VPaStlM2ptTFFxRlBSY1kzVnNPazFFeUZBL0JnWlJVbkNHZUtGeERSN0tQdGhyCmtqSXVuektURXUyaDU4Tlp0S21ScUJHdDEwcTNRYzhZT3ExM2FnbmovUWRjc0ZYYTJnMjB1K1lYZDdoZ3krZksKWk4vVUkxQUQ0YzZyM1lma1ZWUmVHd1lxQVp1WXN2V0RKbW1GNWRwdEMzN011cDBPRUxVTExSakZJOTZXNXIwSAo1TmdPc25NWFJNV1hYVlpiNWRxT3R0SmRtS3FhZ25TZ1JQQVpQN2MwQjFQU2FqYzZjNGZRVXpNQ0F3RUFBVEFOCkJna3Foa2lHOXcwQkFRc0ZBQU9DQVFFQWpLb2tRdGRPcEsrTzhibWVPc3lySmdJSXJycVFVY2ZOUitjb0hZVUoKdGhrYnhITFMzR3VBTWI5dm15VExPY2xxeC9aYzJPblEwMEJCLzlTb0swcitFZ1U2UlVrRWtWcitTTFA3NTdUWgozZWI4dmdPdEduMS9ienM3bzNBaS9kclkrcUI5Q2k1S3lPc3FHTG1US2xFaUtOYkcyR1ZyTWxjS0ZYQU80YTY3Cklnc1hzYktNbTQwV1U3cG9mcGltU1ZmaXFSdkV5YmN3N0NYODF6cFErUyt1eHRYK2VBZ3V0NHh3VlI5d2IyVXYKelhuZk9HbWhWNThDd1dIQnNKa0kxNXhaa2VUWXdSN0diaEFMSkZUUkk3dkhvQXprTWIzbjAxQjQyWjNrN3RXNQpJUDFmTlpIOFUvOWxiUHNoT21FRFZkdjF5ZytVRVJxbStGSis2R0oxeFJGcGZnPT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQo=
+
+    ## The base64-encoded TLS key for the default HTTPS server. Note: If not specified, a pre-generated key is used.
+    ## Note: It is recommended that you specify your own key.
     key: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBdi91RWM4b1JkMHUvZXVJTHNFK1RYZUprckxMMnNJNGFWaEMvYjVyYy9XMlRiNHEvClJOcktGMEdYaVN1eE9ycXgrajlnamx4NXFjdnhkenRKbXNFUkJ1Z1B0ME9hVGtIekhvb3FVWmcwZGxmZ1dkT0EKUTZMNTdlT1l0Q29VOUZ4amRXdzZUVVRJVUQ4R0JsRlNjSVo0b1hFTkhzbysyR3VTTWk2Zk1wTVM3YUhudzFtMApxWkdvRWEzWFNyZEJ6eGc2clhkcUNlUDlCMXl3VmRyYURiUzc1aGQzdUdETDU4cGszOVFqVUFQaHpxdmRoK1JWClZGNGJCaW9CbTVpeTlZTW1hWVhsMm0wTGZzeTZuUTRRdFFzdEdNVWozcGJtdlFmazJBNnljeGRFeFpkZFZsdmwKMm82MjBsMllxcHFDZEtCRThCay90elFIVTlKcU56cHpoOUJUTXdJREFRQUJBb0lCQVFDZklHbXowOHhRVmorNwpLZnZJUXQwQ0YzR2MxNld6eDhVNml4MHg4Mm15d1kxUUNlL3BzWE9LZlRxT1h1SENyUlp5TnUvZ2IvUUQ4bUFOCmxOMjRZTWl0TWRJODg5TEZoTkp3QU5OODJDeTczckM5bzVvUDlkazAvYzRIbjAzSkVYNzZ5QjgzQm9rR1FvYksKMjhMNk0rdHUzUmFqNjd6Vmc2d2szaEhrU0pXSzBwV1YrSjdrUkRWYmhDYUZhNk5nMUZNRWxhTlozVDhhUUtyQgpDUDNDeEFTdjYxWTk5TEI4KzNXWVFIK3NYaTVGM01pYVNBZ1BkQUk3WEh1dXFET1lvMU5PL0JoSGt1aVg2QnRtCnorNTZud2pZMy8yUytSRmNBc3JMTnIwMDJZZi9oY0IraVlDNzVWYmcydVd6WTY3TWdOTGQ5VW9RU3BDRkYrVm4KM0cyUnhybnhBb0dCQU40U3M0ZVlPU2huMVpQQjdhTUZsY0k2RHR2S2ErTGZTTXFyY2pOZjJlSEpZNnhubmxKdgpGenpGL2RiVWVTbWxSekR0WkdlcXZXaHFISy9iTjIyeWJhOU1WMDlRQ0JFTk5jNmtWajJTVHpUWkJVbEx4QzYrCk93Z0wyZHhKendWelU0VC84ajdHalRUN05BZVpFS2FvRHFyRG5BYWkyaW5oZU1JVWZHRXFGKzJyQW9HQkFOMVAKK0tZL0lsS3RWRzRKSklQNzBjUis3RmpyeXJpY05iWCtQVzUvOXFHaWxnY2grZ3l4b25BWlBpd2NpeDN3QVpGdwpaZC96ZFB2aTBkWEppc1BSZjRMazg5b2pCUmpiRmRmc2l5UmJYbyt3TFU4NUhRU2NGMnN5aUFPaTVBRHdVU0FkCm45YWFweUNweEFkREtERHdObit3ZFhtaTZ0OHRpSFRkK3RoVDhkaVpBb0dCQUt6Wis1bG9OOTBtYlF4VVh5YUwKMjFSUm9tMGJjcndsTmVCaWNFSmlzaEhYa2xpSVVxZ3hSZklNM2hhUVRUcklKZENFaHFsV01aV0xPb2I2NTNyZgo3aFlMSXM1ZUtka3o0aFRVdnpldm9TMHVXcm9CV2xOVHlGanIrSWhKZnZUc0hpOGdsU3FkbXgySkJhZUFVWUNXCndNdlQ4NmNLclNyNkQrZG8wS05FZzFsL0FvR0FlMkFVdHVFbFNqLzBmRzgrV3hHc1RFV1JqclRNUzRSUjhRWXQKeXdjdFA4aDZxTGxKUTRCWGxQU05rMXZLTmtOUkxIb2pZT2pCQTViYjhibXNVU1BlV09NNENoaFJ4QnlHbmR2eAphYkJDRkFwY0IvbEg4d1R0alVZYlN5T294ZGt5OEp0ek90ajJhS0FiZHd6NlArWDZDODhjZmxYVFo5MWpYL3RMCjF3TmRKS2tDZ1lCbyt0UzB5TzJ2SWFmK2UwSkN5TGhzVDQ5cTN3Zis2QWVqWGx2WDJ1VnRYejN5QTZnbXo5aCsKcDNlK2JMRUxwb3B0WFhNdUFRR0xhUkcrYlNNcjR5dERYbE5ZSndUeThXczNKY3dlSTdqZVp2b0ZpbmNvVlVIMwphdmxoTUVCRGYxSjltSDB5cDBwWUNaS2ROdHNvZEZtQktzVEtQMjJhTmtsVVhCS3gyZzR6cFE9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo=
-    # secret: <namespace>/<secret_name>
+    secret: #<namespace>/<secret_name>
   wildcardTLS:
     cert: ""
     key: ""
-    # secret: <namespace>/<secret_name>
+
+    ## The secret with a TLS certificate and key for the default HTTPS server. The value must follow the following format: <namespace>/<name>.
+    ## Used as an alternative to specifiying a certifcate and key using controller.defaultTLS.cert and controller.defaultTLS.key parameters.
+    secret: #<namespace>/<secret_name>
+
+  ## The node selector for pod assignment for the Ingress controller pods.
   nodeSelector: {}
+
+  ## The termination grace period of the Ingress controller pod.
   terminationGracePeriodSeconds: 30
+
+  ## The tolerations of the Ingress controller pods.
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
   tolerations: []
+
+  ## The affinity of the Ingress controller pods.
+  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   affinity: {}
+
+  ## The number of replicas of the Ingress controller deployment.
   replicaCount: 1
+
+  ## A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class
+  ## i.e. have the annotation "kubernetes.io/ingress.class" equal to the class.
+  ## Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag.
   ingressClass: nginx
+
+  ## Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation.
   useIngressClassOnly: false
+
+  ## Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces.
   watchNamespace: ""
+
+  ## Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request.
+  ## Useful for external health-checking of the Ingress controller.
   healthStatus: false
+
   nginxStatus:
+    ## Enable the NGINX stub_status, or the NGINX Plus API.
     enable: true
+
+    ## Set the port where the NGINX stub_status or the NGINX Plus API is exposed.
     port: 8080
+
+    ## Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas.
     allowCidrs: "127.0.0.1"
+
   service:
+    ## Creates a service to expose the Ingress controller pods.
     create: true
+
+    ## The type of service to create for the Ingress controller.
     type: LoadBalancer
+
+    ## The externalTrafficPolicy of the service. The value Local preserves the client source IP.
     externalTrafficPolicy: Local
+
+    ## The annotations of the Ingress controller service.
     annotations: {}
+
+    ## The static IP address for the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature.
     loadBalancerIP: ""
+
+    ## The list of external IPs for the Ingress controller service.
     externalIPs: []
+
+    ## The IP ranges (CIDR) that are allowed to access the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature.
     loadBalancerSourceRanges: []
+
     httpPort:
+      ## Enables the HTTP port for the Ingress controller service.
       enable: true
+
+      ## The HTTP port of the Ingress controller service.
       port: 80
+
+      ## The custom NodePort for the HTTP port. Requires controller.service.type set to NodePort.
       nodePort: ""
+
     httpsPort:
+      ## Enables the HTTPS port for the Ingress controller service.
       enable: true
+
+      ## The HTTPS port of the Ingress controller service.
       port: 443
+
+      ## The custom NodePort for the HTTPS port. Requires controller.service.type set to NodePort.
       nodePort: ""
+
   serviceAccount:
+    ## Creates a service account. Required for RBAC.
+    create: true
+
+    ## The name of the service account of the Ingress controller pods. Used for RBAC.
     name: nginx-ingress
+
+    ## The names of the secrets containing docker registry credentials.
+    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
     imagePullSecrets: []
       # - name: secret_name
+
   reportIngressStatus:
+    ## Update the address field in the status of Ingresses resources with an external address of the Ingress controller.
+    ## You must also specify the source of the external address either through an external service via controller.reportIngressStatus.externalService or the external-status-address entry in the ConfigMap via controller.config.entries.
+    ## Note: controller.config.entries.external-status-address takes precedence if both are set.
     enable: true
+
+    ## Specifies the name of the service with the type LoadBalancer through which the Ingress controller is exposed externally.
+    ## The external address of the service is used when reporting the status of Ingress resources. controller.reportIngressStatus.enable must be set to true.
     externalService: nginx-ingress
+
+    ## Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources. controller.reportIngressStatus.enable must be set to true.
     enableLeaderElection: true
+
 rbac:
+  ## Configures RBAC.
   create: true
+
 prometheus:
+  ## Deploys a Prometheus exporter container within the Ingress controller pod. Requires NGINX status enabled via controller.nginxStatus.enable.
+  ## Note: the exporter will use the port specified by controller.nginxStatus.port.
   create: false
+
+  ## Configures the port to scrape the metrics.
   port: 9113
+
   image:
+    ## The image repository of the Prometheus exporter.
     repository: nginx/nginx-prometheus-exporter
+
+    ## The tag of the Prometheus exporter image.
     tag: "0.2.0"
+
+    ## The pull policy for the Prometheus exporter image.
     pullPolicy: IfNotPresent

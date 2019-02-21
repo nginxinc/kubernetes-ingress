@@ -16,22 +16,22 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 ## Installing the Chart
 
 1. Clone the Ingress controller repo:
-    ```
+    ```console
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     ```
 2. Change your working directory to /deployments/helm-chart:
-    ```
+    ```console
     $ cd kubernetes-ingress/deployments/helm-chart
     ```
 3. To install the chart with the release name my-release (my-release is the name that you choose):
 
     For NGINX:
-    ```
+    ```console
     $ helm install --name my-release .
     ```
 
     For NGINX Plus:
-    ```
+    ```console
     $ helm install --name my-release -f values-plus.yaml .
     ```
 
@@ -57,7 +57,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
 
 Parameter | Description | Default
 --- | --- | ---
-`controller.name` | The name of the Ingress controller daemon set or deployment. | nginx-ingress
+`controller.name` | The name of the Ingress controller daemonset or deployment. | nginx-ingress
 `controller.kind` | The kind of the Ingress controller installation - deployment or daemonset. | deployment
 `controller.nginxplus` | Deploys the Ingress controller for NGINX Plus. | false
 `controller.hostNetwork` | Enables the Ingress controller pods to use the host's network namespace. | false
@@ -90,6 +90,7 @@ Parameter | Description | Default
 `controller.service.httpsPort.enable` | Enables the HTTPS port for the Ingress controller service. | true
 `controller.service.httpsPort.port` | The HTTPS port of the Ingress controller service. | 443
 `controller.service.httpsPort.nodePort` | The custom NodePort for the HTTPS port. Requires `controller.service.type` set to `NodePort`.  | ""
+`controller.serviceAccount.create` | Creates a service account. Required for RBAC. | true
 `controller.serviceAccount.name` | The name of the service account of the Ingress controller pods. Used for RBAC. | nginx-ingress
 `controller.serviceAccount.imagePullSecrets` | The names of the secrets containing docker registry credentials. | []
 `controller.ingressClass` | A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation `"kubernetes.io/ingress.class"` equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag. | nginx
@@ -110,7 +111,7 @@ Parameter | Description | Default
 `prometheus.image.pullPolicy` | The pull policy for the Prometheus exporter image. | IfNotPresent
 
 Example:
-```
+```console
 $ cd kubernetes-ingress/helm-chart
 $ helm install --name my-release . --set controller.replicaCount=5
 ```

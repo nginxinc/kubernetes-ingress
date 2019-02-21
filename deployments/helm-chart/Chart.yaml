@@ -2,6 +2,7 @@ name: nginx-ingress
 version: 0.3.3
 appVersion: edge
 description: NGINX Ingress Controller
+icon: https://www.nginx.com/wp-content/uploads/2018/08/icon-NGINX-OSS-2.svg
 sources:
   - https://github.com/nginxinc/kubernetes-ingress/tree/master/deployment/helm-chart
 keywords:

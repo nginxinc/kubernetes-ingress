@@ -2,20 +2,17 @@
 apiVersion: extensions/v1beta1
 kind: DaemonSet
 metadata:
-  name: {{ .Values.controller.name | trunc 63 }}
+  name: {{ include "nginx-ingress.name" . }}
   labels:
-    app: {{ .Values.controller.name | trunc 63 }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    heritage: {{ .Release.Service }}
-    release: {{ .Release.Name }}
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      app: {{ .Values.controller.name | trunc 63 }}
+      app: {{ include "nginx-ingress.name" . }}
   template:
     metadata:
       labels:
-        app: {{ .Values.controller.name | trunc 63 }}
+        app: {{ include "nginx-ingress.name" . }}
 {{- if .Values.prometheus.create }}
       annotations:
         prometheus.io/scrape: "true"
@@ -38,7 +35,7 @@ spec:
 {{- end }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:
-      - name: {{ .Values.controller.name | trunc 63 }}
+      - name: {{ include "nginx-ingress.name" . }}
         image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
         imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
         ports:

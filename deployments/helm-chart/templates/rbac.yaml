@@ -4,10 +4,7 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: nginx-ingress
   labels:
-    app: {{ .Values.controller.name | trunc 63 }}
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    heritage: {{ .Release.Service }}
-    release: {{ .Release.Name }}
+    {{- include "nginx-ingress.labels" . | nindent 4 }}
 rules:
 - apiGroups:
   - ""
