@@ -79,6 +79,7 @@ type LoadBalancerController struct {
 	resync                  time.Duration
 	namespace               string
 	controllerNamespace     string
+	wildcardTLSSecret       string
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -97,6 +98,7 @@ type NewLoadBalancerControllerInput struct {
 	ControllerNamespace     string
 	ReportIngressStatus     bool
 	IsLeaderElectionEnabled bool
+	WildcardTLSSecret       string
 }
 
 // NewLoadBalancerController creates a controller
@@ -113,6 +115,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		resync:                  input.ResyncPeriod,
 		namespace:               input.Namespace,
 		controllerNamespace:     input.ControllerNamespace,
+		wildcardTLSSecret:       input.WildcardTLSSecret,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -647,10 +650,9 @@ func (lbc *LoadBalancerController) syncSecret(task queue.Task) {
 	if !secrExists {
 		glog.V(2).Infof("Deleting Secret: %v\n", key)
 
-		lbc.handleSecretDeletion(key, ings)
-
-		if key == lbc.defaultServerSecret {
-			glog.Warningf("The default server Secret %v was removed. Retaining the Secret.", key)
+		lbc.handleRegularSecretDeletion(key, ings)
+		if lbc.isSpecialSecret(key) {
+			glog.Warningf("A special TLS Secret %v was removed. Retaining the Secret.", key)
 		}
 		return
 	}
@@ -659,9 +661,9 @@ func (lbc *LoadBalancerController) syncSecret(task queue.Task) {
 
 	secret := obj.(*api_v1.Secret)
 
-	if key == lbc.defaultServerSecret {
-		lbc.handleDefaultSecretUpdate(secret)
-		// we don't return here in case the default secret is also used in Ingress resources
+	if lbc.isSpecialSecret(key) {
+		lbc.handleSpecialSecretUpdate(secret)
+		// we don't return here in case the special secret is also used in Ingress resources
 	}
 
 	if len(ings) > 0 {
@@ -669,7 +671,11 @@ func (lbc *LoadBalancerController) syncSecret(task queue.Task) {
 	}
 }
 
-func (lbc *LoadBalancerController) handleSecretDeletion(key string, ings []extensions.Ingress) {
+func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
+	return secretName == lbc.defaultServerSecret || secretName == lbc.wildcardTLSSecret
+}
+
+func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings []extensions.Ingress) {
 	eventType := api_v1.EventTypeWarning
 	title := "Missing Secret"
 	message := fmt.Sprintf("Secret %v was removed", key)
@@ -702,7 +708,7 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 		glog.Errorf("Couldn't validate secret %v: %v", secretNsName, err)
 		glog.Errorf("Removing invalid secret %v", secretNsName)
 
-		lbc.handleSecretDeletion(secretNsName, ings)
+		lbc.handleRegularSecretDeletion(secretNsName, ings)
 
 		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "%v was rejected: %v", secretNsName, err)
 		return
@@ -726,24 +732,31 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 	lbc.emitEventForIngresses(eventType, title, message, ings)
 }
 
-func (lbc *LoadBalancerController) handleDefaultSecretUpdate(secret *api_v1.Secret) {
+func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
+	var specialSecretsToUpdate []string
 	secretNsName := secret.Namespace + "/" + secret.Name
-
 	err := nginx.ValidateTLSSecret(secret)
 	if err != nil {
-		glog.Errorf("Couldn't validate the default server Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the default server Secret %v was rejected, using the previous version: %v", secretNsName, err)
+		glog.Errorf("Couldn't validate the special Secret %v: %v", secretNsName, err)
+		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
 		return
 	}
 
-	err = lbc.configurator.AddOrUpdateDefaultServerTLSSecret(secret)
+	if secretNsName == lbc.defaultServerSecret {
+		specialSecretsToUpdate = append(specialSecretsToUpdate, nginx.DefaultServerSecretName)
+	}
+	if secretNsName == lbc.wildcardTLSSecret {
+		specialSecretsToUpdate = append(specialSecretsToUpdate, nginx.WildcardSecretName)
+	}
+
+	err = lbc.configurator.AddOrUpdateSpecialSecrets(secret, specialSecretsToUpdate)
 	if err != nil {
-		glog.Errorf("Error when updating the default server Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the default server Secret %v was updated, but not applied: %v", secretNsName, err)
+		glog.Errorf("Error when updating the special Secret %v: %v", secretNsName, err)
+		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
 		return
 	}
 
-	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the default server Secret %v was updated", secretNsName)
+	lbc.recorder.Eventf(secret, api_v1.EventTypeNormal, "Updated", "the special Secret %v was updated", secretNsName)
 }
 
 func (lbc *LoadBalancerController) emitEventForIngresses(eventType string, title string, message string, ings []extensions.Ingress) {
@@ -906,6 +919,23 @@ func (lbc *LoadBalancerController) getIngressForEndpoints(obj interface{}) []ext
 	return ings
 }
 
+func (lbc *LoadBalancerController) getAndValidateSecret(secretKey string) (*api_v1.Secret, error) {
+	secretObject, secretExists, err := lbc.secretLister.GetByKey(secretKey)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving secret %v", secretKey)
+	}
+	if !secretExists {
+		return nil, fmt.Errorf("secret %v not found", secretKey)
+	}
+	secret := secretObject.(*api_v1.Secret)
+
+	err = nginx.ValidateTLSSecret(secret)
+	if err != nil {
+		return nil, fmt.Errorf("error validating secret %v", secretKey)
+	}
+	return secret, nil
+}
+
 func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*nginx.IngressEx, error) {
 	ingEx := &nginx.IngressEx{
 		Ingress: ing,
@@ -915,21 +945,9 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*ngin
 	for _, tls := range ing.Spec.TLS {
 		secretName := tls.SecretName
 		secretKey := ing.Namespace + "/" + secretName
-
-		secretObject, secretExists, err := lbc.secretLister.GetByKey(secretKey)
+		secret, err := lbc.getAndValidateSecret(secretKey)
 		if err != nil {
-			glog.Warningf("Error retrieving secret %v for Ingress %v: %v", secretName, ing.Name, err)
-			continue
-		}
-		if !secretExists {
-			glog.Warningf("secret %v not found for Ingress %v", secretKey, ing.Name)
-			continue
-		}
-		secret := secretObject.(*api_v1.Secret)
-
-		err = nginx.ValidateTLSSecret(secret)
-		if err != nil {
-			glog.Warningf("Error validating secret %v for Ingress %v: %v", secretName, ing.Name, err)
+			glog.Warningf("Error trying to get the secret %v for Ingress %v: %v", secretName, ing.Name, err)
 			continue
 		}
 		ingEx.TLSSecrets[secretName] = secret

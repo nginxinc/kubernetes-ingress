@@ -9,6 +9,10 @@ Usage of ./nginx-ingress:
 	If not set, certificate and key in the file "/etc/nginx/secrets/default" are used. If a secret is set,
 	but the Ingress controller is not able to fetch it from Kubernetes API or a secret is not set and
 	the file "/etc/nginx/secrets/default" does not exist, the Ingress controller will fail to start
+  -wildcard-tls-secret string
+    	A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
+    	Format: <namespace>/<name>. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. 
+    	If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.
   -enable-leader-election
     	Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources -- only one replica will report status. See -report-ingress-status flag.
   -external-service string

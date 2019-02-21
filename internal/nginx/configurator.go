@@ -18,9 +18,13 @@ import (
 const emptyHost = ""
 
 const pemFileNameForMissingTLSSecret = "/etc/nginx/secrets/default"
+const pemFileNameForWildcardTLSSecret = "/etc/nginx/secrets/wildcard"
 
 // DefaultServerSecretName is the filename of the Secret with a TLS cert and a key for the default server
 const DefaultServerSecretName = "default"
+
+// WildcardSecretName is the filename of the Secret with a TLS cert and a key for the ingress resources with TLS termination enabled but not secret defined
+const WildcardSecretName = "wildcard"
 
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
@@ -30,25 +34,26 @@ const JWTKeyAnnotation = "nginx.com/jwt-key"
 
 // Configurator transforms an Ingress resource into NGINX Configuration
 type Configurator struct {
-	nginx            *Controller
-	config           *Config
-	nginxAPI         *plus.NginxAPIController
-	templateExecutor *TemplateExecutor
-	ingresses        map[string]*IngressEx
-	minions          map[string]map[string]bool
+	nginx             *Controller
+	config            *Config
+	nginxAPI          *plus.NginxAPIController
+	templateExecutor  *TemplateExecutor
+	ingresses         map[string]*IngressEx
+	minions           map[string]map[string]bool
+	isWildcardEnabled bool
 }
 
 // NewConfigurator creates a new Configurator
-func NewConfigurator(nginx *Controller, config *Config, nginxAPI *plus.NginxAPIController, templateExecutor *TemplateExecutor) *Configurator {
+func NewConfigurator(nginx *Controller, config *Config, nginxAPI *plus.NginxAPIController, templateExecutor *TemplateExecutor, isWildcardEnabled bool) *Configurator {
 	cnf := Configurator{
-		nginx:            nginx,
-		config:           config,
-		nginxAPI:         nginxAPI,
-		ingresses:        make(map[string]*IngressEx),
-		templateExecutor: templateExecutor,
-		minions:          make(map[string]map[string]bool),
+		nginx:             nginx,
+		config:            config,
+		nginxAPI:          nginxAPI,
+		ingresses:         make(map[string]*IngressEx),
+		templateExecutor:  templateExecutor,
+		minions:           make(map[string]map[string]bool),
+		isWildcardEnabled: isWildcardEnabled,
 	}
-
 	return &cnf
 }
 
@@ -194,7 +199,9 @@ func (cnf *Configurator) updateTLSSecrets(ingEx *IngressEx) map[string]string {
 		secretName := tls.SecretName
 
 		pemFileName := pemFileNameForMissingTLSSecret
-		if secret, exists := ingEx.TLSSecrets[secretName]; exists {
+		if secretName == "" && cnf.isWildcardEnabled {
+			pemFileName = pemFileNameForWildcardTLSSecret
+		} else if secret, exists := ingEx.TLSSecrets[secretName]; exists {
 			pemFileName = cnf.addOrUpdateSecret(secret)
 		}
 
@@ -254,7 +261,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 
 		serverName := rule.Host
 
-		statuzZone := rule.Host
+		statusZone := rule.Host
 
 		server := Server{
 			Name:                  serverName,
@@ -267,7 +274,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			HSTSMaxAge:            ingCfg.HSTSMaxAge,
 			HSTSIncludeSubdomains: ingCfg.HSTSIncludeSubdomains,
 			HSTSBehindProxy:       ingCfg.HSTSBehindProxy,
-			StatusZone:            statuzZone,
+			StatusZone:            statusZone,
 			RealIPHeader:          ingCfg.RealIPHeader,
 			SetRealIPFrom:         ingCfg.SetRealIPFrom,
 			RealIPRecursive:       ingCfg.RealIPRecursive,
@@ -959,13 +966,14 @@ func (cnf *Configurator) addOrUpdateSecret(secret *api_v1.Secret) string {
 	return cnf.nginx.AddOrUpdateSecretFile(name, data, mode)
 }
 
-// AddOrUpdateDefaultServerTLSSecret creates or updates a file with a TLS cert and a key from the secret for the default server.
-func (cnf *Configurator) AddOrUpdateDefaultServerTLSSecret(secret *api_v1.Secret) error {
+// AddOrUpdateSpecialSecrets creates or updates a file with a TLS cert and a key from a Special Secret (eg. DefaultServerSecret, WildcardTLSSecret)
+func (cnf *Configurator) AddOrUpdateSpecialSecrets(secret *api_v1.Secret, secretNames []string) error {
 	data := GenerateCertAndKeyFileContent(secret)
-	cnf.nginx.AddOrUpdateSecretFile(DefaultServerSecretName, data, TLSSecretFileMode)
-
+	for _, secretName := range secretNames {
+		cnf.nginx.AddOrUpdateSecretFile(secretName, data, TLSSecretFileMode)
+	}
 	if err := cnf.nginx.Reload(); err != nil {
-		return fmt.Errorf("Error when reloading NGINX when updating the default server Secret: %v", err)
+		return fmt.Errorf("Error when reloading NGINX when updating the special Secrets: %v", err)
 	}
 	return nil
 }

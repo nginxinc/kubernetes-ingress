@@ -549,7 +549,7 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 	cafeMasterIngEx, _ := lbc.createIngress(&cafeMaster)
 	ingExMap["default-cafe-master"] = cafeMasterIngEx
 
-	cnf := nginx.NewConfigurator(&nginx.Controller{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{})
+	cnf := nginx.NewConfigurator(&nginx.Controller{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{}, false)
 
 	// edit private field ingresses to use in testing
 	pointerVal := reflect.ValueOf(cnf)
@@ -782,7 +782,7 @@ func TestFindProbeForPods(t *testing.T) {
 
 func TestGetServicePortForIngressPort(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	cnf := nginx.NewConfigurator(&nginx.Controller{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{})
+	cnf := nginx.NewConfigurator(&nginx.Controller{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{}, false)
 	lbc := LoadBalancerController{
 		client:       fakeClient,
 		ingressClass: "nginx",
@@ -936,7 +936,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 				t.Fatalf("NGINX API Controller could not start: %v", err)
 			}
 
-			cnf := nginx.NewConfigurator(ngxc, &nginx.Config{}, apiCtrl, templateExecutor)
+			cnf := nginx.NewConfigurator(ngxc, &nginx.Config{}, apiCtrl, templateExecutor, false)
 			lbc := LoadBalancerController{
 				client:       fakeClient,
 				ingressClass: "nginx",
@@ -1117,7 +1117,7 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 				t.Fatalf("NGINX API Controller could not start: %v", err)
 			}
 
-			cnf := nginx.NewConfigurator(ngxc, &nginx.Config{}, apiCtrl, templateExecutor)
+			cnf := nginx.NewConfigurator(ngxc, &nginx.Config{}, apiCtrl, templateExecutor, false)
 			lbc := LoadBalancerController{
 				client:       fakeClient,
 				ingressClass: "nginx",

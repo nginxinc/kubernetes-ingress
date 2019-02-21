@@ -93,6 +93,11 @@ The external address of the service is used when reporting the status of Ingress
 
 	nginxDebug = flag.Bool("nginx-debug", false,
 		"Enable debugging for NGINX. Uses the nginx-debug binary. Requires 'error-log-level: debug' in the ConfigMap.")
+
+	wildcardTLSSecret = flag.String("wildcard-tls-secret", "",
+		`A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified. 
+		Format: <namespace>/<name>. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. 
+		If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.`)
 )
 
 func main() {
@@ -168,17 +173,9 @@ func main() {
 	ngxc := nginx.NewNginxController("/etc/nginx/", nginxBinaryPath, local)
 
 	if *defaultServerSecret != "" {
-		ns, name, err := utils.ParseNamespaceName(*defaultServerSecret)
+		secret, err := getAndValidateSecret(kubeClient, *defaultServerSecret)
 		if err != nil {
-			glog.Fatalf("Error parsing the default-server-tls-secret argument: %v", err)
-		}
-		secret, err := kubeClient.CoreV1().Secrets(ns).Get(name, meta_v1.GetOptions{})
-		if err != nil {
-			glog.Fatalf("Error when getting %v: %v", *defaultServerSecret, err)
-		}
-		err = nginx.ValidateTLSSecret(secret)
-		if err != nil {
-			glog.Fatalf("%v is invalid: %v", *defaultServerSecret, err)
+			glog.Fatalf("Error trying to get the default server TLS secret %v: %v", *defaultServerSecret, err)
 		}
 
 		bytes := nginx.GenerateCertAndKeyFileContent(secret)
@@ -188,6 +185,16 @@ func main() {
 		if os.IsNotExist(err) {
 			glog.Fatalf("A TLS cert and key for the default server is not found")
 		}
+	}
+
+	if *wildcardTLSSecret != "" {
+		secret, err := getAndValidateSecret(kubeClient, *wildcardTLSSecret)
+		if err != nil {
+			glog.Fatalf("Error trying to get the wildcard TLS secret %v: %v", *wildcardTLSSecret, err)
+		}
+
+		bytes := nginx.GenerateCertAndKeyFileContent(secret)
+		ngxc.AddOrUpdateSecretFile(nginx.WildcardSecretName, bytes, nginx.TLSSecretFileMode)
 	}
 
 	cfg := nginx.NewDefaultConfig()
@@ -242,8 +249,8 @@ func main() {
 			glog.Fatalf("Failed to create NginxAPIController: %v", err)
 		}
 	}
-
-	cnf := nginx.NewConfigurator(ngxc, cfg, nginxAPI, templateExecutor)
+	isWildcardEnabled := *wildcardTLSSecret != ""
+	cnf := nginx.NewConfigurator(ngxc, cfg, nginxAPI, templateExecutor, isWildcardEnabled)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	lbcInput := controller.NewLoadBalancerControllerInput{
@@ -259,6 +266,7 @@ func main() {
 		ControllerNamespace:     controllerNamespace,
 		ReportIngressStatus:     *reportIngressStatus,
 		IsLeaderElectionEnabled: *leaderElectionEnabled,
+		WildcardTLSSecret:       *wildcardTLSSecret,
 	}
 
 	lbc := controller.NewLoadBalancerController(lbcInput)
@@ -380,4 +388,21 @@ func validateCIDRorIP(cidr string) error {
 		return fmt.Errorf("invalid IP address: %v", cidr)
 	}
 	return nil
+}
+
+// getAndValidateSecret gets and validates a secret.
+func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string) (secret *api_v1.Secret, err error) {
+	ns, name, err := utils.ParseNamespaceName(secretNsName)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse the %v argument: %v", secretNsName, err)
+	}
+	secret, err = kubeClient.CoreV1().Secrets(ns).Get(name, meta_v1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("could not get %v: %v", secretNsName, err)
+	}
+	err = nginx.ValidateTLSSecret(secret)
+	if err != nil {
+		return nil, fmt.Errorf("%v is invalid: %v", secretNsName, err)
+	}
+	return secret, nil
 }

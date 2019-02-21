@@ -533,7 +533,7 @@ func createTestConfigurator() (*Configurator, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewConfigurator(ngxc, NewDefaultConfig(), apiCtrl, templateExecutor), nil
+	return NewConfigurator(ngxc, NewDefaultConfig(), apiCtrl, templateExecutor, false), nil
 }
 
 func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
@@ -547,7 +547,7 @@ func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
 	}
 	ngxc := NewNginxController("/etc/nginx", "nginx", true)
 	apiCtrl, _ := plus.NewNginxAPIController(&http.Client{}, "", true)
-	return NewConfigurator(ngxc, NewDefaultConfig(), apiCtrl, templateExecutor), nil
+	return NewConfigurator(ngxc, NewDefaultConfig(), apiCtrl, templateExecutor, false), nil
 }
 
 func TestGenerateNginxCfg(t *testing.T) {
@@ -720,6 +720,28 @@ func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 	resultCiphers := result.Servers[0].SSLCiphers
 	if !reflect.DeepEqual(resultCiphers, expectedCiphers) {
 		t.Errorf("generateNginxCfg returned SSLCiphers %v,  but expected %v", resultCiphers, expectedCiphers)
+	}
+}
+
+func TestGenerateNginxCfgWithWildcardTLSSecret(t *testing.T) {
+	cafeIngressEx := createCafeIngressEx()
+	cnf, err := createTestConfigurator()
+	if err != nil {
+		t.Errorf("Failed to create a test configurator: %v", err)
+	}
+
+	pems := map[string]string{
+		"cafe.example.com": pemFileNameForWildcardTLSSecret,
+	}
+
+	result := cnf.generateNginxCfg(&cafeIngressEx, pems, false)
+
+	resultServer := result.Servers[0]
+	if !reflect.DeepEqual(resultServer.SSLCertificate, pemFileNameForWildcardTLSSecret) {
+		t.Errorf("generateNginxCfg returned SSLCertificate %v,  but expected %v", resultServer.SSLCertificate, pemFileNameForWildcardTLSSecret)
+	}
+	if !reflect.DeepEqual(resultServer.SSLCertificateKey, pemFileNameForWildcardTLSSecret) {
+		t.Errorf("generateNginxCfg returned SSLCertificateKey %v,  but expected %v", resultServer.SSLCertificateKey, pemFileNameForWildcardTLSSecret)
 	}
 }
 
