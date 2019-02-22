@@ -22,7 +22,6 @@ controller:
     tag: "edge"
 
     ## The pull policy for the Ingress controller image.
-    ## Ref: http://kubernetes.io/docs/user-guide/images/#updating-images
     pullPolicy: IfNotPresent
 
   config:
@@ -53,11 +52,9 @@ controller:
   terminationGracePeriodSeconds: 30
 
   ## The tolerations of the Ingress controller pods.
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
   tolerations: []
 
   ## The affinity of the Ingress controller pods.
-  ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   affinity: {}
 
   ## The number of replicas of the Ingress controller deployment.
@@ -131,14 +128,10 @@ controller:
       nodePort: ""
 
   serviceAccount:
-    ## Creates a service account. Required for RBAC.
-    create: true
-
     ## The name of the service account of the Ingress controller pods. Used for RBAC.
     name: nginx-ingress
 
     ## The names of the secrets containing docker registry credentials.
-    ## Ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
     imagePullSecrets: []
       # - name: secret_name
 

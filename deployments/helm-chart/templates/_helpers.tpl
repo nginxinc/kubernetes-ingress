@@ -12,7 +12,7 @@ Create labels
 */}}
 {{- define "nginx-ingress.labels" -}}
 app.kubernetes.io/name: {{ include "nginx-ingress.name" . }}
-helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
