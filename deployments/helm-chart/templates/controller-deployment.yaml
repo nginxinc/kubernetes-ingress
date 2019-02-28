@@ -43,6 +43,10 @@ spec:
           containerPort: 80
         - name: https
           containerPort: 443
+{{- if .Values.prometheus.create }}
+        - name: prometheus
+          containerPort: {{ .Values.prometheus.port }}
+{{- end }}
         env:
         - name: POD_NAMESPACE
           valueFrom:
@@ -82,23 +86,6 @@ spec:
 {{- else if and .Values.controller.wildcardTLS.cert .Values.controller.wildcardTLS.key }}
           - -wildcard-tls-secret=$(POD_NAMESPACE)/wildcard-tls-secret
 {{- end }}
-{{- if and .Values.prometheus.create .Values.controller.nginxStatus.enable }}
-      - image: "{{ .Values.prometheus.image.repository }}:{{ .Values.prometheus.image.tag }}"
-        name: nginx-prometheus-exporter
-        imagePullPolicy: "{{ .Values.prometheus.image.pullPolicy }}"
-        ports:
-        - name: prometheus
-          containerPort: {{ .Values.prometheus.port }}
-        args:
-          - -web.listen-address
-          - :{{ .Values.prometheus.port }}
-{{- if .Values.controller.nginxplus }}
-          - -nginx.plus
-          - -nginx.scrape-uri
-          - http://127.0.0.1:{{ .Values.controller.nginxStatus.port }}/api
-{{ else }}
-          - -nginx.scrape-uri
-          - http://127.0.0.1:{{ .Values.controller.nginxStatus.port }}/stub_status
-{{- end }}
-{{- end }}
+          - -enable-prometheus-metrics={{ .Values.prometheus.create }}
+          - -prometheus-metrics-listen-port={{ .Values.prometheus.port }}
 {{- end }}

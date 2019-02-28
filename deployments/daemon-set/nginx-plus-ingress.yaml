@@ -11,6 +11,9 @@ spec:
     metadata:
       labels:
         app: nginx-ingress
+     #annotations:
+       #prometheus.io/scrape: "true"
+       #prometheus.io/port: 9113
     spec:
       serviceAccountName: nginx-ingress
       containers:
@@ -24,6 +27,8 @@ spec:
         - name: https
           containerPort: 443
           hostPort: 443
+       #- name: prometheus
+         #containerPort: 9113
         env:
         - name: POD_NAMESPACE
           valueFrom:
@@ -41,3 +46,4 @@ spec:
          #- -report-ingress-status
          #- -external-service=nginx-ingress
          #- -enable-leader-election
+         #- -enable-prometheus-metrics

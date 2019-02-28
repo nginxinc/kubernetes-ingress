@@ -151,18 +151,19 @@ type Location struct {
 
 // MainConfig describe the main NGINX configuration file
 type MainConfig struct {
-	ServerNamesHashBucketSize string
-	ServerNamesHashMaxSize    string
-	LogFormat                 string
-	ErrorLogLevel             string
-	StreamLogFormat           string
-	HealthStatus              bool
-	NginxStatus               bool
-	NginxStatusAllowCIDRs     []string
-	NginxStatusPort           int
-	MainSnippets              []string
-	HTTPSnippets              []string
-	StreamSnippets            []string
+	ServerNamesHashBucketSize      string
+	ServerNamesHashMaxSize         string
+	LogFormat                      string
+	ErrorLogLevel                  string
+	StreamLogFormat                string
+	HealthStatus                   bool
+	NginxStatus                    bool
+	NginxStatusAllowCIDRs          []string
+	NginxStatusPort                int
+	StubStatusOverUnixSocketForOSS bool
+	MainSnippets                   []string
+	HTTPSnippets                   []string
+	StreamSnippets                 []string
 	// http://nginx.org/en/docs/http/ngx_http_ssl_module.html
 	SSLProtocols           string
 	SSLPreferServerCiphers bool

@@ -8,16 +8,17 @@ import (
 
 // TemplateExecutor executes NGINX configuration templates
 type TemplateExecutor struct {
-	HealthStatus          bool
-	NginxStatus           bool
-	NginxStatusAllowCIDRs []string
-	NginxStatusPort       int
-	mainTemplate          *template.Template
-	ingressTemplate       *template.Template
+	HealthStatus                   bool
+	NginxStatus                    bool
+	NginxStatusAllowCIDRs          []string
+	NginxStatusPort                int
+	StubStatusOverUnixSocketForOSS bool
+	mainTemplate                   *template.Template
+	ingressTemplate                *template.Template
 }
 
 // NewTemplateExecutor creates a TemplateExecutor
-func NewTemplateExecutor(mainTemplatePath string, ingressTemplatePath string, healthStatus bool, nginxStatus bool, nginxStatusAllowCIDRs []string, nginxStatusPort int) (*TemplateExecutor, error) {
+func NewTemplateExecutor(mainTemplatePath string, ingressTemplatePath string, healthStatus bool, nginxStatus bool, nginxStatusAllowCIDRs []string, nginxStatusPort int, stubStatusOverUnixSocketForOSS bool) (*TemplateExecutor, error) {
 	// template name must be the base name of the template file https://golang.org/pkg/text/template/#Template.ParseFiles
 	nginxTemplate, err := template.New(path.Base(mainTemplatePath)).ParseFiles(mainTemplatePath)
 	if err != nil {
@@ -30,12 +31,13 @@ func NewTemplateExecutor(mainTemplatePath string, ingressTemplatePath string, he
 	}
 
 	return &TemplateExecutor{
-		mainTemplate:          nginxTemplate,
-		ingressTemplate:       ingressTemplate,
-		HealthStatus:          healthStatus,
-		NginxStatus:           nginxStatus,
-		NginxStatusAllowCIDRs: nginxStatusAllowCIDRs,
-		NginxStatusPort:       nginxStatusPort,
+		mainTemplate:                   nginxTemplate,
+		ingressTemplate:                ingressTemplate,
+		HealthStatus:                   healthStatus,
+		NginxStatus:                    nginxStatus,
+		NginxStatusAllowCIDRs:          nginxStatusAllowCIDRs,
+		NginxStatusPort:                nginxStatusPort,
+		StubStatusOverUnixSocketForOSS: stubStatusOverUnixSocketForOSS,
 	}, nil
 }
 
@@ -67,6 +69,7 @@ func (te *TemplateExecutor) ExecuteMainConfigTemplate(cfg *MainConfig) ([]byte, 
 	cfg.NginxStatus = te.NginxStatus
 	cfg.NginxStatusAllowCIDRs = te.NginxStatusAllowCIDRs
 	cfg.NginxStatusPort = te.NginxStatusPort
+	cfg.StubStatusOverUnixSocketForOSS = te.StubStatusOverUnixSocketForOSS
 
 	var configBuffer bytes.Buffer
 	err := te.mainTemplate.Execute(&configBuffer, cfg)

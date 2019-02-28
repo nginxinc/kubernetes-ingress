@@ -15,6 +15,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/controller"
 	"github.com/nginxinc/kubernetes-ingress/internal/handlers"
+	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx/plus"
 	"github.com/nginxinc/kubernetes-ingress/internal/utils"
@@ -98,6 +99,12 @@ The external address of the service is used when reporting the status of Ingress
 		`A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified. 
 		Format: <namespace>/<name>. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. 
 		If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.`)
+
+	enablePrometheusMetrics = flag.Bool("enable-prometheus-metrics", false,
+		"Enable exposing NGINX or NGINX Plus metrics in the Prometheus format")
+
+	prometheusMetricsListenPort = flag.Int("prometheus-metrics-listen-port", 9113,
+		"Set the port where the Prometheus metrics are exposed. [1023 - 65535]")
 )
 
 func main() {
@@ -109,9 +116,14 @@ func main() {
 		os.Exit(0)
 	}
 
-	portValidationError := validateStatusPort(*nginxStatusPort)
-	if portValidationError != nil {
-		glog.Fatalf("Invalid value for nginx-status-port: %v", portValidationError)
+	statusPortValidationError := validatePort(*nginxStatusPort)
+	if statusPortValidationError != nil {
+		glog.Fatalf("Invalid value for nginx-status-port: %v", statusPortValidationError)
+	}
+
+	metricsPortValidationError := validatePort(*prometheusMetricsListenPort)
+	if metricsPortValidationError != nil {
+		glog.Fatalf("Invalid value for prometheus-metrics-listen-port: %v", metricsPortValidationError)
 	}
 
 	var err error
@@ -166,7 +178,7 @@ func main() {
 		nginxBinaryPath = "/usr/sbin/nginx-debug"
 	}
 
-	templateExecutor, err := nginx.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath, *healthStatus, *nginxStatus, allowedCIDRs, *nginxStatusPort)
+	templateExecutor, err := nginx.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath, *healthStatus, *nginxStatus, allowedCIDRs, *nginxStatusPort, *enablePrometheusMetrics)
 	if err != nil {
 		glog.Fatalf("Error creating TemplateExecutor: %v", err)
 	}
@@ -243,7 +255,7 @@ func main() {
 
 	var nginxAPI *plus.NginxAPIController
 	if *nginxPlus {
-		httpClient := getSocketClient()
+		httpClient := getSocketClient("/var/run/nginx-plus-api.sock")
 		nginxAPI, err = plus.NewNginxAPIController(&httpClient, "http://nginx-plus-api/api", local)
 		if err != nil {
 			glog.Fatalf("Failed to create NginxAPIController: %v", err)
@@ -298,6 +310,19 @@ func main() {
 		lbc.AddLeaderHandler(leaderHandler)
 	}
 
+	if *enablePrometheusMetrics {
+		if *nginxPlus {
+			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, nginxAPI.GetClientPlus())
+		} else {
+			httpClient := getSocketClient("/var/run/nginx-status.sock")
+			client, err := metrics.NewNginxMetricsClient(&httpClient)
+			if err != nil {
+				glog.Fatalf("Error creating the Nginx client for Prometheus metrics: %v", err)
+			}
+			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client)
+		}
+	}
+
 	go handleTermination(lbc, ngxc, nginxDone)
 	lbc.Run()
 
@@ -341,19 +366,20 @@ func handleTermination(lbc *controller.LoadBalancerController, ngxc *nginx.Contr
 }
 
 // getSocketClient gets an http.Client with the a unix socket transport.
-func getSocketClient() http.Client {
+func getSocketClient(sockPath string) http.Client {
 	return http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-				return net.Dial("unix", "/var/run/nginx-plus-api.sock")
+				return net.Dial("unix", sockPath)
 			},
 		},
 	}
 }
 
-func validateStatusPort(nginxStatusPort int) error {
-	if nginxStatusPort < 1023 || nginxStatusPort > 65535 {
-		return fmt.Errorf("port outside of valid port range [1023 - 65535]: %v", nginxStatusPort)
+// validatePort makes sure a given port is inside the valid port range for its usage
+func validatePort(port int) error {
+	if port < 1023 || port > 65535 {
+		return fmt.Errorf("port outside of valid port range [1023 - 65535]: %v", port)
 	}
 	return nil
 }

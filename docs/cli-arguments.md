@@ -69,4 +69,8 @@ Usage of ./nginx-ingress:
     	comma-separated list of pattern=N settings for file-filtered logging
   -watch-namespace string
     	Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces
+  -enable-prometheus-metrics
+    	Enable exposing NGINX or NGINX Plus metrics in the Prometheus format
+  -prometheus-metrics-listen-port
+    	Set the port where the Prometheus metrics are exposed. [1023 - 65535] (default 9113)
 ```

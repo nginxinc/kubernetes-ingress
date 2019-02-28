@@ -160,19 +160,8 @@ rbac:
   create: true
 
 prometheus:
-  ## Deploys a Prometheus exporter container within the Ingress controller pod. Requires NGINX status enabled via controller.nginxStatus.enable.
-  ## Note: the exporter will use the port specified by controller.nginxStatus.port.
-  create: false
+  ## Expose NGINX or NGINX Plus metrics in the Prometheus format.
+  create: true
 
   ## Configures the port to scrape the metrics.
   port: 9113
-
-  image:
-    ## The image repository of the Prometheus exporter.
-    repository: nginx/nginx-prometheus-exporter
-
-    ## The tag of the Prometheus exporter image.
-    tag: "0.2.0"
-
-    ## The pull policy for the Prometheus exporter image.
-    pullPolicy: IfNotPresent

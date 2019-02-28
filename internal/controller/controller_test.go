@@ -926,7 +926,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			fakeClient := fake.NewSimpleClientset()
 
-			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080)
+			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
 			if err != nil {
 				t.Fatalf("templateExecuter could not start: %v", err)
 			}
@@ -1107,7 +1107,7 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			fakeClient := fake.NewSimpleClientset()
 
-			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080)
+			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
 			if err != nil {
 				t.Fatalf("templateExecuter could not start: %v", err)
 			}

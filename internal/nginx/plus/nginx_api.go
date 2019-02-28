@@ -84,3 +84,11 @@ func (nginx *NginxAPIController) UpdateServers(upstream string, servers []string
 	glog.V(3).Infof("Updated servers of %v; Added: %v, Removed: %v", upstream, added, removed)
 	return nil
 }
+
+// GetClientPlus returns the internal client for NGINX Plus API to reuse it outside the package
+func (nginx *NginxAPIController) GetClientPlus() *plus.NginxClient {
+	if nginx != nil && nginx.client != nil {
+		return nginx.client
+	}
+	return nil
+}

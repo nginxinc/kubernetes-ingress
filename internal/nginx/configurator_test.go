@@ -524,7 +524,7 @@ func createExpectedConfigForMergeableCafeIngress() IngressNginxConfig {
 }
 
 func createTestConfigurator() (*Configurator, error) {
-	templateExecutor, err := NewTemplateExecutor("templates/nginx-plus.tmpl", "templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080)
+	templateExecutor, err := NewTemplateExecutor("templates/nginx-plus.tmpl", "templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
 	if err != nil {
 		return nil, err
 	}
@@ -537,7 +537,7 @@ func createTestConfigurator() (*Configurator, error) {
 }
 
 func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
-	templateExecutor, err := NewTemplateExecutor("templates/nginx-plus.tmpl", "templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080)
+	templateExecutor, err := NewTemplateExecutor("templates/nginx-plus.tmpl", "templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
 	if err != nil {
 		return nil, err
 	}

@@ -94,6 +94,17 @@ http {
     }
     {{- end}}
 
+    {{- if .StubStatusOverUnixSocketForOSS }}
+    server {
+        listen unix:/var/run/nginx-status.sock;
+        access_log off;
+
+        location /stub_status {
+            stub_status;
+        }
+    }
+    {{- end}}
+
     include /etc/nginx/config-version.conf;
     include /etc/nginx/conf.d/*.conf;
 }
