@@ -40,7 +40,7 @@ cmd/nginx-ingress/nginx-ingress
 default.pem
 
 # Dockerfiles for building
-Dockerfile
+/Dockerfile
 
 # IntelliJ IDEA
 .idea

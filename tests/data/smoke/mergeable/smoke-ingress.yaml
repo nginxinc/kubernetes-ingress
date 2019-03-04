@@ -1,0 +1,48 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: smoke-ingress-master
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.org/mergeable-ingress-type: "master"
+spec:
+  tls:
+  - hosts:
+    - smoke.example.com
+    secretName: smoke-secret
+  rules:
+  - host: smoke.example.com
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: smoke-ingress-backend1-minion
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.org/mergeable-ingress-type: "minion"
+spec:
+  rules:
+  - host: smoke.example.com
+    http:
+      paths:
+      - path: /backend1
+        backend:
+          serviceName: backend1-svc
+          servicePort: 80
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: smoke-ingress-backend2-minion
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.org/mergeable-ingress-type: "minion"
+spec:
+  rules:
+  - host: smoke.example.com
+    http:
+      paths:
+      - path: /backend2
+        backend:
+          serviceName: backend2-svc
+          servicePort: 80

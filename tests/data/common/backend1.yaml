@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: backend1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend1
+  template:
+    metadata:
+      labels:
+        app: backend1
+    spec:
+      containers:
+      - name: backend1
+        image: nginxdemos/hello:plain-text
+        ports:
+        - containerPort: 80

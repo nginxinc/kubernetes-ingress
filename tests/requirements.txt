@@ -1,0 +1,9 @@
+PyYAML
+requests
+forcediphttpsadapter
+kubernetes==8.0.1
+pytest
+ipaddress>=1.0.17
+pyopenssl
+certifi
+urllib3

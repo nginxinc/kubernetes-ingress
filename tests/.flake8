@@ -1,0 +1,5 @@
+[flake8]
+format = pylint
+max-complexity = 10
+max-line-length = 170
+exclude = .git,__pycache__,data,.idea.pytest_cache
