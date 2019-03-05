@@ -1,8 +1,11 @@
-package controller
+package k8s
 
 import (
+	"context"
 	"os"
 	"time"
+
+	"github.com/golang/glog"
 
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,8 +16,8 @@ import (
 	"k8s.io/client-go/tools/record"
 )
 
-// NewLeaderElector creates a new LeaderElection and returns the Elector.
-func NewLeaderElector(client kubernetes.Interface, callbacks leaderelection.LeaderCallbacks, namespace string) (*leaderelection.LeaderElector, error) {
+// newLeaderElector creates a new LeaderElection and returns the Elector.
+func newLeaderElector(client kubernetes.Interface, callbacks leaderelection.LeaderCallbacks, namespace string) (*leaderelection.LeaderElector, error) {
 	podName := os.Getenv("POD_NAME")
 
 	broadcaster := record.NewBroadcaster()
@@ -40,4 +43,21 @@ func NewLeaderElector(client kubernetes.Interface, callbacks leaderelection.Lead
 		RetryPeriod:   ttl / 4,
 		Callbacks:     callbacks,
 	})
+}
+
+// createLeaderHandler builds the handler funcs for leader handling
+func createLeaderHandler(lbc *LoadBalancerController) leaderelection.LeaderCallbacks {
+	return leaderelection.LeaderCallbacks{
+		OnStartedLeading: func(ctx context.Context) {
+			glog.V(3).Info("started leading, updating ingress status")
+			ingresses, mergeableIngresses := lbc.GetManagedIngresses()
+			err := lbc.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
+			if err != nil {
+				glog.V(3).Infof("error updating status when starting leading: %v", err)
+			}
+		},
+		OnStoppedLeading: func() {
+			glog.V(3).Info("stopped leading")
+		},
+	}
 }

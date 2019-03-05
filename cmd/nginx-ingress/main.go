@@ -13,12 +13,10 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/controller"
-	"github.com/nginxinc/kubernetes-ingress/internal/handlers"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx/plus"
-	"github.com/nginxinc/kubernetes-ingress/internal/utils"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -211,7 +209,7 @@ func main() {
 
 	cfg := nginx.NewDefaultConfig()
 	if *nginxConfigMaps != "" {
-		ns, name, err := utils.ParseNamespaceName(*nginxConfigMaps)
+		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
 		if err != nil {
 			glog.Fatalf("Error parsing the nginx-configmaps argument: %v", err)
 		}
@@ -265,7 +263,7 @@ func main() {
 	cnf := nginx.NewConfigurator(ngxc, cfg, nginxAPI, templateExecutor, isWildcardEnabled)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
-	lbcInput := controller.NewLoadBalancerControllerInput{
+	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:              kubeClient,
 		ResyncPeriod:            30 * time.Second,
 		Namespace:               *watchNamespace,
@@ -279,36 +277,10 @@ func main() {
 		ReportIngressStatus:     *reportIngressStatus,
 		IsLeaderElectionEnabled: *leaderElectionEnabled,
 		WildcardTLSSecret:       *wildcardTLSSecret,
+		ConfigMaps:              *nginxConfigMaps,
 	}
 
-	lbc := controller.NewLoadBalancerController(lbcInput)
-
-	// create handlers for resources we care about
-	ingressHandlers := handlers.CreateIngressHandlers(lbc)
-	secretHandlers := handlers.CreateSecretHandlers(lbc)
-	serviceHandlers := handlers.CreateServiceHandlers(lbc)
-	endpointHandlers := handlers.CreateEndpointHandlers(lbc)
-
-	lbc.AddSecretHandler(secretHandlers)
-	lbc.AddIngressHandler(ingressHandlers)
-	lbc.AddServiceHandler(serviceHandlers)
-	lbc.AddEndpointHandler(endpointHandlers)
-
-	if *nginxConfigMaps != "" {
-		nginxConfigMapsNS, nginxConfigMapsName, err := utils.ParseNamespaceName(*nginxConfigMaps)
-		if err != nil {
-			glog.Warning(err)
-		} else {
-			lbc.WatchNginxConfigMaps()
-			configMapHandlers := handlers.CreateConfigMapHandlers(lbc, nginxConfigMapsName)
-			lbc.AddConfigMapHandler(configMapHandlers, nginxConfigMapsNS)
-		}
-	}
-
-	if lbcInput.ReportIngressStatus && lbcInput.IsLeaderElectionEnabled {
-		leaderHandler := handlers.CreateLeaderHandler(lbc)
-		lbc.AddLeaderHandler(leaderHandler)
-	}
+	lbc := k8s.NewLoadBalancerController(lbcInput)
 
 	if *enablePrometheusMetrics {
 		if *nginxPlus {
@@ -332,7 +304,7 @@ func main() {
 	}
 }
 
-func handleTermination(lbc *controller.LoadBalancerController, ngxc *nginx.Controller, nginxDone chan error) {
+func handleTermination(lbc *k8s.LoadBalancerController, ngxc *nginx.Controller, nginxDone chan error) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
@@ -418,7 +390,7 @@ func validateCIDRorIP(cidr string) error {
 
 // getAndValidateSecret gets and validates a secret.
 func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string) (secret *api_v1.Secret, err error) {
-	ns, name, err := utils.ParseNamespaceName(secretNsName)
+	ns, name, err := k8s.ParseNamespaceName(secretNsName)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse the %v argument: %v", secretNsName, err)
 	}

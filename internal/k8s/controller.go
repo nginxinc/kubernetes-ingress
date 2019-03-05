@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package k8s
 
 import (
 	"context"
@@ -24,14 +24,12 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	"github.com/nginxinc/kubernetes-ingress/internal/queue"
-	"github.com/nginxinc/kubernetes-ingress/internal/utils"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
-	scheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/kubernetes/scheme"
 	core_v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/leaderelection"
@@ -57,12 +55,12 @@ type LoadBalancerController struct {
 	endpointController      cache.Controller
 	configMapController     cache.Controller
 	secretController        cache.Controller
-	ingressLister           utils.StoreToIngressLister
+	ingressLister           storeToIngressLister
 	svcLister               cache.Store
-	endpointLister          utils.StoreToEndpointLister
-	configMapLister         utils.StoreToConfigMapLister
-	secretLister            utils.StoreToSecretLister
-	syncQueue               *queue.TaskQueue
+	endpointLister          storeToEndpointLister
+	configMapLister         storeToConfigMapLister
+	secretLister            storeToSecretLister
+	syncQueue               *taskQueue
 	ctx                     context.Context
 	cancel                  context.CancelFunc
 	configurator            *nginx.Configurator
@@ -72,7 +70,7 @@ type LoadBalancerController struct {
 	defaultServerSecret     string
 	ingressClass            string
 	useIngressClassOnly     bool
-	statusUpdater           *StatusUpdater
+	statusUpdater           *statusUpdater
 	leaderElector           *leaderelection.LeaderElector
 	reportIngressStatus     bool
 	isLeaderElectionEnabled bool
@@ -99,11 +97,12 @@ type NewLoadBalancerControllerInput struct {
 	ReportIngressStatus     bool
 	IsLeaderElectionEnabled bool
 	WildcardTLSSecret       string
+	ConfigMaps              string
 }
 
 // NewLoadBalancerController creates a controller
 func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalancerController {
-	lbc := LoadBalancerController{
+	lbc := &LoadBalancerController{
 		client:                  input.KubeClient,
 		configurator:            input.NginxConfigurator,
 		defaultServerSecret:     input.DefaultServerSecret,
@@ -126,11 +125,11 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.recorder = eventBroadcaster.NewRecorder(scheme.Scheme,
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
 
-	lbc.syncQueue = queue.NewTaskQueue(lbc.sync)
+	lbc.syncQueue = newTaskQueue(lbc.sync)
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
-	lbc.statusUpdater = &StatusUpdater{
+	lbc.statusUpdater = &statusUpdater{
 		client:              input.KubeClient,
 		namespace:           input.ControllerNamespace,
 		externalServiceName: input.ExternalServiceName,
@@ -138,7 +137,27 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		keyFunc:             keyFunc,
 	}
 
-	return &lbc
+	// create handlers for resources we care about
+	lbc.addSecretHandler(createSecretHandlers(lbc))
+	lbc.addIngressHandler(createIngressHandlers(lbc))
+	lbc.addServiceHandler(createServiceHandlers(lbc))
+	lbc.addEndpointHandler(createEndpointHandlers(lbc))
+
+	if input.ConfigMaps != "" {
+		nginxConfigMapsNS, nginxConfigMapsName, err := ParseNamespaceName(input.ConfigMaps)
+		if err != nil {
+			glog.Warning(err)
+		} else {
+			lbc.watchNginxConfigMaps = true
+			lbc.addConfigMapHandler(createConfigMapHandlers(lbc, nginxConfigMapsName), nginxConfigMapsNS)
+		}
+	}
+
+	if input.ReportIngressStatus && input.IsLeaderElectionEnabled {
+		lbc.addLeaderHandler(createLeaderHandler(lbc))
+	}
+
+	return lbc
 }
 
 // UpdateManagedAndMergeableIngresses invokes the UpdateManagedAndMergeableIngresses method on the Status Updater
@@ -146,18 +165,13 @@ func (lbc *LoadBalancerController) UpdateManagedAndMergeableIngresses(ingresses 
 	return lbc.statusUpdater.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
 }
 
-// AddLeaderHandler adds the handler for leader election to the controller
-func (lbc *LoadBalancerController) AddLeaderHandler(leaderHandler leaderelection.LeaderCallbacks) {
+// addLeaderHandler adds the handler for leader election to the controller
+func (lbc *LoadBalancerController) addLeaderHandler(leaderHandler leaderelection.LeaderCallbacks) {
 	var err error
-	lbc.leaderElector, err = NewLeaderElector(lbc.client, leaderHandler, lbc.controllerNamespace)
+	lbc.leaderElector, err = newLeaderElector(lbc.client, leaderHandler, lbc.controllerNamespace)
 	if err != nil {
 		glog.V(3).Infof("Error starting LeaderElection: %v", err)
 	}
-}
-
-// GetIngressClassKey returns the ingress class key
-func (lbc *LoadBalancerController) GetIngressClassKey() string {
-	return ingressClassKey
 }
 
 // AddSyncQueue enqueues the provided item on the sync queue
@@ -165,13 +179,8 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 	lbc.syncQueue.Enqueue(item)
 }
 
-// WatchNginxConfigMaps sets the controller to watch config map changes
-func (lbc *LoadBalancerController) WatchNginxConfigMaps() {
-	lbc.watchNginxConfigMaps = true
-}
-
-// AddSecretHandler adds the handler for secrets to the controller
-func (lbc *LoadBalancerController) AddSecretHandler(handlers cache.ResourceEventHandlerFuncs) {
+// addSecretHandler adds the handler for secrets to the controller
+func (lbc *LoadBalancerController) addSecretHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.secretLister.Store, lbc.secretController = cache.NewInformer(
 		cache.NewListWatchFromClient(
 			lbc.client.Core().RESTClient(),
@@ -184,8 +193,8 @@ func (lbc *LoadBalancerController) AddSecretHandler(handlers cache.ResourceEvent
 	)
 }
 
-// AddServiceHandler adds the handler for services to the controller
-func (lbc *LoadBalancerController) AddServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
+// addServiceHandler adds the handler for services to the controller
+func (lbc *LoadBalancerController) addServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.svcLister, lbc.svcController = cache.NewInformer(
 		cache.NewListWatchFromClient(
 			lbc.client.Core().RESTClient(),
@@ -198,8 +207,8 @@ func (lbc *LoadBalancerController) AddServiceHandler(handlers cache.ResourceEven
 	)
 }
 
-// AddIngressHandler adds the handler for ingresses to the controller
-func (lbc *LoadBalancerController) AddIngressHandler(handlers cache.ResourceEventHandlerFuncs) {
+// addIngressHandler adds the handler for ingresses to the controller
+func (lbc *LoadBalancerController) addIngressHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.ingressLister.Store, lbc.ingressController = cache.NewInformer(
 		cache.NewListWatchFromClient(
 			lbc.client.Extensions().RESTClient(),
@@ -212,8 +221,8 @@ func (lbc *LoadBalancerController) AddIngressHandler(handlers cache.ResourceEven
 	)
 }
 
-// AddEndpointHandler adds the handler for endpoints to the controller
-func (lbc *LoadBalancerController) AddEndpointHandler(handlers cache.ResourceEventHandlerFuncs) {
+// addEndpointHandler adds the handler for endpoints to the controller
+func (lbc *LoadBalancerController) addEndpointHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.endpointLister.Store, lbc.endpointController = cache.NewInformer(
 		cache.NewListWatchFromClient(
 			lbc.client.Core().RESTClient(),
@@ -226,8 +235,8 @@ func (lbc *LoadBalancerController) AddEndpointHandler(handlers cache.ResourceEve
 	)
 }
 
-// AddConfigMapHandler adds the handler for config maps to the controller
-func (lbc *LoadBalancerController) AddConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
+// addConfigMapHandler adds the handler for config maps to the controller
+func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
 	lbc.configMapLister.Store, lbc.configMapController = cache.NewInformer(
 		cache.NewListWatchFromClient(
 			lbc.client.Core().RESTClient(),
@@ -238,11 +247,6 @@ func (lbc *LoadBalancerController) AddConfigMapHandler(handlers cache.ResourceEv
 		lbc.resync,
 		handlers,
 	)
-}
-
-// GetDefaultServerSecret returns the default server secret
-func (lbc *LoadBalancerController) GetDefaultServerSecret() string {
-	return lbc.defaultServerSecret
 }
 
 // Run starts the loadbalancer controller
@@ -270,7 +274,7 @@ func (lbc *LoadBalancerController) Stop() {
 	lbc.syncQueue.Shutdown()
 }
 
-func (lbc *LoadBalancerController) syncEndpoint(task queue.Task) {
+func (lbc *LoadBalancerController) syncEndpoint(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing endpoints %v", key)
 
@@ -290,7 +294,7 @@ func (lbc *LoadBalancerController) syncEndpoint(task queue.Task) {
 			if !lbc.IsNginxIngress(&ings[i]) {
 				continue
 			}
-			if utils.IsMinion(&ings[i]) {
+			if isMinion(&ings[i]) {
 				master, err := lbc.FindMasterForMinion(&ings[i])
 				if err != nil {
 					glog.Errorf("Ignoring Ingress %v(Minion): %v", ings[i].Name, err)
@@ -337,7 +341,7 @@ func (lbc *LoadBalancerController) syncEndpoint(task queue.Task) {
 	}
 }
 
-func (lbc *LoadBalancerController) syncConfig(task queue.Task) {
+func (lbc *LoadBalancerController) syncConfig(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing configmap %v", key)
 
@@ -404,7 +408,7 @@ func (lbc *LoadBalancerController) GetManagedIngresses() ([]extensions.Ingress, 
 		if !lbc.IsNginxIngress(&ing) {
 			continue
 		}
-		if utils.IsMinion(&ing) {
+		if isMinion(&ing) {
 			master, err := lbc.FindMasterForMinion(&ing)
 			if err != nil {
 				glog.Errorf("Ignoring Ingress %v(Minion): %v", ing, err)
@@ -443,29 +447,29 @@ func (lbc *LoadBalancerController) ingressesToIngressExes(ings []extensions.Ingr
 	return ingExes
 }
 
-func (lbc *LoadBalancerController) sync(task queue.Task) {
+func (lbc *LoadBalancerController) sync(task task) {
 	glog.V(3).Infof("Syncing %v", task.Key)
 
 	switch task.Kind {
-	case queue.Ingress:
+	case ingress:
 		lbc.syncIng(task)
-	case queue.IngressMinion:
+	case ingressMinion:
 		lbc.syncIngMinion(task)
-	case queue.ConfigMap:
+	case configMap:
 		lbc.syncConfig(task)
 		return
-	case queue.Endpoints:
+	case endpoints:
 		lbc.syncEndpoint(task)
 		return
-	case queue.Secret:
+	case secret:
 		lbc.syncSecret(task)
 		return
-	case queue.Service:
+	case service:
 		lbc.syncExternalService(task)
 	}
 }
 
-func (lbc *LoadBalancerController) syncIngMinion(task queue.Task) {
+func (lbc *LoadBalancerController) syncIngMinion(task task) {
 	key := task.Key
 	obj, ingExists, err := lbc.ingressLister.Store.GetByKey(key)
 	if err != nil {
@@ -498,7 +502,7 @@ func (lbc *LoadBalancerController) syncIngMinion(task queue.Task) {
 	lbc.syncQueue.Enqueue(master)
 }
 
-func (lbc *LoadBalancerController) syncIng(task queue.Task) {
+func (lbc *LoadBalancerController) syncIng(task task) {
 	key := task.Key
 	ing, ingExists, err := lbc.ingressLister.GetByKeySafe(key)
 	if err != nil {
@@ -516,7 +520,7 @@ func (lbc *LoadBalancerController) syncIng(task queue.Task) {
 	} else {
 		glog.V(2).Infof("Adding or Updating Ingress: %v\n", key)
 
-		if utils.IsMaster(ing) {
+		if isMaster(ing) {
 			mergeableIngExs, err := lbc.createMergableIngresses(ing)
 			if err != nil {
 				// we need to requeue because an error can occur even if the master is valid
@@ -586,7 +590,7 @@ func (lbc *LoadBalancerController) syncIng(task queue.Task) {
 
 // syncExternalService does not sync all services.
 // We only watch the Service specified by the external-service flag.
-func (lbc *LoadBalancerController) syncExternalService(task queue.Task) {
+func (lbc *LoadBalancerController) syncExternalService(task task) {
 	key := task.Key
 	obj, exists, err := lbc.svcLister.GetByKey(key)
 	if err != nil {
@@ -625,7 +629,7 @@ func (lbc *LoadBalancerController) reportStatusEnabled() bool {
 	return false
 }
 
-func (lbc *LoadBalancerController) syncSecret(task queue.Task) {
+func (lbc *LoadBalancerController) syncSecret(task task) {
 	key := task.Key
 	obj, secrExists, err := lbc.secretLister.Store.GetByKey(key)
 	if err != nil {
@@ -633,7 +637,7 @@ func (lbc *LoadBalancerController) syncSecret(task queue.Task) {
 		return
 	}
 
-	namespace, name, err := utils.ParseNamespaceName(key)
+	namespace, name, err := ParseNamespaceName(key)
 	if err != nil {
 		glog.Warningf("Secret key %v is invalid: %v", key, err)
 		return
@@ -762,7 +766,7 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 func (lbc *LoadBalancerController) emitEventForIngresses(eventType string, title string, message string, ings []extensions.Ingress) {
 	for _, ing := range ings {
 		lbc.recorder.Eventf(&ing, eventType, title, message)
-		if utils.IsMinion(&ing) {
+		if isMinion(&ing) {
 			master, err := lbc.FindMasterForMinion(&ing)
 			if err != nil {
 				glog.Errorf("Ignoring Ingress %v(Minion): %v", ing.Name, err)
@@ -776,7 +780,7 @@ func (lbc *LoadBalancerController) emitEventForIngresses(eventType string, title
 
 func (lbc *LoadBalancerController) createIngresses(ings []extensions.Ingress) (regular []nginx.IngressEx, mergeable []nginx.MergeableIngresses) {
 	for i := range ings {
-		if utils.IsMaster(&ings[i]) {
+		if isMaster(&ings[i]) {
 			mergeableIng, err := lbc.createMergableIngresses(&ings[i])
 			if err != nil {
 				glog.Errorf("Ignoring Ingress %v(Master): %v", ings[i].Name, err)
@@ -786,7 +790,7 @@ func (lbc *LoadBalancerController) createIngresses(ings []extensions.Ingress) (r
 			continue
 		}
 
-		if utils.IsMinion(&ings[i]) {
+		if isMinion(&ings[i]) {
 			master, err := lbc.FindMasterForMinion(&ings[i])
 			if err != nil {
 				glog.Errorf("Ignoring Ingress %v(Minion): %v", ings[i].Name, err)
@@ -828,7 +832,7 @@ items:
 			continue
 		}
 
-		if !utils.IsMinion(&ing) {
+		if !isMinion(&ing) {
 			if !lbc.configurator.HasIngress(&ing) {
 				continue
 			}
@@ -879,7 +883,7 @@ func (lbc *LoadBalancerController) EnqueueIngressForService(svc *api_v1.Service)
 		if !lbc.IsNginxIngress(&ing) {
 			continue
 		}
-		if utils.IsMinion(&ing) {
+		if isMinion(&ing) {
 			master, err := lbc.FindMasterForMinion(&ing)
 			if err != nil {
 				glog.Errorf("Ignoring Ingress %v(Minion): %v", ing.Name, err)
@@ -1205,7 +1209,7 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort *api_v1.ServicePort, sv
 
 	pod := &pods.Items[0]
 
-	portNum, err := utils.FindPort(pod, svcPort)
+	portNum, err := findPort(pod, svcPort)
 	if err != nil {
 		return 0, fmt.Errorf("Error finding named port %v in pod %s: %v", svcPort, pod.Name, err)
 	}
@@ -1286,7 +1290,7 @@ func (lbc *LoadBalancerController) getMinionsForMaster(master *nginx.IngressEx) 
 		if !lbc.IsNginxIngress(&ings.Items[i]) {
 			continue
 		}
-		if !utils.IsMinion(&ings.Items[i]) {
+		if !isMinion(&ings.Items[i]) {
 			continue
 		}
 		if ings.Items[i].Spec.Rules[0].Host != master.Ingress.Spec.Rules[0].Host {
@@ -1343,7 +1347,7 @@ func (lbc *LoadBalancerController) FindMasterForMinion(minion *extensions.Ingres
 		if !lbc.configurator.HasIngress(&ings.Items[i]) {
 			continue
 		}
-		if !utils.IsMaster(&ings.Items[i]) {
+		if !isMaster(&ings.Items[i]) {
 			continue
 		}
 		if ings.Items[i].Spec.Rules[0].Host != minion.Spec.Rules[0].Host {

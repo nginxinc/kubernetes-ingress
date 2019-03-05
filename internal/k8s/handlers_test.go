@@ -1,4 +1,4 @@
-package handlers
+package k8s
 
 import (
 	"testing"

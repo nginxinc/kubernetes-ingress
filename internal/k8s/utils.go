@@ -14,18 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package utils
+package k8s
 
 import (
 	"fmt"
 	"reflect"
 	"strings"
 
+	"k8s.io/api/core/v1"
+	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/tools/cache"
-
-	api_v1 "k8s.io/api/core/v1"
-	extensions "k8s.io/api/extensions/v1beta1"
 )
 
 // compareLinks returns true if the 2 self links are equal.
@@ -34,36 +33,36 @@ func compareLinks(l1, l2 string) bool {
 	return l1 == l2 && l1 != ""
 }
 
-// StoreToIngressLister makes a Store that lists Ingress.
+// storeToIngressLister makes a Store that lists Ingress.
 // TODO: Move this to cache/listers post 1.1.
-type StoreToIngressLister struct {
+type storeToIngressLister struct {
 	cache.Store
 }
 
 // GetByKeySafe calls Store.GetByKeySafe and returns a copy of the ingress so it is
 // safe to modify.
-func (s *StoreToIngressLister) GetByKeySafe(key string) (ing *extensions.Ingress, exists bool, err error) {
+func (s *storeToIngressLister) GetByKeySafe(key string) (ing *v1beta1.Ingress, exists bool, err error) {
 	item, exists, err := s.Store.GetByKey(key)
 	if !exists || err != nil {
 		return nil, exists, err
 	}
-	ing = item.(*extensions.Ingress).DeepCopy()
+	ing = item.(*v1beta1.Ingress).DeepCopy()
 	return
 }
 
 // List lists all Ingress' in the store.
-func (s *StoreToIngressLister) List() (ing extensions.IngressList, err error) {
+func (s *storeToIngressLister) List() (ing v1beta1.IngressList, err error) {
 	for _, m := range s.Store.List() {
-		ing.Items = append(ing.Items, *(m.(*extensions.Ingress)).DeepCopy())
+		ing.Items = append(ing.Items, *(m.(*v1beta1.Ingress)).DeepCopy())
 	}
 	return ing, nil
 }
 
 // GetServiceIngress gets all the Ingress' that have rules pointing to a service.
 // Note that this ignores services without the right nodePorts.
-func (s *StoreToIngressLister) GetServiceIngress(svc *api_v1.Service) (ings []extensions.Ingress, err error) {
+func (s *storeToIngressLister) GetServiceIngress(svc *v1.Service) (ings []v1beta1.Ingress, err error) {
 	for _, m := range s.Store.List() {
-		ing := *m.(*extensions.Ingress).DeepCopy()
+		ing := *m.(*v1beta1.Ingress).DeepCopy()
 		if ing.Namespace != svc.Namespace {
 			continue
 		}
@@ -89,28 +88,28 @@ func (s *StoreToIngressLister) GetServiceIngress(svc *api_v1.Service) (ings []ex
 	return
 }
 
-// StoreToConfigMapLister makes a Store that lists ConfigMaps
-type StoreToConfigMapLister struct {
+// storeToConfigMapLister makes a Store that lists ConfigMaps
+type storeToConfigMapLister struct {
 	cache.Store
 }
 
 // List lists all Ingress' in the store.
-func (s *StoreToConfigMapLister) List() (cfgm api_v1.ConfigMapList, err error) {
+func (s *storeToConfigMapLister) List() (cfgm v1.ConfigMapList, err error) {
 	for _, m := range s.Store.List() {
-		cfgm.Items = append(cfgm.Items, *(m.(*api_v1.ConfigMap)))
+		cfgm.Items = append(cfgm.Items, *(m.(*v1.ConfigMap)))
 	}
 	return cfgm, nil
 }
 
-// StoreToEndpointLister makes a Store that lists Endponts
-type StoreToEndpointLister struct {
+// storeToEndpointLister makes a Store that lists Endponts
+type storeToEndpointLister struct {
 	cache.Store
 }
 
 // GetServiceEndpoints returns the endpoints of a service, matched on service name.
-func (s *StoreToEndpointLister) GetServiceEndpoints(svc *api_v1.Service) (ep api_v1.Endpoints, err error) {
+func (s *storeToEndpointLister) GetServiceEndpoints(svc *v1.Service) (ep v1.Endpoints, err error) {
 	for _, m := range s.Store.List() {
-		ep = *m.(*api_v1.Endpoints)
+		ep = *m.(*v1.Endpoints)
 		if svc.Name == ep.Name && svc.Namespace == ep.Namespace {
 			return ep, nil
 		}
@@ -119,11 +118,11 @@ func (s *StoreToEndpointLister) GetServiceEndpoints(svc *api_v1.Service) (ep api
 	return
 }
 
-// FindPort locates the container port for the given pod and portName.  If the
+// findPort locates the container port for the given pod and portName.  If the
 // targetPort is a number, use that.  If the targetPort is a string, look that
 // string up in all named ports in all containers in the target pod.  If no
 // match is found, fail.
-func FindPort(pod *api_v1.Pod, svcPort *api_v1.ServicePort) (int32, error) {
+func findPort(pod *v1.Pod, svcPort *v1.ServicePort) (int32, error) {
 	portName := svcPort.TargetPort
 	switch portName.Type {
 	case intstr.String:
@@ -142,29 +141,29 @@ func FindPort(pod *api_v1.Pod, svcPort *api_v1.ServicePort) (int32, error) {
 	return 0, fmt.Errorf("no suitable port for manifest: %s", pod.UID)
 }
 
-// StoreToSecretLister makes a Store that lists Secrets
-type StoreToSecretLister struct {
+// storeToSecretLister makes a Store that lists Secrets
+type storeToSecretLister struct {
 	cache.Store
 }
 
-// IsMinion determines is an ingress is a minion or not
-func IsMinion(ing *extensions.Ingress) bool {
+// isMinion determines is an ingress is a minion or not
+func isMinion(ing *v1beta1.Ingress) bool {
 	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "minion" {
 		return true
 	}
 	return false
 }
 
-// IsMaster determines is an ingress is a master or not
-func IsMaster(ing *extensions.Ingress) bool {
+// isMaster determines is an ingress is a master or not
+func isMaster(ing *v1beta1.Ingress) bool {
 	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "master" {
 		return true
 	}
 	return false
 }
 
-// HasChanges determines if current ingress has changes compared to old ingress
-func HasChanges(old *extensions.Ingress, current *extensions.Ingress) bool {
+// hasChanges determines if current ingress has changes compared to old ingress
+func hasChanges(old *v1beta1.Ingress, current *v1beta1.Ingress) bool {
 	old.Status.LoadBalancer.Ingress = current.Status.LoadBalancer.Ingress
 	old.ResourceVersion = current.ResourceVersion
 	return !reflect.DeepEqual(old, current)

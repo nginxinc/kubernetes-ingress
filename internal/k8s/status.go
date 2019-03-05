@@ -1,4 +1,4 @@
-package controller
+package k8s
 
 import (
 	"fmt"
@@ -7,7 +7,6 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	"github.com/nginxinc/kubernetes-ingress/internal/utils"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,10 +14,10 @@ import (
 	extensionsv1beta1 "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
 )
 
-// StatusUpdater reports Ingress status information via the kubernetes
+// statusUpdater reports Ingress status information via the kubernetes
 // API, primarily the IP or host of the LoadBalancer Service exposing the
 // Ingress Controller, or an external IP specified in the ConfigMap.
-type StatusUpdater struct {
+type statusUpdater struct {
 	client                   kubernetes.Interface
 	namespace                string
 	externalServiceName      string
@@ -26,11 +25,11 @@ type StatusUpdater struct {
 	externalServiceAddresses []string
 	status                   []api_v1.LoadBalancerIngress
 	keyFunc                  func(obj interface{}) (string, error)
-	ingLister                *utils.StoreToIngressLister
+	ingLister                *storeToIngressLister
 }
 
 // UpdateManagedAndMergeableIngresses handles the full return format of LoadBalancerController.getManagedIngresses
-func (su *StatusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []v1beta1.Ingress, mergableIngExes map[string]*nginx.MergeableIngresses) error {
+func (su *statusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []v1beta1.Ingress, mergableIngExes map[string]*nginx.MergeableIngresses) error {
 	ings := []v1beta1.Ingress{}
 	ings = append(ings, managedIngresses...)
 	for _, mergableIngEx := range mergableIngExes {
@@ -42,7 +41,7 @@ func (su *StatusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []v
 }
 
 // UpdateMergableIngresses is a convience passthru to update Ingresses with our nginx.MergableIngresses type
-func (su *StatusUpdater) UpdateMergableIngresses(mergableIngresses *nginx.MergeableIngresses) error {
+func (su *statusUpdater) UpdateMergableIngresses(mergableIngresses *nginx.MergeableIngresses) error {
 	ings := []v1beta1.Ingress{}
 	ingExes := []*nginx.IngressEx{}
 
@@ -56,17 +55,17 @@ func (su *StatusUpdater) UpdateMergableIngresses(mergableIngresses *nginx.Mergea
 }
 
 // ClearIngressStatus clears the Ingress status.
-func (su *StatusUpdater) ClearIngressStatus(ing v1beta1.Ingress) error {
+func (su *statusUpdater) ClearIngressStatus(ing v1beta1.Ingress) error {
 	return su.updateIngressWithStatus(ing, []api_v1.LoadBalancerIngress{})
 }
 
 // UpdateIngressStatus updates the status on the selected Ingress.
-func (su *StatusUpdater) UpdateIngressStatus(ing v1beta1.Ingress) error {
+func (su *statusUpdater) UpdateIngressStatus(ing v1beta1.Ingress) error {
 	return su.updateIngressWithStatus(ing, su.status)
 }
 
 // updateIngressWithStatus sets the provided status on the selected Ingress.
-func (su *StatusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []api_v1.LoadBalancerIngress) error {
+func (su *statusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []api_v1.LoadBalancerIngress) error {
 	if reflect.DeepEqual(ing.Status.LoadBalancer.Ingress, status) {
 		return nil
 	}
@@ -105,7 +104,7 @@ func (su *StatusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []a
 
 // BulkUpdateIngressStatus sets the status field on the selected Ingresses, specifically
 // the External IP field.
-func (su *StatusUpdater) BulkUpdateIngressStatus(ings []v1beta1.Ingress) error {
+func (su *statusUpdater) BulkUpdateIngressStatus(ings []v1beta1.Ingress) error {
 	if len(ings) < 1 {
 		glog.V(3).Info("no ingresses to update")
 		return nil
@@ -126,7 +125,7 @@ func (su *StatusUpdater) BulkUpdateIngressStatus(ings []v1beta1.Ingress) error {
 // retryStatusUpdate fetches a fresh copy of the Ingress from the k8s API, checks if it still needs to be
 // updated, and then attempts to update. We often need to fetch fresh copies due to the
 // k8s API using ResourceVersion to stop updates on stale items.
-func (su *StatusUpdater) retryStatusUpdate(clientIngress extensionsv1beta1.IngressInterface, ingCopy *v1beta1.Ingress) error {
+func (su *statusUpdater) retryStatusUpdate(clientIngress extensionsv1beta1.IngressInterface, ingCopy *v1beta1.Ingress) error {
 	apiIng, err := clientIngress.Get(ingCopy.Name, metav1.GetOptions{})
 	if err != nil {
 		glog.V(3).Infof("error getting ingress resource: %v", err)
@@ -146,7 +145,7 @@ func (su *StatusUpdater) retryStatusUpdate(clientIngress extensionsv1beta1.Ingre
 
 // saveStatus saves the string array of IPs or addresses that we will set as status
 // on all the Ingresses that we manage.
-func (su *StatusUpdater) saveStatus(ips []string) {
+func (su *statusUpdater) saveStatus(ips []string) {
 	statusIngs := []api_v1.LoadBalancerIngress{}
 	for _, ip := range ips {
 		if net.ParseIP(ip) == nil {
@@ -182,8 +181,8 @@ func getExternalServiceAddress(svc *api_v1.Service) []string {
 
 // SaveStatusFromExternalStatus saves the status from a string.
 // For use with the external-status-address ConfigMap setting.
-// This method does not update ingress status - StatusUpdater.UpdateIngressStatus must be called separately.
-func (su *StatusUpdater) SaveStatusFromExternalStatus(externalStatusAddress string) {
+// This method does not update ingress status - statusUpdater.UpdateIngressStatus must be called separately.
+func (su *statusUpdater) SaveStatusFromExternalStatus(externalStatusAddress string) {
 	su.externalStatusAddress = externalStatusAddress
 	if externalStatusAddress == "" {
 		// if external-status-address was removed from configMap, fall back on
@@ -199,13 +198,13 @@ func (su *StatusUpdater) SaveStatusFromExternalStatus(externalStatusAddress stri
 }
 
 // ClearStatusFromExternalService clears the saved status from the External Service
-func (su *StatusUpdater) ClearStatusFromExternalService() {
+func (su *statusUpdater) ClearStatusFromExternalService() {
 	su.SaveStatusFromExternalService(nil)
 }
 
 // SaveStatusFromExternalService saves the external IP or address from the service.
 // This method does not update ingress status - UpdateIngressStatus must be called separately.
-func (su *StatusUpdater) SaveStatusFromExternalService(svc *api_v1.Service) {
+func (su *statusUpdater) SaveStatusFromExternalService(svc *api_v1.Service) {
 	ips := getExternalServiceAddress(svc)
 	su.externalServiceAddresses = ips
 	if su.externalStatusAddress != "" {

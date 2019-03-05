@@ -1,4 +1,4 @@
-package controller
+package k8s
 
 import (
 	"fmt"
