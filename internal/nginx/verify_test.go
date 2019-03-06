@@ -1,9 +1,10 @@
-package verify
+package nginx
 
 import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -27,7 +28,7 @@ func getTestHTTPClient() *http.Client {
 }
 
 func TestVerifyClient(t *testing.T) {
-	c := Client{
+	c := verifyClient{
 		client:     getTestHTTPClient(),
 		maxRetries: 1,
 	}
@@ -47,5 +48,19 @@ func TestVerifyClient(t *testing.T) {
 	err = c.WaitForCorrectVersion(42)
 	if err != nil {
 		t.Errorf("error waiting for config version: %v", err)
+	}
+}
+
+func TestConfigWriter(t *testing.T) {
+	cw, err := newVerifyConfigGenerator()
+	if err != nil {
+		t.Fatalf("error instantiating ConfigWriter: %v", err)
+	}
+	config, err := cw.GenerateVersionConfig(1)
+	if err != nil {
+		t.Errorf("error generating version config: %v", err)
+	}
+	if !strings.Contains(string(config), "configVersion") {
+		t.Errorf("configVersion endpoint not set. config contents: %v", string(config))
 	}
 }

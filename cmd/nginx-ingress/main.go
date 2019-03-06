@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx/plus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -176,7 +176,7 @@ func main() {
 		nginxBinaryPath = "/usr/sbin/nginx-debug"
 	}
 
-	templateExecutor, err := nginx.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath, *healthStatus, *nginxStatus, allowedCIDRs, *nginxStatusPort, *enablePrometheusMetrics)
+	templateExecutor, err := configs.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath, *healthStatus, *nginxStatus, allowedCIDRs, *nginxStatusPort, *enablePrometheusMetrics)
 	if err != nil {
 		glog.Fatalf("Error creating TemplateExecutor: %v", err)
 	}
@@ -188,8 +188,8 @@ func main() {
 			glog.Fatalf("Error trying to get the default server TLS secret %v: %v", *defaultServerSecret, err)
 		}
 
-		bytes := nginx.GenerateCertAndKeyFileContent(secret)
-		ngxc.AddOrUpdateSecretFile(nginx.DefaultServerSecretName, bytes, nginx.TLSSecretFileMode)
+		bytes := configs.GenerateCertAndKeyFileContent(secret)
+		ngxc.AddOrUpdateSecretFile(configs.DefaultServerSecretName, bytes, nginx.TLSSecretFileMode)
 	} else {
 		_, err = os.Stat("/etc/nginx/secrets/default")
 		if os.IsNotExist(err) {
@@ -203,11 +203,11 @@ func main() {
 			glog.Fatalf("Error trying to get the wildcard TLS secret %v: %v", *wildcardTLSSecret, err)
 		}
 
-		bytes := nginx.GenerateCertAndKeyFileContent(secret)
-		ngxc.AddOrUpdateSecretFile(nginx.WildcardSecretName, bytes, nginx.TLSSecretFileMode)
+		bytes := configs.GenerateCertAndKeyFileContent(secret)
+		ngxc.AddOrUpdateSecretFile(configs.WildcardSecretName, bytes, nginx.TLSSecretFileMode)
 	}
 
-	cfg := nginx.NewDefaultConfig()
+	cfg := configs.NewDefaultConfig()
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
 		if err != nil {
@@ -217,7 +217,7 @@ func main() {
 		if err != nil {
 			glog.Fatalf("Error when getting %v: %v", *nginxConfigMaps, err)
 		}
-		cfg = nginx.ParseConfigMap(cfm, *nginxPlus)
+		cfg = configs.ParseConfigMap(cfm, *nginxPlus)
 		if cfg.MainServerSSLDHParamFileContent != nil {
 			fileName, err := ngxc.AddOrUpdateDHParam(*cfg.MainServerSSLDHParamFileContent)
 			if err != nil {
@@ -240,7 +240,7 @@ func main() {
 		}
 	}
 
-	ngxConfig := nginx.GenerateNginxMainConfig(cfg)
+	ngxConfig := configs.GenerateNginxMainConfig(cfg)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
 	if err != nil {
 		glog.Fatalf("Error generating NGINX main config: %v", err)
@@ -251,16 +251,16 @@ func main() {
 	nginxDone := make(chan error, 1)
 	ngxc.Start(nginxDone)
 
-	var nginxAPI *plus.NginxAPIController
+	var nginxAPI *nginx.NginxAPIController
 	if *nginxPlus {
 		httpClient := getSocketClient("/var/run/nginx-plus-api.sock")
-		nginxAPI, err = plus.NewNginxAPIController(&httpClient, "http://nginx-plus-api/api", local)
+		nginxAPI, err = nginx.NewNginxAPIController(&httpClient, "http://nginx-plus-api/api", local)
 		if err != nil {
 			glog.Fatalf("Failed to create NginxAPIController: %v", err)
 		}
 	}
 	isWildcardEnabled := *wildcardTLSSecret != ""
-	cnf := nginx.NewConfigurator(ngxc, cfg, nginxAPI, templateExecutor, isWildcardEnabled)
+	cnf := configs.NewConfigurator(ngxc, cfg, nginxAPI, templateExecutor, isWildcardEnabled)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
@@ -398,7 +398,7 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	if err != nil {
 		return nil, fmt.Errorf("could not get %v: %v", secretNsName, err)
 	}
-	err = nginx.ValidateTLSSecret(secret)
+	err = configs.ValidateTLSSecret(secret)
 	if err != nil {
 		return nil, fmt.Errorf("%v is invalid: %v", secretNsName, err)
 	}

@@ -27,7 +27,7 @@ data:
 ```
 **Notes:**
 * The templates are truncated for the clarity of the example.
-* The templates for NGINX (the main `nginx.tmpl` and the Ingress `nginx.ingress.tmpl`) and NGINX Plus (the main `nginx-plus.tmpl` and the Ingress `nginx-plus.ingress.tmpl`) are located at [internal/nginx/templates](../../internal/nginx/templates/).
+* The templates for NGINX (the main `nginx.tmpl` and the Ingress `nginx.ingress.tmpl`) and NGINX Plus (the main `nginx-plus.tmpl` and the Ingress `nginx-plus.ingress.tmpl`) are located at [internal/configs/templates](../../internal/configs/templates/).
 
 ## Troubleshooting
 * If a custom template contained within the ConfigMap is invalid on startup, the Ingress controller will fail to start, the error will be reported in the Ingress controller logs.

@@ -8,9 +8,9 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx/plus"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -545,11 +545,11 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 		Status: extensions.IngressStatus{},
 	}
 
-	ingExMap := make(map[string]*nginx.IngressEx)
+	ingExMap := make(map[string]*configs.IngressEx)
 	cafeMasterIngEx, _ := lbc.createIngress(&cafeMaster)
 	ingExMap["default-cafe-master"] = cafeMasterIngEx
 
-	cnf := nginx.NewConfigurator(&nginx.Controller{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{}, false)
+	cnf := configs.NewConfigurator(&nginx.Controller{}, &configs.Config{}, &nginx.NginxAPIController{}, &configs.TemplateExecutor{}, false)
 
 	// edit private field ingresses to use in testing
 	pointerVal := reflect.ValueOf(cnf)
@@ -557,7 +557,7 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 
 	field := val.FieldByName("ingresses")
 	ptrToField := unsafe.Pointer(field.UnsafeAddr())
-	realPtrToField := (*map[string]*nginx.IngressEx)(ptrToField)
+	realPtrToField := (*map[string]*configs.IngressEx)(ptrToField)
 	*realPtrToField = ingExMap
 
 	fakeClient := fake.NewSimpleClientset()
@@ -782,7 +782,7 @@ func TestFindProbeForPods(t *testing.T) {
 
 func TestGetServicePortForIngressPort(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	cnf := nginx.NewConfigurator(&nginx.Controller{}, &nginx.Config{}, &plus.NginxAPIController{}, &nginx.TemplateExecutor{}, false)
+	cnf := configs.NewConfigurator(&nginx.Controller{}, &configs.Config{}, &nginx.NginxAPIController{}, &configs.TemplateExecutor{}, false)
 	lbc := LoadBalancerController{
 		client:       fakeClient,
 		ingressClass: "nginx",
@@ -894,7 +894,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 					Name:      "my-ingress",
 					Namespace: "namespace-1",
 					Annotations: map[string]string{
-						nginx.JWTKeyAnnotation: "my-jwk-secret",
+						configs.JWTKeyAnnotation: "my-jwk-secret",
 					},
 				},
 			},
@@ -913,7 +913,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 					Name:      "my-ingress",
 					Namespace: "namespace-2",
 					Annotations: map[string]string{
-						nginx.JWTKeyAnnotation: "my-jwk-secret",
+						configs.JWTKeyAnnotation: "my-jwk-secret",
 					},
 				},
 			},
@@ -926,17 +926,17 @@ func TestFindIngressesForSecret(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			fakeClient := fake.NewSimpleClientset()
 
-			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
+			templateExecutor, err := configs.NewTemplateExecutor("../configs/templates/nginx-plus.tmpl", "../configs/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
 			if err != nil {
 				t.Fatalf("templateExecuter could not start: %v", err)
 			}
 			ngxc := nginx.NewNginxController("/etc/nginx", "nginx", true)
-			apiCtrl, err := plus.NewNginxAPIController(&http.Client{}, "", true)
+			apiCtrl, err := nginx.NewNginxAPIController(&http.Client{}, "", true)
 			if err != nil {
 				t.Fatalf("NGINX API Controller could not start: %v", err)
 			}
 
-			cnf := nginx.NewConfigurator(ngxc, &nginx.Config{}, apiCtrl, templateExecutor, false)
+			cnf := configs.NewConfigurator(ngxc, &configs.Config{}, apiCtrl, templateExecutor, false)
 			lbc := LoadBalancerController{
 				client:       fakeClient,
 				ingressClass: "nginx",
@@ -952,7 +952,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 				cache.NewListWatchFromClient(lbc.client.Core().RESTClient(), "secrets", "default", fields.Everything()),
 				&v1.Secret{}, time.Duration(1), nil)
 
-			ngxIngress := &nginx.IngressEx{
+			ngxIngress := &configs.IngressEx{
 				Ingress: &test.ingress,
 				TLSSecrets: map[string]*v1.Secret{
 					test.secret.Name: &test.secret,
@@ -1010,7 +1010,7 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 					Annotations: map[string]string{
 						"kubernetes.io/ingress.class":      "nginx",
 						"nginx.org/mergeable-ingress-type": "minion",
-						nginx.JWTKeyAnnotation:             "my-jwk-secret",
+						configs.JWTKeyAnnotation:           "my-jwk-secret",
 					},
 				},
 				Spec: extensions.IngressSpec{
@@ -1051,7 +1051,7 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 					Annotations: map[string]string{
 						"kubernetes.io/ingress.class":      "nginx",
 						"nginx.org/mergeable-ingress-type": "minion",
-						nginx.JWTKeyAnnotation:             "my-jwk-secret",
+						configs.JWTKeyAnnotation:           "my-jwk-secret",
 					},
 				},
 				Spec: extensions.IngressSpec{
@@ -1107,17 +1107,17 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			fakeClient := fake.NewSimpleClientset()
 
-			templateExecutor, err := nginx.NewTemplateExecutor("../nginx/templates/nginx-plus.tmpl", "../nginx/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
+			templateExecutor, err := configs.NewTemplateExecutor("../configs/templates/nginx-plus.tmpl", "../configs/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
 			if err != nil {
 				t.Fatalf("templateExecuter could not start: %v", err)
 			}
 			ngxc := nginx.NewNginxController("/etc/nginx", "nginx", true)
-			apiCtrl, err := plus.NewNginxAPIController(&http.Client{}, "", true)
+			apiCtrl, err := nginx.NewNginxAPIController(&http.Client{}, "", true)
 			if err != nil {
 				t.Fatalf("NGINX API Controller could not start: %v", err)
 			}
 
-			cnf := nginx.NewConfigurator(ngxc, &nginx.Config{}, apiCtrl, templateExecutor, false)
+			cnf := configs.NewConfigurator(ngxc, &configs.Config{}, apiCtrl, templateExecutor, false)
 			lbc := LoadBalancerController{
 				client:       fakeClient,
 				ingressClass: "nginx",
@@ -1133,14 +1133,14 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 				cache.NewListWatchFromClient(lbc.client.Core().RESTClient(), "secrets", "default", fields.Everything()),
 				&v1.Secret{}, time.Duration(1), nil)
 
-			mergeable := &nginx.MergeableIngresses{
-				Master: &nginx.IngressEx{
+			mergeable := &configs.MergeableIngresses{
+				Master: &configs.IngressEx{
 					Ingress: &master,
 				},
-				Minions: []*nginx.IngressEx{
+				Minions: []*configs.IngressEx{
 					{
 						Ingress: &test.ingress,
-						JWTKey: nginx.JWTKey{
+						JWTKey: configs.JWTKey{
 							Name: test.secret.Name,
 						},
 					},

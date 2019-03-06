@@ -23,7 +23,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -63,7 +63,7 @@ type LoadBalancerController struct {
 	syncQueue               *taskQueue
 	ctx                     context.Context
 	cancel                  context.CancelFunc
-	configurator            *nginx.Configurator
+	configurator            *configs.Configurator
 	watchNginxConfigMaps    bool
 	isNginxPlus             bool
 	recorder                record.EventRecorder
@@ -87,7 +87,7 @@ type NewLoadBalancerControllerInput struct {
 	KubeClient              kubernetes.Interface
 	ResyncPeriod            time.Duration
 	Namespace               string
-	NginxConfigurator       *nginx.Configurator
+	NginxConfigurator       *configs.Configurator
 	DefaultServerSecret     string
 	IsNginxPlus             bool
 	IngressClass            string
@@ -161,7 +161,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 }
 
 // UpdateManagedAndMergeableIngresses invokes the UpdateManagedAndMergeableIngresses method on the Status Updater
-func (lbc *LoadBalancerController) UpdateManagedAndMergeableIngresses(ingresses []v1beta1.Ingress, mergeableIngresses map[string]*nginx.MergeableIngresses) error {
+func (lbc *LoadBalancerController) UpdateManagedAndMergeableIngresses(ingresses []v1beta1.Ingress, mergeableIngresses map[string]*configs.MergeableIngresses) error {
 	return lbc.statusUpdater.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
 }
 
@@ -287,8 +287,8 @@ func (lbc *LoadBalancerController) syncEndpoint(task task) {
 	if endpExists {
 		ings := lbc.getIngressForEndpoints(obj)
 
-		var ingExes []*nginx.IngressEx
-		var mergableIngressesSlice []*nginx.MergeableIngresses
+		var ingExes []*configs.IngressEx
+		var mergableIngressesSlice []*configs.MergeableIngresses
 
 		for i := range ings {
 			if !lbc.IsNginxIngress(&ings[i]) {
@@ -350,11 +350,11 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		lbc.syncQueue.Requeue(task, err)
 		return
 	}
-	cfg := nginx.NewDefaultConfig()
+	cfg := configs.NewDefaultConfig()
 
 	if configExists {
 		cfgm := obj.(*api_v1.ConfigMap)
-		cfg = nginx.ParseConfigMap(cfgm, lbc.isNginxPlus)
+		cfg = configs.ParseConfigMap(cfgm, lbc.isNginxPlus)
 
 		lbc.statusUpdater.SaveStatusFromExternalStatus(cfgm.Data["external-status-address"])
 	}
@@ -399,8 +399,8 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 }
 
 // GetManagedIngresses gets Ingress resources that the IC is currently responsible for
-func (lbc *LoadBalancerController) GetManagedIngresses() ([]extensions.Ingress, map[string]*nginx.MergeableIngresses) {
-	mergeableIngresses := make(map[string]*nginx.MergeableIngresses)
+func (lbc *LoadBalancerController) GetManagedIngresses() ([]extensions.Ingress, map[string]*configs.MergeableIngresses) {
+	mergeableIngresses := make(map[string]*configs.MergeableIngresses)
 	var managedIngresses []extensions.Ingress
 	ings, _ := lbc.ingressLister.List()
 	for i := range ings.Items {
@@ -435,8 +435,8 @@ func (lbc *LoadBalancerController) GetManagedIngresses() ([]extensions.Ingress, 
 	return managedIngresses, mergeableIngresses
 }
 
-func (lbc *LoadBalancerController) ingressesToIngressExes(ings []extensions.Ingress) []*nginx.IngressEx {
-	var ingExes []*nginx.IngressEx
+func (lbc *LoadBalancerController) ingressesToIngressExes(ings []extensions.Ingress) []*configs.IngressEx {
+	var ingExes []*configs.IngressEx
 	for i := range ings {
 		ingEx, err := lbc.createIngress(&ings[i])
 		if err != nil {
@@ -739,7 +739,7 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
 	var specialSecretsToUpdate []string
 	secretNsName := secret.Namespace + "/" + secret.Name
-	err := nginx.ValidateTLSSecret(secret)
+	err := configs.ValidateTLSSecret(secret)
 	if err != nil {
 		glog.Errorf("Couldn't validate the special Secret %v: %v", secretNsName, err)
 		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
@@ -747,10 +747,10 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 	}
 
 	if secretNsName == lbc.defaultServerSecret {
-		specialSecretsToUpdate = append(specialSecretsToUpdate, nginx.DefaultServerSecretName)
+		specialSecretsToUpdate = append(specialSecretsToUpdate, configs.DefaultServerSecretName)
 	}
 	if secretNsName == lbc.wildcardTLSSecret {
-		specialSecretsToUpdate = append(specialSecretsToUpdate, nginx.WildcardSecretName)
+		specialSecretsToUpdate = append(specialSecretsToUpdate, configs.WildcardSecretName)
 	}
 
 	err = lbc.configurator.AddOrUpdateSpecialSecrets(secret, specialSecretsToUpdate)
@@ -778,7 +778,7 @@ func (lbc *LoadBalancerController) emitEventForIngresses(eventType string, title
 	}
 }
 
-func (lbc *LoadBalancerController) createIngresses(ings []extensions.Ingress) (regular []nginx.IngressEx, mergeable []nginx.MergeableIngresses) {
+func (lbc *LoadBalancerController) createIngresses(ings []extensions.Ingress) (regular []configs.IngressEx, mergeable []configs.MergeableIngresses) {
 	for i := range ings {
 		if isMaster(&ings[i]) {
 			mergeableIng, err := lbc.createMergableIngresses(&ings[i])
@@ -843,7 +843,7 @@ items:
 				}
 			}
 			if lbc.isNginxPlus {
-				if jwtKey, exists := ing.Annotations[nginx.JWTKeyAnnotation]; exists {
+				if jwtKey, exists := ing.Annotations[configs.JWTKeyAnnotation]; exists {
 					if jwtKey == secretName {
 						ings = append(ings, ing)
 					}
@@ -865,7 +865,7 @@ items:
 				continue
 			}
 
-			if jwtKey, exists := ing.Annotations[nginx.JWTKeyAnnotation]; exists {
+			if jwtKey, exists := ing.Annotations[configs.JWTKeyAnnotation]; exists {
 				if jwtKey == secretName {
 					ings = append(ings, ing)
 				}
@@ -933,15 +933,15 @@ func (lbc *LoadBalancerController) getAndValidateSecret(secretKey string) (*api_
 	}
 	secret := secretObject.(*api_v1.Secret)
 
-	err = nginx.ValidateTLSSecret(secret)
+	err = configs.ValidateTLSSecret(secret)
 	if err != nil {
 		return nil, fmt.Errorf("error validating secret %v", secretKey)
 	}
 	return secret, nil
 }
 
-func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*nginx.IngressEx, error) {
-	ingEx := &nginx.IngressEx{
+func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*configs.IngressEx, error) {
+	ingEx := &configs.IngressEx{
 		Ingress: ing,
 	}
 
@@ -958,7 +958,7 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*ngin
 	}
 
 	if lbc.isNginxPlus {
-		if jwtKey, exists := ingEx.Ingress.Annotations[nginx.JWTKeyAnnotation]; exists {
+		if jwtKey, exists := ingEx.Ingress.Annotations[configs.JWTKeyAnnotation]; exists {
 			secretName := jwtKey
 
 			secret, err := lbc.client.Core().Secrets(ing.Namespace).Get(secretName, meta_v1.GetOptions{})
@@ -966,14 +966,14 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*ngin
 				glog.Warningf("Error retrieving secret %v for Ingress %v: %v", secretName, ing.Name, err)
 				secret = nil
 			} else {
-				err = nginx.ValidateJWKSecret(secret)
+				err = configs.ValidateJWKSecret(secret)
 				if err != nil {
 					glog.Warningf("Error validating secret %v for Ingress %v: %v", secretName, ing.Name, err)
 					secret = nil
 				}
 			}
 
-			ingEx.JWTKey = nginx.JWTKey{
+			ingEx.JWTKey = configs.JWTKey{
 				Name:   jwtKey,
 				Secret: secret,
 			}
@@ -1245,7 +1245,7 @@ func (lbc *LoadBalancerController) IsNginxIngress(ing *extensions.Ingress) bool 
 
 // isHealthCheckEnabled checks if health checks are enabled so we can only query pods if enabled.
 func (lbc *LoadBalancerController) isHealthCheckEnabled(ing *extensions.Ingress) bool {
-	if healthCheckEnabled, exists, err := nginx.GetMapKeyAsBool(ing.Annotations, "nginx.com/health-checks", ing); exists {
+	if healthCheckEnabled, exists, err := configs.GetMapKeyAsBool(ing.Annotations, "nginx.com/health-checks", ing); exists {
 		if err != nil {
 			glog.Error(err)
 		}
@@ -1257,12 +1257,12 @@ func (lbc *LoadBalancerController) isHealthCheckEnabled(ing *extensions.Ingress)
 // ValidateSecret validates that the secret follows the TLS Secret format.
 // For NGINX Plus, it also checks if the secret follows the JWK Secret format.
 func (lbc *LoadBalancerController) ValidateSecret(secret *api_v1.Secret) error {
-	err1 := nginx.ValidateTLSSecret(secret)
+	err1 := configs.ValidateTLSSecret(secret)
 	if !lbc.isNginxPlus {
 		return err1
 	}
 
-	err2 := nginx.ValidateJWKSecret(secret)
+	err2 := configs.ValidateJWKSecret(secret)
 
 	if err1 == nil || err2 == nil {
 		return nil
@@ -1272,10 +1272,10 @@ func (lbc *LoadBalancerController) ValidateSecret(secret *api_v1.Secret) error {
 }
 
 // getMinionsForHost returns a list of all minion ingress resources for a given master
-func (lbc *LoadBalancerController) getMinionsForMaster(master *nginx.IngressEx) ([]*nginx.IngressEx, error) {
+func (lbc *LoadBalancerController) getMinionsForMaster(master *configs.IngressEx) ([]*configs.IngressEx, error) {
 	ings, err := lbc.ingressLister.List()
 	if err != nil {
-		return []*nginx.IngressEx{}, err
+		return []*configs.IngressEx{}, err
 	}
 
 	// ingresses are sorted by creation time
@@ -1283,7 +1283,7 @@ func (lbc *LoadBalancerController) getMinionsForMaster(master *nginx.IngressEx) 
 		return ings.Items[i].CreationTimestamp.Time.UnixNano() < ings.Items[j].CreationTimestamp.Time.UnixNano()
 	})
 
-	var minions []*nginx.IngressEx
+	var minions []*configs.IngressEx
 	var minionPaths = make(map[string]*extensions.Ingress)
 
 	for i := range ings.Items {
@@ -1360,8 +1360,8 @@ func (lbc *LoadBalancerController) FindMasterForMinion(minion *extensions.Ingres
 	return nil, err
 }
 
-func (lbc *LoadBalancerController) createMergableIngresses(master *extensions.Ingress) (*nginx.MergeableIngresses, error) {
-	mergeableIngresses := nginx.MergeableIngresses{}
+func (lbc *LoadBalancerController) createMergableIngresses(master *extensions.Ingress) (*configs.MergeableIngresses, error) {
+	mergeableIngresses := configs.MergeableIngresses{}
 
 	if len(master.Spec.Rules) != 1 {
 		err := fmt.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation must contain only one host", master.Namespace, master.Name)

@@ -112,8 +112,8 @@ spec:
 | Annotation | ConfigMap Key | Description | Default | Example |
 | ---------- | -------------- | ----------- | ------- | ------- |
 | N/A | `error-log-level` | Sets the global [error log level](http://nginx.org/en/docs/ngx_core_module.html#error_log) for NGINX.  | `notice` | |
-| N/A | `log-format` | Sets the custom [log format](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).  | See the [template file](../internal/nginx/templates/nginx.tmpl). | |
-| N/A | `stream-log-format` | Sets the custom [log format](http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format) for TCP/UDP load balancing.  | See the [template file](../internal/nginx/templates/nginx.tmpl). | |
+| N/A | `log-format` | Sets the custom [log format](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).  | See the [template file](../internal/configs/templates/nginx.tmpl). | |
+| N/A | `stream-log-format` | Sets the custom [log format](http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format) for TCP/UDP load balancing.  | See the [template file](../internal/configs/templates/nginx.tmpl). | |
 
 ### Request URI/Header Manipulation
 

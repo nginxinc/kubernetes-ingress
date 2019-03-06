@@ -1,4 +1,4 @@
-package nginx
+package configs
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx/plus"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -34,9 +34,9 @@ const JWTKeyAnnotation = "nginx.com/jwt-key"
 
 // Configurator transforms an Ingress resource into NGINX Configuration
 type Configurator struct {
-	nginx             *Controller
+	nginx             *nginx.Controller
 	config            *Config
-	nginxAPI          *plus.NginxAPIController
+	nginxAPI          *nginx.NginxAPIController
 	templateExecutor  *TemplateExecutor
 	ingresses         map[string]*IngressEx
 	minions           map[string]map[string]bool
@@ -44,7 +44,7 @@ type Configurator struct {
 }
 
 // NewConfigurator creates a new Configurator
-func NewConfigurator(nginx *Controller, config *Config, nginxAPI *plus.NginxAPIController, templateExecutor *TemplateExecutor, isWildcardEnabled bool) *Configurator {
+func NewConfigurator(nginx *nginx.Controller, config *Config, nginxAPI *nginx.NginxAPIController, templateExecutor *TemplateExecutor, isWildcardEnabled bool) *Configurator {
 	cnf := Configurator{
 		nginx:             nginx,
 		config:            config,
@@ -295,7 +295,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 		}
 
 		if !isMinion && ingEx.JWTKey.Name != "" {
-			jwtKeyFileName := cnf.nginx.getSecretFileName(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
+			jwtKeyFileName := cnf.nginx.GetSecretFileName(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
 
 			server.JWTAuth = &JWTAuth{
 				Key:   jwtKeyFileName,
@@ -346,7 +346,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &ingCfg, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
 				sslServices[path.Backend.ServiceName], grpcServices[path.Backend.ServiceName])
 			if isMinion && ingEx.JWTKey.Name != "" {
-				jwtKeyFileName := cnf.nginx.getSecretFileName(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
+				jwtKeyFileName := cnf.nginx.GetSecretFileName(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
 
 				loc.JWTAuth = &JWTAuth{
 					Key:   jwtKeyFileName,
@@ -957,10 +957,10 @@ func (cnf *Configurator) addOrUpdateSecret(secret *api_v1.Secret) string {
 
 	kind, _ := GetSecretKind(secret)
 	if cnf.isPlus() && kind == JWK {
-		mode = jwkSecretFileMode
+		mode = nginx.JWKSecretFileMode
 		data = []byte(secret.Data[JWTKeyKey])
 	} else {
-		mode = TLSSecretFileMode
+		mode = nginx.TLSSecretFileMode
 		data = GenerateCertAndKeyFileContent(secret)
 	}
 	return cnf.nginx.AddOrUpdateSecretFile(name, data, mode)
@@ -970,7 +970,7 @@ func (cnf *Configurator) addOrUpdateSecret(secret *api_v1.Secret) string {
 func (cnf *Configurator) AddOrUpdateSpecialSecrets(secret *api_v1.Secret, secretNames []string) error {
 	data := GenerateCertAndKeyFileContent(secret)
 	for _, secretName := range secretNames {
-		cnf.nginx.AddOrUpdateSecretFile(secretName, data, TLSSecretFileMode)
+		cnf.nginx.AddOrUpdateSecretFile(secretName, data, nginx.TLSSecretFileMode)
 	}
 	if err := cnf.nginx.Reload(); err != nil {
 		return fmt.Errorf("Error when reloading NGINX when updating the special Secrets: %v", err)
@@ -1093,7 +1093,7 @@ func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergableIngressesSlice 
 func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 	ingCfg := cnf.createConfig(ingEx)
 
-	cfg := plus.ServerConfig{
+	cfg := nginx.ServerConfig{
 		MaxFails:    ingCfg.MaxFails,
 		FailTimeout: ingCfg.FailTimeout,
 		SlowStart:   ingCfg.SlowStart,
@@ -1106,7 +1106,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 			if _, isExternalName := ingEx.ExternalNameSvcs[ingEx.Ingress.Spec.Backend.ServiceName]; isExternalName {
 				glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", ingEx.Ingress.Spec.Backend.ServiceName)
 			} else {
-				err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.configVersion)
+				err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.ConfigVersion)
 				if err != nil {
 					return fmt.Errorf("Couldn't update the endpoints for %v: %v", name, err)
 				}
@@ -1125,7 +1125,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 					glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", path.Backend.ServiceName)
 					continue
 				}
-				err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.configVersion)
+				err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.ConfigVersion)
 				if err != nil {
 					return fmt.Errorf("Couldn't update the endpoints for %v: %v", name, err)
 				}

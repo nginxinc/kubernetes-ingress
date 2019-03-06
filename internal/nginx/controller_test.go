@@ -1,8 +1,6 @@
 package nginx
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestGetNginxCommand(t *testing.T) {
 	tests := []struct {

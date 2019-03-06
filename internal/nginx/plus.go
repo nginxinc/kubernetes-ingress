@@ -1,16 +1,16 @@
-package plus
+package nginx
 
 import (
 	"fmt"
 	"net/http"
 
 	"github.com/golang/glog"
-	plus "github.com/nginxinc/nginx-plus-go-sdk/client"
+	"github.com/nginxinc/nginx-plus-go-sdk/client"
 )
 
 // NginxAPIController works with the NGINX API
 type NginxAPIController struct {
-	client     *plus.NginxClient
+	client     *client.NginxClient
 	httpClient *http.Client
 	local      bool
 }
@@ -24,7 +24,7 @@ type ServerConfig struct {
 
 // NewNginxAPIController creates an instance of NginxAPIController
 func NewNginxAPIController(httpClient *http.Client, endpoint string, local bool) (*NginxAPIController, error) {
-	client, err := plus.NewNginxClient(httpClient, endpoint)
+	client, err := client.NewNginxClient(httpClient, endpoint)
 	if !local && err != nil {
 		return nil, err
 	}
@@ -65,9 +65,9 @@ func (nginx *NginxAPIController) UpdateServers(upstream string, servers []string
 	}
 	glog.V(3).Infof("API has the correct config version: %v.", configVersion)
 
-	var upsServers []plus.UpstreamServer
+	var upsServers []client.UpstreamServer
 	for _, s := range servers {
-		upsServers = append(upsServers, plus.UpstreamServer{
+		upsServers = append(upsServers, client.UpstreamServer{
 			Server:      s,
 			MaxFails:    config.MaxFails,
 			FailTimeout: config.FailTimeout,
@@ -86,7 +86,7 @@ func (nginx *NginxAPIController) UpdateServers(upstream string, servers []string
 }
 
 // GetClientPlus returns the internal client for NGINX Plus API to reuse it outside the package
-func (nginx *NginxAPIController) GetClientPlus() *plus.NginxClient {
+func (nginx *NginxAPIController) GetClientPlus() *client.NginxClient {
 	if nginx != nil && nginx.client != nil {
 		return nginx.client
 	}

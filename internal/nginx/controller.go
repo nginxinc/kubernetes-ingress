@@ -9,14 +9,15 @@ import (
 	"path"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx/verify"
 )
 
 const dhparamFilename = "dhparam.pem"
 
 // TLSSecretFileMode defines the default filemode for files with TLS Secrets
 const TLSSecretFileMode = 0600
-const jwkSecretFileMode = 0644
+
+// JWKSecretFileMode defines the default filemode for files with JWK Secrets
+const JWKSecretFileMode = 0644
 
 // Controller updates NGINX configuration, starts and reloads NGINX
 type Controller struct {
@@ -24,187 +25,16 @@ type Controller struct {
 	nginxSecretsPath      string
 	local                 bool
 	nginxBinaryPath       string
-	verifyConfigGenerator *verify.ConfigGenerator
-	verifyClient          *verify.Client
-	configVersion         int
-}
-
-// IngressNginxConfig describes an NGINX configuration
-type IngressNginxConfig struct {
-	Upstreams []Upstream
-	Servers   []Server
-	Keepalive string
-	Ingress   Ingress
-}
-
-// Ingress holds information about an Ingress resource
-type Ingress struct {
-	Name        string
-	Namespace   string
-	Annotations map[string]string
-}
-
-// Upstream describes an NGINX upstream
-type Upstream struct {
-	Name            string
-	UpstreamServers []UpstreamServer
-	StickyCookie    string
-	LBMethod        string
-	Queue           int64
-	QueueTimeout    int64
-}
-
-// UpstreamServer describes a server in an NGINX upstream
-type UpstreamServer struct {
-	Address     string
-	Port        string
-	MaxFails    int
-	FailTimeout string
-	SlowStart   string
-	Resolve     bool
-}
-
-// HealthCheck describes an active HTTP health check
-type HealthCheck struct {
-	UpstreamName   string
-	URI            string
-	Interval       int32
-	Fails          int32
-	Passes         int32
-	Scheme         string
-	Mandatory      bool
-	Headers        map[string]string
-	TimeoutSeconds int64
-}
-
-// Server describes an NGINX server
-type Server struct {
-	ServerSnippets        []string
-	Name                  string
-	ServerTokens          string
-	Locations             []Location
-	SSL                   bool
-	SSLCertificate        string
-	SSLCertificateKey     string
-	SSLCiphers            string
-	GRPCOnly              bool
-	StatusZone            string
-	HTTP2                 bool
-	RedirectToHTTPS       bool
-	SSLRedirect           bool
-	ProxyProtocol         bool
-	HSTS                  bool
-	HSTSMaxAge            int64
-	HSTSIncludeSubdomains bool
-	HSTSBehindProxy       bool
-	ProxyHideHeaders      []string
-	ProxyPassHeaders      []string
-
-	HealthChecks map[string]HealthCheck
-
-	// http://nginx.org/en/docs/http/ngx_http_realip_module.html
-	RealIPHeader    string
-	SetRealIPFrom   []string
-	RealIPRecursive bool
-
-	JWTAuth              *JWTAuth
-	JWTRedirectLocations []JWTRedirectLocation
-
-	Ports    []int
-	SSLPorts []int
-}
-
-// JWTRedirectLocation describes a location for redirecting client requests to a login URL for JWT Authentication
-type JWTRedirectLocation struct {
-	Name     string
-	LoginURL string
-}
-
-// JWTAuth holds JWT authentication configuration
-type JWTAuth struct {
-	Key                  string
-	Realm                string
-	Token                string
-	RedirectLocationName string
-}
-
-// Location describes an NGINX location
-type Location struct {
-	LocationSnippets     []string
-	Path                 string
-	Upstream             Upstream
-	ProxyConnectTimeout  string
-	ProxyReadTimeout     string
-	ClientMaxBodySize    string
-	Websocket            bool
-	Rewrite              string
-	SSL                  bool
-	GRPC                 bool
-	ProxyBuffering       bool
-	ProxyBuffers         string
-	ProxyBufferSize      string
-	ProxyMaxTempFileSize string
-	JWTAuth              *JWTAuth
-
-	MinionIngress *Ingress
-}
-
-// MainConfig describe the main NGINX configuration file
-type MainConfig struct {
-	ServerNamesHashBucketSize      string
-	ServerNamesHashMaxSize         string
-	LogFormat                      string
-	ErrorLogLevel                  string
-	StreamLogFormat                string
-	HealthStatus                   bool
-	NginxStatus                    bool
-	NginxStatusAllowCIDRs          []string
-	NginxStatusPort                int
-	StubStatusOverUnixSocketForOSS bool
-	MainSnippets                   []string
-	HTTPSnippets                   []string
-	StreamSnippets                 []string
-	// http://nginx.org/en/docs/http/ngx_http_ssl_module.html
-	SSLProtocols           string
-	SSLPreferServerCiphers bool
-	SSLCiphers             string
-	SSLDHParam             string
-	HTTP2                  bool
-	ServerTokens           string
-	ProxyProtocol          bool
-	WorkerProcesses        string
-	WorkerCPUAffinity      string
-	WorkerShutdownTimeout  string
-	WorkerConnections      string
-	WorkerRlimitNofile     string
-	ResolverAddresses      []string
-	ResolverIPV6           bool
-	ResolverValid          string
-	ResolverTimeout        string
-}
-
-// NewUpstreamWithDefaultServer creates an upstream with the default server.
-// proxy_pass to an upstream with the default server returns 502.
-// We use it for services that have no endpoints
-func NewUpstreamWithDefaultServer(name string) Upstream {
-	return Upstream{
-		Name: name,
-		UpstreamServers: []UpstreamServer{
-			{
-				Address:     "127.0.0.1",
-				Port:        "8181",
-				MaxFails:    1,
-				FailTimeout: "10s",
-			},
-		},
-	}
+	verifyConfigGenerator *verifyConfigGenerator
+	verifyClient          *verifyClient
+	ConfigVersion         int
 }
 
 // NewNginxController creates a NGINX controller
 func NewNginxController(nginxConfPath string, nginxBinaryPath string, local bool) *Controller {
-	verifyConfigGenerator, err := verify.NewConfigGenerator()
+	verifyConfigGenerator, err := newVerifyConfigGenerator()
 	if err != nil {
-		glog.Fatalf("error instantiating a verify.ConfigGenerator: %v", err)
+		glog.Fatalf("error instantiating a verifyConfigGenerator: %v", err)
 	}
 
 	ngxc := Controller{
@@ -213,8 +43,8 @@ func NewNginxController(nginxConfPath string, nginxBinaryPath string, local bool
 		local:                 local,
 		nginxBinaryPath:       nginxBinaryPath,
 		verifyConfigGenerator: verifyConfigGenerator,
-		configVersion:         0,
-		verifyClient:          verify.NewClient(),
+		ConfigVersion:         0,
+		verifyClient:          newVerifyClient(),
 	}
 
 	return &ngxc
@@ -247,7 +77,7 @@ func (nginx *Controller) AddOrUpdateDHParam(dhparam string) (string, error) {
 
 // AddOrUpdateSecretFile creates a file with the specified name, content and mode.
 func (nginx *Controller) AddOrUpdateSecretFile(name string, content []byte, mode os.FileMode) string {
-	filename := nginx.getSecretFileName(name)
+	filename := nginx.GetSecretFileName(name)
 
 	if !nginx.local {
 		file, err := ioutil.TempFile(nginx.nginxSecretsPath, name)
@@ -281,7 +111,7 @@ func (nginx *Controller) AddOrUpdateSecretFile(name string, content []byte, mode
 
 // DeleteSecretFile the file with a Secret
 func (nginx *Controller) DeleteSecretFile(name string) {
-	filename := nginx.getSecretFileName(name)
+	filename := nginx.GetSecretFileName(name)
 	glog.V(3).Infof("deleting %v", filename)
 
 	if !nginx.local {
@@ -295,7 +125,8 @@ func (nginx *Controller) getIngressNginxConfigFileName(name string) string {
 	return path.Join(nginx.nginxConfdPath, name+".conf")
 }
 
-func (nginx *Controller) getSecretFileName(name string) string {
+// GetSecretFileName constructs the filename for a Secret name
+func (nginx *Controller) GetSecretFileName(name string) string {
 	return path.Join(nginx.nginxSecretsPath, name)
 }
 
@@ -310,16 +141,16 @@ func (nginx *Controller) Reload() error {
 		return nil
 	}
 	// write a new config version
-	nginx.configVersion++
+	nginx.ConfigVersion++
 	nginx.UpdateConfigVersionFile()
 
-	glog.V(3).Infof("Reloading nginx. configVersion: %v", nginx.configVersion)
+	glog.V(3).Infof("Reloading nginx. configVersion: %v", nginx.ConfigVersion)
 
 	reloadCmd := nginx.getNginxCommand("reload")
 	if err := shellOut(reloadCmd); err != nil {
 		return fmt.Errorf("nginx reload failed: %v", err)
 	}
-	err := nginx.verifyClient.WaitForCorrectVersion(nginx.configVersion)
+	err := nginx.verifyClient.WaitForCorrectVersion(nginx.ConfigVersion)
 	if err != nil {
 		return fmt.Errorf("could not get newest config version: %v", err)
 	}
@@ -346,7 +177,7 @@ func (nginx *Controller) Start(done chan error) {
 		done <- cmd.Wait()
 	}()
 
-	err := nginx.verifyClient.WaitForCorrectVersion(nginx.configVersion)
+	err := nginx.verifyClient.WaitForCorrectVersion(nginx.ConfigVersion)
 	if err != nil {
 		glog.Fatalf("Could not get newest config version: %v", err)
 	}
@@ -431,7 +262,7 @@ func (nginx *Controller) UpdateIngressConfigFile(name string, cfg []byte) {
 
 // UpdateConfigVersionFile writes the config version file.
 func (nginx *Controller) UpdateConfigVersionFile() {
-	cfg, err := nginx.verifyConfigGenerator.GenerateVersionConfig(nginx.configVersion)
+	cfg, err := nginx.verifyConfigGenerator.GenerateVersionConfig(nginx.ConfigVersion)
 	if err != nil {
 		glog.Fatalf("Error generating config version content: %v", err)
 	}

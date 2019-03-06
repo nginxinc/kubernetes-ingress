@@ -6,7 +6,7 @@ import (
 	"reflect"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	api_v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +29,7 @@ type statusUpdater struct {
 }
 
 // UpdateManagedAndMergeableIngresses handles the full return format of LoadBalancerController.getManagedIngresses
-func (su *statusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []v1beta1.Ingress, mergableIngExes map[string]*nginx.MergeableIngresses) error {
+func (su *statusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []v1beta1.Ingress, mergableIngExes map[string]*configs.MergeableIngresses) error {
 	ings := []v1beta1.Ingress{}
 	ings = append(ings, managedIngresses...)
 	for _, mergableIngEx := range mergableIngExes {
@@ -40,10 +40,10 @@ func (su *statusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []v
 	return su.BulkUpdateIngressStatus(ings)
 }
 
-// UpdateMergableIngresses is a convience passthru to update Ingresses with our nginx.MergableIngresses type
-func (su *statusUpdater) UpdateMergableIngresses(mergableIngresses *nginx.MergeableIngresses) error {
+// UpdateMergableIngresses is a convience passthru to update Ingresses with our configs.MergableIngresses type
+func (su *statusUpdater) UpdateMergableIngresses(mergableIngresses *configs.MergeableIngresses) error {
 	ings := []v1beta1.Ingress{}
-	ingExes := []*nginx.IngressEx{}
+	ingExes := []*configs.IngressEx{}
 
 	ingExes = append(ingExes, mergableIngresses.Master)
 	ingExes = append(ingExes, mergableIngresses.Minions...)
