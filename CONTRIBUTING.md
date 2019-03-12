@@ -14,7 +14,7 @@ The following is a set of guidelines for contributing to the NGINX Ingress Contr
   * [Git Style Guide](#git-style-guide)
   * [Go Style Guide](#go-style-guide)
 
-[Code of Conduct](CODE_OF_CONDUCT.md)
+[Code of Conduct](https://github.com/nginxinc/kubernetes-ingress/blob/master/CODE_OF_CONDUCT.md)
 
 ## Ask a Question
 
