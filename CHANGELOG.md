@@ -1,5 +1,14 @@
 # Changelog
 
+### 1.4.4
+
+CHANGES:
+* Update NGINX version to 1.15.9.
+
+UPGRADE:
+* For NGINX, use the 1.4.4 image from our DockerHub: `nginx/nginx-ingress:1.4.4` or `nginx/nginx-ingress:1.4.4-alpine`
+* For NGINX Plus, please build your own image using the 1.4.4 source code.
+
 ### 1.4.3
 
 CHANGES:
