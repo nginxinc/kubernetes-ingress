@@ -8,14 +8,36 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 
   - Kubernetes 1.6+.
   - Helm 2.8.x+.
-  - Git.
+  - Git (for installation using the chart source files).
   - If you’d like to use NGINX Plus:
-    - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](../../build/README.md).
-    - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
+    - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](https://github.com/nginxinc/kubernetes-ingress/blob/v1.4.3/build/README.md).
+    - Configure `controller.nginxplus` and `controller.image.repository` parameters accordingly using a values file or the `--set` flag of the `helm install` command.
 
 ## Installing the Chart
 
-1. Clone the Ingress controller repo:
+### Installing via Helm Repository
+
+1. Add NGINX Helm repository:
+    ```
+    $ helm repo add nginx-stable https://helm.nginx.com/stable
+    $ helm repo update
+    ```
+
+2. To install the chart with the release name my-release (my-release is the name that you choose):
+
+    For NGINX:
+    ```
+    $ helm install nginx-stable/nginx-ingress --name my-release
+    ```
+
+    For NGINX Plus (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`):
+    ```
+    $ helm install nginx-stable/nginx-ingress --name my-release --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+    ```
+
+### Installing Using Chart Sources
+
+1. Clone the Ingress controller repo and check out the latest stable version:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     $ git checkout v1.4.3
@@ -31,14 +53,15 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
     $ helm install --name my-release .
     ```
 
-    For NGINX Plus:
+    For NGINX Plus (assuming you have configured the `controller.nginxplus` and `controller.image.repository` parameters in the values file `values-plus.yaml`):
     ```
     $ helm install --name my-release -f values-plus.yaml .
     ```
 
-    The command deploys the Ingress controller in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
+### Notes
 
-    When deploying the Ingress controller, make sure to use your own TLS certificate and key for the default server rather than the default pre-generated ones. Read the [Configuration](#Configuration) section below to see how to configure a TLS certificate and key for the default server. Note that the default server returns the Not Found page with the 404 status code for all requests for domains for which there are no Ingress rules defined.
+* The `helm install` command deploys the Ingress controller in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
+* When deploying the Ingress controller, make sure to use your own TLS certificate and key for the default server rather than the default pre-generated ones. Read the [Configuration](#Configuration) section below to see how to configure a TLS certificate and key for the default server. Note that the default server returns the Not Found page with the 404 status code for all requests for domains for which there are no Ingress rules defined.
 
 > **Tip**: List all releases using `helm list`
 
