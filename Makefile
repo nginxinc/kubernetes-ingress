@@ -38,7 +38,7 @@ endif
 
 container: test nginx-ingress certificate-and-key
 	cp $(DOCKERFILEPATH)/$(DOCKERFILE) ./Dockerfile
-	docker build $(DOCKER_BUILD_OPTIONS) -f Dockerfile -t $(PREFIX):$(TAG) .
+	docker build $(DOCKER_BUILD_OPTIONS) --build-arg IC_VERSION=$(VERSION)-$(GIT_COMMIT) -f Dockerfile -t $(PREFIX):$(TAG) .
 
 push: container
 ifeq ($(PUSH_TO_GCR),1)
