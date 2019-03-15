@@ -105,6 +105,8 @@ spec:
 | N/A | `resolver-ipv6` | Enables IPv6 resolution in the resolver. Supported in NGINX Plus only. | `True` | [Support for Type ExternalName Services](../examples/externalname-services). |
 | N/A | `resolver-valid` | Sets the time NGINX caches the resolved DNS records. Supported in NGINX Plus only. | TTL value of a DNS record | [Support for Type ExternalName Services](../examples/externalname-services). |
 | N/A | `resolver-timeout` | Sets the [resolver_timeout](http://nginx.org/en/docs/http/ngx_http_core_module.html#resolver_timeout) for name resolution. Supported in NGINX Plus only.  | `30s` | [Support for Type ExternalName Services](../examples/externalname-services). |
+| N/A | `keepalive-timeout` | Sets the value of the [keepalive_timeout](http://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout) directive. | `65s` | |
+| N/A | `keepalive-requests` | Sets the value of the [keepalive_requests](http://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_requests) directive. | `100` | |
 
 
 ### Logging
@@ -112,7 +114,8 @@ spec:
 | Annotation | ConfigMap Key | Description | Default | Example |
 | ---------- | -------------- | ----------- | ------- | ------- |
 | N/A | `error-log-level` | Sets the global [error log level](http://nginx.org/en/docs/ngx_core_module.html#error_log) for NGINX.  | `notice` | |
-| N/A | `log-format` | Sets the custom [log format](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).  | See the [template file](../internal/configs/templates/nginx.tmpl). | |
+| N/A | `access-log-off` | Disables the [access log](http://nginx.org/en/docs/http/ngx_http_log_module.html#access_log). | `False` | |
+| N/A | `log-format` | Sets the custom [log format](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).  | See the [template file](../internal/configs/templates/nginx.tmpl) for the access log. | |
 | N/A | `stream-log-format` | Sets the custom [log format](http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format) for TCP/UDP load balancing.  | See the [template file](../internal/configs/templates/nginx.tmpl). | |
 
 ### Request URI/Header Manipulation

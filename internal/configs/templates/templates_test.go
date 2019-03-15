@@ -103,6 +103,8 @@ var mainCfg = configs.MainConfig{
 	ResolverIPV6:           false,
 	ResolverValid:          "10s",
 	ResolverTimeout:        "15s",
+	KeepaliveTimeout:       "65s",
+	KeepaliveRequests:      100,
 }
 
 func TestIngressForNGINXPlus(t *testing.T) {

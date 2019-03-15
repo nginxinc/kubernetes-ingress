@@ -1180,6 +1180,7 @@ func GenerateNginxMainConfig(config *Config) *MainConfig {
 		StreamSnippets:            config.MainStreamSnippets,
 		ServerNamesHashBucketSize: config.MainServerNamesHashBucketSize,
 		ServerNamesHashMaxSize:    config.MainServerNamesHashMaxSize,
+		AccessLogOff:              config.MainAccessLogOff,
 		LogFormat:                 config.MainLogFormat,
 		ErrorLogLevel:             config.MainErrorLogLevel,
 		StreamLogFormat:           config.MainStreamLogFormat,
@@ -1199,6 +1200,8 @@ func GenerateNginxMainConfig(config *Config) *MainConfig {
 		ResolverIPV6:              config.ResolverIPV6,
 		ResolverValid:             config.ResolverValid,
 		ResolverTimeout:           config.ResolverTimeout,
+		KeepaliveTimeout:          config.MainKeepaliveTimeout,
+		KeepaliveRequests:         config.MainKeepaliveRequests,
 	}
 	return nginxCfg
 }

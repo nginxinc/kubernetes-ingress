@@ -23,6 +23,7 @@ type Config struct {
 	MainStreamSnippets            []string
 	MainServerNamesHashBucketSize string
 	MainServerNamesHashMaxSize    string
+	MainAccessLogOff              bool
 	MainLogFormat                 string
 	MainErrorLogLevel             string
 	MainStreamLogFormat           string
@@ -54,6 +55,8 @@ type Config struct {
 	ResolverIPV6                  bool
 	ResolverValid                 string
 	ResolverTimeout               string
+	MainKeepaliveTimeout          string
+	MainKeepaliveRequests         int64
 
 	// http://nginx.org/en/docs/http/ngx_http_realip_module.html
 	RealIPHeader    string
@@ -99,6 +102,8 @@ func NewDefaultConfig() *Config {
 		LBMethod:                   "random two least_conn",
 		MainErrorLogLevel:          "notice",
 		ResolverIPV6:               true,
+		MainKeepaliveTimeout:       "65s",
+		MainKeepaliveRequests:      100,
 	}
 }
 
@@ -275,6 +280,13 @@ func ParseConfigMap(cfgm *api_v1.ConfigMap, nginxPlus bool) *Config {
 	if errorLogLevel, exists := cfgm.Data["error-log-level"]; exists {
 		cfg.MainErrorLogLevel = errorLogLevel
 	}
+	if accessLogOff, exists, err := GetMapKeyAsBool(cfgm.Data, "access-log-off", cfgm); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfg.MainAccessLogOff = accessLogOff
+		}
+	}
 	if logFormat, exists := cfgm.Data["log-format"]; exists {
 		cfg.MainLogFormat = logFormat
 	}
@@ -413,6 +425,17 @@ func ParseConfigMap(cfgm *api_v1.ConfigMap, nginxPlus bool) *Config {
 			cfg.ResolverTimeout = resolverTimeout
 		} else {
 			glog.Warning("ConfigMap key 'resolver-timeout' requires NGINX Plus")
+		}
+	}
+
+	if keepaliveTimeout, exists := cfgm.Data["keepalive-timeout"]; exists {
+		cfg.MainKeepaliveTimeout = keepaliveTimeout
+	}
+	if keepaliveRequests, exists, err := GetMapKeyAsInt64(cfgm.Data, "keepalive-requests", cfgm); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfg.MainKeepaliveRequests = keepaliveRequests
 		}
 	}
 

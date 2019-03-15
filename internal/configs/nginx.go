@@ -124,6 +124,7 @@ type Location struct {
 type MainConfig struct {
 	ServerNamesHashBucketSize      string
 	ServerNamesHashMaxSize         string
+	AccessLogOff                   bool
 	LogFormat                      string
 	ErrorLogLevel                  string
 	StreamLogFormat                string
@@ -152,6 +153,8 @@ type MainConfig struct {
 	ResolverIPV6           bool
 	ResolverValid          string
 	ResolverTimeout        string
+	KeepaliveTimeout       string
+	KeepaliveRequests      int64
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

@@ -37,12 +37,18 @@ http {
                       '$status $body_bytes_sent "$http_referer" '
                       '"$http_user_agent" "$http_x_forwarded_for"';
     {{- end}}
+
+    {{if .AccessLogOff}}
+    access_log off;
+    {{else}}
     access_log  /var/log/nginx/access.log  main;
+    {{end}}
 
     sendfile        on;
     #tcp_nopush     on;
 
-    keepalive_timeout  65;
+    keepalive_timeout {{.KeepaliveTimeout}};
+    keepalive_requests {{.KeepaliveRequests}};
 
     #gzip  on;
 
