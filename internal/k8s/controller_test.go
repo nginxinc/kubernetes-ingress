@@ -2,7 +2,6 @@ package k8s
 
 import (
 	"fmt"
-	"net/http"
 	"reflect"
 	"testing"
 	"time"
@@ -621,7 +620,7 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 	cafeMasterIngEx, _ := lbc.createIngress(&cafeMaster)
 	ingExMap["default-cafe-master"] = cafeMasterIngEx
 
-	cnf := configs.NewConfigurator(&nginx.Controller{}, &configs.Config{}, &nginx.NginxAPIController{}, &configs.TemplateExecutor{}, false)
+	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.Config{}, &configs.TemplateExecutor{}, false, false)
 
 	// edit private field ingresses to use in testing
 	pointerVal := reflect.ValueOf(cnf)
@@ -834,7 +833,7 @@ func TestFindProbeForPods(t *testing.T) {
 
 func TestGetServicePortForIngressPort(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	cnf := configs.NewConfigurator(&nginx.Controller{}, &configs.Config{}, &nginx.NginxAPIController{}, &configs.TemplateExecutor{}, false)
+	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.Config{}, &configs.TemplateExecutor{}, false, false)
 	lbc := LoadBalancerController{
 		client:       fakeClient,
 		ingressClass: "nginx",
@@ -982,13 +981,9 @@ func TestFindIngressesForSecret(t *testing.T) {
 			if err != nil {
 				t.Fatalf("templateExecuter could not start: %v", err)
 			}
-			ngxc := nginx.NewNginxController("/etc/nginx", "nginx", true)
-			apiCtrl, err := nginx.NewNginxAPIController(&http.Client{}, "", true)
-			if err != nil {
-				t.Fatalf("NGINX API Controller could not start: %v", err)
-			}
+			manager := nginx.NewFakeManager("/etc/nginx")
 
-			cnf := configs.NewConfigurator(ngxc, &configs.Config{}, apiCtrl, templateExecutor, false)
+			cnf := configs.NewConfigurator(manager, &configs.Config{}, templateExecutor, false, false)
 			lbc := LoadBalancerController{
 				client:       fakeClient,
 				ingressClass: "nginx",
@@ -1170,13 +1165,9 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 			if err != nil {
 				t.Fatalf("templateExecuter could not start: %v", err)
 			}
-			ngxc := nginx.NewNginxController("/etc/nginx", "nginx", true)
-			apiCtrl, err := nginx.NewNginxAPIController(&http.Client{}, "", true)
-			if err != nil {
-				t.Fatalf("NGINX API Controller could not start: %v", err)
-			}
+			manager := nginx.NewFakeManager("/etc/nginx")
 
-			cnf := configs.NewConfigurator(ngxc, &configs.Config{}, apiCtrl, templateExecutor, false)
+			cnf := configs.NewConfigurator(manager, &configs.Config{}, templateExecutor, false, false)
 			lbc := LoadBalancerController{
 				client:       fakeClient,
 				ingressClass: "nginx",

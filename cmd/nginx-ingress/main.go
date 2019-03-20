@@ -17,6 +17,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	"github.com/nginxinc/nginx-plus-go-sdk/client"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -158,8 +159,6 @@ func main() {
 		glog.Fatalf("Failed to create client: %v.", err)
 	}
 
-	local := *proxyURL != ""
-
 	nginxConfTemplatePath := "nginx.tmpl"
 	nginxIngressTemplatePath := "nginx.ingress.tmpl"
 	if *nginxPlus {
@@ -183,7 +182,15 @@ func main() {
 	if err != nil {
 		glog.Fatalf("Error creating TemplateExecutor: %v", err)
 	}
-	ngxc := nginx.NewNginxController("/etc/nginx/", nginxBinaryPath, local)
+
+	useFakeNginxManager := *proxyURL != ""
+
+	var nginxManager nginx.Manager
+	if useFakeNginxManager {
+		nginxManager = nginx.NewFakeManager("/etc/nginx")
+	} else {
+		nginxManager = nginx.NewLocalManager("/etc/nginx/", nginxBinaryPath)
+	}
 
 	if *defaultServerSecret != "" {
 		secret, err := getAndValidateSecret(kubeClient, *defaultServerSecret)
@@ -192,7 +199,7 @@ func main() {
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		ngxc.AddOrUpdateSecretFile(configs.DefaultServerSecretName, bytes, nginx.TLSSecretFileMode)
+		nginxManager.CreateSecret(configs.DefaultServerSecretName, bytes, nginx.TLSSecretFileMode)
 	} else {
 		_, err = os.Stat("/etc/nginx/secrets/default")
 		if os.IsNotExist(err) {
@@ -207,7 +214,7 @@ func main() {
 		}
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
-		ngxc.AddOrUpdateSecretFile(configs.WildcardSecretName, bytes, nginx.TLSSecretFileMode)
+		nginxManager.CreateSecret(configs.WildcardSecretName, bytes, nginx.TLSSecretFileMode)
 	}
 
 	cfg := configs.NewDefaultConfig()
@@ -222,7 +229,7 @@ func main() {
 		}
 		cfg = configs.ParseConfigMap(cfm, *nginxPlus)
 		if cfg.MainServerSSLDHParamFileContent != nil {
-			fileName, err := ngxc.AddOrUpdateDHParam(*cfg.MainServerSSLDHParamFileContent)
+			fileName, err := nginxManager.CreateDHParam(*cfg.MainServerSSLDHParamFileContent)
 			if err != nil {
 				glog.Fatalf("Configmap %s/%s: Could not update dhparams: %v", ns, name, err)
 			} else {
@@ -248,22 +255,24 @@ func main() {
 	if err != nil {
 		glog.Fatalf("Error generating NGINX main config: %v", err)
 	}
-	ngxc.UpdateMainConfigFile(content)
-	ngxc.UpdateConfigVersionFile()
+	nginxManager.CreateMainConfig(content)
+	nginxManager.UpdateConfigVersionFile()
 
 	nginxDone := make(chan error, 1)
-	ngxc.Start(nginxDone)
+	nginxManager.Start(nginxDone)
 
-	var nginxAPI *nginx.NginxAPIController
-	if *nginxPlus {
+	var plusClient *client.NginxClient
+	if *nginxPlus && !useFakeNginxManager {
 		httpClient := getSocketClient("/var/run/nginx-plus-api.sock")
-		nginxAPI, err = nginx.NewNginxAPIController(&httpClient, "http://nginx-plus-api/api", local)
+		plusClient, err = client.NewNginxClient(httpClient, "http://nginx-plus-api/api")
 		if err != nil {
-			glog.Fatalf("Failed to create NginxAPIController: %v", err)
+			glog.Fatalf("Failed to create NginxClient for Plus: %v", err)
 		}
+		nginxManager.SetPlusClients(plusClient, httpClient)
 	}
+
 	isWildcardEnabled := *wildcardTLSSecret != ""
-	cnf := configs.NewConfigurator(ngxc, cfg, nginxAPI, templateExecutor, isWildcardEnabled)
+	cnf := configs.NewConfigurator(nginxManager, cfg, templateExecutor, *nginxPlus, isWildcardEnabled)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
@@ -287,10 +296,10 @@ func main() {
 
 	if *enablePrometheusMetrics {
 		if *nginxPlus {
-			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, nginxAPI.GetClientPlus())
+			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusClient)
 		} else {
 			httpClient := getSocketClient("/var/run/nginx-status.sock")
-			client, err := metrics.NewNginxMetricsClient(&httpClient)
+			client, err := metrics.NewNginxMetricsClient(httpClient)
 			if err != nil {
 				glog.Fatalf("Error creating the Nginx client for Prometheus metrics: %v", err)
 			}
@@ -298,7 +307,7 @@ func main() {
 		}
 	}
 
-	go handleTermination(lbc, ngxc, nginxDone)
+	go handleTermination(lbc, nginxManager, nginxDone)
 	lbc.Run()
 
 	for {
@@ -307,7 +316,7 @@ func main() {
 	}
 }
 
-func handleTermination(lbc *k8s.LoadBalancerController, ngxc *nginx.Controller, nginxDone chan error) {
+func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, nginxDone chan error) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
@@ -332,7 +341,7 @@ func handleTermination(lbc *k8s.LoadBalancerController, ngxc *nginx.Controller, 
 
 	if !exited {
 		glog.Infof("Shutting down NGINX")
-		ngxc.Quit()
+		nginxManager.Quit()
 		<-nginxDone
 	}
 
@@ -341,8 +350,8 @@ func handleTermination(lbc *k8s.LoadBalancerController, ngxc *nginx.Controller, 
 }
 
 // getSocketClient gets an http.Client with the a unix socket transport.
-func getSocketClient(sockPath string) http.Client {
-	return http.Client{
+func getSocketClient(sockPath string) *http.Client {
+	return &http.Client{
 		Transport: &http.Transport{
 			DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
 				return net.Dial("unix", sockPath)

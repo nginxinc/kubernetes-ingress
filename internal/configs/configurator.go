@@ -34,24 +34,24 @@ const JWTKeyAnnotation = "nginx.com/jwt-key"
 
 // Configurator transforms an Ingress resource into NGINX Configuration
 type Configurator struct {
-	nginx             *nginx.Controller
+	nginxManager      nginx.Manager
 	config            *Config
-	nginxAPI          *nginx.NginxAPIController
 	templateExecutor  *TemplateExecutor
 	ingresses         map[string]*IngressEx
 	minions           map[string]map[string]bool
 	isWildcardEnabled bool
+	isPlus            bool
 }
 
 // NewConfigurator creates a new Configurator
-func NewConfigurator(nginx *nginx.Controller, config *Config, nginxAPI *nginx.NginxAPIController, templateExecutor *TemplateExecutor, isWildcardEnabled bool) *Configurator {
+func NewConfigurator(nginxManager nginx.Manager, config *Config, templateExecutor *TemplateExecutor, isPlus bool, isWildcardEnabled bool) *Configurator {
 	cnf := Configurator{
-		nginx:             nginx,
+		nginxManager:      nginxManager,
 		config:            config,
-		nginxAPI:          nginxAPI,
 		ingresses:         make(map[string]*IngressEx),
 		templateExecutor:  templateExecutor,
 		minions:           make(map[string]map[string]bool),
+		isPlus:            isPlus,
 		isWildcardEnabled: isWildcardEnabled,
 	}
 	return &cnf
@@ -59,7 +59,7 @@ func NewConfigurator(nginx *nginx.Controller, config *Config, nginxAPI *nginx.Ng
 
 // AddOrUpdateDHParam creates a dhparam file with the content of the string.
 func (cnf *Configurator) AddOrUpdateDHParam(content string) (string, error) {
-	return cnf.nginx.AddOrUpdateDHParam(content)
+	return cnf.nginxManager.CreateDHParam(content)
 }
 
 // AddOrUpdateIngress adds or updates NGINX configuration for the Ingress resource
@@ -67,7 +67,7 @@ func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) error {
 	if err := cnf.addOrUpdateIngress(ingEx); err != nil {
 		return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 	}
-	if err := cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error reloading NGINX for %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 	}
 	return nil
@@ -83,7 +83,7 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
 	if err != nil {
 		return fmt.Errorf("Error generating Ingress Config %v: %v", name, err)
 	}
-	cnf.nginx.UpdateIngressConfigFile(name, content)
+	cnf.nginxManager.CreateConfig(name, content)
 	cnf.ingresses[name] = ingEx
 	return nil
 }
@@ -93,7 +93,7 @@ func (cnf *Configurator) AddOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	if err := cnf.addOrUpdateMergeableIngress(mergeableIngs); err != nil {
 		return fmt.Errorf("Error when adding or updating ingress %v/%v: %v", mergeableIngs.Master.Ingress.Namespace, mergeableIngs.Master.Ingress.Name, err)
 	}
-	if err := cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error reloading NGINX for %v/%v: %v", mergeableIngs.Master.Ingress.Namespace, mergeableIngs.Master.Ingress.Name, err)
 	}
 	return nil
@@ -106,7 +106,7 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	if err != nil {
 		return fmt.Errorf("Error generating Ingress Config %v: %v", name, err)
 	}
-	cnf.nginx.UpdateIngressConfigFile(name, content)
+	cnf.nginxManager.CreateConfig(name, content)
 	cnf.ingresses[name] = mergeableIngs.Master
 	cnf.minions[name] = make(map[string]bool)
 	for _, minion := range mergeableIngs.Minions {
@@ -213,7 +213,7 @@ func (cnf *Configurator) updateTLSSecrets(ingEx *IngressEx) map[string]string {
 }
 
 func (cnf *Configurator) updateJWTSecret(jwtKey JWTKey) {
-	if cnf.isPlus() && jwtKey.Secret != nil {
+	if cnf.isPlus && jwtKey.Secret != nil {
 		cnf.addOrUpdateSecret(jwtKey.Secret)
 	}
 }
@@ -291,7 +291,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 		}
 
 		if !isMinion && ingEx.JWTKey.Name != "" {
-			jwtKeyFileName := cnf.nginx.GetSecretFileName(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
+			jwtKeyFileName := cnf.nginxManager.GetFilenameForSecret(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
 
 			server.JWTAuth = &JWTAuth{
 				Key:   jwtKeyFileName,
@@ -342,7 +342,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &ingCfg, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
 				sslServices[path.Backend.ServiceName], grpcServices[path.Backend.ServiceName])
 			if isMinion && ingEx.JWTKey.Name != "" {
-				jwtKeyFileName := cnf.nginx.GetSecretFileName(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
+				jwtKeyFileName := cnf.nginxManager.GetFilenameForSecret(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
 
 				loc.JWTAuth = &JWTAuth{
 					Key:   jwtKeyFileName,
@@ -412,7 +412,7 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 
 	//Override from annotation
 	if lbMethod, exists := ingEx.Ingress.Annotations["nginx.org/lb-method"]; exists {
-		if cnf.isPlus() {
+		if cnf.isPlus {
 			if parsedMethod, err := ParseLBMethodForPlus(lbMethod); err != nil {
 				glog.Errorf("Ingress %s/%s: Invalid value for the nginx.org/lb-method: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), lbMethod, err)
 			} else {
@@ -431,7 +431,7 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 		if err != nil {
 			glog.Error(err)
 		}
-		if cnf.isPlus() {
+		if cnf.isPlus {
 			ingCfg.HealthCheckEnabled = healthCheckEnabled
 		} else {
 			glog.Warning("Annotation 'nginx.com/health-checks' requires NGINX Plus")
@@ -458,7 +458,7 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 		if parsedSlowStart, err := ParseSlowStart(slowStart); err != nil {
 			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/slow-start: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), slowStart, err)
 		} else {
-			if cnf.isPlus() {
+			if cnf.isPlus {
 				ingCfg.SlowStart = parsedSlowStart
 			} else {
 				glog.Warning("Annotation 'nginx.com/slow-start' requires NGINX Plus")
@@ -468,7 +468,7 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 
 	if serverTokens, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "nginx.org/server-tokens", ingEx.Ingress); exists {
 		if err != nil {
-			if cnf.isPlus() {
+			if cnf.isPlus {
 				ingCfg.ServerTokens = ingEx.Ingress.Annotations["nginx.org/server-tokens"]
 			} else {
 				glog.Error(err)
@@ -590,7 +590,7 @@ func (cnf *Configurator) createConfig(ingEx *IngressEx) Config {
 		ingCfg.ProxyMaxTempFileSize = proxyMaxTempFileSize
 	}
 
-	if cnf.isPlus() {
+	if cnf.isPlus {
 		if jwtRealm, exists := ingEx.Ingress.Annotations["nginx.com/jwt-realm"]; exists {
 			ingCfg.JWTRealm = jwtRealm
 		}
@@ -811,7 +811,7 @@ func createLocation(path string, upstream Upstream, cfg *Config, websocket bool,
 // Mandatory Health Checks can cause nginx to return errors on reload, since all Upstreams start
 // Unhealthy. By adding a queue to the Upstream we can avoid returning errors, at the cost of a short delay.
 func (cnf *Configurator) upstreamRequiresQueue(name string, ingEx *IngressEx, cfg *Config) (n int64, timeout int64) {
-	if cnf.isPlus() && cfg.HealthCheckEnabled && cfg.HealthCheckMandatory && cfg.HealthCheckMandatoryQueue > 0 {
+	if cnf.isPlus && cfg.HealthCheckEnabled && cfg.HealthCheckMandatory && cfg.HealthCheckMandatoryQueue > 0 {
 		if hc, exists := ingEx.HealthChecks[name]; exists {
 			return cfg.HealthCheckMandatoryQueue, int64(hc.TimeoutSeconds)
 		}
@@ -824,7 +824,7 @@ func (cnf *Configurator) createUpstream(ingEx *IngressEx, name string, backend *
 
 	queue, timeout := cnf.upstreamRequiresQueue(backend.ServiceName+backend.ServicePort.String(), ingEx, cfg)
 
-	if cnf.isPlus() {
+	if cnf.isPlus {
 		ups = Upstream{Name: name, StickyCookie: stickyCookie, Queue: queue, QueueTimeout: timeout}
 	} else {
 		ups = NewUpstreamWithDefaultServer(name)
@@ -921,7 +921,7 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret, ingExes []Ingr
 	cnf.addOrUpdateSecret(secret)
 
 	kind, _ := GetSecretKind(secret)
-	if cnf.isPlus() && kind == JWK {
+	if cnf.isPlus && kind == JWK {
 		return nil
 	}
 
@@ -939,7 +939,7 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret, ingExes []Ingr
 		}
 	}
 
-	if err := cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
 	}
 	return nil
@@ -952,23 +952,23 @@ func (cnf *Configurator) addOrUpdateSecret(secret *api_v1.Secret) string {
 	var mode os.FileMode
 
 	kind, _ := GetSecretKind(secret)
-	if cnf.isPlus() && kind == JWK {
+	if cnf.isPlus && kind == JWK {
 		mode = nginx.JWKSecretFileMode
 		data = []byte(secret.Data[JWTKeyKey])
 	} else {
 		mode = nginx.TLSSecretFileMode
 		data = GenerateCertAndKeyFileContent(secret)
 	}
-	return cnf.nginx.AddOrUpdateSecretFile(name, data, mode)
+	return cnf.nginxManager.CreateSecret(name, data, mode)
 }
 
 // AddOrUpdateSpecialSecrets creates or updates a file with a TLS cert and a key from a Special Secret (eg. DefaultServerSecret, WildcardTLSSecret)
 func (cnf *Configurator) AddOrUpdateSpecialSecrets(secret *api_v1.Secret, secretNames []string) error {
 	data := GenerateCertAndKeyFileContent(secret)
 	for _, secretName := range secretNames {
-		cnf.nginx.AddOrUpdateSecretFile(secretName, data, nginx.TLSSecretFileMode)
+		cnf.nginxManager.CreateSecret(secretName, data, nginx.TLSSecretFileMode)
 	}
-	if err := cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error when reloading NGINX when updating the special Secrets: %v", err)
 	}
 	return nil
@@ -987,7 +987,7 @@ func GenerateCertAndKeyFileContent(secret *api_v1.Secret) []byte {
 
 // DeleteSecret deletes the file associated with the secret and the configuration files for the Ingress resources. NGINX is reloaded only when len(ings) > 0
 func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
-	cnf.nginx.DeleteSecretFile(keyToFileName(key))
+	cnf.nginxManager.DeleteSecret(keyToFileName(key))
 
 	for i := range ingExes {
 		err := cnf.addOrUpdateIngress(&ingExes[i])
@@ -1004,7 +1004,7 @@ func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeable
 	}
 
 	if len(ingExes)+len(mergeableIngresses) > 0 {
-		if err := cnf.nginx.Reload(); err != nil {
+		if err := cnf.nginxManager.Reload(); err != nil {
 			return fmt.Errorf("Error when reloading NGINX when deleting Secret %v: %v", key, err)
 		}
 	}
@@ -1015,11 +1015,11 @@ func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeable
 // DeleteIngress deletes NGINX configuration for the Ingress resource
 func (cnf *Configurator) DeleteIngress(key string) error {
 	name := keyToFileName(key)
-	cnf.nginx.DeleteIngress(name)
+	cnf.nginxManager.DeleteConfig(name)
 	delete(cnf.ingresses, name)
 	delete(cnf.minions, name)
 
-	if err := cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error when removing ingress %v: %v", key, err)
 	}
 	return nil
@@ -1035,7 +1035,7 @@ func (cnf *Configurator) UpdateEndpoints(ingExes []*IngressEx) error {
 			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 		}
 
-		if cnf.isPlus() {
+		if cnf.isPlus {
 			err := cnf.updatePlusEndpoints(ingEx)
 			if err != nil {
 				glog.Warningf("Couldn't update the endpoints via the API: %v; reloading configuration instead", err)
@@ -1044,12 +1044,12 @@ func (cnf *Configurator) UpdateEndpoints(ingExes []*IngressEx) error {
 		}
 	}
 
-	if cnf.isPlus() && !reloadPlus {
+	if cnf.isPlus && !reloadPlus {
 		glog.V(3).Info("No need to reload nginx")
 		return nil
 	}
 
-	if err := cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error reloading NGINX when updating endpoints: %v", err)
 	}
 
@@ -1065,7 +1065,7 @@ func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergableIngressesSlice 
 			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergableIngressesSlice[i].Master.Ingress.Namespace, mergableIngressesSlice[i].Master.Ingress.Name, err)
 		}
 
-		if cnf.isPlus() {
+		if cnf.isPlus {
 			for _, ing := range mergableIngressesSlice[i].Minions {
 				err = cnf.updatePlusEndpoints(ing)
 				if err != nil {
@@ -1075,12 +1075,12 @@ func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergableIngressesSlice 
 			}
 		}
 	}
-	if cnf.isPlus() && !reloadPlus {
+	if cnf.isPlus && !reloadPlus {
 		glog.V(3).Info("No need to reload nginx")
 		return nil
 	}
 
-	if err := cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error reloading NGINX when updating endpoints for %v: %v", mergableIngressesSlice, err)
 	}
 	return nil
@@ -1102,7 +1102,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 			if _, isExternalName := ingEx.ExternalNameSvcs[ingEx.Ingress.Spec.Backend.ServiceName]; isExternalName {
 				glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", ingEx.Ingress.Spec.Backend.ServiceName)
 			} else {
-				err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.ConfigVersion)
+				err := cnf.nginxManager.UpdateServersInPlus(name, endps, cfg)
 				if err != nil {
 					return fmt.Errorf("Couldn't update the endpoints for %v: %v", name, err)
 				}
@@ -1121,7 +1121,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 					glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", path.Backend.ServiceName)
 					continue
 				}
-				err := cnf.nginxAPI.UpdateServers(name, endps, cfg, cnf.nginx.ConfigVersion)
+				err := cnf.nginxManager.UpdateServersInPlus(name, endps, cfg)
 				if err != nil {
 					return fmt.Errorf("Couldn't update the endpoints for %v: %v", name, err)
 				}
@@ -1206,7 +1206,7 @@ func GenerateNginxMainConfig(config *Config) *MainConfig {
 func (cnf *Configurator) UpdateConfig(config *Config, ingExes []*IngressEx, mergeableIngs map[string]*MergeableIngresses) error {
 	cnf.config = config
 	if cnf.config.MainServerSSLDHParamFileContent != nil {
-		fileName, err := cnf.nginx.AddOrUpdateDHParam(*cnf.config.MainServerSSLDHParamFileContent)
+		fileName, err := cnf.nginxManager.CreateDHParam(*cnf.config.MainServerSSLDHParamFileContent)
 		if err != nil {
 			return fmt.Errorf("Error when updating dhparams: %v", err)
 		}
@@ -1232,7 +1232,7 @@ func (cnf *Configurator) UpdateConfig(config *Config, ingExes []*IngressEx, merg
 	if err != nil {
 		return fmt.Errorf("Error when writing main Config")
 	}
-	cnf.nginx.UpdateMainConfigFile(mainCfgContent)
+	cnf.nginxManager.CreateMainConfig(mainCfgContent)
 
 	for _, ingEx := range ingExes {
 		if err := cnf.addOrUpdateIngress(ingEx); err != nil {
@@ -1245,15 +1245,11 @@ func (cnf *Configurator) UpdateConfig(config *Config, ingExes []*IngressEx, merg
 		}
 	}
 
-	if err := cnf.nginx.Reload(); err != nil {
+	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error when updating config from ConfigMap: %v", err)
 	}
 
 	return nil
-}
-
-func (cnf *Configurator) isPlus() bool {
-	return cnf.nginxAPI != nil
 }
 
 func keyToFileName(key string) string {

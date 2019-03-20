@@ -1,7 +1,6 @@
 package configs
 
 import (
-	"net/http"
 	"reflect"
 	"sort"
 	"testing"
@@ -528,12 +527,8 @@ func createTestConfigurator() (*Configurator, error) {
 	if err != nil {
 		return nil, err
 	}
-	ngxc := nginx.NewNginxController("/etc/nginx", "nginx", true)
-	apiCtrl, err := nginx.NewNginxAPIController(&http.Client{}, "", true)
-	if err != nil {
-		return nil, err
-	}
-	return NewConfigurator(ngxc, NewDefaultConfig(), apiCtrl, templateExecutor, false), nil
+	manager := nginx.NewFakeManager("/etc/nginx")
+	return NewConfigurator(manager, NewDefaultConfig(), templateExecutor, false, false), nil
 }
 
 func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
@@ -545,9 +540,8 @@ func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
 	if err := templateExecutor.UpdateIngressTemplate(&invalidIngressTemplate); err != nil {
 		return nil, err
 	}
-	ngxc := nginx.NewNginxController("/etc/nginx", "nginx", true)
-	apiCtrl, _ := nginx.NewNginxAPIController(&http.Client{}, "", true)
-	return NewConfigurator(ngxc, NewDefaultConfig(), apiCtrl, templateExecutor, false), nil
+	manager := nginx.NewFakeManager("/etc/nginx")
+	return NewConfigurator(manager, NewDefaultConfig(), templateExecutor, false, false), nil
 }
 
 func TestGenerateNginxCfg(t *testing.T) {
@@ -587,6 +581,8 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to create a test configurator: %v", err)
 	}
+	cnf.isPlus = true // must be for Plus
+
 	expected := createExpectedConfigForCafeIngressEx()
 	expected.Servers[0].JWTAuth = &JWTAuth{
 		Key:                  "/etc/nginx/secrets/default-cafe-jwk",
@@ -689,6 +685,7 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to create a test configurator: %v", err)
 	}
+	cnf.isPlus = true // must be for Plus
 
 	result := cnf.generateNginxCfgForMergeableIngresses(mergeableIngresses)
 
@@ -818,8 +815,6 @@ func TestUpdateEndpoints(t *testing.T) {
 		t.Errorf("UpdateEndpoints returned\n%v, but expected \n%v", err, nil)
 	}
 
-	// test with OSS Configurator
-	cnf.nginxAPI = nil
 	err = cnf.UpdateEndpoints(ingresses)
 	if err != nil {
 		t.Errorf("UpdateEndpoints returned\n%v, but expected \n%v", err, nil)
@@ -839,8 +834,6 @@ func TestUpdateEndpointsMergeableIngress(t *testing.T) {
 		t.Errorf("UpdateEndpointsMergeableIngress returned \n%v, but expected \n%v", err, nil)
 	}
 
-	// test with OSS Configurator
-	cnf.nginxAPI = nil
 	err = cnf.UpdateEndpointsMergeableIngress(mergeableIngresses)
 	if err != nil {
 		t.Errorf("UpdateEndpointsMergeableIngress returned \n%v, but expected \n%v", err, nil)
