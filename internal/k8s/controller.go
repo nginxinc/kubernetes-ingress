@@ -120,7 +120,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(glog.Infof)
 	eventBroadcaster.StartRecordingToSink(&core_v1.EventSinkImpl{
-		Interface: core_v1.New(input.KubeClient.Core().RESTClient()).Events(""),
+		Interface: core_v1.New(input.KubeClient.CoreV1().RESTClient()).Events(""),
 	})
 	lbc.recorder = eventBroadcaster.NewRecorder(scheme.Scheme,
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
@@ -183,7 +183,7 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 func (lbc *LoadBalancerController) addSecretHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.secretLister.Store, lbc.secretController = cache.NewInformer(
 		cache.NewListWatchFromClient(
-			lbc.client.Core().RESTClient(),
+			lbc.client.CoreV1().RESTClient(),
 			"secrets",
 			lbc.namespace,
 			fields.Everything()),
@@ -197,7 +197,7 @@ func (lbc *LoadBalancerController) addSecretHandler(handlers cache.ResourceEvent
 func (lbc *LoadBalancerController) addServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.svcLister, lbc.svcController = cache.NewInformer(
 		cache.NewListWatchFromClient(
-			lbc.client.Core().RESTClient(),
+			lbc.client.CoreV1().RESTClient(),
 			"services",
 			lbc.namespace,
 			fields.Everything()),
@@ -211,7 +211,7 @@ func (lbc *LoadBalancerController) addServiceHandler(handlers cache.ResourceEven
 func (lbc *LoadBalancerController) addIngressHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.ingressLister.Store, lbc.ingressController = cache.NewInformer(
 		cache.NewListWatchFromClient(
-			lbc.client.Extensions().RESTClient(),
+			lbc.client.ExtensionsV1beta1().RESTClient(),
 			"ingresses",
 			lbc.namespace,
 			fields.Everything()),
@@ -225,7 +225,7 @@ func (lbc *LoadBalancerController) addIngressHandler(handlers cache.ResourceEven
 func (lbc *LoadBalancerController) addEndpointHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.endpointLister.Store, lbc.endpointController = cache.NewInformer(
 		cache.NewListWatchFromClient(
-			lbc.client.Core().RESTClient(),
+			lbc.client.CoreV1().RESTClient(),
 			"endpoints",
 			lbc.namespace,
 			fields.Everything()),
@@ -239,7 +239,7 @@ func (lbc *LoadBalancerController) addEndpointHandler(handlers cache.ResourceEve
 func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEventHandlerFuncs, namespace string) {
 	lbc.configMapLister.Store, lbc.configMapController = cache.NewInformer(
 		cache.NewListWatchFromClient(
-			lbc.client.Core().RESTClient(),
+			lbc.client.CoreV1().RESTClient(),
 			"configmaps",
 			namespace,
 			fields.Everything()),
@@ -961,7 +961,7 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*conf
 		if jwtKey, exists := ingEx.Ingress.Annotations[configs.JWTKeyAnnotation]; exists {
 			secretName := jwtKey
 
-			secret, err := lbc.client.Core().Secrets(ing.Namespace).Get(secretName, meta_v1.GetOptions{})
+			secret, err := lbc.client.CoreV1().Secrets(ing.Namespace).Get(secretName, meta_v1.GetOptions{})
 			if err != nil {
 				glog.Warningf("Error retrieving secret %v for Ingress %v: %v", secretName, ing.Name, err)
 				secret = nil
@@ -1198,7 +1198,7 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort *api_v1.ServicePort, sv
 		return int32(svcPort.TargetPort.IntValue()), nil
 	}
 
-	pods, err := lbc.client.Core().Pods(svc.Namespace).List(meta_v1.ListOptions{LabelSelector: labels.Set(svc.Spec.Selector).String()})
+	pods, err := lbc.client.CoreV1().Pods(svc.Namespace).List(meta_v1.ListOptions{LabelSelector: labels.Set(svc.Spec.Selector).String()})
 	if err != nil {
 		return 0, fmt.Errorf("Error getting pod information: %v", err)
 	}

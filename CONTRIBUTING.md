@@ -71,3 +71,4 @@ Note: if you’d like to implement a new feature, please consider creating a fea
 * Run `gofmt` over your code to automatically resolve a lot of style issues. Most editors support this running automatically when saving a code file.
 * Run `go lint` and `go vet` on your code too to catch any other issues.
 * Follow this guide on some good practice and idioms for Go -  https://github.com/golang/go/wiki/CodeReviewComments
+* To check for extra issues, install [golangci-lint](https://github.com/golangci/golangci-lint) and run `make lint` or `golangci-lint run`

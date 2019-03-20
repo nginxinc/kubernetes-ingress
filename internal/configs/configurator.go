@@ -122,9 +122,8 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 	var upstreams []Upstream
 	healthChecks := make(map[string]HealthCheck)
 	var keepalive string
-	var removedAnnotations []string
 
-	removedAnnotations = filterMasterAnnotations(mergeableIngs.Master.Ingress.Annotations)
+	removedAnnotations := filterMasterAnnotations(mergeableIngs.Master.Ingress.Annotations)
 	if len(removedAnnotations) != 0 {
 		glog.Errorf("Ingress Resource %v/%v with the annotation 'nginx.org/mergeable-ingress-type' set to 'master' cannot contain the '%v' annotation(s). They will be ignored",
 			mergeableIngs.Master.Ingress.Namespace, mergeableIngs.Master.Ingress.Name, strings.Join(removedAnnotations, ","))
@@ -139,9 +138,8 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 	masterServer = masterNginxCfg.Servers[0]
 	masterServer.Locations = []Location{}
 
-	for _, val := range masterNginxCfg.Upstreams {
-		upstreams = append(upstreams, val)
-	}
+	upstreams = append(upstreams, masterNginxCfg.Upstreams...)
+
 	if masterNginxCfg.Keepalive != "" {
 		keepalive = masterNginxCfg.Keepalive
 	}
@@ -176,9 +174,7 @@ func (cnf *Configurator) generateNginxCfgForMergeableIngresses(mergeableIngs *Me
 			masterServer.JWTRedirectLocations = append(masterServer.JWTRedirectLocations, server.JWTRedirectLocations...)
 		}
 
-		for _, val := range nginxCfg.Upstreams {
-			upstreams = append(upstreams, val)
-		}
+		upstreams = append(upstreams, nginxCfg.Upstreams...)
 	}
 
 	masterServer.HealthChecks = healthChecks
@@ -369,7 +365,7 @@ func (cnf *Configurator) generateNginxCfg(ingEx *IngressEx, pems map[string]stri
 			}
 		}
 
-		if rootLocation == false && ingEx.Ingress.Spec.Backend != nil {
+		if !rootLocation && ingEx.Ingress.Spec.Backend != nil {
 			upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
 
 			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &ingCfg, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName],

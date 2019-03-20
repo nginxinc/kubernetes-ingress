@@ -37,7 +37,10 @@ func TestStatusUpdate(t *testing.T) {
 		cache.NewListWatchFromClient(fakeClient.Extensions().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
 		&extensions.Ingress{}, 2, nil)
 
-	ingLister.Store.Add(&ing)
+	err := ingLister.Store.Add(&ing)
+	if err != nil {
+		t.Errorf("Error adding Ingress to the ingress lister: %v", err)
+	}
 
 	su := statusUpdater{
 		client:                fakeClient,
@@ -47,7 +50,7 @@ func TestStatusUpdate(t *testing.T) {
 		ingLister:             &ingLister,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
-	err := su.ClearIngressStatus(ing)
+	err = su.ClearIngressStatus(ing)
 	if err != nil {
 		t.Errorf("error clearing ing status: %v", err)
 	}
@@ -113,10 +116,7 @@ func TestStatusUpdate(t *testing.T) {
 
 func checkStatus(expected string, actual extensions.Ingress) bool {
 	if len(actual.Status.LoadBalancer.Ingress) == 0 {
-		if expected == "" {
-			return true
-		}
-		return false
+		return expected == ""
 	}
 	return expected == actual.Status.LoadBalancer.Ingress[0].IP
 }

@@ -107,7 +107,11 @@ The external address of the service is used when reporting the status of Ingress
 
 func main() {
 	flag.Parse()
-	flag.Lookup("logtostderr").Value.Set("true")
+
+	err := flag.Lookup("logtostderr").Value.Set("true")
+	if err != nil {
+		glog.Fatalf("Error setting logtostderr to true: %v", err)
+	}
 
 	if *versionFlag {
 		fmt.Printf("Version=%v GitCommit=%v\n", version, gitCommit)
@@ -124,7 +128,6 @@ func main() {
 		glog.Fatalf("Invalid value for prometheus-metrics-listen-port: %v", metricsPortValidationError)
 	}
 
-	var err error
 	allowedCIDRs, err := parseNginxStatusAllowCIDRs(*nginxStatusAllowCIDRs)
 	if err != nil {
 		glog.Fatalf(`Invalid value for nginx-status-allow-cidrs: %v`, err)

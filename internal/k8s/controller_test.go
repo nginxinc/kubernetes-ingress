@@ -159,9 +159,20 @@ func TestIsNginxIngress(t *testing.T) {
 func TestCreateMergableIngresses(t *testing.T) {
 	cafeMaster, coffeeMinion, teaMinion, lbc := getMergableDefaults()
 
-	lbc.ingressLister.Add(&cafeMaster)
-	lbc.ingressLister.Add(&coffeeMinion)
-	lbc.ingressLister.Add(&teaMinion)
+	err := lbc.ingressLister.Add(&cafeMaster)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &cafeMaster.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&coffeeMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &coffeeMinion.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&teaMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &teaMinion.Name, err)
+	}
 
 	mergeableIngresses, err := lbc.createMergableIngresses(&cafeMaster)
 	if err != nil {
@@ -220,10 +231,13 @@ func TestCreateMergableIngressesInvalidMaster(t *testing.T) {
 			},
 		},
 	}
-	lbc.ingressLister.Add(&cafeMaster)
+	err := lbc.ingressLister.Add(&cafeMaster)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &cafeMaster.Name, err)
+	}
 
 	expected := fmt.Errorf("Ingress Resource %v/%v with the 'nginx.org/mergeable-ingress-type' annotation set to 'master' cannot contain Paths", cafeMaster.Namespace, cafeMaster.Name)
-	_, err := lbc.createMergableIngresses(&cafeMaster)
+	_, err = lbc.createMergableIngresses(&cafeMaster)
 	if !reflect.DeepEqual(err, expected) {
 		t.Errorf("Error Validating the Ingress Resource: \n Expected: %s \n Obtained: %s", expected, err)
 	}
@@ -237,9 +251,20 @@ func TestFindMasterForMinion(t *testing.T) {
 		Paths: []extensions.HTTPIngressPath{},
 	}
 
-	lbc.ingressLister.Add(&cafeMaster)
-	lbc.ingressLister.Add(&coffeeMinion)
-	lbc.ingressLister.Add(&teaMinion)
+	err := lbc.ingressLister.Add(&cafeMaster)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &cafeMaster.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&coffeeMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &coffeeMinion.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&teaMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &teaMinion.Name, err)
+	}
 
 	master, err := lbc.FindMasterForMinion(&coffeeMinion)
 	if err != nil {
@@ -261,11 +286,18 @@ func TestFindMasterForMinion(t *testing.T) {
 func TestFindMasterForMinionNoMaster(t *testing.T) {
 	_, coffeeMinion, teaMinion, lbc := getMergableDefaults()
 
-	lbc.ingressLister.Add(&coffeeMinion)
-	lbc.ingressLister.Add(&teaMinion)
+	err := lbc.ingressLister.Add(&coffeeMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &coffeeMinion.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&teaMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &teaMinion.Name, err)
+	}
 
 	expected := fmt.Errorf("Could not find a Master for Minion: '%v/%v'", coffeeMinion.Namespace, coffeeMinion.Name)
-	_, err := lbc.FindMasterForMinion(&coffeeMinion)
+	_, err = lbc.FindMasterForMinion(&coffeeMinion)
 	if !reflect.DeepEqual(err, expected) {
 		t.Errorf("Expected: %s \nObtained: %s", expected, err)
 	}
@@ -291,8 +323,15 @@ func TestFindMasterForMinionInvalidMinion(t *testing.T) {
 		},
 	}
 
-	lbc.ingressLister.Add(&cafeMaster)
-	lbc.ingressLister.Add(&coffeeMinion)
+	err := lbc.ingressLister.Add(&cafeMaster)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &cafeMaster.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&coffeeMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &coffeeMinion.Name, err)
+	}
 
 	master, err := lbc.FindMasterForMinion(&coffeeMinion)
 	if err != nil {
@@ -311,9 +350,20 @@ func TestGetMinionsForMaster(t *testing.T) {
 		Paths: []extensions.HTTPIngressPath{},
 	}
 
-	lbc.ingressLister.Add(&cafeMaster)
-	lbc.ingressLister.Add(&coffeeMinion)
-	lbc.ingressLister.Add(&teaMinion)
+	err := lbc.ingressLister.Add(&cafeMaster)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &cafeMaster.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&coffeeMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &coffeeMinion.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&teaMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &teaMinion.Name, err)
+	}
 
 	cafeMasterIngEx, err := lbc.createIngress(&cafeMaster)
 	if err != nil {
@@ -364,9 +414,20 @@ func TestGetMinionsForMasterInvalidMinion(t *testing.T) {
 		},
 	}
 
-	lbc.ingressLister.Add(&cafeMaster)
-	lbc.ingressLister.Add(&coffeeMinion)
-	lbc.ingressLister.Add(&teaMinion)
+	err := lbc.ingressLister.Add(&cafeMaster)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &cafeMaster.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&coffeeMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &coffeeMinion.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&teaMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &teaMinion.Name, err)
+	}
 
 	cafeMasterIngEx, err := lbc.createIngress(&cafeMaster)
 	if err != nil {
@@ -421,9 +482,20 @@ func TestGetMinionsForMasterConflictingPaths(t *testing.T) {
 		},
 	})
 
-	lbc.ingressLister.Add(&cafeMaster)
-	lbc.ingressLister.Add(&coffeeMinion)
-	lbc.ingressLister.Add(&teaMinion)
+	err := lbc.ingressLister.Add(&cafeMaster)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &cafeMaster.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&coffeeMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &coffeeMinion.Name, err)
+	}
+
+	err = lbc.ingressLister.Add(&teaMinion)
+	if err != nil {
+		t.Errorf("Error adding Ingress %v to the ingress lister: %v", &teaMinion.Name, err)
+	}
 
 	cafeMasterIngEx, err := lbc.createIngress(&cafeMaster)
 	if err != nil {
@@ -572,26 +644,6 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 	lbc.ingressLister.Store, _ = cache.NewInformer(
 		cache.NewListWatchFromClient(lbc.client.ExtensionsV1beta1().RESTClient(), "ingresses", "default", fields.Everything()),
 		&extensions.Ingress{}, time.Duration(1), nil)
-	coffeeService := v1.Service{
-		TypeMeta: meta_v1.TypeMeta{},
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "coffee-svc",
-			Namespace: "default",
-		},
-		Spec:   v1.ServiceSpec{},
-		Status: v1.ServiceStatus{},
-	}
-	teaService := v1.Service{
-		TypeMeta: meta_v1.TypeMeta{},
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "coffee-svc",
-			Namespace: "default",
-		},
-		Spec:   v1.ServiceSpec{},
-		Status: v1.ServiceStatus{},
-	}
-	lbc.svcLister.Add(coffeeService)
-	lbc.svcLister.Add(teaService)
 
 	return
 }
@@ -949,7 +1001,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 				&extensions.Ingress{}, time.Duration(1), nil)
 
 			lbc.secretLister.Store, lbc.secretController = cache.NewInformer(
-				cache.NewListWatchFromClient(lbc.client.Core().RESTClient(), "secrets", "default", fields.Everything()),
+				cache.NewListWatchFromClient(lbc.client.CoreV1().RESTClient(), "secrets", "default", fields.Everything()),
 				&v1.Secret{}, time.Duration(1), nil)
 
 			ngxIngress := &configs.IngressEx{
@@ -964,8 +1016,15 @@ func TestFindIngressesForSecret(t *testing.T) {
 				t.Fatalf("Ingress was not added: %v", err)
 			}
 
-			lbc.ingressLister.Add(&test.ingress)
-			lbc.secretLister.Add(&test.secret)
+			err = lbc.ingressLister.Add(&test.ingress)
+			if err != nil {
+				t.Errorf("Error adding Ingress %v to the ingress lister: %v", &test.ingress.Name, err)
+			}
+
+			err = lbc.secretLister.Add(&test.secret)
+			if err != nil {
+				t.Errorf("Error adding Secret %v to the secret lister: %v", &test.secret.Name, err)
+			}
 
 			ings, err := lbc.findIngressesForSecret(test.secret.Namespace, test.secret.Name)
 			if err != nil {
@@ -1130,7 +1189,7 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 				&extensions.Ingress{}, time.Duration(1), nil)
 
 			lbc.secretLister.Store, lbc.secretController = cache.NewInformer(
-				cache.NewListWatchFromClient(lbc.client.Core().RESTClient(), "secrets", "default", fields.Everything()),
+				cache.NewListWatchFromClient(lbc.client.CoreV1().RESTClient(), "secrets", "default", fields.Everything()),
 				&v1.Secret{}, time.Duration(1), nil)
 
 			mergeable := &configs.MergeableIngresses{
@@ -1152,9 +1211,20 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 				t.Fatalf("Ingress was not added: %v", err)
 			}
 
-			lbc.ingressLister.Add(&master)
-			lbc.ingressLister.Add(&test.ingress)
-			lbc.secretLister.Add(&test.secret)
+			err = lbc.ingressLister.Add(&master)
+			if err != nil {
+				t.Errorf("Error adding Ingress %v to the ingress lister: %v", &master.Name, err)
+			}
+
+			err = lbc.ingressLister.Add(&test.ingress)
+			if err != nil {
+				t.Errorf("Error adding Ingress %v to the ingress lister: %v", &test.ingress.Name, err)
+			}
+
+			err = lbc.secretLister.Add(&test.secret)
+			if err != nil {
+				t.Errorf("Error adding Secret %v to the secret lister: %v", &test.secret.Name, err)
+			}
 
 			ings, err := lbc.findIngressesForSecret(test.secret.Namespace, test.secret.Name)
 			if err != nil {

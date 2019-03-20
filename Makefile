@@ -24,6 +24,9 @@ else
 	CGO_ENABLED=0 GOOS=linux go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 endif
 
+lint:
+	golangci-lint run
+
 test:
 ifeq ($(BUILD_IN_CONTAINER),1)
 	$(DOCKER_RUN) $(GOLANG_CONTAINER) go test ./...

@@ -27,12 +27,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-// compareLinks returns true if the 2 self links are equal.
-func compareLinks(l1, l2 string) bool {
-	// TODO: These can be partial links
-	return l1 == l2 && l1 != ""
-}
-
 // storeToIngressLister makes a Store that lists Ingress.
 // TODO: Move this to cache/listers post 1.1.
 type storeToIngressLister struct {
@@ -148,18 +142,12 @@ type storeToSecretLister struct {
 
 // isMinion determines is an ingress is a minion or not
 func isMinion(ing *v1beta1.Ingress) bool {
-	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "minion" {
-		return true
-	}
-	return false
+	return ing.Annotations["nginx.org/mergeable-ingress-type"] == "minion"
 }
 
 // isMaster determines is an ingress is a master or not
 func isMaster(ing *v1beta1.Ingress) bool {
-	if ing.Annotations["nginx.org/mergeable-ingress-type"] == "master" {
-		return true
-	}
-	return false
+	return ing.Annotations["nginx.org/mergeable-ingress-type"] == "master"
 }
 
 // hasChanges determines if current ingress has changes compared to old ingress

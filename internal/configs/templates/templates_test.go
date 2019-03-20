@@ -116,7 +116,7 @@ func TestIngressForNGINXPlus(t *testing.T) {
 	var buf bytes.Buffer
 
 	err = tmpl.Execute(&buf, ingCfg)
-	t.Log(string(buf.Bytes()))
+	t.Log(buf.String())
 	if err != nil {
 		t.Fatalf("Failed to write template %v", err)
 	}
@@ -131,7 +131,7 @@ func TestIngressForNGINX(t *testing.T) {
 	var buf bytes.Buffer
 
 	err = tmpl.Execute(&buf, ingCfg)
-	t.Log(string(buf.Bytes()))
+	t.Log(buf.String())
 	if err != nil {
 		t.Fatalf("Failed to write template %v", err)
 	}
@@ -146,7 +146,7 @@ func TestMainForNGINXPlus(t *testing.T) {
 	var buf bytes.Buffer
 
 	err = tmpl.Execute(&buf, mainCfg)
-	t.Log(string(buf.Bytes()))
+	t.Log(buf.String())
 	if err != nil {
 		t.Fatalf("Failed to write template %v", err)
 	}
@@ -161,7 +161,7 @@ func TestMainForNGINX(t *testing.T) {
 	var buf bytes.Buffer
 
 	err = tmpl.Execute(&buf, mainCfg)
-	t.Log(string(buf.Bytes()))
+	t.Log(buf.String())
 	if err != nil {
 		t.Fatalf("Failed to write template %v", err)
 	}

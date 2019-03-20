@@ -195,12 +195,6 @@ func (nginx *Controller) Quit() {
 	}
 }
 
-func createDir(path string) {
-	if err := os.Mkdir(path, os.ModeDir); err != nil {
-		glog.Fatalf("Couldn't create directory %v: %v", path, err)
-	}
-}
-
 func shellOut(cmd string) (err error) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
