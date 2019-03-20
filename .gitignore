@@ -41,3 +41,6 @@ default.pem
 
 # Dockerfiles for building
 Dockerfile
+
+# IntelliJ IDEA
+.idea
