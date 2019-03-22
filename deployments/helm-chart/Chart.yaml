@@ -1,16 +1,14 @@
 name: nginx-ingress
-version: 0.3.4
+version: 0.3.5
 appVersion: edge
 description: NGINX Ingress Controller
-icon: https://www.nginx.com/wp-content/uploads/2018/08/icon-NGINX-OSS-2.svg
+icon: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/.github/chart-icon.png
 sources:
   - https://github.com/nginxinc/kubernetes-ingress/tree/master/deployment/helm-chart
 keywords:
   - ingress
   - nginx
 maintainers:
-  - name: Damian Curry
-    email: damian.curry@nginx.com
-  - name: Dean Coakley
-    email: dean.coakley@nginx.com
+  - name: NGINX Kubernetes Team
+    email: kubernetes@nginx.com
 
