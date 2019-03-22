@@ -85,7 +85,7 @@ $ kubectl get pods --namespace=nginx-ingress
 
 ## 4. Get Access to the Ingress Controller
 
-**If you created a daemonset**, ports 80 and 443 of the Ingress controller container are mapped to the same ports of the node where the container is running. To access the Ingress controller, use those ports and an IP address of any node of the cluster where the Ingress controller is running. Make sure the firewall ports of your nodes are open by creating the cluster with the correct network tags, editing the node template or manually opening them your self.
+**If you created a daemonset**, ports 80 and 443 of the Ingress controller container are mapped to the same ports of the node where the container is running. To access the Ingress controller, use those ports and an IP address of any node of the cluster where the Ingress controller is running. Make sure the firewall ports of your nodes are open by creating the cluster with the correct network tags, editing the node template or manually opening them yourself.
 
 **If you created a deployment**, below are two options for accessing the Ingress controller pods.
 
