@@ -14,7 +14,7 @@ spec:
         app: nginx-ingress
      #annotations:
        #prometheus.io/scrape: "true"
-       #prometheus.io/port: 9113
+       #prometheus.io/port: "9113"
     spec:
       serviceAccountName: nginx-ingress
       containers:
