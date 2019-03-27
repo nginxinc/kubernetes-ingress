@@ -8,6 +8,7 @@ import (
 	"unsafe"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	"k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
@@ -620,7 +621,7 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 	cafeMasterIngEx, _ := lbc.createIngress(&cafeMaster)
 	ingExMap["default-cafe-master"] = cafeMasterIngEx
 
-	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.Config{}, &configs.TemplateExecutor{}, false, false)
+	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, false, false)
 
 	// edit private field ingresses to use in testing
 	pointerVal := reflect.ValueOf(cnf)
@@ -833,7 +834,7 @@ func TestFindProbeForPods(t *testing.T) {
 
 func TestGetServicePortForIngressPort(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.Config{}, &configs.TemplateExecutor{}, false, false)
+	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, false, false)
 	lbc := LoadBalancerController{
 		client:       fakeClient,
 		ingressClass: "nginx",
@@ -977,13 +978,13 @@ func TestFindIngressesForSecret(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			fakeClient := fake.NewSimpleClientset()
 
-			templateExecutor, err := configs.NewTemplateExecutor("../configs/templates/nginx-plus.tmpl", "../configs/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
+			templateExecutor, err := version1.NewTemplateExecutor("../configs/version1/nginx-plus.tmpl", "../configs/version1/nginx-plus.ingress.tmpl")
 			if err != nil {
 				t.Fatalf("templateExecuter could not start: %v", err)
 			}
 			manager := nginx.NewFakeManager("/etc/nginx")
 
-			cnf := configs.NewConfigurator(manager, &configs.Config{}, templateExecutor, false, false)
+			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, templateExecutor, false, false)
 			lbc := LoadBalancerController{
 				client:       fakeClient,
 				ingressClass: "nginx",
@@ -1161,13 +1162,13 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 		t.Run(test.desc, func(t *testing.T) {
 			fakeClient := fake.NewSimpleClientset()
 
-			templateExecutor, err := configs.NewTemplateExecutor("../configs/templates/nginx-plus.tmpl", "../configs/templates/nginx-plus.ingress.tmpl", true, true, []string{"127.0.0.1"}, 8080, false)
+			templateExecutor, err := version1.NewTemplateExecutor("../configs/version1/nginx-plus.tmpl", "../configs/version1/nginx-plus.ingress.tmpl")
 			if err != nil {
 				t.Fatalf("templateExecuter could not start: %v", err)
 			}
 			manager := nginx.NewFakeManager("/etc/nginx")
 
-			cnf := configs.NewConfigurator(manager, &configs.Config{}, templateExecutor, false, false)
+			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, templateExecutor, false, false)
 			lbc := LoadBalancerController{
 				client:       fakeClient,
 				ingressClass: "nginx",

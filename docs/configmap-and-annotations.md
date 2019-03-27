@@ -115,8 +115,8 @@ spec:
 | ---------- | -------------- | ----------- | ------- | ------- |
 | N/A | `error-log-level` | Sets the global [error log level](http://nginx.org/en/docs/ngx_core_module.html#error_log) for NGINX.  | `notice` | |
 | N/A | `access-log-off` | Disables the [access log](http://nginx.org/en/docs/http/ngx_http_log_module.html#access_log). | `False` | |
-| N/A | `log-format` | Sets the custom [log format](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).  | See the [template file](../internal/configs/templates/nginx.tmpl) for the access log. | |
-| N/A | `stream-log-format` | Sets the custom [log format](http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format) for TCP/UDP load balancing.  | See the [template file](../internal/configs/templates/nginx.tmpl). | |
+| N/A | `log-format` | Sets the custom [log format](http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format).  | See the [template file](../internal/configs/version1/nginx.tmpl) for the access log. | |
+| N/A | `stream-log-format` | Sets the custom [log format](http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format) for TCP/UDP load balancing.  | See the [template file](../internal/configs/version1/nginx.tmpl). | |
 
 ### Request URI/Header Manipulation
 

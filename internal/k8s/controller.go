@@ -350,11 +350,11 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		lbc.syncQueue.Requeue(task, err)
 		return
 	}
-	cfg := configs.NewDefaultConfig()
+	cfgParams := configs.NewDefaultConfigParams()
 
 	if configExists {
 		cfgm := obj.(*api_v1.ConfigMap)
-		cfg = configs.ParseConfigMap(cfgm, lbc.isNginxPlus)
+		cfgParams = configs.ParseConfigMap(cfgm, lbc.isNginxPlus)
 
 		lbc.statusUpdater.SaveStatusFromExternalStatus(cfgm.Data["external-status-address"])
 	}
@@ -369,7 +369,7 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		}
 	}
 
-	updateErr := lbc.configurator.UpdateConfig(cfg, ingExes, mergeableIngresses)
+	updateErr := lbc.configurator.UpdateConfig(cfgParams, ingExes, mergeableIngresses)
 
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal
@@ -722,15 +722,21 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 	title := "Updated"
 	message := fmt.Sprintf("Configuration was updated due to updated secret %v", secretNsName)
 
-	regular, mergeable := lbc.createIngresses(ings)
+	// we can safely ignore the error because the secret is valid in this function
+	kind, _ := GetSecretKind(secret)
 
-	if err := lbc.configurator.AddOrUpdateSecret(secret, regular, mergeable); err != nil {
-		glog.Errorf("Error when updating Secret %v: %v", secretNsName, err)
-		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, err)
+	if kind == JWK {
+		lbc.configurator.AddOrUpdateJWKSecret(secret)
+	} else {
+		regular, mergeable := lbc.createIngresses(ings)
+		if err := lbc.configurator.AddOrUpdateTLSSecret(secret, regular, mergeable); err != nil {
+			glog.Errorf("Error when updating Secret %v: %v", secretNsName, err)
+			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, err)
 
-		eventType = api_v1.EventTypeWarning
-		title = "UpdatedWithError"
-		message = fmt.Sprintf("Configuration was updated due to updated secret %v, but not applied: %v", secretNsName, err)
+			eventType = api_v1.EventTypeWarning
+			title = "UpdatedWithError"
+			message = fmt.Sprintf("Configuration was updated due to updated secret %v, but not applied: %v", secretNsName, err)
+		}
 	}
 
 	lbc.emitEventForIngresses(eventType, title, message, ings)
@@ -739,7 +745,7 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
 	var specialSecretsToUpdate []string
 	secretNsName := secret.Namespace + "/" + secret.Name
-	err := configs.ValidateTLSSecret(secret)
+	err := ValidateTLSSecret(secret)
 	if err != nil {
 		glog.Errorf("Couldn't validate the special Secret %v: %v", secretNsName, err)
 		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "the special Secret %v was rejected, using the previous version: %v", secretNsName, err)
@@ -753,7 +759,7 @@ func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secr
 		specialSecretsToUpdate = append(specialSecretsToUpdate, configs.WildcardSecretName)
 	}
 
-	err = lbc.configurator.AddOrUpdateSpecialSecrets(secret, specialSecretsToUpdate)
+	err = lbc.configurator.AddOrUpdateSpecialTLSSecrets(secret, specialSecretsToUpdate)
 	if err != nil {
 		glog.Errorf("Error when updating the special Secret %v: %v", secretNsName, err)
 		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "the special Secret %v was updated, but not applied: %v", secretNsName, err)
@@ -933,7 +939,7 @@ func (lbc *LoadBalancerController) getAndValidateSecret(secretKey string) (*api_
 	}
 	secret := secretObject.(*api_v1.Secret)
 
-	err = configs.ValidateTLSSecret(secret)
+	err = ValidateTLSSecret(secret)
 	if err != nil {
 		return nil, fmt.Errorf("error validating secret %v", secretKey)
 	}
@@ -966,7 +972,7 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*conf
 				glog.Warningf("Error retrieving secret %v for Ingress %v: %v", secretName, ing.Name, err)
 				secret = nil
 			} else {
-				err = configs.ValidateJWKSecret(secret)
+				err = ValidateJWKSecret(secret)
 				if err != nil {
 					glog.Warningf("Error validating secret %v for Ingress %v: %v", secretName, ing.Name, err)
 					secret = nil
@@ -1257,12 +1263,12 @@ func (lbc *LoadBalancerController) isHealthCheckEnabled(ing *extensions.Ingress)
 // ValidateSecret validates that the secret follows the TLS Secret format.
 // For NGINX Plus, it also checks if the secret follows the JWK Secret format.
 func (lbc *LoadBalancerController) ValidateSecret(secret *api_v1.Secret) error {
-	err1 := configs.ValidateTLSSecret(secret)
+	err1 := ValidateTLSSecret(secret)
 	if !lbc.isNginxPlus {
 		return err1
 	}
 
-	err2 := configs.ValidateJWKSecret(secret)
+	err2 := ValidateJWKSecret(secret)
 
 	if err1 == nil || err2 == nil {
 		return nil

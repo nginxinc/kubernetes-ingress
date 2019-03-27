@@ -1,6 +1,6 @@
-package configs
+package version1
 
-// IngressNginxConfig describes an NGINX configuration
+// IngressNginxConfig describes an NGINX configuration.
 type IngressNginxConfig struct {
 	Upstreams []Upstream
 	Servers   []Server
@@ -8,14 +8,14 @@ type IngressNginxConfig struct {
 	Ingress   Ingress
 }
 
-// Ingress holds information about an Ingress resource
+// Ingress holds information about an Ingress resource.
 type Ingress struct {
 	Name        string
 	Namespace   string
 	Annotations map[string]string
 }
 
-// Upstream describes an NGINX upstream
+// Upstream describes an NGINX upstream.
 type Upstream struct {
 	Name            string
 	UpstreamServers []UpstreamServer
@@ -25,7 +25,7 @@ type Upstream struct {
 	QueueTimeout    int64
 }
 
-// UpstreamServer describes a server in an NGINX upstream
+// UpstreamServer describes a server in an NGINX upstream.
 type UpstreamServer struct {
 	Address     string
 	Port        string
@@ -35,7 +35,7 @@ type UpstreamServer struct {
 	Resolve     bool
 }
 
-// HealthCheck describes an active HTTP health check
+// HealthCheck describes an active HTTP health check.
 type HealthCheck struct {
 	UpstreamName   string
 	URI            string
@@ -48,7 +48,7 @@ type HealthCheck struct {
 	TimeoutSeconds int64
 }
 
-// Server describes an NGINX server
+// Server describes an NGINX server.
 type Server struct {
 	ServerSnippets        []string
 	Name                  string
@@ -73,7 +73,6 @@ type Server struct {
 
 	HealthChecks map[string]HealthCheck
 
-	// http://nginx.org/en/docs/http/ngx_http_realip_module.html
 	RealIPHeader    string
 	SetRealIPFrom   []string
 	RealIPRecursive bool
@@ -85,13 +84,13 @@ type Server struct {
 	SSLPorts []int
 }
 
-// JWTRedirectLocation describes a location for redirecting client requests to a login URL for JWT Authentication
+// JWTRedirectLocation describes a location for redirecting client requests to a login URL for JWT Authentication.
 type JWTRedirectLocation struct {
 	Name     string
 	LoginURL string
 }
 
-// JWTAuth holds JWT authentication configuration
+// JWTAuth holds JWT authentication configuration.
 type JWTAuth struct {
 	Key                  string
 	Realm                string
@@ -99,7 +98,7 @@ type JWTAuth struct {
 	RedirectLocationName string
 }
 
-// Location describes an NGINX location
+// Location describes an NGINX location.
 type Location struct {
 	LocationSnippets     []string
 	Path                 string
@@ -120,7 +119,7 @@ type Location struct {
 	MinionIngress *Ingress
 }
 
-// MainConfig describe the main NGINX configuration file
+// MainConfig describe the main NGINX configuration file.
 type MainConfig struct {
 	ServerNamesHashBucketSize      string
 	ServerNamesHashMaxSize         string
@@ -136,30 +135,29 @@ type MainConfig struct {
 	MainSnippets                   []string
 	HTTPSnippets                   []string
 	StreamSnippets                 []string
-	// http://nginx.org/en/docs/http/ngx_http_ssl_module.html
-	SSLProtocols           string
-	SSLPreferServerCiphers bool
-	SSLCiphers             string
-	SSLDHParam             string
-	HTTP2                  bool
-	ServerTokens           string
-	ProxyProtocol          bool
-	WorkerProcesses        string
-	WorkerCPUAffinity      string
-	WorkerShutdownTimeout  string
-	WorkerConnections      string
-	WorkerRlimitNofile     string
-	ResolverAddresses      []string
-	ResolverIPV6           bool
-	ResolverValid          string
-	ResolverTimeout        string
-	KeepaliveTimeout       string
-	KeepaliveRequests      int64
+	SSLProtocols                   string
+	SSLPreferServerCiphers         bool
+	SSLCiphers                     string
+	SSLDHParam                     string
+	HTTP2                          bool
+	ServerTokens                   string
+	ProxyProtocol                  bool
+	WorkerProcesses                string
+	WorkerCPUAffinity              string
+	WorkerShutdownTimeout          string
+	WorkerConnections              string
+	WorkerRlimitNofile             string
+	ResolverAddresses              []string
+	ResolverIPV6                   bool
+	ResolverValid                  string
+	ResolverTimeout                string
+	KeepaliveTimeout               string
+	KeepaliveRequests              int64
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.
 // proxy_pass to an upstream with the default server returns 502.
-// We use it for services that have no endpoints
+// We use it for services that have no endpoints.
 func NewUpstreamWithDefaultServer(name string) Upstream {
 	return Upstream{
 		Name: name,

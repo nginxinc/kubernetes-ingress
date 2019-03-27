@@ -14,6 +14,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
@@ -178,7 +179,7 @@ func main() {
 		nginxBinaryPath = "/usr/sbin/nginx-debug"
 	}
 
-	templateExecutor, err := configs.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath, *healthStatus, *nginxStatus, allowedCIDRs, *nginxStatusPort, *enablePrometheusMetrics)
+	templateExecutor, err := version1.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath)
 	if err != nil {
 		glog.Fatalf("Error creating TemplateExecutor: %v", err)
 	}
@@ -217,7 +218,7 @@ func main() {
 		nginxManager.CreateSecret(configs.WildcardSecretName, bytes, nginx.TLSSecretFileMode)
 	}
 
-	cfg := configs.NewDefaultConfig()
+	cfgParams := configs.NewDefaultConfigParams()
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
 		if err != nil {
@@ -227,30 +228,38 @@ func main() {
 		if err != nil {
 			glog.Fatalf("Error when getting %v: %v", *nginxConfigMaps, err)
 		}
-		cfg = configs.ParseConfigMap(cfm, *nginxPlus)
-		if cfg.MainServerSSLDHParamFileContent != nil {
-			fileName, err := nginxManager.CreateDHParam(*cfg.MainServerSSLDHParamFileContent)
+		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus)
+		if cfgParams.MainServerSSLDHParamFileContent != nil {
+			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
 			if err != nil {
 				glog.Fatalf("Configmap %s/%s: Could not update dhparams: %v", ns, name, err)
 			} else {
-				cfg.MainServerSSLDHParam = fileName
+				cfgParams.MainServerSSLDHParam = fileName
 			}
 		}
-		if cfg.MainTemplate != nil {
-			err = templateExecutor.UpdateMainTemplate(cfg.MainTemplate)
+		if cfgParams.MainTemplate != nil {
+			err = templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
 			if err != nil {
 				glog.Fatalf("Error updating NGINX main template: %v", err)
 			}
 		}
-		if cfg.IngressTemplate != nil {
-			err = templateExecutor.UpdateIngressTemplate(cfg.IngressTemplate)
+		if cfgParams.IngressTemplate != nil {
+			err = templateExecutor.UpdateIngressTemplate(cfgParams.IngressTemplate)
 			if err != nil {
 				glog.Fatalf("Error updating ingress template: %v", err)
 			}
 		}
 	}
 
-	ngxConfig := configs.GenerateNginxMainConfig(cfg)
+	staticCfgParams := &configs.StaticConfigParams{
+		HealthStatus:                   *healthStatus,
+		NginxStatus:                    *nginxStatus,
+		NginxStatusAllowCIDRs:          allowedCIDRs,
+		NginxStatusPort:                *nginxStatusPort,
+		StubStatusOverUnixSocketForOSS: *enablePrometheusMetrics,
+	}
+
+	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
 	content, err := templateExecutor.ExecuteMainConfigTemplate(ngxConfig)
 	if err != nil {
 		glog.Fatalf("Error generating NGINX main config: %v", err)
@@ -272,7 +281,7 @@ func main() {
 	}
 
 	isWildcardEnabled := *wildcardTLSSecret != ""
-	cnf := configs.NewConfigurator(nginxManager, cfg, templateExecutor, *nginxPlus, isWildcardEnabled)
+	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, templateExecutor, *nginxPlus, isWildcardEnabled)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
@@ -410,7 +419,7 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	if err != nil {
 		return nil, fmt.Errorf("could not get %v: %v", secretNsName, err)
 	}
-	err = configs.ValidateTLSSecret(secret)
+	err = k8s.ValidateTLSSecret(secret)
 	if err != nil {
 		return nil, fmt.Errorf("%v is invalid: %v", secretNsName, err)
 	}

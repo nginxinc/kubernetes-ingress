@@ -1,11 +1,9 @@
-package templates
+package version1
 
 import (
 	"bytes"
 	"testing"
 	"text/template"
-
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 )
 
 const nginxIngressTmpl = "nginx.ingress.tmpl"
@@ -13,9 +11,9 @@ const nginxMainTmpl = "nginx.tmpl"
 const nginxPlusIngressTmpl = "nginx-plus.ingress.tmpl"
 const nginxPlusMainTmpl = "nginx-plus.tmpl"
 
-var testUps = configs.Upstream{
+var testUps = Upstream{
 	Name: "test",
-	UpstreamServers: []configs.UpstreamServer{
+	UpstreamServers: []UpstreamServer{
 		{
 			Address:     "127.0.0.1",
 			Port:        "8181",
@@ -27,7 +25,7 @@ var testUps = configs.Upstream{
 }
 
 var headers = map[string]string{"Test-Header": "test-header-value"}
-var healthCheck = configs.HealthCheck{
+var healthCheck = HealthCheck{
 	UpstreamName: "test",
 	Fails:        1,
 	Interval:     1,
@@ -35,14 +33,14 @@ var healthCheck = configs.HealthCheck{
 	Headers:      headers,
 }
 
-var ingCfg = configs.IngressNginxConfig{
+var ingCfg = IngressNginxConfig{
 
-	Servers: []configs.Server{
+	Servers: []Server{
 		{
 			Name:         "test.example.com",
 			ServerTokens: "off",
 			StatusZone:   "test.example.com",
-			JWTAuth: &configs.JWTAuth{
+			JWTAuth: &JWTAuth{
 				Key:                  "/etc/nginx/secrets/key.jwk",
 				Realm:                "closed site",
 				Token:                "$cookie_auth_token",
@@ -54,26 +52,26 @@ var ingCfg = configs.IngressNginxConfig{
 			SSLCiphers:        "NULL",
 			SSLPorts:          []int{443},
 			SSLRedirect:       true,
-			Locations: []configs.Location{
+			Locations: []Location{
 				{
 					Path:                "/tea",
 					Upstream:            testUps,
 					ProxyConnectTimeout: "10s",
 					ProxyReadTimeout:    "10s",
 					ClientMaxBodySize:   "2m",
-					JWTAuth: &configs.JWTAuth{
+					JWTAuth: &JWTAuth{
 						Key:   "/etc/nginx/secrets/location-key.jwk",
 						Realm: "closed site",
 						Token: "$cookie_auth_token",
 					},
-					MinionIngress: &configs.Ingress{
+					MinionIngress: &Ingress{
 						Name:      "tea-minion",
 						Namespace: "default",
 					},
 				},
 			},
-			HealthChecks: map[string]configs.HealthCheck{"test": healthCheck},
-			JWTRedirectLocations: []configs.JWTRedirectLocation{
+			HealthChecks: map[string]HealthCheck{"test": healthCheck},
+			JWTRedirectLocations: []JWTRedirectLocation{
 				{
 					Name:     "@login_url-default-cafe-ingress",
 					LoginURL: "https://test.example.com/login",
@@ -81,15 +79,15 @@ var ingCfg = configs.IngressNginxConfig{
 			},
 		},
 	},
-	Upstreams: []configs.Upstream{testUps},
+	Upstreams: []Upstream{testUps},
 	Keepalive: "16",
-	Ingress: configs.Ingress{
+	Ingress: Ingress{
 		Name:      "cafe-ingress",
 		Namespace: "default",
 	},
 }
 
-var mainCfg = configs.MainConfig{
+var mainCfg = MainConfig{
 	ServerNamesHashMaxSize: "512",
 	ServerTokens:           "off",
 	WorkerProcesses:        "auto",
