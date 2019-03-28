@@ -1,5 +1,14 @@
 # Changelog
 
+### 1.4.5
+
+CHANGES:
+* Update NGINX version to 1.15.10.
+
+UPGRADE:
+* For NGINX, use the 1.4.5 image from our DockerHub: `nginx/nginx-ingress:1.4.5` or `nginx/nginx-ingress:1.4.5-alpine`
+* For NGINX Plus, please build your own image using the 1.4.5 source code.
+
 ### 1.4.4
 
 CHANGES:

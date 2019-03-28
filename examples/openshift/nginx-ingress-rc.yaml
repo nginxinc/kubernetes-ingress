@@ -15,7 +15,7 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       containers:
-      - image: nginx/nginx-ingress:1.4.4
+      - image: nginx/nginx-ingress:1.4.5
         name: nginx-ingress
         ports:
         - containerPort: 80

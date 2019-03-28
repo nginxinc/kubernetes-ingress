@@ -10,7 +10,7 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
   - Helm 2.8.x+.
   - Git (for installation using the chart source files).
   - If you’d like to use NGINX Plus:
-    - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](https://github.com/nginxinc/kubernetes-ingress/blob/v1.4.4/build/README.md).
+    - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](https://github.com/nginxinc/kubernetes-ingress/blob/v1.4.5/build/README.md).
     - Configure `controller.nginxplus` and `controller.image.repository` parameters accordingly using a values file or the `--set` flag of the `helm install` command.
 
 ## Installing the Chart
@@ -40,7 +40,7 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 1. Clone the Ingress controller repo and check out the latest stable version:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
-    $ git checkout v1.4.4
+    $ git checkout v1.4.5
     ```
 2. Change your working directory to /deployments/helm-chart:
     ```
@@ -87,7 +87,7 @@ Parameter | Description | Default
 `controller.hostNetwork` | Enables the Ingress controller pods to use the host's network namespace. | false
 `controller.nginxDebug` | Enables debugging for NGINX. Uses the `nginx-debug` binary. Requires `error-log-level: debug` in the ConfigMap via `controller.config.entries`. | false
 `controller.image.repository` | The image repository of the Ingress controller. | nginx/nginx-ingress
-`controller.image.tag` | The tag of the Ingress controller image. | 1.4.4
+`controller.image.tag` | The tag of the Ingress controller image. | 1.4.5
 `controller.image.pullPolicy` | The pull policy for the Ingress controller image. | IfNotPresent
 `controller.config.entries` | The entries of the ConfigMap for customizing NGINX configuration. | { }
 `controller.defaultTLS.cert` | The base64-encoded TLS certificate for the default HTTPS server. If not specified, a pre-generated self-signed certificate is used. **Note:** It is recommended that you specify your own certificate. | A pre-generated self-signed certificate.
