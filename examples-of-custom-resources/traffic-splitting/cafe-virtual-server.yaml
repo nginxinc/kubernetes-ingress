@@ -1,0 +1,20 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: VirtualServer
+metadata:
+  name: cafe
+spec:
+  host: cafe.example.com
+  upstreams:
+  - name: coffee-v1
+    service: coffee-v1-svc
+    port: 80
+  - name: coffee-v2 
+    service: coffee-v2-svc
+    port: 80
+  routes:
+  - path: /coffee
+    splits:
+    - weight: 90
+      upstream: coffee-v1
+    - weight: 10
+      upstream: coffee-v2

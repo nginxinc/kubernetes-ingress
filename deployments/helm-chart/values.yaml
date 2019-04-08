@@ -88,6 +88,9 @@ controller:
   ## Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces.
   watchNamespace: ""
 
+  ## Enable the custom resources.
+  enableCustomResources: false
+
   ## Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request.
   ## Useful for external health-checking of the Ingress controller.
   healthStatus: false

@@ -81,6 +81,7 @@ Parameter | Description | Default
 `controller.ingressClass` | A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation `"kubernetes.io/ingress.class"` equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag. | nginx
 `controller.useIngressClassOnly` | Ignore Ingress resources without the `"kubernetes.io/ingress.class"` annotation. | false
 `controller.watchNamespace` | Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces. | ""
+`controller.enableCustomResources` | Enable the custom resources. | false
 `controller.healthStatus` | Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller. | false
 `controller.nginxStatus.enable` | Enable the NGINX stub_status, or the NGINX Plus API. | true
 `controller.nginxStatus.port` | Set the port where the NGINX stub_status or the NGINX Plus API is exposed. | 8080

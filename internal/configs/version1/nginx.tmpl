@@ -55,6 +55,8 @@ http {
     server_names_hash_max_size {{.ServerNamesHashMaxSize}};
     {{if .ServerNamesHashBucketSize}}server_names_hash_bucket_size {{.ServerNamesHashBucketSize}};{{end}}
 
+    variables_hash_bucket_size 256;
+
     map $http_upgrade $connection_upgrade {
         default upgrade;
         ''      close;
@@ -113,6 +115,15 @@ http {
 
     include /etc/nginx/config-version.conf;
     include /etc/nginx/conf.d/*.conf;
+
+    server {
+        listen unix:/var/run/nginx-502-server.sock;
+        access_log off;
+
+        location / {
+            return 502;
+        }
+    }
 }
 
 stream {

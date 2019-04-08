@@ -5,9 +5,11 @@ import (
 	"sort"
 
 	"github.com/golang/glog"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/client-go/tools/cache"
+
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 )
 
 // createConfigMapHandlers builds the handler funcs for config maps
@@ -199,6 +201,10 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			}
 			glog.V(3).Infof("Adding service: %v", svc.Name)
 			lbc.EnqueueIngressForService(svc)
+
+			if lbc.areCustomResourcesEnabled {
+				lbc.EnqueueVirtualServersForService(svc)
+			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			svc, isSvc := obj.(*v1.Service)
@@ -222,6 +228,10 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			glog.V(3).Infof("Removing service: %v", svc.Name)
 			lbc.EnqueueIngressForService(svc)
 
+			if lbc.areCustomResourcesEnabled {
+				lbc.EnqueueVirtualServersForService(svc)
+			}
+
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			if !reflect.DeepEqual(old, cur) {
@@ -234,6 +244,10 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 				if hasServiceChanges(oldSvc, curSvc) {
 					glog.V(3).Infof("Service %v changed, syncing", curSvc.Name)
 					lbc.EnqueueIngressForService(curSvc)
+
+					if lbc.areCustomResourcesEnabled {
+						lbc.EnqueueVirtualServersForService(curSvc)
+					}
 				}
 			}
 		},
@@ -289,4 +303,72 @@ func hasServicePortChanges(oldServicePorts []v1.ServicePort, curServicePorts []v
 		}
 	}
 	return false
+}
+
+func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			vs := obj.(*conf_v1alpha1.VirtualServer)
+			glog.V(3).Infof("Adding VirtualServer: %v", vs.Name)
+			lbc.AddSyncQueue(vs)
+		},
+		DeleteFunc: func(obj interface{}) {
+			vs, isVs := obj.(*conf_v1alpha1.VirtualServer)
+			if !isVs {
+				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					return
+				}
+				vs, ok = deletedState.Obj.(*conf_v1alpha1.VirtualServer)
+				if !ok {
+					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-VirtualServer object: %v", deletedState.Obj)
+					return
+				}
+			}
+			glog.V(3).Infof("Removing VirtualServer: %v", vs.Name)
+			lbc.AddSyncQueue(vs)
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			curVs := cur.(*conf_v1alpha1.VirtualServer)
+			if !reflect.DeepEqual(old, cur) {
+				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
+				lbc.AddSyncQueue(curVs)
+			}
+		},
+	}
+}
+
+func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
+			glog.V(3).Infof("Adding VirtualServerRoute: %v", vsr.Name)
+			lbc.AddSyncQueue(vsr)
+		},
+		DeleteFunc: func(obj interface{}) {
+			vsr, isVsr := obj.(*conf_v1alpha1.VirtualServerRoute)
+			if !isVsr {
+				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					return
+				}
+				vsr, ok = deletedState.Obj.(*conf_v1alpha1.VirtualServerRoute)
+				if !ok {
+					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-VirtualServerRoute object: %v", deletedState.Obj)
+					return
+				}
+			}
+			glog.V(3).Infof("Removing VirtualServerRoute: %v", vsr.Name)
+			lbc.AddSyncQueue(vsr)
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			curVsr := cur.(*conf_v1alpha1.VirtualServerRoute)
+			if !reflect.DeepEqual(old, cur) {
+				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
+				lbc.AddSyncQueue(curVsr)
+			}
+		},
+	}
 }

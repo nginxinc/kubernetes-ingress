@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,27 +30,30 @@ const JWTKeyKey = "jwk"
 
 // Configurator configures NGINX.
 type Configurator struct {
-	nginxManager      nginx.Manager
-	staticCfgParams   *StaticConfigParams
-	cfgParams         *ConfigParams
-	templateExecutor  *version1.TemplateExecutor
-	ingresses         map[string]*IngressEx
-	minions           map[string]map[string]bool
-	isWildcardEnabled bool
-	isPlus            bool
+	nginxManager       nginx.Manager
+	staticCfgParams    *StaticConfigParams
+	cfgParams          *ConfigParams
+	templateExecutor   *version1.TemplateExecutor
+	templateExecutorV2 *version2.TemplateExecutor
+	ingresses          map[string]*IngressEx
+	minions            map[string]map[string]bool
+	isWildcardEnabled  bool
+	isPlus             bool
 }
 
 // NewConfigurator creates a new Configurator.
-func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams, templateExecutor *version1.TemplateExecutor, isPlus bool, isWildcardEnabled bool) *Configurator {
+func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams, templateExecutor *version1.TemplateExecutor,
+	templateExecutorV2 *version2.TemplateExecutor, isPlus bool, isWildcardEnabled bool) *Configurator {
 	cnf := Configurator{
-		nginxManager:      nginxManager,
-		staticCfgParams:   staticCfgParams,
-		cfgParams:         config,
-		ingresses:         make(map[string]*IngressEx),
-		templateExecutor:  templateExecutor,
-		minions:           make(map[string]map[string]bool),
-		isPlus:            isPlus,
-		isWildcardEnabled: isWildcardEnabled,
+		nginxManager:       nginxManager,
+		staticCfgParams:    staticCfgParams,
+		cfgParams:          config,
+		ingresses:          make(map[string]*IngressEx),
+		templateExecutor:   templateExecutor,
+		templateExecutorV2: templateExecutorV2,
+		minions:            make(map[string]map[string]bool),
+		isPlus:             isPlus,
+		isWildcardEnabled:  isWildcardEnabled,
 	}
 	return &cnf
 }
@@ -130,6 +136,37 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	return nil
 }
 
+// AddOrUpdateVirtualServer adds or updates NGINX configuration for the VirtualServer resource.
+func (cnf *Configurator) AddOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) error {
+	if err := cnf.addOrUpdateVirtualServer(virtualServerEx); err != nil {
+		return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
+	}
+
+	if err := cnf.nginxManager.Reload(); err != nil {
+		return fmt.Errorf("Error reloading NGINX for VirtualServer %v/%v: %v", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
+	}
+
+	return nil
+}
+
+func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) error {
+	tlsPemFileName := ""
+	if virtualServerEx.TLSSecret != nil {
+		tlsPemFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.TLSSecret)
+	}
+
+	vsCfg := generateVirtualServerConfig(virtualServerEx, tlsPemFileName, cnf.cfgParams, cnf.isPlus)
+
+	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
+	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
+	if err != nil {
+		return fmt.Errorf("Error generating VirtualServer config: %v: %v", name, err)
+	}
+	cnf.nginxManager.CreateConfig(name, content)
+
+	return nil
+}
+
 func (cnf *Configurator) updateTLSSecrets(ingEx *IngressEx) map[string]string {
 	pems := make(map[string]string)
 
@@ -177,7 +214,7 @@ func (cnf *Configurator) AddOrUpdateJWKSecret(secret *api_v1.Secret) {
 }
 
 // AddOrUpdateTLSSecret adds or updates a file with the content of the TLS secret.
-func (cnf *Configurator) AddOrUpdateTLSSecret(secret *api_v1.Secret, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
+func (cnf *Configurator) AddOrUpdateTLSSecret(secret *api_v1.Secret, ingExes []IngressEx, mergeableIngresses []MergeableIngresses, virtualServerExes []*VirtualServerEx) error {
 	cnf.addOrUpdateTLSSecret(secret)
 
 	for i := range ingExes {
@@ -191,6 +228,13 @@ func (cnf *Configurator) AddOrUpdateTLSSecret(secret *api_v1.Secret, ingExes []I
 		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
 		if err != nil {
 			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+		}
+	}
+
+	for _, vsEx := range virtualServerExes {
+		err := cnf.addOrUpdateVirtualServer(vsEx)
+		if err != nil {
+			return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
 		}
 	}
 
@@ -233,8 +277,9 @@ func GenerateCertAndKeyFileContent(secret *api_v1.Secret) []byte {
 	return res.Bytes()
 }
 
-// DeleteSecret deletes the file associated with the secret and the configuration files for the Ingress resources. NGINX is reloaded only when len(ings) > 0.
-func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
+// DeleteSecret deletes the file associated with the secret and the configuration files for Ingress and VirtualServer resources.
+// NGINX is reloaded only when the total number of the resources > 0.
+func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses, virtualServerExes []*VirtualServerEx) error {
 	cnf.nginxManager.DeleteSecret(keyToFileName(key))
 
 	for i := range ingExes {
@@ -251,7 +296,14 @@ func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeable
 		}
 	}
 
-	if len(ingExes)+len(mergeableIngresses) > 0 {
+	for _, vsEx := range virtualServerExes {
+		err := cnf.addOrUpdateVirtualServer(vsEx)
+		if err != nil {
+			return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
+		}
+	}
+
+	if len(ingExes)+len(mergeableIngresses)+len(virtualServerExes) > 0 {
 		if err := cnf.nginxManager.Reload(); err != nil {
 			return fmt.Errorf("Error when reloading NGINX when deleting Secret %v: %v", key, err)
 		}
@@ -270,6 +322,18 @@ func (cnf *Configurator) DeleteIngress(key string) error {
 
 	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error when removing ingress %v: %v", key, err)
+	}
+
+	return nil
+}
+
+// DeleteVirtualServer deletes NGINX configuration for the VirtualServer resource.
+func (cnf *Configurator) DeleteVirtualServer(key string) error {
+	name := getFileNameForVirtualServerFromKey(key)
+	cnf.nginxManager.DeleteConfig(name)
+
+	if err := cnf.nginxManager.Reload(); err != nil {
+		return fmt.Errorf("Error when removing VirtualServer %v: %v", key, err)
 	}
 
 	return nil
@@ -339,6 +403,51 @@ func (cnf *Configurator) UpdateEndpointsMergeableIngress(mergeableIngresses []*M
 	return nil
 }
 
+// UpdateEndpointsForVirtualServers updates endpoints in NGINX configuration for the s resources.
+func (cnf *Configurator) UpdateEndpointsForVirtualServers(virtualServerExes []*VirtualServerEx) error {
+	reloadPlus := false
+
+	for _, vs := range virtualServerExes {
+		err := cnf.addOrUpdateVirtualServer(vs)
+		if err != nil {
+			return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vs.VirtualServer.Namespace, vs.VirtualServer.Name, err)
+		}
+
+		if cnf.isPlus {
+			err := cnf.updatePlusEndpointsForVirtualServer(vs)
+			if err != nil {
+				glog.Warningf("Couldn't update the endpoints via the API: %v; reloading configuration instead", err)
+				reloadPlus = true
+			}
+		}
+	}
+
+	if cnf.isPlus && !reloadPlus {
+		glog.V(3).Info("No need to reload nginx")
+		return nil
+	}
+
+	if err := cnf.nginxManager.Reload(); err != nil {
+		return fmt.Errorf("Error reloading NGINX when updating endpoints: %v", err)
+	}
+
+	return nil
+}
+
+func (cnf *Configurator) updatePlusEndpointsForVirtualServer(virtualServerEx *VirtualServerEx) error {
+	serverCfg := createUpstreamServersConfig(cnf.cfgParams)
+	upstreamServers := createUpstreamServersForPlus(virtualServerEx)
+
+	for upstream, servers := range upstreamServers {
+		err := cnf.nginxManager.UpdateServersInPlus(upstream, servers, serverCfg)
+		if err != nil {
+			return fmt.Errorf("Couldn't update the endpoints for %v: %v", upstream, err)
+		}
+	}
+
+	return nil
+}
+
 func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 	ingCfg := parseAnnotations(ingEx, cnf.cfgParams, cnf.isPlus)
 
@@ -389,7 +498,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 }
 
 // UpdateConfig updates NGINX configuration parameters.
-func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*IngressEx, mergeableIngs map[string]*MergeableIngresses) error {
+func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*IngressEx, mergeableIngs map[string]*MergeableIngresses, virtualServerExes []*VirtualServerEx) error {
 	cnf.cfgParams = cfgParams
 
 	if cnf.cfgParams.MainServerSSLDHParamFileContent != nil {
@@ -431,6 +540,11 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*Ingres
 			return err
 		}
 	}
+	for _, vsEx := range virtualServerExes {
+		if err := cnf.addOrUpdateVirtualServer(vsEx); err != nil {
+			return err
+		}
+	}
 
 	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error when updating config from ConfigMap: %v", err)
@@ -445,6 +559,15 @@ func keyToFileName(key string) string {
 
 func objectMetaToFileName(meta *meta_v1.ObjectMeta) string {
 	return meta.Namespace + "-" + meta.Name
+}
+
+func getFileNameForVirtualServer(virtualServer *conf_v1alpha1.VirtualServer) string {
+	return fmt.Sprintf("vs_%s_%s", virtualServer.Namespace, virtualServer.Name)
+}
+
+func getFileNameForVirtualServerFromKey(key string) string {
+	replaced := strings.Replace(key, "/", "_", -1)
+	return fmt.Sprintf("vs_%s", replaced)
 }
 
 // HasIngress checks if the Ingress resource is present in NGINX configuration.

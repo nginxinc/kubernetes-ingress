@@ -1,0 +1,14 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: VirtualServerRoute
+metadata:
+  name: coffee 
+  namespace: coffee
+spec:
+  host: cafe.example.com
+  upstreams:
+  - name: coffee 
+    service: coffee-svc
+    port: 80
+  subroutes:
+  - path: /coffee 
+    upstream: coffee 

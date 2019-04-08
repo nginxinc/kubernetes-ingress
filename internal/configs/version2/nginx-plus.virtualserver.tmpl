@@ -1,0 +1,123 @@
+{{ range $u := .Upstreams }}
+upstream {{ $u.Name }} {
+    zone {{ $u.Name }} 256k;
+
+    {{ if $u.LBMethod }}{{ $u.LBMethod }};{{ end }}
+
+    {{ range $s := $u.Servers }}
+    server {{ $s.Address }} max_fails={{ $s.MaxFails }} fail_timeout={{ $s.FailTimeout }};
+    {{ end }}
+
+    {{ if $.Keepalive }}
+    keepalive {{ $.Keepalive }};
+    {{ end }}
+}
+{{ end }}
+
+{{ range $sc := .SplitClients }}
+split_clients {{ $sc.Source }} {{ $sc.Variable }} {
+    {{ range $d := $sc.Distributions }}
+    {{ $d.Weight }} {{ $d.Value }};
+    {{ end }}
+}
+{{ end }}
+
+{{ range $m := .Maps }}
+map {{ $m.Source }} {{ $m.Variable }} {
+    {{ range $p := $m.Parameters }}
+    {{ $p.Value }} {{ $p.Result }};
+    {{ end }}
+}
+{{ end }}
+
+{{ $s := .Server }}
+server {
+    listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+
+    server_name {{ $s.ServerName }};
+    
+    {{ with $ssl := $s.SSL }}
+    listen 443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+
+    ssl_certificate {{ $ssl.Certificate }};
+    ssl_certificate_key {{ $ssl.CertificateKey }};
+
+        {{ if $ssl.Ciphers }}
+    ssl_ciphers {{ $ssl.Ciphers }};
+        {{ end }}
+    
+        {{ if $ssl.RedirectToHTTPS }}
+    if ($scheme = http) {
+        return 301 https://$host$request_uri;
+    }   
+        {{ end }}
+    {{ end }}
+
+    {{ if $s.RedirectToHTTPSBasedOnXForwarderProto }}
+    if ($http_x_forwarded_proto = 'http') {
+        return 301 https://$host$request_uri;
+    }
+    {{ end }}
+
+    server_tokens "{{ $s.ServerTokens }}";
+
+    {{ range $setRealIPFrom := $s.SetRealIPFrom }}
+    set_real_ip_from {{ $setRealIPFrom }};
+    {{ end }}
+    {{ if $s.RealIPHeader }}
+    real_ip_header {{ $s.RealIPHeader }};
+    {{ end }}
+    {{ if $s.RealIPRecursive }}
+    real_ip_recursive on;
+    {{ end }}
+
+    {{ range $snippet := $s.Snippets }}
+    {{ $snippet }}
+    {{ end }}
+
+    {{ range $l := $s.InternalRedirectLocations }}
+    location {{ $l.Path }} {
+        error_page 418 = {{ $l.Destination }};
+        return 418;
+    }
+    {{ end }}
+
+    {{ range $l := $s.Locations }}
+    location {{ $l.Path }} {
+        {{ range $snippet := $l.Snippets }}
+        {{ $snippet }}
+        {{ end }}
+
+        proxy_connect_timeout {{ $l.ProxyConnectTimeout }};
+        proxy_read_timeout {{ $l.ProxyReadTimeout }};
+        client_max_body_size {{ $l.ClientMaxBodySize }};
+
+        {{ if $l.ProxyMaxTempFileSize }}
+        proxy_max_temp_file_size {{ $l.ProxyMaxTempFileSize }};
+		{{ end }}
+
+        proxy_buffering {{ if $l.ProxyBuffering }}on{{ else }}off{{ end }};
+        {{ if $l.ProxyBuffers }}
+        proxy_buffers {{ $l.ProxyBuffers }};
+        {{ end }}
+        {{ if $l.ProxyBufferSize }}
+        proxy_buffer_size {{ $l.ProxyBufferSize }};
+        {{ end }}
+
+        proxy_http_version 1.1;
+
+        {{ if $.Keepalive }}
+        proxy_set_header Connection "";
+        {{ end }}
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_pass {{ $l.ProxyPass }};
+    }
+    {{ end }}
+}

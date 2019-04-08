@@ -9,7 +9,7 @@ Make sure you have access to the Ingress controller image:
 
 The installation manifests are located in the [deployments](../deployments) folder. In the steps below we assume that you will be running the commands from that folder.
 
-## 1. Create a Namespace, a SA, the Default Secret and the Customization Config Map.
+## 1. Create a Namespace, a SA, the Default Secret, the Customization Config Map, and Custom Resource Definitions
 
 1. Create a namespace and a service account for the Ingress controller:
     ```
@@ -27,6 +27,12 @@ The installation manifests are located in the [deployments](../deployments) fold
     ```
     $ kubectl apply -f common/nginx-config.yaml
     ```
+
+1. (Optional) To use the [VirtualServer and VirtualServerRoute](virtualserver-and-virtualserverroute.md) resources, create the corresponding resource definitions:
+    ```
+    $ kubectl apply -f common/custom-resource-definitions.yaml
+    ```
+    Note: in Step 3, make sure the Ingress controller starts with the `-enable-custom-resources` [command-line argument](cli-arguments.md).
 
 ## 2. Configure RBAC
 

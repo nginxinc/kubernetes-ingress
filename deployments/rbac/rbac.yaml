@@ -57,6 +57,15 @@ rules:
   - ingresses/status
   verbs:
   - update
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - virtualservers
+  - virtualserverroutes
+  verbs:
+  - list
+  - watch
+  - get
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1

@@ -18,7 +18,9 @@ package k8s
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -38,6 +40,9 @@ import (
 
 	"sort"
 
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
+	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,78 +55,88 @@ const (
 // LoadBalancerController watches Kubernetes API and
 // reconfigures NGINX via NginxController when needed
 type LoadBalancerController struct {
-	client                  kubernetes.Interface
-	ingressController       cache.Controller
-	svcController           cache.Controller
-	endpointController      cache.Controller
-	configMapController     cache.Controller
-	secretController        cache.Controller
-	ingressLister           storeToIngressLister
-	svcLister               cache.Store
-	endpointLister          storeToEndpointLister
-	configMapLister         storeToConfigMapLister
-	secretLister            storeToSecretLister
-	syncQueue               *taskQueue
-	ctx                     context.Context
-	cancel                  context.CancelFunc
-	configurator            *configs.Configurator
-	watchNginxConfigMaps    bool
-	isNginxPlus             bool
-	recorder                record.EventRecorder
-	defaultServerSecret     string
-	ingressClass            string
-	useIngressClassOnly     bool
-	statusUpdater           *statusUpdater
-	leaderElector           *leaderelection.LeaderElector
-	reportIngressStatus     bool
-	isLeaderElectionEnabled bool
-	leaderElectionLockName  string
-	resync                  time.Duration
-	namespace               string
-	controllerNamespace     string
-	wildcardTLSSecret       string
-	metricsCollector        collectors.ControllerCollector
+	client                       kubernetes.Interface
+	confClient                   k8s_nginx.Interface
+	ingressController            cache.Controller
+	svcController                cache.Controller
+	endpointController           cache.Controller
+	configMapController          cache.Controller
+	secretController             cache.Controller
+	virtualServerController      cache.Controller
+	virtualServerRouteController cache.Controller
+	ingressLister                storeToIngressLister
+	svcLister                    cache.Store
+	endpointLister               storeToEndpointLister
+	configMapLister              storeToConfigMapLister
+	secretLister                 storeToSecretLister
+	virtualServerLister          cache.Store
+	virtualServerRouteLister     cache.Store
+	syncQueue                    *taskQueue
+	ctx                          context.Context
+	cancel                       context.CancelFunc
+	configurator                 *configs.Configurator
+	watchNginxConfigMaps         bool
+	isNginxPlus                  bool
+	recorder                     record.EventRecorder
+	defaultServerSecret          string
+	ingressClass                 string
+	useIngressClassOnly          bool
+	statusUpdater                *statusUpdater
+	leaderElector                *leaderelection.LeaderElector
+	reportIngressStatus          bool
+	isLeaderElectionEnabled      bool
+	leaderElectionLockName       string
+	resync                       time.Duration
+	namespace                    string
+	controllerNamespace          string
+	wildcardTLSSecret            string
+	areCustomResourcesEnabled    bool
+	metricsCollector             collectors.ControllerCollector
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
 
 // NewLoadBalancerControllerInput holds the input needed to call NewLoadBalancerController.
 type NewLoadBalancerControllerInput struct {
-	KubeClient              kubernetes.Interface
-	ResyncPeriod            time.Duration
-	Namespace               string
-	NginxConfigurator       *configs.Configurator
-	DefaultServerSecret     string
-	IsNginxPlus             bool
-	IngressClass            string
-	UseIngressClassOnly     bool
-	ExternalServiceName     string
-	ControllerNamespace     string
-	ReportIngressStatus     bool
-	IsLeaderElectionEnabled bool
-	LeaderElectionLockName  string
-	WildcardTLSSecret       string
-	ConfigMaps              string
-	MetricsCollector        collectors.ControllerCollector
+	KubeClient                kubernetes.Interface
+	ConfClient                k8s_nginx.Interface
+	ResyncPeriod              time.Duration
+	Namespace                 string
+	NginxConfigurator         *configs.Configurator
+	DefaultServerSecret       string
+	IsNginxPlus               bool
+	IngressClass              string
+	UseIngressClassOnly       bool
+	ExternalServiceName       string
+	ControllerNamespace       string
+	ReportIngressStatus       bool
+	IsLeaderElectionEnabled   bool
+	LeaderElectionLockName    string
+	WildcardTLSSecret         string
+	ConfigMaps                string
+	AreCustomResourcesEnabled bool
+	MetricsCollector          collectors.ControllerCollector
 }
 
 // NewLoadBalancerController creates a controller
 func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalancerController {
 	lbc := &LoadBalancerController{
-		client:                  input.KubeClient,
-		configurator:            input.NginxConfigurator,
-		defaultServerSecret:     input.DefaultServerSecret,
-		isNginxPlus:             input.IsNginxPlus,
-		ingressClass:            input.IngressClass,
-		useIngressClassOnly:     input.UseIngressClassOnly,
-		reportIngressStatus:     input.ReportIngressStatus,
-		isLeaderElectionEnabled: input.IsLeaderElectionEnabled,
-		leaderElectionLockName:  input.LeaderElectionLockName,
-		resync:                  input.ResyncPeriod,
-		namespace:               input.Namespace,
-		controllerNamespace:     input.ControllerNamespace,
-		wildcardTLSSecret:       input.WildcardTLSSecret,
-		metricsCollector:        input.MetricsCollector,
+		client:                    input.KubeClient,
+		confClient:                input.ConfClient,
+		configurator:              input.NginxConfigurator,
+		defaultServerSecret:       input.DefaultServerSecret,
+		isNginxPlus:               input.IsNginxPlus,
+		ingressClass:              input.IngressClass,
+		useIngressClassOnly:       input.UseIngressClassOnly,
+		reportIngressStatus:       input.ReportIngressStatus,
+		isLeaderElectionEnabled:   input.IsLeaderElectionEnabled,
+		leaderElectionLockName:    input.LeaderElectionLockName,
+		resync:                    input.ResyncPeriod,
+		namespace:                 input.Namespace,
+		controllerNamespace:       input.ControllerNamespace,
+		wildcardTLSSecret:         input.WildcardTLSSecret,
+		areCustomResourcesEnabled: input.AreCustomResourcesEnabled,
+		metricsCollector:          input.MetricsCollector,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -149,6 +164,11 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.addIngressHandler(createIngressHandlers(lbc))
 	lbc.addServiceHandler(createServiceHandlers(lbc))
 	lbc.addEndpointHandler(createEndpointHandlers(lbc))
+
+	if lbc.areCustomResourcesEnabled {
+		lbc.addVirtualServerHandler(createVirtualServerHandlers(lbc))
+		lbc.addVirtualServerRouteHandler(createVirtualServerRouteHandlers(lbc))
+	}
 
 	if input.ConfigMaps != "" {
 		nginxConfigMapsNS, nginxConfigMapsName, err := ParseNamespaceName(input.ConfigMaps)
@@ -256,6 +276,32 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 	)
 }
 
+func (lbc *LoadBalancerController) addVirtualServerHandler(handlers cache.ResourceEventHandlerFuncs) {
+	lbc.virtualServerLister, lbc.virtualServerController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.confClient.K8sV1alpha1().RESTClient(),
+			"virtualservers",
+			lbc.namespace,
+			fields.Everything()),
+		&conf_v1alpha1.VirtualServer{},
+		lbc.resync,
+		handlers,
+	)
+}
+
+func (lbc *LoadBalancerController) addVirtualServerRouteHandler(handlers cache.ResourceEventHandlerFuncs) {
+	lbc.virtualServerRouteLister, lbc.virtualServerRouteController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.confClient.K8sV1alpha1().RESTClient(),
+			"virtualserverroutes",
+			lbc.namespace,
+			fields.Everything()),
+		&conf_v1alpha1.VirtualServerRoute{},
+		lbc.resync,
+		handlers,
+	)
+}
+
 // Run starts the loadbalancer controller
 func (lbc *LoadBalancerController) Run() {
 	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
@@ -270,6 +316,10 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.configMapController.Run(lbc.ctx.Done())
 	}
 	go lbc.ingressController.Run(lbc.ctx.Done())
+	if lbc.areCustomResourcesEnabled {
+		go lbc.virtualServerController.Run(lbc.ctx.Done())
+		go lbc.virtualServerRouteController.Run(lbc.ctx.Done())
+	}
 	go lbc.syncQueue.Run(time.Second, lbc.ctx.Done())
 	<-lbc.ctx.Done()
 }
@@ -345,6 +395,19 @@ func (lbc *LoadBalancerController) syncEndpoint(task task) {
 				glog.Errorf("Error updating endpoints for %v: %v", mergableIngressesSlice, err)
 			}
 		}
+
+		if lbc.areCustomResourcesEnabled {
+			virtualServers := lbc.getVirtualServersForEndpoints(obj.(*api_v1.Endpoints))
+			virtualServersExes := lbc.virtualServersToVirtualServerExes(virtualServers)
+
+			if len(virtualServersExes) > 0 {
+				glog.V(3).Infof("Updating endpoints for %v", virtualServersExes)
+				err = lbc.configurator.UpdateEndpointsForVirtualServers(virtualServersExes)
+				if err != nil {
+					glog.Errorf("Error updating endpoints for %v: %v", virtualServersExes, err)
+				}
+			}
+		}
 	}
 }
 
@@ -376,7 +439,13 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		}
 	}
 
-	updateErr := lbc.configurator.UpdateConfig(cfgParams, ingExes, mergeableIngresses)
+	var virtualServerExes []*configs.VirtualServerEx
+	if lbc.areCustomResourcesEnabled {
+		virtualServers := lbc.getVirtualServers()
+		virtualServerExes = lbc.virtualServersToVirtualServerExes(virtualServers)
+	}
+
+	updateErr := lbc.configurator.UpdateConfig(cfgParams, ingExes, mergeableIngresses, virtualServerExes)
 
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal
@@ -401,6 +470,14 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		for _, minion := range mergeableIng.Minions {
 			lbc.recorder.Eventf(minion.Ingress, eventType, eventTitle, "Configuration for %v/%v(Minion) was updated %s",
 				minion.Ingress.Namespace, minion.Ingress.Name, eventWarningMessage)
+		}
+	}
+	for _, vsEx := range virtualServerExes {
+		lbc.recorder.Eventf(vsEx.VirtualServer, eventType, eventTitle, "Configuration for %v/%v was updated %s",
+			vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, eventWarningMessage)
+		for _, vsr := range vsEx.VirtualServerRoutes {
+			lbc.recorder.Eventf(vsr, eventType, eventTitle, "Configuration for %v/%v was updated %s",
+				vsr.Namespace, vsr.Name, eventWarningMessage)
 		}
 	}
 }
@@ -454,6 +531,17 @@ func (lbc *LoadBalancerController) ingressesToIngressExes(ings []extensions.Ingr
 	return ingExes
 }
 
+func (lbc *LoadBalancerController) virtualServersToVirtualServerExes(virtualServers []*conf_v1alpha1.VirtualServer) []*configs.VirtualServerEx {
+	var virtualServersExes []*configs.VirtualServerEx
+
+	for _, vs := range virtualServers {
+		vsEx, _ := lbc.createVirtualServer(vs) // ignoring VirtualServerRouteErrors
+		virtualServersExes = append(virtualServersExes, vsEx)
+	}
+
+	return virtualServersExes
+}
+
 func (lbc *LoadBalancerController) sync(task task) {
 	glog.V(3).Infof("Syncing %v", task.Key)
 
@@ -472,6 +560,103 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncSecret(task)
 	case service:
 		lbc.syncExternalService(task)
+	case virtualserver:
+		lbc.syncVirtualServer(task)
+	case virtualServerRoute:
+		lbc.syncVirtualServerRoute(task)
+	}
+}
+
+func (lbc *LoadBalancerController) syncVirtualServer(task task) {
+	key := task.Key
+	obj, vsExists, err := lbc.virtualServerLister.GetByKey(key)
+	if err != nil {
+		lbc.syncQueue.Requeue(task, err)
+		return
+	}
+
+	if !vsExists {
+		glog.V(2).Infof("Deleting VirtualServer: %v\n", key)
+
+		err := lbc.configurator.DeleteVirtualServer(key)
+		// TO-DO: emit events for referenced VirtualServerRoutes
+		if err != nil {
+			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
+		}
+		return
+	}
+
+	glog.V(2).Infof("Adding or Updating VirtualServer: %v\n", key)
+
+	vs := obj.(*conf_v1alpha1.VirtualServer)
+
+	validationErr := validation.ValidateVirtualServer(vs)
+	if validationErr != nil {
+		err := lbc.configurator.DeleteVirtualServer(key)
+		if err != nil {
+			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
+		}
+		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, "Rejected", "VirtualServer %v is invalid and was rejected: %v", key, validationErr)
+		// TO-DO: emit events for referenced VirtualServerRoutes
+		return
+	}
+
+	vsEx, vsrErrors := lbc.createVirtualServer(vs)
+
+	for _, vsrError := range vsrErrors {
+		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, "IgnoredVirtualServerRoute", "Ignored VirtualServerRoute %v: %v", vsrError.VirtualServerRouteNsName, vsrError.Error)
+		if vsrError.VirtualServerRoute != nil {
+			lbc.recorder.Eventf(vsrError.VirtualServerRoute, api_v1.EventTypeWarning, "Ignored", "Ignored by VirtualServer %v/%v: %v", vs.Namespace, vs.Name, vsrError.Error)
+		}
+	}
+
+	addErr := lbc.configurator.AddOrUpdateVirtualServer(vsEx)
+
+	eventTitle := "AddedOrUpdated"
+	eventType := api_v1.EventTypeNormal
+	eventWarningMessage := ""
+
+	if addErr != nil {
+		eventTitle = "AddedOrUpdatedWithError"
+		eventType = api_v1.EventTypeWarning
+		eventWarningMessage = fmt.Sprintf("but was not applied: %v", addErr)
+	}
+
+	lbc.recorder.Eventf(vs, eventType, eventTitle, "Configuration for %v was added or updated %s", key, eventWarningMessage)
+	for _, vsr := range vsEx.VirtualServerRoutes {
+		lbc.recorder.Eventf(vsr, eventType, eventTitle, "Configuration for %v/%v was added or updated %s", vsr.Namespace, vsr.Name, eventWarningMessage)
+	}
+}
+
+func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
+	key := task.Key
+
+	obj, exists, err := lbc.virtualServerRouteLister.GetByKey(key)
+	if err != nil {
+		lbc.syncQueue.Requeue(task, err)
+		return
+	}
+
+	if !exists {
+		glog.V(2).Infof("Deleting VirtualServerRoute: %v\n", key)
+
+		lbc.enqueueVirtualServersForVirtualServerRouteKey(key)
+		return
+	}
+
+	glog.V(2).Infof("Adding or Updating VirtualServerRoute: %v\n", key)
+
+	vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
+
+	validationErr := validation.ValidateVirtualServerRoute(vsr)
+	if validationErr != nil {
+		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, "Rejected", "VirtualServerRoute %s is invalid and was rejected: %v", key, validationErr)
+	}
+
+	vsCount := lbc.enqueueVirtualServersForVirtualServerRouteKey(key)
+
+	if vsCount == 0 {
+		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, "NoVirtualServersFound", "No VirtualServer references VirtualServerRoute %s", key)
 	}
 
 }
@@ -663,12 +848,18 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 		lbc.syncQueue.RequeueAfter(task, err, 5*time.Second)
 	}
 
+	var virtualServers []*conf_v1alpha1.VirtualServer
+	if lbc.areCustomResourcesEnabled {
+		virtualServers = lbc.getVirtualServersForSecret(namespace, name)
+		glog.V(2).Infof("Found %v VirtualServers with Secret %v", len(virtualServers), key)
+	}
+
 	glog.V(2).Infof("Found %v Ingresses with Secret %v", len(ings), key)
 
 	if !secrExists {
 		glog.V(2).Infof("Deleting Secret: %v\n", key)
 
-		lbc.handleRegularSecretDeletion(key, ings)
+		lbc.handleRegularSecretDeletion(key, ings, virtualServers)
 		if lbc.isSpecialSecret(key) {
 			glog.Warningf("A special TLS Secret %v was removed. Retaining the Secret.", key)
 		}
@@ -681,11 +872,11 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 
 	if lbc.isSpecialSecret(key) {
 		lbc.handleSpecialSecretUpdate(secret)
-		// we don't return here in case the special secret is also used in Ingress resources
+		// we don't return here in case the special secret is also used in Ingress or VirtualServer resources.
 	}
 
-	if len(ings) > 0 {
-		lbc.handleSecretUpdate(secret, ings)
+	if len(ings)+len(virtualServers) > 0 {
+		lbc.handleSecretUpdate(secret, ings, virtualServers)
 	}
 }
 
@@ -693,20 +884,23 @@ func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
 	return secretName == lbc.defaultServerSecret || secretName == lbc.wildcardTLSSecret
 }
 
-func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings []extensions.Ingress) {
+func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings []extensions.Ingress, virtualServers []*conf_v1alpha1.VirtualServer) {
 	eventType := api_v1.EventTypeWarning
 	title := "Missing Secret"
 	message := fmt.Sprintf("Secret %v was removed", key)
 
 	lbc.emitEventForIngresses(eventType, title, message, ings)
+	lbc.emitEventForVirtualServers(eventType, title, message, virtualServers)
 
 	regular, mergeable := lbc.createIngresses(ings)
+
+	virtualServerExes := lbc.virtualServersToVirtualServerExes(virtualServers)
 
 	eventType = api_v1.EventTypeNormal
 	title = "Updated"
 	message = fmt.Sprintf("Configuration was updated due to removed secret %v", key)
 
-	if err := lbc.configurator.DeleteSecret(key, regular, mergeable); err != nil {
+	if err := lbc.configurator.DeleteSecret(key, regular, mergeable, virtualServerExes); err != nil {
 		glog.Errorf("Error when deleting Secret: %v: %v", key, err)
 
 		eventType = api_v1.EventTypeWarning
@@ -715,9 +909,10 @@ func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings 
 	}
 
 	lbc.emitEventForIngresses(eventType, title, message, ings)
+	lbc.emitEventForVirtualServers(eventType, title, message, virtualServers)
 }
 
-func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ings []extensions.Ingress) {
+func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ings []extensions.Ingress, virtualServers []*conf_v1alpha1.VirtualServer) {
 	secretNsName := secret.Namespace + "/" + secret.Name
 
 	err := lbc.ValidateSecret(secret)
@@ -726,7 +921,7 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 		glog.Errorf("Couldn't validate secret %v: %v", secretNsName, err)
 		glog.Errorf("Removing invalid secret %v", secretNsName)
 
-		lbc.handleRegularSecretDeletion(secretNsName, ings)
+		lbc.handleRegularSecretDeletion(secretNsName, ings, virtualServers)
 
 		lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "Rejected", "%v was rejected: %v", secretNsName, err)
 		return
@@ -743,7 +938,10 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 		lbc.configurator.AddOrUpdateJWKSecret(secret)
 	} else {
 		regular, mergeable := lbc.createIngresses(ings)
-		if err := lbc.configurator.AddOrUpdateTLSSecret(secret, regular, mergeable); err != nil {
+
+		virtualServerExes := lbc.virtualServersToVirtualServerExes(virtualServers)
+
+		if err := lbc.configurator.AddOrUpdateTLSSecret(secret, regular, mergeable, virtualServerExes); err != nil {
 			glog.Errorf("Error when updating Secret %v: %v", secretNsName, err)
 			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, err)
 
@@ -754,6 +952,7 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 	}
 
 	lbc.emitEventForIngresses(eventType, title, message, ings)
+	lbc.emitEventForVirtualServers(eventType, title, message, virtualServers)
 }
 
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
@@ -795,6 +994,12 @@ func (lbc *LoadBalancerController) emitEventForIngresses(eventType string, title
 			masterMsg := fmt.Sprintf("%v for Minion %v/%v", message, ing.Namespace, ing.Name)
 			lbc.recorder.Eventf(master, eventType, title, masterMsg)
 		}
+	}
+}
+
+func (lbc *LoadBalancerController) emitEventForVirtualServers(eventType string, title string, message string, virtualServers []*conf_v1alpha1.VirtualServer) {
+	for _, vs := range virtualServers {
+		lbc.recorder.Eventf(vs, eventType, title, message)
 	}
 }
 
@@ -919,10 +1124,18 @@ func (lbc *LoadBalancerController) EnqueueIngressForService(svc *api_v1.Service)
 	}
 }
 
+// EnqueueVirtualServersForService enqueues VirtualServers for the given service.
+func (lbc *LoadBalancerController) EnqueueVirtualServersForService(service *api_v1.Service) {
+	virtualServers := lbc.getVirtualServersForService(service)
+	for _, vs := range virtualServers {
+		lbc.syncQueue.Enqueue(vs)
+	}
+}
+
 func (lbc *LoadBalancerController) getIngressesForService(svc *api_v1.Service) []extensions.Ingress {
 	ings, err := lbc.ingressLister.GetServiceIngress(svc)
 	if err != nil {
-		glog.V(3).Infof("ignoring service %v: %v", svc.Name, err)
+		glog.V(3).Infof("For service %v: %v", svc.Name, err)
 		return nil
 	}
 	return ings
@@ -941,6 +1154,181 @@ func (lbc *LoadBalancerController) getIngressForEndpoints(obj interface{}) []ext
 		}
 	}
 	return ings
+}
+
+func (lbc *LoadBalancerController) getVirtualServersForEndpoints(endpoints *api_v1.Endpoints) []*conf_v1alpha1.VirtualServer {
+	svcKey := fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name)
+
+	svc, exists, err := lbc.svcLister.GetByKey(svcKey)
+	if err != nil {
+		glog.V(3).Infof("Error getting service %v from the cache: %v", svcKey, err)
+		return nil
+	}
+	if !exists {
+		glog.V(3).Infof("Service %v doesn't exist", svcKey)
+		return nil
+	}
+
+	return lbc.getVirtualServersForService(svc.(*api_v1.Service))
+}
+
+func (lbc *LoadBalancerController) getVirtualServersForService(service *api_v1.Service) []*conf_v1alpha1.VirtualServer {
+	var result []*conf_v1alpha1.VirtualServer
+
+	allVirtualServers := lbc.getVirtualServers()
+
+	// find VirtualServers that reference VirtualServerRoutes that reference the service
+	virtualServerRoutes := findVirtualServerRoutesForService(lbc.getVirtualServerRoutes(), service)
+	for _, vsr := range virtualServerRoutes {
+		virtualServers := findVirtualServersForVirtualServerRoute(allVirtualServers, vsr)
+		result = append(result, virtualServers...)
+	}
+
+	// find VirtualServers that reference the service
+	virtualServers := findVirtualServersForService(lbc.getVirtualServers(), service)
+	result = append(result, virtualServers...)
+
+	return result
+}
+
+func findVirtualServersForService(virtualServers []*conf_v1alpha1.VirtualServer, service *api_v1.Service) []*conf_v1alpha1.VirtualServer {
+	var result []*conf_v1alpha1.VirtualServer
+
+	for _, vs := range virtualServers {
+		if vs.Namespace != service.Namespace {
+			continue
+		}
+
+		isReferenced := false
+		for _, u := range vs.Spec.Upstreams {
+			if u.Service == service.Name {
+				isReferenced = true
+				break
+			}
+		}
+		if !isReferenced {
+			continue
+		}
+
+		result = append(result, vs)
+	}
+
+	return result
+}
+
+func findVirtualServerRoutesForService(virtualServerRoutes []*conf_v1alpha1.VirtualServerRoute, service *api_v1.Service) []*conf_v1alpha1.VirtualServerRoute {
+	var result []*conf_v1alpha1.VirtualServerRoute
+
+	for _, vsr := range virtualServerRoutes {
+		if vsr.Namespace != service.Namespace {
+			continue
+		}
+
+		isReferenced := false
+		for _, u := range vsr.Spec.Upstreams {
+			if u.Service == service.Name {
+				isReferenced = true
+				break
+			}
+		}
+		if !isReferenced {
+			continue
+		}
+
+		result = append(result, vsr)
+	}
+
+	return result
+}
+
+func (lbc *LoadBalancerController) getVirtualServersForSecret(secretNamespace string, secretName string) []*conf_v1alpha1.VirtualServer {
+	virtualServers := lbc.getVirtualServers()
+	return findVirtualServersForSecret(virtualServers, secretNamespace, secretName)
+}
+
+func findVirtualServersForSecret(virtualServers []*conf_v1alpha1.VirtualServer, secretNamespace string, secretName string) []*conf_v1alpha1.VirtualServer {
+	var result []*conf_v1alpha1.VirtualServer
+
+	for _, vs := range virtualServers {
+		if vs.Spec.TLS == nil {
+			continue
+		}
+		if vs.Spec.TLS.Secret == "" {
+			continue
+		}
+
+		if vs.Namespace == secretNamespace && vs.Spec.TLS.Secret == secretName {
+			result = append(result, vs)
+		}
+	}
+
+	return result
+}
+
+func (lbc *LoadBalancerController) getVirtualServers() []*conf_v1alpha1.VirtualServer {
+	var virtualServers []*conf_v1alpha1.VirtualServer
+
+	for _, obj := range lbc.virtualServerLister.List() {
+		vs := obj.(*conf_v1alpha1.VirtualServer)
+
+		err := validation.ValidateVirtualServer(vs)
+		if err != nil {
+			glog.V(3).Infof("Skipping invalid VirtualServer %s/%s: %v", vs.Namespace, vs.Name, err)
+			continue
+		}
+
+		virtualServers = append(virtualServers, vs)
+	}
+
+	return virtualServers
+}
+
+func (lbc *LoadBalancerController) getVirtualServerRoutes() []*conf_v1alpha1.VirtualServerRoute {
+	var virtualServerRoutes []*conf_v1alpha1.VirtualServerRoute
+
+	for _, obj := range lbc.virtualServerRouteLister.List() {
+		vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
+
+		err := validation.ValidateVirtualServerRoute(vsr)
+		if err != nil {
+			glog.V(3).Infof("Skipping invalid VirtualServerRoute %s/%s: %v", vsr.Namespace, vsr.Name, err)
+			continue
+		}
+
+		virtualServerRoutes = append(virtualServerRoutes, vsr)
+	}
+
+	return virtualServerRoutes
+}
+
+func (lbc *LoadBalancerController) enqueueVirtualServersForVirtualServerRouteKey(key string) int {
+	virtualServers := findVirtualServersForVirtualServerRouteKey(lbc.getVirtualServers(), key)
+
+	for _, vs := range virtualServers {
+		lbc.syncQueue.Enqueue(vs)
+	}
+
+	return len(virtualServers)
+}
+
+func findVirtualServersForVirtualServerRoute(virtualServers []*conf_v1alpha1.VirtualServer, virtualServerRoute *conf_v1alpha1.VirtualServerRoute) []*conf_v1alpha1.VirtualServer {
+	key := fmt.Sprintf("%s/%s", virtualServerRoute.Namespace, virtualServerRoute.Name)
+	return findVirtualServersForVirtualServerRouteKey(virtualServers, key)
+}
+
+func findVirtualServersForVirtualServerRouteKey(virtualServers []*conf_v1alpha1.VirtualServer, key string) []*conf_v1alpha1.VirtualServer {
+	var result []*conf_v1alpha1.VirtualServer
+
+	for _, vs := range virtualServers {
+		for _, r := range vs.Spec.Routes {
+			if r.Route == key {
+				result = append(result, vs)
+				break
+			}
+		}
+	}
+
+	return result
 }
 
 func (lbc *LoadBalancerController) getAndValidateSecret(secretKey string) (*api_v1.Secret, error) {
@@ -1077,6 +1465,122 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*conf
 	}
 
 	return ingEx, nil
+}
+
+type virtualServerRouteError struct {
+	VirtualServerRouteNsName string
+	VirtualServerRoute       *conf_v1alpha1.VirtualServerRoute
+	Error                    error
+}
+
+func newVirtualServerRouteErrorFromNsName(nsName string, err error) virtualServerRouteError {
+	return virtualServerRouteError{
+		VirtualServerRouteNsName: nsName,
+		Error:                    err,
+	}
+}
+
+func newVirtualServerRouteErrorFromVSR(virtualServerRoute *conf_v1alpha1.VirtualServerRoute, err error) virtualServerRouteError {
+	return virtualServerRouteError{
+		VirtualServerRoute:       virtualServerRoute,
+		VirtualServerRouteNsName: fmt.Sprintf("%s/%s", virtualServerRoute.Namespace, virtualServerRoute.Name),
+		Error:                    err,
+	}
+}
+
+func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alpha1.VirtualServer) (*configs.VirtualServerEx, []virtualServerRouteError) {
+	virtualServerEx := configs.VirtualServerEx{
+		VirtualServer: virtualServer,
+	}
+
+	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
+		secretKey := virtualServer.Namespace + "/" + virtualServer.Spec.TLS.Secret
+		secret, err := lbc.getAndValidateSecret(secretKey)
+		if err != nil {
+			glog.Warningf("Error trying to get the secret %v for VirtualServer %v: %v", secretKey, virtualServer.Name, err)
+		} else {
+			virtualServerEx.TLSSecret = secret
+		}
+	}
+
+	endpoints := make(map[string][]string)
+
+	for _, u := range virtualServer.Spec.Upstreams {
+		endpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, u.Service, u.Port)
+		endpoints[endpointsKey] = lbc.getEndpointsForService(virtualServer.Namespace, u.Service, int(u.Port))
+	}
+
+	var virtualServerRoutes []*conf_v1alpha1.VirtualServerRoute
+	var virtualServerRouteErrors []virtualServerRouteError
+
+	// gather all referenced VirtualServerRoutes
+	for _, r := range virtualServer.Spec.Routes {
+		if r.Route == "" {
+			continue
+		}
+
+		vsrKey := r.Route
+
+		// if route is defined without a namespace, use the namespace of VirtualServer.
+		if !strings.Contains(r.Route, "/") {
+			vsrKey = fmt.Sprintf("%s/%s", virtualServer.Namespace, r.Route)
+		}
+
+		obj, exists, err := lbc.virtualServerRouteLister.GetByKey(vsrKey)
+		if err != nil {
+			glog.Warningf("Failed to get VirtualServerRoute %s for VirtualServer %s/%s: %v", vsrKey, virtualServer.Namespace, virtualServer.Name, err)
+			virtualServerRouteErrors = append(virtualServerRouteErrors, newVirtualServerRouteErrorFromNsName(vsrKey, err))
+			continue
+		}
+
+		if !exists {
+			glog.Warningf("VirtualServer %s/%s references VirtualServerRoute %s that doesn't exist", virtualServer.Name, virtualServer.Namespace, vsrKey)
+			virtualServerRouteErrors = append(virtualServerRouteErrors, newVirtualServerRouteErrorFromNsName(vsrKey, errors.New("VirtualServerRoute doesn't exist")))
+			continue
+		}
+
+		vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
+
+		err = validation.ValidateVirtualServerRouteForVirtualServer(vsr, virtualServer.Spec.Host, r.Path)
+		if err != nil {
+			glog.Warningf("VirtualServer %s/%s references invalid VirtualServerRoute %s: %v", virtualServer.Name, virtualServer.Namespace, vsrKey, err)
+			virtualServerRouteErrors = append(virtualServerRouteErrors, newVirtualServerRouteErrorFromVSR(vsr, err))
+			continue
+		}
+
+		virtualServerRoutes = append(virtualServerRoutes, vsr)
+
+		for _, u := range vsr.Spec.Upstreams {
+			endpointsKey := configs.GenerateEndpointsKey(vsr.Namespace, u.Service, u.Port)
+			endpoints[endpointsKey] = lbc.getEndpointsForService(vsr.Namespace, u.Service, int(u.Port))
+		}
+	}
+
+	virtualServerEx.Endpoints = endpoints
+	virtualServerEx.VirtualServerRoutes = virtualServerRoutes
+
+	return &virtualServerEx, virtualServerRouteErrors
+}
+
+func (lbc *LoadBalancerController) getEndpointsForService(namespace string, name string, port int) []string {
+	backend := &extensions.IngressBackend{
+		ServiceName: name,
+		ServicePort: intstr.FromInt(port),
+	}
+
+	svc, err := lbc.getServiceForIngressBackend(backend, namespace)
+	if err != nil {
+		glog.Warningf("Error getting service %v: %v", name, err)
+		return nil
+	}
+
+	endps, _, err := lbc.getEndpointsForIngressBackend(backend, namespace, svc)
+	if err != nil {
+		glog.Warningf("Error retrieving endpoints for the service %v: %v", name, err)
+		return nil
+	}
+
+	return endps
 }
 
 func (lbc *LoadBalancerController) getPodsForIngressBackend(svc *api_v1.Service, namespace string) *api_v1.PodList {

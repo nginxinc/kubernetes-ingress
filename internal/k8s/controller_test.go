@@ -7,11 +7,13 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -631,7 +633,7 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 	cafeMasterIngEx, _ := lbc.createIngress(&cafeMaster)
 	ingExMap["default-cafe-master"] = cafeMasterIngEx
 
-	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, false, false)
+	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, &version2.TemplateExecutor{}, false, false)
 
 	// edit private field ingresses to use in testing
 	pointerVal := reflect.ValueOf(cnf)
@@ -845,7 +847,7 @@ func TestFindProbeForPods(t *testing.T) {
 
 func TestGetServicePortForIngressPort(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, false, false)
+	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, &version2.TemplateExecutor{}, false, false)
 	lbc := LoadBalancerController{
 		client:           fakeClient,
 		ingressClass:     "nginx",
@@ -992,11 +994,17 @@ func TestFindIngressesForSecret(t *testing.T) {
 
 			templateExecutor, err := version1.NewTemplateExecutor("../configs/version1/nginx-plus.tmpl", "../configs/version1/nginx-plus.ingress.tmpl")
 			if err != nil {
-				t.Fatalf("templateExecuter could not start: %v", err)
+				t.Fatalf("templateExecutor could not start: %v", err)
 			}
+
+			templateExecutorV2, err := version2.NewTemplateExecutor("../configs/version2/nginx-plus.virtualserver.tmpl")
+			if err != nil {
+				t.Fatalf("templateExecutorV2 could not start: %v", err)
+			}
+
 			manager := nginx.NewFakeManager("/etc/nginx")
 
-			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, templateExecutor, false, false)
+			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, templateExecutor, templateExecutorV2, false, false)
 			lbc := LoadBalancerController{
 				client:           fakeClient,
 				ingressClass:     "nginx",
@@ -1177,11 +1185,17 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 
 			templateExecutor, err := version1.NewTemplateExecutor("../configs/version1/nginx-plus.tmpl", "../configs/version1/nginx-plus.ingress.tmpl")
 			if err != nil {
-				t.Fatalf("templateExecuter could not start: %v", err)
+				t.Fatalf("templateExecutor could not start: %v", err)
 			}
+
+			templateExecutorV2, err := version2.NewTemplateExecutor("../configs/version2/nginx-plus.virtualserver.tmpl")
+			if err != nil {
+				t.Fatalf("templateExecutorV2 could not start: %v", err)
+			}
+
 			manager := nginx.NewFakeManager("/etc/nginx")
 
-			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, templateExecutor, false, false)
+			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, templateExecutor, templateExecutorV2, false, false)
 			lbc := LoadBalancerController{
 				client:           fakeClient,
 				ingressClass:     "nginx",
@@ -1252,5 +1266,244 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestFindVirtualServersForService(t *testing.T) {
+	vs1 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-1",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			Upstreams: []conf_v1alpha1.Upstream{
+				{
+					Service: "test-service",
+				},
+			},
+		},
+	}
+	vs2 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-2",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			Upstreams: []conf_v1alpha1.Upstream{
+				{
+					Service: "some-service",
+				},
+			},
+		},
+	}
+	vs3 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-3",
+			Namespace: "ns-2",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			Upstreams: []conf_v1alpha1.Upstream{
+				{
+					Service: "test-service",
+				},
+			},
+		},
+	}
+	virtualServers := []*conf_v1alpha1.VirtualServer{&vs1, &vs2, &vs3}
+
+	service := v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "test-service",
+			Namespace: "ns-1",
+		},
+	}
+
+	expected := []*conf_v1alpha1.VirtualServer{&vs1}
+
+	result := findVirtualServersForService(virtualServers, &service)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("findVirtualServersForService returned %v but expected %v", result, expected)
+	}
+}
+
+func TestFindVirtualServerRoutesForService(t *testing.T) {
+	vsr1 := conf_v1alpha1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-1",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerRouteSpec{
+			Upstreams: []conf_v1alpha1.Upstream{
+				{
+					Service: "test-service",
+				},
+			},
+		},
+	}
+	vsr2 := conf_v1alpha1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-2",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerRouteSpec{
+			Upstreams: []conf_v1alpha1.Upstream{
+				{
+					Service: "some-service",
+				},
+			},
+		},
+	}
+	vsr3 := conf_v1alpha1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vrs-3",
+			Namespace: "ns-2",
+		},
+		Spec: conf_v1alpha1.VirtualServerRouteSpec{
+			Upstreams: []conf_v1alpha1.Upstream{
+				{
+					Service: "test-service",
+				},
+			},
+		},
+	}
+	virtualServerRoutes := []*conf_v1alpha1.VirtualServerRoute{&vsr1, &vsr2, &vsr3}
+
+	service := v1.Service{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "test-service",
+			Namespace: "ns-1",
+		},
+	}
+
+	expected := []*conf_v1alpha1.VirtualServerRoute{&vsr1}
+
+	result := findVirtualServerRoutesForService(virtualServerRoutes, &service)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("findVirtualServerRoutesForService returned %v but expected %v", result, expected)
+	}
+}
+
+func TestFindVirtualServersForSecret(t *testing.T) {
+	vs1 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-1",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			TLS: nil,
+		},
+	}
+	vs2 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-2",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			TLS: &conf_v1alpha1.TLS{
+				Secret: "",
+			},
+		},
+	}
+	vs3 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-3",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			TLS: &conf_v1alpha1.TLS{
+				Secret: "some-secret",
+			},
+		},
+	}
+	vs4 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-4",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			TLS: &conf_v1alpha1.TLS{
+				Secret: "test-secret",
+			},
+		},
+	}
+	vs5 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-5",
+			Namespace: "ns-2",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			TLS: &conf_v1alpha1.TLS{
+				Secret: "test-secret",
+			},
+		},
+	}
+
+	virtualServers := []*conf_v1alpha1.VirtualServer{&vs1, &vs2, &vs3, &vs4, &vs5}
+
+	expected := []*conf_v1alpha1.VirtualServer{&vs4}
+
+	result := findVirtualServersForSecret(virtualServers, "ns-1", "test-secret")
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("findVirtualServersForSecret returned %v but expected %v", result, expected)
+	}
+}
+
+func TestFindVirtualServersForVirtualServerRoute(t *testing.T) {
+	vs1 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-1",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			Routes: []conf_v1alpha1.Route{
+				{
+					Path:  "/",
+					Route: "default/test",
+				},
+			},
+		},
+	}
+	vs2 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-2",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			Routes: []conf_v1alpha1.Route{
+				{
+					Path:  "/",
+					Route: "some-ns/test",
+				},
+			},
+		},
+	}
+	vs3 := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-3",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.VirtualServerSpec{
+			Routes: []conf_v1alpha1.Route{
+				{
+					Path:  "/",
+					Route: "default/test",
+				},
+			},
+		},
+	}
+
+	vsr := conf_v1alpha1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "test",
+			Namespace: "default",
+		},
+	}
+
+	virtualServers := []*conf_v1alpha1.VirtualServer{&vs1, &vs2, &vs3}
+
+	expected := []*conf_v1alpha1.VirtualServer{&vs1, &vs3}
+
+	result := findVirtualServersForVirtualServerRoute(virtualServers, &vsr)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("findVirtualServersForVirtualServerRoute returned %v but expected %v", result, expected)
+	}
 }

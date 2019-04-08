@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
 	"github.com/golang/glog"
@@ -20,11 +21,14 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
+	conf_scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
 	"github.com/nginxinc/nginx-plus-go-sdk/client"
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -77,6 +81,10 @@ var (
 		`Path to the ingress NGINX configuration template for an ingress resource.
 	(default for NGINX "nginx.ingress.tmpl"; default for NGINX Plus "nginx-plus.ingress.tmpl")`)
 
+	virtualServerTemplatePath = flag.String("virtualserver-template-path", "",
+		`Path to the VirtualServer NGINX configuration template for a VirtualServer resource.
+	(default for NGINX "nginx.virtualserver.tmpl"; default for NGINX Plus "nginx-plus.virtualserver.tmpl")`)
+
 	externalService = flag.String("external-service", "",
 		`Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally.
 The external address of the service is used when reporting the status of Ingress resources. Requires -report-ingress-status.`)
@@ -111,6 +119,9 @@ The external address of the service is used when reporting the status of Ingress
 
 	prometheusMetricsListenPort = flag.Int("prometheus-metrics-listen-port", 9113,
 		"Set the port where the Prometheus metrics are exposed. [1023 - 65535]")
+
+	enableCustomResources = flag.Bool("enable-custom-resources", false,
+		"Enable custom resources")
 )
 
 func main() {
@@ -166,11 +177,27 @@ func main() {
 		glog.Fatalf("Failed to create client: %v.", err)
 	}
 
+	var confClient k8s_nginx.Interface
+	if *enableCustomResources {
+		confClient, err = k8s_nginx.NewForConfig(config)
+		if err != nil {
+			glog.Fatalf("Failed to create a conf client: %v", err)
+		}
+
+		// required for emitting Events for VirtualServer
+		err = conf_scheme.AddToScheme(scheme.Scheme)
+		if err != nil {
+			glog.Fatalf("Failed to add configuration types to the scheme: %v", err)
+		}
+	}
+
 	nginxConfTemplatePath := "nginx.tmpl"
 	nginxIngressTemplatePath := "nginx.ingress.tmpl"
+	nginxVirtualServerTemplatePath := "nginx.virtualserver.tmpl"
 	if *nginxPlus {
 		nginxConfTemplatePath = "nginx-plus.tmpl"
 		nginxIngressTemplatePath = "nginx-plus.ingress.tmpl"
+		nginxVirtualServerTemplatePath = "nginx-plus.virtualserver.tmpl"
 	}
 
 	if *mainTemplatePath != "" {
@@ -178,6 +205,9 @@ func main() {
 	}
 	if *ingressTemplatePath != "" {
 		nginxIngressTemplatePath = *ingressTemplatePath
+	}
+	if *virtualServerTemplatePath != "" {
+		nginxVirtualServerTemplatePath = *virtualServerTemplatePath
 	}
 
 	nginxBinaryPath := "/usr/sbin/nginx"
@@ -188,6 +218,11 @@ func main() {
 	templateExecutor, err := version1.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath)
 	if err != nil {
 		glog.Fatalf("Error creating TemplateExecutor: %v", err)
+	}
+
+	templateExecutorV2, err := version2.NewTemplateExecutor(nginxVirtualServerTemplatePath)
+	if err != nil {
+		glog.Fatalf("Error cresting TemplateExecutorV2: %v", err)
 	}
 
 	var registry *prometheus.Registry
@@ -321,26 +356,28 @@ func main() {
 	}
 
 	isWildcardEnabled := *wildcardTLSSecret != ""
-	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, templateExecutor, *nginxPlus, isWildcardEnabled)
+	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, templateExecutor, templateExecutorV2, *nginxPlus, isWildcardEnabled)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
-		KubeClient:              kubeClient,
-		ResyncPeriod:            30 * time.Second,
-		Namespace:               *watchNamespace,
-		NginxConfigurator:       cnf,
-		DefaultServerSecret:     *defaultServerSecret,
-		IsNginxPlus:             *nginxPlus,
-		IngressClass:            *ingressClass,
-		UseIngressClassOnly:     *useIngressClassOnly,
-		ExternalServiceName:     *externalService,
-		ControllerNamespace:     controllerNamespace,
-		ReportIngressStatus:     *reportIngressStatus,
-		IsLeaderElectionEnabled: *leaderElectionEnabled,
-		LeaderElectionLockName:  *leaderElectionLockName,
-		WildcardTLSSecret:       *wildcardTLSSecret,
-		ConfigMaps:              *nginxConfigMaps,
-		MetricsCollector:        controllerCollector,
+		KubeClient:                kubeClient,
+		ConfClient:                confClient,
+		ResyncPeriod:              30 * time.Second,
+		Namespace:                 *watchNamespace,
+		NginxConfigurator:         cnf,
+		DefaultServerSecret:       *defaultServerSecret,
+		IsNginxPlus:               *nginxPlus,
+		IngressClass:              *ingressClass,
+		UseIngressClassOnly:       *useIngressClassOnly,
+		ExternalServiceName:       *externalService,
+		ControllerNamespace:       controllerNamespace,
+		ReportIngressStatus:       *reportIngressStatus,
+		IsLeaderElectionEnabled:   *leaderElectionEnabled,
+		LeaderElectionLockName:    *leaderElectionLockName,
+		WildcardTLSSecret:         *wildcardTLSSecret,
+		ConfigMaps:                *nginxConfigMaps,
+		AreCustomResourcesEnabled: *enableCustomResources,
+		MetricsCollector:          controllerCollector,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

@@ -13,6 +13,8 @@ Usage of ./nginx-ingress:
     	A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
     	Format: <namespace>/<name>. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. 
     	If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.
+  -enable-custom-resources
+    	Enable custom resources
   -enable-leader-election
     	Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources -- only one replica will report status. See -report-ingress-status flag.
   -external-service string
@@ -67,6 +69,9 @@ Usage of ./nginx-ingress:
     	log level for V logs
   -version
     	Print the version and git-commit hash and exit
+  -virtualserver-template-path string
+        Path to the VirtualServer NGINX configuration template for a VirtualServer resource.
+        (default for NGINX "nginx.virtualserver.tmpl"; default for NGINX Plus "nginx-plus.virtualserver.tmpl")
   -vmodule value
     	comma-separated list of pattern=N settings for file-filtered logging
   -watch-namespace string

@@ -1,0 +1,38 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: VirtualServer
+metadata:
+  name: cafe
+spec:
+  host: cafe.example.com
+  upstreams:
+  - name: tea-post
+    service: tea-post-svc
+    port: 80
+  - name: tea
+    service: tea-svc
+    port: 80
+  - name: coffee-v1
+    service: coffee-v1-svc
+    port: 80
+  - name: coffee-v2 
+    service: coffee-v2-svc
+    port: 80
+  routes:
+  - path: /tea
+    rules:
+      conditions:
+      - variable: $request_method
+      matches:
+      - values: 
+        - POST
+        upstream: tea-post
+      defaultUpstream: tea
+  - path: /coffee
+    rules:
+      conditions:
+      - cookie: version
+      matches:
+      - values:
+        - v2
+        upstream: coffee-v2
+      defaultUpstream: coffee-v1
