@@ -6,6 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"time"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/nginx-plus-go-sdk/client"
@@ -60,10 +63,11 @@ type LocalManager struct {
 	quitCmd                      string
 	plusClient                   *client.NginxClient
 	plusConfigVersionCheckClient *http.Client
+	metricsCollector             collectors.ManagerCollector
 }
 
 // NewLocalManager creates a LocalManager.
-func NewLocalManager(confPath string, binaryFilename string) *LocalManager {
+func NewLocalManager(confPath string, binaryFilename string, mc collectors.ManagerCollector) *LocalManager {
 	verifyConfigGenerator, err := newVerifyConfigGenerator()
 	if err != nil {
 		glog.Fatalf("error instantiating a verifyConfigGenerator: %v", err)
@@ -81,6 +85,7 @@ func NewLocalManager(confPath string, binaryFilename string) *LocalManager {
 		verifyClient:          newVerifyClient(),
 		reloadCmd:             fmt.Sprintf("%v -s %v", binaryFilename, "reload"),
 		quitCmd:               fmt.Sprintf("%v -s %v", binaryFilename, "quit"),
+		metricsCollector:      mc,
 	}
 
 	return &manager
@@ -194,14 +199,22 @@ func (lm *LocalManager) Reload() error {
 
 	glog.V(3).Infof("Reloading nginx with configVersion: %v", lm.configVersion)
 
+	t1 := time.Now()
+
 	if err := shellOut(lm.reloadCmd); err != nil {
+		lm.metricsCollector.IncNginxReloadErrors()
 		return fmt.Errorf("nginx reload failed: %v", err)
 	}
 	err := lm.verifyClient.WaitForCorrectVersion(lm.configVersion)
 	if err != nil {
+		lm.metricsCollector.IncNginxReloadErrors()
 		return fmt.Errorf("could not get newest config version: %v", err)
 	}
 
+	lm.metricsCollector.IncNginxReloadCount()
+
+	t2 := time.Now()
+	lm.metricsCollector.UpdateLastReloadTime(t2.Sub(t1))
 	return nil
 }
 

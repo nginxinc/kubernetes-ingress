@@ -165,7 +165,7 @@ For NGINX Plus, you can access the live activity monitoring dashboard:
 
 ## Support For Prometheus Monitoring
 
-You can expose NGINX or NGINX Plus metrics for collection by [Prometheus](https://prometheus.io/):
+You can expose NGINX/NGINX Plus and Ingress Controller [metrics](./prometheus.md) for collection by [Prometheus](https://prometheus.io/):
 
 1. Run the Ingress controller with the `-enable-prometheus-metrics` [command-line argument](cli-arguments.md). As a result, the Ingress Controller will expose NGINX or NGINX Plus metrics in the Prometheus format via the path `/metrics` on port `9113` (customizable via the `-prometheus-metrics-listen-port` command-line argument).
 1. Add the Prometheus port to the list of the ports of the Ingress Controller container:
@@ -173,7 +173,7 @@ You can expose NGINX or NGINX Plus metrics for collection by [Prometheus](https:
     - name: prometheus
       containerPort: 9113
     ```
-1. Make the Prometheus aware of the Ingress Controller targets by adding the following annotations to the template of the Ingress Controller pod (note: this assumes your Prometheus is configured to discover targets by analyzing the annotations of pods):
+1. Make Prometheus aware of the Ingress Controller targets by adding the following annotations to the template of the Ingress Controller pod (note: this assumes your Prometheus is configured to discover targets by analyzing the annotations of pods):
     ```yaml
     annotations:
         prometheus.io/scrape: "true"

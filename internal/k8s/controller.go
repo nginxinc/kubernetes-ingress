@@ -24,6 +24,7 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -79,6 +80,7 @@ type LoadBalancerController struct {
 	namespace               string
 	controllerNamespace     string
 	wildcardTLSSecret       string
+	metricsCollector        collectors.ControllerCollector
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -100,6 +102,7 @@ type NewLoadBalancerControllerInput struct {
 	LeaderElectionLockName  string
 	WildcardTLSSecret       string
 	ConfigMaps              string
+	MetricsCollector        collectors.ControllerCollector
 }
 
 // NewLoadBalancerController creates a controller
@@ -118,6 +121,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		namespace:               input.Namespace,
 		controllerNamespace:     input.ControllerNamespace,
 		wildcardTLSSecret:       input.WildcardTLSSecret,
+		metricsCollector:        input.MetricsCollector,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -456,20 +460,20 @@ func (lbc *LoadBalancerController) sync(task task) {
 	switch task.Kind {
 	case ingress:
 		lbc.syncIng(task)
+		lbc.updateIngressMetrics()
 	case ingressMinion:
 		lbc.syncIngMinion(task)
+		lbc.updateIngressMetrics()
 	case configMap:
 		lbc.syncConfig(task)
-		return
 	case endpoints:
 		lbc.syncEndpoint(task)
-		return
 	case secret:
 		lbc.syncSecret(task)
-		return
 	case service:
 		lbc.syncExternalService(task)
 	}
+
 }
 
 func (lbc *LoadBalancerController) syncIngMinion(task task) {
@@ -588,6 +592,13 @@ func (lbc *LoadBalancerController) syncIng(task task) {
 				glog.V(3).Infof("error updating ing status: %v", err)
 			}
 		}
+	}
+}
+
+func (lbc *LoadBalancerController) updateIngressMetrics() {
+	counters := lbc.configurator.GetIngressCounts()
+	for nType, count := range counters {
+		lbc.metricsCollector.SetIngressResources(nType, count)
 	}
 }
 

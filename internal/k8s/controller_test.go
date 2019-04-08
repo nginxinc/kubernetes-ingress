@@ -7,10 +7,12 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -31,6 +33,7 @@ func TestIsNginxIngress(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:        ingressClass,
 				useIngressClassOnly: false,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
 			},
 			&extensions.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -43,6 +46,7 @@ func TestIsNginxIngress(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:        ingressClass,
 				useIngressClassOnly: false,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
 			},
 			&extensions.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -55,6 +59,7 @@ func TestIsNginxIngress(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:        ingressClass,
 				useIngressClassOnly: false,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
 			},
 			&extensions.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -67,6 +72,7 @@ func TestIsNginxIngress(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:        ingressClass,
 				useIngressClassOnly: false,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
 			},
 			&extensions.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -86,6 +92,7 @@ func TestIsNginxIngress(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:        ingressClass,
 				useIngressClassOnly: true,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
 			},
 			&extensions.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -98,6 +105,7 @@ func TestIsNginxIngress(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:        ingressClass,
 				useIngressClassOnly: true,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
 			},
 			&extensions.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -110,6 +118,7 @@ func TestIsNginxIngress(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:        ingressClass,
 				useIngressClassOnly: true,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
 			},
 			&extensions.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -122,6 +131,7 @@ func TestIsNginxIngress(t *testing.T) {
 			&LoadBalancerController{
 				ingressClass:        ingressClass,
 				useIngressClassOnly: true,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
 			},
 			&extensions.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -634,9 +644,10 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion extensions.Ingre
 
 	fakeClient := fake.NewSimpleClientset()
 	lbc = LoadBalancerController{
-		client:       fakeClient,
-		ingressClass: "nginx",
-		configurator: cnf,
+		client:           fakeClient,
+		ingressClass:     "nginx",
+		configurator:     cnf,
+		metricsCollector: collectors.NewControllerFakeCollector(),
 	}
 	lbc.svcLister, _ = cache.NewInformer(
 		cache.NewListWatchFromClient(lbc.client.ExtensionsV1beta1().RESTClient(), "services", "default", fields.Everything()),
@@ -836,9 +847,10 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
 	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, false, false)
 	lbc := LoadBalancerController{
-		client:       fakeClient,
-		ingressClass: "nginx",
-		configurator: cnf,
+		client:           fakeClient,
+		ingressClass:     "nginx",
+		configurator:     cnf,
+		metricsCollector: collectors.NewControllerFakeCollector(),
 	}
 	svc := v1.Service{
 		TypeMeta: meta_v1.TypeMeta{},
@@ -986,10 +998,11 @@ func TestFindIngressesForSecret(t *testing.T) {
 
 			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, templateExecutor, false, false)
 			lbc := LoadBalancerController{
-				client:       fakeClient,
-				ingressClass: "nginx",
-				configurator: cnf,
-				isNginxPlus:  true,
+				client:           fakeClient,
+				ingressClass:     "nginx",
+				configurator:     cnf,
+				isNginxPlus:      true,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			}
 
 			lbc.ingressLister.Store, _ = cache.NewInformer(
@@ -1170,10 +1183,11 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 
 			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, templateExecutor, false, false)
 			lbc := LoadBalancerController{
-				client:       fakeClient,
-				ingressClass: "nginx",
-				configurator: cnf,
-				isNginxPlus:  true,
+				client:           fakeClient,
+				ingressClass:     "nginx",
+				configurator:     cnf,
+				isNginxPlus:      true,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			}
 
 			lbc.ingressLister.Store, _ = cache.NewInformer(

@@ -12,6 +12,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
@@ -19,6 +21,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	"github.com/nginxinc/nginx-plus-go-sdk/client"
+	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -187,13 +190,34 @@ func main() {
 		glog.Fatalf("Error creating TemplateExecutor: %v", err)
 	}
 
-	useFakeNginxManager := *proxyURL != ""
+	var registry *prometheus.Registry
+	var managerCollector collectors.ManagerCollector
+	var controllerCollector collectors.ControllerCollector
+	managerCollector = collectors.NewManagerFakeCollector()
+	controllerCollector = collectors.NewControllerFakeCollector()
 
+	if *enablePrometheusMetrics {
+		registry = prometheus.NewRegistry()
+		managerCollector = collectors.NewLocalManagerMetricsCollector()
+		controllerCollector = collectors.NewControllerMetricsCollector()
+
+		err = managerCollector.Register(registry)
+		if err != nil {
+			glog.Errorf("Error registering Manager Prometheus metrics: %v", err)
+		}
+
+		err = controllerCollector.Register(registry)
+		if err != nil {
+			glog.Errorf("Error registering Controller Prometheus metrics: %v", err)
+		}
+	}
+
+	useFakeNginxManager := *proxyURL != ""
 	var nginxManager nginx.Manager
 	if useFakeNginxManager {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
-		nginxManager = nginx.NewLocalManager("/etc/nginx/", nginxBinaryPath)
+		nginxManager = nginx.NewLocalManager("/etc/nginx/", nginxBinaryPath, managerCollector)
 	}
 
 	if *defaultServerSecret != "" {
@@ -283,6 +307,19 @@ func main() {
 		nginxManager.SetPlusClients(plusClient, httpClient)
 	}
 
+	if *enablePrometheusMetrics {
+		if *nginxPlus {
+			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusClient, registry)
+		} else {
+			httpClient := getSocketClient("/var/run/nginx-status.sock")
+			client, err := metrics.NewNginxMetricsClient(httpClient)
+			if err != nil {
+				glog.Fatalf("Error creating the Nginx client for Prometheus metrics: %v", err)
+			}
+			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry)
+		}
+	}
+
 	isWildcardEnabled := *wildcardTLSSecret != ""
 	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, templateExecutor, *nginxPlus, isWildcardEnabled)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
@@ -303,22 +340,10 @@ func main() {
 		LeaderElectionLockName:  *leaderElectionLockName,
 		WildcardTLSSecret:       *wildcardTLSSecret,
 		ConfigMaps:              *nginxConfigMaps,
+		MetricsCollector:        controllerCollector,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
-
-	if *enablePrometheusMetrics {
-		if *nginxPlus {
-			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusClient)
-		} else {
-			httpClient := getSocketClient("/var/run/nginx-status.sock")
-			client, err := metrics.NewNginxMetricsClient(httpClient)
-			if err != nil {
-				glog.Fatalf("Error creating the Nginx client for Prometheus metrics: %v", err)
-			}
-			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client)
-		}
-	}
 
 	go handleTermination(lbc, nginxManager, nginxDone)
 	lbc.Run()

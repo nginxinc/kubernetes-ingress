@@ -8,7 +8,7 @@ import (
 	"github.com/golang/glog"
 	sdkClient "github.com/nginxinc/nginx-plus-go-sdk/client"
 	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
-	"github.com/nginxinc/nginx-prometheus-exporter/collector"
+	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -22,16 +22,14 @@ func NewNginxMetricsClient(httpClient *http.Client) (*prometheusClient.NginxClie
 }
 
 // RunPrometheusListenerForNginx runs an http server to expose Prometheus metrics for NGINX
-func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClient) {
-	registry := prometheus.NewRegistry()
-	registry.MustRegister(collector.NewNginxCollector(client, "nginx"))
+func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClient, registry *prometheus.Registry) {
+	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx"))
 	runServer(strconv.Itoa(port), registry)
 }
 
 // RunPrometheusListenerForNginxPlus runs an http server to expose Prometheus metrics for NGINX Plus
-func RunPrometheusListenerForNginxPlus(port int, plusClient *sdkClient.NginxClient) {
-	registry := prometheus.NewRegistry()
-	registry.MustRegister(collector.NewNginxPlusCollector(plusClient, "nginxplus"))
+func RunPrometheusListenerForNginxPlus(port int, plusClient *sdkClient.NginxClient, registry *prometheus.Registry) {
+	registry.MustRegister(nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus"))
 	runServer(strconv.Itoa(port), registry)
 }
 

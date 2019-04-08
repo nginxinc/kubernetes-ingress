@@ -469,3 +469,27 @@ func (cnf *Configurator) HasMinion(master *extensions.Ingress, minion *extension
 func (cnf *Configurator) IsResolverConfigured() bool {
 	return len(cnf.cfgParams.ResolverAddresses) != 0
 }
+
+// GetIngressCounts returns the total count of Ingress resources that are handled by the Ingress Controller grouped by their type
+func (cnf *Configurator) GetIngressCounts() map[string]int {
+	counters := map[string]int{
+		"master":  0,
+		"regular": 0,
+		"minion":  0,
+	}
+
+	// cnf.ingresses contains only master and regular Ingress Resources
+	for _, ing := range cnf.ingresses {
+		if ing.Ingress.Annotations["nginx.org/mergeable-ingress-type"] == "master" {
+			counters["master"]++
+		} else {
+			counters["regular"]++
+		}
+	}
+
+	for _, min := range cnf.minions {
+		counters["minion"] += len(min)
+	}
+
+	return counters
+}
