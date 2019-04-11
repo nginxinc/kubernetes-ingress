@@ -1,5 +1,19 @@
 # Changelog
 
+### 1.4.6
+
+CHANGES:
+* Update NGINX version to 1.15.11.
+* Update NGINX Plus version to R18.
+
+HELM CHART:
+* The version of the Helm chart is now 0.2.1.
+
+UPGRADE:
+* For NGINX, use the 1.4.6 image from our DockerHub: `nginx/nginx-ingress:1.4.6` or `nginx/nginx-ingress:1.4.6-alpine`
+* For NGINX Plus, please build your own image using the 1.4.6 source code.
+* For Helm, use version 0.2.1 of the chart.
+
 ### 1.4.5
 
 CHANGES:
