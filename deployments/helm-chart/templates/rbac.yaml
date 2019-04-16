@@ -58,7 +58,7 @@ rules:
   - watch
 {{- if .Values.controller.reportIngressStatus.enable }}
 - apiGroups:
-  - "extensions"
+  - extensions
   resources:
   - ingresses/status
   verbs:
