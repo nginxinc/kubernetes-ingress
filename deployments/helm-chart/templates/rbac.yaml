@@ -31,8 +31,10 @@ rules:
   - get
   - list
   - watch
+{{- if .Values.controller.reportIngressStatus.enableLeaderElection }}
   - update
   - create
+{{- end }}
 - apiGroups:
   - ""
   resources:
