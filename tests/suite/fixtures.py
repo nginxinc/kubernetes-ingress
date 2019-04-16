@@ -6,14 +6,19 @@ import pytest
 import yaml
 
 from kubernetes import config, client
-from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api
+from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api, CustomObjectsApi, \
+    ApiextensionsV1beta1Api
 
+from suite.custom_resources_utils import create_crd_from_yaml, delete_crd, create_virtual_server_from_yaml, \
+    delete_virtual_server
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
-from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml
+from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml, \
+    patch_rbac, create_common_app, wait_until_all_pods_are_ready, delete_common_app
 from suite.resources_utils import create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac
 from suite.resources_utils import create_service_from_yaml, get_service_node_ports, wait_for_public_ip
 from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml
 from settings import ALLOWED_SERVICE_TYPES, ALLOWED_IC_TYPES, DEPLOYMENTS, TEST_DATA, ALLOWED_DEPLOYMENT_TYPES
+from suite.yaml_utils import get_first_vs_host_from_yaml
 
 
 class KubeApis:
@@ -24,11 +29,19 @@ class KubeApis:
         v1: CoreV1Api
         extensions_v1_beta1: ExtensionsV1beta1Api
         rbac_v1_beta1: RbacAuthorizationV1beta1Api
+        api_extensions_v1_beta1: ApiextensionsV1beta1Api
+        custom_objects: CustomObjectsApi
     """
-    def __init__(self, v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1beta1Api, rbac_v1_beta1: RbacAuthorizationV1beta1Api):
+    def __init__(self, v1: CoreV1Api,
+                 extensions_v1_beta1: ExtensionsV1beta1Api,
+                 rbac_v1_beta1: RbacAuthorizationV1beta1Api,
+                 api_extensions_v1_beta1: ApiextensionsV1beta1Api,
+                 custom_objects: CustomObjectsApi):
         self.v1 = v1
         self.extensions_v1_beta1 = extensions_v1_beta1
         self.rbac_v1_beta1 = rbac_v1_beta1
+        self.api_extensions_v1_beta1 = api_extensions_v1_beta1
+        self.custom_objects = custom_objects
 
 
 class PublicEndpoint:
@@ -100,13 +113,11 @@ def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisite
     """
     namespace = ingress_controller_prerequisites.namespace
     print("------------------------- Create IC -----------------------------------")
-    v1 = kube_apis.v1
-    extensions_v1_beta1 = kube_apis.extensions_v1_beta1
-    name = create_ingress_controller(v1, extensions_v1_beta1, cli_arguments, namespace)
+    name = create_ingress_controller(kube_apis.v1, kube_apis.extensions_v1_beta1, cli_arguments, namespace)
 
     def fin():
         print("Delete IC:")
-        delete_ingress_controller(extensions_v1_beta1, name, cli_arguments['deployment-type'], namespace)
+        delete_ingress_controller(kube_apis.extensions_v1_beta1, name, cli_arguments['deployment-type'], namespace)
 
     request.addfinalizer(fin)
 
@@ -179,7 +190,9 @@ def kube_apis(cli_arguments) -> KubeApis:
     v1 = client.CoreV1Api()
     extensions_v1_beta1 = client.ExtensionsV1beta1Api()
     rbac_v1_beta1 = client.RbacAuthorizationV1beta1Api()
-    return KubeApis(v1, extensions_v1_beta1, rbac_v1_beta1)
+    api_extensions_v1_beta1 = client.ApiextensionsV1beta1Api()
+    custom_objects = client.CustomObjectsApi()
+    return KubeApis(v1, extensions_v1_beta1, rbac_v1_beta1, api_extensions_v1_beta1, custom_objects)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -227,3 +240,89 @@ def cli_arguments(request) -> {}:
         result["node-ip"] = node_ip
         print(f"Tests will use the node-ip: {result['node-ip']}")
     return result
+
+
+@pytest.fixture(scope="class")
+def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisites, request) -> None:
+    """
+    Create an Ingress Controller with CRD enabled.
+
+    :param cli_arguments: pytest context
+    :param kube_apis: client apis
+    :param ingress_controller_prerequisites
+    :param request: pytest fixture to parametrize this method
+
+    :return:
+    """
+    namespace = ingress_controller_prerequisites.namespace
+    print("------------------------- Update ClusterRole -----------------------------------")
+    if request.param['type'] == 'rbac-without-vs':
+        patch_rbac(kube_apis.rbac_v1_beta1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
+    print("------------------------- Register CRD -----------------------------------")
+    crd_name = create_crd_from_yaml(kube_apis.api_extensions_v1_beta1,
+                                    f"{DEPLOYMENTS}/custom-resource-definitions/virtualserver.yaml")
+    print("------------------------- Create IC -----------------------------------")
+    name = create_ingress_controller(kube_apis.v1, kube_apis.extensions_v1_beta1, cli_arguments, namespace,
+                                     request.param.get('extra_args', None))
+
+    def fin():
+        print("Remove the CRD:")
+        delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
+        print("Remove the IC:")
+        delete_ingress_controller(kube_apis.extensions_v1_beta1, name, cli_arguments['deployment-type'], namespace)
+        print("Restore ClusterRole:")
+        patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
+
+    request.addfinalizer(fin)
+
+
+class VirtualServerSetup:
+    """
+    Encapsulate  Virtual Server Example details.
+
+    Attributes:
+        public_endpoint (PublicEndpoint):
+        namespace (str):
+        vs_host (str):
+        vs_name (str):
+        backend_1_url (str):
+        backend_2_url (str):
+    """
+    def __init__(self, public_endpoint: PublicEndpoint, namespace, vs_host, vs_name):
+        self.public_endpoint = public_endpoint
+        self.namespace = namespace
+        self.vs_host = vs_host
+        self.vs_name = vs_name
+        self.backend_1_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}/backend1"
+        self.backend_2_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}/backend2"
+
+
+@pytest.fixture(scope="class")
+def virtual_server_setup(request, kube_apis, crd_ingress_controller, ingress_controller_endpoint,
+                         test_namespace) -> VirtualServerSetup:
+    """
+    Prepare Virtual Server Example.
+
+    :param request: internal pytest fixture to parametrize this method ('virtual-server'|'virtual-server-tls')
+    :param kube_apis: client apis
+    :param crd_ingress_controller:
+    :param ingress_controller_endpoint:
+    :param test_namespace:
+    :return: VirtualServerSetup
+    """
+    print("------------------------- Deploy Virtual Server Example -----------------------------------")
+    vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects,
+                                              f"{TEST_DATA}/{request.param}/standard/virtual-server.yaml",
+                                              test_namespace)
+    vs_host = get_first_vs_host_from_yaml(f"{TEST_DATA}/{request.param}/standard/virtual-server.yaml")
+    common_app = create_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, test_namespace)
+    wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
+
+    def fin():
+        print("Clean up Virtual Server Example:")
+        delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
+        delete_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, common_app, test_namespace)
+
+    request.addfinalizer(fin)
+
+    return VirtualServerSetup(ingress_controller_endpoint, test_namespace, vs_host, vs_name)

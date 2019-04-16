@@ -3,10 +3,11 @@ import pytest
 
 from settings import TEST_DATA
 from suite.fixtures import PublicEndpoint
-from suite.resources_utils import create_ingress_from_yaml, get_ingress_host_from_yaml, get_external_host_from_yaml
+from suite.resources_utils import create_ingress_from_yaml
 from suite.resources_utils import replace_configmap_from_yaml, create_service_from_yaml
 from suite.resources_utils import replace_configmap, delete_ingress, delete_service, get_ingress_nginx_template_conf
 from suite.resources_utils import get_first_pod_name, ensure_connection_to_public_endpoint, wait_before_test
+from suite.yaml_utils import get_first_ingress_host_from_yaml, get_external_host_from_service_yaml
 
 
 class ExternalNameSetup:
@@ -36,8 +37,8 @@ def external_name_setup(request, kube_apis, ingress_controller_prerequisites, in
     print("------------------------- Deploy External-Name-Example -----------------------------------")
     ingress_name = create_ingress_from_yaml(kube_apis.extensions_v1_beta1, test_namespace,
                                             f"{TEST_DATA}/externalname-services/externalname-ingress.yaml")
-    ingress_host = get_ingress_host_from_yaml(f"{TEST_DATA}/externalname-services/externalname-ingress.yaml")
-    external_host = get_external_host_from_yaml(f"{TEST_DATA}/externalname-services/externalname-svc.yaml")
+    ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/externalname-services/externalname-ingress.yaml")
+    external_host = get_external_host_from_service_yaml(f"{TEST_DATA}/externalname-services/externalname-svc.yaml")
     config_map_name = ingress_controller_prerequisites.config_map["metadata"]["name"]
     replace_configmap_from_yaml(kube_apis.v1, config_map_name,
                                 ingress_controller_prerequisites.namespace,

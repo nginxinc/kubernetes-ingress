@@ -2,9 +2,11 @@ import requests
 import pytest
 
 from suite.fixtures import PublicEndpoint
-from suite.resources_utils import create_secret_from_yaml, delete_secret, replace_secret, ensure_connection_to_public_endpoint, wait_before_test
+from suite.resources_utils import create_secret_from_yaml, delete_secret, replace_secret,\
+    ensure_connection_to_public_endpoint, wait_before_test
 from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml, create_common_app, delete_common_app
-from suite.resources_utils import get_ingress_host_from_yaml, wait_until_all_pods_are_ready, is_secret_present
+from suite.resources_utils import wait_until_all_pods_are_ready, is_secret_present
+from suite.yaml_utils import get_first_ingress_host_from_yaml
 from settings import TEST_DATA
 
 
@@ -36,7 +38,7 @@ def jwt_auth_setup(request, kube_apis, ingress_controller_endpoint, ingress_cont
                                                  f"{TEST_DATA}/jwt-auth-mergeable/jwt-minion-secret.yaml")
     print("------------------------- Deploy JWT Auth Mergeable Minions Example -----------------------------------")
     create_items_from_yaml(kube_apis.extensions_v1_beta1, f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml", test_namespace)
-    ingress_host = get_ingress_host_from_yaml(f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml")
+    ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml")
     common_app = create_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,

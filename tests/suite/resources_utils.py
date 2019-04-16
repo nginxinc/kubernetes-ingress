@@ -5,52 +5,11 @@ import yaml
 import pytest
 import requests
 
-from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api
+from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api, V1Service
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes import client
 from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS
-
-
-def get_ingress_host_from_yaml(file) -> str:
-    """
-    Parse yaml file and return first spec.rules[0].host appeared.
-
-    :param file: an absolute path to file
-    :return: str
-    """
-    with open(file) as f:
-        docs = yaml.load_all(f)
-        for dep in docs:
-            return dep['spec']['rules'][0]['host']
-
-
-def get_external_host_from_yaml(file) -> str:
-    """
-    Parse yaml file and return first spec.externalName appeared.
-
-    :param file: an absolute path to file
-    :return: str
-    """
-    with open(file) as f:
-        docs = yaml.load_all(f)
-        for dep in docs:
-            return dep['spec']['externalName']
-
-
-def get_names_from_yaml(file) -> []:
-    """
-    Parse yaml file and return all the found metadata.name.
-
-    :param file: an absolute path to file
-    :return: []
-    """
-    res = []
-    with open(file) as f:
-        docs = yaml.load_all(f)
-        for dep in docs:
-            res.append(dep['metadata']['name'])
-    return res
 
 
 class RBACAuthorization:
@@ -88,6 +47,32 @@ def configure_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api) -> RBACAuthorizat
                 binding_name = dep['metadata']['name']
                 rbac_v1_beta1.create_cluster_role_binding(dep)
                 print(f"Created binding '{binding_name}'")
+        return RBACAuthorization(role_name, binding_name)
+
+
+def patch_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api, yaml_manifest) -> RBACAuthorization:
+    """
+    Patch a clusterrole and a binding.
+
+    :param rbac_v1_beta1: RbacAuthorizationV1beta1Api
+    :param yaml_manifest: an absolute path to yaml manifest
+    :return: RBACAuthorization
+    """
+    with open(yaml_manifest) as f:
+        docs = yaml.load_all(f)
+        role_name = ""
+        binding_name = ""
+        for dep in docs:
+            if dep["kind"] == "ClusterRole":
+                print("Patch the cluster role")
+                role_name = dep['metadata']['name']
+                rbac_v1_beta1.patch_cluster_role(role_name, dep)
+                print(f"Patched the role '{role_name}'")
+            elif dep["kind"] == "ClusterRoleBinding":
+                print("Patch the binding")
+                binding_name = dep['metadata']['name']
+                rbac_v1_beta1.patch_cluster_role_binding(binding_name, dep)
+                print(f"Patched the binding '{binding_name}'")
         return RBACAuthorization(role_name, binding_name)
 
 
@@ -637,7 +622,9 @@ def create_common_app(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1beta1Api, 
     return CommonApp([svc_one, svc_two], [deployment_one, deployment_two])
 
 
-def delete_common_app(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1beta1Api, common_app: CommonApp, namespace) -> None:
+def delete_common_app(v1: CoreV1Api,
+                      extensions_v1_beta1: ExtensionsV1beta1Api,
+                      common_app: CommonApp, namespace) -> None:
     """
     Delete a common simple application.
 
@@ -731,7 +718,6 @@ def create_ingress_controller(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1be
     """
     print(f"Create an Ingress Controller as {cli_arguments['ic-type']}")
     yaml_manifest = f"{DEPLOYMENTS}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
-    name = ""
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
         f.close()
@@ -868,3 +854,32 @@ def ensure_connection_to_public_endpoint(ip_address, port, port_ssl) -> None:
     """
     ensure_connection(f"http://{ip_address}:{port}/")
     ensure_connection(f"https://{ip_address}:{port_ssl}/")
+
+
+def read_service(v1: CoreV1Api, name, namespace) -> V1Service:
+    """
+    Get details of a Service.
+
+    :param v1: CoreV1Api
+    :param name: service name
+    :param namespace: namespace name
+    :return: V1Service
+    """
+    print(f"Read a service named '{name}'")
+    return v1.read_namespaced_service(name, namespace)
+
+
+def replace_service(v1: CoreV1Api, name, namespace, body) -> str:
+    """
+    Patch a service based on a dict.
+
+    :param v1: CoreV1Api
+    :param name:
+    :param namespace: namespace
+    :param body: a dict
+    :return: str
+    """
+    print(f"Replace a Service: {name}")
+    resp = v1.replace_namespaced_service(name, namespace, body)
+    print(f"Service updated with name '{name}'")
+    return resp.metadata.name
