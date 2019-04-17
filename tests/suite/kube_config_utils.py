@@ -25,7 +25,7 @@ def ensure_context_in_config(kube_config, context_name) -> None:
     """
     with open(kube_config) as conf:
         dep = yaml.load(conf)
-        for users in dep['users']:
-            if users['name'] == context_name:
+        for contexts in dep['contexts']:
+            if contexts['name'] == context_name:
                 return
     pytest.fail(f"Failed to find context '{context_name}' in the kubeconfig file: {kube_config}")
