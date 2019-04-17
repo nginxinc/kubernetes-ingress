@@ -18,7 +18,4 @@ before_install:
 - if [[ "${TRAVIS_PULL_REQUEST_SLUG}" == "nginxinc/kubernetes-ingress" || "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
   wget https://${fossalocation}/${fossafile} && tar xzf ${fossafile}
   && ./fossa init
-  && ./fossa analyze -t kubernetes-ingress -b ${TRAVIS_BRANCH}; fi
-env:
-  global:
-    secure: V55h8keIrz7C4KiiyTGRUFY51coVcQSf1W/jPt0G9x8SQIY4s0jJ5jbNx5M1Sllic1wrdZJrSK+q9dxqJBHn/1JsOSgx6CAx8NCsBECJuWz2N841uTVlXSNuW+FpJT3sBtNauwcdxVXJ+FmuL74rPJm1n+utWuXVtaGcj3y39r7gldqBbNiGKTIseMfrHreA+i5U8Yy/6FYk5Pm9TG2jtP+e5lHF7jD6/E1EnhLGOl9u0GAHu1VHHRNU0GNXFZR/mObfsDhBw5QkaZNFavW8/1xU7//ueYM+ZlQUbb/mPC4G4F1A7oouflYnEjmuqAxwxGL30F6xNKCVUV3rW2V7yaBFcLCM+0F3Qw1NHe67hmxRVloHdWl1of5SNHsWgJ8pVA4k6mcOETOwUJS2WN38txphsQKt9SEtu2oB50KVpXt/REg+2OY2Ln880lyzDPGjvV/UT6voa1LhnAx7JQnoQqwOEFk1zwcVxIGxePvCL2PYVkC3iKuj8ESixyZk5r/k0/hVl1n3T1l2KlzmxQgMg7Ew7T0Uv3EyCPc7i39sUMv86XV6BHaooTgDGSSquxiVABZUpaEYHBGq57gmYahVRbKeonOQ4wDFzXWTWSVP6tzy5iBoF5ecD6xB2IpFXwPhKYDPKOnU0eJpahfzUwJMXee/RjVtzswIjRU4BAV8xZY=
+  && FOSSA_API_KEY=${fossapush} ./fossa analyze -t kubernetes-ingress -b ${TRAVIS_BRANCH}; fi
