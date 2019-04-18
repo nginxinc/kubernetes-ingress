@@ -2,7 +2,7 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
-  name: nginx-ingress
+  name: {{ include "nginx-ingress.name" . }}
   labels:
     {{- include "nginx-ingress.labels" . | nindent 4 }}
 rules:
@@ -68,15 +68,15 @@ rules:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
-  name: nginx-ingress
+  name: {{ include "nginx-ingress.name" . }}
   labels:
     {{- include "nginx-ingress.labels" . | nindent 4 }}
 subjects:
 - kind: ServiceAccount
-  name: {{ .Values.controller.serviceAccount.name }}
+  name: {{ include "nginx-ingress.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: nginx-ingress
+  name: {{ include "nginx-ingress.name" . }}
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
