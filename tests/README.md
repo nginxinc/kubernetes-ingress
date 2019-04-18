@@ -46,6 +46,7 @@ The table below shows various configuration options for the tests. If you use Py
 | `--context` | `CONTEXT` | The context to use in the kubeconfig file. | `""` |
 | `--image` | `BUILD_IMAGE` | The Ingress Controller image. | `nginx/nginx-ingress:edge` |
 | `--image-pull-policy` | `PULL_POLICY` | The pull policy of the Ingress Controller image. | `IfNotPresent` |
+| `--deployment-type` | `DEPLOYMENT_TYPE` | The type of the IC deployment: deployment or daemon-set. | `deployment` |
 | `--ic-type` | `IC_TYPE` | The type of the Ingress Controller: nginx-ingress or nginx-ingress-plus. | `nginx-ingress` |
 | `--service` | `SERVICE` | The type of the Ingress Controller service: nodeport or loadbalancer. | `nodeport` |
 | `--node-ip` | `NODE_IP` | The public IP of a cluster node. Not required if you use the loadbalancer service (see --service argument). | `""` |

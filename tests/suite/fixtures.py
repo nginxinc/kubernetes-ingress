@@ -13,7 +13,7 @@ from suite.resources_utils import create_namespace_with_name_from_yaml, delete_n
 from suite.resources_utils import create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac
 from suite.resources_utils import create_service_from_yaml, get_service_node_ports, wait_for_public_ip
 from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml
-from settings import ALLOWED_SERVICE_TYPES, ALLOWED_IC_TYPES, DEPLOYMENTS, TEST_DATA
+from settings import ALLOWED_SERVICE_TYPES, ALLOWED_IC_TYPES, DEPLOYMENTS, TEST_DATA, ALLOWED_DEPLOYMENT_TYPES
 
 
 class KubeApis:
@@ -87,7 +87,7 @@ def test_namespace(kube_apis, request) -> str:
     return namespace
 
 
-@pytest.fixture(scope="class", params=['deployment', 'daemon-set'])
+@pytest.fixture(scope="class")
 def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisites, request) -> None:
     """
     Create Ingress Controller according to the context.
@@ -102,11 +102,11 @@ def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisite
     print("------------------------- Create IC -----------------------------------")
     v1 = kube_apis.v1
     extensions_v1_beta1 = kube_apis.extensions_v1_beta1
-    name = create_ingress_controller(v1, extensions_v1_beta1, cli_arguments, request.param, namespace)
+    name = create_ingress_controller(v1, extensions_v1_beta1, cli_arguments, namespace)
 
     def fin():
         print("Delete IC:")
-        delete_ingress_controller(extensions_v1_beta1, name, request.param, namespace)
+        delete_ingress_controller(extensions_v1_beta1, name, cli_arguments['deployment-type'], namespace)
 
     request.addfinalizer(fin)
 
@@ -188,7 +188,7 @@ def cli_arguments(request) -> {}:
     Verify the CLI arguments.
 
     :param request: pytest fixture
-    :return: {context, image, image-pull-policy, ic-type, service, node-ip, kubeconfig}
+    :return: {context, image, image-pull-policy, deployment-type, ic-type, service, node-ip, kubeconfig}
     """
     result = {"kubeconfig": request.config.getoption("--kubeconfig")}
     assert result["kubeconfig"] != "", "Empty kubeconfig is not allowed"
@@ -209,6 +209,10 @@ def cli_arguments(request) -> {}:
     result["image-pull-policy"] = request.config.getoption("--image-pull-policy")
     assert result["image-pull-policy"] != "", "Empty image-pull-policy is not allowed"
     print(f"Tests will run with the image-pull-policy: {result['image-pull-policy']}")
+
+    result["deployment-type"] = request.config.getoption("--deployment-type")
+    assert result["deployment-type"] in ALLOWED_DEPLOYMENT_TYPES, f"Deployment type {result['deployment-type']} is not allowed"
+    print(f"Tests will use the IC deployment of type: {result['deployment-type']}")
 
     result["ic-type"] = request.config.getoption("--ic-type")
     assert result["ic-type"] in ALLOWED_IC_TYPES, f"IC type {result['ic-type']} is not allowed"

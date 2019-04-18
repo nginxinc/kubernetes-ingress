@@ -4,7 +4,7 @@ import os
 import pytest
 
 from kubernetes.config.kube_config import KUBE_CONFIG_DEFAULT_LOCATION
-from settings import DEFAULT_IMAGE, DEFAULT_PULL_POLICY, DEFAULT_IC_TYPE, DEFAULT_SERVICE
+from settings import DEFAULT_IMAGE, DEFAULT_PULL_POLICY, DEFAULT_IC_TYPE, DEFAULT_SERVICE, DEFAULT_DEPLOYMENT_TYPE
 
 
 def pytest_addoption(parser) -> None:
@@ -19,6 +19,9 @@ def pytest_addoption(parser) -> None:
                      action="store", default=DEFAULT_IMAGE, help="The Ingress Controller image.")
     parser.addoption("--image-pull-policy",
                      action="store", default=DEFAULT_PULL_POLICY, help="The pull policy of the Ingress Controller image.")
+    parser.addoption("--deployment-type",
+                     action="store", default=DEFAULT_DEPLOYMENT_TYPE,
+                     help="The type of the IC deployment: deployment or daemon-set.")
     parser.addoption("--ic-type",
                      action="store", default=DEFAULT_IC_TYPE, help="The type of the Ingress Controller: nginx-ingress or nginx-ingress-plus.")
     parser.addoption("--service",

@@ -260,11 +260,11 @@ def wait_for_public_ip(v1: CoreV1Api, namespace: str) -> str:
     resp = v1.list_namespaced_service(namespace)
     counter = 0
     while str(resp.items[0].status.load_balancer.ingress) == "None" and counter < 20:
-        time.sleep(10)
+        time.sleep(5)
         resp = v1.list_namespaced_service(namespace)
         counter = counter + 1
     if counter == 20:
-        pytest.fail("After 200 seconds the LB still doesn't have a Public IP. Exiting...")
+        pytest.fail("After 100 seconds the LB still doesn't have a Public IP. Exiting...")
     print(f"Public IP ='{resp.items[0].status.load_balancer.ingress[0].ip}'")
     return str(resp.items[0].status.load_balancer.ingress[0].ip)
 
@@ -716,7 +716,7 @@ def wait_before_test(delay=RECONFIGURATION_DELAY) -> None:
     time.sleep(delay)
 
 
-def create_ingress_controller(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1beta1Api, cli_arguments, dep_type,
+def create_ingress_controller(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1beta1Api, cli_arguments,
                               namespace, args=None) -> str:
     """
     Create an Ingress Controller according to the params.
@@ -724,13 +724,12 @@ def create_ingress_controller(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1be
     :param v1: CoreV1Api
     :param extensions_v1_beta1: ExtensionsV1beta1Api
     :param cli_arguments: context name as in kubeconfig
-    :param dep_type: IC deployment type 'deployment' or 'daemon-set'
     :param namespace: namespace name
     :param args: a list of any extra cli arguments to start IC with
     :return: str
     """
     print(f"Create an Ingress Controller as {cli_arguments['ic-type']}")
-    yaml_manifest = f"{DEPLOYMENTS}/{dep_type}/{cli_arguments['ic-type']}.yaml"
+    yaml_manifest = f"{DEPLOYMENTS}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
     name = ""
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
@@ -739,9 +738,9 @@ def create_ingress_controller(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1be
     dep['spec']['template']['spec']['containers'][0]['imagePullPolicy'] = cli_arguments["image-pull-policy"]
     if args is not None:
         dep['spec']['template']['spec']['containers'][0]['args'].extend(args)
-    if dep_type == 'deployment':
+    if cli_arguments['deployment-type'] == 'deployment':
         name = create_deployment(extensions_v1_beta1, namespace, dep)
-    elif dep_type == 'daemon-set':
+    else:
         name = create_daemon_set(extensions_v1_beta1, namespace, dep)
     wait_until_all_pods_are_containers_ready(v1, namespace)
     print(f"Ingress Controller was created with name '{name}'")

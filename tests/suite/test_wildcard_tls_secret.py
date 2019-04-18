@@ -45,7 +45,7 @@ def wildcard_tls_secret_setup(request, kube_apis, ingress_controller_endpoint, t
     return WildcardTLSSecretSetup(ingress_controller_endpoint, test_namespace, host)
 
 
-@pytest.fixture(scope="class", params=['deployment', 'daemon-set'])
+@pytest.fixture(scope="class")
 def wildcard_tls_secret_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisites,
                                            wildcard_tls_secret_setup, request) -> IngressControllerWithSecret:
     """
@@ -62,14 +62,14 @@ def wildcard_tls_secret_ingress_controller(cli_arguments, kube_apis, ingress_con
     secret_name = create_secret_from_yaml(kube_apis.v1, namespace,
                                           f"{TEST_DATA}/wildcard-tls-secret/wildcard-tls-secret.yaml")
     extra_args = [f"-wildcard-tls-secret={namespace}/{secret_name}"]
-    name = create_ingress_controller(kube_apis.v1, kube_apis.extensions_v1_beta1, cli_arguments, request.param, namespace, extra_args)
+    name = create_ingress_controller(kube_apis.v1, kube_apis.extensions_v1_beta1, cli_arguments, namespace, extra_args)
     ensure_connection_to_public_endpoint(wildcard_tls_secret_setup.public_endpoint.public_ip,
                                          wildcard_tls_secret_setup.public_endpoint.port,
                                          wildcard_tls_secret_setup.public_endpoint.port_ssl)
 
     def fin():
         print("Remove IC and wildcard secret:")
-        delete_ingress_controller(kube_apis.extensions_v1_beta1, name, request.param, namespace)
+        delete_ingress_controller(kube_apis.extensions_v1_beta1, name, cli_arguments['deployment-type'], namespace)
         if is_secret_present(kube_apis.v1, secret_name, namespace):
             delete_secret(kube_apis.v1, secret_name, namespace)
 
@@ -99,7 +99,7 @@ class TestTLSWildcardSecrets:
         replace_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
                        ingress_controller_prerequisites.namespace,
                        f"{TEST_DATA}/wildcard-tls-secret/invalid-wildcard-tls-secret.yaml")
-        wait_before_test()
+        wait_before_test(1)
         subject_dict = get_server_certificate_subject(wildcard_tls_secret_setup.public_endpoint.public_ip,
                                                       wildcard_tls_secret_setup.ingress_host,
                                                       wildcard_tls_secret_setup.public_endpoint.port_ssl)
@@ -112,7 +112,7 @@ class TestTLSWildcardSecrets:
         replace_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
                        ingress_controller_prerequisites.namespace,
                        f"{TEST_DATA}/wildcard-tls-secret/gb-wildcard-tls-secret.yaml")
-        wait_before_test()
+        wait_before_test(1)
         subject_dict = get_server_certificate_subject(wildcard_tls_secret_setup.public_endpoint.public_ip,
                                                       wildcard_tls_secret_setup.ingress_host,
                                                       wildcard_tls_secret_setup.public_endpoint.port_ssl)
@@ -124,7 +124,7 @@ class TestTLSWildcardSecrets:
                                                               wildcard_tls_secret_setup):
         delete_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
                       ingress_controller_prerequisites.namespace)
-        wait_before_test()
+        wait_before_test(1)
         req_url = f"https://{wildcard_tls_secret_setup.public_endpoint.public_ip}:{wildcard_tls_secret_setup.public_endpoint.port_ssl}/backend1"
         resp = requests.get(req_url, headers={"host": wildcard_tls_secret_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
