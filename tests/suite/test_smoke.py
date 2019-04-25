@@ -4,7 +4,7 @@ import pytest
 from suite.fixtures import PublicEndpoint
 from suite.resources_utils import create_secret_from_yaml, delete_secret, ensure_connection_to_public_endpoint
 from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml, create_common_app, delete_common_app
-from suite.resources_utils import get_ingress_host_from_yaml, wait_until_all_pods_are_containers_ready
+from suite.resources_utils import get_ingress_host_from_yaml, wait_until_all_pods_are_ready
 from settings import TEST_DATA
 
 paths = ["backend1", "backend2"]
@@ -23,7 +23,7 @@ def smoke_setup(request, kube_apis, ingress_controller_endpoint, ingress_control
     create_items_from_yaml(kube_apis.extensions_v1_beta1, f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml", test_namespace)
     ingress_host = get_ingress_host_from_yaml(f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml")
     common_app = create_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, test_namespace)
-    wait_until_all_pods_are_containers_ready(kube_apis.v1, test_namespace)
+    wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
                                          ingress_controller_endpoint.port,
                                          ingress_controller_endpoint.port_ssl)

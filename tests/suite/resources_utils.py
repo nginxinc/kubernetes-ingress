@@ -151,23 +151,23 @@ def create_daemon_set(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, body
     return body['metadata']['name']
 
 
-def wait_until_all_pods_are_containers_ready(v1: CoreV1Api, namespace) -> None:
+def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     """
-    Wait for all the pods to be 'ContainersReady'.
+    Wait for all the pods to be 'Ready'.
 
     :param v1: CoreV1Api
     :param namespace: namespace of a pod
     :return:
     """
-    print("Start waiting for all pods in a namespace to be ContainersReady")
+    print("Start waiting for all pods in a namespace to be Ready")
     counter = 0
-    while not are_all_pods_in_containers_ready_state(v1, namespace) and counter < 20:
+    while not are_all_pods_in_ready_state(v1, namespace) and counter < 20:
         print("There are pods that are not running. Wait for 4 sec...")
         time.sleep(4)
         counter = counter + 1
     if counter >= 20:
-        pytest.fail("After several seconds the pods aren't ContainersReady. Exiting...")
-    print("All pods are ContainersReady")
+        pytest.fail("After several seconds the pods aren't Ready. Exiting...")
+    print("All pods are Ready")
 
 
 def get_first_pod_name(v1: CoreV1Api, namespace) -> str:
@@ -182,9 +182,9 @@ def get_first_pod_name(v1: CoreV1Api, namespace) -> str:
     return resp.items[0].metadata.name
 
 
-def are_all_pods_in_containers_ready_state(v1: CoreV1Api, namespace) -> bool:
+def are_all_pods_in_ready_state(v1: CoreV1Api, namespace) -> bool:
     """
-    Check if all the pods have ContainersReady condition.
+    Check if all the pods have Ready condition.
 
     :param v1: CoreV1Api
     :param namespace: namespace
@@ -198,7 +198,8 @@ def are_all_pods_in_containers_ready_state(v1: CoreV1Api, namespace) -> bool:
         if pod.status.conditions is None:
             return False
         for condition in pod.status.conditions:
-            if condition.type == 'ContainersReady' and condition.status == 'True':
+            # wait for 'Ready' state instead of 'ContainersReady' for backwards compatibility with k8s 1.10
+            if condition.type == 'Ready' and condition.status == 'True':
                 pod_ready_amount = pod_ready_amount + 1
                 break
     return pod_ready_amount == len(pods.items)
@@ -742,7 +743,7 @@ def create_ingress_controller(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1be
         name = create_deployment(extensions_v1_beta1, namespace, dep)
     else:
         name = create_daemon_set(extensions_v1_beta1, namespace, dep)
-    wait_until_all_pods_are_containers_ready(v1, namespace)
+    wait_until_all_pods_are_ready(v1, namespace)
     print(f"Ingress Controller was created with name '{name}'")
     return name
 

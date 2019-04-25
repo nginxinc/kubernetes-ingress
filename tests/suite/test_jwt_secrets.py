@@ -4,7 +4,7 @@ import pytest
 from suite.fixtures import PublicEndpoint
 from suite.resources_utils import create_secret_from_yaml, delete_secret, replace_secret, ensure_connection_to_public_endpoint, wait_before_test
 from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml, create_common_app, delete_common_app
-from suite.resources_utils import get_ingress_host_from_yaml, wait_until_all_pods_are_containers_ready, is_secret_present
+from suite.resources_utils import get_ingress_host_from_yaml, wait_until_all_pods_are_ready, is_secret_present
 from settings import TEST_DATA
 
 
@@ -42,7 +42,7 @@ def jwt_secrets_setup(request, kube_apis, ingress_controller_endpoint, ingress_c
     create_items_from_yaml(kube_apis.extensions_v1_beta1, f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml", test_namespace)
     ingress_host = get_ingress_host_from_yaml(f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml")
     common_app = create_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, test_namespace)
-    wait_until_all_pods_are_containers_ready(kube_apis.v1, test_namespace)
+    wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
                                          ingress_controller_endpoint.port,
                                          ingress_controller_endpoint.port_ssl)
