@@ -10,6 +10,7 @@ from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes import client
 from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS
+from suite.yaml_utils import get_names_from_yaml
 
 
 class RBACAuthorization:
@@ -606,20 +607,47 @@ class CommonApp:
 
 def create_common_app(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1beta1Api, namespace) -> CommonApp:
     """
-    Create a common simple application.
+    Create a simple backend application.
 
-    Common simple application consists of 2 backend services and 2 ingress resources.
+    A simple application consists of 2 backend services.
 
     :param v1: CoreV1Api
     :param extensions_v1_beta1: ExtensionsV1beta1Api
     :param namespace: namespace name
+
     :return: CommonApp
     """
     svc_one = create_service_from_yaml(v1, namespace, f"{TEST_DATA}/common/backend1-svc.yaml")
     svc_two = create_service_from_yaml(v1, namespace, f"{TEST_DATA}/common/backend2-svc.yaml")
-    deployment_one = create_deployment_from_yaml(extensions_v1_beta1, namespace, f"{TEST_DATA}/common/backend1.yaml")
-    deployment_two = create_deployment_from_yaml(extensions_v1_beta1, namespace, f"{TEST_DATA}/common/backend2.yaml")
+    deployment_one = create_deployment_from_yaml(extensions_v1_beta1, namespace,
+                                                 f"{TEST_DATA}/common/backend1.yaml")
+    deployment_two = create_deployment_from_yaml(extensions_v1_beta1, namespace,
+                                                 f"{TEST_DATA}/common/backend2.yaml")
     return CommonApp([svc_one, svc_two], [deployment_one, deployment_two])
+
+
+def create_example_app(kube_apis, app_type, namespace) -> CommonApp:
+    """
+    Create a backend application.
+
+    An application consists of 3 backend services.
+
+    :param kube_apis: client apis
+    :param app_type: type of the application (simple|split)
+    :param namespace: namespace name
+    :param app_type: type of the application (simple|split)
+    :return: CommonApp
+    """
+    create_items_from_yaml(kube_apis, f"{TEST_DATA}/common/app/{app_type}/app.yaml", namespace)
+    all_names = get_names_from_yaml(f"{TEST_DATA}/common/app/{app_type}/app.yaml")
+    service_names = []
+    dep_names = []
+    for _ in all_names:
+        if "svc" in _:
+            service_names.append(_)
+        else:
+            dep_names.append(_)
+    return CommonApp(service_names, dep_names)
 
 
 def delete_common_app(v1: CoreV1Api,
@@ -775,7 +803,7 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
     """
     Apply yaml manifest with multiple items.
 
-    :param kube_apis: CoreV1Api or ExtensionsV1beta1Api
+    :param kube_apis: KubeApis
     :param yaml_manifest: an absolute path to a file
     :param namespace:
     :return:
@@ -785,24 +813,24 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
         docs = yaml.load_all(f)
         for doc in docs:
             if doc["kind"] == "Secret":
-                create_secret(kube_apis, namespace, doc)
+                create_secret(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "ConfigMap":
-                create_configmap(kube_apis, namespace, doc)
+                create_configmap(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "Ingress":
-                create_ingress(kube_apis, namespace, doc)
+                create_ingress(kube_apis.extensions_v1_beta1, namespace, doc)
             elif doc["kind"] == "Service":
-                create_service(kube_apis, namespace, doc)
+                create_service(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "Deployment":
-                create_deployment(kube_apis, namespace, doc)
+                create_deployment(kube_apis.extensions_v1_beta1, namespace, doc)
             elif doc["kind"] == "DaemonSet":
-                create_daemon_set(kube_apis, namespace, doc)
+                create_daemon_set(kube_apis.extensions_v1_beta1, namespace, doc)
 
 
 def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
     """
     Delete all the items found in the yaml file.
 
-    :param kube_apis: CoreV1Api or ExtensionsV1beta1Api
+    :param kube_apis: KubeApis
     :param yaml_manifest: an absolute path to a file
     :param namespace: namespace
     :return:
@@ -812,17 +840,17 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
         docs = yaml.load_all(f)
         for doc in docs:
             if doc["kind"] == "Namespace":
-                delete_namespace(kube_apis, doc['metadata']['name'])
+                delete_namespace(kube_apis.v1, doc['metadata']['name'])
             elif doc["kind"] == "Secret":
-                delete_secret(kube_apis, doc['metadata']['name'], namespace)
+                delete_secret(kube_apis.v1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Ingress":
-                delete_ingress(kube_apis, doc['metadata']['name'], namespace)
+                delete_ingress(kube_apis.extensions_v1_beta1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Service":
-                delete_service(kube_apis, doc['metadata']['name'], namespace)
+                delete_service(kube_apis.v1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Deployment":
-                delete_deployment(kube_apis, doc['metadata']['name'], namespace)
+                delete_deployment(kube_apis.extensions_v1_beta1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "DaemonSet":
-                delete_daemon_set(kube_apis, doc['metadata']['name'], namespace)
+                delete_daemon_set(kube_apis.extensions_v1_beta1, doc['metadata']['name'], namespace)
 
 
 def ensure_connection(request_url) -> None:

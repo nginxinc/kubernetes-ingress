@@ -42,7 +42,7 @@ class IngressControllerWithSecret:
 def wildcard_tls_secret_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> WildcardTLSSecretSetup:
     ing_type = request.param
     print("------------------------- Deploy Wildcard-Tls-Secret-Example -----------------------------------")
-    create_items_from_yaml(kube_apis.extensions_v1_beta1,
+    create_items_from_yaml(kube_apis,
                            f"{TEST_DATA}/wildcard-tls-secret/{ing_type}/wildcard-secret-ingress.yaml", test_namespace)
     host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/wildcard-tls-secret/{ing_type}/wildcard-secret-ingress.yaml")
     common_app = create_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, test_namespace)
@@ -50,7 +50,7 @@ def wildcard_tls_secret_setup(request, kube_apis, ingress_controller_endpoint, t
 
     def fin():
         print("Clean up Wildcard-Tls-Secret-Example:")
-        delete_items_from_yaml(kube_apis.extensions_v1_beta1,
+        delete_items_from_yaml(kube_apis,
                                f"{TEST_DATA}/wildcard-tls-secret/{ing_type}/wildcard-secret-ingress.yaml",
                                test_namespace)
         delete_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, common_app, test_namespace)

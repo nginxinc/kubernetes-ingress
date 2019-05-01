@@ -40,7 +40,7 @@ def jwt_secrets_setup(request, kube_apis, ingress_controller_endpoint, ingress_c
     with open(f"{TEST_DATA}/jwt-secrets/tokens/jwt-secrets-token.jwt", "r") as token_file:
         token = token_file.read().replace('\n', '')
     print("------------------------- Deploy JWT Secrets Example -----------------------------------")
-    create_items_from_yaml(kube_apis.extensions_v1_beta1, f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml", test_namespace)
+    create_items_from_yaml(kube_apis, f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml", test_namespace)
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml")
     common_app = create_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
@@ -51,7 +51,7 @@ def jwt_secrets_setup(request, kube_apis, ingress_controller_endpoint, ingress_c
     def fin():
         print("Clean up the JWT Secrets Application:")
         delete_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, common_app, test_namespace)
-        delete_items_from_yaml(kube_apis.extensions_v1_beta1, f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml",
+        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml",
                                test_namespace)
 
     request.addfinalizer(fin)

@@ -60,7 +60,7 @@ def assert_gb_subject(virtual_server_setup):
 
 
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
-                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]}, 'virtual-server-tls')],
+                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]}, {"example": "virtual-server-tls", "app_type": "simple"})],
                          indirect=True)
 class TestVirtualServerTLS:
     def test_tls_termination(self, kube_apis, crd_ingress_controller, virtual_server_setup, clean_up):

@@ -28,7 +28,7 @@ class SmokeSetup:
 def smoke_setup(request, kube_apis, ingress_controller_endpoint, ingress_controller, test_namespace) -> SmokeSetup:
     print("------------------------- Deploy Smoke Example -----------------------------------")
     secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml")
-    create_items_from_yaml(kube_apis.extensions_v1_beta1, f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml", test_namespace)
+    create_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml", test_namespace)
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml")
     common_app = create_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
@@ -39,7 +39,7 @@ def smoke_setup(request, kube_apis, ingress_controller_endpoint, ingress_control
     def fin():
         print("Clean up the Smoke Application:")
         delete_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, common_app, test_namespace)
-        delete_items_from_yaml(kube_apis.extensions_v1_beta1, f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml",
+        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml",
                                test_namespace)
         delete_secret(kube_apis.v1, secret_name, test_namespace)
 

@@ -13,7 +13,8 @@ from suite.custom_resources_utils import create_crd_from_yaml, delete_crd, creat
     delete_virtual_server
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml, \
-    patch_rbac, create_common_app, wait_until_all_pods_are_ready, delete_common_app
+    patch_rbac, create_example_app, wait_until_all_pods_are_ready, ensure_connection_to_public_endpoint, \
+    delete_common_app
 from suite.resources_utils import create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac
 from suite.resources_utils import create_service_from_yaml, get_service_node_ports, wait_for_public_ip
 from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml
@@ -312,10 +313,10 @@ def virtual_server_setup(request, kube_apis, crd_ingress_controller, ingress_con
     """
     print("------------------------- Deploy Virtual Server Example -----------------------------------")
     vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects,
-                                              f"{TEST_DATA}/{request.param}/standard/virtual-server.yaml",
+                                              f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml",
                                               test_namespace)
-    vs_host = get_first_vs_host_from_yaml(f"{TEST_DATA}/{request.param}/standard/virtual-server.yaml")
-    common_app = create_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, test_namespace)
+    vs_host = get_first_vs_host_from_yaml(f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml")
+    common_app = create_example_app(kube_apis, request.param['app_type'], test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
