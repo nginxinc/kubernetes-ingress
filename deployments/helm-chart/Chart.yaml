@@ -1,5 +1,5 @@
 name: nginx-ingress
-version: 0.5.0
+version: 0.6.0
 appVersion: edge
 description: NGINX Ingress Controller
 icon: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/master/deployments/helm-chart/chart-icon.png
