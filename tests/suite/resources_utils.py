@@ -103,7 +103,6 @@ def create_deployment_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, names
     print(f"Load {yaml_manifest}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        f.close()
     return create_deployment(extensions_v1_beta1, namespace, dep)
 
 
@@ -203,7 +202,6 @@ def create_service_from_yaml(v1: CoreV1Api, namespace, yaml_manifest) -> str:
     print(f"Load {yaml_manifest}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        f.close()
     return create_service(v1, namespace, dep)
 
 
@@ -268,7 +266,6 @@ def create_secret_from_yaml(v1: CoreV1Api, namespace, yaml_manifest) -> str:
     print(f"Load {yaml_manifest}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        f.close()
     return create_secret(v1, namespace, dep)
 
 
@@ -300,7 +297,6 @@ def replace_secret(v1: CoreV1Api, name, namespace, yaml_manifest) -> str:
     print(f"Replace a secret: '{name}'' in a namespace: '{namespace}'")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        f.close()
         v1.replace_namespaced_secret(name, namespace, dep)
         print("Secret replaced")
     return name
@@ -376,7 +372,6 @@ def create_ingress_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, namespac
     print(f"Load {yaml_manifest}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        f.close()
         return create_ingress(extensions_v1_beta1, namespace, dep)
 
 
@@ -423,7 +418,6 @@ def create_namespace_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
         create_namespace(v1, dep)
-        f.close()
         return dep['metadata']['name']
 
 
@@ -453,7 +447,6 @@ def create_namespace_with_name_from_yaml(v1: CoreV1Api, name, yaml_manifest) -> 
     print(f"Create a namespace with specific name:")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        f.close()
         dep['metadata']['name'] = name
         v1.create_namespace(dep)
         print(f"Namespace created with name '{str(dep['metadata']['name'])}'")
@@ -486,7 +479,6 @@ def create_configmap_from_yaml(v1: CoreV1Api, namespace, yaml_manifest) -> str:
     print(f"Load {yaml_manifest}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        f.close()
     return create_configmap(v1, namespace, dep)
 
 
@@ -518,7 +510,6 @@ def replace_configmap_from_yaml(v1: CoreV1Api, name, namespace, yaml_manifest) -
     print(f"Replace a configMap: '{name}'")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        f.close()
         v1.replace_namespaced_config_map(name, namespace, dep)
         print("ConfigMap replaced")
 
@@ -748,7 +739,6 @@ def create_ingress_controller(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1be
     yaml_manifest = f"{DEPLOYMENTS}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        f.close()
     dep['spec']['template']['spec']['containers'][0]['image'] = cli_arguments["image"]
     dep['spec']['template']['spec']['containers'][0]['imagePullPolicy'] = cli_arguments["image-pull-policy"]
     if args is not None:

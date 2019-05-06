@@ -1,0 +1,34 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: VirtualServer
+metadata:
+  name: virtual-server-adv-routing
+spec:
+  host: virtual-server-adv-routing.example.com
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  - name: backend4-stable
+    service: backend4-stable-svc
+    port: 80
+  - name: backend1-future 
+    service: backend1-future-svc
+    port: 80
+  - name: backend3-deprecated
+    service: backend3-deprecated-svc
+    port: 80
+  routes:
+  - path: "/backend2"
+    upstream: backend2
+  - path: "/backend1"
+    rules:
+      conditions:
+      - header: x-version
+      matches:
+      - values:
+        - future
+        upstream: backend1-future
+      - values:
+        - deprecated
+        upstream: backend3-deprecated
+      defaultUpstream: backend4-stable
