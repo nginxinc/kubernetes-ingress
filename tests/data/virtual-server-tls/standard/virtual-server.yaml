@@ -14,7 +14,7 @@ spec:
     service: backend1-svc
     port: 80
   routes:
-  - path: "/backend2"
-    upstream: backend2
   - path: "/backend1"
     upstream: backend1
+  - path: "/backend2"
+    upstream: backend2

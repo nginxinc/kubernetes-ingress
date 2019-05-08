@@ -15,11 +15,11 @@ spec:
     service: backend1-svc-v2
     port: 80
   routes:
-  - path: "/backend2"
-    upstream: backend2
-  - path: "/backend1"
+  - path: "/backends"
     splits:
     - weight: 90
       upstream: backend1-v1
     - weight: 10
       upstream: backend1-v2
+  - path: "/backend2"
+    upstream: backend2

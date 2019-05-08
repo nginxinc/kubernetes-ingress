@@ -35,7 +35,7 @@ class TestAdvancedRouting:
                                        virtual_server_setup.vs_name,
                                        f"{TEST_DATA}/virtual-server-advanced-routing/virtual-server-argument.yaml",
                                        virtual_server_setup.namespace)
-        wait_before_test(2)
+        wait_before_test(1)
 
         resp_1 = requests.get(virtual_server_setup.backend_1_url + "?arg1=v1",
                               headers={"host": virtual_server_setup.vs_host})
@@ -50,7 +50,7 @@ class TestAdvancedRouting:
                                        virtual_server_setup.vs_name,
                                        f"{TEST_DATA}/virtual-server-advanced-routing/virtual-server-cookie.yaml",
                                        virtual_server_setup.namespace)
-        wait_before_test(2)
+        wait_before_test(1)
 
         resp_1 = requests.get(virtual_server_setup.backend_1_url,
                               headers={"host": virtual_server_setup.vs_host}, cookies={"user": "some"})
@@ -65,7 +65,7 @@ class TestAdvancedRouting:
                                        virtual_server_setup.vs_name,
                                        f"{TEST_DATA}/virtual-server-advanced-routing/virtual-server-variable.yaml",
                                        virtual_server_setup.namespace)
-        wait_before_test(2)
+        wait_before_test(1)
 
         resp_1 = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
         resp_2 = requests.post(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
@@ -77,7 +77,7 @@ class TestAdvancedRouting:
                                        virtual_server_setup.vs_name,
                                        f"{TEST_DATA}/virtual-server-advanced-routing/virtual-server-complex.yaml",
                                        virtual_server_setup.namespace)
-        wait_before_test(2)
+        wait_before_test(1)
 
         resp_1 = requests.get(virtual_server_setup.backend_1_url + "?arg1=v1",
                               headers={"host": virtual_server_setup.vs_host,

@@ -2,10 +2,10 @@
 import pytest
 import yaml
 
-from kubernetes.client import CustomObjectsApi, ApiextensionsV1beta1Api
+from kubernetes.client import CustomObjectsApi, ApiextensionsV1beta1Api, CoreV1Api
 from kubernetes import client
 
-from suite.resources_utils import ensure_item_removal
+from suite.resources_utils import ensure_item_removal, get_file_contents
 
 
 def create_crd_from_yaml(api_extensions_v1_beta1: ApiextensionsV1beta1Api, yaml_manifest) -> str:
@@ -76,8 +76,10 @@ def delete_virtual_server(custom_objects: CustomObjectsApi, name, namespace) -> 
     """
     print(f"Delete a VirtualServer: {name}")
     delete_options = client.V1DeleteOptions()
-    custom_objects.delete_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualservers", name, delete_options)
-    ensure_item_removal(custom_objects.get_namespaced_custom_object, "k8s.nginx.org", "v1alpha1", namespace, "virtualservers", name)
+    custom_objects.delete_namespaced_custom_object("k8s.nginx.org",
+                                                   "v1alpha1", namespace, "virtualservers", name, delete_options)
+    ensure_item_removal(custom_objects.get_namespaced_custom_object,
+                        "k8s.nginx.org", "v1alpha1", namespace, "virtualservers", name)
     print(f"VirtualServer was removed with name '{name}'")
 
 
@@ -97,3 +99,18 @@ def patch_virtual_server_from_yaml(custom_objects: CustomObjectsApi, name, yaml_
 
     custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualservers", name, dep)
     print(f"VirtualServer updated with name '{dep['metadata']['name']}'")
+
+
+def get_vs_nginx_template_conf(v1: CoreV1Api, vs_namespace, vs_name, pod_name, pod_namespace) -> str:
+    """
+    Get contents of /etc/nginx/conf.d/vs_{namespace}_{vs_name}.conf in the pod.
+
+    :param v1: CoreV1Api
+    :param vs_namespace:
+    :param vs_name:
+    :param pod_name:
+    :param pod_namespace:
+    :return: str
+    """
+    file_path = f"/etc/nginx/conf.d/vs_{vs_namespace}_{vs_name}.conf"
+    return get_file_contents(v1, file_path, pod_name, pod_namespace)

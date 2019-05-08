@@ -1,17 +1,17 @@
 apiVersion: k8s.nginx.org/v1alpha1
 kind: VirtualServer
 metadata:
-  name: virtual-server-adv-routing
+  name: virtual-server-validation
 spec:
-  host: virtual-server-adv-routing.example.com
+  host: virtual-server-validation.example.com
   upstreams:
   - name: backend2
     service: backend2-svc
     port: 80
-  - name: backend4-stable 
+  - name: backend4-stable
     service: backend4-stable-svc
     port: 80
-  - name: backend1-future 
+  - name: backend1-future
     service: backend1-future-svc
     port: 80
   - name: backend3-deprecated
@@ -21,13 +21,13 @@ spec:
   - path: "/backends"
     rules:
       conditions:
-      - cookie: user
+      - header: x-version
       matches:
       - values:
-        - some
+        - future
         upstream: backend1-future
       - values:
-        - bad
+        - deprecated
         upstream: backend3-deprecated
       defaultUpstream: backend4-stable
   - path: "/backend2"

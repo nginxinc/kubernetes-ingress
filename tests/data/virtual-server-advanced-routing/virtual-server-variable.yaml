@@ -18,9 +18,7 @@ spec:
     service: backend3-deprecated-svc
     port: 80
   routes:
-  - path: "/backend2"
-    upstream: backend2
-  - path: "/backend1"
+  - path: "/backends"
     rules:
       conditions:
       - variable: $request_method
@@ -32,3 +30,5 @@ spec:
         - post
         upstream: backend3-deprecated
       defaultUpstream: backend4-stable
+  - path: "/backend2"
+    upstream: backend2

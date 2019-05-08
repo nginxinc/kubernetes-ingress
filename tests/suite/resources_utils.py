@@ -901,3 +901,16 @@ def replace_service(v1: CoreV1Api, name, namespace, body) -> str:
     resp = v1.replace_namespaced_service(name, namespace, body)
     print(f"Service updated with name '{name}'")
     return resp.metadata.name
+
+
+def get_events(v1: CoreV1Api, namespace) -> []:
+    """
+    Get the list of events in a namespace.
+
+    :param v1: CoreV1Api
+    :param namespace:
+    :return: []
+    """
+    print(f"Get the events in the namespace: {namespace}")
+    res = v1.list_namespaced_event(namespace)
+    return res.items

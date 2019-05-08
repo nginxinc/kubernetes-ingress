@@ -13,13 +13,13 @@ from suite.custom_resources_utils import create_crd_from_yaml, delete_crd, creat
     delete_virtual_server
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml, \
-    patch_rbac, create_example_app, wait_until_all_pods_are_ready, ensure_connection_to_public_endpoint, \
-    delete_common_app
+    patch_rbac, create_example_app, wait_until_all_pods_are_ready, delete_common_app
 from suite.resources_utils import create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac
 from suite.resources_utils import create_service_from_yaml, get_service_node_ports, wait_for_public_ip
 from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml
+from suite.yaml_utils import get_first_vs_host_from_yaml, get_paths_from_vs_yaml
+
 from settings import ALLOWED_SERVICE_TYPES, ALLOWED_IC_TYPES, DEPLOYMENTS, TEST_DATA, ALLOWED_DEPLOYMENT_TYPES
-from suite.yaml_utils import get_first_vs_host_from_yaml
 
 
 class KubeApis:
@@ -91,7 +91,9 @@ def test_namespace(kube_apis, request) -> str:
     """
     timestamp = round(time.time() * 1000)
     print("------------------------- Create Test Namespace -----------------------------------")
-    namespace = create_namespace_with_name_from_yaml(kube_apis.v1, f"test-namespace-{str(timestamp)}", f"{TEST_DATA}/common/ns.yaml")
+    namespace = create_namespace_with_name_from_yaml(kube_apis.v1,
+                                                     f"test-namespace-{str(timestamp)}",
+                                                     f"{TEST_DATA}/common/ns.yaml")
 
     def fin():
         print("Delete test namespace")
@@ -252,7 +254,9 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     :param kube_apis: client apis
     :param ingress_controller_prerequisites
     :param request: pytest fixture to parametrize this method
-
+        {type: complete|rbac-without-vs, extra_args: }
+        'type' type of test pre-configuration
+        'extra_args' list of IC cli arguments
     :return:
     """
     namespace = ingress_controller_prerequisites.namespace
@@ -289,13 +293,13 @@ class VirtualServerSetup:
         backend_1_url (str):
         backend_2_url (str):
     """
-    def __init__(self, public_endpoint: PublicEndpoint, namespace, vs_host, vs_name):
+    def __init__(self, public_endpoint: PublicEndpoint, namespace, vs_host, vs_name, vs_paths):
         self.public_endpoint = public_endpoint
         self.namespace = namespace
         self.vs_host = vs_host
         self.vs_name = vs_name
-        self.backend_1_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}/backend1"
-        self.backend_2_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}/backend2"
+        self.backend_1_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}/{vs_paths[0]}"
+        self.backend_2_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}/{vs_paths[1]}"
 
 
 @pytest.fixture(scope="class")
@@ -304,7 +308,10 @@ def virtual_server_setup(request, kube_apis, crd_ingress_controller, ingress_con
     """
     Prepare Virtual Server Example.
 
-    :param request: internal pytest fixture to parametrize this method ('virtual-server'|'virtual-server-tls')
+    :param request: internal pytest fixture to parametrize this method:
+        {example: virtul-server|virtual-server-tls|..., app_type: simple|split|...}
+        'example' is a directory name in TEST_DATA,
+        'app_type' is a directory name in TEST_DATA/common/app
     :param kube_apis: client apis
     :param crd_ingress_controller:
     :param ingress_controller_endpoint:
@@ -316,6 +323,7 @@ def virtual_server_setup(request, kube_apis, crd_ingress_controller, ingress_con
                                               f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml",
                                               test_namespace)
     vs_host = get_first_vs_host_from_yaml(f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml")
+    vs_paths = get_paths_from_vs_yaml(f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml")
     common_app = create_example_app(kube_apis, request.param['app_type'], test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
@@ -326,4 +334,4 @@ def virtual_server_setup(request, kube_apis, crd_ingress_controller, ingress_con
 
     request.addfinalizer(fin)
 
-    return VirtualServerSetup(ingress_controller_endpoint, test_namespace, vs_host, vs_name)
+    return VirtualServerSetup(ingress_controller_endpoint, test_namespace, vs_host, vs_name, vs_paths)
