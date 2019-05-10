@@ -1,0 +1,14 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  proxy-buffering: "invalid"
+  real-ip-recursive: "invalid"
+  server-tokens: "invalid"
+  lb-method: "least_time header inflight" # plus only
+  max-fails: "invalid"
+  keepalive: "invalid"
+  proxy-protocol: "invalid proxy"
+  redirect-to-https: "invalid"

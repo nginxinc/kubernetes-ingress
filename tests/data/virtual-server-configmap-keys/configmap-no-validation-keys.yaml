@@ -1,0 +1,17 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  proxy-connect-timeout: "25"
+  proxy-read-timeout: "32"
+  client-max-body-size: "1028"
+  proxy-buffers: "8 4k"
+  proxy-buffer-size: "8k"
+  proxy-max-temp-file-size: "1024m"
+  set-real-ip-from: "192.168.1.4"
+  real-ip-header: "proxy_protocol"
+  location-snippets: "# location-snippet is here;"
+  server-snippets: "# server-snippet is here;"
+  fail-timeout: "20"

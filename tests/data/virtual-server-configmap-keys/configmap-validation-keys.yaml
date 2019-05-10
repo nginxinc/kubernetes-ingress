@@ -1,0 +1,14 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  proxy-buffering: "false"
+  real-ip-recursive: "true"
+  server-tokens: "off"
+  lb-method: "random two least_time=header"
+  max-fails: "3"
+  keepalive: "32"
+  proxy-protocol: "true"
+  redirect-to-https: "true"

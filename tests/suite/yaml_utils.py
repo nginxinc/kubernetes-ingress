@@ -71,3 +71,15 @@ def get_first_vs_host_from_yaml(file) -> str:
         docs = yaml.load_all(f)
         for dep in docs:
             return dep['spec']['host']
+
+
+def get_configmap_fields_from_yaml(file) -> {}:
+    """
+    Parse yaml file and return a dict of ConfigMap data fields.
+
+    :param file: an absolute path to a file
+    :return: {}
+    """
+    with open(file) as f:
+        dep = yaml.load(f)
+        return dep['data']
