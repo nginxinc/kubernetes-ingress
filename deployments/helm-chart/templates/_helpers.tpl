@@ -43,6 +43,13 @@ Expand service account name.
 {{- end -}}
 
 {{/*
+Expand service name.
+*/}}
+{{- define "nginx-ingress.serviceName" -}}
+{{- default (include "nginx-ingress.name" .) .Values.controller.service.name }}
+{{- end -}}
+
+{{/*
 Expand default TLS name.
 */}}
 {{- define "nginx-ingress.defaultTLSName" -}}

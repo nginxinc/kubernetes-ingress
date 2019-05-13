@@ -89,7 +89,7 @@ spec:
 {{- if .Values.controller.reportIngressStatus.externalService }}
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
 {{- else if and (.Values.controller.service.create) (eq .Values.controller.service.type "LoadBalancer") }}
-          - -external-service={{ include "nginx-ingress.name" . }}
+          - -external-service={{ include "nginx-ingress.serviceName" . }}
 {{- end }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}
           - -leader-election-lock-name={{ include "nginx-ingress.leaderElectionName" . }}
