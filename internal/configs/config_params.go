@@ -51,6 +51,8 @@ type ConfigParams struct {
 	ResolverTimeout               string
 	MainKeepaliveTimeout          string
 	MainKeepaliveRequests         int64
+	VariablesHashBucketSize       uint64
+	VariablesHashMaxSize          uint64
 
 	RealIPHeader    string
 	SetRealIPFrom   []string
@@ -105,5 +107,7 @@ func NewDefaultConfigParams() *ConfigParams {
 		ResolverIPV6:               true,
 		MainKeepaliveTimeout:       "65s",
 		MainKeepaliveRequests:      100,
+		VariablesHashBucketSize:    256,
+		VariablesHashMaxSize:       1024,
 	}
 }

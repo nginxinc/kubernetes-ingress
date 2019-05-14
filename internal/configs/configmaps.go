@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -375,6 +375,22 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool) *ConfigParams {
 		}
 	}
 
+	if varHashBucketSize, exists, err := GetMapKeyAsUint64(cfgm.Data, "variables-hash-bucket-size", cfgm, true); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfgParams.VariablesHashBucketSize = varHashBucketSize
+		}
+	}
+
+	if varHashMaxSize, exists, err := GetMapKeyAsUint64(cfgm.Data, "variables-hash-max-size", cfgm, false); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfgParams.VariablesHashMaxSize = varHashMaxSize
+		}
+	}
+
 	return cfgParams
 }
 
@@ -413,6 +429,8 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		ResolverTimeout:                config.ResolverTimeout,
 		KeepaliveTimeout:               config.MainKeepaliveTimeout,
 		KeepaliveRequests:              config.MainKeepaliveRequests,
+		VariablesHashBucketSize:        config.VariablesHashBucketSize,
+		VariablesHashMaxSize:           config.VariablesHashMaxSize,
 	}
 	return nginxCfg
 }

@@ -56,7 +56,8 @@ http {
     server_names_hash_max_size {{.ServerNamesHashMaxSize}};
     {{if .ServerNamesHashBucketSize}}server_names_hash_bucket_size {{.ServerNamesHashBucketSize}};{{end}}
 
-    variables_hash_bucket_size 256;
+    variables_hash_bucket_size {{.VariablesHashBucketSize}};
+    variables_hash_max_size {{.VariablesHashMaxSize}};
 
     map $http_upgrade $connection_upgrade {
         default upgrade;

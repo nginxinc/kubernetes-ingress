@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -50,6 +50,24 @@ func GetMapKeyAsInt64(m map[string]string, key string, context apiObject) (int64
 		i, err := strconv.ParseInt(str, 10, 64)
 		if err != nil {
 			return 0, exists, fmt.Errorf("%s %v/%v '%s' contains invalid integer: %v, ignoring", context.GetObjectKind().GroupVersionKind().Kind, context.GetNamespace(), context.GetName(), key, err)
+		}
+
+		return i, exists, nil
+	}
+
+	return 0, false, nil
+}
+
+// GetMapKeyAsUint64 tries to find and parse a key in a map as uint64.
+func GetMapKeyAsUint64(m map[string]string, key string, context apiObject, nonZero bool) (uint64, bool, error) {
+	if str, exists := m[key]; exists {
+		i, err := strconv.ParseUint(str, 10, 64)
+		if err != nil {
+			return 0, exists, fmt.Errorf("%s %v/%v '%s' contains invalid uint64: %v, ignoring", context.GetObjectKind().GroupVersionKind().Kind, context.GetNamespace(), context.GetName(), key, err)
+		}
+
+		if nonZero && i == 0 {
+			return 0, exists, fmt.Errorf("%s %v/%v '%s' must be greater than 0, ignoring", context.GetObjectKind().GroupVersionKind().Kind, context.GetNamespace(), context.GetName(), key)
 		}
 
 		return i, exists, nil

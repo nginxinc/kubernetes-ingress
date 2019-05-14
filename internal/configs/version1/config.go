@@ -153,6 +153,8 @@ type MainConfig struct {
 	ResolverTimeout                string
 	KeepaliveTimeout               string
 	KeepaliveRequests              int64
+	VariablesHashBucketSize        uint64
+	VariablesHashMaxSize           uint64
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

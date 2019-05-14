@@ -107,7 +107,8 @@ spec:
 | N/A | `resolver-timeout` | Sets the [resolver_timeout](http://nginx.org/en/docs/http/ngx_http_core_module.html#resolver_timeout) for name resolution. Supported in NGINX Plus only.  | `30s` | [Support for Type ExternalName Services](../examples/externalname-services). |
 | N/A | `keepalive-timeout` | Sets the value of the [keepalive_timeout](http://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout) directive. | `65s` | |
 | N/A | `keepalive-requests` | Sets the value of the [keepalive_requests](http://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_requests) directive. | `100` | |
-
+| N/A | `variables-hash-bucket-size` | Sets the value of the [variables_hash_bucket_size](http://nginx.org/en/docs/http/ngx_http_core_module.html#variables_hash_bucket_size) directive. | `256` | |
+| N/A | `variables-hash-max-size` | Sets the value of the [variables-hash-max-size](http://nginx.org/en/docs/http/ngx_http_core_module.html#variables_hash_max_size) directive. | `1024` | |
 
 ### Logging
 

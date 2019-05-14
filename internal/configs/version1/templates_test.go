@@ -88,21 +88,23 @@ var ingCfg = IngressNginxConfig{
 }
 
 var mainCfg = MainConfig{
-	ServerNamesHashMaxSize: "512",
-	ServerTokens:           "off",
-	WorkerProcesses:        "auto",
-	WorkerCPUAffinity:      "auto",
-	WorkerShutdownTimeout:  "1m",
-	WorkerConnections:      "1024",
-	WorkerRlimitNofile:     "65536",
-	StreamSnippets:         []string{"# comment"},
-	StreamLogFormat:        "$remote_addr",
-	ResolverAddresses:      []string{"example.com", "127.0.0.1"},
-	ResolverIPV6:           false,
-	ResolverValid:          "10s",
-	ResolverTimeout:        "15s",
-	KeepaliveTimeout:       "65s",
-	KeepaliveRequests:      100,
+	ServerNamesHashMaxSize:  "512",
+	ServerTokens:            "off",
+	WorkerProcesses:         "auto",
+	WorkerCPUAffinity:       "auto",
+	WorkerShutdownTimeout:   "1m",
+	WorkerConnections:       "1024",
+	WorkerRlimitNofile:      "65536",
+	StreamSnippets:          []string{"# comment"},
+	StreamLogFormat:         "$remote_addr",
+	ResolverAddresses:       []string{"example.com", "127.0.0.1"},
+	ResolverIPV6:            false,
+	ResolverValid:           "10s",
+	ResolverTimeout:         "15s",
+	KeepaliveTimeout:        "65s",
+	KeepaliveRequests:       100,
+	VariablesHashBucketSize: 256,
+	VariablesHashMaxSize:    1024,
 }
 
 func TestIngressForNGINXPlus(t *testing.T) {
