@@ -8,19 +8,19 @@ required = [
 
 [[constraint]]
   name = "k8s.io/api"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.14.1"
 
 [[constraint]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.14.1"
 
 [[constraint]]
   name = "k8s.io/code-generator"
-  version = "kubernetes-1.12.2"
+  version = "kubernetes-1.14.1"
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "9.0.0"
+  version = "11.0.0"
 
 [prune]
   go-tests = true
