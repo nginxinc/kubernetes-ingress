@@ -29,7 +29,7 @@ spec:
   ports:
 {{- if .Values.controller.service.httpPort.enable }}
   - port: {{ .Values.controller.service.httpPort.port }}
-    targetPort: 80
+    targetPort: {{ .Values.controller.service.httpPort.targetPort }}
     protocol: TCP
     name: http
   {{- if eq .Values.controller.service.type "NodePort" }}
@@ -38,7 +38,7 @@ spec:
 {{- end }}
 {{- if .Values.controller.service.httpsPort.enable }}
   - port: {{ .Values.controller.service.httpsPort.port }}
-    targetPort: 443
+    targetPort: {{ .Values.controller.service.httpsPort.targetPort }}
     protocol: TCP
     name: https
   {{- if eq .Values.controller.service.type "NodePort" }}

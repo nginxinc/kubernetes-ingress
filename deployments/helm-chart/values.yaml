@@ -141,6 +141,9 @@ controller:
       ## The custom NodePort for the HTTP port. Requires controller.service.type set to NodePort.
       nodePort: ""
 
+      ## The HTTP port on the POD where the Ingress controller service is running.
+      targetPort: 80
+
     httpsPort:
       ## Enables the HTTPS port for the Ingress controller service.
       enable: true
@@ -150,6 +153,9 @@ controller:
 
       ## The custom NodePort for the HTTPS port. Requires controller.service.type set to NodePort.
       nodePort: ""
+
+      ## The HTTPS port on the POD where the Ingress controller service is running.
+      targetPort: 443
 
   serviceAccount:
     ## The name of the service account of the Ingress controller pods. Used for RBAC.
