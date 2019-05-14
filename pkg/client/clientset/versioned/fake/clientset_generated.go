@@ -59,8 +59,3 @@ var _ clientset.Interface = &Clientset{}
 func (c *Clientset) K8sV1alpha1() k8sv1alpha1.K8sV1alpha1Interface {
 	return &fakek8sv1alpha1.FakeK8sV1alpha1{Fake: &c.Fake}
 }
-
-// K8s retrieves the K8sV1alpha1Client
-func (c *Clientset) K8s() k8sv1alpha1.K8sV1alpha1Interface {
-	return &fakek8sv1alpha1.FakeK8sV1alpha1{Fake: &c.Fake}
-}

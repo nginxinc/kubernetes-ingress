@@ -103,7 +103,7 @@ func (c *FakeVirtualServerRoutes) DeleteCollection(options *v1.DeleteOptions, li
 // Patch applies the patch and returns the patched virtualServerRoute.
 func (c *FakeVirtualServerRoutes) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.VirtualServerRoute, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(virtualserverroutesResource, c.ns, name, data, subresources...), &v1alpha1.VirtualServerRoute{})
+		Invokes(testing.NewPatchSubresourceAction(virtualserverroutesResource, c.ns, name, pt, data, subresources...), &v1alpha1.VirtualServerRoute{})
 
 	if obj == nil {
 		return nil, err

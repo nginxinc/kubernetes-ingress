@@ -3,7 +3,7 @@ package k8s
 import (
 	"testing"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -34,7 +34,7 @@ func TestStatusUpdate(t *testing.T) {
 	)
 	ingLister := storeToIngressLister{}
 	ingLister.Store, _ = cache.NewInformer(
-		cache.NewListWatchFromClient(fakeClient.Extensions().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
+		cache.NewListWatchFromClient(fakeClient.ExtensionsV1beta1().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
 		&extensions.Ingress{}, 2, nil)
 
 	err := ingLister.Store.Add(&ing)
