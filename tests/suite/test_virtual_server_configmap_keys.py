@@ -67,24 +67,15 @@ def assert_specific_keys_for_nginx_oss(config, expected_values):
            and expected_values['lb-method'] in config
 
 
-def assert_defaults_of_keys_with_validation(config):
+def assert_defaults_of_keys_with_validation(config, unexpected_values):
     assert "proxy_buffering on;" in config
     assert "real_ip_recursive" not in config
     assert "max_fails=1" in config
     assert "keepalive" not in config
     assert "listen 80;" in config
     assert "if ($http_x_forwarded_proto = 'http') {" not in config
-
-
-def assert_defaults_of_specific_keys_for_nginx_plus(config, expected_values):
-    assert f"server_tokens \"{expected_values['server-tokens']}\"" in config
-    assert "random two least_conn;" in config and expected_values['lb-method'] not in config
-
-
-def assert_defaults_of_specific_keys_for_nginx_oss(config, expected_values):
     assert "server_tokens \"on\"" in config
-    assert "random two least_conn;" in config \
-           and expected_values['lb-method'] not in config
+    assert "random two least_conn;" in config and unexpected_values['lb-method'] not in config
 
 
 def assert_ssl_keys(config):
@@ -207,12 +198,7 @@ class TestVirtualServerConfigMapNoTls:
                                                    ingress_controller_prerequisites.namespace)
         step_4_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_valid_event_count_increased(virtual_server_setup, step_4_events, step_3_events)
-        assert_defaults_of_keys_with_validation(step_4_config)
-        # to cover the OSS case, this will be changed in the future
-        if cli_arguments['ic-type'] == "nginx-ingress":
-            assert_defaults_of_specific_keys_for_nginx_oss(step_4_config, expected_values)
-        else:
-            assert_defaults_of_specific_keys_for_nginx_plus(step_4_config, expected_values)
+        assert_defaults_of_keys_with_validation(step_4_config, expected_values)
 
 
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
