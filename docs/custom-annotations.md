@@ -1,10 +1,10 @@
 # Custom Annotations
 
-Custom annotations enable you to quickly extend the Ingress Controller to support many advanced features of NGINX, such as rate limiting, caching, etc.
+Custom annotations enable you to quickly extend the Ingress resource to support many advanced features of NGINX, such as rate limiting, caching, etc.
 
 ## What are Custom Annotations
 
-NGINX Ingress Controller supports a number of annotations that fine tune NGINX configuration (for example, connection timeouts) or enable additional features (for example, JWT validation). The complete list of annotations is available [here](configmap-and-annotations.md).
+NGINX Ingress Controller supports a number of annotations for the Ingress resource that fine tune NGINX configuration (for example, connection timeouts) or enable additional features (for example, JWT validation). The complete list of annotations is available [here](configmap-and-annotations.md).
 
 The annotations are provided only for the most common features and use cases, meaning that not every NGINX feature or a customization option is available through the annotations. Additionally, even if an annotation is available, it might not give you the satisfactory level of control of a particular NGINX feature. 
 

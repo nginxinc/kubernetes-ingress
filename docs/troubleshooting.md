@@ -10,6 +10,7 @@ The table below categories some potential problems with the Ingress Controller y
 | ------------ | ----------- | ------- | -------------- |
 | Start | The Ingress Controller fails to start. | Check the logs. | Misconfigured RBAC, a missing default server TLS Secret. |
 | Ingress Resource and Annotations | The configuration is not applied. | Check the events of the Ingress resource, check the logs, check the generated config. | Invalid values of annotations. |
+| VirtualServer and VirtualServerRoute Resources | The configuration is not applied. | Check the events of the VirtualServer and VirtualServerRoutes, check the logs, check the generated config. | VirtualServer and VirtualServerRoute weren't enabled during the installation. |
 ConfigMap Keys | The configuration is not applied. | Check the events of the ConfigMap, check the logs, check the generated config. | Invalid values of ConfigMap keys. |
 | NGINX | NGINX responds with unexpected responses. | Check the logs, check the generated config, check the live activity dashboard (NGINX Plus only), run NGINX in the debug mode. | Unhealthy backend pods, a misconfigured backend service. |
 
@@ -46,6 +47,29 @@ Events:
 ```
 Note how in the events section we have a Normal event with the AddedOrUpdated reason informing us that the configuration was successfully applied.
 
+### Checking the Events of a VirtualServer and VirtualServerRoute Resources
+
+After you create or update a VirtualServer resource, you can immediately check if the NGINX configuration for that  resource was successfully applied by NGINX:
+```
+$ kubectl describe vs cafe
+. . .
+Events:
+  Type    Reason          Age   From                      Message
+  ----    ------          ----  ----                      -------
+  Normal  AddedOrUpdated  16s   nginx-ingress-controller  Configuration for default/cafe was added or updated
+```
+Note how in the events section we have a Normal event with the AddedOrUpdated reason informing us that the configuration was successfully applied.
+
+Checking the events of a VirtualServerRoute is similar:
+```
+$ kubectl describe vsr coffee 
+. . .
+Events:
+  Type     Reason                 Age   From                      Message
+  ----     ------                 ----  ----                      -------
+  Normal   AddedOrUpdated         1m    nginx-ingress-controller  Configuration for default/coffee was added or updated
+```
+
 ### Checking the Events of the ConfigMap Resource
 
 After you update the [ConfigMap](configmap-and-annotations.md) resource, you can immediately check if the configuration was successfully applied by NGINX:
@@ -64,7 +88,7 @@ Note how in the events section we have a Normal event with the Updated reason in
 
 ### Checking the Generated Config
 
-For each Ingress resource, the Ingress Controller generates a corresponding NGINX configuration file in the `/etc/nginx/conf.d` folder. Additionally, the Ingress Controller generates the main configuration file `/etc/nginx/nginx.conf`, which includes all the configurations files from `/etc/nginx/conf.d`.
+For each Ingress/VirtualServer resource, the Ingress Controller generates a corresponding NGINX configuration file in the `/etc/nginx/conf.d` folder. Additionally, the Ingress Controller generates the main configuration file `/etc/nginx/nginx.conf`, which includes all the configurations files from `/etc/nginx/conf.d`. The config of a VirtualServerRoute resource is located in the configuration file of the VirtualServer that references the resource.
 
 You can view the content of the main configuration file by running:
 ```
