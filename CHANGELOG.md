@@ -1,5 +1,47 @@
 # Changelog
 
+### 1.5.0
+
+FEATURES:
+* [560](https://github.com/nginxinc/kubernetes-ingress/pull/560): Add new configuration resources -- VirtualServer and VirtualServerRoute.
+* [554](https://github.com/nginxinc/kubernetes-ingress/pull/554): Add new Prometheus metrics related to the Ingress Controller's operation (as opposed to NGINX/NGINX Plus metrics).
+* [496](https://github.com/nginxinc/kubernetes-ingress/pull/496): Support a wildcard TLS certificate for TLS-enabled Ingress resources.
+* [485](https://github.com/nginxinc/kubernetes-ingress/pull/485): Support ExternalName services in Ingress backends.
+
+IMPROVEMENTS:
+* Add new ConfigMap keys: `keepalive-timeout`, `keepalive-requests`, `access-log-off`, `variables-hash-bucket-size`, `variables-hash-max-size`. Added in [565](https://github.com/nginxinc/kubernetes-ingress/pull/565), [511](https://github.com/nginxinc/kubernetes-ingress/pull/511).
+* [504](https://github.com/nginxinc/kubernetes-ingress/pull/504): Run the Prometheus exporter inside the Ingress Controller process instead of a sidecar container.
+
+BUGFIXES:
+* [520](https://github.com/nginxinc/kubernetes-ingress/pull/520): Fix the type of the Prometheus port annotation in manifests.
+* [481](https://github.com/nginxinc/kubernetes-ingress/pull/481): Fix the HSTS support.
+* [439](https://github.com/nginxinc/kubernetes-ingress/pull/439): Fix the validation of the `lb-method` ConfigMap key and `nginx.org/lb-method` annotation.
+
+HELM CHART:
+* The version of the helm chart is now 0.3.0.
+* The helm chart is now available in our helm chart repo `helm.nginx.com/stable`. 
+* Add new parameters to the Chart: `controller.service.httpPort.targetPort`, `controller.service.httpsPort.targetPort`, `controller.service.name`, `controller.pod.annotations`, `controller.config.name`, `controller.reportIngressStatus.leaderElectionLockName`, `controller.service.httpPort`, `controller.service.httpsPort`, `controller.service.loadBalancerIP`, `controller.service.loadBalancerSourceRanges`, `controller.tolerations`, `controller.affinity`. Added in [562](https://github.com/nginxinc/kubernetes-ingress/pull/562), [561](https://github.com/nginxinc/kubernetes-ingress/pull/561), [553](https://github.com/nginxinc/kubernetes-ingress/pull/553), [534](https://github.com/nginxinc/kubernetes-ingress/pull/534) thanks to [Paulo Ribeiro](https://github.com/paigr), [479](https://github.com/nginxinc/kubernetes-ingress/pull/479) thanks to [Alejandro Llanes](https://github.com/sombralibre),  [468](https://github.com/nginxinc/kubernetes-ingress/pull/468), [456](https://github.com/nginxinc/kubernetes-ingress/pull/456).
+* [546](https://github.com/nginxinc/kubernetes-ingress/pull/546): Support deploying multiple Ingress Controllers in a cluster. **Note**: The generated resources have new names that are unique for each Ingress Controller. As a consequence, the name change affects the upgrade. See the HELM UPGRADE section for more information. 
+* [542](https://github.com/nginxinc/kubernetes-ingress/pull/542): Reduce the required privileges in the RBAC manifests.
+
+CHANGES:
+* Update NGINX version to 1.15.12.
+* Prometheus metrics for NGINX/NGINX Plus have new namespace `nginx_ingress`. Examples: `nginx_http_requests_total` -> `nginx_ingress_http_requests_total`, `nginxplus_http_requests_total` -> `nginx_ingress_nginxplus_http_requests_total`.
+
+UPGRADE:
+* For NGINX, use the 1.5.0 image from our DockerHub: `nginx/nginx-ingress:1.5.0` or `nginx/nginx-ingress:1.5.0-alpine`
+* For NGINX Plus, please build your own image using the 1.5.0 source code.
+* For Helm, use version 0.3.0 of the chart.
+
+HELM UPGRADE:
+
+The new version of the helm chart uses different names for the generated resources. This makes it possible to deploy multiple Ingress Controllers in a cluster. However, as a side effect, during the upgrade from the previous version, helm will recreate the resources, instead of updating the existing ones. This, in turn, might cause problems for the following resources:
+* Service: If the service was created with the type LoadBalancer, the public IP of the new service might change. Additionally, helm updates the selector of the service, so that the old pods will be immediately excluded from the service. 
+* Deployment/DaemonSet: Because the resource is recreated, the old pods will be removed and the new ones will be launched, instead of the default Deployment/Daemonset upgrade strategy. 
+* ConfigMap: After the helm removes the resource, the old Ingress Controller pods will be immediately reconfigured to use the default values of the ConfigMap keys. During a small window between the reconfiguration and the shutdown of the old pods, NGINX will use the configuration with the default values.
+
+We advise not to upgrade to the new version of the helm chart unless the mentioned problems are acceptable for your case. We will provide special upgrade instructions for helm that mitigate the problems for the next minor release of the Ingress Controller (1.5.1).
+
 ### 1.4.6
 
 CHANGES:
