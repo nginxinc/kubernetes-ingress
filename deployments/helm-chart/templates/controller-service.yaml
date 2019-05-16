@@ -46,7 +46,7 @@ spec:
   {{- end }}
 {{- end }}
   selector:
-    app: {{ include "nginx-ingress.name" . }}
+    app:  {{ include "nginx-ingress.appName" . }}
   {{- if .Values.controller.service.externalIPs }}
   externalIPs:
 {{ toYaml .Values.controller.service.externalIPs | indent 4 }}

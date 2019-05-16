@@ -62,3 +62,10 @@ Expand wildcard TLS name.
 {{- define "nginx-ingress.wildcardTLSName" -}}
 {{- printf "%s-%s" (include "nginx-ingress.name" .) "wildcard-tls-secret" -}}
 {{- end -}}
+
+{{/*
+Expand app name.
+*/}}
+{{- define "nginx-ingress.appName" -}}
+{{- default (include "nginx-ingress.name" .) .Values.controller.name -}}
+{{- end -}}
