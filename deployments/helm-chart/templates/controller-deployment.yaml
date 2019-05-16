@@ -10,11 +10,11 @@ spec:
   replicas: {{ .Values.controller.replicaCount }}
   selector:
     matchLabels:
-      app: {{ include "nginx-ingress.name" . }}
+      app: {{ include "nginx-ingress.appName" . }}
   template:
     metadata:
       labels:
-        app: {{ include "nginx-ingress.name" . }}
+        app: {{ include "nginx-ingress.appName" . }}
 {{- if or (.Values.prometheus.create) (.Values.controller.pod.annotations) }}
       annotations:
 {{- if .Values.prometheus.create }}
