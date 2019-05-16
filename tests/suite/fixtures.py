@@ -13,7 +13,8 @@ from suite.custom_resources_utils import create_crd_from_yaml, delete_crd, creat
     delete_virtual_server
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml, \
-    patch_rbac, create_example_app, wait_until_all_pods_are_ready, delete_common_app
+    patch_rbac, create_example_app, wait_until_all_pods_are_ready, delete_common_app, \
+    ensure_connection_to_public_endpoint
 from suite.resources_utils import create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac
 from suite.resources_utils import create_service_from_yaml, get_service_node_ports, wait_for_public_ip
 from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml
@@ -246,13 +247,16 @@ def cli_arguments(request) -> {}:
 
 
 @pytest.fixture(scope="class")
-def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisites, request) -> None:
+def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisites,
+                           ingress_controller_endpoint,
+                           request) -> None:
     """
     Create an Ingress Controller with CRD enabled.
 
     :param cli_arguments: pytest context
     :param kube_apis: client apis
     :param ingress_controller_prerequisites
+    :param ingress_controller_endpoint:
     :param request: pytest fixture to parametrize this method
         {type: complete|rbac-without-vs, extra_args: }
         'type' type of test pre-configuration
@@ -269,6 +273,9 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     print("------------------------- Create IC -----------------------------------")
     name = create_ingress_controller(kube_apis.v1, kube_apis.extensions_v1_beta1, cli_arguments, namespace,
                                      request.param.get('extra_args', None))
+    ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
+                                         ingress_controller_endpoint.port,
+                                         ingress_controller_endpoint.port_ssl)
 
     def fin():
         print("Remove the CRD:")

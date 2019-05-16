@@ -34,9 +34,9 @@ def assert_ssl_error(virtual_server_setup):
         get_server_certificate_subject(virtual_server_setup.public_endpoint.public_ip,
                                        virtual_server_setup.vs_host,
                                        virtual_server_setup.public_endpoint.port_ssl)
-        pytest.fail("We expected an exception here, but didn't get it. Exiting...")
+        pytest.fail("We expected an SSLError here, but didn't get it or got another error. Exiting...")
     except SSLError:
-        print("The expected error was caught")
+        print("The expected error was caught. Continue.")
 
 
 def assert_us_subject(virtual_server_setup):
@@ -59,9 +59,9 @@ def assert_gb_subject(virtual_server_setup):
     assert subject_dict[b'CN'] == b'cafe.example.com'
 
 
-@pytest.mark.skip("This needs improvement. A flaky one.")
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
-                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]}, {"example": "virtual-server-tls", "app_type": "simple"})],
+                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+                           {"example": "virtual-server-tls", "app_type": "simple"})],
                          indirect=True)
 class TestVirtualServerTLS:
     def test_tls_termination(self, kube_apis, crd_ingress_controller, virtual_server_setup, clean_up):
