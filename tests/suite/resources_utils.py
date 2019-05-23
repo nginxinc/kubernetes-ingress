@@ -121,6 +121,25 @@ def create_deployment(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, body
     return body['metadata']['name']
 
 
+def create_deployment_with_name(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, name) -> str:
+    """
+    Create a deployment with a specific name based on common yaml file.
+
+    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param namespace: namespace name
+    :param name:
+    :return: str
+    """
+    print(f"Create a Deployment with a specific name")
+    with open(f"{TEST_DATA}/common/backend1.yaml") as f:
+        dep = yaml.safe_load(f)
+        dep['metadata']['name'] = name
+        dep['spec']['selector']['matchLabels']['app'] = name
+        dep['spec']['template']['metadata']['labels']['app'] = name
+        dep['spec']['template']['spec']['containers'][0]['name'] = name
+        return create_deployment(extensions_v1_beta1, namespace, dep)
+
+
 def create_daemon_set(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, body) -> str:
     """
     Create a daemon-set based on a dict.
@@ -218,6 +237,23 @@ def create_service(v1: CoreV1Api, namespace, body) -> str:
     resp = v1.create_namespaced_service(namespace, body)
     print(f"Service created with name '{body['metadata']['name']}'")
     return resp.metadata.name
+
+
+def create_service_with_name(v1: CoreV1Api, namespace, name) -> str:
+    """
+    Create a service with a specific name based on a common yaml manifest.
+
+    :param v1: CoreV1Api
+    :param namespace: namespace name
+    :param name: name
+    :return: str
+    """
+    print(f"Create a Service with a specific name:")
+    with open(f"{TEST_DATA}/common/backend1-svc.yaml") as f:
+        dep = yaml.safe_load(f)
+        dep['metadata']['name'] = name
+        dep['spec']['selector']['app'] = name.replace("-svc", "")
+        return create_service(v1, namespace, dep)
 
 
 def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (str, str):
@@ -596,27 +632,6 @@ class CommonApp:
         self.deployments = deployments
 
 
-def create_common_app(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1beta1Api, namespace) -> CommonApp:
-    """
-    Create a simple backend application.
-
-    A simple application consists of 2 backend services.
-
-    :param v1: CoreV1Api
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
-    :param namespace: namespace name
-
-    :return: CommonApp
-    """
-    svc_one = create_service_from_yaml(v1, namespace, f"{TEST_DATA}/common/backend1-svc.yaml")
-    svc_two = create_service_from_yaml(v1, namespace, f"{TEST_DATA}/common/backend2-svc.yaml")
-    deployment_one = create_deployment_from_yaml(extensions_v1_beta1, namespace,
-                                                 f"{TEST_DATA}/common/backend1.yaml")
-    deployment_two = create_deployment_from_yaml(extensions_v1_beta1, namespace,
-                                                 f"{TEST_DATA}/common/backend2.yaml")
-    return CommonApp([svc_one, svc_two], [deployment_one, deployment_two])
-
-
 def create_example_app(kube_apis, app_type, namespace) -> CommonApp:
     """
     Create a backend application.
@@ -626,7 +641,6 @@ def create_example_app(kube_apis, app_type, namespace) -> CommonApp:
     :param kube_apis: client apis
     :param app_type: type of the application (simple|split)
     :param namespace: namespace name
-    :param app_type: type of the application (simple|split)
     :return: CommonApp
     """
     create_items_from_yaml(kube_apis, f"{TEST_DATA}/common/app/{app_type}/app.yaml", namespace)

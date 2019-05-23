@@ -2,7 +2,7 @@ import requests
 import pytest
 
 from settings import TEST_DATA, DEPLOYMENTS
-from suite.custom_resources_utils import delete_crd, create_crd_from_yaml, \
+from suite.custom_resources_utils import delete_crd, create_crds_from_yaml, \
     create_virtual_server_from_yaml, delete_virtual_server, patch_virtual_server_from_yaml
 from suite.resources_utils import patch_rbac, replace_service, read_service, \
     wait_before_test, delete_service, create_service_from_yaml
@@ -166,7 +166,7 @@ class TestVirtualServer:
         assert resp.status_code == 404
 
         print("Step 13: restore CRD and VS and check")
-        create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, f"{TEST_DATA}/virtual-server/virtualserver.yaml")
+        create_crds_from_yaml(kube_apis.api_extensions_v1_beta1, f"{TEST_DATA}/virtual-server/virtualserver.yaml")
         create_virtual_server_from_yaml(kube_apis.custom_objects,
                                         f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml",
                                         virtual_server_setup.namespace)
@@ -180,7 +180,8 @@ class TestVirtualServer:
 
 
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
-                         [({"type": "rbac-without-vs", "extra_args": [f"-enable-custom-resources"]}, {"example": "virtual-server", "app_type": "simple"})],
+                         [({"type": "rbac-without-vs", "extra_args": [f"-enable-custom-resources"]},
+                           {"example": "virtual-server", "app_type": "simple"})],
                          indirect=True)
 class TestVirtualServerInitialRBACMisconfiguration:
     def test_responses_after_rbac_misconfiguration(self, kube_apis, crd_ingress_controller, virtual_server_setup):
