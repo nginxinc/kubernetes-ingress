@@ -9,7 +9,7 @@ from kubernetes import config, client
 from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api, CustomObjectsApi, \
     ApiextensionsV1beta1Api
 
-from suite.custom_resources_utils import create_crd_from_yaml, delete_crd, create_virtual_server_from_yaml, \
+from suite.custom_resources_utils import create_crds_from_yaml, delete_crd, create_virtual_server_from_yaml, \
     delete_virtual_server
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml, \
@@ -268,8 +268,8 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     if request.param['type'] == 'rbac-without-vs':
         patch_rbac(kube_apis.rbac_v1_beta1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
     print("------------------------- Register CRD -----------------------------------")
-    crd_name = create_crd_from_yaml(kube_apis.api_extensions_v1_beta1,
-                                    f"{DEPLOYMENTS}/custom-resource-definitions/virtualserver.yaml")
+    crd_names = create_crds_from_yaml(kube_apis.api_extensions_v1_beta1,
+                                      f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")
     print("------------------------- Create IC -----------------------------------")
     name = create_ingress_controller(kube_apis.v1, kube_apis.extensions_v1_beta1, cli_arguments, namespace,
                                      request.param.get('extra_args', None))
@@ -278,11 +278,12 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
                                          ingress_controller_endpoint.port_ssl)
 
     def fin():
-        print("Remove the CRD:")
-        delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
+        for crd_name in crd_names:
+            print("Remove the CRD:")
+            delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
         print("Remove the IC:")
         delete_ingress_controller(kube_apis.extensions_v1_beta1, name, cli_arguments['deployment-type'], namespace)
-        print("Restore ClusterRole:")
+        print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
 
     request.addfinalizer(fin)

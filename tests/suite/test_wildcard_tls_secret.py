@@ -3,10 +3,10 @@ import pytest
 from settings import TEST_DATA
 from suite.fixtures import PublicEndpoint
 from suite.ssl_utils import get_server_certificate_subject
-from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml, create_secret_from_yaml, delete_secret
-from suite.resources_utils import create_common_app, delete_common_app, is_secret_present
-from suite.resources_utils import wait_until_all_pods_are_ready, create_ingress_controller
-from suite.resources_utils import delete_ingress_controller, replace_secret, wait_before_test, ensure_connection_to_public_endpoint
+from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml,\
+    create_secret_from_yaml, delete_secret, create_example_app, delete_common_app,\
+    is_secret_present, wait_until_all_pods_are_ready, create_ingress_controller,\
+    delete_ingress_controller, replace_secret, wait_before_test, ensure_connection_to_public_endpoint
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 
 paths = ["backend1", "backend2"]
@@ -45,7 +45,7 @@ def wildcard_tls_secret_setup(request, kube_apis, ingress_controller_endpoint, t
     create_items_from_yaml(kube_apis,
                            f"{TEST_DATA}/wildcard-tls-secret/{ing_type}/wildcard-secret-ingress.yaml", test_namespace)
     host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/wildcard-tls-secret/{ing_type}/wildcard-secret-ingress.yaml")
-    common_app = create_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, test_namespace)
+    common_app = create_example_app(kube_apis, "simple", test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():

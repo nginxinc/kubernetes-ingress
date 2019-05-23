@@ -83,3 +83,35 @@ def get_configmap_fields_from_yaml(file) -> {}:
     with open(file) as f:
         dep = yaml.load(f)
         return dep['data']
+
+
+def get_route_namespace_from_vs_yaml(file) -> []:
+    """
+    Parse yaml file and return namespaces of all spec.routes.route.
+
+    :param file: an absolute path to file
+    :return: []
+    """
+    res = []
+    with open(file) as f:
+        docs = yaml.load_all(f)
+        for dep in docs:
+            for route in dep['spec']['routes']:
+                res.append(route['route'].split('/')[0])
+    return res
+
+
+def get_paths_from_vsr_yaml(file) -> []:
+    """
+    Parse yaml file and return all the found spec.subroutes.path.
+
+    :param file: an absolute path to file
+    :return: []
+    """
+    res = []
+    with open(file) as f:
+        docs = yaml.load_all(f)
+        for dep in docs:
+            for route in dep['spec']['subroutes']:
+                res.append(route['path'])
+    return res
