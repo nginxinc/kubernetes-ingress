@@ -326,11 +326,12 @@ def virtual_server_setup(request, kube_apis, crd_ingress_controller, ingress_con
     :return: VirtualServerSetup
     """
     print("------------------------- Deploy Virtual Server Example -----------------------------------")
+    vs_source = f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml"
     vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects,
-                                              f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml",
+                                              vs_source,
                                               test_namespace)
-    vs_host = get_first_vs_host_from_yaml(f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml")
-    vs_paths = get_paths_from_vs_yaml(f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml")
+    vs_host = get_first_vs_host_from_yaml(vs_source)
+    vs_paths = get_paths_from_vs_yaml(vs_source)
     common_app = create_example_app(kube_apis, request.param['app_type'], test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 

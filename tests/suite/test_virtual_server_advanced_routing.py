@@ -4,7 +4,7 @@ import requests
 
 from settings import TEST_DATA
 from suite.custom_resources_utils import patch_virtual_server_from_yaml
-from suite.resources_utils import wait_before_test
+from suite.resources_utils import wait_before_test, ensure_response_from_backend
 
 
 def execute_assertions(resp_1, resp_2, resp_3):
@@ -22,6 +22,8 @@ def execute_assertions(resp_1, resp_2, resp_3):
                          indirect=True)
 class TestAdvancedRouting:
     def test_flow_with_header(self, kube_apis, crd_ingress_controller, virtual_server_setup):
+        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+
         resp_1 = requests.get(virtual_server_setup.backend_1_url,
                               headers={"host": virtual_server_setup.vs_host, "x-version": "future"})
         resp_2 = requests.get(virtual_server_setup.backend_1_url,

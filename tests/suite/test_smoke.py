@@ -2,9 +2,10 @@ import requests
 import pytest
 
 from suite.fixtures import PublicEndpoint
-from suite.resources_utils import create_secret_from_yaml, delete_secret, ensure_connection_to_public_endpoint
-from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml, create_common_app, delete_common_app
-from suite.resources_utils import wait_until_all_pods_are_ready
+from suite.resources_utils import create_secret_from_yaml, delete_secret, \
+    ensure_connection_to_public_endpoint, create_items_from_yaml, \
+    delete_items_from_yaml, create_common_app, delete_common_app, \
+    wait_until_all_pods_are_ready, wait_before_test, ensure_response_from_backend
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 from settings import TEST_DATA
 
@@ -53,6 +54,7 @@ class TestSmoke:
     @pytest.mark.parametrize("path", paths)
     def test_response_code_200_and_server_name(self, smoke_setup, path):
         req_url = f"https://{smoke_setup.public_endpoint.public_ip}:{smoke_setup.public_endpoint.port_ssl}/{path}"
+        ensure_response_from_backend(req_url, smoke_setup.ingress_host)
         resp = requests.get(req_url, headers={"host": smoke_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
         assert f"Server name: {path}" in resp.text
