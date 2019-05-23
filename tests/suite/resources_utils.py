@@ -850,7 +850,7 @@ def ensure_connection(request_url) -> None:
     :param request_url: url to request
     :return:
     """
-    for _ in range(0, 4):
+    for _ in range(4):
         try:
             resp = requests.get(request_url, verify=False)
             if resp.status_code == 404:
@@ -914,3 +914,19 @@ def get_events(v1: CoreV1Api, namespace) -> []:
     print(f"Get the events in the namespace: {namespace}")
     res = v1.list_namespaced_event(namespace)
     return res.items
+
+
+def ensure_response_from_backend(req_url, host) -> None:
+    """
+    Wait for 502 to disappear.
+
+    :param req_url: url to request
+    :param host:
+    :return:
+    """
+    for _ in range(5):
+        resp = requests.get(req_url, headers={"host": host}, verify=False)
+        if resp.status_code != 502:
+            return
+        time.sleep(2)
+    pytest.fail(f"Keep getting 502 from {req_url} after 10 seconds. Exiting...")
