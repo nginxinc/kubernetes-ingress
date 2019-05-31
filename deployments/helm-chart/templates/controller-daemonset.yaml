@@ -51,6 +51,9 @@ spec:
         - name: https
           containerPort: 443
           hostPort: 443
+{{ if .Values.controller.customPorts }}
+{{ toYaml .Values.controller.customPorts | indent 4 }}
+{{ end }}
 {{- if .Values.prometheus.create }}
         - name: prometheus
           containerPort: {{ .Values.prometheus.port }}

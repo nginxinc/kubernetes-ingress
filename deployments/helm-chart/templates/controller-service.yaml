@@ -27,6 +27,9 @@ spec:
 {{- end }}
   type: {{ .Values.controller.service.type }}
   ports:
+{{- if .Values.controller.service.customPorts }}
+{{ toYaml .Values.controller.service.customPorts | indent 2 }}
+{{ end }}
 {{- if .Values.controller.service.httpPort.enable }}
   - port: {{ .Values.controller.service.httpPort.port }}
     targetPort: {{ .Values.controller.service.httpPort.targetPort }}

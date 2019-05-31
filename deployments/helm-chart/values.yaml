@@ -15,6 +15,9 @@ controller:
   ## Enables debugging for NGINX. Uses the nginx-debug binary. Requires error-log-level: debug in the ConfigMap via `controller.config.entries`.
   nginxDebug: false
 
+  ## A list of custom ports to expose on the NGINX ingress controller pod. Follows the conventional Kubernetes yaml syntax for container ports.
+  customPorts: []
+
   image:
     ## The image repository of the Ingress controller.
     repository: nginx/nginx-ingress
@@ -156,6 +159,9 @@ controller:
 
       ## The HTTPS port on the POD where the Ingress controller service is running.
       targetPort: 443
+
+    ## A list of custom ports to expose through the Ingress controller service. Follows the conventional Kubernetes yaml syntax for service ports.
+    customPorts: []
 
   serviceAccount:
     ## The name of the service account of the Ingress controller pods. Used for RBAC.
