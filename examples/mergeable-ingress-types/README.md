@@ -1,7 +1,7 @@
 # Mergeable Ingress Types Support
 
-You can configure NGINX to have support for using multiple Ingress Resources which apply to a common host. This allows
-for easier management when using a large amount of paths.
+You can spread the Ingress configuration for a common host across multiple Ingress resources using Mergeable Ingress resources. Such resources can belong to the same or different namespaces. This enables
+easier management when using a large number of paths.
 
 ## Syntax and Rules
 
