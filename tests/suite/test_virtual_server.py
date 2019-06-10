@@ -9,6 +9,7 @@ from suite.resources_utils import patch_rbac, replace_service, read_service, \
 from suite.yaml_utils import get_paths_from_vs_yaml, get_first_vs_host_from_yaml, get_names_from_yaml
 
 
+@pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]}, {"example": "virtual-server", "app_type": "simple"})],
                          indirect=True)
@@ -179,6 +180,24 @@ class TestVirtualServer:
         assert resp.status_code == 200
 
 
+def wait_and_assert_status_code(code, req_url, host) -> None:
+    """
+    Wait for a specific response status code.
+
+    :param  code: status_code
+    :param  req_url: request url
+    :param  host: request headers if any
+    :return:
+    """
+    counter = 0
+    resp = requests.get(req_url, headers={"host": host})
+    while not resp.status_code == code and counter <= 4:
+        wait_before_test(1)
+        counter = counter + 1
+        resp = requests.get(req_url, headers={"host": host})
+    assert resp.status_code == code, f"After a few seconds the status_code is not {code}"
+
+
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "rbac-without-vs", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server", "app_type": "simple"})],
@@ -195,10 +214,5 @@ class TestVirtualServerInitialRBACMisconfiguration:
 
         print("Step 2: configure RBAC and check")
         patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
-        wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url,
-                            headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
-        resp = requests.get(virtual_server_setup.backend_2_url,
-                            headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)

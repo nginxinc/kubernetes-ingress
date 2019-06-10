@@ -52,5 +52,7 @@ The table below shows various configuration options for the tests. If you use Py
 | `--node-ip` | `NODE_IP` | The public IP of a cluster node. Not required if you use the loadbalancer service (see --service argument). | `""` |
 | `--kubeconfig` | `N/A` | An absolute path to a kubeconfig file. | `~/.kube/config` or the value of the `KUBECONFIG` env variable |
 | `N/A` | `KUBE_CONFIG_FOLDER` | A path to a folder with a kubeconfig file. | `~/.kube/` |
+| `--show-ic-logs` | `SHOW_IC_LOGS` | A flag to control accumulating IC logs in stdout. | `no` |
+| `N/A` | `PYTEST_ARGS` | Any additional pytest command-line arguments (i.e `-m "smoke"`) | `""` |
 
 If you would like to use an IDE (such as PyCharm) to run the tests, use the [pytest.ini](pytest.ini) file to set the command-line arguments.

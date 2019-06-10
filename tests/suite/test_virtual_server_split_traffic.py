@@ -38,6 +38,7 @@ def get_upstreams_of_splitting(file) -> []:
     return upstreams
 
 
+@pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-split-traffic", "app_type": "split"})],

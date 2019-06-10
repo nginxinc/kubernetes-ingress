@@ -92,6 +92,7 @@ def wildcard_tls_secret_ingress_controller(cli_arguments, kube_apis, ingress_con
     return IngressControllerWithSecret(secret_name)
 
 
+@pytest.mark.smoke
 class TestTLSWildcardSecrets:
     @pytest.mark.parametrize("path", paths)
     def test_response_code_200(self, wildcard_tls_secret_ingress_controller, wildcard_tls_secret_setup, path):
