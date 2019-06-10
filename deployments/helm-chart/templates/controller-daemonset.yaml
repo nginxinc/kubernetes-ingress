@@ -52,7 +52,7 @@ spec:
           containerPort: 443
           hostPort: 443
 {{ if .Values.controller.customPorts }}
-{{ toYaml .Values.controller.customPorts | indent 4 }}
+{{ toYaml .Values.controller.customPorts | indent 8 }}
 {{ end }}
 {{- if .Values.prometheus.create }}
         - name: prometheus
