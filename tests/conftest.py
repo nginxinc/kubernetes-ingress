@@ -5,6 +5,7 @@ import pytest
 
 from kubernetes.config.kube_config import KUBE_CONFIG_DEFAULT_LOCATION
 from settings import DEFAULT_IMAGE, DEFAULT_PULL_POLICY, DEFAULT_IC_TYPE, DEFAULT_SERVICE, DEFAULT_DEPLOYMENT_TYPE
+from suite.resources_utils import get_first_pod_name
 
 
 def pytest_addoption(parser) -> None:
@@ -54,3 +55,26 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "skip_for_nginx_oss" in item.keywords:
                 item.add_marker(skip_for_nginx_oss)
+
+
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item) -> None:
+    """
+    Print out IC Pod logs on test failure.
+
+    Only look at actual failing test calls, not setup/teardown
+
+    :param item:
+    :return:
+    """
+    # execute all other hooks to obtain the report object
+    outcome = yield
+    rep = outcome.get_result()
+
+    # we only look at actual failing test calls, not setup/teardown
+    if rep.when == "call" and rep.failed:
+        pod_namespace = item.funcargs['ingress_controller_prerequisites'].namespace
+        pod_name = get_first_pod_name(item.funcargs['kube_apis'].v1, pod_namespace)
+        print("===================== IC Logs Start =====================")
+        print(item.funcargs['kube_apis'].v1.read_namespaced_pod_log(pod_name, pod_namespace))
+        print("===================== IC Logs End =====================")
