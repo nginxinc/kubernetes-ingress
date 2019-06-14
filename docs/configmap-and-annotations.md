@@ -184,3 +184,11 @@ spec:
 | N/A | `stream-snippets` | Sets a custom snippet in stream context. | N/A | [Support for  TCP/UDP Load Balancing](../examples/tcp-udp). |
 | N/A | `main-template` | Sets the main NGINX configuration template. | By default the template is read from the file in the container. | [Custom Templates](../examples/custom-templates). |
 | N/A | `ingress-template` | Sets the NGINX configuration template for an Ingress resource. | By default the template is read from the file on the container. | [Custom Templates](../examples/custom-templates). |
+
+
+### Modules
+| Annotation | ConfigMap Key | Description | Default | Example |
+| ---------- | -------------- | ----------- | ------- | ------- |
+| N/A | `opentracing` | Enables [OpenTracing](https://opentracing.io) globally (for all Ingress, VirtualServer and VirtualServerRoute resources). Note: requires the Ingress Controller image with OpenTracing module and a tracer. See the [docs](./opentracing.md) for more information. | `False` | [Support for OpenTracing](../examples/opentracing/README.md). |
+| N/A | `opentracing-tracer` | Sets the path to the vendor tracer binary plugin.| N/A | [Support for OpenTracing](../examples/opentracing/README.md). |
+| N/A | `opentracing-tracer-config` | Sets the tracer configuration in JSON format.| N/A | [Support for OpenTracing](../examples/opentracing/README.md). |

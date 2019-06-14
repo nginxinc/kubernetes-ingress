@@ -21,6 +21,7 @@ const TLSSecretFileMode = 0600
 const JWKSecretFileMode = 0644
 
 const configFileMode = 0644
+const jsonFileForOpenTracingTracer = "/etc/tracer-config.json"
 
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
 type ServerConfig struct {
@@ -39,12 +40,14 @@ type Manager interface {
 	DeleteSecret(name string)
 	GetFilenameForSecret(name string) string
 	CreateDHParam(content string) (string, error)
+	CreateOpenTracingTracerConfig(content string) error
 	Start(done chan error)
 	Reload() error
 	Quit()
-	UpdateConfigVersionFile()
+	UpdateConfigVersionFile(openTracing bool)
 	SetPlusClients(plusClient *client.NginxClient, plusConfigVersionCheckClient *http.Client)
 	UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error
+	SetOpenTracing(openTracing bool)
 }
 
 // LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
@@ -64,6 +67,7 @@ type LocalManager struct {
 	plusClient                   *client.NginxClient
 	plusConfigVersionCheckClient *http.Client
 	metricsCollector             collectors.ManagerCollector
+	OpenTracing                  bool
 }
 
 // NewLocalManager creates a LocalManager.
@@ -195,7 +199,7 @@ func (lm *LocalManager) Start(done chan error) {
 func (lm *LocalManager) Reload() error {
 	// write a new config version
 	lm.configVersion++
-	lm.UpdateConfigVersionFile()
+	lm.UpdateConfigVersionFile(lm.OpenTracing)
 
 	glog.V(3).Infof("Reloading nginx with configVersion: %v", lm.configVersion)
 
@@ -228,8 +232,8 @@ func (lm *LocalManager) Quit() {
 }
 
 // UpdateConfigVersionFile writes the config version file.
-func (lm *LocalManager) UpdateConfigVersionFile() {
-	cfg, err := lm.verifyConfigGenerator.GenerateVersionConfig(lm.configVersion)
+func (lm *LocalManager) UpdateConfigVersionFile(openTracing bool) {
+	cfg, err := lm.verifyConfigGenerator.GenerateVersionConfig(lm.configVersion, openTracing)
 	if err != nil {
 		glog.Fatalf("Error generating config version content: %v", err)
 	}
@@ -277,6 +281,17 @@ func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, c
 	return nil
 }
 
+// CreateOpenTracingTracerConfig creates a json configuration file for the OpenTracing tracer with the content of the string.
+func (lm *LocalManager) CreateOpenTracingTracerConfig(content string) error {
+	glog.V(3).Infof("Writing OpenTracing tracer config file to %v", jsonFileForOpenTracingTracer)
+	err := createFileAndWrite(jsonFileForOpenTracingTracer, []byte(content))
+	if err != nil {
+		return fmt.Errorf("Failed to write config file: %v", err)
+	}
+
+	return nil
+}
+
 // verifyConfigVersion is used to check if the worker process that the API client is connected
 // to is using the latest version of nginx config. This way we avoid making changes on
 // a worker processes that is being shut down.
@@ -299,4 +314,9 @@ func verifyConfigVersion(httpClient *http.Client, configVersion int) error {
 	}
 
 	return nil
+}
+
+// SetOpenTracing sets the value of OpenTracing for the Manager
+func (lm *LocalManager) SetOpenTracing(openTracing bool) {
+	lm.OpenTracing = openTracing
 }

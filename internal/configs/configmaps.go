@@ -391,6 +391,30 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool) *ConfigParams {
 		}
 	}
 
+	if openTracingTracer, exists := cfgm.Data["opentracing-tracer"]; exists {
+		cfgParams.MainOpenTracingTracer = openTracingTracer
+	}
+
+	if openTracingTracerConfig, exists := cfgm.Data["opentracing-tracer-config"]; exists {
+		cfgParams.MainOpenTracingTracerConfig = openTracingTracerConfig
+	}
+
+	if cfgParams.MainOpenTracingTracer != "" || cfgParams.MainOpenTracingTracerConfig != "" {
+		cfgParams.MainOpenTracingLoadModule = true
+	}
+
+	if openTracing, exists, err := GetMapKeyAsBool(cfgm.Data, "opentracing", cfgm); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			if cfgParams.MainOpenTracingLoadModule {
+				cfgParams.MainOpenTracingEnabled = openTracing
+			} else {
+				glog.Error("ConfigMap Key 'opentracing' requires both 'opentracing-tracer' and 'opentracing-tracer-config' Keys configured, Opentracing will be disabled")
+			}
+		}
+	}
+
 	return cfgParams
 }
 
@@ -431,6 +455,10 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		KeepaliveRequests:              config.MainKeepaliveRequests,
 		VariablesHashBucketSize:        config.VariablesHashBucketSize,
 		VariablesHashMaxSize:           config.VariablesHashMaxSize,
+		OpenTracingLoadModule:          config.MainOpenTracingLoadModule,
+		OpenTracingEnabled:             config.MainOpenTracingEnabled,
+		OpenTracingTracer:              config.MainOpenTracingTracer,
+		OpenTracingTracerConfig:        config.MainOpenTracingTracerConfig,
 	}
 	return nginxCfg
 }

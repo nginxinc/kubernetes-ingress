@@ -53,6 +53,10 @@ type ConfigParams struct {
 	MainKeepaliveRequests         int64
 	VariablesHashBucketSize       uint64
 	VariablesHashMaxSize          uint64
+	MainOpenTracingLoadModule     bool
+	MainOpenTracingEnabled        bool
+	MainOpenTracingTracer         string
+	MainOpenTracingTracerConfig   string
 
 	RealIPHeader    string
 	SetRealIPFrom   []string

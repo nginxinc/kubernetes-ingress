@@ -155,6 +155,10 @@ type MainConfig struct {
 	KeepaliveRequests              int64
 	VariablesHashBucketSize        uint64
 	VariablesHashMaxSize           uint64
+	OpenTracingLoadModule          bool
+	OpenTracingEnabled             bool
+	OpenTracingTracer              string
+	OpenTracingTracerConfig        string
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

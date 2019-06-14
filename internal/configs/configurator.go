@@ -149,6 +149,11 @@ func (cnf *Configurator) AddOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	return nil
 }
 
+func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) error {
+	err := cnf.nginxManager.CreateOpenTracingTracerConfig(content)
+	return err
+}
+
 func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) error {
 	tlsPemFileName := ""
 	if virtualServerEx.TLSSecret != nil {
@@ -546,6 +551,13 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*Ingres
 		}
 	}
 
+	if mainCfg.OpenTracingLoadModule {
+		if err := cnf.addOrUpdateOpenTracingTracerConfig(mainCfg.OpenTracingTracerConfig); err != nil {
+			return fmt.Errorf("Error when updating OpenTracing tracer config: %v", err)
+		}
+	}
+
+	cnf.nginxManager.SetOpenTracing(mainCfg.OpenTracingLoadModule)
 	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error when updating config from ConfigMap: %v", err)
 	}

@@ -81,7 +81,7 @@ func (*FakeManager) Quit() {
 }
 
 // UpdateConfigVersionFile provides a fake implementation of UpdateConfigVersionFile.
-func (*FakeManager) UpdateConfigVersionFile() {
+func (*FakeManager) UpdateConfigVersionFile(openTracing bool) {
 	glog.V(3).Infof("Writing config version")
 }
 
@@ -93,4 +93,15 @@ func (*FakeManager) SetPlusClients(plusClient *client.NginxClient, plusConfigVer
 func (*FakeManager) UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error {
 	glog.V(3).Infof("Updating servers of %v: %v", upstream, servers)
 	return nil
+}
+
+// CreateOpenTracingTracerConfig creates a fake implementation of CreateOpenTracingTracerConfig.
+func (*FakeManager) CreateOpenTracingTracerConfig(content string) error {
+	glog.V(3).Infof("Writing OpenTracing tracer config file")
+
+	return nil
+}
+
+// SetOpenTracing creates a fake implementation of SetOpenTracing.
+func (*FakeManager) SetOpenTracing(openTracing bool) {
 }

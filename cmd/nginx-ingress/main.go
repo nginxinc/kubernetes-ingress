@@ -327,7 +327,17 @@ func main() {
 		glog.Fatalf("Error generating NGINX main config: %v", err)
 	}
 	nginxManager.CreateMainConfig(content)
-	nginxManager.UpdateConfigVersionFile()
+
+	nginxManager.UpdateConfigVersionFile(ngxConfig.OpenTracingLoadModule)
+
+	nginxManager.SetOpenTracing(ngxConfig.OpenTracingLoadModule)
+
+	if ngxConfig.OpenTracingLoadModule {
+		err := nginxManager.CreateOpenTracingTracerConfig(cfgParams.MainOpenTracingTracerConfig)
+		if err != nil {
+			glog.Fatalf("Error creating OpenTracing tracer config file: %v", err)
+		}
+	}
 
 	nginxDone := make(chan error, 1)
 	nginxManager.Start(nginxDone)

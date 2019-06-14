@@ -1,0 +1,20 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  opentracing: "True"
+  opentracing-tracer: "/usr/local/lib/libjaegertracing_plugin.so"
+  opentracing-tracer-config: |
+        {
+            "service_name": "nginx-ingress",
+            "sampler": {
+                "type": "const",
+                "param": 1
+            },
+            "reporter": {
+                "localAgentHostPort": "jaeger-agent.default.svc.cluster.local:6831"
+            }
+        }
+

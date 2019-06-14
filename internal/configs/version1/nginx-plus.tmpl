@@ -13,6 +13,10 @@ daemon off;
 error_log  /var/log/nginx/error.log {{.ErrorLogLevel}};
 pid        /var/run/nginx.pid;
 
+{{- if .OpenTracingLoadModule}}
+load_module modules/ngx_http_opentracing_module.so;
+{{- end}}
+
 {{- if .MainSnippets}}
 {{range $value := .MainSnippets}}
 {{$value}}{{end}}
@@ -69,6 +73,13 @@ http {
     {{if .SSLPreferServerCiphers}}ssl_prefer_server_ciphers on;{{end}}
     {{if .SSLDHParam}}ssl_dhparam {{.SSLDHParam}};{{end}}
 
+    {{if .OpenTracingEnabled}}
+    opentracing on;
+    {{end}}
+    {{if .OpenTracingLoadModule}}
+    opentracing_load_tracer {{ .OpenTracingTracer }} /etc/tracer-config.json;
+    {{end}}
+
     {{if .ResolverAddresses}}
     resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
@@ -84,6 +95,10 @@ http {
         server_name _;
         server_tokens "{{.ServerTokens}}";
         access_log off;
+
+        {{if .OpenTracingEnabled}}
+        opentracing off;
+        {{end}}
 
         {{if .HealthStatus}}
         location /nginx-health {
@@ -106,6 +121,10 @@ http {
 
         access_log off;
 
+        {{if .OpenTracingEnabled}}
+        opentracing off;
+        {{end}}
+
         location  = /dashboard.html {
         }
         {{range $value := .NginxStatusAllowCIDRs}}
@@ -122,6 +141,10 @@ http {
     server {
         listen unix:/var/run/nginx-plus-api.sock;
         access_log off;
+
+        {{if .OpenTracingEnabled}}
+        opentracing off;
+        {{end}}
 
         # $config_version_mismatch is defined in /etc/nginx/config-version.conf
         location /configVersionCheck {
