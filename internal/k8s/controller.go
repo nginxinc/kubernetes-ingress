@@ -590,7 +590,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 
 	vs := obj.(*conf_v1alpha1.VirtualServer)
 
-	validationErr := validation.ValidateVirtualServer(vs)
+	validationErr := validation.ValidateVirtualServer(vs, lbc.isNginxPlus)
 	if validationErr != nil {
 		err := lbc.configurator.DeleteVirtualServer(key)
 		if err != nil {
@@ -648,7 +648,7 @@ func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 
 	vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
 
-	validationErr := validation.ValidateVirtualServerRoute(vsr)
+	validationErr := validation.ValidateVirtualServerRoute(vsr, lbc.isNginxPlus)
 	if validationErr != nil {
 		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, "Rejected", "VirtualServerRoute %s is invalid and was rejected: %v", key, validationErr)
 	}
@@ -1271,7 +1271,7 @@ func (lbc *LoadBalancerController) getVirtualServers() []*conf_v1alpha1.VirtualS
 	for _, obj := range lbc.virtualServerLister.List() {
 		vs := obj.(*conf_v1alpha1.VirtualServer)
 
-		err := validation.ValidateVirtualServer(vs)
+		err := validation.ValidateVirtualServer(vs, lbc.isNginxPlus)
 		if err != nil {
 			glog.V(3).Infof("Skipping invalid VirtualServer %s/%s: %v", vs.Namespace, vs.Name, err)
 			continue
@@ -1289,7 +1289,7 @@ func (lbc *LoadBalancerController) getVirtualServerRoutes() []*conf_v1alpha1.Vir
 	for _, obj := range lbc.virtualServerRouteLister.List() {
 		vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
 
-		err := validation.ValidateVirtualServerRoute(vsr)
+		err := validation.ValidateVirtualServerRoute(vsr, lbc.isNginxPlus)
 		if err != nil {
 			glog.V(3).Infof("Skipping invalid VirtualServerRoute %s/%s: %v", vsr.Namespace, vsr.Name, err)
 			continue
@@ -1541,7 +1541,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 
 		vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
 
-		err = validation.ValidateVirtualServerRouteForVirtualServer(vsr, virtualServer.Spec.Host, r.Path)
+		err = validation.ValidateVirtualServerRouteForVirtualServer(vsr, virtualServer.Spec.Host, r.Path, lbc.isNginxPlus)
 		if err != nil {
 			glog.Warningf("VirtualServer %s/%s references invalid VirtualServerRoute %s: %v", virtualServer.Name, virtualServer.Namespace, vsrKey, err)
 			virtualServerRouteErrors = append(virtualServerRouteErrors, newVirtualServerRouteErrorFromVSR(vsr, err))

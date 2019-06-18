@@ -23,9 +23,10 @@ func TestValidateVirtualServer(t *testing.T) {
 			},
 			Upstreams: []v1alpha1.Upstream{
 				{
-					Name:    "first",
-					Service: "service-1",
-					Port:    80,
+					Name:     "first",
+					Service:  "service-1",
+					LBMethod: "random",
+					Port:     80,
 				},
 				{
 					Name:    "second",
@@ -46,7 +47,7 @@ func TestValidateVirtualServer(t *testing.T) {
 		},
 	}
 
-	err := ValidateVirtualServer(&virtualServer)
+	err := ValidateVirtualServer(&virtualServer, false)
 	if err != nil {
 		t.Errorf("ValidateVirtualServer() returned error %v for valid input %v", err, virtualServer)
 	}
@@ -148,9 +149,9 @@ func TestValidateUpstreams(t *testing.T) {
 			msg: "2 valid upstreams",
 		},
 	}
-
+	isPlus := false
 	for _, test := range tests {
-		allErrs, resultUpstreamNames := validateUpstreams(test.upstreams, field.NewPath("upstreams"))
+		allErrs, resultUpstreamNames := validateUpstreams(test.upstreams, field.NewPath("upstreams"), isPlus)
 		if len(allErrs) > 0 {
 			t.Errorf("validateUpstreams() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -223,8 +224,9 @@ func TestValidateUpstreamsFails(t *testing.T) {
 		},
 	}
 
+	isPlus := false
 	for _, test := range tests {
-		allErrs, resultUpstreamNames := validateUpstreams(test.upstreams, field.NewPath("upstreams"))
+		allErrs, resultUpstreamNames := validateUpstreams(test.upstreams, field.NewPath("upstreams"), isPlus)
 		if len(allErrs) == 0 {
 			t.Errorf("validateUpstreams() returned no errors for the case of %s", test.msg)
 		}
@@ -1218,8 +1220,8 @@ func TestValidateVirtualServerRoute(t *testing.T) {
 			},
 		},
 	}
-
-	err := ValidateVirtualServerRoute(&virtualServerRoute)
+	isPlus := false
+	err := ValidateVirtualServerRoute(&virtualServerRoute, isPlus)
 	if err != nil {
 		t.Errorf("ValidateVirtualServerRoute() returned error %v for valid input %v", err, virtualServerRoute)
 	}
@@ -1260,7 +1262,8 @@ func TestValidateVirtualServerRouteForVirtualServer(t *testing.T) {
 	virtualServerHost := "example.com"
 	pathPrefix := "/test"
 
-	err := ValidateVirtualServerRouteForVirtualServer(&virtualServerRoute, virtualServerHost, pathPrefix)
+	isPlus := false
+	err := ValidateVirtualServerRouteForVirtualServer(&virtualServerRoute, virtualServerHost, pathPrefix, isPlus)
 	if err != nil {
 		t.Errorf("ValidateVirtualServerRouteForVirtualServer() returned error %v for valid input %v", err, virtualServerRoute)
 	}
@@ -1375,6 +1378,62 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 		allErrs := validateVirtualServerRouteSubroutes(test.routes, field.NewPath("subroutes"), test.upstreamNames, test.pathPrefix)
 		if len(allErrs) == 0 {
 			t.Errorf("validateVirtualServerRouteSubroutes() returned no errors for the case of %s", test.msg)
+		}
+	}
+}
+
+func TestValidateUpstreamLBMethod(t *testing.T) {
+	tests := []struct {
+		method string
+		isPlus bool
+	}{
+		{
+			method: "round_robin",
+			isPlus: false,
+		},
+		{
+			method: "",
+			isPlus: false,
+		},
+		{
+			method: "ip_hash",
+			isPlus: true,
+		},
+		{
+			method: "",
+			isPlus: true,
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateUpstreamLBMethod(test.method, field.NewPath("lb-method"), test.isPlus)
+
+		if len(allErrs) != 0 {
+			t.Errorf("validateUpstreamLBMethod(%q, %v) returned errors for method %s", test.method, test.isPlus, test.method)
+		}
+	}
+}
+
+func TestValidateUpstreamLBMethodFails(t *testing.T) {
+	tests := []struct {
+		method string
+		isPlus bool
+	}{
+		{
+			method: "wrong",
+			isPlus: false,
+		},
+		{
+			method: "wrong",
+			isPlus: true,
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateUpstreamLBMethod(test.method, field.NewPath("lb-method"), test.isPlus)
+
+		if len(allErrs) == 0 {
+			t.Errorf("validateUpstreamLBMethod(%q, %v) returned no errors for method %s", test.method, test.isPlus, test.method)
 		}
 	}
 }

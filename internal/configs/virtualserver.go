@@ -92,7 +92,7 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
 		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
 		endpointsKey := GenerateEndpointsKey(virtualServerEx.VirtualServer.Namespace, u.Service, u.Port)
-		ups := generateUpstream(upstreamName, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
+		ups := generateUpstream(upstreamName, u.LBMethod, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
 		upstreams = append(upstreams, ups)
 	}
 	// generate upstreams for each VirtualServerRoute
@@ -101,7 +101,7 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 		for _, u := range vsr.Spec.Upstreams {
 			upstreamName := upstreamNamer.GetNameForUpstream(u.Name)
 			endpointsKey := GenerateEndpointsKey(vsr.Namespace, u.Service, u.Port)
-			ups := generateUpstream(upstreamName, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
+			ups := generateUpstream(upstreamName, u.LBMethod, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
 			upstreams = append(upstreams, ups)
 		}
 	}
@@ -195,7 +195,7 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 	}
 }
 
-func generateUpstream(upstreamName string, endpoints []string, isPlus bool, cfgParams *ConfigParams) version2.Upstream {
+func generateUpstream(upstreamName string, lBMethod string, endpoints []string, isPlus bool, cfgParams *ConfigParams) version2.Upstream {
 	var upsServers []version2.UpstreamServer
 
 	for _, e := range endpoints {
@@ -219,10 +219,20 @@ func generateUpstream(upstreamName string, endpoints []string, isPlus bool, cfgP
 	ups := version2.Upstream{
 		Name:     upstreamName,
 		Servers:  upsServers,
-		LBMethod: cfgParams.LBMethod,
+		LBMethod: generateLBMethod(lBMethod, cfgParams.LBMethod),
 	}
 
 	return ups
+}
+
+func generateLBMethod(method string, defaultMethod string) string {
+	if method == "" {
+		return defaultMethod
+	} else if method == "round_robin" {
+		return ""
+	}
+
+	return method
 }
 
 func generateLocation(path string, upstreamName string, cfgParams *ConfigParams) version2.Location {

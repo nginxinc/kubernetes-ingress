@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -12,19 +14,19 @@ import (
 )
 
 // ValidateVirtualServer validates a VirtualServer.
-func ValidateVirtualServer(virtualServer *v1alpha1.VirtualServer) error {
-	allErrs := validateVirtualServerSpec(&virtualServer.Spec, field.NewPath("spec"))
+func ValidateVirtualServer(virtualServer *v1alpha1.VirtualServer, isPlus bool) error {
+	allErrs := validateVirtualServerSpec(&virtualServer.Spec, field.NewPath("spec"), isPlus)
 	return allErrs.ToAggregate()
 }
 
 // validateVirtualServerSpec validates a VirtualServerSpec.
-func validateVirtualServerSpec(spec *v1alpha1.VirtualServerSpec, fieldPath *field.Path) field.ErrorList {
+func validateVirtualServerSpec(spec *v1alpha1.VirtualServerSpec, fieldPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateHost(spec.Host, fieldPath.Child("host"))...)
 	allErrs = append(allErrs, validateTLS(spec.TLS, fieldPath.Child("tls"))...)
 
-	upstreamErrs, upstreamNames := validateUpstreams(spec.Upstreams, fieldPath.Child("upstreams"))
+	upstreamErrs, upstreamNames := validateUpstreams(spec.Upstreams, fieldPath.Child("upstreams"), isPlus)
 	allErrs = append(allErrs, upstreamErrs...)
 
 	allErrs = append(allErrs, validateVirtualServerRoutes(spec.Routes, fieldPath.Child("routes"), upstreamNames)...)
@@ -55,6 +57,27 @@ func validateTLS(tls *v1alpha1.TLS, fieldPath *field.Path) field.ErrorList {
 	return validateSecretName(tls.Secret, fieldPath.Child("secret"))
 }
 
+func validateUpstreamLBMethod(lBMethod string, fieldPath *field.Path, isPlus bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if lBMethod == "" {
+		return allErrs
+	}
+
+	if isPlus {
+		_, err := configs.ParseLBMethodForPlus(lBMethod)
+		if err != nil {
+			return append(allErrs, field.Invalid(fieldPath, lBMethod, err.Error()))
+		}
+	} else {
+		_, err := configs.ParseLBMethod(lBMethod)
+		if err != nil {
+			return append(allErrs, field.Invalid(fieldPath, lBMethod, err.Error()))
+		}
+	}
+
+	return allErrs
+}
+
 // validateSecretName checks if a secret name is valid.
 // It performs the same validation as ValidateSecretName from k8s.io/kubernetes/pkg/apis/core/validation/validation.go.
 func validateSecretName(name string, fieldPath *field.Path) field.ErrorList {
@@ -71,7 +94,7 @@ func validateSecretName(name string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path) (allErrs field.ErrorList, upstreamNames sets.String) {
+func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.String) {
 	allErrs = field.ErrorList{}
 	upstreamNames = sets.String{}
 
@@ -88,6 +111,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path) (al
 		}
 
 		allErrs = append(allErrs, validateServiceName(u.Service, idxPath.Child("service"))...)
+		allErrs = append(allErrs, validateUpstreamLBMethod(u.LBMethod, idxPath.Child("lb-method"), isPlus)...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))
@@ -410,23 +434,23 @@ func isValidMatchValue(value string) []string {
 }
 
 // ValidateVirtualServerRoute validates a VirtualServerRoute.
-func ValidateVirtualServerRoute(virtualServerRoute *v1alpha1.VirtualServerRoute) error {
-	allErrs := validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), "", "/")
+func ValidateVirtualServerRoute(virtualServerRoute *v1alpha1.VirtualServerRoute, isPlus bool) error {
+	allErrs := validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), "", "/", isPlus)
 	return allErrs.ToAggregate()
 }
 
 // ValidateVirtualServerRouteForVirtualServer validates a VirtualServerRoute for a VirtualServer represented by its host and path prefix.
-func ValidateVirtualServerRouteForVirtualServer(virtualServerRoute *v1alpha1.VirtualServerRoute, virtualServerHost string, pathPrefix string) error {
-	allErrs := validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), virtualServerHost, pathPrefix)
+func ValidateVirtualServerRouteForVirtualServer(virtualServerRoute *v1alpha1.VirtualServerRoute, virtualServerHost string, pathPrefix string, isPlus bool) error {
+	allErrs := validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), virtualServerHost, pathPrefix, isPlus)
 	return allErrs.ToAggregate()
 }
 
-func validateVirtualServerRouteSpec(spec *v1alpha1.VirtualServerRouteSpec, fieldPath *field.Path, virtualServerHost string, pathPrefix string) field.ErrorList {
+func validateVirtualServerRouteSpec(spec *v1alpha1.VirtualServerRouteSpec, fieldPath *field.Path, virtualServerHost string, pathPrefix string, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateVirtualServerRouteHost(spec.Host, virtualServerHost, fieldPath.Child("host"))...)
 
-	upstreamErrs, upstreamNames := validateUpstreams(spec.Upstreams, fieldPath.Child("upstreams"))
+	upstreamErrs, upstreamNames := validateUpstreams(spec.Upstreams, fieldPath.Child("upstreams"), isPlus)
 	allErrs = append(allErrs, upstreamErrs...)
 
 	allErrs = append(allErrs, validateVirtualServerRouteSubroutes(spec.Subroutes, fieldPath.Child("subroutes"), upstreamNames, pathPrefix)...)

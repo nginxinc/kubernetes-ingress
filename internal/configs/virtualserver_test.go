@@ -754,7 +754,7 @@ func TestGenerateUpstream(t *testing.T) {
 		LBMethod: "random",
 	}
 
-	result := generateUpstream(name, endpoints, isPlus, &cfgParams)
+	result := generateUpstream(name, "", endpoints, isPlus, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -780,7 +780,7 @@ func TestGenerateUpstreamForZeroEndpoints(t *testing.T) {
 		},
 	}
 
-	result := generateUpstream(name, endpoints, isPlus, &cfgParams)
+	result := generateUpstream(name, "", endpoints, isPlus, &cfgParams)
 	if !reflect.DeepEqual(result, expectedForNGINX) {
 		t.Errorf("generateUpstream(isPlus=%v) returned %v but expected %v", isPlus, result, expectedForNGINX)
 	}
@@ -791,7 +791,7 @@ func TestGenerateUpstreamForZeroEndpoints(t *testing.T) {
 		Servers: nil,
 	}
 
-	result = generateUpstream(name, endpoints, isPlus, &cfgParams)
+	result = generateUpstream(name, "", endpoints, isPlus, &cfgParams)
 	if !reflect.DeepEqual(result, expectedForNGINXPlus) {
 		t.Errorf("generateUpstream(isPlus=%v) returned %v but expected %v", isPlus, result, expectedForNGINXPlus)
 	}
@@ -1433,6 +1433,34 @@ func TestGetNameForSourceForRulesRouteMapFromCondition(t *testing.T) {
 		result := getNameForSourceForRulesRouteMapFromCondition(test.input)
 		if result != test.expected {
 			t.Errorf("getNameForSourceForRulesRouteMapFromCondition() returned %q but expected %q for input %v", result, test.expected, test.input)
+		}
+	}
+}
+
+func TestGenerateLBMethod(t *testing.T) {
+	defaultMethod := "random two least_conn"
+
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			input:    "",
+			expected: defaultMethod,
+		},
+		{
+			input:    "round_robin",
+			expected: "",
+		},
+		{
+			input:    "random",
+			expected: "random",
+		},
+	}
+	for _, test := range tests {
+		result := generateLBMethod(test.input, defaultMethod)
+		if result != test.expected {
+			t.Errorf("generateLBMethod() returned %q but expected %q for input '%v'", result, test.expected, test.input)
 		}
 	}
 }

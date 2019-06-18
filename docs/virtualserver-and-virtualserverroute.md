@@ -7,11 +7,23 @@ This document is the reference documentation for the resources. To see additiona
 **Feature Status**: The VirtualServer and VirtualServerRoute resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases. 
 
 ## Contents
-* [Prerequisites](#Prerequisites)
-* [VirtualServer Specification](#VirtualServer-Specification)
-* [VirtualServerRoute Specification](#VirtualServerRoute-Specification)
-* [Using VirtualServer and VirtualServerRoute](#Using-VirtualServer-and-VirtualServerRoute)
-* [Customization via ConfigMap](#Customization-via-ConfigMap)
+- [VirtualServer and VirtualServerRoute Resources](#VirtualServer-and-VirtualServerRoute-Resources)
+  - [Contents](#Contents)
+  - [Prerequisites](#Prerequisites)
+  - [VirtualServer Specification](#VirtualServer-Specification)
+    - [VirtualServer.TLS](#VirtualServerTLS)
+    - [VirtualServer.Route](#VirtualServerRoute)
+  - [VirtualServerRoute Specification](#VirtualServerRoute-Specification)
+    - [VirtualServerRoute.Subroute](#VirtualServerRouteSubroute)
+  - [Common Parts of the VirtualServer and VirtualServerRoute](#Common-Parts-of-the-VirtualServer-and-VirtualServerRoute)
+    - [Upstream](#Upstream)
+    - [Split](#Split)
+    - [Rules](#Rules)
+    - [Condition](#Condition)
+    - [Match](#Match)
+  - [Using VirtualServer and VirtualServerRoute](#Using-VirtualServer-and-VirtualServerRoute)
+    - [Validation](#Validation)
+  - [Customization via ConfigMap](#Customization-via-ConfigMap)
 
 ## Prerequisites 
 
@@ -164,6 +176,7 @@ The upstream defines a destination for the routing configuration. For example:
 name: tea
 service: tea-svc
 port: 80
+lb-method: "round_robin"
 ``` 
 
 | Field | Description | Type | Required |
@@ -171,6 +184,8 @@ port: 80
 | `name` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, `hello` and `upstream-123` are valid. The name must be unique among all upstreams of the resource. | `string` | Yes |
 | `service` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a `502` response for requests for this upstream. | `string` | Yes |
 | `port` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a `502` response for requests for this upstream. The port must fall into the range `1..65553`. | `uint16` | Yes |
+| `lb-method` | The load [balancing method](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method). To use the round-robin method, specify `round_robin`. The default is specified in the `lb-method` ConfigMap key. | `string` | No |
+
 
 ### Split
 
