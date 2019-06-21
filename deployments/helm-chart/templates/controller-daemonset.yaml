@@ -82,6 +82,7 @@ spec:
 {{- end }}
           - -health-status={{ .Values.controller.healthStatus }}
           - -nginx-debug={{ .Values.controller.nginxDebug }}
+          - -v={{ .Values.controller.logLevel }}
           - -nginx-status={{ .Values.controller.nginxStatus.enable }}
 {{- if .Values.controller.nginxStatus.enable }}
           - -nginx-status-port={{ .Values.controller.nginxStatus.port }}

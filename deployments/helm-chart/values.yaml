@@ -15,6 +15,9 @@ controller:
   ## Enables debugging for NGINX. Uses the nginx-debug binary. Requires error-log-level: debug in the ConfigMap via `controller.config.entries`.
   nginxDebug: false
 
+  ## The log level of the Ingress Controller.
+  logLevel: 1
+
   ## A list of custom ports to expose on the NGINX ingress controller pod. Follows the conventional Kubernetes yaml syntax for container ports.
   customPorts: []
 

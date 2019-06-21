@@ -110,8 +110,8 @@ The external address of the service is used when reporting the status of Ingress
 		"Enable debugging for NGINX. Uses the nginx-debug binary. Requires 'error-log-level: debug' in the ConfigMap.")
 
 	wildcardTLSSecret = flag.String("wildcard-tls-secret", "",
-		`A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified. 
-		Format: <namespace>/<name>. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. 
+		`A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
+		Format: <namespace>/<name>. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection.
 		If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.`)
 
 	enablePrometheusMetrics = flag.Bool("enable-prometheus-metrics", false,
@@ -222,7 +222,7 @@ func main() {
 
 	templateExecutorV2, err := version2.NewTemplateExecutor(nginxVirtualServerTemplatePath)
 	if err != nil {
-		glog.Fatalf("Error cresting TemplateExecutorV2: %v", err)
+		glog.Fatalf("Error creating TemplateExecutorV2: %v", err)
 	}
 
 	var registry *prometheus.Registry
