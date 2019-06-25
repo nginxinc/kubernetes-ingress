@@ -732,6 +732,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 
 func TestGenerateUpstream(t *testing.T) {
 	name := "test-upstream"
+	upstream := conf_v1alpha1.Upstream{}
 	endpoints := []string{
 		"192.168.10.10:8080",
 	}
@@ -754,7 +755,7 @@ func TestGenerateUpstream(t *testing.T) {
 		LBMethod: "random",
 	}
 
-	result := generateUpstream(name, "", endpoints, isPlus, &cfgParams)
+	result := generateUpstream(name, upstream, endpoints, isPlus, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -762,6 +763,7 @@ func TestGenerateUpstream(t *testing.T) {
 
 func TestGenerateUpstreamForZeroEndpoints(t *testing.T) {
 	name := "test-upstream"
+	upstream := conf_v1alpha1.Upstream{}
 	var endpoints []string // nil
 	cfgParams := ConfigParams{
 		MaxFails:    1,
@@ -780,7 +782,7 @@ func TestGenerateUpstreamForZeroEndpoints(t *testing.T) {
 		},
 	}
 
-	result := generateUpstream(name, "", endpoints, isPlus, &cfgParams)
+	result := generateUpstream(name, upstream, endpoints, isPlus, &cfgParams)
 	if !reflect.DeepEqual(result, expectedForNGINX) {
 		t.Errorf("generateUpstream(isPlus=%v) returned %v but expected %v", isPlus, result, expectedForNGINX)
 	}
@@ -791,7 +793,7 @@ func TestGenerateUpstreamForZeroEndpoints(t *testing.T) {
 		Servers: nil,
 	}
 
-	result = generateUpstream(name, "", endpoints, isPlus, &cfgParams)
+	result = generateUpstream(name, upstream, endpoints, isPlus, &cfgParams)
 	if !reflect.DeepEqual(result, expectedForNGINXPlus) {
 		t.Errorf("generateUpstream(isPlus=%v) returned %v but expected %v", isPlus, result, expectedForNGINXPlus)
 	}
