@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -161,6 +161,7 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 						Upstream:            coffeeUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
 						ClientMaxBodySize:   "1m",
 						ProxyBuffering:      true,
 					},
@@ -169,6 +170,7 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 						Upstream:            teaUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
 						ClientMaxBodySize:   "1m",
 						ProxyBuffering:      true,
 					},
@@ -510,6 +512,7 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 						Upstream:            coffeeUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
 						ClientMaxBodySize:   "1m",
 						ProxyBuffering:      true,
 						MinionIngress: &version1.Ingress{
@@ -526,6 +529,7 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 						Upstream:            teaUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
 						ClientMaxBodySize:   "1m",
 						ProxyBuffering:      true,
 						MinionIngress: &version1.Ingress{

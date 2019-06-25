@@ -11,9 +11,12 @@ type VirtualServerConfig struct {
 
 // Upstream defines an upstream.
 type Upstream struct {
-	Name     string
-	Servers  []UpstreamServer
-	LBMethod string
+	Name                string
+	Servers             []UpstreamServer
+	LBMethod            string
+	ProxyConnectTimeout string
+	ProxyReadTimeout    string
+	ProxySendTimeout    string
 }
 
 // UpstreamServer defines an upstream server.
@@ -53,6 +56,7 @@ type Location struct {
 	Snippets             []string
 	ProxyConnectTimeout  string
 	ProxyReadTimeout     string
+	ProxySendTimeout     string
 	ClientMaxBodySize    string
 	ProxyMaxTempFileSize string
 	ProxyBuffering       bool

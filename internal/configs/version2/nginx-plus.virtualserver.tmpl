@@ -35,7 +35,7 @@ server {
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
 
     server_name {{ $s.ServerName }};
-    
+
     {{ with $ssl := $s.SSL }}
     listen 443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
 
@@ -45,11 +45,11 @@ server {
         {{ if $ssl.Ciphers }}
     ssl_ciphers {{ $ssl.Ciphers }};
         {{ end }}
-    
+
         {{ if $ssl.RedirectToHTTPS }}
     if ($scheme = http) {
         return 301 https://$host$request_uri;
-    }   
+    }
         {{ end }}
     {{ end }}
 
@@ -90,6 +90,7 @@ server {
 
         proxy_connect_timeout {{ $l.ProxyConnectTimeout }};
         proxy_read_timeout {{ $l.ProxyReadTimeout }};
+        proxy_send_timeout {{ $l.ProxySendTimeout }};
         client_max_body_size {{ $l.ClientMaxBodySize }};
 
         {{ if $l.ProxyMaxTempFileSize }}

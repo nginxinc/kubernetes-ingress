@@ -138,6 +138,11 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		}
 
 		allErrs = append(allErrs, validateServiceName(u.Service, idxPath.Child("service"))...)
+
+		allErrs = append(allErrs, validateTime(u.ProxyConnectTimeout, idxPath.Child("connect-timeout"))...)
+		allErrs = append(allErrs, validateTime(u.ProxyReadTimeout, idxPath.Child("read-timeout"))...)
+		allErrs = append(allErrs, validateTime(u.ProxySendTimeout, idxPath.Child("send-timeout"))...)
+
 		allErrs = append(allErrs, validateUpstreamLBMethod(u.LBMethod, idxPath.Child("lb-method"), isPlus)...)
 		allErrs = append(allErrs, validateTime(u.FailTimeout, idxPath.Child("fail-timeout"))...)
 		allErrs = append(allErrs, validatePositiveIntOrZero(u.MaxFails, idxPath.Child("max-fails"))...)

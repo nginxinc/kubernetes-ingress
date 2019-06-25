@@ -105,6 +105,7 @@ type Location struct {
 	Upstream             Upstream
 	ProxyConnectTimeout  string
 	ProxyReadTimeout     string
+	ProxySendTimeout     string
 	ClientMaxBodySize    string
 	Websocket            bool
 	Rewrite              string

@@ -4,10 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -803,6 +801,7 @@ func TestGenerateLocation(t *testing.T) {
 	cfgParams := ConfigParams{
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
+		ProxySendTimeout:     "32s",
 		ClientMaxBodySize:    "1m",
 		ProxyMaxTempFileSize: "1024m",
 		ProxyBuffering:       true,
@@ -818,6 +817,7 @@ func TestGenerateLocation(t *testing.T) {
 		Snippets:             []string{"# location snippet"},
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
+		ProxySendTimeout:     "32s",
 		ClientMaxBodySize:    "1m",
 		ProxyMaxTempFileSize: "1024m",
 		ProxyBuffering:       true,
@@ -826,7 +826,7 @@ func TestGenerateLocation(t *testing.T) {
 		ProxyPass:            "http://test-upstream",
 	}
 
-	result := generateLocation(path, upstreamName, &cfgParams)
+	result := generateLocation(path, upstreamName, conf_v1alpha1.Upstream{}, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateLocation() returned %v but expected %v", result, expected)
 	}
@@ -1074,7 +1074,7 @@ func TestGenerateSplitRouteConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateSplitRouteConfig(route, upstreamNamer, variableNamer, index, &cfgParams)
+	result := generateSplitRouteConfig(route, upstreamNamer, []conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateSplitRouteConfig() returned %v but expected %v", result, expected)
 	}
@@ -1286,7 +1286,7 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateRulesRouteConfig(route, upstreamNamer, variableNamer, index, &cfgParams)
+	result := generateRulesRouteConfig(route, upstreamNamer, []conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateRulesRouteConfig() returned \n%v but expected \n%v", result, expected)
 	}

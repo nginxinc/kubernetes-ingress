@@ -3,10 +3,9 @@ package validation
 import (
 	"testing"
 
-	"k8s.io/apimachinery/pkg/util/sets"
-
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -1160,7 +1159,7 @@ func TestIsValidMatchValue(t *testing.T) {
 	validValues := []string{
 		"abc",
 		"123",
-		`\" 
+		`\"
 		abc\"`,
 		`\"`,
 	}

@@ -8,6 +8,7 @@ type ConfigParams struct {
 	ServerTokens                  string
 	ProxyConnectTimeout           string
 	ProxyReadTimeout              string
+	ProxySendTimeout              string
 	ClientMaxBodySize             string
 	HTTP2                         bool
 	RedirectToHTTPS               bool
@@ -91,6 +92,7 @@ func NewDefaultConfigParams() *ConfigParams {
 		ServerTokens:               "on",
 		ProxyConnectTimeout:        "60s",
 		ProxyReadTimeout:           "60s",
+		ProxySendTimeout:           "60s",
 		ClientMaxBodySize:          "1m",
 		SSLRedirect:                true,
 		MainServerNamesHashMaxSize: "512",

@@ -4,7 +4,7 @@ The VirtualServer and VirtualServerRoute resources are new load balancing config
 
 This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples-of-custom-resources](../examples-of-custom-resources) folder.
 
-**Feature Status**: The VirtualServer and VirtualServerRoute resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases. 
+**Feature Status**: The VirtualServer and VirtualServerRoute resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
 
 ## Contents
 - [VirtualServer and VirtualServerRoute Resources](#VirtualServer-and-VirtualServerRoute-Resources)
@@ -25,7 +25,7 @@ This document is the reference documentation for the resources. To see additiona
     - [Validation](#Validation)
   - [Customization via ConfigMap](#Customization-via-ConfigMap)
 
-## Prerequisites 
+## Prerequisites
 
 The VirtualServer and VirtualServerRoute resources are disabled by default. Make sure to follow Step 1.4 of the [installation](installation.md) doc during the installation process to enable the resources.
 
@@ -124,7 +124,7 @@ VirtualServerRoute:
 apiVersion: k8s.nginx.org/v1alpha1
 kind: VirtualServerRoute
 metadata:
-  name: coffee 
+  name: coffee
   namespace: coffee-ns
 spec:
   host: cafe.example.com
@@ -132,7 +132,7 @@ spec:
   - name: latte
     service: latte-svc
     port: 80
-  - name: espresso 
+  - name: espresso
     service: espresso-svc
     port: 80
   subroutes:
@@ -179,7 +179,10 @@ port: 80
 lb-method: round_robin
 fail-timeout: 10s
 max-fails: 1
-``` 
+connect-timeout: 30s
+read-timeout: 30s
+send-timeout: 30s
+```
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
@@ -189,6 +192,9 @@ max-fails: 1
 | `lb-method` | The load [balancing method](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method). To use the round-robin method, specify `round_robin`. The default is specified in the `lb-method` ConfigMap key. | `string` | No |
 | `fail-timeout` | The time during which the specified number of unsuccessful attempts to communicate with an upstream server should happen to consider the server unavailable. See the [fail_timeout](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#fail_timeout) parameter of the server directive. The default is set in the `fail-timeout` ConfigMap key. | `string` | No |
 | `max-fails` | The number of unsuccessful attempts to communicate with an upstream server that should happen in the duration set by the `fail-timeout` to consider the server unavailable. See the [max_fails](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails) parameter of the server directive. The default is set in the `max-fails` ConfgMap key. | `int` | No |
+`connect-timeout` | The timeout for establishing a connection with an upstream server. See the [proxy_connect_timeout](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout) directive. The default is specified in the `proxy-connect-timeout` ConfigMap key. | `string` | No
+`read-timeout` | The timeout for reading a response from an upstream server. See the [proxy_read_timeout](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout) directive.  The default is specified in the `proxy-read-timeout` ConfigMap key. | `string` | No
+`send-timeout` | The timeout for transmitting a request to an upstream server. See the [proxy_send_timeout](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout) directive. The default is 60s. | `string` | No
 
 ### Split
 
@@ -210,12 +216,12 @@ splits:
 
 ### Rules
 
-The rules defines a set of content-based routing rules in a route or subroute. 
+The rules defines a set of content-based routing rules in a route or subroute.
 
 In the example below, NGINX routes requests with the path `/coffee` to different upstreams based on the value of the cookie `user`:
 * `user=john` -> `coffee-future`
 * `user=bob` -> `coffee-deprecated`
-* If the cookie is not set or not equal to either `john` or `bob`, NGINX routes to  `coffee-stable`
+* If the cookie is not set or not equal to either `john` or `bob`, NGINX routes to `coffee-stable`
 
 ```yaml
 path: /coffee
@@ -233,8 +239,8 @@ rules:
 ```
 
 In the next example, NGINX routes requests based on the value of the built-in [`$request_method` variable](http://nginx.org/en/docs/http/ngx_http_core_module.html#var_request_method), which represents the HTTP method of a request:
-* all POST requests -> `coffee-post` 
-* all non-POST requests -> `coffee` 
+* all POST requests -> `coffee-post`
+* all non-POST requests -> `coffee`
 
 ```yaml
 path: /coffee
@@ -242,7 +248,7 @@ rules:
   conditions:
   - variable: $request_method
   matches:
-  - values: 
+  - values:
     - POST
     upstream: coffee-post
   defaultUpstream: coffee
@@ -311,9 +317,9 @@ In the kubectl get and similar commands, you can also use the short name `vs` in
 
 Working with VirtualServerRoute resources is analogous. In the kubectl commands, use `virtualserverroute` or the short name `vsr`.
 
-### Validation 
+### Validation
 
-The Ingress Controller validates VirtualServer and VirtualServerRoute resources. If a resource is invalid, the Ingress Controller will reject it. 
+The Ingress Controller validates VirtualServer and VirtualServerRoute resources. If a resource is invalid, the Ingress Controller will reject it.
 
 You can check if the Ingress Controller successfully applied the configuration for a VirtualServer. For our example `cafe` VirtualServer, we can run:
 ```
