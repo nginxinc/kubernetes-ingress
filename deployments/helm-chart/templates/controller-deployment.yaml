@@ -1,5 +1,5 @@
 {{- if eq .Values.controller.kind "deployment" }}
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ default (include "nginx-ingress.name" .) .Values.controller.name }}
