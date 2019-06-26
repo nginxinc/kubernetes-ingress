@@ -201,8 +201,8 @@ func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, endp
 	for _, e := range endpoints {
 		s := version2.UpstreamServer{
 			Address:     e,
-			MaxFails:    cfgParams.MaxFails,
-			FailTimeout: cfgParams.FailTimeout,
+			MaxFails:    generatePositiveIntFromPointer(upstream.MaxFails, cfgParams.MaxFails),
+			FailTimeout: generateTime(upstream.FailTimeout, cfgParams.FailTimeout),
 		}
 		upsServers = append(upsServers, s)
 	}
@@ -210,8 +210,8 @@ func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, endp
 	if !isPlus && len(upsServers) == 0 {
 		s := version2.UpstreamServer{
 			Address:     nginx502Server,
-			MaxFails:    cfgParams.MaxFails,
-			FailTimeout: cfgParams.FailTimeout,
+			MaxFails:    generatePositiveIntFromPointer(upstream.MaxFails, cfgParams.MaxFails),
+			FailTimeout: generateTime(upstream.FailTimeout, cfgParams.FailTimeout),
 		}
 		upsServers = append(upsServers, s)
 	}
@@ -233,6 +233,20 @@ func generateLBMethod(method string, defaultMethod string) string {
 	}
 
 	return method
+}
+
+func generateTime(time string, defaultTime string) string {
+	if time == "" {
+		return defaultTime
+	}
+	return time
+}
+
+func generatePositiveIntFromPointer(n *int, defaultN int) int {
+	if n == nil {
+		return defaultN
+	}
+	return *n
 }
 
 func generateLocation(path string, upstreamName string, cfgParams *ConfigParams) version2.Location {

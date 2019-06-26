@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -359,6 +359,26 @@ func TestParseLBMethodForPlus(t *testing.T) {
 		_, err := ParseLBMethodForPlus(input)
 		if err == nil {
 			t.Errorf("TestParseLBMethod(%q) does not return an error for invalid input", input)
+		}
+	}
+}
+
+func TestParseTime(t *testing.T) {
+	var testsWithValidInput = []string{"1", "1m10s", "11 11", "5m 30s", "1s", "100m", "5w", "15m", "11M", "3h", "100y", "600"}
+	var invalidInput = []string{"ss", "rM", "m0m", "s1s", "-5s", "", "1L"}
+	for _, test := range testsWithValidInput {
+		result, err := ParseTime(test)
+		if err != nil {
+			t.Errorf("TestparseTime(%q) returned an error for valid input", test)
+		}
+		if test != result {
+			t.Errorf("TestparseTime(%q) returned %q expected %q", test, result, test)
+		}
+	}
+	for _, test := range invalidInput {
+		result, err := ParseTime(test)
+		if err == nil {
+			t.Errorf("TestparseTime(%q) didn't return error. Returned: %q", test, result)
 		}
 	}
 }

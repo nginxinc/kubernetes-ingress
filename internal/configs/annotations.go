@@ -1,9 +1,7 @@
 package configs
 
 import (
-	"errors"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -102,7 +100,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 	}
 
 	if slowStart, exists := ingEx.Ingress.Annotations["nginx.com/slow-start"]; exists {
-		if parsedSlowStart, err := parseSlowStart(slowStart); err != nil {
+		if parsedSlowStart, err := ParseTime(slowStart); err != nil {
 			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/slow-start: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), slowStart, err)
 		} else {
 			if isPlus {
@@ -426,31 +424,6 @@ func mergeMasterAnnotationsIntoMinion(minionAnnotations map[string]string, maste
 	}
 }
 
-// http://nginx.org/en/docs/syntax.html
-var validTimeSuffixes = []string{
-	"ms",
-	"s",
-	"m",
-	"h",
-	"d",
-	"w",
-	"M",
-	"y",
-}
-
-var durationEscaped = strings.Join(validTimeSuffixes, "|")
-var validNginxTime = regexp.MustCompile(`^([0-9]+([` + durationEscaped + `]?){0,1} *)+$`)
-
-// parseSlowStart ensures that the slow_start value in the annotation is valid.
-func parseSlowStart(s string) (string, error) {
-	s = strings.TrimSpace(s)
-
-	if validNginxTime.MatchString(s) {
-		return s, nil
-	}
-	return "", errors.New("Invalid time string")
-}
-
 func parsePort(value string) (int, error) {
 	port, err := strconv.ParseInt(value, 10, 16)
 	if err != nil {
@@ -504,4 +477,3 @@ func parseRewrites(service string) (serviceName string, rewrite string, err erro
 
 	return svcNameParts[1], rwPathParts[1], nil
 }
-

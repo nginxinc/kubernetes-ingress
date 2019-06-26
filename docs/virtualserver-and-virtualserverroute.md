@@ -176,7 +176,9 @@ The upstream defines a destination for the routing configuration. For example:
 name: tea
 service: tea-svc
 port: 80
-lb-method: "round_robin"
+lb-method: round_robin
+fail-timeout: 10s
+max-fails: 1
 ``` 
 
 | Field | Description | Type | Required |
@@ -185,7 +187,8 @@ lb-method: "round_robin"
 | `service` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a `502` response for requests for this upstream. | `string` | Yes |
 | `port` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a `502` response for requests for this upstream. The port must fall into the range `1..65553`. | `uint16` | Yes |
 | `lb-method` | The load [balancing method](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method). To use the round-robin method, specify `round_robin`. The default is specified in the `lb-method` ConfigMap key. | `string` | No |
-
+| `fail-timeout` | The time during which the specified number of unsuccessful attempts to communicate with an upstream server should happen to consider the server unavailable. See the [fail_timeout](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#fail_timeout) parameter of the server directive. The default is set in the `fail-timeout` ConfigMap key. | `string` | No |
+| `max-fails` | The number of unsuccessful attempts to communicate with an upstream server that should happen in the duration set by the `fail-timeout` to consider the server unavailable. See the [max_fails](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails) parameter of the server directive. The default is set in the `max-fails` ConfgMap key. | `int` | No |
 
 ### Split
 

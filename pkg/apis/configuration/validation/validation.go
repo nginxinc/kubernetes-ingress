@@ -57,6 +57,33 @@ func validateTLS(tls *v1alpha1.TLS, fieldPath *field.Path) field.ErrorList {
 	return validateSecretName(tls.Secret, fieldPath.Child("secret"))
 }
 
+func validatePositiveIntOrZero(n *int, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if n == nil {
+		return allErrs
+	}
+
+	if *n < 0 {
+		return append(allErrs, field.Invalid(fieldPath, n, "must be positive or zero"))
+	}
+
+	return allErrs
+}
+
+func validateTime(time string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if time == "" {
+		return allErrs
+	}
+
+	if _, err := configs.ParseTime(time); err != nil {
+		return append(allErrs, field.Invalid(fieldPath, time, err.Error()))
+	}
+
+	return allErrs
+}
+
 func validateUpstreamLBMethod(lBMethod string, fieldPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if lBMethod == "" {
@@ -112,6 +139,8 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 
 		allErrs = append(allErrs, validateServiceName(u.Service, idxPath.Child("service"))...)
 		allErrs = append(allErrs, validateUpstreamLBMethod(u.LBMethod, idxPath.Child("lb-method"), isPlus)...)
+		allErrs = append(allErrs, validateTime(u.FailTimeout, idxPath.Child("fail-timeout"))...)
+		allErrs = append(allErrs, validatePositiveIntOrZero(u.MaxFails, idxPath.Child("max-fails"))...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))

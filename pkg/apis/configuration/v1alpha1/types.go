@@ -25,10 +25,12 @@ type VirtualServerSpec struct {
 
 // Upstream defines an upstream.
 type Upstream struct {
-	Name     string `json:"name"`
-	Service  string `json:"service"`
-	Port     uint16 `json:"port"`
-	LBMethod string `json:"lb-method"`
+	Name        string `json:"name"`
+	Service     string `json:"service"`
+	Port        uint16 `json:"port"`
+	LBMethod    string `json:"lb-method"`
+	FailTimeout string `json:"fail-timeout"`
+	MaxFails    *int   `json:"max-fails"`
 }
 
 // Route defines a route.

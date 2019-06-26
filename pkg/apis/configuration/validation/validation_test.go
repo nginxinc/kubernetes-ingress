@@ -1437,3 +1437,63 @@ func TestValidateUpstreamLBMethodFails(t *testing.T) {
 		}
 	}
 }
+
+func createPointerFromInt(n int) *int {
+	return &n
+}
+
+func TestValidatePositiveIntOrZero(t *testing.T) {
+	tests := []struct {
+		number *int
+		msg    string
+	}{
+		{
+			number: nil,
+			msg:    "valid (nil)",
+		},
+		{
+			number: createPointerFromInt(0),
+			msg:    "valid (0)",
+		},
+		{
+			number: createPointerFromInt(1),
+			msg:    "valid (1)",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validatePositiveIntOrZero(test.number, field.NewPath("int-field"))
+
+		if len(allErrs) != 0 {
+			t.Errorf("validatePositiveInt returned errors for case: %v", test.msg)
+		}
+	}
+}
+
+func TestValidatePositiveIntOrZeroFails(t *testing.T) {
+	number := createPointerFromInt(-1)
+	allErrs := validatePositiveIntOrZero(number, field.NewPath("int-field"))
+
+	if len(allErrs) == 0 {
+		t.Error("validatePositiveInt returned no errors for case: invalid (-1)")
+	}
+
+}
+
+func TestValidateTime(t *testing.T) {
+	time := "1h 2s"
+	allErrs := validateTime(time, field.NewPath("time-field"))
+
+	if len(allErrs) != 0 {
+		t.Errorf("validateTime returned errors %v valid input %v", allErrs, time)
+	}
+}
+
+func TestValidateTimeFails(t *testing.T) {
+	time := "invalid"
+	allErrs := validateTime(time, field.NewPath("time-field"))
+
+	if len(allErrs) == 0 {
+		t.Errorf("validateTime returned no errors for invalid input %v", time)
+	}
+}
