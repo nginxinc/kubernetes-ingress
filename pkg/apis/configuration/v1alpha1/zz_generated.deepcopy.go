@@ -139,6 +139,11 @@ func (in *Upstream) DeepCopyInto(out *Upstream) {
 		*out = new(int)
 		**out = **in
 	}
+	if in.Keepalive != nil {
+		in, out := &in.Keepalive, &out.Keepalive
+		*out = new(int64)
+		**out = **in
+	}
 	return
 }
 

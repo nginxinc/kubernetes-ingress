@@ -240,6 +240,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 						Address: "10.0.0.20:80",
 					},
 				},
+				Keepalive: 16,
 			},
 			{
 				Name: "vs_default_cafe_vsr_default_coffee_coffee",
@@ -248,6 +249,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 						Address: "10.0.0.30:80",
 					},
 				},
+				Keepalive: 16,
 			},
 		},
 		Server: version2.Server{
@@ -739,6 +741,7 @@ func TestGenerateUpstream(t *testing.T) {
 		LBMethod:    "random",
 		MaxFails:    1,
 		FailTimeout: "10s",
+		Keepalive:   21,
 	}
 
 	expected := version2.Upstream{
@@ -750,7 +753,8 @@ func TestGenerateUpstream(t *testing.T) {
 				FailTimeout: "10s",
 			},
 		},
-		LBMethod: "random",
+		LBMethod:  "random",
+		Keepalive: 21,
 	}
 
 	result := generateUpstream(name, upstream, endpoints, isPlus, &cfgParams)

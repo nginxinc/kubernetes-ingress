@@ -3,14 +3,14 @@ package validation
 import (
 	"testing"
 
-	"k8s.io/apimachinery/pkg/util/sets"
-
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestValidateVirtualServer(t *testing.T) {
+	var keepalive int64 = 32
 	virtualServer := v1alpha1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -23,10 +23,11 @@ func TestValidateVirtualServer(t *testing.T) {
 			},
 			Upstreams: []v1alpha1.Upstream{
 				{
-					Name:     "first",
-					Service:  "service-1",
-					LBMethod: "random",
-					Port:     80,
+					Name:      "first",
+					Service:   "service-1",
+					LBMethod:  "random",
+					Port:      80,
+					Keepalive: &keepalive,
 				},
 				{
 					Name:    "second",
@@ -1160,7 +1161,7 @@ func TestIsValidMatchValue(t *testing.T) {
 	validValues := []string{
 		"abc",
 		"123",
-		`\" 
+		`\"
 		abc\"`,
 		`\"`,
 	}
@@ -1476,6 +1477,47 @@ func TestValidatePositiveIntOrZeroFails(t *testing.T) {
 
 	if len(allErrs) == 0 {
 		t.Error("validatePositiveInt returned no errors for case: invalid (-1)")
+	}
+}
+
+func createPointerFromInt64(n int64) *int64 {
+	return &n
+}
+
+func TestValidatePositiveInt64OrZero(t *testing.T) {
+	tests := []struct {
+		number *int64
+		msg    string
+	}{
+		{
+			number: nil,
+			msg:    "valid (nil)",
+		},
+		{
+			number: createPointerFromInt64(0),
+			msg:    "valid (0)",
+		},
+		{
+			number: createPointerFromInt64(1),
+			msg:    "valid (1)",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validatePositiveInt64OrZero(test.number, field.NewPath("int-field"))
+
+		if len(allErrs) != 0 {
+			t.Errorf("validatePositiveInt64OrZero returned errors for case: %v", test.msg)
+		}
+	}
+}
+
+func TestValidatePositiveInt64OrZeroFails(t *testing.T) {
+	number := createPointerFromInt64(-1)
+	allErrs := validatePositiveInt64OrZero(number, field.NewPath("int-field"))
+
+	if len(allErrs) == 0 {
+		t.Error("validatePositiveInt64OrZero returned no errors for case: invalid (-1)")
 	}
 
 }

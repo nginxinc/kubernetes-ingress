@@ -8,8 +8,10 @@ upstream {{ $u.Name }} {
     server {{ $s.Address }} max_fails={{ $s.MaxFails }} fail_timeout={{ $s.FailTimeout }};
     {{ end }}
 
-    {{ if $.Keepalive }}
-    keepalive {{ $.Keepalive }};
+    {{ if $u.Keepalive }}
+    keepalive {{ $u.Keepalive }};
+    {{ else }}
+    {{ if $.Keepalive }}keepalive {{ $.Keepalive }};{{ end }}
     {{ end }}
 }
 {{ end }}

@@ -226,9 +226,10 @@ func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, endp
 	}
 
 	return version2.Upstream{
-		Name:     upstreamName,
-		Servers:  upsServers,
-		LBMethod: generateLBMethod(upstream.LBMethod, cfgParams.LBMethod),
+		Name:      upstreamName,
+		Servers:   upsServers,
+		LBMethod:  generateLBMethod(upstream.LBMethod, cfgParams.LBMethod),
+		Keepalive: generatePositiveInt64FromPointer(upstream.Keepalive, cfgParams.Keepalive),
 	}
 }
 
@@ -249,6 +250,13 @@ func generateTime(time string, defaultTime string) string {
 }
 
 func generatePositiveIntFromPointer(n *int, defaultN int) int {
+	if n == nil {
+		return defaultN
+	}
+	return *n
+}
+
+func generatePositiveInt64FromPointer(n *int64, defaultN int64) int64 {
 	if n == nil {
 		return defaultN
 	}

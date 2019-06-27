@@ -70,6 +70,19 @@ func validatePositiveIntOrZero(n *int, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
+func validatePositiveInt64OrZero(n *int64, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if n == nil {
+		return allErrs
+	}
+
+	if *n < 0 {
+		return append(allErrs, field.Invalid(fieldPath, n, "must be positive or zero"))
+	}
+
+	return allErrs
+}
+
 func validateTime(time string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -102,6 +115,14 @@ func validateUpstreamLBMethod(lBMethod string, fieldPath *field.Path, isPlus boo
 		}
 	}
 
+	return allErrs
+}
+
+func validatePositiveInt64(num int64, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if num < 0 {
+		return append(allErrs, field.Invalid(fieldPath, num, fmt.Errorf("Integer must be positive").Error()))
+	}
 	return allErrs
 }
 
@@ -146,6 +167,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		allErrs = append(allErrs, validateUpstreamLBMethod(u.LBMethod, idxPath.Child("lb-method"), isPlus)...)
 		allErrs = append(allErrs, validateTime(u.FailTimeout, idxPath.Child("fail-timeout"))...)
 		allErrs = append(allErrs, validatePositiveIntOrZero(u.MaxFails, idxPath.Child("max-fails"))...)
+		allErrs = append(allErrs, validatePositiveInt64OrZero(u.Keepalive, idxPath.Child("keepalive"))...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))
