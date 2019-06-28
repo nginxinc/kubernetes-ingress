@@ -51,6 +51,10 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool) *ConfigParams {
 		cfgParams.ProxyReadTimeout = proxyReadTimeout
 	}
 
+	if proxySendTimeout, exists := cfgm.Data["proxy-send-timeout"]; exists {
+		cfgParams.ProxySendTimeout = proxySendTimeout
+	}
+
 	if proxyHideHeaders, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "proxy-hide-headers", cfgm, ","); exists {
 		if err != nil {
 			glog.Error(err)

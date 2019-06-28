@@ -194,7 +194,7 @@ send-timeout: 30s
 | `max-fails` | The number of unsuccessful attempts to communicate with an upstream server that should happen in the duration set by the `fail-timeout` to consider the server unavailable. See the [max_fails](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails) parameter of the server directive. The default is set in the `max-fails` ConfgMap key. | `int` | No |
 `connect-timeout` | The timeout for establishing a connection with an upstream server. See the [proxy_connect_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout) directive. The default is specified in the `proxy-connect-timeout` ConfigMap key. | `string` | No
 `read-timeout` | The timeout for reading a response from an upstream server. See the [proxy_read_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout) directive.  The default is specified in the `proxy-read-timeout` ConfigMap key. | `string` | No
-`send-timeout` | The timeout for transmitting a request to an upstream server. See the [proxy_send_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout) directive. The default is `60s`. | `string` | No
+`send-timeout` | The timeout for transmitting a request to an upstream server. See the [proxy_send_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout) directive. The default is specified in the `proxy-send-timeout` ConfigMap key. | `string` | No
 
 ### Split
 

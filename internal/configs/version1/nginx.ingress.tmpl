@@ -1,4 +1,5 @@
 # configuration for {{.Ingress.Namespace}}/{{.Ingress.Name}}
+
 {{range $upstream := .Upstreams}}
 upstream {{$upstream.Name}} {
 	{{if $upstream.LBMethod }}{{$upstream.LBMethod}};{{end}}
@@ -102,6 +103,7 @@ server {
 
 		grpc_connect_timeout {{$location.ProxyConnectTimeout}};
 		grpc_read_timeout {{$location.ProxyReadTimeout}};
+		grpc_send_timeout {{$location.ProxySendTimeout}};
 		grpc_set_header Host $host;
 		grpc_set_header X-Real-IP $remote_addr;
 		grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -134,6 +136,7 @@ server {
 
 		proxy_connect_timeout {{$location.ProxyConnectTimeout}};
 		proxy_read_timeout {{$location.ProxyReadTimeout}};
+		proxy_send_timeout {{$location.ProxySendTimeout}};
 		client_max_body_size {{$location.ClientMaxBodySize}};
 		proxy_set_header Host $host;
 		proxy_set_header X-Real-IP $remote_addr;

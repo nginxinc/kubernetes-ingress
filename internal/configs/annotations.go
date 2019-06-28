@@ -39,6 +39,7 @@ var minionBlacklist = map[string]bool{
 var minionInheritanceList = map[string]bool{
 	"nginx.org/proxy-connect-timeout":    true,
 	"nginx.org/proxy-read-timeout":       true,
+	"nginx.org/proxy-send-timeout":       true,
 	"nginx.org/client-max-body-size":     true,
 	"nginx.org/proxy-buffering":          true,
 	"nginx.org/proxy-buffers":            true,
@@ -148,6 +149,10 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 
 	if proxyReadTimeout, exists := ingEx.Ingress.Annotations["nginx.org/proxy-read-timeout"]; exists {
 		cfgParams.ProxyReadTimeout = proxyReadTimeout
+	}
+
+	if proxySendTimeout, exists := ingEx.Ingress.Annotations["nginx.org/proxy-send-timeout"]; exists {
+		cfgParams.ProxySendTimeout = proxySendTimeout
 	}
 
 	if proxyHideHeaders, exists, err := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-hide-headers", ingEx.Ingress, ","); exists {

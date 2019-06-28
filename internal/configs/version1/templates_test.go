@@ -58,6 +58,7 @@ var ingCfg = IngressNginxConfig{
 					Upstream:            testUps,
 					ProxyConnectTimeout: "10s",
 					ProxyReadTimeout:    "10s",
+					ProxySendTimeout:    "10s",
 					ClientMaxBodySize:   "2m",
 					JWTAuth: &JWTAuth{
 						Key:   "/etc/nginx/secrets/location-key.jwk",
