@@ -1,0 +1,16 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: VirtualServerRoute
+metadata:
+  name: backend2
+spec:
+  host: virtual-server-route.example.com
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+    lb-method: "random two least_connn"
+    max-fails: -10
+    fail-timeout: "20 seconds"
+  subroutes:
+  - path: "/backend2"
+    upstream: backend2

@@ -75,6 +75,6 @@ def pytest_runtest_makereport(item) -> None:
     if rep.when == "call" and rep.failed:
         pod_namespace = item.funcargs['ingress_controller_prerequisites'].namespace
         pod_name = get_first_pod_name(item.funcargs['kube_apis'].v1, pod_namespace)
-        print("===================== IC Logs Start =====================")
+        print("\n===================== IC Logs Start =====================")
         print(item.funcargs['kube_apis'].v1.read_namespaced_pod_log(pod_name, pod_namespace))
-        print("===================== IC Logs End =====================")
+        print("\n===================== IC Logs End =====================")

@@ -1,0 +1,24 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: VirtualServer
+metadata:
+  name: virtual-server
+spec:
+  host: virtual-server.example.com
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+    lb-method: "} exit;"
+    max-fails: -10
+    fail-timeout: "20 seconds"
+  - name: backend1
+    service: backend1-svc
+    port: 80
+    lb-method: "123"
+    max-fails: -10
+    fail-timeout: "s"
+  routes:
+  - path: "/backend1"
+    upstream: backend1
+  - path: "/backend2"
+    upstream: backend2

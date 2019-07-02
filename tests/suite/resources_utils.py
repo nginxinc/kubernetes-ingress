@@ -565,6 +565,24 @@ def replace_configmap(v1: CoreV1Api, name, namespace, body) -> None:
     print("ConfigMap replaced")
 
 
+def create_configmap_from_yaml_with_overriden_key(yaml_manifest, key, value) -> dict:
+    """
+    Generate a ConfigMap with a key.
+
+    Append a new key to the existing ones
+    :param yaml_manifest: an absolute path to a file
+    :param key:
+    :param value:
+    :return:
+    """
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    if dep['data'] is None:
+        dep['data'] = {}
+    dep['data'][key] = value
+    return dep
+
+
 def delete_namespace(v1: CoreV1Api, namespace) -> None:
     """
     Delete a namespace.

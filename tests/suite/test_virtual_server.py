@@ -10,7 +10,8 @@ from suite.yaml_utils import get_paths_from_vs_yaml, get_first_vs_host_from_yaml
 
 
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
-                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]}, {"example": "virtual-server", "app_type": "simple"})],
+                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+                           {"example": "virtual-server", "app_type": "simple"})],
                          indirect=True)
 class TestVirtualServer:
     def test_responses_after_setup(self, kube_apis, crd_ingress_controller, virtual_server_setup):

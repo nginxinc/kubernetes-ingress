@@ -103,6 +103,21 @@ def patch_virtual_server_from_yaml(custom_objects: CustomObjectsApi, name, yaml_
     print(f"VirtualServer updated with name '{dep['metadata']['name']}'")
 
 
+def patch_virtual_server(custom_objects: CustomObjectsApi, name, namespace, body) -> str:
+    """
+    Update a VirtualServer based on a dict.
+
+    :param custom_objects: CustomObjectsApi
+    :param body: dict
+    :param namespace:
+    :return: str
+    """
+    print("Update a VirtualServer:")
+    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualservers", name, body)
+    print(f"VirtualServer updated with a name '{body['metadata']['name']}'")
+    return body['metadata']['name']
+
+
 def patch_v_s_route_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manifest, namespace) -> None:
     """
     Update a VirtualServerRoute based on yaml manifest
@@ -154,6 +169,21 @@ def create_v_s_route_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, 
     return dep['metadata']['name']
 
 
+def patch_v_s_route(custom_objects: CustomObjectsApi, name, namespace, body) -> str:
+    """
+    Update a VirtualServerRoute based on a dict.
+
+    :param custom_objects: CustomObjectsApi
+    :param body: dict
+    :param namespace:
+    :return: str
+    """
+    print("Update a VirtualServerRoute:")
+    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualserverroutes", name, body)
+    print(f"VirtualServerRoute updated with a name '{body['metadata']['name']}'")
+    return body['metadata']['name']
+
+
 def delete_v_s_route(custom_objects: CustomObjectsApi, name, namespace) -> None:
     """
     Delete a VirtualServerRoute.
@@ -170,3 +200,20 @@ def delete_v_s_route(custom_objects: CustomObjectsApi, name, namespace) -> None:
     ensure_item_removal(custom_objects.get_namespaced_custom_object,
                         "k8s.nginx.org", "v1alpha1", namespace, "virtualserverroutes", name)
     print(f"VirtualServerRoute was removed with the name '{name}'")
+
+
+def generate_item_with_upstream_option(yaml_manifest, option, value) -> dict:
+    """
+    Generate a VS/VSR item with an upstream option.
+
+    Update all the upstreams in VS/VSR
+    :param yaml_manifest: an absolute path to a file
+    :param option:
+    :param value:
+    :return: dict
+    """
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    for upstream in dep['spec']['upstreams']:
+        upstream[option] = value
+    return dep
