@@ -50,7 +50,7 @@ def jwt_secrets_setup(request, kube_apis, ingress_controller_endpoint, ingress_c
 
     def fin():
         print("Clean up the JWT Secrets Application:")
-        delete_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, common_app, test_namespace)
+        delete_common_app(kube_apis.v1, kube_apis.apps_v1_api, common_app, test_namespace)
         delete_items_from_yaml(kube_apis, f"{TEST_DATA}/jwt-secrets/{request.param}/jwt-secrets-ingress.yaml",
                                test_namespace)
 

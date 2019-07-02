@@ -7,7 +7,7 @@ import yaml
 
 from kubernetes import config, client
 from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api, CustomObjectsApi, \
-    ApiextensionsV1beta1Api
+    ApiextensionsV1beta1Api, AppsV1Api
 
 from suite.custom_resources_utils import create_crds_from_yaml, delete_crd, create_virtual_server_from_yaml, \
     delete_virtual_server
@@ -36,11 +36,13 @@ class KubeApis:
     """
     def __init__(self, v1: CoreV1Api,
                  extensions_v1_beta1: ExtensionsV1beta1Api,
+                 apps_v1_api: AppsV1Api,
                  rbac_v1_beta1: RbacAuthorizationV1beta1Api,
                  api_extensions_v1_beta1: ApiextensionsV1beta1Api,
                  custom_objects: CustomObjectsApi):
         self.v1 = v1
         self.extensions_v1_beta1 = extensions_v1_beta1
+        self.apps_v1_api = apps_v1_api
         self.rbac_v1_beta1 = rbac_v1_beta1
         self.api_extensions_v1_beta1 = api_extensions_v1_beta1
         self.custom_objects = custom_objects
@@ -117,11 +119,11 @@ def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisite
     """
     namespace = ingress_controller_prerequisites.namespace
     print("------------------------- Create IC -----------------------------------")
-    name = create_ingress_controller(kube_apis.v1, kube_apis.extensions_v1_beta1, cli_arguments, namespace)
+    name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace)
 
     def fin():
         print("Delete IC:")
-        delete_ingress_controller(kube_apis.extensions_v1_beta1, name, cli_arguments['deployment-type'], namespace)
+        delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments['deployment-type'], namespace)
 
     request.addfinalizer(fin)
 
@@ -193,10 +195,11 @@ def kube_apis(cli_arguments) -> KubeApis:
     config.load_kube_config(config_file=kubeconfig, context=context_name, persist_config=False)
     v1 = client.CoreV1Api()
     extensions_v1_beta1 = client.ExtensionsV1beta1Api()
+    apps_v1_api = client.AppsV1Api()
     rbac_v1_beta1 = client.RbacAuthorizationV1beta1Api()
     api_extensions_v1_beta1 = client.ApiextensionsV1beta1Api()
     custom_objects = client.CustomObjectsApi()
-    return KubeApis(v1, extensions_v1_beta1, rbac_v1_beta1, api_extensions_v1_beta1, custom_objects)
+    return KubeApis(v1, extensions_v1_beta1, apps_v1_api, rbac_v1_beta1, api_extensions_v1_beta1, custom_objects)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -271,7 +274,7 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     crd_names = create_crds_from_yaml(kube_apis.api_extensions_v1_beta1,
                                       f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")
     print("------------------------- Create IC -----------------------------------")
-    name = create_ingress_controller(kube_apis.v1, kube_apis.extensions_v1_beta1, cli_arguments, namespace,
+    name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace,
                                      request.param.get('extra_args', None))
     ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
                                          ingress_controller_endpoint.port,
@@ -282,7 +285,7 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
             print("Remove the CRD:")
             delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
         print("Remove the IC:")
-        delete_ingress_controller(kube_apis.extensions_v1_beta1, name, cli_arguments['deployment-type'], namespace)
+        delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments['deployment-type'], namespace)
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
 
@@ -339,7 +342,7 @@ def virtual_server_setup(request, kube_apis, crd_ingress_controller, ingress_con
     def fin():
         print("Clean up Virtual Server Example:")
         delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
-        delete_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, common_app, test_namespace)
+        delete_common_app(kube_apis.v1, kube_apis.apps_v1_api, common_app, test_namespace)
 
     request.addfinalizer(fin)
 
