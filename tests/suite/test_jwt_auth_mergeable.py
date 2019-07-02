@@ -56,7 +56,7 @@ def jwt_auth_setup(request, kube_apis, ingress_controller_endpoint, ingress_cont
             delete_secret(kube_apis.v1, minion_secret_name, test_namespace)
 
         print("Clean up the JWT Auth Mergeable Minions Application:")
-        delete_common_app(kube_apis.v1, kube_apis.extensions_v1_beta1, common_app, test_namespace)
+        delete_common_app(kube_apis.v1, kube_apis.apps_v1_api, common_app, test_namespace)
         delete_items_from_yaml(kube_apis, f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml",
                                test_namespace)
 
