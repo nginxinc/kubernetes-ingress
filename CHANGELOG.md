@@ -1,5 +1,30 @@
 # Changelog
 
+### 1.5.1
+
+CHANGES:
+* Update NGINX version to 1.17.1.
+
+HELM CHART:
+* The version of the Helm chart is now 0.3.1.
+* [593](https://github.com/nginxinc/kubernetes-ingress/pull/593): Fix the selector in the Ingress Controller service when the `controller.name` parameter is set. This introduces a change, see the HELM UPGRADE section.
+
+UPGRADE:
+* For NGINX, use the 1.5.1 image from our DockerHub: `nginx/nginx-ingress:1.5.1` or `nginx/nginx-ingress:1.5.1-alpine`
+* For NGINX Plus, please build your own image using the 1.5.1 source code.
+* For Helm, use version 0.3.1 of the chart.
+
+HELM UPGRADE:
+
+In the changelog of Release 1.5.0, we advised not to upgrade the helm chart from `0.2.1` to `0.3.0` unless the mentioned in the changelog problems were acceptable. This release we provide mitigation instructions on how to upgrade from `0.2.1` to `0.3.1` without disruptions. 
+
+When you upgrade from `0.2.1` to `0.3.1`, make sure to configure the following parameters:
+* `controller.name` is set to `nginx-ingress` or the previously used value in case you customized it. This ensures the Deployment/Daemonset will not be recreated.
+* `controller.service.name` is set to `nginx-ingress`. This ensures the service will not be recreated.
+* `controller.config.name` is set to `nginx-config`. This ensures the ConfigMap will not be recreated.
+
+Upgrading from `0.3.0` to `0.3.1`: Upgrading is not affected unless you customized `controller.name`. In that case, because of the fix [593](https://github.com/nginxinc/kubernetes-ingress/pull/593), the upgraded service will have a new selector, and the upgraded pod spec will have a new label. As a result, during an upgrade, the old pods will be immediately excluded from the service. Also, for the Deployment, the old pods will not terminate but continue to run. To terminate the old pods, manually remove the corresponding ReplicaSet.
+
 ### 1.5.0
 
 FEATURES:
