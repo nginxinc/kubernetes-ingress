@@ -84,7 +84,7 @@ func (namer *variableNamer) GetNameForVariableForRulesRouteMainMap(rulesIndex in
 func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileName string, baseCfgParams *ConfigParams, isPlus bool) version2.VirtualServerConfig {
 	ssl := generateSSLConfig(virtualServerEx.VirtualServer.Spec.TLS, tlsPemFileName, baseCfgParams)
 
-	// crUpstreams maps an UpstreamName to it's conf_v1alpha1.Upstreams as they are created
+	// crUpstreams maps an UpstreamName to its conf_v1alpha1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
 	crUpstreams := make(map[string]conf_v1alpha1.Upstream)
 
