@@ -1160,7 +1160,7 @@ func TestIsValidMatchValue(t *testing.T) {
 	validValues := []string{
 		"abc",
 		"123",
-		`\"
+		`\" 
 		abc\"`,
 		`\"`,
 	}
