@@ -81,21 +81,12 @@ func (namer *variableNamer) GetNameForVariableForRulesRouteMainMap(rulesIndex in
 	return fmt.Sprintf("$vs_%s_rules_%d", namer.safeNsName, rulesIndex)
 }
 
-func getUpstream(upstreamName string, upstreams []conf_v1alpha1.Upstream) conf_v1alpha1.Upstream {
-	for _, u := range upstreams {
-		if u.Name == upstreamName {
-			return u
-		}
-	}
-	return conf_v1alpha1.Upstream{}
-}
-
 func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileName string, baseCfgParams *ConfigParams, isPlus bool) version2.VirtualServerConfig {
 	ssl := generateSSLConfig(virtualServerEx.VirtualServer.Spec.TLS, tlsPemFileName, baseCfgParams)
 
-	// oUpstreams keeps track of conf_v1alpha1.Upstreams as they are created
+	// crUpstreams keeps track of conf_v1alpha1.Upstreams as they are created
 	// necessary to know what Location references which Upstream
-	var oUpstreams []conf_v1alpha1.Upstream
+	crUpstreams := make(map[string]conf_v1alpha1.Upstream)
 
 	virtualServerUpstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
 
@@ -107,7 +98,7 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 		endpointsKey := GenerateEndpointsKey(virtualServerEx.VirtualServer.Namespace, u.Service, u.Port)
 		ups := generateUpstream(upstreamName, u, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
 		upstreams = append(upstreams, ups)
-		oUpstreams = append(oUpstreams, u)
+		crUpstreams[upstreamName] = u
 	}
 	// generate upstreams for each VirtualServerRoute
 	for _, vsr := range virtualServerEx.VirtualServerRoutes {
@@ -117,7 +108,7 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 			endpointsKey := GenerateEndpointsKey(vsr.Namespace, u.Service, u.Port)
 			ups := generateUpstream(upstreamName, u, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
 			upstreams = append(upstreams, ups)
-			oUpstreams = append(oUpstreams, u)
+			crUpstreams[upstreamName] = u
 		}
 	}
 
@@ -138,13 +129,13 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 		}
 
 		if len(r.Splits) > 0 {
-			splitCfg := generateSplitRouteConfig(r, virtualServerUpstreamNamer, oUpstreams, variableNamer, len(splitClients), baseCfgParams)
+			splitCfg := generateSplitRouteConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients), baseCfgParams)
 
 			splitClients = append(splitClients, splitCfg.SplitClient)
 			locations = append(locations, splitCfg.Locations...)
 			internalRedirectLocations = append(internalRedirectLocations, splitCfg.InternalRedirectLocation)
 		} else if r.Rules != nil {
-			rulesRouteCfg := generateRulesRouteConfig(r, virtualServerUpstreamNamer, oUpstreams, variableNamer, rulesRoutes, baseCfgParams)
+			rulesRouteCfg := generateRulesRouteConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, rulesRoutes, baseCfgParams)
 
 			maps = append(maps, rulesRouteCfg.Maps...)
 			locations = append(locations, rulesRouteCfg.Locations...)
@@ -153,10 +144,11 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 			rulesRoutes++
 		} else {
 			upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(r.Upstream)
-			upstream := getUpstream(r.Upstream, oUpstreams)
+			upstream := crUpstreams[upstreamName]
 			loc := generateLocation(r.Path, upstreamName, upstream, baseCfgParams)
 			locations = append(locations, loc)
 		}
+
 	}
 
 	// generate config for subroutes of each VirtualServerRoute
@@ -164,13 +156,13 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
 		for _, r := range vsr.Spec.Subroutes {
 			if len(r.Splits) > 0 {
-				splitCfg := generateSplitRouteConfig(r, upstreamNamer, oUpstreams, variableNamer, len(splitClients), baseCfgParams)
+				splitCfg := generateSplitRouteConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), baseCfgParams)
 
 				splitClients = append(splitClients, splitCfg.SplitClient)
 				locations = append(locations, splitCfg.Locations...)
 				internalRedirectLocations = append(internalRedirectLocations, splitCfg.InternalRedirectLocation)
 			} else if r.Rules != nil {
-				rulesRouteCfg := generateRulesRouteConfig(r, upstreamNamer, oUpstreams, variableNamer, rulesRoutes, baseCfgParams)
+				rulesRouteCfg := generateRulesRouteConfig(r, upstreamNamer, crUpstreams, variableNamer, rulesRoutes, baseCfgParams)
 
 				maps = append(maps, rulesRouteCfg.Maps...)
 				locations = append(locations, rulesRouteCfg.Locations...)
@@ -179,7 +171,7 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 				rulesRoutes++
 			} else {
 				upstreamName := upstreamNamer.GetNameForUpstream(r.Upstream)
-				upstream := getUpstream(r.Upstream, oUpstreams)
+				upstream := crUpstreams[upstreamName]
 				loc := generateLocation(r.Path, upstreamName, upstream, baseCfgParams)
 				locations = append(locations, loc)
 			}
@@ -285,7 +277,7 @@ type splitRouteCfg struct {
 	InternalRedirectLocation version2.InternalRedirectLocation
 }
 
-func generateSplitRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, oUpstreams []conf_v1alpha1.Upstream, variableNamer *variableNamer, index int, cfgParams *ConfigParams) splitRouteCfg {
+func generateSplitRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream, variableNamer *variableNamer, index int, cfgParams *ConfigParams) splitRouteCfg {
 	splitClientVarName := variableNamer.GetNameForSplitClientVariable(index)
 
 	// Generate a SplitClient
@@ -311,7 +303,7 @@ func generateSplitRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstream
 	for i, s := range route.Splits {
 		path := fmt.Sprintf("@splits_%d_split_%d", index, i)
 		upstreamName := upstreamNamer.GetNameForUpstream(s.Upstream)
-		upstream := getUpstream(upstreamName, oUpstreams)
+		upstream := crUpstreams[upstreamName]
 		loc := generateLocation(path, upstreamName, upstream, cfgParams)
 		locations = append(locations, loc)
 	}
@@ -335,7 +327,8 @@ type rulesRouteCfg struct {
 	InternalRedirectLocation version2.InternalRedirectLocation
 }
 
-func generateRulesRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, oUpstreams []conf_v1alpha1.Upstream, variableNamer *variableNamer, index int, cfgParams *ConfigParams) rulesRouteCfg {
+func generateRulesRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream,
+	variableNamer *variableNamer, index int, cfgParams *ConfigParams) rulesRouteCfg {
 	// Generate maps
 	var maps []version2.Map
 
@@ -393,7 +386,7 @@ func generateRulesRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstream
 	for i, m := range route.Rules.Matches {
 		path := fmt.Sprintf("@rules_%d_match_%d", index, i)
 		upstreamName := upstreamNamer.GetNameForUpstream(m.Upstream)
-		upstream := getUpstream(m.Upstream, oUpstreams)
+		upstream := crUpstreams[upstreamName]
 		loc := generateLocation(path, upstreamName, upstream, cfgParams)
 		locations = append(locations, loc)
 	}
@@ -401,8 +394,7 @@ func generateRulesRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstream
 	// Generate defaultUpstream location
 	path := fmt.Sprintf("@rules_%d_default", index)
 	upstreamName := upstreamNamer.GetNameForUpstream(route.Rules.DefaultUpstream)
-	upstream := getUpstream(route.Rules.DefaultUpstream, oUpstreams)
-
+	upstream := crUpstreams[upstreamName]
 	loc := generateLocation(path, upstreamName, upstream, cfgParams)
 	locations = append(locations, loc)
 
@@ -419,14 +411,14 @@ func generateRulesRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstream
 	}
 }
 
-func generateValueForRulesRouteMap(matchedValue string) (value string, isNegative bool) {
-	var specialMapParameters = map[string]bool{
-		"default":   true,
-		"hostnames": true,
-		"include":   true,
-		"volatile":  true,
-	}
+var specialMapParameters = map[string]bool{
+	"default":   true,
+	"hostnames": true,
+	"include":   true,
+	"volatile":  true,
+}
 
+func generateValueForRulesRouteMap(matchedValue string) (value string, isNegative bool) {
 	if len(matchedValue) == 0 {
 		return `""`, false
 	}

@@ -1074,7 +1074,7 @@ func TestGenerateSplitRouteConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateSplitRouteConfig(route, upstreamNamer, []conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
+	result := generateSplitRouteConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateSplitRouteConfig() returned %v but expected %v", result, expected)
 	}
@@ -1286,7 +1286,7 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateRulesRouteConfig(route, upstreamNamer, []conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
+	result := generateRulesRouteConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateRulesRouteConfig() returned \n%v but expected \n%v", result, expected)
 	}
