@@ -55,6 +55,11 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "skip_for_nginx_oss" in item.keywords:
                 item.add_marker(skip_for_nginx_oss)
+    if config.getoption("--ic-type") == "nginx-plus-ingress":
+        skip_for_nginx_plus = pytest.mark.skip(reason="Skip a test for Nginx Plus")
+        for item in items:
+            if "skip_for_nginx_plus" in item.keywords:
+                item.add_marker(skip_for_nginx_plus)
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

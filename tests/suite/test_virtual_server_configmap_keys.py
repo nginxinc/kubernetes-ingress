@@ -41,6 +41,7 @@ def assert_keys_without_validation(config, expected_values):
     assert f"{expected_values['location-snippets']}" in config
     assert f"{expected_values['server-snippets']}" in config
     assert f"fail_timeout={expected_values['fail-timeout']};" in config
+    assert f"proxy_send_timeout {expected_values['proxy-send-timeout']};" in config
 
 
 def assert_keys_with_validation(config, expected_values):
@@ -76,6 +77,7 @@ def assert_defaults_of_keys_with_validation(config, unexpected_values):
     assert "if ($http_x_forwarded_proto = 'http') {" not in config
     assert "server_tokens \"on\"" in config
     assert "random two least_conn;" in config and unexpected_values['lb-method'] not in config
+    assert f"proxy_send_timeout 60s;" in config
 
 
 def assert_ssl_keys(config):
@@ -163,7 +165,7 @@ class TestVirtualServerConfigMapNoTls:
             data_file = f"{TEST_DATA}/virtual-server-configmap-keys/configmap-validation-keys.yaml"
             data_file_invalid = f"{TEST_DATA}/virtual-server-configmap-keys/configmap-validation-keys-invalid.yaml"
 
-        print("Step 3: update ConfigMap with valid keys with validaiton rules")
+        print("Step 3: update ConfigMap with valid keys with validation rules")
         replace_configmap_from_yaml(kube_apis.v1,
                                     ingress_controller_prerequisites.config_map['metadata']['name'],
                                     ingress_controller_prerequisites.namespace,
