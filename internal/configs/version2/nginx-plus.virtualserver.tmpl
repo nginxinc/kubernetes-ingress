@@ -8,8 +8,8 @@ upstream {{ $u.Name }} {
     server {{ $s.Address }} max_fails={{ $s.MaxFails }} fail_timeout={{ $s.FailTimeout }};
     {{ end }}
 
-    {{ if $.Keepalive }}
-    keepalive {{ $.Keepalive }};
+    {{ if $u.Keepalive }}
+    keepalive {{ $u.Keepalive }};
     {{ end }}
 }
 {{ end }}
@@ -107,7 +107,7 @@ server {
 
         proxy_http_version 1.1;
 
-        {{ if $.Keepalive }}
+        {{ if $l.HasKeepalive }}
         proxy_set_header Connection "";
         {{ end }}
 

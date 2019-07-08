@@ -10,7 +10,6 @@ import (
 )
 
 func TestValidateVirtualServer(t *testing.T) {
-	var keepalive int64 = 32
 	virtualServer := v1alpha1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -27,7 +26,7 @@ func TestValidateVirtualServer(t *testing.T) {
 					Service:   "service-1",
 					LBMethod:  "random",
 					Port:      80,
-					Keepalive: &keepalive,
+					Keepalive: 32,
 				},
 				{
 					Name:    "second",

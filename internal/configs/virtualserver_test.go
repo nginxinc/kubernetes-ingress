@@ -272,7 +272,6 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				},
 			},
 		},
-		Keepalive: "16",
 	}
 
 	isPlus := false

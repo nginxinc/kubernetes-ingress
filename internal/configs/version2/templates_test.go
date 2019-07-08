@@ -159,7 +159,6 @@ var virtualServerCfg = VirtualServerConfig{
 			},
 		},
 	},
-	Keepalive: "10",
 }
 
 func TestVirtualServerForNginxPlus(t *testing.T) {

@@ -178,11 +178,6 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 		}
 	}
 
-	keepalive := ""
-	if baseCfgParams.Keepalive > 0 {
-		keepalive = fmt.Sprint(baseCfgParams.Keepalive)
-	}
-
 	return version2.VirtualServerConfig{
 		Upstreams:    upstreams,
 		SplitClients: splitClients,
@@ -200,7 +195,6 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 			InternalRedirectLocations:             internalRedirectLocations,
 			Locations:                             locations,
 		},
-		Keepalive: keepalive,
 	}
 }
 
@@ -229,7 +223,7 @@ func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, endp
 		Name:      upstreamName,
 		Servers:   upsServers,
 		LBMethod:  generateLBMethod(upstream.LBMethod, cfgParams.LBMethod),
-		Keepalive: generatePositiveInt64FromPointer(upstream.Keepalive, cfgParams.Keepalive),
+		Keepalive: generateInt64(upstream.Keepalive, cfgParams.Keepalive),
 	}
 }
 
@@ -256,11 +250,11 @@ func generatePositiveIntFromPointer(n *int, defaultN int) int {
 	return *n
 }
 
-func generatePositiveInt64FromPointer(n *int64, defaultN int64) int64 {
-	if n == nil {
+func generateInt64(n int64, defaultN int64) int64 {
+	if n == 0 {
 		return defaultN
 	}
-	return *n
+	return n
 }
 
 func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) version2.Location {
@@ -276,6 +270,7 @@ func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.U
 		ProxyBuffers:         cfgParams.ProxyBuffers,
 		ProxyBufferSize:      cfgParams.ProxyBufferSize,
 		ProxyPass:            fmt.Sprintf("http://%v", upstreamName),
+		HasKeepalive:         (upstream.Keepalive != 0),
 	}
 }
 

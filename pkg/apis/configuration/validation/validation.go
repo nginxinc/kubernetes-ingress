@@ -118,14 +118,6 @@ func validateUpstreamLBMethod(lBMethod string, fieldPath *field.Path, isPlus boo
 	return allErrs
 }
 
-func validatePositiveInt64(num int64, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-	if num < 0 {
-		return append(allErrs, field.Invalid(fieldPath, num, fmt.Errorf("Integer must be positive").Error()))
-	}
-	return allErrs
-}
-
 // validateSecretName checks if a secret name is valid.
 // It performs the same validation as ValidateSecretName from k8s.io/kubernetes/pkg/apis/core/validation/validation.go.
 func validateSecretName(name string, fieldPath *field.Path) field.ErrorList {
@@ -167,7 +159,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		allErrs = append(allErrs, validateUpstreamLBMethod(u.LBMethod, idxPath.Child("lb-method"), isPlus)...)
 		allErrs = append(allErrs, validateTime(u.FailTimeout, idxPath.Child("fail-timeout"))...)
 		allErrs = append(allErrs, validatePositiveIntOrZero(u.MaxFails, idxPath.Child("max-fails"))...)
-		allErrs = append(allErrs, validatePositiveInt64OrZero(u.Keepalive, idxPath.Child("keepalive"))...)
+		allErrs = append(allErrs, validatePositiveInt64OrZero(&u.Keepalive, idxPath.Child("keepalive"))...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))
