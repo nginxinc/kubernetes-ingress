@@ -287,7 +287,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool) *ConfigParams {
 		cfgParams.MainWorkerRlimitNofile = workerRlimitNofile
 	}
 
-	if keepalive, exists, err := GetMapKeyAsInt64(cfgm.Data, "keepalive", cfgm); exists {
+	if keepalive, exists, err := GetMapKeyAsInt(cfgm.Data, "keepalive", cfgm); exists {
 		if err != nil {
 			glog.Error(err)
 		} else {

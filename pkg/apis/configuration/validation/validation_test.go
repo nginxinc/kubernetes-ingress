@@ -10,6 +10,7 @@ import (
 )
 
 func TestValidateVirtualServer(t *testing.T) {
+	var keepalive = 32
 	virtualServer := v1alpha1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -26,7 +27,7 @@ func TestValidateVirtualServer(t *testing.T) {
 					Service:   "service-1",
 					LBMethod:  "random",
 					Port:      80,
-					Keepalive: 32,
+					Keepalive: &keepalive,
 				},
 				{
 					Name:    "second",
@@ -1477,48 +1478,6 @@ func TestValidatePositiveIntOrZeroFails(t *testing.T) {
 	if len(allErrs) == 0 {
 		t.Error("validatePositiveInt returned no errors for case: invalid (-1)")
 	}
-}
-
-func createPointerFromInt64(n int64) *int64 {
-	return &n
-}
-
-func TestValidatePositiveInt64OrZero(t *testing.T) {
-	tests := []struct {
-		number *int64
-		msg    string
-	}{
-		{
-			number: nil,
-			msg:    "valid (nil)",
-		},
-		{
-			number: createPointerFromInt64(0),
-			msg:    "valid (0)",
-		},
-		{
-			number: createPointerFromInt64(1),
-			msg:    "valid (1)",
-		},
-	}
-
-	for _, test := range tests {
-		allErrs := validatePositiveInt64OrZero(test.number, field.NewPath("int-field"))
-
-		if len(allErrs) != 0 {
-			t.Errorf("validatePositiveInt64OrZero returned errors for case: %v", test.msg)
-		}
-	}
-}
-
-func TestValidatePositiveInt64OrZeroFails(t *testing.T) {
-	number := createPointerFromInt64(-1)
-	allErrs := validatePositiveInt64OrZero(number, field.NewPath("int-field"))
-
-	if len(allErrs) == 0 {
-		t.Error("validatePositiveInt64OrZero returned no errors for case: invalid (-1)")
-	}
-
 }
 
 func TestValidateTime(t *testing.T) {

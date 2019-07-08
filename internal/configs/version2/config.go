@@ -13,7 +13,7 @@ type Upstream struct {
 	Name      string
 	Servers   []UpstreamServer
 	LBMethod  string
-	Keepalive int64
+	Keepalive int
 }
 
 // UpstreamServer defines an upstream server.

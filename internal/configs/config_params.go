@@ -39,7 +39,7 @@ type ConfigParams struct {
 	MainWorkerShutdownTimeout     string
 	MainWorkerConnections         string
 	MainWorkerRlimitNofile        string
-	Keepalive                     int64
+	Keepalive                     int
 	MaxFails                      int
 	FailTimeout                   string
 	HealthCheckEnabled            bool

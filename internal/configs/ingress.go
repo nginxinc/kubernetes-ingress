@@ -3,7 +3,6 @@ package configs
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/golang/glog"
@@ -214,7 +213,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, b
 
 	var keepalive string
 	if cfgParams.Keepalive > 0 {
-		keepalive = strconv.FormatInt(cfgParams.Keepalive, 10)
+		keepalive = fmt.Sprint(cfgParams.Keepalive)
 	}
 
 	return version1.IngressNginxConfig{

@@ -269,7 +269,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		cfgParams.SSLPorts = sslPorts
 	}
 
-	if keepalive, exists, err := GetMapKeyAsInt64(ingEx.Ingress.Annotations, "nginx.org/keepalive", ingEx.Ingress); exists {
+	if keepalive, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/keepalive", ingEx.Ingress); exists {
 		if err != nil {
 			glog.Error(err)
 		} else {
