@@ -250,6 +250,15 @@ func generateIntFromPointer(n *int, defaultN int) int {
 	return *n
 }
 
+func upstreamHasKeepalive(upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) bool {
+	if upstream.Keepalive != nil && *upstream.Keepalive != 0 {
+		return true
+	} else if upstream.Keepalive == nil && cfgParams.Keepalive != 0 {
+		return true
+	}
+	return false
+}
+
 func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) version2.Location {
 	return version2.Location{
 		Path:                 path,
@@ -263,7 +272,7 @@ func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.U
 		ProxyBuffers:         cfgParams.ProxyBuffers,
 		ProxyBufferSize:      cfgParams.ProxyBufferSize,
 		ProxyPass:            fmt.Sprintf("http://%v", upstreamName),
-		HasKeepalive:         (upstream.Keepalive != nil && cfgParams.Keepalive != 0),
+		HasKeepalive:         upstreamHasKeepalive(upstream, cfgParams),
 	}
 }
 

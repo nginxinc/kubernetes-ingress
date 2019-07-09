@@ -263,12 +263,14 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 			Snippets:                              []string{"# server snippet"},
 			Locations: []version2.Location{
 				{
-					Path:      "/tea",
-					ProxyPass: "http://vs_default_cafe_tea",
+					Path:         "/tea",
+					ProxyPass:    "http://vs_default_cafe_tea",
+					HasKeepalive: true,
 				},
 				{
-					Path:      "/coffee",
-					ProxyPass: "http://vs_default_cafe_vsr_default_coffee_coffee",
+					Path:         "/coffee",
+					ProxyPass:    "http://vs_default_cafe_vsr_default_coffee_coffee",
+					HasKeepalive: true,
 				},
 			},
 		},
@@ -759,6 +761,74 @@ func TestGenerateUpstream(t *testing.T) {
 	result := generateUpstream(name, upstream, endpoints, isPlus, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
+	}
+}
+
+func TestGenerateUpstreamWithKeepalive(t *testing.T) {
+	name := "test-upstream"
+	noKeepalive := 0
+	keepalive := 32
+	endpoints := []string{
+		"192.168.10.10:8080",
+	}
+	isPlus := false
+
+	tests := []struct {
+		upstream  conf_v1alpha1.Upstream
+		cfgParams *ConfigParams
+		expected  version2.Upstream
+	}{
+		{
+			conf_v1alpha1.Upstream{Keepalive: &keepalive},
+			&ConfigParams{
+				Keepalive: 21,
+			},
+			version2.Upstream{
+				Name: "test-upstream",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "192.168.10.10:8080",
+					},
+				},
+				Keepalive: 32,
+			},
+		},
+		{
+			conf_v1alpha1.Upstream{},
+			&ConfigParams{
+				Keepalive: 21,
+			},
+			version2.Upstream{
+				Name: "test-upstream",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "192.168.10.10:8080",
+					},
+				},
+				Keepalive: 21,
+			},
+		},
+		{
+			conf_v1alpha1.Upstream{Keepalive: &noKeepalive},
+			&ConfigParams{
+				Keepalive: 21,
+			},
+			version2.Upstream{
+				Name: "test-upstream",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "192.168.10.10:8080",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		result := generateUpstream(name, test.upstream, endpoints, isPlus, test.cfgParams)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateUpstream() returned %v but expected %v", result, test.expected)
+		}
 	}
 }
 
@@ -1466,6 +1536,39 @@ func TestGenerateLBMethod(t *testing.T) {
 		result := generateLBMethod(test.input, defaultMethod)
 		if result != test.expected {
 			t.Errorf("generateLBMethod() returned %q but expected %q for input '%v'", result, test.expected, test.input)
+		}
+	}
+}
+
+func TestUpstreamHasKeepalive(t *testing.T) {
+	noKeepalive := 0
+	keepalive := 32
+
+	tests := []struct {
+		upstream  conf_v1alpha1.Upstream
+		cfgParams *ConfigParams
+		expected  bool
+	}{
+		{
+			conf_v1alpha1.Upstream{},
+			&ConfigParams{Keepalive: keepalive},
+			true,
+		},
+		{
+			conf_v1alpha1.Upstream{Keepalive: &noKeepalive},
+			&ConfigParams{Keepalive: keepalive},
+			false,
+		},
+		{
+			conf_v1alpha1.Upstream{Keepalive: &keepalive},
+			&ConfigParams{Keepalive: noKeepalive},
+			true,
+		},
+	}
+
+	for _, test := range tests {
+		if result := upstreamHasKeepalive(test.upstream, test.cfgParams); result != test.expected {
+			t.Errorf("hasKeepalive() returned %v, but expected %v", result, test.expected)
 		}
 	}
 }
