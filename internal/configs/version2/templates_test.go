@@ -16,7 +16,8 @@ var virtualServerCfg = VirtualServerConfig{
 					FailTimeout: "10s",
 				},
 			},
-			LBMethod: "random",
+			LBMethod:  "random",
+			Keepalive: 32,
 		},
 		{
 			Name: "coffee-v1",
