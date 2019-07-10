@@ -251,12 +251,10 @@ func generateIntFromPointer(n *int, defaultN int) int {
 }
 
 func upstreamHasKeepalive(upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) bool {
-	if upstream.Keepalive != nil && *upstream.Keepalive != 0 {
-		return true
-	} else if upstream.Keepalive == nil && cfgParams.Keepalive != 0 {
-		return true
+	if upstream.Keepalive != nil {
+		return *upstream.Keepalive != 0
 	}
-	return false
+	return cfgParams.Keepalive != 0
 }
 
 func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) version2.Location {

@@ -777,12 +777,11 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 		upstream  conf_v1alpha1.Upstream
 		cfgParams *ConfigParams
 		expected  version2.Upstream
+		msg       string
 	}{
 		{
 			conf_v1alpha1.Upstream{Keepalive: &keepalive},
-			&ConfigParams{
-				Keepalive: 21,
-			},
+			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
 				Servers: []version2.UpstreamServer{
@@ -792,12 +791,11 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 				},
 				Keepalive: 32,
 			},
+			"upstream keepalive set, configparam set",
 		},
 		{
 			conf_v1alpha1.Upstream{},
-			&ConfigParams{
-				Keepalive: 21,
-			},
+			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
 				Servers: []version2.UpstreamServer{
@@ -807,12 +805,11 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 				},
 				Keepalive: 21,
 			},
+			"upstream keepalive not set, configparam set",
 		},
 		{
 			conf_v1alpha1.Upstream{Keepalive: &noKeepalive},
-			&ConfigParams{
-				Keepalive: 21,
-			},
+			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
 				Servers: []version2.UpstreamServer{
@@ -821,13 +818,14 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 					},
 				},
 			},
+			"upstream keepalive set to 0, configparam set",
 		},
 	}
 
 	for _, test := range tests {
 		result := generateUpstream(name, test.upstream, endpoints, isPlus, test.cfgParams)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateUpstream() returned %v but expected %v", result, test.expected)
+			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 	}
 }
@@ -1548,27 +1546,32 @@ func TestUpstreamHasKeepalive(t *testing.T) {
 		upstream  conf_v1alpha1.Upstream
 		cfgParams *ConfigParams
 		expected  bool
+		msg       string
 	}{
 		{
 			conf_v1alpha1.Upstream{},
 			&ConfigParams{Keepalive: keepalive},
 			true,
+			"upstream keepalive not set, configparam keepalive set",
 		},
 		{
 			conf_v1alpha1.Upstream{Keepalive: &noKeepalive},
 			&ConfigParams{Keepalive: keepalive},
 			false,
+			"upstream keepalive set to 0, configparam keepive set",
 		},
 		{
 			conf_v1alpha1.Upstream{Keepalive: &keepalive},
 			&ConfigParams{Keepalive: noKeepalive},
 			true,
+			"upstream keepalive set, configparam keepalive set to 0",
 		},
 	}
 
 	for _, test := range tests {
-		if result := upstreamHasKeepalive(test.upstream, test.cfgParams); result != test.expected {
-			t.Errorf("hasKeepalive() returned %v, but expected %v", result, test.expected)
+		result := upstreamHasKeepalive(test.upstream, test.cfgParams)
+		if result != test.expected {
+			t.Errorf("hasKeepalive() returned %v, but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 	}
 }
