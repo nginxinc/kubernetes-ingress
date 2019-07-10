@@ -1571,7 +1571,7 @@ func TestUpstreamHasKeepalive(t *testing.T) {
 	for _, test := range tests {
 		result := upstreamHasKeepalive(test.upstream, test.cfgParams)
 		if result != test.expected {
-			t.Errorf("hasKeepalive() returned %v, but expected %v for the case of %v", result, test.expected, test.msg)
+			t.Errorf("upstreamHasKeepalive() returned %v, but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 	}
 }
