@@ -26,6 +26,7 @@ const jsonFileForOpenTracingTracer = "/etc/tracer-config.json"
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
 type ServerConfig struct {
 	MaxFails    int
+	MaxConns    int
 	FailTimeout string
 	SlowStart   string
 }
@@ -265,6 +266,7 @@ func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, c
 		upsServers = append(upsServers, client.UpstreamServer{
 			Server:      s,
 			MaxFails:    config.MaxFails,
+			MaxConns:    config.MaxConns,
 			FailTimeout: config.FailTimeout,
 			SlowStart:   config.SlowStart,
 		})

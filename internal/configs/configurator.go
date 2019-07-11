@@ -458,6 +458,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 
 	cfg := nginx.ServerConfig{
 		MaxFails:    ingCfg.MaxFails,
+		MaxConns:    ingCfg.MaxConns,
 		FailTimeout: ingCfg.FailTimeout,
 		SlowStart:   ingCfg.SlowStart,
 	}
