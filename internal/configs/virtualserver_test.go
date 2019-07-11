@@ -187,10 +187,10 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 			},
 		},
 		Endpoints: map[string][]string{
-			"default/tea-svc:80": []string{
+			"default/tea-svc:80": {
 				"10.0.0.20:80",
 			},
-			"default/coffee-svc:80": []string{
+			"default/coffee-svc:80": {
 				"10.0.0.30:80",
 			},
 		},
@@ -332,16 +332,16 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 			},
 		},
 		Endpoints: map[string][]string{
-			"default/tea-svc-v1:80": []string{
+			"default/tea-svc-v1:80": {
 				"10.0.0.20:80",
 			},
-			"default/tea-svc-v2:80": []string{
+			"default/tea-svc-v2:80": {
 				"10.0.0.21:80",
 			},
-			"default/coffee-svc-v1:80": []string{
+			"default/coffee-svc-v1:80": {
 				"10.0.0.30:80",
 			},
-			"default/coffee-svc-v2:80": []string{
+			"default/coffee-svc-v2:80": {
 				"10.0.0.31:80",
 			},
 		},
@@ -554,16 +554,16 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 			},
 		},
 		Endpoints: map[string][]string{
-			"default/tea-svc-v1:80": []string{
+			"default/tea-svc-v1:80": {
 				"10.0.0.20:80",
 			},
-			"default/tea-svc-v2:80": []string{
+			"default/tea-svc-v2:80": {
 				"10.0.0.21:80",
 			},
-			"default/coffee-svc-v1:80": []string{
+			"default/coffee-svc-v1:80": {
 				"10.0.0.30:80",
 			},
-			"default/coffee-svc-v2:80": []string{
+			"default/coffee-svc-v2:80": {
 				"10.0.0.31:80",
 			},
 		},
@@ -771,6 +771,7 @@ func TestGenerateUpstream(t *testing.T) {
 	cfgParams := ConfigParams{
 		LBMethod:    "random",
 		MaxFails:    1,
+		MaxConns:    0,
 		FailTimeout: "10s",
 		Keepalive:   21,
 	}
@@ -781,6 +782,7 @@ func TestGenerateUpstream(t *testing.T) {
 			{
 				Address:     "192.168.10.10:8080",
 				MaxFails:    1,
+				MaxConns:    0,
 				FailTimeout: "10s",
 			},
 		},
@@ -1102,11 +1104,11 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 			},
 		},
 		Endpoints: map[string][]string{
-			"default/tea-svc:80": []string{
+			"default/tea-svc:80": {
 				"10.0.0.20:80",
 			},
-			"default/test-svc:80": []string{},
-			"default/coffee-svc:80": []string{
+			"default/test-svc:80": {},
+			"default/coffee-svc:80": {
 				"10.0.0.30:80",
 			},
 		},
@@ -1137,11 +1139,11 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 	}
 
 	expected := map[string][]string{
-		"vs_default_cafe_tea": []string{
+		"vs_default_cafe_tea": {
 			"10.0.0.20:80",
 		},
-		"vs_default_cafe_test": []string{},
-		"vs_default_cafe_vsr_default_coffee_coffee": []string{
+		"vs_default_cafe_test": {},
+		"vs_default_cafe_vsr_default_coffee_coffee": {
 			"10.0.0.30:80",
 		},
 	}

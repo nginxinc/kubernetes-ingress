@@ -7,24 +7,24 @@ This document is the reference documentation for the resources. To see additiona
 **Feature Status**: The VirtualServer and VirtualServerRoute resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
 
 ## Contents
-- [VirtualServer and VirtualServerRoute Resources](#VirtualServer-and-VirtualServerRoute-Resources)
-  - [Contents](#Contents)
-  - [Prerequisites](#Prerequisites)
-  - [VirtualServer Specification](#VirtualServer-Specification)
-    - [VirtualServer.TLS](#VirtualServerTLS)
-    - [VirtualServer.Route](#VirtualServerRoute)
-  - [VirtualServerRoute Specification](#VirtualServerRoute-Specification)
-    - [VirtualServerRoute.Subroute](#VirtualServerRouteSubroute)
-  - [Common Parts of the VirtualServer and VirtualServerRoute](#Common-Parts-of-the-VirtualServer-and-VirtualServerRoute)
-    - [Upstream](#Upstream)
-    - [Upstream.TLS](#UpstreamTLS)
-    - [Split](#Split)
-    - [Rules](#Rules)
-    - [Condition](#Condition)
-    - [Match](#Match)
-  - [Using VirtualServer and VirtualServerRoute](#Using-VirtualServer-and-VirtualServerRoute)
-    - [Validation](#Validation)
-  - [Customization via ConfigMap](#Customization-via-ConfigMap)
+- [VirtualServer and VirtualServerRoute Resources](#virtualserver-and-virtualserverroute-resources)
+  - [Contents](#contents)
+  - [Prerequisites](#prerequisites)
+  - [VirtualServer Specification](#virtualserver-specification)
+    - [VirtualServer.TLS](#virtualservertls)
+    - [VirtualServer.Route](#virtualserverroute)
+  - [VirtualServerRoute Specification](#virtualserverroute-specification)
+    - [VirtualServerRoute.Subroute](#virtualserverroutesubroute)
+  - [Common Parts of the VirtualServer and VirtualServerRoute](#common-parts-of-the-virtualserver-and-virtualserverroute)
+    - [Upstream](#upstream)
+    - [Upstream.TLS](#upstreamtls)
+    - [Split](#split)
+    - [Rules](#rules)
+    - [Condition](#condition)
+    - [Match](#match)
+  - [Using VirtualServer and VirtualServerRoute](#using-virtualserver-and-virtualserverroute)
+    - [Validation](#validation)
+  - [Customization via ConfigMap](#customization-via-configmap)
 
 ## Prerequisites
 
@@ -180,6 +180,7 @@ port: 80
 lb-method: round_robin
 fail-timeout: 10s
 max-fails: 1
+max-conns: 32
 keepalive: 32
 connect-timeout: 30s
 read-timeout: 30s
@@ -199,6 +200,7 @@ tls:
 | `lb-method` | The load [balancing method](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method). To use the round-robin method, specify `round_robin`. The default is specified in the `lb-method` ConfigMap key. | `string` | No |
 | `fail-timeout` | The time during which the specified number of unsuccessful attempts to communicate with an upstream server should happen to consider the server unavailable. See the [fail_timeout](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#fail_timeout) parameter of the server directive. The default is set in the `fail-timeout` ConfigMap key. | `string` | No |
 | `max-fails` | The number of unsuccessful attempts to communicate with an upstream server that should happen in the duration set by the `fail-timeout` to consider the server unavailable. See the [max_fails](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails) parameter of the server directive. The default is set in the `max-fails` ConfgMap key. | `int` | No |
+| `max-conns` | The maximum number of simultaneous active connections to an upstream server. See the [max_conns](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_conns) parameter of the server directive. By default there is no limit. Note: if keepalive connections are enabled, the total number of active and idle keepalive connections to an upstream server may exceed the `max_conns` value. | `int` | No |
 | `keepalive` | Configures the cache for connections to upstream servers. The value `0` disables the cache. See the [keepalive](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive) directive. The default is set in the `keepalive` ConfigMap key. | `int` | No |
 | `connect-timeout` | The timeout for establishing a connection with an upstream server. See the [proxy_connect_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout) directive. The default is specified in the `proxy-connect-timeout` ConfigMap key. | `string` | No |
 | `read-timeout` | The timeout for reading a response from an upstream server. See the [proxy_read_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout) directive.  The default is specified in the `proxy-read-timeout` ConfigMap key. | `string` | No |

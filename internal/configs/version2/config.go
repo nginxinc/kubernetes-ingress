@@ -20,6 +20,7 @@ type Upstream struct {
 type UpstreamServer struct {
 	Address     string
 	MaxFails    int
+	MaxConns    int
 	FailTimeout string
 }
 

@@ -14,6 +14,7 @@ var virtualServerCfg = VirtualServerConfig{
 					Address:     "10.0.0.20:8001",
 					MaxFails:    5,
 					FailTimeout: "10s",
+					MaxConns:    31,
 				},
 			},
 			LBMethod:  "random",

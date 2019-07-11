@@ -31,6 +31,7 @@ type Upstream struct {
 	LBMethod                 string      `json:"lb-method"`
 	FailTimeout              string      `json:"fail-timeout"`
 	MaxFails                 *int        `json:"max-fails"`
+	MaxConns                 *int        `json:"max-conns"`
 	Keepalive                *int        `json:"keepalive"`
 	ProxyConnectTimeout      string      `json:"connect-timeout"`
 	ProxyReadTimeout         string      `json:"read-timeout"`

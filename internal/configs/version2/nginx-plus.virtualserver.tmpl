@@ -5,7 +5,7 @@ upstream {{ $u.Name }} {
     {{ if $u.LBMethod }}{{ $u.LBMethod }};{{ end }}
 
     {{ range $s := $u.Servers }}
-    server {{ $s.Address }} max_fails={{ $s.MaxFails }} fail_timeout={{ $s.FailTimeout }};
+    server {{ $s.Address }} max_fails={{ $s.MaxFails }} fail_timeout={{ $s.FailTimeout }} max_conns={{ $s.MaxConns }};
     {{ end }}
 
     {{ if $u.Keepalive }}

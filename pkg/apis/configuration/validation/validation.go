@@ -149,6 +149,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		allErrs = append(allErrs, validateUpstreamLBMethod(u.LBMethod, idxPath.Child("lb-method"), isPlus)...)
 		allErrs = append(allErrs, validateTime(u.FailTimeout, idxPath.Child("fail-timeout"))...)
 		allErrs = append(allErrs, validatePositiveIntOrZero(u.MaxFails, idxPath.Child("max-fails"))...)
+		allErrs = append(allErrs, validatePositiveIntOrZero(u.MaxConns, idxPath.Child("max-conns"))...)
 		allErrs = append(allErrs, validatePositiveIntOrZero(u.Keepalive, idxPath.Child("keepalive"))...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
