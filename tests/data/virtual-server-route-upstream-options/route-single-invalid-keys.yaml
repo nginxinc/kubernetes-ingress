@@ -11,6 +11,10 @@ spec:
     lb-method: "random two least_connn"
     max-fails: -10
     fail-timeout: "20 seconds"
+    connect-timeout: "1.5m"
+    read-timeout: "-16s"
+    send-timeout: "-0s"
+    keepalive: -10
   subroutes:
   - path: "/backend2"
     upstream: backend2

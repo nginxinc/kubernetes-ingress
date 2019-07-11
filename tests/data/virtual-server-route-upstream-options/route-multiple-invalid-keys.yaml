@@ -11,12 +11,20 @@ spec:
     lb-method: "} exit;"
     max-fails: -10
     fail-timeout: "20 seconds"
+    connect-timeout: "1.5m"
+    read-timeout: "-16s"
+    send-timeout: "s"
+    keepalive: -10
   - name: backend3
     service: backend3-svc
     port: 80
     lb-method: "123"
     max-fails: -10
     fail-timeout: "s"
+    connect-timeout: "-40s"
+    read-timeout: "1.2"
+    send-timeout: "ten"
+    keepalive: -24
   subroutes:
   - path: "/backends/backend1"
     upstream: backend1

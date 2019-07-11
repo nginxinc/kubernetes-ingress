@@ -202,18 +202,17 @@ def delete_v_s_route(custom_objects: CustomObjectsApi, name, namespace) -> None:
     print(f"VirtualServerRoute was removed with the name '{name}'")
 
 
-def generate_item_with_upstream_option(yaml_manifest, option, value) -> dict:
+def generate_item_with_upstream_options(yaml_manifest, options) -> dict:
     """
     Generate a VS/VSR item with an upstream option.
 
     Update all the upstreams in VS/VSR
     :param yaml_manifest: an absolute path to a file
-    :param option:
-    :param value:
+    :param options: dict
     :return: dict
     """
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     for upstream in dep['spec']['upstreams']:
-        upstream[option] = value
+        upstream.update(options)
     return dep
