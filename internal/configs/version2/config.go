@@ -2,10 +2,11 @@ package version2
 
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
-	Server       Server
-	Upstreams    []Upstream
-	SplitClients []SplitClient
-	Maps         []Map
+	Server        Server
+	Upstreams     []Upstream
+	SplitClients  []SplitClient
+	Maps          []Map
+	StatusMatches []StatusMatch
 }
 
 // Upstream defines an upstream.
@@ -37,6 +38,7 @@ type Server struct {
 	Snippets                              []string
 	InternalRedirectLocations             []InternalRedirectLocation
 	Locations                             []Location
+	HealthChecks                          []HealthCheck
 }
 
 // SSL defines SSL configuration for a server.
@@ -74,6 +76,23 @@ type SplitClient struct {
 	Distributions []Distribution
 }
 
+// HealthCheck defines a HealthCheck for an upstream in a Server.
+type HealthCheck struct {
+	Name                string
+	URI                 string
+	Interval            string
+	Jitter              string
+	Fails               int
+	Passes              int
+	Port                int
+	ProxyPass           string
+	ProxyConnectTimeout string
+	ProxyReadTimeout    string
+	ProxySendTimeout    string
+	Headers             map[string]string
+	Match               string
+}
+
 // Distribution maps weight to a value in a SplitClient.
 type Distribution struct {
 	Weight string
@@ -97,4 +116,10 @@ type Map struct {
 type Parameter struct {
 	Value  string
 	Result string
+}
+
+// StatusMatch defines a Match block for status codes.
+type StatusMatch struct {
+	Name string
+	Code string
 }

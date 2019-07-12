@@ -81,6 +81,92 @@ func (namer *variableNamer) GetNameForVariableForRulesRouteMainMap(rulesIndex in
 	return fmt.Sprintf("$vs_%s_rules_%d", namer.safeNsName, rulesIndex)
 }
 
+func newHealthCheckWithDefaults(upstream conf_v1alpha1.Upstream, upstreamName string, cfgParams *ConfigParams) *version2.HealthCheck {
+	return &version2.HealthCheck{
+		Name:                upstreamName,
+		URI:                 "/",
+		Interval:            "5s",
+		Jitter:              "0s",
+		Fails:               1,
+		Passes:              1,
+		Port:                int(upstream.Port),
+		ProxyPass:           fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream.TLS.Enable), upstreamName),
+		ProxyConnectTimeout: generateString(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
+		ProxyReadTimeout:    generateString(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),
+		ProxySendTimeout:    generateString(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
+		Headers:             make(map[string]string),
+	}
+}
+
+func generateHealthCheck(upstream conf_v1alpha1.Upstream, upstreamName string, cfgParams *ConfigParams) *version2.HealthCheck {
+	if upstream.HealthCheck == nil || !upstream.HealthCheck.Enable {
+		return nil
+	}
+
+	hc := newHealthCheckWithDefaults(upstream, upstreamName, cfgParams)
+
+	if upstream.HealthCheck.Path != "" {
+		hc.URI = upstream.HealthCheck.Path
+	}
+
+	if upstream.HealthCheck.Interval != "" {
+		hc.Interval = upstream.HealthCheck.Interval
+	}
+
+	if upstream.HealthCheck.Jitter != "" {
+		hc.Jitter = upstream.HealthCheck.Jitter
+	}
+
+	if upstream.HealthCheck.Fails > 0 {
+		hc.Fails = upstream.HealthCheck.Fails
+	}
+
+	if upstream.HealthCheck.Passes > 0 {
+		hc.Passes = upstream.HealthCheck.Passes
+	}
+
+	if upstream.HealthCheck.Port > 0 {
+		hc.Port = upstream.HealthCheck.Port
+	}
+
+	if upstream.HealthCheck.ConnectTimeout != "" {
+		hc.ProxyConnectTimeout = upstream.HealthCheck.ConnectTimeout
+	}
+
+	if upstream.HealthCheck.ReadTimeout != "" {
+		hc.ProxyReadTimeout = upstream.HealthCheck.ReadTimeout
+	}
+
+	if upstream.HealthCheck.SendTimeout != "" {
+		hc.ProxySendTimeout = upstream.HealthCheck.SendTimeout
+	}
+
+	for _, h := range upstream.HealthCheck.Headers {
+		hc.Headers[h.Name] = h.Value
+	}
+
+	if upstream.HealthCheck.TLS != nil {
+		hc.ProxyPass = fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream.HealthCheck.TLS.Enable), upstreamName)
+	}
+
+	if upstream.HealthCheck.StatusMatch != "" {
+		hc.Match = generateStatusMatchName(upstreamName)
+	}
+
+	return hc
+}
+
+func generateStatusMatchName(upstreamName string) string {
+	return fmt.Sprintf("%s_match", upstreamName)
+}
+
+func generateUpstreamStatusMatch(upstreamName string, status string) version2.StatusMatch {
+	return version2.StatusMatch{
+		Name: generateStatusMatchName(upstreamName),
+		Code: status,
+	}
+}
+
 func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileName string, baseCfgParams *ConfigParams, isPlus bool) version2.VirtualServerConfig {
 	ssl := generateSSLConfig(virtualServerEx.VirtualServer.Spec.TLS, tlsPemFileName, baseCfgParams)
 
@@ -91,6 +177,8 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 	virtualServerUpstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
 
 	var upstreams []version2.Upstream
+	var statusMatches []version2.StatusMatch
+	var healthChecks []version2.HealthCheck
 
 	// generate upstreams for VirtualServer
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
@@ -99,6 +187,13 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 		ups := generateUpstream(upstreamName, u, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
 		upstreams = append(upstreams, ups)
 		crUpstreams[upstreamName] = u
+
+		if hc := generateHealthCheck(u, upstreamName, baseCfgParams); hc != nil {
+			healthChecks = append(healthChecks, *hc)
+			if u.HealthCheck.StatusMatch != "" {
+				statusMatches = append(statusMatches, generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch))
+			}
+		}
 	}
 	// generate upstreams for each VirtualServerRoute
 	for _, vsr := range virtualServerEx.VirtualServerRoutes {
@@ -109,6 +204,13 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 			ups := generateUpstream(upstreamName, u, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
 			upstreams = append(upstreams, ups)
 			crUpstreams[upstreamName] = u
+
+			if hc := generateHealthCheck(u, upstreamName, baseCfgParams); hc != nil {
+				healthChecks = append(healthChecks, *hc)
+				if u.HealthCheck.StatusMatch != "" {
+					statusMatches = append(statusMatches, generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch))
+				}
+			}
 		}
 	}
 
@@ -179,9 +281,10 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 	}
 
 	return version2.VirtualServerConfig{
-		Upstreams:    upstreams,
-		SplitClients: splitClients,
-		Maps:         maps,
+		Upstreams:     upstreams,
+		SplitClients:  splitClients,
+		Maps:          maps,
+		StatusMatches: statusMatches,
 		Server: version2.Server{
 			ServerName:                            virtualServerEx.VirtualServer.Spec.Host,
 			ProxyProtocol:                         baseCfgParams.ProxyProtocol,
@@ -194,6 +297,7 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 			Snippets:                              baseCfgParams.ServerSnippets,
 			InternalRedirectLocations:             internalRedirectLocations,
 			Locations:                             locations,
+			HealthChecks:                          healthChecks,
 		},
 	}
 }
@@ -252,8 +356,8 @@ func upstreamHasKeepalive(upstream conf_v1alpha1.Upstream, cfgParams *ConfigPara
 	return cfgParams.Keepalive != 0
 }
 
-func generateProxyPassProtocol(upstream conf_v1alpha1.Upstream) string {
-	if upstream.TLS.Enable {
+func generateProxyPassProtocol(enableTLS bool) string {
+	if enableTLS {
 		return "https"
 	}
 	return "http"
@@ -278,7 +382,7 @@ func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.U
 		ProxyBuffering:           cfgParams.ProxyBuffering,
 		ProxyBuffers:             cfgParams.ProxyBuffers,
 		ProxyBufferSize:          cfgParams.ProxyBufferSize,
-		ProxyPass:                fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream), upstreamName),
+		ProxyPass:                fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream.TLS.Enable), upstreamName),
 		ProxyNextUpstream:        generateString(upstream.ProxyNextUpstream, "error timeout"),
 		ProxyNextUpstreamTimeout: generateString(upstream.ProxyNextUpstreamTimeout, "0s"),
 		ProxyNextUpstreamTries:   upstream.ProxyNextUpstreamTries,

@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -920,9 +921,9 @@ func TestGenerateProxyPassProtocol(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateProxyPassProtocol(test.upstream)
+		result := generateProxyPassProtocol(test.upstream.TLS.Enable)
 		if result != test.expected {
-			t.Errorf("generateProxyPassProtocol() returned %v but expected %v", result, test.expected)
+			t.Errorf("generateProxyPassProtocol(%v) returned %v but expected %v", test.upstream.TLS.Enable, result, test.expected)
 		}
 	}
 }
@@ -1672,6 +1673,159 @@ func TestUpstreamHasKeepalive(t *testing.T) {
 		result := upstreamHasKeepalive(test.upstream, test.cfgParams)
 		if result != test.expected {
 			t.Errorf("upstreamHasKeepalive() returned %v, but expected %v for the case of %v", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestNewHealthCheckWithDefaults(t *testing.T) {
+	upstreamName := "test-upstream"
+	baseCfgParams := &ConfigParams{
+		ProxySendTimeout:    "5s",
+		ProxyReadTimeout:    "5s",
+		ProxyConnectTimeout: "5s",
+	}
+	expected := &version2.HealthCheck{
+		Name:                upstreamName,
+		ProxySendTimeout:    "5s",
+		ProxyReadTimeout:    "5s",
+		ProxyConnectTimeout: "5s",
+		ProxyPass:           fmt.Sprintf("http://%v", upstreamName),
+		URI:                 "/",
+		Interval:            "5s",
+		Jitter:              "0s",
+		Fails:               1,
+		Passes:              1,
+		Headers:             make(map[string]string),
+	}
+
+	result := newHealthCheckWithDefaults(conf_v1alpha1.Upstream{}, upstreamName, baseCfgParams)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("newHealthCheckWithDefaults returned \n%v but expected \n%v", result, expected)
+	}
+}
+
+func TestGenerateHealthCheck(t *testing.T) {
+	upstreamName := "test-upstream"
+	tests := []struct {
+		upstream     conf_v1alpha1.Upstream
+		upstreamName string
+		expected     *version2.HealthCheck
+		msg          string
+	}{
+		{
+
+			upstream: conf_v1alpha1.Upstream{
+				HealthCheck: &conf_v1alpha1.HealthCheck{
+					Enable:         true,
+					Path:           "/healthz",
+					Interval:       "5s",
+					Jitter:         "2s",
+					Fails:          3,
+					Passes:         2,
+					Port:           8080,
+					ConnectTimeout: "20s",
+					SendTimeout:    "20s",
+					ReadTimeout:    "20s",
+					Headers: []conf_v1alpha1.Header{
+						{
+							Name:  "Host",
+							Value: "my.service",
+						},
+						{
+							Name:  "User-Agent",
+							Value: "nginx",
+						},
+					},
+					StatusMatch: "! 500",
+				},
+			},
+			upstreamName: upstreamName,
+			expected: &version2.HealthCheck{
+				Name:                upstreamName,
+				ProxyConnectTimeout: "20s",
+				ProxySendTimeout:    "20s",
+				ProxyReadTimeout:    "20s",
+				ProxyPass:           fmt.Sprintf("http://%v", upstreamName),
+				URI:                 "/healthz",
+				Interval:            "5s",
+				Jitter:              "2s",
+				Fails:               3,
+				Passes:              2,
+				Port:                8080,
+				Headers: map[string]string{
+					"Host":       "my.service",
+					"User-Agent": "nginx",
+				},
+				Match: fmt.Sprintf("%v_match", upstreamName),
+			},
+			msg: "HealthCheck with changed parameters",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{
+				HealthCheck: &conf_v1alpha1.HealthCheck{
+					Enable: true,
+				},
+				ProxyConnectTimeout: "30s",
+				ProxyReadTimeout:    "30s",
+				ProxySendTimeout:    "30s",
+			},
+			upstreamName: upstreamName,
+			expected: &version2.HealthCheck{
+				Name:                upstreamName,
+				ProxyConnectTimeout: "30s",
+				ProxyReadTimeout:    "30s",
+				ProxySendTimeout:    "30s",
+				ProxyPass:           fmt.Sprintf("http://%v", upstreamName),
+				URI:                 "/",
+				Interval:            "5s",
+				Jitter:              "0s",
+				Fails:               1,
+				Passes:              1,
+				Headers:             make(map[string]string),
+			},
+			msg: "HealthCheck with default parameters from Upstream",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{
+				HealthCheck: &conf_v1alpha1.HealthCheck{
+					Enable: true,
+				},
+			},
+			upstreamName: upstreamName,
+			expected: &version2.HealthCheck{
+				Name:                upstreamName,
+				ProxyConnectTimeout: "5s",
+				ProxyReadTimeout:    "5s",
+				ProxySendTimeout:    "5s",
+				ProxyPass:           fmt.Sprintf("http://%v", upstreamName),
+				URI:                 "/",
+				Interval:            "5s",
+				Jitter:              "0s",
+				Fails:               1,
+				Passes:              1,
+				Headers:             make(map[string]string),
+			},
+			msg: "HealthCheck with default parameters from ConfigMap (not defined in Upstream)",
+		},
+		{
+			upstream:     conf_v1alpha1.Upstream{},
+			upstreamName: upstreamName,
+			expected:     nil,
+			msg:          "HealthCheck not enabled",
+		},
+	}
+
+	baseCfgParams := &ConfigParams{
+		ProxySendTimeout:    "5s",
+		ProxyReadTimeout:    "5s",
+		ProxyConnectTimeout: "5s",
+	}
+
+	for _, test := range tests {
+		result := generateHealthCheck(test.upstream, test.upstreamName, baseCfgParams)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateHealthCheck returned \n%v but expected \n%v \n for case: %v", result, test.expected, test.msg)
 		}
 	}
 }

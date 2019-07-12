@@ -25,26 +25,50 @@ type VirtualServerSpec struct {
 
 // Upstream defines an upstream.
 type Upstream struct {
-	Name                     string      `json:"name"`
-	Service                  string      `json:"service"`
-	Port                     uint16      `json:"port"`
-	LBMethod                 string      `json:"lb-method"`
-	FailTimeout              string      `json:"fail-timeout"`
-	MaxFails                 *int        `json:"max-fails"`
-	MaxConns                 *int        `json:"max-conns"`
-	Keepalive                *int        `json:"keepalive"`
-	ProxyConnectTimeout      string      `json:"connect-timeout"`
-	ProxyReadTimeout         string      `json:"read-timeout"`
-	ProxySendTimeout         string      `json:"send-timeout"`
-	ProxyNextUpstream        string      `json:"next-upstream"`
-	ProxyNextUpstreamTimeout string      `json:"next-upstream-timeout"`
-	ProxyNextUpstreamTries   int         `json:"next-upstream-tries"`
-	TLS                      UpstreamTLS `json:"tls"`
+	Name                     string       `json:"name"`
+	Service                  string       `json:"service"`
+	Port                     uint16       `json:"port"`
+	LBMethod                 string       `json:"lb-method"`
+	FailTimeout              string       `json:"fail-timeout"`
+	MaxFails                 *int         `json:"max-fails"`
+	MaxConns                 *int         `json:"max-conns"`
+	Keepalive                *int         `json:"keepalive"`
+	ProxyConnectTimeout      string       `json:"connect-timeout"`
+	ProxyReadTimeout         string       `json:"read-timeout"`
+	ProxySendTimeout         string       `json:"send-timeout"`
+	ProxyNextUpstream        string       `json:"next-upstream"`
+	ProxyNextUpstreamTimeout string       `json:"next-upstream-timeout"`
+	ProxyNextUpstreamTries   int          `json:"next-upstream-tries"`
+	TLS                      UpstreamTLS  `json:"tls"`
+	HealthCheck              *HealthCheck `json:"healthCheck"`
 }
 
 // UpstreamTLS defines a TLS configuration for an Upstream.
 type UpstreamTLS struct {
 	Enable bool `json:"enable"`
+}
+
+// HealthCheck defines the parameters for active Upstream HealthChecks.
+type HealthCheck struct {
+	Enable         bool         `json:"enable"`
+	Path           string       `json:"path"`
+	Interval       string       `json:"interval"`
+	Jitter         string       `json:"jitter"`
+	Fails          int          `json:"fails"`
+	Passes         int          `json:"passes"`
+	Port           int          `json:"port"`
+	TLS            *UpstreamTLS `json:"tls"`
+	ConnectTimeout string       `json:"connect-timeout"`
+	ReadTimeout    string       `json:"read-timeout"`
+	SendTimeout    string       `json:"send-timeout"`
+	Headers        []Header     `json:"headers"`
+	StatusMatch    string       `json:"statusMatch"`
+}
+
+// Header defines an HTTP Header.
+type Header struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 // Route defines a route.

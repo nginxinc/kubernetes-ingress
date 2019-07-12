@@ -7,24 +7,26 @@ This document is the reference documentation for the resources. To see additiona
 **Feature Status**: The VirtualServer and VirtualServerRoute resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
 
 ## Contents
-- [VirtualServer and VirtualServerRoute Resources](#virtualserver-and-virtualserverroute-resources)
-  - [Contents](#contents)
-  - [Prerequisites](#prerequisites)
-  - [VirtualServer Specification](#virtualserver-specification)
-    - [VirtualServer.TLS](#virtualservertls)
-    - [VirtualServer.Route](#virtualserverroute)
-  - [VirtualServerRoute Specification](#virtualserverroute-specification)
-    - [VirtualServerRoute.Subroute](#virtualserverroutesubroute)
-  - [Common Parts of the VirtualServer and VirtualServerRoute](#common-parts-of-the-virtualserver-and-virtualserverroute)
-    - [Upstream](#upstream)
-    - [Upstream.TLS](#upstreamtls)
-    - [Split](#split)
-    - [Rules](#rules)
-    - [Condition](#condition)
-    - [Match](#match)
-  - [Using VirtualServer and VirtualServerRoute](#using-virtualserver-and-virtualserverroute)
-    - [Validation](#validation)
-  - [Customization via ConfigMap](#customization-via-configmap)
+- [VirtualServer and VirtualServerRoute Resources](#VirtualServer-and-VirtualServerRoute-Resources)
+  - [Contents](#Contents)
+  - [Prerequisites](#Prerequisites)
+  - [VirtualServer Specification](#VirtualServer-Specification)
+    - [VirtualServer.TLS](#VirtualServerTLS)
+    - [VirtualServer.Route](#VirtualServerRoute)
+  - [VirtualServerRoute Specification](#VirtualServerRoute-Specification)
+    - [VirtualServerRoute.Subroute](#VirtualServerRouteSubroute)
+  - [Common Parts of the VirtualServer and VirtualServerRoute](#Common-Parts-of-the-VirtualServer-and-VirtualServerRoute)
+    - [Upstream](#Upstream)
+    - [Upstream.TLS](#UpstreamTLS)
+    - [Upstream.Healthcheck](#UpstreamHealthcheck)
+    - [Header](#Header)
+    - [Split](#Split)
+    - [Rules](#Rules)
+    - [Condition](#Condition)
+    - [Match](#Match)
+  - [Using VirtualServer and VirtualServerRoute](#Using-VirtualServer-and-VirtualServerRoute)
+    - [Validation](#Validation)
+  - [Customization via ConfigMap](#Customization-via-ConfigMap)
 
 ## Prerequisites
 
@@ -209,11 +211,67 @@ tls:
 | `next-upstream-timeout` | The time during which a request can be passed to the next upstream server. See the [proxy_next_upstream_timeout](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_timeout) directive. The `0` value turns off the time limit. The default is `0`. | `string` | No |
 | `next-upstream-tries` | The number of possible tries for passing a request to the next upstream server. See the [proxy_next_upstream_tries](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_tries) directive. The `0` value turns off this limit. The default is `0`. | `int` | No |
 | `tls` | The TLS configuration for the Upstream. | [`tls`](#UpstreamTLS) | No |
+| `healthCheck` | The health check configuration for the Upstream. See the [health_check](http://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [`healthcheck`](#UpstreamHealthcheck) | No |
 
 ### Upstream.TLS
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
 | `enable` | Enables HTTPS for requests to upstream servers. The default is `False`, meaning that HTTP will be used. | `boolean` | No |
+
+### Upstream.Healthcheck
+
+The Healthcheck defines an [active health check](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/). In the example below we enable a health check for an upstream and configure all the available parameters:
+
+```yaml
+name: tea
+service: tea-svc
+port: 80
+healthCheck:
+  enable: true
+  path: /healthz
+  interval: 20s
+  jitter: 3s
+  fails: 5
+  passes: 5
+  port: 8080
+  tls:
+    enable: true
+  connect-timeout: 10s
+  read-timeout: 10s
+  send-timeout: 10s
+  headers:
+  - name: Host
+    value: my.service
+  statusMatch: "! 500"
+```
+
+| Field | Description | Type | Required |
+| ----- | ----------- | ---- | -------- |
+| `enable` | Enables a health check for an upstream server. The default is `false`. | `boolean` | No |
+| `path`  | The path used for health check requests. The default is `/`. | `string` | No |
+| `interval` | The interval between two consecutive health checks. The default is `5s`. | `string` | No |
+| `jitter` | The time within which each health check will be randomly delayed. By default, there is no delay. | `string` | No |
+| `fails` | The number of consecutive failed health checks of a particular upstream server after which this server will be considered unhealthy. The default is `1`. | `integer` | No |
+| `passes` | The number of consecutive passed health checks of a particular upstream server after which the server will be considered healthy. The default is `1`. | `integer` | No |
+| `port` | The port used for health check requests. By default, the port of the upstream is used. Note: in contrast with the port of the upstream, this port is not a service port, but a port of a pod. | `integer` | No |
+| `tls` | The TLS configuration used for health check requests. By default, the `tls` field of the upstream is used. | [`upstream.tls`](#UpstreamTLS) | No |
+| `connect-timeout` | The timeout for establishing a connection with an upstream server. By default, the `connect-timeout` of the upstream is used. | `string` | No |
+| `read-timeout` | The timeout for reading a response from an upstream server. By default, the `read-timeout` of the upstream is used. | `string` | No |
+| `send-timeout` | The timeout for transmitting a request to an upstream server. By default, the `send-timeout` of the upstream is used. | `string` | No |
+| `headers` | The request headers used for health check requests. NGINX Plus always sets the `Host`, `User-Agent` and `Connection` headers for health check requests. | [`[]header`](#Header) | No |
+| `statusMatch` | The expected response status codes of a health check.  By default, the response should have status code 2xx or 3xx. Examples: `“200”`, `“! 500”`, `"301-303 307"`. See the documentation of the [match](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html?#match) directive. | `string` | No |
+
+### Header
+The header defines an HTTP Header:
+```yaml
+name: Host
+value: example.com
+```
+
+| Field | Description | Type | Required |
+| ----- | ----------- | ---- | -------- |
+| `name` | The name of the header. | `string` | Yes |
+| `value` | The value of the header. | `string` | No |
 
 ### Split
 

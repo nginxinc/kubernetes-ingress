@@ -1566,7 +1566,7 @@ func createPointerFromInt(n int) *int {
 	return &n
 }
 
-func TestValidatePositiveIntOrZero(t *testing.T) {
+func TestValidatePositiveIntOrZeroFromPointer(t *testing.T) {
 	tests := []struct {
 		number *int
 		msg    string
@@ -1586,20 +1586,52 @@ func TestValidatePositiveIntOrZero(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		allErrs := validatePositiveIntOrZeroFromPointer(test.number, field.NewPath("int-field"))
+
+		if len(allErrs) != 0 {
+			t.Errorf("validatePositiveIntOrZeroFromPointer returned errors for case: %v", test.msg)
+		}
+	}
+}
+
+func TestValidatePositiveIntOrZeroFromPointerFails(t *testing.T) {
+	number := createPointerFromInt(-1)
+	allErrs := validatePositiveIntOrZeroFromPointer(number, field.NewPath("int-field"))
+
+	if len(allErrs) == 0 {
+		t.Error("validatePositiveIntOrZeroFromPointer returned no errors for case: invalid (-1)")
+	}
+}
+
+func TestValidatePositiveIntOrZero(t *testing.T) {
+	tests := []struct {
+		number int
+		msg    string
+	}{
+		{
+			number: 0,
+			msg:    "valid (0)",
+		},
+		{
+			number: 1,
+			msg:    "valid (1)",
+		},
+	}
+
+	for _, test := range tests {
 		allErrs := validatePositiveIntOrZero(test.number, field.NewPath("int-field"))
 
 		if len(allErrs) != 0 {
-			t.Errorf("validatePositiveInt returned errors for case: %v", test.msg)
+			t.Errorf("validatePositiveIntOrZero returned errors for case: %v", test.msg)
 		}
 	}
 }
 
 func TestValidatePositiveIntOrZeroFails(t *testing.T) {
-	number := createPointerFromInt(-1)
-	allErrs := validatePositiveIntOrZero(number, field.NewPath("int-field"))
+	allErrs := validatePositiveIntOrZero(-1, field.NewPath("int-field"))
 
 	if len(allErrs) == 0 {
-		t.Error("validatePositiveInt returned no errors for case: invalid (-1)")
+		t.Error("validatePositiveIntOrZero returned no errors for case: invalid (-1)")
 	}
 }
 
@@ -1618,5 +1650,228 @@ func TestValidateTimeFails(t *testing.T) {
 
 	if len(allErrs) == 0 {
 		t.Errorf("validateTime returned no errors for invalid input %v", time)
+	}
+}
+
+func TestValidateUpstreamHealthCheck(t *testing.T) {
+	hc := &v1alpha1.HealthCheck{
+		Enable:   true,
+		Path:     "/healthz",
+		Interval: "4s",
+		Jitter:   "2s",
+		Fails:    3,
+		Passes:   2,
+		Port:     8080,
+		TLS: &v1alpha1.UpstreamTLS{
+			Enable: true,
+		},
+		ConnectTimeout: "1s",
+		ReadTimeout:    "1s",
+		SendTimeout:    "1s",
+		Headers: []v1alpha1.Header{
+			{
+				Name:  "Host",
+				Value: "my.service",
+			},
+		},
+		StatusMatch: "! 500",
+	}
+
+	allErrs := validateUpstreamHealthCheck(hc, field.NewPath("healthCheck"))
+
+	if len(allErrs) != 0 {
+		t.Errorf("validateUpstreamHealthCheck() returned errors for valid input %v", hc)
+	}
+}
+
+func TestValidateUpstreamHealthCheckFails(t *testing.T) {
+	hc := &v1alpha1.HealthCheck{
+		Enable: true,
+		Path:   "/healthz//;",
+	}
+
+	allErrs := validateUpstreamHealthCheck(hc, field.NewPath("healthCheck"))
+
+	if len(allErrs) == 0 {
+		t.Errorf("validateUpstreamHealthCheck() returned no errors for invalid input %v", hc)
+	}
+}
+
+func TestValidateStatusMatch(t *testing.T) {
+	tests := []struct {
+		status string
+	}{
+		{
+			status: "200",
+		},
+		{
+			status: "! 500",
+		},
+		{
+			status: "200 204",
+		},
+		{
+			status: "! 301 302",
+		},
+		{
+			status: "200-399",
+		},
+		{
+			status: "! 400-599",
+		},
+		{
+			status: "301-303 307",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateStatusMatch(test.status, field.NewPath("statusMatch"))
+
+		if len(allErrs) != 0 {
+			t.Errorf("validateStatusMatch() returned errors %v for valid input %v", allErrs, test.status)
+		}
+	}
+}
+
+func TestValidateStatusMatchFails(t *testing.T) {
+	tests := []struct {
+		status string
+		msg    string
+	}{
+		{
+			status: "qwe",
+			msg:    "Invalid: no digits",
+		},
+		{
+			status: "!",
+			msg:    "Invalid: `!` character only",
+		},
+		{
+			status: "!500",
+			msg:    "Invalid: no space after !",
+		},
+		{
+			status: "0",
+			msg:    "Invalid: status out of range (below 100)",
+		},
+		{
+			status: "1000",
+			msg:    "Invalid: status out of range (above 999)",
+		},
+		{
+			status: "20-600",
+			msg:    "Invalid: code in range is out of range",
+		},
+		{
+			status: "! 200 ! 500",
+			msg:    "Invalid: 2 exclamation symbols",
+		},
+		{
+			status: "200 - 500",
+			msg:    "Invalid: range with space around `-`",
+		},
+		{
+			status: "500-200",
+			msg:    "Invalid: range must be min < max",
+		},
+		{
+			status: "200-200-400",
+			msg:    "Invalid: range with more than 2 numbers",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateStatusMatch(test.status, field.NewPath("statusMatch"))
+
+		if len(allErrs) == 0 {
+			t.Errorf("validateStatusMatch() returned no errors for case %v", test.msg)
+		}
+	}
+}
+
+func TestValidateHeader(t *testing.T) {
+	tests := []struct {
+		header v1alpha1.Header
+		msg    string
+	}{
+		{
+			header: v1alpha1.Header{
+				Name:  "Host",
+				Value: "my.service",
+			},
+		},
+		{
+			header: v1alpha1.Header{
+				Name:  "Host",
+				Value: `\"my.service\"`,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateHeader(test.header, field.NewPath("headers"))
+
+		if len(allErrs) != 0 {
+			t.Errorf("validateHeader() returned errors %v for valid input %v", allErrs, test.header)
+		}
+	}
+}
+
+func TestValidateHeaderFails(t *testing.T) {
+	tests := []struct {
+		header v1alpha1.Header
+		msg    string
+	}{
+		{
+			header: v1alpha1.Header{
+				Name:  "12378 qwe ",
+				Value: "my.service",
+			},
+			msg: "Invalid name with spaces",
+		},
+		{
+			header: v1alpha1.Header{
+				Name:  "Host",
+				Value: `"my.service`,
+			},
+			msg: `Invalid value with unescaped '"'`,
+		},
+		{
+			header: v1alpha1.Header{
+				Name:  "Host",
+				Value: `my.service\`,
+			},
+			msg: "Invalid value with ending '\\'",
+		},
+		{
+			header: v1alpha1.Header{
+				Name:  "Host",
+				Value: "$my.service",
+			},
+			msg: "Invalid value with '$' character",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateHeader(test.header, field.NewPath("headers"))
+
+		if len(allErrs) == 0 {
+			t.Errorf("validateHeader() returned no errors for case: %v", test.msg)
+		}
+	}
+}
+
+func TestValidateIntFromString(t *testing.T) {
+	input := "404"
+	_, errMsg := validateIntFromString(input)
+
+	if errMsg != "" {
+		t.Errorf("validateIntFromString() returned errors %v for valid input %v", errMsg, input)
+	}
+}
+
+func TestValidateIntFromStringFails(t *testing.T) {
+	input := "not a number"
+	_, errMsg := validateIntFromString(input)
+
+	if errMsg == "" {
+		t.Errorf("validateIntFromString() returned no errors for invalid input %v", input)
 	}
 }
