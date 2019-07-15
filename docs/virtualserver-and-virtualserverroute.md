@@ -17,6 +17,7 @@ This document is the reference documentation for the resources. To see additiona
     - [VirtualServerRoute.Subroute](#VirtualServerRouteSubroute)
   - [Common Parts of the VirtualServer and VirtualServerRoute](#Common-Parts-of-the-VirtualServer-and-VirtualServerRoute)
     - [Upstream](#Upstream)
+    - [Upstream.TLS](#UpstreamTLS)
     - [Split](#Split)
     - [Rules](#Rules)
     - [Condition](#Condition)
@@ -183,6 +184,8 @@ keepalive: 32
 connect-timeout: 30s
 read-timeout: 30s
 send-timeout: 30s
+tls:
+  enable: True
 ```
 
 | Field | Description | Type | Required |
@@ -197,6 +200,12 @@ send-timeout: 30s
 `connect-timeout` | The timeout for establishing a connection with an upstream server. See the [proxy_connect_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout) directive. The default is specified in the `proxy-connect-timeout` ConfigMap key. | `string` | No
 `read-timeout` | The timeout for reading a response from an upstream server. See the [proxy_read_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout) directive.  The default is specified in the `proxy-read-timeout` ConfigMap key. | `string` | No
 `send-timeout` | The timeout for transmitting a request to an upstream server. See the [proxy_send_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout) directive. The default is specified in the `proxy-send-timeout` ConfigMap key. | `string` | No
+| `tls` | The TLS configuration for the Upstream. | [`tls`](#UpstreamTLS) | No |
+
+### Upstream.TLS
+| Field | Description | Type | Required |
+| ----- | ----------- | ---- | -------- |
+| `enable` | Enables HTTPS for requests to upstream servers. The default is `False`, meaning that HTTP will be used. | `boolean` | No |
 
 ### Split
 

@@ -868,6 +868,33 @@ func TestGenerateUpstreamForZeroEndpoints(t *testing.T) {
 	}
 }
 
+func TestGenerateProxyPassProtocol(t *testing.T) {
+	tests := []struct {
+		upstream conf_v1alpha1.Upstream
+		expected string
+	}{
+		{
+			upstream: conf_v1alpha1.Upstream{},
+			expected: "http",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{
+				TLS: conf_v1alpha1.UpstreamTLS{
+					Enable: true,
+				},
+			},
+			expected: "https",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateProxyPassProtocol(test.upstream)
+		if result != test.expected {
+			t.Errorf("generateProxyPassProtocol() returned %v but expected %v", result, test.expected)
+		}
+	}
+}
+
 func TestGenerateLocation(t *testing.T) {
 	cfgParams := ConfigParams{
 		ProxyConnectTimeout:  "30s",

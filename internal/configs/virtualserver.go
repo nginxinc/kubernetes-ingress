@@ -257,6 +257,13 @@ func upstreamHasKeepalive(upstream conf_v1alpha1.Upstream, cfgParams *ConfigPara
 	return cfgParams.Keepalive != 0
 }
 
+func generateProxyPassProtocol(upstream conf_v1alpha1.Upstream) string {
+	if upstream.TLS.Enable {
+		return "https"
+	}
+	return "http"
+}
+
 func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) version2.Location {
 	return version2.Location{
 		Path:                 path,
@@ -269,7 +276,7 @@ func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.U
 		ProxyBuffering:       cfgParams.ProxyBuffering,
 		ProxyBuffers:         cfgParams.ProxyBuffers,
 		ProxyBufferSize:      cfgParams.ProxyBufferSize,
-		ProxyPass:            fmt.Sprintf("http://%v", upstreamName),
+		ProxyPass:            fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream), upstreamName),
 		HasKeepalive:         upstreamHasKeepalive(upstream, cfgParams),
 	}
 }
