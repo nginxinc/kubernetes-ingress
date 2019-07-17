@@ -119,6 +119,9 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
 
         proxy_pass {{ $l.ProxyPass }};
+        proxy_next_upstream {{ $l.ProxyNextUpstream }};
+        proxy_next_upstream_timeout {{ $l.ProxyNextUpstreamTimeout }};
+        proxy_next_upstream_tries {{ $l.ProxyNextUpstreamTries }};
     }
     {{ end }}
 }

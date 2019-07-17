@@ -49,18 +49,21 @@ type SSL struct {
 
 // Location defines a location.
 type Location struct {
-	Path                 string
-	Snippets             []string
-	ProxyConnectTimeout  string
-	ProxyReadTimeout     string
-	ProxySendTimeout     string
-	ClientMaxBodySize    string
-	ProxyMaxTempFileSize string
-	ProxyBuffering       bool
-	ProxyBuffers         string
-	ProxyBufferSize      string
-	ProxyPass            string
-	HasKeepalive         bool
+	Path                     string
+	Snippets                 []string
+	ProxyConnectTimeout      string
+	ProxyReadTimeout         string
+	ProxySendTimeout         string
+	ClientMaxBodySize        string
+	ProxyMaxTempFileSize     string
+	ProxyBuffering           bool
+	ProxyBuffers             string
+	ProxyBufferSize          string
+	ProxyPass                string
+	ProxyNextUpstream        string
+	ProxyNextUpstreamTimeout string
+	ProxyNextUpstreamTries   int
+	HasKeepalive             bool
 }
 
 // SplitClient defines a split_clients.

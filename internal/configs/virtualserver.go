@@ -265,20 +265,34 @@ func generateProxyPassProtocol(upstream conf_v1alpha1.Upstream) string {
 }
 
 func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) version2.Location {
-	return version2.Location{
-		Path:                 path,
-		Snippets:             cfgParams.LocationSnippets,
-		ProxyConnectTimeout:  generateTime(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
-		ProxyReadTimeout:     generateTime(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),
-		ProxySendTimeout:     generateTime(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
-		ClientMaxBodySize:    cfgParams.ClientMaxBodySize,
-		ProxyMaxTempFileSize: cfgParams.ProxyMaxTempFileSize,
-		ProxyBuffering:       cfgParams.ProxyBuffering,
-		ProxyBuffers:         cfgParams.ProxyBuffers,
-		ProxyBufferSize:      cfgParams.ProxyBufferSize,
-		ProxyPass:            fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream), upstreamName),
-		HasKeepalive:         upstreamHasKeepalive(upstream, cfgParams),
+	loc := version2.Location{
+		Path:                     path,
+		Snippets:                 cfgParams.LocationSnippets,
+		ProxyConnectTimeout:      generateTime(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
+		ProxyReadTimeout:         generateTime(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),
+		ProxySendTimeout:         generateTime(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
+		ClientMaxBodySize:        cfgParams.ClientMaxBodySize,
+		ProxyMaxTempFileSize:     cfgParams.ProxyMaxTempFileSize,
+		ProxyBuffering:           cfgParams.ProxyBuffering,
+		ProxyBuffers:             cfgParams.ProxyBuffers,
+		ProxyBufferSize:          cfgParams.ProxyBufferSize,
+		ProxyPass:                fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream), upstreamName),
+		ProxyNextUpstream:        "",
+		ProxyNextUpstreamTimeout: "",
+		ProxyNextUpstreamTries:   0,
+		HasKeepalive:             upstreamHasKeepalive(upstream, cfgParams),
 	}
+
+	if upstream.ProxyNextUpstream != "" {
+		loc.ProxyNextUpstream = upstream.ProxyNextUpstream
+	}
+	if upstream.ProxyNextUpstreamTimeout != "" {
+		loc.ProxyNextUpstreamTimeout = upstream.ProxyNextUpstreamTimeout
+	}
+	if upstream.ProxyNextUpstreamTries != 0 {
+		loc.ProxyNextUpstreamTries = upstream.ProxyNextUpstreamTries
+	}
+	return loc
 }
 
 type splitRouteCfg struct {

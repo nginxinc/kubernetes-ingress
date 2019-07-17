@@ -25,17 +25,20 @@ type VirtualServerSpec struct {
 
 // Upstream defines an upstream.
 type Upstream struct {
-	Name                string      `json:"name"`
-	Service             string      `json:"service"`
-	Port                uint16      `json:"port"`
-	LBMethod            string      `json:"lb-method"`
-	FailTimeout         string      `json:"fail-timeout"`
-	MaxFails            *int        `json:"max-fails"`
-	Keepalive           *int        `json:"keepalive"`
-	ProxyConnectTimeout string      `json:"connect-timeout"`
-	ProxyReadTimeout    string      `json:"read-timeout"`
-	ProxySendTimeout    string      `json:"send-timeout"`
-	TLS                 UpstreamTLS `json:"tls"`
+	Name                     string      `json:"name"`
+	Service                  string      `json:"service"`
+	Port                     uint16      `json:"port"`
+	LBMethod                 string      `json:"lb-method"`
+	FailTimeout              string      `json:"fail-timeout"`
+	MaxFails                 *int        `json:"max-fails"`
+	Keepalive                *int        `json:"keepalive"`
+	ProxyConnectTimeout      string      `json:"connect-timeout"`
+	ProxyReadTimeout         string      `json:"read-timeout"`
+	ProxySendTimeout         string      `json:"send-timeout"`
+	ProxyNextUpstream        string      `json:"next-upstream"`
+	ProxyNextUpstreamTimeout string      `json:"next-upstream-timeout"`
+	ProxyNextUpstreamTries   int         `json:"next-upstream-tries"`
+	TLS                      UpstreamTLS `json:"tls"`
 }
 
 // UpstreamTLS defines a TLS configuration for an Upstream.

@@ -10,9 +10,15 @@ spec:
   - name: tea
     service: tea-svc
     port: 80
+    next-upstream: "error timeout HTTP_404 non_idempotent"
+    next-upstream-timeout: 5s
+    next-upstream-tries: 10
   - name: coffee
     service: coffee-svc
     port: 80
+    next-upstream: "error timeout HTTP_404 non_idempotent"
+    next-upstream-timeout: 5s
+    next-upstream-tries: 10
   routes:
   - path: /tea
     upstream: tea
