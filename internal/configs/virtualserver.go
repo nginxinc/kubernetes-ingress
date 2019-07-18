@@ -264,8 +264,15 @@ func generateProxyPassProtocol(upstream conf_v1alpha1.Upstream) string {
 	return "http"
 }
 
+func generateStringOrDefault(s string, defaultS string) string {
+	if s == "" {
+		return defaultS
+	}
+	return s
+}
+
 func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) version2.Location {
-	loc := version2.Location{
+	return version2.Location{
 		Path:                     path,
 		Snippets:                 cfgParams.LocationSnippets,
 		ProxyConnectTimeout:      generateTime(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
@@ -277,22 +284,11 @@ func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.U
 		ProxyBuffers:             cfgParams.ProxyBuffers,
 		ProxyBufferSize:          cfgParams.ProxyBufferSize,
 		ProxyPass:                fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream), upstreamName),
-		ProxyNextUpstream:        "",
-		ProxyNextUpstreamTimeout: "",
-		ProxyNextUpstreamTries:   0,
+		ProxyNextUpstream:        generateStringOrDefault(upstream.ProxyNextUpstream, "error timeout"),
+		ProxyNextUpstreamTimeout: generateStringOrDefault(upstream.ProxyNextUpstreamTimeout, "0s"),
+		ProxyNextUpstreamTries:   generateIntFromPointer(upstream.ProxyNextUpstreamTries, 0),
 		HasKeepalive:             upstreamHasKeepalive(upstream, cfgParams),
 	}
-
-	if upstream.ProxyNextUpstream != "" {
-		loc.ProxyNextUpstream = upstream.ProxyNextUpstream
-	}
-	if upstream.ProxyNextUpstreamTimeout != "" {
-		loc.ProxyNextUpstreamTimeout = upstream.ProxyNextUpstreamTimeout
-	}
-	if upstream.ProxyNextUpstreamTries != 0 {
-		loc.ProxyNextUpstreamTries = upstream.ProxyNextUpstreamTries
-	}
-	return loc
 }
 
 type splitRouteCfg struct {
