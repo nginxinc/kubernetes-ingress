@@ -39,7 +39,7 @@ def jwt_auth_setup(request, kube_apis, ingress_controller_endpoint, ingress_cont
     print("------------------------- Deploy JWT Auth Mergeable Minions Example -----------------------------------")
     create_items_from_yaml(kube_apis, f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml", test_namespace)
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml")
-    common_app = create_example_app(kube_apis, "simple", test_namespace)
+    create_example_app(kube_apis, "simple", test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
                                          ingress_controller_endpoint.port,
@@ -56,7 +56,7 @@ def jwt_auth_setup(request, kube_apis, ingress_controller_endpoint, ingress_cont
             delete_secret(kube_apis.v1, minion_secret_name, test_namespace)
 
         print("Clean up the JWT Auth Mergeable Minions Application:")
-        delete_common_app(kube_apis.v1, kube_apis.apps_v1_api, common_app, test_namespace)
+        delete_common_app(kube_apis, "simple", test_namespace)
         delete_items_from_yaml(kube_apis, f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml",
                                test_namespace)
 

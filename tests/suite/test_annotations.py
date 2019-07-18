@@ -78,7 +78,7 @@ def annotations_setup(request,
                            test_namespace)
     ingress_name = get_names_from_yaml(f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml")[0]
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml")
-    common_app = create_example_app(kube_apis, "simple", test_namespace)
+    create_example_app(kube_apis, "simple", test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
                                          ingress_controller_endpoint.port,
@@ -97,7 +97,7 @@ def annotations_setup(request,
                                     ingress_controller_prerequisites.config_map['metadata']['name'],
                                     ingress_controller_prerequisites.namespace,
                                     f"{DEPLOYMENTS}/common/nginx-config.yaml")
-        delete_common_app(kube_apis.v1, kube_apis.apps_v1_api, common_app, test_namespace)
+        delete_common_app(kube_apis, "simple", test_namespace)
         delete_items_from_yaml(kube_apis,
                                f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml",
                                test_namespace)

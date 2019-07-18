@@ -338,13 +338,13 @@ def virtual_server_setup(request, kube_apis, crd_ingress_controller, ingress_con
                                               test_namespace)
     vs_host = get_first_vs_host_from_yaml(vs_source)
     vs_paths = get_paths_from_vs_yaml(vs_source)
-    common_app = create_example_app(kube_apis, request.param['app_type'], test_namespace)
+    create_example_app(kube_apis, request.param['app_type'], test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
         print("Clean up Virtual Server Example:")
         delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
-        delete_common_app(kube_apis.v1, kube_apis.apps_v1_api, common_app, test_namespace)
+        delete_common_app(kube_apis, request.param['app_type'], test_namespace)
 
     request.addfinalizer(fin)
 

@@ -10,7 +10,6 @@ from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes import client
 from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS
-from suite.yaml_utils import get_names_from_yaml
 
 
 class RBACAuthorization:
@@ -599,6 +598,24 @@ def replace_configmap(v1: CoreV1Api, name, namespace, body) -> None:
     print("ConfigMap replaced")
 
 
+def delete_configmap(v1: CoreV1Api, name, namespace) -> None:
+    """
+    Delete a ConfigMap.
+
+    :param v1: CoreV1Api
+    :param name: ConfigMap name
+    :param namespace: namespace name
+    :return:
+    """
+    print(f"Delete a ConfigMap: {name}")
+    delete_options = client.V1DeleteOptions()
+    delete_options.grace_period_seconds = 0
+    delete_options.propagation_policy = 'Foreground'
+    v1.delete_namespaced_config_map(name, namespace, delete_options)
+    ensure_item_removal(v1.read_namespaced_config_map, name, namespace)
+    print(f"ConfigMap was removed with name '{name}'")
+
+
 def delete_namespace(v1: CoreV1Api, namespace) -> None:
     """
     Delete a namespace.
@@ -653,20 +670,7 @@ def get_ingress_nginx_template_conf(v1: CoreV1Api, ingress_namespace, ingress_na
     return get_file_contents(v1, file_path, pod_name, pod_namespace)
 
 
-class CommonApp:
-    """
-    Encapsulate Common Application details.
-
-    Attributes:
-        services ([]): list of services names
-        deployments ([]): list of deployments names
-    """
-    def __init__(self, services, deployments):
-        self.services = services
-        self.deployments = deployments
-
-
-def create_example_app(kube_apis, app_type, namespace) -> CommonApp:
+def create_example_app(kube_apis, app_type, namespace) -> None:
     """
     Create a backend application.
 
@@ -675,36 +679,21 @@ def create_example_app(kube_apis, app_type, namespace) -> CommonApp:
     :param kube_apis: client apis
     :param app_type: type of the application (simple|split)
     :param namespace: namespace name
-    :return: CommonApp
+    :return:
     """
     create_items_from_yaml(kube_apis, f"{TEST_DATA}/common/app/{app_type}/app.yaml", namespace)
-    all_names = get_names_from_yaml(f"{TEST_DATA}/common/app/{app_type}/app.yaml")
-    service_names = []
-    dep_names = []
-    for _ in all_names:
-        if "svc" in _:
-            service_names.append(_)
-        else:
-            dep_names.append(_)
-    return CommonApp(service_names, dep_names)
 
 
-def delete_common_app(v1: CoreV1Api,
-                      apps_v1_api: AppsV1Api,
-                      common_app: CommonApp, namespace) -> None:
+def delete_common_app(kube_apis, app_type, namespace) -> None:
     """
     Delete a common simple application.
 
-    :param v1: CoreV1Api
-    :param apps_v1_api: AppsV1Api
-    :param common_app: CommonApp
+    :param kube_apis:
+    :param app_type:
     :param namespace: namespace name
     :return:
     """
-    for deployment in common_app.deployments:
-        delete_deployment(apps_v1_api, deployment, namespace)
-    for svc in common_app.services:
-        delete_service(v1, svc, namespace)
+    delete_items_from_yaml(kube_apis, f"{TEST_DATA}/common/app/{app_type}/app.yaml", namespace)
 
 
 def delete_service(v1: CoreV1Api, name, namespace) -> None:
@@ -889,6 +878,8 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
                 delete_deployment(kube_apis.apps_v1_api, doc['metadata']['name'], namespace)
             elif doc["kind"] == "DaemonSet":
                 delete_daemon_set(kube_apis.apps_v1_api, doc['metadata']['name'], namespace)
+            elif doc["kind"] == "ConfigMap":
+                delete_configmap(kube_apis.v1, doc['metadata']['name'], namespace)
 
 
 def ensure_connection(request_url) -> None:
