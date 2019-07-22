@@ -131,6 +131,14 @@
   version = "1.0.1"
 
 [[projects]]
+  digest = "1:1f97a27bc40b073752d15ee0ff6ed73b8ef42db4798ccd2bfd2c0cc638b74862"
+  name = "github.com/nginxinc/nginx-plus-go-client"
+  packages = ["client"]
+  pruneopts = "UT"
+  revision = "3b3fe2931299496cbf57053486ff5a1b788d1f7f"
+  version = "v0.4.0"
+
+[[projects]]
   digest = "1:cae19a6befce186964ddcd591f3f47214ac0ac8e9cfb453a2b2f3842feeb4c06"
   name = "github.com/nginxinc/nginx-plus-go-sdk"
   packages = ["client"]
@@ -617,6 +625,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/golang/glog",
+    "github.com/nginxinc/nginx-plus-go-client/client",
     "github.com/nginxinc/nginx-plus-go-sdk/client",
     "github.com/nginxinc/nginx-prometheus-exporter/client",
     "github.com/nginxinc/nginx-prometheus-exporter/collector",
