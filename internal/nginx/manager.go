@@ -11,7 +11,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/nginx-plus-go-sdk/client"
+	"github.com/nginxinc/nginx-plus-go-client/client"
 )
 
 // TLSSecretFileMode defines the default filemode for files with TLS Secrets.
