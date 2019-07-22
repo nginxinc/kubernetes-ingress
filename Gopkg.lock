@@ -139,23 +139,15 @@
   version = "v0.4.0"
 
 [[projects]]
-  digest = "1:cae19a6befce186964ddcd591f3f47214ac0ac8e9cfb453a2b2f3842feeb4c06"
-  name = "github.com/nginxinc/nginx-plus-go-sdk"
-  packages = ["client"]
-  pruneopts = "UT"
-  revision = "47154e1ef11536726753d5f506babe9304d622d2"
-  version = "v0.2"
-
-[[projects]]
-  digest = "1:aeb11030e3ed0339cfb28f20ee23219e73202f8f8b589f1547c56d6a6a4e36e9"
+  digest = "1:98cd179fa3dcfd2b45faae7ef223ba9e6b376e5fc1e4b84aea81087c1360772d"
   name = "github.com/nginxinc/nginx-prometheus-exporter"
   packages = [
     "client",
     "collector",
   ]
   pruneopts = "UT"
-  revision = "65702758f28e7f472fa3a978d9321ee3cb9a7d2c"
-  version = "v0.3.0"
+  revision = "f0173677183c840e90a56e48082e36ac687e1a30"
+  version = "v0.4.2"
 
 [[projects]]
   digest = "1:93a746f1060a8acbcf69344862b2ceced80f854170e1caae089b2834c5fbf7f4"

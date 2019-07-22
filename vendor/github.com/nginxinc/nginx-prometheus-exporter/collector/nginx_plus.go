@@ -4,7 +4,7 @@ import (
 	"log"
 	"sync"
 
-	plusclient "github.com/nginxinc/nginx-plus-go-sdk/client"
+	plusclient "github.com/nginxinc/nginx-plus-go-client/client"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -18,6 +18,7 @@ type NginxPlusCollector struct {
 	streamServerZoneMetrics     map[string]*prometheus.Desc
 	streamUpstreamMetrics       map[string]*prometheus.Desc
 	streamUpstreamServerMetrics map[string]*prometheus.Desc
+	streamZoneSyncMetrics       map[string]*prometheus.Desc
 	upMetric                    prometheus.Gauge
 	mutex                       sync.Mutex
 }
@@ -100,6 +101,15 @@ func NewNginxPlusCollector(nginxClient *plusclient.NginxClient, namespace string
 			"health_checks_fails":     newStreamUpstreamServerMetric(namespace, "health_checks_fails", "Failed health checks"),
 			"health_checks_unhealthy": newStreamUpstreamServerMetric(namespace, "health_checks_unhealthy", "How many times the server became unhealthy (state 'unhealthy')"),
 		},
+		streamZoneSyncMetrics: map[string]*prometheus.Desc{
+			"bytes_in":        newStreamZoneSyncMetric(namespace, "bytes_in", "Bytes received by this node"),
+			"bytes_out":       newStreamZoneSyncMetric(namespace, "bytes_out", "Bytes sent by this node"),
+			"msgs_in":         newStreamZoneSyncMetric(namespace, "msgs_in", "Total messages received by this node"),
+			"msgs_out":        newStreamZoneSyncMetric(namespace, "msgs_out", "Total messages sent by this node"),
+			"nodes_online":    newStreamZoneSyncMetric(namespace, "nodes_online", "Number of peers this node is conected to"),
+			"records_pending": newStreamZoneSyncZoneMetric(namespace, "records_pending", "The number of records that need to be sent to the cluster"),
+			"records_total":   newStreamZoneSyncZoneMetric(namespace, "records_total", "The total number of records stored in the shared memory zone"),
+		},
 		upMetric: newUpMetric(namespace),
 	}
 }
@@ -128,6 +138,9 @@ func (c *NginxPlusCollector) Describe(ch chan<- *prometheus.Desc) {
 		ch <- m
 	}
 	for _, m := range c.streamUpstreamServerMetrics {
+		ch <- m
+	}
+	for _, m := range c.streamZoneSyncMetrics {
 		ch <- m
 	}
 }
@@ -289,6 +302,26 @@ func (c *NginxPlusCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(c.streamUpstreamMetrics["zombies"],
 			prometheus.GaugeValue, float64(upstream.Zombies), name)
 	}
+
+	if stats.StreamZoneSync != nil {
+		for name, zone := range stats.StreamZoneSync.Zones {
+			ch <- prometheus.MustNewConstMetric(c.streamZoneSyncMetrics["records_pending"],
+				prometheus.GaugeValue, float64(zone.RecordsPending), name)
+			ch <- prometheus.MustNewConstMetric(c.streamZoneSyncMetrics["records_total"],
+				prometheus.GaugeValue, float64(zone.RecordsTotal), name)
+		}
+
+		ch <- prometheus.MustNewConstMetric(c.streamZoneSyncMetrics["bytes_in"],
+			prometheus.CounterValue, float64(stats.StreamZoneSync.Status.BytesIn))
+		ch <- prometheus.MustNewConstMetric(c.streamZoneSyncMetrics["bytes_out"],
+			prometheus.CounterValue, float64(stats.StreamZoneSync.Status.BytesOut))
+		ch <- prometheus.MustNewConstMetric(c.streamZoneSyncMetrics["msgs_in"],
+			prometheus.CounterValue, float64(stats.StreamZoneSync.Status.MsgsIn))
+		ch <- prometheus.MustNewConstMetric(c.streamZoneSyncMetrics["msgs_out"],
+			prometheus.CounterValue, float64(stats.StreamZoneSync.Status.MsgsOut))
+		ch <- prometheus.MustNewConstMetric(c.streamZoneSyncMetrics["nodes_online"],
+			prometheus.GaugeValue, float64(stats.StreamZoneSync.Status.NodesOnline))
+	}
 }
 
 var upstreamServerStates = map[string]float64{
@@ -322,4 +355,12 @@ func newUpstreamServerMetric(namespace string, metricName string, docString stri
 
 func newStreamUpstreamServerMetric(namespace string, metricName string, docString string) *prometheus.Desc {
 	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_upstream_server", metricName), docString, []string{"upstream", "server"}, nil)
+}
+
+func newStreamZoneSyncMetric(namespace string, metricName string, docString string) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_zone_sync_status", metricName), docString, nil, nil)
+}
+
+func newStreamZoneSyncZoneMetric(namespace string, metricName string, docString string) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_zone_sync_zone", metricName), docString, []string{"zone"}, nil)
 }
