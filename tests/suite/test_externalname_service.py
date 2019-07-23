@@ -101,4 +101,4 @@ class TestExternalNameService:
                                                       external_name_setup.ingress_name,
                                                       external_name_setup.ingress_pod_name,
                                                       ingress_controller_prerequisites.namespace)
-        assert f"server {external_name_setup.external_host}:80 max_fails=1 fail_timeout=10s resolve;" in result_conf
+        assert f"server {external_name_setup.external_host}:80 max_fails=1 fail_timeout=10s max_conns=0 resolve;" in result_conf
