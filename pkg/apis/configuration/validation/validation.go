@@ -142,6 +142,9 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		allErrs = append(allErrs, validateTime(u.ProxyConnectTimeout, idxPath.Child("connect-timeout"))...)
 		allErrs = append(allErrs, validateTime(u.ProxyReadTimeout, idxPath.Child("read-timeout"))...)
 		allErrs = append(allErrs, validateTime(u.ProxySendTimeout, idxPath.Child("send-timeout"))...)
+		allErrs = append(allErrs, validateNextUpstream(u.ProxyNextUpstream, idxPath.Child("next-upstream"))...)
+		allErrs = append(allErrs, validateTime(u.ProxyNextUpstream, idxPath.Child("next-upstream-timeout"))...)
+		allErrs = append(allErrs, validatePositiveIntOrZero(u.ProxyNextUpstreamTries, idxPath.Child("next-upstream-tries"))...)
 
 		allErrs = append(allErrs, validateUpstreamLBMethod(u.LBMethod, idxPath.Child("lb-method"), isPlus)...)
 		allErrs = append(allErrs, validateTime(u.FailTimeout, idxPath.Child("fail-timeout"))...)
@@ -154,6 +157,32 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 	}
 
 	return allErrs, upstreamNames
+}
+
+// ValidateNextUpstream checks the values given for passing queries to a upstream
+func validateNextUpstream(nextUpstream string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	validParams := map[string]bool{
+		"error":          true,
+		"timeout":        true,
+		"invalid_header": true,
+		"http_500":       true,
+		"http_502":       true,
+		"http_503":       true,
+		"http_504":       true,
+		"http_403":       true,
+		"http_404":       true,
+		"http_429":       true,
+		"non_idempotent": true,
+		"off":            true,
+	}
+	params := strings.Fields(nextUpstream)
+	for _, para := range params {
+		if !validParams[para] {
+			allErrs = append(allErrs, field.Invalid(fieldPath, para, "not a valid parameter"))
+		}
+	}
+	return allErrs
 }
 
 // validateUpstreamName checks is an upstream name is valid.
