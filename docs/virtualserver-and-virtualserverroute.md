@@ -203,9 +203,9 @@ tls:
 | `connect-timeout` | The timeout for establishing a connection with an upstream server. See the [proxy_connect_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout) directive. The default is specified in the `proxy-connect-timeout` ConfigMap key. | `string` | No
 | `read-timeout` | The timeout for reading a response from an upstream server. See the [proxy_read_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout) directive.  The default is specified in the `proxy-read-timeout` ConfigMap key. | `string` | No
 | `send-timeout` | The timeout for transmitting a request to an upstream server. See the [proxy_send_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout) directive. The default is specified in the `proxy-send-timeout` ConfigMap key. | `string` | No
-| `next-upstream` | Specifies in which cases a request should be passed to the next upstream server. See the proxy_next_upstream directive. The default is `error timeout` | `string` | No 
-| `next-upstream-timeout` | The time during which a request can be passed to the next upstream server. See the proxy_next_upstream_timeout directive. The `0` value turns off the time limit. The default is `0`. | `string` | No 
-| `next-upstream-tries` | The number of possible tries for passing a request to the next upstream server. See the proxy_next_upstream_tries directive. The `0` value turns off this limit. The default is `0`. | `int` | No 
+| `next-upstream` | Specifies in which cases a request should be passed to the next upstream server. See the [proxy_next_upstream](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream) directive. The default is `error timeout`. | `string` | No 
+| `next-upstream-timeout` | The time during which a request can be passed to the next upstream server. See the [proxy_next_upstream_timeout](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_timeout) directive. The `0` value turns off the time limit. The default is `0`. | `string` | No 
+| `next-upstream-tries` | The number of possible tries for passing a request to the next upstream server. See the [proxy_next_upstream_tries](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_tries) directive. The `0` value turns off this limit. The default is `0`. | `int` | No 
 | `tls` | The TLS configuration for the Upstream. | [`tls`](#UpstreamTLS) | No |
 
 ### Upstream.TLS

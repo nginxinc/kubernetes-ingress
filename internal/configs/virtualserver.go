@@ -264,7 +264,7 @@ func generateProxyPassProtocol(upstream conf_v1alpha1.Upstream) string {
 	return "http"
 }
 
-func generateStringOrDefault(s string, defaultS string) string {
+func generateString(s string, defaultS string) string {
 	if s == "" {
 		return defaultS
 	}
@@ -284,8 +284,8 @@ func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.U
 		ProxyBuffers:             cfgParams.ProxyBuffers,
 		ProxyBufferSize:          cfgParams.ProxyBufferSize,
 		ProxyPass:                fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream), upstreamName),
-		ProxyNextUpstream:        generateStringOrDefault(upstream.ProxyNextUpstream, "error timeout"),
-		ProxyNextUpstreamTimeout: generateStringOrDefault(upstream.ProxyNextUpstreamTimeout, "0s"),
+		ProxyNextUpstream:        generateString(upstream.ProxyNextUpstream, "error timeout"),
+		ProxyNextUpstreamTimeout: generateString(upstream.ProxyNextUpstreamTimeout, "0s"),
 		ProxyNextUpstreamTries:   generateIntFromPointer(upstream.ProxyNextUpstreamTries, 0),
 		HasKeepalive:             upstreamHasKeepalive(upstream, cfgParams),
 	}
