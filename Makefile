@@ -34,12 +34,18 @@ else
 	go test ./...
 endif
 
+verify: 
+	./hack/verify-codegen.sh
+
+regen: 
+	./hack/update-codegen.sh
+
 certificate-and-key:
 ifeq ($(GENERATE_DEFAULT_CERT_AND_KEY),1)
 	./build/generate_default_cert_and_key.sh
 endif
 
-container: test nginx-ingress certificate-and-key
+container: test verify nginx-ingress certificate-and-key
 	cp $(DOCKERFILEPATH)/$(DOCKERFILE) ./Dockerfile
 	docker build $(DOCKER_BUILD_OPTIONS) --build-arg IC_VERSION=$(VERSION)-$(GIT_COMMIT) -f Dockerfile -t $(PREFIX):$(TAG) .
 
