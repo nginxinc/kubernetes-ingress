@@ -56,6 +56,8 @@ spec:
         - name: prometheus
           containerPort: {{ .Values.prometheus.port }}
 {{- end }}
+        resources:
+{{ toYaml .Values.controller.resources | indent 10 }}
         env:
         - name: POD_NAMESPACE
           valueFrom:

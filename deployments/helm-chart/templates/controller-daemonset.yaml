@@ -67,6 +67,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        resources:
+{{ toYaml .Values.controller.resources | indent 10 }}
         args:
           - -nginx-plus={{ .Values.controller.nginxplus }}
           - -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
