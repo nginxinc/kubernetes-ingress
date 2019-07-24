@@ -71,7 +71,7 @@ class TestVirtualServerUpstreamOptions:
         assert "proxy_read_timeout 60s;" in config
         assert "proxy_send_timeout 60s;" in config
 
-        assert "max_fails=1 fail_timeout=10s;" in config
+        assert "max_fails=1 fail_timeout=10s max_conns=0;" in config
 
         assert "keepalive" not in config
         assert 'proxy_set_header Connection "";' not in config
@@ -81,7 +81,7 @@ class TestVirtualServerUpstreamOptions:
           "fail-timeout": "13s", "connect-timeout": "55s", "read-timeout": "1s", "send-timeout": "1h",
           "keepalive": 54},
          ["least_conn;", "max_fails=8 ",
-          "fail_timeout=13s;", "proxy_connect_timeout 55s;", "proxy_read_timeout 1s;", "proxy_send_timeout 1h;",
+          "fail_timeout=13s ", "max_conns=0;", "proxy_connect_timeout 55s;", "proxy_read_timeout 1s;", "proxy_send_timeout 1h;",
           "keepalive 54;", 'proxy_set_header Connection "";']),
         ({"lb-method": "ip_hash", "connect-timeout": "75", "read-timeout": "15", "send-timeout": "1h"},
          ["ip_hash;", "proxy_connect_timeout 75;", "proxy_read_timeout 15;", "proxy_send_timeout 1h;"]),
@@ -121,11 +121,11 @@ class TestVirtualServerUpstreamOptions:
 
     @pytest.mark.parametrize('config_map_file, expected_strings, unexpected_strings', [
         (f"{TEST_DATA}/virtual-server-upstream-options/configmap-with-keys.yaml",
-         ["max_fails=3 ", "fail_timeout=33s;",
+         ["max_fails=3 ", "fail_timeout=33s ", "max_conns=0;",
           "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
           "keepalive 1024;", 'proxy_set_header Connection "";'],
          ["ip_hash;", "least_conn;", "random ", "hash", "least_time ",
-          "max_fails=1 ", "fail_timeout=10s;",
+          "max_fails=1 ", "fail_timeout=10s ", "max_conns=1s;",
           "proxy_connect_timeout 60s;", "proxy_read_timeout 60s;", "proxy_send_timeout 60s;"]),
     ])
     def test_when_option_in_config_map_only(self, kube_apis, ingress_controller_prerequisites,
@@ -166,10 +166,10 @@ class TestVirtualServerUpstreamOptions:
           "fail-timeout": "1m", "connect-timeout": "1m", "read-timeout": "77s", "send-timeout": "23s",
           "keepalive": 48},
          ["least_conn;", "max_fails=12 ",
-          "fail_timeout=1m;", "proxy_connect_timeout 1m;", "proxy_read_timeout 77s;", "proxy_send_timeout 23s;",
+          "fail_timeout=1m ", "max_conns=0;", "proxy_connect_timeout 1m;", "proxy_read_timeout 77s;", "proxy_send_timeout 23s;",
           "keepalive 48;", 'proxy_set_header Connection "";'],
          ["ip_hash;", "random ", "hash", "least_time ", "max_fails=1 ",
-          "fail_timeout=10s;", "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
+          "fail_timeout=10s ", "max_conns=33s;", "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
           "keepalive 1024;"])
     ])
     def test_v_s_overrides_config_map(self, kube_apis, ingress_controller_prerequisites,

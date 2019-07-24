@@ -40,7 +40,7 @@ def assert_keys_without_validation(config, expected_values):
     assert f"real_ip_header {expected_values['real-ip-header']};" in config
     assert f"{expected_values['location-snippets']}" in config
     assert f"{expected_values['server-snippets']}" in config
-    assert f"fail_timeout={expected_values['fail-timeout']};" in config
+    assert f"fail_timeout={expected_values['fail-timeout']}" in config
     assert f"proxy_send_timeout {expected_values['proxy-send-timeout']};" in config
 
 
