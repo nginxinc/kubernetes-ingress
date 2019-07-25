@@ -931,8 +931,8 @@ func TestGenerateString(t *testing.T) {
 		expected string
 	}{
 		{
-			inputS:   "error timeout",
-			expected: "error timeout",
+			inputS:   "http_404",
+			expected: "http_404",
 		},
 		{
 			inputS:   "",
