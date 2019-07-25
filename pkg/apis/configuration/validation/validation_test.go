@@ -308,17 +308,14 @@ func TestValidateUpstreamsFails(t *testing.T) {
 
 func TestValidateNextUpstream(t *testing.T) {
 	tests := []struct {
-		inputS   string
-		expected bool
+		inputS string
 	}{
 		{
-			inputS:   "error timeout",
-			expected: true,
+			inputS: "error timeout",
 		},
 		{
 
-			inputS:   "http_404 timeout",
-			expected: true,
+			inputS: "http_404 timeout",
 		},
 	}
 	for _, test := range tests {
@@ -331,21 +328,16 @@ func TestValidateNextUpstream(t *testing.T) {
 
 func TestValidateNextUpstreamFails(t *testing.T) {
 	tests := []struct {
-		inputS   string
-		expected bool
+		inputS strings
 	}{
 		{
-			inputS:   "error error",
-			expected: false,
+			inputS: "error error",
 		},
 		{
-
-			inputS:   "",
-			expected: false,
+			inputS: "",
 		},
 		{
-			inputS:   "https_404",
-			expected: false,
+			inputS: "https_404",
 		},
 	}
 	for _, test := range tests {

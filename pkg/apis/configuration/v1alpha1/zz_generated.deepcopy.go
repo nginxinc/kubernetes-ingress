@@ -144,11 +144,6 @@ func (in *Upstream) DeepCopyInto(out *Upstream) {
 		*out = new(int)
 		**out = **in
 	}
-	if in.ProxyNextUpstreamTries != nil {
-		in, out := &in.ProxyNextUpstreamTries, &out.ProxyNextUpstreamTries
-		*out = new(int)
-		**out = **in
-	}
 	out.TLS = in.TLS
 	return
 }

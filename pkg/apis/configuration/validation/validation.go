@@ -174,7 +174,7 @@ var validVariableParams = map[string]bool{
 	"off":            true,
 }
 
-// ValidateNextUpstream checks the values given for passing queries to a upstream
+// validateNextUpstream checks the values given for passing queries to a upstream
 func validateNextUpstream(nextUpstream string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	var occur int

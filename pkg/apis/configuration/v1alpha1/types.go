@@ -37,7 +37,7 @@ type Upstream struct {
 	ProxySendTimeout         string      `json:"send-timeout"`
 	ProxyNextUpstream        string      `json:"next-upstream"`
 	ProxyNextUpstreamTimeout string      `json:"next-upstream-timeout"`
-	ProxyNextUpstreamTries   *int        `json:"next-upstream-tries"`
+	ProxyNextUpstreamTries   int         `json:"next-upstream-tries"`
 	TLS                      UpstreamTLS `json:"tls"`
 }
 
