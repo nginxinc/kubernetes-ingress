@@ -938,10 +938,6 @@ func TestGenerateString(t *testing.T) {
 			inputS:   "",
 			expected: "error timeout",
 		},
-		{
-			inputS:   "http_404",
-			expected: "http_404",
-		},
 	}
 
 	for _, test := range tests {

@@ -314,14 +314,13 @@ func TestValidateNextUpstream(t *testing.T) {
 			inputS: "error timeout",
 		},
 		{
-
 			inputS: "http_404 timeout",
 		},
 	}
 	for _, test := range tests {
 		allErrs := validateNextUpstream(test.inputS, field.NewPath("next-upstreams"))
 		if len(allErrs) > 0 {
-			t.Errorf("validateNextUpstream() returned errors %v for valid input for the case of %s", allErrs, test.inputS)
+			t.Errorf("validateNextUpstream(%q) returned errors %v for valid input for the case of %s", test.inputS, allErrs, test.inputS)
 		}
 	}
 }
@@ -334,16 +333,13 @@ func TestValidateNextUpstreamFails(t *testing.T) {
 			inputS: "error error",
 		},
 		{
-			inputS: "",
-		},
-		{
 			inputS: "https_404",
 		},
 	}
 	for _, test := range tests {
 		allErrs := validateNextUpstream(test.inputS, field.NewPath("next-upstreams"))
 		if len(allErrs) < 0 {
-			t.Errorf("validateNextUpstream() didn't return errors %v for invalid input for the case of %s", allErrs, test.inputS)
+			t.Errorf("validateNextUpstream(%q) didn't return errors %v for invalid input for the case of %s", test.inputS, allErrs, test.inputS)
 		}
 	}
 }

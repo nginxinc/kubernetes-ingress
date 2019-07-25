@@ -159,7 +159,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 	return allErrs, upstreamNames
 }
 
-var validVariableParams = map[string]bool{
+var validNextUpstreamParams = map[string]bool{
 	"error":          true,
 	"timeout":        true,
 	"invalid_header": true,
@@ -172,23 +172,22 @@ var validVariableParams = map[string]bool{
 	"http_429":       true,
 	"non_idempotent": true,
 	"off":            true,
+	"":               true,
 }
 
 // validateNextUpstream checks the values given for passing queries to a upstream
 func validateNextUpstream(nextUpstream string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	var occur int
+	allParams := sets.String{}
 	params := strings.Fields(nextUpstream)
 	for _, para := range params {
-		if !validVariableParams[para] {
+		if !validNextUpstreamParams[para] {
 			allErrs = append(allErrs, field.Invalid(fieldPath, para, "not a valid parameter"))
 		}
-		for _, p := range params {
-			if p == para {
-				occur++
-			} else if occur > 1 {
-				allErrs = append(allErrs, field.Invalid(fieldPath, para, "can not have recurring parameters"))
-			}
+		if allParams.Has(para) {
+			allErrs = append(allErrs, field.Invalid(fieldPath, para, "can not have duplicate parameters"))
+		} else {
+			allParams.Insert(para)
 		}
 	}
 	return allErrs
