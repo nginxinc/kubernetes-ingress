@@ -144,9 +144,9 @@ func TestValidateUpstreams(t *testing.T) {
 					Name:                     "upstream2",
 					Service:                  "test-2",
 					Port:                     80,
-					ProxyNextUpstream:        "http_404",
-					ProxyNextUpstreamTimeout: "3s",
-					ProxyNextUpstreamTries:   createPointerFromInt(15),
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "10s",
+					ProxyNextUpstreamTries:   createPointerFromInt(5),
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
@@ -302,6 +302,56 @@ func TestValidateUpstreamsFails(t *testing.T) {
 		}
 		if !resultUpstreamNames.Equal(test.expectedUpstreamNames) {
 			t.Errorf("validateUpstreams() returned %v expected %v for the case of %s", resultUpstreamNames, test.expectedUpstreamNames, test.msg)
+		}
+	}
+}
+
+func TestValidateNextUpstream(t *testing.T) {
+	tests := []struct {
+		inputS   string
+		expected bool
+	}{
+		{
+			inputS:   "error timeout",
+			expected: true,
+		},
+		{
+
+			inputS:   "http_404 timeout",
+			expected: true,
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateNextUpstream(test.inputS, field.NewPath("next-upstreams"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateNextUpstream() returned errors %v for valid input for the case of %s", allErrs, test.inputS)
+		}
+	}
+}
+
+func TestValidateNextUpstreamFails(t *testing.T) {
+	tests := []struct {
+		inputS   string
+		expected bool
+	}{
+		{
+			inputS:   "error error",
+			expected: false,
+		},
+		{
+
+			inputS:   "",
+			expected: false,
+		},
+		{
+			inputS:   "https_404",
+			expected: false,
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateNextUpstream(test.inputS, field.NewPath("next-upstreams"))
+		if len(allErrs) < 0 {
+			t.Errorf("validateNextUpstream() didn't return errors %v for invalid input for the case of %s", allErrs, test.inputS)
 		}
 	}
 }

@@ -927,25 +927,25 @@ func TestGenerateProxyPassProtocol(t *testing.T) {
 
 func TestGenerateString(t *testing.T) {
 	tests := []struct {
-		nextUpstream string
-		expected     string
+		inputS   string
+		expected string
 	}{
 		{
-			nextUpstream: "error timeout",
-			expected:     "error timeout",
+			inputS:   "error timeout",
+			expected: "error timeout",
 		},
 		{
-			nextUpstream: "",
-			expected:     "error timeout",
+			inputS:   "",
+			expected: "error timeout",
 		},
 		{
-			nextUpstream: "http_404",
-			expected:     "http_404",
+			inputS:   "http_404",
+			expected: "http_404",
 		},
 	}
 
 	for _, test := range tests {
-		result := generateString(test.nextUpstream, "error timeout")
+		result := generateString(test.inputS, "error timeout")
 		if result != test.expected {
 			t.Errorf("generateString() return %v but expected %v", result, test.expected)
 		}
