@@ -279,7 +279,7 @@ func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.U
 		ProxyPass:                fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream), upstreamName),
 		ProxyNextUpstream:        generateString(upstream.ProxyNextUpstream, "error timeout"),
 		ProxyNextUpstreamTimeout: generateString(upstream.ProxyNextUpstreamTimeout, "0s"),
-		ProxyNextUpstreamTries:   generateIntFromPointer(upstream.ProxyNextUpstreamTries, 0),
+		ProxyNextUpstreamTries:   upstream.ProxyNextUpstreamTries,
 		HasKeepalive:             upstreamHasKeepalive(upstream, cfgParams),
 	}
 }

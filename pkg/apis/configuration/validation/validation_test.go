@@ -138,7 +138,7 @@ func TestValidateUpstreams(t *testing.T) {
 					Port:                     80,
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "10s",
-					ProxyNextUpstreamTries:   createPointerFromInt(5),
+					ProxyNextUpstreamTries:   5,
 				},
 				{
 					Name:                     "upstream2",
@@ -146,7 +146,7 @@ func TestValidateUpstreams(t *testing.T) {
 					Port:                     80,
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "10s",
-					ProxyNextUpstreamTries:   createPointerFromInt(5),
+					ProxyNextUpstreamTries:   5,
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
@@ -182,7 +182,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					Port:                     80,
 					ProxyNextUpstream:        "http_502",
 					ProxyNextUpstreamTimeout: "10s",
-					ProxyNextUpstreamTries:   createPointerFromInt(5),
+					ProxyNextUpstreamTries:   5,
 				},
 			},
 			expectedUpstreamNames: sets.String{},
@@ -196,7 +196,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					Port:                     80,
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "10s",
-					ProxyNextUpstreamTries:   createPointerFromInt(5),
+					ProxyNextUpstreamTries:   5,
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
@@ -212,7 +212,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					Port:                     0,
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "10s",
-					ProxyNextUpstreamTries:   createPointerFromInt(5),
+					ProxyNextUpstreamTries:   5,
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
@@ -228,7 +228,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					Port:                     80,
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "10s",
-					ProxyNextUpstreamTries:   createPointerFromInt(5),
+					ProxyNextUpstreamTries:   5,
 				},
 				{
 					Name:                     "upstream1",
@@ -236,7 +236,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					Port:                     80,
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "10s",
-					ProxyNextUpstreamTries:   createPointerFromInt(5),
+					ProxyNextUpstreamTries:   5,
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
@@ -252,7 +252,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					Port:                     80,
 					ProxyNextUpstream:        "https_504",
 					ProxyNextUpstreamTimeout: "10s",
-					ProxyNextUpstreamTries:   createPointerFromInt(5),
+					ProxyNextUpstreamTries:   5,
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
@@ -268,7 +268,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					Port:                     80,
 					ProxyNextUpstream:        "http_504",
 					ProxyNextUpstreamTimeout: "-2s",
-					ProxyNextUpstreamTries:   createPointerFromInt(5),
+					ProxyNextUpstreamTries:   5,
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
@@ -284,7 +284,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 					Port:                     80,
 					ProxyNextUpstream:        "https_504",
 					ProxyNextUpstreamTimeout: "10s",
-					ProxyNextUpstreamTries:   createPointerFromInt(-1),
+					ProxyNextUpstreamTries:   -1,
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
@@ -328,7 +328,7 @@ func TestValidateNextUpstream(t *testing.T) {
 
 func TestValidateNextUpstreamFails(t *testing.T) {
 	tests := []struct {
-		inputS strings
+		inputS string
 	}{
 		{
 			inputS: "error error",
