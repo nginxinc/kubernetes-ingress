@@ -179,6 +179,9 @@ var validNextUpstreamParams = map[string]bool{
 func validateNextUpstream(nextUpstream string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allParams := sets.String{}
+	if nextUpstream == "" {
+		return allErrs
+	}
 	params := strings.Fields(nextUpstream)
 	for _, para := range params {
 		if !validNextUpstreamParams[para] {
