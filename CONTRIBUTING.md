@@ -35,7 +35,7 @@ Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/mas
     * The internal code is found at `internal/`
     * Build files for Docker and CI are found under `build/`
     * Deployment yaml files, and Helm files are found at `deployments/`
-    * The project dependencies are found at `vendor/`. We use  [dep](https://github.com/golang/dep) for managing dependencies.
+    * The project dependencies are found at `vendor/`. We use [Go Modules](https://github.com/golang/go/wiki/Modules) for managing dependencies.
 
 ## Contributing
 

@@ -6,7 +6,7 @@ go:
 - "1.12"
 script:
 - echo "Building ingress controller commit:${TRAVIS_COMMIT}"
-- make  BUILD_IN_CONTAINER=0 container;
+- make BUILD_IN_CONTAINER=0 container;
 - echo "Helm smoke test"
 - cd ${TRAVIS_BUILD_DIR} && wget -O helm.tar.gz ${helm_download} &&
   tar xzfv helm.tar.gz -C ./ --strip-components=1 linux-amd64/helm
@@ -18,4 +18,4 @@ before_install:
 - if [[ "${TRAVIS_PULL_REQUEST_SLUG}" == "nginxinc/kubernetes-ingress" || "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
   wget https://${fossalocation}/${fossafile} && tar xzf ${fossafile}
   && ./fossa init
-  && FOSSA_API_KEY=${fossapush} ./fossa analyze -t kubernetes-ingress -b ${TRAVIS_BRANCH}; fi
+  && GO111MODULE=on FOSSA_API_KEY=${fossapush} ./fossa analyze -t kubernetes-ingress -b ${TRAVIS_BRANCH}; fi
