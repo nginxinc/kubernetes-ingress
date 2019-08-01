@@ -75,10 +75,10 @@ class TestVSRouteUpstreamOptions:
     @pytest.mark.parametrize('options, expected_strings', [
         ({"lb-method": "least_conn", "max-fails": 8,
           "fail-timeout": "13s", "connect-timeout": "55s", "read-timeout": "1s", "send-timeout": "1h",
-          "keepalive": 54},
+          "keepalive": 54, "max-conns": 1024},
          ["least_conn;", "max_fails=8 ",
-          "fail_timeout=13s ", "max_conns=0;", "proxy_connect_timeout 55s;", "proxy_read_timeout 1s;", "proxy_send_timeout 1h;",
-          "keepalive 54;", 'proxy_set_header Connection "";']),
+          "fail_timeout=13s ", "proxy_connect_timeout 55s;", "proxy_read_timeout 1s;",
+          "proxy_send_timeout 1h;", "keepalive 54;", 'proxy_set_header Connection "";', "max_conns=1024;"]),
         ({"lb-method": "ip_hash", "connect-timeout": "75", "read-timeout": "15", "send-timeout": "1h"},
          ["ip_hash;", "proxy_connect_timeout 75;", "proxy_read_timeout 15;", "proxy_send_timeout 1h;"]),
         ({"connect-timeout": "1m", "read-timeout": "1m", "send-timeout": "1s"},
@@ -135,7 +135,7 @@ class TestVSRouteUpstreamOptions:
           "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
           "keepalive 1024;", 'proxy_set_header Connection "";'],
          ["ip_hash;", "least_conn;", "random ", "hash", "least_time ",
-          "max_fails=1 ", "fail_timeout=10s ", "max_conns=1s;",
+          "max_fails=1 ", "fail_timeout=10s ", "max_conns=1000;",
           "proxy_connect_timeout 60s;", "proxy_read_timeout 60s;", "proxy_send_timeout 60s;"]),
     ])
     def test_when_option_in_config_map_only(self, kube_apis,
@@ -189,7 +189,7 @@ class TestVSRouteUpstreamOptions:
           "fail_timeout=1m ", "max_conns=0;", "proxy_connect_timeout 1m;", "proxy_read_timeout 77s;", "proxy_send_timeout 23s;",
           "keepalive 48;", 'proxy_set_header Connection "";'],
          ["ip_hash;", "random ", "hash", "least_time ", "max_fails=1 ",
-          "fail_timeout=10s ", "max_conns=1s;", "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
+          "fail_timeout=10s ", "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
           "keepalive 1024;"])
     ])
     def test_v_s_r_overrides_config_map(self, kube_apis,
@@ -253,15 +253,15 @@ class TestVSRouteUpstreamOptionsValidation:
         invalid_fields_s = ["upstreams[0].lb-method", "upstreams[0].fail-timeout",
                             "upstreams[0].max-fails", "upstreams[0].connect-timeout",
                             "upstreams[0].read-timeout", "upstreams[0].send-timeout",
-                            "upstreams[0].keepalive"]
+                            "upstreams[0].keepalive","upstreams[0].max-conns"]
         invalid_fields_m = ["upstreams[0].lb-method", "upstreams[0].fail-timeout",
                             "upstreams[0].max-fails", "upstreams[0].connect-timeout",
                             "upstreams[0].read-timeout", "upstreams[0].send-timeout",
-                            "upstreams[0].keepalive",
+                            "upstreams[0].keepalive", "upstreams[0].max-conns",
                             "upstreams[1].lb-method", "upstreams[1].fail-timeout",
                             "upstreams[1].max-fails", "upstreams[1].connect-timeout",
                             "upstreams[1].read-timeout", "upstreams[1].send-timeout",
-                            "upstreams[1].keepalive"]
+                            "upstreams[1].keepalive", "upstreams[1].max-conns"]
         text_s = f"{v_s_route_setup.route_s.namespace}/{v_s_route_setup.route_s.name}"
         text_m = f"{v_s_route_setup.route_m.namespace}/{v_s_route_setup.route_m.name}"
         vsr_s_event_text = f"VirtualServerRoute {text_s} is invalid and was rejected: "

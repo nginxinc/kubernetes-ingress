@@ -15,6 +15,7 @@ spec:
     read-timeout: "-16s"
     send-timeout: "-0s"
     keepalive: -10
+    max-conns: -23
   subroutes:
   - path: "/backend2"
     upstream: backend2

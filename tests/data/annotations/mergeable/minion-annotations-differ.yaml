@@ -6,6 +6,7 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
     nginx.org/mergeable-ingress-type: "master"
     nginx.org/proxy-send-timeout: "10s"
+    nginx.org/max-conns: "108"
 spec:
   rules:
   - host: annotations.example.com
@@ -18,6 +19,7 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
     nginx.org/mergeable-ingress-type: "minion"
     nginx.org/proxy-send-timeout: "25s"
+    nginx.org/max-conns: "1048"
 spec:
   rules:
   - host: annotations.example.com
@@ -36,6 +38,7 @@ metadata:
     kubernetes.io/ingress.class: "nginx"
     nginx.org/mergeable-ingress-type: "minion"
     nginx.org/proxy-send-timeout: "33s"
+    nginx.org/max-conns: "1024"
 spec:
   rules:
   - host: annotations.example.com

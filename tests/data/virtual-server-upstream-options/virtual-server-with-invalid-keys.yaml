@@ -15,6 +15,7 @@ spec:
     read-timeout: "-16s"
     send-timeout: "s"
     keepalive: -12
+    max-conns: -23
   - name: backend1
     service: backend1-svc
     port: 80
@@ -25,6 +26,7 @@ spec:
     read-timeout: "1.2"
     send-timeout: "."
     keepalive: -19
+    max-conns: -24
   routes:
   - path: "/backend1"
     upstream: backend1

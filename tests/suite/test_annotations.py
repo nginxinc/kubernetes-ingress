@@ -174,48 +174,6 @@ def annotations_grpc_setup(request,
                             ingress_name, ingress_host, ic_pod_name, test_namespace, event_text, error_text)
 
 
-@pytest.mark.skip_for_nginx_plus
-@pytest.mark.parametrize('annotations_setup', ["standard", "mergeable"], indirect=True)
-class TestOssOnlyAnnotations:
-    def test_nginx_config_defaults(self, kube_apis, annotations_setup, ingress_controller_prerequisites):
-        print("Case 1: no ConfigMap keys, no annotations in Ingress")
-        result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
-                                                      annotations_setup.namespace,
-                                                      annotations_setup.ingress_name,
-                                                      annotations_setup.ingress_pod_name,
-                                                      ingress_controller_prerequisites.namespace)
-
-        assert "max_conns=0;" in result_conf
-
-    @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
-        ({"nginx.org/max-conns": "1024"}, ["max_conns=1024"], [])
-    ])
-    def test_when_annotation_in_ing_only(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
-                                         annotations, expected_strings, unexpected_strings):
-        initial_events = get_events(kube_apis.v1, annotations_setup.namespace)
-        initial_count = get_event_count(annotations_setup.ingress_event_text, initial_events)
-        new_ing = generate_ingresses_with_annotation(annotations_setup.ingress_src_file,
-                                                     annotations)
-        for ing in new_ing:
-            # in mergeable case this will update master ingress only
-            if ing['metadata']['name'] == annotations_setup.ingress_name:
-                replace_ingress(kube_apis.extensions_v1_beta1,
-                                annotations_setup.ingress_name, annotations_setup.namespace, ing)
-        wait_before_test(1)
-        new_events = get_events(kube_apis.v1, annotations_setup.namespace)
-        result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
-                                                      annotations_setup.namespace,
-                                                      annotations_setup.ingress_name,
-                                                      annotations_setup.ingress_pod_name,
-                                                      ingress_controller_prerequisites.namespace)
-
-        assert_event_count_increased(annotations_setup.ingress_event_text, initial_count, new_events)
-        for _ in expected_strings:
-            assert _ in result_conf
-        for _ in unexpected_strings:
-            assert _ not in result_conf
-
-
 @pytest.mark.parametrize('annotations_setup', ["standard", "mergeable"], indirect=True)
 class TestAnnotations:
     def test_nginx_config_defaults(self, kube_apis, annotations_setup, ingress_controller_prerequisites):
@@ -227,9 +185,12 @@ class TestAnnotations:
                                                       ingress_controller_prerequisites.namespace)
 
         assert "proxy_send_timeout 60s;" in result_conf
+        assert "max_conns=0;" in result_conf
 
     @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
-        ({"nginx.org/proxy-send-timeout": "10s"}, ["proxy_send_timeout 10s;"], ["proxy_send_timeout 60s;"]),
+        ({"nginx.org/proxy-send-timeout": "10s", "nginx.org/max-conns": "1024"},
+         ["proxy_send_timeout 10s;", "max_conns=1024"],
+         ["proxy_send_timeout 60s;"]),
     ])
     def test_when_annotation_in_ing_only(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                                          annotations, expected_strings, unexpected_strings):
@@ -321,7 +282,8 @@ class TestAnnotations:
             assert _ not in result_conf
 
     @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
-        ({"nginx.org/proxy-send-timeout": "invalid"}, ["proxy_send_timeout invalid;"], ["proxy_send_timeout 60s;"]),
+        ({"nginx.org/proxy-send-timeout": "invalid", "nginx.org/max-conns": "-10"},
+         ["proxy_send_timeout invalid;", "max_conns=-10"], ["proxy_send_timeout 60s;", "max_conns=0"])
     ])
     def test_validation(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                         annotations, expected_strings, unexpected_strings):
@@ -354,7 +316,8 @@ class TestAnnotations:
 class TestMergeableFlows:
     @pytest.mark.parametrize('yaml_file, expected_strings, unexpected_strings', [
         (f"{TEST_DATA}/annotations/mergeable/minion-annotations-differ.yaml",
-         ["proxy_send_timeout 25s;", "proxy_send_timeout 33s;"], ["proxy_send_timeout 10s;"]),
+         ["proxy_send_timeout 25s;", "proxy_send_timeout 33s;", "max_conns=1048;", "max_conns=1024;"],
+         ["proxy_send_timeout 10s;", "max_conns=108;"]),
     ])
     def test_minion_overrides_master(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                                      yaml_file, expected_strings, unexpected_strings):
