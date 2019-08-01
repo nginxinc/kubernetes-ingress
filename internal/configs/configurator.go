@@ -159,8 +159,7 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	if virtualServerEx.TLSSecret != nil {
 		tlsPemFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.TLSSecret)
 	}
-
-	vsCfg := generateVirtualServerConfig(virtualServerEx, tlsPemFileName, cnf.cfgParams, cnf.isPlus)
+	vsCfg := generateVirtualServerConfig(virtualServerEx, tlsPemFileName, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured())
 
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)

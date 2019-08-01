@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	api_v1 "k8s.io/api/core/v1"
 
@@ -19,6 +20,7 @@ type VirtualServerEx struct {
 	Endpoints           map[string][]string
 	TLSSecret           *api_v1.Secret
 	VirtualServerRoutes []*conf_v1alpha1.VirtualServerRoute
+	ExternalNameSvcs    map[string]bool
 }
 
 func (vsx *VirtualServerEx) String() string {
@@ -167,7 +169,29 @@ func generateUpstreamStatusMatch(upstreamName string, status string) version2.St
 	}
 }
 
-func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileName string, baseCfgParams *ConfigParams, isPlus bool) version2.VirtualServerConfig {
+// GenerateExternalNameSvcKey returns the key to identify an ExternalName service.
+func GenerateExternalNameSvcKey(namespace string, service string) string {
+	return fmt.Sprintf("%v/%v", namespace, service)
+}
+
+func generateEndpointsForUpstream(namespace string, upstream conf_v1alpha1.Upstream, virtualServerEx *VirtualServerEx, isResolverConfigured bool, isPlus bool) []string {
+	endpointsKey := GenerateEndpointsKey(namespace, upstream.Service, upstream.Port)
+	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, upstream.Service)
+	endpoints, _ := virtualServerEx.Endpoints[endpointsKey]
+	if !isPlus && len(endpoints) == 0 {
+		return []string{nginx502Server}
+	}
+
+	_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[externalNameSvcKey]
+	if isExternalNameSvc && !isResolverConfigured {
+		glog.Warningf("A resolver must be configured for Type ExternalName service %s, no upstream servers will be created", upstream.Service)
+		endpoints = []string{}
+	}
+
+	return endpoints
+}
+
+func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileName string, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool) version2.VirtualServerConfig {
 	ssl := generateSSLConfig(virtualServerEx.VirtualServer.Spec.TLS, tlsPemFileName, baseCfgParams)
 
 	// crUpstreams maps an UpstreamName to its conf_v1alpha1.Upstream as they are generated
@@ -183,8 +207,11 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 	// generate upstreams for VirtualServer
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
 		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
-		endpointsKey := GenerateEndpointsKey(virtualServerEx.VirtualServer.Namespace, u.Service, u.Port)
-		ups := generateUpstream(upstreamName, u, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
+		upstreamNamespace := virtualServerEx.VirtualServer.Namespace
+		endpoints := generateEndpointsForUpstream(upstreamNamespace, u, virtualServerEx, isResolverConfigured, isPlus)
+		// isExternalNameSvc is always false for OSS
+		_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
+		ups := generateUpstream(upstreamName, u, isExternalNameSvc, endpoints, baseCfgParams)
 		upstreams = append(upstreams, ups)
 		crUpstreams[upstreamName] = u
 
@@ -200,8 +227,11 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
 		for _, u := range vsr.Spec.Upstreams {
 			upstreamName := upstreamNamer.GetNameForUpstream(u.Name)
-			endpointsKey := GenerateEndpointsKey(vsr.Namespace, u.Service, u.Port)
-			ups := generateUpstream(upstreamName, u, virtualServerEx.Endpoints[endpointsKey], isPlus, baseCfgParams)
+			upstreamNamespace := vsr.Namespace
+			endpoints := generateEndpointsForUpstream(upstreamNamespace, u, virtualServerEx, isResolverConfigured, isPlus)
+			// isExternalNameSvc is always false for OSS
+			_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
+			ups := generateUpstream(upstreamName, u, isExternalNameSvc, endpoints, baseCfgParams)
 			upstreams = append(upstreams, ups)
 			crUpstreams[upstreamName] = u
 
@@ -302,7 +332,7 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 	}
 }
 
-func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, endpoints []string, isPlus bool, cfgParams *ConfigParams) version2.Upstream {
+func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, isExternalNameSvc bool, endpoints []string, cfgParams *ConfigParams) version2.Upstream {
 	var upsServers []version2.UpstreamServer
 
 	for _, e := range endpoints {
@@ -311,16 +341,7 @@ func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, endp
 			MaxFails:    generateIntFromPointer(upstream.MaxFails, cfgParams.MaxFails),
 			FailTimeout: generateString(upstream.FailTimeout, cfgParams.FailTimeout),
 			MaxConns:    generateIntFromPointer(upstream.MaxConns, cfgParams.MaxConns),
-		}
-		upsServers = append(upsServers, s)
-	}
-
-	if !isPlus && len(upsServers) == 0 {
-		s := version2.UpstreamServer{
-			Address:     nginx502Server,
-			MaxFails:    generateIntFromPointer(upstream.MaxFails, cfgParams.MaxFails),
-			FailTimeout: generateString(upstream.FailTimeout, cfgParams.FailTimeout),
-			MaxConns:    generateIntFromPointer(upstream.MaxConns, cfgParams.MaxConns),
+			Resolve:     isExternalNameSvc,
 		}
 		upsServers = append(upsServers, s)
 	}
@@ -630,18 +651,26 @@ func createUpstreamServersForPlus(virtualServerEx *VirtualServerEx) map[string][
 	virtualServerUpstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
 
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
+		if _, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(virtualServerEx.VirtualServer.Namespace, u.Service)]; isExternalNameSvc {
+			glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
+			continue
+		}
+
 		endpointsKey := GenerateEndpointsKey(virtualServerEx.VirtualServer.Namespace, u.Service, u.Port)
 		name := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
-
 		upstreamEndpoints[name] = virtualServerEx.Endpoints[endpointsKey]
 	}
 
 	for _, vsr := range virtualServerEx.VirtualServerRoutes {
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
 		for _, u := range vsr.Spec.Upstreams {
+			if _, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(vsr.Namespace, u.Service)]; isExternalNameSvc {
+				glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", u.Service)
+				continue
+			}
+
 			endpointsKey := GenerateEndpointsKey(vsr.Namespace, u.Service, u.Port)
 			name := upstreamNamer.GetNameForUpstream(u.Name)
-
 			upstreamEndpoints[name] = virtualServerEx.Endpoints[endpointsKey]
 		}
 	}

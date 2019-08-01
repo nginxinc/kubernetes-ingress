@@ -284,8 +284,9 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	}
 
 	isPlus := false
+	isResolverConfigured := false
 	tlsPemFileName := ""
-	result := generateVirtualServerConfig(&virtualServerEx, tlsPemFileName, &baseCfgParams, isPlus)
+	result := generateVirtualServerConfig(&virtualServerEx, tlsPemFileName, &baseCfgParams, isPlus, isResolverConfigured)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
 	}
@@ -499,8 +500,9 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	}
 
 	isPlus := false
+	isResolverConfigured := false
 	tlsPemFileName := ""
-	result := generateVirtualServerConfig(&virtualServerEx, tlsPemFileName, &baseCfgParams, isPlus)
+	result := generateVirtualServerConfig(&virtualServerEx, tlsPemFileName, &baseCfgParams, isPlus, isResolverConfigured)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
 	}
@@ -755,8 +757,9 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 	}
 
 	isPlus := false
+	isResolverConfigured := false
 	tlsPemFileName := ""
-	result := generateVirtualServerConfig(&virtualServerEx, tlsPemFileName, &baseCfgParams, isPlus)
+	result := generateVirtualServerConfig(&virtualServerEx, tlsPemFileName, &baseCfgParams, isPlus, isResolverConfigured)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
 	}
@@ -764,11 +767,10 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 
 func TestGenerateUpstream(t *testing.T) {
 	name := "test-upstream"
-	upstream := conf_v1alpha1.Upstream{}
+	upstream := conf_v1alpha1.Upstream{Service: name, Port: 80}
 	endpoints := []string{
 		"192.168.10.10:8080",
 	}
-	isPlus := false
 	cfgParams := ConfigParams{
 		LBMethod:    "random",
 		MaxFails:    1,
@@ -791,7 +793,7 @@ func TestGenerateUpstream(t *testing.T) {
 		Keepalive: 21,
 	}
 
-	result := generateUpstream(name, upstream, endpoints, isPlus, &cfgParams)
+	result := generateUpstream(name, upstream, false, endpoints, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -804,7 +806,6 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	endpoints := []string{
 		"192.168.10.10:8080",
 	}
-	isPlus := false
 
 	tests := []struct {
 		upstream  conf_v1alpha1.Upstream
@@ -813,7 +814,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 		msg       string
 	}{
 		{
-			conf_v1alpha1.Upstream{Keepalive: &keepalive},
+			conf_v1alpha1.Upstream{Keepalive: &keepalive, Service: name, Port: 80},
 			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
@@ -827,7 +828,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 			"upstream keepalive set, configparam set",
 		},
 		{
-			conf_v1alpha1.Upstream{},
+			conf_v1alpha1.Upstream{Service: name, Port: 80},
 			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
@@ -841,7 +842,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 			"upstream keepalive not set, configparam set",
 		},
 		{
-			conf_v1alpha1.Upstream{Keepalive: &noKeepalive},
+			conf_v1alpha1.Upstream{Keepalive: &noKeepalive, Service: name, Port: 80},
 			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
@@ -856,49 +857,34 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateUpstream(name, test.upstream, endpoints, isPlus, test.cfgParams)
+		result := generateUpstream(name, test.upstream, false, endpoints, test.cfgParams)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 	}
 }
 
-func TestGenerateUpstreamForZeroEndpoints(t *testing.T) {
+func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	name := "test-upstream"
-	upstream := conf_v1alpha1.Upstream{}
-	var endpoints []string // nil
-	cfgParams := ConfigParams{
-		MaxFails:    1,
-		FailTimeout: "10s",
-	}
+	endpoints := []string{"example.com"}
+	upstream := conf_v1alpha1.Upstream{Service: name}
+	cfgParams := ConfigParams{}
 
-	isPlus := false
-	expectedForNGINX := version2.Upstream{
-		Name: "test-upstream",
+	expected := version2.Upstream{
+		Name: name,
 		Servers: []version2.UpstreamServer{
 			{
-				Address:     nginx502Server,
-				MaxFails:    1,
-				FailTimeout: "10s",
+				Address: "example.com",
+				Resolve: true,
 			},
 		},
 	}
 
-	result := generateUpstream(name, upstream, endpoints, isPlus, &cfgParams)
-	if !reflect.DeepEqual(result, expectedForNGINX) {
-		t.Errorf("generateUpstream(isPlus=%v) returned %v but expected %v", isPlus, result, expectedForNGINX)
+	result := generateUpstream(name, upstream, true, endpoints, &cfgParams)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
 
-	isPlus = true
-	expectedForNGINXPlus := version2.Upstream{
-		Name:    "test-upstream",
-		Servers: nil,
-	}
-
-	result = generateUpstream(name, upstream, endpoints, isPlus, &cfgParams)
-	if !reflect.DeepEqual(result, expectedForNGINXPlus) {
-		t.Errorf("generateUpstream(isPlus=%v) returned %v but expected %v", isPlus, result, expectedForNGINXPlus)
-	}
 }
 
 func TestGenerateProxyPassProtocol(t *testing.T) {
@@ -1091,6 +1077,11 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 						Service: "test-svc",
 						Port:    80,
 					},
+					{
+						Name:    "external",
+						Service: "external-svc",
+						Port:    80,
+					},
 				},
 				Routes: []conf_v1alpha1.Route{
 					{
@@ -1100,6 +1091,10 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 					{
 						Path:  "/coffee",
 						Route: "default/coffee",
+					},
+					{
+						Path:     "/external",
+						Upstream: "external",
 					},
 				},
 			},
@@ -1112,6 +1107,12 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 			"default/coffee-svc:80": {
 				"10.0.0.30:80",
 			},
+			"default/external-svc:80": {
+				"example.com:80",
+			},
+		},
+		ExternalNameSvcs: map[string]bool{
+			"default/external-svc": true,
 		},
 		VirtualServerRoutes: []*conf_v1alpha1.VirtualServerRoute{
 			{
@@ -1826,6 +1827,136 @@ func TestGenerateHealthCheck(t *testing.T) {
 		result := generateHealthCheck(test.upstream, test.upstreamName, baseCfgParams)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateHealthCheck returned \n%v but expected \n%v \n for case: %v", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestGenerateEndpointsForUpstream(t *testing.T) {
+	name := "test"
+	namespace := "test-namespace"
+
+	tests := []struct {
+		upstream             conf_v1alpha1.Upstream
+		vsEx                 *VirtualServerEx
+		isPlus               bool
+		isResolverConfigured bool
+		expected             []string
+		msg                  string
+	}{
+		{
+			upstream: conf_v1alpha1.Upstream{
+				Service: name,
+				Port:    80,
+			},
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1alpha1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+				Endpoints: map[string][]string{
+					"test-namespace/test:80": []string{"example.com:80"},
+				},
+				ExternalNameSvcs: map[string]bool{
+					"test-namespace/test": true,
+				},
+			},
+			isPlus:               true,
+			isResolverConfigured: true,
+			expected:             []string{"example.com:80"},
+			msg:                  "ExternalName service",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{
+				Service: name,
+				Port:    80,
+			},
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1alpha1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+				Endpoints: map[string][]string{
+					"test-namespace/test:80": []string{"example.com:80"},
+				},
+				ExternalNameSvcs: map[string]bool{
+					"test-namespace/test": true,
+				},
+			},
+			isPlus:               true,
+			isResolverConfigured: false,
+			expected:             []string{},
+			msg:                  "ExternalName service without resolver configured",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{
+				Service: name,
+				Port:    8080,
+			},
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1alpha1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+				Endpoints: map[string][]string{
+					"test-namespace/test:8080": []string{"192.168.10.10:8080"},
+				},
+			},
+			isPlus:               false,
+			isResolverConfigured: false,
+			expected:             []string{"192.168.10.10:8080"},
+			msg:                  "Service with endpoints",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{
+				Service: name,
+				Port:    8080,
+			},
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1alpha1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+				Endpoints: map[string][]string{},
+			},
+			isPlus:               false,
+			isResolverConfigured: false,
+			expected:             []string{nginx502Server},
+			msg:                  "Service with no endpoints",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{
+				Service: name,
+				Port:    8080,
+			},
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1alpha1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+				Endpoints: map[string][]string{},
+			},
+			isPlus:               true,
+			isResolverConfigured: false,
+			expected:             nil,
+			msg:                  "Service with no endpoints",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateEndpointsForUpstream(namespace, test.upstream, test.vsEx, test.isResolverConfigured, test.isPlus)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateEndpointsForUpstream(isPlus=%v, isResolverConfigured=%v) returned %v, but expected %v for case: %v",
+				test.isPlus, test.isResolverConfigured, result, test.expected, test.msg)
 		}
 	}
 }

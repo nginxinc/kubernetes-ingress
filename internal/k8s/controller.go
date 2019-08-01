@@ -1504,10 +1504,20 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 	}
 
 	endpoints := make(map[string][]string)
+	externalNameSvcs := make(map[string]bool)
 
 	for _, u := range virtualServer.Spec.Upstreams {
 		endpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, u.Service, u.Port)
-		endpoints[endpointsKey] = lbc.getEndpointsForService(virtualServer.Namespace, u.Service, int(u.Port))
+		endps, external, err := lbc.getEndpointsForUpstream(virtualServer.Namespace, u)
+		if err != nil {
+			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+		}
+
+		if err == nil && external && lbc.isNginxPlus {
+			externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, u.Service)] = true
+		}
+
+		endpoints[endpointsKey] = endps
 	}
 
 	var virtualServerRoutes []*conf_v1alpha1.VirtualServerRoute
@@ -1552,35 +1562,43 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 
 		for _, u := range vsr.Spec.Upstreams {
 			endpointsKey := configs.GenerateEndpointsKey(vsr.Namespace, u.Service, u.Port)
-			endpoints[endpointsKey] = lbc.getEndpointsForService(vsr.Namespace, u.Service, int(u.Port))
+			endps, external, err := lbc.getEndpointsForUpstream(vsr.Namespace, u)
+			if err != nil {
+				glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+			}
+
+			if err == nil && external && lbc.isNginxPlus {
+				externalNameSvcs[configs.GenerateExternalNameSvcKey(vsr.Namespace, u.Service)] = true
+			}
+
+			endpoints[endpointsKey] = endps
 		}
 	}
 
 	virtualServerEx.Endpoints = endpoints
 	virtualServerEx.VirtualServerRoutes = virtualServerRoutes
+	virtualServerEx.ExternalNameSvcs = externalNameSvcs
 
 	return &virtualServerEx, virtualServerRouteErrors
 }
 
-func (lbc *LoadBalancerController) getEndpointsForService(namespace string, name string, port int) []string {
+func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstream conf_v1alpha1.Upstream) (result []string, isExternal bool, err error) {
+	svc, err := lbc.getServiceForUpstream(upstream, namespace)
+	if err != nil {
+		return nil, false, fmt.Errorf("Error getting service %v: %v", upstream.Service, err)
+	}
+
 	backend := &extensions.IngressBackend{
-		ServiceName: name,
-		ServicePort: intstr.FromInt(port),
+		ServiceName: upstream.Service,
+		ServicePort: intstr.FromInt(int(upstream.Port)),
 	}
 
-	svc, err := lbc.getServiceForIngressBackend(backend, namespace)
+	endps, isExternal, err := lbc.getEndpointsForIngressBackend(backend, namespace, svc)
 	if err != nil {
-		glog.Warningf("Error getting service %v: %v", name, err)
-		return nil
+		return nil, false, fmt.Errorf("Error retrieving endpoints for the service %v: %v", upstream.Service, err)
 	}
 
-	endps, _, err := lbc.getEndpointsForIngressBackend(backend, namespace, svc)
-	if err != nil {
-		glog.Warningf("Error retrieving endpoints for the service %v: %v", name, err)
-		return nil
-	}
-
-	return endps
+	return endps, isExternal, err
 }
 
 func (lbc *LoadBalancerController) getPodsForIngressBackend(svc *api_v1.Service, namespace string) *api_v1.PodList {
@@ -1739,6 +1757,14 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort *api_v1.ServicePort, sv
 	}
 
 	return portNum, nil
+}
+
+func (lbc *LoadBalancerController) getServiceForUpstream(u conf_v1alpha1.Upstream, namespace string) (*api_v1.Service, error) {
+	backend := &extensions.IngressBackend{
+		ServiceName: u.Service,
+		ServicePort: intstr.FromInt(int(u.Port)),
+	}
+	return lbc.getServiceForIngressBackend(backend, namespace)
 }
 
 func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *extensions.IngressBackend, namespace string) (*api_v1.Service, error) {
