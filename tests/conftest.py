@@ -34,6 +34,7 @@ def pytest_addoption(parser) -> None:
                      action="store",
                      default=os.path.expanduser(KUBE_CONFIG_DEFAULT_LOCATION),
                      help="An absolute path to a kubeconfig file.")
+    parser.addoption("--show-ic-logs", action="store", default="no", help="Show IC logs in stdout on test failure")
 
 
 # import fixtures into pytest global namespace
@@ -67,7 +68,8 @@ def pytest_runtest_makereport(item) -> None:
     """
     Print out IC Pod logs on test failure.
 
-    Only look at actual failing test calls, not setup/teardown
+    Only look at actual failing test calls, not setup/teardown.
+    Only show the logs if commandline argument `--show-ic-logs` is set to 'yes'
 
     :param item:
     :return:
@@ -77,7 +79,7 @@ def pytest_runtest_makereport(item) -> None:
     rep = outcome.get_result()
 
     # we only look at actual failing test calls, not setup/teardown
-    if rep.when == "call" and rep.failed:
+    if rep.when == "call" and rep.failed and pytest.config.getoption("--show-ic-logs") == "yes":
         pod_namespace = item.funcargs['ingress_controller_prerequisites'].namespace
         pod_name = get_first_pod_name(item.funcargs['kube_apis'].v1, pod_namespace)
         print("\n===================== IC Logs Start =====================")
