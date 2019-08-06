@@ -20,7 +20,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress controller image.
-    tag: "1.5.2"
+    tag: "1.5.3"
 
     ## The pull policy for the Ingress controller image.
     pullPolicy: IfNotPresent
