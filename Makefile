@@ -35,10 +35,18 @@ else
 endif
 
 verify-codegen: 
+ifeq ($(BUILD_IN_CONTAINER), 1)
+	$(DOCKER_RUN) $(GOLANG_CONTAINER) ./hack/verify-codegen.sh
+else 
 	./hack/verify-codegen.sh
+endif
 
 update-codegen: 
+ifeq ($(BUILD_IN_CONTAINER), 1)
+	$(DOCKER_RUN) $(GOLANG_CONTAINER) ./hack/update-codegen.sh
+else 
 	./hack/update-codegen.sh
+endif
 
 certificate-and-key:
 ifeq ($(GENERATE_DEFAULT_CERT_AND_KEY),1)
