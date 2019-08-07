@@ -79,7 +79,7 @@ def pytest_runtest_makereport(item) -> None:
     rep = outcome.get_result()
 
     # we only look at actual failing test calls, not setup/teardown
-    if rep.when == "call" and rep.failed and pytest.config.getoption("--show-ic-logs") == "yes":
+    if rep.when == "call" and rep.failed and item.config.getoption("--show-ic-logs") == "yes":
         pod_namespace = item.funcargs['ingress_controller_prerequisites'].namespace
         pod_name = get_first_pod_name(item.funcargs['kube_apis'].v1, pod_namespace)
         print("\n===================== IC Logs Start =====================")
