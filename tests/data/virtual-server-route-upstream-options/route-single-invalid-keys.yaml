@@ -16,6 +16,9 @@ spec:
     send-timeout: "-0s"
     keepalive: -10
     max-conns: -23
+    next-upstream: "invalid upstream"
+    next-upstream-timeout: "time"
+    next-upstream-tries: -12
   subroutes:
   - path: "/backend2"
     upstream: backend2

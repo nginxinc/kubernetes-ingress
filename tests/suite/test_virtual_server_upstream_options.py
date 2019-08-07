@@ -76,6 +76,10 @@ class TestVirtualServerUpstreamOptions:
         assert "keepalive" not in config
         assert 'proxy_set_header Connection "";' not in config
 
+        assert "proxy_next_upstream error timeout;" in config
+        assert "proxy_next_upstream_timeout 0s;" in config
+        assert "proxy_next_upstream_tries 0;" in config
+
     @pytest.mark.parametrize('options, expected_strings', [
         ({"lb-method": "least_conn", "max-fails": 8,
           "fail-timeout": "13s", "connect-timeout": "55s", "read-timeout": "1s", "send-timeout": "1h",
@@ -86,7 +90,10 @@ class TestVirtualServerUpstreamOptions:
         ({"lb-method": "ip_hash", "connect-timeout": "75", "read-timeout": "15", "send-timeout": "1h"},
          ["ip_hash;", "proxy_connect_timeout 75;", "proxy_read_timeout 15;", "proxy_send_timeout 1h;"]),
         ({"connect-timeout": "1m", "read-timeout": "1m", "send-timeout": "1s"},
-         ["proxy_connect_timeout 1m;", "proxy_read_timeout 1m;", "proxy_send_timeout 1s;"], )
+         ["proxy_connect_timeout 1m;", "proxy_read_timeout 1m;", "proxy_send_timeout 1s;"]),
+        ({"next-upstream": "error timeout non_idempotent", "next-upstream-timeout": "5s", "next-upstream-tries": 10},
+         ["proxy_next_upstream error timeout non_idempotent;",
+          "proxy_next_upstream_timeout 5s;", "proxy_next_upstream_tries 10;"])
     ])
     def test_when_option_in_v_s_only(self, kube_apis, ingress_controller_prerequisites,
                                      crd_ingress_controller, virtual_server_setup,
@@ -221,10 +228,14 @@ class TestVirtualServerUpstreamOptionValidation:
                           "upstreams[0].max-fails", "upstreams[0].connect-timeout",
                           "upstreams[0].read-timeout", "upstreams[0].send-timeout",
                           "upstreams[0].keepalive", "upstreams[0].max-conns",
+                          "upstreams[0].next-upstream",
+                          "upstreams[0].next-upstream-timeout", "upstreams[0].next-upstream-tries",
                           "upstreams[1].lb-method", "upstreams[1].fail-timeout",
                           "upstreams[1].max-fails", "upstreams[1].connect-timeout",
                           "upstreams[1].read-timeout", "upstreams[1].send-timeout",
-                          "upstreams[1].keepalive", "upstreams[1].max-conns"
+                          "upstreams[1].keepalive", "upstreams[1].max-conns",
+                          "upstreams[1].next-upstream",
+                          "upstreams[1].next-upstream-timeout", "upstreams[1].next-upstream-tries"
                           ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"VirtualServer {text} is invalid and was rejected: "

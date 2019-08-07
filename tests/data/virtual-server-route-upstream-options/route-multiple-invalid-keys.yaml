@@ -16,6 +16,9 @@ spec:
     send-timeout: "s"
     keepalive: -10
     max-conns: -23
+    next-upstream: "invalid upstream"
+    next-upstream-timeout: "time"
+    next-upstream-tries: -12
   - name: backend3
     service: backend3-svc
     port: 80
@@ -27,6 +30,9 @@ spec:
     send-timeout: "ten"
     keepalive: -24
     max-conns: -1000
+    next-upstream: "`=1~"
+    next-upstream-timeout: "1.5d"
+    next-upstream-tries: -10
   subroutes:
   - path: "/backends/backend1"
     upstream: backend1
