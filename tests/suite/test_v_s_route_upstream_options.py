@@ -302,3 +302,123 @@ class TestVSRouteUpstreamOptionsValidation:
         assert_event_starts_with_text_and_contains_errors(vsr_s_event_text, vsr_s_events, invalid_fields_s)
         assert_event_starts_with_text_and_contains_errors(vsr_m_event_text, vsr_m_events, invalid_fields_m)
         assert "upstream" not in config
+
+
+@pytest.mark.skip_for_nginx_oss
+@pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
+                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+                           {"example": "virtual-server-route-upstream-options"})],
+                         indirect=True)
+class TestVSRouteHealthCheckUpstreamOption:
+    @pytest.mark.parametrize('options, expected_strings', [
+        ({"healthCheck": {"enable": True}},
+         ["health_check uri=/ port=80 interval=5s jitter=0s", "fails=1 passes=1;"]),
+        ({"healthCheck": {"enable": True, "path": "/health",
+                          "interval": "15s", "jitter": "3",
+                          "fails": 2, "passes": 2, "port": 8080,
+                          "tls": {"enable": True}, "statusMatch": "200",
+                          "connect-timeout": "35s", "read-timeout": "45s", "send-timeout": "55s",
+                          "headers": [{"name": "Host", "value": "virtual-server.example.com"}]}},
+         ["health_check uri=/health port=8080 interval=15s jitter=3", "fails=2 passes=2 match=",
+          "proxy_pass https://vs", "status 200;",
+          "proxy_connect_timeout 35s;", "proxy_read_timeout 45s;", "proxy_send_timeout 55s;",
+          'proxy_set_header Host "virtual-server.example.com";'])
+    ])
+    def test_config_and_events(self, kube_apis,
+                                       ingress_controller_prerequisites,
+                                       crd_ingress_controller,
+                                       v_s_route_setup, v_s_route_app_setup,
+                                       options, expected_strings):
+        expected_strings.append(f"location @hc-vs_{v_s_route_setup.namespace}_{v_s_route_setup.vs_name}"
+                                f"_vsr_{v_s_route_setup.route_m.namespace}_{v_s_route_setup.route_m.name}")
+        expected_strings.append(f"location @hc-vs_{v_s_route_setup.namespace}_{v_s_route_setup.vs_name}"
+                                f"_vsr_{v_s_route_setup.route_s.namespace}_{v_s_route_setup.route_s.name}")
+        req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
+        text_s = f"{v_s_route_setup.route_s.namespace}/{v_s_route_setup.route_s.name}"
+        text_m = f"{v_s_route_setup.route_m.namespace}/{v_s_route_setup.route_m.name}"
+        vsr_s_event_text = f"Configuration for {text_s} was added or updated"
+        vsr_m_event_text = f"Configuration for {text_m} was added or updated"
+        events_ns_m = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
+        events_ns_s = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
+        initial_count_vsr_m = get_event_count(vsr_m_event_text, events_ns_m)
+        initial_count_vsr_s = get_event_count(vsr_s_event_text, events_ns_s)
+        print(f"Case 2: no key in ConfigMap, option specified in VSR")
+        new_body_m = generate_item_with_upstream_options(
+            f"{TEST_DATA}/virtual-server-route-upstream-options/route-multiple.yaml",
+            options)
+        new_body_s = generate_item_with_upstream_options(
+            f"{TEST_DATA}/virtual-server-route-upstream-options/route-single.yaml",
+            options)
+        patch_v_s_route(kube_apis.custom_objects,
+                        v_s_route_setup.route_m.name, v_s_route_setup.route_m.namespace, new_body_m)
+        patch_v_s_route(kube_apis.custom_objects,
+                        v_s_route_setup.route_s.name, v_s_route_setup.route_s.namespace, new_body_s)
+        wait_before_test(1)
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        config = get_vs_nginx_template_conf(kube_apis.v1,
+                                            v_s_route_setup.namespace,
+                                            v_s_route_setup.vs_name,
+                                            ic_pod_name,
+                                            ingress_controller_prerequisites.namespace)
+        resp_1 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+                              headers={"host": v_s_route_setup.vs_host})
+        resp_2 = requests.get(f"{req_url}{v_s_route_setup.route_s.paths[0]}",
+                              headers={"host": v_s_route_setup.vs_host})
+        vsr_s_events = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
+        vsr_m_events = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
+
+        assert_event_count_increased(vsr_m_event_text, initial_count_vsr_m, vsr_m_events)
+        assert_event_count_increased(vsr_s_event_text, initial_count_vsr_s, vsr_s_events)
+        for _ in expected_strings:
+            assert _ in config
+        assert_response_codes(resp_1, resp_2)
+
+    def test_validation_flow(self, kube_apis, ingress_controller_prerequisites,
+                             crd_ingress_controller, v_s_route_setup):
+        invalid_fields_s = [
+            "upstreams[0].healthCheck.path", "upstreams[0].healthCheck.interval", "upstreams[0].healthCheck.jitter",
+            "upstreams[0].healthCheck.fails", "upstreams[0].healthCheck.passes",
+            "upstreams[0].healthCheck.connect-timeout",
+            "upstreams[0].healthCheck.read-timeout", "upstreams[0].healthCheck.send-timeout",
+            "upstreams[0].healthCheck.headers[0].name", "upstreams[0].healthCheck.headers[0].value",
+            "upstreams[0].healthCheck.statusMatch"
+        ]
+        invalid_fields_m = [
+            "upstreams[0].healthCheck.path", "upstreams[0].healthCheck.interval", "upstreams[0].healthCheck.jitter",
+            "upstreams[0].healthCheck.fails", "upstreams[0].healthCheck.passes",
+            "upstreams[0].healthCheck.connect-timeout",
+            "upstreams[0].healthCheck.read-timeout", "upstreams[0].healthCheck.send-timeout",
+            "upstreams[0].healthCheck.headers[0].name", "upstreams[0].healthCheck.headers[0].value",
+            "upstreams[0].healthCheck.statusMatch",
+            "upstreams[1].healthCheck.path", "upstreams[1].healthCheck.interval", "upstreams[1].healthCheck.jitter",
+            "upstreams[1].healthCheck.fails", "upstreams[1].healthCheck.passes",
+            "upstreams[1].healthCheck.connect-timeout",
+            "upstreams[1].healthCheck.read-timeout", "upstreams[1].healthCheck.send-timeout",
+            "upstreams[1].healthCheck.headers[0].name", "upstreams[0].healthCheck.headers[0].value",
+            "upstreams[1].healthCheck.statusMatch"
+        ]
+        text_s = f"{v_s_route_setup.route_s.namespace}/{v_s_route_setup.route_s.name}"
+        text_m = f"{v_s_route_setup.route_m.namespace}/{v_s_route_setup.route_m.name}"
+        vsr_s_event_text = f"VirtualServerRoute {text_s} is invalid and was rejected: "
+        vsr_m_event_text = f"VirtualServerRoute {text_m} is invalid and was rejected: "
+        patch_v_s_route_from_yaml(kube_apis.custom_objects,
+                                  v_s_route_setup.route_s.name,
+                                  f"{TEST_DATA}/virtual-server-route-upstream-options/plus-route-s-invalid-keys.yaml",
+                                  v_s_route_setup.route_s.namespace)
+        patch_v_s_route_from_yaml(kube_apis.custom_objects,
+                                  v_s_route_setup.route_m.name,
+                                  f"{TEST_DATA}/virtual-server-route-upstream-options/plus-route-m-invalid-keys.yaml",
+                                  v_s_route_setup.route_m.namespace)
+        wait_before_test(2)
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        config = get_vs_nginx_template_conf(kube_apis.v1,
+                                            v_s_route_setup.namespace,
+                                            v_s_route_setup.vs_name,
+                                            ic_pod_name,
+                                            ingress_controller_prerequisites.namespace)
+        vsr_s_events = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
+        vsr_m_events = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
+
+        assert_event_starts_with_text_and_contains_errors(vsr_s_event_text, vsr_s_events, invalid_fields_s)
+        assert_event_starts_with_text_and_contains_errors(vsr_m_event_text, vsr_m_events, invalid_fields_m)
+        assert "upstream" not in config

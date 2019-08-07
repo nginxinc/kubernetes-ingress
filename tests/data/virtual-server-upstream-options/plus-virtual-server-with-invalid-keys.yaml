@@ -1,0 +1,48 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: VirtualServer
+metadata:
+  name: virtual-server
+spec:
+  host: virtual-server.example.com
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+    healthCheck:
+      enable: True
+      path: "invalid"
+      interval: 1.5d
+      jitter: invalid
+      fails: -5
+      passes: -1
+      port: -1
+      connect-timeout: invalid
+      read-timeout: m
+      send-timeout: d
+      headers:
+        - name: ""
+          value: "$one"
+      statusMatch: "invalid"
+  - name: backend1
+    service: backend1-svc
+    port: 80
+    healthCheck:
+      enable: True
+      path: "invalid"
+      interval: 1.5d
+      jitter: invalid
+      fails: -5
+      passes: -1
+      port: -1
+      connect-timeout: invalid
+      read-timeout: m
+      send-timeout: d
+      headers:
+        - name: "`=1^&*"
+          value: "`=1.±!@£$%^&*()_+{}[]'^&*"
+      statusMatch: "invalid"
+  routes:
+  - path: "/backend1"
+    upstream: backend1
+  - path: "/backend2"
+    upstream: backend2

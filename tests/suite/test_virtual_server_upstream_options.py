@@ -255,3 +255,95 @@ class TestVirtualServerUpstreamOptionValidation:
 
         assert_event_starts_with_text_and_contains_errors(vs_event_text, vs_events, invalid_fields)
         assert_template_config_does_not_exist(response)
+
+
+@pytest.mark.skip_for_nginx_oss
+@pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
+                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+                           {"example": "virtual-server-upstream-options", "app_type": "simple"})],
+                         indirect=True)
+class TestVSHealthCheckUpstreamOption:
+    @pytest.mark.parametrize('options, expected_strings', [
+        ({"healthCheck": {"enable": True}},
+         ["health_check uri=/ port=80 interval=5s jitter=0s", "fails=1 passes=1;"]),
+        ({"healthCheck": {"enable": True, "path": "/health",
+                          "interval": "15s", "jitter": "3",
+                          "fails": 2, "passes": 2, "port": 8080,
+                          "tls": {"enable": True}, "statusMatch": "200",
+                          "connect-timeout": "35s", "read-timeout": "45s", "send-timeout": "55s",
+                          "headers": [{"name": "Host", "value": "virtual-server.example.com"}]}},
+         ["health_check uri=/health port=8080 interval=15s jitter=3", "fails=2 passes=2 match=",
+          "proxy_pass https://vs", "status 200;",
+          "proxy_connect_timeout 35s;", "proxy_read_timeout 45s;", "proxy_send_timeout 55s;",
+          'proxy_set_header Host "virtual-server.example.com";'])
+
+    ])
+    def test_config_and_events(self, kube_apis, ingress_controller_prerequisites,
+                               crd_ingress_controller, virtual_server_setup,
+                               options, expected_strings):
+        expected_strings.append(f"location @hc-vs_"
+                                f"{virtual_server_setup.namespace}_{virtual_server_setup.vs_name}_backend1")
+        expected_strings.append(f"location @hc-vs_"
+                                f"{virtual_server_setup.namespace}_{virtual_server_setup.vs_name}_backend2")
+        text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
+        vs_event_text = f"Configuration for {text} was added or updated"
+        events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
+        initial_count = get_event_count(vs_event_text, events_vs)
+        print(f"Case 1: option specified in VS")
+        new_body = generate_item_with_upstream_options(
+            f"{TEST_DATA}/virtual-server-upstream-options/standard/virtual-server.yaml",
+            options)
+        patch_virtual_server(kube_apis.custom_objects,
+                             virtual_server_setup.vs_name, virtual_server_setup.namespace, new_body)
+        wait_before_test(1)
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        config = get_vs_nginx_template_conf(kube_apis.v1,
+                                            virtual_server_setup.namespace,
+                                            virtual_server_setup.vs_name,
+                                            ic_pod_name,
+                                            ingress_controller_prerequisites.namespace)
+        resp_1 = requests.get(virtual_server_setup.backend_1_url,
+                              headers={"host": virtual_server_setup.vs_host})
+        resp_2 = requests.get(virtual_server_setup.backend_2_url,
+                              headers={"host": virtual_server_setup.vs_host})
+        vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
+
+        assert_event_count_increased(vs_event_text, initial_count, vs_events)
+        for _ in expected_strings:
+            assert _ in config
+        assert_response_codes(resp_1, resp_2)
+
+    def test_validation_flow(self, kube_apis, ingress_controller_prerequisites,
+                             crd_ingress_controller, virtual_server_setup):
+        invalid_fields = [
+            "upstreams[0].healthCheck.path", "upstreams[0].healthCheck.interval", "upstreams[0].healthCheck.jitter",
+            "upstreams[0].healthCheck.fails", "upstreams[0].healthCheck.passes",
+            "upstreams[0].healthCheck.connect-timeout",
+            "upstreams[0].healthCheck.read-timeout", "upstreams[0].healthCheck.send-timeout",
+            "upstreams[0].healthCheck.headers[0].name", "upstreams[0].healthCheck.headers[0].value",
+            "upstreams[0].healthCheck.statusMatch",
+            "upstreams[1].healthCheck.path", "upstreams[1].healthCheck.interval", "upstreams[1].healthCheck.jitter",
+            "upstreams[1].healthCheck.fails", "upstreams[1].healthCheck.passes",
+            "upstreams[1].healthCheck.connect-timeout",
+            "upstreams[1].healthCheck.read-timeout", "upstreams[1].healthCheck.send-timeout",
+            "upstreams[1].healthCheck.headers[0].name", "upstreams[1].healthCheck.headers[0].value",
+            "upstreams[1].healthCheck.statusMatch"
+        ]
+        text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
+        vs_event_text = f"VirtualServer {text} is invalid and was rejected: "
+        vs_file = f"{TEST_DATA}/virtual-server-upstream-options/plus-virtual-server-with-invalid-keys.yaml"
+        patch_virtual_server_from_yaml(kube_apis.custom_objects,
+                                       virtual_server_setup.vs_name,
+                                       vs_file,
+                                       virtual_server_setup.namespace)
+        wait_before_test(2)
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        response = get_vs_nginx_template_conf(kube_apis.v1,
+                                              virtual_server_setup.namespace,
+                                              virtual_server_setup.vs_name,
+                                              ic_pod_name,
+                                              ingress_controller_prerequisites.namespace)
+        vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
+
+        assert_event_starts_with_text_and_contains_errors(vs_event_text, vs_events, invalid_fields)
+        assert_template_config_does_not_exist(response)
