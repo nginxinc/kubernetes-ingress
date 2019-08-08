@@ -35,9 +35,7 @@ else
 endif
 
 verify-codegen: 
-ifeq ($(BUILD_IN_CONTAINER), 1)
-	$(DOCKER_RUN) $(GOLANG_CONTAINER) ./hack/verify-codegen.sh
-else 
+ifneq ($(BUILD_IN_CONTAINER), 1)
 	./hack/verify-codegen.sh
 endif
 
