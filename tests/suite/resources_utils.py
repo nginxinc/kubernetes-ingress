@@ -442,6 +442,40 @@ def delete_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace) -
     print(f"Ingress was removed with name '{name}'")
 
 
+def generate_ingresses_with_annotation(yaml_manifest, annotations) -> []:
+    """
+    Generate an Ingress item with an annotation.
+
+    :param yaml_manifest: an absolute path to a file
+    :param annotations:
+    :return: []
+    """
+    res = []
+    with open(yaml_manifest) as f:
+        docs = yaml.load_all(f)
+        for doc in docs:
+            if doc['kind'] == 'Ingress':
+                doc['metadata']['annotations'].update(annotations)
+                res.append(doc)
+    return res
+
+
+def replace_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace, body) -> str:
+    """
+    Replace an Ingress based on a dict.
+
+    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param name:
+    :param namespace: namespace
+    :param body: dict
+    :return: str
+    """
+    print(f"Replace a Ingress: {name}")
+    resp = extensions_v1_beta1.replace_namespaced_ingress(name, namespace, body)
+    print(f"Ingress replaced with name '{name}'")
+    return resp.metadata.name
+
+
 def create_namespace_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
     """
     Create a namespace based on yaml file.

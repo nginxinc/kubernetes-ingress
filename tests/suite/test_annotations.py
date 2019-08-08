@@ -7,7 +7,8 @@ from suite.resources_utils import ensure_connection_to_public_endpoint, \
     get_ingress_nginx_template_conf, \
     get_first_pod_name, create_example_app, wait_until_all_pods_are_ready, \
     delete_common_app, create_items_from_yaml, delete_items_from_yaml, \
-    wait_before_test, replace_configmap_from_yaml, get_events
+    wait_before_test, replace_configmap_from_yaml, get_events, \
+    generate_ingresses_with_annotation, replace_ingress
 from suite.yaml_utils import get_first_ingress_host_from_yaml, get_names_from_yaml
 from settings import TEST_DATA, DEPLOYMENTS
 
@@ -25,40 +26,6 @@ def assert_event_count_increased(event_text, count, events_list):
             assert events_list[i].count > count
             return
     pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def generate_ingresses_with_annotation(yaml_manifest, annotations) -> []:
-    """
-    Generate an Ingress item with an annotation.
-
-    :param yaml_manifest: an absolute path to a file
-    :param annotations:
-    :return: []
-    """
-    res = []
-    with open(yaml_manifest) as f:
-        docs = yaml.load_all(f)
-        for doc in docs:
-            if doc['kind'] == 'Ingress':
-                doc['metadata']['annotations'].update(annotations)
-                res.append(doc)
-    return res
-
-
-def replace_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace, body) -> str:
-    """
-    Replace an Ingress based on a dict.
-
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
-    :param name:
-    :param namespace: namespace
-    :param body: dict
-    :return: str
-    """
-    print(f"Replace a Ingress: {name}")
-    resp = extensions_v1_beta1.replace_namespaced_ingress(name, namespace, body)
-    print(f"Ingress replaced with name '{name}'")
-    return resp.metadata.name
 
 
 def replace_ingresses_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, yaml_manifest) -> None:
@@ -187,10 +154,17 @@ class TestAnnotations:
         assert "proxy_send_timeout 60s;" in result_conf
         assert "max_conns=0;" in result_conf
 
+        assert "Strict-Transport-Security" not in result_conf
+
     @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
-        ({"nginx.org/proxy-send-timeout": "10s", "nginx.org/max-conns": "1024"},
-         ["proxy_send_timeout 10s;", "max_conns=1024"],
-         ["proxy_send_timeout 60s;"]),
+        ({"nginx.org/proxy-send-timeout": "10s", "nginx.org/max-conns": "1024",
+          "nginx.org/hsts": "True", "nginx.org/hsts-behind-proxy": "True"},
+         ["proxy_send_timeout 10s;", "max_conns=1024",
+          'set $hsts_header_val "";', "proxy_hide_header Strict-Transport-Security;",
+          'add_header Strict-Transport-Security "$hsts_header_val" always;',
+          "if ($http_x_forwarded_proto = 'https')", 'set $hsts_header_val "max-age=2592000; preload";'
+          ],
+         ["proxy_send_timeout 60s;", "if ($https = on)"])
     ])
     def test_when_annotation_in_ing_only(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                                          annotations, expected_strings, unexpected_strings):
@@ -219,7 +193,13 @@ class TestAnnotations:
             assert _ not in result_conf
 
     @pytest.mark.parametrize('configmap_file, expected_strings, unexpected_strings', [
-        (f"{TEST_DATA}/annotations/configmap-with-keys.yaml", ["proxy_send_timeout 33s;"], ["proxy_send_timeout 60s;"]),
+        (f"{TEST_DATA}/annotations/configmap-with-keys.yaml",
+         ["proxy_send_timeout 33s;",
+          'set $hsts_header_val "";', "proxy_hide_header Strict-Transport-Security;",
+          'add_header Strict-Transport-Security "$hsts_header_val" always;',
+          "if ($http_x_forwarded_proto = 'https')", 'set $hsts_header_val "max-age=2592000; preload";'
+          ],
+         ["proxy_send_timeout 60s;", "if ($https = on)"]),
     ])
     def test_when_annotation_in_configmap_only(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                                                configmap_file, expected_strings, unexpected_strings):
@@ -247,9 +227,11 @@ class TestAnnotations:
             assert _ not in result_conf
 
     @pytest.mark.parametrize('annotations, configmap_file, expected_strings, unexpected_strings', [
-        ({"nginx.org/proxy-send-timeout": "10s"},
+        ({"nginx.org/proxy-send-timeout": "10s",
+          "nginx.org/hsts": "False", "nginx.org/hsts-behind-proxy": "False"},
          f"{TEST_DATA}/annotations/configmap-with-keys.yaml",
-         ["proxy_send_timeout 10s;"], ["proxy_send_timeout 33s;"]),
+         ["proxy_send_timeout 10s;"],
+         ["proxy_send_timeout 33s;", "Strict-Transport-Security"]),
     ])
     def test_ing_overrides_configmap(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                                      annotations, configmap_file, expected_strings, unexpected_strings):
