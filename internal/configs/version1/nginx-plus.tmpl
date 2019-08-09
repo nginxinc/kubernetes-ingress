@@ -67,7 +67,10 @@ http {
         default upgrade;
         ''      close;
     }
-
+    map $http_upgrade $vs_connection_header {
+        default upgrade;
+        ''      $default_connection_header;
+    }
     {{if .SSLProtocols}}ssl_protocols {{.SSLProtocols}};{{end}}
     {{if .SSLCiphers}}ssl_ciphers "{{.SSLCiphers}}";{{end}}
     {{if .SSLPreferServerCiphers}}ssl_prefer_server_ciphers on;{{end}}
@@ -86,6 +89,9 @@ http {
     {{end}}
 
     server {
+        # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
+        set $default_connection_header "";
+
         listen 80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
         listen 443 ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};
 

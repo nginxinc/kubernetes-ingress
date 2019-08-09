@@ -97,7 +97,7 @@ server {
         proxy_read_timeout {{ $hc.ProxyReadTimeout }};
         proxy_send_timeout {{ $hc.ProxySendTimeout }};
         proxy_pass {{ $hc.ProxyPass }};
-        health_check uri={{ $hc.URI }} port={{ $hc.Port }} interval={{ $hc.Interval }} jitter={{ $hc.Jitter }} 
+        health_check uri={{ $hc.URI }} port={{ $hc.Port }} interval={{ $hc.Interval }} jitter={{ $hc.Jitter }}
             fails={{ $hc.Fails }} passes={{ $hc.Passes }}{{ if $hc.Match }} match={{ $hc.Match }}{{ end }};
     }
     {{ end }}
@@ -127,10 +127,9 @@ server {
 
         proxy_http_version 1.1;
 
-        {{ if $l.HasKeepalive }}
-        proxy_set_header Connection "";
-        {{ end }}
-
+        set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $vs_connection_header;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

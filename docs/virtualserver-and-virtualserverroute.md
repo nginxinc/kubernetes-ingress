@@ -7,26 +7,27 @@ This document is the reference documentation for the resources. To see additiona
 **Feature Status**: The VirtualServer and VirtualServerRoute resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
 
 ## Contents
-- [VirtualServer and VirtualServerRoute Resources](#VirtualServer-and-VirtualServerRoute-Resources)
-  - [Contents](#Contents)
-  - [Prerequisites](#Prerequisites)
-  - [VirtualServer Specification](#VirtualServer-Specification)
-    - [VirtualServer.TLS](#VirtualServerTLS)
-    - [VirtualServer.Route](#VirtualServerRoute)
-  - [VirtualServerRoute Specification](#VirtualServerRoute-Specification)
-    - [VirtualServerRoute.Subroute](#VirtualServerRouteSubroute)
-  - [Common Parts of the VirtualServer and VirtualServerRoute](#Common-Parts-of-the-VirtualServer-and-VirtualServerRoute)
-    - [Upstream](#Upstream)
-    - [Upstream.TLS](#UpstreamTLS)
-    - [Upstream.Healthcheck](#UpstreamHealthcheck)
-    - [Header](#Header)
-    - [Split](#Split)
-    - [Rules](#Rules)
-    - [Condition](#Condition)
-    - [Match](#Match)
-  - [Using VirtualServer and VirtualServerRoute](#Using-VirtualServer-and-VirtualServerRoute)
-    - [Validation](#Validation)
-  - [Customization via ConfigMap](#Customization-via-ConfigMap)
+
+- [VirtualServer and VirtualServerRoute Resources](#virtualserver-and-virtualserverroute-resources)
+  - [Contents](#contents)
+  - [Prerequisites](#prerequisites)
+  - [VirtualServer Specification](#virtualserver-specification)
+    - [VirtualServer.TLS](#virtualservertls)
+    - [VirtualServer.Route](#virtualserverroute)
+  - [VirtualServerRoute Specification](#virtualserverroute-specification)
+    - [VirtualServerRoute.Subroute](#virtualserverroutesubroute)
+  - [Common Parts of the VirtualServer and VirtualServerRoute](#common-parts-of-the-virtualserver-and-virtualserverroute)
+    - [Upstream](#upstream)
+    - [Upstream.TLS](#upstreamtls)
+    - [Upstream.Healthcheck](#upstreamhealthcheck)
+    - [Header](#header)
+    - [Split](#split)
+    - [Rules](#rules)
+    - [Condition](#condition)
+    - [Match](#match)
+  - [Using VirtualServer and VirtualServerRoute](#using-virtualserver-and-virtualserverroute)
+    - [Validation](#validation)
+  - [Customization via ConfigMap](#customization-via-configmap)
 
 ## Prerequisites
 
@@ -194,6 +195,8 @@ tls:
   enable: True
 ```
 
+**Note**: The WebSocket protocol is supported without any additional configuration.
+
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
 | `name` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, `hello` and `upstream-123` are valid. The name must be unique among all upstreams of the resource. | `string` | Yes |
@@ -214,6 +217,7 @@ tls:
 | `healthCheck` | The health check configuration for the Upstream. See the [health_check](http://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [`healthcheck`](#UpstreamHealthcheck) | No |
 
 ### Upstream.TLS
+
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
 | `enable` | Enables HTTPS for requests to upstream servers. The default is `False`, meaning that HTTP will be used. | `boolean` | No |
@@ -262,6 +266,7 @@ healthCheck:
 | `statusMatch` | The expected response status codes of a health check.  By default, the response should have status code 2xx or 3xx. Examples: `“200”`, `“! 500”`, `"301-303 307"`. See the documentation of the [match](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html?#match) directive. | `string` | No |
 
 ### Header
+
 The header defines an HTTP Header:
 ```yaml
 name: Host
