@@ -70,7 +70,7 @@ class TestVSRouteUpstreamOptions:
         assert "max_fails=1 fail_timeout=10s max_conns=0;" in config
 
         assert "keepalive" not in config
-        assert 'proxy_set_header Connection "";' not in config
+        assert 'set $default_connection_header "";' not in config
 
         assert "proxy_next_upstream error timeout;" in config
         assert "proxy_next_upstream_timeout 0s;" in config
@@ -82,7 +82,7 @@ class TestVSRouteUpstreamOptions:
           "keepalive": 54, "max-conns": 1024},
          ["least_conn;", "max_fails=8 ",
           "fail_timeout=13s ", "proxy_connect_timeout 55s;", "proxy_read_timeout 1s;",
-          "proxy_send_timeout 1h;", "keepalive 54;", 'proxy_set_header Connection "";', "max_conns=1024;"]),
+          "proxy_send_timeout 1h;", "keepalive 54;", 'set $default_connection_header "";', "max_conns=1024;"]),
         ({"lb-method": "ip_hash", "connect-timeout": "75", "read-timeout": "15", "send-timeout": "1h"},
          ["ip_hash;", "proxy_connect_timeout 75;", "proxy_read_timeout 15;", "proxy_send_timeout 1h;"]),
         ({"connect-timeout": "1m", "read-timeout": "1m", "send-timeout": "1s"},
@@ -140,7 +140,7 @@ class TestVSRouteUpstreamOptions:
         (f"{TEST_DATA}/virtual-server-route-upstream-options/configmap-with-keys.yaml",
          ["max_fails=3 ", "fail_timeout=33s ", "max_conns=0;",
           "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
-          "keepalive 1024;", 'proxy_set_header Connection "";'],
+          "keepalive 1024;", 'set $default_connection_header "";'],
          ["ip_hash;", "least_conn;", "random ", "hash", "least_time ",
           "max_fails=1 ", "fail_timeout=10s ", "max_conns=1000;",
           "proxy_connect_timeout 60s;", "proxy_read_timeout 60s;", "proxy_send_timeout 60s;"]),
@@ -194,7 +194,7 @@ class TestVSRouteUpstreamOptions:
           "keepalive": 48},
          ["least_conn;", "max_fails=12 ",
           "fail_timeout=1m ", "max_conns=0;", "proxy_connect_timeout 1m;", "proxy_read_timeout 77s;", "proxy_send_timeout 23s;",
-          "keepalive 48;", 'proxy_set_header Connection "";'],
+          "keepalive 48;", 'set $default_connection_header "";'],
          ["ip_hash;", "random ", "hash", "least_time ", "max_fails=1 ",
           "fail_timeout=10s ", "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
           "keepalive 1024;"])
