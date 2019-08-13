@@ -25,6 +25,7 @@ type UpstreamServer struct {
 	MaxConns    int
 	FailTimeout string
 	Resolve     bool
+	SlowStart   string
 }
 
 // Server defines a server.

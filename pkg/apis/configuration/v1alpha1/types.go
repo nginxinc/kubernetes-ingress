@@ -42,6 +42,7 @@ type Upstream struct {
 	ClientMaxBodySize        string       `json:"client-max-body-size"`
 	TLS                      UpstreamTLS  `json:"tls"`
 	HealthCheck              *HealthCheck `json:"healthCheck"`
+	SlowStart                string       `json:"slow-start"`
 }
 
 // UpstreamTLS defines a TLS configuration for an Upstream.

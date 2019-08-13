@@ -767,7 +767,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 
 func TestGenerateUpstream(t *testing.T) {
 	name := "test-upstream"
-	upstream := conf_v1alpha1.Upstream{Service: name, Port: 80}
+	upstream := conf_v1alpha1.Upstream{Service: name, Port: 80, SlowStart: "10s"}
 	endpoints := []string{
 		"192.168.10.10:8080",
 	}
@@ -788,6 +788,7 @@ func TestGenerateUpstream(t *testing.T) {
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",
+				SlowStart:   "",
 			},
 		},
 		LBMethod:         "random",
@@ -795,7 +796,7 @@ func TestGenerateUpstream(t *testing.T) {
 		UpstreamZoneSize: "256k",
 	}
 
-	result := generateUpstream(name, upstream, false, endpoints, &cfgParams)
+	result := generateUpstream(name, upstream, false, endpoints, &cfgParams, true)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -859,7 +860,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateUpstream(name, test.upstream, false, endpoints, test.cfgParams)
+		result := generateUpstream(name, test.upstream, false, endpoints, test.cfgParams, false)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
@@ -882,7 +883,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 		},
 	}
 
-	result := generateUpstream(name, upstream, true, endpoints, &cfgParams)
+	result := generateUpstream(name, upstream, true, endpoints, &cfgParams, false)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -1959,6 +1960,59 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateEndpointsForUpstream(isPlus=%v, isResolverConfigured=%v) returned %v, but expected %v for case: %v",
 				test.isPlus, test.isResolverConfigured, result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
+	serviceName := "test-slowstart-with-incompatible-LBMethods"
+	upstream := conf_v1alpha1.Upstream{Service: serviceName, Port: 80, SlowStart: "10s"}
+	expected := ""
+
+	var tests = []string{
+		"random",
+		"ip_hash",
+		"hash 123",
+		"random two",
+		"random two least_conn",
+		"random two least_time=header",
+		"random two least_time=last_byte",
+	}
+
+	for _, lbMethod := range tests {
+		result := generateSlowStartForPlus(upstream, lbMethod)
+
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("generateSlowStartForPlus returned %v, but expected %v for lbMethod %v", result, expected, lbMethod)
+		}
+	}
+
+}
+
+func TestGenerateSlowStartForPlus(t *testing.T) {
+	serviceName := "test-slowstart"
+
+	tests := []struct {
+		upstream conf_v1alpha1.Upstream
+		lbMethod string
+		expected string
+	}{
+		{
+			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, SlowStart: "", LBMethod: "least_conn"},
+			lbMethod: "least_conn",
+			expected: "",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, SlowStart: "10s", LBMethod: "least_conn"},
+			lbMethod: "least_conn",
+			expected: "10s",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateSlowStartForPlus(test.upstream, test.lbMethod)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
 		}
 	}
 }

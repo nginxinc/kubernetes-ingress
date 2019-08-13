@@ -15,6 +15,7 @@ var virtualServerCfg = VirtualServerConfig{
 					MaxFails:    5,
 					FailTimeout: "10s",
 					MaxConns:    31,
+					SlowStart:   "10s",
 				},
 			},
 			LBMethod:         "random",
