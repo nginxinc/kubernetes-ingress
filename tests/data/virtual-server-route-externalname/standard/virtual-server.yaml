@@ -1,0 +1,9 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: VirtualServer
+metadata:
+  name: virtual-server-route
+spec:
+  host: virtual-server-route.example.com
+  routes:
+  - path: "/external-backend"
+    route: external-backend-namespace/ext-backend
