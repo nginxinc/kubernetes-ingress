@@ -72,6 +72,7 @@ class TestVirtualServerUpstreamOptions:
         assert "proxy_send_timeout 60s;" in config
 
         assert "max_fails=1 fail_timeout=10s max_conns=0;" in config
+        assert "slow_start" not in config
 
         assert "keepalive" not in config
         assert 'set $default_connection_header "";' not in config
@@ -142,7 +143,7 @@ class TestVirtualServerUpstreamOptions:
          ["ip_hash;", "least_conn;", "random ", "hash", "least_time ",
           "max_fails=1 ", "fail_timeout=10s ", "max_conns=1000;",
           "proxy_connect_timeout 60s;", "proxy_read_timeout 60s;", "proxy_send_timeout 60s;",
-          "client_max_body_size 1m;"]),
+          "client_max_body_size 1m;", "slow_start=0s"]),
     ])
     def test_when_option_in_config_map_only(self, kube_apis, ingress_controller_prerequisites,
                                             crd_ingress_controller, virtual_server_setup,
@@ -235,21 +236,22 @@ class TestVirtualServerUpstreamOptions:
 class TestVirtualServerUpstreamOptionValidation:
     def test_event_message_and_config(self, kube_apis, ingress_controller_prerequisites,
                                       crd_ingress_controller, virtual_server_setup):
-        invalid_fields = ["upstreams[0].lb-method", "upstreams[0].fail-timeout",
-                          "upstreams[0].max-fails", "upstreams[0].connect-timeout",
-                          "upstreams[0].read-timeout", "upstreams[0].send-timeout",
-                          "upstreams[0].keepalive", "upstreams[0].max-conns",
-                          "upstreams[0].next-upstream",
-                          "upstreams[0].next-upstream-timeout", "upstreams[0].next-upstream-tries",
-                          "upstreams[0].client-max-body-size",
-                          "upstreams[1].lb-method", "upstreams[1].fail-timeout",
-                          "upstreams[1].max-fails", "upstreams[1].connect-timeout",
-                          "upstreams[1].read-timeout", "upstreams[1].send-timeout",
-                          "upstreams[1].keepalive", "upstreams[1].max-conns",
-                          "upstreams[1].next-upstream",
-                          "upstreams[1].next-upstream-timeout", "upstreams[1].next-upstream-tries",
-                          "upstreams[1].client-max-body-size"
-                          ]
+        invalid_fields = [
+            "upstreams[0].lb-method", "upstreams[0].fail-timeout",
+            "upstreams[0].max-fails", "upstreams[0].connect-timeout",
+            "upstreams[0].read-timeout", "upstreams[0].send-timeout",
+            "upstreams[0].keepalive", "upstreams[0].max-conns",
+            "upstreams[0].next-upstream",
+            "upstreams[0].next-upstream-timeout", "upstreams[0].next-upstream-tries",
+            "upstreams[0].client-max-body-size",
+            "upstreams[1].lb-method", "upstreams[1].fail-timeout",
+            "upstreams[1].max-fails", "upstreams[1].connect-timeout",
+            "upstreams[1].read-timeout", "upstreams[1].send-timeout",
+            "upstreams[1].keepalive", "upstreams[1].max-conns",
+            "upstreams[1].next-upstream",
+            "upstreams[1].next-upstream-timeout", "upstreams[1].next-upstream-tries",
+            "upstreams[1].client-max-body-size"
+        ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"VirtualServer {text} is invalid and was rejected: "
         vs_file = f"{TEST_DATA}/virtual-server-upstream-options/virtual-server-with-invalid-keys.yaml"
@@ -275,20 +277,23 @@ class TestVirtualServerUpstreamOptionValidation:
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-upstream-options", "app_type": "simple"})],
                          indirect=True)
-class TestVSHealthCheckUpstreamOption:
+class TestOptionsSpecificForPlus:
     @pytest.mark.parametrize('options, expected_strings', [
-        ({"healthCheck": {"enable": True}},
-         ["health_check uri=/ port=80 interval=5s jitter=0s", "fails=1 passes=1;"]),
+        ({"healthCheck": {"enable": True}, "slow-start": "3h"},
+         ["health_check uri=/ port=80 interval=5s jitter=0s", "fails=1 passes=1;",
+          "slow_start=3h"]),
         ({"healthCheck": {"enable": True, "path": "/health",
                           "interval": "15s", "jitter": "3",
                           "fails": 2, "passes": 2, "port": 8080,
                           "tls": {"enable": True}, "statusMatch": "200",
                           "connect-timeout": "35s", "read-timeout": "45s", "send-timeout": "55s",
-                          "headers": [{"name": "Host", "value": "virtual-server.example.com"}]}},
+                          "headers": [{"name": "Host", "value": "virtual-server.example.com"}]},
+          "slow-start": "0s"},
          ["health_check uri=/health port=8080 interval=15s jitter=3", "fails=2 passes=2 match=",
           "proxy_pass https://vs", "status 200;",
           "proxy_connect_timeout 35s;", "proxy_read_timeout 45s;", "proxy_send_timeout 55s;",
-          'proxy_set_header Host "virtual-server.example.com";'])
+          'proxy_set_header Host "virtual-server.example.com";',
+          "slow_start=0s"])
 
     ])
     def test_config_and_events(self, kube_apis, ingress_controller_prerequisites,
@@ -335,12 +340,14 @@ class TestVSHealthCheckUpstreamOption:
             "upstreams[0].healthCheck.read-timeout", "upstreams[0].healthCheck.send-timeout",
             "upstreams[0].healthCheck.headers[0].name", "upstreams[0].healthCheck.headers[0].value",
             "upstreams[0].healthCheck.statusMatch",
+            "upstreams[0].slow-start",
             "upstreams[1].healthCheck.path", "upstreams[1].healthCheck.interval", "upstreams[1].healthCheck.jitter",
             "upstreams[1].healthCheck.fails", "upstreams[1].healthCheck.passes",
             "upstreams[1].healthCheck.connect-timeout",
             "upstreams[1].healthCheck.read-timeout", "upstreams[1].healthCheck.send-timeout",
             "upstreams[1].healthCheck.headers[0].name", "upstreams[1].healthCheck.headers[0].value",
-            "upstreams[1].healthCheck.statusMatch"
+            "upstreams[1].healthCheck.statusMatch",
+            "upstreams[1].slow-start"
         ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"VirtualServer {text} is invalid and was rejected: "

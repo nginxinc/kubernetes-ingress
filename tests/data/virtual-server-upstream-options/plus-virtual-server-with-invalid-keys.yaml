@@ -23,6 +23,7 @@ spec:
         - name: ""
           value: "$one"
       statusMatch: "invalid"
+    slow-start: "-3s"
   - name: backend1
     service: backend1-svc
     port: 80
@@ -41,6 +42,7 @@ spec:
         - name: "`=1^&*"
           value: "`=1.±!@£$%^&*()_+{}[]'^&*"
       statusMatch: "invalid"
+    slow-start: "1.5d"
   routes:
   - path: "/backend1"
     upstream: backend1
