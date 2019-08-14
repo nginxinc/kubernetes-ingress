@@ -772,11 +772,12 @@ func TestGenerateUpstream(t *testing.T) {
 		"192.168.10.10:8080",
 	}
 	cfgParams := ConfigParams{
-		LBMethod:    "random",
-		MaxFails:    1,
-		MaxConns:    0,
-		FailTimeout: "10s",
-		Keepalive:   21,
+		LBMethod:         "random",
+		MaxFails:         1,
+		MaxConns:         0,
+		FailTimeout:      "10s",
+		Keepalive:        21,
+		UpstreamZoneSize: "256k",
 	}
 
 	expected := version2.Upstream{
@@ -789,8 +790,9 @@ func TestGenerateUpstream(t *testing.T) {
 				FailTimeout: "10s",
 			},
 		},
-		LBMethod:  "random",
-		Keepalive: 21,
+		LBMethod:         "random",
+		Keepalive:        21,
+		UpstreamZoneSize: "256k",
 	}
 
 	result := generateUpstream(name, upstream, false, endpoints, &cfgParams)

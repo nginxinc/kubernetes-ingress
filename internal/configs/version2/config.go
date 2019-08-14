@@ -11,10 +11,11 @@ type VirtualServerConfig struct {
 
 // Upstream defines an upstream.
 type Upstream struct {
-	Name      string
-	Servers   []UpstreamServer
-	LBMethod  string
-	Keepalive int
+	Name             string
+	Servers          []UpstreamServer
+	LBMethod         string
+	Keepalive        int
+	UpstreamZoneSize string
 }
 
 // UpstreamServer defines an upstream server.

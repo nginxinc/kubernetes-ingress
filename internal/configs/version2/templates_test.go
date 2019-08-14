@@ -17,8 +17,9 @@ var virtualServerCfg = VirtualServerConfig{
 					MaxConns:    31,
 				},
 			},
-			LBMethod:  "random",
-			Keepalive: 32,
+			LBMethod:         "random",
+			Keepalive:        32,
+			UpstreamZoneSize: "256k",
 		},
 		{
 			Name: "coffee-v1",
@@ -29,6 +30,7 @@ var virtualServerCfg = VirtualServerConfig{
 					FailTimeout: "10s",
 				},
 			},
+			UpstreamZoneSize: "256k",
 		},
 		{
 			Name: "coffee-v2",
@@ -39,6 +41,7 @@ var virtualServerCfg = VirtualServerConfig{
 					FailTimeout: "10s",
 				},
 			},
+			UpstreamZoneSize: "256k",
 		},
 	},
 	SplitClients: []SplitClient{

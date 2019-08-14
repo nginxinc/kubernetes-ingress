@@ -30,6 +30,7 @@ type Upstream struct {
 	Port                     uint16       `json:"port"`
 	LBMethod                 string       `json:"lb-method"`
 	FailTimeout              string       `json:"fail-timeout"`
+	UpstreamZoneSize         string       `json:"upstream-zone-size"`
 	MaxFails                 *int         `json:"max-fails"`
 	MaxConns                 *int         `json:"max-conns"`
 	Keepalive                *int         `json:"keepalive"`
