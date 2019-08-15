@@ -39,6 +39,7 @@ type Upstream struct {
 	ProxyNextUpstream        string       `json:"next-upstream"`
 	ProxyNextUpstreamTimeout string       `json:"next-upstream-timeout"`
 	ProxyNextUpstreamTries   int          `json:"next-upstream-tries"`
+	ClientMaxBodySize        string       `json:"client-max-body-size"`
 	TLS                      UpstreamTLS  `json:"tls"`
 	HealthCheck              *HealthCheck `json:"healthCheck"`
 }

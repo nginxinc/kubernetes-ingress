@@ -95,6 +95,27 @@ func validateTime(time string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
+// http://nginx.org/en/docs/syntax.html
+const sizeFmt = `\d+[kKmMgG]?`
+const sizeErrMsg = "must consist of numeric characters followed by a valid size suffix. 'k|K|m|M|g|G"
+
+var sizeRegexp = regexp.MustCompile("^" + sizeFmt + "$")
+
+func validateSize(size string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if size == "" {
+		return allErrs
+	}
+
+	if !sizeRegexp.MatchString(size) {
+		msg := validation.RegexError(sizeErrMsg, sizeFmt, "16", "32k", "64M")
+		return append(allErrs, field.Invalid(fieldPath, size, msg))
+	}
+
+	return allErrs
+}
+
 func validateUpstreamLBMethod(lBMethod string, fieldPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if lBMethod == "" {
@@ -308,6 +329,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		allErrs = append(allErrs, validatePositiveIntOrZeroFromPointer(u.MaxFails, idxPath.Child("max-fails"))...)
 		allErrs = append(allErrs, validatePositiveIntOrZeroFromPointer(u.Keepalive, idxPath.Child("keepalive"))...)
 		allErrs = append(allErrs, validatePositiveIntOrZeroFromPointer(u.MaxConns, idxPath.Child("max-conns"))...)
+		allErrs = append(allErrs, validateSize(u.ClientMaxBodySize, idxPath.Child("client-max-body-size"))...)
 		allErrs = append(allErrs, validateUpstreamHealthCheck(u.HealthCheck, idxPath.Child("healthCheck"))...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {

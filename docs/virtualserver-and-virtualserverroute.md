@@ -191,6 +191,7 @@ send-timeout: 30s
 next-upstream: "error timeout non_idempotent"
 next-upstream-timeout: 5s
 next-upstream-tries: 10
+client-max-body-size: 2m
 tls:
   enable: True
 ```
@@ -210,9 +211,10 @@ tls:
 | `connect-timeout` | The timeout for establishing a connection with an upstream server. See the [proxy_connect_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout) directive. The default is specified in the `proxy-connect-timeout` ConfigMap key. | `string` | No |
 | `read-timeout` | The timeout for reading a response from an upstream server. See the [proxy_read_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout) directive.  The default is specified in the `proxy-read-timeout` ConfigMap key. | `string` | No |
 | `send-timeout` | The timeout for transmitting a request to an upstream server. See the [proxy_send_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout) directive. The default is specified in the `proxy-send-timeout` ConfigMap key. | `string` | No |
-| `next-upstream` | Specifies in which cases a request should be passed to the next upstream server. See the [proxy_next_upstream](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream) directive. The default is `error timeout`. | `string` | No |
-| `next-upstream-timeout` | The time during which a request can be passed to the next upstream server. See the [proxy_next_upstream_timeout](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_timeout) directive. The `0` value turns off the time limit. The default is `0`. | `string` | No |
-| `next-upstream-tries` | The number of possible tries for passing a request to the next upstream server. See the [proxy_next_upstream_tries](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_tries) directive. The `0` value turns off this limit. The default is `0`. | `int` | No |
+| `next-upstream` | Specifies in which cases a request should be passed to the next upstream server. See the [proxy_next_upstream](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream) directive. The default is `error timeout`. | `string` | No |
+| `next-upstream-timeout` | The time during which a request can be passed to the next upstream server. See the [proxy_next_upstream_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_timeout) directive. The `0` value turns off the time limit. The default is `0`. | `string` | No |
+| `next-upstream-tries` | The number of possible tries for passing a request to the next upstream server. See the [proxy_next_upstream_tries](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_tries) directive. The `0` value turns off this limit. The default is `0`. | `int` | No |
+| `client-max-body-size` | Sets the maximum allowed size of the client request body. See the [client_max_body_size](https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size) directive. The default is set in the `client-max-body-size` ConfigMap key. | `string` | No |
 | `tls` | The TLS configuration for the Upstream. | [`tls`](#UpstreamTLS) | No |
 | `healthCheck` | The health check configuration for the Upstream. See the [health_check](http://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [`healthcheck`](#UpstreamHealthcheck) | No |
 

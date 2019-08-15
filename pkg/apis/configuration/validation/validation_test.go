@@ -308,6 +308,20 @@ func TestValidateUpstreamsFails(t *testing.T) {
 			},
 			msg: "negative value for MaxConns",
 		},
+		{
+			upstreams: []v1alpha1.Upstream{
+				{
+					Name:              "upstream1",
+					Service:           "test-1",
+					Port:              80,
+					ClientMaxBodySize: "7mins",
+				},
+			},
+			expectedUpstreamNames: map[string]sets.Empty{
+				"upstream1": {},
+			},
+			msg: "invalid value for ClientMaxBodySize",
+		},
 	}
 
 	isPlus := false
@@ -1641,6 +1655,24 @@ func TestValidateTime(t *testing.T) {
 
 	if len(allErrs) != 0 {
 		t.Errorf("validateTime returned errors %v valid input %v", allErrs, time)
+	}
+}
+
+func TestValidateSize(t *testing.T) {
+	var validInput = []string{"", "1", "10k", "11m", "1K", "100M"}
+	for _, test := range validInput {
+		allErrs := validateSize(test, field.NewPath("size-field"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateSize(%q) returned an error for valid input", test)
+		}
+	}
+
+	var invalidInput = []string{"55mm", "2mG", "6kb", "-5k", "1L"}
+	for _, test := range invalidInput {
+		allErrs := validateSize(test, field.NewPath("size-field"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateSize(%q) didn't return error for invalid input.", test)
+		}
 	}
 }
 

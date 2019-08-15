@@ -398,7 +398,7 @@ func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.U
 		ProxyConnectTimeout:      generateString(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
 		ProxyReadTimeout:         generateString(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),
 		ProxySendTimeout:         generateString(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
-		ClientMaxBodySize:        cfgParams.ClientMaxBodySize,
+		ClientMaxBodySize:        generateString(upstream.ClientMaxBodySize, cfgParams.ClientMaxBodySize),
 		ProxyMaxTempFileSize:     cfgParams.ProxyMaxTempFileSize,
 		ProxyBuffering:           cfgParams.ProxyBuffering,
 		ProxyBuffers:             cfgParams.ProxyBuffers,
