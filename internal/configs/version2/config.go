@@ -14,18 +14,18 @@ type Upstream struct {
 	Name             string
 	Servers          []UpstreamServer
 	LBMethod         string
+	Resolve          bool
 	Keepalive        int
+	MaxFails         int
+	MaxConns         int
+	SlowStart        string
+	FailTimeout      string
 	UpstreamZoneSize string
 }
 
 // UpstreamServer defines an upstream server.
 type UpstreamServer struct {
-	Address     string
-	MaxFails    int
-	MaxConns    int
-	FailTimeout string
-	Resolve     bool
-	SlowStart   string
+	Address string
 }
 
 // Server defines a server.

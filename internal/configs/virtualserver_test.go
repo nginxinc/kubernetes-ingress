@@ -784,16 +784,16 @@ func TestGenerateUpstream(t *testing.T) {
 		Name: "test-upstream",
 		Servers: []version2.UpstreamServer{
 			{
-				Address:     "192.168.10.10:8080",
-				MaxFails:    1,
-				MaxConns:    0,
-				FailTimeout: "10s",
-				SlowStart:   "",
+				Address: "192.168.10.10:8080",
 			},
 		},
+		MaxFails:         1,
+		MaxConns:         0,
+		FailTimeout:      "10s",
 		LBMethod:         "random",
 		Keepalive:        21,
 		UpstreamZoneSize: "256k",
+		SlowStart:        "",
 	}
 
 	result := generateUpstream(name, upstream, false, endpoints, &cfgParams, true)
@@ -878,9 +878,9 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 		Servers: []version2.UpstreamServer{
 			{
 				Address: "example.com",
-				Resolve: true,
 			},
 		},
+		Resolve: true,
 	}
 
 	result := generateUpstream(name, upstream, true, endpoints, &cfgParams, false)
@@ -1143,38 +1143,68 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 		},
 	}
 
-	expected := map[string][]string{
-		"vs_default_cafe_tea": {
-			"10.0.0.20:80",
+	expected := []version2.Upstream{
+		{
+			Name: "vs_default_cafe_tea",
+			Servers: []version2.UpstreamServer{
+				{
+					Address: "10.0.0.20:80",
+				},
+			},
 		},
-		"vs_default_cafe_test": {},
-		"vs_default_cafe_vsr_default_coffee_coffee": {
-			"10.0.0.30:80",
+		{
+			Name:    "vs_default_cafe_test",
+			Servers: nil,
+		},
+		{
+			Name: "vs_default_cafe_vsr_default_coffee_coffee",
+			Servers: []version2.UpstreamServer{
+				{
+					Address: "10.0.0.30:80",
+				},
+			},
 		},
 	}
 
-	result := createUpstreamServersForPlus(&virtualServerEx)
+	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{})
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("createUpstreamServersForPlus returned %v but expected %v", result, expected)
 	}
 }
 
-func TestCreateUpstreamServersConfig(t *testing.T) {
-	baseCfgParams := ConfigParams{
-		MaxFails:    5,
+func TestCreateUpstreamServersConfigForPlus(t *testing.T) {
+	upstream := version2.Upstream{
+		Servers: []version2.UpstreamServer{
+			{
+				Address: "10.0.0.20:80",
+			},
+		},
+		MaxFails:    21,
+		MaxConns:    16,
 		FailTimeout: "30s",
 		SlowStart:   "50s",
 	}
 
 	expected := nginx.ServerConfig{
-		MaxFails:    5,
+		MaxFails:    21,
+		MaxConns:    16,
 		FailTimeout: "30s",
 		SlowStart:   "50s",
 	}
 
-	result := createUpstreamServersConfig(&baseCfgParams)
+	result := createUpstreamServersConfigForPlus(upstream)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("createUpstreamServersConfig returned %v but expected %v", result, expected)
+		t.Errorf("createUpstreamServersConfigForPlus returned %v but expected %v", result, expected)
+	}
+}
+
+func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
+	noUpstream := version2.Upstream{}
+	expected := nginx.ServerConfig{}
+
+	result := createUpstreamServersConfigForPlus(noUpstream)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("createUpstreamServersConfigForPlus returned %v but expected %v", result, expected)
 	}
 }
 
@@ -2014,5 +2044,28 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
 		}
+	}
+}
+
+func TestCreateEndpointsFromUpstream(t *testing.T) {
+	ups := version2.Upstream{
+		Servers: []version2.UpstreamServer{
+			{
+				Address: "10.0.0.20:80",
+			},
+			{
+				Address: "10.0.0.30:80",
+			},
+		},
+	}
+
+	expected := []string{
+		"10.0.0.20:80",
+		"10.0.0.30:80",
+	}
+
+	endpoints := createEndpointsFromUpstream(ups)
+	if !reflect.DeepEqual(endpoints, expected) {
+		t.Errorf("createEndpointsFromUpstream returned %v, but expected %v", endpoints, expected)
 	}
 }

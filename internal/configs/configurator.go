@@ -439,13 +439,15 @@ func (cnf *Configurator) UpdateEndpointsForVirtualServers(virtualServerExes []*V
 }
 
 func (cnf *Configurator) updatePlusEndpointsForVirtualServer(virtualServerEx *VirtualServerEx) error {
-	serverCfg := createUpstreamServersConfig(cnf.cfgParams)
-	upstreamServers := createUpstreamServersForPlus(virtualServerEx)
+	upstreams := createUpstreamsForPlus(virtualServerEx, cnf.cfgParams)
+	for _, upstream := range upstreams {
+		serverCfg := createUpstreamServersConfigForPlus(upstream)
 
-	for upstream, servers := range upstreamServers {
-		err := cnf.nginxManager.UpdateServersInPlus(upstream, servers, serverCfg)
+		endpoints := createEndpointsFromUpstream(upstream)
+
+		err := cnf.nginxManager.UpdateServersInPlus(upstream.Name, endpoints, serverCfg)
 		if err != nil {
-			return fmt.Errorf("Couldn't update the endpoints for %v: %v", upstream, err)
+			return fmt.Errorf("Couldn't update the endpoints for %v: %v", upstream.Name, err)
 		}
 	}
 
