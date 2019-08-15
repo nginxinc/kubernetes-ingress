@@ -351,7 +351,7 @@ func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, isEx
 		Servers:          upsServers,
 		LBMethod:         generateLBMethod(upstream.LBMethod, cfgParams.LBMethod),
 		Keepalive:        generateIntFromPointer(upstream.Keepalive, cfgParams.Keepalive),
-		UpstreamZoneSize: generateString(upstream.UpstreamZoneSize, cfgParams.UpstreamZoneSize),
+		UpstreamZoneSize: cfgParams.UpstreamZoneSize,
 	}
 }
 
