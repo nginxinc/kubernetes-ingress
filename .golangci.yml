@@ -1,0 +1,18 @@
+linters-settings:
+  misspell:
+    locale: US
+
+linters:
+    enable:
+    - golint
+    - goimports
+    - misspell
+    - gofmt
+    - unparam
+    - unconvert
+    - interfacer
+    disable:
+    - maligned
+    - prealloc
+    - gochecknoglobals
+
