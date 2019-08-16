@@ -75,6 +75,10 @@ class TestVirtualServerUpstreamOptions:
 
         assert "keepalive" not in config
         assert 'set $default_connection_header "";' not in config
+        assert 'set $default_connection_header close;' in config
+        assert "proxy_set_header Upgrade $http_upgrade;" in config
+        assert "proxy_set_header Connection $vs_connection_header;" in config
+        assert "proxy_http_version 1.1;" in config
 
         assert "proxy_next_upstream error timeout;" in config
         assert "proxy_next_upstream_timeout 0s;" in config
