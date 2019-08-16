@@ -12,3 +12,4 @@ data:
   keepalive: "32"
   proxy-protocol: "true"
   redirect-to-https: "true"
+  upstream-zone-size: "0" # special value

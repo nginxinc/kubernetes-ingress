@@ -16,3 +16,4 @@ data:
   server-snippets: "# server-snippet is here;"
   fail-timeout: "20"
   proxy-send-timeout: "33"
+  upstream-zone-size: "100k"

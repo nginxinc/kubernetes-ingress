@@ -7,3 +7,4 @@ data:
   proxy-send-timeout: "33s"
   hsts: "True"
   hsts-behind-proxy: "True"
+  upstream-zone-size: "100k"

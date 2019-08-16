@@ -16,3 +16,4 @@ data:
   server-snippets: "something invalid"
   fail-timeout: "something invalid"
   proxy-send-timeout: "something invalid"
+  upstream-zone-size: "something invalid"

@@ -156,15 +156,19 @@ class TestAnnotations:
 
         assert "Strict-Transport-Security" not in result_conf
 
+        assert " 256k;" in result_conf
+
     @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
         ({"nginx.org/proxy-send-timeout": "10s", "nginx.org/max-conns": "1024",
-          "nginx.org/hsts": "True", "nginx.org/hsts-behind-proxy": "True"},
+          "nginx.org/hsts": "True", "nginx.org/hsts-behind-proxy": "True",
+          "nginx.org/upstream-zone-size": "124k"},
          ["proxy_send_timeout 10s;", "max_conns=1024",
           'set $hsts_header_val "";', "proxy_hide_header Strict-Transport-Security;",
           'add_header Strict-Transport-Security "$hsts_header_val" always;',
-          "if ($http_x_forwarded_proto = 'https')", 'set $hsts_header_val "max-age=2592000; preload";'
-          ],
-         ["proxy_send_timeout 60s;", "if ($https = on)"])
+          "if ($http_x_forwarded_proto = 'https')", 'set $hsts_header_val "max-age=2592000; preload";',
+          " 124k;"],
+         ["proxy_send_timeout 60s;", "if ($https = on)",
+          " 256k;"])
     ])
     def test_when_annotation_in_ing_only(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                                          annotations, expected_strings, unexpected_strings):
@@ -197,9 +201,10 @@ class TestAnnotations:
          ["proxy_send_timeout 33s;",
           'set $hsts_header_val "";', "proxy_hide_header Strict-Transport-Security;",
           'add_header Strict-Transport-Security "$hsts_header_val" always;',
-          "if ($http_x_forwarded_proto = 'https')", 'set $hsts_header_val "max-age=2592000; preload";'
-          ],
-         ["proxy_send_timeout 60s;", "if ($https = on)"]),
+          "if ($http_x_forwarded_proto = 'https')", 'set $hsts_header_val "max-age=2592000; preload";',
+          " 100k;"],
+         ["proxy_send_timeout 60s;", "if ($https = on)",
+          " 256k;"]),
     ])
     def test_when_annotation_in_configmap_only(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                                                configmap_file, expected_strings, unexpected_strings):
@@ -228,10 +233,11 @@ class TestAnnotations:
 
     @pytest.mark.parametrize('annotations, configmap_file, expected_strings, unexpected_strings', [
         ({"nginx.org/proxy-send-timeout": "10s",
-          "nginx.org/hsts": "False", "nginx.org/hsts-behind-proxy": "False"},
+          "nginx.org/hsts": "False", "nginx.org/hsts-behind-proxy": "False",
+          "nginx.org/upstream-zone-size": "124k"},
          f"{TEST_DATA}/annotations/configmap-with-keys.yaml",
-         ["proxy_send_timeout 10s;"],
-         ["proxy_send_timeout 33s;", "Strict-Transport-Security"]),
+         ["proxy_send_timeout 10s;", " 124k;"],
+         ["proxy_send_timeout 33s;", "Strict-Transport-Security", " 100k;", " 256k;"]),
     ])
     def test_ing_overrides_configmap(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                                      annotations, configmap_file, expected_strings, unexpected_strings):
@@ -263,9 +269,45 @@ class TestAnnotations:
         for _ in unexpected_strings:
             assert _ not in result_conf
 
+    @pytest.mark.parametrize('annotations', [
+        ({"nginx.org/upstream-zone-size": "0"}),
+    ])
+    def test_upstream_zone_size_0(self, cli_arguments, kube_apis,
+                                  annotations_setup, ingress_controller_prerequisites, annotations):
+        initial_events = get_events(kube_apis.v1, annotations_setup.namespace)
+        initial_count = get_event_count(annotations_setup.ingress_event_text, initial_events)
+        print("Edge Case: upstream-zone-size is 0")
+        new_ing = generate_ingresses_with_annotation(annotations_setup.ingress_src_file, annotations)
+        for ing in new_ing:
+            # in mergeable case this will update master ingress only
+            if ing['metadata']['name'] == annotations_setup.ingress_name:
+                replace_ingress(kube_apis.extensions_v1_beta1,
+                                annotations_setup.ingress_name, annotations_setup.namespace, ing)
+        wait_before_test(1)
+        result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
+                                                      annotations_setup.namespace,
+                                                      annotations_setup.ingress_name,
+                                                      annotations_setup.ingress_pod_name,
+                                                      ingress_controller_prerequisites.namespace)
+        new_events = get_events(kube_apis.v1, annotations_setup.namespace)
+
+        assert_event_count_increased(annotations_setup.ingress_event_text, initial_count, new_events)
+        if cli_arguments["ic-type"] == "nginx-plus-ingress":
+            print("Run assertions for Nginx Plus case")
+            assert "zone " in result_conf
+            assert " 256k;" in result_conf
+        elif cli_arguments["ic-type"] == "nginx-ingress":
+            print("Run assertions for Nginx OSS case")
+            assert "zone " not in result_conf
+            assert " 256k;" not in result_conf
+
     @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
-        ({"nginx.org/proxy-send-timeout": "invalid", "nginx.org/max-conns": "-10"},
-         ["proxy_send_timeout invalid;", "max_conns=-10"], ["proxy_send_timeout 60s;", "max_conns=0"])
+        ({"nginx.org/proxy-send-timeout": "invalid", "nginx.org/max-conns": "-10",
+          "nginx.org/upstream-zone-size": "-10I'm S±!@£$%^&*()invalid"},
+         ["proxy_send_timeout invalid;", "max_conns=-10",
+          " -10I'm S±!@£$%^&*()invalid;"],
+         ["proxy_send_timeout 60s;", "max_conns=0",
+          " 256k;"])
     ])
     def test_validation(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
                         annotations, expected_strings, unexpected_strings):

@@ -78,6 +78,9 @@ class TestVSRouteUpstreamOptions:
 
         assert "client_max_body_size 1m;" in config
 
+        assert "zone " in config
+        assert " 256k;" in config
+
     @pytest.mark.parametrize('options, expected_strings', [
         ({"lb-method": "least_conn", "max-fails": 8,
           "fail-timeout": "13s", "connect-timeout": "55s", "read-timeout": "1s", "send-timeout": "1h",
@@ -144,11 +147,11 @@ class TestVSRouteUpstreamOptions:
          ["max_fails=3 ", "fail_timeout=33s ", "max_conns=0;",
           "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
           "keepalive 1024;", 'set $default_connection_header "";',
-          "client_max_body_size 3m;"],
+          "client_max_body_size 3m;", " 100k;"],
          ["ip_hash;", "least_conn;", "random ", "hash", "least_time ",
           "max_fails=1 ", "fail_timeout=10s ", "max_conns=1000;",
           "proxy_connect_timeout 60s;", "proxy_read_timeout 60s;", "proxy_send_timeout 60s;",
-          "client_max_body_size 1m;"]),
+          "client_max_body_size 1m;", " 256k;"]),
     ])
     def test_when_option_in_config_map_only(self, kube_apis,
                                             ingress_controller_prerequisites,

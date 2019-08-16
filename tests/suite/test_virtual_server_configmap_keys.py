@@ -42,6 +42,7 @@ def assert_keys_without_validation(config, expected_values):
     assert f"{expected_values['server-snippets']}" in config
     assert f"fail_timeout={expected_values['fail-timeout']}" in config
     assert f"proxy_send_timeout {expected_values['proxy-send-timeout']};" in config
+    assert f" {expected_values['upstream-zone-size']};" in config
 
 
 def assert_keys_with_validation(config, expected_values):
@@ -66,6 +67,8 @@ def assert_specific_keys_for_nginx_oss(config, expected_values):
     assert "server_tokens \"off\"" in config
     assert "random two least_conn;" not in config \
            and expected_values['lb-method'] in config
+    assert "zone " not in config
+    assert " 256k;" not in config
 
 
 def assert_defaults_of_keys_with_validation(config, unexpected_values):
@@ -78,6 +81,8 @@ def assert_defaults_of_keys_with_validation(config, unexpected_values):
     assert "server_tokens \"on\"" in config
     assert "random two least_conn;" in config and unexpected_values['lb-method'] not in config
     assert f"proxy_send_timeout 60s;" in config
+    assert "zone " in config
+    assert " 256k;" in config
 
 
 def assert_ssl_keys(config):
