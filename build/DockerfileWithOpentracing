@@ -1,0 +1,83 @@
+ARG NGINX_VERSION=1.17.3
+ARG OPENTRACING_CPP_VERSION=1.5.1
+
+FROM nginx:${NGINX_VERSION} AS opentracing-builder
+ARG OPENTRACING_CPP_VERSION
+
+RUN set -x \
+    && apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests -y \
+    libcurl4-openssl-dev \
+    build-essential \
+    cmake \
+    git \
+    ca-certificates \
+    pkg-config \
+    wget \
+    libz-dev \
+    automake \
+    autogen \
+    autoconf \
+    libtool \
+    libpcre3 \
+    libpcre3-dev \
+    && tempDir="$(mktemp -d)" \
+    && chmod 777 "$tempDir" \
+    && git clone https://github.com/opentracing-contrib/nginx-opentracing src \
+    && cd "$tempDir" \
+    && git clone -b v$OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
+    && cd opentracing-cpp \
+    && mkdir .build && cd .build \
+    && cmake -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTING=OFF .. \
+    && make && make install \
+    && cd "$tempDir" \
+    && NGINX_VERSION_BUILD=`nginx -v 2>&1` && NGINX_VERSION_BUILD=${NGINX_VERSION_BUILD#*nginx/} \
+    && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get build-dep -y nginx=${NGINX_VERSION_BUILD} \
+    && wget -O nginx-release-${NGINX_VERSION_BUILD}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION_BUILD}.tar.gz \
+    && tar zxf nginx-release-${NGINX_VERSION_BUILD}.tar.gz \
+    && cd nginx-release-${NGINX_VERSION_BUILD} \
+    && auto/configure \
+    --with-compat \
+    --add-dynamic-module=/src/opentracing \
+    --with-debug \
+    && make modules \
+    && cp objs/ngx_http_opentracing_module.so  /ngx_http_opentracing_module.so
+
+
+FROM debian:stretch-slim AS tracer-downloader
+ARG JAEGER_VERSION=v0.4.2
+RUN set -x \
+    && apt-get update \
+    && apt-get install --no-install-recommends --no-install-suggests -y ca-certificates apt-transport-https wget \
+    && wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
+
+
+# Final Image
+FROM nginx:${NGINX_VERSION}
+ARG OPENTRACING_CPP_VERSION
+# forward nginx access and error logs to stdout and stderr of the ingress
+# controller process
+RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
+    && ln -sf /proc/1/fd/1 /var/log/nginx/stream-access.log \
+    && ln -sf /proc/1/fd/2 /var/log/nginx/error.log
+
+COPY nginx-ingress internal/configs/version1/nginx.ingress.tmpl internal/configs/version1/nginx.tmpl internal/configs/version2/nginx.virtualserver.tmpl /
+
+COPY --from=opentracing-builder /ngx_http_opentracing_module.so /usr/lib/nginx/modules/ngx_http_opentracing_module.so
+COPY --from=opentracing-builder /usr/local/lib/libopentracing.so.${OPENTRACING_CPP_VERSION} /usr/local/lib/libopentracing.so.1
+# Edit the line below to use a different tracer
+COPY --from=tracer-downloader /usr/local/lib/libjaegertracing_plugin.so /usr/local/lib/libjaegertracing_plugin.so
+RUN ldconfig
+
+RUN rm /etc/nginx/conf.d/*
+
+RUN mkdir -p /etc/nginx/secrets
+
+# Uncomment the line below if you would like to add the default.pem to the image
+# and use it as a certificate and key for the default server
+# ADD default.pem /etc/nginx/secrets/default
+
+ENTRYPOINT ["/nginx-ingress"]
