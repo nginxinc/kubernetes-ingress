@@ -166,7 +166,7 @@ spec:
 | `nginx.org/websocket-services` | N/A | Enables WebSocket for services. | N/A | [WebSocket support](../examples/websocket). |
 | `nginx.org/max-fails` | `max-fails` | Sets the value of the [max_fails](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails) parameter of the `server` directive. | `1` | |
 | `nginx.org/max-conns` | N\A | Sets the value of the [max_conns](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_conns) parameter of the `server` directive. | `0` | |
-| `nginx.org/upstream-zone-size` | `upstream-zone-size` | Sets the size of the shared memory [zone](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#zone) for upstreams. For NGINX, the special value `0` disables the shared memory zones. | `256K` | |
+| `nginx.org/upstream-zone-size` | `upstream-zone-size` | Sets the size of the shared memory [zone](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#zone) for upstreams. For NGINX, the special value 0 disables the shared memory zones. For NGINX Plus, shared memory zones are required and cannot be disabled. The special value 0 will be ignored. | `256K` | |
 | `nginx.org/fail-timeout` | `fail-timeout` | Sets the value of the [fail_timeout](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#fail_timeout) parameter of the `server` directive. | `10s` | |
 | `nginx.com/sticky-cookie-services` | N/A | Configures session persistence. | N/A | [Session Persistence](../examples/session-persistence). |
 | `nginx.org/keepalive` | `keepalive` | Sets the value of the [keepalive](http://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive) directive. Note that `proxy_set_header Connection "";` is added to the generated configuration when the value > 0. | `0` | |
