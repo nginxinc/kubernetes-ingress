@@ -1,10 +1,10 @@
 name: nginx-ingress
-version: 0.3.3 
-appVersion: 1.5.3
+version: 0.3.4 
+appVersion: 1.5.4
 description: NGINX Ingress Controller
-icon: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v1.5.3/deployments/helm-chart/chart-icon.png
+icon: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v1.5.4/deployments/helm-chart/chart-icon.png
 sources:
-  - https://github.com/nginxinc/kubernetes-ingress/tree/v1.5.3/deployments/helm-chart
+  - https://github.com/nginxinc/kubernetes-ingress/tree/v1.5.4/deployments/helm-chart
 keywords:
   - ingress
   - nginx
