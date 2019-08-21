@@ -19,6 +19,7 @@ spec:
     next-upstream: "invalid upstream"
     next-upstream-timeout: "time"
     next-upstream-tries: -12
+    client-max-body-size: "1.2m"
   - name: backend1
     service: backend1-svc
     port: 80
@@ -33,6 +34,7 @@ spec:
     next-upstream: "`=1~"
     next-upstream-timeout: "1.5d"
     next-upstream-tries: -10
+    client-max-body-size: "-4m"
   routes:
   - path: "/backend1"
     upstream: backend1

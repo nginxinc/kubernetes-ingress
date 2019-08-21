@@ -80,13 +80,16 @@ class TestVirtualServerUpstreamOptions:
         assert "proxy_next_upstream_timeout 0s;" in config
         assert "proxy_next_upstream_tries 0;" in config
 
+        assert "client_max_body_size 1m;" in config
+
     @pytest.mark.parametrize('options, expected_strings', [
         ({"lb-method": "least_conn", "max-fails": 8,
           "fail-timeout": "13s", "connect-timeout": "55s", "read-timeout": "1s", "send-timeout": "1h",
-          "keepalive": 54, "max-conns": 1048},
+          "keepalive": 54, "max-conns": 1048, "client-max-body-size": "1048K"},
          ["least_conn;", "max_fails=8 ",
           "fail_timeout=13s ", "proxy_connect_timeout 55s;", "proxy_read_timeout 1s;",
-          "proxy_send_timeout 1h;", "keepalive 54;", 'set $default_connection_header "";', "max_conns=1048;"]),
+          "proxy_send_timeout 1h;", "keepalive 54;", 'set $default_connection_header "";', "max_conns=1048;",
+          "client_max_body_size 1048K;"]),
         ({"lb-method": "ip_hash", "connect-timeout": "75", "read-timeout": "15", "send-timeout": "1h"},
          ["ip_hash;", "proxy_connect_timeout 75;", "proxy_read_timeout 15;", "proxy_send_timeout 1h;"]),
         ({"connect-timeout": "1m", "read-timeout": "1m", "send-timeout": "1s"},
@@ -130,10 +133,12 @@ class TestVirtualServerUpstreamOptions:
         (f"{TEST_DATA}/virtual-server-upstream-options/configmap-with-keys.yaml",
          ["max_fails=3 ", "fail_timeout=33s ", "max_conns=0;",
           "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;", "proxy_send_timeout 55s;",
-          "keepalive 1024;", 'set $default_connection_header "";'],
+          "keepalive 1024;", 'set $default_connection_header "";',
+          "client_max_body_size 3m;"],
          ["ip_hash;", "least_conn;", "random ", "hash", "least_time ",
           "max_fails=1 ", "fail_timeout=10s ", "max_conns=1000;",
-          "proxy_connect_timeout 60s;", "proxy_read_timeout 60s;", "proxy_send_timeout 60s;"]),
+          "proxy_connect_timeout 60s;", "proxy_read_timeout 60s;", "proxy_send_timeout 60s;",
+          "client_max_body_size 1m;"]),
     ])
     def test_when_option_in_config_map_only(self, kube_apis, ingress_controller_prerequisites,
                                             crd_ingress_controller, virtual_server_setup,
@@ -171,13 +176,15 @@ class TestVirtualServerUpstreamOptions:
     @pytest.mark.parametrize('options, expected_strings, unexpected_strings', [
         ({"lb-method": "least_conn", "max-fails": 12,
           "fail-timeout": "1m", "connect-timeout": "1m", "read-timeout": "77s", "send-timeout": "23s",
-          "keepalive": 48},
+          "keepalive": 48, "client-max-body-size": "0"},
          ["least_conn;", "max_fails=12 ",
           "fail_timeout=1m ", "max_conns=0;", "proxy_connect_timeout 1m;", "proxy_read_timeout 77s;",
-          "proxy_send_timeout 23s;", "keepalive 48;", 'set $default_connection_header "";'],
+          "proxy_send_timeout 23s;", "keepalive 48;", 'set $default_connection_header "";',
+          "client_max_body_size 0;"],
          ["ip_hash;", "random ", "hash", "least_time ", "max_fails=1 ",
           "fail_timeout=10s ", "proxy_connect_timeout 44s;", "proxy_read_timeout 22s;",
-          "proxy_send_timeout 55s;", "keepalive 1024;"])
+          "proxy_send_timeout 55s;", "keepalive 1024;",
+          "client_max_body_size 3m;", "client_max_body_size 1m;"])
     ])
     def test_v_s_overrides_config_map(self, kube_apis, ingress_controller_prerequisites,
                                       crd_ingress_controller, virtual_server_setup,
@@ -230,12 +237,14 @@ class TestVirtualServerUpstreamOptionValidation:
                           "upstreams[0].keepalive", "upstreams[0].max-conns",
                           "upstreams[0].next-upstream",
                           "upstreams[0].next-upstream-timeout", "upstreams[0].next-upstream-tries",
+                          "upstreams[0].client-max-body-size",
                           "upstreams[1].lb-method", "upstreams[1].fail-timeout",
                           "upstreams[1].max-fails", "upstreams[1].connect-timeout",
                           "upstreams[1].read-timeout", "upstreams[1].send-timeout",
                           "upstreams[1].keepalive", "upstreams[1].max-conns",
                           "upstreams[1].next-upstream",
-                          "upstreams[1].next-upstream-timeout", "upstreams[1].next-upstream-tries"
+                          "upstreams[1].next-upstream-timeout", "upstreams[1].next-upstream-tries",
+                          "upstreams[1].client-max-body-size"
                           ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"VirtualServer {text} is invalid and was rejected: "
