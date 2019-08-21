@@ -12,14 +12,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
-
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
+	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	conf_scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
@@ -350,7 +349,7 @@ func main() {
 
 	var plusClient *client.NginxClient
 	if *nginxPlus && !useFakeNginxManager {
-		httpClient := getSocketClient("/var/run/nginx-plus-api.sock")
+		httpClient := getSocketClient("/var/lib/nginx/nginx-plus-api.sock")
 		plusClient, err = client.NewNginxClient(httpClient, "http://nginx-plus-api/api")
 		if err != nil {
 			glog.Fatalf("Failed to create NginxClient for Plus: %v", err)
@@ -362,7 +361,7 @@ func main() {
 		if *nginxPlus {
 			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusClient, registry)
 		} else {
-			httpClient := getSocketClient("/var/run/nginx-status.sock")
+			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
 			client, err := metrics.NewNginxMetricsClient(httpClient)
 			if err != nil {
 				glog.Fatalf("Error creating the Nginx client for Prometheus metrics: %v", err)

@@ -33,7 +33,8 @@ RUN set -x \
     && make && make install \
     && cd "$tempDir" \
     && NGINX_VERSION_BUILD=`nginx -v 2>&1` && NGINX_VERSION_BUILD=${NGINX_VERSION_BUILD#*nginx/} \
-    && echo "deb-src http://nginx.org/packages/mainline/debian/ stretch nginx" >> /etc/apt/sources.list \
+    && DEBIAN_VERSION="$(cat /etc/os-release | grep CODENAME | cut -f2 -d '=')" \
+    && echo "deb-src http://nginx.org/packages/mainline/debian/ $DEBIAN_VERSION nginx" >> /etc/apt/sources.list \
     && apt-get update \
     && apt-get build-dep -y nginx=${NGINX_VERSION_BUILD} \
     && wget -O nginx-release-${NGINX_VERSION_BUILD}.tar.gz https://github.com/nginx/nginx/archive/release-${NGINX_VERSION_BUILD}.tar.gz \
@@ -58,26 +59,38 @@ RUN set -x \
 # Final Image
 FROM nginx:${NGINX_VERSION}
 ARG OPENTRACING_CPP_VERSION
+
 # forward nginx access and error logs to stdout and stderr of the ingress
 # controller process
 RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
     && ln -sf /proc/1/fd/1 /var/log/nginx/stream-access.log \
     && ln -sf /proc/1/fd/2 /var/log/nginx/error.log
 
-COPY nginx-ingress internal/configs/version1/nginx.ingress.tmpl internal/configs/version1/nginx.tmpl internal/configs/version2/nginx.virtualserver.tmpl /
-
 COPY --from=opentracing-builder /ngx_http_opentracing_module.so /usr/lib/nginx/modules/ngx_http_opentracing_module.so
 COPY --from=opentracing-builder /usr/local/lib/libopentracing.so.${OPENTRACING_CPP_VERSION} /usr/local/lib/libopentracing.so.1
 # Edit the line below to use a different tracer
 COPY --from=tracer-downloader /usr/local/lib/libjaegertracing_plugin.so /usr/local/lib/libjaegertracing_plugin.so
+
 RUN ldconfig
 
-RUN rm /etc/nginx/conf.d/*
+RUN mkdir -p /var/lib/nginx \
+    && mkdir -p /etc/nginx/secrets \
+    && apt-get update \
+    && apt-get install -y libcap2-bin \
+    && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+    && chown -R nginx:0 /etc/nginx \
+    && chown -R nginx:0 /var/cache/nginx \
+    && chown -R nginx:0 /var/lib/nginx \
+    && apt-get remove --purge -y libcap2-bin \
+    && rm /etc/nginx/conf.d/* \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /etc/nginx/secrets
+COPY nginx-ingress internal/configs/version1/nginx.ingress.tmpl internal/configs/version1/nginx.tmpl internal/configs/version2/nginx.virtualserver.tmpl /
 
 # Uncomment the line below if you would like to add the default.pem to the image
 # and use it as a certificate and key for the default server
 # ADD default.pem /etc/nginx/secrets/default
+
+USER nginx
 
 ENTRYPOINT ["/nginx-ingress"]

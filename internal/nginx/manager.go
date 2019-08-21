@@ -21,7 +21,7 @@ const TLSSecretFileMode = 0600
 const JWKSecretFileMode = 0644
 
 const configFileMode = 0644
-const jsonFileForOpenTracingTracer = "/etc/tracer-config.json"
+const jsonFileForOpenTracingTracer = "/var/lib/nginx/tracer-config.json"
 
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
 type ServerConfig struct {

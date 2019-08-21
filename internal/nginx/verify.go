@@ -26,7 +26,7 @@ func newVerifyClient() *verifyClient {
 		client: &http.Client{
 			Transport: &http.Transport{
 				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
-					return net.Dial("unix", "/var/run/nginx-config-version.sock")
+					return net.Dial("unix", "/var/lib/nginx/nginx-config-version.sock")
 				},
 			},
 		},
@@ -79,7 +79,7 @@ func (c *verifyClient) WaitForCorrectVersion(expectedVersion int) error {
 }
 
 const configVersionTemplateString = `server {
-    listen unix:/var/run/nginx-config-version.sock;
+    listen unix:/var/lib/nginx/nginx-config-version.sock;
 	access_log off;
 	
 	{{if .OpenTracingLoadModule}}

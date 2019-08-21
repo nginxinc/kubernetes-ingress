@@ -4,8 +4,7 @@ ARG JAEGER_VERSION=v0.4.2
 RUN set -x \
     && apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y ca-certificates apt-transport-https wget \
-    && wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
-
+    && wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so 
 
 # Final Image
 FROM debian:stretch-slim
@@ -27,7 +26,7 @@ RUN chmod 644 /etc/ssl/nginx/*
 # Install NGINX Plus
 RUN set -x \
     && apt-get update \
-    && apt-get install --no-install-recommends --no-install-suggests -y apt-transport-https ca-certificates gnupg1 \
+    && apt-get install --no-install-recommends --no-install-suggests -y apt-transport-https ca-certificates gnupg1 libcap2-bin \
     && \
     NGINX_GPGKEY=573BFD6B3D8FBC641079A6ABABF5BD827BD9BF62; \
     found=''; \
@@ -51,6 +50,7 @@ RUN set -x \
     nginx-plus=${NGINX_PLUS_VERSION} \
     # Install OpenTracing module
     nginx-plus-module-opentracing=${NGINX_OPENTRACING_MODULE_VERSION} \
+    && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
     && apt-get remove --purge --auto-remove -y gnupg1 \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /etc/ssl/nginx \
@@ -63,19 +63,25 @@ RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
     && ln -sf /proc/1/fd/1 /var/log/nginx/stream-access.log \
     && ln -sf /proc/1/fd/2 /var/log/nginx/error.log
 
-
 # Edit the line below to use a different tracer
 COPY --from=tracer-downloader /usr/local/lib/libjaegertracing_plugin.so /usr/local/lib/libjaegertracing_plugin.so
+
+RUN mkdir -p /var/lib/nginx \
+    && mkdir -p /etc/nginx/secrets \
+    && chown -R nginx:0 /etc/nginx \
+    && chown -R nginx:0 /var/cache/nginx \
+    && chown -R nginx:0 /var/lib/nginx/ \
+    && apt-get remove --purge -y libcap2-bin \
+    && rm /etc/nginx/conf.d/*
 
 EXPOSE 80 443
 
 COPY nginx-ingress internal/configs/version1/nginx-plus.ingress.tmpl internal/configs/version1/nginx-plus.tmpl internal/configs/version2/nginx-plus.virtualserver.tmpl  /
 
-RUN rm /etc/nginx/conf.d/* \
-    && mkdir -p /etc/nginx/secrets
-
 # Uncomment the line below if you would like to add the default.pem to the image
 # and use it as a certificate and key for the default server
 # ADD default.pem /etc/nginx/secrets/default
+
+USER nginx
 
 ENTRYPOINT ["/nginx-ingress"]

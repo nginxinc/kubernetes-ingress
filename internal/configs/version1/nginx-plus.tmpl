@@ -1,5 +1,4 @@
 
-user  nginx;
 worker_processes  {{.WorkerProcesses}};
 {{- if .WorkerRlimitNofile}}
 worker_rlimit_nofile {{.WorkerRlimitNofile}};{{end}}
@@ -11,7 +10,7 @@ worker_shutdown_timeout {{.WorkerShutdownTimeout}};{{end}}
 daemon off;
 
 error_log  /var/log/nginx/error.log {{.ErrorLogLevel}};
-pid        /var/run/nginx.pid;
+pid        /var/lib/nginx/nginx.pid;
 
 {{- if .OpenTracingLoadModule}}
 load_module modules/ngx_http_opentracing_module.so;
@@ -80,7 +79,7 @@ http {
     opentracing on;
     {{end}}
     {{if .OpenTracingLoadModule}}
-    opentracing_load_tracer {{ .OpenTracingTracer }} /etc/tracer-config.json;
+    opentracing_load_tracer {{ .OpenTracingTracer }} /var/lib/nginx/tracer-config.json;
     {{end}}
 
     {{if .ResolverAddresses}}
@@ -145,7 +144,7 @@ http {
 
     # NGINX Plus API over unix socket
     server {
-        listen unix:/var/run/nginx-plus-api.sock;
+        listen unix:/var/lib/nginx/nginx-plus-api.sock;
         access_log off;
 
         {{if .OpenTracingEnabled}}
