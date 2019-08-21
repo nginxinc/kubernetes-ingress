@@ -177,7 +177,7 @@ func GenerateExternalNameSvcKey(namespace string, service string) string {
 func generateEndpointsForUpstream(namespace string, upstream conf_v1alpha1.Upstream, virtualServerEx *VirtualServerEx, isResolverConfigured bool, isPlus bool) []string {
 	endpointsKey := GenerateEndpointsKey(namespace, upstream.Service, upstream.Port)
 	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, upstream.Service)
-	endpoints, _ := virtualServerEx.Endpoints[endpointsKey]
+	endpoints := virtualServerEx.Endpoints[endpointsKey]
 	if !isPlus && len(endpoints) == 0 {
 		return []string{nginx502Server}
 	}

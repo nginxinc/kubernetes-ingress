@@ -123,8 +123,8 @@ func TestPathOrDefaultReturnActual(t *testing.T) {
 
 func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 	coffeeUpstream := version1.Upstream{
-		Name:     "default-cafe-ingress-cafe.example.com-coffee-svc-80",
-		LBMethod: "random two least_conn",
+		Name:             "default-cafe-ingress-cafe.example.com-coffee-svc-80",
+		LBMethod:         "random two least_conn",
 		UpstreamZoneSize: "256k",
 		UpstreamServers: []version1.UpstreamServer{
 			{
@@ -137,8 +137,8 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 		},
 	}
 	teaUpstream := version1.Upstream{
-		Name:     "default-cafe-ingress-cafe.example.com-tea-svc-80",
-		LBMethod: "random two least_conn",
+		Name:             "default-cafe-ingress-cafe.example.com-tea-svc-80",
+		LBMethod:         "random two least_conn",
 		UpstreamZoneSize: "256k",
 		UpstreamServers: []version1.UpstreamServer{
 			{
@@ -478,8 +478,8 @@ func createMergeableCafeIngress() *MergeableIngresses {
 
 func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 	coffeeUpstream := version1.Upstream{
-		Name:     "default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80",
-		LBMethod: "random two least_conn",
+		Name:             "default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80",
+		LBMethod:         "random two least_conn",
 		UpstreamZoneSize: "256k",
 		UpstreamServers: []version1.UpstreamServer{
 			{
@@ -492,8 +492,8 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 		},
 	}
 	teaUpstream := version1.Upstream{
-		Name:     "default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80",
-		LBMethod: "random two least_conn",
+		Name:             "default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80",
+		LBMethod:         "random two least_conn",
 		UpstreamZoneSize: "256k",
 		UpstreamServers: []version1.UpstreamServer{
 			{

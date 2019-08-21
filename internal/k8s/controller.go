@@ -1399,7 +1399,7 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*conf
 		if err != nil {
 			glog.V(3).Infof("Error getting service %v: %v", ing.Spec.Backend.ServiceName, err)
 		} else {
-			endps, external, err = lbc.getEndpointsForIngressBackend(ing.Spec.Backend, ing.Namespace, svc)
+			endps, external, err = lbc.getEndpointsForIngressBackend(ing.Spec.Backend, svc)
 			if err == nil && external && lbc.isNginxPlus {
 				ingEx.ExternalNameSvcs[svc.Name] = true
 			}
@@ -1436,7 +1436,7 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*conf
 			if err != nil {
 				glog.V(3).Infof("Error getting service %v: %v", &path.Backend.ServiceName, err)
 			} else {
-				endps, external, err = lbc.getEndpointsForIngressBackend(&path.Backend, ing.Namespace, svc)
+				endps, external, err = lbc.getEndpointsForIngressBackend(&path.Backend, svc)
 				if err == nil && external && lbc.isNginxPlus {
 					ingEx.ExternalNameSvcs[svc.Name] = true
 				}
@@ -1593,7 +1593,7 @@ func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, ups
 		ServicePort: intstr.FromInt(int(upstream.Port)),
 	}
 
-	endps, isExternal, err := lbc.getEndpointsForIngressBackend(backend, namespace, svc)
+	endps, isExternal, err := lbc.getEndpointsForIngressBackend(backend, svc)
 	if err != nil {
 		return nil, false, fmt.Errorf("Error retrieving endpoints for the service %v: %v", upstream.Service, err)
 	}
@@ -1601,7 +1601,7 @@ func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, ups
 	return endps, isExternal, err
 }
 
-func (lbc *LoadBalancerController) getPodsForIngressBackend(svc *api_v1.Service, namespace string) *api_v1.PodList {
+func (lbc *LoadBalancerController) getPodsForIngressBackend(svc *api_v1.Service) *api_v1.PodList {
 	pods, err := lbc.client.CoreV1().Pods(svc.Namespace).List(meta_v1.ListOptions{LabelSelector: labels.Set(svc.Spec.Selector).String()})
 	if err != nil {
 		glog.V(3).Infof("Error fetching pods for namespace %v: %v", svc.Namespace, err)
@@ -1620,7 +1620,7 @@ func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *ext
 	if svcPort == nil {
 		return nil
 	}
-	pods := lbc.getPodsForIngressBackend(svc, namespace)
+	pods := lbc.getPodsForIngressBackend(svc)
 	if pods == nil {
 		return nil
 	}
@@ -1658,20 +1658,20 @@ func compareContainerPortAndServicePort(containerPort api_v1.ContainerPort, svcP
 	return false
 }
 
-func (lbc *LoadBalancerController) getExternalEndpointsForIngressBackend(backend *extensions.IngressBackend, namespace string, svc *api_v1.Service) []string {
+func (lbc *LoadBalancerController) getExternalEndpointsForIngressBackend(backend *extensions.IngressBackend, svc *api_v1.Service) []string {
 	endpoint := fmt.Sprintf("%s:%d", svc.Spec.ExternalName, int32(backend.ServicePort.IntValue()))
 	endpoints := []string{endpoint}
 	return endpoints
 }
 
-func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *extensions.IngressBackend, namespace string, svc *api_v1.Service) (result []string, isExternal bool, err error) {
+func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *extensions.IngressBackend, svc *api_v1.Service) (result []string, isExternal bool, err error) {
 	endps, err := lbc.endpointLister.GetServiceEndpoints(svc)
 	if err != nil {
 		if svc.Spec.Type == api_v1.ServiceTypeExternalName {
 			if !lbc.isNginxPlus {
 				return nil, false, fmt.Errorf("Type ExternalName Services feature is only available in NGINX Plus")
 			}
-			result = lbc.getExternalEndpointsForIngressBackend(backend, namespace, svc)
+			result = lbc.getExternalEndpointsForIngressBackend(backend, svc)
 			return result, true, nil
 		}
 		glog.V(3).Infof("Error getting endpoints for service %s from the cache: %v", svc.Name, err)

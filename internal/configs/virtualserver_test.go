@@ -1856,7 +1856,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 					},
 				},
 				Endpoints: map[string][]string{
-					"test-namespace/test:80": []string{"example.com:80"},
+					"test-namespace/test:80": {"example.com:80"},
 				},
 				ExternalNameSvcs: map[string]bool{
 					"test-namespace/test": true,
@@ -1880,7 +1880,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 					},
 				},
 				Endpoints: map[string][]string{
-					"test-namespace/test:80": []string{"example.com:80"},
+					"test-namespace/test:80": {"example.com:80"},
 				},
 				ExternalNameSvcs: map[string]bool{
 					"test-namespace/test": true,
@@ -1904,7 +1904,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 					},
 				},
 				Endpoints: map[string][]string{
-					"test-namespace/test:8080": []string{"192.168.10.10:8080"},
+					"test-namespace/test:8080": {"192.168.10.10:8080"},
 				},
 			},
 			isPlus:               false,

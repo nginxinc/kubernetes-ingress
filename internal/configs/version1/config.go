@@ -17,12 +17,12 @@ type Ingress struct {
 
 // Upstream describes an NGINX upstream.
 type Upstream struct {
-	Name            string
-	UpstreamServers []UpstreamServer
-	StickyCookie    string
-	LBMethod        string
-	Queue           int64
-	QueueTimeout    int64
+	Name             string
+	UpstreamServers  []UpstreamServer
+	StickyCookie     string
+	LBMethod         string
+	Queue            int64
+	QueueTimeout     int64
 	UpstreamZoneSize string
 }
 
@@ -169,7 +169,7 @@ type MainConfig struct {
 // We use it for services that have no endpoints.
 func NewUpstreamWithDefaultServer(name string) Upstream {
 	return Upstream{
-		Name: name,
+		Name:             name,
 		UpstreamZoneSize: "256k",
 		UpstreamServers: []UpstreamServer{
 			{

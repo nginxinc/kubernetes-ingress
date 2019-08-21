@@ -209,7 +209,7 @@ func (cnf *Configurator) updateJWKSecret(ingEx *IngressEx) string {
 
 func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
-	data := []byte(secret.Data[JWTKeyKey])
+	data := secret.Data[JWTKeyKey]
 	return cnf.nginxManager.CreateSecret(name, data, nginx.JWKSecretFileMode)
 }
 

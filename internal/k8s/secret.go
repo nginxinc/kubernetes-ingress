@@ -3,7 +3,7 @@ package k8s
 import (
 	"fmt"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 )
 
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.

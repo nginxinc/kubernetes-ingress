@@ -258,7 +258,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
-				"upstream1": sets.Empty{},
+				"upstream1": {},
 			},
 			msg: "invalid next upstream syntax",
 		},
@@ -274,7 +274,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
-				"upstream1": sets.Empty{},
+				"upstream1": {},
 			},
 			msg: "invalid upstream timeout value",
 		},
@@ -290,7 +290,7 @@ func TestValidateUpstreamsFails(t *testing.T) {
 				},
 			},
 			expectedUpstreamNames: map[string]sets.Empty{
-				"upstream1": sets.Empty{},
+				"upstream1": {},
 			},
 			msg: "invalid upstream tries value",
 		},
@@ -1822,7 +1822,6 @@ func TestValidateStatusMatchFails(t *testing.T) {
 func TestValidateHeader(t *testing.T) {
 	tests := []struct {
 		header v1alpha1.Header
-		msg    string
 	}{
 		{
 			header: v1alpha1.Header{
