@@ -4,15 +4,15 @@ linters-settings:
 
 linters:
     enable:
-    - golint
     - goimports
+    - gosimple
+    - govet
     - misspell
     - gofmt
     - unparam
     - unconvert
     - interfacer
-    disable:
-    - maligned
-    - prealloc
-    - gochecknoglobals
+    - structcheck
+    - errcheck
+    disable-all: true
 
