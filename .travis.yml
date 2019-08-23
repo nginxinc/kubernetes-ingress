@@ -19,5 +19,5 @@ before_install:
   wget https://${fossalocation}/${fossafile} && tar xzf ${fossafile}
   && ./fossa init
   && GO111MODULE=on FOSSA_API_KEY=${fossapush} ./fossa analyze -t kubernetes-ingress -b ${TRAVIS_BRANCH}; fi
-- echo "Checking ingress controller for linting errors" && wget -O - -q ${golangci_lint} | sh -s v1.17.1 -b $(pwd)
-- make lint
+- echo "Checking ingress controller for linting errors" && wget -O - -q ${golangci_lint} | sh -s v1.17.1
+- export PATH="$PATH:./bin" && make lint
