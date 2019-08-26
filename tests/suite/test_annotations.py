@@ -45,6 +45,23 @@ def replace_ingresses_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, names
                 replace_ingress(extensions_v1_beta1, doc['metadata']['name'], namespace, doc)
 
 
+def get_minions_info_from_yaml(file) -> []:
+    """
+    Parse yaml file and return minions details.
+
+    :param file: an absolute path to file
+    :return: [{name, svc_name}]
+    """
+    res = []
+    with open(file) as f:
+        docs = yaml.load_all(f)
+        for dep in docs:
+            if 'minion' in dep['metadata']['name']:
+                res.append({"name": dep['metadata']['name'],
+                            "svc_name": dep['spec']['rules'][0]['http']['paths'][0]['backend']['serviceName']})
+    return res
+
+
 class AnnotationsSetup:
     """Encapsulate Annotations example details.
 
@@ -56,7 +73,7 @@ class AnnotationsSetup:
         namespace: example namespace
     """
     def __init__(self, public_endpoint: PublicEndpoint, ingress_src_file, ingress_name, ingress_host, ingress_pod_name,
-                 namespace, ingress_event_text, ingress_error_event_text):
+                 namespace, ingress_event_text, ingress_error_event_text, upstream_names=None):
         self.public_endpoint = public_endpoint
         self.ingress_name = ingress_name
         self.ingress_pod_name = ingress_pod_name
@@ -65,6 +82,7 @@ class AnnotationsSetup:
         self.ingress_src_file = ingress_src_file
         self.ingress_event_text = ingress_event_text
         self.ingress_error_event_text = ingress_error_event_text
+        self.upstream_names = upstream_names
 
 
 @pytest.fixture(scope="class")
@@ -78,18 +96,27 @@ def annotations_setup(request,
                            test_namespace)
     ingress_name = get_names_from_yaml(f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml")[0]
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml")
+    if request.param == 'mergeable':
+        minions_info = get_minions_info_from_yaml(f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml")
+    else:
+        minions_info = None
     create_example_app(kube_apis, "simple", test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
                                          ingress_controller_endpoint.port,
                                          ingress_controller_endpoint.port_ssl)
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+    upstream_names = []
     if request.param == 'mergeable':
         event_text = f"Configuration for {test_namespace}/{ingress_name}(Master) was added or updated"
         error_text = f"{event_text} but was not applied: Error reloading NGINX"
+        for minion in minions_info:
+            upstream_names.append(f"{test_namespace}-{minion['name']}-{ingress_host}-{minion['svc_name']}-80")
     else:
         event_text = f"Configuration for {test_namespace}/{ingress_name} was added or updated"
         error_text = f"{event_text}, but not applied: Error reloading NGINX"
+        upstream_names.append(f"{test_namespace}-{ingress_name}-{ingress_host}-backend1-svc-80")
+        upstream_names.append(f"{test_namespace}-{ingress_name}-{ingress_host}-backend2-svc-80")
 
     def fin():
         print("Clean up Annotations Example:")
@@ -106,7 +133,8 @@ def annotations_setup(request,
 
     return AnnotationsSetup(ingress_controller_endpoint,
                             f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml",
-                            ingress_name, ingress_host, ic_pod_name, test_namespace, event_text, error_text)
+                            ingress_name, ingress_host, ic_pod_name, test_namespace, event_text, error_text,
+                            upstream_names)
 
 
 @pytest.fixture(scope="class")
@@ -156,7 +184,8 @@ class TestAnnotations:
 
         assert "Strict-Transport-Security" not in result_conf
 
-        assert " 256k;" in result_conf
+        for upstream in annotations_setup.upstream_names:
+            assert f"zone {upstream} 256k;" in result_conf
 
     @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
         ({"nginx.org/proxy-send-timeout": "10s", "nginx.org/max-conns": "1024",
