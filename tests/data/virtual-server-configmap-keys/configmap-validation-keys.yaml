@@ -13,3 +13,5 @@ data:
   proxy-protocol: "true"
   redirect-to-https: "true"
   upstream-zone-size: "0" # special value
+  variables-hash-bucket-size: "512"
+  variables-hash-max-size: "2048"

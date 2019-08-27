@@ -12,3 +12,5 @@ data:
   keepalive: "invalid"
   proxy-protocol: "invalid proxy"
   redirect-to-https: "invalid"
+  variables-hash-bucket-size: "0"
+  variables-hash-max-size: "-1024"
