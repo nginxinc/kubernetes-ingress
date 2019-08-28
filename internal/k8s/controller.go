@@ -64,10 +64,12 @@ type LoadBalancerController struct {
 	secretController             cache.Controller
 	virtualServerController      cache.Controller
 	virtualServerRouteController cache.Controller
+	podController                cache.Controller
 	ingressLister                storeToIngressLister
 	svcLister                    cache.Store
 	endpointLister               storeToEndpointLister
 	configMapLister              storeToConfigMapLister
+	podLister                    indexerToPodLister
 	secretLister                 storeToSecretLister
 	virtualServerLister          cache.Store
 	virtualServerRouteLister     cache.Store
@@ -164,6 +166,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.addIngressHandler(createIngressHandlers(lbc))
 	lbc.addServiceHandler(createServiceHandlers(lbc))
 	lbc.addEndpointHandler(createEndpointHandlers(lbc))
+	lbc.addPodHandler()
 
 	if lbc.areCustomResourcesEnabled {
 		lbc.addVirtualServerHandler(createVirtualServerHandlers(lbc))
@@ -276,6 +279,20 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 	)
 }
 
+func (lbc *LoadBalancerController) addPodHandler() {
+	lbc.podLister.Indexer, lbc.podController = cache.NewIndexerInformer(
+		cache.NewListWatchFromClient(
+			lbc.client.CoreV1().RESTClient(),
+			"pods",
+			lbc.namespace,
+			fields.Everything()),
+		&api_v1.Pod{},
+		lbc.resync,
+		cache.ResourceEventHandlerFuncs{},
+		cache.Indexers{},
+	)
+}
+
 func (lbc *LoadBalancerController) addVirtualServerHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.virtualServerLister, lbc.virtualServerController = cache.NewInformer(
 		cache.NewListWatchFromClient(
@@ -310,6 +327,7 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.leaderElector.Run(lbc.ctx)
 	}
 	go lbc.svcController.Run(lbc.ctx.Done())
+	go lbc.podController.Run(lbc.ctx.Done())
 	go lbc.endpointController.Run(lbc.ctx.Done())
 	go lbc.secretController.Run(lbc.ctx.Done())
 	if lbc.watchNginxConfigMaps {
@@ -1555,13 +1573,23 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 
 	for _, u := range virtualServer.Spec.Upstreams {
 		endpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, u.Service, u.Port)
-		endps, external, err := lbc.getEndpointsForUpstream(virtualServer.Namespace, u)
-		if err != nil {
-			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+
+		var endps []string
+		var err error
+
+		if len(u.Subselector) > 0 {
+			endps, err = lbc.getEndpointsForSubselector(virtualServer.Namespace, u)
+		} else {
+			var external bool
+			endps, external, err = lbc.getEndpointsForUpstream(virtualServer.Namespace, u)
+
+			if err == nil && external && lbc.isNginxPlus {
+				externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, u.Service)] = true
+			}
 		}
 
-		if err == nil && external && lbc.isNginxPlus {
-			externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, u.Service)] = true
+		if err != nil {
+			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
 		}
 
 		endpoints[endpointsKey] = endps
@@ -1609,15 +1637,25 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 
 		for _, u := range vsr.Spec.Upstreams {
 			endpointsKey := configs.GenerateEndpointsKey(vsr.Namespace, u.Service, u.Port)
-			endps, external, err := lbc.getEndpointsForUpstream(vsr.Namespace, u)
-			if err != nil {
-				glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-			}
 
-			if err == nil && external && lbc.isNginxPlus {
-				externalNameSvcs[configs.GenerateExternalNameSvcKey(vsr.Namespace, u.Service)] = true
-			}
+			var endps []string
+			var err error
+			if len(u.Subselector) > 0 {
+				endps, err = lbc.getEndpointsForSubselector(vsr.Namespace, u)
+				if err != nil {
+					glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+				}
+			} else {
+				var external bool
+				endps, external, err = lbc.getEndpointsForUpstream(vsr.Namespace, u)
+				if err != nil {
+					glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+				}
 
+				if err == nil && external && lbc.isNginxPlus {
+					externalNameSvcs[configs.GenerateExternalNameSvcKey(vsr.Namespace, u.Service)] = true
+				}
+			}
 			endpoints[endpointsKey] = endps
 		}
 	}
@@ -1629,7 +1667,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 	return &virtualServerEx, virtualServerRouteErrors
 }
 
-func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstream conf_v1alpha1.Upstream) (result []string, isExternal bool, err error) {
+func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstream conf_v1alpha1.Upstream) (endps []string, isExternal bool, err error) {
 	svc, err := lbc.getServiceForUpstream(upstream, namespace)
 	if err != nil {
 		return nil, false, fmt.Errorf("Error getting service %v: %v", upstream.Service, err)
@@ -1640,7 +1678,7 @@ func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, ups
 		ServicePort: intstr.FromInt(int(upstream.Port)),
 	}
 
-	endps, isExternal, err := lbc.getEndpointsForIngressBackend(backend, svc)
+	endps, isExternal, err = lbc.getEndpointsForIngressBackend(backend, svc)
 	if err != nil {
 		return nil, false, fmt.Errorf("Error retrieving endpoints for the service %v: %v", upstream.Service, err)
 	}
@@ -1648,13 +1686,71 @@ func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, ups
 	return endps, isExternal, err
 }
 
-func (lbc *LoadBalancerController) getPodsForIngressBackend(svc *api_v1.Service) *api_v1.PodList {
-	pods, err := lbc.client.CoreV1().Pods(svc.Namespace).List(meta_v1.ListOptions{LabelSelector: labels.Set(svc.Spec.Selector).String()})
+func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, upstream conf_v1alpha1.Upstream) (endps []string, err error) {
+	svc, err := lbc.getServiceForUpstream(upstream, namespace)
 	if err != nil {
-		glog.V(3).Infof("Error fetching pods for namespace %v: %v", svc.Namespace, err)
-		return nil
+		return nil, fmt.Errorf("Error getting service %v: %v", upstream.Service, err)
 	}
-	return pods
+
+	var targetPort int32
+
+	for _, port := range svc.Spec.Ports {
+		if port.Port == int32(upstream.Port) {
+			targetPort, err = lbc.getTargetPort(&port, svc)
+			if err != nil {
+				return nil, fmt.Errorf("Error determining target port for port %v in Ingress: %v", upstream.Port, err)
+			}
+			break
+		}
+	}
+
+	if targetPort == 0 {
+		return nil, fmt.Errorf("No port %v in service %s", upstream.Port, svc.Name)
+	}
+
+	endps, err = lbc.getEndpointsForServiceWithSubselector(targetPort, upstream.Subselector, svc)
+	if err != nil {
+		return nil, fmt.Errorf("Error retrieving endpoints for the service %v: %v", upstream.Service, err)
+	}
+
+	return endps, err
+}
+
+func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetPort int32, subselector map[string]string, svc *api_v1.Service) (endps []string, err error) {
+	pods, err := lbc.podLister.ListByNamespace(svc.Namespace, labels.Merge(svc.Spec.Selector, subselector).AsSelector())
+	if err != nil {
+		return nil, fmt.Errorf("Error getting pods in namespace %v that match the selector %v: %v", svc.Namespace, labels.Merge(svc.Spec.Selector, subselector), err)
+	}
+
+	svcEps, err := lbc.endpointLister.GetServiceEndpoints(svc)
+	if err != nil {
+		glog.V(3).Infof("Error getting endpoints for service %s from the cache: %v", svc.Name, err)
+		return nil, err
+	}
+
+	endps = getEndpointsBySubselectedPods(targetPort, pods, svcEps)
+	return endps, nil
+}
+
+func getEndpointsBySubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEps api_v1.Endpoints) (endps []string) {
+	for _, pod := range pods {
+		podEp := fmt.Sprintf("%v:%v", pod.Status.PodIP, targetPort)
+
+		for _, subset := range svcEps.Subsets {
+			for _, port := range subset.Ports {
+				if port.Port != targetPort {
+					continue
+				}
+				for _, address := range subset.Addresses {
+					svcEp := fmt.Sprintf("%v:%v", address.IP, port.Port)
+					if svcEp == podEp {
+						endps = append(endps, podEp)
+					}
+				}
+			}
+		}
+	}
+	return endps
 }
 
 func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *extensions.IngressBackend, namespace string) *api_v1.Probe {
@@ -1667,14 +1763,15 @@ func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *ext
 	if svcPort == nil {
 		return nil
 	}
-	pods := lbc.getPodsForIngressBackend(svc)
-	if pods == nil {
+	pods, err := lbc.podLister.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
+	if err != nil {
+		glog.V(3).Infof("Error fetching pods for namespace %v: %v", svc.Namespace, err)
 		return nil
 	}
-	return findProbeForPods(pods.Items, svcPort)
+	return findProbeForPods(pods, svcPort)
 }
 
-func findProbeForPods(pods []api_v1.Pod, svcPort *api_v1.ServicePort) *api_v1.Probe {
+func findProbeForPods(pods []*api_v1.Pod, svcPort *api_v1.ServicePort) *api_v1.Probe {
 	if len(pods) > 0 {
 		pod := pods[0]
 		for _, container := range pod.Spec.Containers {
@@ -1736,7 +1833,6 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *extens
 func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, ingSvcPort intstr.IntOrString, svc *api_v1.Service) ([]string, error) {
 	var targetPort int32
 	var err error
-	found := false
 
 	for _, port := range svc.Spec.Ports {
 		if (ingSvcPort.Type == intstr.Int && port.Port == int32(ingSvcPort.IntValue())) || (ingSvcPort.Type == intstr.String && port.Name == ingSvcPort.String()) {
@@ -1744,12 +1840,11 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, i
 			if err != nil {
 				return nil, fmt.Errorf("Error determining target port for port %v in Ingress: %v", ingSvcPort, err)
 			}
-			found = true
 			break
 		}
 	}
 
-	if !found {
+	if targetPort == 0 {
 		return nil, fmt.Errorf("No port %v in service %s", ingSvcPort, svc.Name)
 	}
 
@@ -1787,16 +1882,16 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort *api_v1.ServicePort, sv
 		return int32(svcPort.TargetPort.IntValue()), nil
 	}
 
-	pods, err := lbc.client.CoreV1().Pods(svc.Namespace).List(meta_v1.ListOptions{LabelSelector: labels.Set(svc.Spec.Selector).String()})
+	pods, err := lbc.podLister.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
 	if err != nil {
 		return 0, fmt.Errorf("Error getting pod information: %v", err)
 	}
 
-	if len(pods.Items) == 0 {
+	if len(pods) == 0 {
 		return 0, fmt.Errorf("No pods of service %s", svc.Name)
 	}
 
-	pod := &pods.Items[0]
+	pod := pods[0]
 
 	portNum, err := findPort(pod, svcPort)
 	if err != nil {

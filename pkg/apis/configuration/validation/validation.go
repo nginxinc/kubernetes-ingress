@@ -356,7 +356,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		}
 
 		allErrs = append(allErrs, validateServiceName(u.Service, idxPath.Child("service"))...)
-
+		allErrs = append(allErrs, validateLabels(u.Subselector, idxPath.Child("subselector"))...)
 		allErrs = append(allErrs, validateTime(u.ProxyConnectTimeout, idxPath.Child("connect-timeout"))...)
 		allErrs = append(allErrs, validateTime(u.ProxyReadTimeout, idxPath.Child("read-timeout"))...)
 		allErrs = append(allErrs, validateTime(u.ProxySendTimeout, idxPath.Child("send-timeout"))...)
@@ -832,6 +832,33 @@ func validateQueue(queue *v1alpha1.UpstreamQueue, fieldPath *field.Path, isPlus 
 	allErrs = append(allErrs, validateTime(queue.Timeout, fieldPath.Child("timeout"))...)
 	if queue.Size <= 0 {
 		allErrs = append(allErrs, field.Required(fieldPath.Child("size"), "must be positive"))
+	}
+
+	return allErrs
+}
+
+// isValidLabelName checks if a label name is valid.
+// It performs the same validation as ValidateLabelName from k8s.io/apimachinery/pkg/apis/meta/v1/validation/validation.go.
+func isValidLabelName(labelName string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	for _, msg := range validation.IsQualifiedName(labelName) {
+		allErrs = append(allErrs, field.Invalid(fieldPath, labelName, msg))
+	}
+
+	return allErrs
+}
+
+// validateLabels validates that a set of labels are correctly defined.
+// It performs the same validation as ValidateLabels from k8s.io/apimachinery/pkg/apis/meta/v1/validation/validation.go.
+func validateLabels(labels map[string]string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	for labelName, labelValue := range labels {
+		allErrs = append(allErrs, isValidLabelName(labelName, fieldPath)...)
+		for _, msg := range validation.IsValidLabelValue(labelValue) {
+			allErrs = append(allErrs, field.Invalid(fieldPath, labelValue, msg))
+		}
 	}
 
 	return allErrs

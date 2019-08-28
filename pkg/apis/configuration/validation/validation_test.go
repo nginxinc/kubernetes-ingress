@@ -144,6 +144,7 @@ func TestValidateUpstreams(t *testing.T) {
 				},
 				{
 					Name:                     "upstream2",
+					Subselector:              map[string]string{"version": "test"},
 					Service:                  "test-2",
 					Port:                     80,
 					ProxyNextUpstream:        "error timeout",
@@ -352,6 +353,34 @@ func TestValidateUpstreamsFails(t *testing.T) {
 				"upstream1": {},
 			},
 			msg: "invalid value for ProxyBufferSize",
+		},
+		{
+			upstreams: []v1alpha1.Upstream{
+				{
+					Name:        "upstream1",
+					Service:     "test-1",
+					Subselector: map[string]string{"\\$invalidkey": "test"},
+					Port:        80,
+				},
+			},
+			expectedUpstreamNames: map[string]sets.Empty{
+				"upstream1": {},
+			},
+			msg: "invalid key for subselector",
+		},
+		{
+			upstreams: []v1alpha1.Upstream{
+				{
+					Name:        "upstream1",
+					Service:     "test-1",
+					Subselector: map[string]string{"version": "test=fail"},
+					Port:        80,
+				},
+			},
+			expectedUpstreamNames: map[string]sets.Empty{
+				"upstream1": {},
+			},
+			msg: "invalid value for subselector",
 		},
 	}
 

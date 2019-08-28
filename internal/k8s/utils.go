@@ -23,6 +23,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/tools/cache"
 )
@@ -95,6 +96,19 @@ func (s *storeToConfigMapLister) List() (cfgm v1.ConfigMapList, err error) {
 	return cfgm, nil
 }
 
+// indexerToPodLister makes a Indexer that lists Pods.
+type indexerToPodLister struct {
+	cache.Indexer
+}
+
+// ListByNamespace lists all Pods in the indexer for a given namespace that match the provided selector.
+func (ipl indexerToPodLister) ListByNamespace(ns string, selector labels.Selector) (pods []*v1.Pod, err error) {
+	err = cache.ListAllByNamespace(ipl.Indexer, ns, selector, func(m interface{}) {
+		pods = append(pods, m.(*v1.Pod))
+	})
+	return pods, err
+}
+
 // storeToEndpointLister makes a Store that lists Endponts
 type storeToEndpointLister struct {
 	cache.Store
@@ -108,8 +122,7 @@ func (s *storeToEndpointLister) GetServiceEndpoints(svc *v1.Service) (ep v1.Endp
 			return ep, nil
 		}
 	}
-	err = fmt.Errorf("could not find endpoints for service: %v", svc.Name)
-	return
+	return ep, fmt.Errorf("could not find endpoints for service: %v", svc.Name)
 }
 
 // findPort locates the container port for the given pod and portName.  If the
