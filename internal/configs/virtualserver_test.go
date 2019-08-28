@@ -940,6 +940,29 @@ func TestGenerateString(t *testing.T) {
 	}
 }
 
+func TestGenerateBuffer(t *testing.T) {
+	tests := []struct {
+		inputS   *conf_v1alpha1.UpstreamBuffers
+		expected string
+	}{
+		{
+			inputS:   nil,
+			expected: "8 4k",
+		},
+		{
+			inputS:   &conf_v1alpha1.UpstreamBuffers{Number: 8, Size: "16K"},
+			expected: "8 16K",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateBuffers(test.inputS, "8 4k")
+		if result != test.expected {
+			t.Errorf("generateBuffer() return %v but expected %v", result, test.expected)
+		}
+	}
+}
+
 func TestGenerateLocation(t *testing.T) {
 	cfgParams := ConfigParams{
 		ProxyConnectTimeout:  "30s",

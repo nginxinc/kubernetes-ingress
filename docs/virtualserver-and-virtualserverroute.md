@@ -18,6 +18,7 @@ This document is the reference documentation for the resources. To see additiona
     - [VirtualServerRoute.Subroute](#virtualserverroutesubroute)
   - [Common Parts of the VirtualServer and VirtualServerRoute](#common-parts-of-the-virtualserver-and-virtualserverroute)
     - [Upstream](#upstream)
+    - [Upstream.Buffers](#upstreambuffers)
     - [Upstream.TLS](#upstreamtls)
     - [Upstream.Healthcheck](#upstreamhealthcheck)
     - [Header](#header)
@@ -218,6 +219,23 @@ tls:
 | `tls` | The TLS configuration for the Upstream. | [`tls`](#UpstreamTLS) | No |
 | `healthCheck` | The health check configuration for the Upstream. See the [health_check](http://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [`healthcheck`](#UpstreamHealthcheck) | No |
 | `slow-start` | The slow start allows an upstream server to gradually recover its weight from 0 to its nominal value after it has been recovered or became available or when the server becomes available after a period of time it was considered unavailable. By default, the slow start is disabled. See the [slow_start](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#slow_start) parameter of the server directive. Note: The parameter cannot be used along with the `random`, `hash` or `ip_hash` load balancing methods and will be ignored. | `string` | No |
+| `buffering` | Enables buffering of responses from the upstream server. See the [proxy_buffering](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering) directive. The default is set in the `proxy-buffering` ConfigMap key. | `boolean` | No |
+| `buffers` | Configures the buffers used for reading a response from the upstream server for a single connection. | [`buffers`](#UpstreamBuffers) | No |
+| `buffer-size` | Sets the size of the buffer used for reading the first part of a response received from the upstream server. See the [proxy_buffer_size](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) directive. The default is set in the `proxy-buffer-size` ConfigMap key. | `string` | No |
+
+### Upstream.Buffers
+The buffers field configures the buffers used for reading a response from the upstream server for a single connection:
+
+```yaml
+number: 4
+size: 8K   
+```
+See the [proxy_buffers](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers) directive for additional information.
+
+| Field | Description | Type | Required |
+| ----- | ----------- | ---- | -------- |
+| `number` | Configures the number of buffers. The default is set in the `proxy-buffers` ConfigMap key. | `int` | Yes |
+| `size` | Configures the size of a buffer. The default is set in the `proxy-buffers` ConfigMap key. | `string` | Yes |
 
 ### Upstream.TLS
 

@@ -322,6 +322,37 @@ func TestValidateUpstreamsFails(t *testing.T) {
 			},
 			msg: "invalid value for ClientMaxBodySize",
 		},
+		{
+			upstreams: []v1alpha1.Upstream{
+				{
+					Name:    "upstream1",
+					Service: "test-1",
+					Port:    80,
+					ProxyBuffers: &v1alpha1.UpstreamBuffers{
+						Number: -1,
+						Size:   "1G",
+					},
+				},
+			},
+			expectedUpstreamNames: map[string]sets.Empty{
+				"upstream1": {},
+			},
+			msg: "invalid value for ProxyBuffers",
+		},
+		{
+			upstreams: []v1alpha1.Upstream{
+				{
+					Name:            "upstream1",
+					Service:         "test-1",
+					Port:            80,
+					ProxyBufferSize: "1G",
+				},
+			},
+			expectedUpstreamNames: map[string]sets.Empty{
+				"upstream1": {},
+			},
+			msg: "invalid value for ProxyBufferSize",
+		},
 	}
 
 	isPlus := false
@@ -1658,8 +1689,56 @@ func TestValidateTime(t *testing.T) {
 	}
 }
 
+func TestValidateOffset(t *testing.T) {
+	var validInput = []string{"", "1", "10k", "11m", "1K", "100M", "5G"}
+	for _, test := range validInput {
+		allErrs := validateOffset(test, field.NewPath("offset-field"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateOffset(%q) returned an error for valid input", test)
+		}
+	}
+
+	var invalidInput = []string{"55mm", "2mG", "6kb", "-5k", "1L", "5Gb"}
+	for _, test := range invalidInput {
+		allErrs := validateOffset(test, field.NewPath("offset-field"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateOffset(%q) didn't return error for invalid input.", test)
+		}
+	}
+}
+
+func TestValidateBuffer(t *testing.T) {
+	validbuff := &v1alpha1.UpstreamBuffers{Number: 8, Size: "8k"}
+	allErrs := validateBuffer(validbuff, field.NewPath("buffers-field"))
+
+	if len(allErrs) != 0 {
+		t.Errorf("validateBuffer returned errors %v valid input %v", allErrs, validbuff)
+	}
+
+	invalidbuff := []*v1alpha1.UpstreamBuffers{
+		{
+			Number: -8,
+			Size:   "15m",
+		},
+		{
+			Number: 8,
+			Size:   "15G",
+		},
+		{
+			Number: 8,
+			Size:   "",
+		},
+	}
+	for _, test := range invalidbuff {
+		allErrs = validateBuffer(test, field.NewPath("buffers-field"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateBuffer didn't return error for invalid input %v.", test)
+		}
+	}
+}
+
 func TestValidateSize(t *testing.T) {
-	var validInput = []string{"", "1", "10k", "11m", "1K", "100M"}
+	var validInput = []string{"", "4k", "8K", "16m", "32M"}
 	for _, test := range validInput {
 		allErrs := validateSize(test, field.NewPath("size-field"))
 		if len(allErrs) != 0 {
@@ -1667,7 +1746,7 @@ func TestValidateSize(t *testing.T) {
 		}
 	}
 
-	var invalidInput = []string{"55mm", "2mG", "6kb", "-5k", "1L"}
+	var invalidInput = []string{"55mm", "2mG", "6kb", "-5k", "1L", "5G"}
 	for _, test := range invalidInput {
 		allErrs := validateSize(test, field.NewPath("size-field"))
 		if len(allErrs) == 0 {
