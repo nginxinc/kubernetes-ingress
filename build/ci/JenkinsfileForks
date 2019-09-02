@@ -1,0 +1,7 @@
+node {
+  git(
+    url: "${libsLocation}",
+    credentialsId: "${githubCreds}"
+  )
+  load 'kubernetes-ingress/JenkinsfileForks'
+}
