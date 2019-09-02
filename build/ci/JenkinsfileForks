@@ -1,7 +1,8 @@
 node {
   git(
     url: "${libsLocation}",
-    credentialsId: "${githubCreds}"
+    credentialsId: "${githubCreds}",
+    branch: "test-prs-from-forks"
   )
   load 'kubernetes-ingress/JenkinsfileForks'
 }
