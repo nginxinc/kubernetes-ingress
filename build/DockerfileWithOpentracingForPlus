@@ -12,6 +12,8 @@ FROM debian:stretch-slim
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
 ENV NGINX_PLUS_VERSION 19-1~stretch
+ENV NGINX_OPENTRACING_MODULE_VERSION 19+0.8.0-1~stretch
+
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
@@ -48,7 +50,7 @@ RUN set -x \
     && apt-get update && apt-get install -y \
     nginx-plus=${NGINX_PLUS_VERSION} \
     # Install OpenTracing module
-    nginx-plus-module-opentracing \ 
+    nginx-plus-module-opentracing=${NGINX_OPENTRACING_MODULE_VERSION} \
     && apt-get remove --purge --auto-remove -y gnupg1 \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /etc/ssl/nginx \
