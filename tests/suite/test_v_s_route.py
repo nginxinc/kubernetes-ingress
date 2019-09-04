@@ -45,6 +45,7 @@ def assert_event_and_get_count(event_text, events_list) -> int:
     pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
 
 
+@pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route"})],
