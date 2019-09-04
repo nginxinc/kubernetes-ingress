@@ -27,6 +27,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -135,6 +136,11 @@ func main() {
 	if *versionFlag {
 		fmt.Printf("Version=%v GitCommit=%v\n", version, gitCommit)
 		os.Exit(0)
+	}
+
+	statusLockNameValidationError := validateLockName(*leaderElectionLockName)
+	if statusLockNameValidationError != nil {
+		glog.Fatalf("Invalid value for leader-election-lock-name: %v", statusLockNameValidationError)
 	}
 
 	statusPortValidationError := validatePort(*nginxStatusPort)
@@ -443,6 +449,16 @@ func getSocketClient(sockPath string) *http.Client {
 			},
 		},
 	}
+}
+
+// validateLockName validates the name of a resource
+// It returns an error if the resource name is invalid
+func validateLockName(lock string) error {
+	lst := validation.IsDNS1123Subdomain(lock)
+	if len(lst) > 0 {
+		return fmt.Errorf("invalid resource name: %v", lock)
+	}
+	return nil
 }
 
 // validatePort makes sure a given port is inside the valid port range for its usage
