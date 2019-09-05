@@ -139,6 +139,23 @@ def create_deployment_with_name(apps_v1_api: AppsV1Api, namespace, name) -> str:
         return create_deployment(apps_v1_api, namespace, dep)
 
 
+def scale_deployment(apps_v1_api: AppsV1Api, name, namespace, value) -> None:
+    """
+    Scale a deployment.
+
+    :param apps_v1_api: AppsV1Api
+    :param namespace: namespace name
+    :param name: deployment name
+    :param value: int
+    :return:
+    """
+    print(f"Scale a deployment '{name}'")
+    body = apps_v1_api.read_namespaced_deployment(name, namespace)
+    body.spec.replicas = value
+    apps_v1_api.patch_namespaced_deployment_scale(name, namespace, body)
+    print(f"Scale a deployment '{name}': complete")
+
+
 def create_daemon_set(apps_v1_api: AppsV1Api, namespace, body) -> str:
     """
     Create a daemon-set based on a dict.
@@ -255,18 +272,19 @@ def create_service_with_name(v1: CoreV1Api, namespace, name) -> str:
         return create_service(v1, namespace, dep)
 
 
-def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (str, str):
+def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int):
     """
     Get service allocated node_ports.
 
     :param v1: CoreV1Api
     :param name:
     :param namespace:
-    :return: (plain_port, ssl_port)
+    :return: (plain_port, ssl_port, api_port)
     """
     resp = v1.read_namespaced_service(name, namespace)
-    assert len(resp.spec.ports) == 2, "There are not enough ports assigned to a service"
-    return resp.spec.ports[0].node_port, resp.spec.ports[1].node_port
+    assert len(resp.spec.ports) == 3, "An unexpected amount of ports in a service. Check the configuration"
+    print(f"Service with an API port: {resp.spec.ports[2].node_port}")
+    return resp.spec.ports[0].node_port, resp.spec.ports[1].node_port, resp.spec.ports[2].node_port
 
 
 def wait_for_public_ip(v1: CoreV1Api, namespace: str) -> str:

@@ -59,10 +59,11 @@ class PublicEndpoint:
         port (int):
         port_ssl (int):
     """
-    def __init__(self, public_ip, port=80, port_ssl=443):
+    def __init__(self, public_ip, port=80, port_ssl=443, api_port=8080):
         self.public_ip = public_ip
         self.port = port
         self.port_ssl = port_ssl
+        self.api_port = api_port
 
 
 class IngressControllerPrerequisites:
@@ -143,13 +144,16 @@ def ingress_controller_endpoint(cli_arguments, kube_apis, ingress_controller_pre
     print("------------------------- Create Public Endpoint  -----------------------------------")
     namespace = ingress_controller_prerequisites.namespace
     if cli_arguments["service"] == "nodeport":
-        service_name = create_service_from_yaml(kube_apis.v1, namespace, f"{DEPLOYMENTS}/service/nodeport.yaml")
         public_ip = cli_arguments["node-ip"]
-        port, port_ssl = get_service_node_ports(kube_apis.v1, service_name, namespace)
         print(f"The Public IP: {public_ip}")
-        return PublicEndpoint(public_ip, port, port_ssl)
+        service_name = create_service_from_yaml(kube_apis.v1,
+                                                namespace,
+                                                f"{TEST_DATA}/common/service/nodeport-with-api-port.yaml")
+        port, port_ssl, api_port = get_service_node_ports(kube_apis.v1, service_name, namespace)
+        return PublicEndpoint(public_ip, port, port_ssl, api_port)
     else:
-        create_service_from_yaml(kube_apis.v1, namespace, f"{DEPLOYMENTS}/service/loadbalancer.yaml")
+        create_service_from_yaml(kube_apis.v1,
+                                 namespace, f"{TEST_DATA}/common/service/loadbalancer-with-api-port.yaml")
         public_ip = wait_for_public_ip(kube_apis.v1, namespace)
         print(f"The Public IP: {public_ip}")
         return PublicEndpoint(public_ip)
