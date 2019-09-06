@@ -272,8 +272,8 @@ func validateHeader(h v1alpha1.Header, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-const headerValueFmt = `([^"$\\]|\\.)*`
-const headerValueFmtErrMsg string = `a valid header must have all '"' escaped and must not end with an unescaped '\'`
+const headerValueFmt = `([^"$\\]|\\[^$])*`
+const headerValueFmtErrMsg string = `a valid header must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
 
 var headerValueFmtRegexp = regexp.MustCompile("^" + headerValueFmt + "$")
 

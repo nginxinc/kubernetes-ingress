@@ -1879,6 +1879,13 @@ func TestValidateHeaderFails(t *testing.T) {
 			},
 			msg: "Invalid value with '$' character",
 		},
+		{
+			header: v1alpha1.Header{
+				Name:  "Host",
+				Value: "my.\\$service",
+			},
+			msg: "Invalid value with escaped '$' character",
+		},
 	}
 	for _, test := range tests {
 		allErrs := validateHeader(test.header, field.NewPath("headers"))
