@@ -20,6 +20,10 @@ spec:
     next-upstream-timeout: "time"
     next-upstream-tries: -12
     client-max-body-size: "3.2m"
+    buffers:
+      number: 0
+      size: "k"
+    buffer-size: "±!@£$%^&*()_+#"
   - name: backend3
     service: backend3-svc
     port: 80
@@ -35,6 +39,10 @@ spec:
     next-upstream-timeout: "1.5d"
     next-upstream-tries: -10
     client-max-body-size: "-2m"
+    buffers:
+      number: -4
+      size: ""
+    buffer-size: "k"
   subroutes:
   - path: "/backends/backend1"
     upstream: backend1

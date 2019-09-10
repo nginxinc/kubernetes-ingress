@@ -20,6 +20,10 @@ spec:
     next-upstream-timeout: "time"
     next-upstream-tries: -12
     client-max-body-size: "1.3m"
+    buffers:
+      number: 0
+      size: "k"
+    buffer-size: "one"
   subroutes:
   - path: "/backend2"
     upstream: backend2
