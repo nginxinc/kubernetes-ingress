@@ -138,7 +138,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	statusLockNameValidationError := validateLockName(*leaderElectionLockName)
+	statusLockNameValidationError := validateResourceName(*leaderElectionLockName)
 	if statusLockNameValidationError != nil {
 		glog.Fatalf("Invalid value for leader-election-lock-name: %v", statusLockNameValidationError)
 	}
@@ -451,12 +451,12 @@ func getSocketClient(sockPath string) *http.Client {
 	}
 }
 
-// validateLockName validates the name of a resource
+// validateResourceName validates the name of a resource
 // It returns an error if the resource name is invalid
-func validateLockName(lock string) error {
-	lst := validation.IsDNS1123Subdomain(lock)
-	if len(lst) > 0 {
-		return fmt.Errorf("invalid resource name: %v", lock)
+func validateResourceName(lock string) error {
+	allErrs := validation.IsDNS1123Subdomain(lock)
+	if len(allErrs) > 0 {
+		return fmt.Errorf("invalid resource name %v: %v", lock, allErrs)
 	}
 	return nil
 }
