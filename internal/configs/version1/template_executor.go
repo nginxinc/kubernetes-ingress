@@ -20,7 +20,7 @@ func NewTemplateExecutor(mainTemplatePath string, ingressTemplatePath string) (*
 		return nil, err
 	}
 
-	ingressTemplate, err := template.New(path.Base(ingressTemplatePath)).ParseFiles(ingressTemplatePath)
+	ingressTemplate, err := template.New(path.Base(ingressTemplatePath)).Funcs(helperFunctions).ParseFiles(ingressTemplatePath)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (te *TemplateExecutor) UpdateMainTemplate(templateString *string) error {
 
 // UpdateIngressTemplate updates the ingress template.
 func (te *TemplateExecutor) UpdateIngressTemplate(templateString *string) error {
-	newTemplate, err := template.New("ingressTemplate").Parse(*templateString)
+	newTemplate, err := template.New("ingressTemplate").Funcs(helperFunctions).Parse(*templateString)
 	if err != nil {
 		return err
 	}

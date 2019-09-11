@@ -111,7 +111,7 @@ var mainCfg = MainConfig{
 }
 
 func TestIngressForNGINXPlus(t *testing.T) {
-	tmpl, err := template.New(nginxPlusIngressTmpl).ParseFiles(nginxPlusIngressTmpl)
+	tmpl, err := template.New(nginxPlusIngressTmpl).Funcs(helperFunctions).ParseFiles(nginxPlusIngressTmpl)
 	if err != nil {
 		t.Fatalf("Failed to parse template file: %v", err)
 	}
@@ -126,7 +126,7 @@ func TestIngressForNGINXPlus(t *testing.T) {
 }
 
 func TestIngressForNGINX(t *testing.T) {
-	tmpl, err := template.New(nginxIngressTmpl).ParseFiles(nginxIngressTmpl)
+	tmpl, err := template.New(nginxIngressTmpl).Funcs(helperFunctions).ParseFiles(nginxIngressTmpl)
 	if err != nil {
 		t.Fatalf("Failed to parse template file: %v", err)
 	}
@@ -167,5 +167,49 @@ func TestMainForNGINX(t *testing.T) {
 	t.Log(buf.String())
 	if err != nil {
 		t.Fatalf("Failed to write template %v", err)
+	}
+}
+
+func TestSplitHelperFunctions(t *testing.T) {
+	const tpl = `{{range $n := splitinput (index .) ","}}{{$n}} {{end}}`
+
+	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(tpl)
+	if err != nil {
+		t.Fatalf("Failed to parse template: %v", err)
+	}
+	var buf bytes.Buffer
+
+	slice := "foo,bar"
+	expected := "foo bar "
+	err = tmpl.Execute(&buf, slice)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	if buf.String() != expected {
+		t.Fatalf("Failed parsing the template, got %v but expected %v.", buf.String(), expected)
+	}
+}
+
+func TestTrimHelperFunctions(t *testing.T) {
+	const tpl = `{{triminput (index .)}}`
+
+	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(tpl)
+	if err != nil {
+		t.Fatalf("Failed to parse template: %v", err)
+	}
+	var buf bytes.Buffer
+
+	slice := "  foobar     "
+	expected := "foobar"
+	err = tmpl.Execute(&buf, slice)
+	t.Log(buf.String())
+	if err != nil {
+		t.Fatalf("Failed to write template %v", err)
+	}
+
+	if buf.String() != expected {
+		t.Fatalf("Failed parsing the template, got %v but expected %v.", buf.String(), expected)
 	}
 }

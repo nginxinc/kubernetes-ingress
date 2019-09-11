@@ -86,6 +86,37 @@ If you'd like to use custom annotations with Mergeable Ingress resources, please
 
 * Minions do not inherent custom annotations of the master.
 
+### Helper Functions
+
+Helper functions can be used in custom templates to transform the value of custom annotations.
+
+| Function | Description |
+| -------- | ----------- |
+| `splitinput` | Splits the arguments at specified delimiter and returns an array of strings |
+| `triminput` | Trims the trailing and leading whitespaces from the arguments |
+
+For example, the following custom annotation custom.nginx.org/allowed-ips represents a comma separated list of IP addresses as a string.
+```
+annotations:
+  custom.nginx.org/allowed-ips: "192.168.1.3, 10.0.0.13"
+```
+
+ It is possible to use helper functions such as splitinput and triminput to transform the annotation into something meaningful for NGINX. The example below shows how to use these functions in a custom template for the given annotation:
+
+```
+{{range $ip := splitinput (index $.Ingress.Annotations "custom.nginx.org/allowed-ips") ","}}
+    allow {{triminput $ip}};
+{{end}}
+deny all;
+```
+
+The template will generate the following configuration:
+```
+allow 192.168.1.3;
+allow 10.0.0.13;
+deny all;
+```
+
 ## Example
 
 See the [custom annotations example](../examples/custom-annotations).
