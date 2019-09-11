@@ -323,6 +323,8 @@ func isValidHeaderValue(s string) []string {
 	return nil
 }
 
+// validateSecretName checks if a secret name is valid.
+// It performs the same validation as ValidateSecretName from k8s.io/kubernetes/pkg/apis/core/validation/validation.go.
 func validateSecretName(name string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
