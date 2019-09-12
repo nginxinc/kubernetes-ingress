@@ -137,16 +137,17 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 }
 
 // AddOrUpdateVirtualServer adds or updates NGINX configuration for the VirtualServer resource.
-func (cnf *Configurator) AddOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) error {
-	if err := cnf.addOrUpdateVirtualServer(virtualServerEx); err != nil {
-		return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
+func (cnf *Configurator) AddOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
+	warnings, err := cnf.addOrUpdateVirtualServer(virtualServerEx)
+	if err != nil {
+		return warnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
 	}
 
 	if err := cnf.nginxManager.Reload(); err != nil {
-		return fmt.Errorf("Error reloading NGINX for VirtualServer %v/%v: %v", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
+		return warnings, fmt.Errorf("Error reloading NGINX for VirtualServer %v/%v: %v", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name, err)
 	}
 
-	return nil
+	return warnings, nil
 }
 
 func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) error {
@@ -154,21 +155,22 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 	return err
 }
 
-func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) error {
+func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
 	tlsPemFileName := ""
 	if virtualServerEx.TLSSecret != nil {
 		tlsPemFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.TLSSecret)
 	}
-	vsCfg := generateVirtualServerConfig(virtualServerEx, tlsPemFileName, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured())
+	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured())
+	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName)
 
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
-		return fmt.Errorf("Error generating VirtualServer config: %v: %v", name, err)
+		return warnings, fmt.Errorf("Error generating VirtualServer config: %v: %v", name, err)
 	}
 	cnf.nginxManager.CreateConfig(name, content)
 
-	return nil
+	return warnings, nil
 }
 
 func (cnf *Configurator) updateTLSSecrets(ingEx *IngressEx) map[string]string {
@@ -220,7 +222,6 @@ func (cnf *Configurator) AddOrUpdateJWKSecret(secret *api_v1.Secret) {
 // AddOrUpdateTLSSecret adds or updates a file with the content of the TLS secret.
 func (cnf *Configurator) AddOrUpdateTLSSecret(secret *api_v1.Secret, ingExes []IngressEx, mergeableIngresses []MergeableIngresses, virtualServerExes []*VirtualServerEx) error {
 	cnf.addOrUpdateTLSSecret(secret)
-
 	for i := range ingExes {
 		err := cnf.addOrUpdateIngress(&ingExes[i])
 		if err != nil {
@@ -236,7 +237,8 @@ func (cnf *Configurator) AddOrUpdateTLSSecret(secret *api_v1.Secret, ingExes []I
 	}
 
 	for _, vsEx := range virtualServerExes {
-		err := cnf.addOrUpdateVirtualServer(vsEx)
+		// It is safe to ignore warnings here as no new warnings should appear when adding or updating a secret
+		_, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
 		}
@@ -301,7 +303,8 @@ func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeable
 	}
 
 	for _, vsEx := range virtualServerExes {
-		err := cnf.addOrUpdateVirtualServer(vsEx)
+		// It is safe to ignore warnings here as no new warnings should appear when deleting a secret
+		_, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
 		}
@@ -412,7 +415,8 @@ func (cnf *Configurator) UpdateEndpointsForVirtualServers(virtualServerExes []*V
 	reloadPlus := false
 
 	for _, vs := range virtualServerExes {
-		err := cnf.addOrUpdateVirtualServer(vs)
+		// It is safe to ignore warnings here as no new warnings should appear when updating Endpoints for VirtualServers
+		_, err := cnf.addOrUpdateVirtualServer(vs)
 		if err != nil {
 			return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vs.VirtualServer.Namespace, vs.VirtualServer.Name, err)
 		}
@@ -505,13 +509,14 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 }
 
 // UpdateConfig updates NGINX configuration parameters.
-func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*IngressEx, mergeableIngs map[string]*MergeableIngresses, virtualServerExes []*VirtualServerEx) error {
+func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*IngressEx, mergeableIngs map[string]*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	cnf.cfgParams = cfgParams
+	allWarnings := newWarnings()
 
 	if cnf.cfgParams.MainServerSSLDHParamFileContent != nil {
 		fileName, err := cnf.nginxManager.CreateDHParam(*cnf.cfgParams.MainServerSSLDHParamFileContent)
 		if err != nil {
-			return fmt.Errorf("Error when updating dhparams: %v", err)
+			return allWarnings, fmt.Errorf("Error when updating dhparams: %v", err)
 		}
 		cfgParams.MainServerSSLDHParam = fileName
 	}
@@ -519,52 +524,54 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*Ingres
 	if cfgParams.MainTemplate != nil {
 		err := cnf.templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
 		if err != nil {
-			return fmt.Errorf("Error when parsing the main template: %v", err)
+			return allWarnings, fmt.Errorf("Error when parsing the main template: %v", err)
 		}
 	}
 
 	if cfgParams.IngressTemplate != nil {
 		err := cnf.templateExecutor.UpdateIngressTemplate(cfgParams.IngressTemplate)
 		if err != nil {
-			return fmt.Errorf("Error when parsing the ingress template: %v", err)
+			return allWarnings, fmt.Errorf("Error when parsing the ingress template: %v", err)
 		}
 	}
 
 	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
-		return fmt.Errorf("Error when writing main Config")
+		return allWarnings, fmt.Errorf("Error when writing main Config")
 	}
 	cnf.nginxManager.CreateMainConfig(mainCfgContent)
 
 	for _, ingEx := range ingExes {
 		if err := cnf.addOrUpdateIngress(ingEx); err != nil {
-			return err
+			return allWarnings, err
 		}
 	}
 	for _, mergeableIng := range mergeableIngs {
 		if err := cnf.addOrUpdateMergeableIngress(mergeableIng); err != nil {
-			return err
+			return allWarnings, err
 		}
 	}
 	for _, vsEx := range virtualServerExes {
-		if err := cnf.addOrUpdateVirtualServer(vsEx); err != nil {
-			return err
+		warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
+		if err != nil {
+			return allWarnings, err
 		}
+		allWarnings.Add(warnings)
 	}
 
 	if mainCfg.OpenTracingLoadModule {
 		if err := cnf.addOrUpdateOpenTracingTracerConfig(mainCfg.OpenTracingTracerConfig); err != nil {
-			return fmt.Errorf("Error when updating OpenTracing tracer config: %v", err)
+			return allWarnings, fmt.Errorf("Error when updating OpenTracing tracer config: %v", err)
 		}
 	}
 
 	cnf.nginxManager.SetOpenTracing(mainCfg.OpenTracingLoadModule)
 	if err := cnf.nginxManager.Reload(); err != nil {
-		return fmt.Errorf("Error when updating config from ConfigMap: %v", err)
+		return allWarnings, fmt.Errorf("Error when updating config from ConfigMap: %v", err)
 	}
 
-	return nil
+	return allWarnings, nil
 }
 
 func keyToFileName(key string) string {

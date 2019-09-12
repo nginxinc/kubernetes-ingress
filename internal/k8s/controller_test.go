@@ -1507,3 +1507,14 @@ func TestFindVirtualServersForVirtualServerRoute(t *testing.T) {
 		t.Errorf("findVirtualServersForVirtualServerRoute returned %v but expected %v", result, expected)
 	}
 }
+
+func TestFormatWarningsMessages(t *testing.T) {
+	warnings := []string{"Test warning", "Test warning 2"}
+
+	expected := "Test warning; Test warning 2"
+	result := formatWarningMessages(warnings)
+
+	if result != expected {
+		t.Errorf("formatWarningMessages(%v) returned %v but expected %v", warnings, result, expected)
+	}
+}

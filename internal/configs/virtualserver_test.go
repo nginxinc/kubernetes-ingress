@@ -287,9 +287,14 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	tlsPemFileName := ""
-	result := generateVirtualServerConfig(&virtualServerEx, tlsPemFileName, &baseCfgParams, isPlus, isResolverConfigured)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
 	}
 }
 func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
@@ -504,9 +509,14 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	tlsPemFileName := ""
-	result := generateVirtualServerConfig(&virtualServerEx, tlsPemFileName, &baseCfgParams, isPlus, isResolverConfigured)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
 	}
 }
 
@@ -762,9 +772,14 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	tlsPemFileName := ""
-	result := generateVirtualServerConfig(&virtualServerEx, tlsPemFileName, &baseCfgParams, isPlus, isResolverConfigured)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
 	}
 }
 
@@ -798,9 +813,14 @@ func TestGenerateUpstream(t *testing.T) {
 		UpstreamZoneSize: "256k",
 	}
 
-	result := generateUpstream(name, upstream, false, endpoints, &cfgParams, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, false, false)
+	result := vsc.generateUpstream(&conf_v1alpha1.VirtualServer{}, name, upstream, false, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
+	}
+
+	if len(vsc.warnings) != 0 {
+		t.Errorf("generateUpstream returned warnings for %v", upstream)
 	}
 }
 
@@ -862,9 +882,14 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateUpstream(name, test.upstream, false, endpoints, test.cfgParams, false)
+		vsc := newVirtualServerConfigurator(test.cfgParams, false, false)
+		result := vsc.generateUpstream(&conf_v1alpha1.VirtualServer{}, name, test.upstream, false, endpoints)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
+		}
+
+		if len(vsc.warnings) != 0 {
+			t.Errorf("generateUpstream() returned warnings for %v", test.upstream)
 		}
 	}
 }
@@ -885,11 +910,15 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 		Resolve: true,
 	}
 
-	result := generateUpstream(name, upstream, true, endpoints, &cfgParams, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, true, true)
+	result := vsc.generateUpstream(&conf_v1alpha1.VirtualServer{}, name, upstream, true, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
 
+	if len(vsc.warnings) != 0 {
+		t.Errorf("generateUpstream() returned warnings for %v", upstream)
+	}
 }
 
 func TestGenerateProxyPassProtocol(t *testing.T) {
@@ -1899,6 +1928,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 		isPlus               bool
 		isResolverConfigured bool
 		expected             []string
+		warningsExpected     bool
 		msg                  string
 	}{
 		{
@@ -1946,6 +1976,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 			},
 			isPlus:               true,
 			isResolverConfigured: false,
+			warningsExpected:     true,
 			expected:             []string{},
 			msg:                  "ExternalName service without resolver configured",
 		},
@@ -2011,10 +2042,21 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateEndpointsForUpstream(namespace, test.upstream, test.vsEx, test.isResolverConfigured, test.isPlus)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, test.isResolverConfigured)
+		result := vsc.generateEndpointsForUpstream(test.vsEx.VirtualServer, namespace, test.upstream, test.vsEx)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateEndpointsForUpstream(isPlus=%v, isResolverConfigured=%v) returned %v, but expected %v for case: %v",
 				test.isPlus, test.isResolverConfigured, result, test.expected, test.msg)
+		}
+
+		if len(vsc.warnings) == 0 && test.warningsExpected {
+			t.Errorf("generateEndpointsForUpstream(isPlus=%v, isResolverConfigured=%v) didn't return any warnings for %v but warnings expected",
+				test.isPlus, test.isResolverConfigured, test.upstream)
+		}
+
+		if len(vsc.warnings) != 0 && !test.warningsExpected {
+			t.Errorf("generateEndpointsForUpstream(isPlus=%v, isResolverConfigured=%v) returned warnings for %v",
+				test.isPlus, test.isResolverConfigured, test.upstream)
 		}
 	}
 }
@@ -2035,10 +2077,15 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	}
 
 	for _, lbMethod := range tests {
-		result := generateSlowStartForPlus(upstream, lbMethod)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false)
+		result := vsc.generateSlowStartForPlus(&conf_v1alpha1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v for lbMethod %v", result, expected, lbMethod)
+		}
+
+		if len(vsc.warnings) == 0 {
+			t.Errorf("generateSlowStartForPlus returned no warnings for %v but warnings expected", upstream)
 		}
 	}
 
@@ -2065,9 +2112,14 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateSlowStartForPlus(test.upstream, test.lbMethod)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false)
+		result := vsc.generateSlowStartForPlus(&conf_v1alpha1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
+		}
+
+		if len(vsc.warnings) != 0 {
+			t.Errorf("generateSlowStartForPlus returned warnings for %v", test.upstream)
 		}
 	}
 }
@@ -2146,7 +2198,8 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateUpstream(test.name, test.upstream, false, []string{}, &ConfigParams{}, test.isPlus)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false)
+		result := vsc.generateUpstream(&conf_v1alpha1.VirtualServer{}, test.name, test.upstream, false, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}

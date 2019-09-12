@@ -402,7 +402,7 @@ func (lbc *LoadBalancerController) syncEndpoint(task task) {
 
 			if len(virtualServersExes) > 0 {
 				glog.V(3).Infof("Updating endpoints for %v", virtualServersExes)
-				err = lbc.configurator.UpdateEndpointsForVirtualServers(virtualServersExes)
+				err := lbc.configurator.UpdateEndpointsForVirtualServers(virtualServersExes)
 				if err != nil {
 					glog.Errorf("Error updating endpoints for %v: %v", virtualServersExes, err)
 				}
@@ -445,7 +445,7 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		virtualServerExes = lbc.virtualServersToVirtualServerExes(virtualServers)
 	}
 
-	updateErr := lbc.configurator.UpdateConfig(cfgParams, ingExes, mergeableIngresses, virtualServerExes)
+	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, ingExes, mergeableIngresses, virtualServerExes)
 
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal
@@ -456,9 +456,15 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		eventType = api_v1.EventTypeWarning
 		eventWarningMessage = fmt.Sprintf("but was not applied: %v", updateErr)
 	}
+	cmWarningMessage := eventWarningMessage
+
+	if len(warnings) > 0 && updateErr == nil {
+		cmWarningMessage = "with warnings. Please check the logs"
+	}
+
 	if configExists {
 		cfgm := obj.(*api_v1.ConfigMap)
-		lbc.recorder.Eventf(cfgm, eventType, eventTitle, "Configuration from %v was updated %s", key, eventWarningMessage)
+		lbc.recorder.Eventf(cfgm, eventType, eventTitle, "Configuration from %v was updated %s", key, cmWarningMessage)
 	}
 	for _, ingEx := range ingExes {
 		lbc.recorder.Eventf(ingEx.Ingress, eventType, eventTitle, "Configuration for %v/%v was updated %s",
@@ -473,11 +479,30 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		}
 	}
 	for _, vsEx := range virtualServerExes {
-		lbc.recorder.Eventf(vsEx.VirtualServer, eventType, eventTitle, "Configuration for %v/%v was updated %s",
-			vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, eventWarningMessage)
+		vsEventType := eventType
+		vsEventTitle := eventTitle
+		vsEventWarningMessage := eventWarningMessage
+
+		if messages, ok := warnings[vsEx.VirtualServer]; ok && updateErr == nil {
+			vsEventType = api_v1.EventTypeWarning
+			vsEventTitle = "UpdatedWithWarning"
+			vsEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+		}
+
+		lbc.recorder.Eventf(vsEx.VirtualServer, vsEventType, vsEventTitle, "Configuration for %v/%v was updated %s",
+			vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, vsEventWarningMessage)
+
 		for _, vsr := range vsEx.VirtualServerRoutes {
-			lbc.recorder.Eventf(vsr, eventType, eventTitle, "Configuration for %v/%v was updated %s",
-				vsr.Namespace, vsr.Name, eventWarningMessage)
+			vsrEventType := eventType
+			vsrEventTitle := eventTitle
+			vsrEventWarningMessage := eventWarningMessage
+			if messages, ok := warnings[vsr]; ok && updateErr == nil {
+				vsrEventType = api_v1.EventTypeWarning
+				vsrEventTitle = "UpdatedWithWarning"
+				vsrEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+			}
+			lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, "Configuration for %v/%v was updated %s",
+				vsr.Namespace, vsr.Name, vsrEventWarningMessage)
 		}
 	}
 }
@@ -610,7 +635,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		}
 	}
 
-	addErr := lbc.configurator.AddOrUpdateVirtualServer(vsEx)
+	warnings, addErr := lbc.configurator.AddOrUpdateVirtualServer(vsEx)
 
 	eventTitle := "AddedOrUpdated"
 	eventType := api_v1.EventTypeNormal
@@ -622,10 +647,31 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		eventWarningMessage = fmt.Sprintf("but was not applied: %v", addErr)
 	}
 
-	lbc.recorder.Eventf(vs, eventType, eventTitle, "Configuration for %v was added or updated %s", key, eventWarningMessage)
-	for _, vsr := range vsEx.VirtualServerRoutes {
-		lbc.recorder.Eventf(vsr, eventType, eventTitle, "Configuration for %v/%v was added or updated %s", vsr.Namespace, vsr.Name, eventWarningMessage)
+	vsEventType := eventType
+	vsEventTitle := eventTitle
+	vsEventWarningMessage := eventWarningMessage
+
+	if messages, ok := warnings[vsEx.VirtualServer]; ok && addErr == nil {
+		vsEventType = api_v1.EventTypeWarning
+		vsEventTitle = "AddedOrUpdatedWithWarning"
+		vsEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
 	}
+
+	lbc.recorder.Eventf(vs, vsEventType, vsEventTitle, "Configuration for %v was added or updated %s", key, vsEventWarningMessage)
+
+	for _, vsr := range vsEx.VirtualServerRoutes {
+		vsrEventType := eventType
+		vsrEventTitle := eventTitle
+		vsrEventWarningMessage := eventWarningMessage
+
+		if messages, ok := warnings[vsr]; ok && addErr == nil {
+			vsrEventType = api_v1.EventTypeWarning
+			vsrEventTitle = "AddedOrUpdatedWithWarning"
+			vsrEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+		}
+		lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, "Configuration for %v/%v was added or updated %s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
+	}
+
 }
 
 func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
@@ -941,7 +987,8 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 
 		virtualServerExes := lbc.virtualServersToVirtualServerExes(virtualServers)
 
-		if err := lbc.configurator.AddOrUpdateTLSSecret(secret, regular, mergeable, virtualServerExes); err != nil {
+		err := lbc.configurator.AddOrUpdateTLSSecret(secret, regular, mergeable, virtualServerExes)
+		if err != nil {
 			glog.Errorf("Error when updating Secret %v: %v", secretNsName, err)
 			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, err)
 
@@ -1948,4 +1995,8 @@ func (lbc *LoadBalancerController) createMergableIngresses(master *extensions.In
 	mergeableIngresses.Minions = minions
 
 	return &mergeableIngresses, nil
+}
+
+func formatWarningMessages(w []string) string {
+	return strings.Join(w, "; ")
 }

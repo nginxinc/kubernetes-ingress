@@ -7,6 +7,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	api_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
@@ -109,6 +110,246 @@ func newHealthCheckWithDefaults(upstream conf_v1alpha1.Upstream, upstreamName st
 	}
 }
 
+// VirtualServerConfigurator generates a VirtualServer configuration
+type virtualServerConfigurator struct {
+	cfgParams            *ConfigParams
+	isPlus               bool
+	isResolverConfigured bool
+	warnings             Warnings
+}
+
+func (vsc *virtualServerConfigurator) addWarningf(obj runtime.Object, msgFmt string, args ...interface{}) {
+	vsc.warnings[obj] = append(vsc.warnings[obj], fmt.Sprintf(msgFmt, args...))
+}
+
+func (vsc *virtualServerConfigurator) clearWarnings() {
+	vsc.warnings = make(map[runtime.Object][]string)
+}
+
+// newVirtualServerConfigurator creates a new VirtualServerConfigurator
+func newVirtualServerConfigurator(cfgParams *ConfigParams, isPlus bool, isResolverConfigured bool) *virtualServerConfigurator {
+	return &virtualServerConfigurator{
+		cfgParams:            cfgParams,
+		isPlus:               isPlus,
+		isResolverConfigured: isResolverConfigured,
+		warnings:             make(map[runtime.Object][]string),
+	}
+}
+
+func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(owner runtime.Object, namespace string, upstream conf_v1alpha1.Upstream, virtualServerEx *VirtualServerEx) []string {
+	endpointsKey := GenerateEndpointsKey(namespace, upstream.Service, upstream.Port)
+	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, upstream.Service)
+	endpoints := virtualServerEx.Endpoints[endpointsKey]
+	if !vsc.isPlus && len(endpoints) == 0 {
+		return []string{nginx502Server}
+	}
+
+	_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[externalNameSvcKey]
+	if isExternalNameSvc && !vsc.isResolverConfigured {
+		msgFmt := "Type ExternalName service %v in upstream %v will be ignored. To use ExternaName services, a resolver must be configured in the ConfigMap"
+		vsc.addWarningf(owner, msgFmt, upstream.Service, upstream.Name)
+		endpoints = []string{}
+	}
+
+	return endpoints
+}
+
+// GenerateVirtualServerConfig generates a full configuration for a VirtualServer
+func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileName string) (version2.VirtualServerConfig, Warnings) {
+	vsc.clearWarnings()
+	ssl := generateSSLConfig(virtualServerEx.VirtualServer.Spec.TLS, tlsPemFileName, vsc.cfgParams)
+
+	// crUpstreams maps an UpstreamName to its conf_v1alpha1.Upstream as they are generated
+	// necessary for generateLocation to know what Upstream each Location references
+	crUpstreams := make(map[string]conf_v1alpha1.Upstream)
+
+	virtualServerUpstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
+
+	var upstreams []version2.Upstream
+	var statusMatches []version2.StatusMatch
+	var healthChecks []version2.HealthCheck
+
+	// generate upstreams for VirtualServer
+	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
+		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
+		upstreamNamespace := virtualServerEx.VirtualServer.Namespace
+		endpoints := vsc.generateEndpointsForUpstream(virtualServerEx.VirtualServer, upstreamNamespace, u, virtualServerEx)
+
+		// isExternalNameSvc is always false for OSS
+		_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
+		ups := vsc.generateUpstream(virtualServerEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
+		upstreams = append(upstreams, ups)
+		crUpstreams[upstreamName] = u
+
+		if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
+			healthChecks = append(healthChecks, *hc)
+			if u.HealthCheck.StatusMatch != "" {
+				statusMatches = append(statusMatches, generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch))
+			}
+		}
+	}
+	// generate upstreams for each VirtualServerRoute
+	for _, vsr := range virtualServerEx.VirtualServerRoutes {
+		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
+		for _, u := range vsr.Spec.Upstreams {
+			upstreamName := upstreamNamer.GetNameForUpstream(u.Name)
+			upstreamNamespace := vsr.Namespace
+			endpoints := vsc.generateEndpointsForUpstream(vsr, upstreamNamespace, u, virtualServerEx)
+
+			// isExternalNameSvc is always false for OSS
+			_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
+			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
+			upstreams = append(upstreams, ups)
+			crUpstreams[upstreamName] = u
+
+			if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
+				healthChecks = append(healthChecks, *hc)
+				if u.HealthCheck.StatusMatch != "" {
+					statusMatches = append(statusMatches, generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch))
+				}
+			}
+		}
+	}
+
+	var locations []version2.Location
+	var internalRedirectLocations []version2.InternalRedirectLocation
+	var splitClients []version2.SplitClient
+	var maps []version2.Map
+
+	rulesRoutes := 0
+
+	variableNamer := newVariableNamer(virtualServerEx.VirtualServer)
+
+	// generates config for VirtualServer routes
+	for _, r := range virtualServerEx.VirtualServer.Spec.Routes {
+		// ignore routes that reference VirtualServerRoute
+		if r.Route != "" {
+			continue
+		}
+
+		if len(r.Splits) > 0 {
+			splitCfg := generateSplitRouteConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams)
+
+			splitClients = append(splitClients, splitCfg.SplitClient)
+			locations = append(locations, splitCfg.Locations...)
+			internalRedirectLocations = append(internalRedirectLocations, splitCfg.InternalRedirectLocation)
+		} else if r.Rules != nil {
+			rulesRouteCfg := generateRulesRouteConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, rulesRoutes, vsc.cfgParams)
+
+			maps = append(maps, rulesRouteCfg.Maps...)
+			locations = append(locations, rulesRouteCfg.Locations...)
+			internalRedirectLocations = append(internalRedirectLocations, rulesRouteCfg.InternalRedirectLocation)
+
+			rulesRoutes++
+		} else {
+			upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(r.Upstream)
+			upstream := crUpstreams[upstreamName]
+			loc := generateLocation(r.Path, upstreamName, upstream, vsc.cfgParams)
+			locations = append(locations, loc)
+		}
+
+	}
+
+	// generate config for subroutes of each VirtualServerRoute
+	for _, vsr := range virtualServerEx.VirtualServerRoutes {
+		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
+		for _, r := range vsr.Spec.Subroutes {
+			if len(r.Splits) > 0 {
+				splitCfg := generateSplitRouteConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams)
+
+				splitClients = append(splitClients, splitCfg.SplitClient)
+				locations = append(locations, splitCfg.Locations...)
+				internalRedirectLocations = append(internalRedirectLocations, splitCfg.InternalRedirectLocation)
+			} else if r.Rules != nil {
+				rulesRouteCfg := generateRulesRouteConfig(r, upstreamNamer, crUpstreams, variableNamer, rulesRoutes, vsc.cfgParams)
+
+				maps = append(maps, rulesRouteCfg.Maps...)
+				locations = append(locations, rulesRouteCfg.Locations...)
+				internalRedirectLocations = append(internalRedirectLocations, rulesRouteCfg.InternalRedirectLocation)
+
+				rulesRoutes++
+			} else {
+				upstreamName := upstreamNamer.GetNameForUpstream(r.Upstream)
+				upstream := crUpstreams[upstreamName]
+				loc := generateLocation(r.Path, upstreamName, upstream, vsc.cfgParams)
+				locations = append(locations, loc)
+			}
+		}
+	}
+
+	vscfg := version2.VirtualServerConfig{
+		Upstreams:     upstreams,
+		SplitClients:  splitClients,
+		Maps:          maps,
+		StatusMatches: statusMatches,
+		Server: version2.Server{
+			ServerName:                            virtualServerEx.VirtualServer.Spec.Host,
+			StatusZone:                            virtualServerEx.VirtualServer.Spec.Host,
+			ProxyProtocol:                         vsc.cfgParams.ProxyProtocol,
+			SSL:                                   ssl,
+			RedirectToHTTPSBasedOnXForwarderProto: vsc.cfgParams.RedirectToHTTPS,
+			ServerTokens:                          vsc.cfgParams.ServerTokens,
+			SetRealIPFrom:                         vsc.cfgParams.SetRealIPFrom,
+			RealIPHeader:                          vsc.cfgParams.RealIPHeader,
+			RealIPRecursive:                       vsc.cfgParams.RealIPRecursive,
+			Snippets:                              vsc.cfgParams.ServerSnippets,
+			InternalRedirectLocations:             internalRedirectLocations,
+			Locations:                             locations,
+			HealthChecks:                          healthChecks,
+		},
+	}
+
+	return vscfg, vsc.warnings
+}
+
+func (vsc *virtualServerConfigurator) generateUpstream(owner runtime.Object, upstreamName string, upstream conf_v1alpha1.Upstream, isExternalNameSvc bool, endpoints []string) version2.Upstream {
+	var upsServers []version2.UpstreamServer
+	for _, e := range endpoints {
+		s := version2.UpstreamServer{
+			Address: e,
+		}
+
+		upsServers = append(upsServers, s)
+	}
+
+	lbMethod := generateLBMethod(upstream.LBMethod, vsc.cfgParams.LBMethod)
+
+	ups := version2.Upstream{
+		Name:             upstreamName,
+		Servers:          upsServers,
+		Resolve:          isExternalNameSvc,
+		LBMethod:         lbMethod,
+		Keepalive:        generateIntFromPointer(upstream.Keepalive, vsc.cfgParams.Keepalive),
+		MaxFails:         generateIntFromPointer(upstream.MaxFails, vsc.cfgParams.MaxFails),
+		FailTimeout:      generateString(upstream.FailTimeout, vsc.cfgParams.FailTimeout),
+		MaxConns:         generateIntFromPointer(upstream.MaxConns, vsc.cfgParams.MaxConns),
+		UpstreamZoneSize: vsc.cfgParams.UpstreamZoneSize,
+	}
+
+	if vsc.isPlus {
+		ups.SlowStart = vsc.generateSlowStartForPlus(owner, upstream, lbMethod)
+		ups.Queue = generateQueueForPlus(upstream.Queue, "60s")
+	}
+
+	return ups
+}
+
+func (vsc *virtualServerConfigurator) generateSlowStartForPlus(owner runtime.Object, upstream conf_v1alpha1.Upstream, lbMethod string) string {
+	if upstream.SlowStart == "" {
+		return ""
+	}
+
+	_, isIncompatible := incompatibleLBMethodsForSlowStart[lbMethod]
+	isHash := strings.HasPrefix(lbMethod, "hash")
+	if isIncompatible || isHash {
+		msgFmt := "Slow start will be disabled for upstream %v because lb method '%v' is incompatible with slow start"
+		vsc.addWarningf(owner, msgFmt, upstream.Name, lbMethod)
+		return ""
+	}
+
+	return upstream.SlowStart
+}
+
 func generateHealthCheck(upstream conf_v1alpha1.Upstream, upstreamName string, cfgParams *ConfigParams) *version2.HealthCheck {
 	if upstream.HealthCheck == nil || !upstream.HealthCheck.Enable {
 		return nil
@@ -181,216 +422,6 @@ func generateUpstreamStatusMatch(upstreamName string, status string) version2.St
 // GenerateExternalNameSvcKey returns the key to identify an ExternalName service.
 func GenerateExternalNameSvcKey(namespace string, service string) string {
 	return fmt.Sprintf("%v/%v", namespace, service)
-}
-
-func generateEndpointsForUpstream(namespace string, upstream conf_v1alpha1.Upstream, virtualServerEx *VirtualServerEx, isResolverConfigured bool, isPlus bool) []string {
-	endpointsKey := GenerateEndpointsKey(namespace, upstream.Service, upstream.Port)
-	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, upstream.Service)
-	endpoints := virtualServerEx.Endpoints[endpointsKey]
-	if !isPlus && len(endpoints) == 0 {
-		return []string{nginx502Server}
-	}
-
-	_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[externalNameSvcKey]
-	if isExternalNameSvc && !isResolverConfigured {
-		glog.Warningf("A resolver must be configured for Type ExternalName service %s, no upstream servers will be created", upstream.Service)
-		endpoints = []string{}
-	}
-
-	return endpoints
-}
-
-func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileName string, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool) version2.VirtualServerConfig {
-	ssl := generateSSLConfig(virtualServerEx.VirtualServer.Spec.TLS, tlsPemFileName, baseCfgParams)
-
-	// crUpstreams maps an UpstreamName to its conf_v1alpha1.Upstream as they are generated
-	// necessary for generateLocation to know what Upstream each Location references
-	crUpstreams := make(map[string]conf_v1alpha1.Upstream)
-
-	virtualServerUpstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
-
-	var upstreams []version2.Upstream
-	var statusMatches []version2.StatusMatch
-	var healthChecks []version2.HealthCheck
-
-	// generate upstreams for VirtualServer
-	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
-		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
-		upstreamNamespace := virtualServerEx.VirtualServer.Namespace
-		endpoints := generateEndpointsForUpstream(upstreamNamespace, u, virtualServerEx, isResolverConfigured, isPlus)
-		// isExternalNameSvc is always false for OSS
-		_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
-		ups := generateUpstream(upstreamName, u, isExternalNameSvc, endpoints, baseCfgParams, isPlus)
-		upstreams = append(upstreams, ups)
-		crUpstreams[upstreamName] = u
-
-		if hc := generateHealthCheck(u, upstreamName, baseCfgParams); hc != nil {
-			healthChecks = append(healthChecks, *hc)
-			if u.HealthCheck.StatusMatch != "" {
-				statusMatches = append(statusMatches, generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch))
-			}
-		}
-	}
-	// generate upstreams for each VirtualServerRoute
-	for _, vsr := range virtualServerEx.VirtualServerRoutes {
-		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
-		for _, u := range vsr.Spec.Upstreams {
-			upstreamName := upstreamNamer.GetNameForUpstream(u.Name)
-			upstreamNamespace := vsr.Namespace
-			endpoints := generateEndpointsForUpstream(upstreamNamespace, u, virtualServerEx, isResolverConfigured, isPlus)
-			// isExternalNameSvc is always false for OSS
-			_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
-			ups := generateUpstream(upstreamName, u, isExternalNameSvc, endpoints, baseCfgParams, isPlus)
-			upstreams = append(upstreams, ups)
-			crUpstreams[upstreamName] = u
-
-			if hc := generateHealthCheck(u, upstreamName, baseCfgParams); hc != nil {
-				healthChecks = append(healthChecks, *hc)
-				if u.HealthCheck.StatusMatch != "" {
-					statusMatches = append(statusMatches, generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch))
-				}
-			}
-		}
-	}
-
-	var locations []version2.Location
-	var internalRedirectLocations []version2.InternalRedirectLocation
-	var splitClients []version2.SplitClient
-	var maps []version2.Map
-
-	rulesRoutes := 0
-
-	variableNamer := newVariableNamer(virtualServerEx.VirtualServer)
-
-	// generates config for VirtualServer routes
-	for _, r := range virtualServerEx.VirtualServer.Spec.Routes {
-		// ignore routes that reference VirtualServerRoute
-		if r.Route != "" {
-			continue
-		}
-
-		if len(r.Splits) > 0 {
-			splitCfg := generateSplitRouteConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients), baseCfgParams)
-
-			splitClients = append(splitClients, splitCfg.SplitClient)
-			locations = append(locations, splitCfg.Locations...)
-			internalRedirectLocations = append(internalRedirectLocations, splitCfg.InternalRedirectLocation)
-		} else if r.Rules != nil {
-			rulesRouteCfg := generateRulesRouteConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, rulesRoutes, baseCfgParams)
-
-			maps = append(maps, rulesRouteCfg.Maps...)
-			locations = append(locations, rulesRouteCfg.Locations...)
-			internalRedirectLocations = append(internalRedirectLocations, rulesRouteCfg.InternalRedirectLocation)
-
-			rulesRoutes++
-		} else {
-			upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(r.Upstream)
-			upstream := crUpstreams[upstreamName]
-			loc := generateLocation(r.Path, upstreamName, upstream, baseCfgParams)
-			locations = append(locations, loc)
-		}
-
-	}
-
-	// generate config for subroutes of each VirtualServerRoute
-	for _, vsr := range virtualServerEx.VirtualServerRoutes {
-		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
-		for _, r := range vsr.Spec.Subroutes {
-			if len(r.Splits) > 0 {
-				splitCfg := generateSplitRouteConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), baseCfgParams)
-
-				splitClients = append(splitClients, splitCfg.SplitClient)
-				locations = append(locations, splitCfg.Locations...)
-				internalRedirectLocations = append(internalRedirectLocations, splitCfg.InternalRedirectLocation)
-			} else if r.Rules != nil {
-				rulesRouteCfg := generateRulesRouteConfig(r, upstreamNamer, crUpstreams, variableNamer, rulesRoutes, baseCfgParams)
-
-				maps = append(maps, rulesRouteCfg.Maps...)
-				locations = append(locations, rulesRouteCfg.Locations...)
-				internalRedirectLocations = append(internalRedirectLocations, rulesRouteCfg.InternalRedirectLocation)
-
-				rulesRoutes++
-			} else {
-				upstreamName := upstreamNamer.GetNameForUpstream(r.Upstream)
-				upstream := crUpstreams[upstreamName]
-				loc := generateLocation(r.Path, upstreamName, upstream, baseCfgParams)
-				locations = append(locations, loc)
-			}
-		}
-	}
-
-	return version2.VirtualServerConfig{
-		Upstreams:     upstreams,
-		SplitClients:  splitClients,
-		Maps:          maps,
-		StatusMatches: statusMatches,
-		Server: version2.Server{
-			ServerName:                            virtualServerEx.VirtualServer.Spec.Host,
-			StatusZone:                            virtualServerEx.VirtualServer.Spec.Host,
-			ProxyProtocol:                         baseCfgParams.ProxyProtocol,
-			SSL:                                   ssl,
-			RedirectToHTTPSBasedOnXForwarderProto: baseCfgParams.RedirectToHTTPS,
-			ServerTokens:                          baseCfgParams.ServerTokens,
-			SetRealIPFrom:                         baseCfgParams.SetRealIPFrom,
-			RealIPHeader:                          baseCfgParams.RealIPHeader,
-			RealIPRecursive:                       baseCfgParams.RealIPRecursive,
-			Snippets:                              baseCfgParams.ServerSnippets,
-			InternalRedirectLocations:             internalRedirectLocations,
-			Locations:                             locations,
-			HealthChecks:                          healthChecks,
-		},
-	}
-}
-
-func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, isExternalNameSvc bool, endpoints []string, cfgParams *ConfigParams, isPlus bool) version2.Upstream {
-	var upsServers []version2.UpstreamServer
-
-	for _, e := range endpoints {
-		s := version2.UpstreamServer{
-			Address: e,
-		}
-
-		upsServers = append(upsServers, s)
-	}
-
-	lbMethod := generateLBMethod(upstream.LBMethod, cfgParams.LBMethod)
-
-	ups := version2.Upstream{
-		Name:             upstreamName,
-		Servers:          upsServers,
-		Resolve:          isExternalNameSvc,
-		LBMethod:         lbMethod,
-		Keepalive:        generateIntFromPointer(upstream.Keepalive, cfgParams.Keepalive),
-		MaxFails:         generateIntFromPointer(upstream.MaxFails, cfgParams.MaxFails),
-		FailTimeout:      generateString(upstream.FailTimeout, cfgParams.FailTimeout),
-		MaxConns:         generateIntFromPointer(upstream.MaxConns, cfgParams.MaxConns),
-		UpstreamZoneSize: cfgParams.UpstreamZoneSize,
-	}
-
-	if isPlus {
-		ups.SlowStart = generateSlowStartForPlus(upstream, lbMethod)
-		ups.Queue = generateQueueForPlus(upstream.Queue, "60s")
-	}
-
-	return ups
-}
-
-func generateSlowStartForPlus(upstream conf_v1alpha1.Upstream, lbMethod string) string {
-	if upstream.SlowStart == "" {
-		return ""
-	}
-
-	if strings.HasPrefix(lbMethod, "hash") {
-		glog.Warningf("slow-start will be disabled for the Upstream %v", upstream.Name)
-		return ""
-	}
-
-	if _, exists := incompatibleLBMethodsForSlowStart[lbMethod]; exists {
-		glog.Warningf("slow-start will be disabled for the Upstream %v", upstream.Name)
-		return ""
-	}
-
-	return upstream.SlowStart
 }
 
 func generateLBMethod(method string, defaultMethod string) string {
@@ -710,8 +741,10 @@ func createEndpointsFromUpstream(upstream version2.Upstream) []string {
 
 func createUpstreamsForPlus(virtualServerEx *VirtualServerEx, baseCfgParams *ConfigParams) []version2.Upstream {
 	var upstreams []version2.Upstream
+
 	isPlus := true
 	upstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
+	vsc := newVirtualServerConfigurator(baseCfgParams, isPlus, false)
 
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
 		isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(virtualServerEx.VirtualServer.Namespace, u.Service)]
@@ -726,7 +759,7 @@ func createUpstreamsForPlus(virtualServerEx *VirtualServerEx, baseCfgParams *Con
 		endpointsKey := GenerateEndpointsKey(upstreamNamespace, u.Service, u.Port)
 		endpoints := virtualServerEx.Endpoints[endpointsKey]
 
-		ups := generateUpstream(upstreamName, u, isExternalNameSvc, endpoints, baseCfgParams, isPlus)
+		ups := vsc.generateUpstream(virtualServerEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
 		upstreams = append(upstreams, ups)
 	}
 
@@ -745,7 +778,7 @@ func createUpstreamsForPlus(virtualServerEx *VirtualServerEx, baseCfgParams *Con
 			endpointsKey := GenerateEndpointsKey(upstreamNamespace, u.Service, u.Port)
 			endpoints := virtualServerEx.Endpoints[endpointsKey]
 
-			ups := generateUpstream(upstreamName, u, isExternalNameSvc, endpoints, baseCfgParams, isPlus)
+			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
 			upstreams = append(upstreams, ups)
 		}
 	}
