@@ -326,6 +326,7 @@ func generateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileNam
 		StatusMatches: statusMatches,
 		Server: version2.Server{
 			ServerName:                            virtualServerEx.VirtualServer.Spec.Host,
+			StatusZone:                            virtualServerEx.VirtualServer.Spec.Host,
 			ProxyProtocol:                         baseCfgParams.ProxyProtocol,
 			SSL:                                   ssl,
 			RedirectToHTTPSBasedOnXForwarderProto: baseCfgParams.RedirectToHTTPS,

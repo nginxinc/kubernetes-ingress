@@ -31,6 +31,7 @@ type UpstreamServer struct {
 // Server defines a server.
 type Server struct {
 	ServerName                            string
+	StatusZone                            string
 	ProxyProtocol                         bool
 	SSL                                   *SSL
 	RedirectToHTTPSBasedOnXForwarderProto bool

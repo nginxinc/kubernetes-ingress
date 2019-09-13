@@ -95,6 +95,7 @@ var virtualServerCfg = VirtualServerConfig{
 	},
 	Server: Server{
 		ServerName:    "example.com",
+		StatusZone:    "example.com",
 		ProxyProtocol: true,
 		SSL: &SSL{
 			HTTP2:           true,

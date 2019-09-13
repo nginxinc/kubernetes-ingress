@@ -255,6 +255,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		},
 		Server: version2.Server{
 			ServerName:                            "cafe.example.com",
+			StatusZone:                            "cafe.example.com",
 			ProxyProtocol:                         true,
 			RedirectToHTTPSBasedOnXForwarderProto: true,
 			ServerTokens:                          "off",
@@ -456,6 +457,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 		},
 		Server: version2.Server{
 			ServerName: "cafe.example.com",
+			StatusZone: "cafe.example.com",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/tea",
@@ -713,6 +715,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 		},
 		Server: version2.Server{
 			ServerName: "cafe.example.com",
+			StatusZone: "cafe.example.com",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/tea",
