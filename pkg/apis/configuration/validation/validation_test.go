@@ -1992,3 +1992,22 @@ func TestValidateIntFromStringFails(t *testing.T) {
 		t.Errorf("validateIntFromString() returned no errors for invalid input %v", input)
 	}
 }
+
+func TestRejectPlusResourcesInOSS(t *testing.T) {
+	upstream := v1alpha1.Upstream{
+		SlowStart:   "10s",
+		HealthCheck: &v1alpha1.HealthCheck{},
+	}
+
+	allErrsPlus := rejectPlusResourcesInOSS(upstream, field.NewPath("upstreams").Index(0), true)
+	allErrsOSS := rejectPlusResourcesInOSS(upstream, field.NewPath("upstreams").Index(0), false)
+
+	if len(allErrsPlus) != 0 {
+		t.Errorf("rejectPlusResourcesInOSS() returned errors %v for NGINX Plus for upstream %v", allErrsPlus, upstream)
+	}
+
+	if len(allErrsOSS) == 0 {
+		t.Errorf("rejectPlusResourcesInOSS() returned no errors for NGINX OSS for upstream %v", upstream)
+	}
+
+}

@@ -373,6 +373,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		allErrs = append(allErrs, validateTime(u.SlowStart, idxPath.Child("slow-start"))...)
 		allErrs = append(allErrs, validateBuffer(u.ProxyBuffers, idxPath.Child("buffers"))...)
 		allErrs = append(allErrs, validateSize(u.ProxyBufferSize, idxPath.Child("buffer-size"))...)
+		allErrs = append(allErrs, rejectPlusResourcesInOSS(u, idxPath, isPlus)...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))
@@ -792,6 +793,24 @@ func validateVirtualServerRouteSubroutes(routes []v1alpha1.Route, fieldPath *fie
 		} else {
 			allPaths.Insert(r.Path)
 		}
+	}
+
+	return allErrs
+}
+
+func rejectPlusResourcesInOSS(upstream v1alpha1.Upstream, idxPath *field.Path, isPlus bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if isPlus {
+		return allErrs
+	}
+
+	if upstream.HealthCheck != nil {
+		allErrs = append(allErrs, field.Forbidden(idxPath.Child("healthCheck"), "active health checks are only supported in NGINX Plus"))
+	}
+
+	if upstream.SlowStart != "" {
+		allErrs = append(allErrs, field.Forbidden(idxPath.Child("slow-start"), "slow start is only supported in NGINX Plus"))
 	}
 
 	return allErrs
