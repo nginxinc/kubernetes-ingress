@@ -5,18 +5,17 @@ import (
 	"text/template"
 )
 
-// SplitInput splits the input from "," and returns an array of strings
-func SplitInput(s string, delim string) []string {
+// splitinput splits the input from "," and returns an array of strings
+func splitinput(s string, delim string) []string {
 	return strings.Split(s, delim)
 }
 
-// TrimInput trims the leading and trailing spaces in the string
-func TrimInput(s string) string {
+// triminput trims the leading and trailing spaces in the string
+func triminput(s string) string {
 	return strings.TrimSpace(s)
 }
 
-// HelperFunctions to parse the annotations
 var helperFunctions = template.FuncMap{
-	"splitinput": SplitInput, //returns array of strings
-	"triminput":  TrimInput,  //returns string with trimmed leading and trailing spaces
+	"split": splitinput, //returns array of strings
+	"trim":  triminput,  //returns string with trimmed leading and trailing spaces
 }

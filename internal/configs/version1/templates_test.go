@@ -170,46 +170,50 @@ func TestMainForNGINX(t *testing.T) {
 	}
 }
 
-func TestSplitHelperFunctions(t *testing.T) {
-	const tpl = `{{range $n := splitinput (index .) ","}}{{$n}} {{end}}`
+func TestSplitHelperFunction(t *testing.T) {
+	const tpl = `{{range $n := split . ","}}{{$n}} {{end}}`
 
 	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(tpl)
 	if err != nil {
 		t.Fatalf("Failed to parse template: %v", err)
 	}
+
 	var buf bytes.Buffer
 
-	slice := "foo,bar"
+	input := "foo,bar"
 	expected := "foo bar "
-	err = tmpl.Execute(&buf, slice)
+
+	err = tmpl.Execute(&buf, input)
 	t.Log(buf.String())
 	if err != nil {
-		t.Fatalf("Failed to write template %v", err)
+		t.Fatalf("Failed to execute the template %v", err)
 	}
 
 	if buf.String() != expected {
-		t.Fatalf("Failed parsing the template, got %v but expected %v.", buf.String(), expected)
+		t.Fatalf("Template generated wrong config, got %v but expected %v.", buf.String(), expected)
 	}
 }
 
-func TestTrimHelperFunctions(t *testing.T) {
-	const tpl = `{{triminput (index .)}}`
+func TestTrimHelperFunction(t *testing.T) {
+	const tpl = `{{trim .}}`
 
 	tmpl, err := template.New("testTemplate").Funcs(helperFunctions).Parse(tpl)
 	if err != nil {
 		t.Fatalf("Failed to parse template: %v", err)
 	}
+
 	var buf bytes.Buffer
 
-	slice := "  foobar     "
+	input := "  foobar     "
 	expected := "foobar"
-	err = tmpl.Execute(&buf, slice)
+
+	err = tmpl.Execute(&buf, input)
 	t.Log(buf.String())
 	if err != nil {
-		t.Fatalf("Failed to write template %v", err)
+		t.Fatalf("Failed to execute the template %v", err)
 	}
 
 	if buf.String() != expected {
-		t.Fatalf("Failed parsing the template, got %v but expected %v.", buf.String(), expected)
+		t.Fatalf("Template generated wrong config, got %v but expected %v.", buf.String(), expected)
 	}
 }

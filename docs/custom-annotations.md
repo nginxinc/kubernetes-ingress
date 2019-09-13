@@ -88,29 +88,29 @@ If you'd like to use custom annotations with Mergeable Ingress resources, please
 
 ### Helper Functions
 
-Helper functions can be used in custom templates to transform the value of custom annotations.
+Helper functions can be used in the Ingress template to parse the values of custom annotations.
 
-| Function | Description |
-| -------- | ----------- |
-| `splitinput` | Splits the arguments at specified delimiter and returns an array of strings |
-| `triminput` | Trims the trailing and leading whitespaces from the arguments |
+| Function | Input Arguments| Return Arguments | Description |
+| -------- | -------------- | ---------------- | ----------- |
+| `split` | s, sep string | []string | Splits the string s into a slice of strings separated by the sep. |
+| `trim` | s string | string | Trims the trailing and leading whitespace from the string s. |
 
-For example, the following custom annotation custom.nginx.org/allowed-ips represents a comma separated list of IP addresses as a string.
+Consider the following custom annotation `custom.nginx.org/allowed-ips`, which expects a comma-separated list of IP addresses:
 ```
 annotations:
   custom.nginx.org/allowed-ips: "192.168.1.3, 10.0.0.13"
 ```
 
- It is possible to use helper functions such as splitinput and triminput to transform the annotation into something meaningful for NGINX. The example below shows how to use these functions in a custom template for the given annotation:
+ The helper functions can parse the value of the `custom.nginx.org/allowed-ips` annotation, so that in the template you can use each IP address separately. Consider the following template excerpt:
 
 ```
-{{range $ip := splitinput (index $.Ingress.Annotations "custom.nginx.org/allowed-ips") ","}}
-    allow {{triminput $ip}};
+{{range $ip := split (index $.Ingress.Annotations "custom.nginx.org/allowed-ips") ","}}
+    allow {{trim $ip}};
 {{end}}
 deny all;
 ```
 
-The template will generate the following configuration:
+The template excerpt will generate the following configuration:
 ```
 allow 192.168.1.3;
 allow 10.0.0.13;
