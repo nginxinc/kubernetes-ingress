@@ -452,7 +452,6 @@ func getSocketClient(sockPath string) *http.Client {
 }
 
 // validateResourceName validates the name of a resource
-// It returns an error if the resource name is invalid
 func validateResourceName(lock string) error {
 	allErrs := validation.IsDNS1123Subdomain(lock)
 	if len(allErrs) > 0 {
