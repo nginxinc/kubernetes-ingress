@@ -92,8 +92,8 @@ Helper functions can be used in the Ingress template to parse the values of cust
 
 | Function | Input Arguments| Return Arguments | Description |
 | -------- | -------------- | ---------------- | ----------- |
-| `split` | s, sep string | []string | Splits the string s into a slice of strings separated by the sep. |
-| `trim` | s string | string | Trims the trailing and leading whitespace from the string s. |
+| `split` | `s, sep string` | `[]string` | Splits the string `s` into a slice of strings separated by the `sep`. |
+| `trim` | `s string` | `string` | Trims the trailing and leading whitespace from the string `s`. |
 
 Consider the following custom annotation `custom.nginx.org/allowed-ips`, which expects a comma-separated list of IP addresses:
 ```

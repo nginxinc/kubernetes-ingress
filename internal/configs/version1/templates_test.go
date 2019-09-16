@@ -184,7 +184,6 @@ func TestSplitHelperFunction(t *testing.T) {
 	expected := "foo bar "
 
 	err = tmpl.Execute(&buf, input)
-	t.Log(buf.String())
 	if err != nil {
 		t.Fatalf("Failed to execute the template %v", err)
 	}
@@ -208,7 +207,6 @@ func TestTrimHelperFunction(t *testing.T) {
 	expected := "foobar"
 
 	err = tmpl.Execute(&buf, input)
-	t.Log(buf.String())
 	if err != nil {
 		t.Fatalf("Failed to execute the template %v", err)
 	}
