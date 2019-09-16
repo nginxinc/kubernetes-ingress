@@ -432,7 +432,7 @@ func TestValidateNextUpstreamFails(t *testing.T) {
 	}
 	for _, test := range tests {
 		allErrs := validateNextUpstream(test.inputS, field.NewPath("next-upstreams"))
-		if len(allErrs) < 0 {
+		if len(allErrs) == 0 {
 			t.Errorf("validateNextUpstream(%q) didn't return errors %v for invalid input.", test.inputS, allErrs)
 		}
 	}
