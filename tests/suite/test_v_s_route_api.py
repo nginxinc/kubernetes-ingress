@@ -14,12 +14,10 @@ from suite.resources_utils import scale_deployment
                                                                "-nginx-status-allow-cidrs=0.0.0.0/0"]},
                            {"example": "virtual-server-route-dynamic-configuration"})],
                          indirect=True)
-class TestVSRDynamicConfiguration:
-    def test_nginx_plus_api_response(self, kube_apis,
-                                     ingress_controller_endpoint,
-                                     crd_ingress_controller,
-                                     v_s_route_setup,
-                                     v_s_route_app_setup):
+class TestVSRNginxPlusApi:
+    def test_dynamic_configuration(self, kube_apis,
+                                   ingress_controller_endpoint, crd_ingress_controller,
+                                   v_s_route_setup, v_s_route_app_setup):
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.api_port}"
         vsr_s_upstream = f"vs_{v_s_route_setup.namespace}_{v_s_route_setup.vs_name}_" \
             f"vsr_{v_s_route_setup.route_s.namespace}_{v_s_route_setup.route_s.name}_backend2"
@@ -48,3 +46,11 @@ class TestVSRDynamicConfiguration:
             assert resp[0]['max_fails'] is 25
             assert resp[0]['fail_timeout'] == '15s'
             assert resp[0]['slow_start'] == '10s'
+
+    def test_status_zone_support(self, kube_apis,
+                                 ingress_controller_endpoint, crd_ingress_controller,
+                                 v_s_route_setup, v_s_route_app_setup):
+        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.api_port}"
+        status_zone_url = f"{req_url}/api/{NGINX_API_VERSION}/http/server_zones"
+        resp = json.loads(requests.get(status_zone_url).text)
+        assert resp[f"{v_s_route_setup.vs_host}"]
