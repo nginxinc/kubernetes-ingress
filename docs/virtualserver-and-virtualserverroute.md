@@ -24,8 +24,8 @@ This document is the reference documentation for the resources. To see additiona
     - [Upstream.Healthcheck](#upstreamhealthcheck)
     - [Upstream.SessionCookie](#upstreamsessioncookie)
     - [Header](#header)
+    - [Action](#action)
     - [Split](#split)
-    - [Rules](#rules)
     - [Condition](#condition)
     - [Match](#match)
   - [Using VirtualServer and VirtualServerRoute](#using-virtualserver-and-virtualserverroute)
@@ -57,9 +57,11 @@ spec:
     port: 80
   routes:
   - path: /tea
-    upstream: tea
+    action:
+      pass: tea
   - path: /coffee
-    upstream: coffee
+    action:
+      pass: coffee
 ```
 
 | Field | Description | Type | Required |
@@ -83,21 +85,22 @@ secret: cafe-secret
 
 ### VirtualServer.Route
 
-The route defines rules for routing requests to one or multiple upstreams. For example:
+The route defines rules for matching client requests to actions like passing a request to an upstream. For example:
 ```yaml
-path: /tea
-upstream: tea
+  path: /tea
+  action:
+    pass: tea
 ```
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
 | `path` | The path of the route. NGINX will match it against the URI of a request. The path must start with `/` and must not include any whitespace characters, `{`, `}` or `;`. For example, `/`, `/path` are valid. The path must be unique among the paths of all routes of the VirtualServer. | `string` | Yes |
-| `upstream` | The name of an upstream. The upstream with that name must be defined in the VirtualServer. | `string` | No* |
-| `splits` | The splits configuration for traffic splitting. Must include at least 2 splits. | [`[]split`](#Split) | No* |
-| `rules` | The rules configuration for advanced content-based routing. |[`rules`](#Rules) | No* |
+| `action` | The default action to perform for a request. | [`action`](#Action) | No* |
+| `splits` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [`[]split`](#Split) | No* |
+| `matches` | The matching rules for advanced content-based routing. Requires the default `action` or `splits`.  Unmatched requests will be handled by the default `action` or `splits`. |[`matches`](#Match) | No |
 | `route` | The name of a VirtualServerRoute resource that defines this route. If the VirtualServerRoute belongs to a different namespace than the VirtualServer, you need to include the namespace. For example, `tea-namespace/tea`. | `string` | No* |
 
-\* -- a route must include exactly one of the following: `upstream`, `splits`, `rules` or `route`.
+\* -- a route must include exactly one of the following: `action`, `splits`, or `route`.
 
 
 ## VirtualServerRoute Specification
@@ -121,7 +124,8 @@ spec:
     port: 80
   routes:
   - path: /tea
-    upstream: tea
+    action:
+      pass: tea
   - path: /coffee
     route: coffee-ns/coffee
 ```
@@ -144,9 +148,11 @@ spec:
     port: 80
   subroutes:
   - path: /coffee/latte
-    upstream: latte
+    action:
+      pass: latte
   - path: /coffee/espresso
-    upstream: espresso
+    action:
+      pass: espresso
 ```
 
 Note that each subroute must have a `path` that starts with the same prefix (here `/coffee`), which is defined in the route of the VirtualServer. Additionally, the `host` in the VirtualServerRoute must be the same as the `host` of the VirtualServer.
@@ -159,20 +165,21 @@ Note that each subroute must have a `path` that starts with the same prefix (her
 
 ### VirtualServerRoute.Subroute
 
-The subroute defines rules for routing requests to one or multiple upstreams. For example:
+The subroute defines rules for matching client requests to actions like passing a request to an upstream. For example:
 ```yaml
 path: /coffee
-upstream: coffee
+action:
+  pass: coffee
 ```
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
 | `path` | The path of the subroute. NGINX will match it against the URI of a request. The path must start with the same path as the path of the route of the VirtualServer that references this resource. It must not include any whitespace characters, `{`, `}` or `;`. The path must be unique among the paths of all subroutes of the VirtualServerRoute. | `string` | Yes |
-| `upstream` | The name of an upstream. The upstream with that name must be defined in the VirtualServerRoute. | `string` | No* |
-| `splits` | The splits configuration for traffic splitting. Must include at least 2 splits. | [`[]splits`](#Split) | No* |
-| `rules` | The rules configuration advanced content-based routing. |[`rules`](#Rules) | No* |
+| `action` | The default action to perform for a request. | [`action`](#Action) | No* |
+| `splits` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [`[]split`](#Split) | No* |
+| `matches` | The matching rules for advanced content-based routing. Requires the default `action` or `splits`.  Unmatched requests will be handled by the default `action` or `splits`. |[`matches`](#Match) | No |
 
-\* -- a subroute must include exactly one of the following: `upstream`, `splits` or `rules`.
+\* -- a subroute must include exactly one of the following: `action` or `splits`.
 
 ## Common Parts of the VirtualServer and VirtualServerRoute
 
@@ -355,27 +362,45 @@ value: example.com
 | `name` | The name of the header. | `string` | Yes |
 | `value` | The value of the header. | `string` | No |
 
-### Split
+### Action
 
-The split defines a weight for an upstream as part of the splits configuration.
+The action defines an action to perform for a request.
 
-In the example below NGINX routes 80% of requests to the upstream `coffee-v1` and the remaining 20% to `coffee-v2`:
+In the example below, client requests are passed to an upstream `coffee`:
 ```yaml
-splits:
-- weight: 80
-  upstream: coffee-v1
-- weight: 20
-  upstream: coffee-v2
+ path: /coffee
+ action:
+  pass: coffee
 ```
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
-| `weight` | The weight of an upstream. Must fall into the range `1..99`. The sum of the weights of all splits must be equal to `100`. | `int` | Yes |
-| `upstream` | The name of an upstream. Must be defined in the resource. | `string` | Yes |
+| `pass` | Passes requests to an upstream. The upstream with that name must be defined in the resource. | `string` | Yes |
 
-### Rules
 
-The rules defines a set of content-based routing rules in a route or subroute.
+### Split
+
+The split defines a weight for an action as part of the splits configuration.
+
+In the example below NGINX passes 80% of requests to the upstream `coffee-v1` and the remaining 20% to `coffee-v2`:
+```yaml
+splits:
+- weight: 80
+  action:
+    pass: coffee-v1
+- weight: 20
+  action:
+    pass: coffee-v2
+```
+
+| Field | Description | Type | Required |
+| ----- | ----------- | ---- | -------- |
+| `weight` | The weight of an action. Must fall into the range `1..99`. The sum of the weights of all splits must be equal to `100`. | `int` | Yes |
+| `action` | The action to perform for a request. | [`action`](#Action) | Yes |
+
+### Match
+
+The match defines a match between conditions and an action or splits.
 
 In the example below, NGINX routes requests with the path `/coffee` to different upstreams based on the value of the cookie `user`:
 * `user=john` -> `coffee-future`
@@ -384,17 +409,19 @@ In the example below, NGINX routes requests with the path `/coffee` to different
 
 ```yaml
 path: /coffee
-rules:
-  conditions:
+matches:
+- conditions:
   - cookie: user
-  matches:
-  - values:
-    - john
-    upstream: coffee-future
-  - values:
-    - bob
-    upstream: coffee-deprecated
-  defaultUpstream: coffee-stable
+    value: john
+  action:
+    pass: coffee-future
+- conditions:
+  - cookie: user
+    value: bob
+  action:
+    pass: coffee-deprecated
+action:
+  pass: coffee-stable
 ```
 
 In the next example, NGINX routes requests based on the value of the built-in [`$request_method` variable](http://nginx.org/en/docs/http/ngx_http_core_module.html#var_request_method), which represents the HTTP method of a request:
@@ -403,25 +430,27 @@ In the next example, NGINX routes requests based on the value of the built-in [`
 
 ```yaml
 path: /coffee
-rules:
-  conditions:
+matches:
+- conditions:
   - variable: $request_method
-  matches:
-  - values:
-    - POST
-    upstream: coffee-post
-  defaultUpstream: coffee
+    value: POST
+  action:
+    pass: coffee-post
+action:
+  pass: coffee
 ```
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
 | `conditions` | A list of conditions. Must include at least 1 condition. | [`[]condition`](#Condition) | Yes |
-| `matches` | A list of matches. Must include at least 1 match. | [`[]match`](#Match) | Yes |
-| `defaultUpstream` | The name of the default upstream. NGINX will route requests to the default upstream if it cannot find a successful match in matches. The upstream must be defined in the resource. | `string` | Yes |
+| `action` | The action to perform for a request. | [`action`](#Action) | No* |
+| `splits` | The splits configuration for traffic splitting. Must include at least 2 splits. | [`[]split`](#Split) | No* |
+
+\* -- a match must include exactly one of the following: `action` or `splits`.
 
 ### Condition
 
-The condition defines a condition in rules.
+The condition defines a condition in a match.
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
@@ -429,20 +458,11 @@ The condition defines a condition in rules.
 | `cookie` | The name of a cookie. Must consist of alphanumeric characters or `_`. | `string` | No* |
 | `argument` | The name of an argument. Must consist of alphanumeric characters or `_`. | `string` | No* |
 | `variable` | The name of an NGINX variable. Must start with `$`. See the list of the supported variables below the table. | `string` | No* |
+| `value` | The value to match the condition against. How to define a value is shown below the table. | `string` | Yes |
 
 \* -- a condition must include exactly one of the following: `header`, `cookie`, `argument` or `variable`.
 
 Supported NGINX variables: `$args`, `$http2`, `$https`, `$remote_addr`, `$remote_port`, `$query_string`, `$request`, `$request_body`, `$request_uri`, `$request_method`, `$scheme`. Find the documentation for each variable [here](https://nginx.org/en/docs/varindex.html).
-
-### Match
-
-The match defines a match that corresponds to conditions.
-
-
-| Field | Description | Type | Required |
-| ----- | ----------- | ---- | -------- |
-| `values` | A list of matched values. Must include a value for each condition defined in the rules. How to define a value is shown below the table. | `[]string` | Yes |
-| `upstream` | The name of an upstream. Must be defined in the resource. | `string` | Yes |
 
 The value supports two kinds of matching:
 * *Case-insensitive string comparison*. For example:

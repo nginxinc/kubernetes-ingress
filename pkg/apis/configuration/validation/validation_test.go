@@ -38,12 +38,16 @@ func TestValidateVirtualServer(t *testing.T) {
 			},
 			Routes: []v1alpha1.Route{
 				{
-					Path:     "/first",
-					Upstream: "first",
+					Path: "/first",
+					Action: &v1alpha1.Action{
+						Pass: "first",
+					},
 				},
 				{
-					Path:     "/second",
-					Upstream: "second",
+					Path: "/second",
+					Action: &v1alpha1.Action{
+						Pass: "second",
+					},
 				},
 			},
 		},
@@ -475,8 +479,10 @@ func TestValidateVirtualServerRoutes(t *testing.T) {
 		{
 			routes: []v1alpha1.Route{
 				{
-					Path:     "/",
-					Upstream: "test",
+					Path: "/",
+					Action: &v1alpha1.Action{
+						Pass: "test",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
@@ -503,12 +509,16 @@ func TestValidateVirtualServerRoutesFails(t *testing.T) {
 		{
 			routes: []v1alpha1.Route{
 				{
-					Path:     "/test",
-					Upstream: "test-1",
+					Path: "/test",
+					Action: &v1alpha1.Action{
+						Pass: "test-1",
+					},
 				},
 				{
-					Path:     "/test",
-					Upstream: "test-2",
+					Path: "/test",
+					Action: &v1alpha1.Action{
+						Pass: "test-2",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
@@ -521,8 +531,8 @@ func TestValidateVirtualServerRoutesFails(t *testing.T) {
 		{
 			routes: []v1alpha1.Route{
 				{
-					Path:     "",
-					Upstream: "",
+					Path:   "",
+					Action: nil,
 				},
 			},
 			upstreamNames: map[string]sets.Empty{},
@@ -548,8 +558,10 @@ func TestValidateRoute(t *testing.T) {
 		{
 			route: v1alpha1.Route{
 
-				Path:     "/",
-				Upstream: "test",
+				Path: "/",
+				Action: &v1alpha1.Action{
+					Pass: "test",
+				},
 			},
 			upstreamNames: map[string]sets.Empty{
 				"test": {},
@@ -562,12 +574,16 @@ func TestValidateRoute(t *testing.T) {
 				Path: "/",
 				Splits: []v1alpha1.Split{
 					{
-						Weight:   90,
-						Upstream: "test-1",
+						Weight: 90,
+						Action: &v1alpha1.Action{
+							Pass: "test-1",
+						},
 					},
 					{
-						Weight:   10,
-						Upstream: "test-2",
+						Weight: 10,
+						Action: &v1alpha1.Action{
+							Pass: "test-2",
+						},
 					},
 				},
 			},
@@ -581,21 +597,21 @@ func TestValidateRoute(t *testing.T) {
 		{
 			route: v1alpha1.Route{
 				Path: "/",
-				Rules: &v1alpha1.Rules{
-					Conditions: []v1alpha1.Condition{
-						{
-							Header: "x-version",
-						},
-					},
-					Matches: []v1alpha1.Match{
-						{
-							Values: []string{
-								"test-1",
+				Matches: []v1alpha1.Match{
+					{
+						Conditions: []v1alpha1.Condition{
+							{
+								Header: "x-version",
+								Value:  "test-1",
 							},
-							Upstream: "test-1",
+						},
+						Action: &v1alpha1.Action{
+							Pass: "test-1",
 						},
 					},
-					DefaultUpstream: "test-2",
+				},
+				Action: &v1alpha1.Action{
+					Pass: "test-2",
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
@@ -603,7 +619,7 @@ func TestValidateRoute(t *testing.T) {
 				"test-2": {},
 			},
 			isRouteFieldForbidden: false,
-			msg:                   "valid upstream with rules",
+			msg:                   "valid action with matches",
 		},
 		{
 			route: v1alpha1.Route{
@@ -634,8 +650,10 @@ func TestValidateRouteFails(t *testing.T) {
 	}{
 		{
 			route: v1alpha1.Route{
-				Path:     "",
-				Upstream: "test",
+				Path: "",
+				Action: &v1alpha1.Action{
+					Pass: "test",
+				},
 			},
 			upstreamNames: map[string]sets.Empty{
 				"test": {},
@@ -645,34 +663,44 @@ func TestValidateRouteFails(t *testing.T) {
 		},
 		{
 			route: v1alpha1.Route{
-				Path:     "/test",
-				Upstream: "-test",
+				Path: "/test",
+				Action: &v1alpha1.Action{
+					Pass: "-test",
+				},
 			},
 			upstreamNames:         sets.String{},
 			isRouteFieldForbidden: false,
-			msg:                   "invalid upstream",
+			msg:                   "invalid pass action",
 		},
 		{
 			route: v1alpha1.Route{
-				Path:     "/",
-				Upstream: "test",
+				Path: "/",
+				Action: &v1alpha1.Action{
+					Pass: "test",
+				},
 			},
 			upstreamNames:         sets.String{},
 			isRouteFieldForbidden: false,
-			msg:                   "non-existing upstream",
+			msg:                   "non-existing upstream in pass action",
 		},
 		{
 			route: v1alpha1.Route{
-				Path:     "/",
-				Upstream: "test",
+				Path: "/",
+				Action: &v1alpha1.Action{
+					Pass: "test",
+				},
 				Splits: []v1alpha1.Split{
 					{
-						Weight:   90,
-						Upstream: "test-1",
+						Weight: 90,
+						Action: &v1alpha1.Action{
+							Pass: "test-1",
+						},
 					},
 					{
-						Weight:   10,
-						Upstream: "test-2",
+						Weight: 10,
+						Action: &v1alpha1.Action{
+							Pass: "test-2",
+						},
 					},
 				},
 			},
@@ -682,65 +710,40 @@ func TestValidateRouteFails(t *testing.T) {
 				"test-2": {},
 			},
 			isRouteFieldForbidden: false,
-			msg:                   "both upstream and splits exist",
-		},
-		{
-			route: v1alpha1.Route{
-				Path:     "/",
-				Upstream: "test",
-				Rules: &v1alpha1.Rules{
-					Conditions: []v1alpha1.Condition{
-						{
-							Header: "x-version",
-						},
-					},
-					Matches: []v1alpha1.Match{
-						{
-							Values: []string{
-								"test-1",
-							},
-							Upstream: "test-1",
-						},
-					},
-					DefaultUpstream: "test-2",
-				},
-			},
-			upstreamNames: map[string]sets.Empty{
-				"test":   {},
-				"test-1": {},
-				"test-2": {},
-			},
-			isRouteFieldForbidden: false,
-			msg:                   "both upstream and rules exist",
+			msg:                   "both action and splits exist",
 		},
 		{
 			route: v1alpha1.Route{
 				Path: "/",
 				Splits: []v1alpha1.Split{
 					{
-						Weight:   90,
-						Upstream: "test-1",
+						Weight: 90,
+						Action: &v1alpha1.Action{
+							Pass: "test-1",
+						},
 					},
 					{
-						Weight:   10,
-						Upstream: "test-2",
+						Weight: 10,
+						Action: &v1alpha1.Action{
+							Pass: "test-2",
+						},
 					},
 				},
-				Rules: &v1alpha1.Rules{
-					Conditions: []v1alpha1.Condition{
-						{
-							Header: "x-version",
-						},
-					},
-					Matches: []v1alpha1.Match{
-						{
-							Values: []string{
-								"test-1",
+				Matches: []v1alpha1.Match{
+					{
+						Conditions: []v1alpha1.Condition{
+							{
+								Header: "x-version",
+								Value:  "test-1",
 							},
-							Upstream: "test-1",
+						},
+						Action: &v1alpha1.Action{
+							Pass: "test-1",
 						},
 					},
-					DefaultUpstream: "test-2",
+				},
+				Action: &v1alpha1.Action{
+					Pass: "test-2",
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
@@ -748,7 +751,7 @@ func TestValidateRouteFails(t *testing.T) {
 				"test-2": {},
 			},
 			isRouteFieldForbidden: false,
-			msg:                   "both splits and rules exist",
+			msg:                   "both splits and matches exist",
 		},
 		{
 			route: v1alpha1.Route{
@@ -766,6 +769,30 @@ func TestValidateRouteFails(t *testing.T) {
 		if len(allErrs) == 0 {
 			t.Errorf("validateRoute() returned no errors for invalid input for the case of %s", test.msg)
 		}
+	}
+}
+
+func TestValidateAction(t *testing.T) {
+	action := &v1alpha1.Action{
+		Pass: "test",
+	}
+	upstreamNames := map[string]sets.Empty{
+		"test": {},
+	}
+
+	allErrs := validateAction(action, field.NewPath("action"), upstreamNames)
+	if len(allErrs) > 0 {
+		t.Errorf("validateAction() returned errors %v for valid input", allErrs)
+	}
+}
+
+func TestValidateActionFails(t *testing.T) {
+	action := &v1alpha1.Action{}
+	upstreamNames := map[string]sets.Empty{}
+
+	allErrs := validateAction(action, field.NewPath("action"), upstreamNames)
+	if len(allErrs) == 0 {
+		t.Error("validateAction() returned no errors for invalid input")
 	}
 }
 
@@ -873,12 +900,16 @@ func TestValidatePath(t *testing.T) {
 func TestValidateSplits(t *testing.T) {
 	splits := []v1alpha1.Split{
 		{
-			Weight:   90,
-			Upstream: "test-1",
+			Weight: 90,
+			Action: &v1alpha1.Action{
+				Pass: "test-1",
+			},
 		},
 		{
-			Weight:   10,
-			Upstream: "test-2",
+			Weight: 10,
+			Action: &v1alpha1.Action{
+				Pass: "test-2",
+			},
 		},
 	}
 	upstreamNames := map[string]sets.Empty{
@@ -901,8 +932,10 @@ func TestValidateSplitsFails(t *testing.T) {
 		{
 			splits: []v1alpha1.Split{
 				{
-					Weight:   90,
-					Upstream: "test-1",
+					Weight: 90,
+					Action: &v1alpha1.Action{
+						Pass: "test-1",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
@@ -913,12 +946,16 @@ func TestValidateSplitsFails(t *testing.T) {
 		{
 			splits: []v1alpha1.Split{
 				{
-					Weight:   123,
-					Upstream: "test-1",
+					Weight: 123,
+					Action: &v1alpha1.Action{
+						Pass: "test-1",
+					},
 				},
 				{
-					Weight:   10,
-					Upstream: "test-2",
+					Weight: 10,
+					Action: &v1alpha1.Action{
+						Pass: "test-2",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
@@ -930,12 +967,16 @@ func TestValidateSplitsFails(t *testing.T) {
 		{
 			splits: []v1alpha1.Split{
 				{
-					Weight:   99,
-					Upstream: "test-1",
+					Weight: 99,
+					Action: &v1alpha1.Action{
+						Pass: "test-1",
+					},
 				},
 				{
-					Weight:   99,
-					Upstream: "test-2",
+					Weight: 99,
+					Action: &v1alpha1.Action{
+						Pass: "test-2",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
@@ -947,36 +988,44 @@ func TestValidateSplitsFails(t *testing.T) {
 		{
 			splits: []v1alpha1.Split{
 				{
-					Weight:   90,
-					Upstream: "",
+					Weight: 90,
+					Action: &v1alpha1.Action{
+						Pass: "",
+					},
 				},
 				{
-					Weight:   10,
-					Upstream: "test-2",
+					Weight: 10,
+					Action: &v1alpha1.Action{
+						Pass: "test-2",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
 				"test-1": {},
 				"test-2": {},
 			},
-			msg: "invalid upstream",
+			msg: "invalid action",
 		},
 		{
 			splits: []v1alpha1.Split{
 				{
-					Weight:   90,
-					Upstream: "some-upstream",
+					Weight: 90,
+					Action: &v1alpha1.Action{
+						Pass: "some-upstream",
+					},
 				},
 				{
-					Weight:   10,
-					Upstream: "test-2",
+					Weight: 10,
+					Action: &v1alpha1.Action{
+						Pass: "test-2",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
 				"test-1": {},
 				"test-2": {},
 			},
-			msg: "non-existing upstream",
+			msg: "invalid action with non-existing upstream",
 		},
 	}
 
@@ -984,131 +1033,6 @@ func TestValidateSplitsFails(t *testing.T) {
 		allErrs := validateSplits(test.splits, field.NewPath("splits"), test.upstreamNames)
 		if len(allErrs) == 0 {
 			t.Errorf("validateSplits() returned no errors for invalid input for the case of %s", test.msg)
-		}
-	}
-}
-
-func TestValidateRules(t *testing.T) {
-	rules := v1alpha1.Rules{
-		Conditions: []v1alpha1.Condition{
-			{
-				Header: "x-version",
-			},
-		},
-		Matches: []v1alpha1.Match{
-			{
-				Values: []string{
-					"test-1",
-				},
-				Upstream: "test-1",
-			},
-		},
-		DefaultUpstream: "test-2",
-	}
-
-	upstreamNames := map[string]sets.Empty{
-		"test-1": {},
-		"test-2": {},
-	}
-
-	allErrs := validateRules(&rules, field.NewPath("rules"), upstreamNames)
-	if len(allErrs) > 0 {
-		t.Errorf("validateRules() returned errors %v for valid input", allErrs)
-	}
-}
-
-func TestValidateRulesFails(t *testing.T) {
-	tests := []struct {
-		rules         v1alpha1.Rules
-		upstreamNames sets.String
-		msg           string
-	}{
-		{
-			rules: v1alpha1.Rules{
-				Conditions: []v1alpha1.Condition{},
-				Matches: []v1alpha1.Match{
-					{
-						Values: []string{
-							"test-1",
-						},
-						Upstream: "test-1",
-					},
-				},
-				DefaultUpstream: "test-2",
-			},
-			upstreamNames: map[string]sets.Empty{
-				"test-1": {},
-				"test-2": {},
-			},
-			msg: "no conditions",
-		},
-		{
-			rules: v1alpha1.Rules{
-				Conditions: []v1alpha1.Condition{
-					{
-						Header: "x-version",
-					},
-				},
-				Matches:         []v1alpha1.Match{},
-				DefaultUpstream: "test-2",
-			},
-			upstreamNames: map[string]sets.Empty{
-				"test-2": {},
-			},
-			msg: "no matches",
-		},
-		{
-			rules: v1alpha1.Rules{
-				Conditions: []v1alpha1.Condition{
-					{
-						Header: "x-version",
-					},
-				},
-				Matches: []v1alpha1.Match{
-					{
-						Values: []string{
-							"test-1",
-						},
-						Upstream: "test-1",
-					},
-				},
-				DefaultUpstream: "",
-			},
-			upstreamNames: map[string]sets.Empty{
-				"test-1": {},
-			},
-			msg: "no default upstream",
-		},
-		{
-			rules: v1alpha1.Rules{
-				Conditions: []v1alpha1.Condition{
-					{
-						Header: "x-version",
-						Cookie: "user",
-					},
-				},
-				Matches: []v1alpha1.Match{
-					{
-						Values: []string{
-							"test-1",
-						},
-						Upstream: "test-1",
-					},
-				},
-				DefaultUpstream: "test",
-			},
-			upstreamNames: map[string]sets.Empty{
-				"test-1": {},
-				"test":   {},
-			},
-			msg: "invalid values in a match",
-		},
-	}
-
-	for _, test := range tests {
-		allErrs := validateRules(&test.rules, field.NewPath("rules"), test.upstreamNames)
-		if len(allErrs) == 0 {
-			t.Errorf("validateRules() returned no errors for invalid input for the case of %s", test.msg)
 		}
 	}
 }
@@ -1121,24 +1045,28 @@ func TestValidateCondition(t *testing.T) {
 		{
 			condition: v1alpha1.Condition{
 				Header: "x-version",
+				Value:  "v1",
 			},
 			msg: "valid header",
 		},
 		{
 			condition: v1alpha1.Condition{
 				Cookie: "my_cookie",
+				Value:  "",
 			},
 			msg: "valid cookie",
 		},
 		{
 			condition: v1alpha1.Condition{
 				Argument: "arg",
+				Value:    "yes",
 			},
 			msg: "valid argument",
 		},
 		{
 			condition: v1alpha1.Condition{
 				Variable: "$request_method",
+				Value:    "POST",
 			},
 			msg: "valid variable",
 		},
@@ -1167,6 +1095,7 @@ func TestValidateConditionFails(t *testing.T) {
 				Cookie:   "user",
 				Argument: "answer",
 				Variable: "$request_method",
+				Value:    "something",
 			},
 			msg: "invalid condition",
 		},
@@ -1284,70 +1213,151 @@ func TestValidateVariableName(t *testing.T) {
 }
 
 func TestValidateMatch(t *testing.T) {
-	match := v1alpha1.Match{
-		Values: []string{
-			"value1",
-			"value2",
+	tests := []struct {
+		match         v1alpha1.Match
+		upstreamNames sets.String
+		msg           string
+	}{
+		{
+			match: v1alpha1.Match{
+				Conditions: []v1alpha1.Condition{
+					{
+						Cookie: "version",
+						Value:  "v1",
+					},
+				},
+				Action: &v1alpha1.Action{
+					Pass: "test",
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test": {},
+			},
+			msg: "valid match with action",
 		},
-		Upstream: "test",
-	}
-	conditionsCount := 2
-	upstreamNames := map[string]sets.Empty{
-		"test": {},
+		{
+			match: v1alpha1.Match{
+				Conditions: []v1alpha1.Condition{
+					{
+						Cookie: "version",
+						Value:  "v1",
+					},
+				},
+				Splits: []v1alpha1.Split{
+					{
+						Weight: 90,
+						Action: &v1alpha1.Action{
+							Pass: "test-1",
+						},
+					},
+					{
+						Weight: 10,
+						Action: &v1alpha1.Action{
+							Pass: "test-2",
+						},
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "valid match with splits",
+		},
 	}
 
-	allErrs := validateMatch(match, field.NewPath("match"), conditionsCount, upstreamNames)
-	if len(allErrs) > 0 {
-		t.Errorf("validateMatch() returned errors %v for valid input", allErrs)
+	for _, test := range tests {
+		allErrs := validateMatch(test.match, field.NewPath("match"), test.upstreamNames)
+		if len(allErrs) > 0 {
+			t.Errorf("validateMatch() returned errors %v for valid input for the case of %s", allErrs, test.msg)
+		}
 	}
 }
 
 func TestValidateMatchFails(t *testing.T) {
 	tests := []struct {
-		match           v1alpha1.Match
-		conditionsCount int
-		upstreamNames   sets.String
-		msg             string
+		match         v1alpha1.Match
+		upstreamNames sets.String
+		msg           string
 	}{
 		{
 			match: v1alpha1.Match{
-				Values:   []string{},
-				Upstream: "test",
+				Conditions: []v1alpha1.Condition{},
+				Action: &v1alpha1.Action{
+					Pass: "test",
+				},
 			},
-			conditionsCount: 1,
 			upstreamNames: map[string]sets.Empty{
 				"test": {},
 			},
-			msg: "invalid number of values",
+			msg: "invalid number of conditions",
 		},
 		{
 			match: v1alpha1.Match{
-				Values: []string{
-					`abc"`,
+				Conditions: []v1alpha1.Condition{
+					{
+						Cookie: "version",
+						Value:  `v1"`,
+					},
 				},
-				Upstream: "test",
+				Action: &v1alpha1.Action{
+					Pass: "test",
+				},
 			},
-			conditionsCount: 1,
 			upstreamNames: map[string]sets.Empty{
 				"test": {},
 			},
-			msg: "invalid value",
+			msg: "invalid condition",
 		},
 		{
 			match: v1alpha1.Match{
-				Values: []string{
-					"value",
+				Conditions: []v1alpha1.Condition{
+					{
+						Cookie: "version",
+						Value:  "v1",
+					},
 				},
-				Upstream: "-invalid",
+				Action: &v1alpha1.Action{},
 			},
-			conditionsCount: 1,
-			upstreamNames:   map[string]sets.Empty{},
-			msg:             "invalid upstream",
+			upstreamNames: map[string]sets.Empty{},
+			msg:           "invalid  action",
+		},
+		{
+			match: v1alpha1.Match{
+				Conditions: []v1alpha1.Condition{
+					{
+						Cookie: "version",
+						Value:  "v1",
+					},
+				},
+				Action: &v1alpha1.Action{
+					Pass: "test-1",
+				},
+				Splits: []v1alpha1.Split{
+					{
+						Weight: 90,
+						Action: &v1alpha1.Action{
+							Pass: "test-1",
+						},
+					},
+					{
+						Weight: 10,
+						Action: &v1alpha1.Action{
+							Pass: "test-2",
+						},
+					},
+				},
+			},
+			upstreamNames: map[string]sets.Empty{
+				"test-1": {},
+				"test-2": {},
+			},
+			msg: "both splits and action are set",
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateMatch(test.match, field.NewPath("match"), test.conditionsCount, test.upstreamNames)
+		allErrs := validateMatch(test.match, field.NewPath("match"), test.upstreamNames)
 		if len(allErrs) == 0 {
 			t.Errorf("validateMatch() returned no errors for invalid input for the case of %s", test.msg)
 		}
@@ -1408,12 +1418,16 @@ func TestValidateVirtualServerRoute(t *testing.T) {
 			},
 			Subroutes: []v1alpha1.Route{
 				{
-					Path:     "/test/first",
-					Upstream: "first",
+					Path: "/test/first",
+					Action: &v1alpha1.Action{
+						Pass: "first",
+					},
 				},
 				{
-					Path:     "/test/second",
-					Upstream: "second",
+					Path: "/test/second",
+					Action: &v1alpha1.Action{
+						Pass: "second",
+					},
 				},
 			},
 		},
@@ -1447,12 +1461,16 @@ func TestValidateVirtualServerRouteForVirtualServer(t *testing.T) {
 			},
 			Subroutes: []v1alpha1.Route{
 				{
-					Path:     "/test/first",
-					Upstream: "first",
+					Path: "/test/first",
+					Action: &v1alpha1.Action{
+						Pass: "first",
+					},
 				},
 				{
-					Path:     "/test/second",
-					Upstream: "second",
+					Path: "/test/second",
+					Action: &v1alpha1.Action{
+						Pass: "second",
+					},
 				},
 			},
 		},
@@ -1501,8 +1519,10 @@ func TestValidateVirtualServerRouteSubroutes(t *testing.T) {
 		{
 			routes: []v1alpha1.Route{
 				{
-					Path:     "/",
-					Upstream: "test",
+					Path: "/",
+					Action: &v1alpha1.Action{
+						Pass: "test",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
@@ -1531,12 +1551,16 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 		{
 			routes: []v1alpha1.Route{
 				{
-					Path:     "/test",
-					Upstream: "test-1",
+					Path: "/test",
+					Action: &v1alpha1.Action{
+						Pass: "test-1",
+					},
 				},
 				{
-					Path:     "/test",
-					Upstream: "test-2",
+					Path: "/test",
+					Action: &v1alpha1.Action{
+						Pass: "test-2",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{
@@ -1549,8 +1573,8 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 		{
 			routes: []v1alpha1.Route{
 				{
-					Path:     "",
-					Upstream: "",
+					Path:   "",
+					Action: nil,
 				},
 			},
 			upstreamNames: map[string]sets.Empty{},
@@ -1560,8 +1584,10 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 		{
 			routes: []v1alpha1.Route{
 				{
-					Path:     "/",
-					Upstream: "test-1",
+					Path: "/",
+					Action: &v1alpha1.Action{
+						Pass: "test-1",
+					},
 				},
 			},
 			upstreamNames: map[string]sets.Empty{

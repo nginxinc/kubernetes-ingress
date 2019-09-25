@@ -11,4 +11,5 @@ spec:
     port: 80
   subroutes:
   - path: /coffee 
-    upstream: coffee 
+    action:
+      pass: coffee

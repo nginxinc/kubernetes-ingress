@@ -89,12 +89,12 @@ func (namer *variableNamer) GetNameForSplitClientVariable(index int) string {
 	return fmt.Sprintf("$vs_%s_splits_%d", namer.safeNsName, index)
 }
 
-func (namer *variableNamer) GetNameForVariableForRulesRouteMap(rulesIndex int, matchIndex int, conditionIndex int) string {
-	return fmt.Sprintf("$vs_%s_rules_%d_match_%d_cond_%d", namer.safeNsName, rulesIndex, matchIndex, conditionIndex)
+func (namer *variableNamer) GetNameForVariableForMatchesRouteMap(matchesIndex int, matchIndex int, conditionIndex int) string {
+	return fmt.Sprintf("$vs_%s_matches_%d_match_%d_cond_%d", namer.safeNsName, matchesIndex, matchIndex, conditionIndex)
 }
 
-func (namer *variableNamer) GetNameForVariableForRulesRouteMainMap(rulesIndex int) string {
-	return fmt.Sprintf("$vs_%s_rules_%d", namer.safeNsName, rulesIndex)
+func (namer *variableNamer) GetNameForVariableForMatchesRouteMainMap(matchesIndex int) string {
+	return fmt.Sprintf("$vs_%s_matches_%d", namer.safeNsName, matchesIndex)
 }
 
 func newHealthCheckWithDefaults(upstream conf_v1alpha1.Upstream, upstreamName string, cfgParams *ConfigParams) *version2.HealthCheck {
@@ -220,7 +220,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 	var splitClients []version2.SplitClient
 	var maps []version2.Map
 
-	rulesRoutes := 0
+	matchesRoutes := 0
 
 	variableNamer := newVariableNamer(virtualServerEx.VirtualServer)
 
@@ -231,22 +231,23 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			continue
 		}
 
-		if len(r.Splits) > 0 {
-			splitCfg := generateSplitRouteConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams)
+		if len(r.Matches) > 0 {
+			cfg := generateMatchesConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, matchesRoutes, len(splitClients), vsc.cfgParams)
 
-			splitClients = append(splitClients, splitCfg.SplitClient)
-			locations = append(locations, splitCfg.Locations...)
-			internalRedirectLocations = append(internalRedirectLocations, splitCfg.InternalRedirectLocation)
-		} else if r.Rules != nil {
-			rulesRouteCfg := generateRulesRouteConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, rulesRoutes, vsc.cfgParams)
+			maps = append(maps, cfg.Maps...)
+			locations = append(locations, cfg.Locations...)
+			internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
+			splitClients = append(splitClients, cfg.SplitClients...)
 
-			maps = append(maps, rulesRouteCfg.Maps...)
-			locations = append(locations, rulesRouteCfg.Locations...)
-			internalRedirectLocations = append(internalRedirectLocations, rulesRouteCfg.InternalRedirectLocation)
+			matchesRoutes++
+		} else if len(r.Splits) > 0 {
+			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams)
 
-			rulesRoutes++
+			splitClients = append(splitClients, cfg.SplitClients...)
+			locations = append(locations, cfg.Locations...)
+			internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
 		} else {
-			upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(r.Upstream)
+			upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(r.Action.Pass)
 			upstream := crUpstreams[upstreamName]
 			loc := generateLocation(r.Path, upstreamName, upstream, vsc.cfgParams)
 			locations = append(locations, loc)
@@ -258,22 +259,23 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 	for _, vsr := range virtualServerEx.VirtualServerRoutes {
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
 		for _, r := range vsr.Spec.Subroutes {
-			if len(r.Splits) > 0 {
-				splitCfg := generateSplitRouteConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams)
+			if len(r.Matches) > 0 {
+				cfg := generateMatchesConfig(r, upstreamNamer, crUpstreams, variableNamer, matchesRoutes, len(splitClients), vsc.cfgParams)
 
-				splitClients = append(splitClients, splitCfg.SplitClient)
-				locations = append(locations, splitCfg.Locations...)
-				internalRedirectLocations = append(internalRedirectLocations, splitCfg.InternalRedirectLocation)
-			} else if r.Rules != nil {
-				rulesRouteCfg := generateRulesRouteConfig(r, upstreamNamer, crUpstreams, variableNamer, rulesRoutes, vsc.cfgParams)
+				maps = append(maps, cfg.Maps...)
+				locations = append(locations, cfg.Locations...)
+				internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
+				splitClients = append(splitClients, cfg.SplitClients...)
 
-				maps = append(maps, rulesRouteCfg.Maps...)
-				locations = append(locations, rulesRouteCfg.Locations...)
-				internalRedirectLocations = append(internalRedirectLocations, rulesRouteCfg.InternalRedirectLocation)
+				matchesRoutes++
+			} else if len(r.Splits) > 0 {
+				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams)
 
-				rulesRoutes++
+				splitClients = append(splitClients, cfg.SplitClients...)
+				locations = append(locations, cfg.Locations...)
+				internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
 			} else {
-				upstreamName := upstreamNamer.GetNameForUpstream(r.Upstream)
+				upstreamName := upstreamNamer.GetNameForUpstream(r.Action.Pass)
 				upstream := crUpstreams[upstreamName]
 				loc := generateLocation(r.Path, upstreamName, upstream, vsc.cfgParams)
 				locations = append(locations, loc)
@@ -516,77 +518,75 @@ func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.U
 	}
 }
 
-type splitRouteCfg struct {
-	SplitClient              version2.SplitClient
+type routingCfg struct {
+	Maps                     []version2.Map
+	SplitClients             []version2.SplitClient
 	Locations                []version2.Location
 	InternalRedirectLocation version2.InternalRedirectLocation
 }
 
-func generateSplitRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream, variableNamer *variableNamer, index int, cfgParams *ConfigParams) splitRouteCfg {
-	splitClientVarName := variableNamer.GetNameForSplitClientVariable(index)
-
-	// Generate a SplitClient
+func generateSplits(splits []conf_v1alpha1.Split, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream, variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams) (version2.SplitClient, []version2.Location) {
 	var distributions []version2.Distribution
 
-	for i, s := range route.Splits {
+	for i, s := range splits {
 		d := version2.Distribution{
 			Weight: fmt.Sprintf("%d%%", s.Weight),
-			Value:  fmt.Sprintf("@splits_%d_split_%d", index, i),
+			Value:  fmt.Sprintf("@splits_%d_split_%d", scIndex, i),
 		}
 		distributions = append(distributions, d)
 	}
 
 	splitClient := version2.SplitClient{
 		Source:        "$request_id",
-		Variable:      splitClientVarName,
+		Variable:      variableNamer.GetNameForSplitClientVariable(scIndex),
 		Distributions: distributions,
 	}
 
-	// Generate locations
 	var locations []version2.Location
 
-	for i, s := range route.Splits {
-		path := fmt.Sprintf("@splits_%d_split_%d", index, i)
-		upstreamName := upstreamNamer.GetNameForUpstream(s.Upstream)
+	for i, s := range splits {
+		path := fmt.Sprintf("@splits_%d_split_%d", scIndex, i)
+		upstreamName := upstreamNamer.GetNameForUpstream(s.Action.Pass)
 		upstream := crUpstreams[upstreamName]
 		loc := generateLocation(path, upstreamName, upstream, cfgParams)
 		locations = append(locations, loc)
 	}
 
-	// Generate an InternalRedirectLocation
+	return splitClient, locations
+}
+
+func generateDefaultSplitsConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream, variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams) routingCfg {
+	sc, locs := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex, cfgParams)
+
+	splitClientVarName := variableNamer.GetNameForSplitClientVariable(scIndex)
+
 	irl := version2.InternalRedirectLocation{
 		Path:        route.Path,
 		Destination: splitClientVarName,
 	}
 
-	return splitRouteCfg{
-		SplitClient:              splitClient,
-		Locations:                locations,
+	return routingCfg{
+		SplitClients:             []version2.SplitClient{sc},
+		Locations:                locs,
 		InternalRedirectLocation: irl,
 	}
 }
 
-type rulesRouteCfg struct {
-	Maps                     []version2.Map
-	Locations                []version2.Location
-	InternalRedirectLocation version2.InternalRedirectLocation
-}
-
-func generateRulesRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream,
-	variableNamer *variableNamer, index int, cfgParams *ConfigParams) rulesRouteCfg {
+func generateMatchesConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream,
+	variableNamer *variableNamer, index int, scIndex int, cfgParams *ConfigParams) routingCfg {
 	// Generate maps
 	var maps []version2.Map
 
-	for i, m := range route.Rules.Matches {
-		for j, c := range route.Rules.Conditions {
-			source := getNameForSourceForRulesRouteMapFromCondition(c)
-			variable := variableNamer.GetNameForVariableForRulesRouteMap(index, i, j)
+	for i, m := range route.Matches {
+		for j, c := range m.Conditions {
+			source := getNameForSourceForMatchesRouteMapFromCondition(c)
+			variable := variableNamer.GetNameForVariableForMatchesRouteMap(index, i, j)
 			successfulResult := "1"
-			if j < len(m.Values)-1 {
-				successfulResult = variableNamer.GetNameForVariableForRulesRouteMap(index, i, j+1)
+			if j < len(m.Conditions)-1 {
+				successfulResult = variableNamer.GetNameForVariableForMatchesRouteMap(index, i, j+1)
 			}
 
-			params := generateParametersForRulesRouteMap(m.Values[j], successfulResult)
+			params := generateParametersForMatchesRouteMap(c.Value, successfulResult)
 
 			matchMap := version2.Map{
 				Source:     source,
@@ -597,26 +597,40 @@ func generateRulesRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstream
 		}
 	}
 
+	scLocalIndex := 0
+
 	// Generate the main map
 	source := ""
 	var params []version2.Parameter
-	for i := range route.Rules.Matches {
-		source += variableNamer.GetNameForVariableForRulesRouteMap(index, i, 0)
+	for i, m := range route.Matches {
+		source += variableNamer.GetNameForVariableForMatchesRouteMap(index, i, 0)
+
+		v := fmt.Sprintf("~^%s1", strings.Repeat("0", i))
+		r := fmt.Sprintf("@matches_%d_match_%d", index, i)
+		if len(m.Splits) > 0 {
+			r = variableNamer.GetNameForSplitClientVariable(scIndex + scLocalIndex)
+			scLocalIndex++
+		}
 
 		p := version2.Parameter{
-			Value:  fmt.Sprintf("~^%s1", strings.Repeat("0", i)),
-			Result: fmt.Sprintf("@rules_%d_match_%d", index, i),
+			Value:  v,
+			Result: r,
 		}
 		params = append(params, p)
 	}
 
+	defaultResult := fmt.Sprintf("@matches_%d_default", index)
+	if len(route.Splits) > 0 {
+		defaultResult = variableNamer.GetNameForSplitClientVariable(scIndex + scLocalIndex)
+	}
+
 	defaultParam := version2.Parameter{
 		Value:  "default",
-		Result: fmt.Sprintf("@rules_%d_default", index),
+		Result: defaultResult,
 	}
 	params = append(params, defaultParam)
 
-	variable := variableNamer.GetNameForVariableForRulesRouteMainMap(index)
+	variable := variableNamer.GetNameForVariableForMatchesRouteMainMap(index)
 
 	mainMap := version2.Map{
 		Source:     source,
@@ -625,23 +639,39 @@ func generateRulesRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstream
 	}
 	maps = append(maps, mainMap)
 
-	// Generate locations for each match
+	// Generate locations for each match and split client
 	var locations []version2.Location
+	var splitClients []version2.SplitClient
+	scLocalIndex = 0
 
-	for i, m := range route.Rules.Matches {
-		path := fmt.Sprintf("@rules_%d_match_%d", index, i)
-		upstreamName := upstreamNamer.GetNameForUpstream(m.Upstream)
+	for i, m := range route.Matches {
+		if len(m.Splits) > 0 {
+			sc, locs := generateSplits(m.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex+scLocalIndex, cfgParams)
+			scLocalIndex++
+
+			splitClients = append(splitClients, sc)
+			locations = append(locations, locs...)
+		} else {
+			path := fmt.Sprintf("@matches_%d_match_%d", index, i)
+			upstreamName := upstreamNamer.GetNameForUpstream(m.Action.Pass)
+			upstream := crUpstreams[upstreamName]
+			loc := generateLocation(path, upstreamName, upstream, cfgParams)
+			locations = append(locations, loc)
+		}
+	}
+
+	// Generate default splits or default action
+	if len(route.Splits) > 0 {
+		sc, locs := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex+scLocalIndex, cfgParams)
+		splitClients = append(splitClients, sc)
+		locations = append(locations, locs...)
+	} else {
+		path := fmt.Sprintf("@matches_%d_default", index)
+		upstreamName := upstreamNamer.GetNameForUpstream(route.Action.Pass)
 		upstream := crUpstreams[upstreamName]
 		loc := generateLocation(path, upstreamName, upstream, cfgParams)
 		locations = append(locations, loc)
 	}
-
-	// Generate defaultUpstream location
-	path := fmt.Sprintf("@rules_%d_default", index)
-	upstreamName := upstreamNamer.GetNameForUpstream(route.Rules.DefaultUpstream)
-	upstream := crUpstreams[upstreamName]
-	loc := generateLocation(path, upstreamName, upstream, cfgParams)
-	locations = append(locations, loc)
 
 	// Generate an InternalRedirectLocation to the location defined by the main map variable
 	irl := version2.InternalRedirectLocation{
@@ -649,10 +679,11 @@ func generateRulesRouteConfig(route conf_v1alpha1.Route, upstreamNamer *upstream
 		Destination: variable,
 	}
 
-	return rulesRouteCfg{
+	return routingCfg{
 		Maps:                     maps,
 		Locations:                locations,
 		InternalRedirectLocation: irl,
+		SplitClients:             splitClients,
 	}
 }
 
@@ -663,7 +694,7 @@ var specialMapParameters = map[string]bool{
 	"volatile":  true,
 }
 
-func generateValueForRulesRouteMap(matchedValue string) (value string, isNegative bool) {
+func generateValueForMatchesRouteMap(matchedValue string) (value string, isNegative bool) {
 	if len(matchedValue) == 0 {
 		return `""`, false
 	}
@@ -680,8 +711,8 @@ func generateValueForRulesRouteMap(matchedValue string) (value string, isNegativ
 	return fmt.Sprintf(`"%s"`, matchedValue), isNegative
 }
 
-func generateParametersForRulesRouteMap(matchedValue string, successfulResult string) []version2.Parameter {
-	value, isNegative := generateValueForRulesRouteMap(matchedValue)
+func generateParametersForMatchesRouteMap(matchedValue string, successfulResult string) []version2.Parameter {
+	value, isNegative := generateValueForMatchesRouteMap(matchedValue)
 
 	valueResult := successfulResult
 	defaultResult := "0"
@@ -704,7 +735,7 @@ func generateParametersForRulesRouteMap(matchedValue string, successfulResult st
 	return params
 }
 
-func getNameForSourceForRulesRouteMapFromCondition(condition conf_v1alpha1.Condition) string {
+func getNameForSourceForMatchesRouteMapFromCondition(condition conf_v1alpha1.Condition) string {
 	if condition.Header != "" {
 		return fmt.Sprintf("$http_%s", strings.ReplaceAll(condition.Header, "-", "_"))
 	}

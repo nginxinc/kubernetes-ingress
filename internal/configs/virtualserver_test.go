@@ -151,26 +151,26 @@ func TestVariableNamer(t *testing.T) {
 		t.Errorf("GetNameForSplitClientVariable() returned %q but expected %q", result, expected)
 	}
 
-	// GetNameForVariableForRulesRouteMap()
-	rulesIndex := 1
+	// GetNameForVariableForMatchesRouteMap()
+	matchesIndex := 1
 	matchIndex := 2
 	conditionIndex := 3
 
-	expected = "$vs_default_cafe_rules_1_match_2_cond_3"
+	expected = "$vs_default_cafe_matches_1_match_2_cond_3"
 
-	result = variableNamer.GetNameForVariableForRulesRouteMap(rulesIndex, matchIndex, conditionIndex)
+	result = variableNamer.GetNameForVariableForMatchesRouteMap(matchesIndex, matchIndex, conditionIndex)
 	if result != expected {
-		t.Errorf("GetNameForVariableForRulesRouteMap() returned %q but expected %q", result, expected)
+		t.Errorf("GetNameForVariableForMatchesRouteMap() returned %q but expected %q", result, expected)
 	}
 
-	// GetNameForVariableForRulesRouteMainMap()
-	rulesIndex = 2
+	// GetNameForVariableForMatchesRouteMainMap()
+	matchesIndex = 2
 
-	expected = "$vs_default_cafe_rules_2"
+	expected = "$vs_default_cafe_matches_2"
 
-	result = variableNamer.GetNameForVariableForRulesRouteMainMap(rulesIndex)
+	result = variableNamer.GetNameForVariableForMatchesRouteMainMap(matchesIndex)
 	if result != expected {
-		t.Errorf("GetNameForVariableForRulesRouteMainMap() returned %q but expected %q", result, expected)
+		t.Errorf("GetNameForVariableForMatchesRouteMainMap() returned %q but expected %q", result, expected)
 	}
 }
 
@@ -198,12 +198,16 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				},
 				Routes: []conf_v1alpha1.Route{
 					{
-						Path:     "/tea",
-						Upstream: "tea",
+						Path: "/tea",
+						Action: &conf_v1alpha1.Action{
+							Pass: "tea",
+						},
 					},
 					{
-						Path:     "/tea-latest",
-						Upstream: "tea-latest",
+						Path: "/tea-latest",
+						Action: &conf_v1alpha1.Action{
+							Pass: "tea-latest",
+						},
 					},
 					{
 						Path:  "/coffee",
@@ -247,8 +251,10 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					},
 					Subroutes: []conf_v1alpha1.Route{
 						{
-							Path:     "/coffee",
-							Upstream: "coffee",
+							Path: "/coffee",
+							Action: &conf_v1alpha1.Action{
+								Pass: "coffee",
+							},
 						},
 					},
 				},
@@ -270,8 +276,10 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					},
 					Subroutes: []conf_v1alpha1.Route{
 						{
-							Path:     "/subtea",
-							Upstream: "subtea",
+							Path: "/subtea",
+							Action: &conf_v1alpha1.Action{
+								Pass: "subtea",
+							},
 						},
 					},
 				},
@@ -415,12 +423,16 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 						Path: "/tea",
 						Splits: []conf_v1alpha1.Split{
 							{
-								Weight:   90,
-								Upstream: "tea-v1",
+								Weight: 90,
+								Action: &conf_v1alpha1.Action{
+									Pass: "tea-v1",
+								},
 							},
 							{
-								Weight:   10,
-								Upstream: "tea-v2",
+								Weight: 10,
+								Action: &conf_v1alpha1.Action{
+									Pass: "tea-v2",
+								},
 							},
 						},
 					},
@@ -470,12 +482,16 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 							Path: "/coffee",
 							Splits: []conf_v1alpha1.Split{
 								{
-									Weight:   40,
-									Upstream: "coffee-v1",
+									Weight: 40,
+									Action: &conf_v1alpha1.Action{
+										Pass: "coffee-v1",
+									},
 								},
 								{
-									Weight:   60,
-									Upstream: "coffee-v2",
+									Weight: 60,
+									Action: &conf_v1alpha1.Action{
+										Pass: "coffee-v2",
+									},
 								},
 							},
 						},
@@ -612,7 +628,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	}
 }
 
-func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
+func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1alpha1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -636,21 +652,21 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 				Routes: []conf_v1alpha1.Route{
 					{
 						Path: "/tea",
-						Rules: &conf_v1alpha1.Rules{
-							Conditions: []conf_v1alpha1.Condition{
-								{
-									Header: "x-version",
-								},
-							},
-							Matches: []conf_v1alpha1.Match{
-								{
-									Values: []string{
-										"v2",
+						Matches: []conf_v1alpha1.Match{
+							{
+								Conditions: []conf_v1alpha1.Condition{
+									{
+										Header: "x-version",
+										Value:  "v2",
 									},
-									Upstream: "tea-v2",
+								},
+								Action: &conf_v1alpha1.Action{
+									Pass: "tea-v2",
 								},
 							},
-							DefaultUpstream: "tea-v1",
+						},
+						Action: &conf_v1alpha1.Action{
+							Pass: "tea-v1",
 						},
 					},
 					{
@@ -697,21 +713,21 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 					Subroutes: []conf_v1alpha1.Route{
 						{
 							Path: "/coffee",
-							Rules: &conf_v1alpha1.Rules{
-								Conditions: []conf_v1alpha1.Condition{
-									{
-										Argument: "version",
-									},
-								},
-								Matches: []conf_v1alpha1.Match{
-									{
-										Values: []string{
-											"v2",
+							Matches: []conf_v1alpha1.Match{
+								{
+									Conditions: []conf_v1alpha1.Condition{
+										{
+											Argument: "version",
+											Value:    "v2",
 										},
-										Upstream: "coffee-v2",
+									},
+									Action: &conf_v1alpha1.Action{
+										Pass: "coffee-v2",
 									},
 								},
-								DefaultUpstream: "coffee-v1",
+							},
+							Action: &conf_v1alpha1.Action{
+								Pass: "coffee-v1",
 							},
 						},
 					},
@@ -760,7 +776,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 		Maps: []version2.Map{
 			{
 				Source:   "$http_x_version",
-				Variable: "$vs_default_cafe_rules_0_match_0_cond_0",
+				Variable: "$vs_default_cafe_matches_0_match_0_cond_0",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"v2"`,
@@ -773,22 +789,22 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 				},
 			},
 			{
-				Source:   "$vs_default_cafe_rules_0_match_0_cond_0",
-				Variable: "$vs_default_cafe_rules_0",
+				Source:   "$vs_default_cafe_matches_0_match_0_cond_0",
+				Variable: "$vs_default_cafe_matches_0",
 				Parameters: []version2.Parameter{
 					{
 						Value:  "~^1",
-						Result: "@rules_0_match_0",
+						Result: "@matches_0_match_0",
 					},
 					{
 						Value:  "default",
-						Result: "@rules_0_default",
+						Result: "@matches_0_default",
 					},
 				},
 			},
 			{
 				Source:   "$arg_version",
-				Variable: "$vs_default_cafe_rules_1_match_0_cond_0",
+				Variable: "$vs_default_cafe_matches_1_match_0_cond_0",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"v2"`,
@@ -801,16 +817,16 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 				},
 			},
 			{
-				Source:   "$vs_default_cafe_rules_1_match_0_cond_0",
-				Variable: "$vs_default_cafe_rules_1",
+				Source:   "$vs_default_cafe_matches_1_match_0_cond_0",
+				Variable: "$vs_default_cafe_matches_1",
 				Parameters: []version2.Parameter{
 					{
 						Value:  "~^1",
-						Result: "@rules_1_match_0",
+						Result: "@matches_1_match_0",
 					},
 					{
 						Value:  "default",
-						Result: "@rules_1_default",
+						Result: "@matches_1_default",
 					},
 				},
 			},
@@ -821,37 +837,37 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/tea",
-					Destination: "$vs_default_cafe_rules_0",
+					Destination: "$vs_default_cafe_matches_0",
 				},
 				{
 					Path:        "/coffee",
-					Destination: "$vs_default_cafe_rules_1",
+					Destination: "$vs_default_cafe_matches_1",
 				},
 			},
 			Locations: []version2.Location{
 				{
-					Path:                     "@rules_0_match_0",
+					Path:                     "@matches_0_match_0",
 					ProxyPass:                "http://vs_default_cafe_tea-v2",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 				},
 				{
-					Path:                     "@rules_0_default",
+					Path:                     "@matches_0_default",
 					ProxyPass:                "http://vs_default_cafe_tea-v1",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 				},
 				{
-					Path:                     "@rules_1_match_0",
+					Path:                     "@matches_1_match_0",
 					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v2",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 				},
 				{
-					Path:                     "@rules_1_default",
+					Path:                     "@matches_1_default",
 					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v1",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
@@ -1240,16 +1256,20 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 				},
 				Routes: []conf_v1alpha1.Route{
 					{
-						Path:     "/tea",
-						Upstream: "tea",
+						Path: "/tea",
+						Action: &conf_v1alpha1.Action{
+							Pass: "tea",
+						},
 					},
 					{
 						Path:  "/coffee",
 						Route: "default/coffee",
 					},
 					{
-						Path:     "/external",
-						Upstream: "external",
+						Path: "/external",
+						Action: &conf_v1alpha1.Action{
+							Pass: "external",
+						},
 					},
 				},
 			},
@@ -1298,12 +1318,16 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 					},
 					Subroutes: []conf_v1alpha1.Route{
 						{
-							Path:     "/coffee",
-							Upstream: "coffee",
+							Path: "/coffee",
+							Action: &conf_v1alpha1.Action{
+								Pass: "coffee",
+							},
 						},
 						{
-							Path:     "/coffee/sub",
-							Upstream: "subselector-test",
+							Path: "/coffee/sub",
+							Action: &conf_v1alpha1.Action{
+								Pass: "subselector-test",
+							},
 						},
 					},
 				},
@@ -1392,17 +1416,89 @@ func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
 	}
 }
 
-func TestGenerateSplitRouteConfig(t *testing.T) {
+func TestGenerateSplits(t *testing.T) {
+	splits := []conf_v1alpha1.Split{
+		{
+			Weight: 90,
+			Action: &conf_v1alpha1.Action{
+				Pass: "coffee-v1",
+			},
+		},
+		{
+			Weight: 10,
+			Action: &conf_v1alpha1.Action{
+				Pass: "coffee-v2",
+			},
+		},
+	}
+
+	virtualServer := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
+	}
+	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
+	variableNamer := newVariableNamer(&virtualServer)
+	scIndex := 1
+	cfgParams := ConfigParams{}
+	crUpstreams := make(map[string]conf_v1alpha1.Upstream)
+
+	expectedSplitClient := version2.SplitClient{
+		Source:   "$request_id",
+		Variable: "$vs_default_cafe_splits_1",
+		Distributions: []version2.Distribution{
+			{
+				Weight: "90%",
+				Value:  "@splits_1_split_0",
+			},
+			{
+				Weight: "10%",
+				Value:  "@splits_1_split_1",
+			},
+		},
+	}
+	expectedLocations := []version2.Location{
+		{
+			Path:                     "@splits_1_split_0",
+			ProxyPass:                "http://vs_default_cafe_coffee-v1",
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+		},
+		{
+			Path:                     "@splits_1_split_1",
+			ProxyPass:                "http://vs_default_cafe_coffee-v2",
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+		},
+	}
+
+	resultSplitClient, resultLocations := generateSplits(splits, upstreamNamer, crUpstreams, variableNamer, scIndex, &cfgParams)
+	if !reflect.DeepEqual(resultSplitClient, expectedSplitClient) {
+		t.Errorf("generateSplits() returned %v but expected %v", resultSplitClient, expectedSplitClient)
+	}
+	if !reflect.DeepEqual(resultLocations, expectedLocations) {
+		t.Errorf("generateSplits() returned %v but expected %v", resultLocations, expectedLocations)
+	}
+}
+
+func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	route := conf_v1alpha1.Route{
 		Path: "/",
 		Splits: []conf_v1alpha1.Split{
 			{
-				Weight:   90,
-				Upstream: "coffee-v1",
+				Weight: 90,
+				Action: &conf_v1alpha1.Action{
+					Pass: "coffee-v1",
+				},
 			},
 			{
-				Weight:   10,
-				Upstream: "coffee-v2",
+				Weight: 10,
+				Action: &conf_v1alpha1.Action{
+					Pass: "coffee-v2",
+				},
 			},
 		},
 	}
@@ -1416,18 +1512,20 @@ func TestGenerateSplitRouteConfig(t *testing.T) {
 	variableNamer := newVariableNamer(&virtualServer)
 	index := 1
 
-	expected := splitRouteCfg{
-		SplitClient: version2.SplitClient{
-			Source:   "$request_id",
-			Variable: "$vs_default_cafe_splits_1",
-			Distributions: []version2.Distribution{
-				{
-					Weight: "90%",
-					Value:  "@splits_1_split_0",
-				},
-				{
-					Weight: "10%",
-					Value:  "@splits_1_split_1",
+	expected := routingCfg{
+		SplitClients: []version2.SplitClient{
+			{
+				Source:   "$request_id",
+				Variable: "$vs_default_cafe_splits_1",
+				Distributions: []version2.Distribution{
+					{
+						Weight: "90%",
+						Value:  "@splits_1_split_0",
+					},
+					{
+						Weight: "10%",
+						Value:  "@splits_1_split_1",
+					},
 				},
 			},
 		},
@@ -1455,51 +1553,76 @@ func TestGenerateSplitRouteConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateSplitRouteConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
+	result := generateDefaultSplitsConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateSplitRouteConfig() returned %v but expected %v", result, expected)
+		t.Errorf("generateDefaultSplitsConfig() returned %v but expected %v", result, expected)
 	}
 }
 
-func TestGenerateRulesRouteConfig(t *testing.T) {
+func TestGenerateMatchesConfig(t *testing.T) {
 	route := conf_v1alpha1.Route{
 		Path: "/",
-		Rules: &conf_v1alpha1.Rules{
-			Conditions: []conf_v1alpha1.Condition{
-				{
-					Header: "x-version",
+		Matches: []conf_v1alpha1.Match{
+			{
+				Conditions: []conf_v1alpha1.Condition{
+					{
+						Header: "x-version",
+						Value:  "v1",
+					},
+					{
+						Cookie: "user",
+						Value:  "john",
+					},
+					{
+						Argument: "answer",
+						Value:    "yes",
+					},
+					{
+						Variable: "$request_method",
+						Value:    "GET",
+					},
 				},
-				{
-					Cookie: "user",
-				},
-				{
-					Argument: "answer",
-				},
-				{
-					Variable: "$request_method",
+				Action: &conf_v1alpha1.Action{
+					Pass: "coffee-v1",
 				},
 			},
-			Matches: []conf_v1alpha1.Match{
-				{
-					Values: []string{
-						"v1",
-						"john",
-						"yes",
-						"GET",
+			{
+				Conditions: []conf_v1alpha1.Condition{
+					{
+						Header: "x-version",
+						Value:  "v2",
 					},
-					Upstream: "coffee-v1",
+					{
+						Cookie: "user",
+						Value:  "paul",
+					},
+					{
+						Argument: "answer",
+						Value:    "no",
+					},
+					{
+						Variable: "$request_method",
+						Value:    "POST",
+					},
 				},
-				{
-					Values: []string{
-						"v2",
-						"paul",
-						"no",
-						"POST",
+				Splits: []conf_v1alpha1.Split{
+					{
+						Weight: 90,
+						Action: &conf_v1alpha1.Action{
+							Pass: "coffee-v1",
+						},
 					},
-					Upstream: "coffee-v2",
+					{
+						Weight: 10,
+						Action: &conf_v1alpha1.Action{
+							Pass: "coffee-v2",
+						},
+					},
 				},
 			},
-			DefaultUpstream: "tea",
+		},
+		Action: &conf_v1alpha1.Action{
+			Pass: "tea",
 		},
 	}
 	virtualServer := conf_v1alpha1.VirtualServer{
@@ -1511,16 +1634,17 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
 	variableNamer := newVariableNamer(&virtualServer)
 	index := 1
+	scIndex := 2
 
-	expected := rulesRouteCfg{
+	expected := routingCfg{
 		Maps: []version2.Map{
 			{
 				Source:   "$http_x_version",
-				Variable: "$vs_default_cafe_rules_1_match_0_cond_0",
+				Variable: "$vs_default_cafe_matches_1_match_0_cond_0",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"v1"`,
-						Result: "$vs_default_cafe_rules_1_match_0_cond_1",
+						Result: "$vs_default_cafe_matches_1_match_0_cond_1",
 					},
 					{
 						Value:  "default",
@@ -1530,11 +1654,11 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 			},
 			{
 				Source:   "$cookie_user",
-				Variable: "$vs_default_cafe_rules_1_match_0_cond_1",
+				Variable: "$vs_default_cafe_matches_1_match_0_cond_1",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"john"`,
-						Result: "$vs_default_cafe_rules_1_match_0_cond_2",
+						Result: "$vs_default_cafe_matches_1_match_0_cond_2",
 					},
 					{
 						Value:  "default",
@@ -1544,11 +1668,11 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 			},
 			{
 				Source:   "$arg_answer",
-				Variable: "$vs_default_cafe_rules_1_match_0_cond_2",
+				Variable: "$vs_default_cafe_matches_1_match_0_cond_2",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"yes"`,
-						Result: "$vs_default_cafe_rules_1_match_0_cond_3",
+						Result: "$vs_default_cafe_matches_1_match_0_cond_3",
 					},
 					{
 						Value:  "default",
@@ -1558,7 +1682,7 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 			},
 			{
 				Source:   "$request_method",
-				Variable: "$vs_default_cafe_rules_1_match_0_cond_3",
+				Variable: "$vs_default_cafe_matches_1_match_0_cond_3",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"GET"`,
@@ -1572,11 +1696,11 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 			},
 			{
 				Source:   "$http_x_version",
-				Variable: "$vs_default_cafe_rules_1_match_1_cond_0",
+				Variable: "$vs_default_cafe_matches_1_match_1_cond_0",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"v2"`,
-						Result: "$vs_default_cafe_rules_1_match_1_cond_1",
+						Result: "$vs_default_cafe_matches_1_match_1_cond_1",
 					},
 					{
 						Value:  "default",
@@ -1586,11 +1710,11 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 			},
 			{
 				Source:   "$cookie_user",
-				Variable: "$vs_default_cafe_rules_1_match_1_cond_1",
+				Variable: "$vs_default_cafe_matches_1_match_1_cond_1",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"paul"`,
-						Result: "$vs_default_cafe_rules_1_match_1_cond_2",
+						Result: "$vs_default_cafe_matches_1_match_1_cond_2",
 					},
 					{
 						Value:  "default",
@@ -1600,11 +1724,11 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 			},
 			{
 				Source:   "$arg_answer",
-				Variable: "$vs_default_cafe_rules_1_match_1_cond_2",
+				Variable: "$vs_default_cafe_matches_1_match_1_cond_2",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"no"`,
-						Result: "$vs_default_cafe_rules_1_match_1_cond_3",
+						Result: "$vs_default_cafe_matches_1_match_1_cond_3",
 					},
 					{
 						Value:  "default",
@@ -1614,7 +1738,7 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 			},
 			{
 				Source:   "$request_method",
-				Variable: "$vs_default_cafe_rules_1_match_1_cond_3",
+				Variable: "$vs_default_cafe_matches_1_match_1_cond_3",
 				Parameters: []version2.Parameter{
 					{
 						Value:  `"POST"`,
@@ -1627,41 +1751,48 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 				},
 			},
 			{
-				Source:   "$vs_default_cafe_rules_1_match_0_cond_0$vs_default_cafe_rules_1_match_1_cond_0",
-				Variable: "$vs_default_cafe_rules_1",
+				Source:   "$vs_default_cafe_matches_1_match_0_cond_0$vs_default_cafe_matches_1_match_1_cond_0",
+				Variable: "$vs_default_cafe_matches_1",
 				Parameters: []version2.Parameter{
 					{
 						Value:  "~^1",
-						Result: "@rules_1_match_0",
+						Result: "@matches_1_match_0",
 					},
 					{
 						Value:  "~^01",
-						Result: "@rules_1_match_1",
+						Result: "$vs_default_cafe_splits_2",
 					},
 					{
 						Value:  "default",
-						Result: "@rules_1_default",
+						Result: "@matches_1_default",
 					},
 				},
 			},
 		},
 		Locations: []version2.Location{
 			{
-				Path:                     "@rules_1_match_0",
+				Path:                     "@matches_1_match_0",
 				ProxyPass:                "http://vs_default_cafe_coffee-v1",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
 			},
 			{
-				Path:                     "@rules_1_match_1",
+				Path:                     "@splits_2_split_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				ProxyNextUpstream:        "error timeout",
+				ProxyNextUpstreamTimeout: "0s",
+				ProxyNextUpstreamTries:   0,
+			},
+			{
+				Path:                     "@splits_2_split_1",
 				ProxyPass:                "http://vs_default_cafe_coffee-v2",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
 			},
 			{
-				Path:                     "@rules_1_default",
+				Path:                     "@matches_1_default",
 				ProxyPass:                "http://vs_default_cafe_tea",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
@@ -1670,19 +1801,261 @@ func TestGenerateRulesRouteConfig(t *testing.T) {
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
 			Path:        "/",
-			Destination: "$vs_default_cafe_rules_1",
+			Destination: "$vs_default_cafe_matches_1",
+		},
+		SplitClients: []version2.SplitClient{
+			{
+				Source:   "$request_id",
+				Variable: "$vs_default_cafe_splits_2",
+				Distributions: []version2.Distribution{
+					{
+						Weight: "90%",
+						Value:  "@splits_2_split_0",
+					},
+					{
+						Weight: "10%",
+						Value:  "@splits_2_split_1",
+					},
+				},
+			},
 		},
 	}
 
 	cfgParams := ConfigParams{}
 
-	result := generateRulesRouteConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
+	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, scIndex, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateRulesRouteConfig() returned \n%v but expected \n%v", result, expected)
+		t.Errorf("generateMatchesConfig() returned \n%v but expected \n%v", result, expected)
 	}
 }
 
-func TestGenerateValueForRulesRouteMap(t *testing.T) {
+func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
+	route := conf_v1alpha1.Route{
+		Path: "/",
+		Matches: []conf_v1alpha1.Match{
+			{
+				Conditions: []conf_v1alpha1.Condition{
+					{
+						Header: "x-version",
+						Value:  "v1",
+					},
+				},
+				Splits: []conf_v1alpha1.Split{
+					{
+						Weight: 30,
+						Action: &conf_v1alpha1.Action{
+							Pass: "coffee-v1",
+						},
+					},
+					{
+						Weight: 70,
+						Action: &conf_v1alpha1.Action{
+							Pass: "coffee-v2",
+						},
+					},
+				},
+			},
+			{
+				Conditions: []conf_v1alpha1.Condition{
+					{
+						Header: "x-version",
+						Value:  "v2",
+					},
+				},
+				Splits: []conf_v1alpha1.Split{
+					{
+						Weight: 90,
+						Action: &conf_v1alpha1.Action{
+							Pass: "coffee-v2",
+						},
+					},
+					{
+						Weight: 10,
+						Action: &conf_v1alpha1.Action{
+							Pass: "coffee-v1",
+						},
+					},
+				},
+			},
+		},
+		Splits: []conf_v1alpha1.Split{
+			{
+				Weight: 99,
+				Action: &conf_v1alpha1.Action{
+					Pass: "coffee-v1",
+				},
+			},
+			{
+				Weight: 1,
+				Action: &conf_v1alpha1.Action{
+					Pass: "coffee-v2",
+				},
+			},
+		},
+	}
+	virtualServer := conf_v1alpha1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "cafe",
+			Namespace: "default",
+		},
+	}
+	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
+	variableNamer := newVariableNamer(&virtualServer)
+	index := 1
+	scIndex := 2
+
+	expected := routingCfg{
+		Maps: []version2.Map{
+			{
+				Source:   "$http_x_version",
+				Variable: "$vs_default_cafe_matches_1_match_0_cond_0",
+				Parameters: []version2.Parameter{
+					{
+						Value:  `"v1"`,
+						Result: "1",
+					},
+					{
+						Value:  "default",
+						Result: "0",
+					},
+				},
+			},
+			{
+				Source:   "$http_x_version",
+				Variable: "$vs_default_cafe_matches_1_match_1_cond_0",
+				Parameters: []version2.Parameter{
+					{
+						Value:  `"v2"`,
+						Result: "1",
+					},
+					{
+						Value:  "default",
+						Result: "0",
+					},
+				},
+			},
+			{
+				Source:   "$vs_default_cafe_matches_1_match_0_cond_0$vs_default_cafe_matches_1_match_1_cond_0",
+				Variable: "$vs_default_cafe_matches_1",
+				Parameters: []version2.Parameter{
+					{
+						Value:  "~^1",
+						Result: "$vs_default_cafe_splits_2",
+					},
+					{
+						Value:  "~^01",
+						Result: "$vs_default_cafe_splits_3",
+					},
+					{
+						Value:  "default",
+						Result: "$vs_default_cafe_splits_4",
+					},
+				},
+			},
+		},
+		Locations: []version2.Location{
+			{
+				Path:                     "@splits_2_split_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				ProxyNextUpstream:        "error timeout",
+				ProxyNextUpstreamTimeout: "0s",
+				ProxyNextUpstreamTries:   0,
+			},
+			{
+				Path:                     "@splits_2_split_1",
+				ProxyPass:                "http://vs_default_cafe_coffee-v2",
+				ProxyNextUpstream:        "error timeout",
+				ProxyNextUpstreamTimeout: "0s",
+				ProxyNextUpstreamTries:   0,
+			},
+			{
+				Path:                     "@splits_3_split_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v2",
+				ProxyNextUpstream:        "error timeout",
+				ProxyNextUpstreamTimeout: "0s",
+				ProxyNextUpstreamTries:   0,
+			},
+			{
+				Path:                     "@splits_3_split_1",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				ProxyNextUpstream:        "error timeout",
+				ProxyNextUpstreamTimeout: "0s",
+				ProxyNextUpstreamTries:   0,
+			},
+			{
+				Path:                     "@splits_4_split_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				ProxyNextUpstream:        "error timeout",
+				ProxyNextUpstreamTimeout: "0s",
+				ProxyNextUpstreamTries:   0,
+			},
+			{
+				Path:                     "@splits_4_split_1",
+				ProxyPass:                "http://vs_default_cafe_coffee-v2",
+				ProxyNextUpstream:        "error timeout",
+				ProxyNextUpstreamTimeout: "0s",
+				ProxyNextUpstreamTries:   0,
+			},
+		},
+		InternalRedirectLocation: version2.InternalRedirectLocation{
+			Path:        "/",
+			Destination: "$vs_default_cafe_matches_1",
+		},
+		SplitClients: []version2.SplitClient{
+			{
+				Source:   "$request_id",
+				Variable: "$vs_default_cafe_splits_2",
+				Distributions: []version2.Distribution{
+					{
+						Weight: "30%",
+						Value:  "@splits_2_split_0",
+					},
+					{
+						Weight: "70%",
+						Value:  "@splits_2_split_1",
+					},
+				},
+			},
+			{
+				Source:   "$request_id",
+				Variable: "$vs_default_cafe_splits_3",
+				Distributions: []version2.Distribution{
+					{
+						Weight: "90%",
+						Value:  "@splits_3_split_0",
+					},
+					{
+						Weight: "10%",
+						Value:  "@splits_3_split_1",
+					},
+				},
+			},
+			{
+				Source:   "$request_id",
+				Variable: "$vs_default_cafe_splits_4",
+				Distributions: []version2.Distribution{
+					{
+						Weight: "99%",
+						Value:  "@splits_4_split_0",
+					},
+					{
+						Weight: "1%",
+						Value:  "@splits_4_split_1",
+					},
+				},
+			},
+		},
+	}
+
+	cfgParams := ConfigParams{}
+
+	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, scIndex, &cfgParams)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("generateMatchesConfig() returned \n%v but expected \n%v", result, expected)
+	}
+}
+
+func TestGenerateValueForMatchesRouteMap(t *testing.T) {
 	tests := []struct {
 		input              string
 		expectedValue      string
@@ -1736,17 +2109,17 @@ func TestGenerateValueForRulesRouteMap(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		resultValue, resultIsNegative := generateValueForRulesRouteMap(test.input)
+		resultValue, resultIsNegative := generateValueForMatchesRouteMap(test.input)
 		if resultValue != test.expectedValue {
-			t.Errorf("generateValueForRulesRouteMap(%q) returned %q but expected %q as the value", test.input, resultValue, test.expectedValue)
+			t.Errorf("generateValueForMatchesRouteMap(%q) returned %q but expected %q as the value", test.input, resultValue, test.expectedValue)
 		}
 		if resultIsNegative != test.expectedIsNegative {
-			t.Errorf("generateValueForRulesRouteMap(%q) returned %v but expected %v as the isNegative", test.input, resultIsNegative, test.expectedIsNegative)
+			t.Errorf("generateValueForMatchesRouteMap(%q) returned %v but expected %v as the isNegative", test.input, resultIsNegative, test.expectedIsNegative)
 		}
 	}
 }
 
-func TestGenerateParametersForRulesRouteMap(t *testing.T) {
+func TestGenerateParametersForMatchesRouteMap(t *testing.T) {
 	tests := []struct {
 		inputMatchedValue     string
 		inputSuccessfulResult string
@@ -1783,14 +2156,14 @@ func TestGenerateParametersForRulesRouteMap(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateParametersForRulesRouteMap(test.inputMatchedValue, test.inputSuccessfulResult)
+		result := generateParametersForMatchesRouteMap(test.inputMatchedValue, test.inputSuccessfulResult)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateParametersForRulesRouteMap(%q, %q) returned %v but expected %v", test.inputMatchedValue, test.inputSuccessfulResult, result, test.expected)
+			t.Errorf("generateParametersForMatchesRouteMap(%q, %q) returned %v but expected %v", test.inputMatchedValue, test.inputSuccessfulResult, result, test.expected)
 		}
 	}
 }
 
-func TestGetNameForSourceForRulesRouteMapFromCondition(t *testing.T) {
+func TestGetNameForSourceForMatchesRouteMapFromCondition(t *testing.T) {
 	tests := []struct {
 		input    conf_v1alpha1.Condition
 		expected string
@@ -1822,9 +2195,9 @@ func TestGetNameForSourceForRulesRouteMapFromCondition(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := getNameForSourceForRulesRouteMapFromCondition(test.input)
+		result := getNameForSourceForMatchesRouteMapFromCondition(test.input)
 		if result != test.expected {
-			t.Errorf("getNameForSourceForRulesRouteMapFromCondition() returned %q but expected %q for input %v", result, test.expected, test.input)
+			t.Errorf("getNameForSourceForMatchesRouteMapFromCondition() returned %q but expected %q for input %v", result, test.expected, test.input)
 		}
 	}
 }

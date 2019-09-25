@@ -98,24 +98,22 @@ type SessionCookie struct {
 
 // Route defines a route.
 type Route struct {
-	Path     string  `json:"path"`
-	Upstream string  `json:"upstream"`
-	Splits   []Split `json:"splits"`
-	Rules    *Rules  `json:"rules"`
-	Route    string  `json:"route"`
+	Path    string  `json:"path"`
+	Route   string  `json:"route"`
+	Action  *Action `json:"action"`
+	Splits  []Split `json:"splits"`
+	Matches []Match `json:"matches"`
+}
+
+// Action defines an action.
+type Action struct {
+	Pass string `json:"pass"`
 }
 
 // Split defines a split.
 type Split struct {
-	Weight   int    `json:"weight"`
-	Upstream string `json:"upstream"`
-}
-
-// Rules defines rules.
-type Rules struct {
-	Conditions      []Condition `json:"conditions"`
-	Matches         []Match     `json:"matches"`
-	DefaultUpstream string      `json:"defaultUpstream"`
+	Weight int     `json:"weight"`
+	Action *Action `json:"action"`
 }
 
 // Condition defines a condition in a MatchRule.
@@ -124,12 +122,14 @@ type Condition struct {
 	Cookie   string `json:"cookie"`
 	Argument string `json:"argument"`
 	Variable string `json:"variable"`
+	Value    string `json:"value"`
 }
 
-// Match defines a match in a MatchRule.
+// Match defines a match.
 type Match struct {
-	Values   []string `json:"values"`
-	Upstream string   `json:"upstream"`
+	Conditions []Condition `json:"conditions"`
+	Action     *Action     `json:"action"`
+	Splits     []Split     `json:"splits"`
 }
 
 // TLS defines TLS configuration for a VirtualServer.

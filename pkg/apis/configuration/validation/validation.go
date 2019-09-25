@@ -513,8 +513,8 @@ func validateRoute(route v1alpha1.Route, fieldPath *field.Path, upstreamNames se
 
 	fieldCount := 0
 
-	if route.Upstream != "" {
-		allErrs = append(allErrs, validateReferencedUpstream(route.Upstream, fieldPath.Child("upstream"), upstreamNames)...)
+	if route.Action != nil {
+		allErrs = append(allErrs, validateAction(route.Action, fieldPath.Child("action"), upstreamNames)...)
 		fieldCount++
 	}
 
@@ -523,9 +523,11 @@ func validateRoute(route v1alpha1.Route, fieldPath *field.Path, upstreamNames se
 		fieldCount++
 	}
 
-	if route.Rules != nil {
-		allErrs = append(allErrs, validateRules(route.Rules, fieldPath.Child("rules"), upstreamNames)...)
-		fieldCount++
+	// Matches are optional. that's why we don't do fieldCount++
+	if len(route.Matches) > 0 {
+		for i, m := range route.Matches {
+			allErrs = append(allErrs, validateMatch(m, fieldPath.Child("matches").Index(i), upstreamNames)...)
+		}
 	}
 
 	if route.Route != "" {
@@ -538,13 +540,25 @@ func validateRoute(route v1alpha1.Route, fieldPath *field.Path, upstreamNames se
 	}
 
 	if fieldCount != 1 {
-		msg := "must specify exactly one of: `upstream`, `splits`, `rules` or `route`"
-		if isRouteFieldForbidden {
-			msg = "must specify exactly one of: `upstream`, `splits` or `rules`"
+		msg := "must specify exactly one of `action`, `splits` or `route`"
+		if isRouteFieldForbidden || len(route.Matches) > 0 {
+			msg = "must specify exactly one of `action` or `splits`"
 		}
 
 		allErrs = append(allErrs, field.Invalid(fieldPath, "", msg))
 	}
+
+	return allErrs
+}
+
+func validateAction(action *v1alpha1.Action, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if action.Pass == "" {
+		return append(allErrs, field.Required(fieldPath.Child("pass"), ""))
+	}
+
+	allErrs = append(allErrs, validateReferencedUpstream(action.Pass, fieldPath.Child("pass"), upstreamNames)...)
 
 	return allErrs
 }
@@ -588,7 +602,11 @@ func validateSplits(splits []v1alpha1.Split, fieldPath *field.Path, upstreamName
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("weight"), s.Weight, msg))
 		}
 
-		allErrs = append(allErrs, validateReferencedUpstream(s.Upstream, idxPath.Child("upstream"), upstreamNames)...)
+		if s.Action == nil {
+			allErrs = append(allErrs, field.Required(idxPath.Child("action"), ""))
+		} else {
+			allErrs = append(allErrs, validateAction(s.Action, idxPath.Child("action"), upstreamNames)...)
+		}
 
 		totalWeight += s.Weight
 	}
@@ -621,26 +639,32 @@ func validatePath(path string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateRules(rules *v1alpha1.Rules, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+func validateMatch(match v1alpha1.Match, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if len(rules.Conditions) == 0 {
+	if len(match.Conditions) == 0 {
 		allErrs = append(allErrs, field.Required(fieldPath.Child("conditions"), "must specify at least one condition"))
 	} else {
-		for i, c := range rules.Conditions {
+		for i, c := range match.Conditions {
 			allErrs = append(allErrs, validateCondition(c, fieldPath.Child("conditions").Index(i))...)
 		}
 	}
 
-	if len(rules.Matches) == 0 {
-		allErrs = append(allErrs, field.Required(fieldPath.Child("matches"), "must specify at least one match"))
-	} else {
-		for i, m := range rules.Matches {
-			allErrs = append(allErrs, validateMatch(m, fieldPath.Child("matches").Index(i), len(rules.Conditions), upstreamNames)...)
-		}
+	fieldCount := 0
+
+	if match.Action != nil {
+		allErrs = append(allErrs, validateAction(match.Action, fieldPath.Child("action"), upstreamNames)...)
+		fieldCount++
 	}
 
-	allErrs = append(allErrs, validateReferencedUpstream(rules.DefaultUpstream, fieldPath.Child("defaultUpstream"), upstreamNames)...)
+	if len(match.Splits) > 0 {
+		allErrs = append(allErrs, validateSplits(match.Splits, fieldPath.Child("splits"), upstreamNames)...)
+		fieldCount++
+	}
+
+	if fieldCount != 1 {
+		allErrs = append(allErrs, field.Invalid(fieldPath, "", "must specify exactly one of `action` or `splits`"))
+	}
 
 	return allErrs
 }
@@ -678,6 +702,10 @@ func validateCondition(condition v1alpha1.Condition, fieldPath *field.Path) fiel
 
 	if fieldCount != 1 {
 		allErrs = append(allErrs, field.Invalid(fieldPath, "", "must specify exactly one of: `header`, `cookie`, `argument` or `variable`"))
+	}
+
+	for _, msg := range isValidMatchValue(condition.Value) {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("value"), condition.Value, msg))
 	}
 
 	return allErrs
@@ -733,25 +761,6 @@ func validateVariableName(name string, fieldPath *field.Path) field.ErrorList {
 	if _, exists := validVariableNames[name]; !exists {
 		return append(allErrs, field.Invalid(fieldPath, name, "is not allowed or is not an NGINX variable"))
 	}
-
-	return allErrs
-}
-
-func validateMatch(match v1alpha1.Match, fieldPath *field.Path, conditionsCount int, upstreamNames sets.String) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if len(match.Values) != conditionsCount {
-		msg := fmt.Sprintf("must specify %d values (same as the number of conditions)", conditionsCount)
-		allErrs = append(allErrs, field.Invalid(fieldPath.Child("values"), "", msg))
-	}
-
-	for i, v := range match.Values {
-		for _, msg := range isValidMatchValue(v) {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("values").Index(i), v, msg))
-		}
-	}
-
-	allErrs = append(allErrs, validateReferencedUpstream(match.Upstream, fieldPath.Child("upstream"), upstreamNames)...)
 
 	return allErrs
 }
