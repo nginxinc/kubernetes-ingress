@@ -369,6 +369,7 @@ func generateUpstream(upstreamName string, upstream conf_v1alpha1.Upstream, isEx
 
 	if isPlus {
 		ups.SlowStart = generateSlowStartForPlus(upstream, lbMethod)
+		ups.Queue = generateQueueForPlus(upstream.Queue, "60s")
 	}
 
 	return ups
@@ -761,5 +762,16 @@ func createUpstreamServersConfigForPlus(upstream version2.Upstream) nginx.Server
 		FailTimeout: upstream.FailTimeout,
 		MaxConns:    upstream.MaxConns,
 		SlowStart:   upstream.SlowStart,
+	}
+}
+
+func generateQueueForPlus(upstreamQueue *conf_v1alpha1.UpstreamQueue, defaultTimeout string) *version2.Queue {
+	if upstreamQueue == nil {
+		return nil
+	}
+
+	return &version2.Queue{
+		Size:    upstreamQueue.Size,
+		Timeout: generateString(upstreamQueue.Timeout, defaultTimeout),
 	}
 }

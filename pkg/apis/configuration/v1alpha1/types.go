@@ -46,6 +46,7 @@ type Upstream struct {
 	TLS                      UpstreamTLS      `json:"tls"`
 	HealthCheck              *HealthCheck     `json:"healthCheck"`
 	SlowStart                string           `json:"slow-start"`
+	Queue                    *UpstreamQueue   `json:"queue"`
 }
 
 // UpstreamBuffers defines Buffer Configuration for an Upstream
@@ -156,4 +157,10 @@ type VirtualServerRouteList struct {
 	metav1.ListMeta `json:"metadata"`
 
 	Items []VirtualServerRoute `json:"items"`
+}
+
+// UpstreamQueue defines Queue Configuration for an Upstream
+type UpstreamQueue struct {
+	Size    int    `json:"size"`
+	Timeout string `json:"timeout"`
 }

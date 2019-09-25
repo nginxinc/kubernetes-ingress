@@ -770,7 +770,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithRules(t *testing.T) {
 
 func TestGenerateUpstream(t *testing.T) {
 	name := "test-upstream"
-	upstream := conf_v1alpha1.Upstream{Service: name, Port: 80, SlowStart: "10s"}
+	upstream := conf_v1alpha1.Upstream{Service: name, Port: 80}
 	endpoints := []string{
 		"192.168.10.10:8080",
 	}
@@ -796,10 +796,9 @@ func TestGenerateUpstream(t *testing.T) {
 		LBMethod:         "random",
 		Keepalive:        21,
 		UpstreamZoneSize: "256k",
-		SlowStart:        "",
 	}
 
-	result := generateUpstream(name, upstream, false, endpoints, &cfgParams, true)
+	result := generateUpstream(name, upstream, false, endpoints, &cfgParams, false)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -2094,4 +2093,95 @@ func TestCreateEndpointsFromUpstream(t *testing.T) {
 	if !reflect.DeepEqual(endpoints, expected) {
 		t.Errorf("createEndpointsFromUpstream returned %v, but expected %v", endpoints, expected)
 	}
+}
+
+func TestGenerateUpstreamWithQueue(t *testing.T) {
+	serviceName := "test-queue"
+
+	tests := []struct {
+		name     string
+		upstream conf_v1alpha1.Upstream
+		isPlus   bool
+		expected version2.Upstream
+		msg      string
+	}{
+		{
+			name: "test-upstream-queue",
+			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, Queue: &conf_v1alpha1.UpstreamQueue{
+				Size:    10,
+				Timeout: "10s",
+			}},
+			isPlus: true,
+			expected: version2.Upstream{
+				Name: "test-upstream-queue",
+				Queue: &version2.Queue{
+					Size:    10,
+					Timeout: "10s",
+				},
+			},
+			msg: "upstream queue with size and timeout",
+		},
+		{
+			name:     "test-upstream-queue-with-default-timeout",
+			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, Queue: &conf_v1alpha1.UpstreamQueue{Size: 10, Timeout: ""}},
+			isPlus:   true,
+			expected: version2.Upstream{
+				Name: "test-upstream-queue-with-default-timeout",
+				Queue: &version2.Queue{
+					Size:    10,
+					Timeout: "60s",
+				},
+			},
+			msg: "upstream queue with only size",
+		},
+		{
+			name:     "test-upstream-queue-nil",
+			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, Queue: nil},
+			isPlus:   false,
+			expected: version2.Upstream{
+				Name: "test-upstream-queue-nil",
+			},
+			msg: "upstream queue with nil for OSS",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateUpstream(test.name, test.upstream, false, []string{}, &ConfigParams{}, test.isPlus)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
+		}
+	}
+
+}
+
+func TestGenerateQueueForPlus(t *testing.T) {
+	tests := []struct {
+		upstreamQueue *conf_v1alpha1.UpstreamQueue
+		expected      *version2.Queue
+		msg           string
+	}{
+		{
+			upstreamQueue: &conf_v1alpha1.UpstreamQueue{Size: 10, Timeout: "10s"},
+			expected:      &version2.Queue{Size: 10, Timeout: "10s"},
+			msg:           "upstream queue with size and timeout",
+		},
+		{
+			upstreamQueue: nil,
+			expected:      nil,
+			msg:           "upstream queue with nil",
+		},
+		{
+			upstreamQueue: &conf_v1alpha1.UpstreamQueue{Size: 10},
+			expected:      &version2.Queue{Size: 10, Timeout: "60s"},
+			msg:           "upstream queue with only size",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateQueueForPlus(test.upstreamQueue, "60s")
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateQueueForPlus() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
+		}
+	}
+
 }

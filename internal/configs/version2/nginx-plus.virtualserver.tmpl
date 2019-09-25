@@ -11,6 +11,10 @@ upstream {{ $u.Name }} {
     {{ if $u.Keepalive }}
     keepalive {{ $u.Keepalive }};
     {{ end }}
+
+    {{ if $u.Queue }}
+    queue {{ $u.Queue.Size }} timeout={{ $u.Queue.Timeout }};
+    {{ end }}
 }
 {{ end }}
 

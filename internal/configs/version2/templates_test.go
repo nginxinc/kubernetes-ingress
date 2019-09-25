@@ -21,6 +21,7 @@ var virtualServerCfg = VirtualServerConfig{
 			MaxConns:         31,
 			SlowStart:        "10s",
 			UpstreamZoneSize: "256k",
+			Queue:            &Queue{Size: 10, Timeout: "60s"},
 		},
 		{
 			Name: "coffee-v1",

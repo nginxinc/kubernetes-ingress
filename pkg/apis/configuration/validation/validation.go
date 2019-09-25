@@ -374,6 +374,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		allErrs = append(allErrs, validateBuffer(u.ProxyBuffers, idxPath.Child("buffers"))...)
 		allErrs = append(allErrs, validateSize(u.ProxyBufferSize, idxPath.Child("buffer-size"))...)
 		allErrs = append(allErrs, rejectPlusResourcesInOSS(u, idxPath, isPlus)...)
+		allErrs = append(allErrs, validateQueue(u.Queue, idxPath.Child("queue"), isPlus)...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))
@@ -811,6 +812,26 @@ func rejectPlusResourcesInOSS(upstream v1alpha1.Upstream, idxPath *field.Path, i
 
 	if upstream.SlowStart != "" {
 		allErrs = append(allErrs, field.Forbidden(idxPath.Child("slow-start"), "slow start is only supported in NGINX Plus"))
+	}
+
+	return allErrs
+}
+
+func validateQueue(queue *v1alpha1.UpstreamQueue, fieldPath *field.Path, isPlus bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if queue == nil {
+		return allErrs
+	}
+
+	if !isPlus {
+		allErrs = append(allErrs, field.Forbidden(fieldPath, "queue is only supported in NGINX Plus"))
+		return allErrs
+	}
+
+	allErrs = append(allErrs, validateTime(queue.Timeout, fieldPath.Child("timeout"))...)
+	if queue.Size <= 0 {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("size"), "must be positive"))
 	}
 
 	return allErrs

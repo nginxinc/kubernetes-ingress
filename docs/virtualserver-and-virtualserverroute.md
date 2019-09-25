@@ -20,6 +20,7 @@ This document is the reference documentation for the resources. To see additiona
     - [Upstream](#upstream)
     - [Upstream.Buffers](#upstreambuffers)
     - [Upstream.TLS](#upstreamtls)
+    - [Upstream.Queue](#upstreamqueue)
     - [Upstream.Healthcheck](#upstreamhealthcheck)
     - [Header](#header)
     - [Split](#split)
@@ -219,6 +220,7 @@ tls:
 | `tls` | The TLS configuration for the Upstream. | [`tls`](#UpstreamTLS) | No |
 | `healthCheck` | The health check configuration for the Upstream. See the [health_check](http://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [`healthcheck`](#UpstreamHealthcheck) | No |
 | `slow-start` | The slow start allows an upstream server to gradually recover its weight from 0 to its nominal value after it has been recovered or became available or when the server becomes available after a period of time it was considered unavailable. By default, the slow start is disabled. See the [slow_start](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#slow_start) parameter of the server directive. Note: The parameter cannot be used along with the `random`, `hash` or `ip_hash` load balancing methods and will be ignored. | `string` | No |
+| `queue` | Configures a queue for an upstream. A client request will be placed into the queue if an upstream server cannot be selected immediately while processing the request. By default, no queue is configured. Note: this feature is supported only in NGINX Plus.| [`queue`](#upstreamQueue) | No |
 | `buffering` | Enables buffering of responses from the upstream server. See the [proxy_buffering](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering) directive. The default is set in the `proxy-buffering` ConfigMap key. | `boolean` | No |
 | `buffers` | Configures the buffers used for reading a response from the upstream server for a single connection. | [`buffers`](#UpstreamBuffers) | No |
 | `buffer-size` | Sets the size of the buffer used for reading the first part of a response received from the upstream server. See the [proxy_buffer_size](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) directive. The default is set in the `proxy-buffer-size` ConfigMap key. | `string` | No |
@@ -242,6 +244,24 @@ See the [proxy_buffers](https://nginx.org/en/docs/http/ngx_http_proxy_module.htm
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
 | `enable` | Enables HTTPS for requests to upstream servers. The default is `False`, meaning that HTTP will be used. | `boolean` | No |
+
+### Upstream.Queue
+
+The queue field configures a queue. A client request will be placed into the queue if an upstream server cannot be selected immediately while processing the request:
+
+```yaml
+size: 10
+timeout: 60s
+```
+
+See [`queue`](http://nginx.org/en/docs/http/ngx_http_upstream_module.html#queue) directive for additional information.
+
+Note: This feature is supported only in NGINX Plus.
+
+| Field | Description | Type | Required |
+| ----- | ----------- | ---- | -------- |
+| `size` | The size of the queue. | `int` | Yes |
+| `timeout` | The timeout of the queue. A request cannot be queued for a period longer than the timeout. The default is `60s`. | `string` | No |
 
 ### Upstream.Healthcheck
 

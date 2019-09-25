@@ -21,6 +21,7 @@ type Upstream struct {
 	SlowStart        string
 	FailTimeout      string
 	UpstreamZoneSize string
+	Queue            *Queue
 }
 
 // UpstreamServer defines an upstream server.
@@ -126,4 +127,10 @@ type Parameter struct {
 type StatusMatch struct {
 	Name string
 	Code string
+}
+
+// Queue defines a queue in upstream.
+type Queue struct {
+	Size    int
+	Timeout string
 }
