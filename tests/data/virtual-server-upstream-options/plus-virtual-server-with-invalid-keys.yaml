@@ -24,6 +24,9 @@ spec:
           value: "$one"
       statusMatch: "invalid"
     slow-start: "-3s"
+    queue:
+      size: -100
+      timeout: "one"
   - name: backend1
     service: backend1-svc
     port: 80
@@ -43,6 +46,9 @@ spec:
           value: "`=1.±!@£$%^&*()_+{}[]'^&*"
       statusMatch: "invalid"
     slow-start: "1.5d"
+    queue:
+      size: 0
+      timeout: "hour"
   routes:
   - path: "/backend1"
     upstream: backend1

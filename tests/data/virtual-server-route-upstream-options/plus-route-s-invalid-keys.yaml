@@ -24,6 +24,9 @@ spec:
           value: "$one"
       statusMatch: "invalid"
     slow-start: " "
+    queue:
+      size: 0
+      timeout: "hour"
   subroutes:
   - path: "/backend2"
     upstream: backend2

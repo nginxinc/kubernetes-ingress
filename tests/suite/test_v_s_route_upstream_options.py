@@ -344,21 +344,23 @@ class TestVSRouteUpstreamOptionsValidation:
                          indirect=True)
 class TestOptionsSpecificForPlus:
     @pytest.mark.parametrize('options, expected_strings', [
-        ({"healthCheck": {"enable": True}, "slow-start": "3h"},
+        ({"lb-method": "least_conn", "healthCheck": {"enable": True}, "slow-start": "3h", "queue": {"size": 100}},
          ["health_check uri=/ port=80 interval=5s jitter=0s", "fails=1 passes=1;",
-          "slow_start=3h"]),
-        ({"healthCheck": {"enable": True, "path": "/health",
+          "slow_start=3h", "queue 100 timeout=60s;"]),
+        ({"lb-method": "least_conn",
+          "healthCheck": {"enable": True, "path": "/health",
                           "interval": "15s", "jitter": "3",
                           "fails": 2, "passes": 2, "port": 8080,
                           "tls": {"enable": True}, "statusMatch": "200",
                           "connect-timeout": "35s", "read-timeout": "45s", "send-timeout": "55s",
                           "headers": [{"name": "Host", "value": "virtual-server.example.com"}]},
-          "slow-start": "0s"},
+          "slow-start": "0s",
+          "queue": {"size": 1000, "timeout": "66s"}},
          ["health_check uri=/health port=8080 interval=15s jitter=3", "fails=2 passes=2 match=",
           "proxy_pass https://vs", "status 200;",
           "proxy_connect_timeout 35s;", "proxy_read_timeout 45s;", "proxy_send_timeout 55s;",
           'proxy_set_header Host "virtual-server.example.com";',
-          "slow_start=0s"])
+          "slow_start=0s", "queue 1000 timeout=66s;"])
     ])
     def test_config_and_events(self, kube_apis,
                                ingress_controller_prerequisites,
@@ -418,7 +420,8 @@ class TestOptionsSpecificForPlus:
             "upstreams[0].healthCheck.read-timeout", "upstreams[0].healthCheck.send-timeout",
             "upstreams[0].healthCheck.headers[0].name", "upstreams[0].healthCheck.headers[0].value",
             "upstreams[0].healthCheck.statusMatch",
-            "upstreams[0].slow-start"
+            "upstreams[0].slow-start",
+            "upstreams[0].queue.size", "upstreams[0].queue.timeout",
         ]
         invalid_fields_m = [
             "upstreams[0].healthCheck.path", "upstreams[0].healthCheck.interval", "upstreams[0].healthCheck.jitter",
@@ -428,13 +431,15 @@ class TestOptionsSpecificForPlus:
             "upstreams[0].healthCheck.headers[0].name", "upstreams[0].healthCheck.headers[0].value",
             "upstreams[0].healthCheck.statusMatch",
             "upstreams[0].slow-start",
+            "upstreams[0].queue.size", "upstreams[0].queue.timeout",
             "upstreams[1].healthCheck.path", "upstreams[1].healthCheck.interval", "upstreams[1].healthCheck.jitter",
             "upstreams[1].healthCheck.fails", "upstreams[1].healthCheck.passes",
             "upstreams[1].healthCheck.connect-timeout",
             "upstreams[1].healthCheck.read-timeout", "upstreams[1].healthCheck.send-timeout",
             "upstreams[1].healthCheck.headers[0].name", "upstreams[0].healthCheck.headers[0].value",
             "upstreams[1].healthCheck.statusMatch",
-            "upstreams[1].slow-start"
+            "upstreams[1].slow-start",
+            "upstreams[1].queue.size", "upstreams[1].queue.timeout"
         ]
         text_s = f"{v_s_route_setup.route_s.namespace}/{v_s_route_setup.route_s.name}"
         text_m = f"{v_s_route_setup.route_m.namespace}/{v_s_route_setup.route_m.name}"
