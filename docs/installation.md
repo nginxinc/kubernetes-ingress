@@ -193,3 +193,10 @@ Delete the `nginx-ingress` namespace to uninstall the Ingress controller along w
 $ kubectl delete namespace nginx-ingress
 ```
 
+**Note**: If RBAC is enabled on your cluster and you completed step 2, you will need to remove the ClusterRole and ClusterRoleBinding created in that step:
+
+```
+$ kubectl delete clusterrole nginx-ingress
+$ kubectl delete clusterrolebinding nginx-ingress
+```
+
