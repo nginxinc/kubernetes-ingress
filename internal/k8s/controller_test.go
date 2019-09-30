@@ -1518,86 +1518,56 @@ func TestFormatWarningsMessages(t *testing.T) {
 	}
 }
 
-func TestGetHealthyEndpointsBySubselectedPods(t *testing.T) {
-	type args struct {
-		targetPort int32
-		pods       []*v1.Pod
-		svcEps     v1.Endpoints
-	}
+func TestGetEndpointsBySubselectedPods(t *testing.T) {
 	tests := []struct {
-		name      string
-		args      args
-		wantEndps []string
+		desc        string
+		targetPort  int32
+		svcEps      v1.Endpoints
+		expectedEps []string
 	}{
 		{
-			name: "find one endpoint",
-			args: args{
-				targetPort: 80,
-				pods: []*v1.Pod{
-					{
-						Status: v1.PodStatus{
-							PodIP: "1.2.3.4",
-						},
-					},
-				},
-				svcEps: v1.Endpoints{
-					Subsets: []v1.EndpointSubset{
-						{
-							Addresses: []v1.EndpointAddress{
-								{
-									IP:       "1.2.3.4",
-									Hostname: "asdf.com",
-								},
-							},
-							Ports: []v1.EndpointPort{
-								{
-									Port: 80,
-								},
-							},
-						},
-					},
-				},
-			},
-			wantEndps: []string{
-				"1.2.3.4:80",
-			},
+			desc:        "find one endpoint",
+			targetPort:  80,
+			expectedEps: []string{"1.2.3.4:80"},
 		},
 		{
-			name: "targetPort mismatch",
-			args: args{
-				targetPort: 21,
-				pods: []*v1.Pod{
+			desc:        "targetPort mismatch",
+			targetPort:  21,
+			expectedEps: nil,
+		},
+	}
+
+	pods := []*v1.Pod{
+		{
+			Status: v1.PodStatus{
+				PodIP: "1.2.3.4",
+			},
+		},
+	}
+
+	svcEps := v1.Endpoints{
+		Subsets: []v1.EndpointSubset{
+			{
+				Addresses: []v1.EndpointAddress{
 					{
-						Status: v1.PodStatus{
-							PodIP: "1.2.3.4",
-						},
+						IP:       "1.2.3.4",
+						Hostname: "asdf.com",
 					},
 				},
-				svcEps: v1.Endpoints{
-					Subsets: []v1.EndpointSubset{
-						{
-							Addresses: []v1.EndpointAddress{
-								{
-									IP:       "1.2.3.4",
-									Hostname: "asdf.com",
-								},
-							},
-							Ports: []v1.EndpointPort{
-								{
-									Port: 80,
-								},
-							},
-						},
+				Ports: []v1.EndpointPort{
+					{
+						Port: 80,
 					},
 				},
 			},
-			wantEndps: nil,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if gotEndps := getEndpointsBySubselectedPods(tt.args.targetPort, tt.args.pods, tt.args.svcEps); !reflect.DeepEqual(gotEndps, tt.wantEndps) {
-				t.Errorf("getEndpointsBySubselectedPods() = %v, want %v", gotEndps, tt.wantEndps)
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			gotEndps := getEndpointsBySubselectedPods(test.targetPort, pods, svcEps)
+			if !reflect.DeepEqual(gotEndps, test.expectedEps) {
+				t.Errorf("getEndpointsBySubselectedPods() = %v, want %v", gotEndps, test.expectedEps)
 			}
 		})
 	}

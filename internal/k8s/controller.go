@@ -1642,19 +1642,16 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 			var err error
 			if len(u.Subselector) > 0 {
 				endps, err = lbc.getEndpointsForSubselector(vsr.Namespace, u)
-				if err != nil {
-					glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-				}
 			} else {
 				var external bool
 				endps, external, err = lbc.getEndpointsForUpstream(vsr.Namespace, u)
-				if err != nil {
-					glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-				}
 
 				if err == nil && external && lbc.isNginxPlus {
 					externalNameSvcs[configs.GenerateExternalNameSvcKey(vsr.Namespace, u.Service)] = true
 				}
+			}
+			if err != nil {
+				glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
 			}
 			endpoints[endpointsKey] = endps
 		}
@@ -1698,7 +1695,7 @@ func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, 
 		if port.Port == int32(upstream.Port) {
 			targetPort, err = lbc.getTargetPort(&port, svc)
 			if err != nil {
-				return nil, fmt.Errorf("Error determining target port for port %v in Ingress: %v", upstream.Port, err)
+				return nil, fmt.Errorf("Error determining target port for port %v in service %v: %v", upstream.Port, svc.Name, err)
 			}
 			break
 		}
@@ -1734,17 +1731,15 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 
 func getEndpointsBySubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEps api_v1.Endpoints) (endps []string) {
 	for _, pod := range pods {
-		podEp := fmt.Sprintf("%v:%v", pod.Status.PodIP, targetPort)
-
 		for _, subset := range svcEps.Subsets {
 			for _, port := range subset.Ports {
 				if port.Port != targetPort {
 					continue
 				}
 				for _, address := range subset.Addresses {
-					svcEp := fmt.Sprintf("%v:%v", address.IP, port.Port)
-					if svcEp == podEp {
-						endps = append(endps, podEp)
+					if address.IP == pod.Status.PodIP {
+						podEndpoint := fmt.Sprintf("%v:%v", pod.Status.PodIP, targetPort)
+						endps = append(endps, podEndpoint)
 					}
 				}
 			}
