@@ -14,7 +14,7 @@ require (
 	github.com/json-iterator/go v1.1.5 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
-	github.com/nginxinc/nginx-plus-go-client v0.4.0
+	github.com/nginxinc/nginx-plus-go-client v0.5.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.4.2
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
