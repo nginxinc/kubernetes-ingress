@@ -7,6 +7,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	api_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
@@ -48,6 +49,11 @@ func (vsx *VirtualServerEx) String() string {
 // GenerateEndpointsKey generates a key for the Endpoints map in VirtualServerEx.
 func GenerateEndpointsKey(serviceNamespace string, serviceName string, port uint16) string {
 	return fmt.Sprintf("%s/%s:%d", serviceNamespace, serviceName, port)
+}
+
+// GenerateEndpointsKeyWithSubselector generates a key for the Endpoints map in VirtualServerEx.
+func GenerateEndpointsKeyWithSubselector(serviceNamespace, serviceName, subselector string, port uint16) string {
+	return fmt.Sprintf("%s/%s_%s:%d", serviceNamespace, serviceName, subselector, port)
 }
 
 type upstreamNamer struct {
@@ -138,6 +144,9 @@ func newVirtualServerConfigurator(cfgParams *ConfigParams, isPlus bool, isResolv
 
 func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(owner runtime.Object, namespace string, upstream conf_v1alpha1.Upstream, virtualServerEx *VirtualServerEx) []string {
 	endpointsKey := GenerateEndpointsKey(namespace, upstream.Service, upstream.Port)
+	if len(upstream.Subselector) > 0 {
+		endpointsKey = GenerateEndpointsKeyWithSubselector(namespace, upstream.Service, labels.Set(upstream.Subselector).String(), upstream.Port)
+	}
 	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, upstream.Service)
 	endpoints := virtualServerEx.Endpoints[endpointsKey]
 	if !vsc.isPlus && len(endpoints) == 0 {

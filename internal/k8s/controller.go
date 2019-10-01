@@ -1578,6 +1578,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 		var err error
 
 		if len(u.Subselector) > 0 {
+			endpointsKey = configs.GenerateEndpointsKeyWithSubselector(virtualServer.Namespace, u.Service, labels.Set(u.Subselector).String(), u.Port)
 			endps, err = lbc.getEndpointsForSubselector(virtualServer.Namespace, u)
 		} else {
 			var external bool
@@ -1641,6 +1642,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 			var endps []string
 			var err error
 			if len(u.Subselector) > 0 {
+				endpointsKey = configs.GenerateEndpointsKeyWithSubselector(vsr.Namespace, u.Service, labels.Set(u.Subselector).String(), u.Port)
 				endps, err = lbc.getEndpointsForSubselector(vsr.Namespace, u)
 			} else {
 				var external bool

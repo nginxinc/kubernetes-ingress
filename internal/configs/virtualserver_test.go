@@ -9,6 +9,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 func TestVirtualServerExString(t *testing.T) {
@@ -53,6 +54,21 @@ func TestGenerateEndpointsKey(t *testing.T) {
 	expected := "default/test:80"
 
 	result := GenerateEndpointsKey(serviceNamespace, serviceName, port)
+	if result != expected {
+		t.Errorf("GenerateEndpointsKey() returned %q but expected %q", result, expected)
+	}
+}
+
+func TestGenerateEndpointsKeyWithSubselector(t *testing.T) {
+	serviceNamespace := "default"
+	serviceName := "test"
+	subselector := map[string]string{"version": "v1"}
+	subselectorKey := labels.Set(subselector)
+	var port uint16 = 80
+
+	expected := "default/test_version=v1:80"
+
+	result := GenerateEndpointsKeyWithSubselector(serviceNamespace, serviceName, subselectorKey.String(), port)
 	if result != expected {
 		t.Errorf("GenerateEndpointsKey() returned %q but expected %q", result, expected)
 	}
@@ -2038,6 +2054,50 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 			isResolverConfigured: false,
 			expected:             nil,
 			msg:                  "Service with no endpoints",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{
+				Service:     name,
+				Port:        8080,
+				Subselector: map[string]string{"version": "test"},
+			},
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1alpha1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+				Endpoints: map[string][]string{
+					"test-namespace/test_version=test:8080": {"192.168.10.10:8080"},
+				},
+			},
+			isPlus:               false,
+			isResolverConfigured: false,
+			expected:             []string{"192.168.10.10:8080"},
+			msg:                  "Upstream with subselector, with a matching endpoint",
+		},
+		{
+			upstream: conf_v1alpha1.Upstream{
+				Service:     name,
+				Port:        8080,
+				Subselector: map[string]string{"version": "test"},
+			},
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1alpha1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      name,
+						Namespace: namespace,
+					},
+				},
+				Endpoints: map[string][]string{
+					"test-namespace/test:8080": {"192.168.10.10:8080"},
+				},
+			},
+			isPlus:               false,
+			isResolverConfigured: false,
+			expected:             []string{nginx502Server},
+			msg:                  "Upstream with subselector, without a matching endpoint",
 		},
 	}
 
