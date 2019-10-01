@@ -9,7 +9,6 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 func TestVirtualServerExString(t *testing.T) {
@@ -51,26 +50,26 @@ func TestGenerateEndpointsKey(t *testing.T) {
 	serviceName := "test"
 	var port uint16 = 80
 
-	expected := "default/test:80"
-
-	result := GenerateEndpointsKey(serviceNamespace, serviceName, port)
-	if result != expected {
-		t.Errorf("GenerateEndpointsKey() returned %q but expected %q", result, expected)
+	tests := []struct {
+		subselector map[string]string
+		expected    string
+	}{
+		{
+			subselector: nil,
+			expected:    "default/test:80",
+		},
+		{
+			subselector: map[string]string{"version": "v1"},
+			expected:    "default/test_version=v1:80",
+		},
 	}
-}
 
-func TestGenerateEndpointsKeyWithSubselector(t *testing.T) {
-	serviceNamespace := "default"
-	serviceName := "test"
-	subselector := map[string]string{"version": "v1"}
-	subselectorKey := labels.Set(subselector)
-	var port uint16 = 80
+	for _, test := range tests {
+		result := GenerateEndpointsKey(serviceNamespace, serviceName, test.subselector, port)
+		if result != test.expected {
+			t.Errorf("GenerateEndpointsKey() returned %q but expected %q", result, test.expected)
+		}
 
-	expected := "default/test_version=v1:80"
-
-	result := GenerateEndpointsKeyWithSubselector(serviceNamespace, serviceName, subselectorKey.String(), port)
-	if result != expected {
-		t.Errorf("GenerateEndpointsKey() returned %q but expected %q", result, expected)
 	}
 }
 
