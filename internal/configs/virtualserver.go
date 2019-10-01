@@ -766,6 +766,9 @@ func createUpstreamsForPlus(virtualServerEx *VirtualServerEx, baseCfgParams *Con
 		upstreamNamespace := virtualServerEx.VirtualServer.Namespace
 
 		endpointsKey := GenerateEndpointsKey(upstreamNamespace, u.Service, u.Port)
+		if len(u.Subselector) > 0 {
+			endpointsKey = GenerateEndpointsKeyWithSubselector(upstreamNamespace, u.Service, labels.Set(u.Subselector).String(), u.Port)
+		}
 		endpoints := virtualServerEx.Endpoints[endpointsKey]
 
 		ups := vsc.generateUpstream(virtualServerEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
@@ -785,6 +788,9 @@ func createUpstreamsForPlus(virtualServerEx *VirtualServerEx, baseCfgParams *Con
 			upstreamNamespace := vsr.Namespace
 
 			endpointsKey := GenerateEndpointsKey(upstreamNamespace, u.Service, u.Port)
+			if len(u.Subselector) > 0 {
+				endpointsKey = GenerateEndpointsKeyWithSubselector(upstreamNamespace, u.Service, labels.Set(u.Subselector).String(), u.Port)
+			}
 			endpoints := virtualServerEx.Endpoints[endpointsKey]
 
 			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
