@@ -92,11 +92,14 @@ class TestVSWithExternalNameService:
         assert f"server {vs_externalname_setup.external_host}:80 max_fails=1 fail_timeout=10s max_conns=0 resolve;"\
                in result_conf
 
-    def test_events_flows(self, kube_apis, crd_ingress_controller, virtual_server_setup, vs_externalname_setup):
+    def test_events_flows(self, kube_apis, ingress_controller_prerequisites,
+                          crd_ingress_controller, virtual_server_setup, vs_externalname_setup):
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"Configuration for {text} was added or updated"
+        vs_event_update_text = f"Configuration for {text} was updated"
         events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
         initial_count = assert_event_and_get_count(vs_event_text, events_vs)
+        initial_count_up = assert_event_and_get_count(vs_event_update_text, events_vs)
 
         print("Step 1: Update external host in externalName service")
         external_svc = read_service(kube_apis.v1, vs_externalname_setup.external_svc, virtual_server_setup.namespace)
@@ -104,5 +107,18 @@ class TestVSWithExternalNameService:
         replace_service(kube_apis.v1, vs_externalname_setup.external_svc, virtual_server_setup.namespace, external_svc)
         wait_before_test(1)
 
-        new_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_event_and_count(vs_event_text, initial_count + 1, new_events)
+        events_step_1 = get_events(kube_apis.v1, virtual_server_setup.namespace)
+        assert_event_and_count(vs_event_text, initial_count + 1, events_step_1)
+        assert_event_and_count(vs_event_update_text, initial_count_up, events_step_1)
+
+        print("Step 2: Remove resolver from ConfigMap to trigger an error")
+        config_map_name = ingress_controller_prerequisites.config_map["metadata"]["name"]
+        vs_event_warning_text = f"Configuration for {text} was updated with warning(s):"
+        replace_configmap(kube_apis.v1, config_map_name,
+                          ingress_controller_prerequisites.namespace,
+                          ingress_controller_prerequisites.config_map)
+        wait_before_test(1)
+
+        events_step_2 = get_events(kube_apis.v1, virtual_server_setup.namespace)
+        assert_event_and_count(vs_event_warning_text, 1, events_step_2)
+        assert_event_and_count(vs_event_update_text, initial_count_up, events_step_2)

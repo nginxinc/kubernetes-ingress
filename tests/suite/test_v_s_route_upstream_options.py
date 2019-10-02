@@ -167,7 +167,7 @@ class TestVSRouteUpstreamOptions:
     def test_when_option_in_config_map_only(self, kube_apis,
                                             ingress_controller_prerequisites,
                                             crd_ingress_controller,
-                                            v_s_route_setup, v_s_route_app_setup,
+                                            v_s_route_setup, v_s_route_app_setup, restore_configmap,
                                             config_map_file, expected_strings, unexpected_strings):
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         text_s = f"{v_s_route_setup.route_s.namespace}/{v_s_route_setup.route_s.name}"
@@ -226,7 +226,7 @@ class TestVSRouteUpstreamOptions:
     ])
     def test_v_s_r_overrides_config_map(self, kube_apis,
                                         ingress_controller_prerequisites,
-                                        crd_ingress_controller, v_s_route_setup, v_s_route_app_setup,
+                                        crd_ingress_controller, v_s_route_setup, v_s_route_app_setup, restore_configmap,
                                         options, expected_strings, unexpected_strings):
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         text_s = f"{v_s_route_setup.route_s.namespace}/{v_s_route_setup.route_s.name}"
@@ -410,6 +410,42 @@ class TestOptionsSpecificForPlus:
         for _ in expected_strings:
             assert _ in config
         assert_response_codes(resp_1, resp_2)
+
+    @pytest.mark.parametrize('options', [{"slow-start": "0s"}])
+    def test_slow_start_warning(self, kube_apis,
+                                ingress_controller_prerequisites, crd_ingress_controller,
+                                v_s_route_setup, v_s_route_app_setup, options):
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        text_s = f"{v_s_route_setup.route_s.namespace}/{v_s_route_setup.route_s.name}"
+        text_m = f"{v_s_route_setup.route_m.namespace}/{v_s_route_setup.route_m.name}"
+        vsr_s_event_text = f"Configuration for {text_s} was added or updated with warning(s): " \
+            f"Slow start will be disabled"
+        vsr_m_event_text = f"Configuration for {text_m} was added or updated with warning(s): " \
+            f"Slow start will be disabled"
+        print(f"Case 2: no key in ConfigMap, option specified in VSR")
+        new_body_m = generate_item_with_upstream_options(
+            f"{TEST_DATA}/virtual-server-route-upstream-options/route-multiple.yaml",
+            options)
+        new_body_s = generate_item_with_upstream_options(
+            f"{TEST_DATA}/virtual-server-route-upstream-options/route-single.yaml",
+            options)
+        patch_v_s_route(kube_apis.custom_objects,
+                        v_s_route_setup.route_m.name, v_s_route_setup.route_m.namespace, new_body_m)
+        patch_v_s_route(kube_apis.custom_objects,
+                        v_s_route_setup.route_s.name, v_s_route_setup.route_s.namespace, new_body_s)
+        wait_before_test(1)
+
+        config = get_vs_nginx_template_conf(kube_apis.v1,
+                                            v_s_route_setup.namespace,
+                                            v_s_route_setup.vs_name,
+                                            ic_pod_name,
+                                            ingress_controller_prerequisites.namespace)
+        vsr_s_events = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
+        vsr_m_events = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
+
+        assert_event(vsr_s_event_text, vsr_s_events)
+        assert_event(vsr_m_event_text, vsr_m_events)
+        assert "slow_start" not in config
 
     def test_validation_flow(self, kube_apis, ingress_controller_prerequisites,
                              crd_ingress_controller, v_s_route_setup):

@@ -1,7 +1,7 @@
 import requests
 import pytest
 
-from settings import TEST_DATA, DEPLOYMENTS
+from settings import TEST_DATA
 from suite.custom_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml, \
     patch_virtual_server, generate_item_with_upstream_options
 from suite.resources_utils import get_first_pod_name, wait_before_test, replace_configmap_from_yaml, get_events
@@ -154,7 +154,7 @@ class TestVirtualServerUpstreamOptions:
           "proxy_buffering on;"]),
     ])
     def test_when_option_in_config_map_only(self, kube_apis, ingress_controller_prerequisites,
-                                            crd_ingress_controller, virtual_server_setup,
+                                            crd_ingress_controller, virtual_server_setup, restore_configmap,
                                             config_map_file, expected_strings, unexpected_strings):
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"Configuration for {text} was updated"
@@ -203,7 +203,7 @@ class TestVirtualServerUpstreamOptions:
           "proxy_buffering off;", "proxy_buffer_size 1k;", "proxy_buffers 8 1k;"])
     ])
     def test_v_s_overrides_config_map(self, kube_apis, ingress_controller_prerequisites,
-                                      crd_ingress_controller, virtual_server_setup,
+                                      crd_ingress_controller, virtual_server_setup, restore_configmap,
                                       options, expected_strings, unexpected_strings):
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"Configuration for {text} was added or updated"
@@ -345,6 +345,30 @@ class TestOptionsSpecificForPlus:
         for _ in expected_strings:
             assert _ in config
         assert_response_codes(resp_1, resp_2)
+
+    @pytest.mark.parametrize('options', [{"slow-start": "0s"}])
+    def test_slow_start_warning(self, kube_apis, ingress_controller_prerequisites,
+                                crd_ingress_controller, virtual_server_setup, options):
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
+        vs_event_text = f"Configuration for {text} was added or updated with warning(s): Slow start will be disabled"
+        print(f"Case 0: verify a warning")
+        new_body = generate_item_with_upstream_options(
+            f"{TEST_DATA}/virtual-server-upstream-options/standard/virtual-server.yaml",
+            options)
+        patch_virtual_server(kube_apis.custom_objects,
+                             virtual_server_setup.vs_name, virtual_server_setup.namespace, new_body)
+        wait_before_test(1)
+
+        config = get_vs_nginx_template_conf(kube_apis.v1,
+                                            virtual_server_setup.namespace,
+                                            virtual_server_setup.vs_name,
+                                            ic_pod_name,
+                                            ingress_controller_prerequisites.namespace)
+        vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
+
+        assert_event(vs_event_text, vs_events)
+        assert "slow_start" not in config
 
     def test_validation_flow(self, kube_apis, ingress_controller_prerequisites,
                              crd_ingress_controller, virtual_server_setup):

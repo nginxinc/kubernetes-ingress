@@ -15,7 +15,7 @@ from suite.kube_config_utils import ensure_context_in_config, get_current_contex
 from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml, \
     patch_rbac, create_example_app, wait_until_all_pods_are_ready, delete_common_app, \
     ensure_connection_to_public_endpoint, create_service_with_name, create_deployment_with_name, delete_deployment, \
-    delete_service
+    delete_service, replace_configmap_from_yaml
 from suite.resources_utils import create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac
 from suite.resources_utils import create_service_from_yaml, get_service_node_ports, wait_for_public_ip
 from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml
@@ -495,3 +495,24 @@ def v_s_route_setup(request,
 
     return VirtualServerRouteSetup(ingress_controller_endpoint,
                                    ns_1, vs_host, vs_name, route_m, route_s)
+
+
+@pytest.fixture(scope="function")
+def restore_configmap(request, kube_apis, ingress_controller_prerequisites, test_namespace) -> None:
+    """
+    Return ConfigMap to the initial state after the test.
+
+    :param request: internal pytest fixture
+    :param kube_apis: client apis
+    :param ingress_controller_prerequisites:
+    :param test_namespace: str
+    :return:
+    """
+
+    def fin():
+        replace_configmap_from_yaml(kube_apis.v1,
+                                    ingress_controller_prerequisites.config_map['metadata']['name'],
+                                    ingress_controller_prerequisites.namespace,
+                                    f"{DEPLOYMENTS}/common/nginx-config.yaml")
+
+    request.addfinalizer(fin)
