@@ -189,11 +189,21 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 						Service: "tea-svc",
 						Port:    80,
 					},
+					{
+						Name:        "tea-latest",
+						Service:     "tea-svc",
+						Subselector: map[string]string{"version": "v1"},
+						Port:        80,
+					},
 				},
 				Routes: []conf_v1alpha1.Route{
 					{
 						Path:     "/tea",
 						Upstream: "tea",
+					},
+					{
+						Path:     "/tea-latest",
+						Upstream: "tea-latest",
 					},
 					{
 						Path:  "/coffee",
@@ -206,8 +216,11 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 			"default/tea-svc:80": {
 				"10.0.0.20:80",
 			},
-			"default/coffee-svc:80": {
+			"default/tea-svc_version=v1:80": {
 				"10.0.0.30:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.40:80",
 			},
 		},
 		VirtualServerRoutes: []*conf_v1alpha1.VirtualServerRoute{
@@ -259,10 +272,19 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 			{
-				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Name: "vs_default_cafe_tea-latest",
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.30:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				Name: "vs_default_cafe_vsr_default_coffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
 					},
 				},
 				Keepalive: 16,
@@ -282,6 +304,14 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				{
 					Path:                     "/tea",
 					ProxyPass:                "http://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+				},
+				{
+					Path:                     "/tea-latest",
+					ProxyPass:                "http://vs_default_cafe_tea-latest",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
@@ -1150,6 +1180,12 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 						Port:    80,
 					},
 					{
+						Name:        "subselector-test",
+						Service:     "test-svc",
+						Subselector: map[string]string{"it": "works"},
+						Port:        80,
+					},
+					{
 						Name:    "external",
 						Service: "external-svc",
 						Port:    80,
@@ -1176,8 +1212,11 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 				"10.0.0.20:80",
 			},
 			"default/test-svc:80": {},
-			"default/coffee-svc:80": {
+			"default/test-svc_it=works:80": {
 				"10.0.0.30:80",
+			},
+			"default/coffee-svc:80": {
+				"10.0.0.40:80",
 			},
 			"default/external-svc:80": {
 				"example.com:80",
@@ -1226,10 +1265,18 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 			Servers: nil,
 		},
 		{
-			Name: "vs_default_cafe_vsr_default_coffee_coffee",
+			Name: "vs_default_cafe_subselector-test",
 			Servers: []version2.UpstreamServer{
 				{
 					Address: "10.0.0.30:80",
+				},
+			},
+		},
+		{
+			Name: "vs_default_cafe_vsr_default_coffee_coffee",
+			Servers: []version2.UpstreamServer{
+				{
+					Address: "10.0.0.40:80",
 				},
 			},
 		},
