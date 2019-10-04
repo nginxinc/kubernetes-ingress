@@ -209,6 +209,10 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 						Path:  "/coffee",
 						Route: "default/coffee",
 					},
+					{
+						Path:  "/subtea",
+						Route: "default/subtea",
+					},
 				},
 			},
 		},
@@ -221,6 +225,9 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 			},
 			"default/coffee-svc:80": {
 				"10.0.0.40:80",
+			},
+			"default/sub-tea-svc_version=v1:80": {
+				"10.0.0.50:80",
 			},
 		},
 		VirtualServerRoutes: []*conf_v1alpha1.VirtualServerRoute{
@@ -242,6 +249,29 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 						{
 							Path:     "/coffee",
 							Upstream: "coffee",
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subtea",
+					Namespace: "default",
+				},
+				Spec: conf_v1alpha1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1alpha1.Upstream{
+						{
+							Name:        "subtea",
+							Service:     "sub-tea-svc",
+							Port:        80,
+							Subselector: map[string]string{"version": "v1"},
+						},
+					},
+					Subroutes: []conf_v1alpha1.Route{
+						{
+							Path:     "/subtea",
+							Upstream: "subtea",
 						},
 					},
 				},
@@ -289,6 +319,15 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				},
 				Keepalive: 16,
 			},
+			{
+				Name: "vs_default_cafe_vsr_default_subtea_subtea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
 		},
 		Server: version2.Server{
 			ServerName:                            "cafe.example.com",
@@ -320,6 +359,14 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				{
 					Path:                     "/coffee",
 					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+				},
+				{
+					Path:                     "/subtea",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subtea_subtea",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
