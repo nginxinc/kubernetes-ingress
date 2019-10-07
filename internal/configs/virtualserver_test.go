@@ -1206,7 +1206,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 	}
 }
 
-func TestCreateUpstreamServersForPlus(t *testing.T) {
+func TestCreateUpstreamsForPlus(t *testing.T) {
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1alpha1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -1229,7 +1229,7 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 					{
 						Name:        "subselector-test",
 						Service:     "test-svc",
-						Subselector: map[string]string{"it": "works"},
+						Subselector: map[string]string{"vs": "works"},
 						Port:        80,
 					},
 					{
@@ -1248,6 +1248,10 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 						Route: "default/coffee",
 					},
 					{
+						Path:  "/sub",
+						Route: "default/sub",
+					},
+					{
 						Path:     "/external",
 						Upstream: "external",
 					},
@@ -1259,11 +1263,14 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 				"10.0.0.20:80",
 			},
 			"default/test-svc:80": {},
-			"default/test-svc_it=works:80": {
+			"default/test-svc_vs=works:80": {
 				"10.0.0.30:80",
 			},
 			"default/coffee-svc:80": {
 				"10.0.0.40:80",
+			},
+			"default/test-svc_vsr=works:80": {
+				"10.0.0.50:80",
 			},
 			"default/external-svc:80": {
 				"example.com:80",
@@ -1286,11 +1293,21 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 							Service: "coffee-svc",
 							Port:    80,
 						},
+						{
+							Name:        "subselector-test",
+							Service:     "test-svc",
+							Subselector: map[string]string{"vsr": "works"},
+							Port:        80,
+						},
 					},
 					Subroutes: []conf_v1alpha1.Route{
 						{
 							Path:     "/coffee",
 							Upstream: "coffee",
+						},
+						{
+							Path:     "/sub",
+							Upstream: "subselector-test",
 						},
 					},
 				},
@@ -1327,11 +1344,19 @@ func TestCreateUpstreamServersForPlus(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name: "vs_default_cafe_vsr_default_coffee_subselector-test",
+			Servers: []version2.UpstreamServer{
+				{
+					Address: "10.0.0.50:80",
+				},
+			},
+		},
 	}
 
 	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{})
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("createUpstreamServersForPlus returned %v but expected %v", result, expected)
+		t.Errorf("createUpstreamsForPlus returned \n%v but expected \n%v", result, expected)
 	}
 }
 
