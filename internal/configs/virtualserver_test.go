@@ -1248,10 +1248,6 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 						Route: "default/coffee",
 					},
 					{
-						Path:  "/sub",
-						Route: "default/sub",
-					},
-					{
 						Path:     "/external",
 						Upstream: "external",
 					},
@@ -1306,7 +1302,7 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 							Upstream: "coffee",
 						},
 						{
-							Path:     "/sub",
+							Path:     "/coffee/sub",
 							Upstream: "subselector-test",
 						},
 					},
