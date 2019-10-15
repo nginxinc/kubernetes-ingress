@@ -37,6 +37,7 @@ type Configurator struct {
 	templateExecutorV2 *version2.TemplateExecutor
 	ingresses          map[string]*IngressEx
 	minions            map[string]map[string]bool
+	virtualServers     map[string]*VirtualServerEx
 	isWildcardEnabled  bool
 	isPlus             bool
 }
@@ -49,6 +50,7 @@ func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigPa
 		staticCfgParams:    staticCfgParams,
 		cfgParams:          config,
 		ingresses:          make(map[string]*IngressEx),
+		virtualServers:     make(map[string]*VirtualServerEx),
 		templateExecutor:   templateExecutor,
 		templateExecutorV2: templateExecutorV2,
 		minions:            make(map[string]map[string]bool),
@@ -169,6 +171,8 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 		return warnings, fmt.Errorf("Error generating VirtualServer config: %v: %v", name, err)
 	}
 	cnf.nginxManager.CreateConfig(name, content)
+
+	cnf.virtualServers[name] = virtualServerEx
 
 	return warnings, nil
 }
@@ -338,6 +342,8 @@ func (cnf *Configurator) DeleteIngress(key string) error {
 func (cnf *Configurator) DeleteVirtualServer(key string) error {
 	name := getFileNameForVirtualServerFromKey(key)
 	cnf.nginxManager.DeleteConfig(name)
+
+	delete(cnf.virtualServers, name)
 
 	if err := cnf.nginxManager.Reload(); err != nil {
 		return fmt.Errorf("Error when removing VirtualServer %v: %v", key, err)
@@ -636,4 +642,16 @@ func (cnf *Configurator) GetIngressCounts() map[string]int {
 	}
 
 	return counters
+}
+
+// GetVSCounts returns the total count of Vs/Vsr resources that are handled by the Ingress Controller
+func (cnf *Configurator) GetVSCounts() (vsCount int, vsrCount int) {
+	for _, vs := range cnf.virtualServers {
+		if vs != nil {
+			vsCount++
+		}
+		vsrCount += len(vs.VirtualServerRoutes)
+	}
+
+	return vsCount, vsrCount
 }

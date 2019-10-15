@@ -58,12 +58,12 @@ func (cc *ControllerMetricsCollector) SetIngressResources(ingressType string, co
 	cc.ingressResourcesTotal.WithLabelValues(ingressType).Set(float64(count))
 }
 
-// SetVsResources sets the value of the VS resources gauge for a given type
+// SetVsResources sets the value of the VS resources gauge
 func (cc *ControllerMetricsCollector) SetVsResources(count int) {
 	cc.vsResourcesTotal.Set(float64(count))
 }
 
-// SetVsrResources sets the value of the VSR resources gauge for a given type
+// SetVsrResources sets the value of the VSR resources gauge
 func (cc *ControllerMetricsCollector) SetVsrResources(count int) {
 	cc.vsrResourcesTotal.Set(float64(count))
 }
