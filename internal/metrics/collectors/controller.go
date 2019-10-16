@@ -6,17 +6,17 @@ var labelNamesController = []string{"type"}
 
 // ControllerCollector is an interface for the metrics of the Controller
 type ControllerCollector interface {
-	SetIngressResources(ingressType string, count int)
-	SetVsResources(count int)
-	SetVsrResources(count int)
+	SetIngress(ingressType string, count int)
+	SetVirtualServer(count int)
+	SetVirtualServerRoute(count int)
 	Register(registry *prometheus.Registry) error
 }
 
 // ControllerMetricsCollector implements the ControllerCollector interface and prometheus.Collector interface
 type ControllerMetricsCollector struct {
-	ingressResourcesTotal *prometheus.GaugeVec
-	vsResourcesTotal      prometheus.Gauge
-	vsrResourcesTotal     prometheus.Gauge
+	ingressesTotal           *prometheus.GaugeVec
+	virtualServersTotal      prometheus.Gauge
+	virtualServerRoutesTotal prometheus.Gauge
 }
 
 // NewControllerMetricsCollector creates a new ControllerMetricsCollector
@@ -47,39 +47,39 @@ func NewControllerMetricsCollector() *ControllerMetricsCollector {
 	)
 
 	return &ControllerMetricsCollector{
-		ingressResourcesTotal: ingResTotal,
-		vsResourcesTotal:      vsResTotal,
-		vsrResourcesTotal:     vsrResTotal,
+		ingressesTotal:           ingResTotal,
+		virtualServersTotal:      vsResTotal,
+		virtualServerRoutesTotal: vsrResTotal,
 	}
 }
 
-// SetIngressResources sets the value of the ingress resources gauge for a given type
-func (cc *ControllerMetricsCollector) SetIngressResources(ingressType string, count int) {
-	cc.ingressResourcesTotal.WithLabelValues(ingressType).Set(float64(count))
+// SetIngress sets the value of the ingress resources gauge for a given type
+func (cc *ControllerMetricsCollector) SetIngress(ingressType string, count int) {
+	cc.ingressesTotal.WithLabelValues(ingressType).Set(float64(count))
 }
 
-// SetVsResources sets the value of the VS resources gauge
-func (cc *ControllerMetricsCollector) SetVsResources(count int) {
-	cc.vsResourcesTotal.Set(float64(count))
+// SetVirtualServer sets the value of the VirtualServer resources gauge
+func (cc *ControllerMetricsCollector) SetVirtualServer(count int) {
+	cc.virtualServersTotal.Set(float64(count))
 }
 
-// SetVsrResources sets the value of the VSR resources gauge
-func (cc *ControllerMetricsCollector) SetVsrResources(count int) {
-	cc.vsrResourcesTotal.Set(float64(count))
+// SetVirtualServerRoute sets the value of the VirtualServerRoute resources gauge
+func (cc *ControllerMetricsCollector) SetVirtualServerRoute(count int) {
+	cc.virtualServerRoutesTotal.Set(float64(count))
 }
 
 // Describe implements prometheus.Collector interface Describe method
 func (cc *ControllerMetricsCollector) Describe(ch chan<- *prometheus.Desc) {
-	cc.ingressResourcesTotal.Describe(ch)
-	cc.vsResourcesTotal.Describe(ch)
-	cc.vsrResourcesTotal.Describe(ch)
+	cc.ingressesTotal.Describe(ch)
+	cc.virtualServersTotal.Describe(ch)
+	cc.virtualServerRoutesTotal.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface Collect method
 func (cc *ControllerMetricsCollector) Collect(ch chan<- prometheus.Metric) {
-	cc.ingressResourcesTotal.Collect(ch)
-	cc.vsResourcesTotal.Collect(ch)
-	cc.vsrResourcesTotal.Collect(ch)
+	cc.ingressesTotal.Collect(ch)
+	cc.virtualServersTotal.Collect(ch)
+	cc.virtualServerRoutesTotal.Collect(ch)
 }
 
 // Register registers all the metrics of the collector
@@ -98,11 +98,11 @@ func NewControllerFakeCollector() *ControllerFakeCollector {
 // Register implements a fake Register
 func (cc *ControllerFakeCollector) Register(registry *prometheus.Registry) error { return nil }
 
-// SetIngressResources implements a fake SetIngressResources
-func (cc *ControllerFakeCollector) SetIngressResources(ingressType string, count int) {}
+// SetIngress implements a fake SetIngress
+func (cc *ControllerFakeCollector) SetIngress(ingressType string, count int) {}
 
-// SetVsResources implements a fake SetVsResources
-func (cc *ControllerFakeCollector) SetVsResources(count int) {}
+// SetVirtualServer implements a fake SetVirtualServer
+func (cc *ControllerFakeCollector) SetVirtualServer(count int) {}
 
-// SetVsrResources implements a fake SetVsrResources
-func (cc *ControllerFakeCollector) SetVsrResources(count int) {}
+// SetVirtualServerRoute implements a fake SetVirtualServerRoute
+func (cc *ControllerFakeCollector) SetVirtualServerRoute(count int) {}

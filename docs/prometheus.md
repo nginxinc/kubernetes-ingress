@@ -15,8 +15,8 @@ The Ingress Controller exports the following metrics:
   * `controller_nginx_reload_errors_total`. Number of unsuccessful NGINX reloads.
   * `controller_nginx_last_reload_status`. Status of the last NGINX reload, 0 meaning down and 1 up.
   * `controller_nginx_last_reload_milliseconds`. Duration in milliseconds of the last NGINX reload.
-  * `controller_ingress_resources_total`. Number of handled Ingress resources. This metric includes the label type, that groups the Ingress resources by their type (regular, [minion or master](./../examples/mergeable-ingress-types))
+  * `controller_ingress_resources_total`. Number of handled Ingress resources. This metric includes the label type, that groups the Ingress resources by their type (regular, [minion or master](./../examples/mergeable-ingress-types)). **Note**: The metric doesn't count minions without a master.
   * `controller_virtualserver_resources_total`. Number of handled VirtualServer resources.
-  * `controller_virtualserverroute_resources_total`. Number of handled VirtualServerRoute resources. **Note**: Only counts VirtualServerRoutes that have a reference from a VirtualServer.
+  * `controller_virtualserverroute_resources_total`. Number of handled VirtualServerRoute resources. **Note**: The metric counts only VirtualServerRoutes that have a reference from a VirtualServer.
 
 **Note**: all metrics have the namespace nginx_ingress. For example, nginx_ingress_controller_nginx_reloads_total.
