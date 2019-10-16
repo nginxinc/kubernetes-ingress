@@ -8,6 +8,23 @@ from kubernetes import client
 from suite.resources_utils import ensure_item_removal, get_file_contents
 
 
+def create_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, body) -> None:
+    """
+    Create a CRD based on a dict
+
+    :param api_extensions_v1_beta1: ApiextensionsV1beta1Api
+    :param body: a dict
+    """
+    try:
+        api_extensions_v1_beta1.create_custom_resource_definition(body)
+    except Exception as ex:
+        # https://github.com/kubernetes-client/python/issues/376
+        if ex.args[0] == 'Invalid value for `conditions`, must not be `None`':
+            print("There was an insignificant exception during the CRD creation. Continue...")
+        else:
+            pytest.fail(f"An unexpected exception {ex} occurred. Exiting...")
+
+
 def create_crds_from_yaml(api_extensions_v1_beta1: ApiextensionsV1beta1Api, yaml_manifest) -> []:
     """
     Create a CRD based on yaml file.
@@ -21,17 +38,27 @@ def create_crds_from_yaml(api_extensions_v1_beta1: ApiextensionsV1beta1Api, yaml
     with open(yaml_manifest) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            try:
-                api_extensions_v1_beta1.create_custom_resource_definition(dep)
-            except Exception as ex:
-                # https://github.com/kubernetes-client/python/issues/376
-                if ex.args[0] == 'Invalid value for `conditions`, must not be `None`':
-                    print("There was an insignificant exception during the CRD creation. Continue...")
-                else:
-                    pytest.fail(f"An unexpected exception {ex} occurred. Exiting...")
+            create_crd(api_extensions_v1_beta1, dep)
             names.append(dep['metadata']['name'])
-            print(f"CRD created with name '{dep['metadata']['name']}'")
+            print(f"CRD was created with name '{dep['metadata']['name']}'")
         return names
+
+
+def create_crd_from_yaml(api_extensions_v1_beta1: ApiextensionsV1beta1Api, name, yaml_manifest) -> None:
+    """
+    Create a specific CRD based on yaml file.
+
+    :param api_extensions_v1_beta1: ApiextensionsV1beta1Api
+    :param name: CRD name
+    :param yaml_manifest: an absolute path to file
+    """
+    print(f"Create a CRD with name: {name}")
+    with open(yaml_manifest) as f:
+        docs = yaml.safe_load_all(f)
+        for dep in docs:
+            if dep['metadata']['name'] == name:
+                create_crd(api_extensions_v1_beta1, dep)
+                print("CRD was created")
 
 
 def delete_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, name) -> None:

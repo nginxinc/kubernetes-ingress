@@ -2,7 +2,7 @@ import requests
 import pytest
 
 from settings import TEST_DATA, DEPLOYMENTS
-from suite.custom_resources_utils import delete_crd, create_crds_from_yaml, \
+from suite.custom_resources_utils import delete_crd, create_crd_from_yaml, \
     create_virtual_server_from_yaml, delete_virtual_server, patch_virtual_server_from_yaml
 from suite.resources_utils import patch_rbac, replace_service, read_service, \
     wait_before_test, delete_service, create_service_from_yaml
@@ -154,10 +154,9 @@ class TestVirtualServer:
                             headers={"host": virtual_server_setup.vs_host})
         assert resp.status_code == 200
 
-    @pytest.mark.skip(reason="There is a bug here")
     def test_responses_after_crd_removal_on_the_fly(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("\nStep 12: remove CRD and check")
-        crd_name = get_names_from_yaml(f"{TEST_DATA}/virtual-server/virtualserver.yaml")[0]
+        crd_name = get_names_from_yaml(f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")[0]
         delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
         wait_before_test(1)
         resp = requests.get(virtual_server_setup.backend_1_url,
@@ -168,7 +167,8 @@ class TestVirtualServer:
         assert resp.status_code == 404
 
         print("Step 13: restore CRD and VS and check")
-        create_crds_from_yaml(kube_apis.api_extensions_v1_beta1, f"{TEST_DATA}/virtual-server/virtualserver.yaml")
+        create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, crd_name,
+                             f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")
         create_virtual_server_from_yaml(kube_apis.custom_objects,
                                         f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml",
                                         virtual_server_setup.namespace)
