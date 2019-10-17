@@ -158,13 +158,8 @@ class TestVirtualServer:
         print("\nStep 12: remove CRD and check")
         crd_name = get_names_from_yaml(f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")[0]
         delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
-        wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url,
-                            headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 404
-        resp = requests.get(virtual_server_setup.backend_2_url,
-                            headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 404
+        wait_and_assert_status_code(404, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(404, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
         print("Step 13: restore CRD and VS and check")
         create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, crd_name,
@@ -172,13 +167,8 @@ class TestVirtualServer:
         create_virtual_server_from_yaml(kube_apis.custom_objects,
                                         f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml",
                                         virtual_server_setup.namespace)
-        wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url,
-                            headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
-        resp = requests.get(virtual_server_setup.backend_2_url,
-                            headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
 
 def wait_and_assert_status_code(code, req_url, host) -> None:
