@@ -6,9 +6,9 @@ var labelNamesController = []string{"type"}
 
 // ControllerCollector is an interface for the metrics of the Controller
 type ControllerCollector interface {
-	SetIngress(ingressType string, count int)
-	SetVirtualServer(count int)
-	SetVirtualServerRoute(count int)
+	SetIngresses(ingressType string, count int)
+	SetVirtualServers(count int)
+	SetVirtualServerRoutes(count int)
 	Register(registry *prometheus.Registry) error
 }
 
@@ -53,18 +53,18 @@ func NewControllerMetricsCollector() *ControllerMetricsCollector {
 	}
 }
 
-// SetIngress sets the value of the ingress resources gauge for a given type
-func (cc *ControllerMetricsCollector) SetIngress(ingressType string, count int) {
+// SetIngresses sets the value of the ingress resources gauge for a given type
+func (cc *ControllerMetricsCollector) SetIngresses(ingressType string, count int) {
 	cc.ingressesTotal.WithLabelValues(ingressType).Set(float64(count))
 }
 
-// SetVirtualServer sets the value of the VirtualServer resources gauge
-func (cc *ControllerMetricsCollector) SetVirtualServer(count int) {
+// SetVirtualServers sets the value of the VirtualServer resources gauge
+func (cc *ControllerMetricsCollector) SetVirtualServers(count int) {
 	cc.virtualServersTotal.Set(float64(count))
 }
 
-// SetVirtualServerRoute sets the value of the VirtualServerRoute resources gauge
-func (cc *ControllerMetricsCollector) SetVirtualServerRoute(count int) {
+// SetVirtualServerRoutes sets the value of the VirtualServerRoute resources gauge
+func (cc *ControllerMetricsCollector) SetVirtualServerRoutes(count int) {
 	cc.virtualServerRoutesTotal.Set(float64(count))
 }
 
@@ -98,11 +98,11 @@ func NewControllerFakeCollector() *ControllerFakeCollector {
 // Register implements a fake Register
 func (cc *ControllerFakeCollector) Register(registry *prometheus.Registry) error { return nil }
 
-// SetIngress implements a fake SetIngress
-func (cc *ControllerFakeCollector) SetIngress(ingressType string, count int) {}
+// SetIngresses implements a fake SetIngress
+func (cc *ControllerFakeCollector) SetIngresses(ingressType string, count int) {}
 
-// SetVirtualServer implements a fake SetVirtualServer
-func (cc *ControllerFakeCollector) SetVirtualServer(count int) {}
+// SetVirtualServers implements a fake SetVirtualServers
+func (cc *ControllerFakeCollector) SetVirtualServers(count int) {}
 
-// SetVirtualServerRoute implements a fake SetVirtualServerRoute
-func (cc *ControllerFakeCollector) SetVirtualServerRoute(count int) {}
+// SetVirtualServerRoutes implements a fake SetVirtualServerRoutes
+func (cc *ControllerFakeCollector) SetVirtualServerRoutes(count int) {}
