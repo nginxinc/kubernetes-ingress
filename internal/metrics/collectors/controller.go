@@ -98,7 +98,7 @@ func NewControllerFakeCollector() *ControllerFakeCollector {
 // Register implements a fake Register
 func (cc *ControllerFakeCollector) Register(registry *prometheus.Registry) error { return nil }
 
-// SetIngresses implements a fake SetIngress
+// SetIngresses implements a fake SetIngresses
 func (cc *ControllerFakeCollector) SetIngresses(ingressType string, count int) {}
 
 // SetVirtualServers implements a fake SetVirtualServers
