@@ -22,6 +22,7 @@ var virtualServerCfg = VirtualServerConfig{
 			SlowStart:        "10s",
 			UpstreamZoneSize: "256k",
 			Queue:            &Queue{Size: 10, Timeout: "60s"},
+			SessionCookie:    &SessionCookie{Enable: true, Name: "test", Path: "/tea", Expires: "25s"},
 		},
 		{
 			Name: "coffee-v1",

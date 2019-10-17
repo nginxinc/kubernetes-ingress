@@ -333,6 +333,7 @@ func (vsc *virtualServerConfigurator) generateUpstream(owner runtime.Object, ups
 	if vsc.isPlus {
 		ups.SlowStart = vsc.generateSlowStartForPlus(owner, upstream, lbMethod)
 		ups.Queue = generateQueueForPlus(upstream.Queue, "60s")
+		ups.SessionCookie = generateSessionCookie(upstream.SessionCookie)
 	}
 
 	return ups
@@ -410,6 +411,22 @@ func generateHealthCheck(upstream conf_v1alpha1.Upstream, upstreamName string, c
 	}
 
 	return hc
+}
+
+func generateSessionCookie(sc *conf_v1alpha1.SessionCookie) *version2.SessionCookie {
+	if sc == nil || !sc.Enable {
+		return nil
+	}
+
+	return &version2.SessionCookie{
+		Enable:   true,
+		Name:     sc.Name,
+		Path:     generateString(sc.Path, "/"),
+		Expires:  generateString(sc.Expires, "20s"),
+		Domain:   generateString(sc.Domain, ""),
+		HTTPOnly: sc.HTTPOnly,
+		Secure:   sc.Secure,
+	}
 }
 
 func generateStatusMatchName(upstreamName string) string {

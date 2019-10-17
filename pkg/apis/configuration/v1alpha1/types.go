@@ -48,6 +48,7 @@ type Upstream struct {
 	HealthCheck              *HealthCheck      `json:"healthCheck"`
 	SlowStart                string            `json:"slow-start"`
 	Queue                    *UpstreamQueue    `json:"queue"`
+	SessionCookie            *SessionCookie    `json:"sessionCookie"`
 }
 
 // UpstreamBuffers defines Buffer Configuration for an Upstream
@@ -82,6 +83,17 @@ type HealthCheck struct {
 type Header struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+}
+
+// SessionCookie -
+type SessionCookie struct {
+	Enable   bool   `json:"enable"`
+	Name     string `json:"name"`
+	Path     string `json:"path"`
+	Expires  string `json:"expires"`
+	Domain   string `json:"domain"`
+	HTTPOnly bool   `json:"httpOnly"`
+	Secure   bool   `json:"secure"`
 }
 
 // Route defines a route.

@@ -210,6 +210,24 @@ func validateUpstreamHealthCheck(hc *v1alpha1.HealthCheck, fieldPath *field.Path
 	return allErrs
 }
 
+func validateSessionCookie(sc *v1alpha1.SessionCookie, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if sc == nil || !sc.Enable {
+		return allErrs
+	}
+
+	if sc.Name == "" {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("name"), ""))
+	}
+	if sc.Path != "" {
+		allErrs = append(allErrs, validatePath(sc.Path, fieldPath.Child("path"))...)
+	}
+	allErrs = append(allErrs, validateTime(sc.Expires, fieldPath.Child("expires"))...)
+
+	return allErrs
+}
+
 func validateStatusMatch(s string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -375,6 +393,7 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		allErrs = append(allErrs, validateSize(u.ProxyBufferSize, idxPath.Child("buffer-size"))...)
 		allErrs = append(allErrs, rejectPlusResourcesInOSS(u, idxPath, isPlus)...)
 		allErrs = append(allErrs, validateQueue(u.Queue, idxPath.Child("queue"), isPlus)...)
+		allErrs = append(allErrs, validateSessionCookie(u.SessionCookie, idxPath.Child("sessionCookie"))...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))
@@ -812,6 +831,10 @@ func rejectPlusResourcesInOSS(upstream v1alpha1.Upstream, idxPath *field.Path, i
 
 	if upstream.SlowStart != "" {
 		allErrs = append(allErrs, field.Forbidden(idxPath.Child("slow-start"), "slow start is only supported in NGINX Plus"))
+	}
+
+	if upstream.SessionCookie != nil {
+		allErrs = append(allErrs, field.Forbidden(idxPath.Child("sessionCookie"), "sticky cookies are only supported in NGINX Plus"))
 	}
 
 	return allErrs

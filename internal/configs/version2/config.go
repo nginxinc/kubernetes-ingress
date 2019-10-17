@@ -22,6 +22,7 @@ type Upstream struct {
 	FailTimeout      string
 	UpstreamZoneSize string
 	Queue            *Queue
+	SessionCookie    *SessionCookie
 }
 
 // UpstreamServer defines an upstream server.
@@ -96,6 +97,17 @@ type HealthCheck struct {
 	ProxySendTimeout    string
 	Headers             map[string]string
 	Match               string
+}
+
+// SessionCookie -
+type SessionCookie struct {
+	Enable   bool
+	Name     string
+	Path     string
+	Expires  string
+	Domain   string
+	HTTPOnly bool
+	Secure   bool
 }
 
 // Distribution maps weight to a value in a SplitClient.
