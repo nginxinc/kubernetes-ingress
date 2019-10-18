@@ -14,13 +14,14 @@ type ControllerCollector interface {
 
 // ControllerMetricsCollector implements the ControllerCollector interface and prometheus.Collector interface
 type ControllerMetricsCollector struct {
+	crdsEnabled              bool
 	ingressesTotal           *prometheus.GaugeVec
 	virtualServersTotal      prometheus.Gauge
 	virtualServerRoutesTotal prometheus.Gauge
 }
 
 // NewControllerMetricsCollector creates a new ControllerMetricsCollector
-func NewControllerMetricsCollector() *ControllerMetricsCollector {
+func NewControllerMetricsCollector(areCrdsEnabled bool) *ControllerMetricsCollector {
 	ingResTotal := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name:      "ingress_resources_total",
@@ -29,6 +30,10 @@ func NewControllerMetricsCollector() *ControllerMetricsCollector {
 		},
 		labelNamesController,
 	)
+
+	if !areCrdsEnabled {
+		return &ControllerMetricsCollector{ingressesTotal: ingResTotal}
+	}
 
 	vsResTotal := prometheus.NewGauge(
 		prometheus.GaugeOpts{
@@ -47,6 +52,7 @@ func NewControllerMetricsCollector() *ControllerMetricsCollector {
 	)
 
 	return &ControllerMetricsCollector{
+		crdsEnabled:              true,
 		ingressesTotal:           ingResTotal,
 		virtualServersTotal:      vsResTotal,
 		virtualServerRoutesTotal: vsrResTotal,
@@ -71,15 +77,19 @@ func (cc *ControllerMetricsCollector) SetVirtualServerRoutes(count int) {
 // Describe implements prometheus.Collector interface Describe method
 func (cc *ControllerMetricsCollector) Describe(ch chan<- *prometheus.Desc) {
 	cc.ingressesTotal.Describe(ch)
-	cc.virtualServersTotal.Describe(ch)
-	cc.virtualServerRoutesTotal.Describe(ch)
+	if cc.crdsEnabled {
+		cc.virtualServersTotal.Describe(ch)
+		cc.virtualServerRoutesTotal.Describe(ch)
+	}
 }
 
 // Collect implements the prometheus.Collector interface Collect method
 func (cc *ControllerMetricsCollector) Collect(ch chan<- prometheus.Metric) {
 	cc.ingressesTotal.Collect(ch)
-	cc.virtualServersTotal.Collect(ch)
-	cc.virtualServerRoutesTotal.Collect(ch)
+	if cc.crdsEnabled {
+		cc.virtualServersTotal.Collect(ch)
+		cc.virtualServerRoutesTotal.Collect(ch)
+	}
 }
 
 // Register registers all the metrics of the collector

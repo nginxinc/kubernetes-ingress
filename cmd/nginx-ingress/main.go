@@ -239,7 +239,7 @@ func main() {
 	if *enablePrometheusMetrics {
 		registry = prometheus.NewRegistry()
 		managerCollector = collectors.NewLocalManagerMetricsCollector()
-		controllerCollector = collectors.NewControllerMetricsCollector()
+		controllerCollector = collectors.NewControllerMetricsCollector(*enableCustomResources)
 
 		err = managerCollector.Register(registry)
 		if err != nil {
