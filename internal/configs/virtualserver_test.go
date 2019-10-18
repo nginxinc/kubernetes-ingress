@@ -2412,3 +2412,33 @@ func TestGenerateQueueForPlus(t *testing.T) {
 	}
 
 }
+
+func TestGenerateSessionCookie(t *testing.T) {
+	tests := []struct {
+		sc   *conf_v1alpha1.SessionCookie
+		want *version2.SessionCookie
+		msg  string
+	}{
+		{
+			sc:   &conf_v1alpha1.SessionCookie{Enable: true, Name: "test"},
+			want: &version2.SessionCookie{Enable: true, Name: "test"},
+			msg:  "session cookie with name",
+		},
+		{
+			sc:   nil,
+			want: nil,
+			msg:  "session cookie with nil",
+		},
+		{
+			sc:   &conf_v1alpha1.SessionCookie{Name: "test"},
+			want: nil,
+			msg:  "session cookie not enabled",
+		},
+	}
+	for _, test := range tests {
+		got := generateSessionCookie(test.sc)
+		if !reflect.DeepEqual(got, test.want) {
+			t.Errorf("generateSessionCookie() returned %v, but expected %v for the case of: %v", got, test.want, test.msg)
+		}
+	}
+}

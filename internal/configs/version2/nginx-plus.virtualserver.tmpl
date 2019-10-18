@@ -16,8 +16,8 @@ upstream {{ $u.Name }} {
     queue {{ $u.Queue.Size }} timeout={{ $u.Queue.Timeout }};
     {{ end }}
 
-    {{ if $u.SessionCookie }}
-    {{ if $u.SessionCookie.Enable }}sticky cookie {{ $u.SessionCookie.Name }} expires={{ $u.SessionCookie.Expires }}{{ if $u.SessionCookie.Domain }} domain={{ $u.SessionCookie.Domain }} {{ end }}{{ if $u.SessionCookie.HTTPOnly }} httponly {{ end }}{{ if $u.SessionCookie.Secure }} secure {{end}} path={{ $u.SessionCookie.Path }};{{ end }}
+    {{ with $u.SessionCookie }}
+    {{ if .Enable }}sticky cookie {{ .Name }}{{ if .Expires }} expires={{ .Expires }}{{ end }}{{ if .Domain }} domain={{ .Domain }}{{ end }}{{ if .HTTPOnly }} httponly{{ end }}{{ if .Secure }} secure{{ end }}{{ if .Path }} path={{ .Path }}{{ end }};{{ end }}
     {{ end }}
 }
 {{ end }}

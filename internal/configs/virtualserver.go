@@ -421,9 +421,9 @@ func generateSessionCookie(sc *conf_v1alpha1.SessionCookie) *version2.SessionCoo
 	return &version2.SessionCookie{
 		Enable:   true,
 		Name:     sc.Name,
-		Path:     generateString(sc.Path, "/"),
-		Expires:  generateString(sc.Expires, "20s"),
-		Domain:   generateString(sc.Domain, ""),
+		Path:     sc.Path,
+		Expires:  sc.Expires,
+		Domain:   sc.Domain,
 		HTTPOnly: sc.HTTPOnly,
 		Secure:   sc.Secure,
 	}

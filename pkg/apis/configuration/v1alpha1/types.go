@@ -85,7 +85,7 @@ type Header struct {
 	Value string `json:"value"`
 }
 
-// SessionCookie -
+// SessionCookie defines the parameters for session persistence.
 type SessionCookie struct {
 	Enable   bool   `json:"enable"`
 	Name     string `json:"name"`

@@ -2024,8 +2024,9 @@ func TestValidateIntFromStringFails(t *testing.T) {
 
 func TestRejectPlusResourcesInOSS(t *testing.T) {
 	upstream := v1alpha1.Upstream{
-		SlowStart:   "10s",
-		HealthCheck: &v1alpha1.HealthCheck{},
+		SlowStart:     "10s",
+		HealthCheck:   &v1alpha1.HealthCheck{},
+		SessionCookie: &v1alpha1.SessionCookie{},
 	}
 
 	allErrsPlus := rejectPlusResourcesInOSS(upstream, field.NewPath("upstreams").Index(0), true)
@@ -2107,6 +2108,68 @@ func TestValidateQueueFails(t *testing.T) {
 		allErrs := validateQueue(test.upstreamQueue, test.fieldPath, test.isPlus)
 		if len(allErrs) == 0 {
 			t.Errorf("validateQueue() returned no errors for invalid input for the case of %s", test.msg)
+		}
+	}
+}
+
+func TestValidateSessionCookie(t *testing.T) {
+	tests := []struct {
+		sc        *v1alpha1.SessionCookie
+		fieldPath *field.Path
+		msg       string
+	}{
+		{
+			sc:        &v1alpha1.SessionCookie{Enable: true, Name: "min"},
+			fieldPath: field.NewPath("sessionCookie"),
+			msg:       "min valid config",
+		},
+		{
+			sc:        &v1alpha1.SessionCookie{Enable: false},
+			fieldPath: field.NewPath("sessionCookie"),
+			msg:       "session cookie not enabled",
+		},
+		{
+			sc: &v1alpha1.SessionCookie{
+				Enable: true, Name: "test", Path: "/tea", Expires: "1", Domain: ".example.com", HTTPOnly: false, Secure: true,
+			},
+			fieldPath: field.NewPath("sessionCookie"),
+			msg:       "max valid config",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateSessionCookie(test.sc, test.fieldPath)
+		if len(allErrs) != 0 {
+			t.Errorf("validateSessionCookie() returned errors %v for valid input for the case of: %s", allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateSessionCookieFails(t *testing.T) {
+	tests := []struct {
+		sc        *v1alpha1.SessionCookie
+		fieldPath *field.Path
+		msg       string
+	}{
+		{
+			sc:        &v1alpha1.SessionCookie{Enable: true},
+			fieldPath: field.NewPath("sessionCookie"),
+			msg:       "missing required field: Name",
+		},
+		{
+			sc:        &v1alpha1.SessionCookie{Enable: true, Name: "test", Expires: "EGGS"},
+			fieldPath: field.NewPath("sessionCookie"),
+			msg:       "invalid time format",
+		},
+		{
+			sc:        &v1alpha1.SessionCookie{Enable: true, Name: "test", Path: "/ coffee"},
+			fieldPath: field.NewPath("sessionCookie"),
+			msg:       "invalid path format",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateSessionCookie(test.sc, test.fieldPath)
+		if len(allErrs) == 0 {
+			t.Errorf("validateSessionCookie() returned no errors for invalid input for the case of: %v", test.msg)
 		}
 	}
 }
