@@ -99,7 +99,7 @@ type HealthCheck struct {
 	Match               string
 }
 
-// SessionCookie defines a cookie for an upstream.
+// SessionCookie defines a session cookie for an upstream.
 type SessionCookie struct {
 	Enable   bool
 	Name     string
