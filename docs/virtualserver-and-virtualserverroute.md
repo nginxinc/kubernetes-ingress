@@ -339,8 +339,8 @@ See the [`sticky`](https://nginx.org/en/docs/http/ngx_http_upstream_module.html?
 | `path` | The path for which the cookie is set. | `string` | No |
 | `expires` | The time for which a browser should keep the cookie. Can be set to the special value `max`, which will cause the cookie to expire on `31 Dec 2037 23:55:55 GMT`. | `string` | No |
 | `domain` | The domain for which the cookie is set. | `string` | No |
-| `httpOnly` | Adds the `HttpOnly` attribute is added to the cookie. | `boolean` | No |
-| `secure` | Adds the `Secure` attribute is added to the cookie. | `boolean` | No |
+| `httpOnly` | Adds the `HttpOnly` attribute to the cookie. | `boolean` | No |
+| `secure` | Adds the `Secure` attribute to the cookie. | `boolean` | No |
 
 ### Header
 

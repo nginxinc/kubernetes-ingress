@@ -228,13 +228,15 @@ func validateSessionCookie(sc *v1alpha1.SessionCookie, fieldPath *field.Path) fi
 	if sc.Path != "" {
 		allErrs = append(allErrs, validatePath(sc.Path, fieldPath.Child("path"))...)
 	}
+
 	if sc.Expires != "max" {
 		allErrs = append(allErrs, validateTime(sc.Expires, fieldPath.Child("expires"))...)
 	}
 
 	if sc.Domain != "" {
 		// A Domain prefix of "." is allowed.
-		for _, msg := range validation.IsDNS1123Subdomain(strings.TrimPrefix(sc.Domain, ".")) {
+		domain := strings.TrimPrefix(sc.Domain, ".")
+		for _, msg := range validation.IsDNS1123Subdomain(domain) {
 			allErrs = append(allErrs, field.Invalid(fieldPath, sc.Domain, msg))
 		}
 	}
