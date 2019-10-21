@@ -21,7 +21,7 @@ type ControllerMetricsCollector struct {
 }
 
 // NewControllerMetricsCollector creates a new ControllerMetricsCollector
-func NewControllerMetricsCollector(areCrdsEnabled bool) *ControllerMetricsCollector {
+func NewControllerMetricsCollector(crdsEnabled bool) *ControllerMetricsCollector {
 	ingResTotal := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name:      "ingress_resources_total",
@@ -31,7 +31,7 @@ func NewControllerMetricsCollector(areCrdsEnabled bool) *ControllerMetricsCollec
 		labelNamesController,
 	)
 
-	if !areCrdsEnabled {
+	if !crdsEnabled {
 		return &ControllerMetricsCollector{ingressesTotal: ingResTotal}
 	}
 
