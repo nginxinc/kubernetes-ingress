@@ -2124,11 +2124,6 @@ func TestValidateSessionCookie(t *testing.T) {
 			msg:       "min valid config",
 		},
 		{
-			sc:        &v1alpha1.SessionCookie{Enable: false},
-			fieldPath: field.NewPath("sessionCookie"),
-			msg:       "session cookie not enabled",
-		},
-		{
 			sc: &v1alpha1.SessionCookie{
 				Enable: true, Name: "test", Path: "/tea", Expires: "1", Domain: ".example.com", HTTPOnly: false, Secure: true,
 			},
@@ -2154,6 +2149,11 @@ func TestValidateSessionCookieFails(t *testing.T) {
 			sc:        &v1alpha1.SessionCookie{Enable: true},
 			fieldPath: field.NewPath("sessionCookie"),
 			msg:       "missing required field: Name",
+		},
+		{
+			sc:        &v1alpha1.SessionCookie{Enable: false},
+			fieldPath: field.NewPath("sessionCookie"),
+			msg:       "session cookie not enabled",
 		},
 		{
 			sc:        &v1alpha1.SessionCookie{Enable: true, Name: "test", Expires: "EGGS"},

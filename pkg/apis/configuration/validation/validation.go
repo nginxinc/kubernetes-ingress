@@ -213,17 +213,31 @@ func validateUpstreamHealthCheck(hc *v1alpha1.HealthCheck, fieldPath *field.Path
 func validateSessionCookie(sc *v1alpha1.SessionCookie, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if sc == nil || !sc.Enable {
+	if sc == nil {
 		return allErrs
 	}
 
 	if sc.Name == "" {
 		allErrs = append(allErrs, field.Required(fieldPath.Child("name"), ""))
+	} else {
+		for _, msg := range isCookieName(sc.Name) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("name"), sc.Name, msg))
+		}
 	}
+
 	if sc.Path != "" {
 		allErrs = append(allErrs, validatePath(sc.Path, fieldPath.Child("path"))...)
 	}
-	allErrs = append(allErrs, validateTime(sc.Expires, fieldPath.Child("expires"))...)
+	if sc.Expires != "max" {
+		allErrs = append(allErrs, validateTime(sc.Expires, fieldPath.Child("expires"))...)
+	}
+
+	if sc.Domain != "" {
+		// A Domain prefix of "." is allowed.
+		for _, msg := range validation.IsDNS1123Subdomain(strings.TrimPrefix(sc.Domain, ".")) {
+			allErrs = append(allErrs, field.Invalid(fieldPath, sc.Domain, msg))
+		}
+	}
 
 	return allErrs
 }
