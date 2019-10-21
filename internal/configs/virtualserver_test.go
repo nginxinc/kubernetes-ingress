@@ -2883,3 +2883,34 @@ func TestGenerateSessionCookie(t *testing.T) {
 		}
 	}
 }
+
+func TestGeneratePath(t *testing.T) {
+	tests := []struct {
+		path     string
+		expected string
+	}{
+		{
+			path:     "/",
+			expected: "/",
+		},
+		{
+			path:     "=/exact/match",
+			expected: "=/exact/match",
+		},
+		{
+			path:     `~ *\\.jpg`,
+			expected: `~ "*\\.jpg"`,
+		},
+		{
+			path:     `~* *\\.PNG`,
+			expected: `~* "*\\.PNG"`,
+		},
+	}
+
+	for _, test := range tests {
+		result := generatePath(test.path)
+		if result != test.expected {
+			t.Errorf("generatePath() returned %v, but expected %v.", result, test.expected)
+		}
+	}
+}

@@ -63,6 +63,12 @@ spec:
   - path: /coffee
     action:
       pass: coffee
+  - path: ~ ^/decaf/.*\\.jpg$
+    action:
+      pass: coffee
+  - path: = /green/tea
+    action:
+      pass: tea
 ```
 
 | Field | Description | Type | Required |
@@ -113,7 +119,7 @@ The route defines rules for matching client requests to actions like passing a r
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
-| `path` | The path of the route. NGINX will match it against the URI of a request. The path must start with `/` and must not include any whitespace characters, `{`, `}` or `;`. For example, `/`, `/path` are valid. The path must be unique among the paths of all routes of the VirtualServer. | `string` | Yes |
+| `path` | The path of the route. NGINX will match it against the URI of a request. Possible values are: a prefix (`/`, `/path`), an exact match (`=/exact/match`), a case insensitive regular expression (`~*^/Bar.*\\.jpg`) or a case sensitive regular expression (`~^/foo.*\\.jpg`). In the case of a prefix (must start with `/`) or an exact match (must start with `=`), the path must not include any whitespace characters, `{`, `}` or `;`. In the case of the regex matches, all double quotes `"` must be escaped and the match can't end in an unescaped backslash `\`. The path must be unique among the paths of all routes of the VirtualServer. Check the [location](http://nginx.org/en/docs/http/ngx_http_core_module.html#location) directive for more information. | `string` | Yes |
 | `action` | The default action to perform for a request. | [`action`](#Action) | No* |
 | `splits` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [`[]split`](#Split) | No* |
 | `matches` | The matching rules for advanced content-based routing. Requires the default `action` or `splits`.  Unmatched requests will be handled by the default `action` or `splits`. |[`matches`](#Match) | No |
@@ -193,7 +199,7 @@ action:
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
-| `path` | The path of the subroute. NGINX will match it against the URI of a request. The path must start with the same path as the path of the route of the VirtualServer that references this resource. It must not include any whitespace characters, `{`, `}` or `;`. The path must be unique among the paths of all subroutes of the VirtualServerRoute. | `string` | Yes |
+| `path` | The path of the subroute. NGINX will match it against the URI of a request. Possible values are: a prefix (`/`, `/path`), an exact match (`=/exact/match`), a case insensitive regular expression (`~*^/Bar.*\\.jpg`) or a case sensitive regular expression (`~^/foo.*\\.jpg`). In the case of a prefix, the path must start with the same path as the path of the route of the VirtualServer that references this resource. In the case of an exact or regex match, the path must be the same as the path of the route of the VirtualServer that references this resource. In the case of a prefix or an exact match, the path must not include any whitespace characters, `{`, `}` or `;`.  In the case of the regex matches, all double quotes `"` must be escaped and the match can't end in an unescaped backslash `\`. The path must be unique among the paths of all subroutes of the VirtualServerRoute. | `string` | Yes |
 | `action` | The default action to perform for a request. | [`action`](#Action) | No* |
 | `splits` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [`[]split`](#Split) | No* |
 | `matches` | The matching rules for advanced content-based routing. Requires the default `action` or `splits`.  Unmatched requests will be handled by the default `action` or `splits`. |[`matches`](#Match) | No |

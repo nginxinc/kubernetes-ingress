@@ -499,9 +499,21 @@ func generateBool(s *bool, defaultS bool) bool {
 	return defaultS
 }
 
+func generatePath(path string) string {
+	// Wrap the regular expression (if present) inside double quotes (") to avoid NGINX parsing errors
+	if strings.HasPrefix(path, "~*") {
+		return fmt.Sprintf(`~* "%v"`, strings.TrimPrefix(strings.TrimPrefix(path, "~*"), " "))
+	}
+	if strings.HasPrefix(path, "~") {
+		return fmt.Sprintf(`~ "%v"`, strings.TrimPrefix(strings.TrimPrefix(path, "~"), " "))
+	}
+
+	return path
+}
+
 func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) version2.Location {
 	return version2.Location{
-		Path:                     path,
+		Path:                     generatePath(path),
 		Snippets:                 cfgParams.LocationSnippets,
 		ProxyConnectTimeout:      generateString(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
 		ProxyReadTimeout:         generateString(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),

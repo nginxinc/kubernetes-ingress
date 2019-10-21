@@ -907,6 +907,92 @@ func TestValdateUpstreamFails(t *testing.T) {
 	}
 }
 
+func TestValidateRegexPath(t *testing.T) {
+	tests := []struct {
+		regexPath string
+		msg       string
+	}{
+		{
+			regexPath: "~ ^/foo.*\\.jpg",
+			msg:       "case sensitive regexp",
+		},
+		{
+			regexPath: "~* ^/Bar.*\\.jpg",
+			msg:       "case insensitive regexp",
+		},
+		{
+			regexPath: `~ ^/f\"oo.*\\.jpg`,
+			msg:       "regexp with escaped double quotes",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateRegexPath(test.regexPath, field.NewPath("path"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateRegexPath(%v) returned errors for valid input for the case of %v", test.regexPath, test.msg)
+		}
+	}
+}
+
+func TestValidateRegexPathFails(t *testing.T) {
+	tests := []struct {
+		regexPath string
+		msg       string
+	}{
+		{
+			regexPath: "~ [{",
+			msg:       "invalid regexp",
+		},
+		{
+			regexPath: `~ /foo"`,
+			msg:       "unescaped double quotes",
+		},
+		{
+			regexPath: `~"`,
+			msg:       "empty regex",
+		},
+		{
+			regexPath: `~ /foo\`,
+			msg:       "ending in backslash",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateRegexPath(test.regexPath, field.NewPath("path"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateRegexPath(%v) returned no errors for invalid input for the case of %v", test.regexPath, test.msg)
+		}
+	}
+}
+
+func TestValidateRoutePath(t *testing.T) {
+	validPaths := []string{
+		"/",
+		"~ /^foo.*\\.jpg",
+		"~* /^Bar.*\\.jpg",
+		"=/exact/match",
+	}
+
+	for _, path := range validPaths {
+		allErrs := validateRoutePath(path, field.NewPath("path"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateRoutePath(%v) returned errors for valid input", path)
+		}
+	}
+
+	invalidPaths := []string{
+		"",
+		"invalid",
+	}
+
+	for _, path := range invalidPaths {
+		allErrs := validateRoutePath(path, field.NewPath("path"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateRoutePath(%v) returned no errors for invalid input", path)
+		}
+	}
+}
+
 func TestValidatePath(t *testing.T) {
 	validPaths := []string{
 		"/",
@@ -2286,6 +2372,33 @@ func TestValidateTLSRedirectStatusCodeFails(t *testing.T) {
 		allErrs := validateTLSRedirectStatusCode(test.code, field.NewPath("code"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateTLSRedirectStatusCode(%v) returned no errors for invalid input", test.code)
+		}
+	}
+}
+
+func TestIsRegexOrExactMatch(t *testing.T) {
+	tests := []struct {
+		path     string
+		expected bool
+	}{
+		{
+			path:     "/path",
+			expected: false,
+		},
+		{
+			path:     "~ .*\\.jpg",
+			expected: true,
+		},
+		{
+			path:     "=/exact/match",
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		result := isRegexOrExactMatch(test.path)
+		if result != test.expected {
+			t.Errorf("isRegexOrExactMatch(%v) returned %v but expected %v", test.path, result, test.expected)
 		}
 	}
 }

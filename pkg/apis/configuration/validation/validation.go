@@ -551,7 +551,7 @@ func validateVirtualServerRoutes(routes []v1alpha1.Route, fieldPath *field.Path,
 func validateRoute(route v1alpha1.Route, fieldPath *field.Path, upstreamNames sets.String, isRouteFieldForbidden bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, validatePath(route.Path, fieldPath.Child("path"))...)
+	allErrs = append(allErrs, validateRoutePath(route.Path, fieldPath.Child("path"))...)
 
 	fieldCount := 0
 
@@ -660,7 +660,48 @@ func validateSplits(splits []v1alpha1.Split, fieldPath *field.Path, upstreamName
 	return allErrs
 }
 
-// For now, we only support prefix-based NGINX locations. For example, location /abc { ... }.
+// We support prefix-based NGINX locations, positive case-sensitive/insensitive regular expressions matches and exact matches.
+// More info http://nginx.org/en/docs/http/ngx_http_core_module.html#location
+func validateRoutePath(path string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if path == "" {
+		return append(allErrs, field.Required(fieldPath, ""))
+	}
+
+	if strings.HasPrefix(path, "~") {
+		allErrs = append(allErrs, validateRegexPath(path, fieldPath)...)
+	} else if strings.HasPrefix(path, "/") {
+		allErrs = append(allErrs, validatePath(path, fieldPath)...)
+	} else if strings.HasPrefix(path, "=") {
+		allErrs = append(allErrs, validatePath(strings.TrimPrefix(path, "="), fieldPath)...)
+	} else {
+		allErrs = append(allErrs, field.Invalid(fieldPath, path, "must start with /, ~ or ="))
+	}
+
+	return allErrs
+}
+
+const regexPathFmt = `([^"\\]|\\.)*`
+const regexPathErrMsg = `must have all '"' (double quotes) escaped and must not end with an unescaped '\' (backslash)`
+
+var regexPathRegexp = regexp.MustCompile("^" + regexPathFmt + "$")
+
+func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if _, err := regexp.Compile(path); err != nil {
+		return append(allErrs, field.Invalid(fieldPath, path, fmt.Sprintf("must be a valid regular expression: %v", err)))
+	}
+
+	if !regexPathRegexp.MatchString(path) {
+		msg := validation.RegexError(regexPathErrMsg, regexPathFmt, "*.jpg", "^/images/image_*.png$")
+		return append(allErrs, field.Invalid(fieldPath, path, msg))
+	}
+
+	return allErrs
+}
+
 const pathFmt = `/[^\s{};]*`
 const pathErrMsg = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
 
@@ -826,12 +867,12 @@ func ValidateVirtualServerRoute(virtualServerRoute *v1alpha1.VirtualServerRoute,
 }
 
 // ValidateVirtualServerRouteForVirtualServer validates a VirtualServerRoute for a VirtualServer represented by its host and path prefix.
-func ValidateVirtualServerRouteForVirtualServer(virtualServerRoute *v1alpha1.VirtualServerRoute, virtualServerHost string, pathPrefix string, isPlus bool) error {
-	allErrs := validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), virtualServerHost, pathPrefix, isPlus)
+func ValidateVirtualServerRouteForVirtualServer(virtualServerRoute *v1alpha1.VirtualServerRoute, virtualServerHost string, vsPath string, isPlus bool) error {
+	allErrs := validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), virtualServerHost, vsPath, isPlus)
 	return allErrs.ToAggregate()
 }
 
-func validateVirtualServerRouteSpec(spec *v1alpha1.VirtualServerRouteSpec, fieldPath *field.Path, virtualServerHost string, pathPrefix string, isPlus bool) field.ErrorList {
+func validateVirtualServerRouteSpec(spec *v1alpha1.VirtualServerRouteSpec, fieldPath *field.Path, virtualServerHost string, vsPath string, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateVirtualServerRouteHost(spec.Host, virtualServerHost, fieldPath.Child("host"))...)
@@ -839,7 +880,7 @@ func validateVirtualServerRouteSpec(spec *v1alpha1.VirtualServerRouteSpec, field
 	upstreamErrs, upstreamNames := validateUpstreams(spec.Upstreams, fieldPath.Child("upstreams"), isPlus)
 	allErrs = append(allErrs, upstreamErrs...)
 
-	allErrs = append(allErrs, validateVirtualServerRouteSubroutes(spec.Subroutes, fieldPath.Child("subroutes"), upstreamNames, pathPrefix)...)
+	allErrs = append(allErrs, validateVirtualServerRouteSubroutes(spec.Subroutes, fieldPath.Child("subroutes"), upstreamNames, vsPath)...)
 
 	return allErrs
 }
@@ -857,10 +898,27 @@ func validateVirtualServerRouteHost(host string, virtualServerHost string, field
 	return allErrs
 }
 
-func validateVirtualServerRouteSubroutes(routes []v1alpha1.Route, fieldPath *field.Path, upstreamNames sets.String, pathPrefix string) field.ErrorList {
+func isRegexOrExactMatch(path string) bool {
+	return strings.HasPrefix(path, "~") || strings.HasPrefix(path, "=")
+}
+
+func validateVirtualServerRouteSubroutes(routes []v1alpha1.Route, fieldPath *field.Path, upstreamNames sets.String, vsPath string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allPaths := sets.String{}
+
+	if isRegexOrExactMatch(vsPath) {
+		if len(routes) != 1 {
+			return append(allErrs, field.Invalid(fieldPath, "subroutes", "must have only one subroute if regex match or exact match are being used"))
+		}
+
+		idxPath := fieldPath.Index(0)
+		if routes[0].Path != vsPath {
+			return append(allErrs, field.Invalid(idxPath.Child("path"), routes[0].Path, "must have the same path as the referenced VirtualServer route path"))
+		}
+
+		return validateRoute(routes[0], idxPath, upstreamNames, true)
+	}
 
 	for i, r := range routes {
 		idxPath := fieldPath.Index(i)
@@ -868,8 +926,8 @@ func validateVirtualServerRouteSubroutes(routes []v1alpha1.Route, fieldPath *fie
 		isRouteFieldForbidden := true
 		routeErrs := validateRoute(r, idxPath, upstreamNames, isRouteFieldForbidden)
 
-		if pathPrefix != "" && !strings.HasPrefix(r.Path, pathPrefix) {
-			msg := fmt.Sprintf("must start with '%s'", pathPrefix)
+		if vsPath != "" && !strings.HasPrefix(r.Path, vsPath) && !isRegexOrExactMatch(r.Path) {
+			msg := fmt.Sprintf("must start with '%s'", vsPath)
 			routeErrs = append(routeErrs, field.Invalid(idxPath, r.Path, msg))
 		}
 
