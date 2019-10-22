@@ -1825,15 +1825,29 @@ func TestValidateUpstreamHealthCheck(t *testing.T) {
 }
 
 func TestValidateUpstreamHealthCheckFails(t *testing.T) {
-	hc := &v1alpha1.HealthCheck{
-		Enable: true,
-		Path:   "/healthz//;",
+	tests := []struct {
+		hc *v1alpha1.HealthCheck
+	}{
+		{
+			hc: &v1alpha1.HealthCheck{
+				Enable: true,
+				Path:   "/healthz//;",
+			},
+		},
+		{
+			hc: &v1alpha1.HealthCheck{
+				Enable: false,
+				Path:   "/healthz//;",
+			},
+		},
 	}
 
-	allErrs := validateUpstreamHealthCheck(hc, field.NewPath("healthCheck"))
+	for _, test := range tests {
+		allErrs := validateUpstreamHealthCheck(test.hc, field.NewPath("healthCheck"))
 
-	if len(allErrs) == 0 {
-		t.Errorf("validateUpstreamHealthCheck() returned no errors for invalid input %v", hc)
+		if len(allErrs) == 0 {
+			t.Errorf("validateUpstreamHealthCheck() returned no errors for invalid input %v", test.hc)
+		}
 	}
 }
 

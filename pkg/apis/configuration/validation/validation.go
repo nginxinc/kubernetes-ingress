@@ -179,7 +179,7 @@ func validateUpstreamLBMethod(lBMethod string, fieldPath *field.Path, isPlus boo
 func validateUpstreamHealthCheck(hc *v1alpha1.HealthCheck, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if hc == nil || !hc.Enable {
+	if hc == nil {
 		return allErrs
 	}
 
