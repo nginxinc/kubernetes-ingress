@@ -8,6 +8,11 @@ spec:
   - name: backend1
     service: backend1-svc
     port: 80
+    sessionCookie:
+      name: ±!@£$%^&*()_+MyTestCookie
+      path: path
+      expires: one
+      domain: "$request_uri"
     healthCheck:
       enable: True
       path: "invalid"
@@ -30,6 +35,11 @@ spec:
   - name: backend3
     service: backend3-svc
     port: 80
+    sessionCookie:
+      name: ±!@£$%^&*()_+MyTestCookie
+      path: path
+      expires: one
+      domain: "$request_uri"
     healthCheck:
       enable: True
       path: "invalid"

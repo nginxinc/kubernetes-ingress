@@ -91,6 +91,8 @@ class TestVirtualServerUpstreamOptions:
         assert "proxy_buffering on;" in config
         assert "proxy_buffers" not in config
 
+        assert "sticky cookie" not in config
+
     @pytest.mark.parametrize('options, expected_strings', [
         ({"lb-method": "least_conn", "max-fails": 8,
           "fail-timeout": "13s", "connect-timeout": "55s", "read-timeout": "1s", "send-timeout": "1h",
@@ -292,9 +294,15 @@ class TestVirtualServerUpstreamOptionValidation:
                          indirect=True)
 class TestOptionsSpecificForPlus:
     @pytest.mark.parametrize('options, expected_strings', [
-        ({"lb-method": "least_conn", "healthCheck": {"enable": True}, "slow-start": "3h", "queue": {"size": 100}},
+        ({"lb-method": "least_conn", "healthCheck": {"enable": True}, "slow-start": "3h", "queue": {"size": 100},
+          "sessionCookie": {"enable": True,
+                            "name": "TestCookie",
+                            "path": "/some-valid/path",
+                            "expires": "max",
+                            "domain": "virtual-server-route.example.com", "httpOnly": True, "secure": True}},
          ["health_check uri=/ port=80 interval=5s jitter=0s", "fails=1 passes=1;",
-          "slow_start=3h", "queue 100 timeout=60s;"]),
+          "slow_start=3h", "queue 100 timeout=60s;",
+          "sticky cookie TestCookie expires=max domain=virtual-server-route.example.com httponly secure path=/some-valid/path;"]),
         ({"lb-method": "least_conn",
           "healthCheck": {"enable": True, "path": "/health",
                           "interval": "15s", "jitter": "3",
@@ -381,6 +389,8 @@ class TestOptionsSpecificForPlus:
             "upstreams[0].healthCheck.statusMatch",
             "upstreams[0].slow-start",
             "upstreams[0].queue.size", "upstreams[0].queue.timeout",
+            "upstreams[0].sessionCookie.name", "upstreams[0].sessionCookie.path",
+            "upstreams[0].sessionCookie.expires", "upstreams[0].sessionCookie.domain",
             "upstreams[1].healthCheck.path", "upstreams[1].healthCheck.interval", "upstreams[1].healthCheck.jitter",
             "upstreams[1].healthCheck.fails", "upstreams[1].healthCheck.passes",
             "upstreams[1].healthCheck.connect-timeout",
@@ -388,7 +398,9 @@ class TestOptionsSpecificForPlus:
             "upstreams[1].healthCheck.headers[0].name", "upstreams[1].healthCheck.headers[0].value",
             "upstreams[1].healthCheck.statusMatch",
             "upstreams[1].slow-start",
-            "upstreams[1].queue.size", "upstreams[1].queue.timeout"
+            "upstreams[1].queue.size", "upstreams[1].queue.timeout",
+            "upstreams[1].sessionCookie.name", "upstreams[1].sessionCookie.path",
+            "upstreams[1].sessionCookie.expires", "upstreams[1].sessionCookie.domain"
         ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"VirtualServer {text} is invalid and was rejected: "
