@@ -237,7 +237,7 @@ func validateSessionCookie(sc *v1alpha1.SessionCookie, fieldPath *field.Path) fi
 		// A Domain prefix of "." is allowed.
 		domain := strings.TrimPrefix(sc.Domain, ".")
 		for _, msg := range validation.IsDNS1123Subdomain(domain) {
-			allErrs = append(allErrs, field.Invalid(fieldPath, sc.Domain, msg))
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("domain"), sc.Domain, msg))
 		}
 	}
 
