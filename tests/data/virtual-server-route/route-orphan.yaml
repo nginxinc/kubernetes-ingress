@@ -10,4 +10,5 @@ spec:
     port: 80
   subroutes:
   - path: "/alone-backend2"
-    upstream: backend2
+    action:
+      pass: backend2

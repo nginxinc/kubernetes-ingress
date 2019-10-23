@@ -45,6 +45,8 @@ spec:
     buffer-size: "k"
   subroutes:
   - path: "/backends/backend1"
-    upstream: backend1
+    action:
+      pass: backend1
   - path: "/backends/backend3"
-    upstream: backend3
+    action:
+      pass: backend3

@@ -8,18 +8,18 @@ spec:
   - name: backend1
     service: backend1-svc
     port: 80
-    lb-method: "least_conn"
-    max-conns: 32
-    max-fails: 25
-    fail-timeout: 15s
-    slow-start: 10s
   - name: backend3
     service: backend3-svc
     port: 80
   subroutes:
   - path: "/backends/backend1"
-    action:
-      pass: backend1
+    splits:
+      - weight: 90
+        action:
+          pass: backend1
+      - weight: 10
+        action:
+          pass: backend3
   - path: "/backends/backend3"
     action:
       pass: backend3

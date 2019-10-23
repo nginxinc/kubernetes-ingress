@@ -18,8 +18,11 @@ spec:
   - path: "/backends"
     splits:
     - weight: 90
-      upstream: backend1-v1
+      action:
+        pass: backend1-v1
     - weight: 10
-      upstream: backend1-v2
+      action:
+        pass: backend1-v2
   - path: "/backend2"
-    upstream: backend2
+    action:
+      pass: backend2

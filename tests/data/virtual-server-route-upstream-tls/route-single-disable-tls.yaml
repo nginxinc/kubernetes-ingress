@@ -12,4 +12,5 @@ spec:
       enable:
   subroutes:
   - path: "/backend2"
-    upstream: backend2
+    action:
+      pass: backend2

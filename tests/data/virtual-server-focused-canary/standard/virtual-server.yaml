@@ -1,0 +1,31 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: VirtualServer
+metadata:
+  name: virtual-server-canary
+spec:
+  host: virtual-server-canary.example.com
+  upstreams:
+  - name: backend1
+    service: backend1-svc
+    port: 80
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  routes:
+  - path: "/backends/focused-canary"
+    matches:
+    - conditions:
+      - header: x-version
+        value: canary
+      splits:
+      - weight: 90
+        action:
+          pass: backend1
+      - weight: 10
+        action:
+          pass: backend2
+    action:
+      pass: backend1
+  - path: "/backend2"
+    action:
+      pass: backend2

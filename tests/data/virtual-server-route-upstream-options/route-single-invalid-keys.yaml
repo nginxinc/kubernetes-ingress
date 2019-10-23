@@ -26,4 +26,5 @@ spec:
     buffer-size: "one"
   subroutes:
   - path: "/backend2"
-    upstream: backend2
+    action:
+      pass: backend2
