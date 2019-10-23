@@ -2063,50 +2063,67 @@ func TestValidateIntFromStringFails(t *testing.T) {
 }
 
 func TestRejectPlusResourcesInOSS(t *testing.T) {
-	upstream := v1alpha1.Upstream{
-		SlowStart:     "10s",
-		HealthCheck:   &v1alpha1.HealthCheck{},
-		SessionCookie: &v1alpha1.SessionCookie{},
+	tests := []struct {
+		upstream *v1alpha1.Upstream
+	}{
+		{
+			upstream: &v1alpha1.Upstream{
+				SlowStart: "10s",
+			},
+		},
+		{
+			upstream: &v1alpha1.Upstream{
+				HealthCheck: &v1alpha1.HealthCheck{},
+			},
+		},
+		{
+			upstream: &v1alpha1.Upstream{
+				SessionCookie: &v1alpha1.SessionCookie{},
+			},
+		},
+		{
+			upstream: &v1alpha1.Upstream{
+				Queue: &v1alpha1.UpstreamQueue{},
+			},
+		},
 	}
 
-	allErrsPlus := rejectPlusResourcesInOSS(upstream, field.NewPath("upstreams").Index(0), true)
-	allErrsOSS := rejectPlusResourcesInOSS(upstream, field.NewPath("upstreams").Index(0), false)
+	for _, test := range tests {
+		allErrsOSS := rejectPlusResourcesInOSS(*test.upstream, field.NewPath("upstreams"), false)
 
-	if len(allErrsPlus) != 0 {
-		t.Errorf("rejectPlusResourcesInOSS() returned errors %v for NGINX Plus for upstream %v", allErrsPlus, upstream)
+		if len(allErrsOSS) == 0 {
+			t.Errorf("rejectPlusResourcesInOSS() returned no errors for upstream: %v", test.upstream)
+		}
+
+		allErrsPlus := rejectPlusResourcesInOSS(*test.upstream, field.NewPath("upstreams"), true)
+
+		if len(allErrsPlus) != 0 {
+			t.Errorf("rejectPlusResourcesInOSS() returned no errors for upstream: %v", test.upstream)
+		}
 	}
-
-	if len(allErrsOSS) == 0 {
-		t.Errorf("rejectPlusResourcesInOSS() returned no errors for NGINX OSS for upstream %v", upstream)
-	}
-
 }
 
 func TestValidateQueue(t *testing.T) {
 	tests := []struct {
 		upstreamQueue *v1alpha1.UpstreamQueue
-		isPlus        bool
 		msg           string
 	}{
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: 10, Timeout: "10s"},
-			isPlus:        true,
 			msg:           "valid upstream queue with size and timeout",
 		},
 		{
 			upstreamQueue: nil,
-			isPlus:        true,
 			msg:           "upstream queue nil",
 		},
 		{
 			upstreamQueue: nil,
-			isPlus:        false,
 			msg:           "upstream queue nil in OSS",
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateQueue(test.upstreamQueue, field.NewPath("queue"), test.isPlus)
+		allErrs := validateQueue(test.upstreamQueue, field.NewPath("queue"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateQueue() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -2116,28 +2133,20 @@ func TestValidateQueue(t *testing.T) {
 func TestValidateQueueFails(t *testing.T) {
 	tests := []struct {
 		upstreamQueue *v1alpha1.UpstreamQueue
-		isPlus        bool
 		msg           string
 	}{
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: -1, Timeout: "10s"},
-			isPlus:        true,
 			msg:           "upstream queue with invalid size",
 		},
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: 10, Timeout: "-10"},
-			isPlus:        true,
 			msg:           "upstream queue with invalid timeout",
-		},
-		{
-			upstreamQueue: &v1alpha1.UpstreamQueue{Size: 10, Timeout: "10s"},
-			isPlus:        false,
-			msg:           "upstream queue with valid size and timeout in OSS",
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateQueue(test.upstreamQueue, field.NewPath("queue"), test.isPlus)
+		allErrs := validateQueue(test.upstreamQueue, field.NewPath("queue"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateQueue() returned no errors for invalid input for the case of %s", test.msg)
 		}

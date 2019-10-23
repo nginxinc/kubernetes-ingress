@@ -407,13 +407,14 @@ func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isP
 		allErrs = append(allErrs, validateTime(u.SlowStart, idxPath.Child("slow-start"))...)
 		allErrs = append(allErrs, validateBuffer(u.ProxyBuffers, idxPath.Child("buffers"))...)
 		allErrs = append(allErrs, validateSize(u.ProxyBufferSize, idxPath.Child("buffer-size"))...)
-		allErrs = append(allErrs, rejectPlusResourcesInOSS(u, idxPath, isPlus)...)
-		allErrs = append(allErrs, validateQueue(u.Queue, idxPath.Child("queue"), isPlus)...)
+		allErrs = append(allErrs, validateQueue(u.Queue, idxPath.Child("queue"))...)
 		allErrs = append(allErrs, validateSessionCookie(u.SessionCookie, idxPath.Child("sessionCookie"))...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))
 		}
+
+		allErrs = append(allErrs, rejectPlusResourcesInOSS(u, idxPath, isPlus)...)
 	}
 
 	return allErrs, upstreamNames
@@ -862,18 +863,17 @@ func rejectPlusResourcesInOSS(upstream v1alpha1.Upstream, idxPath *field.Path, i
 		allErrs = append(allErrs, field.Forbidden(idxPath.Child("sessionCookie"), "sticky cookies are only supported in NGINX Plus"))
 	}
 
+	if upstream.Queue != nil {
+		allErrs = append(allErrs, field.Forbidden(idxPath.Child("queue"), "queue is only supported in NGINX Plus"))
+	}
+
 	return allErrs
 }
 
-func validateQueue(queue *v1alpha1.UpstreamQueue, fieldPath *field.Path, isPlus bool) field.ErrorList {
+func validateQueue(queue *v1alpha1.UpstreamQueue, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if queue == nil {
-		return allErrs
-	}
-
-	if !isPlus {
-		allErrs = append(allErrs, field.Forbidden(fieldPath, "queue is only supported in NGINX Plus"))
 		return allErrs
 	}
 
