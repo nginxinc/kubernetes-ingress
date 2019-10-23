@@ -2085,32 +2085,28 @@ func TestRejectPlusResourcesInOSS(t *testing.T) {
 func TestValidateQueue(t *testing.T) {
 	tests := []struct {
 		upstreamQueue *v1alpha1.UpstreamQueue
-		fieldPath     *field.Path
 		isPlus        bool
 		msg           string
 	}{
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: 10, Timeout: "10s"},
-			fieldPath:     field.NewPath("queue"),
 			isPlus:        true,
 			msg:           "valid upstream queue with size and timeout",
 		},
 		{
 			upstreamQueue: nil,
-			fieldPath:     field.NewPath("queue"),
 			isPlus:        true,
 			msg:           "upstream queue nil",
 		},
 		{
 			upstreamQueue: nil,
-			fieldPath:     field.NewPath("queue"),
 			isPlus:        false,
 			msg:           "upstream queue nil in OSS",
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateQueue(test.upstreamQueue, test.fieldPath, test.isPlus)
+		allErrs := validateQueue(test.upstreamQueue, field.NewPath("queue"), test.isPlus)
 		if len(allErrs) != 0 {
 			t.Errorf("validateQueue() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -2120,32 +2116,28 @@ func TestValidateQueue(t *testing.T) {
 func TestValidateQueueFails(t *testing.T) {
 	tests := []struct {
 		upstreamQueue *v1alpha1.UpstreamQueue
-		fieldPath     *field.Path
 		isPlus        bool
 		msg           string
 	}{
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: -1, Timeout: "10s"},
-			fieldPath:     field.NewPath("queue"),
 			isPlus:        true,
 			msg:           "upstream queue with invalid size",
 		},
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: 10, Timeout: "-10"},
-			fieldPath:     field.NewPath("queue"),
 			isPlus:        true,
 			msg:           "upstream queue with invalid timeout",
 		},
 		{
 			upstreamQueue: &v1alpha1.UpstreamQueue{Size: 10, Timeout: "10s"},
-			fieldPath:     field.NewPath("queue"),
 			isPlus:        false,
 			msg:           "upstream queue with valid size and timeout in OSS",
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateQueue(test.upstreamQueue, test.fieldPath, test.isPlus)
+		allErrs := validateQueue(test.upstreamQueue, field.NewPath("queue"), test.isPlus)
 		if len(allErrs) == 0 {
 			t.Errorf("validateQueue() returned no errors for invalid input for the case of %s", test.msg)
 		}
@@ -2154,30 +2146,27 @@ func TestValidateQueueFails(t *testing.T) {
 
 func TestValidateSessionCookie(t *testing.T) {
 	tests := []struct {
-		sc        *v1alpha1.SessionCookie
-		fieldPath *field.Path
-		msg       string
+		sc  *v1alpha1.SessionCookie
+		msg string
 	}{
 		{
-			sc:        &v1alpha1.SessionCookie{Enable: true, Name: "min"},
-			fieldPath: field.NewPath("sessionCookie"),
-			msg:       "min valid config",
+			sc:  &v1alpha1.SessionCookie{Enable: true, Name: "min"},
+			msg: "min valid config",
 		},
 		{
-			sc:        &v1alpha1.SessionCookie{Enable: true, Name: "test", Expires: "max"},
-			fieldPath: field.NewPath("sessionCookie"),
-			msg:       "valid config with expires max",
+			sc:  &v1alpha1.SessionCookie{Enable: true, Name: "test", Expires: "max"},
+			msg: "valid config with expires max",
 		},
 		{
 			sc: &v1alpha1.SessionCookie{
 				Enable: true, Name: "test", Path: "/tea", Expires: "1", Domain: ".example.com", HTTPOnly: false, Secure: true,
 			},
-			fieldPath: field.NewPath("sessionCookie"),
-			msg:       "max valid config",
+
+			msg: "max valid config",
 		},
 	}
 	for _, test := range tests {
-		allErrs := validateSessionCookie(test.sc, test.fieldPath)
+		allErrs := validateSessionCookie(test.sc, field.NewPath("sessionCookie"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateSessionCookie() returned errors %v for valid input for the case of: %s", allErrs, test.msg)
 		}
@@ -2186,38 +2175,32 @@ func TestValidateSessionCookie(t *testing.T) {
 
 func TestValidateSessionCookieFails(t *testing.T) {
 	tests := []struct {
-		sc        *v1alpha1.SessionCookie
-		fieldPath *field.Path
-		msg       string
+		sc  *v1alpha1.SessionCookie
+		msg string
 	}{
 		{
-			sc:        &v1alpha1.SessionCookie{Enable: true},
-			fieldPath: field.NewPath("sessionCookie"),
-			msg:       "missing required field: Name",
+			sc:  &v1alpha1.SessionCookie{Enable: true},
+			msg: "missing required field: Name",
 		},
 		{
-			sc:        &v1alpha1.SessionCookie{Enable: false},
-			fieldPath: field.NewPath("sessionCookie"),
-			msg:       "session cookie not enabled",
+			sc:  &v1alpha1.SessionCookie{Enable: false},
+			msg: "session cookie not enabled",
 		},
 		{
-			sc:        &v1alpha1.SessionCookie{Enable: true, Name: "$ecret-Name"},
-			fieldPath: field.NewPath("sessionCookie"),
-			msg:       "invalid name format",
+			sc:  &v1alpha1.SessionCookie{Enable: true, Name: "$ecret-Name"},
+			msg: "invalid name format",
 		},
 		{
-			sc:        &v1alpha1.SessionCookie{Enable: true, Name: "test", Expires: "EGGS"},
-			fieldPath: field.NewPath("sessionCookie"),
-			msg:       "invalid time format",
+			sc:  &v1alpha1.SessionCookie{Enable: true, Name: "test", Expires: "EGGS"},
+			msg: "invalid time format",
 		},
 		{
-			sc:        &v1alpha1.SessionCookie{Enable: true, Name: "test", Path: "/ coffee"},
-			fieldPath: field.NewPath("sessionCookie"),
-			msg:       "invalid path format",
+			sc:  &v1alpha1.SessionCookie{Enable: true, Name: "test", Path: "/ coffee"},
+			msg: "invalid path format",
 		},
 	}
 	for _, test := range tests {
-		allErrs := validateSessionCookie(test.sc, test.fieldPath)
+		allErrs := validateSessionCookie(test.sc, field.NewPath("sessionCookie"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateSessionCookie() returned no errors for invalid input for the case of: %v", test.msg)
 		}
