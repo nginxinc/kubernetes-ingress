@@ -8,7 +8,8 @@ from suite.resources_utils import wait_before_test, get_events, get_first_pod_na
 
 
 def assert_new_event_emitted(virtual_server_setup, new_list, previous_list):
-    text_invalid = f"VirtualServer {virtual_server_setup.namespace}/{virtual_server_setup.vs_name} is invalid and was rejected"
+    item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
+    text_invalid = f"VirtualServer {item_name} is invalid and was rejected"
     new_event = new_list[len(new_list) - 1]
     assert len(new_list) - len(previous_list) == 1
     assert text_invalid in new_event.message
@@ -33,7 +34,8 @@ def assert_template_conf_exists(kube_apis, ic_pod_name, ic_namespace, virtual_se
 
 
 def assert_event_count_increased(virtual_server_setup, new_list, previous_list):
-    text_valid = f"Configuration for {virtual_server_setup.namespace}/{virtual_server_setup.vs_name} was added or updated"
+    item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
+    text_valid = f"Configuration for {item_name} was added or updated"
     for i in range(len(previous_list)-1, 0, -1):
         if text_valid in previous_list[i].message:
             assert new_list[i].count - previous_list[i].count == 1, "We expect the counter to increase"
@@ -74,7 +76,7 @@ class TestVirtualServerValidation:
         print("Step 2: make a valid VirtualServer invalid and check")
         patch_virtual_server_from_yaml(kube_apis.custom_objects,
                                        virtual_server_setup.vs_name,
-                                       f"{TEST_DATA}/virtual-server-validation/virtual-server-invalid.yaml",
+                                       f"{TEST_DATA}/virtual-server-validation/virtual-server-invalid-cookie.yaml",
                                        virtual_server_setup.namespace)
         wait_before_test(1)
         step_2_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
@@ -86,7 +88,7 @@ class TestVirtualServerValidation:
         print("Step 3: update an invalid VirtualServer with another invalid and check")
         patch_virtual_server_from_yaml(kube_apis.custom_objects,
                                        virtual_server_setup.vs_name,
-                                       f"{TEST_DATA}/virtual-server-validation/virtual-server-invalid-2.yaml",
+                                       f"{TEST_DATA}/virtual-server-validation/virtual-server-no-default-action.yaml",
                                        virtual_server_setup.namespace)
         wait_before_test(1)
         step_3_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
@@ -110,7 +112,7 @@ class TestVirtualServerValidation:
         print("Step 5: delete VS and then create an invalid and check")
         delete_virtual_server(kube_apis.custom_objects, virtual_server_setup.vs_name, virtual_server_setup.namespace)
         create_virtual_server_from_yaml(kube_apis.custom_objects,
-                                        f"{TEST_DATA}/virtual-server-validation/virtual-server-invalid.yaml",
+                                        f"{TEST_DATA}/virtual-server-validation/virtual-server-invalid-cookie.yaml",
                                         virtual_server_setup.namespace)
         wait_before_test(1)
         step_5_list = get_events(kube_apis.v1, virtual_server_setup.namespace)

@@ -13,6 +13,8 @@ spec:
     port: 80
   routes:
   - path: "/backend1"
-    upstream: backend1
+    action:
+      pass: backend1
   - path: "/backend2"
-    upstream: backend2
+    action:
+      pass: backend2

@@ -10,4 +10,5 @@ spec:
     port: 80
   subroutes:
   - path: "/external-backend"
-    upstream: ext-backend
+    action:
+      pass: ext-backend

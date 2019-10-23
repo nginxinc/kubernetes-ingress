@@ -19,16 +19,19 @@ spec:
     port: 80
   routes:
   - path: "/backends"
-    rules:
-      conditions:
+    matches:
+    - conditions:
       - header: x-version
-      matches:
-      - values:
-        - future
-        upstream: backend1-future
-      - values:
-        - deprecated
-        upstream: backend3-deprecated
-#      defaultUpstream: backend1-stable
+        value: future
+      action:
+        pass: backend1-future
+    - conditions:
+      - header: x-version
+        value: deprecated
+      action:
+        pass: backend3-deprecated
+#    action:
+#      pass: backend4-stable
   - path: "/backend2"
-    upstream: backend2
+    action:
+      pass: backend2

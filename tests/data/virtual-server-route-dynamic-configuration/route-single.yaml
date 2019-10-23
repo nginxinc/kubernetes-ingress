@@ -15,4 +15,5 @@ spec:
     slow-start: 10s
   subroutes:
   - path: "/backend2"
-    upstream: backend2
+    action:
+      pass: backend2

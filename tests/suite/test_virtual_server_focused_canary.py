@@ -17,7 +17,7 @@ def get_weights_of_splitting(file) -> []:
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            for item in dep['spec']['routes'][0]['splits']:
+            for item in dep['spec']['routes'][0]['matches'][0]['splits']:
                 weights.append(item['weight'])
     return weights
 
@@ -33,29 +33,28 @@ def get_upstreams_of_splitting(file) -> []:
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            for item in dep['spec']['routes'][0]['splits']:
+            for item in dep['spec']['routes'][0]['matches'][0]['splits']:
                 upstreams.append(item['action']['pass'])
     return upstreams
 
 
-@pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
-                           {"example": "virtual-server-split-traffic", "app_type": "split"})],
+                           {"example": "virtual-server-focused-canary", "app_type": "simple"})],
                          indirect=True)
-class TestTrafficSplitting:
+class TestVSFocusedCanaryRelease:
     def test_several_requests(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         weights = get_weights_of_splitting(
-            f"{TEST_DATA}/virtual-server-split-traffic/standard/virtual-server.yaml")
+            f"{TEST_DATA}/virtual-server-focused-canary/standard/virtual-server.yaml")
         upstreams = get_upstreams_of_splitting(
-            f"{TEST_DATA}/virtual-server-split-traffic/standard/virtual-server.yaml")
+            f"{TEST_DATA}/virtual-server-focused-canary/standard/virtual-server.yaml")
         sum_weights = sum(weights)
         ratios = [round(i/sum_weights, 1) for i in weights]
 
         counter_v1, counter_v2 = 0, 0
         for _ in range(100):
             resp = requests.get(virtual_server_setup.backend_1_url,
-                                headers={"host": virtual_server_setup.vs_host})
+                                headers={"host": virtual_server_setup.vs_host, "x-version": "canary"})
             if upstreams[0] in resp.text in resp.text:
                 counter_v1 = counter_v1 + 1
             elif upstreams[1] in resp.text in resp.text:

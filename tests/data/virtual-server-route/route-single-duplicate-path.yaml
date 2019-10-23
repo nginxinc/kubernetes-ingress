@@ -10,6 +10,8 @@ spec:
     port: 80
   subroutes:
   - path: "/backend2"
-    upstream: backend2
+    action:
+      pass: backend2
   - path: "/backend2"
-    upstream: backend2
+    action:
+      pass: backend2
