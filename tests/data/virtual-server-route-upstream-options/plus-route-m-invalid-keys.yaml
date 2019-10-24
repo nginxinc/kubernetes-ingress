@@ -14,7 +14,7 @@ spec:
       expires: one
       domain: "$request_uri"
     healthCheck:
-      enable: True
+      enable: False # validation should occur even when False
       path: "invalid"
       interval: 1.5d
       jitter: invalid
