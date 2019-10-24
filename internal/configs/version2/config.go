@@ -32,28 +32,27 @@ type UpstreamServer struct {
 
 // Server defines a server.
 type Server struct {
-	ServerName                            string
-	StatusZone                            string
-	ProxyProtocol                         bool
-	SSL                                   *SSL
-	RedirectToHTTPSBasedOnXForwarderProto bool
-	ServerTokens                          string
-	RealIPHeader                          string
-	SetRealIPFrom                         []string
-	RealIPRecursive                       bool
-	Snippets                              []string
-	InternalRedirectLocations             []InternalRedirectLocation
-	Locations                             []Location
-	HealthChecks                          []HealthCheck
+	ServerName                string
+	StatusZone                string
+	ProxyProtocol             bool
+	SSL                       *SSL
+	ServerTokens              string
+	RealIPHeader              string
+	SetRealIPFrom             []string
+	RealIPRecursive           bool
+	Snippets                  []string
+	InternalRedirectLocations []InternalRedirectLocation
+	Locations                 []Location
+	HealthChecks              []HealthCheck
+	TLSRedirect               *TLSRedirect
 }
 
 // SSL defines SSL configuration for a server.
 type SSL struct {
-	HTTP2           bool
-	Certificate     string
-	CertificateKey  string
-	Ciphers         string
-	RedirectToHTTPS bool
+	HTTP2          bool
+	Certificate    string
+	CertificateKey string
+	Ciphers        string
 }
 
 // Location defines a location.
@@ -97,6 +96,12 @@ type HealthCheck struct {
 	ProxySendTimeout    string
 	Headers             map[string]string
 	Match               string
+}
+
+// TLSRedirect defines a redirect in a Server.
+type TLSRedirect struct {
+	Code    int
+	BasedOn string
 }
 
 // SessionCookie defines a session cookie for an upstream.

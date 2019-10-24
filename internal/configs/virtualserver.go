@@ -162,6 +162,7 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(owner runtime
 func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileName string) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
 	ssl := generateSSLConfig(virtualServerEx.VirtualServer.Spec.TLS, tlsPemFileName, vsc.cfgParams)
+	tlsRedirectConfig := generateTLSRedirectConfig(virtualServerEx.VirtualServer.Spec.TLS)
 
 	// crUpstreams maps an UpstreamName to its conf_v1alpha1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
@@ -289,19 +290,19 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		Maps:          maps,
 		StatusMatches: statusMatches,
 		Server: version2.Server{
-			ServerName:                            virtualServerEx.VirtualServer.Spec.Host,
-			StatusZone:                            virtualServerEx.VirtualServer.Spec.Host,
-			ProxyProtocol:                         vsc.cfgParams.ProxyProtocol,
-			SSL:                                   ssl,
-			RedirectToHTTPSBasedOnXForwarderProto: vsc.cfgParams.RedirectToHTTPS,
-			ServerTokens:                          vsc.cfgParams.ServerTokens,
-			SetRealIPFrom:                         vsc.cfgParams.SetRealIPFrom,
-			RealIPHeader:                          vsc.cfgParams.RealIPHeader,
-			RealIPRecursive:                       vsc.cfgParams.RealIPRecursive,
-			Snippets:                              vsc.cfgParams.ServerSnippets,
-			InternalRedirectLocations:             internalRedirectLocations,
-			Locations:                             locations,
-			HealthChecks:                          healthChecks,
+			ServerName:                virtualServerEx.VirtualServer.Spec.Host,
+			StatusZone:                virtualServerEx.VirtualServer.Spec.Host,
+			ProxyProtocol:             vsc.cfgParams.ProxyProtocol,
+			SSL:                       ssl,
+			ServerTokens:              vsc.cfgParams.ServerTokens,
+			SetRealIPFrom:             vsc.cfgParams.SetRealIPFrom,
+			RealIPHeader:              vsc.cfgParams.RealIPHeader,
+			RealIPRecursive:           vsc.cfgParams.RealIPRecursive,
+			Snippets:                  vsc.cfgParams.ServerSnippets,
+			InternalRedirectLocations: internalRedirectLocations,
+			Locations:                 locations,
+			HealthChecks:              healthChecks,
+			TLSRedirect:               tlsRedirectConfig,
 		},
 	}
 
@@ -771,14 +772,33 @@ func generateSSLConfig(tls *conf_v1alpha1.TLS, tlsPemFileName string, cfgParams 
 	}
 
 	ssl := version2.SSL{
-		HTTP2:           cfgParams.HTTP2,
-		Certificate:     name,
-		CertificateKey:  name,
-		Ciphers:         ciphers,
-		RedirectToHTTPS: cfgParams.SSLRedirect,
+		HTTP2:          cfgParams.HTTP2,
+		Certificate:    name,
+		CertificateKey: name,
+		Ciphers:        ciphers,
 	}
 
 	return &ssl
+}
+
+func generateTLSRedirectConfig(tls *conf_v1alpha1.TLS) *version2.TLSRedirect {
+	if tls == nil || tls.Redirect == nil || !tls.Redirect.Enable {
+		return nil
+	}
+
+	redirect := &version2.TLSRedirect{
+		Code:    generateIntFromPointer(tls.Redirect.Code, 301),
+		BasedOn: generateTLSRedirectBasedOn(tls.Redirect.BasedOn),
+	}
+
+	return redirect
+}
+
+func generateTLSRedirectBasedOn(basedOn string) string {
+	if basedOn == "x-forwarded-proto" {
+		return "$http_x_forwarded_proto"
+	}
+	return "$scheme"
 }
 
 func createEndpointsFromUpstream(upstream version2.Upstream) []string {

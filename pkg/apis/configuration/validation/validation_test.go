@@ -95,6 +95,14 @@ func TestValidateTLS(t *testing.T) {
 		{
 			Secret: "my-secret",
 		},
+		{
+			Secret: "my-secret",
+			Redirect: &v1alpha1.TLSRedirect{
+				Enable:  true,
+				Code:    createPointerFromInt(302),
+				BasedOn: "scheme",
+			},
+		},
 	}
 
 	for _, tls := range validTLSes {
@@ -113,6 +121,22 @@ func TestValidateTLS(t *testing.T) {
 		},
 		{
 			Secret: "a/b",
+		},
+		{
+			Secret: "my-secret",
+			Redirect: &v1alpha1.TLSRedirect{
+				Enable:  true,
+				Code:    createPointerFromInt(305),
+				BasedOn: "scheme",
+			},
+		},
+		{
+			Secret: "my-secret",
+			Redirect: &v1alpha1.TLSRedirect{
+				Enable:  true,
+				Code:    createPointerFromInt(301),
+				BasedOn: "invalidScheme",
+			},
 		},
 	}
 
@@ -2220,6 +2244,39 @@ func TestValidateSessionCookieFails(t *testing.T) {
 		allErrs := validateSessionCookie(test.sc, test.fieldPath)
 		if len(allErrs) == 0 {
 			t.Errorf("validateSessionCookie() returned no errors for invalid input for the case of: %v", test.msg)
+		}
+	}
+}
+
+func TestValidateTLSRedirectStatusCode(t *testing.T) {
+	tests := []struct {
+		code int
+	}{
+		{code: 301},
+		{code: 302},
+		{code: 307},
+		{code: 308},
+	}
+	for _, test := range tests {
+		allErrs := validateTLSRedirectStatusCode(test.code, field.NewPath("code"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateTLSRedirectStatusCode(%v) returned errors %v for valid input", test.code, allErrs)
+		}
+	}
+}
+
+func TestValidateTLSRedirectStatusCodeFails(t *testing.T) {
+	tests := []struct {
+		code int
+	}{
+		{code: 309},
+		{code: 299},
+		{code: 305},
+	}
+	for _, test := range tests {
+		allErrs := validateTLSRedirectStatusCode(test.code, field.NewPath("code"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateTLSRedirectStatusCode(%v) returned no errors for invalid input", test.code)
 		}
 	}
 }

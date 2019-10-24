@@ -295,7 +295,6 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		SetRealIPFrom:   []string{"0.0.0.0/0"},
 		RealIPHeader:    "X-Real-IP",
 		RealIPRecursive: true,
-		RedirectToHTTPS: true,
 	}
 
 	expected := version2.VirtualServerConfig{
@@ -338,15 +337,14 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 			},
 		},
 		Server: version2.Server{
-			ServerName:                            "cafe.example.com",
-			StatusZone:                            "cafe.example.com",
-			ProxyProtocol:                         true,
-			RedirectToHTTPSBasedOnXForwarderProto: true,
-			ServerTokens:                          "off",
-			SetRealIPFrom:                         []string{"0.0.0.0/0"},
-			RealIPHeader:                          "X-Real-IP",
-			RealIPRecursive:                       true,
-			Snippets:                              []string{"# server snippet"},
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
 			Locations: []version2.Location{
 				{
 					Path:                     "/tea",
@@ -1171,13 +1169,12 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputTLSPemFileName: "",
 			inputCfgParams:      &ConfigParams{},
 			expected: &version2.SSL{
-				HTTP2:           false,
-				Certificate:     pemFileNameForMissingTLSSecret,
-				CertificateKey:  pemFileNameForMissingTLSSecret,
-				Ciphers:         "NULL",
-				RedirectToHTTPS: false,
+				HTTP2:          false,
+				Certificate:    pemFileNameForMissingTLSSecret,
+				CertificateKey: pemFileNameForMissingTLSSecret,
+				Ciphers:        "NULL",
 			},
-			msg: "secret doesn't exist in the cluster with HTTP2 and SSLRedirect disabled",
+			msg: "secret doesn't exist in the cluster with HTTP2",
 		},
 		{
 			inputTLS: &conf_v1alpha1.TLS{
@@ -1186,31 +1183,12 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputTLSPemFileName: "secret.pem",
 			inputCfgParams:      &ConfigParams{},
 			expected: &version2.SSL{
-				HTTP2:           false,
-				Certificate:     "secret.pem",
-				CertificateKey:  "secret.pem",
-				Ciphers:         "",
-				RedirectToHTTPS: false,
+				HTTP2:          false,
+				Certificate:    "secret.pem",
+				CertificateKey: "secret.pem",
+				Ciphers:        "",
 			},
-			msg: "normal case with HTTP2 and SSLRedirect disabled",
-		},
-		{
-			inputTLS: &conf_v1alpha1.TLS{
-				Secret: "secret",
-			},
-			inputTLSPemFileName: "secret.pem",
-			inputCfgParams: &ConfigParams{
-				HTTP2:       true,
-				SSLRedirect: true,
-			},
-			expected: &version2.SSL{
-				HTTP2:           true,
-				Certificate:     "secret.pem",
-				CertificateKey:  "secret.pem",
-				Ciphers:         "",
-				RedirectToHTTPS: true,
-			},
-			msg: "normal case with HTTP2 and SSLRedirect enabled",
+			msg: "normal case with HTTP2",
 		},
 	}
 
@@ -1218,6 +1196,96 @@ func TestGenerateSSLConfig(t *testing.T) {
 		result := generateSSLConfig(test.inputTLS, test.inputTLSPemFileName, test.inputCfgParams)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSSLConfig() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestGenerateRedirectConfig(t *testing.T) {
+	tests := []struct {
+		inputTLS *conf_v1alpha1.TLS
+		expected *version2.TLSRedirect
+		msg      string
+	}{
+		{
+			inputTLS: nil,
+			expected: nil,
+			msg:      "no TLS field",
+		},
+		{
+			inputTLS: &conf_v1alpha1.TLS{
+				Secret:   "secret",
+				Redirect: nil,
+			},
+			expected: nil,
+			msg:      "no redirect field",
+		},
+		{
+			inputTLS: &conf_v1alpha1.TLS{
+				Secret:   "secret",
+				Redirect: &conf_v1alpha1.TLSRedirect{Enable: false},
+			},
+			expected: nil,
+			msg:      "redirect disabled",
+		},
+		{
+			inputTLS: &conf_v1alpha1.TLS{
+				Secret: "secret",
+				Redirect: &conf_v1alpha1.TLSRedirect{
+					Enable: true,
+				},
+			},
+			expected: &version2.TLSRedirect{
+				Code:    301,
+				BasedOn: "$scheme",
+			},
+			msg: "normal case with defaults",
+		},
+		{
+			inputTLS: &conf_v1alpha1.TLS{
+				Secret: "secret",
+				Redirect: &conf_v1alpha1.TLSRedirect{
+					Enable:  true,
+					BasedOn: "x-forwarded-proto",
+				},
+			},
+			expected: &version2.TLSRedirect{
+				Code:    301,
+				BasedOn: "$http_x_forwarded_proto",
+			},
+			msg: "normal case with BasedOn set",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateTLSRedirectConfig(test.inputTLS)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateTLSRedirectConfig() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestGenerateTLSRedirectBasedOn(t *testing.T) {
+	tests := []struct {
+		basedOn  string
+		expected string
+	}{
+		{
+			basedOn:  "scheme",
+			expected: "$scheme",
+		},
+		{
+			basedOn:  "x-forwarded-proto",
+			expected: "$http_x_forwarded_proto",
+		},
+		{
+			basedOn:  "",
+			expected: "$scheme",
+		},
+	}
+	for _, test := range tests {
+		result := generateTLSRedirectBasedOn(test.basedOn)
+		if result != test.expected {
+			t.Errorf("generateTLSRedirectBasedOn(%v) returned %v but expected %v", test.basedOn, result, test.expected)
 		}
 	}
 }

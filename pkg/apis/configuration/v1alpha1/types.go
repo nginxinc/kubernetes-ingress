@@ -134,7 +134,15 @@ type Match struct {
 
 // TLS defines TLS configuration for a VirtualServer.
 type TLS struct {
-	Secret string `json:"secret"`
+	Secret   string       `json:"secret"`
+	Redirect *TLSRedirect `json:"redirect"`
+}
+
+// TLSRedirect defines a redirect for a TLS.
+type TLSRedirect struct {
+	Enable  bool   `json:"enable"`
+	Code    *int   `json:"code"`
+	BasedOn string `json:"basedOn"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

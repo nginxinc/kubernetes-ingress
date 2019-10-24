@@ -13,6 +13,7 @@ This document is the reference documentation for the resources. To see additiona
   - [Prerequisites](#prerequisites)
   - [VirtualServer Specification](#virtualserver-specification)
     - [VirtualServer.TLS](#virtualservertls)
+    - [VirtualServer.TLS.Redirect](#virtualservertlsredirect)
     - [VirtualServer.Route](#virtualserverroute)
   - [VirtualServerRoute Specification](#virtualserverroute-specification)
     - [VirtualServerRoute.Subroute](#virtualserverroutesubroute)
@@ -26,8 +27,8 @@ This document is the reference documentation for the resources. To see additiona
     - [Header](#header)
     - [Action](#action)
     - [Split](#split)
-    - [Condition](#condition)
     - [Match](#match)
+    - [Condition](#condition)
   - [Using VirtualServer and VirtualServerRoute](#using-virtualserver-and-virtualserverroute)
     - [Validation](#validation)
   - [Customization via ConfigMap](#customization-via-configmap)
@@ -76,12 +77,30 @@ spec:
 The tls field defines TLS configuration for a VirtualServer. For example:
 ```yaml
 secret: cafe-secret
+redirect:
+  code: 302
+  basedOn: x-forwarded-proto
 ```
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
 | `secret` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must contain keys named `tls.crt` and `tls.key` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). If the secret doesn't exist, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer. | `string` | Yes |
+| `redirect` | The redirect configuration of the TLS for a VirtualServer. | [`tls.redirect`](#VirtualServerTLSRedirect) | No |
 
+### VirtualServer.TLS.Redirect
+
+The redirect field configures a TLS redirect for a VirtualServer:
+```yaml
+enable: true
+code: 301
+basedOn: scheme
+```
+
+| Field | Description | Type | Required |
+| ----- | ----------- | ---- | -------- |
+| `enable` | Enables a TLS redirect for a VirtualServer. The default is `False`. | `boolean` | No |
+| `code` | The status code of a redirect. The allowed values are: `301`, `302`, `307`, `308`.  The default is `301`. | `int` | No |
+| `basedOn` | The attribute of a request that NGINX will evaluate to send a redirect. The allowed values are `scheme` (the scheme of the request) or `x-forwarded-proto` (the `X-Forwarded-Proto` header of the request). The default is `scheme`. | `string` | No |
 
 ### VirtualServer.Route
 
@@ -205,7 +224,7 @@ next-upstream-timeout: 5s
 next-upstream-tries: 10
 client-max-body-size: 2m
 tls:
-  enable: True
+  enable: true
 ```
 
 **Note**: The WebSocket protocol is supported without any additional configuration.
@@ -535,3 +554,5 @@ You can customize the NGINX configuration for VirtualServer and VirtualServerRou
 * `hsts-max-age`
 * `hsts-include-subdomains`
 * `hsts-behind-proxy`
+* `redirect-to-https`
+* `ssl-redirect`

@@ -50,12 +50,53 @@ func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 }
 
 func validateTLS(tls *v1alpha1.TLS, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
 	if tls == nil {
 		// valid case - tls is not defined
-		return field.ErrorList{}
+		return allErrs
 	}
 
-	return validateSecretName(tls.Secret, fieldPath.Child("secret"))
+	allErrs = append(allErrs, validateSecretName(tls.Secret, fieldPath.Child("secret"))...)
+
+	allErrs = append(allErrs, validateTLSRedirect(tls.Redirect, fieldPath.Child("redirect"))...)
+
+	return allErrs
+}
+
+func validateTLSRedirect(redirect *v1alpha1.TLSRedirect, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if redirect == nil {
+		return allErrs
+	}
+
+	if redirect.Code != nil {
+		allErrs = append(allErrs, validateTLSRedirectStatusCode(*redirect.Code, fieldPath.Child("code"))...)
+	}
+
+	if redirect.BasedOn != "scheme" && redirect.BasedOn != "x-forwarded-proto" {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("basedOn"), redirect.BasedOn, "accepted values are 'scheme' or 'x-forwarded-proto'"))
+	}
+
+	return allErrs
+}
+
+var validTLSRedirectStatusCodes = map[int]bool{
+	301: true,
+	302: true,
+	307: true,
+	308: true,
+}
+
+func validateTLSRedirectStatusCode(code int, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if _, ok := validTLSRedirectStatusCodes[code]; !ok {
+		allErrs = append(allErrs, field.Invalid(fieldPath, code, "status code out of accepted range. accepted values are '301', '302', '307', '308'"))
+	}
+
+	return allErrs
 }
 
 func validatePositiveIntOrZero(n int, fieldPath *field.Path) field.ErrorList {

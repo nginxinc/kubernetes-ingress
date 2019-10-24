@@ -45,17 +45,11 @@ server {
         {{ if $ssl.Ciphers }}
     ssl_ciphers {{ $ssl.Ciphers }};
         {{ end }}
-
-        {{ if $ssl.RedirectToHTTPS }}
-    if ($scheme = http) {
-        return 301 https://$host$request_uri;
-    }
-        {{ end }}
     {{ end }}
 
-    {{ if $s.RedirectToHTTPSBasedOnXForwarderProto }}
-    if ($http_x_forwarded_proto = 'http') {
-        return 301 https://$host$request_uri;
+    {{ with $s.TLSRedirect }}
+    if ({{ .BasedOn }} = 'http') {
+        return {{ .Code }} https://$host$request_uri;
     }
     {{ end }}
 
