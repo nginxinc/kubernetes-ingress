@@ -15,7 +15,7 @@ def get_weights_of_splitting(file) -> []:
     """
     weights = []
     with open(file) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         for dep in docs:
             for item in dep['spec']['routes'][0]['splits']:
                 weights.append(item['weight'])
@@ -31,7 +31,7 @@ def get_upstreams_of_splitting(file) -> []:
     """
     upstreams = []
     with open(file) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         for dep in docs:
             for item in dep['spec']['routes'][0]['splits']:
                 upstreams.append(item['upstream'])

@@ -11,7 +11,7 @@ def get_current_context_name(kube_config) -> str:
     :return: str
     """
     with open(kube_config) as conf:
-        dep = yaml.load(conf)
+        dep = yaml.safe_load(conf)
         return dep['current-context']
 
 
@@ -24,7 +24,7 @@ def ensure_context_in_config(kube_config, context_name) -> None:
     :return:
     """
     with open(kube_config) as conf:
-        dep = yaml.load(conf)
+        dep = yaml.safe_load(conf)
         for contexts in dep['contexts']:
             if contexts['name'] == context_name:
                 return

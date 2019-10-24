@@ -39,7 +39,7 @@ def replace_ingresses_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, names
     """
     print(f"Replace an Ingresses from yaml")
     with open(yaml_manifest) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         for doc in docs:
             if doc['kind'] == 'Ingress':
                 replace_ingress(extensions_v1_beta1, doc['metadata']['name'], namespace, doc)
@@ -54,7 +54,7 @@ def get_minions_info_from_yaml(file) -> []:
     """
     res = []
     with open(file) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         for dep in docs:
             if 'minion' in dep['metadata']['name']:
                 res.append({"name": dep['metadata']['name'],

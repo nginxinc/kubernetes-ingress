@@ -33,7 +33,7 @@ def configure_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api) -> RBACAuthorizat
     :return: RBACAuthorization
     """
     with open(f'{DEPLOYMENTS}/rbac/rbac.yaml') as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         role_name = ""
         binding_name = ""
         for dep in docs:
@@ -59,7 +59,7 @@ def patch_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api, yaml_manifest) -> RBA
     :return: RBACAuthorization
     """
     with open(yaml_manifest) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         role_name = ""
         binding_name = ""
         for dep in docs:
@@ -469,7 +469,7 @@ def generate_ingresses_with_annotation(yaml_manifest, annotations) -> []:
     """
     res = []
     with open(yaml_manifest) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         for doc in docs:
             if doc['kind'] == 'Ingress':
                 doc['metadata']['annotations'].update(annotations)
@@ -834,7 +834,7 @@ def create_ns_and_sa_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
     print("Load yaml:")
     res = {}
     with open(yaml_manifest) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         for doc in docs:
             if doc["kind"] == "Namespace":
                 res['namespace'] = create_namespace(v1, doc)
@@ -855,7 +855,7 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
     """
     print("Load yaml:")
     with open(yaml_manifest) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         for doc in docs:
             if doc["kind"] == "Secret":
                 create_secret(kube_apis.v1, namespace, doc)
@@ -882,7 +882,7 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
     """
     print("Load yaml:")
     with open(yaml_manifest) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.safe_load_all(f)
         for doc in docs:
             if doc["kind"] == "Namespace":
                 delete_namespace(kube_apis.v1, doc['metadata']['name'])
