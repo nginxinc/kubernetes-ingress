@@ -1,5 +1,18 @@
 # Changelog
 
+### 1.5.7
+
+CHANGES:
+* Update NGINX version to 1.17.5.
+
+HELM CHART:
+* The version of the Helm chart is now 0.3.7.
+
+UPGRADE:
+* For NGINX, use the 1.5.7 image from our DockerHub: `nginx/nginx-ingress:1.5.7` or `nginx/nginx-ingress:1.5.7-alpine`
+* For NGINX Plus, please build your own image using the 1.5.7 source code.
+* For Helm, use version 0.3.7 of the chart.
+
 ### 1.5.6
 
 CHANGES:

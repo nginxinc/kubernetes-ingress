@@ -1,6 +1,6 @@
 all: push
 
-VERSION = 1.5.6
+VERSION = 1.5.7
 TAG = $(VERSION)
 PREFIX = nginx/nginx-ingress
 
