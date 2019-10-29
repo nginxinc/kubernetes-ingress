@@ -49,6 +49,7 @@ def smoke_setup(request, kube_apis, ingress_controller_endpoint, ingress_control
     return SmokeSetup(ingress_controller_endpoint, ingress_host)
 
 
+@pytest.mark.ingresses
 @pytest.mark.smoke
 class TestSmoke:
     @pytest.mark.parametrize("path", paths)

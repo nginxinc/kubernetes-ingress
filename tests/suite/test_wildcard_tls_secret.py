@@ -39,7 +39,8 @@ class IngressControllerWithSecret:
 
 
 @pytest.fixture(scope="class", params=["standard", "mergeable"])
-def wildcard_tls_secret_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> WildcardTLSSecretSetup:
+def wildcard_tls_secret_setup(request, kube_apis,
+                              ingress_controller_endpoint, test_namespace) -> WildcardTLSSecretSetup:
     ing_type = request.param
     print("------------------------- Deploy Wildcard-Tls-Secret-Example -----------------------------------")
     create_items_from_yaml(kube_apis,
@@ -92,11 +93,13 @@ def wildcard_tls_secret_ingress_controller(cli_arguments, kube_apis, ingress_con
     return IngressControllerWithSecret(secret_name)
 
 
+@pytest.mark.ingresses
 @pytest.mark.smoke
 class TestTLSWildcardSecrets:
     @pytest.mark.parametrize("path", paths)
     def test_response_code_200(self, wildcard_tls_secret_ingress_controller, wildcard_tls_secret_setup, path):
-        req_url = f"https://{wildcard_tls_secret_setup.public_endpoint.public_ip}:{wildcard_tls_secret_setup.public_endpoint.port_ssl}/{path}"
+        req_url = f"https://{wildcard_tls_secret_setup.public_endpoint.public_ip}:" \
+                  f"{wildcard_tls_secret_setup.public_endpoint.port_ssl}/{path}"
         resp = requests.get(req_url, headers={"host": wildcard_tls_secret_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
 
@@ -110,7 +113,8 @@ class TestTLSWildcardSecrets:
         assert subject_dict[b'OU'] == b'example.com'
         assert subject_dict[b'CN'] == b'example.com'
 
-    def test_certificate_subject_remains_with_invalid_secret(self, kube_apis, ingress_controller_prerequisites, wildcard_tls_secret_ingress_controller,
+    def test_certificate_subject_remains_with_invalid_secret(self, kube_apis, ingress_controller_prerequisites,
+                                                             wildcard_tls_secret_ingress_controller,
                                                              wildcard_tls_secret_setup):
         replace_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
                        ingress_controller_prerequisites.namespace,
@@ -123,7 +127,8 @@ class TestTLSWildcardSecrets:
         assert subject_dict[b'ST'] == b'CanaryIslands'
         assert subject_dict[b'CN'] == b'example.com'
 
-    def test_certificate_subject_updates_after_secret_update(self, kube_apis, ingress_controller_prerequisites, wildcard_tls_secret_ingress_controller,
+    def test_certificate_subject_updates_after_secret_update(self, kube_apis, ingress_controller_prerequisites,
+                                                             wildcard_tls_secret_ingress_controller,
                                                              wildcard_tls_secret_setup):
         replace_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
                        ingress_controller_prerequisites.namespace,
@@ -136,12 +141,14 @@ class TestTLSWildcardSecrets:
         assert subject_dict[b'ST'] == b'Cambridgeshire'
         assert subject_dict[b'CN'] == b'cafe.example.com'
 
-    def test_response_and_subject_remains_after_secret_delete(self, kube_apis, ingress_controller_prerequisites, wildcard_tls_secret_ingress_controller,
+    def test_response_and_subject_remains_after_secret_delete(self, kube_apis, ingress_controller_prerequisites,
+                                                              wildcard_tls_secret_ingress_controller,
                                                               wildcard_tls_secret_setup):
         delete_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
                       ingress_controller_prerequisites.namespace)
         wait_before_test(1)
-        req_url = f"https://{wildcard_tls_secret_setup.public_endpoint.public_ip}:{wildcard_tls_secret_setup.public_endpoint.port_ssl}/backend1"
+        req_url = f"https://{wildcard_tls_secret_setup.public_endpoint.public_ip}:" \
+                  f"{wildcard_tls_secret_setup.public_endpoint.port_ssl}/backend1"
         resp = requests.get(req_url, headers={"host": wildcard_tls_secret_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
         subject_dict = get_server_certificate_subject(wildcard_tls_secret_setup.public_endpoint.public_ip,

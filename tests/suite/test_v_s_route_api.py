@@ -8,6 +8,7 @@ from suite.nginx_api_utils import wait_for_empty_array, wait_for_non_empty_array
 from suite.resources_utils import scale_deployment
 
 
+@pytest.mark.vsr
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": ["-enable-custom-resources",

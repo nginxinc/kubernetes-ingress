@@ -56,3 +56,8 @@ The table below shows various configuration options for the tests. If you use Py
 | `N/A` | `PYTEST_ARGS` | Any additional pytest command-line arguments (i.e `-m "smoke"`) | `""` |
 
 If you would like to use an IDE (such as PyCharm) to run the tests, use the [pytest.ini](pytest.ini) file to set the command-line arguments.
+
+Tests are marked with custom markers. The markers allow to logically split all the tests into smaller groups. The full list can be found in the [pytest.ini](pytest.ini) file or via command line:
+```bash
+$ python3 -m pytest --markers
+```

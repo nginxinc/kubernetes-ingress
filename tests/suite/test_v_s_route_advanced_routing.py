@@ -85,6 +85,7 @@ def vsr_adv_routing_setup(request, kube_apis,
     return VSRAdvancedRoutingSetup(ns_1, vs_host, vs_name, route, backends_url)
 
 
+@pytest.mark.vsr
 @pytest.mark.parametrize('crd_ingress_controller, vsr_adv_routing_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route-advanced-routing"})],

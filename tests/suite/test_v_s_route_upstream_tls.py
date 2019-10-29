@@ -76,6 +76,7 @@ def v_s_route_secure_app_setup(request, kube_apis, v_s_route_setup) -> None:
     request.addfinalizer(fin)
 
 
+@pytest.mark.vsr
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route-upstream-tls"})],
@@ -102,7 +103,7 @@ class TestVSRouteUpstreamOptions:
         assert_response_codes(resp_1, resp_2)
 
     def test_events_after_setup(self, kube_apis, ingress_controller_prerequisites,
-                               crd_ingress_controller, v_s_route_setup, v_s_route_secure_app_setup):
+                                crd_ingress_controller, v_s_route_setup, v_s_route_secure_app_setup):
         text_s = f"{v_s_route_setup.route_s.namespace}/{v_s_route_setup.route_s.name}"
         text_m = f"{v_s_route_setup.route_m.namespace}/{v_s_route_setup.route_m.name}"
         text_vs = f"{v_s_route_setup.namespace}/{v_s_route_setup.vs_name}"

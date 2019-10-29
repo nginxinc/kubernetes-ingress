@@ -59,6 +59,7 @@ def assert_gb_subject(virtual_server_setup):
     assert subject_dict[b'CN'] == b'cafe.example.com'
 
 
+@pytest.mark.vs
 @pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},

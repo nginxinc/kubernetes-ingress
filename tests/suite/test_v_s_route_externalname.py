@@ -103,6 +103,7 @@ def vsr_externalname_setup(request, kube_apis,
                                           ns_1, vs_host, vs_name, route, external_svc_name, external_svc_host)
 
 
+@pytest.mark.vsr
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize('crd_ingress_controller, vsr_externalname_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},

@@ -45,6 +45,7 @@ def assert_event_and_get_count(event_text, events_list) -> int:
     pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
 
 
+@pytest.mark.vsr
 @pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
@@ -279,6 +280,7 @@ class TestVirtualServerRoute:
         assert_event_and_count(vsr_2_event_text, initial_count_vsr_2 + 9, list1_list_ns_2)
 
 
+@pytest.mark.vsr
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route"})],
@@ -336,6 +338,7 @@ class TestVirtualServerRouteValidation:
                                new_vsr_events)
 
 
+@pytest.mark.vsr
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route"})],

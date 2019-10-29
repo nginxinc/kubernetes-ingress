@@ -43,6 +43,7 @@ def assert_event_starts_with_text_and_contains_errors(event_text, events_list, f
     pytest.fail(f"Failed to find the event starting with \"{event_text}\" in the list. Exiting...")
 
 
+@pytest.mark.vsr
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route-upstream-options"})],
@@ -277,6 +278,7 @@ class TestVSRouteUpstreamOptions:
         assert_response_codes(resp_1, resp_2)
 
 
+@pytest.mark.vsr
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route-upstream-options"})],
@@ -339,6 +341,7 @@ class TestVSRouteUpstreamOptionsValidation:
         assert "upstream" not in config
 
 
+@pytest.mark.vsr
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},

@@ -169,6 +169,7 @@ def annotations_grpc_setup(request,
                             ingress_name, ingress_host, ic_pod_name, test_namespace, event_text, error_text)
 
 
+@pytest.mark.ingresses
 @pytest.mark.parametrize('annotations_setup', ["standard", "mergeable"], indirect=True)
 class TestAnnotations:
     def test_nginx_config_defaults(self, kube_apis, annotations_setup, ingress_controller_prerequisites):
@@ -365,6 +366,7 @@ class TestAnnotations:
             assert _ not in result_conf
 
 
+@pytest.mark.ingresses
 @pytest.mark.parametrize('annotations_setup', ["mergeable"], indirect=True)
 class TestMergeableFlows:
     @pytest.mark.parametrize('yaml_file, expected_strings, unexpected_strings', [
@@ -393,6 +395,7 @@ class TestMergeableFlows:
             assert _ not in result_conf
 
 
+@pytest.mark.ingresses
 class TestGrpcFlows:
     @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
         ({"nginx.org/proxy-send-timeout": "10s"}, ["grpc_send_timeout 10s;"], ["proxy_send_timeout 60s;"]),

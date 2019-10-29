@@ -9,6 +9,7 @@ from suite.resources_utils import patch_rbac, replace_service, read_service, \
 from suite.yaml_utils import get_paths_from_vs_yaml, get_first_vs_host_from_yaml, get_names_from_yaml
 
 
+@pytest.mark.vs
 @pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
@@ -189,6 +190,7 @@ def wait_and_assert_status_code(code, req_url, host) -> None:
     assert resp.status_code == code, f"After a few seconds the status_code is not {code}"
 
 
+@pytest.mark.vs
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "rbac-without-vs", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server", "app_type": "simple"})],

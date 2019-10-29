@@ -67,6 +67,7 @@ def external_name_setup(request,
                              ingress_name, ingress_host, ic_pod_name, svc_name, external_host, test_namespace)
 
 
+@pytest.mark.ingresses
 @pytest.mark.skip_for_nginx_oss
 class TestExternalNameService:
     def test_resolver(self, external_name_setup):

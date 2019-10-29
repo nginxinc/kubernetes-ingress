@@ -62,6 +62,7 @@ class VSRAdvancedRoutingSetup:
         self.backends_url = backends_url
 
 
+@pytest.mark.vsr
 @pytest.fixture(scope="class")
 def vsr_canary_setup(request, kube_apis,
                      ingress_controller_prerequisites, ingress_controller_endpoint) -> VSRAdvancedRoutingSetup:

@@ -16,6 +16,7 @@ def execute_assertions(resp_1, resp_2, resp_3):
     assert "Server name: backend4-" in resp_3.text
 
 
+@pytest.mark.vs
 @pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},

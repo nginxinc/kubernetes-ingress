@@ -112,6 +112,7 @@ step_5_expected_results = [{"token_type": "master", "path": "", "response_code":
                            {"token_type": "minion", "path": "backend2", "response_code": 500}]
 
 
+@pytest.mark.ingresses
 @pytest.mark.skip_for_nginx_oss
 class TestJWTAuthMergeableMinions:
     def test_jwt_auth_response_codes_and_location(self, kube_apis, jwt_auth_setup, test_namespace):

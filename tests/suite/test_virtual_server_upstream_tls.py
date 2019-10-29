@@ -40,6 +40,7 @@ def assert_no_new_events(old_list, new_list):
             pytest.fail(f"Expected: no new events. There is a new event found:\"{new_list[i].message}\". Exiting...")
 
 
+@pytest.mark.vs
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-upstream-tls", "app_type": "secure"})],

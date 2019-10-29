@@ -129,6 +129,7 @@ def clean_up(request, kube_apis, ingress_controller_prerequisites, test_namespac
     request.addfinalizer(fin)
 
 
+@pytest.mark.vs
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-configmap-keys", "app_type": "simple"})],
@@ -268,6 +269,7 @@ class TestVirtualServerConfigMapNoTls:
         assert_keys_with_validation_in_main_config(step_7_config, expected_values)
 
 
+@pytest.mark.vs
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-tls", "app_type": "simple"})],

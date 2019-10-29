@@ -67,6 +67,7 @@ def vs_externalname_setup(request,
     return ExternalNameSetup(ic_pod_name, external_svc, external_svc_host)
 
 
+@pytest.mark.vs
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},

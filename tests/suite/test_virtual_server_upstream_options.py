@@ -47,6 +47,7 @@ def assert_template_config_does_not_exist(response):
     assert "No such file or directory" in response
 
 
+@pytest.mark.vs
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-upstream-options", "app_type": "simple"})],
@@ -242,6 +243,7 @@ class TestVirtualServerUpstreamOptions:
         assert_response_codes(resp_1, resp_2)
 
 
+@pytest.mark.vs
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-upstream-options", "app_type": "simple"})],
@@ -287,6 +289,7 @@ class TestVirtualServerUpstreamOptionValidation:
         assert_template_config_does_not_exist(response)
 
 
+@pytest.mark.vs
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},

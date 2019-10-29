@@ -64,6 +64,7 @@ def hsts_setup(request,
                      ingress_name, ingress_host, test_namespace)
 
 
+@pytest.mark.ingresses
 @pytest.mark.parametrize('hsts_setup', ["standard-tls", "mergeable-tls"], indirect=True)
 class TestTLSHSTSFlows:
     def test_headers(self, kube_apis, hsts_setup, ingress_controller_prerequisites):
@@ -102,6 +103,7 @@ class TestTLSHSTSFlows:
         assert "'Strict-Transport-Security'" not in str(xfp_http_resp.headers)
 
 
+@pytest.mark.ingresses
 @pytest.mark.parametrize('hsts_setup', ["tls-no-secret"], indirect=True)
 class TestBrokenTLSHSTSFlows:
     def test_headers_without_secret(self, kube_apis, hsts_setup, ingress_controller_prerequisites):
@@ -115,6 +117,7 @@ class TestBrokenTLSHSTSFlows:
         assert "'Strict-Transport-Security'" not in str(http_resp.headers)
 
 
+@pytest.mark.ingresses
 @pytest.mark.parametrize('hsts_setup', ["standard", "mergeable"], indirect=True)
 class TestNoTLSHSTS:
     def test_headers(self, kube_apis, hsts_setup, ingress_controller_prerequisites):
