@@ -2,11 +2,12 @@ import pytest
 import requests
 
 from settings import TEST_DATA
+from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count
 from suite.custom_resources_utils import get_vs_nginx_template_conf
 from suite.resources_utils import replace_configmap_from_yaml, \
     ensure_connection_to_public_endpoint, replace_configmap, create_service_from_yaml, get_first_pod_name, get_events, \
-    read_service, replace_service, wait_before_test
-from suite.yaml_utils import get_external_host_from_service_yaml
+    read_service, replace_service, wait_before_test, delete_namespace, create_service_with_name, \
+    create_deployment_with_name, create_namespace_with_name_from_yaml
 
 
 class ExternalNameSetup:
@@ -22,35 +23,24 @@ class ExternalNameSetup:
         self.external_host = external_host
 
 
-def assert_event_and_count(event_text, count, events_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            assert events_list[i].count == count
-            return
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def assert_event_and_get_count(event_text, events_list) -> int:
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            return events_list[i].count
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
 @pytest.fixture(scope="class")
 def vs_externalname_setup(request,
                           kube_apis,
                           ingress_controller_prerequisites,
                           virtual_server_setup) -> ExternalNameSetup:
+    print("------------------------- Deploy External-Backend -----------------------------------")
+    external_ns = create_namespace_with_name_from_yaml(kube_apis.v1, "external-ns", f"{TEST_DATA}/common/ns.yaml")
+    external_svc_name = create_service_with_name(kube_apis.v1, external_ns, "external-backend-svc")
+    create_deployment_with_name(kube_apis.apps_v1_api, external_ns, "external-backend")
     print("------------------------- Prepare ExternalName Setup -----------------------------------")
     external_svc_src = f"{TEST_DATA}/virtual-server-externalname/externalname-svc.yaml"
-    external_svc_host = get_external_host_from_service_yaml(external_svc_src)
+    external_svc_host = f"{external_svc_name}.{external_ns}.svc.cluster.local"
     config_map_name = ingress_controller_prerequisites.config_map["metadata"]["name"]
     replace_configmap_from_yaml(kube_apis.v1, config_map_name,
                                 ingress_controller_prerequisites.namespace,
                                 f"{TEST_DATA}/virtual-server-externalname/nginx-config.yaml")
     external_svc = create_service_from_yaml(kube_apis.v1, virtual_server_setup.namespace, external_svc_src)
-    wait_before_test(1)
+    wait_before_test(2)
     ensure_connection_to_public_endpoint(virtual_server_setup.public_endpoint.public_ip,
                                          virtual_server_setup.public_endpoint.port,
                                          virtual_server_setup.public_endpoint.port_ssl)
@@ -58,6 +48,7 @@ def vs_externalname_setup(request,
 
     def fin():
         print("Clean up ExternalName Setup:")
+        delete_namespace(kube_apis.v1, external_ns)
         replace_configmap(kube_apis.v1, config_map_name,
                           ingress_controller_prerequisites.namespace,
                           ingress_controller_prerequisites.config_map)
@@ -77,7 +68,7 @@ class TestVSWithExternalNameService:
     def test_response(self, kube_apis, crd_ingress_controller, virtual_server_setup, vs_externalname_setup):
         resp = requests.get(virtual_server_setup.backend_1_url,
                             headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 502
+        assert resp.status_code == 200
 
     def test_template_config(self, kube_apis, ingress_controller_prerequisites,
                              crd_ingress_controller,

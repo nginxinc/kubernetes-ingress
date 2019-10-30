@@ -2,49 +2,11 @@ import requests
 import pytest
 
 from settings import TEST_DATA
+from suite.custom_assertions import assert_event_and_get_count, assert_event_count_increased, assert_response_codes, \
+    assert_event, assert_event_starts_with_text_and_contains_errors, assert_vs_conf_not_exists
 from suite.custom_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml, \
     patch_virtual_server, generate_item_with_upstream_options
 from suite.resources_utils import get_first_pod_name, wait_before_test, replace_configmap_from_yaml, get_events
-
-
-def assert_response_codes(resp_1, resp_2, code=200):
-    assert resp_1.status_code == code
-    assert resp_2.status_code == code
-
-
-def get_event_count(event_text, events_list) -> int:
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            return events_list[i].count
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def assert_event_count_increased(event_text, count, events_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            assert events_list[i].count > count
-            return
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def assert_event(event_text, events_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            return
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def assert_event_starts_with_text_and_contains_errors(event_text, events_list, fields_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if str(events_list[i].message).startswith(event_text):
-            for field_error in fields_list:
-                assert field_error in events_list[i].message
-            return
-    pytest.fail(f"Failed to find the event starting with \"{event_text}\" in the list. Exiting...")
-
-
-def assert_template_config_does_not_exist(response):
-    assert "No such file or directory" in response
 
 
 @pytest.mark.vs
@@ -118,7 +80,7 @@ class TestVirtualServerUpstreamOptions:
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"Configuration for {text} was added or updated"
         events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        initial_count = get_event_count(vs_event_text, events_vs)
+        initial_count = assert_event_and_get_count(vs_event_text, events_vs)
         print(f"Case 2: no key in ConfigMap , option specified in VS")
         new_body = generate_item_with_upstream_options(
             f"{TEST_DATA}/virtual-server-upstream-options/standard/virtual-server.yaml",
@@ -211,7 +173,7 @@ class TestVirtualServerUpstreamOptions:
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"Configuration for {text} was added or updated"
         events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        initial_count = get_event_count(vs_event_text, events_vs)
+        initial_count = assert_event_and_get_count(vs_event_text, events_vs)
         print(f"Case 4: key in ConfigMap, option specified in VS")
         new_body = generate_item_with_upstream_options(
             f"{TEST_DATA}/virtual-server-upstream-options/standard/virtual-server.yaml",
@@ -278,15 +240,11 @@ class TestVirtualServerUpstreamOptionValidation:
                                        virtual_server_setup.namespace)
         wait_before_test(2)
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
-        response = get_vs_nginx_template_conf(kube_apis.v1,
-                                              virtual_server_setup.namespace,
-                                              virtual_server_setup.vs_name,
-                                              ic_pod_name,
-                                              ingress_controller_prerequisites.namespace)
         vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
 
         assert_event_starts_with_text_and_contains_errors(vs_event_text, vs_events, invalid_fields)
-        assert_template_config_does_not_exist(response)
+        assert_vs_conf_not_exists(kube_apis, ic_pod_name, ingress_controller_prerequisites.namespace,
+                                  virtual_server_setup)
 
 
 @pytest.mark.vs
@@ -332,7 +290,7 @@ class TestOptionsSpecificForPlus:
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"Configuration for {text} was added or updated"
         events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        initial_count = get_event_count(vs_event_text, events_vs)
+        initial_count = assert_event_and_get_count(vs_event_text, events_vs)
         print(f"Case 1: option specified in VS")
         new_body = generate_item_with_upstream_options(
             f"{TEST_DATA}/virtual-server-upstream-options/standard/virtual-server.yaml",
@@ -414,12 +372,8 @@ class TestOptionsSpecificForPlus:
                                        virtual_server_setup.namespace)
         wait_before_test(2)
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
-        response = get_vs_nginx_template_conf(kube_apis.v1,
-                                              virtual_server_setup.namespace,
-                                              virtual_server_setup.vs_name,
-                                              ic_pod_name,
-                                              ingress_controller_prerequisites.namespace)
         vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
 
         assert_event_starts_with_text_and_contains_errors(vs_event_text, vs_events, invalid_fields)
-        assert_template_config_does_not_exist(response)
+        assert_vs_conf_not_exists(kube_apis, ic_pod_name, ingress_controller_prerequisites.namespace,
+                                  virtual_server_setup)

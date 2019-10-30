@@ -1,7 +1,7 @@
 apiVersion: k8s.nginx.org/v1alpha1
 kind: VirtualServerRoute
 metadata:
-  name: ext-backend
+  name: externalname-route
 spec:
   host: virtual-server-route.example.com
   upstreams:

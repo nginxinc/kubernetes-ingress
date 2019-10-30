@@ -2,6 +2,7 @@ import requests
 import pytest
 
 from settings import TEST_DATA
+from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count
 from suite.custom_resources_utils import create_virtual_server_from_yaml, \
     delete_virtual_server, create_v_s_route_from_yaml, delete_v_s_route, get_vs_nginx_template_conf, \
     patch_v_s_route_from_yaml
@@ -30,22 +31,6 @@ def assert_locations_not_in_config(config, paths):
         assert f"location {path}" not in config
 
 
-def assert_event_and_count(event_text, count, events_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            assert events_list[i].count == count
-            return
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def assert_event_and_get_count(event_text, events_list) -> int:
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            return events_list[i].count
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-@pytest.mark.vsr
 @pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},

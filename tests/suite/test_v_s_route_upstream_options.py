@@ -2,48 +2,13 @@ import requests
 import pytest
 
 from settings import TEST_DATA
+from suite.custom_assertions import assert_event_and_get_count, assert_event_count_increased, assert_response_codes, \
+    assert_event, assert_event_starts_with_text_and_contains_errors
 from suite.custom_resources_utils import get_vs_nginx_template_conf, patch_v_s_route_from_yaml, patch_v_s_route, \
     generate_item_with_upstream_options
 from suite.resources_utils import get_first_pod_name, wait_before_test, replace_configmap_from_yaml, get_events
 
 
-def assert_response_codes(resp_1, resp_2, code=200):
-    assert resp_1.status_code == code
-    assert resp_2.status_code == code
-
-
-def get_event_count(event_text, events_list) -> int:
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            return events_list[i].count
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def assert_event_count_increased(event_text, count, events_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            assert events_list[i].count > count
-            return
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def assert_event(event_text, events_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            return
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def assert_event_starts_with_text_and_contains_errors(event_text, events_list, fields_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if str(events_list[i].message).startswith(event_text):
-            for field_error in fields_list:
-                assert field_error in events_list[i].message
-            return
-    pytest.fail(f"Failed to find the event starting with \"{event_text}\" in the list. Exiting...")
-
-
-@pytest.mark.vsr
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route-upstream-options"})],
@@ -120,8 +85,8 @@ class TestVSRouteUpstreamOptions:
         vsr_m_event_text = f"Configuration for {text_m} was added or updated"
         events_ns_m = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
         events_ns_s = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
-        initial_count_vsr_m = get_event_count(vsr_m_event_text, events_ns_m)
-        initial_count_vsr_s = get_event_count(vsr_s_event_text, events_ns_s)
+        initial_count_vsr_m = assert_event_and_get_count(vsr_m_event_text, events_ns_m)
+        initial_count_vsr_s = assert_event_and_get_count(vsr_s_event_text, events_ns_s)
         print(f"Case 2: no key in ConfigMap, option specified in VSR")
         new_body_m = generate_item_with_upstream_options(
             f"{TEST_DATA}/virtual-server-route-upstream-options/route-multiple.yaml",
@@ -238,8 +203,8 @@ class TestVSRouteUpstreamOptions:
         vsr_m_event_text = f"Configuration for {text_m} was added or updated"
         events_ns_m = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
         events_ns_s = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
-        initial_count_vsr_m = get_event_count(vsr_m_event_text, events_ns_m)
-        initial_count_vsr_s = get_event_count(vsr_s_event_text, events_ns_s)
+        initial_count_vsr_m = assert_event_and_get_count(vsr_m_event_text, events_ns_m)
+        initial_count_vsr_s = assert_event_and_get_count(vsr_s_event_text, events_ns_s)
         print(f"Case 4: key specified in ConfigMap, option specified in VS")
         new_body_m = generate_item_with_upstream_options(
             f"{TEST_DATA}/virtual-server-route-upstream-options/route-multiple.yaml",
@@ -290,7 +255,7 @@ class TestVSRouteUpstreamOptionsValidation:
             "upstreams[0].lb-method", "upstreams[0].fail-timeout",
             "upstreams[0].max-fails", "upstreams[0].connect-timeout",
             "upstreams[0].read-timeout", "upstreams[0].send-timeout",
-            "upstreams[0].keepalive","upstreams[0].max-conns",
+            "upstreams[0].keepalive", "upstreams[0].max-conns",
             "upstreams[0].next-upstream",
             "upstreams[0].next-upstream-timeout", "upstreams[0].next-upstream-tries",
             "upstreams[0].client-max-body-size",
@@ -389,8 +354,8 @@ class TestOptionsSpecificForPlus:
         vsr_m_event_text = f"Configuration for {text_m} was added or updated"
         events_ns_m = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
         events_ns_s = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
-        initial_count_vsr_m = get_event_count(vsr_m_event_text, events_ns_m)
-        initial_count_vsr_s = get_event_count(vsr_s_event_text, events_ns_s)
+        initial_count_vsr_m = assert_event_and_get_count(vsr_m_event_text, events_ns_m)
+        initial_count_vsr_s = assert_event_and_get_count(vsr_s_event_text, events_ns_s)
         print(f"Case 2: no key in ConfigMap, option specified in VSR")
         new_body_m = generate_item_with_upstream_options(
             f"{TEST_DATA}/virtual-server-route-upstream-options/route-multiple.yaml",

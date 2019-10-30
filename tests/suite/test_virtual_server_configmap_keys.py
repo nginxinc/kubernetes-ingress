@@ -7,23 +7,26 @@ from suite.custom_resources_utils import get_vs_nginx_template_conf
 from suite.yaml_utils import get_configmap_fields_from_yaml
 
 
-def assert_valid_event_emitted(virtual_server_setup, new_list, previous_list):
-    text_valid = f"Configuration for {virtual_server_setup.namespace}/{virtual_server_setup.vs_name} was updated"
+def assert_update_event_emitted(virtual_server_setup, new_list, previous_list):
+    item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
+    text_valid = f"Configuration for {item_name} was updated"
     text_invalid = "was updated but was not applied"
     new_event = new_list[len(new_list) - 1]
     assert len(new_list) - len(previous_list) == 1
     assert text_valid in new_event.message and text_invalid not in new_event.message
 
 
-def assert_invalid_event_emitted(virtual_server_setup, new_list, previous_list):
-    text_invalid = f"Configuration for {virtual_server_setup.namespace}/{virtual_server_setup.vs_name} was updated but was not applied"
+def assert_not_applied_event_emitted(virtual_server_setup, new_list, previous_list):
+    item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
+    text_invalid = f"Configuration for {item_name} was updated but was not applied"
     new_event = new_list[len(new_list) - 1]
     assert len(new_list) - len(previous_list) == 1
     assert text_invalid in new_event.message
 
 
-def assert_valid_event_count_increased(virtual_server_setup, new_list, previous_list):
-    text_valid = f"Configuration for {virtual_server_setup.namespace}/{virtual_server_setup.vs_name} was updated"
+def assert_update_event_count_increased(virtual_server_setup, new_list, previous_list):
+    item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
+    text_valid = f"Configuration for {item_name} was updated"
     text_invalid = "was updated but was not applied"
     for i in range(len(previous_list)-1, 0, -1):
         if text_valid in previous_list[i].message and text_invalid not in previous_list[i].message:
@@ -154,7 +157,7 @@ class TestVirtualServerConfigMapNoTls:
                                                    virtual_server_setup.vs_name,
                                                    ic_pod_name,
                                                    ingress_controller_prerequisites.namespace)
-        assert_valid_event_emitted(virtual_server_setup, step_1_events, initial_list)
+        assert_update_event_emitted(virtual_server_setup, step_1_events, initial_list)
         assert_keys_without_validation(step_1_config, expected_values)
 
         print("Step 2: update ConfigMap with invalid keys without validation rules")
@@ -171,7 +174,7 @@ class TestVirtualServerConfigMapNoTls:
                                                    virtual_server_setup.vs_name,
                                                    ic_pod_name,
                                                    ingress_controller_prerequisites.namespace)
-        assert_invalid_event_emitted(virtual_server_setup, step_2_events, step_1_events)
+        assert_not_applied_event_emitted(virtual_server_setup, step_2_events, step_1_events)
         assert_keys_without_validation(step_2_config, expected_values)
 
         # to cover the OSS case, this will be changed in the future
@@ -195,7 +198,7 @@ class TestVirtualServerConfigMapNoTls:
                                                    ic_pod_name,
                                                    ingress_controller_prerequisites.namespace)
         step_3_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_valid_event_count_increased(virtual_server_setup, step_3_events, step_2_events)
+        assert_update_event_count_increased(virtual_server_setup, step_3_events, step_2_events)
         assert_keys_with_validation(step_3_config, expected_values)
         # to cover the OSS case, this will be changed in the future
         if cli_arguments['ic-type'] == "nginx-ingress":
@@ -216,7 +219,7 @@ class TestVirtualServerConfigMapNoTls:
                                                    ic_pod_name,
                                                    ingress_controller_prerequisites.namespace)
         step_4_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_valid_event_count_increased(virtual_server_setup, step_4_events, step_3_events)
+        assert_update_event_count_increased(virtual_server_setup, step_4_events, step_3_events)
         assert_defaults_of_keys_with_validation(step_4_config, expected_values)
 
     def test_keys_in_main_config(self, cli_arguments, kube_apis, ingress_controller_prerequisites,
@@ -238,7 +241,7 @@ class TestVirtualServerConfigMapNoTls:
         step_5_config = get_file_contents(kube_apis.v1,
                                           config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
         step_5_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_valid_event_count_increased(virtual_server_setup, step_5_events, initial_list)
+        assert_update_event_count_increased(virtual_server_setup, step_5_events, initial_list)
         assert_keys_with_validation_in_main_config(step_5_config, expected_values)
 
         print("Step 6: main config: update ConfigMap with invalid keys")
@@ -251,7 +254,7 @@ class TestVirtualServerConfigMapNoTls:
         step_6_config = get_file_contents(kube_apis.v1,
                                           config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
         step_6_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_valid_event_count_increased(virtual_server_setup, step_6_events, step_5_events)
+        assert_update_event_count_increased(virtual_server_setup, step_6_events, step_5_events)
         assert_defaults_of_keys_with_validation_in_main_config(step_6_config, unexpected_values)
 
         print("Step 7: main config: special case for hash variables")
@@ -265,7 +268,7 @@ class TestVirtualServerConfigMapNoTls:
         step_7_config = get_file_contents(kube_apis.v1,
                                           config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
         step_7_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_invalid_event_emitted(virtual_server_setup, step_7_events, step_6_events)
+        assert_not_applied_event_emitted(virtual_server_setup, step_7_events, step_6_events)
         assert_keys_with_validation_in_main_config(step_7_config, expected_values)
 
 
@@ -292,7 +295,7 @@ class TestVirtualServerConfigMapWithTls:
                                                    virtual_server_setup.vs_name,
                                                    ic_pod_name,
                                                    ingress_controller_prerequisites.namespace)
-        assert_valid_event_emitted(virtual_server_setup, step_1_events, initial_list)
+        assert_update_event_emitted(virtual_server_setup, step_1_events, initial_list)
         assert_ssl_keys(step_1_config)
 
         print("Step 2: update ConfigMap with invalid ssl keys")
@@ -307,5 +310,5 @@ class TestVirtualServerConfigMapWithTls:
                                                    virtual_server_setup.vs_name,
                                                    ic_pod_name,
                                                    ingress_controller_prerequisites.namespace)
-        assert_valid_event_count_increased(virtual_server_setup, step_2_events, step_1_events)
+        assert_update_event_count_increased(virtual_server_setup, step_2_events, step_1_events)
         assert_defaults_of_ssl_keys(step_2_config)

@@ -2,29 +2,15 @@ import requests
 import pytest
 
 from settings import TEST_DATA
+from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count
 from suite.custom_resources_utils import create_virtual_server_from_yaml, \
     create_v_s_route_from_yaml, get_vs_nginx_template_conf
 from suite.fixtures import VirtualServerRoute, PublicEndpoint
 from suite.resources_utils import get_first_pod_name, get_events, \
     wait_before_test, replace_configmap_from_yaml, create_service_from_yaml, \
-    delete_namespace, create_namespace_with_name_from_yaml, read_service, replace_service, replace_configmap
-from suite.yaml_utils import get_paths_from_vsr_yaml, get_route_namespace_from_vs_yaml, get_first_vs_host_from_yaml, \
-    get_external_host_from_service_yaml
-
-
-def assert_event_and_count(event_text, count, events_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            assert events_list[i].count == count
-            return
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
-
-
-def assert_event_and_get_count(event_text, events_list) -> int:
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            return events_list[i].count
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
+    delete_namespace, create_namespace_with_name_from_yaml, read_service, replace_service, replace_configmap, \
+    create_service_with_name, create_deployment_with_name
+from suite.yaml_utils import get_paths_from_vsr_yaml, get_route_namespace_from_vs_yaml, get_first_vs_host_from_yaml
 
 
 class ReducedVirtualServerRouteSetup:
@@ -70,6 +56,11 @@ def vsr_externalname_setup(request, kube_apis,
     ns_1 = create_namespace_with_name_from_yaml(kube_apis.v1,
                                                 vs_routes_ns[0],
                                                 f"{TEST_DATA}/common/ns.yaml")
+    print("------------------------- Deploy External-Backend -----------------------------------")
+    external_ns = create_namespace_with_name_from_yaml(kube_apis.v1, "external-ns", f"{TEST_DATA}/common/ns.yaml")
+    external_svc_name = create_service_with_name(kube_apis.v1, external_ns, "external-backend-svc")
+    create_deployment_with_name(kube_apis.apps_v1_api, external_ns, "external-backend")
+
     print("------------------------- Deploy Virtual Server -----------------------------------")
     vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects,
                                               f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml",
@@ -88,19 +79,20 @@ def vsr_externalname_setup(request, kube_apis,
     replace_configmap_from_yaml(kube_apis.v1, config_map_name,
                                 ingress_controller_prerequisites.namespace,
                                 f"{TEST_DATA}/{request.param['example']}/nginx-config.yaml")
-    external_svc_src = f"{TEST_DATA}/{request.param['example']}/externalname-svc.yaml"
-    external_svc_name = create_service_from_yaml(kube_apis.v1, route.namespace, external_svc_src)
-    external_svc_host = get_external_host_from_service_yaml(external_svc_src)
+    external_svc_host = f"{external_svc_name}.{external_ns}.svc.cluster.local"
+    svc_name = create_service_from_yaml(kube_apis.v1,
+                                        ns_1, f"{TEST_DATA}/{request.param['example']}/externalname-svc.yaml")
     wait_before_test(2)
 
     def fin():
-        print("Delete test namespace")
+        print("Delete test namespaces")
+        delete_namespace(kube_apis.v1, external_ns)
         delete_namespace(kube_apis.v1, ns_1)
 
     request.addfinalizer(fin)
 
     return ReducedVirtualServerRouteSetup(ingress_controller_endpoint,
-                                          ns_1, vs_host, vs_name, route, external_svc_name, external_svc_host)
+                                          ns_1, vs_host, vs_name, route, svc_name, external_svc_host)
 
 
 @pytest.mark.vsr
@@ -117,7 +109,7 @@ class TestVSRWithExternalNameService:
             f"{vsr_externalname_setup.public_endpoint.port}"
         resp = requests.get(f"{req_url}{vsr_externalname_setup.route.paths[0]}",
                             headers={"host": vsr_externalname_setup.vs_host})
-        assert resp.status_code == 502
+        assert resp.status_code == 200
 
     def test_template_config(self, kube_apis,
                              ingress_controller_prerequisites,

@@ -4,4 +4,4 @@ metadata:
   name: externalname-service
 spec:
   type: ExternalName
-  externalName: nginx.com
+  externalName: external-backend-svc.external-ns.svc.cluster.local

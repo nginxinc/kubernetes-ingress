@@ -6,4 +6,4 @@ spec:
   host: virtual-server-route.example.com
   routes:
   - path: "/external-backend"
-    route: external-backend-namespace/ext-backend
+    route: route-namespace/externalname-route

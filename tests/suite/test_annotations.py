@@ -2,6 +2,7 @@ import pytest
 import yaml
 from kubernetes.client import ExtensionsV1beta1Api
 
+from suite.custom_assertions import assert_event_count_increased
 from suite.fixtures import PublicEndpoint
 from suite.resources_utils import ensure_connection_to_public_endpoint, \
     get_ingress_nginx_template_conf, \
@@ -18,14 +19,6 @@ def get_event_count(event_text, events_list) -> int:
         if event_text in events_list[i].message:
             return events_list[i].count
     return 0
-
-
-def assert_event_count_increased(event_text, count, events_list):
-    for i in range(len(events_list) - 1, -1, -1):
-        if event_text in events_list[i].message:
-            assert events_list[i].count > count
-            return
-    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
 
 
 def replace_ingresses_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, yaml_manifest) -> None:

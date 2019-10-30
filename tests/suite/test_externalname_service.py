@@ -3,11 +3,12 @@ import pytest
 
 from settings import TEST_DATA
 from suite.fixtures import PublicEndpoint
-from suite.resources_utils import create_ingress_from_yaml
+from suite.resources_utils import create_ingress_from_yaml, create_service_with_name, \
+    create_namespace_with_name_from_yaml, create_deployment_with_name, delete_namespace
 from suite.resources_utils import replace_configmap_from_yaml, create_service_from_yaml
 from suite.resources_utils import replace_configmap, delete_ingress, delete_service, get_ingress_nginx_template_conf
 from suite.resources_utils import get_first_pod_name, ensure_connection_to_public_endpoint, wait_before_test
-from suite.yaml_utils import get_first_ingress_host_from_yaml, get_external_host_from_service_yaml
+from suite.yaml_utils import get_first_ingress_host_from_yaml
 
 
 class ExternalNameSetup:
@@ -22,7 +23,8 @@ class ExternalNameSetup:
         external_host: external-name example external host
         namespace: external-name example namespace
     """
-    def __init__(self, public_endpoint: PublicEndpoint, ingress_name, ingress_host, ingress_pod_name, service, external_host, namespace):
+    def __init__(self, public_endpoint: PublicEndpoint,
+                 ingress_name, ingress_host, ingress_pod_name, service, external_host, namespace):
         self.public_endpoint = public_endpoint
         self.ingress_name = ingress_name
         self.ingress_pod_name = ingress_pod_name
@@ -37,11 +39,15 @@ def external_name_setup(request,
                         kube_apis,
                         ingress_controller_prerequisites,
                         ingress_controller_endpoint, ingress_controller, test_namespace) -> ExternalNameSetup:
+    print("------------------------- Deploy External-Backend -----------------------------------")
+    external_ns = create_namespace_with_name_from_yaml(kube_apis.v1, "external-ns", f"{TEST_DATA}/common/ns.yaml")
+    external_svc_name = create_service_with_name(kube_apis.v1, external_ns, "external-backend-svc")
+    create_deployment_with_name(kube_apis.apps_v1_api, external_ns, "external-backend")
     print("------------------------- Deploy External-Name-Example -----------------------------------")
     ingress_name = create_ingress_from_yaml(kube_apis.extensions_v1_beta1, test_namespace,
                                             f"{TEST_DATA}/externalname-services/externalname-ingress.yaml")
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/externalname-services/externalname-ingress.yaml")
-    external_host = get_external_host_from_service_yaml(f"{TEST_DATA}/externalname-services/externalname-svc.yaml")
+    external_host = f"{external_svc_name}.{external_ns}.svc.cluster.local"
     config_map_name = ingress_controller_prerequisites.config_map["metadata"]["name"]
     replace_configmap_from_yaml(kube_apis.v1, config_map_name,
                                 ingress_controller_prerequisites.namespace,
@@ -55,6 +61,7 @@ def external_name_setup(request,
 
     def fin():
         print("Clean up External-Name-Example:")
+        delete_namespace(kube_apis.v1, external_ns)
         replace_configmap(kube_apis.v1, config_map_name,
                           ingress_controller_prerequisites.namespace,
                           ingress_controller_prerequisites.config_map)
@@ -74,7 +81,7 @@ class TestExternalNameService:
         wait_before_test()
         req_url = f"http://{external_name_setup.public_endpoint.public_ip}:{external_name_setup.public_endpoint.port}/"
         resp = requests.get(req_url, headers={"host": external_name_setup.ingress_host}, verify=False)
-        assert resp.status_code == 502
+        assert resp.status_code == 200
 
     def test_ic_template_config_upstream_zone(self, kube_apis, ingress_controller_prerequisites,
                                               ingress_controller, external_name_setup):
@@ -83,7 +90,9 @@ class TestExternalNameService:
                                                       external_name_setup.ingress_name,
                                                       external_name_setup.ingress_pod_name,
                                                       ingress_controller_prerequisites.namespace)
-        line = f"zone {external_name_setup.namespace}-{external_name_setup.ingress_name}-{external_name_setup.ingress_host}-{external_name_setup.service}-80 256k;"
+        line = f"zone {external_name_setup.namespace}-" \
+               f"{external_name_setup.ingress_name}-" \
+               f"{external_name_setup.ingress_host}-{external_name_setup.service}-80 256k;"
         assert line in result_conf
 
     def test_ic_template_config_upstream_rule(self, kube_apis, ingress_controller_prerequisites,
@@ -102,4 +111,5 @@ class TestExternalNameService:
                                                       external_name_setup.ingress_name,
                                                       external_name_setup.ingress_pod_name,
                                                       ingress_controller_prerequisites.namespace)
-        assert f"server {external_name_setup.external_host}:80 max_fails=1 fail_timeout=10s max_conns=0 resolve;" in result_conf
+        assert f"server {external_name_setup.external_host}:80 max_fails=1 fail_timeout=10s max_conns=0 resolve;"\
+               in result_conf

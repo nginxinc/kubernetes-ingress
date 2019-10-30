@@ -16,19 +16,6 @@ def get_first_ingress_host_from_yaml(file) -> str:
             return dep['spec']['rules'][0]['host']
 
 
-def get_external_host_from_service_yaml(file) -> str:
-    """
-    Parse yaml file and return first spec.externalName appeared.
-
-    :param file: an absolute path to file
-    :return: str
-    """
-    with open(file) as f:
-        docs = yaml.safe_load_all(f)
-        for dep in docs:
-            return dep['spec']['externalName']
-
-
 def get_names_from_yaml(file) -> []:
     """
     Parse yaml file and return all the found metadata.name.

@@ -150,7 +150,7 @@ def scale_deployment(apps_v1_api: AppsV1Api, name, namespace, value) -> None:
     :return:
     """
     print(f"Scale a deployment '{name}'")
-    body = apps_v1_api.read_namespaced_deployment(name, namespace)
+    body = apps_v1_api.read_namespaced_deployment_scale(name, namespace)
     body.spec.replicas = value
     apps_v1_api.patch_namespaced_deployment_scale(name, namespace, body)
     print(f"Scale a deployment '{name}': complete")

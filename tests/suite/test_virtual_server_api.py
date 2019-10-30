@@ -32,8 +32,8 @@ class TestVSNginxPlusApi:
         resp = json.loads(requests.get(upstream_servers_url).text)
         new_reloads_count = get_nginx_generation_value(req_url)
         assert new_reloads_count == initial_reloads_count, "Expected: no new reloads"
-        assert resp[0]['max_conns'] is 32
-        assert resp[0]['max_fails'] is 25
+        assert resp[0]['max_conns'] == 32
+        assert resp[0]['max_fails'] == 25
         assert resp[0]['fail_timeout'] == '15s'
         assert resp[0]['slow_start'] == '10s'
 

@@ -3,4 +3,4 @@ apiVersion: v1
 metadata:
   name: nginx-config
 data:
-  resolver-addresses: "8.8.8.8"
+  resolver-addresses: "kube-dns.kube-system.svc.cluster.local"

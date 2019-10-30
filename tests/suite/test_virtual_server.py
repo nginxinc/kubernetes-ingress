@@ -165,6 +165,7 @@ class TestVirtualServer:
         print("Step 13: restore CRD and VS and check")
         create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, crd_name,
                              f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")
+        wait_before_test(1)
         create_virtual_server_from_yaml(kube_apis.custom_objects,
                                         f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml",
                                         virtual_server_setup.namespace)
