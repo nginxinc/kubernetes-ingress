@@ -53,7 +53,6 @@ def assert_keys_with_validation(config, expected_values):
     assert f"max_fails={expected_values['max-fails']}" in config
     assert f"keepalive {expected_values['keepalive']};" in config
     assert "listen 80 proxy_protocol;" in config
-    assert "if ($http_x_forwarded_proto = 'http') {" in config
 
 
 def assert_keys_with_validation_in_main_config(config, expected_values):
@@ -84,7 +83,6 @@ def assert_defaults_of_keys_with_validation(config, unexpected_values):
     assert "max_fails=1" in config
     assert "keepalive" not in config
     assert "listen 80;" in config
-    assert "if ($http_x_forwarded_proto = 'http') {" not in config
     assert "server_tokens \"on\"" in config
     assert "random two least_conn;" in config and unexpected_values['lb-method'] not in config
     assert f"proxy_send_timeout 60s;" in config

@@ -4,6 +4,5 @@ metadata:
   name: nginx-config
   namespace: nginx-ingress
 data:
-  ssl-redirect: "false"
   proxy-protocol: "true"
   http2: "true"
