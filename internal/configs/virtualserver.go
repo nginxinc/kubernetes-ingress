@@ -14,7 +14,7 @@ import (
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 )
 
-const nginx502Server = "unix:/var/lib/nginx-502-server.sock"
+const nginx502Server = "unix:/var/lib/nginx/nginx-502-server.sock"
 
 var incompatibleLBMethodsForSlowStart = map[string]bool{
 	"random":                          true,
