@@ -13,6 +13,7 @@ import (
 func createTestStaticConfigParams() *StaticConfigParams {
 	return &StaticConfigParams{
 		HealthStatus:                   true,
+		HealthStatusURI:                "/nginx-health",
 		NginxStatus:                    true,
 		NginxStatusAllowCIDRs:          []string{"127.0.0.1"},
 		NginxStatusPort:                8080,

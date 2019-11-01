@@ -40,8 +40,11 @@ var (
 	gitCommit string
 
 	healthStatus = flag.Bool("health-status", false,
-		`Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request.
+		`Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
 	Useful for external health-checking of the Ingress controller`)
+
+	healthStatusURI = flag.String("health-status-uri", "/nginx-health",
+		`Sets the location of health status uri in the default server. Requires -health-status`)
 
 	proxyURL = flag.String("proxy", "",
 		`Use a proxy server to connect to Kubernetes API started by "kubectl proxy" command. For testing purposes only.
@@ -320,6 +323,7 @@ func main() {
 
 	staticCfgParams := &configs.StaticConfigParams{
 		HealthStatus:                   *healthStatus,
+		HealthStatusURI:                *healthStatusURI,
 		NginxStatus:                    *nginxStatus,
 		NginxStatusAllowCIDRs:          allowedCIDRs,
 		NginxStatusPort:                *nginxStatusPort,

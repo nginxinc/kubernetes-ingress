@@ -100,7 +100,7 @@ http {
         {{end}}
 
         {{if .HealthStatus}}
-        location /nginx-health {
+        location {{.HealthStatusURI}} {
             default_type text/plain;
             return 200 "healthy\n";
         }

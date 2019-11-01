@@ -11,7 +11,7 @@ Usage of ./nginx-ingress:
 	the file "/etc/nginx/secrets/default" does not exist, the Ingress controller will fail to start
   -wildcard-tls-secret string
     	A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
-    	Format: <namespace>/<name>. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection. 
+       Format: <namespace>/<name>. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection.
     	If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.
   -enable-custom-resources
     	Enable custom resources
@@ -21,8 +21,10 @@ Usage of ./nginx-ingress:
     	Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally.
     	The external address of the service is used when reporting the status of Ingress resources. Requires -report-ingress-status.
   -health-status
-    	Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request.
-	Useful for external health-checking of the Ingress controller
+        Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
+    	Useful for external health-checking of the Ingress controller
+  -health-status-uri string
+    	Sets the location of health status uri in the default server. Requires -health-status (default "/nginx-health")
   -ingress-class string
     	A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class
 	- i.e. have the annotation "kubernetes.io/ingress.class" equal to the class. Additionally,

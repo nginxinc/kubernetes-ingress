@@ -131,6 +131,7 @@ type MainConfig struct {
 	ErrorLogLevel                  string
 	StreamLogFormat                string
 	HealthStatus                   bool
+	HealthStatusURI                string
 	NginxStatus                    bool
 	NginxStatusAllowCIDRs          []string
 	NginxStatusPort                int

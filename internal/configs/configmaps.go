@@ -430,6 +430,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool) *ConfigParams {
 func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *ConfigParams) *version1.MainConfig {
 	nginxCfg := &version1.MainConfig{
 		HealthStatus:                   staticCfgParams.HealthStatus,
+		HealthStatusURI:                staticCfgParams.HealthStatusURI,
 		NginxStatus:                    staticCfgParams.NginxStatus,
 		NginxStatusAllowCIDRs:          staticCfgParams.NginxStatusAllowCIDRs,
 		NginxStatusPort:                staticCfgParams.NginxStatusPort,

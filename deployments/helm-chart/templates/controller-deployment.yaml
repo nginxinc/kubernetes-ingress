@@ -89,6 +89,7 @@ spec:
           - -watch-namespace={{ .Values.controller.watchNamespace }}
 {{- end }}
           - -health-status={{ .Values.controller.healthStatus }}
+          - -health-status-uri={{ .Values.controller.healthStatusURI }}
           - -nginx-debug={{ .Values.controller.nginxDebug }}
           - -v={{ .Values.controller.logLevel }}
           - -nginx-status={{ .Values.controller.nginxStatus.enable }}

@@ -106,9 +106,12 @@ controller:
   ## Enable the custom resources.
   enableCustomResources: false
 
-  ## Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request.
+  ## Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
   ## Useful for external health-checking of the Ingress controller.
   healthStatus: false
+
+  ## Set the name of the location for healthStatus. Requires -health-status.
+  healthStatusURI: "/nginx-health"
 
   nginxStatus:
     ## Enable the NGINX stub_status, or the NGINX Plus API.
