@@ -103,6 +103,13 @@ func TestValidateTLS(t *testing.T) {
 				BasedOn: "scheme",
 			},
 		},
+		{
+			Secret: "my-secret",
+			Redirect: &v1alpha1.TLSRedirect{
+				Enable: true,
+				Code:   createPointerFromInt(307),
+			},
+		},
 	}
 
 	for _, tls := range validTLSes {
