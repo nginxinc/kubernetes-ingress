@@ -24,7 +24,7 @@ Usage of ./nginx-ingress:
         Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
     	Useful for external health-checking of the Ingress controller
   -health-status-uri string
-    	Sets the location of health status uri in the default server. Requires -health-status (default "/nginx-health")
+       Sets the URI of health status location in the default server. Requires -health-status (default "/nginx-health")
   -ingress-class string
     	A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class
 	- i.e. have the annotation "kubernetes.io/ingress.class" equal to the class. Additionally,

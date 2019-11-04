@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strings"
 	"syscall"
 	"time"
@@ -44,7 +45,7 @@ var (
 	Useful for external health-checking of the Ingress controller`)
 
 	healthStatusURI = flag.String("health-status-uri", "/nginx-health",
-		`Sets the location of health status uri in the default server. Requires -health-status`)
+		`Sets the URI of health status location in the default server. Requires -health-status`)
 
 	proxyURL = flag.String("proxy", "",
 		`Use a proxy server to connect to Kubernetes API started by "kubectl proxy" command. For testing purposes only.
@@ -138,6 +139,11 @@ func main() {
 	if *versionFlag {
 		fmt.Printf("Version=%v GitCommit=%v\n", version, gitCommit)
 		os.Exit(0)
+	}
+
+	healthStatusURIValidationError := validateLocation(*healthStatusURI)
+	if healthStatusURIValidationError != nil {
+		glog.Fatalf("Invalid value for health-status-uri: %v", healthStatusURIValidationError)
 	}
 
 	statusLockNameValidationError := validateResourceName(*leaderElectionLockName)
@@ -518,4 +524,20 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 		return nil, fmt.Errorf("%v is invalid: %v", secretNsName, err)
 	}
 	return secret, nil
+}
+
+const locationFmt = `/[^\s{};]*`
+const locationErrMsg = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
+
+var locationRegexp = regexp.MustCompile("^" + locationFmt + "$")
+
+func validateLocation(location string) error {
+	if location == "" {
+		return fmt.Errorf("invalid location: an empty string is an invalid location")
+	}
+	if !locationRegexp.MatchString(location) {
+		msg := validation.RegexError(locationErrMsg, locationFmt, "/", "/path", "/path/subpath-123")
+		return fmt.Errorf("invalid location format: %v", msg)
+	}
+	return nil
 }
