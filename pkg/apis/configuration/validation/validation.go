@@ -76,7 +76,7 @@ func validateTLSRedirect(redirect *v1alpha1.TLSRedirect, fieldPath *field.Path) 
 	}
 
 	if redirect.BasedOn != "" && redirect.BasedOn != "scheme" && redirect.BasedOn != "x-forwarded-proto" {
-		allErrs = append(allErrs, field.Invalid(fieldPath.Child("basedOn"), redirect.BasedOn, "accepted values are '', 'scheme', 'x-forwarded-proto'"))
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("basedOn"), redirect.BasedOn, "accepted values are 'scheme', 'x-forwarded-proto'"))
 	}
 
 	return allErrs
