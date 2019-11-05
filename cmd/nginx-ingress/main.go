@@ -532,11 +532,11 @@ const locationErrMsg = "must start with / and must not include any whitespace ch
 var locationRegexp = regexp.MustCompile("^" + locationFmt + "$")
 
 func validateLocation(location string) error {
-	if location == "" {
-		return fmt.Errorf("invalid location: an empty string is an invalid location")
+	if location == "" || location == "/" {
+		return fmt.Errorf("invalid location format: '%v' is an invalid location", location)
 	}
 	if !locationRegexp.MatchString(location) {
-		msg := validation.RegexError(locationErrMsg, locationFmt, "/", "/path", "/path/subpath-123")
+		msg := validation.RegexError(locationErrMsg, locationFmt, "/path", "/path/subpath-123")
 		return fmt.Errorf("invalid location format: %v", msg)
 	}
 	return nil

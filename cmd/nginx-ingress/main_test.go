@@ -98,3 +98,29 @@ func TestValidateCIDRorIP(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateLocation(t *testing.T) {
+	badLocations := []string{
+		"",
+		"/",
+		" /test",
+		"/bad;",
+	}
+	for _, badLocation := range badLocations {
+		err := validateLocation(badLocation)
+		if err == nil {
+			t.Errorf("validateLocation(%v) returned no error when it should have returned an error", badLocation)
+		}
+	}
+
+	goodLocations := []string{
+		"/test",
+		"/test/subtest",
+	}
+	for _, goodLocation := range goodLocations {
+		err := validateLocation(goodLocation)
+		if err != nil {
+			t.Errorf("validateLocation(%v) returned an error when it should have returned no error: %v", goodLocation, err)
+		}
+	}
+}

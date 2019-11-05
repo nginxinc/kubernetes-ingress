@@ -110,7 +110,7 @@ controller:
   ## Useful for external health-checking of the Ingress controller.
   healthStatus: false
 
-  ## Sets the URI of health status location in the default server. Requires -health-status (default "/nginx-health").
+  ## Sets the URI of health status location in the default server. Requires contoller.healthStatus.
   healthStatusURI: "/nginx-health"
 
   nginxStatus:
