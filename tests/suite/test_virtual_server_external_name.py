@@ -7,7 +7,7 @@ from suite.custom_resources_utils import get_vs_nginx_template_conf
 from suite.resources_utils import replace_configmap_from_yaml, \
     ensure_connection_to_public_endpoint, replace_configmap, create_service_from_yaml, get_first_pod_name, get_events, \
     read_service, replace_service, wait_before_test, delete_namespace, create_service_with_name, \
-    create_deployment_with_name, create_namespace_with_name_from_yaml
+    create_deployment_with_name, create_namespace_with_name_from_yaml, ensure_response_from_backend
 
 
 class ExternalNameSetup:
@@ -45,6 +45,7 @@ def vs_externalname_setup(request,
                                          virtual_server_setup.public_endpoint.port,
                                          virtual_server_setup.public_endpoint.port_ssl)
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+    ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
 
     def fin():
         print("Clean up ExternalName Setup:")
@@ -61,7 +62,7 @@ def vs_externalname_setup(request,
 @pytest.mark.vs
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
-                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+                         [({"type": "complete", "extra_args": [f"-enable-custom-resources", "-v=3"]},
                            {"example": "virtual-server-externalname", "app_type": "simple"})],
                          indirect=True)
 class TestVSWithExternalNameService:

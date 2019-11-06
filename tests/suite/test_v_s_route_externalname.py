@@ -9,7 +9,7 @@ from suite.fixtures import VirtualServerRoute, PublicEndpoint
 from suite.resources_utils import get_first_pod_name, get_events, \
     wait_before_test, replace_configmap_from_yaml, create_service_from_yaml, \
     delete_namespace, create_namespace_with_name_from_yaml, read_service, replace_service, replace_configmap, \
-    create_service_with_name, create_deployment_with_name
+    create_service_with_name, create_deployment_with_name, ensure_response_from_backend
 from suite.yaml_utils import get_paths_from_vsr_yaml, get_route_namespace_from_vs_yaml, get_first_vs_host_from_yaml
 
 
@@ -83,6 +83,8 @@ def vsr_externalname_setup(request, kube_apis,
     svc_name = create_service_from_yaml(kube_apis.v1,
                                         ns_1, f"{TEST_DATA}/{request.param['example']}/externalname-svc.yaml")
     wait_before_test(2)
+    req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}"
+    ensure_response_from_backend(f"{req_url}{route.paths[0]}", vs_host)
 
     def fin():
         print("Delete test namespaces")

@@ -981,10 +981,10 @@ def ensure_response_from_backend(req_url, host) -> None:
     :param host:
     :return:
     """
-    for _ in range(10):
+    for _ in range(30):
         resp = requests.get(req_url, headers={"host": host}, verify=False)
         if resp.status_code != 502:
             print(f"At last after {_ * 2} seconds got 200. Continue...")
             return
         time.sleep(2)
-    pytest.fail(f"Keep getting 502 from {req_url} after 20 seconds. Exiting...")
+    pytest.fail(f"Keep getting 502 from {req_url} after 60 seconds. Exiting...")

@@ -5,7 +5,7 @@ from suite.custom_resources_utils import get_vs_nginx_template_conf
 
 
 def assert_no_new_events(old_list, new_list):
-    assert len(old_list) == len(new_list), "expected: lists are the same"
+    assert len(old_list) == len(new_list), "Expected: lists are of the same size"
     for i in range(len(new_list) - 1, -1, -1):
         if old_list[i].count != new_list[i].count:
             pytest.fail(f"Expected: no new events. There is a new event found:\"{new_list[i].message}\". Exiting...")
