@@ -265,20 +265,20 @@ func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, c
 	for _, s := range servers {
 		upsServers = append(upsServers, client.UpstreamServer{
 			Server:      s,
-			MaxFails:    config.MaxFails,
-			MaxConns:    config.MaxConns,
+			MaxFails:    &config.MaxFails,
+			MaxConns:    &config.MaxConns,
 			FailTimeout: config.FailTimeout,
 			SlowStart:   config.SlowStart,
 		})
 	}
 
-	added, removed, err := lm.plusClient.UpdateHTTPServers(upstream, upsServers)
+	added, removed, updated, err := lm.plusClient.UpdateHTTPServers(upstream, upsServers)
 	if err != nil {
 		glog.V(3).Infof("Couldn't update servers of %v upstream: %v", upstream, err)
 		return fmt.Errorf("error updating servers of %v upstream: %v", upstream, err)
 	}
 
-	glog.V(3).Infof("Updated servers of %v; Added: %v, Removed: %v", upstream, added, removed)
+	glog.V(3).Infof("Updated servers of %v; Added: %v, Removed: %v, Updated: %v", upstream, added, removed, updated)
 
 	return nil
 }

@@ -372,7 +372,7 @@ func (in *VirtualServer) DeepCopyObject() runtime.Object {
 func (in *VirtualServerList) DeepCopyInto(out *VirtualServerList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]VirtualServer, len(*in))
@@ -432,7 +432,7 @@ func (in *VirtualServerRoute) DeepCopyObject() runtime.Object {
 func (in *VirtualServerRouteList) DeepCopyInto(out *VirtualServerRouteList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]VirtualServerRoute, len(*in))
