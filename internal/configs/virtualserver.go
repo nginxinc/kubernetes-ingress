@@ -250,7 +250,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		} else {
 			upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(r.Action.Pass)
 			upstream := crUpstreams[upstreamName]
-			loc := generateLocation(r.Path, upstreamName, upstream, vsc.cfgParams)
+			loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams)
 			locations = append(locations, loc)
 		}
 
@@ -278,7 +278,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			} else {
 				upstreamName := upstreamNamer.GetNameForUpstream(r.Action.Pass)
 				upstream := crUpstreams[upstreamName]
-				loc := generateLocation(r.Path, upstreamName, upstream, vsc.cfgParams)
+				loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams)
 				locations = append(locations, loc)
 			}
 		}
@@ -511,7 +511,15 @@ func generatePath(path string) string {
 	return path
 }
 
-func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, cfgParams *ConfigParams) version2.Location {
+func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, action *conf_v1.Action, cfgParams *ConfigParams) version2.Location {
+	if action.Redirect != nil {
+		return generateLocationForRedirect(path, cfgParams.LocationSnippets, action.Redirect)
+	}
+
+	return generateLocationForProxying(path, upstreamName, upstream, cfgParams)
+}
+
+func generateLocationForProxying(path string, upstreamName string, upstream conf_v1.Upstream, cfgParams *ConfigParams) version2.Location {
 	return version2.Location{
 		Path:                     generatePath(path),
 		Snippets:                 cfgParams.LocationSnippets,
@@ -528,6 +536,14 @@ func generateLocation(path string, upstreamName string, upstream conf_v1.Upstrea
 		ProxyNextUpstreamTimeout: generateString(upstream.ProxyNextUpstreamTimeout, "0s"),
 		ProxyNextUpstreamTries:   upstream.ProxyNextUpstreamTries,
 		HasKeepalive:             upstreamHasKeepalive(upstream, cfgParams),
+	}
+}
+
+func generateLocationForRedirect(path string, locationSnippets []string, redirect *conf_v1.ActionRedirect) version2.Location {
+	return version2.Location{
+		Path:     path,
+		Snippets: locationSnippets,
+		Redirect: generateActionRedirectConfig(redirect),
 	}
 }
 
@@ -561,7 +577,7 @@ func generateSplits(splits []conf_v1.Split, upstreamNamer *upstreamNamer, crUpst
 		path := fmt.Sprintf("@splits_%d_split_%d", scIndex, i)
 		upstreamName := upstreamNamer.GetNameForUpstream(s.Action.Pass)
 		upstream := crUpstreams[upstreamName]
-		loc := generateLocation(path, upstreamName, upstream, cfgParams)
+		loc := generateLocation(path, upstreamName, upstream, s.Action, cfgParams)
 		locations = append(locations, loc)
 	}
 
@@ -668,7 +684,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 			path := fmt.Sprintf("@matches_%d_match_%d", index, i)
 			upstreamName := upstreamNamer.GetNameForUpstream(m.Action.Pass)
 			upstream := crUpstreams[upstreamName]
-			loc := generateLocation(path, upstreamName, upstream, cfgParams)
+			loc := generateLocation(path, upstreamName, upstream, m.Action, cfgParams)
 			locations = append(locations, loc)
 		}
 	}
@@ -682,7 +698,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 		path := fmt.Sprintf("@matches_%d_default", index)
 		upstreamName := upstreamNamer.GetNameForUpstream(route.Action.Pass)
 		upstream := crUpstreams[upstreamName]
-		loc := generateLocation(path, upstreamName, upstream, cfgParams)
+		loc := generateLocation(path, upstreamName, upstream, route.Action, cfgParams)
 		locations = append(locations, loc)
 	}
 
@@ -801,6 +817,23 @@ func generateTLSRedirectConfig(tls *conf_v1.TLS) *version2.TLSRedirect {
 	redirect := &version2.TLSRedirect{
 		Code:    generateIntFromPointer(tls.Redirect.Code, 301),
 		BasedOn: generateTLSRedirectBasedOn(tls.Redirect.BasedOn),
+	}
+
+	return redirect
+}
+
+func generateActionRedirectConfig(actionRedirect *conf_v1.ActionRedirect) *version2.ActionRedirect {
+	if actionRedirect == nil {
+		return nil
+	}
+
+	redirect := &version2.ActionRedirect{
+		URL:  actionRedirect.URL,
+		Code: 301,
+	}
+
+	if actionRedirect.Code != 0 {
+		redirect.Code = actionRedirect.Code
 	}
 
 	return redirect

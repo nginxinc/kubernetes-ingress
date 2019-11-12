@@ -107,7 +107,14 @@ type Route struct {
 
 // Action defines an action.
 type Action struct {
-	Pass string `json:"pass"`
+	Pass     string          `json:"pass"`
+	Redirect *ActionRedirect `json:"redirect"`
+}
+
+// ActionRedirect defines a redirect in an Action.
+type ActionRedirect struct {
+	URL  string `json:"url"`
+	Code int    `json:"code"`
 }
 
 // Split defines a split.

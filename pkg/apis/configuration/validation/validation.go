@@ -72,7 +72,7 @@ func validateTLSRedirect(redirect *v1.TLSRedirect, fieldPath *field.Path) field.
 	}
 
 	if redirect.Code != nil {
-		allErrs = append(allErrs, validateTLSRedirectStatusCode(*redirect.Code, fieldPath.Child("code"))...)
+		allErrs = append(allErrs, validateRedirectStatusCode(*redirect.Code, fieldPath.Child("code"))...)
 	}
 
 	if redirect.BasedOn != "" && redirect.BasedOn != "scheme" && redirect.BasedOn != "x-forwarded-proto" {
@@ -82,17 +82,17 @@ func validateTLSRedirect(redirect *v1.TLSRedirect, fieldPath *field.Path) field.
 	return allErrs
 }
 
-var validTLSRedirectStatusCodes = map[int]bool{
+var validRedirectStatusCodes = map[int]bool{
 	301: true,
 	302: true,
 	307: true,
 	308: true,
 }
 
-func validateTLSRedirectStatusCode(code int, fieldPath *field.Path) field.ErrorList {
+func validateRedirectStatusCode(code int, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if _, ok := validTLSRedirectStatusCodes[code]; !ok {
+	if _, ok := validRedirectStatusCodes[code]; !ok {
 		allErrs = append(allErrs, field.Invalid(fieldPath, code, "status code out of accepted range. accepted values are '301', '302', '307', '308'"))
 	}
 
@@ -596,13 +596,138 @@ func validateRoute(route v1.Route, fieldPath *field.Path, upstreamNames sets.Str
 func validateAction(action *v1.Action, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if action.Pass == "" {
-		return append(allErrs, field.Required(fieldPath.Child("pass"), ""))
+	if action.Pass == "" && action.Redirect == nil {
+		return append(allErrs, field.Required(fieldPath, "action must specify exactly one of `pass` or `redirect`"))
 	}
 
-	allErrs = append(allErrs, validateReferencedUpstream(action.Pass, fieldPath.Child("pass"), upstreamNames)...)
+	if action.Pass != "" && action.Redirect != nil {
+		return append(allErrs, field.Required(fieldPath, "action must specify exactly one of `pass` or `redirect`"))
+	}
+
+	if action.Pass != "" {
+		allErrs = append(allErrs, validateReferencedUpstream(action.Pass, fieldPath.Child("pass"), upstreamNames)...)
+	}
+
+	if action.Redirect != nil {
+		allErrs = append(allErrs, validateActionRedirect(action.Redirect, fieldPath.Child("redirect"))...)
+	}
 
 	return allErrs
+}
+
+func validateActionRedirect(redirect *v1.ActionRedirect, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allErrs = append(allErrs, validateRedirectURL(redirect.URL, fieldPath.Child("url"))...)
+
+	if redirect.Code != 0 {
+		allErrs = append(allErrs, validateRedirectStatusCode(redirect.Code, fieldPath.Child("code"))...)
+	}
+
+	return allErrs
+}
+
+// Returns a slice of vars enclosed in ${}. For example ${scheme} would return scheme.
+func captureVariables(s string) [][]string {
+	regex := regexp.MustCompile(`\$\{([^}]+)\}`)
+	return regex.FindAllStringSubmatch(s, -1)
+}
+
+// validRedirectVariableNames includes NGINX variables allowed to be used in redirects.
+var validRedirectVariableNames = map[string]bool{
+	"scheme":                 true,
+	"http_x_forwarded_proto": true,
+	"request_uri":            true,
+	"host":                   true,
+}
+
+func validateRedirectURL(redirectURL string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if redirectURL == "" {
+		return append(allErrs, field.Required(fieldPath, "must specify a url"))
+	}
+
+	allErrs = append(allErrs, validateRedirectURLFmt(redirectURL, fieldPath)...)
+
+	if strings.Contains(redirectURL, "$") {
+		nginxVars := captureVariables(redirectURL)
+		if nginxVars != nil {
+			for _, v := range nginxVars {
+				nVar := v[1]
+				allErrs = append(allErrs, validateVariable(nVar, validRedirectVariableNames, fieldPath)...)
+			}
+		}
+	}
+
+	return allErrs
+}
+
+const redirectFmt string = `([^"\\]|\\.)*`
+const redirectFmtErrMsg string = `must have all '"' (double quotes) escaped and must not end with an unescaped '\' (backslash)`
+
+var redirectFmtRegexp = regexp.MustCompile("^" + redirectFmt + "$")
+
+func validateRedirectURLFmt(str string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !redirectFmtRegexp.MatchString(str) {
+		msg := validation.RegexError(redirectFmtErrMsg, redirectFmt, "http://www.nginx.com", "$scheme://$host/green/", `\"http://www.nginx.com\"`)
+		return append(allErrs, field.Invalid(fieldPath, str, msg))
+	}
+
+	if strings.Contains(str, "${}") {
+		return append(allErrs, field.Invalid(fieldPath, str, "must not contain any empty variable ${}"))
+	}
+
+	if strings.HasSuffix(str, "$") {
+		return append(allErrs, field.Invalid(fieldPath, str, "must not end with $"))
+	}
+
+	for i, c := range str {
+		if c == '$' && i+1 < len(str) {
+			msg := "variables must be enclosed in curly braces, for example ${host}"
+
+			if str[i+1] != '{' {
+				return append(allErrs, field.Invalid(fieldPath, str, msg))
+			}
+
+			if !strings.Contains(str[i+1:], "}") {
+				return append(allErrs, field.Invalid(fieldPath, str, msg))
+			}
+		}
+	}
+
+	return allErrs
+}
+
+func validateVariable(nVar string, validVars map[string]bool, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if nVar == "" {
+		return append(allErrs, field.Invalid(fieldPath, nVar, "$ must be followed by a set of curly braces to define a nginx variable"))
+	}
+
+	if strings.Contains(nVar, "{") || strings.Contains(nVar, "}") || strings.Contains(nVar, "$") {
+		return append(allErrs, field.Invalid(fieldPath, nVar, "nested nginx variables are not valid. Any nested '{', '}', or '$' should be removed"))
+	}
+
+	if !validVars[nVar] {
+		msg := fmt.Sprintf("'%v' contains an invalid nginx variable. Accepted variables are: %v", nVar, mapToPrettyString(validVars))
+		allErrs = append(allErrs, field.Invalid(fieldPath, nVar, msg))
+	}
+
+	return allErrs
+}
+
+func mapToPrettyString(m map[string]bool) string {
+	var out []string
+
+	for k := range m {
+		out = append(out, k)
+	}
+
+	return strings.Join(out, ", ")
 }
 
 func validateRouteField(value string, fieldPath *field.Path) field.ErrorList {

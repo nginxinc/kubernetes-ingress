@@ -814,26 +814,197 @@ func TestValidateRouteFails(t *testing.T) {
 }
 
 func TestValidateAction(t *testing.T) {
-	action := &v1.Action{
-		Pass: "test",
-	}
 	upstreamNames := map[string]sets.Empty{
 		"test": {},
 	}
+	tests := []struct {
+		action *v1.Action
+		msg    string
+	}{
+		{
+			action: &v1.Action{
+				Pass: "test",
+			},
+			msg: "base pass action",
+		},
+		{
+			action: &v1.Action{
+				Redirect: &v1.ActionRedirect{
+					URL: "http://www.nginx.com",
+				},
+			},
+			msg: "base redirect action",
+		},
+		{
+			action: &v1.Action{
+				Redirect: &v1.ActionRedirect{
+					URL:  "http://www.nginx.com",
+					Code: 302,
+				},
+			},
 
-	allErrs := validateAction(action, field.NewPath("action"), upstreamNames)
-	if len(allErrs) > 0 {
-		t.Errorf("validateAction() returned errors %v for valid input", allErrs)
+			msg: "redirect action with status code set",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateAction(test.action, field.NewPath("action"), upstreamNames)
+		if len(allErrs) > 0 {
+			t.Errorf("validateAction() returned errors %v for valid input for the case of %s", allErrs, test.msg)
+		}
 	}
 }
 
 func TestValidateActionFails(t *testing.T) {
-	action := &v1.Action{}
 	upstreamNames := map[string]sets.Empty{}
 
-	allErrs := validateAction(action, field.NewPath("action"), upstreamNames)
-	if len(allErrs) == 0 {
-		t.Error("validateAction() returned no errors for invalid input")
+	tests := []struct {
+		action *v1.Action
+		msg    string
+	}{
+
+		{
+			action: &v1.Action{},
+			msg:    "empty action",
+		},
+		{
+			action: &v1.Action{
+				Redirect: &v1.ActionRedirect{},
+			},
+			msg: "missing required field url",
+		},
+		{
+			action: &v1.Action{
+				Pass: "test",
+				Redirect: &v1.ActionRedirect{
+					URL: "http://www.nginx.com",
+				},
+			},
+			msg: "multiple actions defined",
+		},
+		{
+			action: &v1.Action{
+				Redirect: &v1.ActionRedirect{
+					URL:  "http://www.nginx.com",
+					Code: 305,
+				},
+			},
+			msg: "redirect action with invalid status code set",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateAction(test.action, field.NewPath("action"), upstreamNames)
+		if len(allErrs) == 0 {
+			t.Errorf("validateAction() returned no errors for invalid input for the case of %s", test.msg)
+		}
+	}
+}
+
+func TestValidateRedirectURL(t *testing.T) {
+	tests := []struct {
+		redirectURL string
+		msg         string
+	}{
+		{
+			redirectURL: "http://www.nginx.com",
+			msg:         "base redirect url",
+		},
+		{
+			redirectURL: "${scheme}://${host}/sorry",
+			msg:         "multi variable redirect url",
+		},
+		{
+			redirectURL: "${http_x_forwarded_proto}://${host}/sorry",
+			msg:         "x-forwarded-proto redirect url use case",
+		},
+		{
+			redirectURL: "${host}${request_uri}",
+			msg:         "use multi variables, no scheme set",
+		},
+		{
+			redirectURL: "${scheme}://www.${host}${request_uri}",
+			msg:         "use multi variables",
+		},
+		{
+			redirectURL: "http://example.com/redirect?source=abc",
+			msg:         "arg variable use",
+		},
+		{
+			redirectURL: `\"${scheme}://${host}\"`,
+			msg:         "url with escaped quotes",
+		},
+		{
+			redirectURL: "{abc}",
+			msg:         "url with curly braces with no $ prefix",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateRedirectURL(test.redirectURL, field.NewPath("url"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateRedirectURL(%s) returned errors %v for valid input for the case of %s", test.redirectURL, allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateRedirectURLFails(t *testing.T) {
+	tests := []struct {
+		redirectURL string
+		msg         string
+	}{
+
+		{
+			redirectURL: "",
+			msg:         "url is blank",
+		},
+		{
+			redirectURL: "$scheme://www.$host.com",
+			msg:         "usage of nginx variable in url without ${}",
+		},
+		{
+			redirectURL: "${scheme}://www.${invalid}.com",
+			msg:         "invalid nginx variable in url",
+		},
+		{
+			redirectURL: "${scheme}://www.${{host}.com",
+			msg:         "leading curly brace",
+		},
+		{
+			redirectURL: "${host.abc}.com",
+			msg:         "multi var in curly brace",
+		},
+		{
+			redirectURL: "${scheme}://www.${host{host}}.com",
+			msg:         "nested nginx vars",
+		},
+		{
+			redirectURL: `"${scheme}://${host}"`,
+			msg:         "url in unescaped quotes",
+		},
+		{
+			redirectURL: `"${scheme}://${host}`,
+			msg:         "url with unescaped quote prefix",
+		},
+		{
+			redirectURL: `\\"${scheme}://${host}\\"`,
+			msg:         "url with escaped backslash",
+		},
+		{
+			redirectURL: `${scheme}://${host}$`,
+			msg:         "url with ending $",
+		},
+		{
+			redirectURL: `http://${}`,
+			msg:         "url containing blank var",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateRedirectURL(test.redirectURL, field.NewPath("action"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateRedirectURL(%s) returned no errors for invalid input for the case of %s", test.redirectURL, test.msg)
+		}
 	}
 }
 
@@ -2343,7 +2514,7 @@ func TestValidateSessionCookieFails(t *testing.T) {
 	}
 }
 
-func TestValidateTLSRedirectStatusCode(t *testing.T) {
+func TestValidateRedirectStatusCode(t *testing.T) {
 	tests := []struct {
 		code int
 	}{
@@ -2353,14 +2524,14 @@ func TestValidateTLSRedirectStatusCode(t *testing.T) {
 		{code: 308},
 	}
 	for _, test := range tests {
-		allErrs := validateTLSRedirectStatusCode(test.code, field.NewPath("code"))
+		allErrs := validateRedirectStatusCode(test.code, field.NewPath("code"))
 		if len(allErrs) != 0 {
-			t.Errorf("validateTLSRedirectStatusCode(%v) returned errors %v for valid input", test.code, allErrs)
+			t.Errorf("validateRedirectStatusCode(%v) returned errors %v for valid input", test.code, allErrs)
 		}
 	}
 }
 
-func TestValidateTLSRedirectStatusCodeFails(t *testing.T) {
+func TestValidateRedirectStatusCodeFails(t *testing.T) {
 	tests := []struct {
 		code int
 	}{
@@ -2369,9 +2540,56 @@ func TestValidateTLSRedirectStatusCodeFails(t *testing.T) {
 		{code: 305},
 	}
 	for _, test := range tests {
-		allErrs := validateTLSRedirectStatusCode(test.code, field.NewPath("code"))
+		allErrs := validateRedirectStatusCode(test.code, field.NewPath("code"))
 		if len(allErrs) == 0 {
-			t.Errorf("validateTLSRedirectStatusCode(%v) returned no errors for invalid input", test.code)
+			t.Errorf("validateRedirectStatusCode(%v) returned no errors for invalid input", test.code)
+		}
+	}
+}
+
+func TestValidateVariable(t *testing.T) {
+	var validVars = map[string]bool{
+		"scheme":                 true,
+		"http_x_forwarded_proto": true,
+		"request_uri":            true,
+		"host":                   true,
+	}
+
+	tests := []struct {
+		nVar string
+	}{
+		{"scheme"},
+		{"http_x_forwarded_proto"},
+		{"request_uri"},
+		{"host"},
+	}
+	for _, test := range tests {
+		allErrs := validateVariable(test.nVar, validVars, field.NewPath("url"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateVariable(%v) returned errors %v for valid input", test.nVar, allErrs)
+		}
+	}
+}
+
+func TestValidateVariableFails(t *testing.T) {
+	var validVars = map[string]bool{
+		"host": true,
+	}
+
+	tests := []struct {
+		nVar string
+	}{
+		{""},
+		{"hostinvalid.com"},
+		{"$a"},
+		{"host${host}"},
+		{"host${host}}"},
+		{"host$${host}"},
+	}
+	for _, test := range tests {
+		allErrs := validateVariable(test.nVar, validVars, field.NewPath("url"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateVariable(%v) returned no errors for invalid input", test.nVar)
 		}
 	}
 }

@@ -26,6 +26,7 @@ This document is the reference documentation for the resources. To see additiona
     - [Upstream.SessionCookie](#upstreamsessioncookie)
     - [Header](#header)
     - [Action](#action)
+    - [Action.Redirect](#actionredirect)
     - [Split](#split)
     - [Match](#match)
     - [Condition](#condition)
@@ -400,7 +401,26 @@ In the example below, client requests are passed to an upstream `coffee`:
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
-| `pass` | Passes requests to an upstream. The upstream with that name must be defined in the resource. | `string` | Yes |
+| `pass` | Passes requests to an upstream. The upstream with that name must be defined in the resource. | `string` | No* |
+| `redirect` | Redirects requests to a provided URL. | [`action.redirect`](#ActionRedirect) | No* |
+
+\* -- an action must include exactly one of the following: `pass` or `redirect`.
+
+### Action.Redirect
+
+The redirect action defines a redirect to return for a request.
+
+In the example below, client requests are passed to a url `http://www.nginx.com`:
+```yaml
+redirect:
+  url: http://www.nginx.com
+  code: 301
+```
+
+| Field | Description | Type | Required |
+| ----- | ----------- | ---- | -------- |
+| `url` | The URL to redirect the request to. Supported NGINX variables: `$scheme`, `$http_x_forwarded_proto`, `$request_uri`, `$host`. Variables must be inclosed in the curly braces. For example: `${host}${request_uri}`. | `string` | Yes |
+| `code` | The status code of a redirect. The allowed values are: `301`, `302`, `307`, `308`. The default is `301`. | `int` | No |
 
 
 ### Split

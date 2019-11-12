@@ -72,6 +72,7 @@ type Location struct {
 	ProxyNextUpstreamTimeout string
 	ProxyNextUpstreamTries   int
 	HasKeepalive             bool
+	Redirect                 *ActionRedirect
 }
 
 // SplitClient defines a split_clients.
@@ -102,6 +103,12 @@ type HealthCheck struct {
 type TLSRedirect struct {
 	Code    int
 	BasedOn string
+}
+
+// ActionRedirect defines a redirect in a location.
+type ActionRedirect struct {
+	URL  string
+	Code int
 }
 
 // SessionCookie defines a session cookie for an upstream.
