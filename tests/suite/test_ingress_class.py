@@ -1,0 +1,89 @@
+import requests
+import pytest
+
+from suite.resources_utils import ensure_connection_to_public_endpoint, create_items_from_yaml,\
+    create_example_app, delete_common_app, delete_items_from_yaml, \
+    wait_until_all_pods_are_ready, ensure_response_from_backend, wait_before_test
+from suite.yaml_utils import get_first_ingress_host_from_yaml
+from settings import TEST_DATA
+
+
+class BackendSetup:
+    """
+    Encapsulate the example details.
+
+    Attributes:
+        req_url (str):
+        ingress_hosts (dict):
+    """
+
+    def __init__(self, req_url, ingress_hosts):
+        self.req_url = req_url
+        self.ingress_hosts = ingress_hosts
+
+
+ingresses_under_test = ["custom-class", "nginx-class", "no-class"]
+
+
+@pytest.fixture(scope="class")
+def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> BackendSetup:
+    """
+    Deploy simple application and all the Ingress resources under test in one namespace.
+
+    :param request: pytest fixture
+    :param kube_apis: client apis
+    :param ingress_controller_endpoint: public endpoint
+    :param test_namespace:
+    :return: BackendSetup
+    """
+    print("------------------------- Deploy the backend -----------------------------------")
+    create_example_app(kube_apis, "simple", test_namespace)
+    req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/backend1"
+    wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
+    ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
+                                         ingress_controller_endpoint.port,
+                                         ingress_controller_endpoint.port_ssl)
+    print("------------------------- Deploy ingresses under test -----------------------------------")
+    ingress_hosts = {}
+    for item in ingresses_under_test:
+        src_ing_yaml = f"{TEST_DATA}/ingress-class/{item}-ingress.yaml"
+        create_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+        ingress_hosts[item] = get_first_ingress_host_from_yaml(src_ing_yaml)
+    wait_before_test(2)
+
+    def fin():
+        print("Clean up:")
+        delete_common_app(kube_apis, "simple", test_namespace)
+        for item in ingresses_under_test:
+            src_ing_yaml = f"{TEST_DATA}/ingress-class/{item}-ingress.yaml"
+            delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+
+    request.addfinalizer(fin)
+
+    return BackendSetup(req_url, ingress_hosts)
+
+
+@pytest.mark.ingresses
+@pytest.mark.parametrize('ingress_controller, expected_responses',
+                         [
+                             pytest.param({"extra_args": ["-ingress-class=custom"]},
+                                          {"custom-class": 200, "nginx-class": 404, "no-class": 200},
+                                          id="custom-ingress-class"),
+                             pytest.param({"extra_args": ["-use-ingress-class-only"]},
+                                          {"custom-class": 404, "nginx-class": 200, "no-class": 404},
+                                          id="use-ingress-class-only"),
+                             pytest.param({"extra_args": ["-use-ingress-class-only", "-ingress-class=custom"]},
+                                          {"custom-class": 200, "nginx-class": 404, "no-class": 404},
+                                          id="both-args-set"),
+                             pytest.param({"extra_args": None},
+                                          {"custom-class": 404, "nginx-class": 200, "no-class": 200},
+                                          id="no-args-set")
+                          ],
+                         indirect=["ingress_controller"])
+class TestIngressClassArgs:
+    def test_response_codes(self, ingress_controller, backend_setup, expected_responses):
+        for item in ingresses_under_test:
+            ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_hosts[item])
+            resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[item]})
+            assert resp.status_code == expected_responses[item],\
+                f"Expected: {expected_responses[item]} response code for {backend_setup.ingress_hosts[item]}"

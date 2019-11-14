@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: no-class-ingress
+spec:
+  rules:
+  - host: no-class.example.com
+    http:
+      paths:
+      - path: /backend2
+        backend:
+          serviceName: backend2-svc
+          servicePort: 80
+      - path: /backend1
+        backend:
+          serviceName: backend1-svc
+          servicePort: 80

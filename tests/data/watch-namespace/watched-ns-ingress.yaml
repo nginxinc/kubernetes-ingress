@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  name: watched-ingress
+spec:
+  rules:
+  - host: watched.example.com
+    http:
+      paths:
+      - path: /backend2
+        backend:
+          serviceName: backend2-svc
+          servicePort: 80
+      - path: /backend1
+        backend:
+          serviceName: backend1-svc
+          servicePort: 80

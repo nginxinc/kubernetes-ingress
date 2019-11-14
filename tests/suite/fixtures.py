@@ -122,7 +122,12 @@ def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisite
     """
     namespace = ingress_controller_prerequisites.namespace
     print("------------------------- Create IC -----------------------------------")
-    name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace)
+    extra_args = None
+    try:
+        extra_args = request.param.get('extra_args', None)
+    except AttributeError:
+        print("IC will start without any additional arguments")
+    name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace, extra_args)
 
     def fin():
         print("Delete IC:")
