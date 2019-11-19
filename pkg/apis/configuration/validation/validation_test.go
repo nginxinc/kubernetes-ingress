@@ -93,6 +93,9 @@ func TestValidateTLS(t *testing.T) {
 	validTLSes := []*v1alpha1.TLS{
 		nil,
 		{
+			Secret: "",
+		},
+		{
 			Secret: "my-secret",
 		},
 		{
@@ -130,9 +133,6 @@ func TestValidateTLS(t *testing.T) {
 	}
 
 	invalidTLSes := []*v1alpha1.TLS{
-		{
-			Secret: "",
-		},
 		{
 			Secret: "-",
 		},

@@ -404,7 +404,7 @@ func validateSecretName(name string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if name == "" {
-		return append(allErrs, field.Required(fieldPath, ""))
+		return allErrs
 	}
 
 	for _, msg := range validation.IsDNS1123Subdomain(name) {

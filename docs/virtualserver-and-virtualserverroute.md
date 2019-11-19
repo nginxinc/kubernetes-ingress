@@ -84,13 +84,12 @@ The tls field defines TLS configuration for a VirtualServer. For example:
 ```yaml
 secret: cafe-secret
 redirect:
-  code: 302
-  basedOn: x-forwarded-proto
+  enable: true
 ```
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
-| `secret` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must contain keys named `tls.crt` and `tls.key` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). If the secret doesn't exist, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer. | `string` | Yes |
+| `secret` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must contain keys named `tls.crt` and `tls.key` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). If the secret doesn't exist, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer. | `string` | No |
 | `redirect` | The redirect configuration of the TLS for a VirtualServer. | [`tls.redirect`](#VirtualServerTLSRedirect) | No |
 
 ### VirtualServer.TLS.Redirect
