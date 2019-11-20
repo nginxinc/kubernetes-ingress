@@ -49,7 +49,7 @@ def v_s_route_secure_app_setup(request, kube_apis, v_s_route_setup) -> None:
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route-upstream-tls"})],
                          indirect=True)
-class TestVSRouteUpstreamOptions:
+class TestVSRouteUpstreamTls:
     def test_responses_and_config_after_setup(self, kube_apis, ingress_controller_prerequisites,
                                               crd_ingress_controller, v_s_route_setup, v_s_route_secure_app_setup):
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)

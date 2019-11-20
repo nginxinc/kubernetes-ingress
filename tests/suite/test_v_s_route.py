@@ -32,6 +32,7 @@ def assert_locations_not_in_config(config, paths):
 
 
 @pytest.mark.smoke
+@pytest.mark.vsr
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route"})],

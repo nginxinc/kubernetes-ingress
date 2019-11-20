@@ -9,6 +9,8 @@ from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorization
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes import client
+from more_itertools import first
+
 from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS
 
 
@@ -297,14 +299,16 @@ def wait_for_public_ip(v1: CoreV1Api, namespace: str) -> str:
     """
     resp = v1.list_namespaced_service(namespace)
     counter = 0
-    while str(resp.items[0].status.load_balancer.ingress) == "None" and counter < 20:
+    svc_item = first(x for x in resp.items if x.metadata.name == "nginx-ingress")
+    while str(svc_item.status.load_balancer.ingress) == "None" and counter < 20:
         time.sleep(5)
         resp = v1.list_namespaced_service(namespace)
+        svc_item = first(x for x in resp.items if x.metadata.name == "nginx-ingress")
         counter = counter + 1
     if counter == 20:
         pytest.fail("After 100 seconds the LB still doesn't have a Public IP. Exiting...")
-    print(f"Public IP ='{resp.items[0].status.load_balancer.ingress[0].ip}'")
-    return str(resp.items[0].status.load_balancer.ingress[0].ip)
+    print(f"Public IP ='{svc_item.status.load_balancer.ingress[0].ip}'")
+    return str(svc_item.status.load_balancer.ingress[0].ip)
 
 
 def create_secret_from_yaml(v1: CoreV1Api, namespace, yaml_manifest) -> str:
@@ -983,8 +987,8 @@ def ensure_response_from_backend(req_url, host) -> None:
     """
     for _ in range(30):
         resp = requests.get(req_url, headers={"host": host}, verify=False)
-        if resp.status_code != 502:
-            print(f"At last after {_ * 2} seconds got 200. Continue...")
+        if resp.status_code != 502 and resp.status_code != 504:
+            print(f"After {_ * 2} seconds got non 502|504 response. Continue with tests...")
             return
         time.sleep(2)
-    pytest.fail(f"Keep getting 502 from {req_url} after 60 seconds. Exiting...")
+    pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")
