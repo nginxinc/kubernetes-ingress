@@ -51,6 +51,7 @@ RUN set -x \
     # Install OpenTracing module
     nginx-plus-module-opentracing=${NGINX_OPENTRACING_MODULE_VERSION} \
     && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+    && setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
     && apt-get remove --purge --auto-remove -y gnupg1 \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /etc/ssl/nginx \
