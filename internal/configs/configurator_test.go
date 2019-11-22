@@ -6,7 +6,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -190,7 +190,7 @@ func TestUpdateEndpointsMergeableIngressFailsWithInvalidTemplate(t *testing.T) {
 }
 
 func TestGetVirtualServerConfigFileName(t *testing.T) {
-	vs := conf_v1alpha1.VirtualServer{
+	vs := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Namespace: "test",
 			Name:      "virtual-server",

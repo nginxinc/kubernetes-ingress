@@ -7,7 +7,7 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -18,7 +18,7 @@ func TestVirtualServerExString(t *testing.T) {
 	}{
 		{
 			input: &VirtualServerEx{
-				VirtualServer: &conf_v1alpha1.VirtualServer{
+				VirtualServer: &conf_v1.VirtualServer{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "cafe",
 						Namespace: "default",
@@ -74,7 +74,7 @@ func TestGenerateEndpointsKey(t *testing.T) {
 }
 
 func TestUpstreamNamerForVirtualServer(t *testing.T) {
-	virtualServer := conf_v1alpha1.VirtualServer{
+	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
 			Namespace: "default",
@@ -92,13 +92,13 @@ func TestUpstreamNamerForVirtualServer(t *testing.T) {
 }
 
 func TestUpstreamNamerForVirtualServerRoute(t *testing.T) {
-	virtualServer := conf_v1alpha1.VirtualServer{
+	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
 			Namespace: "default",
 		},
 	}
-	virtualServerRoute := conf_v1alpha1.VirtualServerRoute{
+	virtualServerRoute := conf_v1.VirtualServerRoute{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "coffee",
 			Namespace: "default",
@@ -116,7 +116,7 @@ func TestUpstreamNamerForVirtualServerRoute(t *testing.T) {
 }
 
 func TestVariableNamerSafeNsName(t *testing.T) {
-	virtualServer := conf_v1alpha1.VirtualServer{
+	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe-test",
 			Namespace: "default",
@@ -133,7 +133,7 @@ func TestVariableNamerSafeNsName(t *testing.T) {
 }
 
 func TestVariableNamer(t *testing.T) {
-	virtualServer := conf_v1alpha1.VirtualServer{
+	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
 			Namespace: "default",
@@ -176,14 +176,14 @@ func TestVariableNamer(t *testing.T) {
 
 func TestGenerateVirtualServerConfig(t *testing.T) {
 	virtualServerEx := VirtualServerEx{
-		VirtualServer: &conf_v1alpha1.VirtualServer{
+		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "cafe",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.VirtualServerSpec{
+			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.Upstream{
 					{
 						Name:    "tea",
 						Service: "tea-svc",
@@ -196,16 +196,16 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 						Port:        80,
 					},
 				},
-				Routes: []conf_v1alpha1.Route{
+				Routes: []conf_v1.Route{
 					{
 						Path: "/tea",
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "tea",
 						},
 					},
 					{
 						Path: "/tea-latest",
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "tea-latest",
 						},
 					},
@@ -234,25 +234,25 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				"10.0.0.50:80",
 			},
 		},
-		VirtualServerRoutes: []*conf_v1alpha1.VirtualServerRoute{
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "coffee",
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.VirtualServerRouteSpec{
+				Spec: conf_v1.VirtualServerRouteSpec{
 					Host: "cafe.example.com",
-					Upstreams: []conf_v1alpha1.Upstream{
+					Upstreams: []conf_v1.Upstream{
 						{
 							Name:    "coffee",
 							Service: "coffee-svc",
 							Port:    80,
 						},
 					},
-					Subroutes: []conf_v1alpha1.Route{
+					Subroutes: []conf_v1.Route{
 						{
 							Path: "/coffee",
-							Action: &conf_v1alpha1.Action{
+							Action: &conf_v1.Action{
 								Pass: "coffee",
 							},
 						},
@@ -264,9 +264,9 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					Name:      "subtea",
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.VirtualServerRouteSpec{
+				Spec: conf_v1.VirtualServerRouteSpec{
 					Host: "cafe.example.com",
-					Upstreams: []conf_v1alpha1.Upstream{
+					Upstreams: []conf_v1.Upstream{
 						{
 							Name:        "subtea",
 							Service:     "sub-tea-svc",
@@ -274,10 +274,10 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 							Subselector: map[string]string{"version": "v1"},
 						},
 					},
-					Subroutes: []conf_v1alpha1.Route{
+					Subroutes: []conf_v1.Route{
 						{
 							Path: "/subtea",
-							Action: &conf_v1alpha1.Action{
+							Action: &conf_v1.Action{
 								Pass: "subtea",
 							},
 						},
@@ -397,14 +397,14 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 }
 func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	virtualServerEx := VirtualServerEx{
-		VirtualServer: &conf_v1alpha1.VirtualServer{
+		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "cafe",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.VirtualServerSpec{
+			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.Upstream{
 					{
 						Name:    "tea-v1",
 						Service: "tea-svc-v1",
@@ -416,19 +416,19 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 						Port:    80,
 					},
 				},
-				Routes: []conf_v1alpha1.Route{
+				Routes: []conf_v1.Route{
 					{
 						Path: "/tea",
-						Splits: []conf_v1alpha1.Split{
+						Splits: []conf_v1.Split{
 							{
 								Weight: 90,
-								Action: &conf_v1alpha1.Action{
+								Action: &conf_v1.Action{
 									Pass: "tea-v1",
 								},
 							},
 							{
 								Weight: 10,
-								Action: &conf_v1alpha1.Action{
+								Action: &conf_v1.Action{
 									Pass: "tea-v2",
 								},
 							},
@@ -455,15 +455,15 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 				"10.0.0.31:80",
 			},
 		},
-		VirtualServerRoutes: []*conf_v1alpha1.VirtualServerRoute{
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "coffee",
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.VirtualServerRouteSpec{
+				Spec: conf_v1.VirtualServerRouteSpec{
 					Host: "cafe.example.com",
-					Upstreams: []conf_v1alpha1.Upstream{
+					Upstreams: []conf_v1.Upstream{
 						{
 							Name:    "coffee-v1",
 							Service: "coffee-svc-v1",
@@ -475,19 +475,19 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 							Port:    80,
 						},
 					},
-					Subroutes: []conf_v1alpha1.Route{
+					Subroutes: []conf_v1.Route{
 						{
 							Path: "/coffee",
-							Splits: []conf_v1alpha1.Split{
+							Splits: []conf_v1.Split{
 								{
 									Weight: 40,
-									Action: &conf_v1alpha1.Action{
+									Action: &conf_v1.Action{
 										Pass: "coffee-v1",
 									},
 								},
 								{
 									Weight: 60,
-									Action: &conf_v1alpha1.Action{
+									Action: &conf_v1.Action{
 										Pass: "coffee-v2",
 									},
 								},
@@ -628,14 +628,14 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 
 func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	virtualServerEx := VirtualServerEx{
-		VirtualServer: &conf_v1alpha1.VirtualServer{
+		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "cafe",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.VirtualServerSpec{
+			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.Upstream{
 					{
 						Name:    "tea-v1",
 						Service: "tea-svc-v1",
@@ -647,23 +647,23 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 						Port:    80,
 					},
 				},
-				Routes: []conf_v1alpha1.Route{
+				Routes: []conf_v1.Route{
 					{
 						Path: "/tea",
-						Matches: []conf_v1alpha1.Match{
+						Matches: []conf_v1.Match{
 							{
-								Conditions: []conf_v1alpha1.Condition{
+								Conditions: []conf_v1.Condition{
 									{
 										Header: "x-version",
 										Value:  "v2",
 									},
 								},
-								Action: &conf_v1alpha1.Action{
+								Action: &conf_v1.Action{
 									Pass: "tea-v2",
 								},
 							},
 						},
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "tea-v1",
 						},
 					},
@@ -688,15 +688,15 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 				"10.0.0.31:80",
 			},
 		},
-		VirtualServerRoutes: []*conf_v1alpha1.VirtualServerRoute{
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "coffee",
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.VirtualServerRouteSpec{
+				Spec: conf_v1.VirtualServerRouteSpec{
 					Host: "cafe.example.com",
-					Upstreams: []conf_v1alpha1.Upstream{
+					Upstreams: []conf_v1.Upstream{
 						{
 							Name:    "coffee-v1",
 							Service: "coffee-svc-v1",
@@ -708,23 +708,23 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 							Port:    80,
 						},
 					},
-					Subroutes: []conf_v1alpha1.Route{
+					Subroutes: []conf_v1.Route{
 						{
 							Path: "/coffee",
-							Matches: []conf_v1alpha1.Match{
+							Matches: []conf_v1.Match{
 								{
-									Conditions: []conf_v1alpha1.Condition{
+									Conditions: []conf_v1.Condition{
 										{
 											Argument: "version",
 											Value:    "v2",
 										},
 									},
-									Action: &conf_v1alpha1.Action{
+									Action: &conf_v1.Action{
 										Pass: "coffee-v2",
 									},
 								},
 							},
-							Action: &conf_v1alpha1.Action{
+							Action: &conf_v1.Action{
 								Pass: "coffee-v1",
 							},
 						},
@@ -891,7 +891,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 
 func TestGenerateUpstream(t *testing.T) {
 	name := "test-upstream"
-	upstream := conf_v1alpha1.Upstream{Service: name, Port: 80}
+	upstream := conf_v1.Upstream{Service: name, Port: 80}
 	endpoints := []string{
 		"192.168.10.10:8080",
 	}
@@ -920,7 +920,7 @@ func TestGenerateUpstream(t *testing.T) {
 	}
 
 	vsc := newVirtualServerConfigurator(&cfgParams, false, false)
-	result := vsc.generateUpstream(&conf_v1alpha1.VirtualServer{}, name, upstream, false, endpoints)
+	result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, upstream, false, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -939,13 +939,13 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	}
 
 	tests := []struct {
-		upstream  conf_v1alpha1.Upstream
+		upstream  conf_v1.Upstream
 		cfgParams *ConfigParams
 		expected  version2.Upstream
 		msg       string
 	}{
 		{
-			conf_v1alpha1.Upstream{Keepalive: &keepalive, Service: name, Port: 80},
+			conf_v1.Upstream{Keepalive: &keepalive, Service: name, Port: 80},
 			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
@@ -959,7 +959,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 			"upstream keepalive set, configparam set",
 		},
 		{
-			conf_v1alpha1.Upstream{Service: name, Port: 80},
+			conf_v1.Upstream{Service: name, Port: 80},
 			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
@@ -973,7 +973,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 			"upstream keepalive not set, configparam set",
 		},
 		{
-			conf_v1alpha1.Upstream{Keepalive: &noKeepalive, Service: name, Port: 80},
+			conf_v1.Upstream{Keepalive: &noKeepalive, Service: name, Port: 80},
 			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
@@ -989,7 +989,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 
 	for _, test := range tests {
 		vsc := newVirtualServerConfigurator(test.cfgParams, false, false)
-		result := vsc.generateUpstream(&conf_v1alpha1.VirtualServer{}, name, test.upstream, false, endpoints)
+		result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, test.upstream, false, endpoints)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
@@ -1003,7 +1003,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	name := "test-upstream"
 	endpoints := []string{"example.com"}
-	upstream := conf_v1alpha1.Upstream{Service: name}
+	upstream := conf_v1.Upstream{Service: name}
 	cfgParams := ConfigParams{}
 
 	expected := version2.Upstream{
@@ -1017,7 +1017,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	}
 
 	vsc := newVirtualServerConfigurator(&cfgParams, true, true)
-	result := vsc.generateUpstream(&conf_v1alpha1.VirtualServer{}, name, upstream, true, endpoints)
+	result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, upstream, true, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -1029,16 +1029,16 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 
 func TestGenerateProxyPassProtocol(t *testing.T) {
 	tests := []struct {
-		upstream conf_v1alpha1.Upstream
+		upstream conf_v1.Upstream
 		expected string
 	}{
 		{
-			upstream: conf_v1alpha1.Upstream{},
+			upstream: conf_v1.Upstream{},
 			expected: "http",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{
-				TLS: conf_v1alpha1.UpstreamTLS{
+			upstream: conf_v1.Upstream{
+				TLS: conf_v1.UpstreamTLS{
 					Enable: true,
 				},
 			},
@@ -1079,7 +1079,7 @@ func TestGenerateString(t *testing.T) {
 
 func TestGenerateBuffer(t *testing.T) {
 	tests := []struct {
-		inputS   *conf_v1alpha1.UpstreamBuffers
+		inputS   *conf_v1.UpstreamBuffers
 		expected string
 	}{
 		{
@@ -1087,7 +1087,7 @@ func TestGenerateBuffer(t *testing.T) {
 			expected: "8 4k",
 		},
 		{
-			inputS:   &conf_v1alpha1.UpstreamBuffers{Number: 8, Size: "16K"},
+			inputS:   &conf_v1.UpstreamBuffers{Number: 8, Size: "16K"},
 			expected: "8 16K",
 		},
 	}
@@ -1132,7 +1132,7 @@ func TestGenerateLocation(t *testing.T) {
 		ProxyNextUpstreamTries:   0,
 	}
 
-	result := generateLocation(path, upstreamName, conf_v1alpha1.Upstream{}, &cfgParams)
+	result := generateLocation(path, upstreamName, conf_v1.Upstream{}, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateLocation() returned %v but expected %v", result, expected)
 	}
@@ -1140,7 +1140,7 @@ func TestGenerateLocation(t *testing.T) {
 
 func TestGenerateSSLConfig(t *testing.T) {
 	tests := []struct {
-		inputTLS            *conf_v1alpha1.TLS
+		inputTLS            *conf_v1.TLS
 		inputTLSPemFileName string
 		inputCfgParams      *ConfigParams
 		expected            *version2.SSL
@@ -1154,7 +1154,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			msg:                 "no TLS field",
 		},
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TLS{
 				Secret: "",
 			},
 			inputTLSPemFileName: "",
@@ -1163,7 +1163,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			msg:                 "TLS field with empty secret",
 		},
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TLS{
 				Secret: "secret",
 			},
 			inputTLSPemFileName: "",
@@ -1177,7 +1177,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			msg: "secret doesn't exist in the cluster with HTTP2",
 		},
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TLS{
 				Secret: "secret",
 			},
 			inputTLSPemFileName: "secret.pem",
@@ -1202,7 +1202,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 
 func TestGenerateRedirectConfig(t *testing.T) {
 	tests := []struct {
-		inputTLS *conf_v1alpha1.TLS
+		inputTLS *conf_v1.TLS
 		expected *version2.TLSRedirect
 		msg      string
 	}{
@@ -1212,7 +1212,7 @@ func TestGenerateRedirectConfig(t *testing.T) {
 			msg:      "no TLS field",
 		},
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TLS{
 				Secret:   "secret",
 				Redirect: nil,
 			},
@@ -1220,17 +1220,17 @@ func TestGenerateRedirectConfig(t *testing.T) {
 			msg:      "no redirect field",
 		},
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TLS{
 				Secret:   "secret",
-				Redirect: &conf_v1alpha1.TLSRedirect{Enable: false},
+				Redirect: &conf_v1.TLSRedirect{Enable: false},
 			},
 			expected: nil,
 			msg:      "redirect disabled",
 		},
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TLS{
 				Secret: "secret",
-				Redirect: &conf_v1alpha1.TLSRedirect{
+				Redirect: &conf_v1.TLSRedirect{
 					Enable: true,
 				},
 			},
@@ -1241,9 +1241,9 @@ func TestGenerateRedirectConfig(t *testing.T) {
 			msg: "normal case with defaults",
 		},
 		{
-			inputTLS: &conf_v1alpha1.TLS{
+			inputTLS: &conf_v1.TLS{
 				Secret: "secret",
-				Redirect: &conf_v1alpha1.TLSRedirect{
+				Redirect: &conf_v1.TLSRedirect{
 					Enable:  true,
 					BasedOn: "x-forwarded-proto",
 				},
@@ -1292,14 +1292,14 @@ func TestGenerateTLSRedirectBasedOn(t *testing.T) {
 
 func TestCreateUpstreamsForPlus(t *testing.T) {
 	virtualServerEx := VirtualServerEx{
-		VirtualServer: &conf_v1alpha1.VirtualServer{
+		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "cafe",
 				Namespace: "default",
 			},
-			Spec: conf_v1alpha1.VirtualServerSpec{
+			Spec: conf_v1.VirtualServerSpec{
 				Host: "cafe.example.com",
-				Upstreams: []conf_v1alpha1.Upstream{
+				Upstreams: []conf_v1.Upstream{
 					{
 						Name:    "tea",
 						Service: "tea-svc",
@@ -1322,10 +1322,10 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 						Port:    80,
 					},
 				},
-				Routes: []conf_v1alpha1.Route{
+				Routes: []conf_v1.Route{
 					{
 						Path: "/tea",
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "tea",
 						},
 					},
@@ -1335,7 +1335,7 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 					},
 					{
 						Path: "/external",
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "external",
 						},
 					},
@@ -1363,15 +1363,15 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 		ExternalNameSvcs: map[string]bool{
 			"default/external-svc": true,
 		},
-		VirtualServerRoutes: []*conf_v1alpha1.VirtualServerRoute{
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
 			{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "coffee",
 					Namespace: "default",
 				},
-				Spec: conf_v1alpha1.VirtualServerRouteSpec{
+				Spec: conf_v1.VirtualServerRouteSpec{
 					Host: "cafe.example.com",
-					Upstreams: []conf_v1alpha1.Upstream{
+					Upstreams: []conf_v1.Upstream{
 						{
 							Name:    "coffee",
 							Service: "coffee-svc",
@@ -1384,16 +1384,16 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 							Port:        80,
 						},
 					},
-					Subroutes: []conf_v1alpha1.Route{
+					Subroutes: []conf_v1.Route{
 						{
 							Path: "/coffee",
-							Action: &conf_v1alpha1.Action{
+							Action: &conf_v1.Action{
 								Pass: "coffee",
 							},
 						},
 						{
 							Path: "/coffee/sub",
-							Action: &conf_v1alpha1.Action{
+							Action: &conf_v1.Action{
 								Pass: "subselector-test",
 							},
 						},
@@ -1485,22 +1485,22 @@ func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
 }
 
 func TestGenerateSplits(t *testing.T) {
-	splits := []conf_v1alpha1.Split{
+	splits := []conf_v1.Split{
 		{
 			Weight: 90,
-			Action: &conf_v1alpha1.Action{
+			Action: &conf_v1.Action{
 				Pass: "coffee-v1",
 			},
 		},
 		{
 			Weight: 10,
-			Action: &conf_v1alpha1.Action{
+			Action: &conf_v1.Action{
 				Pass: "coffee-v2",
 			},
 		},
 	}
 
-	virtualServer := conf_v1alpha1.VirtualServer{
+	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
 			Namespace: "default",
@@ -1510,7 +1510,7 @@ func TestGenerateSplits(t *testing.T) {
 	variableNamer := newVariableNamer(&virtualServer)
 	scIndex := 1
 	cfgParams := ConfigParams{}
-	crUpstreams := make(map[string]conf_v1alpha1.Upstream)
+	crUpstreams := make(map[string]conf_v1.Upstream)
 
 	expectedSplitClient := version2.SplitClient{
 		Source:   "$request_id",
@@ -1553,24 +1553,24 @@ func TestGenerateSplits(t *testing.T) {
 }
 
 func TestGenerateDefaultSplitsConfig(t *testing.T) {
-	route := conf_v1alpha1.Route{
+	route := conf_v1.Route{
 		Path: "/",
-		Splits: []conf_v1alpha1.Split{
+		Splits: []conf_v1.Split{
 			{
 				Weight: 90,
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.Action{
 					Pass: "coffee-v1",
 				},
 			},
 			{
 				Weight: 10,
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.Action{
 					Pass: "coffee-v2",
 				},
 			},
 		},
 	}
-	virtualServer := conf_v1alpha1.VirtualServer{
+	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
 			Namespace: "default",
@@ -1621,18 +1621,18 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateDefaultSplitsConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, &cfgParams)
+	result := generateDefaultSplitsConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateDefaultSplitsConfig() returned %v but expected %v", result, expected)
 	}
 }
 
 func TestGenerateMatchesConfig(t *testing.T) {
-	route := conf_v1alpha1.Route{
+	route := conf_v1.Route{
 		Path: "/",
-		Matches: []conf_v1alpha1.Match{
+		Matches: []conf_v1.Match{
 			{
-				Conditions: []conf_v1alpha1.Condition{
+				Conditions: []conf_v1.Condition{
 					{
 						Header: "x-version",
 						Value:  "v1",
@@ -1650,12 +1650,12 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						Value:    "GET",
 					},
 				},
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.Action{
 					Pass: "coffee-v1",
 				},
 			},
 			{
-				Conditions: []conf_v1alpha1.Condition{
+				Conditions: []conf_v1.Condition{
 					{
 						Header: "x-version",
 						Value:  "v2",
@@ -1673,27 +1673,27 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						Value:    "POST",
 					},
 				},
-				Splits: []conf_v1alpha1.Split{
+				Splits: []conf_v1.Split{
 					{
 						Weight: 90,
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "coffee-v1",
 						},
 					},
 					{
 						Weight: 10,
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "coffee-v2",
 						},
 					},
 				},
 			},
 		},
-		Action: &conf_v1alpha1.Action{
+		Action: &conf_v1.Action{
 			Pass: "tea",
 		},
 	}
-	virtualServer := conf_v1alpha1.VirtualServer{
+	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
 			Namespace: "default",
@@ -1891,77 +1891,77 @@ func TestGenerateMatchesConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, scIndex, &cfgParams)
+	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, scIndex, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%v but expected \n%v", result, expected)
 	}
 }
 
 func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
-	route := conf_v1alpha1.Route{
+	route := conf_v1.Route{
 		Path: "/",
-		Matches: []conf_v1alpha1.Match{
+		Matches: []conf_v1.Match{
 			{
-				Conditions: []conf_v1alpha1.Condition{
+				Conditions: []conf_v1.Condition{
 					{
 						Header: "x-version",
 						Value:  "v1",
 					},
 				},
-				Splits: []conf_v1alpha1.Split{
+				Splits: []conf_v1.Split{
 					{
 						Weight: 30,
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "coffee-v1",
 						},
 					},
 					{
 						Weight: 70,
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "coffee-v2",
 						},
 					},
 				},
 			},
 			{
-				Conditions: []conf_v1alpha1.Condition{
+				Conditions: []conf_v1.Condition{
 					{
 						Header: "x-version",
 						Value:  "v2",
 					},
 				},
-				Splits: []conf_v1alpha1.Split{
+				Splits: []conf_v1.Split{
 					{
 						Weight: 90,
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "coffee-v2",
 						},
 					},
 					{
 						Weight: 10,
-						Action: &conf_v1alpha1.Action{
+						Action: &conf_v1.Action{
 							Pass: "coffee-v1",
 						},
 					},
 				},
 			},
 		},
-		Splits: []conf_v1alpha1.Split{
+		Splits: []conf_v1.Split{
 			{
 				Weight: 99,
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.Action{
 					Pass: "coffee-v1",
 				},
 			},
 			{
 				Weight: 1,
-				Action: &conf_v1alpha1.Action{
+				Action: &conf_v1.Action{
 					Pass: "coffee-v2",
 				},
 			},
 		},
 	}
-	virtualServer := conf_v1alpha1.VirtualServer{
+	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
 			Namespace: "default",
@@ -2117,7 +2117,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1alpha1.Upstream{}, variableNamer, index, scIndex, &cfgParams)
+	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, scIndex, &cfgParams)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%v but expected \n%v", result, expected)
 	}
@@ -2233,29 +2233,29 @@ func TestGenerateParametersForMatchesRouteMap(t *testing.T) {
 
 func TestGetNameForSourceForMatchesRouteMapFromCondition(t *testing.T) {
 	tests := []struct {
-		input    conf_v1alpha1.Condition
+		input    conf_v1.Condition
 		expected string
 	}{
 		{
-			input: conf_v1alpha1.Condition{
+			input: conf_v1.Condition{
 				Header: "x-version",
 			},
 			expected: "$http_x_version",
 		},
 		{
-			input: conf_v1alpha1.Condition{
+			input: conf_v1.Condition{
 				Cookie: "mycookie",
 			},
 			expected: "$cookie_mycookie",
 		},
 		{
-			input: conf_v1alpha1.Condition{
+			input: conf_v1.Condition{
 				Argument: "arg",
 			},
 			expected: "$arg_arg",
 		},
 		{
-			input: conf_v1alpha1.Condition{
+			input: conf_v1.Condition{
 				Variable: "$request_method",
 			},
 			expected: "$request_method",
@@ -2303,25 +2303,25 @@ func TestUpstreamHasKeepalive(t *testing.T) {
 	keepalive := 32
 
 	tests := []struct {
-		upstream  conf_v1alpha1.Upstream
+		upstream  conf_v1.Upstream
 		cfgParams *ConfigParams
 		expected  bool
 		msg       string
 	}{
 		{
-			conf_v1alpha1.Upstream{},
+			conf_v1.Upstream{},
 			&ConfigParams{Keepalive: keepalive},
 			true,
 			"upstream keepalive not set, configparam keepalive set",
 		},
 		{
-			conf_v1alpha1.Upstream{Keepalive: &noKeepalive},
+			conf_v1.Upstream{Keepalive: &noKeepalive},
 			&ConfigParams{Keepalive: keepalive},
 			false,
 			"upstream keepalive set to 0, configparam keepive set",
 		},
 		{
-			conf_v1alpha1.Upstream{Keepalive: &keepalive},
+			conf_v1.Upstream{Keepalive: &keepalive},
 			&ConfigParams{Keepalive: noKeepalive},
 			true,
 			"upstream keepalive set, configparam keepalive set to 0",
@@ -2357,7 +2357,7 @@ func TestNewHealthCheckWithDefaults(t *testing.T) {
 		Headers:             make(map[string]string),
 	}
 
-	result := newHealthCheckWithDefaults(conf_v1alpha1.Upstream{}, upstreamName, baseCfgParams)
+	result := newHealthCheckWithDefaults(conf_v1.Upstream{}, upstreamName, baseCfgParams)
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("newHealthCheckWithDefaults returned \n%v but expected \n%v", result, expected)
@@ -2367,15 +2367,15 @@ func TestNewHealthCheckWithDefaults(t *testing.T) {
 func TestGenerateHealthCheck(t *testing.T) {
 	upstreamName := "test-upstream"
 	tests := []struct {
-		upstream     conf_v1alpha1.Upstream
+		upstream     conf_v1.Upstream
 		upstreamName string
 		expected     *version2.HealthCheck
 		msg          string
 	}{
 		{
 
-			upstream: conf_v1alpha1.Upstream{
-				HealthCheck: &conf_v1alpha1.HealthCheck{
+			upstream: conf_v1.Upstream{
+				HealthCheck: &conf_v1.HealthCheck{
 					Enable:         true,
 					Path:           "/healthz",
 					Interval:       "5s",
@@ -2386,7 +2386,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 					ConnectTimeout: "20s",
 					SendTimeout:    "20s",
 					ReadTimeout:    "20s",
-					Headers: []conf_v1alpha1.Header{
+					Headers: []conf_v1.Header{
 						{
 							Name:  "Host",
 							Value: "my.service",
@@ -2421,8 +2421,8 @@ func TestGenerateHealthCheck(t *testing.T) {
 			msg: "HealthCheck with changed parameters",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{
-				HealthCheck: &conf_v1alpha1.HealthCheck{
+			upstream: conf_v1.Upstream{
+				HealthCheck: &conf_v1.HealthCheck{
 					Enable: true,
 				},
 				ProxyConnectTimeout: "30s",
@@ -2446,8 +2446,8 @@ func TestGenerateHealthCheck(t *testing.T) {
 			msg: "HealthCheck with default parameters from Upstream",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{
-				HealthCheck: &conf_v1alpha1.HealthCheck{
+			upstream: conf_v1.Upstream{
+				HealthCheck: &conf_v1.HealthCheck{
 					Enable: true,
 				},
 			},
@@ -2468,7 +2468,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 			msg: "HealthCheck with default parameters from ConfigMap (not defined in Upstream)",
 		},
 		{
-			upstream:     conf_v1alpha1.Upstream{},
+			upstream:     conf_v1.Upstream{},
 			upstreamName: upstreamName,
 			expected:     nil,
 			msg:          "HealthCheck not enabled",
@@ -2494,7 +2494,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 	namespace := "test-namespace"
 
 	tests := []struct {
-		upstream             conf_v1alpha1.Upstream
+		upstream             conf_v1.Upstream
 		vsEx                 *VirtualServerEx
 		isPlus               bool
 		isResolverConfigured bool
@@ -2503,12 +2503,12 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 		msg                  string
 	}{
 		{
-			upstream: conf_v1alpha1.Upstream{
+			upstream: conf_v1.Upstream{
 				Service: name,
 				Port:    80,
 			},
 			vsEx: &VirtualServerEx{
-				VirtualServer: &conf_v1alpha1.VirtualServer{
+				VirtualServer: &conf_v1.VirtualServer{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      name,
 						Namespace: namespace,
@@ -2527,12 +2527,12 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 			msg:                  "ExternalName service",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{
+			upstream: conf_v1.Upstream{
 				Service: name,
 				Port:    80,
 			},
 			vsEx: &VirtualServerEx{
-				VirtualServer: &conf_v1alpha1.VirtualServer{
+				VirtualServer: &conf_v1.VirtualServer{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      name,
 						Namespace: namespace,
@@ -2552,12 +2552,12 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 			msg:                  "ExternalName service without resolver configured",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{
+			upstream: conf_v1.Upstream{
 				Service: name,
 				Port:    8080,
 			},
 			vsEx: &VirtualServerEx{
-				VirtualServer: &conf_v1alpha1.VirtualServer{
+				VirtualServer: &conf_v1.VirtualServer{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      name,
 						Namespace: namespace,
@@ -2573,12 +2573,12 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 			msg:                  "Service with endpoints",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{
+			upstream: conf_v1.Upstream{
 				Service: name,
 				Port:    8080,
 			},
 			vsEx: &VirtualServerEx{
-				VirtualServer: &conf_v1alpha1.VirtualServer{
+				VirtualServer: &conf_v1.VirtualServer{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      name,
 						Namespace: namespace,
@@ -2592,12 +2592,12 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 			msg:                  "Service with no endpoints",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{
+			upstream: conf_v1.Upstream{
 				Service: name,
 				Port:    8080,
 			},
 			vsEx: &VirtualServerEx{
-				VirtualServer: &conf_v1alpha1.VirtualServer{
+				VirtualServer: &conf_v1.VirtualServer{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      name,
 						Namespace: namespace,
@@ -2611,13 +2611,13 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 			msg:                  "Service with no endpoints",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{
+			upstream: conf_v1.Upstream{
 				Service:     name,
 				Port:        8080,
 				Subselector: map[string]string{"version": "test"},
 			},
 			vsEx: &VirtualServerEx{
-				VirtualServer: &conf_v1alpha1.VirtualServer{
+				VirtualServer: &conf_v1.VirtualServer{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      name,
 						Namespace: namespace,
@@ -2633,13 +2633,13 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 			msg:                  "Upstream with subselector, with a matching endpoint",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{
+			upstream: conf_v1.Upstream{
 				Service:     name,
 				Port:        8080,
 				Subselector: map[string]string{"version": "test"},
 			},
 			vsEx: &VirtualServerEx{
-				VirtualServer: &conf_v1alpha1.VirtualServer{
+				VirtualServer: &conf_v1.VirtualServer{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      name,
 						Namespace: namespace,
@@ -2678,7 +2678,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 
 func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	serviceName := "test-slowstart-with-incompatible-LBMethods"
-	upstream := conf_v1alpha1.Upstream{Service: serviceName, Port: 80, SlowStart: "10s"}
+	upstream := conf_v1.Upstream{Service: serviceName, Port: 80, SlowStart: "10s"}
 	expected := ""
 
 	var tests = []string{
@@ -2693,7 +2693,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 
 	for _, lbMethod := range tests {
 		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false)
-		result := vsc.generateSlowStartForPlus(&conf_v1alpha1.VirtualServer{}, upstream, lbMethod)
+		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v for lbMethod %v", result, expected, lbMethod)
@@ -2710,17 +2710,17 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 	serviceName := "test-slowstart"
 
 	tests := []struct {
-		upstream conf_v1alpha1.Upstream
+		upstream conf_v1.Upstream
 		lbMethod string
 		expected string
 	}{
 		{
-			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, SlowStart: "", LBMethod: "least_conn"},
+			upstream: conf_v1.Upstream{Service: serviceName, Port: 80, SlowStart: "", LBMethod: "least_conn"},
 			lbMethod: "least_conn",
 			expected: "",
 		},
 		{
-			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, SlowStart: "10s", LBMethod: "least_conn"},
+			upstream: conf_v1.Upstream{Service: serviceName, Port: 80, SlowStart: "10s", LBMethod: "least_conn"},
 			lbMethod: "least_conn",
 			expected: "10s",
 		},
@@ -2728,7 +2728,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 
 	for _, test := range tests {
 		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false)
-		result := vsc.generateSlowStartForPlus(&conf_v1alpha1.VirtualServer{}, test.upstream, test.lbMethod)
+		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
 		}
@@ -2767,14 +2767,14 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		upstream conf_v1alpha1.Upstream
+		upstream conf_v1.Upstream
 		isPlus   bool
 		expected version2.Upstream
 		msg      string
 	}{
 		{
 			name: "test-upstream-queue",
-			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, Queue: &conf_v1alpha1.UpstreamQueue{
+			upstream: conf_v1.Upstream{Service: serviceName, Port: 80, Queue: &conf_v1.UpstreamQueue{
 				Size:    10,
 				Timeout: "10s",
 			}},
@@ -2790,7 +2790,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 		},
 		{
 			name:     "test-upstream-queue-with-default-timeout",
-			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, Queue: &conf_v1alpha1.UpstreamQueue{Size: 10, Timeout: ""}},
+			upstream: conf_v1.Upstream{Service: serviceName, Port: 80, Queue: &conf_v1.UpstreamQueue{Size: 10, Timeout: ""}},
 			isPlus:   true,
 			expected: version2.Upstream{
 				Name: "test-upstream-queue-with-default-timeout",
@@ -2803,7 +2803,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 		},
 		{
 			name:     "test-upstream-queue-nil",
-			upstream: conf_v1alpha1.Upstream{Service: serviceName, Port: 80, Queue: nil},
+			upstream: conf_v1.Upstream{Service: serviceName, Port: 80, Queue: nil},
 			isPlus:   false,
 			expected: version2.Upstream{
 				Name: "test-upstream-queue-nil",
@@ -2814,7 +2814,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 
 	for _, test := range tests {
 		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false)
-		result := vsc.generateUpstream(&conf_v1alpha1.VirtualServer{}, test.name, test.upstream, false, []string{})
+		result := vsc.generateUpstream(&conf_v1.VirtualServer{}, test.name, test.upstream, false, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
@@ -2824,12 +2824,12 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 
 func TestGenerateQueueForPlus(t *testing.T) {
 	tests := []struct {
-		upstreamQueue *conf_v1alpha1.UpstreamQueue
+		upstreamQueue *conf_v1.UpstreamQueue
 		expected      *version2.Queue
 		msg           string
 	}{
 		{
-			upstreamQueue: &conf_v1alpha1.UpstreamQueue{Size: 10, Timeout: "10s"},
+			upstreamQueue: &conf_v1.UpstreamQueue{Size: 10, Timeout: "10s"},
 			expected:      &version2.Queue{Size: 10, Timeout: "10s"},
 			msg:           "upstream queue with size and timeout",
 		},
@@ -2839,7 +2839,7 @@ func TestGenerateQueueForPlus(t *testing.T) {
 			msg:           "upstream queue with nil",
 		},
 		{
-			upstreamQueue: &conf_v1alpha1.UpstreamQueue{Size: 10},
+			upstreamQueue: &conf_v1.UpstreamQueue{Size: 10},
 			expected:      &version2.Queue{Size: 10, Timeout: "60s"},
 			msg:           "upstream queue with only size",
 		},
@@ -2856,12 +2856,12 @@ func TestGenerateQueueForPlus(t *testing.T) {
 
 func TestGenerateSessionCookie(t *testing.T) {
 	tests := []struct {
-		sc       *conf_v1alpha1.SessionCookie
+		sc       *conf_v1.SessionCookie
 		expected *version2.SessionCookie
 		msg      string
 	}{
 		{
-			sc:       &conf_v1alpha1.SessionCookie{Enable: true, Name: "test"},
+			sc:       &conf_v1.SessionCookie{Enable: true, Name: "test"},
 			expected: &version2.SessionCookie{Enable: true, Name: "test"},
 			msg:      "session cookie with name",
 		},
@@ -2871,7 +2871,7 @@ func TestGenerateSessionCookie(t *testing.T) {
 			msg:      "session cookie with nil",
 		},
 		{
-			sc:       &conf_v1alpha1.SessionCookie{Name: "test"},
+			sc:       &conf_v1.SessionCookie{Name: "test"},
 			expected: nil,
 			msg:      "session cookie not enabled",
 		},

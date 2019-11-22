@@ -40,7 +40,7 @@ import (
 
 	"sort"
 
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	api_v1 "k8s.io/api/core/v1"
@@ -298,11 +298,11 @@ func (lbc *LoadBalancerController) addPodHandler() {
 func (lbc *LoadBalancerController) addVirtualServerHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.virtualServerLister, lbc.virtualServerController = cache.NewInformer(
 		cache.NewListWatchFromClient(
-			lbc.confClient.K8sV1alpha1().RESTClient(),
+			lbc.confClient.K8sV1().RESTClient(),
 			"virtualservers",
 			lbc.namespace,
 			fields.Everything()),
-		&conf_v1alpha1.VirtualServer{},
+		&conf_v1.VirtualServer{},
 		lbc.resync,
 		handlers,
 	)
@@ -311,11 +311,11 @@ func (lbc *LoadBalancerController) addVirtualServerHandler(handlers cache.Resour
 func (lbc *LoadBalancerController) addVirtualServerRouteHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.virtualServerRouteLister, lbc.virtualServerRouteController = cache.NewInformer(
 		cache.NewListWatchFromClient(
-			lbc.confClient.K8sV1alpha1().RESTClient(),
+			lbc.confClient.K8sV1().RESTClient(),
 			"virtualserverroutes",
 			lbc.namespace,
 			fields.Everything()),
-		&conf_v1alpha1.VirtualServerRoute{},
+		&conf_v1.VirtualServerRoute{},
 		lbc.resync,
 		handlers,
 	)
@@ -576,7 +576,7 @@ func (lbc *LoadBalancerController) ingressesToIngressExes(ings []extensions.Ingr
 	return ingExes
 }
 
-func (lbc *LoadBalancerController) virtualServersToVirtualServerExes(virtualServers []*conf_v1alpha1.VirtualServer) []*configs.VirtualServerEx {
+func (lbc *LoadBalancerController) virtualServersToVirtualServerExes(virtualServers []*conf_v1.VirtualServer) []*configs.VirtualServerEx {
 	var virtualServersExes []*configs.VirtualServerEx
 
 	for _, vs := range virtualServers {
@@ -635,7 +635,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 
 	glog.V(2).Infof("Adding or Updating VirtualServer: %v\n", key)
 
-	vs := obj.(*conf_v1alpha1.VirtualServer)
+	vs := obj.(*conf_v1.VirtualServer)
 
 	validationErr := validation.ValidateVirtualServer(vs, lbc.isNginxPlus)
 	if validationErr != nil {
@@ -714,7 +714,7 @@ func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 
 	glog.V(2).Infof("Adding or Updating VirtualServerRoute: %v\n", key)
 
-	vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
+	vsr := obj.(*conf_v1.VirtualServerRoute)
 
 	validationErr := validation.ValidateVirtualServerRoute(vsr, lbc.isNginxPlus)
 	if validationErr != nil {
@@ -922,7 +922,7 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 		lbc.syncQueue.RequeueAfter(task, err, 5*time.Second)
 	}
 
-	var virtualServers []*conf_v1alpha1.VirtualServer
+	var virtualServers []*conf_v1.VirtualServer
 	if lbc.areCustomResourcesEnabled {
 		virtualServers = lbc.getVirtualServersForSecret(namespace, name)
 		glog.V(2).Infof("Found %v VirtualServers with Secret %v", len(virtualServers), key)
@@ -958,7 +958,7 @@ func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
 	return secretName == lbc.defaultServerSecret || secretName == lbc.wildcardTLSSecret
 }
 
-func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings []extensions.Ingress, virtualServers []*conf_v1alpha1.VirtualServer) {
+func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings []extensions.Ingress, virtualServers []*conf_v1.VirtualServer) {
 	eventType := api_v1.EventTypeWarning
 	title := "Missing Secret"
 	message := fmt.Sprintf("Secret %v was removed", key)
@@ -986,7 +986,7 @@ func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings 
 	lbc.emitEventForVirtualServers(eventType, title, message, virtualServers)
 }
 
-func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ings []extensions.Ingress, virtualServers []*conf_v1alpha1.VirtualServer) {
+func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ings []extensions.Ingress, virtualServers []*conf_v1.VirtualServer) {
 	secretNsName := secret.Namespace + "/" + secret.Name
 
 	err := lbc.ValidateSecret(secret)
@@ -1072,7 +1072,7 @@ func (lbc *LoadBalancerController) emitEventForIngresses(eventType string, title
 	}
 }
 
-func (lbc *LoadBalancerController) emitEventForVirtualServers(eventType string, title string, message string, virtualServers []*conf_v1alpha1.VirtualServer) {
+func (lbc *LoadBalancerController) emitEventForVirtualServers(eventType string, title string, message string, virtualServers []*conf_v1.VirtualServer) {
 	for _, vs := range virtualServers {
 		lbc.recorder.Eventf(vs, eventType, title, message)
 	}
@@ -1231,7 +1231,7 @@ func (lbc *LoadBalancerController) getIngressForEndpoints(obj interface{}) []ext
 	return ings
 }
 
-func (lbc *LoadBalancerController) getVirtualServersForEndpoints(endpoints *api_v1.Endpoints) []*conf_v1alpha1.VirtualServer {
+func (lbc *LoadBalancerController) getVirtualServersForEndpoints(endpoints *api_v1.Endpoints) []*conf_v1.VirtualServer {
 	svcKey := fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name)
 
 	svc, exists, err := lbc.svcLister.GetByKey(svcKey)
@@ -1247,8 +1247,8 @@ func (lbc *LoadBalancerController) getVirtualServersForEndpoints(endpoints *api_
 	return lbc.getVirtualServersForService(svc.(*api_v1.Service))
 }
 
-func (lbc *LoadBalancerController) getVirtualServersForService(service *api_v1.Service) []*conf_v1alpha1.VirtualServer {
-	var result []*conf_v1alpha1.VirtualServer
+func (lbc *LoadBalancerController) getVirtualServersForService(service *api_v1.Service) []*conf_v1.VirtualServer {
+	var result []*conf_v1.VirtualServer
 
 	allVirtualServers := lbc.getVirtualServers()
 
@@ -1266,8 +1266,8 @@ func (lbc *LoadBalancerController) getVirtualServersForService(service *api_v1.S
 	return result
 }
 
-func findVirtualServersForService(virtualServers []*conf_v1alpha1.VirtualServer, service *api_v1.Service) []*conf_v1alpha1.VirtualServer {
-	var result []*conf_v1alpha1.VirtualServer
+func findVirtualServersForService(virtualServers []*conf_v1.VirtualServer, service *api_v1.Service) []*conf_v1.VirtualServer {
+	var result []*conf_v1.VirtualServer
 
 	for _, vs := range virtualServers {
 		if vs.Namespace != service.Namespace {
@@ -1291,8 +1291,8 @@ func findVirtualServersForService(virtualServers []*conf_v1alpha1.VirtualServer,
 	return result
 }
 
-func findVirtualServerRoutesForService(virtualServerRoutes []*conf_v1alpha1.VirtualServerRoute, service *api_v1.Service) []*conf_v1alpha1.VirtualServerRoute {
-	var result []*conf_v1alpha1.VirtualServerRoute
+func findVirtualServerRoutesForService(virtualServerRoutes []*conf_v1.VirtualServerRoute, service *api_v1.Service) []*conf_v1.VirtualServerRoute {
+	var result []*conf_v1.VirtualServerRoute
 
 	for _, vsr := range virtualServerRoutes {
 		if vsr.Namespace != service.Namespace {
@@ -1316,13 +1316,13 @@ func findVirtualServerRoutesForService(virtualServerRoutes []*conf_v1alpha1.Virt
 	return result
 }
 
-func (lbc *LoadBalancerController) getVirtualServersForSecret(secretNamespace string, secretName string) []*conf_v1alpha1.VirtualServer {
+func (lbc *LoadBalancerController) getVirtualServersForSecret(secretNamespace string, secretName string) []*conf_v1.VirtualServer {
 	virtualServers := lbc.getVirtualServers()
 	return findVirtualServersForSecret(virtualServers, secretNamespace, secretName)
 }
 
-func findVirtualServersForSecret(virtualServers []*conf_v1alpha1.VirtualServer, secretNamespace string, secretName string) []*conf_v1alpha1.VirtualServer {
-	var result []*conf_v1alpha1.VirtualServer
+func findVirtualServersForSecret(virtualServers []*conf_v1.VirtualServer, secretNamespace string, secretName string) []*conf_v1.VirtualServer {
+	var result []*conf_v1.VirtualServer
 
 	for _, vs := range virtualServers {
 		if vs.Spec.TLS == nil {
@@ -1340,11 +1340,11 @@ func findVirtualServersForSecret(virtualServers []*conf_v1alpha1.VirtualServer, 
 	return result
 }
 
-func (lbc *LoadBalancerController) getVirtualServers() []*conf_v1alpha1.VirtualServer {
-	var virtualServers []*conf_v1alpha1.VirtualServer
+func (lbc *LoadBalancerController) getVirtualServers() []*conf_v1.VirtualServer {
+	var virtualServers []*conf_v1.VirtualServer
 
 	for _, obj := range lbc.virtualServerLister.List() {
-		vs := obj.(*conf_v1alpha1.VirtualServer)
+		vs := obj.(*conf_v1.VirtualServer)
 
 		err := validation.ValidateVirtualServer(vs, lbc.isNginxPlus)
 		if err != nil {
@@ -1358,11 +1358,11 @@ func (lbc *LoadBalancerController) getVirtualServers() []*conf_v1alpha1.VirtualS
 	return virtualServers
 }
 
-func (lbc *LoadBalancerController) getVirtualServerRoutes() []*conf_v1alpha1.VirtualServerRoute {
-	var virtualServerRoutes []*conf_v1alpha1.VirtualServerRoute
+func (lbc *LoadBalancerController) getVirtualServerRoutes() []*conf_v1.VirtualServerRoute {
+	var virtualServerRoutes []*conf_v1.VirtualServerRoute
 
 	for _, obj := range lbc.virtualServerRouteLister.List() {
-		vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
+		vsr := obj.(*conf_v1.VirtualServerRoute)
 
 		err := validation.ValidateVirtualServerRoute(vsr, lbc.isNginxPlus)
 		if err != nil {
@@ -1386,13 +1386,13 @@ func (lbc *LoadBalancerController) enqueueVirtualServersForVirtualServerRouteKey
 	return len(virtualServers)
 }
 
-func findVirtualServersForVirtualServerRoute(virtualServers []*conf_v1alpha1.VirtualServer, virtualServerRoute *conf_v1alpha1.VirtualServerRoute) []*conf_v1alpha1.VirtualServer {
+func findVirtualServersForVirtualServerRoute(virtualServers []*conf_v1.VirtualServer, virtualServerRoute *conf_v1.VirtualServerRoute) []*conf_v1.VirtualServer {
 	key := fmt.Sprintf("%s/%s", virtualServerRoute.Namespace, virtualServerRoute.Name)
 	return findVirtualServersForVirtualServerRouteKey(virtualServers, key)
 }
 
-func findVirtualServersForVirtualServerRouteKey(virtualServers []*conf_v1alpha1.VirtualServer, key string) []*conf_v1alpha1.VirtualServer {
-	var result []*conf_v1alpha1.VirtualServer
+func findVirtualServersForVirtualServerRouteKey(virtualServers []*conf_v1.VirtualServer, key string) []*conf_v1.VirtualServer {
+	var result []*conf_v1.VirtualServer
 
 	for _, vs := range virtualServers {
 		for _, r := range vs.Spec.Routes {
@@ -1544,7 +1544,7 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*conf
 
 type virtualServerRouteError struct {
 	VirtualServerRouteNsName string
-	VirtualServerRoute       *conf_v1alpha1.VirtualServerRoute
+	VirtualServerRoute       *conf_v1.VirtualServerRoute
 	Error                    error
 }
 
@@ -1555,7 +1555,7 @@ func newVirtualServerRouteErrorFromNsName(nsName string, err error) virtualServe
 	}
 }
 
-func newVirtualServerRouteErrorFromVSR(virtualServerRoute *conf_v1alpha1.VirtualServerRoute, err error) virtualServerRouteError {
+func newVirtualServerRouteErrorFromVSR(virtualServerRoute *conf_v1.VirtualServerRoute, err error) virtualServerRouteError {
 	return virtualServerRouteError{
 		VirtualServerRoute:       virtualServerRoute,
 		VirtualServerRouteNsName: fmt.Sprintf("%s/%s", virtualServerRoute.Namespace, virtualServerRoute.Name),
@@ -1563,7 +1563,7 @@ func newVirtualServerRouteErrorFromVSR(virtualServerRoute *conf_v1alpha1.Virtual
 	}
 }
 
-func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alpha1.VirtualServer) (*configs.VirtualServerEx, []virtualServerRouteError) {
+func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.VirtualServer) (*configs.VirtualServerEx, []virtualServerRouteError) {
 	virtualServerEx := configs.VirtualServerEx{
 		VirtualServer: virtualServer,
 	}
@@ -1605,7 +1605,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 		endpoints[endpointsKey] = endps
 	}
 
-	var virtualServerRoutes []*conf_v1alpha1.VirtualServerRoute
+	var virtualServerRoutes []*conf_v1.VirtualServerRoute
 	var virtualServerRouteErrors []virtualServerRouteError
 
 	// gather all referenced VirtualServerRoutes
@@ -1634,7 +1634,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 			continue
 		}
 
-		vsr := obj.(*conf_v1alpha1.VirtualServerRoute)
+		vsr := obj.(*conf_v1.VirtualServerRoute)
 
 		err = validation.ValidateVirtualServerRouteForVirtualServer(vsr, virtualServer.Spec.Host, r.Path, lbc.isNginxPlus)
 		if err != nil {
@@ -1674,7 +1674,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1alp
 	return &virtualServerEx, virtualServerRouteErrors
 }
 
-func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstream conf_v1alpha1.Upstream) (endps []string, isExternal bool, err error) {
+func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstream conf_v1.Upstream) (endps []string, isExternal bool, err error) {
 	svc, err := lbc.getServiceForUpstream(upstream, namespace)
 	if err != nil {
 		return nil, false, fmt.Errorf("Error getting service %v: %v", upstream.Service, err)
@@ -1693,7 +1693,7 @@ func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, ups
 	return endps, isExternal, err
 }
 
-func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, upstream conf_v1alpha1.Upstream) (endps []string, err error) {
+func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, upstream conf_v1.Upstream) (endps []string, err error) {
 	svc, err := lbc.getServiceForUpstream(upstream, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting service %v: %v", upstream.Service, err)
@@ -1906,7 +1906,7 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort *api_v1.ServicePort, sv
 	return portNum, nil
 }
 
-func (lbc *LoadBalancerController) getServiceForUpstream(u conf_v1alpha1.Upstream, namespace string) (*api_v1.Service, error) {
+func (lbc *LoadBalancerController) getServiceForUpstream(u conf_v1.Upstream, namespace string) (*api_v1.Service, error) {
 	backend := &extensions.IngressBackend{
 		ServiceName: u.Service,
 		ServicePort: intstr.FromInt(int(u.Port)),

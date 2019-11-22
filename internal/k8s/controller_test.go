@@ -12,7 +12,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1268,46 +1268,46 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 }
 
 func TestFindVirtualServersForService(t *testing.T) {
-	vs1 := conf_v1alpha1.VirtualServer{
+	vs1 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-1",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			Upstreams: []conf_v1alpha1.Upstream{
+		Spec: conf_v1.VirtualServerSpec{
+			Upstreams: []conf_v1.Upstream{
 				{
 					Service: "test-service",
 				},
 			},
 		},
 	}
-	vs2 := conf_v1alpha1.VirtualServer{
+	vs2 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-2",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			Upstreams: []conf_v1alpha1.Upstream{
+		Spec: conf_v1.VirtualServerSpec{
+			Upstreams: []conf_v1.Upstream{
 				{
 					Service: "some-service",
 				},
 			},
 		},
 	}
-	vs3 := conf_v1alpha1.VirtualServer{
+	vs3 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-3",
 			Namespace: "ns-2",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			Upstreams: []conf_v1alpha1.Upstream{
+		Spec: conf_v1.VirtualServerSpec{
+			Upstreams: []conf_v1.Upstream{
 				{
 					Service: "test-service",
 				},
 			},
 		},
 	}
-	virtualServers := []*conf_v1alpha1.VirtualServer{&vs1, &vs2, &vs3}
+	virtualServers := []*conf_v1.VirtualServer{&vs1, &vs2, &vs3}
 
 	service := v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -1316,7 +1316,7 @@ func TestFindVirtualServersForService(t *testing.T) {
 		},
 	}
 
-	expected := []*conf_v1alpha1.VirtualServer{&vs1}
+	expected := []*conf_v1.VirtualServer{&vs1}
 
 	result := findVirtualServersForService(virtualServers, &service)
 	if !reflect.DeepEqual(result, expected) {
@@ -1325,46 +1325,46 @@ func TestFindVirtualServersForService(t *testing.T) {
 }
 
 func TestFindVirtualServerRoutesForService(t *testing.T) {
-	vsr1 := conf_v1alpha1.VirtualServerRoute{
+	vsr1 := conf_v1.VirtualServerRoute{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vsr-1",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerRouteSpec{
-			Upstreams: []conf_v1alpha1.Upstream{
+		Spec: conf_v1.VirtualServerRouteSpec{
+			Upstreams: []conf_v1.Upstream{
 				{
 					Service: "test-service",
 				},
 			},
 		},
 	}
-	vsr2 := conf_v1alpha1.VirtualServerRoute{
+	vsr2 := conf_v1.VirtualServerRoute{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vsr-2",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerRouteSpec{
-			Upstreams: []conf_v1alpha1.Upstream{
+		Spec: conf_v1.VirtualServerRouteSpec{
+			Upstreams: []conf_v1.Upstream{
 				{
 					Service: "some-service",
 				},
 			},
 		},
 	}
-	vsr3 := conf_v1alpha1.VirtualServerRoute{
+	vsr3 := conf_v1.VirtualServerRoute{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vrs-3",
 			Namespace: "ns-2",
 		},
-		Spec: conf_v1alpha1.VirtualServerRouteSpec{
-			Upstreams: []conf_v1alpha1.Upstream{
+		Spec: conf_v1.VirtualServerRouteSpec{
+			Upstreams: []conf_v1.Upstream{
 				{
 					Service: "test-service",
 				},
 			},
 		},
 	}
-	virtualServerRoutes := []*conf_v1alpha1.VirtualServerRoute{&vsr1, &vsr2, &vsr3}
+	virtualServerRoutes := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr3}
 
 	service := v1.Service{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -1373,7 +1373,7 @@ func TestFindVirtualServerRoutesForService(t *testing.T) {
 		},
 	}
 
-	expected := []*conf_v1alpha1.VirtualServerRoute{&vsr1}
+	expected := []*conf_v1.VirtualServerRoute{&vsr1}
 
 	result := findVirtualServerRoutesForService(virtualServerRoutes, &service)
 	if !reflect.DeepEqual(result, expected) {
@@ -1382,63 +1382,63 @@ func TestFindVirtualServerRoutesForService(t *testing.T) {
 }
 
 func TestFindVirtualServersForSecret(t *testing.T) {
-	vs1 := conf_v1alpha1.VirtualServer{
+	vs1 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-1",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
+		Spec: conf_v1.VirtualServerSpec{
 			TLS: nil,
 		},
 	}
-	vs2 := conf_v1alpha1.VirtualServer{
+	vs2 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-2",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			TLS: &conf_v1alpha1.TLS{
+		Spec: conf_v1.VirtualServerSpec{
+			TLS: &conf_v1.TLS{
 				Secret: "",
 			},
 		},
 	}
-	vs3 := conf_v1alpha1.VirtualServer{
+	vs3 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-3",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			TLS: &conf_v1alpha1.TLS{
+		Spec: conf_v1.VirtualServerSpec{
+			TLS: &conf_v1.TLS{
 				Secret: "some-secret",
 			},
 		},
 	}
-	vs4 := conf_v1alpha1.VirtualServer{
+	vs4 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-4",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			TLS: &conf_v1alpha1.TLS{
+		Spec: conf_v1.VirtualServerSpec{
+			TLS: &conf_v1.TLS{
 				Secret: "test-secret",
 			},
 		},
 	}
-	vs5 := conf_v1alpha1.VirtualServer{
+	vs5 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-5",
 			Namespace: "ns-2",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			TLS: &conf_v1alpha1.TLS{
+		Spec: conf_v1.VirtualServerSpec{
+			TLS: &conf_v1.TLS{
 				Secret: "test-secret",
 			},
 		},
 	}
 
-	virtualServers := []*conf_v1alpha1.VirtualServer{&vs1, &vs2, &vs3, &vs4, &vs5}
+	virtualServers := []*conf_v1.VirtualServer{&vs1, &vs2, &vs3, &vs4, &vs5}
 
-	expected := []*conf_v1alpha1.VirtualServer{&vs4}
+	expected := []*conf_v1.VirtualServer{&vs4}
 
 	result := findVirtualServersForSecret(virtualServers, "ns-1", "test-secret")
 	if !reflect.DeepEqual(result, expected) {
@@ -1447,13 +1447,13 @@ func TestFindVirtualServersForSecret(t *testing.T) {
 }
 
 func TestFindVirtualServersForVirtualServerRoute(t *testing.T) {
-	vs1 := conf_v1alpha1.VirtualServer{
+	vs1 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-1",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			Routes: []conf_v1alpha1.Route{
+		Spec: conf_v1.VirtualServerSpec{
+			Routes: []conf_v1.Route{
 				{
 					Path:  "/",
 					Route: "default/test",
@@ -1461,13 +1461,13 @@ func TestFindVirtualServersForVirtualServerRoute(t *testing.T) {
 			},
 		},
 	}
-	vs2 := conf_v1alpha1.VirtualServer{
+	vs2 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-2",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			Routes: []conf_v1alpha1.Route{
+		Spec: conf_v1.VirtualServerSpec{
+			Routes: []conf_v1.Route{
 				{
 					Path:  "/",
 					Route: "some-ns/test",
@@ -1475,13 +1475,13 @@ func TestFindVirtualServersForVirtualServerRoute(t *testing.T) {
 			},
 		},
 	}
-	vs3 := conf_v1alpha1.VirtualServer{
+	vs3 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-3",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.VirtualServerSpec{
-			Routes: []conf_v1alpha1.Route{
+		Spec: conf_v1.VirtualServerSpec{
+			Routes: []conf_v1.Route{
 				{
 					Path:  "/",
 					Route: "default/test",
@@ -1490,16 +1490,16 @@ func TestFindVirtualServersForVirtualServerRoute(t *testing.T) {
 		},
 	}
 
-	vsr := conf_v1alpha1.VirtualServerRoute{
+	vsr := conf_v1.VirtualServerRoute{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "test",
 			Namespace: "default",
 		},
 	}
 
-	virtualServers := []*conf_v1alpha1.VirtualServer{&vs1, &vs2, &vs3}
+	virtualServers := []*conf_v1.VirtualServer{&vs1, &vs2, &vs3}
 
-	expected := []*conf_v1alpha1.VirtualServer{&vs1, &vs3}
+	expected := []*conf_v1.VirtualServer{&vs1, &vs3}
 
 	result := findVirtualServersForVirtualServerRoute(virtualServers, &vsr)
 	if !reflect.DeepEqual(result, expected) {

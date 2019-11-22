@@ -1,4 +1,4 @@
-package v1alpha1
+package v1
 
 import (
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration"
@@ -8,7 +8,7 @@ import (
 )
 
 // SchemeGroupVersion is group version used to register these object.
-var SchemeGroupVersion = schema.GroupVersion{Group: configuration.GroupName, Version: "v1alpha1"}
+var SchemeGroupVersion = schema.GroupVersion{Group: configuration.GroupName, Version: "v1"}
 
 // Kind takes an unqualified kind and returns back a Group qualified GroupKind.
 func Kind(kind string) schema.GroupKind {

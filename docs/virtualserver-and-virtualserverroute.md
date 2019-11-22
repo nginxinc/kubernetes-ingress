@@ -41,7 +41,7 @@ The VirtualServer and VirtualServerRoute resources are disabled by default. Make
 
 The VirtualServer resource defines load balancing configuration for a domain name, such as `example.com`. Below is an example of such configuration:
 ```yaml
-apiVersion: k8s.nginx.org/v1alpha1
+apiVersion: k8s.nginx.org/v1
 kind: VirtualServer
 metadata:
   name: cafe
@@ -136,7 +136,7 @@ In the example below, the VirtualServer `cafe` from the namespace `cafe-ns` defi
 
 VirtualServer:
 ```yaml
-apiVersion: k8s.nginx.org/v1alpha1
+apiVersion: k8s.nginx.org/v1
 kind: VirtualServer
 metadata:
   name: cafe
@@ -157,7 +157,7 @@ spec:
 
 VirtualServerRoute:
 ```yaml
-apiVersion: k8s.nginx.org/v1alpha1
+apiVersion: k8s.nginx.org/v1
 kind: VirtualServerRoute
 metadata:
   name: coffee

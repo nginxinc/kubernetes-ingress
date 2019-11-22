@@ -7,21 +7,21 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidateVirtualServer validates a VirtualServer.
-func ValidateVirtualServer(virtualServer *v1alpha1.VirtualServer, isPlus bool) error {
+func ValidateVirtualServer(virtualServer *v1.VirtualServer, isPlus bool) error {
 	allErrs := validateVirtualServerSpec(&virtualServer.Spec, field.NewPath("spec"), isPlus)
 	return allErrs.ToAggregate()
 }
 
 // validateVirtualServerSpec validates a VirtualServerSpec.
-func validateVirtualServerSpec(spec *v1alpha1.VirtualServerSpec, fieldPath *field.Path, isPlus bool) field.ErrorList {
+func validateVirtualServerSpec(spec *v1.VirtualServerSpec, fieldPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateHost(spec.Host, fieldPath.Child("host"))...)
@@ -49,7 +49,7 @@ func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateTLS(tls *v1alpha1.TLS, fieldPath *field.Path) field.ErrorList {
+func validateTLS(tls *v1.TLS, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if tls == nil {
@@ -64,7 +64,7 @@ func validateTLS(tls *v1alpha1.TLS, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateTLSRedirect(redirect *v1alpha1.TLSRedirect, fieldPath *field.Path) field.ErrorList {
+func validateTLSRedirect(redirect *v1.TLSRedirect, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if redirect == nil {
@@ -176,7 +176,7 @@ func validateSize(size string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateBuffer(buff *v1alpha1.UpstreamBuffers, fieldPath *field.Path) field.ErrorList {
+func validateBuffer(buff *v1.UpstreamBuffers, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if buff == nil {
@@ -217,7 +217,7 @@ func validateUpstreamLBMethod(lBMethod string, fieldPath *field.Path, isPlus boo
 	return allErrs
 }
 
-func validateUpstreamHealthCheck(hc *v1alpha1.HealthCheck, fieldPath *field.Path) field.ErrorList {
+func validateUpstreamHealthCheck(hc *v1.HealthCheck, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if hc == nil {
@@ -251,7 +251,7 @@ func validateUpstreamHealthCheck(hc *v1alpha1.HealthCheck, fieldPath *field.Path
 	return allErrs
 }
 
-func validateSessionCookie(sc *v1alpha1.SessionCookie, fieldPath *field.Path) field.ErrorList {
+func validateSessionCookie(sc *v1.SessionCookie, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if sc == nil {
@@ -368,7 +368,7 @@ func validateStatusCode(status string) string {
 	return ""
 }
 
-func validateHeader(h v1alpha1.Header, fieldPath *field.Path) field.ErrorList {
+func validateHeader(h v1.Header, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if h.Name == "" {
@@ -414,7 +414,7 @@ func validateSecretName(name string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.String) {
+func validateUpstreams(upstreams []v1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.String) {
 	allErrs = field.ErrorList{}
 	upstreamNames = sets.String{}
 
@@ -526,7 +526,7 @@ func validateDNS1035Label(name string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateVirtualServerRoutes(routes []v1alpha1.Route, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+func validateVirtualServerRoutes(routes []v1.Route, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allPaths := sets.String{}
@@ -548,7 +548,7 @@ func validateVirtualServerRoutes(routes []v1alpha1.Route, fieldPath *field.Path,
 	return allErrs
 }
 
-func validateRoute(route v1alpha1.Route, fieldPath *field.Path, upstreamNames sets.String, isRouteFieldForbidden bool) field.ErrorList {
+func validateRoute(route v1.Route, fieldPath *field.Path, upstreamNames sets.String, isRouteFieldForbidden bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateRoutePath(route.Path, fieldPath.Child("path"))...)
@@ -593,7 +593,7 @@ func validateRoute(route v1alpha1.Route, fieldPath *field.Path, upstreamNames se
 	return allErrs
 }
 
-func validateAction(action *v1alpha1.Action, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+func validateAction(action *v1.Action, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if action.Pass == "" {
@@ -628,7 +628,7 @@ func validateReferencedUpstream(name string, fieldPath *field.Path, upstreamName
 	return allErrs
 }
 
-func validateSplits(splits []v1alpha1.Split, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+func validateSplits(splits []v1.Split, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(splits) < 2 {
@@ -722,7 +722,7 @@ func validatePath(path string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateMatch(match v1alpha1.Match, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+func validateMatch(match v1.Match, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(match.Conditions) == 0 {
@@ -752,7 +752,7 @@ func validateMatch(match v1alpha1.Match, fieldPath *field.Path, upstreamNames se
 	return allErrs
 }
 
-func validateCondition(condition v1alpha1.Condition, fieldPath *field.Path) field.ErrorList {
+func validateCondition(condition v1.Condition, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -861,18 +861,18 @@ func isValidMatchValue(value string) []string {
 }
 
 // ValidateVirtualServerRoute validates a VirtualServerRoute.
-func ValidateVirtualServerRoute(virtualServerRoute *v1alpha1.VirtualServerRoute, isPlus bool) error {
+func ValidateVirtualServerRoute(virtualServerRoute *v1.VirtualServerRoute, isPlus bool) error {
 	allErrs := validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), "", "/", isPlus)
 	return allErrs.ToAggregate()
 }
 
 // ValidateVirtualServerRouteForVirtualServer validates a VirtualServerRoute for a VirtualServer represented by its host and path prefix.
-func ValidateVirtualServerRouteForVirtualServer(virtualServerRoute *v1alpha1.VirtualServerRoute, virtualServerHost string, vsPath string, isPlus bool) error {
+func ValidateVirtualServerRouteForVirtualServer(virtualServerRoute *v1.VirtualServerRoute, virtualServerHost string, vsPath string, isPlus bool) error {
 	allErrs := validateVirtualServerRouteSpec(&virtualServerRoute.Spec, field.NewPath("spec"), virtualServerHost, vsPath, isPlus)
 	return allErrs.ToAggregate()
 }
 
-func validateVirtualServerRouteSpec(spec *v1alpha1.VirtualServerRouteSpec, fieldPath *field.Path, virtualServerHost string, vsPath string, isPlus bool) field.ErrorList {
+func validateVirtualServerRouteSpec(spec *v1.VirtualServerRouteSpec, fieldPath *field.Path, virtualServerHost string, vsPath string, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateVirtualServerRouteHost(spec.Host, virtualServerHost, fieldPath.Child("host"))...)
@@ -902,7 +902,7 @@ func isRegexOrExactMatch(path string) bool {
 	return strings.HasPrefix(path, "~") || strings.HasPrefix(path, "=")
 }
 
-func validateVirtualServerRouteSubroutes(routes []v1alpha1.Route, fieldPath *field.Path, upstreamNames sets.String, vsPath string) field.ErrorList {
+func validateVirtualServerRouteSubroutes(routes []v1.Route, fieldPath *field.Path, upstreamNames sets.String, vsPath string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allPaths := sets.String{}
@@ -943,7 +943,7 @@ func validateVirtualServerRouteSubroutes(routes []v1alpha1.Route, fieldPath *fie
 	return allErrs
 }
 
-func rejectPlusResourcesInOSS(upstream v1alpha1.Upstream, idxPath *field.Path, isPlus bool) field.ErrorList {
+func rejectPlusResourcesInOSS(upstream v1.Upstream, idxPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if isPlus {
@@ -969,7 +969,7 @@ func rejectPlusResourcesInOSS(upstream v1alpha1.Upstream, idxPath *field.Path, i
 	return allErrs
 }
 
-func validateQueue(queue *v1alpha1.UpstreamQueue, fieldPath *field.Path) field.ErrorList {
+func validateQueue(queue *v1.UpstreamQueue, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if queue == nil {

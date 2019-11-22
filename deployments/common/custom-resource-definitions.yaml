@@ -5,7 +5,7 @@ metadata:
 spec:
   group: k8s.nginx.org
   versions:
-  - name: v1alpha1
+  - name: v1
     served: true
     storage: true
   scope: Namespaced
@@ -23,7 +23,7 @@ metadata:
 spec:
   group: k8s.nginx.org
   versions:
-  - name: v1alpha1
+  - name: v1
     served: true
     storage: true
   scope: Namespaced

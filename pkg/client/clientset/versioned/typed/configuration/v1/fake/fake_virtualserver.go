@@ -3,7 +3,7 @@
 package fake
 
 import (
-	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	configurationv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,29 +14,29 @@ import (
 
 // FakeVirtualServers implements VirtualServerInterface
 type FakeVirtualServers struct {
-	Fake *FakeK8sV1alpha1
+	Fake *FakeK8sV1
 	ns   string
 }
 
-var virtualserversResource = schema.GroupVersionResource{Group: "k8s.nginx.org", Version: "v1alpha1", Resource: "virtualservers"}
+var virtualserversResource = schema.GroupVersionResource{Group: "k8s.nginx.org", Version: "v1", Resource: "virtualservers"}
 
-var virtualserversKind = schema.GroupVersionKind{Group: "k8s.nginx.org", Version: "v1alpha1", Kind: "VirtualServer"}
+var virtualserversKind = schema.GroupVersionKind{Group: "k8s.nginx.org", Version: "v1", Kind: "VirtualServer"}
 
 // Get takes name of the virtualServer, and returns the corresponding virtualServer object, and an error if there is any.
-func (c *FakeVirtualServers) Get(name string, options v1.GetOptions) (result *v1alpha1.VirtualServer, err error) {
+func (c *FakeVirtualServers) Get(name string, options v1.GetOptions) (result *configurationv1.VirtualServer, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(virtualserversResource, c.ns, name), &v1alpha1.VirtualServer{})
+		Invokes(testing.NewGetAction(virtualserversResource, c.ns, name), &configurationv1.VirtualServer{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.VirtualServer), err
+	return obj.(*configurationv1.VirtualServer), err
 }
 
 // List takes label and field selectors, and returns the list of VirtualServers that match those selectors.
-func (c *FakeVirtualServers) List(opts v1.ListOptions) (result *v1alpha1.VirtualServerList, err error) {
+func (c *FakeVirtualServers) List(opts v1.ListOptions) (result *configurationv1.VirtualServerList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(virtualserversResource, virtualserversKind, c.ns, opts), &v1alpha1.VirtualServerList{})
+		Invokes(testing.NewListAction(virtualserversResource, virtualserversKind, c.ns, opts), &configurationv1.VirtualServerList{})
 
 	if obj == nil {
 		return nil, err
@@ -46,8 +46,8 @@ func (c *FakeVirtualServers) List(opts v1.ListOptions) (result *v1alpha1.Virtual
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.VirtualServerList{ListMeta: obj.(*v1alpha1.VirtualServerList).ListMeta}
-	for _, item := range obj.(*v1alpha1.VirtualServerList).Items {
+	list := &configurationv1.VirtualServerList{ListMeta: obj.(*configurationv1.VirtualServerList).ListMeta}
+	for _, item := range obj.(*configurationv1.VirtualServerList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -63,31 +63,31 @@ func (c *FakeVirtualServers) Watch(opts v1.ListOptions) (watch.Interface, error)
 }
 
 // Create takes the representation of a virtualServer and creates it.  Returns the server's representation of the virtualServer, and an error, if there is any.
-func (c *FakeVirtualServers) Create(virtualServer *v1alpha1.VirtualServer) (result *v1alpha1.VirtualServer, err error) {
+func (c *FakeVirtualServers) Create(virtualServer *configurationv1.VirtualServer) (result *configurationv1.VirtualServer, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(virtualserversResource, c.ns, virtualServer), &v1alpha1.VirtualServer{})
+		Invokes(testing.NewCreateAction(virtualserversResource, c.ns, virtualServer), &configurationv1.VirtualServer{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.VirtualServer), err
+	return obj.(*configurationv1.VirtualServer), err
 }
 
 // Update takes the representation of a virtualServer and updates it. Returns the server's representation of the virtualServer, and an error, if there is any.
-func (c *FakeVirtualServers) Update(virtualServer *v1alpha1.VirtualServer) (result *v1alpha1.VirtualServer, err error) {
+func (c *FakeVirtualServers) Update(virtualServer *configurationv1.VirtualServer) (result *configurationv1.VirtualServer, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(virtualserversResource, c.ns, virtualServer), &v1alpha1.VirtualServer{})
+		Invokes(testing.NewUpdateAction(virtualserversResource, c.ns, virtualServer), &configurationv1.VirtualServer{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.VirtualServer), err
+	return obj.(*configurationv1.VirtualServer), err
 }
 
 // Delete takes name of the virtualServer and deletes it. Returns an error if one occurs.
 func (c *FakeVirtualServers) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(virtualserversResource, c.ns, name), &v1alpha1.VirtualServer{})
+		Invokes(testing.NewDeleteAction(virtualserversResource, c.ns, name), &configurationv1.VirtualServer{})
 
 	return err
 }
@@ -96,17 +96,17 @@ func (c *FakeVirtualServers) Delete(name string, options *v1.DeleteOptions) erro
 func (c *FakeVirtualServers) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(virtualserversResource, c.ns, listOptions)
 
-	_, err := c.Fake.Invokes(action, &v1alpha1.VirtualServerList{})
+	_, err := c.Fake.Invokes(action, &configurationv1.VirtualServerList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched virtualServer.
-func (c *FakeVirtualServers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.VirtualServer, err error) {
+func (c *FakeVirtualServers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *configurationv1.VirtualServer, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(virtualserversResource, c.ns, name, pt, data, subresources...), &v1alpha1.VirtualServer{})
+		Invokes(testing.NewPatchSubresourceAction(virtualserversResource, c.ns, name, pt, data, subresources...), &configurationv1.VirtualServer{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.VirtualServer), err
+	return obj.(*configurationv1.VirtualServer), err
 }

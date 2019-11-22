@@ -89,7 +89,7 @@ def create_virtual_server_from_yaml(custom_objects: CustomObjectsApi, yaml_manif
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
 
-    custom_objects.create_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualservers", dep)
+    custom_objects.create_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualservers", dep)
     print(f"VirtualServer created with name '{dep['metadata']['name']}'")
     return dep['metadata']['name']
 
@@ -106,9 +106,9 @@ def delete_virtual_server(custom_objects: CustomObjectsApi, name, namespace) -> 
     print(f"Delete a VirtualServer: {name}")
     delete_options = client.V1DeleteOptions()
     custom_objects.delete_namespaced_custom_object("k8s.nginx.org",
-                                                   "v1alpha1", namespace, "virtualservers", name, delete_options)
+                                                   "v1", namespace, "virtualservers", name, delete_options)
     ensure_item_removal(custom_objects.get_namespaced_custom_object,
-                        "k8s.nginx.org", "v1alpha1", namespace, "virtualservers", name)
+                        "k8s.nginx.org", "v1", namespace, "virtualservers", name)
     print(f"VirtualServer was removed with name '{name}'")
 
 
@@ -126,7 +126,7 @@ def patch_virtual_server_from_yaml(custom_objects: CustomObjectsApi, name, yaml_
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
 
-    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualservers", name, dep)
+    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualservers", name, dep)
     print(f"VirtualServer updated with name '{dep['metadata']['name']}'")
 
 
@@ -140,7 +140,7 @@ def patch_virtual_server(custom_objects: CustomObjectsApi, name, namespace, body
     :return: str
     """
     print("Update a VirtualServer:")
-    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualservers", name, body)
+    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualservers", name, body)
     print(f"VirtualServer updated with a name '{body['metadata']['name']}'")
     return body['metadata']['name']
 
@@ -159,7 +159,7 @@ def patch_v_s_route_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manif
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
 
-    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualserverroutes", name, dep)
+    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualserverroutes", name, dep)
     print(f"VirtualServerRoute updated with name '{dep['metadata']['name']}'")
 
 
@@ -191,7 +191,7 @@ def create_v_s_route_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, 
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
 
-    custom_objects.create_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualserverroutes", dep)
+    custom_objects.create_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualserverroutes", dep)
     print(f"VirtualServerRoute created with a name '{dep['metadata']['name']}'")
     return dep['metadata']['name']
 
@@ -206,7 +206,7 @@ def patch_v_s_route(custom_objects: CustomObjectsApi, name, namespace, body) -> 
     :return: str
     """
     print("Update a VirtualServerRoute:")
-    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, "virtualserverroutes", name, body)
+    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualserverroutes", name, body)
     print(f"VirtualServerRoute updated with a name '{body['metadata']['name']}'")
     return body['metadata']['name']
 
@@ -223,9 +223,9 @@ def delete_v_s_route(custom_objects: CustomObjectsApi, name, namespace) -> None:
     print(f"Delete a VirtualServerRoute: {name}")
     delete_options = client.V1DeleteOptions()
     custom_objects.delete_namespaced_custom_object("k8s.nginx.org",
-                                                   "v1alpha1", namespace, "virtualserverroutes", name, delete_options)
+                                                   "v1", namespace, "virtualserverroutes", name, delete_options)
     ensure_item_removal(custom_objects.get_namespaced_custom_object,
-                        "k8s.nginx.org", "v1alpha1", namespace, "virtualserverroutes", name)
+                        "k8s.nginx.org", "v1", namespace, "virtualserverroutes", name)
     print(f"VirtualServerRoute was removed with the name '{name}'")
 
 

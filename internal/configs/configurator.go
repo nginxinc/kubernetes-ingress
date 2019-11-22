@@ -10,7 +10,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -588,7 +588,7 @@ func objectMetaToFileName(meta *meta_v1.ObjectMeta) string {
 	return meta.Namespace + "-" + meta.Name
 }
 
-func getFileNameForVirtualServer(virtualServer *conf_v1alpha1.VirtualServer) string {
+func getFileNameForVirtualServer(virtualServer *conf_v1.VirtualServer) string {
 	return fmt.Sprintf("vs_%s_%s", virtualServer.Namespace, virtualServer.Name)
 }
 

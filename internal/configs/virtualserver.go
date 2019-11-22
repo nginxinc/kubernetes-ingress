@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
 
 const nginx502Server = "unix:/var/lib/nginx/nginx-502-server.sock"
@@ -27,10 +27,10 @@ var incompatibleLBMethodsForSlowStart = map[string]bool{
 
 // VirtualServerEx holds a VirtualServer along with the resources that are referenced in this VirtualServer.
 type VirtualServerEx struct {
-	VirtualServer       *conf_v1alpha1.VirtualServer
+	VirtualServer       *conf_v1.VirtualServer
 	Endpoints           map[string][]string
 	TLSSecret           *api_v1.Secret
-	VirtualServerRoutes []*conf_v1alpha1.VirtualServerRoute
+	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
 }
 
@@ -58,13 +58,13 @@ type upstreamNamer struct {
 	prefix string
 }
 
-func newUpstreamNamerForVirtualServer(virtualServer *conf_v1alpha1.VirtualServer) *upstreamNamer {
+func newUpstreamNamerForVirtualServer(virtualServer *conf_v1.VirtualServer) *upstreamNamer {
 	return &upstreamNamer{
 		prefix: fmt.Sprintf("vs_%s_%s", virtualServer.Namespace, virtualServer.Name),
 	}
 }
 
-func newUpstreamNamerForVirtualServerRoute(virtualServer *conf_v1alpha1.VirtualServer, virtualServerRoute *conf_v1alpha1.VirtualServerRoute) *upstreamNamer {
+func newUpstreamNamerForVirtualServerRoute(virtualServer *conf_v1.VirtualServer, virtualServerRoute *conf_v1.VirtualServerRoute) *upstreamNamer {
 	return &upstreamNamer{
 		prefix: fmt.Sprintf("vs_%s_%s_vsr_%s_%s", virtualServer.Namespace, virtualServer.Name, virtualServerRoute.Namespace, virtualServerRoute.Name),
 	}
@@ -78,7 +78,7 @@ type variableNamer struct {
 	safeNsName string
 }
 
-func newVariableNamer(virtualServer *conf_v1alpha1.VirtualServer) *variableNamer {
+func newVariableNamer(virtualServer *conf_v1.VirtualServer) *variableNamer {
 	safeNsName := strings.ReplaceAll(fmt.Sprintf("%s_%s", virtualServer.Namespace, virtualServer.Name), "-", "_")
 	return &variableNamer{
 		safeNsName: safeNsName,
@@ -97,7 +97,7 @@ func (namer *variableNamer) GetNameForVariableForMatchesRouteMainMap(matchesInde
 	return fmt.Sprintf("$vs_%s_matches_%d", namer.safeNsName, matchesIndex)
 }
 
-func newHealthCheckWithDefaults(upstream conf_v1alpha1.Upstream, upstreamName string, cfgParams *ConfigParams) *version2.HealthCheck {
+func newHealthCheckWithDefaults(upstream conf_v1.Upstream, upstreamName string, cfgParams *ConfigParams) *version2.HealthCheck {
 	return &version2.HealthCheck{
 		Name:                upstreamName,
 		URI:                 "/",
@@ -140,7 +140,7 @@ func newVirtualServerConfigurator(cfgParams *ConfigParams, isPlus bool, isResolv
 	}
 }
 
-func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(owner runtime.Object, namespace string, upstream conf_v1alpha1.Upstream, virtualServerEx *VirtualServerEx) []string {
+func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(owner runtime.Object, namespace string, upstream conf_v1.Upstream, virtualServerEx *VirtualServerEx) []string {
 	endpointsKey := GenerateEndpointsKey(namespace, upstream.Service, upstream.Subselector, upstream.Port)
 	externalNameSvcKey := GenerateExternalNameSvcKey(namespace, upstream.Service)
 	endpoints := virtualServerEx.Endpoints[endpointsKey]
@@ -164,9 +164,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 	ssl := generateSSLConfig(virtualServerEx.VirtualServer.Spec.TLS, tlsPemFileName, vsc.cfgParams)
 	tlsRedirectConfig := generateTLSRedirectConfig(virtualServerEx.VirtualServer.Spec.TLS)
 
-	// crUpstreams maps an UpstreamName to its conf_v1alpha1.Upstream as they are generated
+	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
-	crUpstreams := make(map[string]conf_v1alpha1.Upstream)
+	crUpstreams := make(map[string]conf_v1.Upstream)
 
 	virtualServerUpstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
 
@@ -309,7 +309,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 	return vscfg, vsc.warnings
 }
 
-func (vsc *virtualServerConfigurator) generateUpstream(owner runtime.Object, upstreamName string, upstream conf_v1alpha1.Upstream, isExternalNameSvc bool, endpoints []string) version2.Upstream {
+func (vsc *virtualServerConfigurator) generateUpstream(owner runtime.Object, upstreamName string, upstream conf_v1.Upstream, isExternalNameSvc bool, endpoints []string) version2.Upstream {
 	var upsServers []version2.UpstreamServer
 	for _, e := range endpoints {
 		s := version2.UpstreamServer{
@@ -342,7 +342,7 @@ func (vsc *virtualServerConfigurator) generateUpstream(owner runtime.Object, ups
 	return ups
 }
 
-func (vsc *virtualServerConfigurator) generateSlowStartForPlus(owner runtime.Object, upstream conf_v1alpha1.Upstream, lbMethod string) string {
+func (vsc *virtualServerConfigurator) generateSlowStartForPlus(owner runtime.Object, upstream conf_v1.Upstream, lbMethod string) string {
 	if upstream.SlowStart == "" {
 		return ""
 	}
@@ -358,7 +358,7 @@ func (vsc *virtualServerConfigurator) generateSlowStartForPlus(owner runtime.Obj
 	return upstream.SlowStart
 }
 
-func generateHealthCheck(upstream conf_v1alpha1.Upstream, upstreamName string, cfgParams *ConfigParams) *version2.HealthCheck {
+func generateHealthCheck(upstream conf_v1.Upstream, upstreamName string, cfgParams *ConfigParams) *version2.HealthCheck {
 	if upstream.HealthCheck == nil || !upstream.HealthCheck.Enable {
 		return nil
 	}
@@ -416,7 +416,7 @@ func generateHealthCheck(upstream conf_v1alpha1.Upstream, upstreamName string, c
 	return hc
 }
 
-func generateSessionCookie(sc *conf_v1alpha1.SessionCookie) *version2.SessionCookie {
+func generateSessionCookie(sc *conf_v1.SessionCookie) *version2.SessionCookie {
 	if sc == nil || !sc.Enable {
 		return nil
 	}
@@ -464,7 +464,7 @@ func generateIntFromPointer(n *int, defaultN int) int {
 	return *n
 }
 
-func upstreamHasKeepalive(upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) bool {
+func upstreamHasKeepalive(upstream conf_v1.Upstream, cfgParams *ConfigParams) bool {
 	if upstream.Keepalive != nil {
 		return *upstream.Keepalive != 0
 	}
@@ -485,7 +485,7 @@ func generateString(s string, defaultS string) string {
 	return s
 }
 
-func generateBuffers(s *conf_v1alpha1.UpstreamBuffers, defaultS string) string {
+func generateBuffers(s *conf_v1.UpstreamBuffers, defaultS string) string {
 	if s == nil {
 		return defaultS
 	}
@@ -511,7 +511,7 @@ func generatePath(path string) string {
 	return path
 }
 
-func generateLocation(path string, upstreamName string, upstream conf_v1alpha1.Upstream, cfgParams *ConfigParams) version2.Location {
+func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, cfgParams *ConfigParams) version2.Location {
 	return version2.Location{
 		Path:                     generatePath(path),
 		Snippets:                 cfgParams.LocationSnippets,
@@ -538,7 +538,7 @@ type routingCfg struct {
 	InternalRedirectLocation version2.InternalRedirectLocation
 }
 
-func generateSplits(splits []conf_v1alpha1.Split, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream, variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams) (version2.SplitClient, []version2.Location) {
+func generateSplits(splits []conf_v1.Split, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream, variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams) (version2.SplitClient, []version2.Location) {
 	var distributions []version2.Distribution
 
 	for i, s := range splits {
@@ -568,7 +568,7 @@ func generateSplits(splits []conf_v1alpha1.Split, upstreamNamer *upstreamNamer, 
 	return splitClient, locations
 }
 
-func generateDefaultSplitsConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream, variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams) routingCfg {
+func generateDefaultSplitsConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream, variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams) routingCfg {
 	sc, locs := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex, cfgParams)
 
 	splitClientVarName := variableNamer.GetNameForSplitClientVariable(scIndex)
@@ -585,7 +585,7 @@ func generateDefaultSplitsConfig(route conf_v1alpha1.Route, upstreamNamer *upstr
 	}
 }
 
-func generateMatchesConfig(route conf_v1alpha1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1alpha1.Upstream,
+func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream,
 	variableNamer *variableNamer, index int, scIndex int, cfgParams *ConfigParams) routingCfg {
 	// Generate maps
 	var maps []version2.Map
@@ -748,7 +748,7 @@ func generateParametersForMatchesRouteMap(matchedValue string, successfulResult 
 	return params
 }
 
-func getNameForSourceForMatchesRouteMapFromCondition(condition conf_v1alpha1.Condition) string {
+func getNameForSourceForMatchesRouteMapFromCondition(condition conf_v1.Condition) string {
 	if condition.Header != "" {
 		return fmt.Sprintf("$http_%s", strings.ReplaceAll(condition.Header, "-", "_"))
 	}
@@ -764,7 +764,7 @@ func getNameForSourceForMatchesRouteMapFromCondition(condition conf_v1alpha1.Con
 	return condition.Variable
 }
 
-func generateSSLConfig(tls *conf_v1alpha1.TLS, tlsPemFileName string, cfgParams *ConfigParams) *version2.SSL {
+func generateSSLConfig(tls *conf_v1.TLS, tlsPemFileName string, cfgParams *ConfigParams) *version2.SSL {
 	if tls == nil {
 		return nil
 	}
@@ -793,7 +793,7 @@ func generateSSLConfig(tls *conf_v1alpha1.TLS, tlsPemFileName string, cfgParams 
 	return &ssl
 }
 
-func generateTLSRedirectConfig(tls *conf_v1alpha1.TLS) *version2.TLSRedirect {
+func generateTLSRedirectConfig(tls *conf_v1.TLS) *version2.TLSRedirect {
 	if tls == nil || tls.Redirect == nil || !tls.Redirect.Enable {
 		return nil
 	}
@@ -882,7 +882,7 @@ func createUpstreamServersConfigForPlus(upstream version2.Upstream) nginx.Server
 	}
 }
 
-func generateQueueForPlus(upstreamQueue *conf_v1alpha1.UpstreamQueue, defaultTimeout string) *version2.Queue {
+func generateQueueForPlus(upstreamQueue *conf_v1.UpstreamQueue, defaultTimeout string) *version2.Queue {
 	if upstreamQueue == nil {
 		return nil
 	}

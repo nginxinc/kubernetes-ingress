@@ -3,26 +3,26 @@
 package fake
 
 import (
-	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1alpha1"
+	v1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1"
 	rest "k8s.io/client-go/rest"
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeK8sV1alpha1 struct {
+type FakeK8sV1 struct {
 	*testing.Fake
 }
 
-func (c *FakeK8sV1alpha1) VirtualServers(namespace string) v1alpha1.VirtualServerInterface {
+func (c *FakeK8sV1) VirtualServers(namespace string) v1.VirtualServerInterface {
 	return &FakeVirtualServers{c, namespace}
 }
 
-func (c *FakeK8sV1alpha1) VirtualServerRoutes(namespace string) v1alpha1.VirtualServerRouteInterface {
+func (c *FakeK8sV1) VirtualServerRoutes(namespace string) v1.VirtualServerRouteInterface {
 	return &FakeVirtualServerRoutes{c, namespace}
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeK8sV1alpha1) RESTClient() rest.Interface {
+func (c *FakeK8sV1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }
