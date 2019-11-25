@@ -1,5 +1,19 @@
 # Changelog
 
+### 1.5.8
+
+CHANGES:
+* Update NGINX version to 1.17.6.
+* Update deployment and daemonset manifests to apps/v1.
+
+HELM CHART:
+* The version of the Helm chart is now 0.3.8.
+
+UPGRADE:
+* For NGINX, use the 1.5.8 image from our DockerHub: `nginx/nginx-ingress:1.5.8` or `nginx/nginx-ingress:1.5.8-alpine`
+* For NGINX Plus, please build your own image using the 1.5.8 source code.
+* For Helm, use version 0.3.8 of the chart.
+
 ### 1.5.7
 
 CHANGES:
