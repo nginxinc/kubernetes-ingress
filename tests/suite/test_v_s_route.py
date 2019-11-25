@@ -30,15 +30,15 @@ def example_app_setup(request, kube_apis, v_s_route_setup) -> None:
     print("---------------------- Deploy a VS Route Example Application ----------------------------")
     svc_one = create_service_with_name(kube_apis.v1, v_s_route_setup.route_m.namespace, "backend1-svc")
     svc_three = create_service_with_name(kube_apis.v1, v_s_route_setup.route_m.namespace, "backend3-svc")
-    deployment_one = create_deployment_with_name(kube_apis.extensions_v1_beta1,
+    deployment_one = create_deployment_with_name(kube_apis.apps_v1_api,
                                                  v_s_route_setup.route_m.namespace,
                                                  "backend1")
-    deployment_three = create_deployment_with_name(kube_apis.extensions_v1_beta1,
+    deployment_three = create_deployment_with_name(kube_apis.apps_v1_api,
                                                    v_s_route_setup.route_m.namespace,
                                                    "backend3")
 
     svc_two = create_service_with_name(kube_apis.v1, v_s_route_setup.route_s.namespace, "backend2-svc")
-    deployment_two = create_deployment_with_name(kube_apis.extensions_v1_beta1,
+    deployment_two = create_deployment_with_name(kube_apis.apps_v1_api,
                                                  v_s_route_setup.route_s.namespace, "backend2")
 
     wait_until_all_pods_are_ready(kube_apis.v1, v_s_route_setup.route_m.namespace)
@@ -47,11 +47,11 @@ def example_app_setup(request, kube_apis, v_s_route_setup) -> None:
 
     def fin():
         print("Clean up the Application:")
-        delete_deployment(kube_apis.extensions_v1_beta1, deployment_one, v_s_route_setup.route_m.namespace)
+        delete_deployment(kube_apis.apps_v1_api, deployment_one, v_s_route_setup.route_m.namespace)
         delete_service(kube_apis.v1, svc_one, v_s_route_setup.route_m.namespace)
-        delete_deployment(kube_apis.extensions_v1_beta1, deployment_three, v_s_route_setup.route_m.namespace)
+        delete_deployment(kube_apis.apps_v1_api, deployment_three, v_s_route_setup.route_m.namespace)
         delete_service(kube_apis.v1, svc_three, v_s_route_setup.route_m.namespace)
-        delete_deployment(kube_apis.extensions_v1_beta1, deployment_two, v_s_route_setup.route_s.namespace)
+        delete_deployment(kube_apis.apps_v1_api, deployment_two, v_s_route_setup.route_s.namespace)
         delete_service(kube_apis.v1, svc_two, v_s_route_setup.route_s.namespace)
 
     request.addfinalizer(fin)

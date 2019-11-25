@@ -5,7 +5,7 @@ import yaml
 import pytest
 import requests
 
-from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api, V1Service
+from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api, V1Service, AppsV1Api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes import client
@@ -91,11 +91,11 @@ def cleanup_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api, rbac: RBACAuthoriza
     rbac_v1_beta1.delete_cluster_role(rbac.role, delete_options)
 
 
-def create_deployment_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, yaml_manifest) -> str:
+def create_deployment_from_yaml(apps_v1_api: AppsV1Api, namespace, yaml_manifest) -> str:
     """
     Create a deployment based on yaml file.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param apps_v1_api: AppsV1Api
     :param namespace: namespace name
     :param yaml_manifest: absolute path to file
     :return: str
@@ -103,29 +103,29 @@ def create_deployment_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, names
     print(f"Load {yaml_manifest}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-    return create_deployment(extensions_v1_beta1, namespace, dep)
+    return create_deployment(apps_v1_api, namespace, dep)
 
 
-def create_deployment(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, body) -> str:
+def create_deployment(apps_v1_api: AppsV1Api, namespace, body) -> str:
     """
     Create a deployment based on a dict.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param apps_v1_api: AppsV1Api
     :param namespace: namespace name
     :param body: dict
     :return: str
     """
     print("Create a deployment:")
-    extensions_v1_beta1.create_namespaced_deployment(namespace, body)
+    apps_v1_api.create_namespaced_deployment(namespace, body)
     print(f"Deployment created with name '{body['metadata']['name']}'")
     return body['metadata']['name']
 
 
-def create_deployment_with_name(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, name) -> str:
+def create_deployment_with_name(apps_v1_api: AppsV1Api, namespace, name) -> str:
     """
     Create a deployment with a specific name based on common yaml file.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param apps_v1_api: AppsV1Api
     :param namespace: namespace name
     :param name:
     :return: str
@@ -137,20 +137,20 @@ def create_deployment_with_name(extensions_v1_beta1: ExtensionsV1beta1Api, names
         dep['spec']['selector']['matchLabels']['app'] = name
         dep['spec']['template']['metadata']['labels']['app'] = name
         dep['spec']['template']['spec']['containers'][0]['name'] = name
-        return create_deployment(extensions_v1_beta1, namespace, dep)
+        return create_deployment(apps_v1_api, namespace, dep)
 
 
-def create_daemon_set(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, body) -> str:
+def create_daemon_set(apps_v1_api: AppsV1Api, namespace, body) -> str:
     """
     Create a daemon-set based on a dict.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param apps_v1_api: AppsV1Api
     :param namespace: namespace name
     :param body: dict
     :return: str
     """
     print("Create a daemon-set:")
-    extensions_v1_beta1.create_namespaced_daemon_set(namespace, body)
+    apps_v1_api.create_namespaced_daemon_set(namespace, body)
     print(f"Daemon-Set created with name '{body['metadata']['name']}'")
     return body['metadata']['name']
 
@@ -656,19 +656,19 @@ def create_example_app(kube_apis, app_type, namespace) -> CommonApp:
 
 
 def delete_common_app(v1: CoreV1Api,
-                      extensions_v1_beta1: ExtensionsV1beta1Api,
+                      apps_v1_api: AppsV1Api,
                       common_app: CommonApp, namespace) -> None:
     """
     Delete a common simple application.
 
     :param v1: CoreV1Api
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param apps_v1_api: AppsV1Api
     :param common_app: CommonApp
     :param namespace: namespace name
     :return:
     """
     for deployment in common_app.deployments:
-        delete_deployment(extensions_v1_beta1, deployment, namespace)
+        delete_deployment(apps_v1_api, deployment, namespace)
     for svc in common_app.services:
         delete_service(v1, svc, namespace)
 
@@ -691,11 +691,11 @@ def delete_service(v1: CoreV1Api, name, namespace) -> None:
     print(f"Service was removed with name '{name}'")
 
 
-def delete_deployment(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace) -> None:
+def delete_deployment(apps_v1_api: AppsV1Api, name, namespace) -> None:
     """
     Delete a deployment.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param apps_v1_api: AppsV1Api
     :param name:
     :param namespace:
     :return:
@@ -704,16 +704,16 @@ def delete_deployment(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace
     delete_options = client.V1DeleteOptions()
     delete_options.grace_period_seconds = 0
     delete_options.propagation_policy = 'Foreground'
-    extensions_v1_beta1.delete_namespaced_deployment(name, namespace, delete_options)
-    ensure_item_removal(extensions_v1_beta1.read_namespaced_deployment_status, name, namespace)
+    apps_v1_api.delete_namespaced_deployment(name, namespace, delete_options)
+    ensure_item_removal(apps_v1_api.read_namespaced_deployment_status, name, namespace)
     print(f"Deployment was removed with name '{name}'")
 
 
-def delete_daemon_set(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace) -> None:
+def delete_daemon_set(apps_v1_api: AppsV1Api, name, namespace) -> None:
     """
     Delete a daemon-set.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param apps_v1_api: AppsV1Api
     :param name:
     :param namespace:
     :return:
@@ -722,8 +722,8 @@ def delete_daemon_set(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace
     delete_options = client.V1DeleteOptions()
     delete_options.grace_period_seconds = 0
     delete_options.propagation_policy = 'Foreground'
-    extensions_v1_beta1.delete_namespaced_daemon_set(name, namespace, delete_options)
-    ensure_item_removal(extensions_v1_beta1.read_namespaced_daemon_set_status, name, namespace)
+    apps_v1_api.delete_namespaced_daemon_set(name, namespace, delete_options)
+    ensure_item_removal(apps_v1_api.read_namespaced_daemon_set_status, name, namespace)
     print(f"Daemon-set was removed with name '{name}'")
 
 
@@ -737,13 +737,13 @@ def wait_before_test(delay=RECONFIGURATION_DELAY) -> None:
     time.sleep(delay)
 
 
-def create_ingress_controller(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1beta1Api, cli_arguments,
+def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments,
                               namespace, args=None) -> str:
     """
     Create an Ingress Controller according to the params.
 
     :param v1: CoreV1Api
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param apps_v1_api: AppsV1Api
     :param cli_arguments: context name as in kubeconfig
     :param namespace: namespace name
     :param args: a list of any extra cli arguments to start IC with
@@ -758,28 +758,28 @@ def create_ingress_controller(v1: CoreV1Api, extensions_v1_beta1: ExtensionsV1be
     if args is not None:
         dep['spec']['template']['spec']['containers'][0]['args'].extend(args)
     if cli_arguments['deployment-type'] == 'deployment':
-        name = create_deployment(extensions_v1_beta1, namespace, dep)
+        name = create_deployment(apps_v1_api, namespace, dep)
     else:
-        name = create_daemon_set(extensions_v1_beta1, namespace, dep)
+        name = create_daemon_set(apps_v1_api, namespace, dep)
     wait_until_all_pods_are_ready(v1, namespace)
     print(f"Ingress Controller was created with name '{name}'")
     return name
 
 
-def delete_ingress_controller(extensions_v1_beta1: ExtensionsV1beta1Api, name, dep_type, namespace) -> None:
+def delete_ingress_controller(apps_v1_api: AppsV1Api, name, dep_type, namespace) -> None:
     """
     Delete IC according to its type.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param apps_v1_api: AppsV1Api
     :param name: name
     :param dep_type: IC deployment type 'deployment' or 'daemon-set'
     :param namespace: namespace name
     :return:
     """
     if dep_type == 'deployment':
-        delete_deployment(extensions_v1_beta1, name, namespace)
+        delete_deployment(apps_v1_api, name, namespace)
     elif dep_type == 'daemon-set':
-        delete_daemon_set(extensions_v1_beta1, name, namespace)
+        delete_daemon_set(apps_v1_api, name, namespace)
 
 
 def create_ns_and_sa_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
@@ -825,9 +825,9 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
             elif doc["kind"] == "Service":
                 create_service(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "Deployment":
-                create_deployment(kube_apis.extensions_v1_beta1, namespace, doc)
+                create_deployment(kube_apis.apps_v1_api, namespace, doc)
             elif doc["kind"] == "DaemonSet":
-                create_daemon_set(kube_apis.extensions_v1_beta1, namespace, doc)
+                create_daemon_set(kube_apis.apps_v1_api, namespace, doc)
 
 
 def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
@@ -852,9 +852,9 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
             elif doc["kind"] == "Service":
                 delete_service(kube_apis.v1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Deployment":
-                delete_deployment(kube_apis.extensions_v1_beta1, doc['metadata']['name'], namespace)
+                delete_deployment(kube_apis.apps_v1_api, doc['metadata']['name'], namespace)
             elif doc["kind"] == "DaemonSet":
-                delete_daemon_set(kube_apis.extensions_v1_beta1, doc['metadata']['name'], namespace)
+                delete_daemon_set(kube_apis.apps_v1_api, doc['metadata']['name'], namespace)
 
 
 def ensure_connection(request_url) -> None:

@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend1-v1
@@ -31,7 +31,7 @@ spec:
   selector:
     app: backend1-v1
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend1-v2
@@ -64,7 +64,7 @@ spec:
   selector:
     app: backend1-v2
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend2
