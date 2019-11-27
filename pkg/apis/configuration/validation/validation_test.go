@@ -2651,3 +2651,273 @@ func TestIsRegexOrExactMatch(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateActionReturnBody(t *testing.T) {
+	tests := []struct {
+		body string
+		msg  string
+	}{
+		{
+			body: "Hello World",
+			msg:  "single string",
+		},
+		{
+			body: "${host}${request_uri}",
+			msg:  "string with variables",
+		},
+		{
+			body: "Could not complete request, please go to ${scheme}://www.${host}${request_uri}-2",
+			msg:  "string with url and variables",
+		},
+		{
+			body: "{abc} %&*()!@#",
+			msg:  "string with symbols",
+		},
+		{
+			body: "${http_authorization}",
+			msg:  "special variable with name",
+		},
+		{
+			body: `
+				<html>
+				<body>
+				<h1>Hello</h1>
+				</body>
+				</html>`,
+			msg: "string with multiple lines",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateActionReturnBody(test.body, field.NewPath("body"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateActionReturnBody(%v) returned errors %v for valid input for the case of: %v", test.body, allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateActionReturnBodyFails(t *testing.T) {
+	tests := []struct {
+		body string
+		msg  string
+	}{
+		{
+			body: "Request to $host",
+			msg:  "invalid variable format",
+		},
+		{
+			body: `Request to host failed "`,
+			msg:  "unescaped double quotes",
+		},
+		{
+			body: "Please access to ${something}.com",
+			msg:  "invalid variable",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateActionReturnBody(test.body, field.NewPath("body"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateActionReturnBody(%v) returned no errors for invalid input for the case of: %v", test.body, test.msg)
+		}
+	}
+}
+
+func TestValidateActionReturnType(t *testing.T) {
+	tests := []struct {
+		defaultType string
+		msg         string
+	}{
+		{
+			defaultType: "application/json",
+			msg:         "normal MIME type",
+		},
+		{
+			defaultType: `\"application/json\"`,
+			msg:         "double quotes escaped",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateActionReturnType(test.defaultType, field.NewPath("type"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateActionReturnType(%v) returned errors %v for the case of: %v", test.defaultType, allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateActionReturnTypeFails(t *testing.T) {
+	tests := []struct {
+		defaultType string
+		msg         string
+	}{
+		{
+			defaultType: "application/{json}",
+			msg:         "use of forbidden symbols",
+		},
+		{
+			defaultType: "application;json",
+			msg:         "use of forbidden symbols",
+		},
+		{
+			defaultType: `"application/json"`,
+			msg:         "double quotes not escaped",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateActionReturnType(test.defaultType, field.NewPath("type"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateActionReturnType(%v) returned no errors for the case of: %v", test.defaultType, test.msg)
+		}
+	}
+}
+
+func TestValidateActionReturn(t *testing.T) {
+	tests := []*v1.ActionReturn{
+		{
+			Body: "Hello World",
+		},
+		{
+			Type: "application/json",
+			Body: "Hello World",
+		},
+		{
+			Code: 200,
+			Type: "application/json",
+			Body: "Hello World",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateActionReturn(test, field.NewPath("return"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateActionReturn(%v) returned errors for valid input", test)
+		}
+	}
+}
+
+func TestValidateActionReturnFails(t *testing.T) {
+	tests := []*v1.ActionReturn{
+		{},
+		{
+			Code: 301,
+			Body: "Hello World",
+		},
+		{
+			Code: 200,
+			Type: `application/"json"`,
+			Body: "Hello World",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateActionReturn(test, field.NewPath("return"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateActionReturn(%v) returned no errors for invalid input", test)
+		}
+	}
+}
+
+func TestValidateStringWithVariables(t *testing.T) {
+	testStrings := []string{
+		"",
+		"${scheme}",
+		"${scheme}${host}",
+		"foo.bar",
+	}
+	validVars := map[string]bool{"scheme": true, "host": true}
+
+	for _, test := range testStrings {
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), validVars, nil)
+		if len(allErrs) != 0 {
+			t.Errorf("validateStringWithVariables(%v) returned errors for valid input: %v", test, allErrs)
+		}
+	}
+
+	specialVars := []string{"arg", "http", "cookie"}
+	testStringsSpecial := []string{
+		"${arg_username}",
+		"${http_header_name}",
+		"${cookie_cookie_name}",
+	}
+
+	for _, test := range testStringsSpecial {
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), validVars, specialVars)
+		if len(allErrs) != 0 {
+			t.Errorf("validateStringWithVariables(%v) returned errors for valid input: %v", test, allErrs)
+		}
+	}
+}
+
+func TestValidateStringWithVariablesFail(t *testing.T) {
+	testStrings := []string{
+		"$scheme}",
+		"${sch${eme}${host}",
+		"host$",
+		"${host",
+		"${invalid}",
+	}
+	validVars := map[string]bool{"scheme": true, "host": true}
+
+	for _, test := range testStrings {
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), validVars, nil)
+		if len(allErrs) == 0 {
+			t.Errorf("validateStringWithVariables(%v) returned no errors for invalid input", test)
+		}
+	}
+
+	specialVars := []string{"arg", "http", "cookie"}
+	testStringsSpecial := []string{
+		"${arg_username%}",
+		"${http_header-name}",
+		"${cookie_cookie?name}",
+	}
+
+	for _, test := range testStringsSpecial {
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), validVars, specialVars)
+		if len(allErrs) == 0 {
+			t.Errorf("validateStringWithVariables(%v) returned no errors for invalid input", test)
+		}
+	}
+}
+
+func TestValidateActionReturnCode(t *testing.T) {
+	codes := []int{200, 201, 400, 404, 500, 502, 599}
+	for _, c := range codes {
+		allErrs := validateActionReturnCode(c, field.NewPath("code"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateActionReturnCode(%v) returned errors for valid input: %v", c, allErrs)
+		}
+	}
+}
+
+func TestValidateActionReturnCodeFails(t *testing.T) {
+	codes := []int{0, -1, 199, 300, 399, 600, 999}
+	for _, c := range codes {
+		allErrs := validateActionReturnCode(c, field.NewPath("code"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateActionReturnCode(%v) returned no errors for invalid input", c)
+		}
+	}
+}
+
+func TestValidateSpecialVariable(t *testing.T) {
+	specialVars := []string{"arg_username", "arg_user_name", "http_header_name", "cookie_cookie_name"}
+	for _, v := range specialVars {
+		allErrs := validateSpecialVariable(v, field.NewPath("variable"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateSpecialVariable(%v) returned errors for valid case: %v", v, allErrs)
+		}
+	}
+}
+
+func TestValidateSpecialVariableFails(t *testing.T) {
+	specialVars := []string{"arg_invalid%", "http_header+invalid", "cookie_cookie_name?invalid"}
+	for _, v := range specialVars {
+		allErrs := validateSpecialVariable(v, field.NewPath("variable"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateSpecialVariable(%v) returned no errors for invalid case", v)
+		}
+	}
+}

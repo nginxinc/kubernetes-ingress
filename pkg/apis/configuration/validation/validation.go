@@ -8,11 +8,17 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
+
+const (
+	escapedStringsFmt    = `([^"\\]|\\.)*`
+	escapedStringsErrMsg = `must have all '"' (double quotes) escaped and must not end with an unescaped '\' (backslash)`
+)
+
+var escapedStringsFmtRegexp = regexp.MustCompile("^" + escapedStringsFmt + "$")
 
 // ValidateVirtualServer validates a VirtualServer.
 func ValidateVirtualServer(virtualServer *v1.VirtualServer, isPlus bool) error {
@@ -593,15 +599,28 @@ func validateRoute(route v1.Route, fieldPath *field.Path, upstreamNames sets.Str
 	return allErrs
 }
 
+func countActions(action *v1.Action) int {
+	var count int
+	if action.Pass != "" {
+		count++
+	}
+
+	if action.Redirect != nil {
+		count++
+	}
+
+	if action.Return != nil {
+		count++
+	}
+
+	return count
+}
+
 func validateAction(action *v1.Action, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if action.Pass == "" && action.Redirect == nil {
-		return append(allErrs, field.Required(fieldPath, "action must specify exactly one of `pass` or `redirect`"))
-	}
-
-	if action.Pass != "" && action.Redirect != nil {
-		return append(allErrs, field.Required(fieldPath, "action must specify exactly one of `pass` or `redirect`"))
+	if countActions(action) != 1 {
+		return append(allErrs, field.Required(fieldPath, "action must specify exactly one of `pass`, `redirect` or `return`"))
 	}
 
 	if action.Pass != "" {
@@ -610,6 +629,10 @@ func validateAction(action *v1.Action, fieldPath *field.Path, upstreamNames sets
 
 	if action.Redirect != nil {
 		allErrs = append(allErrs, validateActionRedirect(action.Redirect, fieldPath.Child("redirect"))...)
+	}
+
+	if action.Return != nil {
+		allErrs = append(allErrs, validateActionReturn(action.Return, fieldPath.Child("return"))...)
 	}
 
 	return allErrs
@@ -656,28 +679,18 @@ func validateRedirectURL(redirectURL string, fieldPath *field.Path) field.ErrorL
 		return append(allErrs, field.Required(fieldPath, "must specify a url"))
 	}
 
-	allErrs = append(allErrs, validateRedirectURLFmt(redirectURL, fieldPath)...)
-
-	nginxVars := captureVariables(redirectURL)
-	for _, nVar := range nginxVars {
-		allErrs = append(allErrs, validateVariable(nVar, validRedirectVariableNames, fieldPath)...)
+	if !escapedStringsFmtRegexp.MatchString(redirectURL) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, "http://www.nginx.com", "${scheme}://${host}/green/", `\"http://www.nginx.com\"`)
+		return append(allErrs, field.Invalid(fieldPath, redirectURL, msg))
 	}
+
+	allErrs = append(allErrs, validateStringWithVariables(redirectURL, fieldPath, validRedirectVariableNames, nil)...)
 
 	return allErrs
 }
 
-const redirectFmt string = `([^"\\]|\\.)*`
-const redirectFmtErrMsg string = `must have all '"' (double quotes) escaped and must not end with an unescaped '\' (backslash)`
-
-var redirectFmtRegexp = regexp.MustCompile("^" + redirectFmt + "$")
-
-func validateRedirectURLFmt(str string, fieldPath *field.Path) field.ErrorList {
+func validateStringWithVariables(str string, fieldPath *field.Path, validVars map[string]bool, specialVars []string) field.ErrorList {
 	allErrs := field.ErrorList{}
-
-	if !redirectFmtRegexp.MatchString(str) {
-		msg := validation.RegexError(redirectFmtErrMsg, redirectFmt, "http://www.nginx.com", "$scheme://$host/green/", `\"http://www.nginx.com\"`)
-		return append(allErrs, field.Invalid(fieldPath, str, msg))
-	}
 
 	if strings.HasSuffix(str, "$") {
 		return append(allErrs, field.Invalid(fieldPath, str, "must not end with $"))
@@ -697,6 +710,23 @@ func validateRedirectURLFmt(str string, fieldPath *field.Path) field.ErrorList {
 		}
 	}
 
+	nginxVars := captureVariables(str)
+	for _, nVar := range nginxVars {
+		special := false
+		for _, specialVar := range specialVars {
+			if strings.HasPrefix(nVar, specialVar) {
+				special = true
+				break
+			}
+		}
+
+		if special {
+			allErrs = append(allErrs, validateSpecialVariable(nVar, fieldPath)...)
+		} else {
+			allErrs = append(allErrs, validateVariable(nVar, validVars, fieldPath)...)
+		}
+	}
+
 	return allErrs
 }
 
@@ -706,6 +736,125 @@ func validateVariable(nVar string, validVars map[string]bool, fieldPath *field.P
 	if !validVars[nVar] {
 		msg := fmt.Sprintf("'%v' contains an invalid NGINX variable. Accepted variables are: %v", nVar, mapToPrettyString(validVars))
 		allErrs = append(allErrs, field.Invalid(fieldPath, nVar, msg))
+	}
+	return allErrs
+}
+
+func isValidSpecialVariableHeader(header string) []string {
+	// underscores in $http_ variable represent '-'.
+	errMsgs := validation.IsHTTPHeaderName(strings.Replace(header, "_", "-", -1))
+	if len(errMsgs) >= 1 || strings.Contains(header, "-") {
+		return []string{"a valid HTTP header must consist of alphanumeric characters or '_'"}
+	}
+	return nil
+}
+
+func validateSpecialVariable(nVar string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	value := strings.SplitN(nVar, "_", 2)
+
+	switch value[0] {
+	case "arg":
+		for _, msg := range isArgumentName(value[1]) {
+			allErrs = append(allErrs, field.Invalid(fieldPath, nVar, msg))
+		}
+	case "http":
+		for _, msg := range isValidSpecialVariableHeader(value[1]) {
+			allErrs = append(allErrs, field.Invalid(fieldPath, nVar, msg))
+		}
+	case "cookie":
+		for _, msg := range isCookieName(value[1]) {
+			allErrs = append(allErrs, field.Invalid(fieldPath, nVar, msg))
+		}
+	}
+
+	return allErrs
+}
+
+func validateActionReturnCode(code int, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if (code >= 200 && code <= 299) || (code >= 400 && code <= 599) {
+		return allErrs
+	}
+
+	msg := fmt.Sprintf("must be a valid status code either 2XX, 4XX or 5XX, for example, 200 or 402.")
+	return append(allErrs, field.Invalid(fieldPath, code, msg))
+}
+
+func validateActionReturn(r *v1.ActionReturn, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if r.Body == "" {
+		return append(allErrs, field.Required(fieldPath.Child("body"), ""))
+	}
+
+	allErrs = append(allErrs, validateActionReturnBody(r.Body, fieldPath.Child("body"))...)
+
+	if r.Type != "" {
+		allErrs = append(allErrs, validateActionReturnType(r.Type, fieldPath.Child("type"))...)
+	}
+
+	if r.Code != 0 {
+		allErrs = append(allErrs, validateActionReturnCode(r.Code, fieldPath.Child("code"))...)
+	}
+
+	return allErrs
+}
+
+// returnBodyVariables includes NGINX variables allowed to be used in a return body.
+var returnBodyVariables = map[string]bool{
+	"request_uri":         true,
+	"request_method":      true,
+	"request_body":        true,
+	"scheme":              true,
+	"args":                true,
+	"host":                true,
+	"request_time":        true,
+	"request_length":      true,
+	"nginx_version":       true,
+	"pid":                 true,
+	"connection":          true,
+	"remote_addr":         true,
+	"remote_port":         true,
+	"time_iso8601":        true,
+	"time_local":          true,
+	"server_addr":         true,
+	"server_port":         true,
+	"server_name":         true,
+	"server_protocol":     true,
+	"connections_active":  true,
+	"connections_reading": true,
+	"connections_writing": true,
+	"connections_waiting": true,
+}
+
+var returnBodySpecialVariables = []string{"arg_", "http_", "cookie_"}
+
+func validateActionReturnBody(body string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !escapedStringsFmtRegexp.MatchString(body) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, `Hello World! \n`, `\"${request_uri}\" is unavailable. \n`)
+		allErrs = append(allErrs, field.Invalid(fieldPath, body, msg))
+	}
+
+	allErrs = append(allErrs, validateStringWithVariables(body, fieldPath, returnBodyVariables, returnBodySpecialVariables)...)
+
+	return allErrs
+}
+
+var actionReturnTypeFmt = `([^;\{\}"\\]|\\.)*`
+var actionReturnTypeErr = `must have all '"' (double quotes) escaped, must not contain '{', '}' or ';' and must not end with an unescaped '\' (backslash)`
+
+var actionReturnTypeRegexp = regexp.MustCompile("^" + actionReturnTypeFmt + "$")
+
+func validateActionReturnType(returnType string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !actionReturnTypeRegexp.MatchString(returnType) {
+		msg := validation.RegexError(actionReturnTypeErr, actionReturnTypeFmt, "type/subtype", "application/json")
+		allErrs = append(allErrs, field.Invalid(fieldPath, returnType, msg))
 	}
 
 	return allErrs
@@ -798,11 +947,6 @@ func validateRoutePath(path string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-const regexPathFmt = `([^"\\]|\\.)*`
-const regexPathErrMsg = `must have all '"' (double quotes) escaped and must not end with an unescaped '\' (backslash)`
-
-var regexPathRegexp = regexp.MustCompile("^" + regexPathFmt + "$")
-
 func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -810,8 +954,8 @@ func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
 		return append(allErrs, field.Invalid(fieldPath, path, fmt.Sprintf("must be a valid regular expression: %v", err)))
 	}
 
-	if !regexPathRegexp.MatchString(path) {
-		msg := validation.RegexError(regexPathErrMsg, regexPathFmt, "*.jpg", "^/images/image_*.png$")
+	if !escapedStringsFmtRegexp.MatchString(path) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, "*.jpg", "^/images/image_*.png$")
 		return append(allErrs, field.Invalid(fieldPath, path, msg))
 	}
 
@@ -964,14 +1108,9 @@ func validateVariableName(name string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-const matchValueFmt string = `([^"\\]|\\.)*`
-const matchValueErrMsg string = `a valid value must have all '"' (double quotes) escaped and must not end with an unescaped '\' (backslash)`
-
-var matchValueRegexp = regexp.MustCompile("^" + matchValueFmt + "$")
-
 func isValidMatchValue(value string) []string {
-	if !matchValueRegexp.MatchString(value) {
-		return []string{validation.RegexError(matchValueErrMsg, matchValueFmt, "value-123")}
+	if !escapedStringsFmtRegexp.MatchString(value) {
+		return []string{validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, "value-123")}
 	}
 	return nil
 }

@@ -25,6 +25,7 @@ This document is the reference documentation for the resources. To see additiona
     - [Header](#header)
     - [Action](#action)
     - [Action.Redirect](#actionredirect)
+    - [Action.Return](#actionreturn)
     - [Split](#split)
     - [Match](#match)
     - [Condition](#condition)
@@ -400,8 +401,10 @@ In the example below, client requests are passed to an upstream `coffee`:
 | ----- | ----------- | ---- | -------- |
 | `pass` | Passes requests to an upstream. The upstream with that name must be defined in the resource. | `string` | No* |
 | `redirect` | Redirects requests to a provided URL. | [`action.redirect`](#ActionRedirect) | No* |
+| `return` | Returns a preconfigured response. | [`action.return`](#ActionReturn) | No* |
 
-\* -- an action must include exactly one of the following: `pass` or `redirect`.
+
+\* -- an action must include exactly one of the following: `pass`, `redirect` or `return`.
 
 ### Action.Redirect
 
@@ -416,9 +419,28 @@ redirect:
 
 | Field | Description | Type | Required |
 | ----- | ----------- | ---- | -------- |
-| `url` | The URL to redirect the request to. Supported NGINX variables: `$scheme`, `$http_x_forwarded_proto`, `$request_uri`, `$host`. Variables must be inclosed in the curly braces. For example: `${host}${request_uri}`. | `string` | Yes |
+| `url` | The URL to redirect the request to. Supported NGINX variables: `$scheme`, `$http_x_forwarded_proto`, `$request_uri`, `$host`. Variables must be inclosed in curly braces. For example: `${host}${request_uri}`. | `string` | Yes |
 | `code` | The status code of a redirect. The allowed values are: `301`, `302`, `307`, `308`. The default is `301`. | `int` | No |
 
+### Action.Return
+
+The return action defines a preconfigured response for a request.
+
+In the example below, NGINX will respond with the preconfigured response for every request:
+```yaml
+return:
+  code: 200
+  type: text/plain
+  body: "Hello World\n"
+```
+
+| Field | Description | Type | Required |
+| ----- | ----------- | ---- | -------- |
+| `code` | The status code of the response. The allowed values are: `2XX`, `4XX` or `5XX`. The default is `200`. | `int` | No |
+| `type` | The MIME type of the response. The default is `text/plain`. | `string` | No |
+| `body` | The body of the response. Supports NGINX variables*. Variables must be inclosed in curly brackets. For example: `Request is ${request_uri}\n`. | `string` | Yes |
+
+\* -- Supported NGINX variables: `$request_uri`, `$request_method`, `$request_body`, `$scheme`, `$http_`, `$args`, `$arg_`, `$cookie_`, `$host`, `$request_time`, `$request_length`, `$nginx_version`, `$pid`, `$connection`, `$remote_addr`, `$remote_port`, `$time_iso8601`, `$time_local`, `$server_addr`, `$server_port`, `$server_name`, `$server_protocol`, `$connections_active`, `$connections_reading`, `$connections_writing` and `$connections_waiting`.
 
 ### Split
 

@@ -511,9 +511,32 @@ func generatePath(path string) string {
 	return path
 }
 
+func generateReturnBlock(text string, code int, defaultCode int) *version2.Return {
+	returnBlock := &version2.Return{
+		Code: defaultCode,
+		Text: text,
+	}
+
+	if code != 0 {
+		returnBlock.Code = code
+	}
+
+	return returnBlock
+}
+
 func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, action *conf_v1.Action, cfgParams *ConfigParams) version2.Location {
 	if action.Redirect != nil {
-		return generateLocationForRedirect(path, cfgParams.LocationSnippets, action.Redirect)
+		returnBlock := generateReturnBlock(action.Redirect.URL, action.Redirect.Code, 301)
+		return generateLocationForReturnBlock(path, cfgParams.LocationSnippets, returnBlock, "")
+	}
+
+	if action.Return != nil {
+		defaultType := action.Return.Type
+		if defaultType == "" {
+			defaultType = "text/plain"
+		}
+		returnBlock := generateReturnBlock(action.Return.Body, action.Return.Code, 200)
+		return generateLocationForReturnBlock(path, cfgParams.LocationSnippets, returnBlock, defaultType)
 	}
 
 	return generateLocationForProxying(path, upstreamName, upstream, cfgParams)
@@ -539,11 +562,12 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 	}
 }
 
-func generateLocationForRedirect(path string, locationSnippets []string, redirect *conf_v1.ActionRedirect) version2.Location {
+func generateLocationForReturnBlock(path string, locationSnippets []string, r *version2.Return, defaultType string) version2.Location {
 	return version2.Location{
-		Path:     path,
-		Snippets: locationSnippets,
-		Redirect: generateActionRedirectConfig(redirect),
+		Path:        path,
+		Snippets:    locationSnippets,
+		DefaultType: defaultType,
+		Return:      r,
 	}
 }
 
@@ -817,23 +841,6 @@ func generateTLSRedirectConfig(tls *conf_v1.TLS) *version2.TLSRedirect {
 	redirect := &version2.TLSRedirect{
 		Code:    generateIntFromPointer(tls.Redirect.Code, 301),
 		BasedOn: generateTLSRedirectBasedOn(tls.Redirect.BasedOn),
-	}
-
-	return redirect
-}
-
-func generateActionRedirectConfig(actionRedirect *conf_v1.ActionRedirect) *version2.ActionRedirect {
-	if actionRedirect == nil {
-		return nil
-	}
-
-	redirect := &version2.ActionRedirect{
-		URL:  actionRedirect.URL,
-		Code: 301,
-	}
-
-	if actionRedirect.Code != 0 {
-		redirect.Code = actionRedirect.Code
 	}
 
 	return redirect

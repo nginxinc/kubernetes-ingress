@@ -1138,29 +1138,66 @@ func TestGenerateLocationForProxying(t *testing.T) {
 	}
 }
 
-func TestGenerateLocationForRedirect(t *testing.T) {
-	cfgParams := ConfigParams{
-		LocationSnippets: []string{"# location snippet"},
-	}
-	path := "/"
-	redirect := &conf_v1.Action{
-		Redirect: &conf_v1.ActionRedirect{
-			URL: "http://www.nginx.com",
+func TestGenerateReturnBlock(t *testing.T) {
+	tests := []struct {
+		text        string
+		code        int
+		defaultCode int
+		expected    *version2.Return
+	}{
+		{
+			text:        "Hello World!",
+			code:        0, // Not set
+			defaultCode: 200,
+			expected: &version2.Return{
+				Code: 200,
+				Text: "Hello World!",
+			},
+		},
+		{
+			text:        "Hello World!",
+			code:        400,
+			defaultCode: 200,
+			expected: &version2.Return{
+				Code: 400,
+				Text: "Hello World!",
+			},
 		},
 	}
 
+	for _, test := range tests {
+		result := generateReturnBlock(test.text, test.code, test.defaultCode)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateReturnBlock() returned %v but expected %v", result, test.expected)
+		}
+	}
+
+}
+
+func TestGenerateLocationForReturnBlock(t *testing.T) {
+	cfgParams := ConfigParams{
+		LocationSnippets: []string{"# location snippet"},
+	}
+	defaultType := "application/json"
+	path := "/"
+	returnBlock := &version2.Return{
+		Code: 301,
+		Text: "http://www.nginx.com",
+	}
+
 	expected := version2.Location{
-		Path:     "/",
-		Snippets: []string{"# location snippet"},
-		Redirect: &version2.ActionRedirect{
-			URL:  "http://www.nginx.com",
+		Path:        "/",
+		Snippets:    []string{"# location snippet"},
+		DefaultType: defaultType,
+		Return: &version2.Return{
+			Text: "http://www.nginx.com",
 			Code: 301,
 		},
 	}
 
-	result := generateLocationForRedirect(path, cfgParams.LocationSnippets, redirect.Redirect)
+	result := generateLocationForReturnBlock(path, cfgParams.LocationSnippets, returnBlock, defaultType)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateLocationForRedirect() returned %v but expected %v", result, expected)
+		t.Errorf("generateLocationForReturnBlock() returned %v but expected %v", result, expected)
 	}
 }
 
@@ -1312,43 +1349,6 @@ func TestGenerateTLSRedirectBasedOn(t *testing.T) {
 		result := generateTLSRedirectBasedOn(test.basedOn)
 		if result != test.expected {
 			t.Errorf("generateTLSRedirectBasedOn(%v) returned %v but expected %v", test.basedOn, result, test.expected)
-		}
-	}
-}
-
-func TestGenerateActionRedirectConfig(t *testing.T) {
-	tests := []struct {
-		redirect *conf_v1.ActionRedirect
-		expected *version2.ActionRedirect
-	}{
-		{
-			redirect: nil,
-			expected: nil,
-		},
-		{
-			redirect: &conf_v1.ActionRedirect{
-				URL: "http://www.nginx.com",
-			},
-			expected: &version2.ActionRedirect{
-				URL:  "http://www.nginx.com",
-				Code: 301,
-			},
-		},
-		{
-			redirect: &conf_v1.ActionRedirect{
-				URL:  "$scheme://www.nginx.com",
-				Code: 302,
-			},
-			expected: &version2.ActionRedirect{
-				URL:  "$scheme://www.nginx.com",
-				Code: 302,
-			},
-		},
-	}
-	for _, test := range tests {
-		result := generateActionRedirectConfig(test.redirect)
-		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateActionRedirectConfig() returned %v, but expected %v", result, test.expected)
 		}
 	}
 }

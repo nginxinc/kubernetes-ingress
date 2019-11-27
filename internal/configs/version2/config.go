@@ -72,7 +72,8 @@ type Location struct {
 	ProxyNextUpstreamTimeout string
 	ProxyNextUpstreamTries   int
 	HasKeepalive             bool
-	Redirect                 *ActionRedirect
+	DefaultType              string
+	Return                   *Return
 }
 
 // SplitClient defines a split_clients.
@@ -80,6 +81,12 @@ type SplitClient struct {
 	Source        string
 	Variable      string
 	Distributions []Distribution
+}
+
+// Return defines a Return directive used for redirects and canned responses.
+type Return struct {
+	Code int
+	Text string
 }
 
 // HealthCheck defines a HealthCheck for an upstream in a Server.
@@ -103,12 +110,6 @@ type HealthCheck struct {
 type TLSRedirect struct {
 	Code    int
 	BasedOn string
-}
-
-// ActionRedirect defines a redirect in a location.
-type ActionRedirect struct {
-	URL  string
-	Code int
 }
 
 // SessionCookie defines a session cookie for an upstream.

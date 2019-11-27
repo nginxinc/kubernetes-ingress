@@ -82,8 +82,11 @@ server {
         {{ $snippet }}
         {{ end }}
 
-        {{ with $l.Redirect }}
-        return {{ .Code }} "{{ .URL }}";
+        {{ with $l.Return }}
+            {{ if $l.DefaultType }}
+        default_type "{{ $l.DefaultType }}";
+            {{ end }}
+        return {{ .Code }} "{{ .Text }}";
         {{ end }}
 
         {{ if $l.ProxyPass }}
