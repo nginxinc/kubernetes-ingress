@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"reflect"
 	"testing"
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
@@ -901,6 +902,32 @@ func TestValidateActionFails(t *testing.T) {
 	}
 }
 
+func TestCaptureVariables(t *testing.T) {
+	tests := []struct {
+		s        string
+		expected []string
+	}{
+		{
+			"${scheme}://${host}",
+			[]string{"scheme", "host"},
+		},
+		{
+			"http://www.nginx.org",
+			nil,
+		},
+		{
+			"${}",
+			[]string{""},
+		},
+	}
+	for _, test := range tests {
+		result := captureVariables(test.s)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("captureVariables(%s) returned %v but expected %v", test.s, result, test.expected)
+		}
+	}
+}
+
 func TestValidateRedirectURL(t *testing.T) {
 	tests := []struct {
 		redirectURL string
@@ -997,6 +1024,10 @@ func TestValidateRedirectURLFails(t *testing.T) {
 		{
 			redirectURL: `http://${}`,
 			msg:         "url containing blank var",
+		},
+		{
+			redirectURL: `http://${abca`,
+			msg:         "url containing a var without ending }",
 		},
 	}
 

@@ -627,11 +627,18 @@ func validateActionRedirect(redirect *v1.ActionRedirect, fieldPath *field.Path) 
 	return allErrs
 }
 
-var regexFmtRegexp = regexp.MustCompile(`\$\{([^}]+)\}`)
+var regexFmtRegexp = regexp.MustCompile(`\$\{([^}]*)\}`)
 
-// Returns a slice of vars enclosed in ${}. For example ${scheme} would return scheme.
-func captureVariables(s string) [][]string {
-	return regexFmtRegexp.FindAllStringSubmatch(s, -1)
+// captureVariables returns a slice of vars enclosed in ${}. For example "${a} ${b}" would return ["a", "b"].
+func captureVariables(s string) []string {
+	var nVars []string
+
+	res := regexFmtRegexp.FindAllStringSubmatch(s, -1)
+	for _, n := range res {
+		nVars = append(nVars, n[1])
+	}
+
+	return nVars
 }
 
 // validRedirectVariableNames includes NGINX variables allowed to be used in redirects.
@@ -651,13 +658,9 @@ func validateRedirectURL(redirectURL string, fieldPath *field.Path) field.ErrorL
 
 	allErrs = append(allErrs, validateRedirectURLFmt(redirectURL, fieldPath)...)
 
-	if strings.Contains(redirectURL, "$") {
-		nginxVars := captureVariables(redirectURL)
-		if nginxVars != nil {
-			for _, v := range nginxVars {
-				allErrs = append(allErrs, validateVariable(v[1], validRedirectVariableNames, fieldPath)...)
-			}
-		}
+	nginxVars := captureVariables(redirectURL)
+	for _, nVar := range nginxVars {
+		allErrs = append(allErrs, validateVariable(nVar, validRedirectVariableNames, fieldPath)...)
 	}
 
 	return allErrs
@@ -674,10 +677,6 @@ func validateRedirectURLFmt(str string, fieldPath *field.Path) field.ErrorList {
 	if !redirectFmtRegexp.MatchString(str) {
 		msg := validation.RegexError(redirectFmtErrMsg, redirectFmt, "http://www.nginx.com", "$scheme://$host/green/", `\"http://www.nginx.com\"`)
 		return append(allErrs, field.Invalid(fieldPath, str, msg))
-	}
-
-	if strings.Contains(str, "${}") {
-		return append(allErrs, field.Invalid(fieldPath, str, "must not contain any empty variable ${}"))
 	}
 
 	if strings.HasSuffix(str, "$") {
@@ -704,16 +703,8 @@ func validateRedirectURLFmt(str string, fieldPath *field.Path) field.ErrorList {
 func validateVariable(nVar string, validVars map[string]bool, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if nVar == "" {
-		return append(allErrs, field.Invalid(fieldPath, nVar, "$ must be followed by a set of curly braces to define a nginx variable"))
-	}
-
-	if strings.Contains(nVar, "{") || strings.Contains(nVar, "}") || strings.Contains(nVar, "$") {
-		return append(allErrs, field.Invalid(fieldPath, nVar, "nested nginx variables are not valid. Any nested '{', '}', or '$' should be removed"))
-	}
-
 	if !validVars[nVar] {
-		msg := fmt.Sprintf("'%v' contains an invalid nginx variable. Accepted variables are: %v", nVar, mapToPrettyString(validVars))
+		msg := fmt.Sprintf("'%v' contains an invalid NGINX variable. Accepted variables are: %v", nVar, mapToPrettyString(validVars))
 		allErrs = append(allErrs, field.Invalid(fieldPath, nVar, msg))
 	}
 

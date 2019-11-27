@@ -1348,7 +1348,7 @@ func TestGenerateActionRedirectConfig(t *testing.T) {
 	for _, test := range tests {
 		result := generateActionRedirectConfig(test.redirect)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateActionRedirectConfig() = %v, want %v", result, test.expected)
+			t.Errorf("generateActionRedirectConfig() returned %v, but expected %v", result, test.expected)
 		}
 	}
 }
