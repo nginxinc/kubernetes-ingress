@@ -627,10 +627,11 @@ func validateActionRedirect(redirect *v1.ActionRedirect, fieldPath *field.Path) 
 	return allErrs
 }
 
+var regexFmtRegexp = regexp.MustCompile(`\$\{([^}]+)\}`)
+
 // Returns a slice of vars enclosed in ${}. For example ${scheme} would return scheme.
 func captureVariables(s string) [][]string {
-	regex := regexp.MustCompile(`\$\{([^}]+)\}`)
-	return regex.FindAllStringSubmatch(s, -1)
+	return regexFmtRegexp.FindAllStringSubmatch(s, -1)
 }
 
 // validRedirectVariableNames includes NGINX variables allowed to be used in redirects.
@@ -654,8 +655,7 @@ func validateRedirectURL(redirectURL string, fieldPath *field.Path) field.ErrorL
 		nginxVars := captureVariables(redirectURL)
 		if nginxVars != nil {
 			for _, v := range nginxVars {
-				nVar := v[1]
-				allErrs = append(allErrs, validateVariable(nVar, validRedirectVariableNames, fieldPath)...)
+				allErrs = append(allErrs, validateVariable(v[1], validRedirectVariableNames, fieldPath)...)
 			}
 		}
 	}
@@ -685,7 +685,7 @@ func validateRedirectURLFmt(str string, fieldPath *field.Path) field.ErrorList {
 	}
 
 	for i, c := range str {
-		if c == '$' && i+1 < len(str) {
+		if c == '$' {
 			msg := "variables must be enclosed in curly braces, for example ${host}"
 
 			if str[i+1] != '{' {
