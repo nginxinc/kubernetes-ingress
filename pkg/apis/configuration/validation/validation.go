@@ -627,13 +627,13 @@ func validateActionRedirect(redirect *v1.ActionRedirect, fieldPath *field.Path) 
 	return allErrs
 }
 
-var regexFmtRegexp = regexp.MustCompile(`\$\{([^}]*)\}`)
+var nginxVariableRegexp = regexp.MustCompile(`\$\{([^}]*)\}`)
 
 // captureVariables returns a slice of vars enclosed in ${}. For example "${a} ${b}" would return ["a", "b"].
 func captureVariables(s string) []string {
 	var nVars []string
 
-	res := regexFmtRegexp.FindAllStringSubmatch(s, -1)
+	res := nginxVariableRegexp.FindAllStringSubmatch(s, -1)
 	for _, n := range res {
 		nVars = append(nVars, n[1])
 	}
