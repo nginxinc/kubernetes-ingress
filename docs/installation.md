@@ -32,7 +32,8 @@ The installation manifests are located in the [deployments](../deployments) fold
     ```
     $ kubectl apply -f common/custom-resource-definitions.yaml
     ```
-    Note: in Step 3, make sure the Ingress controller starts with the `-enable-custom-resources` [command-line argument](cli-arguments.md).
+
+    **Note**: If you want to use the ingress resource instead, you must skip this step. Additionally in Step 3 remove the `-enable-custom-resources` [command-line argument](cli-arguments.md).
 
 ## 2. Configure RBAC
 
