@@ -6,7 +6,7 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 
 ## Prerequisites
 
-  - Kubernetes 1.6+.
+  - Kubernetes 1.12+.
   - Helm 2.8.x+.
   - Git.
   - If you’d like to use NGINX Plus:
@@ -25,15 +25,29 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 
 2. To install the chart with the release name my-release (my-release is the name that you choose):
 
-    For NGINX:
-    ```
-    $ helm install nginx-edge/nginx-ingress --name my-release
-    ```
+    * Using Helm 3.x client:
 
-    For NGINX Plus (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`):
-    ```
-    $ helm install nginx-edge/nginx-ingress --name my-release --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
-    ```
+        For NGINX:
+        ```console
+        $ helm install my-release nginx-edge/nginx-ingress
+        ```
+
+        For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
+        ```console
+        $ helm install my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+        ```
+
+    * Using Helm 2.x client:
+
+        For NGINX:
+        ```console
+        $ helm install --name my-release nginx-edge/nginx-ingress
+        ```
+
+        For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
+        ```console
+        $ helm install --name my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+        ```
 
 ### Installing Using Chart Sources
 
@@ -45,17 +59,32 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
     ```console
     $ cd kubernetes-ingress/deployments/helm-chart
     ```
+
 3. To install the chart with the release name my-release (my-release is the name that you choose):
 
-    For NGINX:
-    ```console
-    $ helm install --name my-release .
-    ```
+    * Using Helm 3.x client:
 
-    For NGINX Plus:
-    ```console
-    $ helm install --name my-release -f values-plus.yaml .
-    ```
+        For NGINX:
+        ```console
+        $ helm install my-release .
+        ```
+
+        For NGINX Plus:
+        ```console
+        $ helm install my-release -f values-plus.yaml .
+        ```
+
+    * Using Helm 2.x client:
+
+        For NGINX:
+        ```console
+        $ helm install --name my-release .
+        ```
+
+        For NGINX Plus:
+        ```console
+        $ helm install --name my-release -f values-plus.yaml .
+        ```
 
     The command deploys the Ingress controller in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
 
@@ -67,9 +96,17 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 
 To uninstall/delete the release `my-release`
 
-```console
-$ helm delete my-release
-```
+* Using Helm 3.x client:
+
+    ```console
+    $ helm uninstall my-release
+    ```
+
+* Using Helm 2.x client:
+
+    ```console
+    $ helm delete my-release
+    ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
@@ -145,7 +182,7 @@ Parameter | Description | Default
 Example:
 ```console
 $ cd kubernetes-ingress/helm-chart
-$ helm install --name my-release . --set controller.replicaCount=5
+$ helm install my-release . --set controller.replicaCount=5
 ```
 
 ## Notes
