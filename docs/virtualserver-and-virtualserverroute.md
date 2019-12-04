@@ -4,8 +4,6 @@ The VirtualServer and VirtualServerRoute resources are new load balancing config
 
 This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples-of-custom-resources](../examples-of-custom-resources) folder.
 
-**Feature Status**: The VirtualServer and VirtualServerRoute resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
-
 ## Contents
 
 - [VirtualServer and VirtualServerRoute Resources](#virtualserver-and-virtualserverroute-resources)

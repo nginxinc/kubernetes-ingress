@@ -28,7 +28,7 @@ The installation manifests are located in the [deployments](../deployments) fold
     $ kubectl apply -f common/nginx-config.yaml
     ```
 
-1. (Optional) To use the [VirtualServer and VirtualServerRoute](virtualserver-and-virtualserverroute.md) resources, create the corresponding resource definitions:
+1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](virtualserver-and-virtualserverroute.md) resources:
     ```
     $ kubectl apply -f common/custom-resource-definitions.yaml
     ```

@@ -14,7 +14,7 @@ Usage of ./nginx-ingress:
        Format: <namespace>/<name>. If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection.
     	If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.
   -enable-custom-resources
-    	Enable custom resources
+       Enable custom resources (default true)
   -enable-leader-election
     	Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources -- only one replica will report status. See -report-ingress-status flag.
   -external-service string

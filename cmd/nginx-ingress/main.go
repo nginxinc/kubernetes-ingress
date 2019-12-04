@@ -124,7 +124,7 @@ The external address of the service is used when reporting the status of Ingress
 	prometheusMetricsListenPort = flag.Int("prometheus-metrics-listen-port", 9113,
 		"Set the port where the Prometheus metrics are exposed. [1023 - 65535]")
 
-	enableCustomResources = flag.Bool("enable-custom-resources", false,
+	enableCustomResources = flag.Bool("enable-custom-resources", true,
 		"Enable custom resources")
 )
 
