@@ -2,7 +2,7 @@ FROM debian:stretch-slim
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV NGINX_PLUS_VERSION 19-1~stretch
+ENV NGINX_PLUS_VERSION 20-1~stretch
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
@@ -57,7 +57,7 @@ RUN  mkdir -p /var/lib/nginx \
   && chown -R nginx:0 /var/cache/nginx \
   && chown -R nginx:0 /var/lib/nginx/ \
   && apt-get remove --purge -y libcap2-bin \
-  && rm /etc/nginx/conf.d/* 
+  && rm /etc/nginx/conf.d/*
 
 EXPOSE 80 443
 

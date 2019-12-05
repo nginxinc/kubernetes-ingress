@@ -4,14 +4,14 @@ ARG JAEGER_VERSION=v0.4.2
 RUN set -x \
     && apt-get update \
     && apt-get install --no-install-recommends --no-install-suggests -y ca-certificates apt-transport-https wget \
-    && wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so 
+    && wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
 
 # Final Image
 FROM debian:stretch-slim
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV NGINX_PLUS_VERSION 19-1~stretch
-ENV NGINX_OPENTRACING_MODULE_VERSION 19+0.8.0-1~stretch
+ENV NGINX_PLUS_VERSION 20-1~stretch
+ENV NGINX_OPENTRACING_MODULE_VERSION 20+0.9.0-1~stretch
 
 ARG IC_VERSION
 
