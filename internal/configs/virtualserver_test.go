@@ -195,6 +195,11 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 						Subselector: map[string]string{"version": "v1"},
 						Port:        80,
 					},
+					{
+						Name:    "coffee",
+						Service: "coffee-svc",
+						Port:    80,
+					},
 				},
 				Routes: []conf_v1.Route{
 					{
@@ -216,6 +221,38 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					{
 						Path:  "/subtea",
 						Route: "default/subtea",
+					},
+					{
+						Path: "/coffee-errorpage",
+						Action: &conf_v1.Action{
+							Pass: "coffee",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
+					},
+					{
+						Path:  "/coffee-errorpage-subroute",
+						Route: "default/subcoffee",
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{401, 403},
+								Redirect: &conf_v1.ErrorPageRedirect{
+									ActionRedirect: conf_v1.ActionRedirect{
+										URL:  "http://nginx.com",
+										Code: 301,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -284,6 +321,48 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					},
 				},
 			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "subcoffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee",
+							Service: "coffee-svc",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee-errorpage-subroute",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+						},
+						{
+							Path: "/coffee-errorpage-subroute-defined",
+							Action: &conf_v1.Action{
+								Pass: "coffee",
+							},
+							ErrorPages: []conf_v1.ErrorPage{
+								{
+									Codes: []int{502, 503},
+									Return: &conf_v1.ErrorPageReturn{
+										ActionReturn: conf_v1.ActionReturn{
+											Code: 200,
+											Type: "text/plain",
+											Body: "All Good",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -318,6 +397,15 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 			{
+				Name: "vs_default_cafe_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
 				Name: "vs_default_cafe_vsr_default_coffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
@@ -331,6 +419,15 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.50:80",
+					},
+				},
+				Keepalive: 16,
+			},
+			{
+				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.40:80",
 					},
 				},
 				Keepalive: 16,
@@ -362,6 +459,23 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
 				},
+				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
+				{
+					Path:                     "/coffee-errorpage",
+					ProxyPass:                "http://vs_default_cafe_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+				},
 				{
 					Path:                     "/coffee",
 					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee",
@@ -378,6 +492,48 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
 				},
+
+				{
+					Path:                     "/coffee-errorpage-subroute",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "http://nginx.com",
+							Codes:        "401 403",
+							ResponseCode: 301,
+						},
+					},
+				},
+				{
+					Path:                     "/coffee-errorpage-subroute-defined",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_subcoffee_coffee",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxyInterceptErrors:     true,
+					ErrorPages: []version2.ErrorPage{
+						{
+							Name:         "@error_page_0_0",
+							Codes:        "502 503",
+							ResponseCode: 200,
+						},
+					},
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return: &version2.Return{
+						Text: "All Good",
+					},
+				},
 			},
 		},
 	}
@@ -388,7 +544,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured)
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
 
 	if len(warnings) != 0 {
@@ -543,11 +699,11 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 				Distributions: []version2.Distribution{
 					{
 						Weight: "90%",
-						Value:  "@splits_0_split_0",
+						Value:  "/internal_location_splits_0_split_0",
 					},
 					{
 						Weight: "10%",
-						Value:  "@splits_0_split_1",
+						Value:  "/internal_location_splits_0_split_1",
 					},
 				},
 			},
@@ -557,11 +713,11 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 				Distributions: []version2.Distribution{
 					{
 						Weight: "40%",
-						Value:  "@splits_1_split_0",
+						Value:  "/internal_location_splits_1_split_0",
 					},
 					{
 						Weight: "60%",
-						Value:  "@splits_1_split_1",
+						Value:  "/internal_location_splits_1_split_1",
 					},
 				},
 			},
@@ -581,32 +737,36 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 			},
 			Locations: []version2.Location{
 				{
-					Path:                     "@splits_0_split_0",
-					ProxyPass:                "http://vs_default_cafe_tea-v1",
+					Path:                     "/internal_location_splits_0_split_0",
+					ProxyPass:                "http://vs_default_cafe_tea-v1$request_uri",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
+					Internal:                 true,
 				},
 				{
-					Path:                     "@splits_0_split_1",
-					ProxyPass:                "http://vs_default_cafe_tea-v2",
+					Path:                     "/internal_location_splits_0_split_1",
+					ProxyPass:                "http://vs_default_cafe_tea-v2$request_uri",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
+					Internal:                 true,
 				},
 				{
-					Path:                     "@splits_1_split_0",
-					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v1",
+					Path:                     "/internal_location_splits_1_split_0",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v1$request_uri",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
+					Internal:                 true,
 				},
 				{
-					Path:                     "@splits_1_split_1",
-					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v2",
+					Path:                     "/internal_location_splits_1_split_1",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v2$request_uri",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
+					Internal:                 true,
 				},
 			},
 		},
@@ -618,7 +778,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured)
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
 
 	if len(warnings) != 0 {
@@ -792,11 +952,11 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 				Parameters: []version2.Parameter{
 					{
 						Value:  "~^1",
-						Result: "@matches_0_match_0",
+						Result: "/internal_location_matches_0_match_0",
 					},
 					{
 						Value:  "default",
-						Result: "@matches_0_default",
+						Result: "/internal_location_matches_0_default",
 					},
 				},
 			},
@@ -820,11 +980,11 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 				Parameters: []version2.Parameter{
 					{
 						Value:  "~^1",
-						Result: "@matches_1_match_0",
+						Result: "/internal_location_matches_1_match_0",
 					},
 					{
 						Value:  "default",
-						Result: "@matches_1_default",
+						Result: "/internal_location_matches_1_default",
 					},
 				},
 			},
@@ -844,32 +1004,36 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 			},
 			Locations: []version2.Location{
 				{
-					Path:                     "@matches_0_match_0",
-					ProxyPass:                "http://vs_default_cafe_tea-v2",
+					Path:                     "/internal_location_matches_0_match_0",
+					ProxyPass:                "http://vs_default_cafe_tea-v2$request_uri",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
+					Internal:                 true,
 				},
 				{
-					Path:                     "@matches_0_default",
-					ProxyPass:                "http://vs_default_cafe_tea-v1",
+					Path:                     "/internal_location_matches_0_default",
+					ProxyPass:                "http://vs_default_cafe_tea-v1$request_uri",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
+					Internal:                 true,
 				},
 				{
-					Path:                     "@matches_1_match_0",
-					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v2",
+					Path:                     "/internal_location_matches_1_match_0",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v2$request_uri",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
+					Internal:                 true,
 				},
 				{
-					Path:                     "@matches_1_default",
-					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v1",
+					Path:                     "/internal_location_matches_1_default",
+					ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v1$request_uri",
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
+					Internal:                 true,
 				},
 			},
 		},
@@ -881,7 +1045,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured)
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%v but expected \n%v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
 
 	if len(warnings) != 0 {
@@ -1027,6 +1191,47 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	}
 }
 
+func TestGenerateProxyPass(t *testing.T) {
+	tests := []struct {
+		tlsEnabled   bool
+		upstreamName string
+		internal     bool
+		expected     string
+	}{
+		{
+			tlsEnabled:   false,
+			upstreamName: "test-upstream",
+			internal:     false,
+			expected:     "http://test-upstream",
+		},
+		{
+			tlsEnabled:   true,
+			upstreamName: "test-upstream",
+			internal:     false,
+			expected:     "https://test-upstream",
+		},
+		{
+			tlsEnabled:   false,
+			upstreamName: "test-upstream",
+			internal:     true,
+			expected:     "http://test-upstream$request_uri",
+		},
+		{
+			tlsEnabled:   true,
+			upstreamName: "test-upstream",
+			internal:     true,
+			expected:     "https://test-upstream$request_uri",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateProxyPass(test.tlsEnabled, test.upstreamName, test.internal)
+		if result != test.expected {
+			t.Errorf("generateProxyPass(%v, %v, %v) returned %v but expected %v", test.tlsEnabled, test.upstreamName, test.internal, result, test.expected)
+		}
+	}
+}
+
 func TestGenerateProxyPassProtocol(t *testing.T) {
 	tests := []struct {
 		upstream conf_v1.Upstream
@@ -1132,7 +1337,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 		ProxyNextUpstreamTries:   0,
 	}
 
-	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams)
+	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateLocationForProxying() returned %v but expected %v", result, expected)
 	}
@@ -1574,6 +1779,35 @@ func TestGenerateSplits(t *testing.T) {
 	scIndex := 1
 	cfgParams := ConfigParams{}
 	crUpstreams := make(map[string]conf_v1.Upstream)
+	errorPages := []conf_v1.ErrorPage{
+		{
+			Codes: []int{400, 500},
+			Return: &conf_v1.ErrorPageReturn{
+				ActionReturn: conf_v1.ActionReturn{
+					Code: 200,
+					Type: "application/json",
+					Body: `{\"message\": \"ok\"}`,
+				},
+				Headers: []conf_v1.Header{
+					{
+						Name:  "Set-Cookie",
+						Value: "cookie1=value",
+					},
+				},
+			},
+			Redirect: nil,
+		},
+		{
+			Codes:  []int{500, 502},
+			Return: nil,
+			Redirect: &conf_v1.ErrorPageRedirect{
+				ActionRedirect: conf_v1.ActionRedirect{
+					URL:  "http://nginx.com",
+					Code: 301,
+				},
+			},
+		},
+	}
 
 	expectedSplitClient := version2.SplitClient{
 		Source:   "$request_id",
@@ -1581,38 +1815,67 @@ func TestGenerateSplits(t *testing.T) {
 		Distributions: []version2.Distribution{
 			{
 				Weight: "90%",
-				Value:  "@splits_1_split_0",
+				Value:  "/internal_location_splits_1_split_0",
 			},
 			{
 				Weight: "10%",
-				Value:  "@splits_1_split_1",
+				Value:  "/internal_location_splits_1_split_1",
 			},
 		},
 	}
 	expectedLocations := []version2.Location{
 		{
-			Path:                     "@splits_1_split_0",
-			ProxyPass:                "http://vs_default_cafe_coffee-v1",
+			Path:                     "/internal_location_splits_1_split_0",
+			ProxyPass:                "http://vs_default_cafe_coffee-v1$request_uri",
 			ProxyNextUpstream:        "error timeout",
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyNextUpstreamTries:   0,
+			ProxyInterceptErrors:     true,
+			Internal:                 true,
+			ErrorPages: []version2.ErrorPage{
+				{
+					Name:         "@error_page_0_0",
+					Codes:        "400 500",
+					ResponseCode: 200,
+				},
+				{
+					Name:         "http://nginx.com",
+					Codes:        "500 502",
+					ResponseCode: 301,
+				},
+			},
 		},
 		{
-			Path:                     "@splits_1_split_1",
-			ProxyPass:                "http://vs_default_cafe_coffee-v2",
+			Path:                     "/internal_location_splits_1_split_1",
+			ProxyPass:                "http://vs_default_cafe_coffee-v2$request_uri",
 			ProxyNextUpstream:        "error timeout",
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyNextUpstreamTries:   0,
+			ProxyInterceptErrors:     true,
+			Internal:                 true,
+			ErrorPages: []version2.ErrorPage{
+				{
+					Name:         "@error_page_0_0",
+					Codes:        "400 500",
+					ResponseCode: 200,
+				},
+				{
+					Name:         "http://nginx.com",
+					Codes:        "500 502",
+					ResponseCode: 301,
+				},
+			},
 		},
 	}
 
-	resultSplitClient, resultLocations := generateSplits(splits, upstreamNamer, crUpstreams, variableNamer, scIndex, &cfgParams)
+	resultSplitClient, resultLocations := generateSplits(splits, upstreamNamer, crUpstreams, variableNamer, scIndex, &cfgParams, errorPages, 0)
 	if !reflect.DeepEqual(resultSplitClient, expectedSplitClient) {
-		t.Errorf("generateSplits() returned %v but expected %v", resultSplitClient, expectedSplitClient)
+		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultSplitClient, expectedSplitClient)
 	}
 	if !reflect.DeepEqual(resultLocations, expectedLocations) {
-		t.Errorf("generateSplits() returned %v but expected %v", resultLocations, expectedLocations)
+		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultLocations, expectedLocations)
 	}
+
 }
 
 func TestGenerateDefaultSplitsConfig(t *testing.T) {
@@ -1651,29 +1914,31 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				Distributions: []version2.Distribution{
 					{
 						Weight: "90%",
-						Value:  "@splits_1_split_0",
+						Value:  "/internal_location_splits_1_split_0",
 					},
 					{
 						Weight: "10%",
-						Value:  "@splits_1_split_1",
+						Value:  "/internal_location_splits_1_split_1",
 					},
 				},
 			},
 		},
 		Locations: []version2.Location{
 			{
-				Path:                     "@splits_1_split_0",
-				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				Path:                     "/internal_location_splits_1_split_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				Internal:                 true,
 			},
 			{
-				Path:                     "@splits_1_split_1",
-				ProxyPass:                "http://vs_default_cafe_coffee-v2",
+				Path:                     "/internal_location_splits_1_split_1",
+				ProxyPass:                "http://vs_default_cafe_coffee-v2$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				Internal:                 true,
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -1684,9 +1949,9 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateDefaultSplitsConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, &cfgParams)
+	result := generateDefaultSplitsConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, &cfgParams, route.ErrorPages, 0)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateDefaultSplitsConfig() returned %v but expected %v", result, expected)
+		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
 }
 
@@ -1760,6 +2025,35 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
 			Namespace: "default",
+		},
+	}
+	errorPages := []conf_v1.ErrorPage{
+		{
+			Codes: []int{400, 500},
+			Return: &conf_v1.ErrorPageReturn{
+				ActionReturn: conf_v1.ActionReturn{
+					Code: 200,
+					Type: "application/json",
+					Body: `{\"message\": \"ok\"}`,
+				},
+				Headers: []conf_v1.Header{
+					{
+						Name:  "Set-Cookie",
+						Value: "cookie1=value",
+					},
+				},
+			},
+			Redirect: nil,
+		},
+		{
+			Codes:  []int{500, 502},
+			Return: nil,
+			Redirect: &conf_v1.ErrorPageRedirect{
+				ActionRedirect: conf_v1.ActionRedirect{
+					URL:  "http://nginx.com",
+					Code: 301,
+				},
+			},
 		},
 	}
 	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
@@ -1887,7 +2181,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				Parameters: []version2.Parameter{
 					{
 						Value:  "~^1",
-						Result: "@matches_1_match_0",
+						Result: "/internal_location_matches_1_match_0",
 					},
 					{
 						Value:  "~^01",
@@ -1895,39 +2189,95 @@ func TestGenerateMatchesConfig(t *testing.T) {
 					},
 					{
 						Value:  "default",
-						Result: "@matches_1_default",
+						Result: "/internal_location_matches_1_default",
 					},
 				},
 			},
 		},
 		Locations: []version2.Location{
 			{
-				Path:                     "@matches_1_match_0",
-				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				Path:                     "/internal_location_matches_1_match_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				ProxyInterceptErrors:     true,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_2_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
 			},
 			{
-				Path:                     "@splits_2_split_0",
-				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				Path:                     "/internal_location_splits_2_split_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				ProxyInterceptErrors:     true,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_2_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
 			},
 			{
-				Path:                     "@splits_2_split_1",
-				ProxyPass:                "http://vs_default_cafe_coffee-v2",
+				Path:                     "/internal_location_splits_2_split_1",
+				ProxyPass:                "http://vs_default_cafe_coffee-v2$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				ProxyInterceptErrors:     true,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_2_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
 			},
 			{
-				Path:                     "@matches_1_default",
-				ProxyPass:                "http://vs_default_cafe_tea",
+				Path:                     "/internal_location_matches_1_default",
+				ProxyPass:                "http://vs_default_cafe_tea$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				ProxyInterceptErrors:     true,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_2_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -1941,11 +2291,11 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				Distributions: []version2.Distribution{
 					{
 						Weight: "90%",
-						Value:  "@splits_2_split_0",
+						Value:  "/internal_location_splits_2_split_0",
 					},
 					{
 						Weight: "10%",
-						Value:  "@splits_2_split_1",
+						Value:  "/internal_location_splits_2_split_1",
 					},
 				},
 			},
@@ -1954,9 +2304,9 @@ func TestGenerateMatchesConfig(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, scIndex, &cfgParams)
+	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, scIndex, &cfgParams, errorPages, 2)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateMatchesConfig() returned \n%v but expected \n%v", result, expected)
+		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
 }
 
@@ -2034,6 +2384,35 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 	variableNamer := newVariableNamer(&virtualServer)
 	index := 1
 	scIndex := 2
+	errorPages := []conf_v1.ErrorPage{
+		{
+			Codes: []int{400, 500},
+			Return: &conf_v1.ErrorPageReturn{
+				ActionReturn: conf_v1.ActionReturn{
+					Code: 200,
+					Type: "application/json",
+					Body: `{\"message\": \"ok\"}`,
+				},
+				Headers: []conf_v1.Header{
+					{
+						Name:  "Set-Cookie",
+						Value: "cookie1=value",
+					},
+				},
+			},
+			Redirect: nil,
+		},
+		{
+			Codes:  []int{500, 502},
+			Return: nil,
+			Redirect: &conf_v1.ErrorPageRedirect{
+				ActionRedirect: conf_v1.ActionRedirect{
+					URL:  "http://nginx.com",
+					Code: 301,
+				},
+			},
+		},
+	}
 
 	expected := routingCfg{
 		Maps: []version2.Map{
@@ -2086,46 +2465,130 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		},
 		Locations: []version2.Location{
 			{
-				Path:                     "@splits_2_split_0",
-				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				Path:                     "/internal_location_splits_2_split_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_0_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
+				ProxyInterceptErrors: true,
 			},
 			{
-				Path:                     "@splits_2_split_1",
-				ProxyPass:                "http://vs_default_cafe_coffee-v2",
+				Path:                     "/internal_location_splits_2_split_1",
+				ProxyPass:                "http://vs_default_cafe_coffee-v2$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_0_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
+				ProxyInterceptErrors: true,
 			},
 			{
-				Path:                     "@splits_3_split_0",
-				ProxyPass:                "http://vs_default_cafe_coffee-v2",
+				Path:                     "/internal_location_splits_3_split_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v2$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_0_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
+				ProxyInterceptErrors: true,
 			},
 			{
-				Path:                     "@splits_3_split_1",
-				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				Path:                     "/internal_location_splits_3_split_1",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_0_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
+				ProxyInterceptErrors: true,
 			},
 			{
-				Path:                     "@splits_4_split_0",
-				ProxyPass:                "http://vs_default_cafe_coffee-v1",
+				Path:                     "/internal_location_splits_4_split_0",
+				ProxyPass:                "http://vs_default_cafe_coffee-v1$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_0_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
+				ProxyInterceptErrors: true,
 			},
 			{
-				Path:                     "@splits_4_split_1",
-				ProxyPass:                "http://vs_default_cafe_coffee-v2",
+				Path:                     "/internal_location_splits_4_split_1",
+				ProxyPass:                "http://vs_default_cafe_coffee-v2$request_uri",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
+				Internal:                 true,
+				ErrorPages: []version2.ErrorPage{
+					{
+						Name:         "@error_page_0_0",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "http://nginx.com",
+						Codes:        "500 502",
+						ResponseCode: 301,
+					},
+				},
+				ProxyInterceptErrors: true,
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -2139,11 +2602,11 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				Distributions: []version2.Distribution{
 					{
 						Weight: "30%",
-						Value:  "@splits_2_split_0",
+						Value:  "/internal_location_splits_2_split_0",
 					},
 					{
 						Weight: "70%",
-						Value:  "@splits_2_split_1",
+						Value:  "/internal_location_splits_2_split_1",
 					},
 				},
 			},
@@ -2153,11 +2616,11 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				Distributions: []version2.Distribution{
 					{
 						Weight: "90%",
-						Value:  "@splits_3_split_0",
+						Value:  "/internal_location_splits_3_split_0",
 					},
 					{
 						Weight: "10%",
-						Value:  "@splits_3_split_1",
+						Value:  "/internal_location_splits_3_split_1",
 					},
 				},
 			},
@@ -2167,11 +2630,11 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				Distributions: []version2.Distribution{
 					{
 						Weight: "99%",
-						Value:  "@splits_4_split_0",
+						Value:  "/internal_location_splits_4_split_0",
 					},
 					{
 						Weight: "1%",
-						Value:  "@splits_4_split_1",
+						Value:  "/internal_location_splits_4_split_1",
 					},
 				},
 			},
@@ -2180,9 +2643,9 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 
 	cfgParams := ConfigParams{}
 
-	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, scIndex, &cfgParams)
+	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, scIndex, &cfgParams, errorPages, 0)
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateMatchesConfig() returned \n%v but expected \n%v", result, expected)
+		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
 }
 
@@ -2974,6 +3437,192 @@ func TestGeneratePath(t *testing.T) {
 		result := generatePath(test.path)
 		if result != test.expected {
 			t.Errorf("generatePath() returned %v, but expected %v.", result, test.expected)
+		}
+	}
+}
+
+func TestGenerateErrorPageName(t *testing.T) {
+	tests := []struct {
+		routeIndex int
+		index      int
+		expected   string
+	}{
+		{
+			0,
+			0,
+			"@error_page_0_0",
+		},
+		{
+			0,
+			1,
+			"@error_page_0_1",
+		},
+		{
+			1,
+			0,
+			"@error_page_1_0",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateErrorPageName(test.routeIndex, test.index)
+		if result != test.expected {
+			t.Errorf("generateErrorPageName(%v, %v) returned %v but expected %v", test.routeIndex, test.index, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateErrorPageCodes(t *testing.T) {
+	tests := []struct {
+		codes    []int
+		expected string
+	}{
+		{
+			codes:    []int{400},
+			expected: "400",
+		},
+		{
+			codes:    []int{404, 405, 502},
+			expected: "404 405 502",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateErrorPageCodes(test.codes)
+		if result != test.expected {
+			t.Errorf("generateErrorPageCodes(%v) returned %v but expected %v", test.codes, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateErrorPages(t *testing.T) {
+	tests := []struct {
+		upstreamName string
+		errorPages   []conf_v1.ErrorPage
+		expected     []version2.ErrorPage
+	}{
+		{}, // empty errorPages
+		{
+			"vs_test_test",
+			[]conf_v1.ErrorPage{
+				{
+					Codes: []int{404, 405, 500, 502},
+					Return: &conf_v1.ErrorPageReturn{
+						ActionReturn: conf_v1.ActionReturn{
+							Code: 200,
+						},
+						Headers: nil,
+					},
+					Redirect: nil,
+				},
+			},
+			[]version2.ErrorPage{
+				{
+					Name:         "@error_page_1_0",
+					Codes:        "404 405 500 502",
+					ResponseCode: 200,
+				},
+			},
+		},
+		{
+			"vs_test_test",
+			[]conf_v1.ErrorPage{
+				{
+					Codes:  []int{404, 405, 500, 502},
+					Return: nil,
+					Redirect: &conf_v1.ErrorPageRedirect{
+						ActionRedirect: conf_v1.ActionRedirect{
+							URL:  "http://nginx.org",
+							Code: 302,
+						},
+					},
+				},
+			},
+			[]version2.ErrorPage{
+				{
+					Name:         "http://nginx.org",
+					Codes:        "404 405 500 502",
+					ResponseCode: 302,
+				},
+			},
+		},
+	}
+
+	for i, test := range tests {
+		result := generateErrorPages(i, test.errorPages)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateErrorPages(%v, %v) returned %v but expected %v", test.upstreamName, test.errorPages, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateErrorPageLocations(t *testing.T) {
+	tests := []struct {
+		upstreamName string
+		errorPages   []conf_v1.ErrorPage
+		expected     []version2.ErrorPageLocation
+	}{
+		{},
+		{
+			"vs_test_test",
+			[]conf_v1.ErrorPage{
+				{
+					Codes:  []int{404, 405, 500, 502},
+					Return: nil,
+					Redirect: &conf_v1.ErrorPageRedirect{
+						ActionRedirect: conf_v1.ActionRedirect{
+							URL:  "http://nginx.org",
+							Code: 302,
+						},
+					},
+				},
+			},
+			nil,
+		},
+		{
+			"vs_test_test",
+			[]conf_v1.ErrorPage{
+				{
+					Codes: []int{404, 405, 500, 502},
+					Return: &conf_v1.ErrorPageReturn{
+						ActionReturn: conf_v1.ActionReturn{
+							Code: 200,
+							Type: "application/json",
+							Body: "Hello World",
+						},
+						Headers: []conf_v1.Header{
+							{
+								Name:  "HeaderName",
+								Value: "HeaderValue",
+							},
+						},
+					},
+					Redirect: nil,
+				},
+			},
+			[]version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_2_0",
+					DefaultType: "application/json",
+					Return: &version2.Return{
+						Code: 0,
+						Text: "Hello World",
+					},
+					Headers: []version2.Header{
+						{
+							Name:  "HeaderName",
+							Value: "HeaderValue",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for i, test := range tests {
+		result := generateErrorPageLocations(i, test.errorPages)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateErrorPageLocations(%v, %v) returned %v but expected %v", test.upstreamName, test.errorPages, result, test.expected)
 		}
 	}
 }

@@ -968,7 +968,7 @@ func TestValidateRedirectURL(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateRedirectURL(test.redirectURL, field.NewPath("url"))
+		allErrs := validateRedirectURL(test.redirectURL, field.NewPath("url"), validRedirectVariableNames)
 		if len(allErrs) > 0 {
 			t.Errorf("validateRedirectURL(%s) returned errors %v for valid input for the case of %s", test.redirectURL, allErrs, test.msg)
 		}
@@ -1032,7 +1032,7 @@ func TestValidateRedirectURLFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateRedirectURL(test.redirectURL, field.NewPath("action"))
+		allErrs := validateRedirectURL(test.redirectURL, field.NewPath("action"), validRedirectVariableNames)
 		if len(allErrs) == 0 {
 			t.Errorf("validateRedirectURL(%s) returned no errors for invalid input for the case of %s", test.redirectURL, test.msg)
 		}
@@ -2689,7 +2689,7 @@ func TestValidateActionReturnBody(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateActionReturnBody(test.body, field.NewPath("body"))
+		allErrs := validateActionReturnBody(test.body, field.NewPath("body"), returnBodySpecialVariables, returnBodyVariables)
 		if len(allErrs) != 0 {
 			t.Errorf("validateActionReturnBody(%v) returned errors %v for valid input for the case of: %v", test.body, allErrs, test.msg)
 		}
@@ -2716,7 +2716,7 @@ func TestValidateActionReturnBodyFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateActionReturnBody(test.body, field.NewPath("body"))
+		allErrs := validateActionReturnBody(test.body, field.NewPath("body"), returnBodySpecialVariables, returnBodyVariables)
 		if len(allErrs) == 0 {
 			t.Errorf("validateActionReturnBody(%v) returned no errors for invalid input for the case of: %v", test.body, test.msg)
 		}
@@ -2790,7 +2790,7 @@ func TestValidateActionReturn(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateActionReturn(test, field.NewPath("return"))
+		allErrs := validateActionReturn(test, field.NewPath("return"), returnBodySpecialVariables, returnBodyVariables)
 		if len(allErrs) != 0 {
 			t.Errorf("validateActionReturn(%v) returned errors for valid input", test)
 		}
@@ -2812,7 +2812,7 @@ func TestValidateActionReturnFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateActionReturn(test, field.NewPath("return"))
+		allErrs := validateActionReturn(test, field.NewPath("return"), returnBodySpecialVariables, returnBodyVariables)
 		if len(allErrs) == 0 {
 			t.Errorf("validateActionReturn(%v) returned no errors for invalid input", test)
 		}
@@ -2829,7 +2829,7 @@ func TestValidateStringWithVariables(t *testing.T) {
 	validVars := map[string]bool{"scheme": true, "host": true}
 
 	for _, test := range testStrings {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), validVars, nil)
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), nil, validVars)
 		if len(allErrs) != 0 {
 			t.Errorf("validateStringWithVariables(%v) returned errors for valid input: %v", test, allErrs)
 		}
@@ -2843,7 +2843,7 @@ func TestValidateStringWithVariables(t *testing.T) {
 	}
 
 	for _, test := range testStringsSpecial {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), validVars, specialVars)
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), specialVars, validVars)
 		if len(allErrs) != 0 {
 			t.Errorf("validateStringWithVariables(%v) returned errors for valid input: %v", test, allErrs)
 		}
@@ -2861,7 +2861,7 @@ func TestValidateStringWithVariablesFail(t *testing.T) {
 	validVars := map[string]bool{"scheme": true, "host": true}
 
 	for _, test := range testStrings {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), validVars, nil)
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), nil, validVars)
 		if len(allErrs) == 0 {
 			t.Errorf("validateStringWithVariables(%v) returned no errors for invalid input", test)
 		}
@@ -2875,7 +2875,7 @@ func TestValidateStringWithVariablesFail(t *testing.T) {
 	}
 
 	for _, test := range testStringsSpecial {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), validVars, specialVars)
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), specialVars, validVars)
 		if len(allErrs) == 0 {
 			t.Errorf("validateStringWithVariables(%v) returned no errors for invalid input", test)
 		}
@@ -2918,6 +2918,334 @@ func TestValidateSpecialVariableFails(t *testing.T) {
 		allErrs := validateSpecialVariable(v, field.NewPath("variable"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateSpecialVariable(%v) returned no errors for invalid case", v)
+		}
+	}
+}
+
+func TestErrorPageHasRequiredFields(t *testing.T) {
+	tests := []struct {
+		errorPage v1.ErrorPage
+		expected  bool
+	}{
+		{
+			errorPage: v1.ErrorPage{
+				Codes:    nil,
+				Return:   nil,
+				Redirect: nil,
+			},
+			expected: false,
+		},
+		{
+			errorPage: v1.ErrorPage{
+				Codes:    nil,
+				Return:   &v1.ErrorPageReturn{},
+				Redirect: &v1.ErrorPageRedirect{},
+			},
+			expected: false,
+		},
+		{
+			errorPage: v1.ErrorPage{
+				Codes:    nil,
+				Return:   &v1.ErrorPageReturn{},
+				Redirect: nil,
+			},
+			expected: true,
+		},
+		{
+			errorPage: v1.ErrorPage{
+				Codes:    nil,
+				Return:   nil,
+				Redirect: &v1.ErrorPageRedirect{},
+			},
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		result := errorPageHasRequiredFields(test.errorPage)
+		if result != test.expected {
+			t.Errorf("errorPageHasRequiredFields(%v) returned %v but expected %v", test.errorPage, result, test.expected)
+		}
+	}
+}
+
+func TestValidateErrorPage(t *testing.T) {
+	tests := []v1.ErrorPage{
+		{
+			Codes: []int{400, 404},
+			Return: &v1.ErrorPageReturn{
+				ActionReturn: v1.ActionReturn{
+					Body: "Hello World",
+				},
+			},
+			Redirect: nil,
+		},
+		{
+			Codes:  []int{400, 404},
+			Return: nil,
+			Redirect: &v1.ErrorPageRedirect{
+				ActionRedirect: v1.ActionRedirect{
+					URL: "http://nginx.com",
+				},
+			},
+		},
+	}
+
+	for _, ep := range tests {
+		allErrs := validateErrorPage(ep, field.NewPath("errorPage"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateErrorPage(%v) returned errors for valid input: %v", ep, allErrs)
+		}
+	}
+}
+
+func TestValidateErrorPageFails(t *testing.T) {
+	tests := []v1.ErrorPage{
+		{},
+		{
+			Codes:    []int{400, 404},
+			Return:   &v1.ErrorPageReturn{},
+			Redirect: &v1.ErrorPageRedirect{},
+		},
+		{
+			Codes:    []int{100, 700},
+			Return:   &v1.ErrorPageReturn{},
+			Redirect: nil,
+		},
+		{
+			Codes:    nil,
+			Return:   &v1.ErrorPageReturn{},
+			Redirect: nil,
+		},
+	}
+
+	for _, ep := range tests {
+		allErrs := validateErrorPage(ep, field.NewPath("errorPage"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateErrorPage(%v) returned no errors for invalid input", ep)
+		}
+	}
+}
+
+func TestValidateErrorPageReturn(t *testing.T) {
+	tests := []v1.ErrorPageReturn{
+		{
+			ActionReturn: v1.ActionReturn{
+				Code: 200,
+				Type: "",
+				Body: "Could not process request, try again",
+			},
+			Headers: nil,
+		},
+		{
+			ActionReturn: v1.ActionReturn{
+				Code: 0,
+				Type: "",
+				Body: "Could not process request, try again. Status ${status}",
+			},
+			Headers: []v1.Header{
+				{
+					Name:  "Set-Cookie",
+					Value: "mycookie=true",
+				},
+			},
+		},
+		{
+			ActionReturn: v1.ActionReturn{
+				Code: 200,
+				Type: "application/json",
+				Body: `{\"message\": \"Could not process request, try again\", \"status\": \"${status}\"}`,
+			},
+			Headers: nil,
+		},
+	}
+
+	for _, epr := range tests {
+		allErrs := validateErrorPageReturn(&epr, field.NewPath("return"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateErrorPageReturn(%v) returned errors for valid input: %v", epr, allErrs)
+		}
+	}
+}
+
+func TestValidateErrorPageReturnFails(t *testing.T) {
+	tests := []struct {
+		msg string
+		epr v1.ErrorPageReturn
+	}{
+		{
+			msg: "empty body",
+			epr: v1.ErrorPageReturn{
+				ActionReturn: v1.ActionReturn{
+					Code: 200,
+					Type: "application/json",
+					Body: "",
+				},
+			},
+		},
+		{
+			msg: "unescaped double quotes",
+			epr: v1.ErrorPageReturn{
+				ActionReturn: v1.ActionReturn{
+					Code: 200,
+					Type: "",
+					Body: ` "Oops, Could not process request"`,
+				},
+			},
+		},
+		{
+			msg: "invalid variable",
+			epr: v1.ErrorPageReturn{
+				ActionReturn: v1.ActionReturn{
+					Code: 0,
+					Type: "",
+					Body: "Could not process request, response with invalid var: ${invalid}",
+				},
+			},
+		},
+		{
+			msg: "invalid cookie name",
+			epr: v1.ErrorPageReturn{
+				ActionReturn: v1.ActionReturn{
+					Code: 200,
+					Type: "application/json",
+					Body: `{\"message\": \"Could not process request, try again\", \"status\": \"${status}\"}`,
+				},
+				Headers: []v1.Header{
+					{
+						Name:  "Set-Cookie$_%^$  -",
+						Value: "mycookie=true",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateErrorPageReturn(&test.epr, field.NewPath("return"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateErrorPageReturn(%v) returned no errors for invalid input for the case of %v", test.epr, test.msg)
+		}
+	}
+}
+
+func TestValidateErrorPageRedirect(t *testing.T) {
+	tests := []v1.ErrorPageRedirect{
+		{
+			ActionRedirect: v1.ActionRedirect{
+				URL:  "http://nginx.com",
+				Code: 301,
+			},
+		},
+		{
+			ActionRedirect: v1.ActionRedirect{
+				URL:  "${scheme}://nginx.com",
+				Code: 302,
+			},
+		},
+	}
+
+	for _, epr := range tests {
+		allErrs := validateErrorPageRedirect(&epr, field.NewPath("redirect"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateErrorPageRedirect(%v) returned errors for valid input: %v", epr, allErrs)
+		}
+	}
+}
+
+func TestValidateErrorPageRedirectFails(t *testing.T) {
+	tests := []v1.ErrorPageRedirect{
+		{
+			ActionRedirect: v1.ActionRedirect{
+				URL:  "",
+				Code: 301,
+			},
+		},
+		{
+			ActionRedirect: v1.ActionRedirect{
+				URL:  `"http://nginx.com"`,
+				Code: 301,
+			},
+		},
+		{
+			ActionRedirect: v1.ActionRedirect{
+				URL:  "http://nginx.com",
+				Code: 100,
+			},
+		},
+		{
+			ActionRedirect: v1.ActionRedirect{
+				URL:  "$scheme://nginx.com",
+				Code: 302,
+			},
+		},
+		{
+			ActionRedirect: v1.ActionRedirect{
+				URL:  "https://${host}.com",
+				Code: 302,
+			},
+		},
+	}
+
+	for _, epr := range tests {
+		allErrs := validateErrorPageRedirect(&epr, field.NewPath("redirect"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateErrorPageRedirect(%v) returned no errors for invalid input", epr)
+		}
+	}
+}
+
+func TestValidateErrorPageHeader(t *testing.T) {
+	tests := []v1.Header{
+		{
+			Name:  "Header-Name",
+			Value: "",
+		},
+		{
+			Name:  "Header-Name",
+			Value: "Value",
+		},
+		{
+			Name:  "Header-Name",
+			Value: "${status}",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateErrorPageHeader(test, field.NewPath("header"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateErrorPageHeader(%v) returned errors for valid input", test)
+		}
+	}
+}
+
+func TestValidateErrorPageHeaderFails(t *testing.T) {
+	tests := []v1.Header{
+		{
+			Name:  "",
+			Value: "",
+		},
+		{
+			Name:  "Header-!!#Name",
+			Value: "",
+		},
+		{
+			Name:  "Header-Name",
+			Value: "$novar",
+		},
+		{
+			Name:  "Header-Name",
+			Value: "${invalid_var}",
+		}, {
+			Name:  "Header-Name",
+			Value: `unescaped "`,
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateErrorPageHeader(test, field.NewPath("header"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateErrorPageHeader(%v) returned no errors for invalid input", test)
 		}
 	}
 }

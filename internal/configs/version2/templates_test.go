@@ -139,6 +139,7 @@ var virtualServerCfg = VirtualServerConfig{
 				ProxyPass:                "http://test-upstream",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "5s",
+				Internal:                 true,
 			},
 			{
 				Path:                     "@loc0",
@@ -149,6 +150,19 @@ var virtualServerCfg = VirtualServerConfig{
 				ProxyPass:                "http://coffee-v1",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "5s",
+				ProxyInterceptErrors:     true,
+				ErrorPages: []ErrorPage{
+					{
+						Name:         "@error_page_1",
+						Codes:        "400 500",
+						ResponseCode: 200,
+					},
+					{
+						Name:         "@error_page_2",
+						Codes:        "500",
+						ResponseCode: 0,
+					},
+				},
 			},
 			{
 				Path:                     "@loc1",
@@ -179,6 +193,35 @@ var virtualServerCfg = VirtualServerConfig{
 				ProxyPass:                "http://coffee-v1",
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "5s",
+			},
+		},
+		ErrorPageLocations: []ErrorPageLocation{
+			{
+				Name:        "@vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_0",
+				DefaultType: "application/json",
+				Return: &Return{
+					Code: 200,
+					Text: "Hello World",
+				},
+				Headers: nil,
+			},
+			{
+				Name:        "@vs_cafe_cafe_vsr_tea_tea_tea__tea_error_page_1",
+				DefaultType: "",
+				Return: &Return{
+					Code: 200,
+					Text: "Hello World",
+				},
+				Headers: []Header{
+					{
+						Name:  "Set-Cookie",
+						Value: "cookie1=test",
+					},
+					{
+						Name:  "Set-Cookie",
+						Value: "cookie2=test; Secure",
+					},
+				},
 			},
 		},
 	},

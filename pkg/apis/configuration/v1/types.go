@@ -98,11 +98,12 @@ type SessionCookie struct {
 
 // Route defines a route.
 type Route struct {
-	Path    string  `json:"path"`
-	Route   string  `json:"route"`
-	Action  *Action `json:"action"`
-	Splits  []Split `json:"splits"`
-	Matches []Match `json:"matches"`
+	Path       string      `json:"path"`
+	Route      string      `json:"route"`
+	Action     *Action     `json:"action"`
+	Splits     []Split     `json:"splits"`
+	Matches    []Match     `json:"matches"`
+	ErrorPages []ErrorPage `json:"errorPages"`
 }
 
 // Action defines an action.
@@ -145,6 +146,24 @@ type Match struct {
 	Conditions []Condition `json:"conditions"`
 	Action     *Action     `json:"action"`
 	Splits     []Split     `json:"splits"`
+}
+
+// ErrorPage defines an ErrorPage in a Route.
+type ErrorPage struct {
+	Codes    []int              `json:"codes"`
+	Return   *ErrorPageReturn   `json:"return"`
+	Redirect *ErrorPageRedirect `json:"redirect"`
+}
+
+// ErrorPageReturn defines a return for an ErrorPage.
+type ErrorPageReturn struct {
+	ActionReturn
+	Headers []Header `json:"headers"`
+}
+
+// ErrorPageRedirect defines a redirect for an ErrorPage.
+type ErrorPageRedirect struct {
+	ActionRedirect
 }
 
 // TLS defines TLS configuration for a VirtualServer.

@@ -88,8 +88,7 @@ server {
 
     {{ range $l := $s.InternalRedirectLocations }}
     location {{ $l.Path }} {
-        error_page 418 = {{ $l.Destination }};
-        return 418;
+        rewrite ^ {{ $l.Destination }} last;
     }
     {{ end }}
 
@@ -107,8 +106,24 @@ server {
     }
     {{ end }}
 
+    {{ range $e := $s.ErrorPageLocations }}
+    location {{ $e.Name }} {
+        {{ if $e.DefaultType }}
+        default_type "{{ $e.DefaultType }}";
+        {{ end }}
+        {{ range $h := $e.Headers }}
+        add_header {{ $h.Name }} "{{ $h.Value }}" always;
+        {{ end }}
+        # status code is ignored here, using 0
+        return 0 "{{ $e.Return.Text }}";
+    }
+    {{ end }}
+
     {{ range $l := $s.Locations }}
     location {{ $l.Path }} {
+        {{ if $l.Internal }}
+        internal;
+        {{ end }}
         {{ range $snippet := $l.Snippets }}
         {{ $snippet }}
         {{ end }}
@@ -121,6 +136,10 @@ server {
         {{ end }}
 
         {{ if $l.ProxyPass }}
+            {{ range $e := $l.ErrorPages }}
+        error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";
+            {{ end }}
+
         proxy_connect_timeout {{ $l.ProxyConnectTimeout }};
         proxy_read_timeout {{ $l.ProxyReadTimeout }};
         proxy_send_timeout {{ $l.ProxySendTimeout }};
@@ -137,7 +156,9 @@ server {
             {{ if $l.ProxyBufferSize }}
         proxy_buffer_size {{ $l.ProxyBufferSize }};
             {{ end }}
-
+            {{ if $l.ProxyInterceptErrors }}
+        proxy_intercept_errors on;
+            {{ end }}
         proxy_http_version 1.1;
 
         set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};

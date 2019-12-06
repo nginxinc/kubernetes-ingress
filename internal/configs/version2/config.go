@@ -43,6 +43,7 @@ type Server struct {
 	Snippets                  []string
 	InternalRedirectLocations []InternalRedirectLocation
 	Locations                 []Location
+	ErrorPageLocations        []ErrorPageLocation
 	HealthChecks              []HealthCheck
 	TLSRedirect               *TLSRedirect
 }
@@ -58,6 +59,7 @@ type SSL struct {
 // Location defines a location.
 type Location struct {
 	Path                     string
+	Internal                 bool
 	Snippets                 []string
 	ProxyConnectTimeout      string
 	ProxyReadTimeout         string
@@ -71,9 +73,11 @@ type Location struct {
 	ProxyNextUpstream        string
 	ProxyNextUpstreamTimeout string
 	ProxyNextUpstreamTries   int
+	ProxyInterceptErrors     bool
 	HasKeepalive             bool
 	DefaultType              string
 	Return                   *Return
+	ErrorPages               []ErrorPage
 }
 
 // SplitClient defines a split_clients.
@@ -87,6 +91,27 @@ type SplitClient struct {
 type Return struct {
 	Code int
 	Text string
+}
+
+// ErrorPage defines an error_page of a location.
+type ErrorPage struct {
+	Name         string
+	Codes        string
+	ResponseCode int
+}
+
+// ErrorPageLocation defines a named location for an error_page directive.
+type ErrorPageLocation struct {
+	Name        string
+	DefaultType string
+	Return      *Return
+	Headers     []Header
+}
+
+// Header defines a header to use with add_header directive.
+type Header struct {
+	Name  string
+	Value string
 }
 
 // HealthCheck defines a HealthCheck for an upstream in a Server.

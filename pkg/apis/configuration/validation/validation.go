@@ -578,6 +578,10 @@ func validateRoute(route v1.Route, fieldPath *field.Path, upstreamNames sets.Str
 		}
 	}
 
+	for i, e := range route.ErrorPages {
+		allErrs = append(allErrs, validateErrorPage(e, fieldPath.Child("errorPages").Index(i))...)
+	}
+
 	if route.Route != "" {
 		if isRouteFieldForbidden {
 			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("route"), "is not allowed"))
@@ -599,6 +603,95 @@ func validateRoute(route v1.Route, fieldPath *field.Path, upstreamNames sets.Str
 	return allErrs
 }
 
+func errorPageHasRequiredFields(errorPage v1.ErrorPage) bool {
+	var count int
+
+	if errorPage.Return != nil {
+		count++
+	}
+
+	if errorPage.Redirect != nil {
+		count++
+	}
+
+	return count == 1
+}
+
+func validateErrorPage(errorPage v1.ErrorPage, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !errorPageHasRequiredFields(errorPage) {
+		return append(allErrs, field.Required(fieldPath, "must specify exactly one of `redirect` or `return`"))
+	}
+
+	if len(errorPage.Codes) == 0 {
+		return append(allErrs, field.Required(fieldPath.Child("codes"), "must include at least 1 status code in `codes`"))
+	}
+
+	for i, c := range errorPage.Codes {
+		for _, msg := range validation.IsInRange(c, 300, 599) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("codes").Index(i), c, msg))
+		}
+	}
+
+	if errorPage.Return != nil {
+		allErrs = append(allErrs, validateErrorPageReturn(errorPage.Return, fieldPath.Child("return"))...)
+	}
+
+	if errorPage.Redirect != nil {
+		allErrs = append(allErrs, validateErrorPageRedirect(errorPage.Redirect, fieldPath.Child("redirect"))...)
+	}
+
+	return allErrs
+}
+
+var errorPageReturnBodyVariable = map[string]bool{"status": true}
+
+func validateErrorPageReturn(r *v1.ErrorPageReturn, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allErrs = append(allErrs, validateActionReturn(&r.ActionReturn, fieldPath, nil, errorPageReturnBodyVariable)...)
+
+	for i, header := range r.Headers {
+		allErrs = append(allErrs, validateErrorPageHeader(header, fieldPath.Child("headers").Index(i))...)
+	}
+
+	return allErrs
+}
+
+var errorPageHeaderValueVariables = map[string]bool{"status": true}
+
+func validateErrorPageHeader(h v1.Header, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if h.Name == "" {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("name"), ""))
+	}
+
+	for _, msg := range validation.IsHTTPHeaderName(h.Name) {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("name"), h.Name, msg))
+	}
+
+	if !escapedStringsFmtRegexp.MatchString(h.Value) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, "value", `\"${status}\"`)
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("value"), h.Value, msg))
+	}
+
+	allErrs = append(allErrs, validateStringWithVariables(h.Value, fieldPath.Child("value"), nil, errorPageHeaderValueVariables)...)
+
+	return allErrs
+}
+
+var validErrorPageRedirectVariables = map[string]bool{"scheme": true, "status": true, "http_x_forwarded_proto": true}
+
+func validateErrorPageRedirect(r *v1.ErrorPageRedirect, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allErrs = append(allErrs, validateActionRedirect(&r.ActionRedirect, fieldPath, validErrorPageRedirectVariables)...)
+
+	return allErrs
+}
+
 func countActions(action *v1.Action) int {
 	var count int
 	if action.Pass != "" {
@@ -616,6 +709,43 @@ func countActions(action *v1.Action) int {
 	return count
 }
 
+// returnBodyVariables includes NGINX variables allowed to be used in a return body.
+var returnBodyVariables = map[string]bool{
+	"request_uri":         true,
+	"request_method":      true,
+	"request_body":        true,
+	"scheme":              true,
+	"args":                true,
+	"host":                true,
+	"request_time":        true,
+	"request_length":      true,
+	"nginx_version":       true,
+	"pid":                 true,
+	"connection":          true,
+	"remote_addr":         true,
+	"remote_port":         true,
+	"time_iso8601":        true,
+	"time_local":          true,
+	"server_addr":         true,
+	"server_port":         true,
+	"server_name":         true,
+	"server_protocol":     true,
+	"connections_active":  true,
+	"connections_reading": true,
+	"connections_writing": true,
+	"connections_waiting": true,
+}
+
+var returnBodySpecialVariables = []string{"arg_", "http_", "cookie_"}
+
+// validRedirectVariableNames includes NGINX variables allowed to be used in redirects.
+var validRedirectVariableNames = map[string]bool{
+	"scheme":                 true,
+	"http_x_forwarded_proto": true,
+	"request_uri":            true,
+	"host":                   true,
+}
+
 func validateAction(action *v1.Action, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -628,20 +758,20 @@ func validateAction(action *v1.Action, fieldPath *field.Path, upstreamNames sets
 	}
 
 	if action.Redirect != nil {
-		allErrs = append(allErrs, validateActionRedirect(action.Redirect, fieldPath.Child("redirect"))...)
+		allErrs = append(allErrs, validateActionRedirect(action.Redirect, fieldPath.Child("redirect"), validRedirectVariableNames)...)
 	}
 
 	if action.Return != nil {
-		allErrs = append(allErrs, validateActionReturn(action.Return, fieldPath.Child("return"))...)
+		allErrs = append(allErrs, validateActionReturn(action.Return, fieldPath.Child("return"), returnBodySpecialVariables, returnBodyVariables)...)
 	}
 
 	return allErrs
 }
 
-func validateActionRedirect(redirect *v1.ActionRedirect, fieldPath *field.Path) field.ErrorList {
+func validateActionRedirect(redirect *v1.ActionRedirect, fieldPath *field.Path, validVars map[string]bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, validateRedirectURL(redirect.URL, fieldPath.Child("url"))...)
+	allErrs = append(allErrs, validateRedirectURL(redirect.URL, fieldPath.Child("url"), validVars)...)
 
 	if redirect.Code != 0 {
 		allErrs = append(allErrs, validateRedirectStatusCode(redirect.Code, fieldPath.Child("code"))...)
@@ -664,15 +794,7 @@ func captureVariables(s string) []string {
 	return nVars
 }
 
-// validRedirectVariableNames includes NGINX variables allowed to be used in redirects.
-var validRedirectVariableNames = map[string]bool{
-	"scheme":                 true,
-	"http_x_forwarded_proto": true,
-	"request_uri":            true,
-	"host":                   true,
-}
-
-func validateRedirectURL(redirectURL string, fieldPath *field.Path) field.ErrorList {
+func validateRedirectURL(redirectURL string, fieldPath *field.Path, validVars map[string]bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if redirectURL == "" {
@@ -684,12 +806,12 @@ func validateRedirectURL(redirectURL string, fieldPath *field.Path) field.ErrorL
 		return append(allErrs, field.Invalid(fieldPath, redirectURL, msg))
 	}
 
-	allErrs = append(allErrs, validateStringWithVariables(redirectURL, fieldPath, validRedirectVariableNames, nil)...)
+	allErrs = append(allErrs, validateStringWithVariables(redirectURL, fieldPath, nil, validVars)...)
 
 	return allErrs
 }
 
-func validateStringWithVariables(str string, fieldPath *field.Path, validVars map[string]bool, specialVars []string) field.ErrorList {
+func validateStringWithVariables(str string, fieldPath *field.Path, specialVars []string, validVars map[string]bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if strings.HasSuffix(str, "$") {
@@ -782,14 +904,14 @@ func validateActionReturnCode(code int, fieldPath *field.Path) field.ErrorList {
 	return append(allErrs, field.Invalid(fieldPath, code, msg))
 }
 
-func validateActionReturn(r *v1.ActionReturn, fieldPath *field.Path) field.ErrorList {
+func validateActionReturn(r *v1.ActionReturn, fieldPath *field.Path, specialValidVars []string, validVars map[string]bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if r.Body == "" {
 		return append(allErrs, field.Required(fieldPath.Child("body"), ""))
 	}
 
-	allErrs = append(allErrs, validateActionReturnBody(r.Body, fieldPath.Child("body"))...)
+	allErrs = append(allErrs, validateActionReturnBody(r.Body, fieldPath.Child("body"), specialValidVars, validVars)...)
 
 	if r.Type != "" {
 		allErrs = append(allErrs, validateActionReturnType(r.Type, fieldPath.Child("type"))...)
@@ -802,36 +924,7 @@ func validateActionReturn(r *v1.ActionReturn, fieldPath *field.Path) field.Error
 	return allErrs
 }
 
-// returnBodyVariables includes NGINX variables allowed to be used in a return body.
-var returnBodyVariables = map[string]bool{
-	"request_uri":         true,
-	"request_method":      true,
-	"request_body":        true,
-	"scheme":              true,
-	"args":                true,
-	"host":                true,
-	"request_time":        true,
-	"request_length":      true,
-	"nginx_version":       true,
-	"pid":                 true,
-	"connection":          true,
-	"remote_addr":         true,
-	"remote_port":         true,
-	"time_iso8601":        true,
-	"time_local":          true,
-	"server_addr":         true,
-	"server_port":         true,
-	"server_name":         true,
-	"server_protocol":     true,
-	"connections_active":  true,
-	"connections_reading": true,
-	"connections_writing": true,
-	"connections_waiting": true,
-}
-
-var returnBodySpecialVariables = []string{"arg_", "http_", "cookie_"}
-
-func validateActionReturnBody(body string, fieldPath *field.Path) field.ErrorList {
+func validateActionReturnBody(body string, fieldPath *field.Path, specialValidVars []string, validVars map[string]bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if !escapedStringsFmtRegexp.MatchString(body) {
@@ -839,7 +932,7 @@ func validateActionReturnBody(body string, fieldPath *field.Path) field.ErrorLis
 		allErrs = append(allErrs, field.Invalid(fieldPath, body, msg))
 	}
 
-	allErrs = append(allErrs, validateStringWithVariables(body, fieldPath, returnBodyVariables, returnBodySpecialVariables)...)
+	allErrs = append(allErrs, validateStringWithVariables(body, fieldPath, specialValidVars, validVars)...)
 
 	return allErrs
 }
