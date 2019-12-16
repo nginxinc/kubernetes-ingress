@@ -121,12 +121,13 @@ def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisite
     :return:
     """
     namespace = ingress_controller_prerequisites.namespace
-    print("------------------------- Create IC -----------------------------------")
-    extra_args = None
+    print("------------------------- Create IC without CRDs -----------------------------------")
     try:
         extra_args = request.param.get('extra_args', None)
+        extra_args.append("-enable-custom-resources=false")
     except AttributeError:
-        print("IC will start without any additional arguments")
+        print("IC will start with CRDs disabled and without any additional cli-arguments")
+        extra_args = ["-enable-custom-resources=false"]
     name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace, extra_args)
 
     def fin():

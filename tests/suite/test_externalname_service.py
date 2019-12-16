@@ -4,7 +4,7 @@ import pytest
 from settings import TEST_DATA
 from suite.fixtures import PublicEndpoint
 from suite.resources_utils import create_ingress_from_yaml, create_service_with_name, \
-    create_namespace_with_name_from_yaml, create_deployment_with_name, delete_namespace
+    create_namespace_with_name_from_yaml, create_deployment_with_name, delete_namespace, ensure_response_from_backend
 from suite.resources_utils import replace_configmap_from_yaml, create_service_from_yaml
 from suite.resources_utils import replace_configmap, delete_ingress, delete_service, get_ingress_nginx_template_conf
 from suite.resources_utils import get_first_pod_name, ensure_connection_to_public_endpoint, wait_before_test
@@ -80,6 +80,7 @@ class TestExternalNameService:
     def test_resolver(self, external_name_setup):
         wait_before_test()
         req_url = f"http://{external_name_setup.public_endpoint.public_ip}:{external_name_setup.public_endpoint.port}/"
+        ensure_response_from_backend(req_url, external_name_setup.ingress_host)
         resp = requests.get(req_url, headers={"host": external_name_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
 
