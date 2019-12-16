@@ -722,9 +722,11 @@ func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 	}
 
 	vsCount := lbc.enqueueVirtualServersForVirtualServerRouteKey(key)
+
 	if vsCount == 0 {
 		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, "NoVirtualServersFound", "No VirtualServer references VirtualServerRoute %s", key)
 	}
+
 }
 
 func (lbc *LoadBalancerController) syncIngMinion(task task) {
