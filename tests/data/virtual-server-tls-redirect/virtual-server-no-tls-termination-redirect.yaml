@@ -1,0 +1,26 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server-tls
+spec:
+  host: virtual-server-tls.example.com
+  tls:
+    secret: "" # no TLS termination
+    redirect:
+      enable: True
+      code: 308
+      basedOn: x-forwarded-proto
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  - name: backend1
+    service: backend1-svc
+    port: 80
+  routes:
+  - path: "/backend1"
+    action:
+      pass: backend1
+  - path: "/backend2"
+    action:
+      pass: backend2
