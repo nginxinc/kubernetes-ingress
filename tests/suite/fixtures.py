@@ -15,7 +15,7 @@ from suite.kube_config_utils import ensure_context_in_config, get_current_contex
 from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml, \
     patch_rbac, create_example_app, wait_until_all_pods_are_ready, delete_common_app, \
     ensure_connection_to_public_endpoint, create_service_with_name, create_deployment_with_name, delete_deployment, \
-    delete_service, replace_configmap_from_yaml
+    delete_service, replace_configmap_from_yaml, delete_testing_namespaces
 from suite.resources_utils import create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac
 from suite.resources_utils import create_service_from_yaml, get_service_node_ports, wait_for_public_ip
 from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml
@@ -87,12 +87,11 @@ def print_name() -> None:
 
 
 @pytest.fixture(scope="class")
-def test_namespace(kube_apis, request) -> str:
+def test_namespace(kube_apis) -> str:
     """
     Create a test namespace.
 
     :param kube_apis: client apis
-    :param request: pytest fixture
     :return: str
     """
     timestamp = round(time.time() * 1000)
@@ -100,13 +99,26 @@ def test_namespace(kube_apis, request) -> str:
     namespace = create_namespace_with_name_from_yaml(kube_apis.v1,
                                                      f"test-namespace-{str(timestamp)}",
                                                      f"{TEST_DATA}/common/ns.yaml")
+    return namespace
+
+
+@pytest.fixture(scope="session", autouse=True)
+def delete_test_namespaces(kube_apis, request) -> None:
+    """
+    Delete all the testing namespaces.
+
+    Testing namespaces are the ones starting with "test-namespace-"
+
+    :param kube_apis: client apis
+    :param request: pytest fixture
+    :return: str
+    """
 
     def fin():
-        print("Delete test namespace")
-        delete_namespace(kube_apis.v1, namespace)
+        print("------------------------- Delete All Test Namespaces -----------------------------------")
+        delete_testing_namespaces(kube_apis.v1)
 
     request.addfinalizer(fin)
-    return namespace
 
 
 @pytest.fixture(scope="class")

@@ -649,10 +649,24 @@ def delete_namespace(v1: CoreV1Api, namespace) -> None:
     print(f"Delete a namespace: {namespace}")
     delete_options = client.V1DeleteOptions()
     delete_options.grace_period_seconds = 0
-    delete_options.propagation_policy = 'Foreground'
+    delete_options.propagation_policy = 'Background'
     v1.delete_namespace(namespace, delete_options)
     ensure_item_removal(v1.read_namespace, namespace)
     print(f"Namespace was removed with name '{namespace}'")
+
+
+def delete_testing_namespaces(v1: CoreV1Api) -> []:
+    """
+    List and remove all the testing namespaces.
+
+    Testing namespaces are the ones starting with "test-namespace-"
+
+    :param v1: CoreV1Api
+    :return:
+    """
+    namespaces_list = v1.list_namespace()
+    for namespace in list(filter(lambda ns: ns.metadata.name.startswith("test-namespace-"), namespaces_list.items)):
+        delete_namespace(v1, namespace.metadata.name)
 
 
 def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
