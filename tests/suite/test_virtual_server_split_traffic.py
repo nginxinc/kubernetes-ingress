@@ -4,6 +4,7 @@ import requests
 import yaml
 
 from settings import TEST_DATA
+from suite.resources_utils import ensure_response_from_backend
 
 
 def get_weights_of_splitting(file) -> []:
@@ -46,6 +47,7 @@ def get_upstreams_of_splitting(file) -> []:
                          indirect=True)
 class TestTrafficSplitting:
     def test_several_requests(self, kube_apis, crd_ingress_controller, virtual_server_setup):
+        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         weights = get_weights_of_splitting(
             f"{TEST_DATA}/virtual-server-split-traffic/standard/virtual-server.yaml")
         upstreams = get_upstreams_of_splitting(
