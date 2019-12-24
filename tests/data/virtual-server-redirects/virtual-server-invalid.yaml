@@ -1,0 +1,17 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server
+spec:
+  host: virtual-server.example.com
+  routes:
+  - path: "/custom-redirect"
+    action:
+      redirect:
+        code: 304
+        url: "http://example.com"
+  - path: "/default-redirect"
+    action:
+      redirect:
+        code:
+        url: "${nginx_version}"

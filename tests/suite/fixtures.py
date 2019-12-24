@@ -333,10 +333,10 @@ class VirtualServerSetup:
         self.namespace = namespace
         self.vs_host = vs_host
         self.vs_name = vs_name
-        self.backend_1_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}/{vs_paths[0]}"
-        self.backend_2_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}/{vs_paths[1]}"
-        self.backend_1_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}/{vs_paths[0]}"
-        self.backend_2_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}/{vs_paths[1]}"
+        self.backend_1_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}{vs_paths[0]}"
+        self.backend_2_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}{vs_paths[1]}"
+        self.backend_1_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[0]}"
+        self.backend_2_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[1]}"
 
 
 @pytest.fixture(scope="class")
@@ -362,13 +362,15 @@ def virtual_server_setup(request, kube_apis, crd_ingress_controller, ingress_con
                                               test_namespace)
     vs_host = get_first_vs_host_from_yaml(vs_source)
     vs_paths = get_paths_from_vs_yaml(vs_source)
-    create_example_app(kube_apis, request.param['app_type'], test_namespace)
-    wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
+    if request.param['app_type']:
+        create_example_app(kube_apis, request.param['app_type'], test_namespace)
+        wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
         print("Clean up Virtual Server Example:")
         delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
-        delete_common_app(kube_apis, request.param['app_type'], test_namespace)
+        if request.param['app_type']:
+            delete_common_app(kube_apis, request.param['app_type'], test_namespace)
 
     request.addfinalizer(fin)
 

@@ -1,0 +1,12 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: backend2
+spec:
+  host: virtual-server-route.example.com
+  subroutes:
+  - path: "/backend2"
+    action:
+      redirect:
+        code: 307
+        url: "http://example.com"

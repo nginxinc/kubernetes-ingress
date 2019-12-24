@@ -1,0 +1,19 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: backends
+spec:
+  host: virtual-server-route.example.com
+  subroutes:
+  - path: "/backends/canned-response"
+    action:
+      return:
+        code: 501
+        type: "some/type"
+        body: '{}'
+  - path: "/backends/canned-defaults"
+    action:
+      return:
+        code: 201
+        type: "user-type"
+        body: "line1\\nline2"

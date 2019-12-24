@@ -1,5 +1,8 @@
 """Describe the custom assertion methods"""
+import time
+
 import pytest
+import requests
 
 from suite.custom_resources_utils import get_vs_nginx_template_conf
 
@@ -118,3 +121,22 @@ def assert_vs_conf_exists(kube_apis, ic_pod_name, ic_namespace, virtual_server_s
                                               ic_pod_name,
                                               ic_namespace)
     assert "No such file or directory" not in new_response
+
+
+def wait_and_assert_status_code(code, req_url, host, **kwargs) -> None:
+    """
+    Wait for a specific response status code.
+
+    :param  code: status_code
+    :param  req_url: request url
+    :param  host: request headers if any
+    :paramv **kwargs: optional arguments that ``request`` takes
+    :return:
+    """
+    counter = 0
+    resp = requests.get(req_url, headers={"host": host}, **kwargs)
+    while not resp.status_code == code and counter <= 4:
+        time.sleep(1)
+        counter = counter + 1
+        resp = requests.get(req_url, headers={"host": host}, **kwargs)
+    assert resp.status_code == code, f"After a few seconds the status_code is still not {code}"

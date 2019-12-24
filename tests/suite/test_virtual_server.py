@@ -2,6 +2,7 @@ import requests
 import pytest
 
 from settings import TEST_DATA, DEPLOYMENTS
+from suite.custom_assertions import wait_and_assert_status_code
 from suite.custom_resources_utils import delete_crd, create_crd_from_yaml, \
     create_virtual_server_from_yaml, delete_virtual_server, patch_virtual_server_from_yaml
 from suite.resources_utils import patch_rbac, replace_service, read_service, \
@@ -171,24 +172,6 @@ class TestVirtualServer:
                                         virtual_server_setup.namespace)
         wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
-
-
-def wait_and_assert_status_code(code, req_url, host) -> None:
-    """
-    Wait for a specific response status code.
-
-    :param  code: status_code
-    :param  req_url: request url
-    :param  host: request headers if any
-    :return:
-    """
-    counter = 0
-    resp = requests.get(req_url, headers={"host": host})
-    while not resp.status_code == code and counter <= 4:
-        wait_before_test(1)
-        counter = counter + 1
-        resp = requests.get(req_url, headers={"host": host})
-    assert resp.status_code == code, f"After a few seconds the status_code is not {code}"
 
 
 @pytest.mark.vs

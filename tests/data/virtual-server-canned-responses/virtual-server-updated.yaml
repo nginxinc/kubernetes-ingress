@@ -1,0 +1,19 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server
+spec:
+  host: virtual-server.example.com
+  routes:
+  - path: "/canned-response"
+    action:
+      return:
+        code: 501
+        type: "some/type"
+        body: '{}'
+  - path: "/canned-defaults"
+    action:
+      return:
+        code: 201
+        type: "user-type"
+        body: "line1\\nline2"
