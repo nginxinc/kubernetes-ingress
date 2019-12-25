@@ -918,17 +918,18 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
                 delete_configmap(kube_apis.v1, doc['metadata']['name'], namespace)
 
 
-def ensure_connection(request_url) -> None:
+def ensure_connection(request_url, expected_code=404) -> None:
     """
     Wait for connection.
 
     :param request_url: url to request
+    :param expected_code: response code
     :return:
     """
     for _ in range(4):
         try:
             resp = requests.get(request_url, verify=False)
-            if resp.status_code == 404:
+            if resp.status_code == expected_code:
                 return
         except Exception as ex:
             print(f"Warning: there was an exception {str(ex)}")

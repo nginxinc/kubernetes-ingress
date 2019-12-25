@@ -51,9 +51,15 @@ def smoke_setup(request, kube_apis, ingress_controller_endpoint, ingress_control
 
 @pytest.mark.ingresses
 @pytest.mark.smoke
+@pytest.mark.parametrize('ingress_controller',
+                         [
+                             pytest.param({"extra_args": None}, id="no-additional-cli-args"),
+                             pytest.param({"extra_args": ["-nginx-debug", "-health-status=true"]},
+                                          id="some-additional-cli-args")
+                         ], indirect=True)
 class TestSmoke:
     @pytest.mark.parametrize("path", paths)
-    def test_response_code_200_and_server_name(self, smoke_setup, path):
+    def test_response_code_200_and_server_name(self, ingress_controller, smoke_setup, path):
         req_url = f"https://{smoke_setup.public_endpoint.public_ip}:{smoke_setup.public_endpoint.port_ssl}/{path}"
         ensure_response_from_backend(req_url, smoke_setup.ingress_host)
         resp = requests.get(req_url, headers={"host": smoke_setup.ingress_host}, verify=False)
