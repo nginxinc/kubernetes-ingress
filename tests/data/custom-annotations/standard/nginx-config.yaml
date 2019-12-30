@@ -1,0 +1,17 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  ingress-template: |
+    # This is TEST configuration for {{$.Ingress.Name}}/{{$.Ingress.Namespace}}
+    {{range $ip := split (index $.Ingress.Annotations "custom.nginx.org/test-split-feature") ","}}
+    # Insert config for test-split-feature: {{trim $ip}};
+    {{end}}
+    {{if index $.Ingress.Annotations "custom.nginx.org/feature-a"}}
+      # Insert config for feature A if the annotation is set
+    {{end}}
+    {{with $value := index $.Ingress.Annotations "custom.nginx.org/feature-b"}}
+      # Print the value assigned to the annotation: {{$value}}
+    {{end}}
