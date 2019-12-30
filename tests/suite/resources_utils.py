@@ -227,6 +227,18 @@ def are_all_pods_in_ready_state(v1: CoreV1Api, namespace) -> bool:
     return pod_ready_amount == len(pods.items)
 
 
+def get_pods_amount(v1: CoreV1Api, namespace) -> int:
+    """
+    Get an amount of pods.
+
+    :param v1: CoreV1Api
+    :param namespace: namespace
+    :return: int
+    """
+    pods = v1.list_namespaced_pod(namespace)
+    return 0 if not pods.items else len(pods.items)
+
+
 def create_service_from_yaml(v1: CoreV1Api, namespace, yaml_manifest) -> str:
     """
     Create a service based on yaml file.
