@@ -38,6 +38,9 @@ spec:
       affinity:
 {{ toYaml .Values.controller.affinity | indent 8 }}
 {{- end }}
+{{- if .Values.controller.priorityClassName }}
+      priorityClassName: {{ .Values.controller.priorityClassName }}
+{{- end }}
       serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:

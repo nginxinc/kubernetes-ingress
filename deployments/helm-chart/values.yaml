@@ -209,6 +209,9 @@ controller:
     ## The annotations of the Ingress Controller pod.
     annotations: {}
 
+  ## The PriorityClass of the ingress controller pods.
+  priorityClassName:
+
 rbac:
   ## Configures RBAC.
   create: true
