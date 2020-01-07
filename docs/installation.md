@@ -13,7 +13,7 @@ The installation manifests are located in the [deployments](../deployments) fold
 
 1. Create a namespace and a service account for the Ingress controller:
     ```
-    kubectl apply -f common/ns-and-sa.yaml
+    $ kubectl apply -f common/ns-and-sa.yaml
     ```
 
 1. Create a secret with a TLS certificate and a key for the default server in NGINX:
