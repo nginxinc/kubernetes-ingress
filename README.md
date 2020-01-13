@@ -29,20 +29,20 @@ In the case of NGINX, the Ingress controller is deployed in a pod along with the
 
 NGINX Ingress controller works with both NGINX and NGINX Plus and supports the standard Ingress features - content-based routing and TLS/SSL termination.
 
-Additionally, several NGINX and NGINX Plus features are available as extensions to the Ingress resource via annotations and the ConfigMap resource. In addition to HTTP, NGINX Ingress controller supports load balancing Websocket, gRPC, TCP and UDP applications. See [ConfigMap and Annotations doc](docs/configmap-and-annotations.md) to learn more about the supported features and customization options.
+Additionally, several NGINX and NGINX Plus features are available as extensions to the Ingress resource via annotations and the ConfigMap resource. In addition to HTTP, NGINX Ingress controller supports load balancing Websocket, gRPC, TCP and UDP applications. See [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) and [Annotations](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/) docs to learn more about the supported features and customization options.
 
-As an alternative to the Ingress, NGINX Ingress controller supports the VirtualServer and VirtualServerRoute resources. They enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. See [VirtualServer and VirtualServerRoute Resources doc](docs/virtualserver-and-virtualserverroute.md).
+As an alternative to the Ingress, NGINX Ingress controller supports the VirtualServer and VirtualServerRoute resources. They enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. See [VirtualServer and VirtualServerRoute Resources doc](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/).
 
 Read [this doc](docs/nginx-plus.md) to learn more about NGINX Ingress controller with NGINX Plus.
 
 ## Getting Started
 
-1. Install the NGINX Ingress controller using the Kubernetes [manifests](deployments) or the [helm chart](deployments/helm-chart).
+1. Install the NGINX Ingress controller using the Kubernetes [manifests](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) or the [helm chart](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/).
 1. Configure load balancing for a simple web application:
     * Use the Ingress resource. See the [Cafe example](examples/complete-example).
     * Or the VirtualServer resource. See the [Basic configuration](examples-of-custom-resources/basic-configuration) example.
 1. See additional configuration [examples](examples).
-1. Learn more about all available configuration and customization in the [docs](docs).
+1. Learn more about all available configuration and customization in the [docs](https://docs.nginx.com/nginx-ingress-controller/).
 
 
 ## NGINX Ingress Controller Releases
@@ -62,8 +62,8 @@ The table below summarizes the options regarding the images, manifests, helm cha
 
 | Version | Description |  Image for NGINX | Image for NGINX Plus | Installation Manifests and Helm Chart | Documentation and Examples |
 | ------- | ----------- | --------------- | -------------------- | ---------------------------------------| -------------------------- |
-| Latest stable release | For production use | `nginx/nginx-ingress:1.6.0`, `nginx/nginx-ingress:1.6.0-alpine` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) or [build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.0/build). | [Build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.0/build). | [Manifests](https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.0/deployments). [Helm chart](https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.0/deployments/helm-chart). | [Documentation](https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.0/docs). [Examples](https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.0/examples). |
-| Edge | For testing and experimenting | `nginx/nginx-ingress:edge`, `nginx/nginx-ingress:edge-alpine` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) or [build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/master/build). | [Build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/master/build). | [Manifests](https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments). [Helm chart](https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments/helm-chart). | [Documentation](https://github.com/nginxinc/kubernetes-ingress/tree/master/docs). [Examples](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples). |
+| Latest stable release | For production use | `nginx/nginx-ingress:1.6.0`, `nginx/nginx-ingress:1.6.0-alpine` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) or [build your own image](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image/). | [Build your own image](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image/). | [Manifests](https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.0/deployments). [Helm chart](https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.0/deployments/helm-chart). | [Documentation](https://docs.nginx.com/nginx-ingress-controller/). [Examples](https://docs.nginx.com/nginx-ingress-controller/configuration/configuration-examples/). |
+| Edge | For testing and experimenting | `nginx/nginx-ingress:edge`, `nginx/nginx-ingress:edge-alpine` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) or [build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/master/docs-web/installation/building-ingress-controller-image.md). | [Build your own image](https://github.com/nginxinc/kubernetes-ingress/tree/master/docs-web/installation/building-ingress-controller-image.md). | [Manifests](https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments). [Helm chart](https://github.com/nginxinc/kubernetes-ingress/tree/master/deployments/helm-chart). | [Documentation](https://github.com/nginxinc/kubernetes-ingress/tree/master/docs-web). [Examples](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples). |
 
 ## Contacts
 
