@@ -303,7 +303,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
 Example:
 ```console
 $ cd kubernetes-ingress/helm-chart
-$ helm install --name my-release . --set controller.replicaCount=5
+$ helm install my-release . --set controller.replicaCount=5
 ```
 
 ## Notes
