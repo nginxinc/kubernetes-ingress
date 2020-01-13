@@ -19,6 +19,12 @@ def execute_assertions(resp_1, resp_2, resp_3):
     assert "Server name: backend4-" in resp_3.text, "Expected response from backend4"
 
 
+def ensure_responses_from_backends(req_url, host) -> None:
+    ensure_response_from_backend(req_url, host, {"x-version": "future"})
+    ensure_response_from_backend(req_url, host, {"x-version": "deprecated"})
+    ensure_response_from_backend(req_url, host, {"x-version-invalid": "deprecated"})
+
+
 class VSRAdvancedRoutingSetup:
     """
     Encapsulate advanced routing VSR example details.
@@ -92,7 +98,7 @@ def vsr_adv_routing_setup(request, kube_apis,
                          indirect=True)
 class TestVSRAdvancedRouting:
     def test_flow_with_header(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
-        ensure_response_from_backend(vsr_adv_routing_setup.backends_url, vsr_adv_routing_setup.vs_host)
+        ensure_responses_from_backends(vsr_adv_routing_setup.backends_url, vsr_adv_routing_setup.vs_host)
 
         resp_1 = requests.get(vsr_adv_routing_setup.backends_url,
                               headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "future"})

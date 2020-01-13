@@ -6,7 +6,7 @@ from suite.custom_assertions import assert_event, assert_vs_conf_not_exists
 from suite.custom_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml, \
     get_vs_nginx_template_conf, create_virtual_server_from_yaml, create_v_s_route_from_yaml
 from suite.resources_utils import wait_before_test, get_events, get_first_pod_name, \
-    create_example_app, wait_until_all_pods_are_ready
+    create_example_app, wait_until_all_pods_are_ready, ensure_response_from_backend
 from suite.yaml_utils import get_first_vs_host_from_yaml
 
 
@@ -49,6 +49,7 @@ class TestRegexpLocation:
         for item in test_data['expected_results']:
             uri = item
             expected_code = test_data['expected_results'][uri]
+            ensure_response_from_backend(f"{req_url}{uri}", v_s_route_setup.vs_host)
             resp = requests.get(f"{req_url}{uri}", headers={"host": v_s_route_setup.vs_host})
             if expected_code == 200:
                 assert resp.status_code == expected_code and "Server name: backend2-" in resp.text
@@ -165,7 +166,7 @@ class TestVSRRegexpMultipleMatches:
                                        ingress_controller_prerequisites, ingress_controller_endpoint,
                                        crd_ingress_controller, vsr_regexp_setup):
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}"
-
+        ensure_response_from_backend(f"{req_url}/backends/match", vsr_regexp_setup.vs_host)
         resp = requests.get(f"{req_url}/backends/match", headers={"host": vsr_regexp_setup.vs_host})
         assert resp.status_code == 200 and "Server name: backend2-" in resp.text
 
@@ -179,6 +180,6 @@ class TestVSRRegexpMultipleMatches:
                                        vs_src_yaml,
                                        vsr_regexp_setup.namespace)
         wait_before_test(1)
-
+        ensure_response_from_backend(f"{req_url}/backends/match", vsr_regexp_setup.vs_host)
         resp = requests.get(f"{req_url}/backends/match", headers={"host": vsr_regexp_setup.vs_host})
         assert resp.status_code == 200 and "Server name: backend3-" in resp.text

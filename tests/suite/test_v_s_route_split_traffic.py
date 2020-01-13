@@ -60,12 +60,14 @@ class TestVSRTrafficSplitting:
         for _ in range(100):
             resp = requests.get(req_url,
                                 headers={"host": v_s_route_setup.vs_host})
+            if resp.status_code == 502:
+                print("Backend is not ready yet, skip.")
             if upstreams[0] in resp.text in resp.text:
                 counter_v1 = counter_v1 + 1
             elif upstreams[1] in resp.text in resp.text:
                 counter_v2 = counter_v2 + 1
             else:
-                pytest.fail(f"An unexpected backend in response: {resp.text}")
+                pytest.fail(f"An unexpected response: {resp.text}")
 
         assert abs(round(counter_v1/(counter_v1 + counter_v2), 1) - ratios[0]) <= 0.2
         assert abs(round(counter_v2/(counter_v1 + counter_v2), 1) - ratios[1]) <= 0.2

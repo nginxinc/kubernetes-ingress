@@ -1008,16 +1008,20 @@ def get_events(v1: CoreV1Api, namespace) -> []:
     return res.items
 
 
-def ensure_response_from_backend(req_url, host) -> None:
+def ensure_response_from_backend(req_url, host, additional_headers=None) -> None:
     """
-    Wait for 502 to disappear.
+    Wait for 502|504 to disappear.
 
     :param req_url: url to request
     :param host:
+    :param additional_headers:
     :return:
     """
+    headers = {"host": host}
+    if additional_headers:
+        headers.update(additional_headers)
     for _ in range(30):
-        resp = requests.get(req_url, headers={"host": host}, verify=False)
+        resp = requests.get(req_url, headers=headers, verify=False)
         if resp.status_code != 502 and resp.status_code != 504:
             print(f"After {_ * 2} seconds got non 502|504 response. Continue with tests...")
             return

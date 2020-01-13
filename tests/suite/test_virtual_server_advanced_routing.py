@@ -1,5 +1,4 @@
 import pytest
-
 import requests
 
 from settings import TEST_DATA
@@ -16,6 +15,12 @@ def execute_assertions(resp_1, resp_2, resp_3):
     assert "Server name: backend4-" in resp_3.text
 
 
+def ensure_responses_from_backends(req_url, host) -> None:
+    ensure_response_from_backend(req_url, host, {"x-version": "future"})
+    ensure_response_from_backend(req_url, host, {"x-version": "deprecated"})
+    ensure_response_from_backend(req_url, host, {"x-version-invalid": "deprecated"})
+
+
 @pytest.mark.vs
 @pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
@@ -24,7 +29,7 @@ def execute_assertions(resp_1, resp_2, resp_3):
                          indirect=True)
 class TestAdvancedRouting:
     def test_flow_with_header(self, kube_apis, crd_ingress_controller, virtual_server_setup):
-        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        ensure_responses_from_backends(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
 
         resp_1 = requests.get(virtual_server_setup.backend_1_url,
                               headers={"host": virtual_server_setup.vs_host, "x-version": "future"})
