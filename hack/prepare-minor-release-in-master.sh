@@ -23,5 +23,10 @@ prev_helm_chart_version=$(echo $helm_chart_version | awk -F. '{ printf("%s.%s.%d
 
 sed -i "" "s/$prev_ic_version/$ic_version/g" README.md
 
+# update repo CHANGELOG
 sed -i "" "1r hack/changelog-template.txt" CHANGELOG.md
-sed -i "" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" CHANGELOG.md
+sed -i "" -e "s/%%TITLE%%/### $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" CHANGELOG.md
+
+# update docs CHANGELOG
+sed -i "" "1r hack/changelog-template.txt" docs-web/releases.md 
+sed -i "" -e "s/%%TITLE%%/## NGINX Ingress Controller $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" docs-web/releases.md

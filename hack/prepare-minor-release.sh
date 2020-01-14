@@ -11,7 +11,6 @@
 FILES_TO_UPDATE_IC_VERSION=(
     Makefile
     README.md
-    build/README.md
     deployments/daemon-set/nginx-ingress.yaml
     deployments/daemon-set/nginx-plus-ingress.yaml
     deployments/deployment/nginx-ingress.yaml
@@ -24,6 +23,8 @@ FILES_TO_UPDATE_IC_VERSION=(
 )
 
 FILE_TO_UPDATE_HELM_CHART_VERSION=( deployments/helm-chart/Chart.yaml )
+
+DOCS_TO_UPDATE_FOLDER=docs-web
 
 if [ $# != 2 ];
 then
@@ -41,5 +42,17 @@ prev_helm_chart_version=$(echo $helm_chart_version | awk -F. '{ printf("%s.%s.%d
 sed -i "" "s/$prev_ic_version/$ic_version/g" ${FILES_TO_UPDATE_IC_VERSION[*]}
 sed -i "" "s/$prev_helm_chart_version/$helm_chart_version/g" ${FILE_TO_UPDATE_HELM_CHART_VERSION[*]}
 
+# update repo CHANGELOG
 sed -i "" "1r hack/changelog-template.txt" CHANGELOG.md
-sed -i "" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" CHANGELOG.md
+sed -i "" -e "s/%%TITLE%%/### $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" CHANGELOG.md
+
+# update docs CHANGELOG
+sed -i "" "1r hack/changelog-template.txt" $DOCS_TO_UPDATE_FOLDER/releases.md 
+sed -i "" -e "s/%%TITLE%%/## NGINX Ingress Controller $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" $DOCS_TO_UPDATE_FOLDER/releases.md
+
+# update docs
+find $DOCS_TO_UPDATE_FOLDER -type f -name "*.md" -exec sed -i "" "s/v$prev_ic_version/v$ic_version/g" {} +
+find $DOCS_TO_UPDATE_FOLDER -type f -name "*.rst" -exec sed -i "" "s/v$prev_ic_version/v$ic_version/g" {} +
+
+# update IC version in the helm doc  
+sed -i "" "s/$prev_ic_version/$ic_version/g" $DOCS_TO_UPDATE_FOLDER/installation/installation-with-helm.md

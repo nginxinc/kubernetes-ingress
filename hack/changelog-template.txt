@@ -1,5 +1,5 @@
 
-### %%IC_VERSION%%
+%%TITLE%%
 
 CHANGES:
 * Update NGINX version to X.Y.Z.
