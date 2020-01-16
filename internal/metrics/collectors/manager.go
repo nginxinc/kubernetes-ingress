@@ -24,34 +24,38 @@ type LocalManagerMetricsCollector struct {
 }
 
 // NewLocalManagerMetricsCollector creates a new LocalManagerMetricsCollector
-func NewLocalManagerMetricsCollector() *LocalManagerMetricsCollector {
+func NewLocalManagerMetricsCollector(ingressClassLabel map[string]string) *LocalManagerMetricsCollector {
 	nc := &LocalManagerMetricsCollector{
 		reloadsTotal: prometheus.NewCounter(
 			prometheus.CounterOpts{
-				Name:      "nginx_reloads_total",
-				Namespace: metricsNamespace,
-				Help:      "Number of successful NGINX reloads",
+				Name:        "nginx_reloads_total",
+				Namespace:   metricsNamespace,
+				Help:        "Number of successful NGINX reloads",
+				ConstLabels: ingressClassLabel,
 			},
 		),
 		reloadsError: prometheus.NewCounter(
 			prometheus.CounterOpts{
-				Name:      "nginx_reload_errors_total",
-				Namespace: metricsNamespace,
-				Help:      "Number of unsuccessful NGINX reloads",
+				Name:        "nginx_reload_errors_total",
+				Namespace:   metricsNamespace,
+				Help:        "Number of unsuccessful NGINX reloads",
+				ConstLabels: ingressClassLabel,
 			},
 		),
 		lastReloadStatus: prometheus.NewGauge(
 			prometheus.GaugeOpts{
-				Name:      "nginx_last_reload_status",
-				Namespace: metricsNamespace,
-				Help:      "Status of the last NGINX reload",
+				Name:        "nginx_last_reload_status",
+				Namespace:   metricsNamespace,
+				Help:        "Status of the last NGINX reload",
+				ConstLabels: ingressClassLabel,
 			},
 		),
 		lastReloadTime: prometheus.NewGauge(
 			prometheus.GaugeOpts{
-				Name:      "nginx_last_reload_milliseconds",
-				Namespace: metricsNamespace,
-				Help:      "Duration in milliseconds of the last NGINX reload",
+				Name:        "nginx_last_reload_milliseconds",
+				Namespace:   metricsNamespace,
+				Help:        "Duration in milliseconds of the last NGINX reload",
+				ConstLabels: ingressClassLabel,
 			},
 		),
 	}
