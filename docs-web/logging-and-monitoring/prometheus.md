@@ -18,7 +18,7 @@ If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the 
         prometheus.io/port: "9113"
     ```
 
-If you're using *Helm* to install the Ingress Controller, to enable Prometheus metrics, configure the `prometheus.*` parameters of the Helm chart. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc. 
+If you're using *Helm* to install the Ingress Controller, to enable Prometheus metrics, configure the `prometheus.*` parameters of the Helm chart. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc.
 
 ## Available Metrics
 The Ingress Controller exports the following metrics:
@@ -35,3 +35,5 @@ The Ingress Controller exports the following metrics:
   * `controller_virtualserverroute_resources_total`. Number of handled VirtualServerRoute resources. **Note**: The metric counts only VirtualServerRoutes that have a reference from a VirtualServer.
 
 **Note**: all metrics have the namespace nginx_ingress. For example, nginx_ingress_controller_nginx_reloads_total.
+
+**Note**: all metrics include the label `class` which is set to the `ingress-class` of the Ingress Controller deployment.
