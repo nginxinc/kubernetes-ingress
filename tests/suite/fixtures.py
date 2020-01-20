@@ -59,11 +59,12 @@ class PublicEndpoint:
         port (int):
         port_ssl (int):
     """
-    def __init__(self, public_ip, port=80, port_ssl=443, api_port=8080):
+    def __init__(self, public_ip, port=80, port_ssl=443, api_port=8080, metrics_port=9113):
         self.public_ip = public_ip
         self.port = port
         self.port_ssl = port_ssl
         self.api_port = api_port
+        self.metrics_port = metrics_port
 
 
 class IngressControllerPrerequisites:
@@ -122,7 +123,7 @@ def delete_test_namespaces(kube_apis, request) -> None:
 
 
 @pytest.fixture(scope="class")
-def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisites, request) -> None:
+def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisites, request) -> str:
     """
     Create Ingress Controller according to the context.
 
@@ -130,7 +131,7 @@ def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisite
     :param kube_apis: client apis
     :param ingress_controller_prerequisites
     :param request: pytest fixture
-    :return:
+    :return: IC name
     """
     namespace = ingress_controller_prerequisites.namespace
     print("------------------------- Create IC without CRDs -----------------------------------")
@@ -147,6 +148,8 @@ def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisite
         delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments['deployment-type'], namespace)
 
     request.addfinalizer(fin)
+
+    return name
 
 
 @pytest.fixture(scope="session")
@@ -166,12 +169,12 @@ def ingress_controller_endpoint(cli_arguments, kube_apis, ingress_controller_pre
         print(f"The Public IP: {public_ip}")
         service_name = create_service_from_yaml(kube_apis.v1,
                                                 namespace,
-                                                f"{TEST_DATA}/common/service/nodeport-with-api-port.yaml")
-        port, port_ssl, api_port = get_service_node_ports(kube_apis.v1, service_name, namespace)
-        return PublicEndpoint(public_ip, port, port_ssl, api_port)
+                                                f"{TEST_DATA}/common/service/nodeport-with-additional-ports.yaml")
+        port, port_ssl, api_port, metrics_port = get_service_node_ports(kube_apis.v1, service_name, namespace)
+        return PublicEndpoint(public_ip, port, port_ssl, api_port, metrics_port)
     else:
         create_service_from_yaml(kube_apis.v1,
-                                 namespace, f"{TEST_DATA}/common/service/loadbalancer-with-api-port.yaml")
+                                 namespace, f"{TEST_DATA}/common/service/loadbalancer-with-additional-ports.yaml")
         public_ip = wait_for_public_ip(kube_apis.v1, namespace)
         print(f"The Public IP: {public_ip}")
         return PublicEndpoint(public_ip)
