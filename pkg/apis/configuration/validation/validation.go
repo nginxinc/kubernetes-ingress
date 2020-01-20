@@ -845,7 +845,7 @@ func validateActionReturnBody(body string, fieldPath *field.Path) field.ErrorLis
 }
 
 var actionReturnTypeFmt = `([^;\{\}"\\]|\\.)*`
-var actionReturnTypeErr = `must have all '"' (double quotes) escaped, must not contain '{', '}' or ';' and must not end with an unescaped '\' (backslash)`
+var actionReturnTypeErr = `must have all '"' (double quotes), '{', '}' or ';' escaped and must not end with an unescaped '\' (backslash)`
 
 var actionReturnTypeRegexp = regexp.MustCompile("^" + actionReturnTypeFmt + "$")
 
