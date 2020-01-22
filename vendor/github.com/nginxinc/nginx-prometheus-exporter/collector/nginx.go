@@ -17,17 +17,17 @@ type NginxCollector struct {
 }
 
 // NewNginxCollector creates an NginxCollector.
-func NewNginxCollector(nginxClient *client.NginxClient, namespace string) *NginxCollector {
+func NewNginxCollector(nginxClient *client.NginxClient, namespace string, constLabels map[string]string) *NginxCollector {
 	return &NginxCollector{
 		nginxClient: nginxClient,
 		metrics: map[string]*prometheus.Desc{
-			"connections_active":   newGlobalMetric(namespace, "connections_active", "Active client connections"),
-			"connections_accepted": newGlobalMetric(namespace, "connections_accepted", "Accepted client connections"),
-			"connections_handled":  newGlobalMetric(namespace, "connections_handled", "Handled client connections"),
-			"connections_reading":  newGlobalMetric(namespace, "connections_reading", "Connections where NGINX is reading the request header"),
-			"connections_writing":  newGlobalMetric(namespace, "connections_writing", "Connections where NGINX is writing the response back to the client"),
-			"connections_waiting":  newGlobalMetric(namespace, "connections_waiting", "Idle client connections"),
-			"http_requests_total":  newGlobalMetric(namespace, "http_requests_total", "Total http requests"),
+			"connections_active":   newGlobalMetric(namespace, "connections_active", "Active client connections", constLabels),
+			"connections_accepted": newGlobalMetric(namespace, "connections_accepted", "Accepted client connections", constLabels),
+			"connections_handled":  newGlobalMetric(namespace, "connections_handled", "Handled client connections", constLabels),
+			"connections_reading":  newGlobalMetric(namespace, "connections_reading", "Connections where NGINX is reading the request header", constLabels),
+			"connections_writing":  newGlobalMetric(namespace, "connections_writing", "Connections where NGINX is writing the response back to the client", constLabels),
+			"connections_waiting":  newGlobalMetric(namespace, "connections_waiting", "Idle client connections", constLabels),
+			"http_requests_total":  newGlobalMetric(namespace, "http_requests_total", "Total http requests", constLabels),
 		},
 		upMetric: newUpMetric(namespace),
 	}

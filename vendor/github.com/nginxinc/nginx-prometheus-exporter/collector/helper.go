@@ -1,12 +1,14 @@
 package collector
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 const nginxUp = 1
 const nginxDown = 0
 
-func newGlobalMetric(namespace string, metricName string, docString string) *prometheus.Desc {
-	return prometheus.NewDesc(namespace+"_"+metricName, docString, nil, nil)
+func newGlobalMetric(namespace string, metricName string, docString string, constLabels map[string]string) *prometheus.Desc {
+	return prometheus.NewDesc(namespace+"_"+metricName, docString, nil, constLabels)
 }
 
 func newUpMetric(namespace string) prometheus.Gauge {
@@ -15,4 +17,18 @@ func newUpMetric(namespace string) prometheus.Gauge {
 		Name:      "up",
 		Help:      "Status of the last metric scrape",
 	})
+}
+
+// MergeLabels merges two maps of labels.
+func MergeLabels(a map[string]string, b map[string]string) map[string]string {
+	c := make(map[string]string)
+
+	for k, v := range a {
+		c[k] = v
+	}
+	for k, v := range b {
+		c[k] = v
+	}
+
+	return c
 }

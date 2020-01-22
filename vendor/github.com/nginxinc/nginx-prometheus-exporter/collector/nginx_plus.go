@@ -19,96 +19,122 @@ type NginxPlusCollector struct {
 	streamUpstreamMetrics       map[string]*prometheus.Desc
 	streamUpstreamServerMetrics map[string]*prometheus.Desc
 	streamZoneSyncMetrics       map[string]*prometheus.Desc
+	locationZoneMetrics         map[string]*prometheus.Desc
+	resolverMetrics             map[string]*prometheus.Desc
 	upMetric                    prometheus.Gauge
 	mutex                       sync.Mutex
 }
 
 // NewNginxPlusCollector creates an NginxPlusCollector.
-func NewNginxPlusCollector(nginxClient *plusclient.NginxClient, namespace string) *NginxPlusCollector {
+func NewNginxPlusCollector(nginxClient *plusclient.NginxClient, namespace string, constLabels map[string]string) *NginxPlusCollector {
 	return &NginxPlusCollector{
 		nginxClient: nginxClient,
 		totalMetrics: map[string]*prometheus.Desc{
-			"connections_accepted":  newGlobalMetric(namespace, "connections_accepted", "Accepted client connections"),
-			"connections_dropped":   newGlobalMetric(namespace, "connections_dropped", "Dropped client connections"),
-			"connections_active":    newGlobalMetric(namespace, "connections_active", "Active client connections"),
-			"connections_idle":      newGlobalMetric(namespace, "connections_idle", "Idle client connections"),
-			"http_requests_total":   newGlobalMetric(namespace, "http_requests_total", "Total http requests"),
-			"http_requests_current": newGlobalMetric(namespace, "http_requests_current", "Current http requests"),
-			"ssl_handshakes":        newGlobalMetric(namespace, "ssl_handshakes", "Successful SSL handshakes"),
-			"ssl_handshakes_failed": newGlobalMetric(namespace, "ssl_handshakes_failed", "Failed SSL handshakes"),
-			"ssl_session_reuses":    newGlobalMetric(namespace, "ssl_session_reuses", "Session reuses during SSL handshake"),
+			"connections_accepted":  newGlobalMetric(namespace, "connections_accepted", "Accepted client connections", constLabels),
+			"connections_dropped":   newGlobalMetric(namespace, "connections_dropped", "Dropped client connections", constLabels),
+			"connections_active":    newGlobalMetric(namespace, "connections_active", "Active client connections", constLabels),
+			"connections_idle":      newGlobalMetric(namespace, "connections_idle", "Idle client connections", constLabels),
+			"http_requests_total":   newGlobalMetric(namespace, "http_requests_total", "Total http requests", constLabels),
+			"http_requests_current": newGlobalMetric(namespace, "http_requests_current", "Current http requests", constLabels),
+			"ssl_handshakes":        newGlobalMetric(namespace, "ssl_handshakes", "Successful SSL handshakes", constLabels),
+			"ssl_handshakes_failed": newGlobalMetric(namespace, "ssl_handshakes_failed", "Failed SSL handshakes", constLabels),
+			"ssl_session_reuses":    newGlobalMetric(namespace, "ssl_session_reuses", "Session reuses during SSL handshake", constLabels),
 		},
 		serverZoneMetrics: map[string]*prometheus.Desc{
-			"processing":    newServerZoneMetric(namespace, "processing", "Client requests that are currently being processed", nil),
-			"requests":      newServerZoneMetric(namespace, "requests", "Total client requests", nil),
-			"responses_1xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "1xx"}),
-			"responses_2xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "2xx"}),
-			"responses_3xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "3xx"}),
-			"responses_4xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "4xx"}),
-			"responses_5xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "5xx"}),
-			"discarded":     newServerZoneMetric(namespace, "discarded", "Requests completed without sending a response", nil),
-			"received":      newServerZoneMetric(namespace, "received", "Bytes received from clients", nil),
-			"sent":          newServerZoneMetric(namespace, "sent", "Bytes sent to clients", nil),
+			"processing":    newServerZoneMetric(namespace, "processing", "Client requests that are currently being processed", constLabels),
+			"requests":      newServerZoneMetric(namespace, "requests", "Total client requests", constLabels),
+			"responses_1xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "1xx"})),
+			"responses_2xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "2xx"})),
+			"responses_3xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "3xx"})),
+			"responses_4xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "4xx"})),
+			"responses_5xx": newServerZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "5xx"})),
+			"discarded":     newServerZoneMetric(namespace, "discarded", "Requests completed without sending a response", constLabels),
+			"received":      newServerZoneMetric(namespace, "received", "Bytes received from clients", constLabels),
+			"sent":          newServerZoneMetric(namespace, "sent", "Bytes sent to clients", constLabels),
 		},
 		streamServerZoneMetrics: map[string]*prometheus.Desc{
-			"processing":   newStreamServerZoneMetric(namespace, "processing", "Client connections that are currently being processed", nil),
-			"connections":  newStreamServerZoneMetric(namespace, "connections", "Total connections", nil),
-			"sessions_2xx": newStreamServerZoneMetric(namespace, "sessions", "Total sessions completed", prometheus.Labels{"code": "2xx"}),
-			"sessions_4xx": newStreamServerZoneMetric(namespace, "sessions", "Total sessions completed", prometheus.Labels{"code": "4xx"}),
-			"sessions_5xx": newStreamServerZoneMetric(namespace, "sessions", "Total sessions completed", prometheus.Labels{"code": "5xx"}),
-			"discarded":    newStreamServerZoneMetric(namespace, "discarded", "Connections completed without creating a session", nil),
-			"received":     newStreamServerZoneMetric(namespace, "received", "Bytes received from clients", nil),
-			"sent":         newStreamServerZoneMetric(namespace, "sent", "Bytes sent to clients", nil),
+			"processing":   newStreamServerZoneMetric(namespace, "processing", "Client connections that are currently being processed", constLabels),
+			"connections":  newStreamServerZoneMetric(namespace, "connections", "Total connections", constLabels),
+			"sessions_2xx": newStreamServerZoneMetric(namespace, "sessions", "Total sessions completed", MergeLabels(constLabels, prometheus.Labels{"code": "2xx"})),
+			"sessions_4xx": newStreamServerZoneMetric(namespace, "sessions", "Total sessions completed", MergeLabels(constLabels, prometheus.Labels{"code": "4xx"})),
+			"sessions_5xx": newStreamServerZoneMetric(namespace, "sessions", "Total sessions completed", MergeLabels(constLabels, prometheus.Labels{"code": "5xx"})),
+			"discarded":    newStreamServerZoneMetric(namespace, "discarded", "Connections completed without creating a session", constLabels),
+			"received":     newStreamServerZoneMetric(namespace, "received", "Bytes received from clients", constLabels),
+			"sent":         newStreamServerZoneMetric(namespace, "sent", "Bytes sent to clients", constLabels),
 		},
 		upstreamMetrics: map[string]*prometheus.Desc{
-			"keepalives": newUpstreamMetric(namespace, "keepalives", "Idle keepalive connections"),
-			"zombies":    newUpstreamMetric(namespace, "zombies", "Servers removed from the group but still processing active client requests"),
+			"keepalives": newUpstreamMetric(namespace, "keepalives", "Idle keepalive connections", constLabels),
+			"zombies":    newUpstreamMetric(namespace, "zombies", "Servers removed from the group but still processing active client requests", constLabels),
 		},
 		streamUpstreamMetrics: map[string]*prometheus.Desc{
-			"zombies": newStreamUpstreamMetric(namespace, "zombies", "Servers removed from the group but still processing active client connections"),
+			"zombies": newStreamUpstreamMetric(namespace, "zombies", "Servers removed from the group but still processing active client connections", constLabels),
 		},
 		upstreamServerMetrics: map[string]*prometheus.Desc{
-			"state":                   newUpstreamServerMetric(namespace, "state", "Current state", nil),
-			"active":                  newUpstreamServerMetric(namespace, "active", "Active connections", nil),
-			"requests":                newUpstreamServerMetric(namespace, "requests", "Total client requests", nil),
-			"responses_1xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "1xx"}),
-			"responses_2xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "2xx"}),
-			"responses_3xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "3xx"}),
-			"responses_4xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "4xx"}),
-			"responses_5xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", prometheus.Labels{"code": "5xx"}),
-			"sent":                    newUpstreamServerMetric(namespace, "sent", "Bytes sent to this server", nil),
-			"received":                newUpstreamServerMetric(namespace, "received", "Bytes received to this server", nil),
-			"fails":                   newUpstreamServerMetric(namespace, "fails", "Active connections", nil),
-			"unavail":                 newUpstreamServerMetric(namespace, "unavail", "How many times the server became unavailable for client requests (state 'unavail') due to the number of unsuccessful attempts reaching the max_fails threshold", nil),
-			"header_time":             newUpstreamServerMetric(namespace, "header_time", "Average time to get the response header from the server", nil),
-			"response_time":           newUpstreamServerMetric(namespace, "response_time", "Average time to get the full response from the server", nil),
-			"health_checks_checks":    newUpstreamServerMetric(namespace, "health_checks_checks", "Total health check requests", nil),
-			"health_checks_fails":     newUpstreamServerMetric(namespace, "health_checks_fails", "Failed health checks", nil),
-			"health_checks_unhealthy": newUpstreamServerMetric(namespace, "health_checks_unhealthy", "How many times the server became unhealthy (state 'unhealthy')", nil),
+			"state":                   newUpstreamServerMetric(namespace, "state", "Current state", constLabels),
+			"active":                  newUpstreamServerMetric(namespace, "active", "Active connections", constLabels),
+			"requests":                newUpstreamServerMetric(namespace, "requests", "Total client requests", constLabels),
+			"responses_1xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "1xx"})),
+			"responses_2xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "2xx"})),
+			"responses_3xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "3xx"})),
+			"responses_4xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "4xx"})),
+			"responses_5xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "5xx"})),
+			"sent":                    newUpstreamServerMetric(namespace, "sent", "Bytes sent to this server", constLabels),
+			"received":                newUpstreamServerMetric(namespace, "received", "Bytes received to this server", constLabels),
+			"fails":                   newUpstreamServerMetric(namespace, "fails", "Active connections", constLabels),
+			"unavail":                 newUpstreamServerMetric(namespace, "unavail", "How many times the server became unavailable for client requests (state 'unavail') due to the number of unsuccessful attempts reaching the max_fails threshold", constLabels),
+			"header_time":             newUpstreamServerMetric(namespace, "header_time", "Average time to get the response header from the server", constLabels),
+			"response_time":           newUpstreamServerMetric(namespace, "response_time", "Average time to get the full response from the server", constLabels),
+			"health_checks_checks":    newUpstreamServerMetric(namespace, "health_checks_checks", "Total health check requests", constLabels),
+			"health_checks_fails":     newUpstreamServerMetric(namespace, "health_checks_fails", "Failed health checks", constLabels),
+			"health_checks_unhealthy": newUpstreamServerMetric(namespace, "health_checks_unhealthy", "How many times the server became unhealthy (state 'unhealthy')", constLabels),
 		},
 		streamUpstreamServerMetrics: map[string]*prometheus.Desc{
-			"state":                   newStreamUpstreamServerMetric(namespace, "state", "Current state"),
-			"active":                  newStreamUpstreamServerMetric(namespace, "active", "Active connections"),
-			"sent":                    newStreamUpstreamServerMetric(namespace, "sent", "Bytes sent to this server"),
-			"received":                newStreamUpstreamServerMetric(namespace, "received", "Bytes received from this server"),
-			"fails":                   newStreamUpstreamServerMetric(namespace, "fails", "Number of unsuccessful attempts to communicate with the server"),
-			"unavail":                 newStreamUpstreamServerMetric(namespace, "unavail", "How many times the server became unavailable for client connections (state 'unavail') due to the number of unsuccessful attempts reaching the max_fails threshold"),
-			"connections":             newStreamUpstreamServerMetric(namespace, "connections", "Total number of client connections forwarded to this server"),
-			"connect_time":            newStreamUpstreamServerMetric(namespace, "connect_time", "Average time to connect to the upstream server"),
-			"first_byte_time":         newStreamUpstreamServerMetric(namespace, "first_byte_time", "Average time to receive the first byte of data"),
-			"response_time":           newStreamUpstreamServerMetric(namespace, "response_time", "Average time to receive the last byte of data"),
-			"health_checks_checks":    newStreamUpstreamServerMetric(namespace, "health_checks_checks", "Total health check requests"),
-			"health_checks_fails":     newStreamUpstreamServerMetric(namespace, "health_checks_fails", "Failed health checks"),
-			"health_checks_unhealthy": newStreamUpstreamServerMetric(namespace, "health_checks_unhealthy", "How many times the server became unhealthy (state 'unhealthy')"),
+			"state":                   newStreamUpstreamServerMetric(namespace, "state", "Current state", constLabels),
+			"active":                  newStreamUpstreamServerMetric(namespace, "active", "Active connections", constLabels),
+			"sent":                    newStreamUpstreamServerMetric(namespace, "sent", "Bytes sent to this server", constLabels),
+			"received":                newStreamUpstreamServerMetric(namespace, "received", "Bytes received from this server", constLabels),
+			"fails":                   newStreamUpstreamServerMetric(namespace, "fails", "Number of unsuccessful attempts to communicate with the server", constLabels),
+			"unavail":                 newStreamUpstreamServerMetric(namespace, "unavail", "How many times the server became unavailable for client connections (state 'unavail') due to the number of unsuccessful attempts reaching the max_fails threshold", constLabels),
+			"connections":             newStreamUpstreamServerMetric(namespace, "connections", "Total number of client connections forwarded to this server", constLabels),
+			"connect_time":            newStreamUpstreamServerMetric(namespace, "connect_time", "Average time to connect to the upstream server", constLabels),
+			"first_byte_time":         newStreamUpstreamServerMetric(namespace, "first_byte_time", "Average time to receive the first byte of data", constLabels),
+			"response_time":           newStreamUpstreamServerMetric(namespace, "response_time", "Average time to receive the last byte of data", constLabels),
+			"health_checks_checks":    newStreamUpstreamServerMetric(namespace, "health_checks_checks", "Total health check requests", constLabels),
+			"health_checks_fails":     newStreamUpstreamServerMetric(namespace, "health_checks_fails", "Failed health checks", constLabels),
+			"health_checks_unhealthy": newStreamUpstreamServerMetric(namespace, "health_checks_unhealthy", "How many times the server became unhealthy (state 'unhealthy')", constLabels),
 		},
 		streamZoneSyncMetrics: map[string]*prometheus.Desc{
-			"bytes_in":        newStreamZoneSyncMetric(namespace, "bytes_in", "Bytes received by this node"),
-			"bytes_out":       newStreamZoneSyncMetric(namespace, "bytes_out", "Bytes sent by this node"),
-			"msgs_in":         newStreamZoneSyncMetric(namespace, "msgs_in", "Total messages received by this node"),
-			"msgs_out":        newStreamZoneSyncMetric(namespace, "msgs_out", "Total messages sent by this node"),
-			"nodes_online":    newStreamZoneSyncMetric(namespace, "nodes_online", "Number of peers this node is conected to"),
-			"records_pending": newStreamZoneSyncZoneMetric(namespace, "records_pending", "The number of records that need to be sent to the cluster"),
-			"records_total":   newStreamZoneSyncZoneMetric(namespace, "records_total", "The total number of records stored in the shared memory zone"),
+			"bytes_in":        newStreamZoneSyncMetric(namespace, "bytes_in", "Bytes received by this node", constLabels),
+			"bytes_out":       newStreamZoneSyncMetric(namespace, "bytes_out", "Bytes sent by this node", constLabels),
+			"msgs_in":         newStreamZoneSyncMetric(namespace, "msgs_in", "Total messages received by this node", constLabels),
+			"msgs_out":        newStreamZoneSyncMetric(namespace, "msgs_out", "Total messages sent by this node", constLabels),
+			"nodes_online":    newStreamZoneSyncMetric(namespace, "nodes_online", "Number of peers this node is connected to", constLabels),
+			"records_pending": newStreamZoneSyncZoneMetric(namespace, "records_pending", "The number of records that need to be sent to the cluster", constLabels),
+			"records_total":   newStreamZoneSyncZoneMetric(namespace, "records_total", "The total number of records stored in the shared memory zone", constLabels),
+		},
+		locationZoneMetrics: map[string]*prometheus.Desc{
+			"requests":      newLocationZoneMetric(namespace, "requests", "Total client requests", constLabels),
+			"responses_1xx": newLocationZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "1xx"})),
+			"responses_2xx": newLocationZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "2xx"})),
+			"responses_3xx": newLocationZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "3xx"})),
+			"responses_4xx": newLocationZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "4xx"})),
+			"responses_5xx": newLocationZoneMetric(namespace, "responses", "Total responses sent to clients", MergeLabels(constLabels, prometheus.Labels{"code": "5xx"})),
+			"discarded":     newLocationZoneMetric(namespace, "discarded", "Requests completed without sending a response", constLabels),
+			"received":      newLocationZoneMetric(namespace, "received", "Bytes received from clients", constLabels),
+			"sent":          newLocationZoneMetric(namespace, "sent", "Bytes sent to clients", constLabels),
+		},
+		resolverMetrics: map[string]*prometheus.Desc{
+			"name":     newResolverMetric(namespace, "name", "Total requests to resolve names to addresses", constLabels),
+			"srv":      newResolverMetric(namespace, "srv", "Total requests to resolve SRV records", constLabels),
+			"addr":     newResolverMetric(namespace, "addr", "Total requests to resolve addresses to names", constLabels),
+			"noerror":  newResolverMetric(namespace, "noerror", "Total number of successful responses", constLabels),
+			"formerr":  newResolverMetric(namespace, "formerr", "Total number of FORMERR responses", constLabels),
+			"servfail": newResolverMetric(namespace, "servfail", "Total number of SERVFAIL responses", constLabels),
+			"nxdomain": newResolverMetric(namespace, "nxdomain", "Total number of NXDOMAIN responses", constLabels),
+			"notimp":   newResolverMetric(namespace, "notimp", "Total number of NOTIMP responses", constLabels),
+			"refused":  newResolverMetric(namespace, "refused", "Total number of REFUSED responses", constLabels),
+			"timedout": newResolverMetric(namespace, "timedout", "Total number of timed out requests", constLabels),
+			"unknown":  newResolverMetric(namespace, "unknown", "Total requests completed with an unknown error", constLabels),
 		},
 		upMetric: newUpMetric(namespace),
 	}
@@ -141,6 +167,12 @@ func (c *NginxPlusCollector) Describe(ch chan<- *prometheus.Desc) {
 		ch <- m
 	}
 	for _, m := range c.streamZoneSyncMetrics {
+		ch <- m
+	}
+	for _, m := range c.locationZoneMetrics {
+		ch <- m
+	}
+	for _, m := range c.resolverMetrics {
 		ch <- m
 	}
 }
@@ -322,6 +354,52 @@ func (c *NginxPlusCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(c.streamZoneSyncMetrics["nodes_online"],
 			prometheus.GaugeValue, float64(stats.StreamZoneSync.Status.NodesOnline))
 	}
+
+	for name, zone := range stats.LocationZones {
+		ch <- prometheus.MustNewConstMetric(c.locationZoneMetrics["requests"],
+			prometheus.CounterValue, float64(zone.Requests), name)
+		ch <- prometheus.MustNewConstMetric(c.locationZoneMetrics["responses_1xx"],
+			prometheus.CounterValue, float64(zone.Responses.Responses1xx), name)
+		ch <- prometheus.MustNewConstMetric(c.locationZoneMetrics["responses_2xx"],
+			prometheus.CounterValue, float64(zone.Responses.Responses2xx), name)
+		ch <- prometheus.MustNewConstMetric(c.locationZoneMetrics["responses_3xx"],
+			prometheus.CounterValue, float64(zone.Responses.Responses3xx), name)
+		ch <- prometheus.MustNewConstMetric(c.locationZoneMetrics["responses_4xx"],
+			prometheus.CounterValue, float64(zone.Responses.Responses4xx), name)
+		ch <- prometheus.MustNewConstMetric(c.locationZoneMetrics["responses_5xx"],
+			prometheus.CounterValue, float64(zone.Responses.Responses5xx), name)
+		ch <- prometheus.MustNewConstMetric(c.locationZoneMetrics["discarded"],
+			prometheus.CounterValue, float64(zone.Discarded), name)
+		ch <- prometheus.MustNewConstMetric(c.locationZoneMetrics["received"],
+			prometheus.CounterValue, float64(zone.Received), name)
+		ch <- prometheus.MustNewConstMetric(c.locationZoneMetrics["sent"],
+			prometheus.CounterValue, float64(zone.Sent), name)
+	}
+
+	for name, zone := range stats.Resolvers {
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["name"],
+			prometheus.CounterValue, float64(zone.Requests.Name), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["srv"],
+			prometheus.CounterValue, float64(zone.Requests.Srv), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["addr"],
+			prometheus.CounterValue, float64(zone.Requests.Addr), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["noerror"],
+			prometheus.CounterValue, float64(zone.Responses.Noerror), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["formerr"],
+			prometheus.CounterValue, float64(zone.Responses.Formerr), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["servfail"],
+			prometheus.CounterValue, float64(zone.Responses.Servfail), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["nxdomain"],
+			prometheus.CounterValue, float64(zone.Responses.Nxdomain), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["notimp"],
+			prometheus.CounterValue, float64(zone.Responses.Notimp), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["refused"],
+			prometheus.CounterValue, float64(zone.Responses.Refused), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["timedout"],
+			prometheus.CounterValue, float64(zone.Responses.Timedout), name)
+		ch <- prometheus.MustNewConstMetric(c.resolverMetrics["unknown"],
+			prometheus.CounterValue, float64(zone.Responses.Unknown), name)
+	}
 }
 
 var upstreamServerStates = map[string]float64{
@@ -341,26 +419,34 @@ func newStreamServerZoneMetric(namespace string, metricName string, docString st
 	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_server_zone", metricName), docString, []string{"server_zone"}, constLabels)
 }
 
-func newUpstreamMetric(namespace string, metricName string, docString string) *prometheus.Desc {
-	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "upstream", metricName), docString, []string{"upstream"}, nil)
+func newUpstreamMetric(namespace string, metricName string, docString string, constLabels prometheus.Labels) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "upstream", metricName), docString, []string{"upstream"}, constLabels)
 }
 
-func newStreamUpstreamMetric(namespace string, metricName string, docString string) *prometheus.Desc {
-	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_upstream", metricName), docString, []string{"upstream"}, nil)
+func newStreamUpstreamMetric(namespace string, metricName string, docString string, constLabels prometheus.Labels) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_upstream", metricName), docString, []string{"upstream"}, constLabels)
 }
 
 func newUpstreamServerMetric(namespace string, metricName string, docString string, constLabels prometheus.Labels) *prometheus.Desc {
 	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "upstream_server", metricName), docString, []string{"upstream", "server"}, constLabels)
 }
 
-func newStreamUpstreamServerMetric(namespace string, metricName string, docString string) *prometheus.Desc {
-	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_upstream_server", metricName), docString, []string{"upstream", "server"}, nil)
+func newStreamUpstreamServerMetric(namespace string, metricName string, docString string, constLabels prometheus.Labels) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_upstream_server", metricName), docString, []string{"upstream", "server"}, constLabels)
 }
 
-func newStreamZoneSyncMetric(namespace string, metricName string, docString string) *prometheus.Desc {
-	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_zone_sync_status", metricName), docString, nil, nil)
+func newStreamZoneSyncMetric(namespace string, metricName string, docString string, constLabels prometheus.Labels) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_zone_sync_status", metricName), docString, nil, constLabels)
 }
 
-func newStreamZoneSyncZoneMetric(namespace string, metricName string, docString string) *prometheus.Desc {
-	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_zone_sync_zone", metricName), docString, []string{"zone"}, nil)
+func newStreamZoneSyncZoneMetric(namespace string, metricName string, docString string, constLabels prometheus.Labels) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "stream_zone_sync_zone", metricName), docString, []string{"zone"}, constLabels)
+}
+
+func newLocationZoneMetric(namespace string, metricName string, docString string, constLabels prometheus.Labels) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "location_zone", metricName), docString, []string{"location_zone"}, constLabels)
+}
+
+func newResolverMetric(namespace string, metricName string, docString string, constLabels prometheus.Labels) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName(namespace, "resolver", metricName), docString, []string{"resolver"}, constLabels)
 }

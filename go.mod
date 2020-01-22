@@ -10,17 +10,15 @@ require (
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/imdario/mergo v0.3.8 // indirect
-	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/nginxinc/nginx-plus-go-client v0.6.0
-	github.com/nginxinc/nginx-prometheus-exporter v0.4.2
+	github.com/nginxinc/nginx-prometheus-exporter v0.5.1-0.20200122150314-eb956e2ca62e
 	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
-	github.com/prometheus/client_golang v1.2.1
-	github.com/prometheus/procfs v0.0.6 // indirect
+	github.com/prometheus/client_golang v1.3.0
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/crypto v0.0.0-20191108234033-bd318be0434a // indirect
 	golang.org/x/net v0.0.0-20191112182307-2180aed22343 // indirect
-	golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4 // indirect
+	golang.org/x/sys v0.0.0-20200122134326-e047566fdf82 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/tools v0.0.0-20191113055240-e33b02e76616 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
