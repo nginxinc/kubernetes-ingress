@@ -36,4 +36,4 @@ The Ingress Controller exports the following metrics:
 
 **Note**: all metrics have the namespace nginx_ingress. For example, nginx_ingress_controller_nginx_reloads_total.
 
-**Note**: all metrics include the label `class` which is set to the `ingress-class` of the Ingress Controller deployment.
+**Note**: all metrics include the label `class`, which is set to the class of the Ingress Controller. The class is configured via the `-ingress-class` command-line argument.

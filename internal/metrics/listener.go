@@ -22,14 +22,14 @@ func NewNginxMetricsClient(httpClient *http.Client) (*prometheusClient.NginxClie
 }
 
 // RunPrometheusListenerForNginx runs an http server to expose Prometheus metrics for NGINX
-func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClient, registry *prometheus.Registry, ingressClassLabel map[string]string) {
-	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx", ingressClassLabel))
+func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClient, registry *prometheus.Registry, constLabels map[string]string) {
+	registry.MustRegister(nginxCollector.NewNginxCollector(client, "nginx_ingress_nginx", constLabels))
 	runServer(strconv.Itoa(port), registry)
 }
 
 // RunPrometheusListenerForNginxPlus runs an http server to expose Prometheus metrics for NGINX Plus
-func RunPrometheusListenerForNginxPlus(port int, plusClient *plusClient.NginxClient, registry *prometheus.Registry, ingressClassLabel map[string]string) {
-	registry.MustRegister(nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", ingressClassLabel))
+func RunPrometheusListenerForNginxPlus(port int, plusClient *plusClient.NginxClient, registry *prometheus.Registry, constLabels map[string]string) {
+	registry.MustRegister(nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", constLabels))
 	runServer(strconv.Itoa(port), registry)
 }
 

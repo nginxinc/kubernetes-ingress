@@ -242,14 +242,14 @@ func main() {
 	var registry *prometheus.Registry
 	var managerCollector collectors.ManagerCollector
 	var controllerCollector collectors.ControllerCollector
-	var ingressClassLabel = map[string]string{"class": *ingressClass}
+	constLabels := map[string]string{"class": *ingressClass}
 	managerCollector = collectors.NewManagerFakeCollector()
 	controllerCollector = collectors.NewControllerFakeCollector()
 
 	if *enablePrometheusMetrics {
 		registry = prometheus.NewRegistry()
-		managerCollector = collectors.NewLocalManagerMetricsCollector(ingressClassLabel)
-		controllerCollector = collectors.NewControllerMetricsCollector(*enableCustomResources, ingressClassLabel)
+		managerCollector = collectors.NewLocalManagerMetricsCollector(constLabels)
+		controllerCollector = collectors.NewControllerMetricsCollector(*enableCustomResources, constLabels)
 
 		err = managerCollector.Register(registry)
 		if err != nil {
@@ -370,14 +370,14 @@ func main() {
 
 	if *enablePrometheusMetrics {
 		if *nginxPlus {
-			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusClient, registry, ingressClassLabel)
+			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusClient, registry, constLabels)
 		} else {
 			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
 			client, err := metrics.NewNginxMetricsClient(httpClient)
 			if err != nil {
 				glog.Fatalf("Error creating the Nginx client for Prometheus metrics: %v", err)
 			}
-			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, ingressClassLabel)
+			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, constLabels)
 		}
 	}
 
