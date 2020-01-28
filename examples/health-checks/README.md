@@ -59,12 +59,12 @@ spec:
     spec:
       containers:
       - name: tea
-        image: nginxdemos/hello:plain-text
+        image: nginxdemos/nginx-hello:plain-text
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         readinessProbe:
           httpGet:
-            port: 80
+            port: 8080
             path: /healthz/tea
             httpHeaders:
             - name: header1
