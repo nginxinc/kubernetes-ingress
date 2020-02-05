@@ -314,13 +314,16 @@ class TestVSRouteUpstreamOptionsValidation:
                          indirect=True)
 class TestOptionsSpecificForPlus:
     @pytest.mark.parametrize('options, expected_strings', [
-        ({"lb-method": "least_conn", "healthCheck": {"enable": True}, "slow-start": "3h", "queue": {"size": 100},
+        ({"lb-method": "least_conn",
+          "healthCheck": {"enable": True, "port": 8080},
+          "slow-start": "3h",
+          "queue": {"size": 100},
           "sessionCookie": {"enable": True,
                             "name": "TestCookie",
                             "path": "/some-valid/path",
                             "expires": "max",
                             "domain": "virtual-server-route.example.com", "httpOnly": True, "secure": True}},
-         ["health_check uri=/ port=80 interval=5s jitter=0s", "fails=1 passes=1;",
+         ["health_check uri=/ port=8080 interval=5s jitter=0s", "fails=1 passes=1;",
           "slow_start=3h", "queue 100 timeout=60s;",
           "sticky cookie TestCookie expires=max domain=virtual-server-route.example.com httponly secure path=/some-valid/path;"]),
         ({"lb-method": "least_conn",
