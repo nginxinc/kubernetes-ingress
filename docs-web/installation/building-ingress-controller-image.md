@@ -1,6 +1,6 @@
-# Building Ingress Controller Image
+# Building the Ingress Controller Image
 
-This document explains how to build an Ingress Controller image. Note that for NGINX, we provide the image though [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress-controller/). For NGINX Plus, you need to build the image.
+This document explains how to build an Ingress Controller image. Note that for NGINX, we provide the image though [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/). For NGINX Plus, you need to build the image.
 
 ## Prerequisites
 
@@ -27,7 +27,6 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 1. Build the image:
     * For NGINX:
       ```
-      $ make clean
       $ make PREFIX=myregistry.example.com/nginx-ingress
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
@@ -41,7 +40,6 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       Then run:
       ```
-      $ make clean
       $ make DOCKERFILE=DockerfileForPlus PREFIX=myregistry.example.com/nginx-plus-ingress
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
