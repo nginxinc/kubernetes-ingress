@@ -142,7 +142,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
      - nginx/nginx-ingress
    * - ``controller.image.tag``
      - The tag of the Ingress controller image.
-     - 1.6.1
+     - 1.6.2
    * - ``controller.image.pullPolicy``
      - The pull policy for the Ingress controller image.
      - IfNotPresent

@@ -1,4 +1,17 @@
-# Releases 
+# Releases
+
+## NGINX Ingress Controller 1.6.2
+
+CHANGES:
+* Update NGINX version to 1.17.8.
+
+HELM CHART:
+* The version of the Helm chart is now 0.4.2.
+
+UPGRADE:
+* For NGINX, use the 1.6.2 image from our DockerHub: `nginx/nginx-ingress:1.6.2` or `nginx/nginx-ingress:1.6.2-alpine`
+* For NGINX Plus, please build your own image using the 1.6.2 source code.
+* For Helm, use version 0.4.2 of the chart.
 
 ## NGINX Ingress Controller 1.6.1
 
@@ -17,7 +30,7 @@ UPGRADE:
 
 OVERVIEW:
 
-Release 1.6.0 includes: 
+Release 1.6.0 includes:
 * Improvements to VirtualServer and VirtualServerRoute resources, adding support for richer load balancing behavior, more sophisticated request routing, redirects, direct responses, and blue-green and circuit breaker patterns. The VirtualServer and VirtualServerRoute resources are enabled by default and are ready for production use.
 * Support for OpenTracing, helping you to monitor and debug complex transactions.
 * An improved security posture, with support to run the Ingress Controller as a non-root user.
@@ -54,7 +67,7 @@ FEATURES FOR VIRTUALSERVER AND VIRTUALSERVERROUTE RESOURCES:
 * [596](https://github.com/nginxinc/kubernetes-ingress/pull/596): Add lb-method support in vs and vsr.
 
 FEATURES:
-* [750](https://github.com/nginxinc/kubernetes-ingress/pull/750): Add support for health status uri customisation. 
+* [750](https://github.com/nginxinc/kubernetes-ingress/pull/750): Add support for health status uri customisation.
 * [691](https://github.com/nginxinc/kubernetes-ingress/pull/691): Helper Functions for custom annotations.
 * [631](https://github.com/nginxinc/kubernetes-ingress/pull/631): Add max_conns support for NGINX plus.
 * [629](https://github.com/nginxinc/kubernetes-ingress/pull/629): Added upstream zone directive annotation. Thanks to [Victor Regalado](https://github.com/vrrs).

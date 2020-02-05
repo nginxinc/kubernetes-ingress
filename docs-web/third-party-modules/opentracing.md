@@ -78,4 +78,4 @@ nginx.org/location-snippets: |
    opentracing_propagate_context;
 ```
 
-**Note**: `opentracing_propagate_context` and `opentracing_grpc_propagate_context` directives can be used in http, server or location contexts according to the [module documentation](https://github.com/opentracing-contrib/nginx-opentracing/blob/v1.6.1/doc/Reference.md#opentracing_propagate_context). However, because of the way the module works and how the Ingress Controller generates the NGINX configuration, it is only possible to use the directive in the location context.
+**Note**: `opentracing_propagate_context` and `opentracing_grpc_propagate_context` directives can be used in http, server or location contexts according to the [module documentation](https://github.com/opentracing-contrib/nginx-opentracing/blob/v1.6.2/doc/Reference.md#opentracing_propagate_context). However, because of the way the module works and how the Ingress Controller generates the NGINX configuration, it is only possible to use the directive in the location context.

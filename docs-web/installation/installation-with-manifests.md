@@ -10,7 +10,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 1. Clone the Ingress controller repo and change into the deployments folder:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
-    $ git checkout v1.6.1
+    $ git checkout v1.6.2
     $ cd kubernetes-ingress/deployments
     ```
 
