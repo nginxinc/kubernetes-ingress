@@ -1,6 +1,6 @@
 ARG GOLANG_CONTAINER=golang:latest
 
-FROM nginx:1.17.7 AS base
+FROM nginx:1.17.8 AS base
 
 # forward nginx access and error logs to stdout and stderr of the ingress
 # controller process
