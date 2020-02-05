@@ -1,6 +1,6 @@
-# Building Ingress Controller Image
+# Building the Ingress Controller Image
 
-This document explains how to build an Ingress Controller image. Note that for NGINX, we provide the image though [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress-controller/). For NGINX Plus, you need to build the image.
+This document explains how to build an Ingress Controller image. Note that for NGINX, we provide the image though [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/). For NGINX Plus, you need to build the image.
 
 ## Prerequisites
 
@@ -22,7 +22,8 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 1. Clone the Ingress controller repo:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
-    $ git checkout v1.6.1
+    $ cd kubernetes-ingress
+    $ git checkout v1.6.2
     ```
 
 1. Build the image:
@@ -32,7 +33,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       $ make PREFIX=myregistry.example.com/nginx-ingress
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
-      
+
       As the result, the image **myregistry.example.com/nginx-ingress:1.6.0** is built and pushed to the registry. Note that the tag `1.6.0` comes from the `VERSION` variable, defined in the Makefile.
 
     * For NGINX Plus, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
@@ -46,7 +47,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       $ make DOCKERFILE=DockerfileForPlus PREFIX=myregistry.example.com/nginx-plus-ingress
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
-      
+
       As the result, the image **myregistry.example.com/nginx-plus-ingress:1.6.0** is built and pushed to the registry. Note that the tag `1.6.0` comes from the `VERSION` variable, defined in the Makefile.
 
 Next you will find the details about available Makefile targets and variables.

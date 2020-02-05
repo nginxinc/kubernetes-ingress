@@ -2,10 +2,10 @@
 
 The Ingress Controller supports [OpenTracing](http://opentracing.io/) with the third-party module [opentracing-contrib/nginx-opentracing](https://github.com/opentracing-contrib/nginx-opentracing).
 
-This document explains how to use OpenTracing with the Ingress Controller. Additionally, we have an [example](https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.1/docs/opentracing.md) on how to enable OpenTracing for a simple web application using Jaeger as a tracer.
+This document explains how to use OpenTracing with the Ingress Controller. Additionally, we have an [example](https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.2/examples/opentracing) on how to enable OpenTracing for a simple web application using Jaeger as a tracer.
 
 ## Prerequisites
-1. **Use the Ingress Controller image with OpenTracing.** The default Ingress Controller images don’t include the OpenTracing module. To use OpenTracing, you need to build the image with that module. Follow the build instructions to build the image using `DockerfileWithOpentracing` for NGINX or `DockerfileWithOpentracingForPlus` for NGINX Plus. 
+1. **Use the Ingress Controller image with OpenTracing.** The default Ingress Controller images don’t include the OpenTracing module. To use OpenTracing, you need to build the image with that module. Follow the build instructions to build the image using `DockerfileWithOpentracing` for NGINX or `DockerfileWithOpentracingForPlus` for NGINX Plus.
 By default, the Dockerfiles install Jaeger as a tracer. However, it is possible to replace Jaeger with other supported [tracers](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source). For that, please modify the Dockerfile accordingly:
    1. Change the download line in the tracer-downloader stage of the Dockerfile to download the right tracer.
    1. Edit the COPY line of the final image to copy the previously downloaded tracer to the image
@@ -13,7 +13,7 @@ By default, the Dockerfiles install Jaeger as a tracer. However, it is possible 
 1. **Load the OpenTracing module.** You need to load the module with the configuration for the chosen tracer using the following ConfigMap keys:
    * `opentracing-tracer`: sets the path to the vendor tracer binary plugin. This is the path you used in the COPY line of step *ii* above.
    * `opentracing-tracer-config`: sets the tracer configuration in JSON format.
-    
+
    Below an example on how to use those keys to load the module with Jaeger tracer:
     ```yaml
     opentracing-tracer: "/usr/local/lib/libjaegertracing_plugin.so"
@@ -55,7 +55,7 @@ Consider the following two cases:
         ```
 
 2. OpenTracing is globally enabled:
-   1. To disable OpenTracing for a specific Ingress Resource, use the server snippet annotation:  
+   1. To disable OpenTracing for a specific Ingress Resource, use the server snippet annotation:
         ```yaml
         nginx.org/server-snippets: |
             opentracing off;
@@ -69,9 +69,9 @@ Consider the following two cases:
 
 ## Customize OpenTracing
 
-You can customize OpenTracing though the supported [OpenTracing module directives](https://github.com/opentracing-contrib/nginx-opentracing/blob/v1.6.1/doc/Reference.md). Use the snippets ConfigMap keys or annotations to insert those directives into the http, server or location contexts of the generated NGINX configuration. 
+You can customize OpenTracing though the supported [OpenTracing module directives](https://github.com/opentracing-contrib/nginx-opentracing/blob/v1.6.2/doc/Reference.md). Use the snippets ConfigMap keys or annotations to insert those directives into the http, server or location contexts of the generated NGINX configuration.
 
-For example, to propagate the active span context for upstream requests, it is required to set the `opentracing_propagate_context` directive, which you can add to an Ingress resource using the location snippets annotation: 
+For example, to propagate the active span context for upstream requests, it is required to set the `opentracing_propagate_context` directive, which you can add to an Ingress resource using the location snippets annotation:
 
 ```yaml
 nginx.org/location-snippets: |

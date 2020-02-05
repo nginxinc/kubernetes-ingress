@@ -27,7 +27,7 @@ spec:
 
 Here is a breakdown of what this Ingress resource definition means:
 * The `metadata.name` field defines the name of the resource `cafe‑ingress`.
-* In the `spec.tsl` field we set up SSL/TLS termination:
+* In the `spec.tls` field we set up SSL/TLS termination:
     * In the `secretName`, we reference a secret resource by its name, `cafe‑secret`. This resource contains the SSL/TLS certificate and key and it must be deployed prior to the Ingress resource.
     * In the `hosts` field, we apply the certificate and key to our `cafe.example.com` host.
 * In the `spec.rules` field, we define a host with domain name `cafe.example.com`.
