@@ -4,6 +4,7 @@ import yaml
 
 from kubernetes.client import CustomObjectsApi, ApiextensionsV1beta1Api, CoreV1Api
 from kubernetes import client
+from kubernetes.client.rest import ApiException
 
 from suite.resources_utils import ensure_item_removal, get_file_contents
 
@@ -17,6 +18,9 @@ def create_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, body) -> None:
     """
     try:
         api_extensions_v1_beta1.create_custom_resource_definition(body)
+    except ApiException as api_ex:
+        raise api_ex
+        # ApiException(f"An unexpected exception occurred: {api_ex}", reason=api_ex.reason)
     except Exception as ex:
         # https://github.com/kubernetes-client/python/issues/376
         if ex.args[0] == 'Invalid value for `conditions`, must not be `None`':
@@ -74,6 +78,20 @@ def delete_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, name) -> None:
     api_extensions_v1_beta1.delete_custom_resource_definition(name, delete_options)
     ensure_item_removal(api_extensions_v1_beta1.read_custom_resource_definition, name)
     print(f"CRD was removed with name '{name}'")
+
+
+def delete_crds_from_yaml(api_extensions_v1_beta1: ApiextensionsV1beta1Api, yaml_manifest) -> None:
+    """
+    Delete a CRD based on yaml file.
+
+    :param api_extensions_v1_beta1: ApiextensionsV1beta1Api
+    :param yaml_manifest: an absolute path to file
+    :return: []
+    """
+    with open(yaml_manifest) as f:
+        docs = yaml.safe_load_all(f)
+        for dep in docs:
+            delete_crd(api_extensions_v1_beta1, dep['metadata']['name'])
 
 
 def create_virtual_server_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
@@ -135,6 +153,7 @@ def patch_virtual_server(custom_objects: CustomObjectsApi, name, namespace, body
     Update a VirtualServer based on a dict.
 
     :param custom_objects: CustomObjectsApi
+    :param name:
     :param body: dict
     :param namespace:
     :return: str
@@ -201,6 +220,7 @@ def patch_v_s_route(custom_objects: CustomObjectsApi, name, namespace, body) -> 
     Update a VirtualServerRoute based on a dict.
 
     :param custom_objects: CustomObjectsApi
+    :param name:
     :param body: dict
     :param namespace:
     :return: str

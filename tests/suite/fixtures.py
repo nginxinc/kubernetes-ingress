@@ -8,9 +8,10 @@ import yaml
 from kubernetes import config, client
 from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api, CustomObjectsApi, \
     ApiextensionsV1beta1Api, AppsV1Api
+from kubernetes.client.rest import ApiException
 
-from suite.custom_resources_utils import create_crds_from_yaml, delete_crd, create_virtual_server_from_yaml, \
-    delete_virtual_server, create_v_s_route_from_yaml, delete_v_s_route
+from suite.custom_resources_utils import create_crds_from_yaml, create_virtual_server_from_yaml, \
+    delete_virtual_server, create_v_s_route_from_yaml, delete_v_s_route, delete_crds_from_yaml
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml, \
     patch_rbac, create_example_app, wait_until_all_pods_are_ready, delete_common_app, \
@@ -134,6 +135,7 @@ def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisite
     :return: IC name
     """
     namespace = ingress_controller_prerequisites.namespace
+    name = "nginx-ingress"
     print("------------------------- Create IC without CRDs -----------------------------------")
     try:
         extra_args = request.param.get('extra_args', None)
@@ -141,7 +143,12 @@ def ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequisite
     except AttributeError:
         print("IC will start with CRDs disabled and without any additional cli-arguments")
         extra_args = ["-enable-custom-resources=false"]
-    name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace, extra_args)
+    try:
+        name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace, extra_args)
+    except ApiException as ex:
+        # Finalizer doesn't start if fixture creation was incomplete, ensure clean up here
+        print(f"Failed to complete IC fixture: {ex}\nClean up the cluster as much as possible.")
+        delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments['deployment-type'], namespace)
 
     def fin():
         print("Delete IC:")
@@ -294,27 +301,37 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     :return:
     """
     namespace = ingress_controller_prerequisites.namespace
-    print("------------------------- Update ClusterRole -----------------------------------")
-    if request.param['type'] == 'rbac-without-vs':
-        patch_rbac(kube_apis.rbac_v1_beta1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
-    print("------------------------- Register CRD -----------------------------------")
-    crd_names = create_crds_from_yaml(kube_apis.api_extensions_v1_beta1,
-                                      f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")
-    print("------------------------- Create IC -----------------------------------")
-    name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace,
-                                     request.param.get('extra_args', None))
-    ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
-                                         ingress_controller_endpoint.port,
-                                         ingress_controller_endpoint.port_ssl)
-
-    def fin():
-        for crd_name in crd_names:
-            print("Remove the CRD:")
-            delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
-        print("Remove the IC:")
-        delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments['deployment-type'], namespace)
+    name = "nginx-ingress"
+    try:
+        print("------------------------- Update ClusterRole -----------------------------------")
+        if request.param['type'] == 'rbac-without-vs':
+            patch_rbac(kube_apis.rbac_v1_beta1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
+        print("------------------------- Register CRD -----------------------------------")
+        create_crds_from_yaml(kube_apis.api_extensions_v1_beta1,
+                              f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")
+        print("------------------------- Create IC -----------------------------------")
+        name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace,
+                                         request.param.get('extra_args', None))
+        ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
+                                             ingress_controller_endpoint.port,
+                                             ingress_controller_endpoint.port_ssl)
+    except ApiException as ex:
+        # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
+        print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
+        delete_crds_from_yaml(kube_apis.api_extensions_v1_beta1,
+                              f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
+        print("Remove the IC:")
+        delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments['deployment-type'], namespace)
+
+    def fin():
+        delete_crds_from_yaml(kube_apis.api_extensions_v1_beta1,
+                              f"{DEPLOYMENTS}/common/custom-resource-definitions.yaml")
+        print("Restore the ClusterRole:")
+        patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
+        print("Remove the IC:")
+        delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments['deployment-type'], namespace)
 
     request.addfinalizer(fin)
 

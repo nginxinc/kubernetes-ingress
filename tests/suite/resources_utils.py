@@ -425,8 +425,8 @@ def ensure_item_removal(get_item, *args, **kwargs) -> None:
             get_item(*args, **kwargs)
             counter = counter + 1
         if counter >= 30:
-            # Due to k8s issue with namespaces, they sometimes stuck in Terminating state, skip such cases
-            if "namespace" in str(get_item):
+            # Due to k8s issue with namespaces, they sometimes get stuck in Terminating state, skip such cases
+            if "_namespace " in str(get_item):
                 print(f"Failed to remove namespace '{args}' after 30 seconds, skip removal. Remove manually.")
             else:
                 pytest.fail("Failed to remove the item after 30 seconds")
