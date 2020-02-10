@@ -19,9 +19,11 @@ type ConfigParams struct {
 	MainServerNamesHashBucketSize string
 	MainServerNamesHashMaxSize    string
 	MainAccessLogOff              bool
-	MainLogFormat                 string
+	MainLogFormat                 []string
+	MainLogFormatEscaping         string
 	MainErrorLogLevel             string
-	MainStreamLogFormat           string
+	MainStreamLogFormat           []string
+	MainStreamLogFormatEscaping   string
 	ProxyBuffering                bool
 	ProxyBuffers                  string
 	ProxyBufferSize               string

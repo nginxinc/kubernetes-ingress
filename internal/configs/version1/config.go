@@ -127,9 +127,11 @@ type MainConfig struct {
 	ServerNamesHashBucketSize      string
 	ServerNamesHashMaxSize         string
 	AccessLogOff                   bool
-	LogFormat                      string
+	LogFormat                      []string
+	LogFormatEscaping              string
 	ErrorLogLevel                  string
-	StreamLogFormat                string
+	StreamLogFormat                []string
+	StreamLogFormatEscaping        string
 	HealthStatus                   bool
 	HealthStatusURI                string
 	NginxStatus                    bool

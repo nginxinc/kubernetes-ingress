@@ -35,7 +35,10 @@ http {
     {{- end}}
 
     {{if .LogFormat -}}
-    log_format  main  '{{.LogFormat}}';
+    log_format  main {{if .LogFormatEscaping}}escape={{ .LogFormatEscaping }} {{end}}
+                     {{range $i, $value := .LogFormat -}}
+                     {{with $value}}'{{if $i}} {{end}}{{$value}}'
+                     {{end}}{{end}};
     {{- else -}}
     log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
                       '$status $body_bytes_sent "$http_referer" '
@@ -170,7 +173,10 @@ http {
 
 stream {
     {{if .StreamLogFormat -}}
-    log_format  stream-main  '{{.StreamLogFormat}}';
+    log_format  stream-main {{if .StreamLogFormatEscaping}}escape={{ .StreamLogFormatEscaping }} {{end}}
+                            {{range $i, $value := .StreamLogFormat -}}
+                            {{with $value}}'{{if $i}} {{end}}{{$value}}'
+                            {{end}}{{end}};
     {{- else -}}
     log_format  stream-main  '$remote_addr [$time_local] '
                       '$protocol $status $bytes_sent $bytes_received '

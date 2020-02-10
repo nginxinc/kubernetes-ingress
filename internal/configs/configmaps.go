@@ -207,12 +207,34 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool) *ConfigParams {
 		}
 	}
 
-	if logFormat, exists := cfgm.Data["log-format"]; exists {
-		cfgParams.MainLogFormat = logFormat
+	if logFormat, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "log-format", cfgm, "\n"); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfgParams.MainLogFormat = logFormat
+		}
 	}
 
-	if streamLogFormat, exists := cfgm.Data["stream-log-format"]; exists {
-		cfgParams.MainStreamLogFormat = streamLogFormat
+	if logFormatEscaping, exists := cfgm.Data["log-format-escaping"]; exists {
+		logFormatEscaping = strings.TrimSpace(logFormatEscaping)
+		if logFormatEscaping != "" {
+			cfgParams.MainLogFormatEscaping = logFormatEscaping
+		}
+	}
+
+	if streamLogFormat, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "stream-log-format", cfgm, "\n"); exists {
+		if err != nil {
+			glog.Error(err)
+		} else {
+			cfgParams.MainStreamLogFormat = streamLogFormat
+		}
+	}
+
+	if streamLogFormatEscaping, exists := cfgm.Data["stream-log-format-escaping"]; exists {
+		streamLogFormatEscaping = strings.TrimSpace(streamLogFormatEscaping)
+		if streamLogFormatEscaping != "" {
+			cfgParams.MainStreamLogFormatEscaping = streamLogFormatEscaping
+		}
 	}
 
 	if proxyBuffering, exists, err := GetMapKeyAsBool(cfgm.Data, "proxy-buffering", cfgm); exists {
@@ -442,8 +464,10 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		ServerNamesHashMaxSize:         config.MainServerNamesHashMaxSize,
 		AccessLogOff:                   config.MainAccessLogOff,
 		LogFormat:                      config.MainLogFormat,
+		LogFormatEscaping:              config.MainLogFormatEscaping,
 		ErrorLogLevel:                  config.MainErrorLogLevel,
 		StreamLogFormat:                config.MainStreamLogFormat,
+		StreamLogFormatEscaping:        config.MainStreamLogFormatEscaping,
 		SSLProtocols:                   config.MainServerSSLProtocols,
 		SSLCiphers:                     config.MainServerSSLCiphers,
 		SSLDHParam:                     config.MainServerSSLDHParam,
