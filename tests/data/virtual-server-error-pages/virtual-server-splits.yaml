@@ -1,0 +1,43 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server
+spec:
+  host: virtual-server.example.com
+  upstreams:
+  - name: backend2
+    service: backend2-svc
+    port: 80
+  - name: backend1-v1
+    service: backend1-svc-v1
+    port: 80
+  - name: backend1-v2
+    service: backend1-svc-v2
+    port: 80
+  routes:
+  - path: "/backend1"
+    splits:
+      - weight: 90
+        action:
+          pass: backend1-v1
+      - weight: 10
+        action:
+          pass: backend1-v2
+    errorPages:
+      - codes: [502]
+        redirect:
+          code: 308
+          url: ${scheme}://virtual-server.example.com/error.html
+  - path: "/backend2"
+    errorPages:
+      - codes: [502]
+        return:
+          code: 207
+          type: application/json
+          body: |
+            {\"status\": \"${upstream_status}\",\"message\":\"Forbidden\"}
+          headers:
+          - name: x-debug-original-status
+            value: ${upstream_status}
+    action:
+      pass: backend2

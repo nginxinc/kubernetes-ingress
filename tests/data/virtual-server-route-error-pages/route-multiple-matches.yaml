@@ -1,0 +1,52 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: backends
+spec:
+  host: virtual-server-route.example.com
+  upstreams:
+  - name: backend1
+    service: backend1-svc
+    port: 80
+  - name: backend4-stable
+    service: backend4-stable-svc
+    port: 80
+  - name: backend1-future
+    service: backend1-future-svc
+    port: 80
+  - name: backend3-deprecated
+    service: backend3-deprecated-svc
+    port: 80
+  subroutes:
+  - path: "/backends/backend1"
+    matches:
+      - conditions:
+          - argument: arg1
+            value: v1
+        action:
+          pass: backend1-future
+      - conditions:
+          - argument: arg1
+            value: v2
+        action:
+          pass: backend3-deprecated
+    errorPages:
+      - codes: [502, 404]
+        redirect:
+          code: 307
+          url: ${scheme}://virtual-server-route.example.com/error.html
+    action:
+      pass: backend4-stable
+  - path: "/backends/backend3"
+    errorPages:
+      - codes: [502]
+        return:
+          code: 207
+          type: application/json
+          body: |
+            {\"status\": \"${upstream_status}\",\"message\":\"Forbidden\"}
+          headers:
+            - name: x-debug-original-status
+              value: ${upstream_status}
+    action:
+      pass: backend3-deprecated
