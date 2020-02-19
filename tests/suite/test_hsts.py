@@ -7,7 +7,7 @@ from suite.resources_utils import ensure_connection_to_public_endpoint, \
     delete_common_app, create_items_from_yaml, delete_items_from_yaml, \
     wait_before_test, ensure_response_from_backend, \
     generate_ingresses_with_annotation, replace_ingress
-from suite.yaml_utils import get_first_ingress_host_from_yaml, get_names_from_yaml
+from suite.yaml_utils import get_first_ingress_host_from_yaml, get_name_from_yaml
 from settings import TEST_DATA
 
 
@@ -39,7 +39,7 @@ def hsts_setup(request,
     create_items_from_yaml(kube_apis,
                            f"{TEST_DATA}/hsts/{request.param}/hsts-ingress.yaml",
                            test_namespace)
-    ingress_name = get_names_from_yaml(f"{TEST_DATA}/hsts/{request.param}/hsts-ingress.yaml")[0]
+    ingress_name = get_name_from_yaml(f"{TEST_DATA}/hsts/{request.param}/hsts-ingress.yaml")
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/hsts/{request.param}/hsts-ingress.yaml")
     create_example_app(kube_apis, "simple", test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)

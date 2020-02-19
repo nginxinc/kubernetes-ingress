@@ -41,3 +41,6 @@ default.pem
 
 # IntelliJ IDEA
 .idea
+
+# Platform specific CRD schema generation scripts
+hack/controller-gen-*

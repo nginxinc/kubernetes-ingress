@@ -6,7 +6,7 @@ from settings import TEST_DATA
 from suite.resources_utils import create_secret_from_yaml, wait_before_test, delete_secret, is_secret_present, \
     replace_secret
 from suite.ssl_utils import get_server_certificate_subject
-from suite.yaml_utils import get_names_from_yaml
+from suite.yaml_utils import get_name_from_yaml
 
 
 @pytest.fixture(scope="class")
@@ -19,7 +19,7 @@ def clean_up(request, kube_apis, test_namespace) -> None:
     :param test_namespace: str
     :return:
     """
-    secret_name = get_names_from_yaml(f"{TEST_DATA}/virtual-server-tls/tls-secret.yaml")[0]
+    secret_name = get_name_from_yaml(f"{TEST_DATA}/virtual-server-tls/tls-secret.yaml")
 
     def fin():
         print("Clean up after test:")

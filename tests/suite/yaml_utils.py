@@ -16,19 +16,17 @@ def get_first_ingress_host_from_yaml(file) -> str:
             return dep['spec']['rules'][0]['host']
 
 
-def get_names_from_yaml(file) -> []:
+def get_name_from_yaml(file) -> str:
     """
     Parse yaml file and return all the found metadata.name.
 
     :param file: an absolute path to file
-    :return: []
+    :return: str
     """
-    res = []
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            res.append(dep['metadata']['name'])
-    return res
+            return dep['metadata']['name']
 
 
 def get_paths_from_vs_yaml(file) -> []:

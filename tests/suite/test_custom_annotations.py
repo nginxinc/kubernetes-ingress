@@ -3,7 +3,7 @@ from settings import TEST_DATA, DEPLOYMENTS
 from suite.fixtures import PublicEndpoint
 from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml, replace_configmap_from_yaml, \
     get_ingress_nginx_template_conf, get_first_pod_name, wait_before_test
-from suite.yaml_utils import get_first_ingress_host_from_yaml, get_names_from_yaml
+from suite.yaml_utils import get_first_ingress_host_from_yaml, get_name_from_yaml
 
 
 class CustomAnnotationsSetup:
@@ -38,7 +38,7 @@ def custom_annotations_setup(request, kube_apis, ingress_controller_prerequisite
     ing_src = f"{TEST_DATA}/custom-annotations/{ing_type}/annotations-ingress.yaml"
     create_items_from_yaml(kube_apis, ing_src, test_namespace)
     host = get_first_ingress_host_from_yaml(ing_src)
-    ingress_name = get_names_from_yaml(ing_src)[0]
+    ingress_name = get_name_from_yaml(ing_src)
     wait_before_test(1)
 
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)

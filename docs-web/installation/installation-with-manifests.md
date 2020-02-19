@@ -18,11 +18,11 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 1. Create a namespace and a service account for the Ingress controller:
     ```
     $ kubectl apply -f common/ns-and-sa.yaml
-    ``` 
+    ```
 2. Create a cluster role and cluster role binding for the service account:
     ```
     $ kubectl apply -f rbac/rbac.yaml
-    ``` 
+    ```
 **Note**: To perform this step you must be a cluster admin. Follow the documentation of your Kubernetes platform to configure the admin access. For GKE, see the [Role-Based Access Control](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control) doc.
 
 ## 2. Create the Default Secret, Customization ConfigMap, and Custom Resource Definitions
@@ -41,7 +41,8 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 
 1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) resources:
     ```
-    $ kubectl apply -f common/custom-resource-definitions.yaml
+    $ kubectl apply -f common/vs-definition.yaml
+    $ kubectl apply -f common/vsr-definition.yaml
     ```
 
 ## 3. Deploy the Ingress Controller
@@ -98,8 +99,8 @@ $ kubectl get pods --namespace=nginx-ingress
 
 ### 4.1 Create a Service for the Ingress Controller Pods
 
-* *Use a NodePort service*. 
-    
+* *Use a NodePort service*.
+
     Create a service with the type *NodePort*:
     ```
     $ kubectl create -f service/nodeport.yaml
@@ -133,7 +134,7 @@ $ kubectl get pods --namespace=nginx-ingress
                 kubectl apply -f common/nginx-config.yaml
                 ```
             **Note**: For AWS, additional options regarding an allocated load balancer are available, such as the type of a load balancer and SSL termination. Read the [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer) to learn more.
-        
+
         Kubernetes will allocate and configure a cloud load balancer for load balancing the Ingress controller pods.
     2. Use the public IP of the load balancer to access the Ingress controller. To get the public IP:
         * For GCP or Azure, run:
@@ -148,7 +149,7 @@ $ kubectl get pods --namespace=nginx-ingress
             ```
             $ nslookup <dns-name>
             ```
-        
+
         The public IP can be reported in the status of an ingress resource. See the [Reporting Resources Status doc](/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status) for more details.
 
     > Learn more about type LoadBalancer in the [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer).

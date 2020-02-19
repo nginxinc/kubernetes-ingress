@@ -10,7 +10,7 @@ from suite.resources_utils import ensure_connection_to_public_endpoint, \
     delete_common_app, create_items_from_yaml, delete_items_from_yaml, \
     wait_before_test, replace_configmap_from_yaml, get_events, \
     generate_ingresses_with_annotation, replace_ingress
-from suite.yaml_utils import get_first_ingress_host_from_yaml, get_names_from_yaml
+from suite.yaml_utils import get_first_ingress_host_from_yaml, get_name_from_yaml
 from settings import TEST_DATA, DEPLOYMENTS
 
 
@@ -87,7 +87,7 @@ def annotations_setup(request,
     create_items_from_yaml(kube_apis,
                            f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml",
                            test_namespace)
-    ingress_name = get_names_from_yaml(f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml")[0]
+    ingress_name = get_name_from_yaml(f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml")
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml")
     if request.param == 'mergeable':
         minions_info = get_minions_info_from_yaml(f"{TEST_DATA}/annotations/{request.param}/annotations-ingress.yaml")
@@ -139,7 +139,7 @@ def annotations_grpc_setup(request,
     create_items_from_yaml(kube_apis,
                            f"{TEST_DATA}/annotations/grpc/annotations-ingress.yaml",
                            test_namespace)
-    ingress_name = get_names_from_yaml(f"{TEST_DATA}/annotations/grpc/annotations-ingress.yaml")[0]
+    ingress_name = get_name_from_yaml(f"{TEST_DATA}/annotations/grpc/annotations-ingress.yaml")
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/annotations/grpc/annotations-ingress.yaml")
     replace_configmap_from_yaml(kube_apis.v1,
                                 ingress_controller_prerequisites.config_map['metadata']['name'],

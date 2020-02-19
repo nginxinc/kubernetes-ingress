@@ -30,8 +30,14 @@ ifneq ($(BUILD_IN_CONTAINER),1)
 	./hack/verify-codegen.sh
 endif
 
+verify-crds:
+	./hack/verify-crds.sh
+
 update-codegen:
 	./hack/update-codegen.sh
+
+update-crds:
+	./hack/update-crds.sh
 
 certificate-and-key:
 ifeq ($(GENERATE_DEFAULT_CERT_AND_KEY),1)
@@ -43,7 +49,7 @@ ifneq ($(BUILD_IN_CONTAINER),1)
 	CGO_ENABLED=0 GO111MODULE=on GOFLAGS='-mod=vendor' GOOS=linux go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 endif
 
-container: test verify-codegen binary certificate-and-key
+container: test verify-codegen verify-crds binary certificate-and-key
 ifeq ($(BUILD_IN_CONTAINER),1)
 	docker build $(DOCKER_BUILD_OPTIONS) --build-arg IC_VERSION=$(VERSION)-$(GIT_COMMIT) --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg VERSION=$(VERSION) --build-arg GOLANG_CONTAINER=$(GOLANG_CONTAINER) --target container -f $(DOCKERFILEPATH)/$(DOCKERFILE) -t $(PREFIX):$(TAG) .
 else

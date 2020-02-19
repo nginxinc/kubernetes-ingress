@@ -6,6 +6,7 @@ import (
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:validation:Optional
 
 // VirtualServer defines the VirtualServer resource.
 type VirtualServer struct {
@@ -51,7 +52,7 @@ type Upstream struct {
 	SessionCookie            *SessionCookie    `json:"sessionCookie"`
 }
 
-// UpstreamBuffers defines Buffer Configuration for an Upstream
+// UpstreamBuffers defines Buffer Configuration for an Upstream.
 type UpstreamBuffers struct {
 	Number int    `json:"number"`
 	Size   string `json:"size"`
@@ -157,13 +158,13 @@ type ErrorPage struct {
 
 // ErrorPageReturn defines a return for an ErrorPage.
 type ErrorPageReturn struct {
-	ActionReturn
-	Headers []Header `json:"headers"`
+	ActionReturn `json:",inline"`
+	Headers      []Header `json:"headers"`
 }
 
 // ErrorPageRedirect defines a redirect for an ErrorPage.
 type ErrorPageRedirect struct {
-	ActionRedirect
+	ActionRedirect `json:",inline"`
 }
 
 // TLS defines TLS configuration for a VirtualServer.
@@ -214,7 +215,7 @@ type VirtualServerRouteList struct {
 	Items []VirtualServerRoute `json:"items"`
 }
 
-// UpstreamQueue defines Queue Configuration for an Upstream
+// UpstreamQueue defines Queue Configuration for an Upstream.
 type UpstreamQueue struct {
 	Size    int    `json:"size"`
 	Timeout string `json:"timeout"`

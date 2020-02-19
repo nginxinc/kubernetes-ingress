@@ -92,21 +92,6 @@ def cleanup_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api, rbac: RBACAuthoriza
     rbac_v1_beta1.delete_cluster_role(rbac.role, delete_options)
 
 
-def create_deployment_from_yaml(apps_v1_api: AppsV1Api, namespace, yaml_manifest) -> str:
-    """
-    Create a deployment based on yaml file.
-
-    :param apps_v1_api: AppsV1Api
-    :param namespace: namespace name
-    :param yaml_manifest: absolute path to file
-    :return: str
-    """
-    print(f"Load {yaml_manifest}")
-    with open(yaml_manifest) as f:
-        dep = yaml.safe_load(f)
-    return create_deployment(apps_v1_api, namespace, dep)
-
-
 def create_deployment(apps_v1_api: AppsV1Api, namespace, body) -> str:
     """
     Create a deployment based on a dict.
@@ -542,24 +527,6 @@ def create_namespace(v1: CoreV1Api, body) -> str:
     v1.create_namespace(body)
     print(f"Namespace created with name '{body['metadata']['name']}'")
     return body['metadata']['name']
-
-
-def create_namespace_with_name_from_yaml(v1: CoreV1Api, name, yaml_manifest) -> str:
-    """
-    Create a namespace with a specific name based on a yaml manifest.
-
-    :param v1: CoreV1Api
-    :param name: name
-    :param yaml_manifest: an absolute path to file
-    :return: str
-    """
-    print(f"Create a namespace with specific name:")
-    with open(yaml_manifest) as f:
-        dep = yaml.safe_load(f)
-        dep['metadata']['name'] = name
-        v1.create_namespace(dep)
-        print(f"Namespace created with name '{str(dep['metadata']['name'])}'")
-        return dep['metadata']['name']
 
 
 def create_service_account(v1: CoreV1Api, namespace, body) -> None:

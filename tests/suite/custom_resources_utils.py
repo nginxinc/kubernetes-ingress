@@ -29,25 +29,6 @@ def create_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, body) -> None:
             pytest.fail(f"An unexpected exception {ex} occurred. Exiting...")
 
 
-def create_crds_from_yaml(api_extensions_v1_beta1: ApiextensionsV1beta1Api, yaml_manifest) -> []:
-    """
-    Create a CRD based on yaml file.
-
-    :param api_extensions_v1_beta1: ApiextensionsV1beta1Api
-    :param yaml_manifest: an absolute path to file
-    :return: []
-    """
-    print("Create a CRD:")
-    names = []
-    with open(yaml_manifest) as f:
-        docs = yaml.safe_load_all(f)
-        for dep in docs:
-            create_crd(api_extensions_v1_beta1, dep)
-            names.append(dep['metadata']['name'])
-            print(f"CRD was created with name '{dep['metadata']['name']}'")
-        return names
-
-
 def create_crd_from_yaml(api_extensions_v1_beta1: ApiextensionsV1beta1Api, name, yaml_manifest) -> None:
     """
     Create a specific CRD based on yaml file.
@@ -78,20 +59,6 @@ def delete_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, name) -> None:
     api_extensions_v1_beta1.delete_custom_resource_definition(name, delete_options)
     ensure_item_removal(api_extensions_v1_beta1.read_custom_resource_definition, name)
     print(f"CRD was removed with name '{name}'")
-
-
-def delete_crds_from_yaml(api_extensions_v1_beta1: ApiextensionsV1beta1Api, yaml_manifest) -> None:
-    """
-    Delete a CRD based on yaml file.
-
-    :param api_extensions_v1_beta1: ApiextensionsV1beta1Api
-    :param yaml_manifest: an absolute path to file
-    :return: []
-    """
-    with open(yaml_manifest) as f:
-        docs = yaml.safe_load_all(f)
-        for dep in docs:
-            delete_crd(api_extensions_v1_beta1, dep['metadata']['name'])
 
 
 def create_virtual_server_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
