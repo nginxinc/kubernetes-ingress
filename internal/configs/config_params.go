@@ -96,6 +96,18 @@ type StaticConfigParams struct {
 	StubStatusOverUnixSocketForOSS bool
 }
 
+// GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.
+// GlobalConfigParams should replace ConfigParams in the future.
+type GlobalConfigParams struct {
+	Listeners map[string]Listener
+}
+
+// Listener represents a listener that can be used in a TransportServer resource.
+type Listener struct {
+	Port     int
+	Protocol string
+}
+
 // NewDefaultConfigParams creates a ConfigParams with default values.
 func NewDefaultConfigParams() *ConfigParams {
 	return &ConfigParams{
@@ -125,4 +137,9 @@ func NewDefaultConfigParams() *ConfigParams {
 		VariablesHashBucketSize:       256,
 		VariablesHashMaxSize:          1024,
 	}
+}
+
+// NewDefaultGlobalConfigParams creates a GlobalConfigParams with default values.
+func NewDefaultGlobalConfigParams() *GlobalConfigParams {
+	return &GlobalConfigParams{Listeners: map[string]Listener{}}
 }

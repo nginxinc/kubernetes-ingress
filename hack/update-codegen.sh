@@ -29,5 +29,5 @@ echo "$(dirname ${BASH_SOURCE})/../../.."
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 ${CODEGEN_PKG}/generate-groups.sh "deepcopy,client,informer,lister" \
   github.com/nginxinc/kubernetes-ingress/pkg/client github.com/nginxinc/kubernetes-ingress/pkg/apis \
-  configuration:v1 \
+  configuration:v1alpha1,v1 \
   --go-header-file ${SCRIPT_ROOT}/hack/boilerplate.go.txt

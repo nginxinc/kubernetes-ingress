@@ -42,6 +42,17 @@ func (*FakeManager) DeleteConfig(name string) {
 	glog.V(3).Infof("Deleting config %v", name)
 }
 
+// CreateStreamConfig provides a fake implementation of CreateStreamConfig.
+func (*FakeManager) CreateStreamConfig(name string, content []byte) {
+	glog.V(3).Infof("Writing stream config %v", name)
+	glog.V(3).Info(string(content))
+}
+
+// DeleteStreamConfig provides a fake implementation of DeleteStreamConfig.
+func (*FakeManager) DeleteStreamConfig(name string) {
+	glog.V(3).Infof("Deleting stream config %v", name)
+}
+
 // CreateSecret provides a fake implementation of CreateSecret.
 func (fm *FakeManager) CreateSecret(name string, content []byte, mode os.FileMode) string {
 	glog.V(3).Infof("Writing secret %v", name)
@@ -92,6 +103,12 @@ func (*FakeManager) SetPlusClients(plusClient *client.NginxClient, plusConfigVer
 // UpdateServersInPlus provides a fake implementation of UpdateServersInPlus.
 func (*FakeManager) UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error {
 	glog.V(3).Infof("Updating servers of %v: %v", upstream, servers)
+	return nil
+}
+
+// UpdateStreamServersInPlus provides a fake implementation of UpdateStreamServersInPlus.
+func (*FakeManager) UpdateStreamServersInPlus(upstream string, servers []string) error {
+	glog.V(3).Infof("Updating stream servers of %v: %v", upstream, servers)
 	return nil
 }
 

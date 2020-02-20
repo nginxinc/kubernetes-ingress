@@ -76,6 +76,7 @@ RUN ldconfig
 
 RUN mkdir -p /var/lib/nginx \
 	&& mkdir -p /etc/nginx/secrets \
+	&& mkdir -p /etc/nginx/stream-conf.d \
 	&& apt-get update \
 	&& apt-get install -y libcap2-bin \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
@@ -89,7 +90,8 @@ RUN mkdir -p /var/lib/nginx \
 
 COPY internal/configs/version1/nginx.ingress.tmpl \
 	internal/configs/version1/nginx.tmpl \
-	internal/configs/version2/nginx.virtualserver.tmpl /
+	internal/configs/version2/nginx.virtualserver.tmpl \
+	internal/configs/version2/nginx.transportserver.tmpl /
 
 # Uncomment the line below if you would like to add the default.pem to the image
 # and use it as a certificate and key for the default server

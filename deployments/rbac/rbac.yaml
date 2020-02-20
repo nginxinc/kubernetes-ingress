@@ -63,6 +63,8 @@ rules:
   resources:
   - virtualservers
   - virtualserverroutes
+  - globalconfigurations
+  - transportservers
   verbs:
   - list
   - watch

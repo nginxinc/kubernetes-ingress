@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/glog"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -112,6 +113,10 @@ const (
 	virtualserver
 	// virtualServeRoute resource
 	virtualServerRoute
+	// globalConfiguration resource
+	globalConfiguration
+	// transportserver resource
+	transportserver
 )
 
 // task is an element of a taskQueue
@@ -143,6 +148,10 @@ func newTask(key string, obj interface{}) (task, error) {
 		k = virtualserver
 	case *conf_v1.VirtualServerRoute:
 		k = virtualServerRoute
+	case *conf_v1alpha1.GlobalConfiguration:
+		k = globalConfiguration
+	case *conf_v1alpha1.TransportServer:
+		k = transportserver
 	default:
 		return task{}, fmt.Errorf("Unknow type: %v", t)
 	}

@@ -1,0 +1,27 @@
+{{ range $u := .Upstreams }}
+upstream {{ $u.Name }} {
+    zone {{ $u.Name }} 256k;
+
+    random two least_conn;
+
+    {{ range $s := $u.Servers }}
+    server {{ $s.Address }};
+    {{ end }}
+}
+{{ end }}
+
+{{ $s := .Server }}
+server {
+    listen {{ $s.Port }}{{ if $s.UDP }} udp{{ end }};
+
+    status_zone {{ $s.StatusZone }};
+
+    {{ if $s.ProxyRequests }}
+    proxy_requests {{ $s.ProxyRequests }};
+    {{ end }}
+    {{ if $s.ProxyResponses }}
+    proxy_responses {{ $s.ProxyResponses }};
+    {{ end }}
+
+    proxy_pass {{ $s.ProxyPass }};
+}

@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 )
 
 // createConfigMapHandlers builds the handler funcs for config maps
@@ -190,7 +191,11 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 	}
 }
 
-// createServiceHandlers builds the handler funcs for services
+// createServiceHandlers builds the handler funcs for services.
+// In the handlers below, we need to enqueue Ingress or other affected resources
+// so that we can catch a change like a change of the port field of a service port (for such a change Kubernetes doesn't
+// update the corresponding endpoints resource, that we monitor as well)
+// or a change of the externalName field of an ExternalName service.
 func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -204,6 +209,9 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 
 			if lbc.areCustomResourcesEnabled {
 				lbc.EnqueueVirtualServersForService(svc)
+			}
+			if lbc.watchGlobalConfigurationAndTransportServers {
+				lbc.EnqueueTransportServerForService(svc)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -231,6 +239,9 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			if lbc.areCustomResourcesEnabled {
 				lbc.EnqueueVirtualServersForService(svc)
 			}
+			if lbc.watchGlobalConfigurationAndTransportServers {
+				lbc.EnqueueTransportServerForService(svc)
+			}
 
 		},
 		UpdateFunc: func(old, cur interface{}) {
@@ -247,6 +258,9 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 
 					if lbc.areCustomResourcesEnabled {
 						lbc.EnqueueVirtualServersForService(curSvc)
+					}
+					if lbc.watchGlobalConfigurationAndTransportServers {
+						lbc.EnqueueTransportServerForService(curSvc)
 					}
 				}
 			}
@@ -368,6 +382,74 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			if !reflect.DeepEqual(old, cur) {
 				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
+			}
+		},
+	}
+}
+
+func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			gc := obj.(*conf_v1alpha1.GlobalConfiguration)
+			glog.V(3).Infof("Adding GlobalConfiguration: %v", gc.Name)
+			lbc.AddSyncQueue(gc)
+		},
+		DeleteFunc: func(obj interface{}) {
+			gc, isGc := obj.(*conf_v1alpha1.GlobalConfiguration)
+			if !isGc {
+				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					return
+				}
+				gc, ok = deletedState.Obj.(*conf_v1alpha1.GlobalConfiguration)
+				if !ok {
+					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-GlobalConfiguration object: %v", deletedState.Obj)
+					return
+				}
+			}
+			glog.V(3).Infof("Removing GlobalConfiguration: %v", gc.Name)
+			lbc.AddSyncQueue(gc)
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			curGc := cur.(*conf_v1alpha1.GlobalConfiguration)
+			if !reflect.DeepEqual(old, cur) {
+				glog.V(3).Infof("GlobalConfiguration %v changed, syncing", curGc.Name)
+				lbc.AddSyncQueue(curGc)
+			}
+		},
+	}
+}
+
+func createTransportServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			ts := obj.(*conf_v1alpha1.TransportServer)
+			glog.V(3).Infof("Adding TransportServer: %v", ts.Name)
+			lbc.AddSyncQueue(ts)
+		},
+		DeleteFunc: func(obj interface{}) {
+			ts, isTs := obj.(*conf_v1alpha1.TransportServer)
+			if !isTs {
+				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					return
+				}
+				ts, ok = deletedState.Obj.(*conf_v1alpha1.TransportServer)
+				if !ok {
+					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-TransportServer object: %v", deletedState.Obj)
+					return
+				}
+			}
+			glog.V(3).Infof("Removing TransportServer: %v", ts.Name)
+			lbc.AddSyncQueue(ts)
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			curTs := cur.(*conf_v1alpha1.TransportServer)
+			if !reflect.DeepEqual(old, cur) {
+				glog.V(3).Infof("TransportServer %v changed, syncing", curTs.Name)
+				lbc.AddSyncQueue(curTs)
 			}
 		},
 	}

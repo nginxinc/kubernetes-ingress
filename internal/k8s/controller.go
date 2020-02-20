@@ -41,6 +41,7 @@ import (
 	"sort"
 
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	api_v1 "k8s.io/api/core/v1"
@@ -55,90 +56,99 @@ const (
 // LoadBalancerController watches Kubernetes API and
 // reconfigures NGINX via NginxController when needed
 type LoadBalancerController struct {
-	client                       kubernetes.Interface
-	confClient                   k8s_nginx.Interface
-	ingressController            cache.Controller
-	svcController                cache.Controller
-	endpointController           cache.Controller
-	configMapController          cache.Controller
-	secretController             cache.Controller
-	virtualServerController      cache.Controller
-	virtualServerRouteController cache.Controller
-	podController                cache.Controller
-	ingressLister                storeToIngressLister
-	svcLister                    cache.Store
-	endpointLister               storeToEndpointLister
-	configMapLister              storeToConfigMapLister
-	podLister                    indexerToPodLister
-	secretLister                 storeToSecretLister
-	virtualServerLister          cache.Store
-	virtualServerRouteLister     cache.Store
-	syncQueue                    *taskQueue
-	ctx                          context.Context
-	cancel                       context.CancelFunc
-	configurator                 *configs.Configurator
-	watchNginxConfigMaps         bool
-	isNginxPlus                  bool
-	recorder                     record.EventRecorder
-	defaultServerSecret          string
-	ingressClass                 string
-	useIngressClassOnly          bool
-	statusUpdater                *statusUpdater
-	leaderElector                *leaderelection.LeaderElector
-	reportIngressStatus          bool
-	isLeaderElectionEnabled      bool
-	leaderElectionLockName       string
-	resync                       time.Duration
-	namespace                    string
-	controllerNamespace          string
-	wildcardTLSSecret            string
-	areCustomResourcesEnabled    bool
-	metricsCollector             collectors.ControllerCollector
+	client                                      kubernetes.Interface
+	confClient                                  k8s_nginx.Interface
+	ingressController                           cache.Controller
+	svcController                               cache.Controller
+	endpointController                          cache.Controller
+	configMapController                         cache.Controller
+	secretController                            cache.Controller
+	virtualServerController                     cache.Controller
+	virtualServerRouteController                cache.Controller
+	globalConfigurationController               cache.Controller
+	transportServerController                   cache.Controller
+	podController                               cache.Controller
+	ingressLister                               storeToIngressLister
+	svcLister                                   cache.Store
+	endpointLister                              storeToEndpointLister
+	configMapLister                             storeToConfigMapLister
+	podLister                                   indexerToPodLister
+	secretLister                                storeToSecretLister
+	virtualServerLister                         cache.Store
+	virtualServerRouteLister                    cache.Store
+	globalConfiguratonLister                    cache.Store
+	transportServerLister                       cache.Store
+	syncQueue                                   *taskQueue
+	ctx                                         context.Context
+	cancel                                      context.CancelFunc
+	configurator                                *configs.Configurator
+	watchNginxConfigMaps                        bool
+	watchGlobalConfigurationAndTransportServers bool
+	isNginxPlus                                 bool
+	recorder                                    record.EventRecorder
+	defaultServerSecret                         string
+	ingressClass                                string
+	useIngressClassOnly                         bool
+	statusUpdater                               *statusUpdater
+	leaderElector                               *leaderelection.LeaderElector
+	reportIngressStatus                         bool
+	isLeaderElectionEnabled                     bool
+	leaderElectionLockName                      string
+	resync                                      time.Duration
+	namespace                                   string
+	controllerNamespace                         string
+	wildcardTLSSecret                           string
+	areCustomResourcesEnabled                   bool
+	metricsCollector                            collectors.ControllerCollector
+	globalConfigurationValidator                *validation.GlobalConfigurationValidator
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
 
 // NewLoadBalancerControllerInput holds the input needed to call NewLoadBalancerController.
 type NewLoadBalancerControllerInput struct {
-	KubeClient                kubernetes.Interface
-	ConfClient                k8s_nginx.Interface
-	ResyncPeriod              time.Duration
-	Namespace                 string
-	NginxConfigurator         *configs.Configurator
-	DefaultServerSecret       string
-	IsNginxPlus               bool
-	IngressClass              string
-	UseIngressClassOnly       bool
-	ExternalServiceName       string
-	ControllerNamespace       string
-	ReportIngressStatus       bool
-	IsLeaderElectionEnabled   bool
-	LeaderElectionLockName    string
-	WildcardTLSSecret         string
-	ConfigMaps                string
-	AreCustomResourcesEnabled bool
-	MetricsCollector          collectors.ControllerCollector
+	KubeClient                   kubernetes.Interface
+	ConfClient                   k8s_nginx.Interface
+	ResyncPeriod                 time.Duration
+	Namespace                    string
+	NginxConfigurator            *configs.Configurator
+	DefaultServerSecret          string
+	IsNginxPlus                  bool
+	IngressClass                 string
+	UseIngressClassOnly          bool
+	ExternalServiceName          string
+	ControllerNamespace          string
+	ReportIngressStatus          bool
+	IsLeaderElectionEnabled      bool
+	LeaderElectionLockName       string
+	WildcardTLSSecret            string
+	ConfigMaps                   string
+	GlobalConfiguration          string
+	AreCustomResourcesEnabled    bool
+	MetricsCollector             collectors.ControllerCollector
+	GlobalConfigurationValidator *validation.GlobalConfigurationValidator
 }
 
 // NewLoadBalancerController creates a controller
 func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalancerController {
 	lbc := &LoadBalancerController{
-		client:                    input.KubeClient,
-		confClient:                input.ConfClient,
-		configurator:              input.NginxConfigurator,
-		defaultServerSecret:       input.DefaultServerSecret,
-		isNginxPlus:               input.IsNginxPlus,
-		ingressClass:              input.IngressClass,
-		useIngressClassOnly:       input.UseIngressClassOnly,
-		reportIngressStatus:       input.ReportIngressStatus,
-		isLeaderElectionEnabled:   input.IsLeaderElectionEnabled,
-		leaderElectionLockName:    input.LeaderElectionLockName,
-		resync:                    input.ResyncPeriod,
-		namespace:                 input.Namespace,
-		controllerNamespace:       input.ControllerNamespace,
-		wildcardTLSSecret:         input.WildcardTLSSecret,
-		areCustomResourcesEnabled: input.AreCustomResourcesEnabled,
-		metricsCollector:          input.MetricsCollector,
+		client:                       input.KubeClient,
+		confClient:                   input.ConfClient,
+		configurator:                 input.NginxConfigurator,
+		defaultServerSecret:          input.DefaultServerSecret,
+		isNginxPlus:                  input.IsNginxPlus,
+		ingressClass:                 input.IngressClass,
+		useIngressClassOnly:          input.UseIngressClassOnly,
+		reportIngressStatus:          input.ReportIngressStatus,
+		isLeaderElectionEnabled:      input.IsLeaderElectionEnabled,
+		leaderElectionLockName:       input.LeaderElectionLockName,
+		resync:                       input.ResyncPeriod,
+		namespace:                    input.Namespace,
+		controllerNamespace:          input.ControllerNamespace,
+		wildcardTLSSecret:            input.WildcardTLSSecret,
+		areCustomResourcesEnabled:    input.AreCustomResourcesEnabled,
+		metricsCollector:             input.MetricsCollector,
+		globalConfigurationValidator: input.GlobalConfigurationValidator,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -171,6 +181,15 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	if lbc.areCustomResourcesEnabled {
 		lbc.addVirtualServerHandler(createVirtualServerHandlers(lbc))
 		lbc.addVirtualServerRouteHandler(createVirtualServerRouteHandlers(lbc))
+
+		if input.GlobalConfiguration != "" {
+			lbc.watchGlobalConfigurationAndTransportServers = true
+
+			ns, name, _ := ParseNamespaceName(input.GlobalConfiguration)
+
+			lbc.addGlobalConfigurationHandler(createGlobalConfigurationHandlers(lbc), ns, name)
+			lbc.addTransportServerHandler(createTransportServerHandlers(lbc))
+		}
 	}
 
 	if input.ConfigMaps != "" {
@@ -321,6 +340,32 @@ func (lbc *LoadBalancerController) addVirtualServerRouteHandler(handlers cache.R
 	)
 }
 
+func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.ResourceEventHandlerFuncs, namespace string, name string) {
+	lbc.globalConfiguratonLister, lbc.globalConfigurationController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.confClient.K8sV1alpha1().RESTClient(),
+			"globalconfigurations",
+			namespace,
+			fields.Set{"metadata.name": name}.AsSelector()),
+		&conf_v1alpha1.GlobalConfiguration{},
+		lbc.resync,
+		handlers,
+	)
+}
+
+func (lbc *LoadBalancerController) addTransportServerHandler(handlers cache.ResourceEventHandlerFuncs) {
+	lbc.transportServerLister, lbc.transportServerController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.confClient.K8sV1alpha1().RESTClient(),
+			"transportservers",
+			lbc.namespace,
+			fields.Everything()),
+		&conf_v1alpha1.TransportServer{},
+		lbc.resync,
+		handlers,
+	)
+}
+
 // Run starts the loadbalancer controller
 func (lbc *LoadBalancerController) Run() {
 	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
@@ -339,6 +384,10 @@ func (lbc *LoadBalancerController) Run() {
 	if lbc.areCustomResourcesEnabled {
 		go lbc.virtualServerController.Run(lbc.ctx.Done())
 		go lbc.virtualServerRouteController.Run(lbc.ctx.Done())
+	}
+	if lbc.watchGlobalConfigurationAndTransportServers {
+		go lbc.transportServerController.Run(lbc.ctx.Done())
+		go lbc.globalConfigurationController.Run(lbc.ctx.Done())
 	}
 	go lbc.syncQueue.Run(time.Second, lbc.ctx.Done())
 	<-lbc.ctx.Done()
@@ -425,6 +474,19 @@ func (lbc *LoadBalancerController) syncEndpoint(task task) {
 				err := lbc.configurator.UpdateEndpointsForVirtualServers(virtualServersExes)
 				if err != nil {
 					glog.Errorf("Error updating endpoints for %v: %v", virtualServersExes, err)
+				}
+			}
+		}
+
+		if lbc.watchGlobalConfigurationAndTransportServers {
+			transportServers := lbc.getTransportServersForEndpoints(obj.(*api_v1.Endpoints))
+			transportServerExes := lbc.transportServersToTransportServerExes(transportServers)
+
+			if len(transportServerExes) > 0 {
+				glog.V(3).Infof("Updating endpoints for %v", transportServerExes)
+				err := lbc.configurator.UpdateEndpointsForTransportServers(transportServerExes)
+				if err != nil {
+					glog.Errorf("Error updating endpoints for %v: %v", transportServerExes, err)
 				}
 			}
 		}
@@ -587,6 +649,17 @@ func (lbc *LoadBalancerController) virtualServersToVirtualServerExes(virtualServ
 	return virtualServersExes
 }
 
+func (lbc *LoadBalancerController) transportServersToTransportServerExes(transportServers []*conf_v1alpha1.TransportServer) []*configs.TransportServerEx {
+	var transportServerExes []*configs.TransportServerEx
+
+	for _, ts := range transportServers {
+		tsEx := lbc.createTransportServer(ts)
+		transportServerExes = append(transportServerExes, tsEx)
+	}
+
+	return transportServerExes
+}
+
 func (lbc *LoadBalancerController) sync(task task) {
 	glog.V(3).Infof("Syncing %v", task.Key)
 
@@ -611,6 +684,128 @@ func (lbc *LoadBalancerController) sync(task task) {
 	case virtualServerRoute:
 		lbc.syncVirtualServerRoute(task)
 		lbc.updateVirtualServerMetrics()
+	case globalConfiguration:
+		lbc.syncGlobalConfiguration(task)
+	case transportserver:
+		lbc.syncTransportServer(task)
+	}
+}
+
+func (lbc *LoadBalancerController) syncTransportServer(task task) {
+	key := task.Key
+	obj, tsExists, err := lbc.transportServerLister.GetByKey(key)
+	if err != nil {
+		lbc.syncQueue.Requeue(task, err)
+		return
+	}
+
+	if !tsExists {
+		glog.V(2).Infof("Deleting TransportServer: %v\n", key)
+
+		err := lbc.configurator.DeleteTransportServer(key)
+		if err != nil {
+			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
+		}
+		return
+	}
+
+	glog.V(2).Infof("Adding or Updating TransportServer: %v\n", key)
+
+	ts := obj.(*conf_v1alpha1.TransportServer)
+
+	validationErr := validation.ValidateTransportServer(ts)
+	if validationErr != nil {
+		err := lbc.configurator.DeleteTransportServer(key)
+		if err != nil {
+			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
+		}
+		lbc.recorder.Eventf(ts, api_v1.EventTypeWarning, "Rejected", "TransportServer %v is invalid and was rejected: %v", key, validationErr)
+		return
+	}
+
+	if !lbc.configurator.CheckIfListenerExists(&ts.Spec.Listener) {
+		err := lbc.configurator.DeleteTransportServer(key)
+		if err != nil {
+			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
+		}
+		lbc.recorder.Eventf(ts, api_v1.EventTypeWarning, "Rejected", "TransportServer %v references a non-existing listener and was rejected", key)
+		return
+	}
+
+	tsEx := lbc.createTransportServer(ts)
+
+	addErr := lbc.configurator.AddOrUpdateTransportServer(tsEx)
+
+	eventTitle := "AddedOrUpdated"
+	eventType := api_v1.EventTypeNormal
+	eventWarningMessage := ""
+
+	if addErr != nil {
+		eventTitle = "AddedOrUpdatedWithError"
+		eventType = api_v1.EventTypeWarning
+		eventWarningMessage = fmt.Sprintf("but was not applied: %v", addErr)
+	}
+
+	lbc.recorder.Eventf(ts, eventType, eventTitle, "Configuration for %v was added or updated %v", key, eventWarningMessage)
+}
+
+func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
+	key := task.Key
+	obj, gcExists, err := lbc.globalConfiguratonLister.GetByKey(key)
+	if err != nil {
+		lbc.syncQueue.Requeue(task, err)
+		return
+	}
+
+	if !gcExists {
+		glog.Warningf("GlobalConfiguration %v was removed. Retaining the GlobalConfiguration,", key)
+		return
+	}
+
+	glog.V(2).Infof("GlobalConfiguration was updated: %v\n", key)
+
+	gc := obj.(*conf_v1alpha1.GlobalConfiguration)
+
+	validationErr := lbc.globalConfigurationValidator.ValidateGlobalConfiguration(gc)
+	if validationErr != nil {
+		lbc.recorder.Eventf(gc, api_v1.EventTypeWarning, "Rejected", "GlobalConfiguration %v is invalid and was rejected: %v", key, validationErr)
+		return
+	}
+
+	// GlobalConfiguration configures listeners
+	// As a result, a change in a GC might affect all TransportServers
+
+	transportServerExes := lbc.transportServersToTransportServerExes(lbc.getTransportServers())
+
+	updatedTransportServerExes, deletedTransportServerExes, updateErr := lbc.configurator.UpdateGlobalConfiguration(gc, transportServerExes)
+
+	for _, tsEx := range deletedTransportServerExes {
+		eventTitle := "Rejected"
+		eventType := api_v1.EventTypeWarning
+		eventWarningMessage := ""
+
+		if updateErr != nil {
+			eventTitle = "RejectedWithError"
+			eventWarningMessage = fmt.Sprintf("but was not applied: %v", updateErr)
+		}
+
+		lbc.recorder.Eventf(tsEx.TransportServer, eventType, eventTitle, "TransportServer %v/%v references a non-existing listener %v", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, eventWarningMessage)
+	}
+
+	eventTitle := "Updated"
+	eventType := api_v1.EventTypeNormal
+	eventWarningMessage := ""
+
+	if updateErr != nil {
+		eventTitle = "UpdatedWithError"
+		eventType = api_v1.EventTypeWarning
+		eventWarningMessage = fmt.Sprintf("but was not applied: %v", updateErr)
+	}
+
+	lbc.recorder.Eventf(gc, eventType, eventTitle, "GlobalConfiguration %v was updated %v", key, eventWarningMessage)
+
+	for _, tsEx := range updatedTransportServerExes {
+		lbc.recorder.Eventf(tsEx.TransportServer, eventType, eventTitle, "TransportServer %v/%v was updated %v", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, eventWarningMessage)
 	}
 }
 
@@ -1207,6 +1402,14 @@ func (lbc *LoadBalancerController) EnqueueVirtualServersForService(service *api_
 	}
 }
 
+// EnqueueTransportServerForService enqueues TransportServers for the given service.
+func (lbc *LoadBalancerController) EnqueueTransportServerForService(service *api_v1.Service) {
+	transportServers := lbc.getTransportServersForService(service)
+	for _, ts := range transportServers {
+		lbc.syncQueue.Enqueue(ts)
+	}
+}
+
 func (lbc *LoadBalancerController) getIngressesForService(svc *api_v1.Service) []extensions.Ingress {
 	ings, err := lbc.ingressLister.GetServiceIngress(svc)
 	if err != nil {
@@ -1286,6 +1489,45 @@ func findVirtualServersForService(virtualServers []*conf_v1.VirtualServer, servi
 		}
 
 		result = append(result, vs)
+	}
+
+	return result
+}
+
+func (lbc *LoadBalancerController) getTransportServersForEndpoints(endpoints *api_v1.Endpoints) []*conf_v1alpha1.TransportServer {
+	svcKey := fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name)
+
+	svc, exists, err := lbc.svcLister.GetByKey(svcKey)
+	if err != nil {
+		glog.V(3).Infof("Error getting service %v from the cache: %v", svcKey, err)
+		return nil
+	}
+	if !exists {
+		glog.V(3).Infof("Service %v doesn't exist", svcKey)
+		return nil
+	}
+
+	return lbc.getTransportServersForService(svc.(*api_v1.Service))
+}
+
+func (lbc *LoadBalancerController) getTransportServersForService(service *api_v1.Service) []*conf_v1alpha1.TransportServer {
+	return findTransportServersForService(lbc.getTransportServers(), service)
+}
+
+func findTransportServersForService(transportServers []*conf_v1alpha1.TransportServer, service *api_v1.Service) []*conf_v1alpha1.TransportServer {
+	var result []*conf_v1alpha1.TransportServer
+
+	for _, ts := range transportServers {
+		if ts.Namespace != service.Namespace {
+			continue
+		}
+
+		for _, u := range ts.Spec.Upstreams {
+			if u.Service == service.Name {
+				result = append(result, ts)
+				break
+			}
+		}
 	}
 
 	return result
@@ -1374,6 +1616,24 @@ func (lbc *LoadBalancerController) getVirtualServerRoutes() []*conf_v1.VirtualSe
 	}
 
 	return virtualServerRoutes
+}
+
+func (lbc *LoadBalancerController) getTransportServers() []*conf_v1alpha1.TransportServer {
+	var transportServers []*conf_v1alpha1.TransportServer
+
+	for _, obj := range lbc.transportServerLister.List() {
+		ts := obj.(*conf_v1alpha1.TransportServer)
+
+		err := validation.ValidateTransportServer(ts)
+		if err != nil {
+			glog.V(3).Infof("Skipping invalid TransportServer %s/%s: %v", ts.Namespace, ts.Name, err)
+			continue
+		}
+
+		transportServers = append(transportServers, ts)
+	}
+
+	return transportServers
 }
 
 func (lbc *LoadBalancerController) enqueueVirtualServersForVirtualServerRouteKey(key string) int {
@@ -1597,7 +1857,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 			endps, err = lbc.getEndpointsForSubselector(virtualServer.Namespace, u)
 		} else {
 			var external bool
-			endps, external, err = lbc.getEndpointsForUpstream(virtualServer.Namespace, u)
+			endps, external, err = lbc.getEndpointsForUpstream(virtualServer.Namespace, u.Service, u.Port)
 
 			if err == nil && external && lbc.isNginxPlus {
 				externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, u.Service)] = true
@@ -1660,7 +1920,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 				endps, err = lbc.getEndpointsForSubselector(vsr.Namespace, u)
 			} else {
 				var external bool
-				endps, external, err = lbc.getEndpointsForUpstream(vsr.Namespace, u)
+				endps, external, err = lbc.getEndpointsForUpstream(vsr.Namespace, u.Service, u.Port)
 
 				if err == nil && external && lbc.isNginxPlus {
 					externalNameSvcs[configs.GenerateExternalNameSvcKey(vsr.Namespace, u.Service)] = true
@@ -1680,27 +1940,52 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 	return &virtualServerEx, virtualServerRouteErrors
 }
 
-func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstream conf_v1.Upstream) (endps []string, isExternal bool, err error) {
-	svc, err := lbc.getServiceForUpstream(upstream, namespace)
+func (lbc *LoadBalancerController) createTransportServer(transportServer *conf_v1alpha1.TransportServer) *configs.TransportServerEx {
+	endpoints := make(map[string][]string)
+
+	for _, u := range transportServer.Spec.Upstreams {
+		endps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port))
+		if err != nil {
+			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
+		}
+
+		if external {
+			glog.Warningf("ExternalName services are not yet supported in TransportServer upstreams")
+		}
+
+		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
+		endpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Service, nil, uint16(u.Port))
+
+		endpoints[endpointsKey] = endps
+	}
+
+	return &configs.TransportServerEx{
+		TransportServer: transportServer,
+		Endpoints:       endpoints,
+	}
+}
+
+func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstreamService string, upstreamPort uint16) (endps []string, isExternal bool, err error) {
+	svc, err := lbc.getServiceForUpstream(namespace, upstreamService, upstreamPort)
 	if err != nil {
-		return nil, false, fmt.Errorf("Error getting service %v: %v", upstream.Service, err)
+		return nil, false, fmt.Errorf("Error getting service %v: %v", upstreamService, err)
 	}
 
 	backend := &extensions.IngressBackend{
-		ServiceName: upstream.Service,
-		ServicePort: intstr.FromInt(int(upstream.Port)),
+		ServiceName: upstreamService,
+		ServicePort: intstr.FromInt(int(upstreamPort)),
 	}
 
 	endps, isExternal, err = lbc.getEndpointsForIngressBackend(backend, svc)
 	if err != nil {
-		return nil, false, fmt.Errorf("Error retrieving endpoints for the service %v: %v", upstream.Service, err)
+		return nil, false, fmt.Errorf("Error retrieving endpoints for the service %v: %v", upstreamService, err)
 	}
 
 	return endps, isExternal, err
 }
 
 func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, upstream conf_v1.Upstream) (endps []string, err error) {
-	svc, err := lbc.getServiceForUpstream(upstream, namespace)
+	svc, err := lbc.getServiceForUpstream(namespace, upstream.Service, upstream.Port)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting service %v: %v", upstream.Service, err)
 	}
@@ -1912,10 +2197,10 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort *api_v1.ServicePort, sv
 	return portNum, nil
 }
 
-func (lbc *LoadBalancerController) getServiceForUpstream(u conf_v1.Upstream, namespace string) (*api_v1.Service, error) {
+func (lbc *LoadBalancerController) getServiceForUpstream(namespace string, upstreamService string, upstreamPort uint16) (*api_v1.Service, error) {
 	backend := &extensions.IngressBackend{
-		ServiceName: u.Service,
-		ServicePort: intstr.FromInt(int(u.Port)),
+		ServiceName: upstreamService,
+		ServicePort: intstr.FromInt(int(upstreamPort)),
 	}
 	return lbc.getServiceForIngressBackend(backend, namespace)
 }

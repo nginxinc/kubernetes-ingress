@@ -37,6 +37,8 @@ type Manager interface {
 	CreateMainConfig(content []byte)
 	CreateConfig(name string, content []byte)
 	DeleteConfig(name string)
+	CreateStreamConfig(name string, content []byte)
+	DeleteStreamConfig(name string)
 	CreateSecret(name string, content []byte, mode os.FileMode) string
 	DeleteSecret(name string)
 	GetFilenameForSecret(name string) string
@@ -48,6 +50,7 @@ type Manager interface {
 	UpdateConfigVersionFile(openTracing bool)
 	SetPlusClients(plusClient *client.NginxClient, plusConfigVersionCheckClient *http.Client)
 	UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error
+	UpdateStreamServersInPlus(upstream string, servers []string) error
 	SetOpenTracing(openTracing bool)
 }
 
@@ -55,6 +58,7 @@ type Manager interface {
 // updates NGINX Plus upstream servers. It assumes that NGINX is running in the same container.
 type LocalManager struct {
 	confdPath                    string
+	streamConfdPath              string
 	secretsPath                  string
 	mainConfFilename             string
 	configVersionFilename        string
@@ -80,6 +84,7 @@ func NewLocalManager(confPath string, binaryFilename string, mc collectors.Manag
 
 	manager := LocalManager{
 		confdPath:             path.Join(confPath, "conf.d"),
+		streamConfdPath:       path.Join(confPath, "stream-conf.d"),
 		secretsPath:           path.Join(confPath, "secrets"),
 		dhparamFilename:       path.Join(confPath, "secrets", "dhparam.pem"),
 		mainConfFilename:      path.Join(confPath, "nginx.conf"),
@@ -109,8 +114,10 @@ func (lm *LocalManager) CreateMainConfig(content []byte) {
 
 // CreateConfig creates a configuration file. If the file already exists, it will be overridden.
 func (lm *LocalManager) CreateConfig(name string, content []byte) {
-	filename := lm.getFilenameForConfig(name)
+	createConfig(lm.getFilenameForConfig(name), content)
+}
 
+func createConfig(filename string, content []byte) {
 	glog.V(3).Infof("Writing config to %v", filename)
 	glog.V(3).Info(string(content))
 
@@ -122,8 +129,10 @@ func (lm *LocalManager) CreateConfig(name string, content []byte) {
 
 // DeleteConfig deletes the configuration file from the conf.d folder.
 func (lm *LocalManager) DeleteConfig(name string) {
-	filename := lm.getFilenameForConfig(name)
+	deleteConfig(lm.getFilenameForConfig(name))
+}
 
+func deleteConfig(filename string) {
 	glog.V(3).Infof("Deleting config from %v", filename)
 
 	if err := os.Remove(filename); err != nil {
@@ -133,6 +142,21 @@ func (lm *LocalManager) DeleteConfig(name string) {
 
 func (lm *LocalManager) getFilenameForConfig(name string) string {
 	return path.Join(lm.confdPath, name+".conf")
+}
+
+// CreateStreamConfig creates a configuration file for stream module.
+// If the file already exists, it will be overridden.
+func (lm *LocalManager) CreateStreamConfig(name string, content []byte) {
+	createConfig(lm.getFilenameForStreamConfig(name), content)
+}
+
+// DeleteStreamConfig deletes the configuration file from the stream-conf.d folder.
+func (lm *LocalManager) DeleteStreamConfig(name string) {
+	deleteConfig(lm.getFilenameForStreamConfig(name))
+}
+
+func (lm *LocalManager) getFilenameForStreamConfig(name string) string {
+	return path.Join(lm.streamConfdPath, name+".conf")
 }
 
 // CreateSecret creates a secret file with the specified name, content and mode. If the file already exists,
@@ -279,6 +303,33 @@ func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, c
 	}
 
 	glog.V(3).Infof("Updated servers of %v; Added: %v, Removed: %v, Updated: %v", upstream, added, removed, updated)
+
+	return nil
+}
+
+// UpdateStreamServersInPlus updates NGINX Plus stream servers of the given upstream.
+func (lm *LocalManager) UpdateStreamServersInPlus(upstream string, servers []string) error {
+	err := verifyConfigVersion(lm.plusConfigVersionCheckClient, lm.configVersion)
+	if err != nil {
+		return fmt.Errorf("error verifying config version: %v", err)
+	}
+
+	glog.V(3).Infof("API has the correct config version: %v.", lm.configVersion)
+
+	var upsServers []client.StreamUpstreamServer
+	for _, s := range servers {
+		upsServers = append(upsServers, client.StreamUpstreamServer{
+			Server: s,
+		})
+	}
+
+	added, removed, updated, err := lm.plusClient.UpdateStreamServers(upstream, upsServers)
+	if err != nil {
+		glog.V(3).Infof("Couldn't update stream servers of %v upstream: %v", upstream, err)
+		return fmt.Errorf("error updating stream servers of %v upstream: %v", upstream, err)
+	}
+
+	glog.V(3).Infof("Updated stream servers of %v; Added: %v, Removed: %v, Updated: %v", upstream, added, removed, updated)
 
 	return nil
 }

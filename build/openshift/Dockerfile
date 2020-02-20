@@ -24,6 +24,7 @@ RUN set -x \
 	&& yum install -y nginx-${NGINX_VERSION} \
 	&& mkdir -p /var/lib/nginx \
 	&& mkdir -p /etc/nginx/secrets \
+	&& mkdir -p /etc/nginx/stream-conf.d \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& chown -R nginx:0 /etc/nginx \
@@ -40,7 +41,8 @@ RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
 
 COPY internal/configs/version1/nginx.ingress.tmpl \
 	internal/configs/version1/nginx.tmpl \
-	internal/configs/version2/nginx.virtualserver.tmpl /
+	internal/configs/version2/nginx.virtualserver.tmpl \
+	internal/configs/version2/nginx.transportserver.tmpl /
 
 # Uncomment the line below if you would like to add the default.pem to the image
 # and use it as a certificate and key for the default server

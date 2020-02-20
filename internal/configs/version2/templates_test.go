@@ -1,9 +1,13 @@
 package version2
 
-import "testing"
+import (
+	"testing"
+)
 
 const nginxPlusVirtualServerTmpl = "nginx-plus.virtualserver.tmpl"
 const nginxVirtualServerTmpl = "nginx.virtualserver.tmpl"
+const nginxPlusTransportServerTmpl = "nginx-plus.transportserver.tmpl"
+const nginxTransportServerTmpl = "nginx.transportserver.tmpl"
 
 var virtualServerCfg = VirtualServerConfig{
 	Upstreams: []Upstream{
@@ -227,8 +231,33 @@ var virtualServerCfg = VirtualServerConfig{
 	},
 }
 
+var transportServerCfg = TransportServerConfig{
+	Upstreams: []StreamUpstream{
+		{
+			Name: "udp-upstream",
+			Servers: []StreamUpstreamServer{
+				{
+					Address: "10.0.0.20:5001",
+				},
+			},
+		},
+	},
+	Server: StreamServer{
+		Port:           1234,
+		UDP:            true,
+		StatusZone:     "udp-app",
+		ProxyRequests:  createPointerFromInt(1),
+		ProxyResponses: createPointerFromInt(2),
+		ProxyPass:      "udp-upstream",
+	},
+}
+
+func createPointerFromInt(n int) *int {
+	return &n
+}
+
 func TestVirtualServerForNginxPlus(t *testing.T) {
-	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl)
+	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
 	if err != nil {
 		t.Fatalf("Failed to create template executor: %v", err)
 	}
@@ -242,12 +271,40 @@ func TestVirtualServerForNginxPlus(t *testing.T) {
 }
 
 func TestVirtualServerForNginx(t *testing.T) {
-	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl)
+	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
 	if err != nil {
 		t.Fatalf("Failed to create template executor: %v", err)
 	}
 
 	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
+	if err != nil {
+		t.Fatalf("Failed to execute template: %v", err)
+	}
+
+	t.Log(string(data))
+}
+
+func TestTransportServerForNginxPlus(t *testing.T) {
+	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
+	data, err := executor.ExecuteTransportServerTemplate(&transportServerCfg)
+	if err != nil {
+		t.Fatalf("Failed to execute template: %v", err)
+	}
+
+	t.Log(string(data))
+}
+
+func TestTransportServerForNginx(t *testing.T) {
+	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
+	data, err := executor.ExecuteTransportServerTemplate(&transportServerCfg)
 	if err != nil {
 		t.Fatalf("Failed to execute template: %v", err)
 	}

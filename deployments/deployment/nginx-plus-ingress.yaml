@@ -54,3 +54,4 @@ spec:
          #- -external-service=nginx-ingress
          #- -enable-leader-election
          #- -enable-prometheus-metrics
+         #- -global-configuration=$(POD_NAMESPACE)/nginx-configuration
