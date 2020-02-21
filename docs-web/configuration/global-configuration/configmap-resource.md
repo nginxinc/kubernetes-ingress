@@ -198,6 +198,10 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - Disables the `access log <http://nginx.org/en/docs/http/ngx_http_log_module.html#access_log>`_.
      - ``False``
      - 
+   * - ``default-server-access-log-off``
+     - Disables the `access log <http://nginx.org/en/docs/http/ngx_http_log_module.html#access_log>`_ for the default server. If access log is disabled globally (``access-log-off: "True"``), then the default server access log is always disabled.
+     - ``False``
+     - 
    * - ``log-format``
      - Sets the custom `log format <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_.
      - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/master/internal/configs/version1/nginx.tmpl>`_ for the access log.

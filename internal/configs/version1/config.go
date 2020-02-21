@@ -124,47 +124,48 @@ type Location struct {
 
 // MainConfig describe the main NGINX configuration file.
 type MainConfig struct {
-	ServerNamesHashBucketSize      string
-	ServerNamesHashMaxSize         string
 	AccessLogOff                   bool
-	LogFormat                      []string
-	LogFormatEscaping              string
+	DefaultServerAccessLogOff      bool
 	ErrorLogLevel                  string
-	StreamLogFormat                []string
-	StreamLogFormatEscaping        string
 	HealthStatus                   bool
 	HealthStatusURI                string
+	HTTP2                          bool
+	HTTPSnippets                   []string
+	KeepaliveRequests              int64
+	KeepaliveTimeout               string
+	LogFormat                      []string
+	LogFormatEscaping              string
+	MainSnippets                   []string
 	NginxStatus                    bool
 	NginxStatusAllowCIDRs          []string
 	NginxStatusPort                int
-	StubStatusOverUnixSocketForOSS bool
-	MainSnippets                   []string
-	HTTPSnippets                   []string
-	StreamSnippets                 []string
-	SSLProtocols                   string
-	SSLPreferServerCiphers         bool
-	SSLCiphers                     string
-	SSLDHParam                     string
-	HTTP2                          bool
-	ServerTokens                   string
-	ProxyProtocol                  bool
-	WorkerProcesses                string
-	WorkerCPUAffinity              string
-	WorkerShutdownTimeout          string
-	WorkerConnections              string
-	WorkerRlimitNofile             string
-	ResolverAddresses              []string
-	ResolverIPV6                   bool
-	ResolverValid                  string
-	ResolverTimeout                string
-	KeepaliveTimeout               string
-	KeepaliveRequests              int64
-	VariablesHashBucketSize        uint64
-	VariablesHashMaxSize           uint64
-	OpenTracingLoadModule          bool
 	OpenTracingEnabled             bool
+	OpenTracingLoadModule          bool
 	OpenTracingTracer              string
 	OpenTracingTracerConfig        string
+	ProxyProtocol                  bool
+	ResolverAddresses              []string
+	ResolverIPV6                   bool
+	ResolverTimeout                string
+	ResolverValid                  string
+	ServerNamesHashBucketSize      string
+	ServerNamesHashMaxSize         string
+	ServerTokens                   string
+	SSLCiphers                     string
+	SSLDHParam                     string
+	SSLPreferServerCiphers         bool
+	SSLProtocols                   string
+	StreamLogFormat                []string
+	StreamLogFormatEscaping        string
+	StreamSnippets                 []string
+	StubStatusOverUnixSocketForOSS bool
+	VariablesHashBucketSize        uint64
+	VariablesHashMaxSize           uint64
+	WorkerConnections              string
+	WorkerCPUAffinity              string
+	WorkerProcesses                string
+	WorkerRlimitNofile             string
+	WorkerShutdownTimeout          string
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

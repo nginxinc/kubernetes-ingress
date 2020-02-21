@@ -96,7 +96,9 @@ http {
 
         server_name _;
         server_tokens "{{.ServerTokens}}";
+        {{if .DefaultServerAccessLogOff}}
         access_log off;
+        {{end}}
 
         {{if .OpenTracingEnabled}}
         opentracing off;
