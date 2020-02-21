@@ -1,9 +1,9 @@
-import requests
 import pytest
+import requests
 
 from settings import TEST_DATA
 from suite.custom_assertions import assert_event_and_get_count, assert_event_count_increased, assert_response_codes, \
-    assert_event, assert_event_starts_with_text_and_contains_errors
+    assert_event, assert_event_starts_with_text_and_contains_errors, wait_for_event_count_increases
 from suite.custom_resources_utils import get_vs_nginx_template_conf, patch_v_s_route_from_yaml, patch_v_s_route, \
     generate_item_with_upstream_options
 from suite.resources_utils import get_first_pod_name, wait_before_test, replace_configmap_from_yaml, get_events
@@ -109,11 +109,12 @@ class TestVSRouteUpstreamOptions:
                               headers={"host": v_s_route_setup.vs_host})
         resp_2 = requests.get(f"{req_url}{v_s_route_setup.route_s.paths[0]}",
                               headers={"host": v_s_route_setup.vs_host})
-        vsr_s_events = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
-        vsr_m_events = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
 
-        assert_event_count_increased(vsr_m_event_text, initial_count_vsr_m, vsr_m_events)
-        assert_event_count_increased(vsr_s_event_text, initial_count_vsr_s, vsr_s_events)
+        wait_for_event_count_increases(kube_apis, vsr_s_event_text,
+                                       initial_count_vsr_s, v_s_route_setup.route_s.namespace)
+        wait_for_event_count_increases(kube_apis, vsr_m_event_text,
+                                       initial_count_vsr_m, v_s_route_setup.route_m.namespace)
+
         for _ in expected_strings:
             assert _ in config
         assert_response_codes(resp_1, resp_2)

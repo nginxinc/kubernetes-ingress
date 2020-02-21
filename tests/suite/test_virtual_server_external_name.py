@@ -1,8 +1,8 @@
 import pytest
-import requests
 
 from settings import TEST_DATA
-from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count
+from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count, wait_and_assert_status_code, \
+    wait_for_event_count_increases
 from suite.custom_resources_utils import get_vs_nginx_template_conf
 from suite.resources_utils import replace_configmap_from_yaml, \
     ensure_connection_to_public_endpoint, replace_configmap, create_service_from_yaml, get_first_pod_name, get_events, \
@@ -67,9 +67,8 @@ def vs_externalname_setup(request,
                          indirect=True)
 class TestVSWithExternalNameService:
     def test_response(self, kube_apis, crd_ingress_controller, virtual_server_setup, vs_externalname_setup):
-        resp = requests.get(virtual_server_setup.backend_1_url,
-                            headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url,
+                                    virtual_server_setup.vs_host)
 
     def test_template_config(self, kube_apis, ingress_controller_prerequisites,
                              crd_ingress_controller,
@@ -100,6 +99,7 @@ class TestVSWithExternalNameService:
         replace_service(kube_apis.v1, vs_externalname_setup.external_svc, virtual_server_setup.namespace, external_svc)
         wait_before_test(1)
 
+        wait_for_event_count_increases(kube_apis, vs_event_text, initial_count, virtual_server_setup.namespace)
         events_step_1 = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_event_and_count(vs_event_text, initial_count + 1, events_step_1)
         assert_event_and_count(vs_event_update_text, initial_count_up, events_step_1)
