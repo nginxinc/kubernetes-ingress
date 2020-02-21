@@ -9,5 +9,5 @@ spec:
     action:
       return:
         code: 301
-        type: "text/html"
-        body:
+        type: "anything will do"
+        body: "Variables must be enclosed in curly brackets: $request_uri"

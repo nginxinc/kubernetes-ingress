@@ -158,7 +158,7 @@ class TestVirtualServer:
 
     def test_responses_after_crd_removal_on_the_fly(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("\nStep 12: remove CRD and check")
-        crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/common/vs-definition.yaml")
+        crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/vs-definition.yaml")
         delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
         wait_and_assert_status_code(404, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         wait_and_assert_status_code(404, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)

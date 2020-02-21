@@ -10,18 +10,18 @@ from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorization
     ApiextensionsV1beta1Api, AppsV1Api
 from kubernetes.client.rest import ApiException
 
-from suite.custom_resources_utils import create_crd_from_yaml, create_virtual_server_from_yaml, \
-    delete_virtual_server, create_v_s_route_from_yaml, delete_v_s_route, delete_crd
+from suite.custom_resources_utils import create_virtual_server_from_yaml, \
+    delete_virtual_server, create_v_s_route_from_yaml, delete_v_s_route, create_crd_from_yaml, delete_crd
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.resources_utils import create_namespace_with_name_from_yaml, delete_namespace, create_ns_and_sa_from_yaml, \
     patch_rbac, create_example_app, wait_until_all_pods_are_ready, delete_common_app, \
     ensure_connection_to_public_endpoint, create_service_with_name, create_deployment_with_name, delete_deployment, \
-    delete_service, replace_configmap_from_yaml, delete_testing_namespaces, \
-    create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac, \
-    create_service_from_yaml, get_service_node_ports, wait_for_public_ip, \
-    create_configmap_from_yaml, create_secret_from_yaml, \
-    get_first_vs_host_from_yaml, get_paths_from_vs_yaml, get_paths_from_vsr_yaml, get_name_from_yaml, \
-    get_route_namespace_from_vs_yaml
+    delete_service, replace_configmap_from_yaml, delete_testing_namespaces
+from suite.resources_utils import create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac
+from suite.resources_utils import create_service_from_yaml, get_service_node_ports, wait_for_public_ip
+from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml
+from suite.yaml_utils import get_first_vs_host_from_yaml, get_paths_from_vs_yaml, get_paths_from_vsr_yaml, \
+    get_route_namespace_from_vs_yaml, get_name_from_yaml
 
 from settings import ALLOWED_SERVICE_TYPES, ALLOWED_IC_TYPES, DEPLOYMENTS, TEST_DATA, ALLOWED_DEPLOYMENT_TYPES
 
@@ -302,15 +302,18 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     """
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
-    crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/common/vs-definition.yaml")
+    vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/vs-definition.yaml")
+    vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/vsr-definition.yaml")
 
     try:
         print("------------------------- Update ClusterRole -----------------------------------")
         if request.param['type'] == 'rbac-without-vs':
             patch_rbac(kube_apis.rbac_v1_beta1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
-        print("------------------------- Register CRD -----------------------------------")
-        create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, crd_name,
+        print("------------------------- Register CRDs -----------------------------------")
+        create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, vs_crd_name,
                              f"{DEPLOYMENTS}/common/vs-definition.yaml")
+        create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, vsr_crd_name,
+                             f"{DEPLOYMENTS}/common/vsr-definition.yaml")
         print("------------------------- Create IC -----------------------------------")
         name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace,
                                          request.param.get('extra_args', None))
@@ -320,14 +323,16 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     except ApiException as ex:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
         print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
-        delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, vs_crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, vsr_crd_name)
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")
         delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments['deployment-type'], namespace)
 
     def fin():
-        delete_crd(kube_apis.api_extensions_v1_beta1, crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, vs_crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, vsr_crd_name)
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")

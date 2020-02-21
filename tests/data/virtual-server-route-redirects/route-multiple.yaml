@@ -13,5 +13,4 @@ spec:
   - path: "/backends/default-redirect"
     action:
       redirect:
-        code:
         url: "${scheme}://${host}${request_uri}?arg=${http_x_forwarded_proto}"

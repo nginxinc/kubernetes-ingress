@@ -8,8 +8,6 @@ spec:
   - name: backend2
     service: backend2-svc
     port: 80
-    tls:
-      enable:
   subroutes:
   - path: "/backend2"
     action:

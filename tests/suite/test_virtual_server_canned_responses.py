@@ -3,8 +3,8 @@ import requests
 import json
 
 from settings import TEST_DATA
-from suite.custom_assertions import wait_and_assert_status_code, assert_event, assert_event_and_get_count, \
-    assert_event_count_increased
+from suite.custom_assertions import wait_and_assert_status_code, assert_event_and_get_count, \
+    assert_event_count_increased, assert_event_starts_with_text_and_contains_errors
 from suite.custom_resources_utils import patch_virtual_server_from_yaml, get_vs_nginx_template_conf
 from suite.resources_utils import get_first_pod_name, get_events, wait_before_test
 
@@ -83,9 +83,11 @@ class TestVSCannedResponse:
         assert_event_count_increased(vs_event_text, initial_count, vs_events)
 
     def test_validation_flow(self, kube_apis, crd_ingress_controller, virtual_server_setup):
+        invalid_fields = [
+            "spec.routes[0].action.return.code", "spec.routes[0].action.return.body"
+        ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-        event_text = f"VirtualServer {text} is invalid and was rejected: " \
-                     f"spec.routes[0].action.return.body: Required value"
+        vs_event_text = f"VirtualServer {text} is invalid and was rejected: "
         vs_src = f"{TEST_DATA}/virtual-server-canned-responses/virtual-server-invalid.yaml"
         patch_virtual_server_from_yaml(kube_apis.custom_objects, virtual_server_setup.vs_name, vs_src,
                                        virtual_server_setup.namespace)
@@ -93,4 +95,4 @@ class TestVSCannedResponse:
 
         wait_and_assert_status_code(404, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        assert_event(event_text, vs_events)
+        assert_event_starts_with_text_and_contains_errors(vs_event_text, vs_events, invalid_fields)

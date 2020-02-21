@@ -8,13 +8,9 @@ spec:
   - name: backend1
     service: backend1-svc
     port: 80
-    tls:
-      enable:
   - name: backend3
     service: backend3-svc
     port: 80
-    tls:
-      enable: False
   subroutes:
   - path: "/backends/backend1"
     action:

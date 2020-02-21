@@ -13,5 +13,5 @@ spec:
   - path: "/default-redirect"
     action:
       redirect:
-        code:
+        code: 204
         url: "${nginx_version}"

@@ -8,7 +8,6 @@ spec:
   - path: "/custom-redirect"
     action:
       redirect:
-        code:
         url: "http://demo.nginx.com"
   - path: "/default-redirect"
     action:

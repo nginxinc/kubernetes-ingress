@@ -1,5 +1,6 @@
 import requests
 import pytest
+from kubernetes.client.rest import ApiException
 
 from settings import TEST_DATA
 from suite.custom_assertions import assert_event_and_get_count, assert_event_count_increased, assert_response_codes, \
@@ -39,14 +40,18 @@ class TestVirtualServerUpstreamTls:
         events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_event(vs_event_text, events_vs)
 
-    def test_invalid_value_rejection(self, kube_apis, ingress_controller_prerequisites,
+    def test_validation_flow(self, kube_apis, ingress_controller_prerequisites,
                                      crd_ingress_controller, virtual_server_setup):
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         initial_events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        patch_virtual_server_from_yaml(kube_apis.custom_objects,
-                                       virtual_server_setup.vs_name,
-                                       f"{TEST_DATA}/virtual-server-upstream-tls/virtual-server-invalid.yaml",
-                                       virtual_server_setup.namespace)
+        try:
+            patch_virtual_server_from_yaml(kube_apis.custom_objects,
+                                           virtual_server_setup.vs_name,
+                                           f"{TEST_DATA}/virtual-server-upstream-tls/virtual-server-invalid.yaml",
+                                           virtual_server_setup.namespace)
+        except ApiException as ex:
+            assert ex.status == 422 and "spec.upstreams.tls.enable: Invalid value" in ex.body
+
         wait_before_test(1)
         config = get_vs_nginx_template_conf(kube_apis.v1,
                                             virtual_server_setup.namespace,

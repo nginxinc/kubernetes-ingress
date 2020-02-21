@@ -57,6 +57,7 @@ spec:
       statusMatch: "invalid"
     slow-start: "1.5m"
     queue:
+      size: 0
       timeout: "hour"
   subroutes:
   - path: "/backends/backend1"

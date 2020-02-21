@@ -38,8 +38,6 @@ spec:
   - path: "/backends/canned-defaults"
     action:
       return:
-        code:
-        type:
         body: |
           line1
           line2

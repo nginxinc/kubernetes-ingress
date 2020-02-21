@@ -5,7 +5,7 @@ import requests
 
 from settings import TEST_DATA
 from suite.custom_assertions import assert_event_and_get_count, wait_and_assert_status_code, \
-    assert_event, assert_event_count_increased
+    assert_event_count_increased, assert_event_starts_with_text_and_contains_errors
 from suite.custom_resources_utils import get_vs_nginx_template_conf, patch_v_s_route_from_yaml
 from suite.resources_utils import get_first_pod_name, get_events, wait_before_test
 
@@ -95,11 +95,13 @@ class TestVSRCannedResponses:
         assert_event_count_increased(vsr_event_text, initial_count_vsr, new_events_ns)
 
     def test_validation_flow(self, kube_apis, crd_ingress_controller, v_s_route_setup):
+        invalid_fields = [
+            "spec.subroutes[0].action.return.code", "spec.subroutes[0].action.return.body"
+        ]
         req_host = f"{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         req_url = f"http://{req_host}{v_s_route_setup.route_s.paths[0]}"
         text = f"{v_s_route_setup.namespace}/{v_s_route_setup.route_m.name}"
-        event_text = f"VirtualServerRoute {text} is invalid and was rejected: " \
-                     f"spec.subroutes[0].action.return.body: Required value"
+        vsr_m_event_text = f"VirtualServerRoute {text} is invalid and was rejected: "
         vsr_src = f"{TEST_DATA}/virtual-server-route-canned-responses/route-multiple-invalid.yaml"
         patch_v_s_route_from_yaml(kube_apis.custom_objects,
                                   v_s_route_setup.route_m.name, vsr_src, v_s_route_setup.namespace)
@@ -107,4 +109,4 @@ class TestVSRCannedResponses:
 
         wait_and_assert_status_code(404, req_url, v_s_route_setup.vs_host)
         events = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
-        assert_event(event_text, events)
+        assert_event_starts_with_text_and_contains_errors(vsr_m_event_text, events, invalid_fields)
