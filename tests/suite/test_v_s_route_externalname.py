@@ -1,8 +1,8 @@
-import requests
 import pytest
 
 from settings import TEST_DATA
-from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count
+from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count, wait_and_assert_status_code, \
+    wait_for_event_count_increases
 from suite.custom_resources_utils import create_virtual_server_from_yaml, \
     create_v_s_route_from_yaml, get_vs_nginx_template_conf
 from suite.fixtures import VirtualServerRoute, PublicEndpoint
@@ -109,9 +109,8 @@ class TestVSRWithExternalNameService:
                        vsr_externalname_setup):
         req_url = f"http://{vsr_externalname_setup.public_endpoint.public_ip}:" \
             f"{vsr_externalname_setup.public_endpoint.port}"
-        resp = requests.get(f"{req_url}{vsr_externalname_setup.route.paths[0]}",
-                            headers={"host": vsr_externalname_setup.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, f"{req_url}{vsr_externalname_setup.route.paths[0]}",
+                                    vsr_externalname_setup.vs_host)
 
     def test_template_config(self, kube_apis,
                              ingress_controller_prerequisites,
@@ -152,6 +151,8 @@ class TestVSRWithExternalNameService:
                         vsr_externalname_setup.external_svc, vsr_externalname_setup.namespace, external_svc)
         wait_before_test(1)
 
+        wait_for_event_count_increases(kube_apis, vsr_event_text,
+                                       initial_count_vsr, vsr_externalname_setup.route.namespace)
         events_step_1 = get_events(kube_apis.v1, vsr_externalname_setup.route.namespace)
         assert_event_and_count(vsr_event_text, initial_count_vsr + 1, events_step_1)
         assert_event_and_count(vs_event_text, initial_count_vs + 1, events_step_1)

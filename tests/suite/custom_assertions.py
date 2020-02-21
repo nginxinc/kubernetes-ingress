@@ -5,6 +5,7 @@ import pytest
 import requests
 
 from suite.custom_resources_utils import get_vs_nginx_template_conf
+from suite.resources_utils import get_events
 
 
 def assert_no_new_events(old_list, new_list):
@@ -58,6 +59,41 @@ def assert_event_and_get_count(event_text, events_list) -> int:
         if event_text in events_list[i].message:
             return events_list[i].count
     pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
+
+
+def get_event_count(event_text, events_list) -> int:
+    """
+    Search for the event in the list and return its counter.
+
+    :param event_text: event text
+    :param events_list: list of events
+    :return: (int)
+    """
+    for i in range(len(events_list) - 1, -1, -1):
+        if event_text in events_list[i].message:
+            return events_list[i].count
+    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
+
+
+def wait_for_event_count_increases(kube_apis, event_text, initial_count, events_namespace) -> None:
+    """
+    Wait for the event counter to get bigger than the initial value.
+
+    :param kube_apis: KubeApis
+    :param event_text: event text
+    :param initial_count: expected value
+    :param events_namespace: namespace to fetch events
+    :return:
+    """
+    events_list = get_events(kube_apis.v1, events_namespace)
+    count = get_event_count(event_text, events_list)
+    counter = 0
+    while count <= initial_count and counter < 4:
+        time.sleep(1)
+        counter = counter + 1
+        events_list = get_events(kube_apis.v1, events_namespace)
+        count = get_event_count(event_text, events_list)
+    assert count > initial_count, f"After several seconds the event counter has not increased \"{event_text}\""
 
 
 def assert_response_codes(resp_1, resp_2, code_1=200, code_2=200) -> None:
