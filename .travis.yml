@@ -8,11 +8,11 @@ script:
 - echo "Building ingress controller commit:${TRAVIS_COMMIT}"
 - make container BUILD_IN_CONTAINER=0 DOCKER_BUILDKIT=0;
 - echo "Helm smoke test"
-- cd ${TRAVIS_BUILD_DIR} && wget -O helm.tar.gz ${helm_download} &&
+- cd ${TRAVIS_BUILD_DIR} && wget -O helm.tar.gz https://get.helm.sh/helm-v3.0.3-linux-amd64.tar.gz &&
   tar xzfv helm.tar.gz -C ./ --strip-components=1 linux-amd64/helm
-- ./helm template deployments/helm-chart/ --name nginx-ingress
-- ./helm template deployments/helm-chart/ --name nginx-ingress -f deployments/helm-chart/values-plus.yaml
-- ./helm template deployments/helm-chart/ --name nginx-ingress -f deployments/helm-chart/values-icp.yaml
+- ./helm template nginx-ingress deployments/helm-chart/
+- ./helm template nginx-ingress deployments/helm-chart/ -f deployments/helm-chart/values-plus.yaml
+- ./helm template nginx-ingress deployments/helm-chart/ -f deployments/helm-chart/values-icp.yaml
 before_install:
 - echo "PR Slug:${TRAVIS_PULL_REQUEST_SLUG}"
 - if [[ "${TRAVIS_PULL_REQUEST_SLUG}" == "nginxinc/kubernetes-ingress" || "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
