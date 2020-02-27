@@ -1024,7 +1024,8 @@ codes: [401, 403]
 return:
   code: 200
   type: application/json
-  body: "{\"msg\": \"You don't have permission to do this\"}"
+  body: |
+    {\"msg\": \"You don't have permission to do this\"}
   headers:
   - name: x-debug-original-statuses
     value: ${upstream_status}
