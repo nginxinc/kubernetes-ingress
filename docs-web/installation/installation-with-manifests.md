@@ -5,7 +5,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 ## Prerequisites
 
 1. Make sure you have access to the Ingress controller image:
-    * For NGINX Ingress controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress-controller/).
+    * For NGINX Ingress controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
     * For NGINX Plus Ingress controller, build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
 1. Clone the Ingress controller repo and change into the deployments folder:
     ```
