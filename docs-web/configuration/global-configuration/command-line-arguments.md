@@ -6,10 +6,6 @@ The Ingress Controller supports several command-line arguments. Setting the argu
 
 Below we describe the available command-line arguments:
 ```eval_rst
-.. option:: -alsologtostderr
-
-	Log to standard error as well as files
-
 .. option:: -default-server-tls-secret <string>
 
 	Secret with a TLS certificate and key for TLS termination of the default server.
@@ -70,10 +66,6 @@ Below we describe the available command-line arguments:
 .. option:: -log_dir <string>
 
 	If non-empty, write log files in this directory
-
-.. option:: -logtostderr
-
-	Log to standard error instead of files
 
 .. option:: -main-template-path <string>
 
