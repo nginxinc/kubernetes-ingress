@@ -6,10 +6,6 @@ The Ingress Controller supports several command-line arguments. Setting the argu
 
 Below we describe the available command-line arguments:
 ```eval_rst
-.. option:: -alsologtostderr
-
-	Log to standard error as well as files
-
 .. option:: -default-server-tls-secret <string>
 
 	Secret with a TLS certificate and key for TLS termination of the default server.
@@ -67,14 +63,6 @@ Below we describe the available command-line arguments:
 
 	When logging hits line ``file:N``, emit a stack trace
 
-.. option:: -log_dir <string>
-
-	If non-empty, write log files in this directory
-
-.. option:: -logtostderr
-
-	Log to standard error instead of files
-
 .. option:: -main-template-path <string>
 
 	Path to the main NGINX configuration template.
@@ -120,10 +108,6 @@ Below we describe the available command-line arguments:
 
 	Update the address field in the status of Ingresses resources.
 	Requires the :option:`-external-service` flag or the ``external-status-address`` key in the ConfigMap.
-
-.. option:: -stderrthreshold <value>
-
-	Logs at or above this threshold go to stderr
 
 .. option:: -use-ingress-class-only
 
