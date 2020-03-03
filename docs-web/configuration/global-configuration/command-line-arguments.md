@@ -63,10 +63,6 @@ Below we describe the available command-line arguments:
 
 	When logging hits line ``file:N``, emit a stack trace
 
-.. option:: -log_dir <string>
-
-	If non-empty, write log files in this directory
-
 .. option:: -main-template-path <string>
 
 	Path to the main NGINX configuration template.
@@ -112,10 +108,6 @@ Below we describe the available command-line arguments:
 
 	Update the address field in the status of Ingresses resources.
 	Requires the :option:`-external-service` flag or the ``external-status-address`` key in the ConfigMap.
-
-.. option:: -stderrthreshold <value>
-
-	Logs at or above this threshold go to stderr
 
 .. option:: -use-ingress-class-only
 
