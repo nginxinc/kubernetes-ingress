@@ -149,19 +149,19 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``resolver-addresses``
      - Sets the value of the `resolver <http://nginx.org/en/docs/http/ngx_http_core_module.html#resolver>`_ addresses. Note: If you use a DNS name (ex., ``kube-dns.kube-system.svc.cluster.local``\ ) as a resolver address, NGINX Plus will resolve it using the system resolver during the start and on every configuration reload. As a consequence, If the name cannot be resolved or the DNS server doesn't respond, NGINX Plus will fail to start or reload. To avoid this, consider using only IP addresses as resolver addresses. Supported in NGINX Plus only.
      - N/A
-     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.2/examples/externalname-services>`_.
+     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.3/examples/externalname-services>`_.
    * - ``resolver-ipv6``
      - Enables IPv6 resolution in the resolver. Supported in NGINX Plus only.
      - ``True``
-     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.2/examples/externalname-services>`_.
+     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.3/examples/externalname-services>`_.
    * - ``resolver-valid``
      - Sets the time NGINX caches the resolved DNS records. Supported in NGINX Plus only.
      - TTL value of a DNS record
-     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.2/examples/externalname-services>`_.
+     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.3/examples/externalname-services>`_.
    * - ``resolver-timeout``
      - Sets the `resolver_timeout <http://nginx.org/en/docs/http/ngx_http_core_module.html#resolver_timeout>`_ for name resolution. Supported in NGINX Plus only.
      - ``30s``
-     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.2/examples/externalname-services>`_.
+     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.3/examples/externalname-services>`_.
    * - ``keepalive-timeout``
      - Sets the value of the `keepalive_timeout <http://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout>`_ directive.
      - ``65s``
@@ -200,11 +200,11 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - 
    * - ``log-format``
      - Sets the custom `log format <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_.
-     - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.2/internal/configs/version1/nginx.tmpl>`_ for the access log.
+     - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.3/internal/configs/version1/nginx.tmpl>`_ for the access log.
      - 
    * - ``stream-log-format``
      - Sets the custom `log format <http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format>`_ for TCP/UDP load balancing.
-     - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.2/internal/configs/version1/nginx.tmpl>`_.
+     - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.3/internal/configs/version1/nginx.tmpl>`_.
      - 
 ```
 
@@ -297,7 +297,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``proxy-protocol``
      - Enables PROXY Protocol for incoming connections.
      - ``False``
-     - `Proxy Protocol <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.2/examples/proxy-protocol>`_.
+     - `Proxy Protocol <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.3/examples/proxy-protocol>`_.
 ```
 
 ### Backend Services (Upstreams)
@@ -361,7 +361,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``stream-snippets``
      - Sets a custom snippet in stream context.
      - N/A
-     - `Support for  TCP/UDP Load Balancing <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.2/examples/tcp-udp>`_.
+     - `Support for  TCP/UDP Load Balancing <https://github.com/nginxinc/kubernetes-ingress/tree/v1.6.3/examples/tcp-udp>`_.
    * - ``main-template``
      - Sets the main NGINX configuration template.
      - By default the template is read from the file in the container.
@@ -385,13 +385,13 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``opentracing``
      - Enables `OpenTracing <https://opentracing.io>`_ globally (for all Ingress, VirtualServer and VirtualServerRoute resources). Note: requires the Ingress Controller image with OpenTracing module and a tracer. See the `docs </nginx-ingress-controller/third-party-modules/opentracing>`_ for more information.
      - ``False``
-     - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.2/examples/opentracing/README.md>`_.
+     - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.3/examples/opentracing/README.md>`_.
    * - ``opentracing-tracer``
      - Sets the path to the vendor tracer binary plugin.
      - N/A
-     - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.2/examples/opentracing/README.md>`_.
+     - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.3/examples/opentracing/README.md>`_.
    * - ``opentracing-tracer-config``
      - Sets the tracer configuration in JSON format.
      - N/A
-     - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.2/examples/opentracing/README.md>`_.
+     - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/v1.6.3/examples/opentracing/README.md>`_.
 ```

@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       containers:
-      - image: nginx/nginx-ingress:1.6.2
+      - image: nginx/nginx-ingress:1.6.3
         name: nginx-ingress
         ports:
         - name: http
