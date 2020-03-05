@@ -16,7 +16,7 @@ script:
 before_install:
 - echo "PR Slug:${TRAVIS_PULL_REQUEST_SLUG}"
 - if [[ "${TRAVIS_PULL_REQUEST_SLUG}" == "nginxinc/kubernetes-ingress" || "${TRAVIS_PULL_REQUEST}" == "false" ]]; then
-  wget https://${fossalocation}/${fossafile} && tar xzf ${fossafile}
+  wget https://github.com/fossas/fossa-cli/releases/download/v1.0.27/fossa-cli_1.0.27_linux_amd64.tar.gz && tar xzf fossa-cli_1.0.27_linux_amd64.tar.gz
   && ./fossa init
   && GO111MODULE=on FOSSA_API_KEY=${fossapush} ./fossa analyze -t kubernetes-ingress -b ${TRAVIS_BRANCH}; fi
 - echo "Checking ingress controller for linting errors" && wget -O - -q ${golangci_lint} | sh -s v1.17.1
