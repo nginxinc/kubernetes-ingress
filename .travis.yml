@@ -3,7 +3,7 @@ sudo: required
 services:
 - docker
 go:
-- "1.13"
+- "1.14"
 script:
 - echo "Building ingress controller commit:${TRAVIS_COMMIT}"
 - make container BUILD_IN_CONTAINER=0 DOCKER_BUILDKIT=0;
