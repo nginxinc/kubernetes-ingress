@@ -5,7 +5,7 @@ TAG = $(VERSION)
 PREFIX = nginx/nginx-ingress
 
 GOLANG_CONTAINER = golang:1.13
-GOFLAGS ?= "-mod=vendor"
+GOFLAGS ?= -mod=vendor
 DOCKERFILEPATH = build
 DOCKERFILE = Dockerfile # note, this can be overwritten e.g. can be DOCKERFILE=DockerFileForPlus
 
@@ -23,7 +23,7 @@ lint:
 
 test:
 ifneq ($(BUILD_IN_CONTAINER),1)
-	GO111MODULE=on GOFLAGS=$(GOFLAGS) go test ./...
+	GO111MODULE=on GOFLAGS='$(GOFLAGS)' go test ./...
 endif
 
 verify-codegen:
@@ -41,7 +41,7 @@ endif
 
 binary:
 ifneq ($(BUILD_IN_CONTAINER),1)
-	CGO_ENABLED=0 GO111MODULE=on GOFLAGS=$(GOFLAGS) GOOS=linux go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
+	CGO_ENABLED=0 GO111MODULE=on GOFLAGS='$(GOFLAGS)' GOOS=linux go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 endif
 
 container: test verify-codegen binary certificate-and-key
