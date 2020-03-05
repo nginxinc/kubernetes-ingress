@@ -1,5 +1,18 @@
 # Releases 
 
+## NGINX Ingress Controller 1.6.3
+
+CHANGES:
+* Update NGINX version to 1.17.9.
+
+HELM CHART:
+* The version of the Helm chart is now 0.4.3.
+
+UPGRADE:
+* For NGINX, use the 1.6.3 image from our DockerHub: `nginx/nginx-ingress:1.6.3` or `nginx/nginx-ingress:1.6.3-alpine`
+* For NGINX Plus, please build your own image using the 1.6.3 source code.
+* For Helm, use version 0.4.3 of the chart.
+
 ## NGINX Ingress Controller 1.6.2
 
 CHANGES:
