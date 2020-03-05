@@ -8,6 +8,7 @@ NODE_IP =
 TAG = latest
 PREFIX = test-runner
 KUBE_CONFIG_FOLDER = $${HOME}/.kube
+MINIKUBE_CONFIG_FOLDER = $${HOME}/.minikube
 SHOW_IC_LOGS = no
 PYTEST_ARGS =
 
@@ -15,4 +16,4 @@ build:
 	docker build -t $(PREFIX):$(TAG) -f docker/Dockerfile ..
 
 run-tests:
-	docker run --rm -v $(KUBE_CONFIG_FOLDER):/root/.kube $(PREFIX):$(TAG) --context=$(CONTEXT) --image=$(BUILD_IMAGE) --image-pull-policy=$(PULL_POLICY) --deployment-type=$(DEPLOYMENT_TYPE) --ic-type=$(IC_TYPE) --service=$(SERVICE) --node-ip=$(NODE_IP) --show-ic-logs=$(SHOW_IC_LOGS) $(PYTEST_ARGS)
+	docker run --rm -v $(KUBE_CONFIG_FOLDER):/root/.kube -v $(MINIKUBE_CONFIG_FOLDER):$(MINIKUBE_CONFIG_FOLDER) $(PREFIX):$(TAG) --context=$(CONTEXT) --image=$(BUILD_IMAGE) --image-pull-policy=$(PULL_POLICY) --deployment-type=$(DEPLOYMENT_TYPE) --ic-type=$(IC_TYPE) --service=$(SERVICE) --node-ip=$(NODE_IP) --show-ic-logs=$(SHOW_IC_LOGS) $(PYTEST_ARGS)
