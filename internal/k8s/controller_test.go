@@ -23,131 +23,79 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func TestIsNginxIngress(t *testing.T) {
+func TestCheckIngressClassAnnotation(t *testing.T) {
 	ingressClass := "ing-ctrl"
 
+	lbcWithoutIngressClassOnly := &LoadBalancerController{
+		ingressClass:        ingressClass,
+		useIngressClassOnly: false,
+		metricsCollector:    collectors.NewControllerFakeCollector(),
+	}
+
+	lbcWithIngressClassOnly := &LoadBalancerController{
+		ingressClass:        ingressClass,
+		useIngressClassOnly: true,
+		metricsCollector:    collectors.NewControllerFakeCollector(),
+	}
+
 	var testsWithoutIngressClassOnly = []struct {
-		lbc      *LoadBalancerController
-		ing      *extensions.Ingress
-		expected bool
+		lbc         *LoadBalancerController
+		annotations map[string]string
+		expected    bool
 	}{
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&extensions.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: ""},
-				},
-			},
+			lbcWithoutIngressClassOnly,
+			map[string]string{ingressClassKey: ""},
 			true,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&extensions.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: "gce"},
-				},
-			},
+			lbcWithoutIngressClassOnly,
+			map[string]string{ingressClassKey: "gce"},
 			false,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&extensions.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: ingressClass},
-				},
-			},
+			lbcWithoutIngressClassOnly,
+			map[string]string{ingressClassKey: ingressClass},
 			true,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&extensions.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{},
-				},
-			},
+			lbcWithoutIngressClassOnly,
+			map[string]string{},
 			true,
 		},
 	}
 
 	var testsWithIngressClassOnly = []struct {
-		lbc      *LoadBalancerController
-		ing      *extensions.Ingress
-		expected bool
+		lbc         *LoadBalancerController
+		annotations map[string]string
+		expected    bool
 	}{
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&extensions.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: ""},
-				},
-			},
+			lbcWithIngressClassOnly,
+			map[string]string{ingressClassKey: ""},
 			false,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&extensions.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: "gce"},
-				},
-			},
+			lbcWithIngressClassOnly,
+			map[string]string{ingressClassKey: "gce"},
 			false,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&extensions.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: ingressClass},
-				},
-			},
+			lbcWithIngressClassOnly,
+			map[string]string{ingressClassKey: ingressClass},
 			true,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&extensions.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{},
-				},
-			},
+			lbcWithIngressClassOnly,
+			map[string]string{},
 			false,
 		},
 	}
 
 	for _, test := range testsWithoutIngressClassOnly {
-		if result := test.lbc.IsNginxIngress(test.ing); result != test.expected {
+		if result := test.lbc.CheckIngressClassAnnotation(test.annotations); result != test.expected {
 			classAnnotation := "N/A"
-			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
+			if class, exists := test.annotations[ingressClassKey]; exists {
 				classAnnotation = class
 			}
 			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
@@ -156,9 +104,9 @@ func TestIsNginxIngress(t *testing.T) {
 	}
 
 	for _, test := range testsWithIngressClassOnly {
-		if result := test.lbc.IsNginxIngress(test.ing); result != test.expected {
+		if result := test.lbc.CheckIngressClassAnnotation(test.annotations); result != test.expected {
 			classAnnotation := "N/A"
-			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
+			if class, exists := test.annotations[ingressClassKey]; exists {
 				classAnnotation = class
 			}
 			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",

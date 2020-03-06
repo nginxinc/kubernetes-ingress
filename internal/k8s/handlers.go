@@ -93,7 +93,7 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ingress := obj.(*v1beta1.Ingress)
-			if !lbc.IsNginxIngress(ingress) {
+			if !lbc.CheckIngressClassAnnotation(ingress.Annotations) {
 				glog.Infof("Ignoring Ingress %v based on Annotation %v", ingress.Name, ingressClassKey)
 				return
 			}
@@ -114,7 +114,7 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 					return
 				}
 			}
-			if !lbc.IsNginxIngress(ingress) {
+			if !lbc.CheckIngressClassAnnotation(ingress.Annotations) {
 				return
 			}
 			if isMinion(ingress) {
@@ -133,7 +133,7 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 		UpdateFunc: func(old, current interface{}) {
 			c := current.(*v1beta1.Ingress)
 			o := old.(*v1beta1.Ingress)
-			if !lbc.IsNginxIngress(c) {
+			if !lbc.CheckIngressClassAnnotation(c.Annotations) {
 				return
 			}
 			if hasChanges(o, c) {
