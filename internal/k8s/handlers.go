@@ -316,6 +316,10 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vs := obj.(*conf_v1.VirtualServer)
+			if !lbc.CheckIngressClassAnnotation(vs.Annotations) {
+				glog.Infof("Ignoring VirtualServer %v based on Annotation %v", vs.Name, ingressClassKey)
+				return
+			}
 			glog.V(3).Infof("Adding VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
@@ -333,11 +337,17 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 					return
 				}
 			}
+			if !lbc.CheckIngressClassAnnotation(vs.Annotations) {
+				return
+			}
 			glog.V(3).Infof("Removing VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVs := cur.(*conf_v1.VirtualServer)
+			if !lbc.CheckIngressClassAnnotation(curVs.Annotations) {
+				return
+			}
 			if !reflect.DeepEqual(old, cur) {
 				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
 				lbc.AddSyncQueue(curVs)
@@ -350,6 +360,10 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vsr := obj.(*conf_v1.VirtualServerRoute)
+			if !lbc.CheckIngressClassAnnotation(vsr.Annotations) {
+				glog.Infof("Ignoring VirtualServerRoute %v based on Annotation %v", vsr.Name, ingressClassKey)
+				return
+			}
 			glog.V(3).Infof("Adding VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
@@ -367,11 +381,17 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 					return
 				}
 			}
+			if !lbc.CheckIngressClassAnnotation(vsr.Annotations) {
+				return
+			}
 			glog.V(3).Infof("Removing VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
+			if !lbc.CheckIngressClassAnnotation(curVsr.Annotations) {
+				return
+			}
 			if !reflect.DeepEqual(old, cur) {
 				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
