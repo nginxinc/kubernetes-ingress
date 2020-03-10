@@ -138,6 +138,8 @@ Parameter | Description | Default
 `controller.terminationGracePeriodSeconds` | The termination grace period of the Ingress controller pod. | 30
 `controller.tolerations` | The tolerations of the Ingress controller pods. | []
 `controller.affinity` | The affinity of the Ingress controller pods. | {}
+`controller.volumes` | The volumes of the Ingress controller pods. | []
+`controller.volumeMounts` | The volumeMounts of the Ingress controller pods. | []
 `controller.resources` | The resources of the Ingress controller pods. | {}
 `controller.replicaCount` | The number of replicas of the Ingress controller deployment. | 1
 `controller.ingressClass` | A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation `"kubernetes.io/ingress.class"` equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag. | nginx

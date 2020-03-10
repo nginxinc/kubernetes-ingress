@@ -39,6 +39,10 @@ spec:
       affinity:
 {{ toYaml .Values.controller.affinity | indent 8 }}
 {{- end }}
+{{- if .Values.controller.volumes }}
+      volumes:
+{{ toYaml .Values.controller.volumes | indent 6 }}
+{{- end }}
 {{- if .Values.controller.priorityClassName }}
       priorityClassName: {{ .Values.controller.priorityClassName }}
 {{- end }}
@@ -69,6 +73,10 @@ spec:
             - ALL
             add:
             - NET_BIND_SERVICE
+{{- if .Values.controller.volumeMounts }}
+        volumeMounts:
+{{ toYaml .Values.controller.volumeMounts | indent 8 }}
+{{- end }}
         env:
         - name: POD_NAMESPACE
           valueFrom:

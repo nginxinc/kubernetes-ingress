@@ -89,6 +89,18 @@ controller:
   ## The affinity of the Ingress controller pods.
   affinity: {}
 
+  ## The volumes of the Ingress controller pods.
+  volumes: []
+  # - name: extra-conf
+  #   configMap:
+  #     name: extra-conf
+
+  ## The volumeMounts of the Ingress controller pods.
+  volumeMounts: []
+  # - name: extra-conf
+  #   mountPath: /etc/nginx/conf.d/extra.conf
+  #   subPath: extra.conf
+
   ## The number of replicas of the Ingress controller deployment.
   replicaCount: 1
 
