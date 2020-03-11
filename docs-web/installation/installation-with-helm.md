@@ -184,6 +184,12 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``controller.affinity``
      - The affinity of the Ingress controller pods.
      - {}
+   * - ``controller.volumes``
+     - The volumes of the Ingress controller pods.
+     - []
+   * - ``controller.volumeMounts``
+     - The volumeMounts of the Ingress controller pods.
+     - []
    * - ``controller.resources``
      - The resources of the Ingress controller pods.
      - {}
