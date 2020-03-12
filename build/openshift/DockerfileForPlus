@@ -76,11 +76,6 @@ USER nginx
 
 ENTRYPOINT ["/nginx-ingress"]
 
-
-FROM base AS local
-COPY nginx-ingress /
-
-
 FROM $GOLANG_CONTAINER AS builder
 ARG VERSION
 ARG GIT_COMMIT
