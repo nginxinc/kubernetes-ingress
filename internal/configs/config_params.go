@@ -1,5 +1,7 @@
 package configs
 
+import conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+
 // ConfigParams holds NGINX configuration parameters that affect the main NGINX config
 // as well as configs for Ingress resources.
 type ConfigParams struct {
@@ -94,6 +96,7 @@ type StaticConfigParams struct {
 	NginxStatusAllowCIDRs          []string
 	NginxStatusPort                int
 	StubStatusOverUnixSocketForOSS bool
+	TLSPassthrough                 bool
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.
@@ -142,4 +145,15 @@ func NewDefaultConfigParams() *ConfigParams {
 // NewDefaultGlobalConfigParams creates a GlobalConfigParams with default values.
 func NewDefaultGlobalConfigParams() *GlobalConfigParams {
 	return &GlobalConfigParams{Listeners: map[string]Listener{}}
+}
+
+// NewGlobalConfigParamsWithTLSPassthrough creates new GlobalConfigParams with enabled TLS Passthrough listener.
+func NewGlobalConfigParamsWithTLSPassthrough() *GlobalConfigParams {
+	return &GlobalConfigParams{
+		Listeners: map[string]Listener{
+			conf_v1alpha1.TLSPassthroughListenerName: {
+				Protocol: conf_v1alpha1.TLSPassthroughListenerProtocol,
+			},
+		},
+	}
 }

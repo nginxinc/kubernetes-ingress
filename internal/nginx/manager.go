@@ -39,6 +39,7 @@ type Manager interface {
 	DeleteConfig(name string)
 	CreateStreamConfig(name string, content []byte)
 	DeleteStreamConfig(name string)
+	CreateTLSPassthroughHostsConfig(content []byte)
 	CreateSecret(name string, content []byte, mode os.FileMode) string
 	DeleteSecret(name string)
 	GetFilenameForSecret(name string) string
@@ -64,6 +65,7 @@ type LocalManager struct {
 	configVersionFilename        string
 	binaryFilename               string
 	dhparamFilename              string
+	tlsPassthroughHostsFilename  string
 	verifyConfigGenerator        *verifyConfigGenerator
 	verifyClient                 *verifyClient
 	configVersion                int
@@ -83,19 +85,20 @@ func NewLocalManager(confPath string, binaryFilename string, mc collectors.Manag
 	}
 
 	manager := LocalManager{
-		confdPath:             path.Join(confPath, "conf.d"),
-		streamConfdPath:       path.Join(confPath, "stream-conf.d"),
-		secretsPath:           path.Join(confPath, "secrets"),
-		dhparamFilename:       path.Join(confPath, "secrets", "dhparam.pem"),
-		mainConfFilename:      path.Join(confPath, "nginx.conf"),
-		configVersionFilename: path.Join(confPath, "config-version.conf"),
-		binaryFilename:        binaryFilename,
-		verifyConfigGenerator: verifyConfigGenerator,
-		configVersion:         0,
-		verifyClient:          newVerifyClient(),
-		reloadCmd:             fmt.Sprintf("%v -s %v", binaryFilename, "reload"),
-		quitCmd:               fmt.Sprintf("%v -s %v", binaryFilename, "quit"),
-		metricsCollector:      mc,
+		confdPath:                   path.Join(confPath, "conf.d"),
+		streamConfdPath:             path.Join(confPath, "stream-conf.d"),
+		secretsPath:                 path.Join(confPath, "secrets"),
+		dhparamFilename:             path.Join(confPath, "secrets", "dhparam.pem"),
+		mainConfFilename:            path.Join(confPath, "nginx.conf"),
+		configVersionFilename:       path.Join(confPath, "config-version.conf"),
+		tlsPassthroughHostsFilename: path.Join(confPath, "tls-passthrough-hosts.conf"),
+		binaryFilename:              binaryFilename,
+		verifyConfigGenerator:       verifyConfigGenerator,
+		configVersion:               0,
+		verifyClient:                newVerifyClient(),
+		reloadCmd:                   fmt.Sprintf("%v -s %v", binaryFilename, "reload"),
+		quitCmd:                     fmt.Sprintf("%v -s %v", binaryFilename, "quit"),
+		metricsCollector:            mc,
 	}
 
 	return &manager
@@ -157,6 +160,14 @@ func (lm *LocalManager) DeleteStreamConfig(name string) {
 
 func (lm *LocalManager) getFilenameForStreamConfig(name string) string {
 	return path.Join(lm.streamConfdPath, name+".conf")
+}
+
+// CreateTLSPassthroughHostsConfig creates a configuration file with mapping between TLS Passthrough hosts and
+// the corresponding unix sockets.
+// If the file already exists, it will be overridden.
+func (lm *LocalManager) CreateTLSPassthroughHostsConfig(content []byte) {
+	glog.V(3).Infof("Writing TLS Passthrough Hosts config file to %v", lm.tlsPassthroughHostsFilename)
+	createConfig(lm.tlsPassthroughHostsFilename, content)
 }
 
 // CreateSecret creates a secret file with the specified name, content and mode. If the file already exists,

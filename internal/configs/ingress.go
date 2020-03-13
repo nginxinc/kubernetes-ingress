@@ -43,7 +43,8 @@ type MergeableIngresses struct {
 	Minions []*IngressEx
 }
 
-func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, jwtKeyFileName string) version1.IngressNginxConfig {
+func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, baseCfgParams *ConfigParams, isPlus bool,
+	isResolverConfigured bool, jwtKeyFileName string, isTLSPassthrough bool) version1.IngressNginxConfig {
 	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus)
 	wsServices := getWebsocketServices(ingEx)
 	spServices := getSessionPersistenceServices(ingEx)
@@ -104,6 +105,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, b
 			ServerSnippets:        cfgParams.ServerSnippets,
 			Ports:                 cfgParams.Ports,
 			SSLPorts:              cfgParams.SSLPorts,
+			TLSPassthrough:        isTLSPassthrough,
 		}
 
 		if pemFile, ok := pems[serverName]; ok {
@@ -363,7 +365,7 @@ func upstreamMapToSlice(upstreams map[string]version1.Upstream) []version1.Upstr
 }
 
 func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, masterPems map[string]string, masterJwtKeyFileName string,
-	minionJwtKeyFileNames map[string]string, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool) version1.IngressNginxConfig {
+	minionJwtKeyFileNames map[string]string, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, isTLSPassthrough bool) version1.IngressNginxConfig {
 	var masterServer version1.Server
 	var locations []version1.Location
 	var upstreams []version1.Upstream
@@ -377,7 +379,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	}
 
 	isMinion := false
-	masterNginxCfg := generateNginxCfg(mergeableIngs.Master, masterPems, isMinion, baseCfgParams, isPlus, isResolverConfigured, masterJwtKeyFileName)
+	masterNginxCfg := generateNginxCfg(mergeableIngs.Master, masterPems, isMinion, baseCfgParams, isPlus, isResolverConfigured, masterJwtKeyFileName, isTLSPassthrough)
 
 	masterServer = masterNginxCfg.Servers[0]
 	masterServer.Locations = []version1.Location{}
@@ -405,7 +407,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 		pems := make(map[string]string)
 		jwtKeyFileName := minionJwtKeyFileNames[objectMetaToFileName(&minion.Ingress.ObjectMeta)]
 		isMinion := true
-		nginxCfg := generateNginxCfg(minion, pems, isMinion, baseCfgParams, isPlus, isResolverConfigured, jwtKeyFileName)
+		nginxCfg := generateNginxCfg(minion, pems, isMinion, baseCfgParams, isPlus, isResolverConfigured, jwtKeyFileName, isTLSPassthrough)
 
 		for _, server := range nginxCfg.Servers {
 			for _, loc := range server.Locations {

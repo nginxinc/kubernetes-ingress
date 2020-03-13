@@ -111,6 +111,7 @@ var mainCfg = MainConfig{
 	KeepaliveRequests:       100,
 	VariablesHashBucketSize: 256,
 	VariablesHashMaxSize:    1024,
+	TLSPassthrough:          true,
 }
 
 func TestIngressForNGINXPlus(t *testing.T) {

@@ -9,16 +9,31 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+// TransportServerValidator validates a TransportServer resource.
+type TransportServerValidator struct {
+	tlsPassthrough bool
+}
+
+// NewTransportServerValidator creates a new TransportServerValidator.
+func NewTransportServerValidator(tlsPassthrough bool) *TransportServerValidator {
+	return &TransportServerValidator{
+		tlsPassthrough: tlsPassthrough,
+	}
+}
+
 // ValidateTransportServer validates a TransportServer.
-func ValidateTransportServer(transportServer *v1alpha1.TransportServer) error {
-	allErrs := validateTransportServerSpec(&transportServer.Spec, field.NewPath("spec"))
+func (tsv *TransportServerValidator) ValidateTransportServer(transportServer *v1alpha1.TransportServer) error {
+	allErrs := tsv.validateTransportServerSpec(&transportServer.Spec, field.NewPath("spec"))
 	return allErrs.ToAggregate()
 }
 
-func validateTransportServerSpec(spec *v1alpha1.TransportServerSpec, fieldPath *field.Path) field.ErrorList {
+func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.TransportServerSpec, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, validateTransportListener(&spec.Listener, fieldPath.Child("listener"))...)
+	allErrs = append(allErrs, tsv.validateTransportListener(&spec.Listener, fieldPath.Child("listener"))...)
+
+	isTLSPassthroughListener := isPotentialTLSPassthroughListener(&spec.Listener)
+	allErrs = append(allErrs, validateTransportServerHost(spec.Host, fieldPath.Child("host"), isTLSPassthroughListener)...)
 
 	upstreamErrs, upstreamNames := validateTransportServerUpstreams(spec.Upstreams, fieldPath.Child("upstreams"))
 	allErrs = append(allErrs, upstreamErrs...)
@@ -34,11 +49,56 @@ func validateTransportServerSpec(spec *v1alpha1.TransportServerSpec, fieldPath *
 	return allErrs
 }
 
-func validateTransportListener(listener *v1alpha1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
+func validateTransportServerHost(host string, fieldPath *field.Path, isTLSPassthroughListener bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !isTLSPassthroughListener {
+		if host != "" {
+			return append(allErrs, field.Forbidden(fieldPath, "host field is allowed only for TLS Passthrough TransportServers"))
+		}
+		return allErrs
+	}
+
+	return validateHost(host, fieldPath)
+}
+
+func (tsv *TransportServerValidator) validateTransportListener(listener *v1alpha1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
+	if isPotentialTLSPassthroughListener(listener) {
+		return tsv.validateTLSPassthroughListener(listener, fieldPath)
+	}
+
+	return validateRegularListener(listener, fieldPath)
+}
+
+func validateRegularListener(listener *v1alpha1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateListenerName(listener.Name, fieldPath.Child("name"))...)
 	allErrs = append(allErrs, validateListenerProtocol(listener.Protocol, fieldPath.Child("protocol"))...)
+
+	return allErrs
+}
+
+func isPotentialTLSPassthroughListener(listener *v1alpha1.TransportServerListener) bool {
+	return listener.Name == v1alpha1.TLSPassthroughListenerName || listener.Protocol == v1alpha1.TLSPassthroughListenerProtocol
+}
+
+func (tsv *TransportServerValidator) validateTLSPassthroughListener(listener *v1alpha1.TransportServerListener, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !tsv.tlsPassthrough {
+		return append(allErrs, field.Forbidden(fieldPath, "TLS Passthrough is not enabled"))
+	}
+
+	if listener.Name == v1alpha1.TLSPassthroughListenerName && listener.Protocol != v1alpha1.TLSPassthroughListenerProtocol {
+		msg := fmt.Sprintf("must be '%s' for the built-in %s listener", v1alpha1.TLSPassthroughListenerProtocol, v1alpha1.TLSPassthroughListenerName)
+		return append(allErrs, field.Invalid(fieldPath.Child("protocol"), listener.Protocol, msg))
+	}
+
+	if listener.Protocol == v1alpha1.TLSPassthroughListenerProtocol && listener.Name != v1alpha1.TLSPassthroughListenerName {
+		msg := fmt.Sprintf("must be '%s' for a listener with the protocol %s", v1alpha1.TLSPassthroughListenerName, v1alpha1.TLSPassthroughListenerProtocol)
+		return append(allErrs, field.Invalid(fieldPath.Child("name"), listener.Name, msg))
+	}
 
 	return allErrs
 }

@@ -442,6 +442,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 			RealIPHeader:    "X-Real-IP",
 			RealIPRecursive: true,
 			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
 			Locations: []version2.Location{
 				{
 					Path:                     "/tea",
@@ -540,8 +541,9 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
+	isTLSPassthrough := true
 	tlsPemFileName := ""
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, isTLSPassthrough)
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
@@ -774,8 +776,9 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
+	isTLSPassthrough := false
 	tlsPemFileName := ""
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, isTLSPassthrough)
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
@@ -1041,8 +1044,9 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
+	isTLSPassthrough := false
 	tlsPemFileName := ""
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, isTLSPassthrough)
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
@@ -1083,7 +1087,7 @@ func TestGenerateUpstream(t *testing.T) {
 		UpstreamZoneSize: "256k",
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, false, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, false, false, false)
 	result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, upstream, false, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -1152,7 +1156,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(test.cfgParams, false, false)
+		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, false)
 		result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, test.upstream, false, endpoints)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
@@ -1180,7 +1184,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 		Resolve: true,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, true, true)
+	vsc := newVirtualServerConfigurator(&cfgParams, true, true, false)
 	result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, upstream, true, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -3182,8 +3186,10 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 		},
 	}
 
+	isTLSPassthrough := false
+
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, test.isResolverConfigured)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, test.isResolverConfigured, isTLSPassthrough)
 		result := vsc.generateEndpointsForUpstream(test.vsEx.VirtualServer, namespace, test.upstream, test.vsEx)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateEndpointsForUpstream(isPlus=%v, isResolverConfigured=%v) returned %v, but expected %v for case: %v",
@@ -3218,7 +3224,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	}
 
 	for _, lbMethod := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, false)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
@@ -3253,7 +3259,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, false)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
@@ -3339,7 +3345,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, false)
 		result := vsc.generateUpstream(&conf_v1.VirtualServer{}, test.name, test.upstream, false, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)

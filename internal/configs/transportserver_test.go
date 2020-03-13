@@ -187,3 +187,34 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 		t.Errorf("generateTransportServerConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
 }
+
+func TestGenerateUnixSocket(t *testing.T) {
+	transportServerEx := &TransportServerEx{
+		TransportServer: &conf_v1alpha1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "tcp-server",
+				Namespace: "default",
+			},
+			Spec: conf_v1alpha1.TransportServerSpec{
+				Listener: conf_v1alpha1.TransportServerListener{
+					Name: "tls-passthrough",
+				},
+			},
+		},
+	}
+
+	expected := "unix:/var/lib/nginx/passthrough-default_tcp-server.sock"
+
+	result := generateUnixSocket(transportServerEx)
+	if result != expected {
+		t.Errorf("generateUnixSocket() returned %q but expected %q", result, expected)
+	}
+
+	transportServerEx.TransportServer.Spec.Listener.Name = "some-listener"
+	expected = ""
+
+	result = generateUnixSocket(transportServerEx)
+	if result != expected {
+		t.Errorf("generateUnixSocket() returned %q but expected %q", result, expected)
+	}
+}

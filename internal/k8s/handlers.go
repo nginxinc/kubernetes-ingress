@@ -209,8 +209,6 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 
 			if lbc.areCustomResourcesEnabled {
 				lbc.EnqueueVirtualServersForService(svc)
-			}
-			if lbc.watchGlobalConfigurationAndTransportServers {
 				lbc.EnqueueTransportServerForService(svc)
 			}
 		},
@@ -238,11 +236,8 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 
 			if lbc.areCustomResourcesEnabled {
 				lbc.EnqueueVirtualServersForService(svc)
-			}
-			if lbc.watchGlobalConfigurationAndTransportServers {
 				lbc.EnqueueTransportServerForService(svc)
 			}
-
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			if !reflect.DeepEqual(old, cur) {
@@ -258,8 +253,6 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 
 					if lbc.areCustomResourcesEnabled {
 						lbc.EnqueueVirtualServersForService(curSvc)
-					}
-					if lbc.watchGlobalConfigurationAndTransportServers {
 						lbc.EnqueueTransportServerForService(curSvc)
 					}
 				}

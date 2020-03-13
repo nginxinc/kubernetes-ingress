@@ -12,7 +12,12 @@ upstream {{ $u.Name }} {
 
 {{ $s := .Server }}
 server {
+    {{ if $s.TLSPassthrough }}
+    listen {{ $s.UnixSocket }} proxy_protocol;
+    set_real_ip_from unix:;
+    {{ else }}
     listen {{ $s.Port }}{{ if $s.UDP }} udp{{ end }};
+    {{ end }}
 
     status_zone {{ $s.StatusZone }};
 

@@ -395,5 +395,36 @@ func TestUpdateGlobalConfiguration(t *testing.T) {
 	if err != nil {
 		t.Errorf("UpdateGlobalConfiguration() returned an unexpected error %v", err)
 	}
+}
 
+func TestGenerateTLSPassthroughHostsConfig(t *testing.T) {
+	tlsPassthroughPairs := map[string]tlsPassthroughPair{
+		"default/ts-1": {
+			Host:       "app.example.com",
+			UnixSocket: "socket1.sock",
+		},
+		"default/ts-2": {
+			Host:       "app.example.com",
+			UnixSocket: "socket2.sock",
+		},
+		"default/ts-3": {
+			Host:       "some.example.com",
+			UnixSocket: "socket3.sock",
+		},
+	}
+
+	expectedCfg := &version2.TLSPassthroughHostsConfig{
+		"app.example.com":  "socket2.sock",
+		"some.example.com": "socket3.sock",
+	}
+	expectedDuplicatedHosts := []string{"app.example.com"}
+
+	resultCfg, resultDuplicatedHosts := generateTLSPassthroughHostsConfig(tlsPassthroughPairs)
+	if !reflect.DeepEqual(resultCfg, expectedCfg) {
+		t.Errorf("generateTLSPassthroughHostsConfig() returned %v but expected %v", resultCfg, expectedCfg)
+	}
+
+	if !reflect.DeepEqual(resultDuplicatedHosts, expectedDuplicatedHosts) {
+		t.Errorf("generateTLSPassthroughHostsConfig() returned %v but expected %v", resultDuplicatedHosts, expectedDuplicatedHosts)
+	}
 }

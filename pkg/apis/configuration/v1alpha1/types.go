@@ -4,6 +4,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// TLSPassthroughListenerName is the name of a built-in TLS Passthrough listener.
+	TLSPassthroughListenerName = "tls-passthrough"
+	// TLSPassthroughListenerProtocol is the protocol of a built-in TLS Passthrough listener.
+	TLSPassthroughListenerProtocol = "TLS_PASSTHROUGH"
+)
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:validation:Optional
@@ -53,6 +60,7 @@ type TransportServer struct {
 // TransportServerSpec is the spec of the TransportServer resource.
 type TransportServerSpec struct {
 	Listener           TransportServerListener `json:"listener"`
+	Host               string                  `json:"host"`
 	Upstreams          []Upstream              `json:"upstreams"`
 	UpstreamParameters *UpstreamParameters     `json:"upstreamParameters"`
 	Action             *Action                 `json:"action"`

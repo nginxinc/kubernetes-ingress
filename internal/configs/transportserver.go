@@ -41,6 +41,8 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 
 	return version2.TransportServerConfig{
 		Server: version2.StreamServer{
+			TLSPassthrough: transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName,
+			UnixSocket:     generateUnixSocket(transportServerEx),
 			Port:           listenerPort,
 			UDP:            transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP",
 			StatusZone:     transportServerEx.TransportServer.Spec.Listener.Name,
@@ -50,6 +52,14 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 		},
 		Upstreams: upstreams,
 	}
+}
+
+func generateUnixSocket(transportServerEx *TransportServerEx) string {
+	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName {
+		return fmt.Sprintf("unix:/var/lib/nginx/passthrough-%s_%s.sock", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name)
+	}
+
+	return ""
 }
 
 func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool) []version2.StreamUpstream {

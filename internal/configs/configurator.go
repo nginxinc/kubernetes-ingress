@@ -3,6 +3,7 @@ package configs
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
@@ -29,36 +30,43 @@ const WildcardSecretName = "wildcard"
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
 
+type tlsPassthroughPair struct {
+	Host       string
+	UnixSocket string
+}
+
 // Configurator configures NGINX.
 type Configurator struct {
-	nginxManager       nginx.Manager
-	staticCfgParams    *StaticConfigParams
-	cfgParams          *ConfigParams
-	globalCfgParams    *GlobalConfigParams
-	templateExecutor   *version1.TemplateExecutor
-	templateExecutorV2 *version2.TemplateExecutor
-	ingresses          map[string]*IngressEx
-	minions            map[string]map[string]bool
-	virtualServers     map[string]*VirtualServerEx
-	isWildcardEnabled  bool
-	isPlus             bool
+	nginxManager        nginx.Manager
+	staticCfgParams     *StaticConfigParams
+	cfgParams           *ConfigParams
+	globalCfgParams     *GlobalConfigParams
+	templateExecutor    *version1.TemplateExecutor
+	templateExecutorV2  *version2.TemplateExecutor
+	ingresses           map[string]*IngressEx
+	minions             map[string]map[string]bool
+	virtualServers      map[string]*VirtualServerEx
+	tlsPassthroughPairs map[string]tlsPassthroughPair
+	isWildcardEnabled   bool
+	isPlus              bool
 }
 
 // NewConfigurator creates a new Configurator.
 func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams, globalCfgParams *GlobalConfigParams,
 	templateExecutor *version1.TemplateExecutor, templateExecutorV2 *version2.TemplateExecutor, isPlus bool, isWildcardEnabled bool) *Configurator {
 	cnf := Configurator{
-		nginxManager:       nginxManager,
-		staticCfgParams:    staticCfgParams,
-		cfgParams:          config,
-		globalCfgParams:    globalCfgParams,
-		ingresses:          make(map[string]*IngressEx),
-		virtualServers:     make(map[string]*VirtualServerEx),
-		templateExecutor:   templateExecutor,
-		templateExecutorV2: templateExecutorV2,
-		minions:            make(map[string]map[string]bool),
-		isPlus:             isPlus,
-		isWildcardEnabled:  isWildcardEnabled,
+		nginxManager:        nginxManager,
+		staticCfgParams:     staticCfgParams,
+		cfgParams:           config,
+		globalCfgParams:     globalCfgParams,
+		ingresses:           make(map[string]*IngressEx),
+		virtualServers:      make(map[string]*VirtualServerEx),
+		templateExecutor:    templateExecutor,
+		templateExecutorV2:  templateExecutorV2,
+		minions:             make(map[string]map[string]bool),
+		tlsPassthroughPairs: make(map[string]tlsPassthroughPair),
+		isPlus:              isPlus,
+		isWildcardEnabled:   isWildcardEnabled,
 	}
 	return &cnf
 }
@@ -86,7 +94,7 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
 	jwtKeyFileName := cnf.updateJWKSecret(ingEx)
 
 	isMinion := false
-	nginxCfg := generateNginxCfg(ingEx, pems, isMinion, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), jwtKeyFileName)
+	nginxCfg := generateNginxCfg(ingEx, pems, isMinion, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), jwtKeyFileName, cnf.staticCfgParams.TLSPassthrough)
 
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
@@ -122,7 +130,8 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 		minionJwtKeyFileNames[minionName] = cnf.updateJWKSecret(minion)
 	}
 
-	nginxCfg := generateNginxCfgForMergeableIngresses(mergeableIngs, masterPems, masterJwtKeyFileName, minionJwtKeyFileNames, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured())
+	nginxCfg := generateNginxCfgForMergeableIngresses(mergeableIngs, masterPems, masterJwtKeyFileName, minionJwtKeyFileNames,
+		cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams.TLSPassthrough)
 
 	name := objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
@@ -165,7 +174,7 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	if virtualServerEx.TLSSecret != nil {
 		tlsPemFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.TLSSecret)
 	}
-	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured())
+	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams.TLSPassthrough)
 	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName)
 
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
@@ -208,7 +217,62 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 
 	cnf.nginxManager.CreateStreamConfig(name, content)
 
+	// update TLS Passhrough Hosts config in case we have a TLS Passthrough TransportServer
+	// only TLS Passthrough TransportServers have non-empty hosts
+	if transportServerEx.TransportServer.Spec.Host != "" {
+		key := generateNamespaceNameKey(&transportServerEx.TransportServer.ObjectMeta)
+		cnf.tlsPassthroughPairs[key] = tlsPassthroughPair{
+			Host:       transportServerEx.TransportServer.Spec.Host,
+			UnixSocket: generateUnixSocket(transportServerEx),
+		}
+
+		return cnf.updateTLSPassthroughHostsConfig()
+	}
+
 	return nil
+}
+
+func (cnf *Configurator) updateTLSPassthroughHostsConfig() error {
+	cfg, duplicatedHosts := generateTLSPassthroughHostsConfig(cnf.tlsPassthroughPairs)
+
+	for _, host := range duplicatedHosts {
+		glog.Warningf("host %s is used by more than one TransportServers", host)
+	}
+
+	content, err := cnf.templateExecutorV2.ExecuteTLSPassthroughHostsTemplate(cfg)
+	if err != nil {
+		return fmt.Errorf("Error generating config for TLS Passthrough Unix Sockets map: %v", err)
+	}
+
+	cnf.nginxManager.CreateTLSPassthroughHostsConfig(content)
+
+	return nil
+}
+
+func generateTLSPassthroughHostsConfig(tlsPassthroughPairs map[string]tlsPassthroughPair) (*version2.TLSPassthroughHostsConfig, []string) {
+	var keys []string
+
+	for key := range tlsPassthroughPairs {
+		keys = append(keys, key)
+	}
+
+	// we sort the keys of tlsPassthroughPairs so that we get the same result for the same input
+	sort.Strings(keys)
+
+	cfg := version2.TLSPassthroughHostsConfig{}
+	var duplicatedHosts []string
+
+	for _, key := range keys {
+		pair := tlsPassthroughPairs[key]
+
+		if _, exists := cfg[pair.Host]; exists {
+			duplicatedHosts = append(duplicatedHosts, pair.Host)
+		}
+
+		cfg[pair.Host] = pair.UnixSocket
+	}
+
+	return &cfg, duplicatedHosts
 }
 
 func (cnf *Configurator) updateTLSSecrets(ingEx *IngressEx) map[string]string {
@@ -388,18 +452,31 @@ func (cnf *Configurator) DeleteVirtualServer(key string) error {
 
 // DeleteTransportServer deletes NGINX configuration for the TransportServer resource.
 func (cnf *Configurator) DeleteTransportServer(key string) error {
-	cnf.deleteTransportServer(key)
+	err := cnf.deleteTransportServer(key)
+	if err != nil {
+		return fmt.Errorf("Error when removing TransportServer %v: %v", key, err)
+	}
 
-	if err := cnf.nginxManager.Reload(); err != nil {
+	err = cnf.nginxManager.Reload()
+	if err != nil {
 		return fmt.Errorf("Error when removing TransportServer %v: %v", key, err)
 	}
 
 	return nil
 }
 
-func (cnf *Configurator) deleteTransportServer(key string) {
+func (cnf *Configurator) deleteTransportServer(key string) error {
 	name := getFileNameForTransportServerFromKey(key)
 	cnf.nginxManager.DeleteStreamConfig(name)
+
+	// update TLS Passhrough Hosts config in case we have a TLS Passthrough TransportServer
+	if _, exists := cnf.tlsPassthroughPairs[key]; exists {
+		delete(cnf.tlsPassthroughPairs, key)
+
+		return cnf.updateTLSPassthroughHostsConfig()
+	}
+
+	return nil
 }
 
 // UpdateEndpoints updates endpoints in NGINX configuration for the Ingress resources.
@@ -687,7 +764,7 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*Ingres
 func (cnf *Configurator) UpdateGlobalConfiguration(globalConfiguration *conf_v1alpha1.GlobalConfiguration,
 	transportServerExes []*TransportServerEx) (updatedTransportServerExes []*TransportServerEx, deletedTransportServerExes []*TransportServerEx, err error) {
 
-	cnf.globalCfgParams = ParseGlobalConfiguration(globalConfiguration)
+	cnf.globalCfgParams = ParseGlobalConfiguration(globalConfiguration, cnf.staticCfgParams.TLSPassthrough)
 
 	for _, tsEx := range transportServerExes {
 		if cnf.CheckIfListenerExists(&tsEx.TransportServer.Spec.Listener) {
@@ -700,7 +777,9 @@ func (cnf *Configurator) UpdateGlobalConfiguration(globalConfiguration *conf_v1a
 
 		} else {
 			deletedTransportServerExes = append(deletedTransportServerExes, tsEx)
-			cnf.deleteTransportServer(generateNamespaceNameKey(&tsEx.TransportServer.ObjectMeta))
+			if err != nil {
+				return updatedTransportServerExes, deletedTransportServerExes, fmt.Errorf("Error when updating global configuration: %v", err)
+			}
 		}
 	}
 

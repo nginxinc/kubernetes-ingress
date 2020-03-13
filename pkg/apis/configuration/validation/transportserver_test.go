@@ -8,6 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+func createTransportServerValidator() *TransportServerValidator {
+	return &TransportServerValidator{}
+}
+
 func TestValidateTransportServer(t *testing.T) {
 	ts := v1alpha1.TransportServer{
 		Spec: v1alpha1.TransportServerSpec{
@@ -28,7 +32,9 @@ func TestValidateTransportServer(t *testing.T) {
 		},
 	}
 
-	err := ValidateTransportServer(&ts)
+	tsv := createTransportServerValidator()
+
+	err := tsv.ValidateTransportServer(&ts)
 	if err != nil {
 		t.Errorf("ValidateTransportServer() returned error %v for valid input", err)
 	}
@@ -52,7 +58,9 @@ func TestValidateTransportServerFails(t *testing.T) {
 		},
 	}
 
-	err := ValidateTransportServer(&ts)
+	tsv := createTransportServerValidator()
+
+	err := tsv.ValidateTransportServer(&ts)
 	if err == nil {
 		t.Errorf("ValidateTransportServer() returned no error for invalid input")
 	}
@@ -171,6 +179,182 @@ func TestValidateTransportServerUpstreamsFails(t *testing.T) {
 		}
 		if !resultUpstreamNames.Equal(test.expectedUpstreamNames) {
 			t.Errorf("validateTransportServerUpstreams() returned %v expected %v for the case of %s", resultUpstreamNames, test.expectedUpstreamNames, test.msg)
+		}
+	}
+}
+
+func TestValidateTransportServerHost(t *testing.T) {
+	tests := []struct {
+		host                     string
+		isTLSPassthroughListener bool
+	}{
+		{
+			host:                     "",
+			isTLSPassthroughListener: false,
+		},
+		{
+			host:                     "nginx.org",
+			isTLSPassthroughListener: true,
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateTransportServerHost(test.host, field.NewPath("host"), test.isTLSPassthroughListener)
+		if len(allErrs) > 0 {
+			t.Errorf("validateTransportServerHost(%q, %v) returned errors %v for valid input", test.host, test.isTLSPassthroughListener, allErrs)
+		}
+	}
+}
+
+func TestValidateTransportServerHostFails(t *testing.T) {
+	tests := []struct {
+		host                     string
+		isTLSPassthroughListener bool
+	}{
+		{
+			host:                     "nginx.org",
+			isTLSPassthroughListener: false,
+		},
+		{
+			host:                     "",
+			isTLSPassthroughListener: true,
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateTransportServerHost(test.host, field.NewPath("host"), test.isTLSPassthroughListener)
+		if len(allErrs) == 0 {
+			t.Errorf("validateTransportServerHost(%q, %v) returned no errors for invalid input", test.host, test.isTLSPassthroughListener)
+		}
+	}
+}
+
+func TestValidateTransportListener(t *testing.T) {
+	tests := []struct {
+		listener       *v1alpha1.TransportServerListener
+		tlsPassthrough bool
+	}{
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "tcp-listener",
+				Protocol: "TCP",
+			},
+			tlsPassthrough: false,
+		},
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "tcp-listener",
+				Protocol: "TCP",
+			},
+			tlsPassthrough: true,
+		},
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "tls-passthrough",
+				Protocol: "TLS_PASSTHROUGH",
+			},
+			tlsPassthrough: true,
+		},
+	}
+
+	for _, test := range tests {
+		tsv := &TransportServerValidator{
+			tlsPassthrough: test.tlsPassthrough,
+		}
+
+		allErrs := tsv.validateTransportListener(test.listener, field.NewPath("listener"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateTransportListener() returned errors %v for valid input %+v when tlsPassithrough is %v", allErrs, test.listener, test.tlsPassthrough)
+		}
+	}
+}
+
+func TestValidateTransportListenerFails(t *testing.T) {
+	tests := []struct {
+		listener       *v1alpha1.TransportServerListener
+		tlsPassthrough bool
+	}{
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "tls-passthrough",
+				Protocol: "TLS_PASSTHROUGH",
+			},
+			tlsPassthrough: false,
+		},
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "tls-passthrough",
+				Protocol: "abc",
+			},
+			tlsPassthrough: true,
+		},
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "tls-passthrough",
+				Protocol: "abc",
+			},
+			tlsPassthrough: false,
+		},
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "abc",
+				Protocol: "TLS_PASSTHROUGH",
+			},
+			tlsPassthrough: true,
+		},
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "abc",
+				Protocol: "TLS_PASSTHROUGH",
+			},
+			tlsPassthrough: false,
+		},
+	}
+
+	for _, test := range tests {
+		tsv := &TransportServerValidator{
+			tlsPassthrough: test.tlsPassthrough,
+		}
+
+		allErrs := tsv.validateTransportListener(test.listener, field.NewPath("listener"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateTransportListener() returned no errors for invalid input %+v when tlsPassthrough is %v", test.listener, test.tlsPassthrough)
+		}
+	}
+}
+
+func TestValidateIsPotentialTLSPassthroughListener(t *testing.T) {
+	tests := []struct {
+		listener *v1alpha1.TransportServerListener
+		expected bool
+	}{
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "tls-passthrough",
+				Protocol: "abc",
+			},
+			expected: true,
+		},
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "abc",
+				Protocol: "TLS_PASSTHROUGH",
+			},
+			expected: true,
+		},
+		{
+			listener: &v1alpha1.TransportServerListener{
+				Name:     "tcp",
+				Protocol: "TCP",
+			},
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		result := isPotentialTLSPassthroughListener(test.listener)
+		if result != test.expected {
+			t.Errorf("isPotentialTLSPassthroughListener(%+v) returned %v but expected %v", test.listener, result, test.expected)
 		}
 	}
 }

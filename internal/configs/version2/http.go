@@ -46,6 +46,7 @@ type Server struct {
 	ErrorPageLocations        []ErrorPageLocation
 	HealthChecks              []HealthCheck
 	TLSRedirect               *TLSRedirect
+	TLSPassthrough            bool
 }
 
 // SSL defines SSL configuration for a server.

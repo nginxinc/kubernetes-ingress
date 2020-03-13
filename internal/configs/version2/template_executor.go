@@ -6,10 +6,17 @@ import (
 	"text/template"
 )
 
+const tlsPassthroughHostsTemplateString = `# mapping between TLS Passthrough hosts and unix sockets
+{{ range $h, $u := . }}
+{{ $h }} {{ $u }};
+{{ end }}
+`
+
 // TemplateExecutor executes NGINX configuration templates.
 type TemplateExecutor struct {
-	virtualServerTemplate   *template.Template
-	transportServerTemplate *template.Template
+	virtualServerTemplate       *template.Template
+	transportServerTemplate     *template.Template
+	tlsPassthroughHostsTemplate *template.Template
 }
 
 // NewTemplateExecutor creates a TemplateExecutor.
@@ -26,9 +33,15 @@ func NewTemplateExecutor(virtualServerTemplatePath string, transportServerTempla
 		return nil, err
 	}
 
+	tlsPassthroughHostsTemplate, err := template.New("unixSockets").Parse(tlsPassthroughHostsTemplateString)
+	if err != nil {
+		return nil, err
+	}
+
 	return &TemplateExecutor{
-		virtualServerTemplate:   vsTemplate,
-		transportServerTemplate: tsTemplate,
+		virtualServerTemplate:       vsTemplate,
+		transportServerTemplate:     tsTemplate,
+		tlsPassthroughHostsTemplate: tlsPassthroughHostsTemplate,
 	}, nil
 }
 
@@ -44,6 +57,15 @@ func (te *TemplateExecutor) ExecuteVirtualServerTemplate(cfg *VirtualServerConfi
 func (te *TemplateExecutor) ExecuteTransportServerTemplate(cfg *TransportServerConfig) ([]byte, error) {
 	var configBuffer bytes.Buffer
 	err := te.transportServerTemplate.Execute(&configBuffer, cfg)
+
+	return configBuffer.Bytes(), err
+}
+
+// ExecuteTLSPassthroughHostsTemplate generates the content of an NGINX configuration file for mapping between
+// TLS Passthrough hosts and the corresponding unix sockets.
+func (te *TemplateExecutor) ExecuteTLSPassthroughHostsTemplate(cfg *TLSPassthroughHostsConfig) ([]byte, error) {
+	var configBuffer bytes.Buffer
+	err := te.tlsPassthroughHostsTemplate.Execute(&configBuffer, cfg)
 
 	return configBuffer.Bytes(), err
 }

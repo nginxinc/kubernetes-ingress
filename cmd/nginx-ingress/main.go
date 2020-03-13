@@ -137,6 +137,9 @@ The external address of the service is used when reporting the status of Ingress
 		configuring listeners for TCP/UDP load balancing. Requires -enable-custom-resources. If the flag is set,
 		but the Ingress controller is not able to fetch the corresponding resource from Kubernetes API, the Ingress Controller 
 		will fail to start. Format: <namespace>/<name>`)
+
+	enableTLSPassthrough = flag.Bool("enable-tls-passthrough", false,
+		"Enable TLS Passthrough on port 443. Requires -enable-custom-resources")
 )
 
 func main() {
@@ -175,6 +178,10 @@ func main() {
 	allowedCIDRs, err := parseNginxStatusAllowCIDRs(*nginxStatusAllowCIDRs)
 	if err != nil {
 		glog.Fatalf(`Invalid value for nginx-status-allow-cidrs: %v`, err)
+	}
+
+	if *enableTLSPassthrough && !*enableCustomResources {
+		glog.Fatalf("enable-tls-passthrough flag requires -enable-custom-resources")
 	}
 
 	glog.Infof("Starting NGINX Ingress controller Version=%v GitCommit=%v\n", version, gitCommit)
@@ -314,6 +321,10 @@ func main() {
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
 	globalCfgParams := configs.NewDefaultGlobalConfigParams()
+	if *enableTLSPassthrough {
+		globalCfgParams = configs.NewGlobalConfigParamsWithTLSPassthrough()
+	}
+
 	if *globalConfiguration != "" {
 		ns, name, err := k8s.ParseNamespaceName(*globalConfiguration)
 		if err != nil {
@@ -334,7 +345,7 @@ func main() {
 			glog.Fatalf("GlobalConfiguration %s is invalid: %v", *globalConfiguration, err)
 		}
 
-		globalCfgParams = configs.ParseGlobalConfiguration(gc)
+		globalCfgParams = configs.ParseGlobalConfiguration(gc, *enableTLSPassthrough)
 	}
 
 	cfgParams := configs.NewDefaultConfigParams()
@@ -377,6 +388,7 @@ func main() {
 		NginxStatusAllowCIDRs:          allowedCIDRs,
 		NginxStatusPort:                *nginxStatusPort,
 		StubStatusOverUnixSocketForOSS: *enablePrometheusMetrics,
+		TLSPassthrough:                 *enableTLSPassthrough,
 	}
 
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
@@ -395,6 +407,11 @@ func main() {
 		if err != nil {
 			glog.Fatalf("Error creating OpenTracing tracer config file: %v", err)
 		}
+	}
+
+	if *enableTLSPassthrough {
+		var emptyFile []byte
+		nginxManager.CreateTLSPassthroughHostsConfig(emptyFile)
 	}
 
 	nginxDone := make(chan error, 1)
@@ -427,6 +444,8 @@ func main() {
 	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, globalCfgParams, templateExecutor, templateExecutorV2, *nginxPlus, isWildcardEnabled)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
+	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough)
+
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
 		ConfClient:                   confClient,
@@ -448,6 +467,7 @@ func main() {
 		AreCustomResourcesEnabled:    *enableCustomResources,
 		MetricsCollector:             controllerCollector,
 		GlobalConfigurationValidator: globalConfigurationValidator,
+		TransportServerValidator:     transportServerValidator,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
@@ -474,7 +494,7 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 		forbiddenListenerPorts[*prometheusMetricsListenPort] = true
 	}
 
-	return cr_validation.CreateGlobalConfigurationValidator(forbiddenListenerPorts)
+	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
 }
 
 func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, nginxDone chan error) {

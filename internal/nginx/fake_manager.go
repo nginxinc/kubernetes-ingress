@@ -53,6 +53,11 @@ func (*FakeManager) DeleteStreamConfig(name string) {
 	glog.V(3).Infof("Deleting stream config %v", name)
 }
 
+// CreateTLSPassthroughHostsConfig provides a fake implementation of CreateTLSPassthroughHostsConfig.
+func (*FakeManager) CreateTLSPassthroughHostsConfig(content []byte) {
+	glog.V(3).Infof("Writing TLS Passthrough Hosts config file")
+}
+
 // CreateSecret provides a fake implementation of CreateSecret.
 func (fm *FakeManager) CreateSecret(name string, content []byte, mode os.FileMode) string {
 	glog.V(3).Infof("Writing secret %v", name)

@@ -42,6 +42,8 @@ spec:
               properties:
                 pass:
                   type: string
+            host:
+              type: string
             listener:
               description: TransportServerListener defines a listener for a TransportServer.
               type: object

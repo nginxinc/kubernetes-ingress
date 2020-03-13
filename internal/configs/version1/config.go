@@ -60,6 +60,7 @@ type Server struct {
 	SSLCertificate        string
 	SSLCertificateKey     string
 	SSLCiphers            string
+	TLSPassthrough        bool
 	GRPCOnly              bool
 	StatusZone            string
 	HTTP2                 bool
@@ -159,6 +160,7 @@ type MainConfig struct {
 	StreamLogFormatEscaping        string
 	StreamSnippets                 []string
 	StubStatusOverUnixSocketForOSS bool
+	TLSPassthrough                 bool
 	VariablesHashBucketSize        uint64
 	VariablesHashMaxSize           uint64
 	WorkerConnections              string

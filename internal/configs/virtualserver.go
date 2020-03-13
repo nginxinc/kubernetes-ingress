@@ -128,6 +128,7 @@ type virtualServerConfigurator struct {
 	cfgParams            *ConfigParams
 	isPlus               bool
 	isResolverConfigured bool
+	isTLSPassthrough     bool
 	warnings             Warnings
 }
 
@@ -140,11 +141,12 @@ func (vsc *virtualServerConfigurator) clearWarnings() {
 }
 
 // newVirtualServerConfigurator creates a new VirtualServerConfigurator
-func newVirtualServerConfigurator(cfgParams *ConfigParams, isPlus bool, isResolverConfigured bool) *virtualServerConfigurator {
+func newVirtualServerConfigurator(cfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, isTLSPassthrough bool) *virtualServerConfigurator {
 	return &virtualServerConfigurator{
 		cfgParams:            cfgParams,
 		isPlus:               isPlus,
 		isResolverConfigured: isResolverConfigured,
+		isTLSPassthrough:     isTLSPassthrough,
 		warnings:             make(map[runtime.Object][]string),
 	}
 }
@@ -337,6 +339,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			HealthChecks:              healthChecks,
 			TLSRedirect:               tlsRedirectConfig,
 			ErrorPageLocations:        errorPageLocations,
+			TLSPassthrough:            vsc.isTLSPassthrough,
 		},
 	}
 
@@ -923,7 +926,7 @@ func createUpstreamsForPlus(virtualServerEx *VirtualServerEx, baseCfgParams *Con
 
 	isPlus := true
 	upstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
-	vsc := newVirtualServerConfigurator(baseCfgParams, isPlus, false)
+	vsc := newVirtualServerConfigurator(baseCfgParams, isPlus, false, false)
 
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
 		isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(virtualServerEx.VirtualServer.Namespace, u.Service)]

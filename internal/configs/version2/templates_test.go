@@ -311,3 +311,21 @@ func TestTransportServerForNginx(t *testing.T) {
 
 	t.Log(string(data))
 }
+
+func TestTLSPassthroughHosts(t *testing.T) {
+	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
+	if err != nil {
+		t.Fatalf("Failed to create template executor: %v", err)
+	}
+
+	unixSocketsCfg := TLSPassthroughHostsConfig{
+		"app.example.com": "unix:/var/lib/nginx/passthrough-default_secure-app.sock",
+	}
+
+	data, err := executor.ExecuteTLSPassthroughHostsTemplate(&unixSocketsCfg)
+	if err != nil {
+		t.Fatalf("Failed to execute template: %v", err)
+	}
+
+	t.Log(string(data))
+}

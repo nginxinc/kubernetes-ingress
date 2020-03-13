@@ -170,6 +170,14 @@ func TestValidateListenerFails(t *testing.T) {
 			},
 			msg: "invalid protocol",
 		},
+		{
+			Listener: v1alpha1.Listener{
+				Name:     "tls-passthrough",
+				Port:     2201,
+				Protocol: "TCP",
+			},
+			msg: "name of a built-in listener",
+		},
 	}
 
 	gcv := createGlobalConfigurationValidator()
