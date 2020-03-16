@@ -1438,6 +1438,9 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*conf
 	for _, tls := range ing.Spec.TLS {
 		secretName := tls.SecretName
 		secretKey := ing.Namespace + "/" + secretName
+		if strings.Contains(secretName, "/") {
+			secretKey = secretName
+		}
 		secret, err := lbc.getAndValidateSecret(secretKey)
 		if err != nil {
 			glog.Warningf("Error trying to get the secret %v for Ingress %v: %v", secretName, ing.Name, err)
