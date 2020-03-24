@@ -1,0 +1,102 @@
+ARG GOLANG_CONTAINER=registry.access.redhat.com/ubi8/go-toolset:latest
+
+FROM registry.access.redhat.com/ubi8/ubi:8.1 AS base
+
+LABEL name="NGINX Ingress Controller" \
+      description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+      summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+      io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift" \
+      maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>" \
+      vendor="NGINX Inc <kubernetes@nginx.com>"
+
+ENV NGINX_PLUS_VERSION 20-1.el8.ngx
+ARG IC_VERSION
+
+# Download certificate and key from the customer portal (https://cs.nginx.com)
+# and copy to the build context
+RUN mkdir /etc/ssl/nginx/
+COPY nginx-repo.crt nginx-repo.key /etc/ssl/nginx/
+
+# Make sure the certificate and key have correct permissions
+RUN chmod 644 /etc/ssl/nginx/*
+
+# Install NGINX Plus
+RUN set -x \
+	&& groupadd --system --gid 101 nginx \
+	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
+	&& yum install -y wget \
+	&& wget https://nginx.org/keys/nginx_signing.key \
+	&& \
+	NGINX_GPGKEY=nginx_signing.key; \
+	found=''; \
+	for server in \
+		ha.pool.sks-keyservers.net \
+		hkp://p80.pool.sks-keyservers.net:80 \
+		pgp.mit.edu \
+	; do \
+		echo "Fetching GPG key $NGINX_GPGKEY from $server"; \
+		rpm --define="%_hkp_keyserver $server" --import $NGINX_GPGKEY && found=yes && break; \
+	done; \
+	test -z "$found" && echo >&2 "error: failed to fetch GPG key $NGINX_GPGKEY" && exit 1; \
+	echo "[nginx-plus]" >> /etc/yum.repos.d/nginx-plus-8.repo \
+	&& echo "name=nginx-plus repo" >> /etc/yum.repos.d/nginx-plus-8.repo \
+	&& echo "baseurl=https://plus-pkgs.nginx.com/centos/8/\$basearch/" >> /etc/yum.repos.d/nginx-plus-8.repo \
+	&& echo "sslclientcert=/etc/ssl/nginx/nginx-repo.crt" >> /etc/yum.repos.d/nginx-plus-8.repo \
+	&& echo "sslclientkey=/etc/ssl/nginx/nginx-repo.key" >> /etc/yum.repos.d/nginx-plus-8.repo \
+	&& echo "gpgcheck=1" >> /etc/yum.repos.d/nginx-plus-8.repo \
+	&& echo "enabled=1" >> /etc/yum.repos.d/nginx-plus-8.repo \
+	&& yum install -y nginx-plus-${NGINX_PLUS_VERSION} \
+	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
+	&& yum remove -y wget \
+	&& rm -rf /etc/ssl/nginx \
+	&& rm /etc/yum.repos.d/nginx-plus-8.repo \
+	&& rm nginx_signing.key
+
+
+# forward nginx access and error logs to stdout and stderr of the ingress
+# controller process
+RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
+	&& ln -sf /proc/1/fd/1 /var/log/nginx/stream-access.log \
+	&& ln -sf /proc/1/fd/2 /var/log/nginx/error.log
+
+RUN mkdir -p /var/lib/nginx \
+	&& mkdir -p /etc/nginx/secrets \
+	&& chown -R nginx:0 /etc/nginx \
+	&& chown -R nginx:0 /var/cache/nginx \
+	&& chown -R nginx:0 /var/lib/nginx/ \
+	&& rm /etc/nginx/conf.d/*
+
+EXPOSE 80 443
+
+COPY internal/configs/version1/nginx-plus.ingress.tmpl \
+	internal/configs/version1/nginx-plus.tmpl \
+	internal/configs/version2/nginx-plus.virtualserver.tmpl /
+
+# Uncomment the line below if you would like to add the default.pem to the image
+# and use it as a certificate and key for the default server
+# ADD default.pem /etc/nginx/secrets/default
+
+RUN mkdir licenses
+COPY LICENSE /licenses
+
+USER nginx
+
+ENTRYPOINT ["/nginx-ingress"]
+
+
+FROM base AS local
+COPY nginx-ingress /
+
+
+FROM $GOLANG_CONTAINER AS builder
+ARG VERSION
+ARG GIT_COMMIT
+WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/cmd/nginx-ingress
+COPY . /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/
+RUN CGO_ENABLED=0 GOFLAGS='-mod=vendor' \
+	go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o /tmp/nginx-ingress
+
+
+FROM base AS container
+COPY --from=builder /tmp/nginx-ingress /
