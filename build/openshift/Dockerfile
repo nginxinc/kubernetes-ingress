@@ -2,6 +2,13 @@ ARG GOLANG_CONTAINER=registry.access.redhat.com/ubi8/go-toolset:latest
 
 FROM registry.access.redhat.com/ubi8/ubi:8.1 AS base
 
+LABEL name="NGINX Ingress Controller" \
+      description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+      summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+      io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift" \
+      maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>" \
+      vendor="NGINX Inc <kubernetes@nginx.com>"
+
 ENV NGINX_VERSION=1.17.9
 
 RUN set -x \
@@ -39,6 +46,9 @@ COPY internal/configs/version1/nginx.ingress.tmpl \
 # Uncomment the line below if you would like to add the default.pem to the image
 # and use it as a certificate and key for the default server
 # ADD default.pem /etc/nginx/secrets/default
+
+RUN mkdir licenses
+COPY LICENSE /licenses
 
 USER nginx
 
