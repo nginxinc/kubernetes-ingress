@@ -203,12 +203,20 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - ``False``
      - 
    * - ``log-format``
-     - Sets the custom `log format <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_ for HTTP and HTTPS traffic.
+     - Sets the custom `log format <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_ for HTTP and HTTPS traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by ``\n``). In that case, the Ingress Controller will replace every ``\n`` character with a space character. All ``'`` characters must be escaped.
      - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/master/internal/configs/version1/nginx.tmpl>`_ for the access log.
      - 
+   * - ``log-format-escaping``
+     - Sets the characters escaping for the variables of the log format. Supported values: ``json`` (JSON escaping), ``default`` (the default escaping) ``none`` (disables escaping).
+     - ``default``
+     -
    * - ``stream-log-format``
-     - Sets the custom `log format <http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format>`_ for TCP, UDP, and TLS Passthrough traffic.
+     - Sets the custom `log format <http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format>`_ for TCP, UDP, and TLS Passthrough traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by ``\n``). In that case, the Ingress Controller will replace every ``\n`` character with a space character. All ``'`` characters must be escaped.
      - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/master/internal/configs/version1/nginx.tmpl>`_.
+     - 
+   * - ``stream-log-format-escaping``
+     - Sets the characters escaping for the variables of the stream log format. Supported values: ``json`` (JSON escaping), ``default`` (the default escaping) ``none`` (disables escaping).
+     - ``default``
      - 
 ```
 
