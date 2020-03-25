@@ -22,7 +22,6 @@ RUN set -x \
 	&& echo "module_hotfixes=true" >> /etc/yum.repos.d/nginx.repo \
 	&& yum update -y \
 	&& yum install -y nginx-${NGINX_VERSION} \
-	&& nginx \
 	&& mkdir -p /var/lib/nginx \
 	&& mkdir -p /etc/nginx/secrets \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
