@@ -32,7 +32,9 @@ ifneq ($(BUILD_IN_CONTAINER),1)
 endif
 
 verify-crds:
+ifneq ($(BUILD_IN_CONTAINER),1)
 	./hack/verify-crds.sh
+endif
 
 update-codegen:
 	./hack/update-codegen.sh
