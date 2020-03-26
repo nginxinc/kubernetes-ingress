@@ -1,4 +1,4 @@
-ARG GOLANG_CONTAINER=registry.access.redhat.com/ubi8/go-toolset:latest
+ARG GOLANG_CONTAINER=golang:latest
 
 FROM registry.access.redhat.com/ubi8/ubi:8.1 AS base
 
