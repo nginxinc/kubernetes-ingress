@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"reflect"
@@ -89,7 +90,7 @@ func (su *statusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []a
 
 	ingCopy.Status.LoadBalancer.Ingress = status
 	clientIngress := su.client.ExtensionsV1beta1().Ingresses(ingCopy.Namespace)
-	_, err = clientIngress.UpdateStatus(ingCopy)
+	_, err = clientIngress.UpdateStatus(context.TODO(), ingCopy, metav1.UpdateOptions{})
 	if err != nil {
 		glog.V(3).Infof("error setting ingress status: %v", err)
 		err = su.retryStatusUpdate(clientIngress, ingCopy)
@@ -126,7 +127,7 @@ func (su *statusUpdater) BulkUpdateIngressStatus(ings []v1beta1.Ingress) error {
 // updated, and then attempts to update. We often need to fetch fresh copies due to the
 // k8s API using ResourceVersion to stop updates on stale items.
 func (su *statusUpdater) retryStatusUpdate(clientIngress extensionsv1beta1.IngressInterface, ingCopy *v1beta1.Ingress) error {
-	apiIng, err := clientIngress.Get(ingCopy.Name, metav1.GetOptions{})
+	apiIng, err := clientIngress.Get(context.TODO(), ingCopy.Name, metav1.GetOptions{})
 	if err != nil {
 		glog.V(3).Infof("error getting ingress resource: %v", err)
 		return err
@@ -134,7 +135,7 @@ func (su *statusUpdater) retryStatusUpdate(clientIngress extensionsv1beta1.Ingre
 	if !reflect.DeepEqual(ingCopy.Status.LoadBalancer, apiIng.Status.LoadBalancer) {
 		glog.V(3).Infof("retrying update status for ingress: %v, %v", ingCopy.Namespace, ingCopy.Name)
 		apiIng.Status.LoadBalancer = ingCopy.Status.LoadBalancer
-		_, err := clientIngress.UpdateStatus(apiIng)
+		_, err := clientIngress.UpdateStatus(context.TODO(), apiIng, metav1.UpdateOptions{})
 		if err != nil {
 			glog.V(3).Infof("update retry failed: %v", err)
 		}

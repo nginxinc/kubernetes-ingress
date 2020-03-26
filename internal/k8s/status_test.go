@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"context"
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
@@ -54,7 +55,7 @@ func TestStatusUpdate(t *testing.T) {
 	if err != nil {
 		t.Errorf("error clearing ing status: %v", err)
 	}
-	ings, _ := fakeClient.ExtensionsV1beta1().Ingresses("namespace").List(meta_v1.ListOptions{})
+	ings, _ := fakeClient.ExtensionsV1beta1().Ingresses("namespace").List(context.TODO(), meta_v1.ListOptions{})
 	ingf := ings.Items[0]
 	if !checkStatus("", ingf) {
 		t.Errorf("expected: %v actual: %v", "", ingf.Status.LoadBalancer.Ingress[0])
@@ -65,7 +66,7 @@ func TestStatusUpdate(t *testing.T) {
 	if err != nil {
 		t.Errorf("error updating ing status: %v", err)
 	}
-	ring, _ := fakeClient.ExtensionsV1beta1().Ingresses(ing.Namespace).Get(ing.Name, meta_v1.GetOptions{})
+	ring, _ := fakeClient.ExtensionsV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
 	if !checkStatus("1.1.1.1", *ring) {
 		t.Errorf("expected: %v actual: %v", "", ring.Status.LoadBalancer.Ingress)
 	}
@@ -88,7 +89,7 @@ func TestStatusUpdate(t *testing.T) {
 	if err != nil {
 		t.Errorf("error updating ing status: %v", err)
 	}
-	ring, _ = fakeClient.ExtensionsV1beta1().Ingresses(ing.Namespace).Get(ing.Name, meta_v1.GetOptions{})
+	ring, _ = fakeClient.ExtensionsV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
 	if !checkStatus("1.1.1.1", *ring) {
 		t.Errorf("expected: %v actual: %v", "1.1.1.1", ring.Status.LoadBalancer.Ingress)
 	}
@@ -98,7 +99,7 @@ func TestStatusUpdate(t *testing.T) {
 	if err != nil {
 		t.Errorf("error updating ing status: %v", err)
 	}
-	ring, _ = fakeClient.ExtensionsV1beta1().Ingresses(ing.Namespace).Get(ing.Name, meta_v1.GetOptions{})
+	ring, _ = fakeClient.ExtensionsV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
 	if !checkStatus("2.2.2.2", *ring) {
 		t.Errorf("expected: %v actual: %v", "2.2.2.2", ring.Status.LoadBalancer.Ingress)
 	}
@@ -108,7 +109,7 @@ func TestStatusUpdate(t *testing.T) {
 	if err != nil {
 		t.Errorf("error updating ing status: %v", err)
 	}
-	ring, _ = fakeClient.ExtensionsV1beta1().Ingresses(ing.Namespace).Get(ing.Name, meta_v1.GetOptions{})
+	ring, _ = fakeClient.ExtensionsV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
 	if !checkStatus("", *ring) {
 		t.Errorf("expected: %v actual: %v", "", ring.Status.LoadBalancer.Ingress)
 	}

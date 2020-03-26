@@ -3,6 +3,8 @@
 package fake
 
 import (
+	"context"
+
 	configurationv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -23,7 +25,7 @@ var virtualserverroutesResource = schema.GroupVersionResource{Group: "k8s.nginx.
 var virtualserverroutesKind = schema.GroupVersionKind{Group: "k8s.nginx.org", Version: "v1", Kind: "VirtualServerRoute"}
 
 // Get takes name of the virtualServerRoute, and returns the corresponding virtualServerRoute object, and an error if there is any.
-func (c *FakeVirtualServerRoutes) Get(name string, options v1.GetOptions) (result *configurationv1.VirtualServerRoute, err error) {
+func (c *FakeVirtualServerRoutes) Get(ctx context.Context, name string, options v1.GetOptions) (result *configurationv1.VirtualServerRoute, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(virtualserverroutesResource, c.ns, name), &configurationv1.VirtualServerRoute{})
 
@@ -34,7 +36,7 @@ func (c *FakeVirtualServerRoutes) Get(name string, options v1.GetOptions) (resul
 }
 
 // List takes label and field selectors, and returns the list of VirtualServerRoutes that match those selectors.
-func (c *FakeVirtualServerRoutes) List(opts v1.ListOptions) (result *configurationv1.VirtualServerRouteList, err error) {
+func (c *FakeVirtualServerRoutes) List(ctx context.Context, opts v1.ListOptions) (result *configurationv1.VirtualServerRouteList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(virtualserverroutesResource, virtualserverroutesKind, c.ns, opts), &configurationv1.VirtualServerRouteList{})
 
@@ -56,14 +58,14 @@ func (c *FakeVirtualServerRoutes) List(opts v1.ListOptions) (result *configurati
 }
 
 // Watch returns a watch.Interface that watches the requested virtualServerRoutes.
-func (c *FakeVirtualServerRoutes) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeVirtualServerRoutes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(virtualserverroutesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a virtualServerRoute and creates it.  Returns the server's representation of the virtualServerRoute, and an error, if there is any.
-func (c *FakeVirtualServerRoutes) Create(virtualServerRoute *configurationv1.VirtualServerRoute) (result *configurationv1.VirtualServerRoute, err error) {
+func (c *FakeVirtualServerRoutes) Create(ctx context.Context, virtualServerRoute *configurationv1.VirtualServerRoute, opts v1.CreateOptions) (result *configurationv1.VirtualServerRoute, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(virtualserverroutesResource, c.ns, virtualServerRoute), &configurationv1.VirtualServerRoute{})
 
@@ -74,7 +76,7 @@ func (c *FakeVirtualServerRoutes) Create(virtualServerRoute *configurationv1.Vir
 }
 
 // Update takes the representation of a virtualServerRoute and updates it. Returns the server's representation of the virtualServerRoute, and an error, if there is any.
-func (c *FakeVirtualServerRoutes) Update(virtualServerRoute *configurationv1.VirtualServerRoute) (result *configurationv1.VirtualServerRoute, err error) {
+func (c *FakeVirtualServerRoutes) Update(ctx context.Context, virtualServerRoute *configurationv1.VirtualServerRoute, opts v1.UpdateOptions) (result *configurationv1.VirtualServerRoute, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(virtualserverroutesResource, c.ns, virtualServerRoute), &configurationv1.VirtualServerRoute{})
 
@@ -85,7 +87,7 @@ func (c *FakeVirtualServerRoutes) Update(virtualServerRoute *configurationv1.Vir
 }
 
 // Delete takes name of the virtualServerRoute and deletes it. Returns an error if one occurs.
-func (c *FakeVirtualServerRoutes) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeVirtualServerRoutes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(virtualserverroutesResource, c.ns, name), &configurationv1.VirtualServerRoute{})
 
@@ -93,15 +95,15 @@ func (c *FakeVirtualServerRoutes) Delete(name string, options *v1.DeleteOptions)
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeVirtualServerRoutes) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(virtualserverroutesResource, c.ns, listOptions)
+func (c *FakeVirtualServerRoutes) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(virtualserverroutesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &configurationv1.VirtualServerRouteList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched virtualServerRoute.
-func (c *FakeVirtualServerRoutes) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *configurationv1.VirtualServerRoute, err error) {
+func (c *FakeVirtualServerRoutes) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *configurationv1.VirtualServerRoute, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(virtualserverroutesResource, c.ns, name, pt, data, subresources...), &configurationv1.VirtualServerRoute{})
 

@@ -3,6 +3,7 @@
 package v1
 
 import (
+	"context"
 	time "time"
 
 	configurationv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
@@ -45,13 +46,13 @@ func NewFilteredVirtualServerRouteInformer(client versioned.Interface, namespace
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.K8sV1().VirtualServerRoutes(namespace).List(options)
+				return client.K8sV1().VirtualServerRoutes(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.K8sV1().VirtualServerRoutes(namespace).Watch(options)
+				return client.K8sV1().VirtualServerRoutes(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&configurationv1.VirtualServerRoute{},

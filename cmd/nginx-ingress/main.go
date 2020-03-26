@@ -334,7 +334,7 @@ func main() {
 			glog.Fatal("global-configuration flag requires -enable-custom-resources")
 		}
 
-		gc, err := confClient.K8sV1alpha1().GlobalConfigurations(ns).Get(name, meta_v1.GetOptions{})
+		gc, err := confClient.K8sV1alpha1().GlobalConfigurations(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 		if err != nil {
 			glog.Fatalf("Error when getting %s: %v", *globalConfiguration, err)
 		}
@@ -353,7 +353,7 @@ func main() {
 		if err != nil {
 			glog.Fatalf("Error parsing the nginx-configmaps argument: %v", err)
 		}
-		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(name, meta_v1.GetOptions{})
+		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 		if err != nil {
 			glog.Fatalf("Error when getting %v: %v", *nginxConfigMaps, err)
 		}
@@ -595,7 +595,7 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse the %v argument: %v", secretNsName, err)
 	}
-	secret, err = kubeClient.CoreV1().Secrets(ns).Get(name, meta_v1.GetOptions{})
+	secret, err = kubeClient.CoreV1().Secrets(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("could not get %v: %v", secretNsName, err)
 	}
