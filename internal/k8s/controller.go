@@ -1726,7 +1726,7 @@ func (lbc *LoadBalancerController) createIngress(ing *extensions.Ingress) (*conf
 		if jwtKey, exists := ingEx.Ingress.Annotations[configs.JWTKeyAnnotation]; exists {
 			secretName := jwtKey
 
-			secret, err := lbc.client.CoreV1().Secrets(ing.Namespace).Get(secretName, meta_v1.GetOptions{})
+			secret, err := lbc.client.CoreV1().Secrets(ing.Namespace).Get(context.TODO(), secretName, meta_v1.GetOptions{})
 			if err != nil {
 				glog.Warningf("Error retrieving secret %v for Ingress %v: %v", secretName, ing.Name, err)
 				secret = nil

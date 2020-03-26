@@ -3,6 +3,8 @@
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -23,7 +25,7 @@ var transportserversResource = schema.GroupVersionResource{Group: "k8s.nginx.org
 var transportserversKind = schema.GroupVersionKind{Group: "k8s.nginx.org", Version: "v1alpha1", Kind: "TransportServer"}
 
 // Get takes name of the transportServer, and returns the corresponding transportServer object, and an error if there is any.
-func (c *FakeTransportServers) Get(name string, options v1.GetOptions) (result *v1alpha1.TransportServer, err error) {
+func (c *FakeTransportServers) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.TransportServer, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(transportserversResource, c.ns, name), &v1alpha1.TransportServer{})
 
@@ -34,7 +36,7 @@ func (c *FakeTransportServers) Get(name string, options v1.GetOptions) (result *
 }
 
 // List takes label and field selectors, and returns the list of TransportServers that match those selectors.
-func (c *FakeTransportServers) List(opts v1.ListOptions) (result *v1alpha1.TransportServerList, err error) {
+func (c *FakeTransportServers) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.TransportServerList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(transportserversResource, transportserversKind, c.ns, opts), &v1alpha1.TransportServerList{})
 
@@ -56,14 +58,14 @@ func (c *FakeTransportServers) List(opts v1.ListOptions) (result *v1alpha1.Trans
 }
 
 // Watch returns a watch.Interface that watches the requested transportServers.
-func (c *FakeTransportServers) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeTransportServers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(transportserversResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a transportServer and creates it.  Returns the server's representation of the transportServer, and an error, if there is any.
-func (c *FakeTransportServers) Create(transportServer *v1alpha1.TransportServer) (result *v1alpha1.TransportServer, err error) {
+func (c *FakeTransportServers) Create(ctx context.Context, transportServer *v1alpha1.TransportServer, opts v1.CreateOptions) (result *v1alpha1.TransportServer, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(transportserversResource, c.ns, transportServer), &v1alpha1.TransportServer{})
 
@@ -74,7 +76,7 @@ func (c *FakeTransportServers) Create(transportServer *v1alpha1.TransportServer)
 }
 
 // Update takes the representation of a transportServer and updates it. Returns the server's representation of the transportServer, and an error, if there is any.
-func (c *FakeTransportServers) Update(transportServer *v1alpha1.TransportServer) (result *v1alpha1.TransportServer, err error) {
+func (c *FakeTransportServers) Update(ctx context.Context, transportServer *v1alpha1.TransportServer, opts v1.UpdateOptions) (result *v1alpha1.TransportServer, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(transportserversResource, c.ns, transportServer), &v1alpha1.TransportServer{})
 
@@ -85,7 +87,7 @@ func (c *FakeTransportServers) Update(transportServer *v1alpha1.TransportServer)
 }
 
 // Delete takes name of the transportServer and deletes it. Returns an error if one occurs.
-func (c *FakeTransportServers) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeTransportServers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(transportserversResource, c.ns, name), &v1alpha1.TransportServer{})
 
@@ -93,15 +95,15 @@ func (c *FakeTransportServers) Delete(name string, options *v1.DeleteOptions) er
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeTransportServers) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(transportserversResource, c.ns, listOptions)
+func (c *FakeTransportServers) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(transportserversResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.TransportServerList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched transportServer.
-func (c *FakeTransportServers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.TransportServer, err error) {
+func (c *FakeTransportServers) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.TransportServer, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(transportserversResource, c.ns, name, pt, data, subresources...), &v1alpha1.TransportServer{})
 

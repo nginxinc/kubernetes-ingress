@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
 	configurationv1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
@@ -45,13 +46,13 @@ func NewFilteredTransportServerInformer(client versioned.Interface, namespace st
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.K8sV1alpha1().TransportServers(namespace).List(options)
+				return client.K8sV1alpha1().TransportServers(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.K8sV1alpha1().TransportServers(namespace).Watch(options)
+				return client.K8sV1alpha1().TransportServers(namespace).Watch(context.TODO(), options)
 			},
 		},
 		&configurationv1alpha1.TransportServer{},

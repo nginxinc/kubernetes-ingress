@@ -3,6 +3,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"time"
 
 	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
@@ -21,14 +22,14 @@ type GlobalConfigurationsGetter interface {
 
 // GlobalConfigurationInterface has methods to work with GlobalConfiguration resources.
 type GlobalConfigurationInterface interface {
-	Create(*v1alpha1.GlobalConfiguration) (*v1alpha1.GlobalConfiguration, error)
-	Update(*v1alpha1.GlobalConfiguration) (*v1alpha1.GlobalConfiguration, error)
-	Delete(name string, options *v1.DeleteOptions) error
-	DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error
-	Get(name string, options v1.GetOptions) (*v1alpha1.GlobalConfiguration, error)
-	List(opts v1.ListOptions) (*v1alpha1.GlobalConfigurationList, error)
-	Watch(opts v1.ListOptions) (watch.Interface, error)
-	Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.GlobalConfiguration, err error)
+	Create(ctx context.Context, globalConfiguration *v1alpha1.GlobalConfiguration, opts v1.CreateOptions) (*v1alpha1.GlobalConfiguration, error)
+	Update(ctx context.Context, globalConfiguration *v1alpha1.GlobalConfiguration, opts v1.UpdateOptions) (*v1alpha1.GlobalConfiguration, error)
+	Delete(ctx context.Context, name string, opts v1.DeleteOptions) error
+	DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error
+	Get(ctx context.Context, name string, opts v1.GetOptions) (*v1alpha1.GlobalConfiguration, error)
+	List(ctx context.Context, opts v1.ListOptions) (*v1alpha1.GlobalConfigurationList, error)
+	Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error)
+	Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.GlobalConfiguration, err error)
 	GlobalConfigurationExpansion
 }
 
@@ -47,20 +48,20 @@ func newGlobalConfigurations(c *K8sV1alpha1Client, namespace string) *globalConf
 }
 
 // Get takes name of the globalConfiguration, and returns the corresponding globalConfiguration object, and an error if there is any.
-func (c *globalConfigurations) Get(name string, options v1.GetOptions) (result *v1alpha1.GlobalConfiguration, err error) {
+func (c *globalConfigurations) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.GlobalConfiguration, err error) {
 	result = &v1alpha1.GlobalConfiguration{}
 	err = c.client.Get().
 		Namespace(c.ns).
 		Resource("globalconfigurations").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // List takes label and field selectors, and returns the list of GlobalConfigurations that match those selectors.
-func (c *globalConfigurations) List(opts v1.ListOptions) (result *v1alpha1.GlobalConfigurationList, err error) {
+func (c *globalConfigurations) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.GlobalConfigurationList, err error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -71,13 +72,13 @@ func (c *globalConfigurations) List(opts v1.ListOptions) (result *v1alpha1.Globa
 		Resource("globalconfigurations").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Watch returns a watch.Interface that watches the requested globalConfigurations.
-func (c *globalConfigurations) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *globalConfigurations) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	var timeout time.Duration
 	if opts.TimeoutSeconds != nil {
 		timeout = time.Duration(*opts.TimeoutSeconds) * time.Second
@@ -88,71 +89,74 @@ func (c *globalConfigurations) Watch(opts v1.ListOptions) (watch.Interface, erro
 		Resource("globalconfigurations").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Watch()
+		Watch(ctx)
 }
 
 // Create takes the representation of a globalConfiguration and creates it.  Returns the server's representation of the globalConfiguration, and an error, if there is any.
-func (c *globalConfigurations) Create(globalConfiguration *v1alpha1.GlobalConfiguration) (result *v1alpha1.GlobalConfiguration, err error) {
+func (c *globalConfigurations) Create(ctx context.Context, globalConfiguration *v1alpha1.GlobalConfiguration, opts v1.CreateOptions) (result *v1alpha1.GlobalConfiguration, err error) {
 	result = &v1alpha1.GlobalConfiguration{}
 	err = c.client.Post().
 		Namespace(c.ns).
 		Resource("globalconfigurations").
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(globalConfiguration).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Update takes the representation of a globalConfiguration and updates it. Returns the server's representation of the globalConfiguration, and an error, if there is any.
-func (c *globalConfigurations) Update(globalConfiguration *v1alpha1.GlobalConfiguration) (result *v1alpha1.GlobalConfiguration, err error) {
+func (c *globalConfigurations) Update(ctx context.Context, globalConfiguration *v1alpha1.GlobalConfiguration, opts v1.UpdateOptions) (result *v1alpha1.GlobalConfiguration, err error) {
 	result = &v1alpha1.GlobalConfiguration{}
 	err = c.client.Put().
 		Namespace(c.ns).
 		Resource("globalconfigurations").
 		Name(globalConfiguration.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(globalConfiguration).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }
 
 // Delete takes name of the globalConfiguration and deletes it. Returns an error if one occurs.
-func (c *globalConfigurations) Delete(name string, options *v1.DeleteOptions) error {
+func (c *globalConfigurations) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("globalconfigurations").
 		Name(name).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *globalConfigurations) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
+func (c *globalConfigurations) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	var timeout time.Duration
-	if listOptions.TimeoutSeconds != nil {
-		timeout = time.Duration(*listOptions.TimeoutSeconds) * time.Second
+	if listOpts.TimeoutSeconds != nil {
+		timeout = time.Duration(*listOpts.TimeoutSeconds) * time.Second
 	}
 	return c.client.Delete().
 		Namespace(c.ns).
 		Resource("globalconfigurations").
-		VersionedParams(&listOptions, scheme.ParameterCodec).
+		VersionedParams(&listOpts, scheme.ParameterCodec).
 		Timeout(timeout).
-		Body(options).
-		Do().
+		Body(&opts).
+		Do(ctx).
 		Error()
 }
 
 // Patch applies the patch and returns the patched globalConfiguration.
-func (c *globalConfigurations) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.GlobalConfiguration, err error) {
+func (c *globalConfigurations) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.GlobalConfiguration, err error) {
 	result = &v1alpha1.GlobalConfiguration{}
 	err = c.client.Patch(pt).
 		Namespace(c.ns).
 		Resource("globalconfigurations").
-		SubResource(subresources...).
 		Name(name).
+		SubResource(subresources...).
+		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(data).
-		Do().
+		Do(ctx).
 		Into(result)
 	return
 }

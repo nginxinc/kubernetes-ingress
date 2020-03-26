@@ -3,6 +3,8 @@
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -23,7 +25,7 @@ var globalconfigurationsResource = schema.GroupVersionResource{Group: "k8s.nginx
 var globalconfigurationsKind = schema.GroupVersionKind{Group: "k8s.nginx.org", Version: "v1alpha1", Kind: "GlobalConfiguration"}
 
 // Get takes name of the globalConfiguration, and returns the corresponding globalConfiguration object, and an error if there is any.
-func (c *FakeGlobalConfigurations) Get(name string, options v1.GetOptions) (result *v1alpha1.GlobalConfiguration, err error) {
+func (c *FakeGlobalConfigurations) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.GlobalConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(globalconfigurationsResource, c.ns, name), &v1alpha1.GlobalConfiguration{})
 
@@ -34,7 +36,7 @@ func (c *FakeGlobalConfigurations) Get(name string, options v1.GetOptions) (resu
 }
 
 // List takes label and field selectors, and returns the list of GlobalConfigurations that match those selectors.
-func (c *FakeGlobalConfigurations) List(opts v1.ListOptions) (result *v1alpha1.GlobalConfigurationList, err error) {
+func (c *FakeGlobalConfigurations) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.GlobalConfigurationList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(globalconfigurationsResource, globalconfigurationsKind, c.ns, opts), &v1alpha1.GlobalConfigurationList{})
 
@@ -56,14 +58,14 @@ func (c *FakeGlobalConfigurations) List(opts v1.ListOptions) (result *v1alpha1.G
 }
 
 // Watch returns a watch.Interface that watches the requested globalConfigurations.
-func (c *FakeGlobalConfigurations) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeGlobalConfigurations) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(globalconfigurationsResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a globalConfiguration and creates it.  Returns the server's representation of the globalConfiguration, and an error, if there is any.
-func (c *FakeGlobalConfigurations) Create(globalConfiguration *v1alpha1.GlobalConfiguration) (result *v1alpha1.GlobalConfiguration, err error) {
+func (c *FakeGlobalConfigurations) Create(ctx context.Context, globalConfiguration *v1alpha1.GlobalConfiguration, opts v1.CreateOptions) (result *v1alpha1.GlobalConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(globalconfigurationsResource, c.ns, globalConfiguration), &v1alpha1.GlobalConfiguration{})
 
@@ -74,7 +76,7 @@ func (c *FakeGlobalConfigurations) Create(globalConfiguration *v1alpha1.GlobalCo
 }
 
 // Update takes the representation of a globalConfiguration and updates it. Returns the server's representation of the globalConfiguration, and an error, if there is any.
-func (c *FakeGlobalConfigurations) Update(globalConfiguration *v1alpha1.GlobalConfiguration) (result *v1alpha1.GlobalConfiguration, err error) {
+func (c *FakeGlobalConfigurations) Update(ctx context.Context, globalConfiguration *v1alpha1.GlobalConfiguration, opts v1.UpdateOptions) (result *v1alpha1.GlobalConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(globalconfigurationsResource, c.ns, globalConfiguration), &v1alpha1.GlobalConfiguration{})
 
@@ -85,7 +87,7 @@ func (c *FakeGlobalConfigurations) Update(globalConfiguration *v1alpha1.GlobalCo
 }
 
 // Delete takes name of the globalConfiguration and deletes it. Returns an error if one occurs.
-func (c *FakeGlobalConfigurations) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeGlobalConfigurations) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(globalconfigurationsResource, c.ns, name), &v1alpha1.GlobalConfiguration{})
 
@@ -93,15 +95,15 @@ func (c *FakeGlobalConfigurations) Delete(name string, options *v1.DeleteOptions
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeGlobalConfigurations) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(globalconfigurationsResource, c.ns, listOptions)
+func (c *FakeGlobalConfigurations) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(globalconfigurationsResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.GlobalConfigurationList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched globalConfiguration.
-func (c *FakeGlobalConfigurations) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.GlobalConfiguration, err error) {
+func (c *FakeGlobalConfigurations) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.GlobalConfiguration, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(globalconfigurationsResource, c.ns, name, pt, data, subresources...), &v1alpha1.GlobalConfiguration{})
 
