@@ -8,3 +8,4 @@ Global Configuration
    command-line-arguments
    custom-templates
    reporting-resources-status
+   globalconfiguration-resource

@@ -25,8 +25,9 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     ```
 **Note**: To perform this step you must be a cluster admin. Follow the documentation of your Kubernetes platform to configure the admin access. For GKE, see the [Role-Based Access Control](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control) doc.
 
-## 2. Create the Default Secret, Customization ConfigMap, and Custom Resource Definitions
+## 2. Create Common Resources
 
+In this section, we create resources common for most of the Ingress Controller installations:
 1. Create a secret with a TLS certificate and a key for the default server in NGINX:
     ```
     $ kubectl apply -f common/default-server-secret.yaml
@@ -45,11 +46,32 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     $ kubectl apply -f common/vsr-definition.yaml
     ```
 
+If you would like to use the TCP, UDP, and TLS Passthrough load balancing features of the Ingress Controller, create the following additional resources: 
+1. Create custom resource definitions for [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resources:
+    ```
+    $ kubectl apply -f common/ts-definition.yaml
+    $ kubectl apply -f common/gc-definition.yaml
+    ```
+1. Create a GlobalConfiguration resource:
+    ```
+    $ kubectl apply -f common/global-configuration.yaml
+    ```
+    **Note**: Make sure to references this resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument.
+
+If you would like to use only TLS Passthrough load balancing (without TCP and UDP), create only the custom resource definition for the TransportServer:
+```
+$ kubectl apply -f common/ts-definition.yaml
+```
+
+> **Feature Status**: The TransportServer and GlobalConfiguration resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
+
 ## 3. Deploy the Ingress Controller
 
 We include two options for deploying the Ingress controller:
 * *Deployment*. Use a Deployment if you plan to dynamically change the number of Ingress controller replicas.
 * *DaemonSet*. Use a DaemonSet for deploying the Ingress controller on every node or a subset of nodes.
+
+> Before creating a Deployment or Daemonset resource, make sure to update the  [command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments) of the Ingress Controller container in the corresponding manifest file according to your requirements.
 
 ### 3.1 Run the Ingress Controller
 * *Use a Deployment*.

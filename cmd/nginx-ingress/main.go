@@ -133,8 +133,7 @@ The external address of the service is used when reporting the status of Ingress
 		"Enable custom resources")
 
 	globalConfiguration = flag.String("global-configuration", "",
-		`A GlobalConfiguration resource for global configuration of the Ingress Controller. Currently, only supports
-		configuring listeners for TCP/UDP load balancing. Requires -enable-custom-resources. If the flag is set,
+		`A GlobalConfiguration resource for global configuration of the Ingress Controller. Requires -enable-custom-resources. If the flag is set,
 		but the Ingress controller is not able to fetch the corresponding resource from Kubernetes API, the Ingress Controller 
 		will fail to start. Format: <namespace>/<name>`)
 

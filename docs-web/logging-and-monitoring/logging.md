@@ -14,7 +14,11 @@ See also the doc about Ingress Controller [command-line arguments](/nginx-ingres
 ## NGINX Logs
 
 The NGINX includes two logs:
-* *Access log*, where NGINX writes information about client requests in the access log right after the request is processed. The access log is configured via the `log-format` [ConfigMap key](/nginx-ingress-controller/configuration/global-configuration/configmap-resource#logging). Additionally, you can disable access logging with the `access-log-off` ConfigMap key.
+* *Access log*, where NGINX writes information about client requests in the access log right after the request is processed. The access log is configured via the [logging-related](/nginx-ingress-controller/configuration/global-configuration/configmap-resource#logging) ConfigMap keys:
+    * `log-format` for HTTP and HTTPS traffic.
+    * `stream-log-format` for TCP, UDP, and TLS Passthrough traffic.
+
+    Additionally, you can disable access logging with the `access-log-off` ConfigMap key.
 * *Error log*, where NGINX writes information about encountered issues of different severity levels. It is configured via the `error-log-level` [ConfigMap key](/nginx-ingress-controller/configuration/global-configuration/configmap-resource#logging). To enable debug logging, set the level to `debug` and also set the `-nginx-debug` [command-line argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments), so that NGINX is started with the debug binary `nginx-debug`.
 
 See also the doc about [NGINX logs](https://docs.nginx.com/nginx/admin-guide/monitoring/logging/) from NGINX Admin guide.

@@ -366,7 +366,7 @@ tls:
      - ``map[string]string``
      - No
    * - ``port``
-     - The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65553``.
+     - The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65535``.
      - ``uint16``
      - Yes
    * - ``lb-method``

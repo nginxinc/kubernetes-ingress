@@ -35,11 +35,25 @@ Below we describe the available command-line arguments:
 
 	See :option:`-report-ingress-status` flag.
 
+.. option:: -enable-tls-passthrough
+
+	Enable TLS Passthrough on port 443.
+
+	Requires :option:`-enable-custom-resources`.	
+
 .. option:: -external-service <string>
 
 	Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. The external address of the service is used when reporting the status of Ingress resources.
 
 	Requires :option:`-report-ingress-status`.
+
+.. option:: -global-configuration <string>
+
+	A GlobalConfiguration resource for global configuration of the Ingress Controller. If the flag is set, but the Ingress Controller is not able to fetch the corresponding resource from Kubernetes API, the Ingress Controller will fail to start.
+	
+	Format: ``<namespace>/<name>``
+
+	Requires :option:`-enable-custom-resources`.
 
 .. option:: -health-status
 
@@ -108,6 +122,13 @@ Below we describe the available command-line arguments:
 
 	Update the address field in the status of Ingresses resources.
 	Requires the :option:`-external-service` flag or the ``external-status-address`` key in the ConfigMap.
+
+.. option:: -transportserver-template-path <string>
+
+	Path to the TransportServer NGINX configuration template for a TransportServer resource.
+
+	- Default for NGINX is "nginx.transportserver.tmpl"
+	- Default for NGINX Plus is "nginx-plus.transportserver.tmpl".
 
 .. option:: -use-ingress-class-only
 

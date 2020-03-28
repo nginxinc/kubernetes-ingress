@@ -203,11 +203,11 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - ``False``
      - 
    * - ``log-format``
-     - Sets the custom `log format <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_.
+     - Sets the custom `log format <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_ for HTTP and HTTPS traffic.
      - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/master/internal/configs/version1/nginx.tmpl>`_ for the access log.
      - 
    * - ``stream-log-format``
-     - Sets the custom `log format <http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format>`_ for TCP/UDP load balancing.
+     - Sets the custom `log format <http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format>`_ for TCP, UDP, and TLS Passthrough traffic.
      - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/master/internal/configs/version1/nginx.tmpl>`_.
      - 
 ```

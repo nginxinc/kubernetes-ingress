@@ -1,10 +1,12 @@
 # Basic TCP/UDP Load Balancing 
 
-In this example we deploy a DNS server in a cluster and configure TCP and UDP load balancing for it using the TransportServer resource.  As a result, NGINX will pass any connections or datagrams coming to its port 5353 to the DNS server pods.
+In this example, we deploy a DNS server in a cluster and configure TCP and UDP load balancing for it using the TransportServer resource.  As a result, NGINX will pass any connections or datagrams coming to its port 5353 to the DNS server pods.
 
 ## Prerequisites  
 
-1. Follow the [installation](../../docs/installation.md) instructions to deploy the Ingress Controller. Make sure to deploy the GlobalConfiguration resource and configure the Ingress Controller to use it. Additionally, expose port 5353 of the Ingress Controller both for TCP and UDP traffic.
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller:
+   * As part of Step 2 of those instructions, make sure to deploy the GlobalConfiguration resource and configure the Ingress Controller to use it. 
+   * Expose port 5353 of the Ingress Controller both for TCP and UDP traffic.
 1. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III
@@ -15,6 +17,8 @@ In this example we deploy a DNS server in a cluster and configure TCP and UDP lo
     ```
     **Note**: If you'd like to expose the Ingress Controller via a service with the type LoadBalancer, it is not allowed to create a type LoadBalancer service for both TCP and UDP protocols. To overcome this limitation, create two separate services, one for TCP and the other for UDP.  In this case, you will end up with two separate public IPs, one for TCP and the other for UDP. Use the former in Step 4.1 and the latter in Step 4.2.
 1. We use `dig` for testing. Make sure it is installed on your machine.
+
+**Note**: We assume that as part of the Ingress Controller installation, you deployed the GlobalConfiguration resource in the namespace `nginx-ingress` with the name `nginx-configuration`. If this is not the case, make sure to update the file `global-configuration.yaml` to use the correct namespace and/or name.
 
 ## Step 1 - Deploy the DNS Server
 
