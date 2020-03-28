@@ -14,3 +14,4 @@ NGINX Ingress Controller
    troubleshooting
    third-party-modules/index
    releases
+   Technical Specifications <technical-specifications>
