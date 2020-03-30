@@ -15,6 +15,7 @@ spec:
     kind: GlobalConfiguration
     shortNames:
     - gc
+  preserveUnknownFields: false
   validation:
     openAPIV3Schema:
       description: GlobalConfiguration defines the GlobalConfiguration resource.
