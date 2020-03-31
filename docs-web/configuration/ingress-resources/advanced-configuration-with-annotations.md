@@ -146,7 +146,7 @@ The table below summarizes the available annotations.
      - N/A
      - Configures URI rewriting.
      - N/A
-     - `Rewrites Support <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/rewrites>`_.
+     - `Rewrites Support <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/rewrites>`_.
 ```
 
 ### Auth and SSL/TLS
@@ -194,22 +194,22 @@ The table below summarizes the available annotations.
      - N/A
      - Specifies a Secret resource with keys for validating JSON Web Tokens (JWTs).
      - N/A
-     - `Support for JSON Web Tokens (JWTs) <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/jwt>`_.
+     - `Support for JSON Web Tokens (JWTs) <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/jwt>`_.
    * - ``nginx.com/jwt-realm``
      - N/A
      - Specifies a realm.
      - N/A
-     - `Support for JSON Web Tokens (JWTs) <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/jwt>`_.
+     - `Support for JSON Web Tokens (JWTs) <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/jwt>`_.
    * - ``nginx.com/jwt-token``
      - N/A
      - Specifies a variable that contains JSON Web Token.
      - By default, a JWT is expected in the ``Authorization`` header as a Bearer Token.
-     - `Support for JSON Web Tokens (JWTs) <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/jwt>`_.
+     - `Support for JSON Web Tokens (JWTs) <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/jwt>`_.
    * - ``nginx.com/jwt-login-url``
      - N/A
      - Specifies a URL to which a client is redirected in case of an invalid or missing JWT.
      - N/A
-     - `Support for JSON Web Tokens (JWTs) <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/jwt>`_.
+     - `Support for JSON Web Tokens (JWTs) <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/jwt>`_.
 ```
 
 ### Listeners
@@ -255,17 +255,17 @@ The table below summarizes the available annotations.
      - N/A
      - Enables HTTPS or gRPC over SSL when connecting to the endpoints of services.
      - N/A
-     - `SSL Services Support <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/ssl-services>`_.
+     - `SSL Services Support <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/ssl-services>`_.
    * - ``nginx.org/grpc-services``
      - N/A
      - Enables gRPC for services. Note: requires HTTP/2 (see ``http2`` ConfigMap key); only works for Ingresses with TLS termination enabled.
      - N/A
-     - `GRPC Services Support <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/grpc-services>`_.
+     - `GRPC Services Support <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/grpc-services>`_.
    * - ``nginx.org/websocket-services``
      - N/A
      - Enables WebSocket for services.
      - N/A
-     - `WebSocket support <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/websocket>`_.
+     - `WebSocket support <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/websocket>`_.
    * - ``nginx.org/max-fails``
      - ``max-fails``
      - Sets the value of the `max_fails <https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails>`_ parameter of the ``server`` directive.
@@ -290,7 +290,7 @@ The table below summarizes the available annotations.
      - N/A
      - Configures session persistence.
      - N/A
-     - `Session Persistence <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/session-persistence>`_.
+     - `Session Persistence <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/session-persistence>`_.
    * - ``nginx.org/keepalive``
      - ``keepalive``
      - Sets the value of the `keepalive <http://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive>`_ directive. Note that ``proxy_set_header Connection "";`` is added to the generated configuration when the value > 0.
@@ -300,20 +300,20 @@ The table below summarizes the available annotations.
      - N/A
      - Enables active health checks.
      - ``False``
-     - `Support for Active Health Checks <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/health-checks>`_.
+     - `Support for Active Health Checks <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/health-checks>`_.
    * - ``nginx.com/health-checks-mandatory``
      - N/A
      - Configures active health checks as mandatory.
      - ``False``
-     - `Support for Active Health Checks <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/health-checks>`_.
+     - `Support for Active Health Checks <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/health-checks>`_.
    * - ``nginx.com/health-checks-mandatory-queue``
      - N/A
      - When active health checks are mandatory, configures a queue for temporary storing incoming requests during the time when NGINX Plus is checking the health of the endpoints after a configuration reload.
      - ``0``
-     - `Support for Active Health Checks <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/health-checks>`_.
+     - `Support for Active Health Checks <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/health-checks>`_.
    * - ``nginx.com/slow-start``
      - N/A
-     - Sets the upstream server `slow-start period <https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#server-slow-start>`_. By default, slow-start is activated after a server becomes `available <https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#passive-health-checks>`_ or `healthy <https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#active-health-checks>`_. To enable slow-start for newly added servers, configure `mandatory active health checks <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/health-checks>`_.
+     - Sets the upstream server `slow-start period <https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#server-slow-start>`_. By default, slow-start is activated after a server becomes `available <https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#passive-health-checks>`_ or `healthy <https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#active-health-checks>`_. To enable slow-start for newly added servers, configure `mandatory active health checks <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/health-checks>`_.
      - ``"0s"``
      - 
 ```

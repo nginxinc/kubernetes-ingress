@@ -2,7 +2,7 @@
 
 The Ingress Controller supports [OpenTracing](http://opentracing.io/) with the third-party module [opentracing-contrib/nginx-opentracing](https://github.com/opentracing-contrib/nginx-opentracing).
 
-This document explains how to use OpenTracing with the Ingress Controller. Additionally, we have an [example](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/opentracing) on how to enable OpenTracing for a simple web application using Jaeger as a tracer.
+This document explains how to use OpenTracing with the Ingress Controller. Additionally, we have an [example](https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/opentracing) on how to enable OpenTracing for a simple web application using Jaeger as a tracer.
 
 ## Prerequisites
 1. **Use the Ingress Controller image with OpenTracing.** The default Ingress Controller images don’t include the OpenTracing module. To use OpenTracing, you need to build the image with that module. Follow the build instructions to build the image using `DockerfileWithOpentracing` for NGINX or `DockerfileWithOpentracingForPlus` for NGINX Plus.
@@ -69,7 +69,7 @@ Consider the following two cases:
 
 ## Customize OpenTracing
 
-You can customize OpenTracing though the supported [OpenTracing module directives](https://github.com/opentracing-contrib/nginx-opentracing/blob/master/doc/Reference.md). Use the snippets ConfigMap keys or annotations to insert those directives into the http, server or location contexts of the generated NGINX configuration.
+You can customize OpenTracing though the supported [OpenTracing module directives](https://github.com/opentracing-contrib/nginx-opentracing/blob/v1.7.0-rc1/doc/Reference.md). Use the snippets ConfigMap keys or annotations to insert those directives into the http, server or location contexts of the generated NGINX configuration.
 
 For example, to propagate the active span context for upstream requests, it is required to set the `opentracing_propagate_context` directive, which you can add to an Ingress resource using the location snippets annotation:
 
@@ -78,4 +78,4 @@ nginx.org/location-snippets: |
    opentracing_propagate_context;
 ```
 
-**Note**: `opentracing_propagate_context` and `opentracing_grpc_propagate_context` directives can be used in http, server or location contexts according to the [module documentation](https://github.com/opentracing-contrib/nginx-opentracing/blob/master/doc/Reference.md#opentracing_propagate_context). However, because of the way the module works and how the Ingress Controller generates the NGINX configuration, it is only possible to use the directive in the location context.
+**Note**: `opentracing_propagate_context` and `opentracing_grpc_propagate_context` directives can be used in http, server or location contexts according to the [module documentation](https://github.com/opentracing-contrib/nginx-opentracing/blob/v1.7.0-rc1/doc/Reference.md#opentracing_propagate_context). However, because of the way the module works and how the Ingress Controller generates the NGINX configuration, it is only possible to use the directive in the location context.

@@ -17,34 +17,34 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 
 1. Add NGINX Helm repository:
     ```
-    $ helm repo add nginx-edge https://helm.nginx.com/edge
+    $ helm repo add nginx-stable https://helm.nginx.com/stable
     $ helm repo update
     ```
 
 2. To install the chart with the release name my-release (my-release is the name that you choose):
 
-     * Using Helm 3.x client:
+    * Using Helm 3.x client:
 
         For NGINX:
         ```console
-        $ helm install my-release nginx-edge/nginx-ingress
+        $ helm install my-release nginx-stable/nginx-ingress
         ```
 
         For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
         ```console
-        $ helm install my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+        $ helm install my-release nginx-stable/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
         ```
 
     * Using Helm 2.x client:
 
         For NGINX:
         ```console
-        $ helm install --name my-release nginx-edge/nginx-ingress
+        $ helm install --name my-release nginx-stable/nginx-ingress
         ```
 
         For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
         ```console
-        $ helm install --name my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+        $ helm install --name my-release nginx-stable/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
         ```
 
 ## Installing Using Chart Sources
@@ -56,6 +56,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 2. Change your working directory to /deployments/helm-chart:
     ```console
     $ cd kubernetes-ingress/deployments/helm-chart
+    $ git checkout v1.7.0-rc1
     ```
 3. To install the chart with the release name my-release (my-release is the name that you choose):
 
@@ -141,7 +142,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
      - nginx/nginx-ingress
    * - ``controller.image.tag``
      - The tag of the Ingress controller image.
-     - edge
+     - 1.7.0-rc1
    * - ``controller.image.pullPolicy``
      - The pull policy for the Ingress controller image.
      - IfNotPresent

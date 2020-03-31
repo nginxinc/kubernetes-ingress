@@ -2,7 +2,7 @@
 
 The VirtualServer and VirtualServerRoute resources are new load balancing configuration, introduced in release 1.5 as an alternative to the Ingress resource. The resources enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/blob/master/examples-of-custom-resources) folder in our GitHub repo.
+This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/blob/v1.7.0-rc1/examples-of-custom-resources) folder in our GitHub repo.
 
 ## Contents
 
@@ -358,7 +358,7 @@ tls:
      - ``string``
      - Yes
    * - ``service``
-     - The name of a `service <https://kubernetes.io/docs/concepts/services-networking/service/>`_. The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type `ExternalName <https://kubernetes.io/docs/concepts/services-networking/service/#externalname>`_ are also supported (check the `prerequisites <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/externalname-services#prerequisites>`_\ ).
+     - The name of a `service <https://kubernetes.io/docs/concepts/services-networking/service/>`_. The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type `ExternalName <https://kubernetes.io/docs/concepts/services-networking/service/#externalname>`_ are also supported (check the `prerequisites <https://github.com/nginxinc/kubernetes-ingress/tree/v1.7.0-rc1/examples/externalname-services#prerequisites>`_\ ).
      - ``string``
      - Yes
    * - ``subselector``
