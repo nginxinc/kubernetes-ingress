@@ -199,10 +199,10 @@ class TestVirtualServerTLSRedirect:
                                            virtual_server_setup.namespace)
         except ApiException as ex:
             assert ex.status == 422 \
-                   and "spec.tls.redirect.enable: Invalid value" in ex.body \
-                   and "spec.tls.redirect.code: Invalid value" in ex.body \
-                   and "spec.tls.redirect.basedOn: Invalid value" in ex.body \
-                   and "spec.tls.secret: Invalid value" in ex.body
+                   and "spec.tls.redirect.enable" in ex.body \
+                   and "spec.tls.redirect.code" in ex.body \
+                   and "spec.tls.redirect.basedOn" in ex.body \
+                   and "spec.tls.secret" in ex.body
         except Exception as ex:
             pytest.fail(f"An unexpected exception is raised: {ex}")
         else:
