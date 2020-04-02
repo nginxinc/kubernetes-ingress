@@ -420,16 +420,16 @@ def ensure_item_removal(get_item, *args, **kwargs) -> None:
     """
     try:
         counter = 0
-        while counter < 30:
+        while counter < 120:
             time.sleep(1)
             get_item(*args, **kwargs)
             counter = counter + 1
-        if counter >= 30:
+        if counter >= 120:
             # Due to k8s issue with namespaces, they sometimes get stuck in Terminating state, skip such cases
             if "_namespace " in str(get_item):
-                print(f"Failed to remove namespace '{args}' after 30 seconds, skip removal. Remove manually.")
+                print(f"Failed to remove namespace '{args}' after 120 seconds, skip removal. Remove manually.")
             else:
-                pytest.fail("Failed to remove the item after 30 seconds")
+                pytest.fail("Failed to remove the item after 120 seconds")
     except ApiException as ex:
         if ex.status == 404:
             print("Item was removed")

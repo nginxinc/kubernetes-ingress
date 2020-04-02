@@ -36,6 +36,7 @@ rules:
   - pods
   verbs:
   - list
+  - watch
 - apiGroups:
   - ""
   resources:
@@ -57,3 +58,13 @@ rules:
   - ingresses/status
   verbs:
   - update
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - virtualserverroutes
+  - globalconfigurations
+  - transportservers
+  verbs:
+  - list
+  - watch
+  - get
