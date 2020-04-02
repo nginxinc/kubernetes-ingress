@@ -304,6 +304,8 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     name = "nginx-ingress"
     vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/vs-definition.yaml")
     vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/vsr-definition.yaml")
+    ts_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/ts-definition.yaml")
+    gc_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/gc-definition.yaml")
 
     try:
         print("------------------------- Update ClusterRole -----------------------------------")
@@ -314,6 +316,10 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
                              f"{DEPLOYMENTS}/common/vs-definition.yaml")
         create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, vsr_crd_name,
                              f"{DEPLOYMENTS}/common/vsr-definition.yaml")
+        create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, ts_crd_name,
+                             f"{DEPLOYMENTS}/common/ts-definition.yaml")
+        create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, gc_crd_name,
+                             f"{DEPLOYMENTS}/common/gc-definition.yaml")
         print("------------------------- Create IC -----------------------------------")
         name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace,
                                          request.param.get('extra_args', None))
@@ -325,6 +331,8 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
         print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
         delete_crd(kube_apis.api_extensions_v1_beta1, vs_crd_name)
         delete_crd(kube_apis.api_extensions_v1_beta1, vsr_crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, ts_crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, gc_crd_name)
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")
@@ -333,6 +341,8 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     def fin():
         delete_crd(kube_apis.api_extensions_v1_beta1, vs_crd_name)
         delete_crd(kube_apis.api_extensions_v1_beta1, vsr_crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, ts_crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, gc_crd_name)
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")
