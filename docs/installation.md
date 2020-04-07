@@ -1,3 +1,3 @@
 # Installing the Ingress Controller
 
-This doc is now available at https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/
+This doc is now available at https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/status-page/
