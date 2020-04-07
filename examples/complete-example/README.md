@@ -57,5 +57,5 @@ certificate and the --resolve option to set the Host header of a request with ``
     ```
 
 1. You can view an NGINX status page, either stub_status for NGINX, or the Live Activity Monitoring Dashboard for NGINX Plus:
-    1. Follow the [instructions](../../docs/installation.md#5-access-the-live-activity-monitoring-dashboard--stub_status-page) to access the status page.
+    1. Follow the [instructions](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/status-page/) to access the status page.
     1. For NGINX Plus, If you go to the Upstream tab, you'll see: ![dashboard](dashboard.png)
