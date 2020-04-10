@@ -4,7 +4,7 @@ FROM debian:buster-slim AS base
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV NGINX_PLUS_VERSION 20-1~buster
+ENV NGINX_PLUS_VERSION 21-1~buster
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
