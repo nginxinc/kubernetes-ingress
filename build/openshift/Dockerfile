@@ -9,7 +9,7 @@ LABEL name="NGINX Ingress Controller" \
       maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>" \
       vendor="NGINX Inc <kubernetes@nginx.com>"
 
-ENV NGINX_VERSION=1.17.9
+ENV NGINX_VERSION=1.17.10
 
 RUN set -x \
 	&& groupadd --system --gid 101 nginx \
