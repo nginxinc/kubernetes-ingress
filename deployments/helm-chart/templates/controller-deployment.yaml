@@ -126,4 +126,7 @@ spec:
           - -enable-prometheus-metrics={{ .Values.prometheus.create }}
           - -prometheus-metrics-listen-port={{ .Values.prometheus.port }}
           - -enable-custom-resources={{ .Values.controller.enableCustomResources }}
+{{- if .Values.controller.enableCustomResources  }}
+          - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}
+{{- end }}
 {{- end }}
