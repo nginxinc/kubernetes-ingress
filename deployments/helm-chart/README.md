@@ -148,6 +148,7 @@ Parameter | Description | Default
 `controller.useIngressClassOnly` | Ignore Ingress resources without the `"kubernetes.io/ingress.class"` annotation. | false
 `controller.watchNamespace` | Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces. | ""
 `controller.enableCustomResources` | Enable the custom resources. | true
+`controller.enableTLSPassthrough` | Enable TLS Passthrough on port 443. Requires `controller.enableCustomResources`. | false 
 `controller.healthStatus` | Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller. | false
 `controller.healthStatusURI` | Sets the URI of health status location in the default server. Requires `contoller.healthStatus`. | "/nginx-health"
 `controller.nginxStatus.enable` | Enable the NGINX stub_status, or the NGINX Plus API. | true

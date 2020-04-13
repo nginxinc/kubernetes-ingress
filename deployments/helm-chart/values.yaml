@@ -118,6 +118,9 @@ controller:
   ## Enable the custom resources.
   enableCustomResources: true
 
+  ## Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.
+  enableTLSPassthrough: false
+
   ## Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
   ## Useful for external health-checking of the Ingress controller.
   healthStatus: false
