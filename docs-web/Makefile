@@ -1,15 +1,11 @@
-NETLIFY_ROOT	=	/opt/build/repo
-SITE_ROOT			= ${NETLIFY_ROOT}/site
-BUILDDIR			= ${NETLIFY_ROOT}/docs-web/build
-THEME_REPO		= ${THEME_REPO_URL}
-#DOCKER_IMAGE 	=
+NETLIFY_ROOT = /opt/build/repo
+SITE_ROOT = ${NETLIFY_ROOT}/site
+BUILDDIR = ${NETLIFY_ROOT}/docs-web/build
+THEME_REPO = ${THEME_REPO_URL}
 
 .PHONY: all build clean setup
 
-#help:
-
 all: clean setup build
-#docker-all: docker setup build
 
 clean:
 	rm -rf ${SITE_ROOT}
@@ -23,7 +19,3 @@ setup:
 build:
 	sphinx-build -b dirhtml -d ${BUILDDIR}/doctrees ${SITE_ROOT}/docs-nginx-com/source ${BUILDDIR}/dirhtml
 	@echo "Build finished. The HTML pages are in ${BUILDDIR}/dirhtml."
-
-#docker:
-
-#docker-serve:
