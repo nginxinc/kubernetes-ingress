@@ -14,7 +14,7 @@ setup:
 	mkdir ${SITE_ROOT}
 	@git clone -q --single-branch --branch master https://$(GITHUB_PAT)@${THEME_REPO} ${SITE_ROOT}/docs-nginx-com
 	pip install -r ${SITE_ROOT}/docs-nginx-com/requirements.txt
-	rsync -avOz ${NETLIFY_ROOT}/docs-web/ ${SITE_ROOT}/docs-nginx-com/source/nginx-ingress-controller/ --exclude ${NETLIFY_ROOT}/docs-web/.netlify --exclude ${NETLIFY_ROOT}/docs-web/Makefile
+	rsync -avOz ${NETLIFY_ROOT}/docs-web/ ${SITE_ROOT}/docs-nginx-com/source/nginx-ingress-controller/ --exclude ${NETLIFY_ROOT}/docs-web/Makefile
 
 build:
 	sphinx-build -b dirhtml -d ${BUILDDIR}/doctrees ${SITE_ROOT}/docs-nginx-com/source ${BUILDDIR}/dirhtml
