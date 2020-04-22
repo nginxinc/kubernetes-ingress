@@ -4,9 +4,9 @@ Proxies and load balancers, such as HAProxy or ELB, can pass the client's inform
 
 ## Syntax
 
-The `proxy-protocol` key syntax is as follows:
+The `use-proxy-protocol` key syntax is as follows:
 ```
-proxy-protocol: "True | False"
+use-proxy-protocol: "true | false"
 ```
 
 Additionally, you must configure the following keys:
@@ -23,7 +23,7 @@ apiVersion: v1
 metadata:
   name: nginx-config
 data:
-  proxy-protocol: "True"
+  use-proxy-protocol: "true"
   real-ip-header: "proxy_protocol"
   set-real-ip-from: "192.168.192.168"
 ```
