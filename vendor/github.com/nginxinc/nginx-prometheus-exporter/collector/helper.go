@@ -11,11 +11,12 @@ func newGlobalMetric(namespace string, metricName string, docString string, cons
 	return prometheus.NewDesc(namespace+"_"+metricName, docString, nil, constLabels)
 }
 
-func newUpMetric(namespace string) prometheus.Gauge {
+func newUpMetric(namespace string, constLabels map[string]string) prometheus.Gauge {
 	return prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Name:      "up",
-		Help:      "Status of the last metric scrape",
+		Namespace:   namespace,
+		Name:        "up",
+		Help:        "Status of the last metric scrape",
+		ConstLabels: constLabels,
 	})
 }
 

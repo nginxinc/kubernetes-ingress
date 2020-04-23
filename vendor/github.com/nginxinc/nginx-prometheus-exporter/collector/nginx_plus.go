@@ -136,7 +136,7 @@ func NewNginxPlusCollector(nginxClient *plusclient.NginxClient, namespace string
 			"timedout": newResolverMetric(namespace, "timedout", "Total number of timed out requests", constLabels),
 			"unknown":  newResolverMetric(namespace, "unknown", "Total requests completed with an unknown error", constLabels),
 		},
-		upMetric: newUpMetric(namespace),
+		upMetric: newUpMetric(namespace, constLabels),
 	}
 }
 

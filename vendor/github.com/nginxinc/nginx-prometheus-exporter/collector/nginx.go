@@ -29,7 +29,7 @@ func NewNginxCollector(nginxClient *client.NginxClient, namespace string, constL
 			"connections_waiting":  newGlobalMetric(namespace, "connections_waiting", "Idle client connections", constLabels),
 			"http_requests_total":  newGlobalMetric(namespace, "http_requests_total", "Total http requests", constLabels),
 		},
-		upMetric: newUpMetric(namespace),
+		upMetric: newUpMetric(namespace, constLabels),
 	}
 }
 
