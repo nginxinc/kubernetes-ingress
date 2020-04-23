@@ -21,12 +21,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/spiffe/go-spiffe/workload"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -38,15 +38,19 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/record"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
+
 	"sort"
+
+	api_v1 "k8s.io/api/core/v1"
+	extensions "k8s.io/api/extensions/v1beta1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
-	api_v1 "k8s.io/api/core/v1"
-	extensions "k8s.io/api/extensions/v1beta1"
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -102,6 +106,8 @@ type LoadBalancerController struct {
 	metricsCollector              collectors.ControllerCollector
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
+	spiffeController              *spiffeController
+	syncLock                      sync.Mutex
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -129,6 +135,7 @@ type NewLoadBalancerControllerInput struct {
 	MetricsCollector             collectors.ControllerCollector
 	GlobalConfigurationValidator *validation.GlobalConfigurationValidator
 	TransportServerValidator     *validation.TransportServerValidator
+	SpireAgentAddress            string
 }
 
 // NewLoadBalancerController creates a controller
@@ -163,9 +170,15 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		api_v1.EventSource{Component: "nginx-ingress-controller"})
 
 	lbc.syncQueue = newTaskQueue(lbc.sync)
+	if input.SpireAgentAddress != "" {
+		var err error
+		lbc.spiffeController, err = NewSpiffeController(lbc.syncSVIDRotation, input.SpireAgentAddress)
+		if err != nil {
+			glog.Fatalf("failed to create Spiffe Controller: %v", err)
+		}
+	}
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
-
 	lbc.statusUpdater = &statusUpdater{
 		client:              input.KubeClient,
 		namespace:           input.ControllerNamespace,
@@ -373,6 +386,13 @@ func (lbc *LoadBalancerController) addTransportServerHandler(handlers cache.Reso
 func (lbc *LoadBalancerController) Run() {
 	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
 
+	if lbc.spiffeController != nil {
+		err := lbc.spiffeController.Start(lbc.ctx.Done())
+		if err != nil {
+			glog.Fatal(err)
+		}
+	}
+
 	if lbc.leaderElector != nil {
 		go lbc.leaderElector.Run(lbc.ctx)
 	}
@@ -392,6 +412,7 @@ func (lbc *LoadBalancerController) Run() {
 	if lbc.watchGlobalConfiguration {
 		go lbc.globalConfigurationController.Run(lbc.ctx.Done())
 	}
+
 	go lbc.syncQueue.Run(time.Second, lbc.ctx.Done())
 	<-lbc.ctx.Done()
 }
@@ -663,7 +684,10 @@ func (lbc *LoadBalancerController) transportServersToTransportServerExes(transpo
 
 func (lbc *LoadBalancerController) sync(task task) {
 	glog.V(3).Infof("Syncing %v", task.Key)
-
+	if lbc.spiffeController != nil {
+		lbc.syncLock.Lock()
+		defer lbc.syncLock.Unlock()
+	}
 	switch task.Kind {
 	case ingress:
 		lbc.syncIng(task)
@@ -2406,4 +2430,14 @@ func (lbc *LoadBalancerController) createMergableIngresses(master *extensions.In
 
 func formatWarningMessages(w []string) string {
 	return strings.Join(w, "; ")
+}
+
+func (lbc *LoadBalancerController) syncSVIDRotation(svidResponse *workload.X509SVIDs) {
+	lbc.syncLock.Lock()
+	defer lbc.syncLock.Unlock()
+	glog.V(3).Info("Rotating SPIFFE Certificates")
+	err := lbc.configurator.AddOrUpdateSpiffeCerts(svidResponse)
+	if err != nil {
+		glog.Errorf("failed to rotate SPIFFE certificates: %v", err)
+	}
 }

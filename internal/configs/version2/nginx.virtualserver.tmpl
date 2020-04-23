@@ -145,7 +145,15 @@ server {
         proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Port $server_port;
         proxy_set_header X-Forwarded-Proto {{ with $s.TLSRedirect }}{{ .BasedOn }}{{ else }}$scheme{{ end }};
-
+        {{ if $.SpiffeCerts }}
+        proxy_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
+        proxy_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
+        proxy_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;
+        proxy_ssl_server_name on;
+        proxy_ssl_verify on;
+        proxy_ssl_verify_depth 25;
+        proxy_ssl_name {{ $l.ProxySSLName }};
+        {{ end }}
         proxy_pass {{ $l.ProxyPass }};
         proxy_next_upstream {{ $l.ProxyNextUpstream }};
         proxy_next_upstream_timeout {{ $l.ProxyNextUpstreamTimeout }};

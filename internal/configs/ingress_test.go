@@ -2,6 +2,7 @@ package configs
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
@@ -21,7 +22,7 @@ func TestGenerateNginxCfg(t *testing.T) {
 		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
 	}
 
-	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", false)
+	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", &StaticConfigParams{})
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result, expected)
@@ -62,7 +63,7 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
 	}
 
-	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, true, false, "/etc/nginx/secrets/default-cafe-jwk", false)
+	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, true, false, "/etc/nginx/secrets/default-cafe-jwk", &StaticConfigParams{})
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -79,7 +80,7 @@ func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 		"cafe.example.com": pemFileNameForMissingTLSSecret,
 	}
 
-	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", false)
+	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", &StaticConfigParams{})
 
 	expectedCiphers := "NULL"
 	resultCiphers := result.Servers[0].SSLCiphers
@@ -95,7 +96,7 @@ func TestGenerateNginxCfgWithWildcardTLSSecret(t *testing.T) {
 		"cafe.example.com": pemFileNameForWildcardTLSSecret,
 	}
 
-	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", false)
+	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", &StaticConfigParams{})
 
 	resultServer := result.Servers[0]
 	if !reflect.DeepEqual(resultServer.SSLCertificate, pemFileNameForWildcardTLSSecret) {
@@ -168,6 +169,7 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 						ProxySendTimeout:    "60s",
 						ClientMaxBodySize:   "1m",
 						ProxyBuffering:      true,
+						ProxySSLName:        "coffee-svc.default.svc",
 					},
 					{
 						Path:                "/tea",
@@ -177,6 +179,7 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 						ProxySendTimeout:    "60s",
 						ClientMaxBodySize:   "1m",
 						ProxyBuffering:      true,
+						ProxySSLName:        "tea-svc.default.svc",
 					},
 				},
 				SSL:               true,
@@ -268,11 +271,37 @@ func TestGenerateNginxCfgForMergeableIngresses(t *testing.T) {
 	minionJwtKeyFileNames := make(map[string]string)
 	configParams := NewDefaultConfigParams()
 
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, "", minionJwtKeyFileNames, configParams, false, false, false)
+	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, "", minionJwtKeyFileNames, configParams, false, false, &StaticConfigParams{})
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result, expected)
 	}
+}
+
+func TestGenerateNginxConfigForCrossNamespaceMergeableIngresses(t *testing.T) {
+	mergeableIngresses := createMergeableCafeIngress()
+	// change the namespaces of the minions to be coffee and tea
+	for i, m := range mergeableIngresses.Minions {
+		if strings.Contains(m.Ingress.Name, "coffee") {
+			mergeableIngresses.Minions[i].Ingress.Namespace = "coffee"
+		} else {
+			mergeableIngresses.Minions[i].Ingress.Namespace = "tea"
+		}
+	}
+
+	expected := createExpectedConfigForCrossNamespaceMergeableCafeIngress()
+	masterPems := map[string]string{
+		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
+	}
+	minionJwtKeyFileNames := make(map[string]string)
+	configParams := NewDefaultConfigParams()
+
+	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, "", minionJwtKeyFileNames, configParams, false, false, &StaticConfigParams{})
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result, expected)
+	}
+
 }
 
 func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
@@ -337,7 +366,7 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	configParams := NewDefaultConfigParams()
 	isPlus := true
 
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, "/etc/nginx/secrets/default-cafe-jwk", minionJwtKeyFileNames, configParams, isPlus, false, false)
+	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, "/etc/nginx/secrets/default-cafe-jwk", minionJwtKeyFileNames, configParams, isPlus, false, &StaticConfigParams{})
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -531,6 +560,7 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 								"nginx.org/mergeable-ingress-type": "minion",
 							},
 						},
+						ProxySSLName: "coffee-svc.default.svc",
 					},
 					{
 						Path:                "/tea",
@@ -548,6 +578,7 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 								"nginx.org/mergeable-ingress-type": "minion",
 							},
 						},
+						ProxySSLName: "tea-svc.default.svc",
 					},
 				},
 				SSL:               true,
@@ -572,4 +603,128 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 	}
 
 	return expected
+}
+
+func createExpectedConfigForCrossNamespaceMergeableCafeIngress() version1.IngressNginxConfig {
+	coffeeUpstream := version1.Upstream{
+		Name:             "coffee-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: "256k",
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "10.0.0.1",
+				Port:        "80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+	teaUpstream := version1.Upstream{
+		Name:             "tea-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80",
+		LBMethod:         "random two least_conn",
+		UpstreamZoneSize: "256k",
+		UpstreamServers: []version1.UpstreamServer{
+			{
+				Address:     "10.0.0.2",
+				Port:        "80",
+				MaxFails:    1,
+				MaxConns:    0,
+				FailTimeout: "10s",
+			},
+		},
+	}
+	expected := version1.IngressNginxConfig{
+		Upstreams: []version1.Upstream{
+			coffeeUpstream,
+			teaUpstream,
+		},
+		Servers: []version1.Server{
+			{
+				Name:         "cafe.example.com",
+				ServerTokens: "on",
+				Locations: []version1.Location{
+					{
+						Path:                "/coffee",
+						Upstream:            coffeeUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &version1.Ingress{
+							Name:      "cafe-ingress-coffee-minion",
+							Namespace: "coffee",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
+						ProxySSLName: "coffee-svc.coffee.svc",
+					},
+					{
+						Path:                "/tea",
+						Upstream:            teaUpstream,
+						ProxyConnectTimeout: "60s",
+						ProxyReadTimeout:    "60s",
+						ProxySendTimeout:    "60s",
+						ClientMaxBodySize:   "1m",
+						ProxyBuffering:      true,
+						MinionIngress: &version1.Ingress{
+							Name:      "cafe-ingress-tea-minion",
+							Namespace: "tea",
+							Annotations: map[string]string{
+								"kubernetes.io/ingress.class":      "nginx",
+								"nginx.org/mergeable-ingress-type": "minion",
+							},
+						},
+						ProxySSLName: "tea-svc.tea.svc",
+					},
+				},
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+				StatusZone:        "cafe.example.com",
+				HSTSMaxAge:        2592000,
+				Ports:             []int{80},
+				SSLPorts:          []int{443},
+				SSLRedirect:       true,
+				HealthChecks:      make(map[string]version1.HealthCheck),
+			},
+		},
+		Ingress: version1.Ingress{
+			Name:      "cafe-ingress-master",
+			Namespace: "default",
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class":      "nginx",
+				"nginx.org/mergeable-ingress-type": "master",
+			},
+		},
+	}
+
+	return expected
+}
+
+func TestGenerateNginxCfgForSpiffe(t *testing.T) {
+	cafeIngressEx := createCafeIngressEx()
+	configParams := NewDefaultConfigParams()
+	configParams.SpiffeCerts = true
+
+	expected := createExpectedConfigForCafeIngressEx()
+	expected.SpiffeCerts = true
+	for _, s := range expected.Servers {
+		for i := range s.Locations {
+			s.Locations[i].SSL = true
+		}
+	}
+
+	pems := map[string]string{
+		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
+	}
+
+	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", &StaticConfigParams{SpiffeCerts: true})
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result, expected)
+	}
 }

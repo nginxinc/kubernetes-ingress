@@ -166,4 +166,10 @@ Below we describe the available command-line arguments:
 	Sets the port where the Prometheus metrics are exposed.
 
 	Format: ``[1023 - 65535]`` (default 9113)
+
+.. option:: -spire-agent-address
+
+	Specifies the address of a running Spire agent. **For use with NGINX Service Mesh only**.
+
+	- If the argument is set, but the Ingress Controller is unable to connect to the Spire Agent, the Ingress Controller will fail to start.
 ```

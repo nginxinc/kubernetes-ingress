@@ -58,18 +58,21 @@ func GenerateEndpointsKey(serviceNamespace string, serviceName string, subselect
 }
 
 type upstreamNamer struct {
-	prefix string
+	prefix    string
+	namespace string
 }
 
 func newUpstreamNamerForVirtualServer(virtualServer *conf_v1.VirtualServer) *upstreamNamer {
 	return &upstreamNamer{
-		prefix: fmt.Sprintf("vs_%s_%s", virtualServer.Namespace, virtualServer.Name),
+		prefix:    fmt.Sprintf("vs_%s_%s", virtualServer.Namespace, virtualServer.Name),
+		namespace: virtualServer.Namespace,
 	}
 }
 
 func newUpstreamNamerForVirtualServerRoute(virtualServer *conf_v1.VirtualServer, virtualServerRoute *conf_v1.VirtualServerRoute) *upstreamNamer {
 	return &upstreamNamer{
-		prefix: fmt.Sprintf("vs_%s_%s_vsr_%s_%s", virtualServer.Namespace, virtualServer.Name, virtualServerRoute.Namespace, virtualServerRoute.Name),
+		prefix:    fmt.Sprintf("vs_%s_%s_vsr_%s_%s", virtualServer.Namespace, virtualServer.Name, virtualServerRoute.Namespace, virtualServerRoute.Name),
+		namespace: virtualServerRoute.Namespace,
 	}
 }
 
@@ -130,6 +133,7 @@ type virtualServerConfigurator struct {
 	isResolverConfigured bool
 	isTLSPassthrough     bool
 	warnings             Warnings
+	spiffeCerts          bool
 }
 
 func (vsc *virtualServerConfigurator) addWarningf(obj runtime.Object, msgFmt string, args ...interface{}) {
@@ -141,13 +145,14 @@ func (vsc *virtualServerConfigurator) clearWarnings() {
 }
 
 // newVirtualServerConfigurator creates a new VirtualServerConfigurator
-func newVirtualServerConfigurator(cfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, isTLSPassthrough bool) *virtualServerConfigurator {
+func newVirtualServerConfigurator(cfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams) *virtualServerConfigurator {
 	return &virtualServerConfigurator{
 		cfgParams:            cfgParams,
 		isPlus:               isPlus,
 		isResolverConfigured: isResolverConfigured,
-		isTLSPassthrough:     isTLSPassthrough,
+		isTLSPassthrough:     staticParams.TLSPassthrough,
 		warnings:             make(map[runtime.Object][]string),
+		spiffeCerts:          staticParams.SpiffeCerts,
 	}
 }
 
@@ -180,7 +185,6 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 	crUpstreams := make(map[string]conf_v1.Upstream)
 
 	virtualServerUpstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
-
 	var upstreams []version2.Upstream
 	var statusMatches []version2.StatusMatch
 	var healthChecks []version2.HealthCheck
@@ -195,6 +199,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
 		ups := vsc.generateUpstream(virtualServerEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
 		upstreams = append(upstreams, ups)
+
+		u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
 		crUpstreams[upstreamName] = u
 
 		if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
@@ -216,6 +222,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
 			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
 			upstreams = append(upstreams, ups)
+			u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
 			crUpstreams[upstreamName] = u
 
 			if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
@@ -274,7 +281,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		} else {
 			upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(r.Action.Pass)
 			upstream := crUpstreams[upstreamName]
-			loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, r.ErrorPages, false, errorPageIndex)
+			proxySSLName := generateProxySSLName(upstream.Service, virtualServerEx.VirtualServer.Namespace)
+			loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, r.ErrorPages, false, errorPageIndex, proxySSLName)
 			locations = append(locations, loc)
 		}
 	}
@@ -313,7 +321,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			} else {
 				upstreamName := upstreamNamer.GetNameForUpstream(r.Action.Pass)
 				upstream := crUpstreams[upstreamName]
-				loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false, errorPageIndex)
+				proxySSLName := generateProxySSLName(upstream.Service, vsr.Namespace)
+				loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false, errorPageIndex, proxySSLName)
 				locations = append(locations, loc)
 			}
 		}
@@ -341,6 +350,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			ErrorPageLocations:        errorPageLocations,
 			TLSPassthrough:            vsc.isTLSPassthrough,
 		},
+		SpiffeCerts: vsc.spiffeCerts,
 	}
 
 	return vscfg, vsc.warnings
@@ -572,7 +582,7 @@ func generateReturnBlock(text string, code int, defaultCode int) *version2.Retur
 }
 
 func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, action *conf_v1.Action,
-	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int) version2.Location {
+	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int, proxySSLName string) version2.Location {
 	if action.Redirect != nil {
 		returnBlock := generateReturnBlock(action.Redirect.URL, action.Redirect.Code, 301)
 		return generateLocationForReturnBlock(path, cfgParams.LocationSnippets, returnBlock, "")
@@ -587,11 +597,11 @@ func generateLocation(path string, upstreamName string, upstream conf_v1.Upstrea
 		return generateLocationForReturnBlock(path, cfgParams.LocationSnippets, returnBlock, defaultType)
 	}
 
-	return generateLocationForProxying(path, upstreamName, upstream, cfgParams, errorPages, internal, errPageIndex)
+	return generateLocationForProxying(path, upstreamName, upstream, cfgParams, errorPages, internal, errPageIndex, proxySSLName)
 }
 
 func generateLocationForProxying(path string, upstreamName string, upstream conf_v1.Upstream,
-	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int) version2.Location {
+	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int, proxySSLName string) version2.Location {
 	return version2.Location{
 		Path:                     generatePath(path),
 		Internal:                 internal,
@@ -611,6 +621,7 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 		ProxyInterceptErrors:     generateProxyInterceptErrors(errorPages),
 		HasKeepalive:             upstreamHasKeepalive(upstream, cfgParams),
 		ErrorPages:               generateErrorPages(errPageIndex, errorPages),
+		ProxySSLName:             proxySSLName,
 	}
 }
 
@@ -658,7 +669,8 @@ func generateSplits(splits []conf_v1.Split, upstreamNamer *upstreamNamer, crUpst
 		path := fmt.Sprintf("/%vsplits_%d_split_%d", internalLocationPrefix, scIndex, i)
 		upstreamName := upstreamNamer.GetNameForUpstream(s.Action.Pass)
 		upstream := crUpstreams[upstreamName]
-		loc := generateLocation(path, upstreamName, upstream, s.Action, cfgParams, errorPages, true, errPageIndex)
+		proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
+		loc := generateLocation(path, upstreamName, upstream, s.Action, cfgParams, errorPages, true, errPageIndex, proxySSLName)
 		locations = append(locations, loc)
 	}
 
@@ -766,7 +778,8 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 			path := fmt.Sprintf("/%vmatches_%d_match_%d", internalLocationPrefix, index, i)
 			upstreamName := upstreamNamer.GetNameForUpstream(m.Action.Pass)
 			upstream := crUpstreams[upstreamName]
-			loc := generateLocation(path, upstreamName, upstream, m.Action, cfgParams, errorPages, true, errPageIndex)
+			proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
+			loc := generateLocation(path, upstreamName, upstream, m.Action, cfgParams, errorPages, true, errPageIndex, proxySSLName)
 			locations = append(locations, loc)
 		}
 	}
@@ -780,7 +793,8 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 		path := fmt.Sprintf("/%vmatches_%d_default", internalLocationPrefix, index)
 		upstreamName := upstreamNamer.GetNameForUpstream(route.Action.Pass)
 		upstream := crUpstreams[upstreamName]
-		loc := generateLocation(path, upstreamName, upstream, route.Action, cfgParams, errorPages, true, errPageIndex)
+		proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
+		loc := generateLocation(path, upstreamName, upstream, route.Action, cfgParams, errorPages, true, errPageIndex, proxySSLName)
 		locations = append(locations, loc)
 	}
 
@@ -921,12 +935,12 @@ func createEndpointsFromUpstream(upstream version2.Upstream) []string {
 	return endpoints
 }
 
-func createUpstreamsForPlus(virtualServerEx *VirtualServerEx, baseCfgParams *ConfigParams) []version2.Upstream {
+func createUpstreamsForPlus(virtualServerEx *VirtualServerEx, baseCfgParams *ConfigParams, staticParams *StaticConfigParams) []version2.Upstream {
 	var upstreams []version2.Upstream
 
 	isPlus := true
 	upstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
-	vsc := newVirtualServerConfigurator(baseCfgParams, isPlus, false, false)
+	vsc := newVirtualServerConfigurator(baseCfgParams, isPlus, false, staticParams)
 
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
 		isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(virtualServerEx.VirtualServer.Namespace, u.Service)]
@@ -1066,4 +1080,12 @@ func generateErrorPageLocations(errPageIndex int, errorPages []conf_v1.ErrorPage
 	}
 
 	return errorPageLocations
+}
+
+func generateProxySSLName(svcName, ns string) string {
+	return fmt.Sprintf("%s.%s.svc", svcName, ns)
+}
+
+func isTLSEnabled(u conf_v1.Upstream, spiffeCerts bool) bool {
+	return u.TLS.Enable || spiffeCerts
 }

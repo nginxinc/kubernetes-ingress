@@ -2,10 +2,11 @@ package version1
 
 // IngressNginxConfig describes an NGINX configuration.
 type IngressNginxConfig struct {
-	Upstreams []Upstream
-	Servers   []Server
-	Keepalive string
-	Ingress   Ingress
+	Upstreams   []Upstream
+	Servers     []Server
+	Keepalive   string
+	Ingress     Ingress
+	SpiffeCerts bool
 }
 
 // Ingress holds information about an Ingress resource.
@@ -118,6 +119,7 @@ type Location struct {
 	ProxyBuffers         string
 	ProxyBufferSize      string
 	ProxyMaxTempFileSize string
+	ProxySSLName         string
 	JWTAuth              *JWTAuth
 
 	MinionIngress *Ingress

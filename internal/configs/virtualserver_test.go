@@ -451,6 +451,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
 				},
 				{
 					Path:                     "/tea-latest",
@@ -459,6 +460,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
 				},
 				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
 				{
@@ -476,6 +478,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 							ResponseCode: 301,
 						},
 					},
+					ProxySSLName: "coffee-svc.default.svc",
 				},
 				{
 					Path:                     "/coffee",
@@ -484,6 +487,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
+					ProxySSLName:             "coffee-svc.default.svc",
 				},
 				{
 					Path:                     "/subtea",
@@ -492,6 +496,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
+					ProxySSLName:             "sub-tea-svc.default.svc",
 				},
 
 				{
@@ -509,6 +514,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 							ResponseCode: 301,
 						},
 					},
+					ProxySSLName: "coffee-svc.default.svc",
 				},
 				{
 					Path:                     "/coffee-errorpage-subroute-defined",
@@ -525,6 +531,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 							ResponseCode: 200,
 						},
 					},
+					ProxySSLName: "coffee-svc.default.svc",
 				},
 			},
 			ErrorPageLocations: []version2.ErrorPageLocation{
@@ -541,9 +548,103 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
-	isTLSPassthrough := true
 	tlsPemFileName := ""
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, isTLSPassthrough)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{TLSPassthrough: true})
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
+func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
+	virtualServerEx := VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/tea",
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc:80": {
+				"10.0.0.20:80",
+			},
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		ServerTokens:    "off",
+		Keepalive:       16,
+		ServerSnippets:  []string{"# server snippet"},
+		ProxyProtocol:   true,
+		SetRealIPFrom:   []string{"0.0.0.0/0"},
+		RealIPHeader:    "X-Real-IP",
+		RealIPRecursive: true,
+	}
+
+	expected := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				Name: "vs_default_cafe_tea",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+				Keepalive: 16,
+			},
+		},
+		Server: version2.Server{
+			ServerName:      "cafe.example.com",
+			StatusZone:      "cafe.example.com",
+			ProxyProtocol:   true,
+			ServerTokens:    "off",
+			SetRealIPFrom:   []string{"0.0.0.0/0"},
+			RealIPHeader:    "X-Real-IP",
+			RealIPRecursive: true,
+			Snippets:        []string{"# server snippet"},
+			TLSPassthrough:  true,
+			Locations: []version2.Location{
+				{
+					Path:                     "/tea",
+					ProxyPass:                "https://vs_default_cafe_tea",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             true,
+					ProxySSLName:             "tea-svc.default.svc",
+				},
+			},
+		},
+		SpiffeCerts: true,
+	}
+
+	isPlus := false
+	isResolverConfigured := false
+	tlsPemFileName := ""
+	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, SpiffeCerts: true}
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams)
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
@@ -745,6 +846,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
+					ProxySSLName:             "tea-svc-v1.default.svc",
 				},
 				{
 					Path:                     "/internal_location_splits_0_split_1",
@@ -753,6 +855,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
+					ProxySSLName:             "tea-svc-v2.default.svc",
 				},
 				{
 					Path:                     "/internal_location_splits_1_split_0",
@@ -761,6 +864,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
+					ProxySSLName:             "coffee-svc-v1.default.svc",
 				},
 				{
 					Path:                     "/internal_location_splits_1_split_1",
@@ -769,6 +873,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
+					ProxySSLName:             "coffee-svc-v2.default.svc",
 				},
 			},
 		},
@@ -776,9 +881,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
-	isTLSPassthrough := false
 	tlsPemFileName := ""
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, isTLSPassthrough)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
@@ -1013,6 +1117,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
+					ProxySSLName:             "tea-svc-v2.default.svc",
 				},
 				{
 					Path:                     "/internal_location_matches_0_default",
@@ -1021,6 +1126,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
+					ProxySSLName:             "tea-svc-v1.default.svc",
 				},
 				{
 					Path:                     "/internal_location_matches_1_match_0",
@@ -1029,6 +1135,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
+					ProxySSLName:             "coffee-svc-v2.default.svc",
 				},
 				{
 					Path:                     "/internal_location_matches_1_default",
@@ -1037,6 +1144,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					ProxyNextUpstreamTimeout: "0s",
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
+					ProxySSLName:             "coffee-svc-v1.default.svc",
 				},
 			},
 		},
@@ -1044,9 +1152,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
-	isTLSPassthrough := false
 	tlsPemFileName := ""
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, isTLSPassthrough)
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
@@ -1087,7 +1194,7 @@ func TestGenerateUpstream(t *testing.T) {
 		UpstreamZoneSize: "256k",
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, false, false, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{})
 	result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, upstream, false, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -1156,7 +1263,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, false)
+		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{})
 		result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, test.upstream, false, endpoints)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
@@ -1184,7 +1291,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 		Resolve: true,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, true, true, false)
+	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{})
 	result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, upstream, true, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -1341,7 +1448,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 		ProxyNextUpstreamTries:   0,
 	}
 
-	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0)
+	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0, "")
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateLocationForProxying() returned %v but expected %v", result, expected)
 	}
@@ -1714,7 +1821,7 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 		},
 	}
 
-	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{})
+	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{}, &StaticConfigParams{})
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("createUpstreamsForPlus returned \n%v but expected \n%v", result, expected)
 	}
@@ -1782,7 +1889,14 @@ func TestGenerateSplits(t *testing.T) {
 	variableNamer := newVariableNamer(&virtualServer)
 	scIndex := 1
 	cfgParams := ConfigParams{}
-	crUpstreams := make(map[string]conf_v1.Upstream)
+	crUpstreams := map[string]conf_v1.Upstream{
+		"vs_default_cafe_coffee-v1": {
+			Service: "coffee-v1",
+		},
+		"vs_default_cafe_coffee-v2": {
+			Service: "coffee-v2",
+		},
+	}
 	errorPages := []conf_v1.ErrorPage{
 		{
 			Codes: []int{400, 500},
@@ -1848,6 +1962,7 @@ func TestGenerateSplits(t *testing.T) {
 					ResponseCode: 301,
 				},
 			},
+			ProxySSLName: "coffee-v1.default.svc",
 		},
 		{
 			Path:                     "/internal_location_splits_1_split_1",
@@ -1869,6 +1984,7 @@ func TestGenerateSplits(t *testing.T) {
 					ResponseCode: 301,
 				},
 			},
+			ProxySSLName: "coffee-v2.default.svc",
 		},
 	}
 
@@ -1935,6 +2051,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
 				Internal:                 true,
+				ProxySSLName:             "coffee-v1.default.svc",
 			},
 			{
 				Path:                     "/internal_location_splits_1_split_1",
@@ -1943,6 +2060,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				ProxyNextUpstreamTimeout: "0s",
 				ProxyNextUpstreamTries:   0,
 				Internal:                 true,
+				ProxySSLName:             "coffee-v2.default.svc",
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -1952,8 +2070,16 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	}
 
 	cfgParams := ConfigParams{}
+	crUpstreams := map[string]conf_v1.Upstream{
+		"vs_default_cafe_coffee-v1": {
+			Service: "coffee-v1",
+		},
+		"vs_default_cafe_coffee-v2": {
+			Service: "coffee-v2",
+		},
+	}
 
-	result := generateDefaultSplitsConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, &cfgParams, route.ErrorPages, 0)
+	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams, route.ErrorPages, 0)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -2219,6 +2345,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
+				ProxySSLName: "coffee-v1.default.svc",
 			},
 			{
 				Path:                     "/internal_location_splits_2_split_0",
@@ -2240,6 +2367,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
+				ProxySSLName: "coffee-v1.default.svc",
 			},
 			{
 				Path:                     "/internal_location_splits_2_split_1",
@@ -2261,6 +2389,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
+				ProxySSLName: "coffee-v2.default.svc",
 			},
 			{
 				Path:                     "/internal_location_matches_1_default",
@@ -2282,6 +2411,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
+				ProxySSLName: "tea.default.svc",
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -2307,8 +2437,13 @@ func TestGenerateMatchesConfig(t *testing.T) {
 	}
 
 	cfgParams := ConfigParams{}
+	crUpstreams := map[string]conf_v1.Upstream{
+		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
+		"vs_default_cafe_coffee-v2": {Service: "coffee-v2"},
+		"vs_default_cafe_tea":       {Service: "tea"},
+	}
 
-	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, scIndex, &cfgParams, errorPages, 2)
+	result := generateMatchesConfig(route, upstreamNamer, crUpstreams, variableNamer, index, scIndex, &cfgParams, errorPages, 2)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -2488,6 +2623,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 					},
 				},
 				ProxyInterceptErrors: true,
+				ProxySSLName:         "coffee-v1.default.svc",
 			},
 			{
 				Path:                     "/internal_location_splits_2_split_1",
@@ -2509,6 +2645,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 					},
 				},
 				ProxyInterceptErrors: true,
+				ProxySSLName:         "coffee-v2.default.svc",
 			},
 			{
 				Path:                     "/internal_location_splits_3_split_0",
@@ -2530,6 +2667,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 					},
 				},
 				ProxyInterceptErrors: true,
+				ProxySSLName:         "coffee-v2.default.svc",
 			},
 			{
 				Path:                     "/internal_location_splits_3_split_1",
@@ -2551,6 +2689,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 					},
 				},
 				ProxyInterceptErrors: true,
+				ProxySSLName:         "coffee-v1.default.svc",
 			},
 			{
 				Path:                     "/internal_location_splits_4_split_0",
@@ -2572,6 +2711,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 					},
 				},
 				ProxyInterceptErrors: true,
+				ProxySSLName:         "coffee-v1.default.svc",
 			},
 			{
 				Path:                     "/internal_location_splits_4_split_1",
@@ -2593,6 +2733,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 					},
 				},
 				ProxyInterceptErrors: true,
+				ProxySSLName:         "coffee-v2.default.svc",
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -2646,8 +2787,11 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 	}
 
 	cfgParams := ConfigParams{}
-
-	result := generateMatchesConfig(route, upstreamNamer, map[string]conf_v1.Upstream{}, variableNamer, index, scIndex, &cfgParams, errorPages, 0)
+	crUpstreams := map[string]conf_v1.Upstream{
+		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
+		"vs_default_cafe_coffee-v2": {Service: "coffee-v2"},
+	}
+	result := generateMatchesConfig(route, upstreamNamer, crUpstreams, variableNamer, index, scIndex, &cfgParams, errorPages, 0)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -3186,10 +3330,8 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 		},
 	}
 
-	isTLSPassthrough := false
-
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, test.isResolverConfigured, isTLSPassthrough)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, test.isResolverConfigured, &StaticConfigParams{})
 		result := vsc.generateEndpointsForUpstream(test.vsEx.VirtualServer, namespace, test.upstream, test.vsEx)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateEndpointsForUpstream(isPlus=%v, isResolverConfigured=%v) returned %v, but expected %v for case: %v",
@@ -3224,7 +3366,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	}
 
 	for _, lbMethod := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{})
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
@@ -3259,7 +3401,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{})
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
@@ -3345,7 +3487,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, false)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{})
 		result := vsc.generateUpstream(&conf_v1.VirtualServer{}, test.name, test.upstream, false, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
@@ -3631,4 +3773,64 @@ func TestGenerateErrorPageLocations(t *testing.T) {
 			t.Errorf("generateErrorPageLocations(%v, %v) returned %v but expected %v", test.upstreamName, test.errorPages, result, test.expected)
 		}
 	}
+}
+
+func TestGenerateProxySSLName(t *testing.T) {
+	result := generateProxySSLName("coffee-v1", "default")
+	if result != "coffee-v1.default.svc" {
+		t.Errorf("generateProxySSLName(coffee-v1, default) returned %v but expected coffee-v1.default.svc", result)
+	}
+}
+
+func TestIsTLSEnabled(t *testing.T) {
+	tests := []struct {
+		upstream   conf_v1.Upstream
+		spiffeCert bool
+		expected   bool
+	}{
+		{
+			upstream: conf_v1.Upstream{
+				TLS: conf_v1.UpstreamTLS{
+					Enable: false,
+				},
+			},
+			spiffeCert: false,
+			expected:   false,
+		},
+		{
+			upstream: conf_v1.Upstream{
+				TLS: conf_v1.UpstreamTLS{
+					Enable: false,
+				},
+			},
+			spiffeCert: true,
+			expected:   true,
+		},
+		{
+			upstream: conf_v1.Upstream{
+				TLS: conf_v1.UpstreamTLS{
+					Enable: true,
+				},
+			},
+			spiffeCert: true,
+			expected:   true,
+		},
+		{
+			upstream: conf_v1.Upstream{
+				TLS: conf_v1.UpstreamTLS{
+					Enable: true,
+				},
+			},
+			spiffeCert: false,
+			expected:   true,
+		},
+	}
+
+	for _, test := range tests {
+		result := isTLSEnabled(test.upstream, test.spiffeCert)
+		if result != test.expected {
+			t.Errorf("isTLSEnabled(%v, %v) returned %v but expected %v", test.upstream, test.spiffeCert, result, test.expected)
+		}
+	}
+
 }

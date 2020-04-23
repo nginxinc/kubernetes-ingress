@@ -139,6 +139,10 @@ The external address of the service is used when reporting the status of Ingress
 
 	enableTLSPassthrough = flag.Bool("enable-tls-passthrough", false,
 		"Enable TLS Passthrough on port 443. Requires -enable-custom-resources")
+
+	spireAgentAddress = flag.String("spire-agent-address", "",
+		`Specifies the address of the running Spire agent. For use with NGINX Service Mesh only. If the flag is set,
+			but the Ingress Controller is not able to connect with the Spire Agent, the Ingress Controller will fail to start.`)
 )
 
 func main() {
@@ -388,6 +392,7 @@ func main() {
 		NginxStatusPort:                *nginxStatusPort,
 		StubStatusOverUnixSocketForOSS: *enablePrometheusMetrics,
 		TLSPassthrough:                 *enableTLSPassthrough,
+		SpiffeCerts:                    *spireAgentAddress != "",
 	}
 
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
@@ -467,6 +472,7 @@ func main() {
 		MetricsCollector:             controllerCollector,
 		GlobalConfigurationValidator: globalConfigurationValidator,
 		TransportServerValidator:     transportServerValidator,
+		SpireAgentAddress:            *spireAgentAddress,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 )
 
 const emptyHost = ""
@@ -44,7 +45,7 @@ type MergeableIngresses struct {
 }
 
 func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, baseCfgParams *ConfigParams, isPlus bool,
-	isResolverConfigured bool, jwtKeyFileName string, isTLSPassthrough bool) version1.IngressNginxConfig {
+	isResolverConfigured bool, jwtKeyFileName string, staticParams *StaticConfigParams) version1.IngressNginxConfig {
 	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus)
 	wsServices := getWebsocketServices(ingEx)
 	spServices := getSessionPersistenceServices(ingEx)
@@ -105,7 +106,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, b
 			ServerSnippets:        cfgParams.ServerSnippets,
 			Ports:                 cfgParams.Ports,
 			SSLPorts:              cfgParams.SSLPorts,
-			TLSPassthrough:        isTLSPassthrough,
+			TLSPassthrough:        staticParams.TLSPassthrough,
 		}
 
 		if pemFile, ok := pems[serverName]; ok {
@@ -164,8 +165,10 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, b
 				upstreams[upsName] = upstream
 			}
 
+			ssl := sslServices[path.Backend.ServiceName] || staticParams.SpiffeCerts
+			proxySSLName := generateProxySSLName(path.Backend.ServiceName, ingEx.Ingress.Namespace)
 			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &cfgParams, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
-				sslServices[path.Backend.ServiceName], grpcServices[path.Backend.ServiceName])
+				ssl, grpcServices[path.Backend.ServiceName], proxySSLName)
 			if isMinion && ingEx.JWTKey.Name != "" {
 				loc.JWTAuth = &version1.JWTAuth{
 					Key:   jwtKeyFileName,
@@ -190,9 +193,11 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, b
 
 		if !rootLocation && ingEx.Ingress.Spec.Backend != nil {
 			upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
+			ssl := sslServices[ingEx.Ingress.Spec.Backend.ServiceName] || staticParams.SpiffeCerts
+			proxySSLName := generateProxySSLName(ingEx.Ingress.Spec.Backend.ServiceName, ingEx.Ingress.Namespace)
 
 			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &cfgParams, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName],
-				sslServices[ingEx.Ingress.Spec.Backend.ServiceName], grpcServices[ingEx.Ingress.Spec.Backend.ServiceName])
+				ssl, grpcServices[ingEx.Ingress.Spec.Backend.ServiceName], proxySSLName)
 			locations = append(locations, loc)
 
 			if cfgParams.HealthCheckEnabled {
@@ -227,10 +232,11 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, b
 			Namespace:   ingEx.Ingress.Namespace,
 			Annotations: ingEx.Ingress.Annotations,
 		},
+		SpiffeCerts: staticParams.SpiffeCerts,
 	}
 }
 
-func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, websocket bool, rewrite string, ssl bool, grpc bool) version1.Location {
+func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, websocket bool, rewrite string, ssl bool, grpc bool, proxySSLName string) version1.Location {
 	loc := version1.Location{
 		Path:                 path,
 		Upstream:             upstream,
@@ -246,6 +252,7 @@ func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, 
 		ProxyBuffers:         cfg.ProxyBuffers,
 		ProxyBufferSize:      cfg.ProxyBufferSize,
 		ProxyMaxTempFileSize: cfg.ProxyMaxTempFileSize,
+		ProxySSLName:         proxySSLName,
 		LocationSnippets:     cfg.LocationSnippets,
 	}
 
@@ -365,7 +372,7 @@ func upstreamMapToSlice(upstreams map[string]version1.Upstream) []version1.Upstr
 }
 
 func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, masterPems map[string]string, masterJwtKeyFileName string,
-	minionJwtKeyFileNames map[string]string, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, isTLSPassthrough bool) version1.IngressNginxConfig {
+	minionJwtKeyFileNames map[string]string, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams) version1.IngressNginxConfig {
 	var masterServer version1.Server
 	var locations []version1.Location
 	var upstreams []version1.Upstream
@@ -379,7 +386,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	}
 
 	isMinion := false
-	masterNginxCfg := generateNginxCfg(mergeableIngs.Master, masterPems, isMinion, baseCfgParams, isPlus, isResolverConfigured, masterJwtKeyFileName, isTLSPassthrough)
+	masterNginxCfg := generateNginxCfg(mergeableIngs.Master, masterPems, isMinion, baseCfgParams, isPlus, isResolverConfigured, masterJwtKeyFileName, staticParams)
 
 	masterServer = masterNginxCfg.Servers[0]
 	masterServer.Locations = []version1.Location{}
@@ -407,7 +414,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 		pems := make(map[string]string)
 		jwtKeyFileName := minionJwtKeyFileNames[objectMetaToFileName(&minion.Ingress.ObjectMeta)]
 		isMinion := true
-		nginxCfg := generateNginxCfg(minion, pems, isMinion, baseCfgParams, isPlus, isResolverConfigured, jwtKeyFileName, isTLSPassthrough)
+		nginxCfg := generateNginxCfg(minion, pems, isMinion, baseCfgParams, isPlus, isResolverConfigured, jwtKeyFileName, staticParams)
 
 		for _, server := range nginxCfg.Servers {
 			for _, loc := range server.Locations {
@@ -427,9 +434,10 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	masterServer.Locations = locations
 
 	return version1.IngressNginxConfig{
-		Servers:   []version1.Server{masterServer},
-		Upstreams: upstreams,
-		Keepalive: keepalive,
-		Ingress:   masterNginxCfg.Ingress,
+		Servers:     []version1.Server{masterServer},
+		Upstreams:   upstreams,
+		Keepalive:   keepalive,
+		Ingress:     masterNginxCfg.Ingress,
+		SpiffeCerts: staticParams.SpiffeCerts,
 	}
 }

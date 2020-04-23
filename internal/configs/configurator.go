@@ -2,20 +2,27 @@ package configs
 
 import (
 	"bytes"
+	"crypto"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
+
+	"github.com/spiffe/go-spiffe/workload"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
+	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
 
 const pemFileNameForMissingTLSSecret = "/etc/nginx/secrets/default"
@@ -29,6 +36,15 @@ const WildcardSecretName = "wildcard"
 
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
+
+// SPIFFE filenames and modes
+const (
+	spiffeCertFileName   = "spiffe_cert.pem"
+	spiffeKeyFileName    = "spiffe_key.pem"
+	spiffeBundleFileName = "spiffe_rootca.pem"
+	spiffeCertsFileMode  = os.FileMode(0644)
+	spiffeKeyFileMode    = os.FileMode(0600)
+)
 
 type tlsPassthroughPair struct {
 	Host       string
@@ -94,8 +110,7 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
 	jwtKeyFileName := cnf.updateJWKSecret(ingEx)
 
 	isMinion := false
-	nginxCfg := generateNginxCfg(ingEx, pems, isMinion, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), jwtKeyFileName, cnf.staticCfgParams.TLSPassthrough)
-
+	nginxCfg := generateNginxCfg(ingEx, pems, isMinion, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), jwtKeyFileName, cnf.staticCfgParams)
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
 	if err != nil {
@@ -131,7 +146,7 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 	}
 
 	nginxCfg := generateNginxCfgForMergeableIngresses(mergeableIngs, masterPems, masterJwtKeyFileName, minionJwtKeyFileNames,
-		cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams.TLSPassthrough)
+		cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
 
 	name := objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
@@ -174,7 +189,7 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	if virtualServerEx.TLSSecret != nil {
 		tlsPemFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.TLSSecret)
 	}
-	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams.TLSPassthrough)
+	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
 	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName)
 
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
@@ -576,7 +591,7 @@ func (cnf *Configurator) UpdateEndpointsForVirtualServers(virtualServerExes []*V
 }
 
 func (cnf *Configurator) updatePlusEndpointsForVirtualServer(virtualServerEx *VirtualServerEx) error {
-	upstreams := createUpstreamsForPlus(virtualServerEx, cnf.cfgParams)
+	upstreams := createUpstreamsForPlus(virtualServerEx, cnf.cfgParams, cnf.staticCfgParams)
 	for _, upstream := range upstreams {
 		serverCfg := createUpstreamServersConfigForPlus(upstream)
 
@@ -885,4 +900,42 @@ func (cnf *Configurator) CheckIfListenerExists(transportServerListener *conf_v1a
 	}
 
 	return transportServerListener.Protocol == listener.Protocol
+}
+
+// AddOrUpdateSpiffeCerts writes Spiffe certs and keys to disk and reloads NGINX
+func (cnf *Configurator) AddOrUpdateSpiffeCerts(svidResponse *workload.X509SVIDs) error {
+	svid := svidResponse.Default()
+	privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(svid.PrivateKey.(crypto.PrivateKey))
+	if err != nil {
+		return fmt.Errorf("error when marshaling private key: %v", err)
+	}
+
+	cnf.nginxManager.CreateSecret(spiffeKeyFileName, createSpiffeKey(privateKeyBytes), spiffeKeyFileMode)
+	cnf.nginxManager.CreateSecret(spiffeCertFileName, createSpiffeCert(svid.Certificates), spiffeCertsFileMode)
+	cnf.nginxManager.CreateSecret(spiffeBundleFileName, createSpiffeCert(svid.TrustBundle), spiffeCertsFileMode)
+
+	err = cnf.nginxManager.Reload()
+	if err != nil {
+		return fmt.Errorf("error when reloading NGINX when updating the SPIFFE Certs: %v", err)
+	}
+	return nil
+}
+
+func createSpiffeKey(content []byte) []byte {
+	return pem.EncodeToMemory(&pem.Block{
+		Type:  "EC PRIVATE KEY",
+		Bytes: content,
+	})
+}
+
+func createSpiffeCert(certs []*x509.Certificate) []byte {
+	pemData := make([]byte, 0, len(certs))
+	for _, c := range certs {
+		b := &pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: c.Raw,
+		}
+		pemData = append(pemData, pem.EncodeToMemory(b)...)
+	}
+	return pemData
 }

@@ -7,6 +7,7 @@ type VirtualServerConfig struct {
 	SplitClients  []SplitClient
 	Maps          []Map
 	StatusMatches []StatusMatch
+	SpiffeCerts   bool
 }
 
 // Upstream defines an upstream.
@@ -79,6 +80,7 @@ type Location struct {
 	DefaultType              string
 	Return                   *Return
 	ErrorPages               []ErrorPage
+	ProxySSLName             string
 }
 
 // SplitClient defines a split_clients.
