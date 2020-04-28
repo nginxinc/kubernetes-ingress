@@ -41,16 +41,16 @@ In this section, we create resources common for most of the Ingress Controller i
     $ kubectl apply -f common/nginx-config.yaml
     ```
 
-1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) resources:
+1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) and [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) resources:
     ```
     $ kubectl apply -f common/vs-definition.yaml
     $ kubectl apply -f common/vsr-definition.yaml
+    $ kubectl apply -f common/ts-definition.yaml
     ```
 
-If you would like to use the TCP, UDP, and TLS Passthrough load balancing features of the Ingress Controller, create the following additional resources: 
-1. Create custom resource definitions for [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resources:
+If you would like to use the TCP and UDP load balancing features of the Ingress Controller, create the following additional resources: 
+1. Create a custom resource definition for [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resource:
     ```
-    $ kubectl apply -f common/ts-definition.yaml
     $ kubectl apply -f common/gc-definition.yaml
     ```
 1. Create a GlobalConfiguration resource:
@@ -58,11 +58,6 @@ If you would like to use the TCP, UDP, and TLS Passthrough load balancing featur
     $ kubectl apply -f common/global-configuration.yaml
     ```
     **Note**: Make sure to references this resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument.
-
-If you would like to use only TLS Passthrough load balancing (without TCP and UDP), create only the custom resource definition for the TransportServer:
-```
-$ kubectl apply -f common/ts-definition.yaml
-```
 
 > **Feature Status**: The TransportServer and GlobalConfiguration resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
 
