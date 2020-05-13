@@ -1,6 +1,6 @@
 # OpenTracing
 
-The Ingress Controller supports [OpenTracing](http://opentracing.io/) with the third-party module [opentracing-contrib/nginx-opentracing](https://github.com/opentracing-contrib/nginx-opentracing).
+The Ingress Controller supports [OpenTracing](https://opentracing.io/) with the third-party module [opentracing-contrib/nginx-opentracing](https://github.com/opentracing-contrib/nginx-opentracing).
 
 This document explains how to use OpenTracing with the Ingress Controller. Additionally, we have an [example](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/opentracing) on how to enable OpenTracing for a simple web application using Jaeger as a tracer.
 
