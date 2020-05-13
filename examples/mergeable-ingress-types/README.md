@@ -63,7 +63,7 @@ load balancing for that application using Ingress resources with the `nginx.org/
 
 ## 1. Deploy the Ingress Controller
 
-1. Follow the installation [instructions](../../docs/installation.md) to deploy the Ingress controller.
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) to deploy the Ingress controller.
 
 2. Save the public IP address of the Ingress controller into a shell variable:
     ```

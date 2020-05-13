@@ -9,7 +9,7 @@ Let's create a set of custom annotations to support [rate-limiting](https://ngin
 
 ## Prerequisites 
 
-* Read the [custom annotations doc](../../docs/custom-annotations.md) before going through this example first.
+* Read the [custom annotations doc](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/custom-annotations/) before going through this example first.
 * Read about [custom templates](../custom-templates).
 
 ## Step 1 - Customize the Template

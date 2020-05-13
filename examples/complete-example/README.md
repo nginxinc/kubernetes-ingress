@@ -6,7 +6,7 @@ In this example we deploy the NGINX or NGINX Plus Ingress controller, a simple w
 
 ## 1. Deploy the Ingress Controller
 
-1. Follow the installation [instructions](../../docs/installation.md) to deploy the Ingress controller.
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation/) to deploy the Ingress controller.
 
 2. Save the public IP address of the Ingress controller into a shell variable:
     ```

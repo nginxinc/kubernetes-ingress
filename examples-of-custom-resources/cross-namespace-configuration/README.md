@@ -1,13 +1,13 @@
 # Cross-Namespace Configuration
 
-In this example we use the [VirtualServer and VirtualServerRoute](../../docs/virtualserver-and-virtualserverroute.md) resources to configure load balancing for the modified cafe application from the [Basic Configuration](../basic-configuration/) example. We have put the load balancing configuration as well as the deployments and services into multiple namespaces. Instead of one namespace, we now use three: `tea`, `coffee`, and `cafe`.
+In this example we use the [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/) resources to configure load balancing for the modified cafe application from the [Basic Configuration](../basic-configuration/) example. We have put the load balancing configuration as well as the deployments and services into multiple namespaces. Instead of one namespace, we now use three: `tea`, `coffee`, and `cafe`.
 * In the tea namespace, we create the tea deployment, service, and the corresponding load-balancing configuration.
 * In the coffee namespace, we create the coffee deployment, service, and the corresponding load-balancing configuration.
 * In the cafe namespace, we create the cafe secret with the TLS certificate and key and the load-balancing configuration for the cafe application. That configuration references the coffee and tea configurations.
 
 ## Prerequisites  
 
-1. Follow the [installation](../../docs/installation.md) instructions to deploy the Ingress Controller with custom resources enabled.
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller with custom resources enabled.
 1. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III

@@ -1,6 +1,6 @@
 # Support for  TCP/UDP Load Balancing
 
-In this example we deploy the NGINX or NGINX Plus Ingress controller, a DNS server and then configure both TCP and UDP load balancing for the DNS server using the `stream-snippets` [ConfigMap key](../../docs/configmap-and-annotations.md).
+In this example we deploy the NGINX or NGINX Plus Ingress controller, a DNS server and then configure both TCP and UDP load balancing for the DNS server using the `stream-snippets` [ConfigMap key](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/).
 
 The standard Kubernetes Ingress resources assume that all traffic is HTTP-based; they do not cater for the case of basic TCP or UDP load balancing.  In this example, we use the `stream-snippets` ConfigMap key to embed the required TCP and UDP load-balancing configuration directly into the `stream{}` block of the NGINX configuration file. 
 
@@ -15,7 +15,7 @@ With NGINX, we’ll use the DNS name or virtual IP address to identify the servi
 
 ### 1. Deploy the Ingress Controller
 
-1. Follow the installation [instructions](../../docs/installation.md) to deploy the Ingress controller. Make sure to expose port 5353 of the Ingress controller
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) to deploy the Ingress controller. Make sure to expose port 5353 of the Ingress controller
 both for TCP and UDP traffic.
 
 2. Save the public IP address of the Ingress controller into a shell variable:
