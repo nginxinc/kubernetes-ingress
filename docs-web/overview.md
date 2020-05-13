@@ -17,7 +17,7 @@ The Ingress resource supports the following features:
     * *Path-based routing*. For example, routing requests with the URI that starts with `/serviceA` to service A and requests with the URI that starts with `/serviceB` to service B.
 * **TLS/SSL termination** for each hostname, such as `foo.example.com`.
 
-See the [Ingress User Guide](http://kubernetes.io/docs/user-guide/ingress/) to learn more about the Ingress resource.
+See the [Ingress User Guide](https://kubernetes.io/docs/user-guide/ingress/) to learn more about the Ingress resource.
 
 ## What is the Ingress Controller?
 
