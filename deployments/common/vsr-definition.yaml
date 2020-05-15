@@ -9,6 +9,8 @@ spec:
     served: true
     storage: true
   scope: Namespaced
+  subresources:
+    status: {}
   names:
     kind: VirtualServerRoute
     plural: virtualserverroutes
@@ -16,6 +18,24 @@ spec:
     shortNames:
     - vsr
   preserveUnknownFields: false
+  additionalPrinterColumns:
+  - name: State
+    type: string
+    description: Current state of the VirtualServerRoute. If the resource has a valid
+      status, it means it has been validated and accepted by the Ingress Controller.
+    JSONPath: .status.state
+  - name: Host
+    type: string
+    JSONPath: .spec.host
+  - name: IP
+    type: string
+    JSONPath: .status.externalEndpoints[*].ip
+  - name: Ports
+    type: string
+    JSONPath: .status.externalEndpoints[*].ports
+  - name: Age
+    type: date
+    JSONPath: .metadata.creationTimestamp
   validation:
     openAPIV3Schema:
       type: object
@@ -357,3 +377,27 @@ spec:
                     properties:
                       enable:
                         type: boolean
+        status:
+          description: VirtualServerRouteStatus defines the status for the VirtualServerRoute
+            resource.
+          type: object
+          properties:
+            externalEndpoints:
+              type: array
+              items:
+                description: ExternalEndpoint defines the IP and ports used to connect
+                  to this resource.
+                type: object
+                properties:
+                  ip:
+                    type: string
+                  ports:
+                    type: string
+            message:
+              type: string
+            reason:
+              type: string
+            referencedBy:
+              type: string
+            state:
+              type: string

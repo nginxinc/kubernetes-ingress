@@ -338,7 +338,8 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVs := cur.(*conf_v1.VirtualServer)
-			if !reflect.DeepEqual(old, cur) {
+			oldVs := old.(*conf_v1.VirtualServer)
+			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
 				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
 				lbc.AddSyncQueue(curVs)
 			}
@@ -372,7 +373,8 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
-			if !reflect.DeepEqual(old, cur) {
+			oldVsr := old.(*conf_v1.VirtualServerRoute)
+			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
 				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
 			}

@@ -2,12 +2,15 @@ package k8s
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/tools/cache"
 )
@@ -120,4 +123,249 @@ func checkStatus(expected string, actual extensions.Ingress) bool {
 		return expected == ""
 	}
 	return expected == actual.Status.LoadBalancer.Ingress[0].IP
+}
+
+func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
+	su := statusUpdater{
+		status: []v1.LoadBalancerIngress{
+			{
+				IP: "8.8.8.8",
+			},
+		},
+	}
+
+	expectedEndpoints := []conf_v1.ExternalEndpoint{
+		{IP: "8.8.8.8", Ports: ""},
+	}
+
+	endpoints := su.generateExternalEndpointsFromStatus(su.status)
+
+	if !reflect.DeepEqual(endpoints, expectedEndpoints) {
+		t.Errorf("generateExternalEndpointsFromStatus(%v) returned %v but expected %v", su.status, endpoints, expectedEndpoints)
+	}
+}
+
+func TestHasVsStatusChanged(t *testing.T) {
+	state := "Valid"
+	reason := "AddedOrUpdated"
+	msg := "Configuration was added or updated"
+
+	tests := []struct {
+		expected bool
+		vs       conf_v1.VirtualServer
+	}{
+		{
+			expected: false,
+			vs: conf_v1.VirtualServer{
+				Status: conf_v1.VirtualServerStatus{
+					State:   state,
+					Reason:  reason,
+					Message: msg,
+				},
+			},
+		},
+		{
+			expected: true,
+			vs: conf_v1.VirtualServer{
+				Status: conf_v1.VirtualServerStatus{
+					State:   "DifferentState",
+					Reason:  reason,
+					Message: msg,
+				},
+			},
+		},
+		{
+			expected: true,
+			vs: conf_v1.VirtualServer{
+				Status: conf_v1.VirtualServerStatus{
+					State:   state,
+					Reason:  "DifferentReason",
+					Message: msg,
+				},
+			},
+		},
+		{
+			expected: true,
+			vs: conf_v1.VirtualServer{
+				Status: conf_v1.VirtualServerStatus{
+					State:   state,
+					Reason:  reason,
+					Message: "DifferentMessage",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		changed := hasVsStatusChanged(&test.vs, state, reason, msg)
+
+		if changed != test.expected {
+			t.Errorf("hasVsStatusChanged(%v, %v, %v, %v) returned %v but expected %v.", test.vs, state, reason, msg, changed, test.expected)
+		}
+	}
+}
+
+func TestHasVsrStatusChanged(t *testing.T) {
+
+	referencedBy := "namespace/name"
+	state := "Valid"
+	reason := "AddedOrUpdated"
+	msg := "Configuration was added or updated"
+
+	tests := []struct {
+		expected bool
+		vsr      conf_v1.VirtualServerRoute
+	}{
+		{
+			expected: false,
+			vsr: conf_v1.VirtualServerRoute{
+				Status: conf_v1.VirtualServerRouteStatus{
+					State:        state,
+					Reason:       reason,
+					Message:      msg,
+					ReferencedBy: referencedBy,
+				},
+			},
+		},
+		{
+			expected: true,
+			vsr: conf_v1.VirtualServerRoute{
+				Status: conf_v1.VirtualServerRouteStatus{
+					State:        "DifferentState",
+					Reason:       reason,
+					Message:      msg,
+					ReferencedBy: referencedBy,
+				},
+			},
+		},
+		{
+			expected: true,
+			vsr: conf_v1.VirtualServerRoute{
+				Status: conf_v1.VirtualServerRouteStatus{
+					State:        state,
+					Reason:       "DifferentReason",
+					Message:      msg,
+					ReferencedBy: referencedBy,
+				},
+			},
+		},
+		{
+			expected: true,
+			vsr: conf_v1.VirtualServerRoute{
+				Status: conf_v1.VirtualServerRouteStatus{
+					State:        state,
+					Reason:       reason,
+					Message:      "DifferentMessage",
+					ReferencedBy: referencedBy,
+				},
+			},
+		},
+		{
+			expected: true,
+			vsr: conf_v1.VirtualServerRoute{
+				Status: conf_v1.VirtualServerRouteStatus{
+					State:        state,
+					Reason:       reason,
+					Message:      msg,
+					ReferencedBy: "DifferentReferencedBy",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		changed := hasVsrStatusChanged(&test.vsr, state, reason, msg, referencedBy)
+
+		if changed != test.expected {
+			t.Errorf("hasVsrStatusChanged(%v, %v, %v, %v) returned %v but expected %v.", test.vsr, state, reason, msg, changed, test.expected)
+		}
+	}
+}
+
+func TestGetExternalServicePorts(t *testing.T) {
+	svc := v1.Service{
+		Spec: v1.ServiceSpec{
+			Ports: []v1.ServicePort{
+				{
+					Port: int32(80),
+					TargetPort: intstr.IntOrString{
+						Type:   intstr.Int,
+						IntVal: 80,
+					},
+				},
+				{
+					Port: int32(443),
+					TargetPort: intstr.IntOrString{
+						Type:   intstr.Int,
+						IntVal: 443,
+					},
+				},
+			},
+		},
+	}
+
+	expected := "[80,443]"
+	ports := getExternalServicePorts(&svc)
+
+	if ports != expected {
+		t.Errorf("getExternalServicePorts(%v) returned %v but expected %v", svc, ports, expected)
+	}
+}
+
+func TestIsRequiredPort(t *testing.T) {
+	tests := []struct {
+		port     intstr.IntOrString
+		expected bool
+	}{
+		{
+			port: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: 999,
+			},
+			expected: false,
+		},
+		{
+			port: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: 80,
+			},
+			expected: true,
+		},
+		{
+			port: intstr.IntOrString{
+				Type:   intstr.Int,
+				IntVal: 443,
+			},
+			expected: true,
+		},
+		{
+			port: intstr.IntOrString{
+				Type:   intstr.String,
+				StrVal: "name",
+			},
+			expected: false,
+		},
+		{
+			port: intstr.IntOrString{
+				Type:   intstr.String,
+				StrVal: "http",
+			},
+			expected: true,
+		},
+		{
+			port: intstr.IntOrString{
+				Type:   intstr.String,
+				StrVal: "https",
+			},
+			expected: true,
+		},
+	}
+
+	for _, test := range tests {
+		result := isRequiredPort(test.port)
+
+		if result != test.expected {
+			t.Errorf("isRequiredPort(%+v) returned %v but expected %v", test.port, result, test.expected)
+		}
+	}
 }

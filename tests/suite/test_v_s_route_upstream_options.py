@@ -155,7 +155,7 @@ class TestVSRouteUpstreamOptions:
         replace_configmap_from_yaml(kube_apis.v1, config_map_name,
                                     ingress_controller_prerequisites.namespace,
                                     config_map_file)
-        wait_before_test(1)
+        wait_before_test()
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         config = get_vs_nginx_template_conf(kube_apis.v1,
                                             v_s_route_setup.namespace,

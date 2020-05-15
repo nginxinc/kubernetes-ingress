@@ -95,14 +95,14 @@ var (
 	(default for NGINX "nginx.transportserver.tmpl"; default for NGINX Plus "nginx-plus.transportserver.tmpl")`)
 
 	externalService = flag.String("external-service", "",
-		`Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally.
-The external address of the service is used when reporting the status of Ingress resources. Requires -report-ingress-status.`)
+		`Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. 
+	The external address of the service is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. For Ingress resources only: Requires -report-ingress-status.`)
 
 	reportIngressStatus = flag.Bool("report-ingress-status", false,
 		"Update the address field in the status of Ingresses resources. Requires the -external-service flag, or the 'external-status-address' key in the ConfigMap.")
 
 	leaderElectionEnabled = flag.Bool("enable-leader-election", false,
-		"Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources -- only one replica will report status. See -report-ingress-status flag.")
+		"Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status. See -report-ingress-status flag.")
 
 	leaderElectionLockName = flag.String("leader-election-lock-name", "nginx-ingress-leader-election",
 		`Specifies the name of the ConfigMap, within the same namespace as the controller, used as the lock for leader election. Requires -enable-leader-election.`)

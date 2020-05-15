@@ -185,6 +185,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		externalServiceName: input.ExternalServiceName,
 		ingLister:           &lbc.ingressLister,
 		keyFunc:             keyFunc,
+		confClient:          input.ConfClient,
 	}
 
 	// create handlers for resources we care about
@@ -547,6 +548,12 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 	if lbc.areCustomResourcesEnabled {
 		virtualServers := lbc.getVirtualServers()
 		virtualServerExes = lbc.virtualServersToVirtualServerExes(virtualServers)
+		if lbc.reportVsVsrStatusEnabled() {
+			err = lbc.statusUpdater.UpdateVsVsrExternalEndpoints(virtualServers, lbc.getVirtualServerRoutes())
+			if err != nil {
+				glog.V(3).Infof("error updating status on ConfigMap change: %v", err)
+			}
+		}
 	}
 
 	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, ingExes, mergeableIngresses, virtualServerExes)
@@ -586,27 +593,49 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		vsEventType := eventType
 		vsEventTitle := eventTitle
 		vsEventWarningMessage := eventWarningMessage
+		vsState := conf_v1.StateValid
 
 		if messages, ok := warnings[vsEx.VirtualServer]; ok && updateErr == nil {
 			vsEventType = api_v1.EventTypeWarning
 			vsEventTitle = "UpdatedWithWarning"
 			vsEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+			vsState = conf_v1.StateWarning
 		}
 
-		lbc.recorder.Eventf(vsEx.VirtualServer, vsEventType, vsEventTitle, "Configuration for %v/%v was updated %s",
-			vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, vsEventWarningMessage)
+		msg := fmt.Sprintf("Configuration for %v/%v was updated %s", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, vsEventWarningMessage)
+		lbc.recorder.Eventf(vsEx.VirtualServer, vsEventType, vsEventTitle, msg)
+
+		if lbc.reportVsVsrStatusEnabled() {
+			err = lbc.statusUpdater.UpdateVirtualServerStatus(vsEx.VirtualServer, vsState, vsEventTitle, msg)
+
+			if err != nil {
+				glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
+			}
+		}
 
 		for _, vsr := range vsEx.VirtualServerRoutes {
 			vsrEventType := eventType
 			vsrEventTitle := eventTitle
 			vsrEventWarningMessage := eventWarningMessage
+			vsrState := conf_v1.StateValid
+
 			if messages, ok := warnings[vsr]; ok && updateErr == nil {
 				vsrEventType = api_v1.EventTypeWarning
 				vsrEventTitle = "UpdatedWithWarning"
 				vsrEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+				vsrState = conf_v1.StateWarning
 			}
-			lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, "Configuration for %v/%v was updated %s",
-				vsr.Namespace, vsr.Name, vsrEventWarningMessage)
+
+			msg := fmt.Sprintf("Configuration for %v/%v was updated %s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
+			lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, msg)
+
+			if lbc.reportVsVsrStatusEnabled() {
+				err = lbc.statusUpdater.UpdateVirtualServerRouteStatus(vsr, vsrState, vsrEventTitle, vsrEventWarningMessage)
+
+				if err != nil {
+					glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				}
+			}
 		}
 	}
 }
@@ -863,7 +892,18 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		if err != nil {
 			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
 		}
-		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, "Rejected", "VirtualServer %v is invalid and was rejected: %v", key, validationErr)
+		reason := "Rejected"
+		msg := fmt.Sprintf("VirtualServer %v is invalid and was rejected: %v", key, validationErr)
+
+		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, reason, msg)
+		if lbc.reportVsVsrStatusEnabled() {
+			err = lbc.statusUpdater.UpdateVirtualServerStatus(vs, conf_v1.StateInvalid, reason, msg)
+
+			if err != nil {
+				glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vs.Namespace, vs.Name, err)
+			}
+		}
+
 		// TO-DO: emit events for referenced VirtualServerRoutes
 		return
 	}
@@ -882,11 +922,13 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 	eventTitle := "AddedOrUpdated"
 	eventType := api_v1.EventTypeNormal
 	eventWarningMessage := ""
+	state := conf_v1.StateValid
 
 	if addErr != nil {
 		eventTitle = "AddedOrUpdatedWithError"
 		eventType = api_v1.EventTypeWarning
 		eventWarningMessage = fmt.Sprintf("but was not applied: %v", addErr)
+		state = conf_v1.StateInvalid
 	}
 
 	vsEventType := eventType
@@ -897,21 +939,43 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		vsEventType = api_v1.EventTypeWarning
 		vsEventTitle = "AddedOrUpdatedWithWarning"
 		vsEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+		state = conf_v1.StateWarning
 	}
 
-	lbc.recorder.Eventf(vs, vsEventType, vsEventTitle, "Configuration for %v was added or updated %s", key, vsEventWarningMessage)
+	msg := fmt.Sprintf("Configuration for %v was added or updated %s", key, vsEventWarningMessage)
+	lbc.recorder.Eventf(vs, vsEventType, vsEventTitle, msg)
+
+	if lbc.reportVsVsrStatusEnabled() {
+		err = lbc.statusUpdater.UpdateVirtualServerStatus(vs, state, vsEventTitle, msg)
+
+		if err != nil {
+			glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vs.Namespace, vs.Name, err)
+		}
+	}
 
 	for _, vsr := range vsEx.VirtualServerRoutes {
 		vsrEventType := eventType
 		vsrEventTitle := eventTitle
 		vsrEventWarningMessage := eventWarningMessage
+		state := conf_v1.StateValid
 
 		if messages, ok := warnings[vsr]; ok && addErr == nil {
 			vsrEventType = api_v1.EventTypeWarning
 			vsrEventTitle = "AddedOrUpdatedWithWarning"
 			vsrEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+			state = conf_v1.StateWarning
 		}
-		lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, "Configuration for %v/%v was added or updated %s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
+		msg := fmt.Sprintf("Configuration for %v/%v was added or updated %s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
+		lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, msg)
+
+		if lbc.reportVsVsrStatusEnabled() {
+			virtualServersForVSR := findVirtualServersForVirtualServerRoute(lbc.getVirtualServers(), vsr)
+			err = lbc.statusUpdater.UpdateVirtualServerRouteStatusWithReferencedBy(vsr, state, vsrEventTitle, msg, virtualServersForVSR)
+
+			if err != nil {
+				glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+			}
+		}
 	}
 
 }
@@ -938,15 +1002,30 @@ func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 
 	validationErr := validation.ValidateVirtualServerRoute(vsr, lbc.isNginxPlus)
 	if validationErr != nil {
-		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, "Rejected", "VirtualServerRoute %s is invalid and was rejected: %v", key, validationErr)
+		reason := "Rejected"
+		msg := fmt.Sprintf("VirtualServerRoute %s is invalid and was rejected: %v", key, validationErr)
+		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, reason, msg)
+		if lbc.reportVsVsrStatusEnabled() {
+			err = lbc.statusUpdater.UpdateVirtualServerRouteStatus(vsr, conf_v1.StateInvalid, reason, msg)
+			if err != nil {
+				glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+			}
+		}
 	}
-
 	vsCount := lbc.enqueueVirtualServersForVirtualServerRouteKey(key)
 
 	if vsCount == 0 {
-		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, "NoVirtualServersFound", "No VirtualServer references VirtualServerRoute %s", key)
-	}
+		reason := "NoVirtualServersFound"
+		msg := fmt.Sprintf("No VirtualServer references VirtualServerRoute %s", key)
+		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, reason, msg)
 
+		if lbc.reportVsVsrStatusEnabled() {
+			err = lbc.statusUpdater.UpdateVirtualServerRouteStatus(vsr, conf_v1.StateInvalid, reason, msg)
+			if err != nil {
+				glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+			}
+		}
+	}
 }
 
 func (lbc *LoadBalancerController) syncIngMinion(task task) {
@@ -1104,6 +1183,13 @@ func (lbc *LoadBalancerController) syncExternalService(task task) {
 			glog.Errorf("error updating ingress status in syncExternalService: %v", err)
 		}
 	}
+
+	if lbc.areCustomResourcesEnabled && lbc.reportVsVsrStatusEnabled() {
+		err = lbc.statusUpdater.UpdateVsVsrExternalEndpoints(lbc.getVirtualServers(), lbc.getVirtualServerRoutes())
+		if err != nil {
+			glog.V(3).Infof("error updating VirtualServer/VirtualServerRoute status in syncExternalService: %v", err)
+		}
+	}
 }
 
 // IsExternalServiceForStatus matches the service specified by the external-service arg
@@ -1111,7 +1197,7 @@ func (lbc *LoadBalancerController) IsExternalServiceForStatus(svc *api_v1.Servic
 	return lbc.statusUpdater.namespace == svc.Namespace && lbc.statusUpdater.externalServiceName == svc.Name
 }
 
-// reportStatusEnabled determines if we should attempt to report status
+// reportStatusEnabled determines if we should attempt to report status for Ingress resources.
 func (lbc *LoadBalancerController) reportStatusEnabled() bool {
 	if lbc.reportIngressStatus {
 		if lbc.isLeaderElectionEnabled {
@@ -1120,6 +1206,15 @@ func (lbc *LoadBalancerController) reportStatusEnabled() bool {
 		return true
 	}
 	return false
+}
+
+// reportVsVsrStatusEnabled determines if we should attempt to report status for VirtualServers and VirtualServerRoutes.
+func (lbc *LoadBalancerController) reportVsVsrStatusEnabled() bool {
+	if lbc.isLeaderElectionEnabled {
+		return lbc.leaderElector != nil && lbc.leaderElector.IsLeader()
+	}
+
+	return true
 }
 
 func (lbc *LoadBalancerController) syncSecret(task task) {
@@ -1182,9 +1277,11 @@ func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings 
 	eventType := api_v1.EventTypeWarning
 	title := "Missing Secret"
 	message := fmt.Sprintf("Secret %v was removed", key)
+	state := conf_v1.StateInvalid
 
 	lbc.emitEventForIngresses(eventType, title, message, ings)
 	lbc.emitEventForVirtualServers(eventType, title, message, virtualServers)
+	lbc.updateStatusForVirtualServers(state, title, message, virtualServers)
 
 	regular, mergeable := lbc.createIngresses(ings)
 
@@ -1200,10 +1297,12 @@ func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings 
 		eventType = api_v1.EventTypeWarning
 		title = "UpdatedWithError"
 		message = fmt.Sprintf("Configuration was updated due to removed secret %v, but not applied: %v", key, err)
+		state = conf_v1.StateInvalid
 	}
 
 	lbc.emitEventForIngresses(eventType, title, message, ings)
 	lbc.emitEventForVirtualServers(eventType, title, message, virtualServers)
+	lbc.updateStatusForVirtualServers(state, title, message, virtualServers)
 }
 
 func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ings []extensions.Ingress, virtualServers []*conf_v1.VirtualServer) {
@@ -1224,6 +1323,7 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 	eventType := api_v1.EventTypeNormal
 	title := "Updated"
 	message := fmt.Sprintf("Configuration was updated due to updated secret %v", secretNsName)
+	state := conf_v1.StateValid
 
 	// we can safely ignore the error because the secret is valid in this function
 	kind, _ := GetSecretKind(secret)
@@ -1243,11 +1343,13 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 			eventType = api_v1.EventTypeWarning
 			title = "UpdatedWithError"
 			message = fmt.Sprintf("Configuration was updated due to updated secret %v, but not applied: %v", secretNsName, err)
+			state = conf_v1.StateInvalid
 		}
 	}
 
 	lbc.emitEventForIngresses(eventType, title, message, ings)
 	lbc.emitEventForVirtualServers(eventType, title, message, virtualServers)
+	lbc.updateStatusForVirtualServers(state, title, message, virtualServers)
 }
 
 func (lbc *LoadBalancerController) handleSpecialSecretUpdate(secret *api_v1.Secret) {
@@ -1295,6 +1397,15 @@ func (lbc *LoadBalancerController) emitEventForIngresses(eventType string, title
 func (lbc *LoadBalancerController) emitEventForVirtualServers(eventType string, title string, message string, virtualServers []*conf_v1.VirtualServer) {
 	for _, vs := range virtualServers {
 		lbc.recorder.Eventf(vs, eventType, title, message)
+	}
+}
+
+func (lbc *LoadBalancerController) updateStatusForVirtualServers(state string, reason string, message string, virtualServers []*conf_v1.VirtualServer) {
+	for _, vs := range virtualServers {
+		err := lbc.statusUpdater.UpdateVirtualServerStatus(vs, state, reason, message)
+		if err != nil {
+			glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vs.Namespace, vs.Name, err)
+		}
 	}
 }
 

@@ -31,7 +31,7 @@ Below we describe the available command-line arguments:
 
 .. option:: -enable-leader-election
 
-	Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress resources -- only one replica will report status.
+	Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status.
 
 	See :option:`-report-ingress-status` flag.
 
@@ -43,9 +43,9 @@ Below we describe the available command-line arguments:
 
 .. option:: -external-service <string>
 
-	Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. The external address of the service is used when reporting the status of Ingress resources.
+	Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. The external address of the service is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources.
 
-	Requires :option:`-report-ingress-status`.
+	For Ingress resources only: Requires :option:`-report-ingress-status`.
 
 .. option:: -global-configuration <string>
 

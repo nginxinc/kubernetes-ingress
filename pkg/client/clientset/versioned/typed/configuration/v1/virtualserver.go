@@ -24,6 +24,7 @@ type VirtualServersGetter interface {
 type VirtualServerInterface interface {
 	Create(ctx context.Context, virtualServer *v1.VirtualServer, opts metav1.CreateOptions) (*v1.VirtualServer, error)
 	Update(ctx context.Context, virtualServer *v1.VirtualServer, opts metav1.UpdateOptions) (*v1.VirtualServer, error)
+	UpdateStatus(ctx context.Context, virtualServer *v1.VirtualServer, opts metav1.UpdateOptions) (*v1.VirtualServer, error)
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 	DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Get(ctx context.Context, name string, opts metav1.GetOptions) (*v1.VirtualServer, error)
@@ -112,6 +113,22 @@ func (c *virtualServers) Update(ctx context.Context, virtualServer *v1.VirtualSe
 		Namespace(c.ns).
 		Resource("virtualservers").
 		Name(virtualServer.Name).
+		VersionedParams(&opts, scheme.ParameterCodec).
+		Body(virtualServer).
+		Do(ctx).
+		Into(result)
+	return
+}
+
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *virtualServers) UpdateStatus(ctx context.Context, virtualServer *v1.VirtualServer, opts metav1.UpdateOptions) (result *v1.VirtualServer, err error) {
+	result = &v1.VirtualServer{}
+	err = c.client.Put().
+		Namespace(c.ns).
+		Resource("virtualservers").
+		Name(virtualServer.Name).
+		SubResource("status").
 		VersionedParams(&opts, scheme.ParameterCodec).
 		Body(virtualServer).
 		Do(ctx).

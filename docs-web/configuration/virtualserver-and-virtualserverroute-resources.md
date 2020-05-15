@@ -1099,8 +1099,8 @@ virtualserver.k8s.nginx.org "cafe" created
 You can get the resource by running:
 ```
 $ kubectl get virtualserver cafe
-NAME      AGE
-cafe      3m
+NAME   STATE   HOST                   IP            PORTS      AGE
+cafe   Valid   cafe.example.com       12.13.23.123  [80,443]   3m
 ```
 
 In the kubectl get and similar commands, you can also use the short name `vs` instead of `virtualserver`.
@@ -1157,6 +1157,20 @@ Events:
   Warning  Rejected  12s   nginx-ingress-controller  VirtualServer default/cafe is invalid and was rejected: spec.upstreams[1].name: Duplicate value: "tea"
 ```
 Note how the events section includes a Warning event with the Rejected reason.
+
+Additionally, this information is also available in the `status` field of the VirtualServer resource. Note the Status section of the VirtualServer:
+
+```
+$ kubectl describe vs cafe
+. . . 
+Status:
+  External Endpoints:
+    Ip:        12.13.23.123
+    Ports:     [80,443]
+  Message:  VirtualServer default/cafe is invalid and was rejected: spec.upstreams[1].name: Duplicate value: "tea"
+  Reason:   Rejected
+  State:    Invalid
+```
 
 The Ingress Controller validates VirtualServerRoute resources in a similar way.
 

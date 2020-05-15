@@ -76,6 +76,13 @@ rules:
   - list
   - watch
   - get
+- apiGroups:
+  - k8s.nginx.org
+  resources:
+  - virtualservers/status
+  - virtualserverroutes/status
+  verbs:
+  - update
 {{- end }}
 ---
 kind: ClusterRoleBinding

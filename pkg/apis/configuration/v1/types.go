@@ -4,6 +4,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// StateWarning is used when the resource has been validated and accepted but it might work in a degraded state.
+	StateWarning = "Warning"
+	// StateValid is used when the resource has been validated and accepted and is working as expected.
+	StateValid = "Valid"
+	// StateInvalid is used when the resource failed validation or NGINX failed to reload the corresponding config.
+	StateInvalid = "Invalid"
+)
+
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:validation:Optional
@@ -13,7 +22,8 @@ type VirtualServer struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec VirtualServerSpec `json:"spec"`
+	Spec   VirtualServerSpec   `json:"spec"`
+	Status VirtualServerStatus `json:"status"`
 }
 
 // VirtualServerSpec is the spec of the VirtualServer resource.
@@ -180,6 +190,20 @@ type TLSRedirect struct {
 	BasedOn string `json:"basedOn"`
 }
 
+// VirtualServerStatus defines the status for the VirtualServer resource.
+type VirtualServerStatus struct {
+	State             string             `json:"state"`
+	Reason            string             `json:"reason"`
+	Message           string             `json:"message"`
+	ExternalEndpoints []ExternalEndpoint `json:"externalEndpoints,omitempty"`
+}
+
+// ExternalEndpoint defines the IP and ports used to connect to this resource.
+type ExternalEndpoint struct {
+	IP    string `json:"ip"`
+	Ports string `json:"ports"`
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // VirtualServerList is a list of the VirtualServer resources.
@@ -197,7 +221,8 @@ type VirtualServerRoute struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec VirtualServerRouteSpec `json:"spec"`
+	Spec   VirtualServerRouteSpec   `json:"spec"`
+	Status VirtualServerRouteStatus `json:"status"`
 }
 
 type VirtualServerRouteSpec struct {
@@ -219,4 +244,13 @@ type VirtualServerRouteList struct {
 type UpstreamQueue struct {
 	Size    int    `json:"size"`
 	Timeout string `json:"timeout"`
+}
+
+// VirtualServerRouteStatus defines the status for the VirtualServerRoute resource.
+type VirtualServerRouteStatus struct {
+	State             string             `json:"state"`
+	Reason            string             `json:"reason"`
+	Message           string             `json:"message"`
+	ReferencedBy      string             `json:"referencedBy"`
+	ExternalEndpoints []ExternalEndpoint `json:"externalEndpoints,omitempty"`
 }

@@ -86,6 +86,18 @@ func (c *FakeVirtualServerRoutes) Update(ctx context.Context, virtualServerRoute
 	return obj.(*configurationv1.VirtualServerRoute), err
 }
 
+// UpdateStatus was generated because the type contains a Status member.
+// Add a +genclient:noStatus comment above the type to avoid generating UpdateStatus().
+func (c *FakeVirtualServerRoutes) UpdateStatus(ctx context.Context, virtualServerRoute *configurationv1.VirtualServerRoute, opts v1.UpdateOptions) (*configurationv1.VirtualServerRoute, error) {
+	obj, err := c.Fake.
+		Invokes(testing.NewUpdateSubresourceAction(virtualserverroutesResource, "status", c.ns, virtualServerRoute), &configurationv1.VirtualServerRoute{})
+
+	if obj == nil {
+		return nil, err
+	}
+	return obj.(*configurationv1.VirtualServerRoute), err
+}
+
 // Delete takes name of the virtualServerRoute and deletes it. Returns an error if one occurs.
 func (c *FakeVirtualServerRoutes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
