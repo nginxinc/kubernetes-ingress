@@ -54,6 +54,9 @@ sed -i "" -e "s/%%TITLE%%/## NGINX Ingress Controller $ic_version/g" -e "s/%%IC_
 find $DOCS_TO_UPDATE_FOLDER -type f -name "*.md" -exec sed -i "" "s/v$prev_ic_version/v$ic_version/g" {} +
 find $DOCS_TO_UPDATE_FOLDER -type f -name "*.rst" -exec sed -i "" "s/v$prev_ic_version/v$ic_version/g" {} +
 
+# update IC version in the technical-specification doc
+sed -i "" "s/$prev_ic_version/$ic_version/g" $DOCS_TO_UPDATE_FOLDER/technical-specifications.md 
+
 # update IC version in the building ingress controller doc
 sed -i "" "s/$prev_ic_version/$ic_version/g" $DOCS_TO_UPDATE_FOLDER/installation/building-ingress-controller-image.md
 
