@@ -76,47 +76,47 @@ The table below summarizes the available annotations.
      - Example
    * - ``nginx.org/proxy-connect-timeout``
      - ``proxy-connect-timeout``
-     - Sets the value of the `proxy_connect_timeout <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout>`_ and `grpc_connect_timeout <http://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_connect_timeout>`_ directive.
+     - Sets the value of the `proxy_connect_timeout <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout>`_ and `grpc_connect_timeout <https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_connect_timeout>`_ directive.
      - ``60s``
      - 
    * - ``nginx.org/proxy-read-timeout``
      - ``proxy-read-timeout``
-     - Sets the value of the `proxy_read_timeout <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout>`_ and `grpc_read_timeout <http://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_read_timeout>`_ directive.
+     - Sets the value of the `proxy_read_timeout <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout>`_ and `grpc_read_timeout <https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_read_timeout>`_ directive.
      - ``60s``
      - 
    * - ``nginx.org/proxy-send-timeout``
      - ``proxy-send-timeout``
-     - Sets the value of the `proxy_send_timeout <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout>`_ and `grpc_send_timeout <http://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_send_timeout>`_ directive.
+     - Sets the value of the `proxy_send_timeout <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout>`_ and `grpc_send_timeout <https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_send_timeout>`_ directive.
      - ``60s``
      - 
    * - ``nginx.org/client-max-body-size``
      - ``client-max-body-size``
-     - Sets the value of the `client_max_body_size <http://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size>`_ directive.
+     - Sets the value of the `client_max_body_size <https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size>`_ directive.
      - ``1m``
      - 
    * - ``nginx.org/proxy-buffering``
      - ``proxy-buffering``
-     - Enables or disables `buffering of responses <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering>`_ from the proxied server.
+     - Enables or disables `buffering of responses <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering>`_ from the proxied server.
      - ``True``
      - 
    * - ``nginx.org/proxy-buffers``
      - ``proxy-buffers``
-     - Sets the value of the `proxy_buffers <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers>`_ directive.
+     - Sets the value of the `proxy_buffers <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers>`_ directive.
      - Depends on the platform.
      - 
    * - ``nginx.org/proxy-buffer-size``
      - ``proxy-buffer-size``
-     - Sets the value of the `proxy_buffer_size <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size>`_ and `grpc_buffer_size <http://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_buffer_size>`_ directives.
+     - Sets the value of the `proxy_buffer_size <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size>`_ and `grpc_buffer_size <https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_buffer_size>`_ directives.
      - Depends on the platform.
      - 
    * - ``nginx.org/proxy-max-temp-file-size``
      - ``proxy-max-temp-file-size``
-     - Sets the value of the  `proxy_max_temp_file_size <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size>`_ directive.
+     - Sets the value of the  `proxy_max_temp_file_size <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size>`_ directive.
      - ``1024m``
      - 
    * - ``nginx.org/server-tokens``
      - ``server-tokens``
-     - Enables or disables the `server_tokens <http://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens>`_ directive. Additionally, with the NGINX Plus, you can specify a custom string value, including the empty string value, which disables the emission of the “Server” field.
+     - Enables or disables the `server_tokens <https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens>`_ directive. Additionally, with the NGINX Plus, you can specify a custom string value, including the empty string value, which disables the emission of the “Server” field.
      - ``True``
      - 
 ```
@@ -134,12 +134,12 @@ The table below summarizes the available annotations.
      - Example
    * - ``nginx.org/proxy-hide-headers``
      - ``proxy-hide-headers``
-     - Sets the value of one or more  `proxy_hide_header <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header>`_ directives. Example: ``"nginx.org/proxy-hide-headers": "header-a,header-b"``
+     - Sets the value of one or more  `proxy_hide_header <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header>`_ directives. Example: ``"nginx.org/proxy-hide-headers": "header-a,header-b"``
      - N/A
      - 
    * - ``nginx.org/proxy-pass-headers``
      - ``proxy-pass-headers``
-     - Sets the value of one or more   `proxy_pass_header <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header>`_ directives. Example: ``"nginx.org/proxy-pass-headers": "header-a,header-b"``
+     - Sets the value of one or more   `proxy_pass_header <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header>`_ directives. Example: ``"nginx.org/proxy-pass-headers": "header-a,header-b"``
      - N/A
      - 
    * - ``nginx.org/rewrites``
@@ -293,7 +293,7 @@ The table below summarizes the available annotations.
      - `Session Persistence <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/session-persistence>`_.
    * - ``nginx.org/keepalive``
      - ``keepalive``
-     - Sets the value of the `keepalive <http://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive>`_ directive. Note that ``proxy_set_header Connection "";`` is added to the generated configuration when the value > 0.
+     - Sets the value of the `keepalive <https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive>`_ directive. Note that ``proxy_set_header Connection "";`` is added to the generated configuration when the value > 0.
      - ``0``
      - 
    * - ``nginx.com/health-checks``

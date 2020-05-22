@@ -11,7 +11,7 @@ proxy-protocol: "True | False"
 
 Additionally, you must configure the following keys:
 * **real-ip-header**: Set its value to `proxy_protocol`.
-* **set-real-ip-from**: Set its value to the IP address or the subnet of the proxy or the load balancer. See http://nginx.org/en/docs/http/ngx_http_realip_module.html#set_real_ip_from
+* **set-real-ip-from**: Set its value to the IP address or the subnet of the proxy or the load balancer. See https://nginx.org/en/docs/http/ngx_http_realip_module.html#set_real_ip_from
 
 ## Example
 

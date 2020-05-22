@@ -36,4 +36,4 @@ If you want to access the dashboard externally (without `kubectl port-forward`):
 1. Configure `-nginx-status-allow-cidrs` command-line argument with IPv4 IP/CIDR blocks for which you want to allow access to the dashboard. By default, the access is allowed for `127.0.0.1`.
 1. Use the IP/port through which the Ingress Controller pod/pods are available to connect the dashboard at the `/dashboard.html` path.
 
-**Note**: The [API](http://nginx.org/en/docs/http/ngx_http_api_module.html), which the dashboard uses to get the metrics, is also accessible: use the `/api` path. Note that the API is configured in the read-only mode.
+**Note**: The [API](https://nginx.org/en/docs/http/ngx_http_api_module.html), which the dashboard uses to get the metrics, is also accessible: use the `/api` path. Note that the API is configured in the read-only mode.

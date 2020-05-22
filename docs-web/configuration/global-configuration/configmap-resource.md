@@ -71,83 +71,83 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - Default
      - Example
    * - ``proxy-connect-timeout``
-     - Sets the value of the `proxy_connect_timeout <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout>`_ and `grpc_connect_timeout <http://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_connect_timeout>`_ directive.
+     - Sets the value of the `proxy_connect_timeout <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_connect_timeout>`_ and `grpc_connect_timeout <https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_connect_timeout>`_ directive.
      - ``60s``
      - 
    * - ``proxy-read-timeout``
-     - Sets the value of the `proxy_read_timeout <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout>`_ and `grpc_read_timeout <http://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_read_timeout>`_ directive.
+     - Sets the value of the `proxy_read_timeout <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout>`_ and `grpc_read_timeout <https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_read_timeout>`_ directive.
      - ``60s``
      - 
    * - ``proxy-send-timeout``
-     - Sets the value of the `proxy_send_timeout <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout>`_ and `grpc_send_timeout <http://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_send_timeout>`_ directive.
+     - Sets the value of the `proxy_send_timeout <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_send_timeout>`_ and `grpc_send_timeout <https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_send_timeout>`_ directive.
      - ``60s``
      - 
    * - ``client-max-body-size``
-     - Sets the value of the `client_max_body_size <http://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size>`_ directive.
+     - Sets the value of the `client_max_body_size <https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size>`_ directive.
      - ``1m``
      - 
    * - ``proxy-buffering``
-     - Enables or disables `buffering of responses <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering>`_ from the proxied server.
+     - Enables or disables `buffering of responses <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering>`_ from the proxied server.
      - ``True``
      - 
    * - ``proxy-buffers``
-     - Sets the value of the `proxy_buffers <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers>`_ directive.
+     - Sets the value of the `proxy_buffers <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers>`_ directive.
      - Depends on the platform.
      - 
    * - ``proxy-buffer-size``
-     - Sets the value of the `proxy_buffer_size <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size>`_ and `grpc_buffer_size <http://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_buffer_size>`_ directives.
+     - Sets the value of the `proxy_buffer_size <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size>`_ and `grpc_buffer_size <https://nginx.org/en/docs/http/ngx_http_grpc_module.html#grpc_buffer_size>`_ directives.
      - Depends on the platform.
      - 
    * - ``proxy-max-temp-file-size``
-     - Sets the value of the  `proxy_max_temp_file_size <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size>`_ directive.
+     - Sets the value of the  `proxy_max_temp_file_size <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_max_temp_file_size>`_ directive.
      - ``1024m``
      - 
    * - ``set-real-ip-from``
-     - Sets the value of the `set_real_ip_from <http://nginx.org/en/docs/http/ngx_http_realip_module.html#set_real_ip_from>`_ directive.
+     - Sets the value of the `set_real_ip_from <https://nginx.org/en/docs/http/ngx_http_realip_module.html#set_real_ip_from>`_ directive.
      - N/A
      - 
    * - ``real-ip-header``
-     - Sets the value of the `real_ip_header <http://nginx.org/en/docs/http/ngx_http_realip_module.html#real_ip_header>`_ directive.
+     - Sets the value of the `real_ip_header <https://nginx.org/en/docs/http/ngx_http_realip_module.html#real_ip_header>`_ directive.
      - ``X-Real-IP``
      - 
    * - ``real-ip-recursive``
-     - Enables or disables the `real_ip_recursive <http://nginx.org/en/docs/http/ngx_http_realip_module.html#real_ip_recursive>`_ directive.
+     - Enables or disables the `real_ip_recursive <https://nginx.org/en/docs/http/ngx_http_realip_module.html#real_ip_recursive>`_ directive.
      - ``False``
      - 
    * - ``server-tokens``
-     - Enables or disables the `server_tokens <http://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens>`_ directive. Additionally, with the NGINX Plus, you can specify a custom string value, including the empty string value, which disables the emission of the “Server” field.
+     - Enables or disables the `server_tokens <https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens>`_ directive. Additionally, with the NGINX Plus, you can specify a custom string value, including the empty string value, which disables the emission of the “Server” field.
      - ``True``
      - 
    * - ``worker-processes``
-     - Sets the value of the `worker_processes <http://nginx.org/en/docs/ngx_core_module.html#worker_processes>`_ directive.
+     - Sets the value of the `worker_processes <https://nginx.org/en/docs/ngx_core_module.html#worker_processes>`_ directive.
      - ``auto``
      - 
    * - ``worker-rlimit-nofile``
-     - Sets the value of the `worker_rlimit_nofile <http://nginx.org/en/docs/ngx_core_module.html#worker_rlimit_nofile>`_ directive.
+     - Sets the value of the `worker_rlimit_nofile <https://nginx.org/en/docs/ngx_core_module.html#worker_rlimit_nofile>`_ directive.
      - N/A
      - 
    * - ``worker-connections``
-     - Sets the value of the `worker_connections <http://nginx.org/en/docs/ngx_core_module.html#worker_connections>`_ directive.
+     - Sets the value of the `worker_connections <https://nginx.org/en/docs/ngx_core_module.html#worker_connections>`_ directive.
      - ``1024``
      - 
    * - ``worker-cpu-affinity``
-     - Sets the value of the `worker_cpu_affinity <http://nginx.org/en/docs/ngx_core_module.html#worker_cpu_affinity>`_ directive.
+     - Sets the value of the `worker_cpu_affinity <https://nginx.org/en/docs/ngx_core_module.html#worker_cpu_affinity>`_ directive.
      - N/A
      - 
    * - ``worker-shutdown-timeout``
-     - Sets the value of the `worker_shutdown_timeout <http://nginx.org/en/docs/ngx_core_module.html#worker_shutdown_timeout>`_ directive.
+     - Sets the value of the `worker_shutdown_timeout <https://nginx.org/en/docs/ngx_core_module.html#worker_shutdown_timeout>`_ directive.
      - N/A
      - 
    * - ``server-names-hash-bucket-size``
-     - Sets the value of the `server_names_hash_bucket_size <http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_bucket_size>`_ directive.
+     - Sets the value of the `server_names_hash_bucket_size <https://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_bucket_size>`_ directive.
      - ``256``
      - 
    * - ``server-names-hash-max-size``
-     - Sets the value of the `server_names_hash_max_size <http://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_max_size>`_ directive.
+     - Sets the value of the `server_names_hash_max_size <https://nginx.org/en/docs/http/ngx_http_core_module.html#server_names_hash_max_size>`_ directive.
      - ``1024``
      - 
    * - ``resolver-addresses``
-     - Sets the value of the `resolver <http://nginx.org/en/docs/http/ngx_http_core_module.html#resolver>`_ addresses. Note: If you use a DNS name (ex., ``kube-dns.kube-system.svc.cluster.local``\ ) as a resolver address, NGINX Plus will resolve it using the system resolver during the start and on every configuration reload. As a consequence, If the name cannot be resolved or the DNS server doesn't respond, NGINX Plus will fail to start or reload. To avoid this, consider using only IP addresses as resolver addresses. Supported in NGINX Plus only.
+     - Sets the value of the `resolver <https://nginx.org/en/docs/http/ngx_http_core_module.html#resolver>`_ addresses. Note: If you use a DNS name (ex., ``kube-dns.kube-system.svc.cluster.local``\ ) as a resolver address, NGINX Plus will resolve it using the system resolver during the start and on every configuration reload. As a consequence, If the name cannot be resolved or the DNS server doesn't respond, NGINX Plus will fail to start or reload. To avoid this, consider using only IP addresses as resolver addresses. Supported in NGINX Plus only.
      - N/A
      - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/externalname-services>`_.
    * - ``resolver-ipv6``
@@ -159,23 +159,23 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - TTL value of a DNS record
      - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/externalname-services>`_.
    * - ``resolver-timeout``
-     - Sets the `resolver_timeout <http://nginx.org/en/docs/http/ngx_http_core_module.html#resolver_timeout>`_ for name resolution. Supported in NGINX Plus only.
+     - Sets the `resolver_timeout <https://nginx.org/en/docs/http/ngx_http_core_module.html#resolver_timeout>`_ for name resolution. Supported in NGINX Plus only.
      - ``30s``
      - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/externalname-services>`_.
    * - ``keepalive-timeout``
-     - Sets the value of the `keepalive_timeout <http://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout>`_ directive.
+     - Sets the value of the `keepalive_timeout <https://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout>`_ directive.
      - ``65s``
      - 
    * - ``keepalive-requests``
-     - Sets the value of the `keepalive_requests <http://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_requests>`_ directive.
+     - Sets the value of the `keepalive_requests <https://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_requests>`_ directive.
      - ``100``
      - 
    * - ``variables-hash-bucket-size``
-     - Sets the value of the `variables_hash_bucket_size <http://nginx.org/en/docs/http/ngx_http_core_module.html#variables_hash_bucket_size>`_ directive.
+     - Sets the value of the `variables_hash_bucket_size <https://nginx.org/en/docs/http/ngx_http_core_module.html#variables_hash_bucket_size>`_ directive.
      - ``256``
      - 
    * - ``variables-hash-max-size``
-     - Sets the value of the `variables-hash-max-size <http://nginx.org/en/docs/http/ngx_http_core_module.html#variables_hash_max_size>`_ directive.
+     - Sets the value of the `variables-hash-max-size <https://nginx.org/en/docs/http/ngx_http_core_module.html#variables_hash_max_size>`_ directive.
      - ``1024``
      - 
 ```
@@ -191,19 +191,19 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - Default
      - Example
    * - ``error-log-level``
-     - Sets the global `error log level <http://nginx.org/en/docs/ngx_core_module.html#error_log>`_ for NGINX.
+     - Sets the global `error log level <https://nginx.org/en/docs/ngx_core_module.html#error_log>`_ for NGINX.
      - ``notice``
      - 
    * - ``access-log-off``
-     - Disables the `access log <http://nginx.org/en/docs/http/ngx_http_log_module.html#access_log>`_.
+     - Disables the `access log <https://nginx.org/en/docs/http/ngx_http_log_module.html#access_log>`_.
      - ``False``
      - 
    * - ``default-server-access-log-off``
-     - Disables the `access log <http://nginx.org/en/docs/http/ngx_http_log_module.html#access_log>`_ for the default server. If access log is disabled globally (``access-log-off: "True"``), then the default server access log is always disabled.
+     - Disables the `access log <https://nginx.org/en/docs/http/ngx_http_log_module.html#access_log>`_ for the default server. If access log is disabled globally (``access-log-off: "True"``), then the default server access log is always disabled.
      - ``False``
      - 
    * - ``log-format``
-     - Sets the custom `log format <http://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_ for HTTP and HTTPS traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by ``\n``). In that case, the Ingress Controller will replace every ``\n`` character with a space character. All ``'`` characters must be escaped.
+     - Sets the custom `log format <https://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_ for HTTP and HTTPS traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by ``\n``). In that case, the Ingress Controller will replace every ``\n`` character with a space character. All ``'`` characters must be escaped.
      - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/master/internal/configs/version1/nginx.tmpl>`_ for the access log.
      - 
    * - ``log-format-escaping``
@@ -211,7 +211,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - ``default``
      -
    * - ``stream-log-format``
-     - Sets the custom `log format <http://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format>`_ for TCP, UDP, and TLS Passthrough traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by ``\n``). In that case, the Ingress Controller will replace every ``\n`` character with a space character. All ``'`` characters must be escaped.
+     - Sets the custom `log format <https://nginx.org/en/docs/stream/ngx_stream_log_module.html#log_format>`_ for TCP, UDP, and TLS Passthrough traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by ``\n``). In that case, the Ingress Controller will replace every ``\n`` character with a space character. All ``'`` characters must be escaped.
      - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/master/internal/configs/version1/nginx.tmpl>`_.
      - 
    * - ``stream-log-format-escaping``
@@ -231,11 +231,11 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - Default
      - Example
    * - ``proxy-hide-headers``
-     - Sets the value of one or more  `proxy_hide_header <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header>`_ directives. Example: ``"nginx.org/proxy-hide-headers": "header-a,header-b"``
+     - Sets the value of one or more  `proxy_hide_header <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header>`_ directives. Example: ``"nginx.org/proxy-hide-headers": "header-a,header-b"``
      - N/A
      - 
    * - ``proxy-pass-headers``
-     - Sets the value of one or more   `proxy_pass_header <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header>`_ directives. Example: ``"nginx.org/proxy-pass-headers": "header-a,header-b"``
+     - Sets the value of one or more   `proxy_pass_header <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header>`_ directives. Example: ``"nginx.org/proxy-pass-headers": "header-a,header-b"``
      - N/A
      - 
 ```
@@ -275,19 +275,19 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - ``False``
      - 
    * - ``ssl-protocols``
-     - Sets the value of the `ssl_protocols <http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_protocols>`_ directive.
+     - Sets the value of the `ssl_protocols <https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_protocols>`_ directive.
      - ``TLSv1 TLSv1.1 TLSv1.2``
      - 
    * - ``ssl-prefer-server-ciphers``
-     - Enables or disables the `ssl_prefer_server_ciphers <http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_prefer_server_ciphers>`_ directive.
+     - Enables or disables the `ssl_prefer_server_ciphers <https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_prefer_server_ciphers>`_ directive.
      - ``False``
      - 
    * - ``ssl-ciphers``
-     - Sets the value of the `ssl_ciphers <http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_ciphers>`_ directive.
+     - Sets the value of the `ssl_ciphers <https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_ciphers>`_ directive.
      - ``HIGH:!aNULL:!MD5``
      - 
    * - ``ssl-dhparam-file``
-     - Sets the content of the dhparam file. The controller will create the file and set the value of the `ssl_dhparam <http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_dhparam>`_ directive with the path of the file.
+     - Sets the content of the dhparam file. The controller will create the file and set the value of the `ssl_dhparam <https://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_dhparam>`_ directive with the path of the file.
      - N/A
      - 
 ```
@@ -339,7 +339,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - ``10s``
      - 
    * - ``keepalive``
-     - Sets the value of the `keepalive <http://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive>`_ directive. Note that ``proxy_set_header Connection "";`` is added to the generated configuration when the value > 0.
+     - Sets the value of the `keepalive <https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive>`_ directive. Note that ``proxy_set_header Connection "";`` is added to the generated configuration when the value > 0.
      - ``0``
      - 
 ```

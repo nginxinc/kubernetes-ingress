@@ -172,7 +172,7 @@ The route defines rules for matching client requests to actions like passing a r
      - Type
      - Required
    * - ``path``
-     - The path of the route. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix (must start with ``/``\ ) or an exact match (must start with ``=``\ ), the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``. In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all routes of the VirtualServer. Check the `location <http://nginx.org/en/docs/http/ngx_http_core_module.html#location>`_ directive for more information.
+     - The path of the route. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix (must start with ``/``\ ) or an exact match (must start with ``=``\ ), the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``. In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all routes of the VirtualServer. Check the `location <https://nginx.org/en/docs/http/ngx_http_core_module.html#location>`_ directive for more information.
      - ``string``
      - Yes
    * - ``action``
@@ -422,7 +422,7 @@ tls:
      - `tls <#upstream-tls>`_
      - No
    * - ``healthCheck``
-     - The health check configuration for the Upstream. See the `health_check <http://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check>`_ directive. Note: this feature is supported only in NGINX Plus.
+     - The health check configuration for the Upstream. See the `health_check <https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check>`_ directive. Note: this feature is supported only in NGINX Plus.
      - `healthcheck <#upstream-healthcheck>`_
      - No
    * - ``slow-start``
@@ -499,7 +499,7 @@ size: 10
 timeout: 60s
 ```
 
-See [`queue`](http://nginx.org/en/docs/http/ngx_http_upstream_module.html#queue) directive for additional information.
+See [`queue`](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#queue) directive for additional information.
 
 Note: This feature is supported only in NGINX Plus.
 
@@ -854,7 +854,7 @@ action:
   pass: coffee-stable
 ```
 
-In the next example, NGINX routes requests based on the value of the built-in [`$request_method` variable](http://nginx.org/en/docs/http/ngx_http_core_module.html#var_request_method), which represents the HTTP method of a request:
+In the next example, NGINX routes requests based on the value of the built-in [`$request_method` variable](https://nginx.org/en/docs/http/ngx_http_core_module.html#var_request_method), which represents the HTTP method of a request:
 * all POST requests -> `coffee-post`
 * all non-POST requests -> `coffee`
 
