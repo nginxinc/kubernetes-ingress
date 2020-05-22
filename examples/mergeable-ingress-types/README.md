@@ -134,7 +134,7 @@ nginx-ingress-66bc44674b-hrcx8   1/1       Running   0          4m
 
 2. Examine the NGINX Configuration.
 ```
-$ kubectl exec -it nginx-ingress-66bc44674b-hrcx8 -n nginx-ingress cat /etc/nginx/conf.d/default-cafe-ingress-master.conf
+$ kubectl exec -it nginx-ingress-66bc44674b-hrcx8 -n nginx-ingress -- cat /etc/nginx/conf.d/default-cafe-ingress-master.conf
 
 upstream default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc {
 	server 172.17.0.5:80;
