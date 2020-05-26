@@ -5,7 +5,7 @@ In this example we deploy the NGINX or NGINX Plus Ingress Controller and a simpl
 
 ## Prerequisites
 
-The default Ingress Controller images don’t include the OpenTracing module required for this example. See Step 1 of the [Prerequisites section](https://docs.nginx.com/nginx-ingress-controller/third-party-modules/opentracing/#prerequisites) in the OpenTracing doc for the instructions on how to get the right image with Jaeger tracer.
+The default Ingress Controller images do not include the OpenTracing module required for this example. See Step 1 of the [Prerequisites section](https://docs.nginx.com/nginx-ingress-controller/third-party-modules/opentracing/#prerequisites) in the OpenTracing doc for the instructions on how to get the right image with Jaeger tracer.
 
 ## Step 1 - Deploy Ingress Controller and the Cafe App
 
