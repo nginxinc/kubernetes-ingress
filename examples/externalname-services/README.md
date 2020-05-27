@@ -21,7 +21,7 @@ data:
   resolver-addresses: "10.0.0.10"
 ```
 
-Additional resolver parameters, including the caching of DNS records, are available. Check the corresponding [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) and [Annotations](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/) sections.
+Additional resolver parameters, including the caching of DNS records, are available. Check the corresponding [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) section.
 
 
 ## Example
