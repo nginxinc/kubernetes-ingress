@@ -15,7 +15,7 @@ With NGINX, we’ll use the DNS name or virtual IP address to identify the servi
 
 ### 1. Deploy the Ingress Controller
 
-1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) to deploy the Ingress controller. Make sure to expose port 5353 of the Ingress controller
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress controller. Make sure to expose port 5353 of the Ingress controller
 both for TCP and UDP traffic.
 
 2. Save the public IP address of the Ingress controller into a shell variable:
