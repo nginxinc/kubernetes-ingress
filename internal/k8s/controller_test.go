@@ -1659,6 +1659,82 @@ func TestFindVirtualServersForSecret(t *testing.T) {
 	}
 }
 
+func TestFindVirtualServersForPolicy(t *testing.T) {
+	vs1 := conf_v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-1",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.VirtualServerSpec{
+			Policies: nil,
+		},
+	}
+	vs2 := conf_v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-2",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.VirtualServerSpec{
+			Policies: []conf_v1.PolicyReference{
+				{
+					Name: "some-policy",
+				},
+			},
+		},
+	}
+	vs3 := conf_v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-3",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.VirtualServerSpec{
+			Policies: []conf_v1.PolicyReference{
+				{
+					Name:      "test-policy",
+					Namespace: "some-namespace",
+				},
+			},
+		},
+	}
+	vs4 := conf_v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-4",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.VirtualServerSpec{
+			Policies: []conf_v1.PolicyReference{
+				{
+					Name:      "test-policy",
+					Namespace: "ns-1",
+				},
+			},
+		},
+	}
+	vs5 := conf_v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-5",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.VirtualServerSpec{
+			Policies: []conf_v1.PolicyReference{
+				{
+					Name:      "test-policy",
+					Namespace: "",
+				},
+			},
+		},
+	}
+
+	virtualServers := []*conf_v1.VirtualServer{&vs1, &vs2, &vs3, &vs4, &vs5}
+
+	expected := []*conf_v1.VirtualServer{&vs4, &vs5}
+
+	result := findVirtualServersForPolicy(virtualServers, "ns-1", "test-policy")
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("findVirtualServersForPolicy returned %v but expected %v", result, expected)
+	}
+}
+
 func TestFindVirtualServersForVirtualServerRoute(t *testing.T) {
 	vs1 := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{

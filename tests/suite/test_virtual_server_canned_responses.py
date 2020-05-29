@@ -24,7 +24,7 @@ class TestVSCannedResponse:
                                             virtual_server_setup.vs_name,
                                             ic_pod_name,
                                             ingress_controller_prerequisites.namespace)
-        assert "return 407" in config and "return 200" in config
+        assert "error_page 418 =407" in config and "error_page 418 =200" in config
 
     def test_custom_canned_response(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         req_url = f"{virtual_server_setup.backend_1_url}?arg1=arg"

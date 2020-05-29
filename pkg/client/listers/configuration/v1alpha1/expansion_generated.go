@@ -10,6 +10,14 @@ type GlobalConfigurationListerExpansion interface{}
 // GlobalConfigurationNamespaceLister.
 type GlobalConfigurationNamespaceListerExpansion interface{}
 
+// PolicyListerExpansion allows custom methods to be added to
+// PolicyLister.
+type PolicyListerExpansion interface{}
+
+// PolicyNamespaceListerExpansion allows custom methods to be added to
+// PolicyNamespaceLister.
+type PolicyNamespaceListerExpansion interface{}
+
 // TransportServerListerExpansion allows custom methods to be added to
 // TransportServerLister.
 type TransportServerListerExpansion interface{}

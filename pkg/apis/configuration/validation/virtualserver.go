@@ -22,16 +22,17 @@ var escapedStringsFmtRegexp = regexp.MustCompile("^" + escapedStringsFmt + "$")
 
 // ValidateVirtualServer validates a VirtualServer.
 func ValidateVirtualServer(virtualServer *v1.VirtualServer, isPlus bool) error {
-	allErrs := validateVirtualServerSpec(&virtualServer.Spec, field.NewPath("spec"), isPlus)
+	allErrs := validateVirtualServerSpec(&virtualServer.Spec, field.NewPath("spec"), isPlus, virtualServer.Namespace)
 	return allErrs.ToAggregate()
 }
 
 // validateVirtualServerSpec validates a VirtualServerSpec.
-func validateVirtualServerSpec(spec *v1.VirtualServerSpec, fieldPath *field.Path, isPlus bool) field.ErrorList {
+func validateVirtualServerSpec(spec *v1.VirtualServerSpec, fieldPath *field.Path, isPlus bool, namespace string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateHost(spec.Host, fieldPath.Child("host"))...)
 	allErrs = append(allErrs, validateTLS(spec.TLS, fieldPath.Child("tls"))...)
+	allErrs = append(allErrs, validatePolicies(spec.Policies, fieldPath.Child("policies"), namespace)...)
 
 	upstreamErrs, upstreamNames := validateUpstreams(spec.Upstreams, fieldPath.Child("upstreams"), isPlus)
 	allErrs = append(allErrs, upstreamErrs...)
@@ -50,6 +51,44 @@ func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 
 	for _, msg := range validation.IsDNS1123Subdomain(host) {
 		allErrs = append(allErrs, field.Invalid(fieldPath, host, msg))
+	}
+
+	return allErrs
+}
+
+func validatePolicies(policies []v1.PolicyReference, fieldPath *field.Path, namespace string) field.ErrorList {
+	allErrs := field.ErrorList{}
+	policyKeys := sets.String{}
+
+	for i, p := range policies {
+		idxPath := fieldPath.Index(i)
+
+		polNamespace := p.Namespace
+		if polNamespace == "" {
+			polNamespace = namespace
+		}
+
+		key := fmt.Sprintf("%s/%s", polNamespace, p.Name)
+
+		if policyKeys.Has(key) {
+			allErrs = append(allErrs, field.Duplicate(idxPath, key))
+		} else {
+			policyKeys.Insert(key)
+		}
+
+		if p.Name == "" {
+			allErrs = append(allErrs, field.Required(idxPath.Child("name"), ""))
+		} else {
+			for _, msg := range validation.IsDNS1123Subdomain(p.Name) {
+				allErrs = append(allErrs, field.Invalid(idxPath.Child("name"), p.Name, msg))
+			}
+		}
+
+		if p.Namespace != "" {
+			for _, msg := range validation.IsDNS1123Label(p.Namespace) {
+				allErrs = append(allErrs, field.Invalid(idxPath.Child("namespace"), p.Namespace, msg))
+			}
+		}
 	}
 
 	return allErrs

@@ -66,6 +66,7 @@ rules:
   - virtualserverroutes
   - globalconfigurations
   - transportservers
+  - policies
   verbs:
   - list
   - watch

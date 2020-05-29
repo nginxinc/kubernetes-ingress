@@ -67,6 +67,17 @@ spec:
               type: string
             ingressClassName:
               type: string
+            policies:
+              type: array
+              items:
+                description: PolicyReference references a policy by name and an optional
+                  namespace.
+                type: object
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
             routes:
               type: array
               items:

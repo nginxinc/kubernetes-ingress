@@ -32,6 +32,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&GlobalConfigurationList{},
 		&TransportServer{},
 		&TransportServerList{},
+		&Policy{},
+		&PolicyList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

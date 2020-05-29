@@ -24,7 +24,7 @@ class TestVSRCannedResponses:
                                             v_s_route_setup.vs_name,
                                             ic_pod_name,
                                             ingress_controller_prerequisites.namespace)
-        assert "return 407" in config and "return 200" in config
+        assert "error_page 418 =407" in config and "error_page 418 =200" in config
 
     def test_custom_canned_response(self, kube_apis, crd_ingress_controller, v_s_route_setup):
         req_host = f"{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"

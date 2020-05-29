@@ -46,9 +46,13 @@ type Server struct {
 	InternalRedirectLocations []InternalRedirectLocation
 	Locations                 []Location
 	ErrorPageLocations        []ErrorPageLocation
+	ReturnLocations           []ReturnLocation
 	HealthChecks              []HealthCheck
 	TLSRedirect               *TLSRedirect
 	TLSPassthrough            bool
+	Allow                     []string
+	Deny                      []string
+	PoliciesErrorReturn       *Return
 }
 
 // SSL defines SSL configuration for a server.
@@ -86,10 +90,16 @@ type Location struct {
 	AddHeaders               []AddHeader
 	Rewrites                 []string
 	HasKeepalive             bool
-	DefaultType              string
-	Return                   *Return
 	ErrorPages               []ErrorPage
 	ProxySSLName             string
+	InternalProxyPass        string
+}
+
+// ReturnLocation defines a location for returning a fixed response.
+type ReturnLocation struct {
+	Name        string
+	DefaultType string
+	Return      Return
 }
 
 // SplitClient defines a split_clients.

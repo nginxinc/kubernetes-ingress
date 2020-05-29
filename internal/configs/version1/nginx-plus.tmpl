@@ -178,6 +178,17 @@ http {
 
     include /etc/nginx/config-version.conf;
     include /etc/nginx/conf.d/*.conf;
+
+    server {
+        listen unix:/var/lib/nginx/nginx-418-server.sock;
+        access_log off;
+
+        {{if .OpenTracingEnabled}}
+        opentracing off;
+        {{end}}
+
+        return 418;
+    }
 }
 
 stream {

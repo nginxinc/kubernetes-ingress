@@ -28,13 +28,20 @@ type VirtualServer struct {
 
 // VirtualServerSpec is the spec of the VirtualServer resource.
 type VirtualServerSpec struct {
-	IngressClass   string     `json:"ingressClassName"`
-	Host           string     `json:"host"`
-	TLS            *TLS       `json:"tls"`
-	Upstreams      []Upstream `json:"upstreams"`
-	Routes         []Route    `json:"routes"`
-	HTTPSnippets   string     `json:"http-snippets"`
-	ServerSnippets string     `json:"server-snippets"`
+	IngressClass   string            `json:"ingressClassName"`
+	Host           string            `json:"host"`
+	TLS            *TLS              `json:"tls"`
+	Policies       []PolicyReference `json:"policies"`
+	Upstreams      []Upstream        `json:"upstreams"`
+	Routes         []Route           `json:"routes"`
+	HTTPSnippets   string            `json:"http-snippets"`
+	ServerSnippets string            `json:"server-snippets"`
+}
+
+// PolicyReference references a policy by name and an optional namespace.
+type PolicyReference struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
 }
 
 // Upstream defines an upstream.

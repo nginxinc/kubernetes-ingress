@@ -165,9 +165,18 @@ http {
         opentracing off;
         {{end}}
 
-        location / {
-            return 502;
-        }
+        return 502;
+    }
+
+    server {
+        listen unix:/var/lib/nginx/nginx-418-server.sock;
+        access_log off;
+
+        {{if .OpenTracingEnabled}}
+        opentracing off;
+        {{end}}
+
+        return 418;
     }
 }
 

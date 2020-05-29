@@ -10,6 +10,8 @@ import (
 type Interface interface {
 	// GlobalConfigurations returns a GlobalConfigurationInformer.
 	GlobalConfigurations() GlobalConfigurationInformer
+	// Policies returns a PolicyInformer.
+	Policies() PolicyInformer
 	// TransportServers returns a TransportServerInformer.
 	TransportServers() TransportServerInformer
 }
@@ -28,6 +30,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // GlobalConfigurations returns a GlobalConfigurationInformer.
 func (v *version) GlobalConfigurations() GlobalConfigurationInformer {
 	return &globalConfigurationInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// Policies returns a PolicyInformer.
+func (v *version) Policies() PolicyInformer {
+	return &policyInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // TransportServers returns a TransportServerInformer.

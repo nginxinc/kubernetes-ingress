@@ -22,7 +22,7 @@ class TestVSRedirects:
                                             virtual_server_setup.vs_name,
                                             ic_pod_name,
                                             ingress_controller_prerequisites.namespace)
-        assert 'return 307 ' in config and 'return 301 ' in config
+        assert 'error_page 418 =307' in config and 'error_page 418 =301' in config
 
     def test_custom_redirect(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         req_url = f"{virtual_server_setup.backend_1_url}"

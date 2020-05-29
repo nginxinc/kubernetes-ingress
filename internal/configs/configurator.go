@@ -204,6 +204,25 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	return warnings, nil
 }
 
+// AddOrUpdateVirtualServers adds or updates NGINX configuration for multiple VirtualServer resources.
+func (cnf *Configurator) AddOrUpdateVirtualServers(virtualServerExes []*VirtualServerEx) (Warnings, error) {
+	allWarnings := newWarnings()
+
+	for _, vsEx := range virtualServerExes {
+		warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
+		if err != nil {
+			return allWarnings, err
+		}
+		allWarnings.Add(warnings)
+	}
+
+	if err := cnf.nginxManager.Reload(); err != nil {
+		return allWarnings, fmt.Errorf("Error when reloading NGINX when updating Policy: %v", err)
+	}
+
+	return allWarnings, nil
+}
+
 // AddOrUpdateTransportServer adds or updates NGINX configuration for the TransportServer resource.
 // It is a responsibility of the caller to check that the TransportServer references an existing listener.
 func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *TransportServerEx) error {

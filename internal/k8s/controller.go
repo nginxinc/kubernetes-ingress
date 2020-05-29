@@ -71,6 +71,7 @@ type LoadBalancerController struct {
 	virtualServerRouteController  cache.Controller
 	globalConfigurationController cache.Controller
 	transportServerController     cache.Controller
+	policyController              cache.Controller
 	podController                 cache.Controller
 	ingressLister                 storeToIngressLister
 	svcLister                     cache.Store
@@ -82,6 +83,7 @@ type LoadBalancerController struct {
 	virtualServerRouteLister      cache.Store
 	globalConfiguratonLister      cache.Store
 	transportServerLister         cache.Store
+	policyLister                  cache.Store
 	syncQueue                     *taskQueue
 	ctx                           context.Context
 	cancel                        context.CancelFunc
@@ -199,6 +201,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		lbc.addVirtualServerHandler(createVirtualServerHandlers(lbc))
 		lbc.addVirtualServerRouteHandler(createVirtualServerRouteHandlers(lbc))
 		lbc.addTransportServerHandler(createTransportServerHandlers(lbc))
+		lbc.addPolicyHandler(createPolicyHandlers(lbc))
 
 		if input.GlobalConfiguration != "" {
 			lbc.watchGlobalConfiguration = true
@@ -383,6 +386,19 @@ func (lbc *LoadBalancerController) addTransportServerHandler(handlers cache.Reso
 	)
 }
 
+func (lbc *LoadBalancerController) addPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
+	lbc.policyLister, lbc.policyController = cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.confClient.K8sV1alpha1().RESTClient(),
+			"policies",
+			lbc.namespace,
+			fields.Everything()),
+		&conf_v1alpha1.Policy{},
+		lbc.resync,
+		handlers,
+	)
+}
+
 // Run starts the loadbalancer controller
 func (lbc *LoadBalancerController) Run() {
 	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
@@ -409,6 +425,7 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.virtualServerController.Run(lbc.ctx.Done())
 		go lbc.virtualServerRouteController.Run(lbc.ctx.Done())
 		go lbc.transportServerController.Run(lbc.ctx.Done())
+		go lbc.policyController.Run(lbc.ctx.Done())
 	}
 	if lbc.watchGlobalConfiguration {
 		go lbc.globalConfigurationController.Run(lbc.ctx.Done())
@@ -742,6 +759,108 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncGlobalConfiguration(task)
 	case transportserver:
 		lbc.syncTransportServer(task)
+	case policy:
+		lbc.syncPolicy(task)
+	}
+}
+
+func (lbc *LoadBalancerController) syncPolicy(task task) {
+	key := task.Key
+	obj, polExists, err := lbc.policyLister.GetByKey(key)
+	if err != nil {
+		lbc.syncQueue.Requeue(task, err)
+		return
+	}
+
+	glog.V(2).Infof("Adding, Updating or Deleting Policy: %v\n", key)
+
+	if polExists {
+		pol := obj.(*conf_v1alpha1.Policy)
+		err := validation.ValidatePolicy(pol)
+		if err != nil {
+			lbc.recorder.Eventf(pol, api_v1.EventTypeWarning, "Rejected", "Policy %v is invalid and was rejected: %v", key, err)
+		} else {
+			lbc.recorder.Eventf(pol, api_v1.EventTypeNormal, "AddedOrUpdated", "Policy %v was added or updated", key)
+		}
+	}
+
+	// it is safe to ignore the error
+	namespace, name, _ := ParseNamespaceName(key)
+
+	virtualServers := lbc.getVirtualServersForPolicy(namespace, name)
+	virtualServerExes := lbc.virtualServersToVirtualServerExes(virtualServers)
+
+	if len(virtualServerExes) == 0 {
+		return
+	}
+
+	warnings, updateErr := lbc.configurator.AddOrUpdateVirtualServers(virtualServerExes)
+
+	// Note: updating the status of a policy based on a reload is not needed.
+
+	eventTitle := "Updated"
+	eventType := api_v1.EventTypeNormal
+	eventWarningMessage := ""
+	state := conf_v1.StateValid
+
+	if updateErr != nil {
+		eventTitle = "UpdatedWithError"
+		eventType = api_v1.EventTypeWarning
+		eventWarningMessage = fmt.Sprintf("but was not applied: %v", updateErr)
+		state = conf_v1.StateInvalid
+	}
+
+	for _, vsEx := range virtualServerExes {
+		vsEventType := eventType
+		vsEventTitle := eventTitle
+		vsEventWarningMessage := eventWarningMessage
+		vsState := state
+
+		if messages, ok := warnings[vsEx.VirtualServer]; ok && updateErr == nil {
+			vsEventType = api_v1.EventTypeWarning
+			vsEventTitle = "UpdatedWithWarning"
+			vsEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+			vsState = conf_v1.StateWarning
+		}
+
+		msg := fmt.Sprintf("Configuration for %v/%v was updated %s", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name,
+			vsEventWarningMessage)
+		lbc.recorder.Eventf(vsEx.VirtualServer, vsEventType, vsEventTitle, msg)
+
+		if lbc.reportVsVsrStatusEnabled() {
+			err = lbc.statusUpdater.UpdateVirtualServerStatus(vsEx.VirtualServer, vsState, vsEventTitle, msg)
+
+			if err != nil {
+				glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace,
+					vsEx.VirtualServer.Name, err)
+			}
+		}
+
+		for _, vsr := range vsEx.VirtualServerRoutes {
+			vsrEventType := eventType
+			vsrEventTitle := eventTitle
+			vsrEventWarningMessage := eventWarningMessage
+			vsrState := state
+
+			if messages, ok := warnings[vsr]; ok && updateErr == nil {
+				vsrEventType = api_v1.EventTypeWarning
+				vsrEventTitle = "UpdatedWithWarning"
+				vsrEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+				vsrState = conf_v1.StateWarning
+			}
+
+			msg := fmt.Sprintf("Configuration for %v/%v was added or updated %s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
+			lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, msg)
+
+			if lbc.reportVsVsrStatusEnabled() {
+				virtualServersForVSR := findVirtualServersForVirtualServerRoute(lbc.getVirtualServers(), vsr)
+				err = lbc.statusUpdater.UpdateVirtualServerRouteStatusWithReferencedBy(vsr, vsrState, vsrEventTitle, msg, virtualServersForVSR)
+
+				if err != nil {
+					glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				}
+			}
+		}
 	}
 }
 
@@ -1883,6 +2002,30 @@ func findVirtualServersForSecret(virtualServers []*conf_v1.VirtualServer, secret
 	return result
 }
 
+func (lbc *LoadBalancerController) getVirtualServersForPolicy(policyNamespace string, policyName string) []*conf_v1.VirtualServer {
+	return findVirtualServersForPolicy(lbc.getVirtualServers(), policyNamespace, policyName)
+}
+
+func findVirtualServersForPolicy(virtualServers []*conf_v1.VirtualServer, policyNamespace string, policyName string) []*conf_v1.VirtualServer {
+	var result []*conf_v1.VirtualServer
+
+	for _, vs := range virtualServers {
+		for _, p := range vs.Spec.Policies {
+			namespace := p.Namespace
+			if namespace == "" {
+				namespace = vs.Namespace
+			}
+
+			if p.Name == policyName && namespace == policyNamespace {
+				result = append(result, vs)
+				break
+			}
+		}
+	}
+
+	return result
+}
+
 func (lbc *LoadBalancerController) getVirtualServers() []*conf_v1.VirtualServer {
 	var virtualServers []*conf_v1.VirtualServer
 
@@ -2155,6 +2298,38 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 		}
 	}
 
+	policies := make(map[string]*conf_v1alpha1.Policy)
+
+	for _, p := range virtualServer.Spec.Policies {
+		polNamespace := p.Namespace
+		if polNamespace == "" {
+			polNamespace = virtualServer.Namespace
+		}
+
+		policyKey := fmt.Sprintf("%s/%s", polNamespace, p.Name)
+
+		policyObj, exists, err := lbc.policyLister.GetByKey(policyKey)
+		if err != nil {
+			glog.Warningf("Failed to get policy %s for VirtualServer %s/%s: %v", p.Name, polNamespace, virtualServer.Name, err)
+			continue
+		}
+
+		if !exists {
+			glog.Warningf("Policy %s doesn't exist for VirtualServer %s/%s", p.Name, polNamespace, virtualServer.Name)
+			continue
+		}
+
+		policy := policyObj.(*conf_v1alpha1.Policy)
+
+		err = validation.ValidatePolicy(policy)
+		if err != nil {
+			glog.Warningf("Policy %s is invalid for VirtualServer %s/%s: %v", policyKey, virtualServer.Namespace, virtualServer.Name, err)
+			continue
+		}
+
+		policies[policyKey] = policy
+	}
+
 	endpoints := make(map[string][]string)
 	externalNameSvcs := make(map[string]bool)
 
@@ -2253,6 +2428,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 	virtualServerEx.Endpoints = endpoints
 	virtualServerEx.VirtualServerRoutes = virtualServerRoutes
 	virtualServerEx.ExternalNameSvcs = externalNameSvcs
+	virtualServerEx.Policies = policies
 
 	return &virtualServerEx, virtualServerRouteErrors
 }

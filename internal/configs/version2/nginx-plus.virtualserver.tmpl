@@ -92,6 +92,24 @@ server {
     real_ip_recursive on;
     {{ end }}
 
+    {{ with $s.PoliciesErrorReturn }}
+    return {{ .Code }};
+    {{ end }}
+
+    {{ range $allow := $s.Allow }}
+    allow {{ $allow }};
+    {{ end }}
+    {{ if gt (len $s.Allow) 0 }}
+    deny all;
+    {{ end }}
+
+    {{ range $deny := $s.Deny }}
+    deny {{ $deny }};
+    {{ end }}
+    {{ if gt (len $s.Deny) 0 }}
+    allow all;
+    {{ end }}
+
     {{ range $snippet := $s.Snippets }}
     {{ $snippet }}
     {{ end }}
@@ -129,6 +147,14 @@ server {
     }
     {{ end }}
 
+    {{ range $l := $s.ReturnLocations }}
+    location {{ $l.Name }} {
+        default_type "{{ $l.DefaultType }}";
+        # status code is ignored here, using 0
+        return 0 "{{ $l.Return.Text }}";
+    }
+    {{ end }}
+
     {{ range $l := $s.Locations }}
     location {{ $l.Path }} {
         {{ if $l.Internal }}
@@ -138,18 +164,19 @@ server {
         {{ $snippet }}
         {{ end }}
 
-        {{ with $l.Return }}
-            {{ if $l.DefaultType }}
-        default_type "{{ $l.DefaultType }}";
-            {{ end }}
-        return {{ .Code }} "{{ .Text }}";
+        {{ range $e := $l.ErrorPages }}
+        error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";
+        {{ end }}
+
+        {{ if $l.ProxyInterceptErrors }}
+        proxy_intercept_errors on;
+        {{ end }}
+
+        {{ if $l.InternalProxyPass }}
+        proxy_pass {{ $l.InternalProxyPass }};
         {{ end }}
 
         {{ if $l.ProxyPass }}
-            {{ range $e := $l.ErrorPages }}
-        error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";
-            {{ end }}
-
         set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
 
             {{ range $r := $l.Rewrites }}
@@ -170,9 +197,6 @@ server {
             {{ end }}
             {{ if $l.ProxyBufferSize }}
         proxy_buffer_size {{ $l.ProxyBufferSize }};
-            {{ end }}
-            {{ if $l.ProxyInterceptErrors }}
-        proxy_intercept_errors on;
             {{ end }}
         proxy_http_version 1.1;
 

@@ -117,6 +117,8 @@ const (
 	globalConfiguration
 	// transportserver resource
 	transportserver
+	// policy resource
+	policy
 )
 
 // task is an element of a taskQueue
@@ -152,8 +154,10 @@ func newTask(key string, obj interface{}) (task, error) {
 		k = globalConfiguration
 	case *conf_v1alpha1.TransportServer:
 		k = transportserver
+	case *conf_v1alpha1.Policy:
+		k = policy
 	default:
-		return task{}, fmt.Errorf("Unknow type: %v", t)
+		return task{}, fmt.Errorf("Unknown type: %v", t)
 	}
 
 	return task{k, key}, nil

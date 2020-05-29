@@ -99,3 +99,39 @@ type TransportServerList struct {
 
 	Items []TransportServer `json:"items"`
 }
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:validation:Optional
+
+// Policy defines a Policy for VirtualServer and VirtualServerRoute resources.
+type Policy struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec PolicySpec `json:"spec"`
+}
+
+// PolicySpec is the spec of the Policy resource.
+// The spec includes multiple fields, where each field represents a different policy.
+// Note: currently we have only one policy -- AccessControl, but we will support more in the future.
+// Only one policy (field) is allowed.
+type PolicySpec struct {
+	AccessControl *AccessControl `json:"accessControl"`
+}
+
+// AccessControl defines an access policy based on the source IP of a request.
+type AccessControl struct {
+	Allow []string `json:"allow"`
+	Deny  []string `json:"deny"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// PolicyList is a list of the Policy resources.
+type PolicyList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []Policy `json:"items"`
+}

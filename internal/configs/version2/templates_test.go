@@ -118,6 +118,8 @@ var virtualServerCfg = VirtualServerConfig{
 		SetRealIPFrom:   []string{"0.0.0.0/0"},
 		RealIPHeader:    "X-Real-IP",
 		RealIPRecursive: true,
+		Allow:           []string{"127.0.0.1"},
+		Deny:            []string{"127.0.0.1"},
 		Snippets:        []string{"# server snippet"},
 		InternalRedirectLocations: []InternalRedirectLocation{
 			{
@@ -214,6 +216,18 @@ var virtualServerCfg = VirtualServerConfig{
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "5s",
 			},
+			{
+				Path:                 "/return",
+				ProxyInterceptErrors: true,
+				ErrorPages: []ErrorPage{
+					{
+						Name:         "@return_0",
+						Codes:        "418",
+						ResponseCode: 200,
+					},
+				},
+				InternalProxyPass: "http://unix:/var/lib/nginx/nginx-418-server.sock",
+			},
 		},
 		ErrorPageLocations: []ErrorPageLocation{
 			{
@@ -241,6 +255,16 @@ var virtualServerCfg = VirtualServerConfig{
 						Name:  "Set-Cookie",
 						Value: "cookie2=test; Secure",
 					},
+				},
+			},
+		},
+		ReturnLocations: []ReturnLocation{
+			{
+				Name:        "@return_0",
+				DefaultType: "text/html",
+				Return: Return{
+					Code: 200,
+					Text: "Hello!",
 				},
 			},
 		},
