@@ -879,6 +879,10 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		if err != nil {
 			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
 		}
+		vsr := lbc.getVirtualServerRoutes()
+		for _, r := range vsr {
+			lbc.recorder.Eventf(r, api_v1.EventTypeWarning, "NoVirtualServerFound", "No VirtualServer references VirtualServerRoute %v/%v", r.Namespace, r.Name)
+		}
 		return
 	}
 
@@ -905,6 +909,10 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		}
 
 		// TO-DO: emit events for referenced VirtualServerRoutes
+		vsr := lbc.getVirtualServerRoutes()
+		for _, r := range vsr {
+			lbc.recorder.Eventf(r, api_v1.EventTypeWarning, "NoVirtualServerFound", "No VirtualServer references VirtualServerRoute %v/%v", r.Namespace, r.Name)
+		}
 		return
 	}
 
