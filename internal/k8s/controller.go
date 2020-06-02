@@ -875,14 +875,15 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		glog.V(2).Infof("Deleting VirtualServer: %v\n", key)
 
 		err := lbc.configurator.DeleteVirtualServer(key)
-		// TO-DO: emit events for referenced VirtualServerRoutes
 		if err != nil {
 			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
+		} else {
+			vsr := lbc.getVirtualServerRoutes()
+			for _, r := range vsr {
+				lbc.recorder.Eventf(r, api_v1.EventTypeWarning, "NoVirtualServerFound", "No VirtualServer references VirtualServerRoute %v/%v", r.Namespace, r.Name)
+			}
 		}
-		vsr := lbc.getVirtualServerRoutes()
-		for _, r := range vsr {
-			lbc.recorder.Eventf(r, api_v1.EventTypeWarning, "NoVirtualServerFound", "No VirtualServer references VirtualServerRoute %v/%v", r.Namespace, r.Name)
-		}
+
 		return
 	}
 
@@ -895,24 +896,13 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		err := lbc.configurator.DeleteVirtualServer(key)
 		if err != nil {
 			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
-		}
-		reason := "Rejected"
-		msg := fmt.Sprintf("VirtualServer %v is invalid and was rejected: %v", key, validationErr)
-
-		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, reason, msg)
-		if lbc.reportVsVsrStatusEnabled() {
-			err = lbc.statusUpdater.UpdateVirtualServerStatus(vs, conf_v1.StateInvalid, reason, msg)
-
-			if err != nil {
-				glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vs.Namespace, vs.Name, err)
+		} else {
+			vsr := lbc.getVirtualServerRoutes()
+			for _, r := range vsr {
+				lbc.recorder.Eventf(r, api_v1.EventTypeWarning, "NoVirtualServerFound", "No VirtualServer references VirtualServerRoute %v/%v", r.Namespace, r.Name)
 			}
 		}
-
-		// TO-DO: emit events for referenced VirtualServerRoutes
-		vsr := lbc.getVirtualServerRoutes()
-		for _, r := range vsr {
-			lbc.recorder.Eventf(r, api_v1.EventTypeWarning, "NoVirtualServerFound", "No VirtualServer references VirtualServerRoute %v/%v", r.Namespace, r.Name)
-		}
+		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, "Rejected", "VirtualServer %v is invalid and was rejected: %v", key, validationErr)
 		return
 	}
 
