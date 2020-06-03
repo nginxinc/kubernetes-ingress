@@ -30,3 +30,9 @@ sed -i "" -e "s/%%TITLE%%/### $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g"
 # update docs CHANGELOG
 sed -i "" "1r hack/changelog-template.txt" docs-web/releases.md 
 sed -i "" -e "s/%%TITLE%%/## NGINX Ingress Controller $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" docs-web/releases.md
+
+# update IC version in the technical-specification doc
+sed -i "" "s/$prev_ic_version/$ic_version/g" docs-web/technical-specifications.md 
+
+# update IC version in the building ingress controller doc
+sed -i "" "s/$prev_ic_version/$ic_version/g" doc-webs/installation/building-ingress-controller-image.md
