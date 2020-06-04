@@ -11,3 +11,7 @@ results.xml
 __pycache__/
 *.py[cod]
 .pytest_cache
+
+# Pytest HTML report
+*.html
+*.css 
