@@ -31,7 +31,7 @@ Below we describe the available command-line arguments:
 
 .. option:: -enable-leader-election
 
-	Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status.
+	Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status (default true).
 
 	See :option:`-report-ingress-status` flag.
 

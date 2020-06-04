@@ -101,8 +101,8 @@ var (
 	reportIngressStatus = flag.Bool("report-ingress-status", false,
 		"Update the address field in the status of Ingresses resources. Requires the -external-service flag, or the 'external-status-address' key in the ConfigMap.")
 
-	leaderElectionEnabled = flag.Bool("enable-leader-election", false,
-		"Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status. See -report-ingress-status flag.")
+	leaderElectionEnabled = flag.Bool("enable-leader-election", true,
+		"Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status (default true). See -report-ingress-status flag.")
 
 	leaderElectionLockName = flag.String("leader-election-lock-name", "nginx-ingress-leader-election",
 		`Specifies the name of the ConfigMap, within the same namespace as the controller, used as the lock for leader election. Requires -enable-leader-election.`)
