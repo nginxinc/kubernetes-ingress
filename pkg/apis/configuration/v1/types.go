@@ -122,6 +122,7 @@ type Action struct {
 	Pass     string          `json:"pass"`
 	Redirect *ActionRedirect `json:"redirect"`
 	Return   *ActionReturn   `json:"return"`
+	Proxy    *ActionProxy    `json:"proxy"`
 }
 
 // ActionRedirect defines a redirect in an Action.
@@ -135,6 +136,34 @@ type ActionReturn struct {
 	Code int    `json:"code"`
 	Type string `json:"type"`
 	Body string `json:"body"`
+}
+
+// ActionProxy defines a proxy in an Action.
+type ActionProxy struct {
+	Upstream        string                `json:"upstream"`
+	RewritePath     string                `json:"rewritePath"`
+	RequestHeaders  *ProxyRequestHeaders  `json:"requestHeaders"`
+	ResponseHeaders *ProxyResponseHeaders `json:"responseHeaders"`
+}
+
+// ProxyRequestHeaders defines the request headers manipulation in an ActionProxy.
+type ProxyRequestHeaders struct {
+	Pass *bool    `json:"pass"`
+	Set  []Header `json:"set"`
+}
+
+// ProxyRequestHeaders defines the response headers manipulation in an ActionProxy.
+type ProxyResponseHeaders struct {
+	Hide   []string    `json:"hide"`
+	Pass   []string    `json:"pass"`
+	Ignore []string    `json:"ignore"`
+	Add    []AddHeader `json:"add"`
+}
+
+// Header defines an HTTP Header with an optional Always field to use with the add_header NGINX directive.
+type AddHeader struct {
+	Header `json:",inline"`
+	Always bool `json:"always"`
 }
 
 // Split defines a split.

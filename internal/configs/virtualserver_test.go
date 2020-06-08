@@ -452,6 +452,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
 					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 				{
 					Path:                     "/tea-latest",
@@ -461,6 +462,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
 					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
 				{
@@ -478,7 +480,8 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 							ResponseCode: 301,
 						},
 					},
-					ProxySSLName: "coffee-svc.default.svc",
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
 				},
 				{
 					Path:                     "/coffee",
@@ -488,6 +491,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
 					ProxySSLName:             "coffee-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 				{
 					Path:                     "/subtea",
@@ -497,6 +501,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
 					ProxySSLName:             "sub-tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 
 				{
@@ -514,7 +519,8 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 							ResponseCode: 301,
 						},
 					},
-					ProxySSLName: "coffee-svc.default.svc",
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
 				},
 				{
 					Path:                     "/coffee-errorpage-subroute-defined",
@@ -531,7 +537,8 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 							ResponseCode: 200,
 						},
 					},
-					ProxySSLName: "coffee-svc.default.svc",
+					ProxySSLName:            "coffee-svc.default.svc",
+					ProxyPassRequestHeaders: true,
 				},
 			},
 			ErrorPageLocations: []version2.ErrorPageLocation{
@@ -634,6 +641,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					HasKeepalive:             true,
 					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 			},
 		},
@@ -847,6 +855,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v1.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 				{
 					Path:                     "/internal_location_splits_0_split_1",
@@ -856,6 +865,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v2.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 				{
 					Path:                     "/internal_location_splits_1_split_0",
@@ -865,6 +875,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v1.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 				{
 					Path:                     "/internal_location_splits_1_split_1",
@@ -874,6 +885,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v2.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 			},
 		},
@@ -1118,6 +1130,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v2.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 				{
 					Path:                     "/internal_location_matches_0_default",
@@ -1127,6 +1140,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v1.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 				{
 					Path:                     "/internal_location_matches_1_match_0",
@@ -1136,6 +1150,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v2.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 				{
 					Path:                     "/internal_location_matches_1_default",
@@ -1145,6 +1160,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					ProxyNextUpstreamTries:   0,
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v1.default.svc",
+					ProxyPassRequestHeaders:  true,
 				},
 			},
 		},
@@ -1336,7 +1352,7 @@ func TestGenerateProxyPass(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateProxyPass(test.tlsEnabled, test.upstreamName, test.internal)
+		result := generateProxyPass(test.tlsEnabled, test.upstreamName, test.internal, nil)
 		if result != test.expected {
 			t.Errorf("generateProxyPass(%v, %v, %v) returned %v but expected %v", test.tlsEnabled, test.upstreamName, test.internal, result, test.expected)
 		}
@@ -1446,11 +1462,12 @@ func TestGenerateLocationForProxying(t *testing.T) {
 		ProxyNextUpstream:        "error timeout",
 		ProxyNextUpstreamTimeout: "0s",
 		ProxyNextUpstreamTries:   0,
+		ProxyPassRequestHeaders:  true,
 	}
 
-	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0, "")
+	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0, "", nil, "")
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateLocationForProxying() returned %v but expected %v", result, expected)
+		t.Errorf("generateLocationForProxying() returned \n%v but expected \n%v", result, expected)
 	}
 }
 
@@ -1864,11 +1881,15 @@ func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
 }
 
 func TestGenerateSplits(t *testing.T) {
+	originalPath := "/path"
 	splits := []conf_v1.Split{
 		{
 			Weight: 90,
 			Action: &conf_v1.Action{
-				Pass: "coffee-v1",
+				Proxy: &conf_v1.ActionProxy{
+					Upstream:    "coffee-v1",
+					RewritePath: "/rewrite",
+				},
 			},
 		},
 		{
@@ -1944,7 +1965,8 @@ func TestGenerateSplits(t *testing.T) {
 	expectedLocations := []version2.Location{
 		{
 			Path:                     "/internal_location_splits_1_split_0",
-			ProxyPass:                "http://vs_default_cafe_coffee-v1$request_uri",
+			ProxyPass:                "http://vs_default_cafe_coffee-v1",
+			Rewrites:                 []string{"^ $request_uri", fmt.Sprintf(`"^%v(.*)$" "/rewrite$1" break`, originalPath)},
 			ProxyNextUpstream:        "error timeout",
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyNextUpstreamTries:   0,
@@ -1962,7 +1984,8 @@ func TestGenerateSplits(t *testing.T) {
 					ResponseCode: 301,
 				},
 			},
-			ProxySSLName: "coffee-v1.default.svc",
+			ProxySSLName:            "coffee-v1.default.svc",
+			ProxyPassRequestHeaders: true,
 		},
 		{
 			Path:                     "/internal_location_splits_1_split_1",
@@ -1984,11 +2007,12 @@ func TestGenerateSplits(t *testing.T) {
 					ResponseCode: 301,
 				},
 			},
-			ProxySSLName: "coffee-v2.default.svc",
+			ProxySSLName:            "coffee-v2.default.svc",
+			ProxyPassRequestHeaders: true,
 		},
 	}
 
-	resultSplitClient, resultLocations := generateSplits(splits, upstreamNamer, crUpstreams, variableNamer, scIndex, &cfgParams, errorPages, 0)
+	resultSplitClient, resultLocations := generateSplits(splits, upstreamNamer, crUpstreams, variableNamer, scIndex, &cfgParams, errorPages, 0, originalPath)
 	if !reflect.DeepEqual(resultSplitClient, expectedSplitClient) {
 		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultSplitClient, expectedSplitClient)
 	}
@@ -2052,6 +2076,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				ProxyNextUpstreamTries:   0,
 				Internal:                 true,
 				ProxySSLName:             "coffee-v1.default.svc",
+				ProxyPassRequestHeaders:  true,
 			},
 			{
 				Path:                     "/internal_location_splits_1_split_1",
@@ -2061,6 +2086,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				ProxyNextUpstreamTries:   0,
 				Internal:                 true,
 				ProxySSLName:             "coffee-v2.default.svc",
+				ProxyPassRequestHeaders:  true,
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -2079,7 +2105,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 		},
 	}
 
-	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams, route.ErrorPages, 0)
+	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams, route.ErrorPages, 0, "")
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -2345,7 +2371,8 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxySSLName: "coffee-v1.default.svc",
+				ProxySSLName:            "coffee-v1.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 			{
 				Path:                     "/internal_location_splits_2_split_0",
@@ -2367,7 +2394,8 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxySSLName: "coffee-v1.default.svc",
+				ProxySSLName:            "coffee-v1.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 			{
 				Path:                     "/internal_location_splits_2_split_1",
@@ -2389,7 +2417,8 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxySSLName: "coffee-v2.default.svc",
+				ProxySSLName:            "coffee-v2.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 			{
 				Path:                     "/internal_location_matches_1_default",
@@ -2411,7 +2440,8 @@ func TestGenerateMatchesConfig(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxySSLName: "tea.default.svc",
+				ProxySSLName:            "tea.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -2622,8 +2652,9 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxyInterceptErrors: true,
-				ProxySSLName:         "coffee-v1.default.svc",
+				ProxyInterceptErrors:    true,
+				ProxySSLName:            "coffee-v1.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 			{
 				Path:                     "/internal_location_splits_2_split_1",
@@ -2644,8 +2675,9 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxyInterceptErrors: true,
-				ProxySSLName:         "coffee-v2.default.svc",
+				ProxyInterceptErrors:    true,
+				ProxySSLName:            "coffee-v2.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 			{
 				Path:                     "/internal_location_splits_3_split_0",
@@ -2666,8 +2698,9 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxyInterceptErrors: true,
-				ProxySSLName:         "coffee-v2.default.svc",
+				ProxyInterceptErrors:    true,
+				ProxySSLName:            "coffee-v2.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 			{
 				Path:                     "/internal_location_splits_3_split_1",
@@ -2688,8 +2721,9 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxyInterceptErrors: true,
-				ProxySSLName:         "coffee-v1.default.svc",
+				ProxyInterceptErrors:    true,
+				ProxySSLName:            "coffee-v1.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 			{
 				Path:                     "/internal_location_splits_4_split_0",
@@ -2710,8 +2744,9 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxyInterceptErrors: true,
-				ProxySSLName:         "coffee-v1.default.svc",
+				ProxyInterceptErrors:    true,
+				ProxySSLName:            "coffee-v1.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 			{
 				Path:                     "/internal_location_splits_4_split_1",
@@ -2732,8 +2767,9 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 						ResponseCode: 301,
 					},
 				},
-				ProxyInterceptErrors: true,
-				ProxySSLName:         "coffee-v2.default.svc",
+				ProxyInterceptErrors:    true,
+				ProxySSLName:            "coffee-v2.default.svc",
+				ProxyPassRequestHeaders: true,
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -3833,4 +3869,379 @@ func TestIsTLSEnabled(t *testing.T) {
 		}
 	}
 
+}
+
+func TestGenerateRewrites(t *testing.T) {
+	tests := []struct {
+		path         string
+		proxy        *conf_v1.ActionProxy
+		internal     bool
+		originalPath string
+		expected     []string
+	}{
+		{
+			proxy:    nil,
+			expected: nil,
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "",
+			},
+			expected: nil,
+		},
+		{
+			path: "/path",
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "/rewrite",
+			},
+			expected: nil,
+		},
+		{
+			path:     "/_internal_path",
+			internal: true,
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "/rewrite",
+			},
+			originalPath: "/path",
+			expected:     []string{`^ $request_uri`, `"^/path(.*)$" "/rewrite$1" break`},
+		},
+		{
+			path:     "/_internal_path",
+			internal: true,
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "/rewrite",
+			},
+			originalPath: "/path",
+			expected:     []string{`^ $request_uri`, `"^/path(.*)$" "/rewrite$1" break`},
+		},
+		{
+			path:     "~/regex",
+			internal: true,
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "/rewrite",
+			},
+			originalPath: "/path",
+			expected:     []string{`^ $request_uri`, `"^/path(.*)$" "/rewrite$1" break`},
+		},
+		{
+			path:     "~/regex",
+			internal: false,
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "/rewrite",
+			},
+			expected: []string{`"^/regex$" "/rewrite" break`},
+		},
+	}
+
+	for _, test := range tests {
+		result := generateRewrites(test.path, test.proxy, test.internal, test.originalPath)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateRewrites(%v, %v, %v, %v) returned \n %v but expected \n %v",
+				test.path, test.proxy, test.internal, test.originalPath, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateProxyPassRewrite(t *testing.T) {
+	tests := []struct {
+		path     string
+		proxy    *conf_v1.ActionProxy
+		internal bool
+		expected string
+	}{
+		{
+			expected: "",
+		},
+		{
+			internal: true,
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "/rewrite",
+			},
+			expected: "",
+		},
+		{
+			path: "/path",
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "/rewrite",
+			},
+			expected: "/rewrite",
+		},
+		{
+			path: "=/path",
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "/rewrite",
+			},
+			expected: "/rewrite",
+		},
+		{
+			path: "~/path",
+			proxy: &conf_v1.ActionProxy{
+				RewritePath: "/rewrite",
+			},
+			expected: "",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateProxyPassRewrite(test.path, test.proxy, test.internal)
+		if result != test.expected {
+			t.Errorf("generateProxyPassRewrite(%v, %v, %v) returned %v but expected %v",
+				test.path, test.proxy, test.internal, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateProxySetHeaders(t *testing.T) {
+	tests := []struct {
+		proxy    *conf_v1.ActionProxy
+		expected []version2.Header
+	}{
+		{
+			proxy:    nil,
+			expected: nil,
+		},
+		{
+			proxy:    &conf_v1.ActionProxy{},
+			expected: nil,
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Set: []conf_v1.Header{
+						{
+							Name:  "Header-Name",
+							Value: "HeaderValue",
+						},
+						{
+							Name:  "Host",
+							Value: "nginx.org",
+						},
+					},
+				},
+			},
+			expected: []version2.Header{
+				{
+					Name:  "Header-Name",
+					Value: "HeaderValue",
+				},
+				{
+					Name:  "Host",
+					Value: "nginx.org",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		result := generateProxySetHeaders(test.proxy)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateProxySetHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateProxyPassRequestHeaders(t *testing.T) {
+	passTrue := true
+	passFalse := false
+	tests := []struct {
+		proxy    *conf_v1.ActionProxy
+		expected bool
+	}{
+		{
+			proxy:    nil,
+			expected: true,
+		},
+		{
+			proxy:    &conf_v1.ActionProxy{},
+			expected: true,
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Pass: nil,
+				},
+			},
+			expected: true,
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Pass: &passTrue,
+				},
+			},
+			expected: true,
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Pass: &passFalse,
+				},
+			},
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		result := generateProxyPassRequestHeaders(test.proxy)
+		if result != test.expected {
+			t.Errorf("generateProxyPassRequestHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateProxyHideHeaders(t *testing.T) {
+	tests := []struct {
+		proxy    *conf_v1.ActionProxy
+		expected []string
+	}{
+		{
+			proxy:    nil,
+			expected: nil,
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				ResponseHeaders: nil,
+			},
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				ResponseHeaders: &conf_v1.ProxyResponseHeaders{
+					Hide: []string{"Header", "Header-2"},
+				},
+			},
+			expected: []string{"Header", "Header-2"},
+		},
+	}
+
+	for _, test := range tests {
+		result := generateProxyHideHeaders(test.proxy)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateProxyHideHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateProxyPassHeaders(t *testing.T) {
+	tests := []struct {
+		proxy    *conf_v1.ActionProxy
+		expected []string
+	}{
+		{
+			proxy:    nil,
+			expected: nil,
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				ResponseHeaders: nil,
+			},
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				ResponseHeaders: &conf_v1.ProxyResponseHeaders{
+					Pass: []string{"Header", "Header-2"},
+				},
+			},
+			expected: []string{"Header", "Header-2"},
+		},
+	}
+
+	for _, test := range tests {
+		result := generateProxyPassHeaders(test.proxy)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateProxyPassHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateProxyIgnoreHeaders(t *testing.T) {
+	tests := []struct {
+		proxy    *conf_v1.ActionProxy
+		expected string
+	}{
+		{
+			proxy:    nil,
+			expected: "",
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				ResponseHeaders: nil,
+			},
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				ResponseHeaders: &conf_v1.ProxyResponseHeaders{
+					Ignore: []string{"Header", "Header-2"},
+				},
+			},
+			expected: "Header Header-2",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateProxyIgnoreHeaders(test.proxy)
+		if result != test.expected {
+			t.Errorf("generateProxyIgnoreHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateProxyAddHeaders(t *testing.T) {
+	tests := []struct {
+		proxy    *conf_v1.ActionProxy
+		expected []version2.AddHeader
+	}{
+		{
+			proxy:    nil,
+			expected: nil,
+		},
+		{
+			proxy:    &conf_v1.ActionProxy{},
+			expected: nil,
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				ResponseHeaders: &conf_v1.ProxyResponseHeaders{
+					Add: []conf_v1.AddHeader{
+						{
+							Header: conf_v1.Header{
+								Name:  "Header-Name",
+								Value: "HeaderValue",
+							},
+							Always: true,
+						},
+						{
+							Header: conf_v1.Header{
+								Name:  "Server",
+								Value: "myServer",
+							},
+							Always: false,
+						},
+					},
+				},
+			},
+			expected: []version2.AddHeader{
+				{
+					Header: version2.Header{
+						Name:  "Header-Name",
+						Value: "HeaderValue",
+					},
+					Always: true,
+				},
+				{
+					Header: version2.Header{
+						Name:  "Server",
+						Value: "myServer",
+					},
+					Always: false,
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		result := generateProxyAddHeaders(test.proxy)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateProxyAddHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+		}
+	}
 }

@@ -76,6 +76,14 @@ type Location struct {
 	ProxyNextUpstreamTimeout string
 	ProxyNextUpstreamTries   int
 	ProxyInterceptErrors     bool
+	ProxyPassRequestHeaders  bool
+	ProxySetHeaders          []Header
+	ProxyHideHeaders         []string
+	ProxyPassHeaders         []string
+	ProxyIgnoreHeaders       string
+	ProxyPassRewrite         string
+	AddHeaders               []AddHeader
+	Rewrites                 []string
 	HasKeepalive             bool
 	DefaultType              string
 	Return                   *Return
@@ -115,6 +123,12 @@ type ErrorPageLocation struct {
 type Header struct {
 	Name  string
 	Value string
+}
+
+// AddHeader defines a header to use with add_header directive with an optional Always field.
+type AddHeader struct {
+	Header
+	Always bool
 }
 
 // HealthCheck defines a HealthCheck for an upstream in a Server.

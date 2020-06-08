@@ -144,6 +144,21 @@ var virtualServerCfg = VirtualServerConfig{
 				ProxyNextUpstream:        "error timeout",
 				ProxyNextUpstreamTimeout: "5s",
 				Internal:                 true,
+				ProxyPassRequestHeaders:  false,
+				ProxyPassHeaders:         []string{"Host"},
+				ProxyPassRewrite:         "$request_uri",
+				ProxyHideHeaders:         []string{"Header"},
+				ProxyIgnoreHeaders:       "Cache",
+				Rewrites:                 []string{"$request_uri $request_uri", "$request_uri $request_uri"},
+				AddHeaders: []AddHeader{
+					{
+						Header: Header{
+							Name:  "Header-Name",
+							Value: "Header Value",
+						},
+						Always: true,
+					},
+				},
 			},
 			{
 				Path:                     "@loc0",

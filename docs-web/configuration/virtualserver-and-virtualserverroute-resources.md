@@ -25,6 +25,7 @@ This document is the reference documentation for the resources. To see additiona
     - [Action](#action)
     - [Action.Redirect](#action-redirect)
     - [Action.Return](#action-return)
+    - [Action.Proxy](#action-proxy)
     - [Split](#split)
     - [Match](#match)
     - [Condition](#condition)
@@ -726,9 +727,13 @@ In the example below, client requests are passed to an upstream `coffee`:
      - Returns a preconfigured response.
      - `action.return <#action-return>`_
      - No*
+   * - ``proxy``
+     - Passes requests to an upstream with the ability to modify the request/response (for example, rewrite the URI or modify the headers).
+     - `action.proxy <#action-proxy>`_
+     - No*
 ```
 
-\* -- an action must include exactly one of the following: `pass`, `redirect` or `return`.
+\* -- an action must include exactly one of the following: `pass`, `redirect`, `return` or `proxy`.
 
 ### Action.Redirect
 
@@ -794,6 +799,149 @@ return:
 ```
 
 \* -- Supported NGINX variables: `$request_uri`, `$request_method`, `$request_body`, `$scheme`, `$http_`, `$args`, `$arg_`, `$cookie_`, `$host`, `$request_time`, `$request_length`, `$nginx_version`, `$pid`, `$connection`, `$remote_addr`, `$remote_port`, `$time_iso8601`, `$time_local`, `$server_addr`, `$server_port`, `$server_name`, `$server_protocol`, `$connections_active`, `$connections_reading`, `$connections_writing` and `$connections_waiting`.
+
+### Action.Proxy
+
+The proxy action passes requests to an upstream with the ability to modify the request/response (for example, rewrite the URI or modify the headers).
+
+In the example below, the request URI is rewritten to `/`, and the request and the response headers are modified:
+```yaml
+proxy:
+  upstream: coffee
+  requestHeaders:
+    pass: true
+    set:
+    - name: My-Header
+      value: Value
+  responseHeaders:
+    add:
+    - name: My-Header
+      value: Value
+      always: true
+    hide:
+    - x-internal-version
+    ignore:
+    - Expires
+    - Set-Cookie
+    pass:
+    - Server
+  rewritePath: /
+```
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``upstream``
+     -  The name of the upstream which the requests will be proxied to. The upstream with that name must be defined in the resource.
+     - ``string``
+     - Yes
+   * - ``requestHeaders``
+     - The request headers modifications.
+     - `action.Proxy.RequestHeaders <#action-proxy-requestheaders>`_
+     - No
+   * - ``responseHeaders``
+     - The response headers modifications.
+     - `action.Proxy.ResponseHeaders <#action-proxy-responseheaders>`_
+     - No
+   * - ``rewritePath``
+     - The rewritten URI. If the route path is a regular expression (starts with ~), the rewritePath can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the `rewrite <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples-of-custom-resources/rewrites>`_ example.
+     - ``string``
+     - No
+```
+
+### Action.Proxy.RequestHeaders
+
+The RequestHeaders field modifies the headers of the request to the proxied upstream server.
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``pass``
+     -  Passes the original request headers to the proxied upstream server. See the `proxy_pass_request_header <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_request_headers>`_ directive for more information. Default is true.
+     - ``bool``
+     - No
+   * - ``set``
+     - Allows redefining or appending fields to present request headers passed to the proxied upstream servers. See the `proxy_set_header <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header>`_ directive for more information.
+     - `[]header <#header>`_
+     - No
+```
+
+### Action.Proxy.ResponseHeaders
+
+The ResponseHeaders field modifies the headers of the response to the client.
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``hide``
+     -  The headers that will not be passed* in the response to the client from a proxied upstream server. See the `proxy_hide_header <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header>`_ directive for more information.
+     - ``bool``
+     - No
+   * - ``pass``
+     - Allows passing the hidden header fields* to the client from a proxied upstream server. See the `proxy_pass_header <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header>`_ directive for more information.
+     - ``[]string``
+     - No
+   * - ``ignore``
+     - Disables processing of certain headers** to the client from a proxied upstream server. See the `proxy_ignore_headers <http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_ignore_headers>`_ directive for more information.
+     - ``[]string``
+     - No
+   * - ``add``
+     - Adds headers to the response to the client.
+     - `[]addHeader <#addheader>`_
+     - No
+```
+
+\* -- Default hidden headers are: `Date`, `Server`, `X-Pad` and `X-Accel-...`.
+
+\** -- The following fields can be ignored: `X-Accel-Redirect`, `X-Accel-Expires`, `X-Accel-Limit-Rate`, `X-Accel-Buffering`, `X-Accel-Charset`, `Expires`, `Cache-Control`, `Set-Cookie` and `Vary`.
+
+### AddHeader
+
+The addHeader defines an HTTP Header with an optional `always` field:
+```yaml
+name: Host
+value: example.com
+always: true
+```
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``name``
+     - The name of the header.
+     - ``string``
+     - Yes
+   * - ``value``
+     - The value of the header.
+     - ``string``
+     - No
+   * - ``always``
+     - If set to true, add the header regardless of the response status code*. Default is false. See the `add_header <http://nginx.org/en/docs/http/ngx_http_headers_module.html#add_header>`_ directive for more information.
+     - ``bool``
+     - No
+```
+
+\* -- If `always` is false, the response header is added only if the response status code is any of `200`, `201`, `204`, `206`, `301`, `302`, `303`, `304`, `307` or `308`.
 
 ### Split
 
@@ -1055,7 +1203,7 @@ return:
      - Yes
    * - ``headers``
      - The custom headers of the response.
-     - `errorPage.Redirect.Header <#errorpage-return-header>`_
+     - `errorPage.Return.Header <#errorpage-return-header>`_
      - No
 ```
 
