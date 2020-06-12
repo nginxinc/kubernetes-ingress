@@ -6,6 +6,10 @@ The Ingress Controller supports several command-line arguments. Setting the argu
 
 Below we describe the available command-line arguments:
 ```eval_rst
+.. option:: -enable-snippets
+
+	Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources. (default false)
+
 .. option:: -default-server-tls-secret <string>
 
 	Secret with a TLS certificate and key for TLS termination of the default server.
@@ -27,11 +31,11 @@ Below we describe the available command-line arguments:
 
 .. option:: -enable-custom-resources
 
-	Enables custom resources (default true)
+	Enables custom resources. (default true)
 
 .. option:: -enable-leader-election
 
-	Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status (default true).
+	Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status. (default true)
 
 	See :option:`-report-ingress-status` flag.
 
@@ -161,13 +165,13 @@ Below we describe the available command-line arguments:
 
 	Enables exposing NGINX or NGINX Plus metrics in the Prometheus format.
 
-.. option:: -prometheus-metrics-listen-port
+.. option:: -prometheus-metrics-listen-port <int>
 
 	Sets the port where the Prometheus metrics are exposed.
 
 	Format: ``[1023 - 65535]`` (default 9113)
 
-.. option:: -spire-agent-address
+.. option:: -spire-agent-address <string>
 
 	Specifies the address of a running Spire agent. **For use with NGINX Service Mesh only**.
 

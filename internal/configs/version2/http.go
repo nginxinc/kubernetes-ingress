@@ -7,6 +7,7 @@ type VirtualServerConfig struct {
 	SplitClients  []SplitClient
 	Maps          []Map
 	StatusMatches []StatusMatch
+	HTTPSnippets  []string
 	SpiffeCerts   bool
 }
 

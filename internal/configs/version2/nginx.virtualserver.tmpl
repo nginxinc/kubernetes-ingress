@@ -30,6 +30,10 @@ map {{ $m.Source }} {{ $m.Variable }} {
 }
 {{ end }}
 
+{{ range $snippet := .HTTPSnippets }}
+{{ $snippet }}
+{{ end }}
+
 {{ $s := .Server }}
 server {
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
@@ -137,7 +141,7 @@ server {
         proxy_buffer_size {{ $l.ProxyBufferSize }};
             {{ end }}
             {{ if $l.ProxyInterceptErrors }}
-                proxy_intercept_errors on;
+        proxy_intercept_errors on;
             {{ end }}
         proxy_http_version 1.1;
 

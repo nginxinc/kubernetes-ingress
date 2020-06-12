@@ -99,6 +99,7 @@ var virtualServerCfg = VirtualServerConfig{
 			},
 		},
 	},
+	HTTPSnippets: []string{"# HTTP snippet"},
 	Server: Server{
 		ServerName:    "example.com",
 		StatusZone:    "example.com",

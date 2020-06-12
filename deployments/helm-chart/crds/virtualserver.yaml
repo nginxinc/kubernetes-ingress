@@ -61,9 +61,11 @@ spec:
           description: VirtualServerSpec is the spec of the VirtualServer resource.
           type: object
           properties:
-            ingressClassName:
-              type: string
             host:
+              type: string
+            http-snippets:
+              type: string
+            ingressClassName:
               type: string
             routes:
               type: array
@@ -190,6 +192,8 @@ spec:
                                     type: string
                             type:
                               type: string
+                  location-snippets:
+                    type: string
                   matches:
                     type: array
                     items:
@@ -478,6 +482,8 @@ spec:
                                   type: string
                         weight:
                           type: integer
+            server-snippets:
+              type: string
             tls:
               description: TLS defines TLS configuration for a VirtualServer.
               type: object

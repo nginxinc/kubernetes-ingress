@@ -99,6 +99,7 @@ type StaticConfigParams struct {
 	NginxStatusPort                int
 	StubStatusOverUnixSocketForOSS bool
 	TLSPassthrough                 bool
+	EnableSnippets                 bool
 	SpiffeCerts                    bool
 }
 

@@ -132,6 +132,9 @@ var (
 	enableCustomResources = flag.Bool("enable-custom-resources", true,
 		"Enable custom resources")
 
+	enableSnippets = flag.Bool("enable-snippets", false,
+		"Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources.")
+
 	globalConfiguration = flag.String("global-configuration", "",
 		`A GlobalConfiguration resource for global configuration of the Ingress Controller. Requires -enable-custom-resources. If the flag is set,
 		but the Ingress controller is not able to fetch the corresponding resource from Kubernetes API, the Ingress Controller 
@@ -392,6 +395,7 @@ func main() {
 		NginxStatusPort:                *nginxStatusPort,
 		StubStatusOverUnixSocketForOSS: *enablePrometheusMetrics,
 		TLSPassthrough:                 *enableTLSPassthrough,
+		EnableSnippets:                 *enableSnippets,
 		SpiffeCerts:                    *spireAgentAddress != "",
 	}
 

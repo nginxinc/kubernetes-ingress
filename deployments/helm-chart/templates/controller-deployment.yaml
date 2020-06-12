@@ -128,5 +128,6 @@ spec:
           - -enable-custom-resources={{ .Values.controller.enableCustomResources }}
 {{- if .Values.controller.enableCustomResources  }}
           - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}
+          - -enable-snippets={{ .Values.controller.enableSnippets }}
 {{- end }}
 {{- end }}

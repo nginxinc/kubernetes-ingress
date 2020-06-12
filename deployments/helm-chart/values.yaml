@@ -124,6 +124,9 @@ controller:
   ## Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.
   enableTLSPassthrough: false
 
+  ## Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources.
+  enableSnippets: false
+
   ## Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
   ## Useful for external health-checking of the Ingress controller.
   healthStatus: false

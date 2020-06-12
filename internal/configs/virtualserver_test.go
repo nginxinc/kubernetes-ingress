@@ -433,6 +433,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 		},
+		HTTPSnippets: []string{""},
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
@@ -622,6 +623,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 				Keepalive: 16,
 			},
 		},
+		HTTPSnippets: []string{""},
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
@@ -833,6 +835,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 				},
 			},
 		},
+		HTTPSnippets: []string{""},
 		Server: version2.Server{
 			ServerName: "cafe.example.com",
 			StatusZone: "cafe.example.com",
@@ -1108,6 +1111,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 				},
 			},
 		},
+		HTTPSnippets: []string{""},
 		Server: version2.Server{
 			ServerName: "cafe.example.com",
 			StatusZone: "cafe.example.com",
@@ -1409,6 +1413,46 @@ func TestGenerateString(t *testing.T) {
 	}
 }
 
+func TestGenerateSnippets(t *testing.T) {
+	tests := []struct {
+		enableSnippets bool
+		s              string
+		defaultS       []string
+		expected       []string
+	}{
+		{
+			true,
+			"test",
+			[]string{""},
+			[]string{"test"},
+		},
+		{
+			true,
+			"",
+			[]string{"default"},
+			[]string{"default"},
+		},
+		{
+			true,
+			"test\none\ntwo",
+			[]string{""},
+			[]string{"test", "one", "two"},
+		},
+		{
+			false,
+			"test",
+			nil,
+			nil,
+		},
+	}
+	for _, test := range tests {
+		result := generateSnippets(test.enableSnippets, test.s, test.defaultS)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateSnippets() return %v, but expected %v", result, test.expected)
+		}
+	}
+}
+
 func TestGenerateBuffer(t *testing.T) {
 	tests := []struct {
 		inputS   *conf_v1.UpstreamBuffers
@@ -1446,10 +1490,11 @@ func TestGenerateLocationForProxying(t *testing.T) {
 	}
 	path := "/"
 	upstreamName := "test-upstream"
+	vsLocSnippets := []string{"# vs location snippet"}
 
 	expected := version2.Location{
 		Path:                     "/",
-		Snippets:                 []string{"# location snippet"},
+		Snippets:                 vsLocSnippets,
 		ProxyConnectTimeout:      "30s",
 		ProxyReadTimeout:         "31s",
 		ProxySendTimeout:         "32s",
@@ -1465,7 +1510,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 		ProxyPassRequestHeaders:  true,
 	}
 
-	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0, "", nil, "")
+	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0, "", nil, "", vsLocSnippets)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateLocationForProxying() returned \n%v but expected \n%v", result, expected)
 	}
@@ -1918,6 +1963,8 @@ func TestGenerateSplits(t *testing.T) {
 			Service: "coffee-v2",
 		},
 	}
+	locSnippet := "# location snippet"
+	enableSnippets := true
 	errorPages := []conf_v1.ErrorPage{
 		{
 			Codes: []int{400, 500},
@@ -1986,6 +2033,7 @@ func TestGenerateSplits(t *testing.T) {
 			},
 			ProxySSLName:            "coffee-v1.default.svc",
 			ProxyPassRequestHeaders: true,
+			Snippets:                []string{locSnippet},
 		},
 		{
 			Path:                     "/internal_location_splits_1_split_1",
@@ -2009,10 +2057,11 @@ func TestGenerateSplits(t *testing.T) {
 			},
 			ProxySSLName:            "coffee-v2.default.svc",
 			ProxyPassRequestHeaders: true,
+			Snippets:                []string{locSnippet},
 		},
 	}
 
-	resultSplitClient, resultLocations := generateSplits(splits, upstreamNamer, crUpstreams, variableNamer, scIndex, &cfgParams, errorPages, 0, originalPath)
+	resultSplitClient, resultLocations := generateSplits(splits, upstreamNamer, crUpstreams, variableNamer, scIndex, &cfgParams, errorPages, 0, originalPath, locSnippet, enableSnippets)
 	if !reflect.DeepEqual(resultSplitClient, expectedSplitClient) {
 		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultSplitClient, expectedSplitClient)
 	}
@@ -2096,6 +2145,8 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	}
 
 	cfgParams := ConfigParams{}
+	locSnippet := ""
+	enableSnippets := false
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {
 			Service: "coffee-v1",
@@ -2105,7 +2156,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 		},
 	}
 
-	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams, route.ErrorPages, 0, "")
+	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams, route.ErrorPages, 0, "", locSnippet, enableSnippets)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -2467,13 +2518,15 @@ func TestGenerateMatchesConfig(t *testing.T) {
 	}
 
 	cfgParams := ConfigParams{}
+	enableSnippets := false
+	locSnippets := ""
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
 		"vs_default_cafe_coffee-v2": {Service: "coffee-v2"},
 		"vs_default_cafe_tea":       {Service: "tea"},
 	}
 
-	result := generateMatchesConfig(route, upstreamNamer, crUpstreams, variableNamer, index, scIndex, &cfgParams, errorPages, 2)
+	result := generateMatchesConfig(route, upstreamNamer, crUpstreams, variableNamer, index, scIndex, &cfgParams, errorPages, 2, locSnippets, enableSnippets)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -2823,11 +2876,13 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 	}
 
 	cfgParams := ConfigParams{}
+	enableSnippets := false
+	locSnippets := ""
 	crUpstreams := map[string]conf_v1.Upstream{
 		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
 		"vs_default_cafe_coffee-v2": {Service: "coffee-v2"},
 	}
-	result := generateMatchesConfig(route, upstreamNamer, crUpstreams, variableNamer, index, scIndex, &cfgParams, errorPages, 0)
+	result := generateMatchesConfig(route, upstreamNamer, crUpstreams, variableNamer, index, scIndex, &cfgParams, errorPages, 0, locSnippets, enableSnippets)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
 	}

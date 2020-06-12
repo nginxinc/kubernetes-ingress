@@ -40,6 +40,10 @@ map {{ $m.Source }} {{ $m.Variable }} {
 }
 {{ end }}
 
+{{ range $snippet := .HTTPSnippets }}
+{{ $snippet }}
+{{ end }}
+
 {{ range $m := .StatusMatches }}
 match {{ $m.Name }} {
     status {{ $m.Code }};

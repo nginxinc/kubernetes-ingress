@@ -28,11 +28,13 @@ type VirtualServer struct {
 
 // VirtualServerSpec is the spec of the VirtualServer resource.
 type VirtualServerSpec struct {
-	IngressClass string     `json:"ingressClassName"`
-	Host         string     `json:"host"`
-	TLS          *TLS       `json:"tls"`
-	Upstreams    []Upstream `json:"upstreams"`
-	Routes       []Route    `json:"routes"`
+	IngressClass   string     `json:"ingressClassName"`
+	Host           string     `json:"host"`
+	TLS            *TLS       `json:"tls"`
+	Upstreams      []Upstream `json:"upstreams"`
+	Routes         []Route    `json:"routes"`
+	HTTPSnippets   string     `json:"http-snippets"`
+	ServerSnippets string     `json:"server-snippets"`
 }
 
 // Upstream defines an upstream.
@@ -110,12 +112,13 @@ type SessionCookie struct {
 
 // Route defines a route.
 type Route struct {
-	Path       string      `json:"path"`
-	Route      string      `json:"route"`
-	Action     *Action     `json:"action"`
-	Splits     []Split     `json:"splits"`
-	Matches    []Match     `json:"matches"`
-	ErrorPages []ErrorPage `json:"errorPages"`
+	Path             string      `json:"path"`
+	Route            string      `json:"route"`
+	Action           *Action     `json:"action"`
+	Splits           []Split     `json:"splits"`
+	Matches          []Match     `json:"matches"`
+	ErrorPages       []ErrorPage `json:"errorPages"`
+	LocationSnippets string      `json:"location-snippets"`
 }
 
 // Action defines an action.

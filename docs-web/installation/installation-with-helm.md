@@ -273,6 +273,9 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``controller.enableTLSPassthrough``
      - Enable TLS Passthrough on port 443. Requires ``controller.enableCustomResources``.
      - false
+   * - ``controller.enableSnippets``
+     - Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources.
+     - false
    * - ``controller.healthStatus``
      - Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller.
      - false

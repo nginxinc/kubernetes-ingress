@@ -59,6 +59,8 @@ spec:
           properties:
             host:
               type: string
+            http-snippets:
+              type: string
             ingressClassName:
               type: string
             routes:
@@ -186,6 +188,8 @@ spec:
                                     type: string
                             type:
                               type: string
+                  location-snippets:
+                    type: string
                   matches:
                     type: array
                     items:
@@ -474,6 +478,8 @@ spec:
                                   type: string
                         weight:
                           type: integer
+            server-snippets:
+              type: string
             tls:
               description: TLS defines TLS configuration for a VirtualServer.
               type: object

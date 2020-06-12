@@ -184,6 +184,8 @@ spec:
                                     type: string
                             type:
                               type: string
+                  location-snippets:
+                    type: string
                   matches:
                     type: array
                     items:
