@@ -864,12 +864,30 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 }
 
 func (lbc *LoadBalancerController) syncVirtualServer(task task) {
+	glog.Errorf("Problem %v", 1)
 	key := task.Key
 	obj, vsExists, err := lbc.virtualServerLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
 	}
+
+	glog.Errorf("Problem %v", 2)
+	var vs *conf_v1.VirtualServer
+	var vsrlist []*conf_v1.VirtualServerRoute
+	var vsrNotRef []*conf_v1.VirtualServerRoute
+	vslist := lbc.getVirtualServers()
+
+	for _, v := range vslist {
+		vskey := fmt.Sprintf("%s/%s", v.Namespace, v.Name)
+		if vskey == key {
+			vs = v
+			break
+		}
+	}
+	glog.Errorf("Problem %v", 3)
+	vsrlist = findVirtualServerRoutesForVirtualServer(vs, lbc.getVirtualServerRoutes())
+	glog.Errorf("num of vsr %d", lbc.getVirtualServerRoutes())
 
 	if !vsExists {
 		glog.V(2).Infof("Deleting VirtualServer: %v\n", key)
@@ -878,9 +896,11 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		if err != nil {
 			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
 		} else {
-			vsr := lbc.getVirtualServerRoutes()
-			for _, r := range vsr {
-				lbc.recorder.Eventf(r, api_v1.EventTypeWarning, "NoVirtualServerFound", "No VirtualServer references VirtualServerRoute %v/%v", r.Namespace, r.Name)
+			reason := "NoVirtualServerFound"
+			for _, vsr := range vsrlist {
+				msg := fmt.Sprintf("No VirtualServer references VirtualServerRoute %v/%v", vsr.Namespace, vsr.Name)
+				lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, reason, msg)
+				lbc.statusUpdater.UpdateVirtualServerRouteStatus(vsr, conf_v1.StateInvalid, reason, msg)
 			}
 		}
 
@@ -888,19 +908,20 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 	}
 
 	glog.V(2).Infof("Adding or Updating VirtualServer: %v\n", key)
-
-	vs := obj.(*conf_v1.VirtualServer)
+	glog.Errorf("Problem %v", 4)
+	vs = obj.(*conf_v1.VirtualServer)
 
 	validationErr := validation.ValidateVirtualServer(vs, lbc.isNginxPlus)
 	if validationErr != nil {
 		err := lbc.configurator.DeleteVirtualServer(key)
 		if err != nil {
 			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
-		} else {
-			vsr := lbc.getVirtualServerRoutes()
-			for _, r := range vsr {
-				lbc.recorder.Eventf(r, api_v1.EventTypeWarning, "NoVirtualServerFound", "No VirtualServer references VirtualServerRoute %v/%v", r.Namespace, r.Name)
-			}
+		}
+		reason := "NoVirtualServerFound"
+		for _, vsr := range vsrlist {
+			msg := fmt.Sprintf("No VirtualServer references VirtualServerRoute %v/%v", vsr.Namespace, vsr.Name)
+			lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, reason, msg)
+			lbc.statusUpdater.UpdateVirtualServerRouteStatus(vsr, conf_v1.StateInvalid, reason, msg)
 		}
 		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, "Rejected", "VirtualServer %v is invalid and was rejected: %v", key, validationErr)
 		return
@@ -940,7 +961,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		state = conf_v1.StateWarning
 	}
 
-	msg := fmt.Sprintf("Configuration for %v was added or updated %s", key, vsEventWarningMessage)
+	msg := fmt.Sprintf("Configuration for %v was adddddded or updated %s", key, vsEventWarningMessage)
 	lbc.recorder.Eventf(vs, vsEventType, vsEventTitle, msg)
 
 	if lbc.reportVsVsrStatusEnabled() {
@@ -951,11 +972,19 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		}
 	}
 
+	vsrRemoved := 0
+	vsrlist = findAllVirtualServerRoutesForVirtualServer(vs, lbc.getVirtualServerRoutes())
+	vsrNotRef = vsrlist
+	//lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, "num vsr", "%d", len(vsrlist))
+	glog.Errorf("later num of vsr %d", vsrlist)
+
 	for _, vsr := range vsEx.VirtualServerRoutes {
 		vsrEventType := eventType
 		vsrEventTitle := eventTitle
 		vsrEventWarningMessage := eventWarningMessage
 		state := conf_v1.StateValid
+
+		glog.Errorf("meta owenerreference %v", vsr.Name)
 
 		if messages, ok := warnings[vsr]; ok && addErr == nil {
 			vsrEventType = api_v1.EventTypeWarning
@@ -974,8 +1003,65 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 				glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
 		}
-	}
 
+		vsrkey := fmt.Sprintf("%s/%s", vsr.Namespace, vsr.Name)
+		glog.Errorf("outter loop vsr %v", vsrkey)
+		//if len(vsrlist) > 1 {
+		for i, r := range vsrlist {
+			key := fmt.Sprintf("%s/%s", r.Namespace, r.Name)
+			glog.Errorf("Inner loop vsr %v", key)
+			if key == vsrkey {
+				if len(vsrlist) > 1 {
+					vsrNotRef = append(vsrNotRef[:i-vsrRemoved], vsrNotRef[(i-vsrRemoved)+1:]...)
+					vsrRemoved++
+					glog.Errorf("Removing %v", key)
+				} else {
+					glog.Errorf("making list empty %v", r)
+					vsrNotRef = []*conf_v1.VirtualServerRoute{}
+				}
+			}
+		}
+		/*} else {
+			glog.Errorf("less than or equal to %s", 1)
+			if len(vsrlist) == 1 {
+				key = fmt.Sprintf("%s/%s", vsrlist[0].Namespace, vsrlist[0].Name)
+				glog.Errorf("%s", key)
+			}
+			if key == vsrkey {
+				vsrNotRef = []*conf_v1.VirtualServerRoute{}
+			}
+		}*/
+	}
+	glog.Errorf("Number of not reference : %d", len(vsrNotRef))
+	reason := "Ignored"
+	for _, vsr := range vsrNotRef {
+		msg := fmt.Sprintf("Ignored by VirtualServer %v/%v", vs.Namespace, vs.Name)
+		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, "Ignored", msg)
+		lbc.statusUpdater.UpdateVirtualServerRouteStatus(vsr, conf_v1.StateInvalid, reason, msg)
+	}
+}
+
+func findAllVirtualServerRoutesForVirtualServer(vs *conf_v1.VirtualServer, vsrs []*conf_v1.VirtualServerRoute) []*conf_v1.VirtualServerRoute {
+	var result []*conf_v1.VirtualServerRoute
+	key := fmt.Sprintf("%s/%s", vs.Namespace, vs.Name)
+	for _, r := range vsrs {
+		if r.Status.ReferencedBy == key {
+			result = append(result, r)
+		}
+	}
+	return result
+}
+
+func findVirtualServerRoutesForVirtualServer(virtualserver *conf_v1.VirtualServer, virtualServerRoutes []*conf_v1.VirtualServerRoute) []*conf_v1.VirtualServerRoute {
+	var result []*conf_v1.VirtualServerRoute
+	vslist := []*conf_v1.VirtualServer{virtualserver}
+	for _, vsr := range virtualServerRoutes {
+		key := fmt.Sprintf("%s/%s", vsr.Namespace, vsr.Name)
+		if len(findVirtualServersForVirtualServerRouteKey(vslist, key)) != 0 {
+			result = append(result, vsr)
+		}
+	}
+	return result
 }
 
 func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
