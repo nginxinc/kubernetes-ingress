@@ -85,6 +85,55 @@ func TestIsNginxIngress(t *testing.T) {
 		},
 	}
 
+	var testsWithoutIngressClassOnlyVS = []struct {
+		lbc      *LoadBalancerController
+		ing      *conf_v1.VirtualServerSpec
+		expected bool
+	}{
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: false,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&conf_v1.VirtualServerSpec{
+				IngressClass: "",
+			},
+			true,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: false,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&conf_v1.VirtualServerSpec{
+				IngressClass: "gce",
+			},
+			false,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: false,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&conf_v1.VirtualServerSpec{
+				IngressClass: ingressClass,
+			},
+			true,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: false,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&conf_v1.VirtualServerSpec{},
+			true,
+		},
+	}
+
 	var testsWithIngressClassOnly = []struct {
 		lbc      *LoadBalancerController
 		ing      *extensions.Ingress
@@ -144,6 +193,55 @@ func TestIsNginxIngress(t *testing.T) {
 		},
 	}
 
+	var testsWithIngressClassOnlyVS = []struct {
+		lbc      *LoadBalancerController
+		ing      *conf_v1.VirtualServerSpec
+		expected bool
+	}{
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: true,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&conf_v1.VirtualServerSpec{
+				IngressClass: "",
+			},
+			false,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: true,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&conf_v1.VirtualServerSpec{
+				IngressClass: "gce",
+			},
+			false,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: true,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&conf_v1.VirtualServerSpec{
+				IngressClass: ingressClass,
+			},
+			true,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: true,
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&conf_v1.VirtualServerSpec{},
+			false,
+		},
+	}
+
 	for _, test := range testsWithoutIngressClassOnly {
 		if result := test.lbc.IsNginxIngress(test.ing); result != test.expected {
 			classAnnotation := "N/A"
@@ -152,6 +250,12 @@ func TestIsNginxIngress(t *testing.T) {
 			}
 			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
 				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
+		}
+	}
+	for _, test := range testsWithoutIngressClassOnlyVS {
+		if result := test.lbc.IsNginxIngress(test.ing.IngressClass); result != test.expected {
+			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ingressClassKey=%v, ing.IngressClass=%v; got %v, expected %v",
+				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.IngressClass, result, test.expected)
 		}
 	}
 
@@ -163,6 +267,13 @@ func TestIsNginxIngress(t *testing.T) {
 			}
 			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
 				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
+		}
+	}
+
+	for _, test := range testsWithIngressClassOnlyVS {
+		if result := test.lbc.IsNginxIngress(test.ing.IngressClass); result != test.expected {
+			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ingressClassKey=%v, ing.IngressClass=%v; got %v, expected %v",
+				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.IngressClass, result, test.expected)
 		}
 	}
 

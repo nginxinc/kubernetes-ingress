@@ -60,6 +60,8 @@ spec:
           description: VirtualServerSpec is the spec of the VirtualServer resource.
           type: object
           properties:
+            class:
+              type: string
             host:
               type: string
             routes:

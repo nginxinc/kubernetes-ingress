@@ -55,6 +55,8 @@ spec:
         spec:
           type: object
           properties:
+            class:
+              type: string
             host:
               type: string
             subroutes:

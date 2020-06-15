@@ -2372,14 +2372,24 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *extensio
 
 // IsNginxIngress checks if resource ingress class annotation (if exists) is matching with ingress controller class
 // If annotation is absent and use-ingress-class-only enabled - ingress resource would ignore
-func (lbc *LoadBalancerController) IsNginxIngress(ing *extensions.Ingress) bool {
-	if class, exists := ing.Annotations[ingressClassKey]; exists {
-		if lbc.useIngressClassOnly {
-			return class == lbc.ingressClass
+func (lbc *LoadBalancerController) IsNginxIngress(obj interface{}) bool {
+	var class string
+	switch obj.(type) {
+	case string:
+		class = obj.(string)
+	case *extensions.Ingress:
+		ing := obj.(*extensions.Ingress)
+		if ingClass, exists := ing.Annotations[ingressClassKey]; exists {
+			class = ingClass
 		}
-		return class == lbc.ingressClass || class == ""
+	default:
+		return false
 	}
-	return !lbc.useIngressClassOnly
+
+	if lbc.useIngressClassOnly {
+		return class == lbc.ingressClass
+	}
+	return class == lbc.ingressClass || class == ""
 }
 
 // isHealthCheckEnabled checks if health checks are enabled so we can only query pods if enabled.

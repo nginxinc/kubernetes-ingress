@@ -28,10 +28,11 @@ type VirtualServer struct {
 
 // VirtualServerSpec is the spec of the VirtualServer resource.
 type VirtualServerSpec struct {
-	Host      string     `json:"host"`
-	TLS       *TLS       `json:"tls"`
-	Upstreams []Upstream `json:"upstreams"`
-	Routes    []Route    `json:"routes"`
+	IngressClass string     `json:"class"`
+	Host         string     `json:"host"`
+	TLS          *TLS       `json:"tls"`
+	Upstreams    []Upstream `json:"upstreams"`
+	Routes       []Route    `json:"routes"`
 }
 
 // Upstream defines an upstream.
@@ -226,9 +227,10 @@ type VirtualServerRoute struct {
 }
 
 type VirtualServerRouteSpec struct {
-	Host      string     `json:"host"`
-	Upstreams []Upstream `json:"upstreams"`
-	Subroutes []Route    `json:"subroutes"`
+	IngressClass string     `json:"class"`
+	Host         string     `json:"host"`
+	Upstreams    []Upstream `json:"upstreams"`
+	Subroutes    []Route    `json:"subroutes"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
