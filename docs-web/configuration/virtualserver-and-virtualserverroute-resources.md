@@ -96,7 +96,7 @@ spec:
      - `[]route <#virtualserver-route>`_
      - No
    * - ``class``
-     - Specifies which Ingress controller must handle the Virtual Server resource. Set to `nginx` to make NGINX Ingress controller handle it.
+     - Specifies which Ingress controller must handle the VirtualServer resource. Set to `nginx` to make NGINX Ingress controller handle it.
      - ``string``
      - No
 ```
@@ -278,7 +278,7 @@ Note that each subroute must have a `path` that starts with the same prefix (her
      - `[]subroute <#virtualserverroute-subroute>`_
      - No
    * - ``class``
-     - Specifies which Ingress controller must handle the Virtual Server Route resource. Set to `nginx` to make NGINX Ingress controller handle it.
+     - Specifies which Ingress controller must handle the VirtualServerRoute resource. Set to `nginx` to make NGINX Ingress controller handle it.
      - ``string``_
      - No
 ```

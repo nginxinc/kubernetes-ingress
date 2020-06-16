@@ -10,7 +10,7 @@ This document explains the following topics:
 The smooth coexistence of multiple Ingress Controllers in one cluster is provided by the Ingress class concept, which mandates the following:
 * Every Ingress Controller must only handle Ingress resources for its particular class. 
 * Ingress resources should be annotated with the `kubernetes.io/ingress.class` annotation set to the value, which corresponds to the class of the Ingress Controller the user wants to use. 
-* Virtual Server and Virtual Server Route resources should have the `class` field set to the value, which corresponds to the class of the Ingress Controller the user wants to use.
+* VirtualServer and VirtualServerRoute resources should have the `class` field set to the value, which corresponds to the class of the Ingress Controller the user wants to use.
 
 ### Configuring Ingress Class
 
@@ -39,4 +39,3 @@ Considering the options above, you can run multiple NGINX Ingress Controllers, e
 * [Command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments)
 
 **Note**: all mentioned command-line arguments are also available as the parameters in the [Helm chart](/nginx-ingress-controller/installation/installation-with-helm).
-
