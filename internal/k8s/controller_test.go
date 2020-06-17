@@ -1382,6 +1382,126 @@ func TestFindVirtualServerRoutesForService(t *testing.T) {
 	}
 }
 
+func TestFindVirtualServerRoutesForVirtualServer(t *testing.T) {
+	vsr1 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-1",
+			Namespace: "ns-1",
+		},
+	}
+
+	vsr2 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-2",
+			Namespace: "ns-1",
+		},
+	}
+
+	vsr3 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-3",
+			Namespace: "ns-2",
+		},
+	}
+
+	vsr4 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-4",
+			Namespace: "ns-1",
+		},
+	}
+
+	virtualserverroutes := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr3, &vsr4}
+
+	vs1 := conf_v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-1",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.VirtualServerSpec{
+			Routes: []conf_v1.Route{
+				{
+					Route: "ns-1/vsr-1",
+				},
+				{
+					Route: "ns-1/vsr-2",
+				},
+				{
+					Route: "ns-1/vsr-4",
+				},
+			},
+		},
+	}
+
+	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr4}
+
+	result := findVirtualServerRoutesForVirtualServer(&vs1, virtualserverroutes)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("findVirtualServerRoutesForVirtualServer returned %v but expected %v", result, expected)
+	}
+
+}
+
+func TestFindAllVirtualServerRoutesForVirtualServer(t *testing.T) {
+
+	vsr1 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-1",
+			Namespace: "ns-1",
+		},
+		Status: conf_v1.VirtualServerRouteStatus{
+			State:        "Valid",
+			Reason:       "AddedOrUpdated",
+			Message:      fmt.Sprint("Configuration for ns-1/vs-1 was added or updated"),
+			ReferencedBy: "ns-1/vs-1",
+		},
+	}
+
+	vsr2 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-2",
+			Namespace: "ns-1",
+		},
+		Status: conf_v1.VirtualServerRouteStatus{
+			State:        "InValid",
+			Reason:       "Ignored",
+			Message:      fmt.Sprint("Ignored by VirtualServer ns-1/vs-1"),
+			ReferencedBy: "ns-1/vs-1",
+		},
+	}
+
+	vsr3 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-3",
+			Namespace: "ns-1",
+		},
+		Status: conf_v1.VirtualServerRouteStatus{
+			State:        "InValid",
+			Reason:       "NoVirtualServerFound",
+			Message:      fmt.Sprint("No VirtualServer references VirtualServerRoute vsr-3/ns-1"),
+			ReferencedBy: "",
+		},
+	}
+
+	virtualserverroutes := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr3}
+
+	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2}
+
+	vs1 := conf_v1.VirtualServer{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vs-1",
+			Namespace: "ns-1",
+		},
+	}
+
+	result := findAllVirtualServerRoutesForVirtualServer(&vs1, virtualserverroutes)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("findAllVirtualServerRoutes return %v but expected %v", result, expected)
+	}
+}
+
 func TestFindTransportServersForService(t *testing.T) {
 	ts1 := conf_v1alpha1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
