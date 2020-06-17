@@ -1382,6 +1382,54 @@ func TestFindVirtualServerRoutesForService(t *testing.T) {
 	}
 }
 
+func TestCheckForVirtualServerRoute(t *testing.T) {
+
+	vsr1 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-1",
+			Namespace: "ns-1",
+		},
+	}
+
+	vsr2 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-2",
+			Namespace: "ns-1",
+		},
+	}
+
+	vsr3 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-3",
+			Namespace: "ns-2",
+		},
+	}
+
+	vsr4 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-4",
+			Namespace: "ns-1",
+		},
+	}
+
+	vsr5 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-5",
+			Namespace: "ns-3",
+		},
+	}
+
+	vsrlist := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr3, &vsr4, &vsr5}
+
+	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr4, &vsr5}
+
+	result := checkForVirtualServerRoute("ns-2/vsr-3", vsrlist)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("checkForVirtualServerRoute return %v but expected %v", result, expected)
+	}
+
+}
 func TestFindVirtualServerRoutesForVirtualServer(t *testing.T) {
 	vsr1 := conf_v1.VirtualServerRoute{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -1413,7 +1461,7 @@ func TestFindVirtualServerRoutesForVirtualServer(t *testing.T) {
 
 	virtualserverroutes := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr3, &vsr4}
 
-	vs1 := conf_v1.VirtualServer{
+	vs := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-1",
 			Namespace: "ns-1",
@@ -1435,16 +1483,14 @@ func TestFindVirtualServerRoutesForVirtualServer(t *testing.T) {
 
 	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr4}
 
-	result := findVirtualServerRoutesForVirtualServer(&vs1, virtualserverroutes)
+	result := findVirtualServerRoutesForVirtualServer(&vs, virtualserverroutes)
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("findVirtualServerRoutesForVirtualServer returned %v but expected %v", result, expected)
 	}
-
 }
 
 func TestFindAllVirtualServerRoutesForVirtualServer(t *testing.T) {
-
 	vsr1 := conf_v1.VirtualServerRoute{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vsr-1",
@@ -1464,7 +1510,7 @@ func TestFindAllVirtualServerRoutesForVirtualServer(t *testing.T) {
 			Namespace: "ns-1",
 		},
 		Status: conf_v1.VirtualServerRouteStatus{
-			State:        "InValid",
+			State:        "Invalid",
 			Reason:       "Ignored",
 			Message:      fmt.Sprint("Ignored by VirtualServer ns-1/vs-1"),
 			ReferencedBy: "ns-1/vs-1",
@@ -1477,7 +1523,7 @@ func TestFindAllVirtualServerRoutesForVirtualServer(t *testing.T) {
 			Namespace: "ns-1",
 		},
 		Status: conf_v1.VirtualServerRouteStatus{
-			State:        "InValid",
+			State:        "Invalid",
 			Reason:       "NoVirtualServerFound",
 			Message:      fmt.Sprint("No VirtualServer references VirtualServerRoute vsr-3/ns-1"),
 			ReferencedBy: "",
@@ -1488,14 +1534,14 @@ func TestFindAllVirtualServerRoutesForVirtualServer(t *testing.T) {
 
 	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2}
 
-	vs1 := conf_v1.VirtualServer{
+	vs := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vs-1",
 			Namespace: "ns-1",
 		},
 	}
 
-	result := findAllVirtualServerRoutesForVirtualServer(&vs1, virtualserverroutes)
+	result := findAllVirtualServerRoutesForVirtualServer(&vs, virtualserverroutes)
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("findAllVirtualServerRoutes return %v but expected %v", result, expected)
