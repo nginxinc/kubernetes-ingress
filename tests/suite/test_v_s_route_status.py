@@ -15,7 +15,7 @@ from settings import TEST_DATA
     "crd_ingress_controller, v_s_route_setup",
     [
         (
-            {"type": "complete", "extra_args": [f"-enable-custom-resources"],},
+            {"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],},
             {"example": "virtual-server-route-status"},
         )
     ],
