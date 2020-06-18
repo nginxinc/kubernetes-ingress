@@ -870,18 +870,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		lbc.syncQueue.Requeue(task, err)
 		return
 	}
-
-	var vs *conf_v1.VirtualServer
-
-	vslist := lbc.getVirtualServers()
-	for _, v := range vslist {
-		vskey := fmt.Sprintf("%s/%s", v.Namespace, v.Name)
-		if vskey == key {
-			vs = v
-			break
-		}
-	}
-	vsrlist := findVirtualServerRoutesForVirtualServer(vs, lbc.getVirtualServerRoutes())
+	vsrlist := findAllVirtualServerRoutesForVirtualServer(key, lbc.getVirtualServerRoutes())
 
 	if !vsExists {
 		glog.V(2).Infof("Deleting VirtualServer: %v\n", key)
@@ -902,7 +891,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 	}
 
 	glog.V(2).Infof("Adding or Updating VirtualServer: %v\n", key)
-	vs = obj.(*conf_v1.VirtualServer)
+	vs := obj.(*conf_v1.VirtualServer)
 
 	validationErr := validation.ValidateVirtualServer(vs, lbc.isNginxPlus)
 	if validationErr != nil {
@@ -968,7 +957,8 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		}
 	}
 
-	vsrlist = findAllVirtualServerRoutesForVirtualServer(vs, lbc.getVirtualServerRoutes())
+	key = fmt.Sprintf("%v/%v", vs.Namespace, vs.Name)
+	vsrlist = findAllVirtualServerRoutesForVirtualServer(key, lbc.getVirtualServerRoutes())
 
 	for _, vsr := range vsEx.VirtualServerRoutes {
 		vsrEventType := eventType
@@ -1024,9 +1014,8 @@ func checkForVirtualServerRoute(vsrkey string, vsrlist []*conf_v1.VirtualServerR
 	return vsrNotRef
 }
 
-func findAllVirtualServerRoutesForVirtualServer(vs *conf_v1.VirtualServer, vsrs []*conf_v1.VirtualServerRoute) []*conf_v1.VirtualServerRoute {
+func findAllVirtualServerRoutesForVirtualServer(key string, vsrs []*conf_v1.VirtualServerRoute) []*conf_v1.VirtualServerRoute {
 	var result []*conf_v1.VirtualServerRoute
-	key := fmt.Sprintf("%s/%s", vs.Namespace, vs.Name)
 	for _, r := range vsrs {
 		if r.Status.ReferencedBy == key {
 			result = append(result, r)
