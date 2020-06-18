@@ -1383,7 +1383,6 @@ func TestFindVirtualServerRoutesForService(t *testing.T) {
 }
 
 func TestCheckForVirtualServerRoute(t *testing.T) {
-
 	vsr1 := conf_v1.VirtualServerRoute{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vsr-1",
