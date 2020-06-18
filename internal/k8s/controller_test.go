@@ -1422,7 +1422,7 @@ func TestCheckForVirtualServerRoute(t *testing.T) {
 
 	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr4, &vsr5}
 
-	result := checkForVirtualServerRoute("ns-2/vsr-3", vsrlist)
+	result := removeVirtualServerRouteByKey("ns-2/vsr-3", vsrlist)
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("checkForVirtualServerRoute return %v but expected %v", result, expected)
@@ -1533,14 +1533,9 @@ func TestFindAllVirtualServerRoutesForVirtualServer(t *testing.T) {
 
 	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2}
 
-	vs := conf_v1.VirtualServer{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "vs-1",
-			Namespace: "ns-1",
-		},
-	}
+	vsKey := "ns-1/vs-1"
 
-	result := findAllVirtualServerRoutesForVirtualServer(&vs, virtualserverroutes)
+	result := findAllVirtualServerRoutesForVirtualServer(vsKey, virtualserverroutes)
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("findAllVirtualServerRoutes return %v but expected %v", result, expected)
