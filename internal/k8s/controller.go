@@ -442,7 +442,7 @@ func (lbc *LoadBalancerController) syncEndpoint(task task) {
 		var mergableIngressesSlice []*configs.MergeableIngresses
 
 		for i := range ings {
-			if !lbc.IsNginxIngress(&ings[i]) {
+			if !lbc.HasCorrectIngressClass(&ings[i]) {
 				continue
 			}
 			if isMinion(&ings[i]) {
@@ -647,7 +647,7 @@ func (lbc *LoadBalancerController) GetManagedIngresses() ([]extensions.Ingress, 
 	ings, _ := lbc.ingressLister.List()
 	for i := range ings.Items {
 		ing := ings.Items[i]
-		if !lbc.IsNginxIngress(&ing) {
+		if !lbc.HasCorrectIngressClass(&ing) {
 			continue
 		}
 		if isMinion(&ing) {
@@ -1459,7 +1459,7 @@ items:
 			continue
 		}
 
-		if !lbc.IsNginxIngress(&ing) {
+		if !lbc.HasCorrectIngressClass(&ing) {
 			continue
 		}
 
@@ -1511,7 +1511,7 @@ items:
 func (lbc *LoadBalancerController) EnqueueIngressForService(svc *api_v1.Service) {
 	ings := lbc.getIngressesForService(svc)
 	for _, ing := range ings {
-		if !lbc.IsNginxIngress(&ing) {
+		if !lbc.HasCorrectIngressClass(&ing) {
 			continue
 		}
 		if isMinion(&ing) {
@@ -2370,9 +2370,9 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *extensio
 	return nil, fmt.Errorf("service %s doesn't exist", svcKey)
 }
 
-// IsNginxIngress checks if resource ingress class annotation (if exists) is matching with ingress controller class
+// HasCorrectIngressClass checks if resource ingress class annotation (if exists) is matching with ingress controller class
 // If annotation is absent and use-ingress-class-only enabled - ingress resource would ignore
-func (lbc *LoadBalancerController) IsNginxIngress(obj interface{}) bool {
+func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool {
 	var class string
 	switch obj.(type) {
 	case string:
@@ -2436,7 +2436,7 @@ func (lbc *LoadBalancerController) getMinionsForMaster(master *configs.IngressEx
 	var minionPaths = make(map[string]*extensions.Ingress)
 
 	for i := range ings.Items {
-		if !lbc.IsNginxIngress(&ings.Items[i]) {
+		if !lbc.HasCorrectIngressClass(&ings.Items[i]) {
 			continue
 		}
 		if !isMinion(&ings.Items[i]) {
@@ -2490,7 +2490,7 @@ func (lbc *LoadBalancerController) FindMasterForMinion(minion *extensions.Ingres
 	}
 
 	for i := range ings.Items {
-		if !lbc.IsNginxIngress(&ings.Items[i]) {
+		if !lbc.HasCorrectIngressClass(&ings.Items[i]) {
 			continue
 		}
 		if !lbc.configurator.HasIngress(&ings.Items[i]) {
