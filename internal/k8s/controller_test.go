@@ -1418,11 +1418,11 @@ func TestCheckForVirtualServerRoute(t *testing.T) {
 		},
 	}
 
-	vsrlist := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr3, &vsr4, &vsr5}
+	vsrs := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr3, &vsr4, &vsr5}
 
 	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr4, &vsr5}
 
-	result := removeVirtualServerRouteByKey("ns-2/vsr-3", vsrlist)
+	result := removeVirtualServerRouteByKey("ns-2/vsr-3", vsrs)
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("checkForVirtualServerRoute return %v but expected %v", result, expected)
