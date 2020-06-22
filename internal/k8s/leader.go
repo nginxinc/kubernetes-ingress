@@ -61,9 +61,14 @@ func createLeaderHandler(lbc *LoadBalancerController) leaderelection.LeaderCallb
 			}
 
 			glog.V(3).Info("updating VirtualServer and VirtualServerRoutes status")
-			err := lbc.updateVirtualServerVirtualServerRouteStatusesFromEvents()
+			err := lbc.updateVirtualServersStatusFromEvents()
 			if err != nil {
-				glog.V(3).Infof("error updating status when starting leading: %v", err)
+				glog.V(3).Infof("error updating VirtualServers status when starting leading: %v", err)
+			}
+
+			err = lbc.updateVirtualServerRoutessStatusFromEvents()
+			if err != nil {
+				glog.V(3).Infof("error updating VirtualServerRoutes status when starting leading: %v", err)
 			}
 		},
 		OnStoppedLeading: func() {
