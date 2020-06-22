@@ -4,7 +4,7 @@ This document describes how to troubleshoot problems with the Ingress Controller
 
 ## Potential Problems
 
-The table below categories some potential problems with the Ingress Controller you may encounter and suggests how to troubleshoot those problems using one or more methods from the next section.
+The table below categorizes some potential problems with the Ingress Controller you may encounter and suggests how to troubleshoot those problems using one or more methods from the next section.
 
 ```eval_rst
 .. list-table::
@@ -25,7 +25,11 @@ The table below categories some potential problems with the Ingress Controller y
    * - VirtualServer and VirtualServerRoute Resources
      - The configuration is not applied.
      - Check the events of the VirtualServer and VirtualServerRoutes, check the logs, check the generated config.
-     - VirtualServer and VirtualServerRoute weren't enabled during the installation.
+     - VirtualServer or VirtualServerRoute is invalid.
+   * - Policy Resource
+     - The configuration is not applied.
+     - Check the events of the Policy resource as well as the events of the VirtualServers that reference that policy, check the logs, check the generated config.
+     - Policy is invalid.
    * - ConfigMap Keys
      - The configuration is not applied.
      - Check the events of the ConfigMap, check the logs, check the generated config. 
@@ -66,7 +70,7 @@ Events:
   ----    ------          ----  ----                      -------
   Normal  AddedOrUpdated  12s   nginx-ingress-controller  Configuration for default/cafe-ingress was added or updated
 ```
-Note how in the events section we have a Normal event with the AddedOrUpdated reason informing us that the configuration was successfully applied.
+Note that in the events section, we have a `Normal` event with the `AddedOrUpdated` reason, which informs us that the configuration was successfully applied.
 
 ### Checking the Events of a VirtualServer and VirtualServerRoute Resources
 
@@ -79,7 +83,7 @@ Events:
   ----    ------          ----  ----                      -------
   Normal  AddedOrUpdated  16s   nginx-ingress-controller  Configuration for default/cafe was added or updated
 ```
-Note how in the events section we have a Normal event with the AddedOrUpdated reason informing us that the configuration was successfully applied.
+Note that in the events section, we have a `Normal` event with the `AddedOrUpdated` reason, which informs us that the configuration was successfully applied.
 
 Checking the events of a VirtualServerRoute is similar:
 ```
@@ -90,6 +94,21 @@ Events:
   ----     ------                 ----  ----                      -------
   Normal   AddedOrUpdated         1m    nginx-ingress-controller  Configuration for default/coffee was added or updated
 ```
+
+### Checking the Events of a Policy Resource
+
+After you create or update a Policy resource, you can use `kubectl describe` to check whether or not the Ingress Controller accepted the Policy:
+```
+$ kubectl describe pol webapp-policy
+. . .
+Events:
+  Type    Reason          Age   From                      Message
+  ----    ------          ----  ----                      -------
+  Normal  AddedOrUpdated  11s   nginx-ingress-controller  Policy default/webapp-policy was added or updated
+```
+Note that in the events section, we have a `Normal` event with the `AddedOrUpdated` reason, which informs us that the policy was successfully accepted.
+
+However, the fact that a policy was accepted doesn't guarantee that the NGINX configuration was successfully applied. To confirm that, check the events of the VirtualServer resources that reference that policy.
 
 ### Checking the Events of the ConfigMap Resource
 
@@ -105,7 +124,7 @@ Events:
   ----    ------   ----               ----                      -------
   Normal  Updated  11s (x2 over 26m)  nginx-ingress-controller  Configuration from nginx-ingress/nginx-config was updated
 ```
-Note how in the events section we have a Normal event with the Updated reason informing us that the configuration was successfully applied.
+Note that in the events section, we have a `Normal` event with the `Updated` reason, which informs us that the configuration was successfully applied.
 
 ### Checking the Generated Config
 

@@ -40,11 +40,12 @@ In this section, we create resources common for most of the Ingress Controller i
     $ kubectl apply -f common/nginx-config.yaml
     ```
 
-1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) and [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) resources:
+1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources), [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and [Policy](/nginx-ingress-controller/configuration/policy-resource) resources:
     ```
     $ kubectl apply -f common/vs-definition.yaml
     $ kubectl apply -f common/vsr-definition.yaml
     $ kubectl apply -f common/ts-definition.yaml
+    $ kubectl apply -f common/policy-definition.yaml
     ```
 
 If you would like to use the TCP and UDP load balancing features of the Ingress Controller, create the following additional resources: 
@@ -58,7 +59,7 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
     ```
     **Note**: Make sure to references this resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument.
 
-> **Feature Status**: The TransportServer and GlobalConfiguration resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
+> **Feature Status**: The TransportServer, GlobalConfiguration and Policy resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
 
 ## 3. Deploy the Ingress Controller
 

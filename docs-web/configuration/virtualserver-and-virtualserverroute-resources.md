@@ -89,6 +89,10 @@ spec:
      - The TLS termination configuration.
      - `tls <#virtualserver-tls>`_
      - No
+   * - ``policies``
+     - A list of policies.
+     - `[]policy <#virtualserver-policy>`_
+     - No
    * - ``upstreams``
      - A list of upstreams.
      - `[]upstream <#upstream>`_
@@ -164,6 +168,30 @@ basedOn: scheme
      - No
    * - ``basedOn``
      - The attribute of a request that NGINX will evaluate to send a redirect. The allowed values are ``scheme`` (the scheme of the request) or ``x-forwarded-proto`` (the ``X-Forwarded-Proto`` header of the request). The default is ``scheme``.
+     - ``string``
+     - No
+```
+### VirtualServer.Policy
+
+The policy field references a [Policy resource](/nginx-ingress-controller/configuration/policy-resource/) by its name and optional namespace. For example:
+```yaml
+name: access-control
+```
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``name``
+     - The name of a policy. If the policy doesn't exist or invalid, NGINX will respond with an error response with the `500` status code.
+     - ``string``
+     - Yes 
+   * - ``namespace``
+     - The namespace of a policy. If not specified, the namespace of the VirtualServer resource is used. 
      - ``string``
      - No
 ```
