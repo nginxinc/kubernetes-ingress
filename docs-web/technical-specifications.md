@@ -27,12 +27,12 @@ The supported architecture is x86-64.
       - ``Dockerfile``
       - ``nginx:1.19.0``, which is based on ``debian:buster-slim``
       - 
-      - ``nginx/nginx-ingress:1.7.1``
+      - ``nginx/nginx-ingress:1.7.2``
     * - Alpine-based image
       - ``DockerfileForAlpine``
       - ``nginx:1.19.0-alpine``, which is based on ``alpine:3.10``
       - 
-      - ``nginx/nginx-ingress:1.7.1-alpine``
+      - ``nginx/nginx-ingress:1.7.2-alpine``
     * - Debian-based image with Opentracing
       - ``DockerfileWithOpentracing``
       - ``nginx:1.19.0``, which is based on ``debian:buster-slim``
@@ -42,13 +42,13 @@ The supported architecture is x86-64.
       - ``openshift/Dockerfile``
       - ``registry.access.redhat.com/ubi8/ubi:8.1``
       - 
-      - ``nginx/nginx-ingress:1.7.1-ubi``
+      - ``nginx/nginx-ingress:1.7.2-ubi``
 ```
 \* -- Dockerfile paths are relative to the ``build`` folder of the Ingress Controller git repo.
 
 ### Images with NGINX Plus
 
-All images include NGINX Plus R21.
+All images include NGINX Plus R22.
 The supported architecture is x86-64.
 
 NGINX Plus images are not available through DockerHub.
