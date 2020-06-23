@@ -29,8 +29,8 @@ func getTestHTTPClient() *http.Client {
 
 func TestVerifyClient(t *testing.T) {
 	c := verifyClient{
-		client:     getTestHTTPClient(),
-		maxRetries: 1,
+		client:  getTestHTTPClient(),
+		timeout: 25,
 	}
 
 	configVersion, err := c.GetConfigVersion()

@@ -54,6 +54,15 @@ server {
 
 	status_zone {{$server.StatusZone}};
 
+	{{- if $server.AppProtectEnable}}
+	app_protect_enable {{$server.AppProtectEnable}};
+	{{if $server.AppProtectPolicy}}app_protect_policy_file {{$server.AppProtectPolicy}};{{end}}
+	{{- end}}
+	{{- if $server.AppProtectLogEnable}}
+	app_protect_security_log_enable {{$server.AppProtectLogEnable}};
+	{{if $server.AppProtectLogConf}}app_protect_security_log {{$server.AppProtectLogConf}};{{end}}
+	{{- end}}
+	
 	{{if not $server.GRPCOnly}}
 	{{range $proxyHideHeader := $server.ProxyHideHeaders}}
 	proxy_hide_header {{$proxyHideHeader}};{{end}}

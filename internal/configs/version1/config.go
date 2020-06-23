@@ -84,8 +84,12 @@ type Server struct {
 	JWTAuth              *JWTAuth
 	JWTRedirectLocations []JWTRedirectLocation
 
-	Ports    []int
-	SSLPorts []int
+	Ports               []int
+	SSLPorts            []int
+	AppProtectEnable    string
+	AppProtectPolicy    string
+	AppProtectLogConf   string
+	AppProtectLogEnable string
 }
 
 // JWTRedirectLocation describes a location for redirecting client requests to a login URL for JWT Authentication.
@@ -127,49 +131,54 @@ type Location struct {
 
 // MainConfig describe the main NGINX configuration file.
 type MainConfig struct {
-	AccessLogOff                   bool
-	DefaultServerAccessLogOff      bool
-	ErrorLogLevel                  string
-	HealthStatus                   bool
-	HealthStatusURI                string
-	HTTP2                          bool
-	HTTPSnippets                   []string
-	KeepaliveRequests              int64
-	KeepaliveTimeout               string
-	LogFormat                      []string
-	LogFormatEscaping              string
-	MainSnippets                   []string
-	NginxStatus                    bool
-	NginxStatusAllowCIDRs          []string
-	NginxStatusPort                int
-	OpenTracingEnabled             bool
-	OpenTracingLoadModule          bool
-	OpenTracingTracer              string
-	OpenTracingTracerConfig        string
-	ProxyProtocol                  bool
-	ResolverAddresses              []string
-	ResolverIPV6                   bool
-	ResolverTimeout                string
-	ResolverValid                  string
-	ServerNamesHashBucketSize      string
-	ServerNamesHashMaxSize         string
-	ServerTokens                   string
-	SSLCiphers                     string
-	SSLDHParam                     string
-	SSLPreferServerCiphers         bool
-	SSLProtocols                   string
-	StreamLogFormat                []string
-	StreamLogFormatEscaping        string
-	StreamSnippets                 []string
-	StubStatusOverUnixSocketForOSS bool
-	TLSPassthrough                 bool
-	VariablesHashBucketSize        uint64
-	VariablesHashMaxSize           uint64
-	WorkerConnections              string
-	WorkerCPUAffinity              string
-	WorkerProcesses                string
-	WorkerRlimitNofile             string
-	WorkerShutdownTimeout          string
+	AccessLogOff                       bool
+	DefaultServerAccessLogOff          bool
+	ErrorLogLevel                      string
+	HealthStatus                       bool
+	HealthStatusURI                    string
+	HTTP2                              bool
+	HTTPSnippets                       []string
+	KeepaliveRequests                  int64
+	KeepaliveTimeout                   string
+	LogFormat                          []string
+	LogFormatEscaping                  string
+	MainSnippets                       []string
+	NginxStatus                        bool
+	NginxStatusAllowCIDRs              []string
+	NginxStatusPort                    int
+	OpenTracingEnabled                 bool
+	OpenTracingLoadModule              bool
+	OpenTracingTracer                  string
+	OpenTracingTracerConfig            string
+	ProxyProtocol                      bool
+	ResolverAddresses                  []string
+	ResolverIPV6                       bool
+	ResolverTimeout                    string
+	ResolverValid                      string
+	ServerNamesHashBucketSize          string
+	ServerNamesHashMaxSize             string
+	ServerTokens                       string
+	SSLCiphers                         string
+	SSLDHParam                         string
+	SSLPreferServerCiphers             bool
+	SSLProtocols                       string
+	StreamLogFormat                    []string
+	StreamLogFormatEscaping            string
+	StreamSnippets                     []string
+	StubStatusOverUnixSocketForOSS     bool
+	TLSPassthrough                     bool
+	VariablesHashBucketSize            uint64
+	VariablesHashMaxSize               uint64
+	WorkerConnections                  string
+	WorkerCPUAffinity                  string
+	WorkerProcesses                    string
+	WorkerRlimitNofile                 string
+	WorkerShutdownTimeout              string
+	AppProtectLoadModule               bool
+	AppProtectFailureModeAction        string
+	AppProtectCookieSeed               string
+	AppProtectCPUThresholds            string
+	AppProtectPhysicalMemoryThresholds string
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

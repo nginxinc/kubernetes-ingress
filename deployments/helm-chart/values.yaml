@@ -9,6 +9,18 @@ controller:
   ## Deploys the Ingress controller for NGINX Plus.
   nginxplus: false
 
+  # Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
+  # Default is 4000 (default is 20000 instead if enable-app-protect is true)
+  # If set to 0, default values will be used.
+  nginxReloadTimeout: 0
+
+  ## Support for App Protect
+  appprotect:
+    ## Create the Custom Resources required for App Protect to work.
+    createCustomResources: false
+    ## Enable the App Protect module in the Ingress Controller.
+    enable: false
+  
   ## Enables the Ingress controller pods to use the host's network namespace.
   hostNetwork: false
 

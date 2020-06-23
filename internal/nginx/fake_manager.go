@@ -37,6 +37,17 @@ func (*FakeManager) CreateConfig(name string, content []byte) {
 	glog.V(3).Info(string(content))
 }
 
+//CreateAppProtectResourceFile provides a fake implementation of CreateAppProtectResourceFile
+func (*FakeManager) CreateAppProtectResourceFile(name string, content []byte) {
+	glog.V(3).Infof("Writing Ap Resource File %v", name)
+	glog.V(3).Info(string(content))
+}
+
+//DeleteAppProtectResourceFile provides a fake implementation of DeleteAppProtectResourceFile
+func (*FakeManager) DeleteAppProtectResourceFile(name string) {
+	glog.V(3).Infof("Deleting Ap Resource File %v", name)
+}
+
 // DeleteConfig provides a fake implementation of DeleteConfig.
 func (*FakeManager) DeleteConfig(name string) {
 	glog.V(3).Infof("Deleting config %v", name)
@@ -126,4 +137,24 @@ func (*FakeManager) CreateOpenTracingTracerConfig(content string) error {
 
 // SetOpenTracing creates a fake implementation of SetOpenTracing.
 func (*FakeManager) SetOpenTracing(openTracing bool) {
+}
+
+// AppProtectAgentStart is a fake implementation of AppProtectAgentStart
+func (*FakeManager) AppProtectAgentStart(apaDone chan error, debug bool) {
+	glog.V(3).Infof("Starting FakeAppProtectAgent")
+}
+
+// AppProtectAgentQuit is a fake implementtion AppProtectAgentQuit
+func (*FakeManager) AppProtectAgentQuit() {
+	glog.V(3).Infof("Quitting FakeAppProtectAgent")
+}
+
+// AppProtectPluginStart is a fake implementtion AppProtectPluginStart
+func (*FakeManager) AppProtectPluginStart(appDone chan error) {
+	glog.V(3).Infof("Starting FakeAppProtectPlugin")
+}
+
+// AppProtectPluginQuit is a fake implementtion AppProtectPluginQuit
+func (*FakeManager) AppProtectPluginQuit() {
+	glog.V(3).Infof("Quitting FakeAppProtectPlugin")
 }

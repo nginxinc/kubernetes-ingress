@@ -1,0 +1,874 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
+  name: appolicies.appprotect.f5.com
+spec:
+  preserveUnknownFields: false
+  group: appprotect.f5.com
+  names:
+    kind: APPolicy
+    listKind: APPolicyList
+    plural: appolicies
+    singular: appolicy
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      description: APPolicyConfig is the Schema for the APPolicyconfigs API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: APPolicySpec defines the desired state of APPolicy
+          properties:
+            modifications:
+              items:
+                properties:
+                  action:
+                    type: string
+                  description:
+                    type: string
+                  entity:
+                    properties:
+                      name:
+                        type: string
+                    type: object
+                  entityChanges:
+                    properties:
+                      type:
+                        type: string
+                    type: object
+                type: object
+              type: array
+            policy:
+              description: Foo is an example field of APPolicyConfig. Edit APPolicyConfig_types.go
+                to remove/update
+              properties:
+                applicationLanguage:
+                  enum:
+                  - iso-8859-10
+                  - iso-8859-6
+                  - windows-1255
+                  - auto-detect
+                  - koi8-r
+                  - gb18030
+                  - iso-8859-8
+                  - windows-1250
+                  - iso-8859-9
+                  - windows-1252
+                  - iso-8859-16
+                  - gb2312
+                  - iso-8859-2
+                  - iso-8859-5
+                  - windows-1257
+                  - windows-1256
+                  - iso-8859-13
+                  - windows-874
+                  - windows-1253
+                  - iso-8859-3
+                  - euc-jp
+                  - utf-8
+                  - gbk
+                  - windows-1251
+                  - big5
+                  - iso-8859-1
+                  - shift_jis
+                  - euc-kr
+                  - iso-8859-4
+                  - iso-8859-7
+                  - iso-8859-15
+                  type: string
+                blocking-settings:
+                  properties:
+                    evasions:
+                      items:
+                        properties:
+                          description:
+                            enum:
+                            - '%u decoding'
+                            - Apache whitespace
+                            - Bad unescape
+                            - Bare byte decoding
+                            - Directory traversals
+                            - IIS backslashes
+                            - IIS Unicode codepoints
+                            - Multiple decoding
+                            type: string
+                          enabled:
+                            type: boolean
+                          maxDecodingPasses:
+                            type: integer
+                        type: object
+                      type: array
+                    http-protocols:
+                      items:
+                        properties:
+                          description:
+                            enum:
+                            - Unparsable request content
+                            - Several Content-Length headers
+                            - 'POST request with Content-Length: 0'
+                            - Null in request
+                            - No Host header in HTTP/1.1 request
+                            - Multiple host headers
+                            - Host header contains IP address
+                            - High ASCII characters in headers
+                            - Header name with no header value
+                            - CRLF characters before request start
+                            - Content length should be a positive number
+                            - Chunked request with Content-Length header
+                            - Check maximum number of parameters
+                            - Check maximum number of headers
+                            - Body in GET or HEAD requests
+                            - Bad multipart/form-data request parsing
+                            - Bad multipart parameters parsing
+                            - Bad HTTP version
+                            - Bad host header value
+                            type: string
+                          enabled:
+                            type: boolean
+                          maxHeaders:
+                            description: optional
+                            type: integer
+                          maxParams:
+                            type: integer
+                        type: object
+                      type: array
+                    violations:
+                      items:
+                        properties:
+                          alarm:
+                            type: boolean
+                          block:
+                            type: boolean
+                          description:
+                            type: string
+                          name:
+                            enum:
+                            - VIOL_XML_SOAP_ATTACHMENT
+                            - VIOL_DATA_GUARD
+                            - VIOL_LOGIN_URL_EXPIRED
+                            - VIOL_LOGIN_URL_BYPASSED
+                            - VIOL_REQUEST_MAX_LENGTH
+                            - VIOL_VIRUS
+                            - VIOL_EVASION
+                            - VIOL_XML_WEB_SERVICES_SECURITY
+                            - VIOL_XML_FORMAT
+                            - VIOL_XML_SCHEMA
+                            - VIOL_XML_MALFORMED
+                            - VIOL_CSRF
+                            - VIOL_ENCODING
+                            - VIOL_HTTP_PROTOCOL
+                            - VIOL_GEOLOCATION
+                            - VIOL_QUERY_STRING_LENGTH
+                            - VIOL_REQUEST_LENGTH
+                            - VIOL_COOKIE_LENGTH
+                            - VIOL_URL_LENGTH
+                            - VIOL_CSRF_EXPIRED
+                            - VIOL_BRUTE_FORCE
+                            - VIOL_XML_SOAP_METHOD
+                            - VIOL_PARAMETER_VALUE_METACHAR
+                            - VIOL_PARAMETER_NAME_METACHAR
+                            - VIOL_URL_METACHAR
+                            - VIOL_PARAMETER_REPEATED
+                            - VIOL_JSON_FORMAT
+                            - VIOL_HEADER_LENGTH
+                            - VIOL_PARAMETER_MULTIPART_NULL_VALUE
+                            - VIOL_POST_DATA_LENGTH
+                            - VIOL_PARAMETER_EMPTY_VALUE
+                            - VIOL_PARAMETER
+                            - VIOL_FLOW_DISALLOWED_INPUT
+                            - VIOL_DYNAMIC_SESSION
+                            - VIOL_METHOD
+                            - VIOL_FLOW
+                            - VIOL_URL
+                            - VIOL_FILETYPE
+                            - VIOL_PARAMETER_VALUE_REGEXP
+                            - VIOL_FLOW_MANDATORY_PARAMS
+                            - VIOL_ATTACK_SIGNATURE
+                            - VIOL_PARAMETER_NUMERIC_VALUE
+                            - VIOL_PARAMETER_DATA_TYPE
+                            - VIOL_PARAMETER_VALUE_LENGTH
+                            - VIOL_PARAMETER_DYNAMIC_VALUE
+                            - VIOL_PARAMETER_STATIC_VALUE
+                            - VIOL_COOKIE_EXPIRED
+                            - VIOL_ASM_COOKIE_HIJACKING
+                            - VIOL_SESSION_AWARENESS
+                            - VIOL_FLOW_ENTRY_POINT
+                            - VIOL_JSON_MALFORMED
+                            - VIOL_COOKIE_MALFORMED
+                            - VIOL_COOKIE_MODIFIED
+                            - VIOL_ASM_COOKIE_MODIFIED
+                            - VIOL_HTTP_RESPONSE_STATUS
+                            - VIOL_URL_CONTENT_TYPE
+                            - VIOL_HEADER_METACHAR
+                            - VIOL_GWT_MALFORMED
+                            - VIOL_FILE_UPLOAD
+                            - VIOL_MALICIOUS_IP
+                            - VIOL_PARAMETER_VALUE_BASE64
+                            - VIOL_GWT_FORMAT
+                            - VIOL_MANDATORY_HEADER
+                            - VIOL_REDIRECT
+                            - VIOL_WEBSOCKET_BAD_REQUEST
+                            - VIOL_WEBSOCKET_FRAMING_PROTOCOL
+                            - VIOL_WEBSOCKET_FRAME_MASKING
+                            - VIOL_WEBSOCKET_FRAME_LENGTH
+                            - VIOL_WEBSOCKET_TEXT_NULL_VALUE
+                            - VIOL_CROSS_ORIGIN_REQUEST
+                            - VIOL_WEBSOCKET_TEXT_MESSAGE_NOT_ALLOWED
+                            - VIOL_WEBSOCKET_BINARY_MESSAGE_NOT_ALLOWED
+                            - VIOL_WEBSOCKET_EXTENSION
+                            - VIOL_WEBSOCKET_FRAMES_PER_MESSAGE_COUNT
+                            - VIOL_WEBSOCKET_BINARY_MESSAGE_LENGTH
+                            - VIOL_PLAINTEXT_FORMAT
+                            - VIOL_BLACKLISTED_IP
+                            - VIOL_THREAT_CAMPAIGN
+                            - VIOL_PARAMETER_ARRAY_VALUE
+                            - VIOL_JSON_SCHEMA
+                            - VIOL_MANDATORY_PARAMETER
+                            - VIOL_PARAMETER_LOCATION
+                            - VIOL_MALICIOUS_DEVICE
+                            - VIOL_BLOCKING_CONDITION
+                            - VIOL_THREAT_ANALYSIS
+                            - VIOL_LEAKED_CREDENTIALS
+                            - VIOL_HOSTNAME
+                            - VIOL_HOSTNAME_MISMATCH
+                            - VIOL_CONVICTION
+                            - VIOL_MANDATORY_REQUEST_BODY
+                            - VIOL_RATING_THREAT
+                            - VIOL_RATING_NEED_EXAMINATION
+                            type: string
+                        type: object
+                      type: array
+                  type: object
+                caseInsensitive:
+                  type: boolean
+                character-sets:
+                  items:
+                    properties:
+                      characterSet:
+                        items:
+                          properties:
+                            isAllowed:
+                              type: boolean
+                            metachar:
+                              type: string
+                          type: object
+                        type: array
+                      characterSetType:
+                        enum:
+                        - gwt-content
+                        - header
+                        - json-content
+                        - parameter-name
+                        - parameter-value
+                        - plain-text-content
+                        - url
+                        - xml-content
+                        type: string
+                    type: object
+                  type: array
+                cookie-settings:
+                  properties:
+                    maximumCookieHeaderLength:
+                      pattern: any|\d+
+                      type: string
+                  type: object
+                cookies:
+                  items:
+                    properties:
+                      accessibleOnlyThroughTheHttpProtocol:
+                        type: boolean
+                      attackSignaturesCheck:
+                        type: boolean
+                      enforcementType:
+                        type: string
+                      insertSameSiteAttribute:
+                        enum:
+                        - lax
+                        - none
+                        - none-value
+                        - strict
+                        type: string
+                      name:
+                        type: string
+                      securedOverHttpsConnection:
+                        type: boolean
+                      signatureOverrides:
+                        items:
+                          properties:
+                            enabled:
+                              type: boolean
+                            signatureId:
+                              type: integer
+                          type: object
+                        type: array
+                      type:
+                        enum:
+                        - explicit
+                        - wildcard
+                        type: string
+                    type: object
+                  type: array
+                data-guard:
+                  properties:
+                    creditCardNumbers:
+                      type: boolean
+                    enabled:
+                      type: boolean
+                    enforcementMode:
+                      enum:
+                      - ignore-urls-in-list
+                      - enforce-urls-in-list
+                      type: string
+                    enforcementUrls:
+                      items:
+                        type: string
+                      type: array
+                    lastCcnDigitsToExpose:
+                      type: integer
+                    lastSsnDigitsToExpose:
+                      type: integer
+                    maskData:
+                      type: boolean
+                    usSocialSecurityNumbers:
+                      type: boolean
+                  type: object
+                description:
+                  type: string
+                enablePassiveMode:
+                  type: boolean
+                enforcementMode:
+                  enum:
+                  - transparent
+                  - blocking
+                  type: string
+                filetypes:
+                  items:
+                    properties:
+                      allowed:
+                        type: boolean
+                      checkPostDataLength:
+                        type: boolean
+                      checkQueryStringLength:
+                        type: boolean
+                      checkRequestLength:
+                        type: boolean
+                      checkUrlLength:
+                        type: boolean
+                      name:
+                        type: string
+                      postDataLength:
+                        type: integer
+                      queryStringLength:
+                        type: integer
+                      requestLength:
+                        type: integer
+                      responseCheck:
+                        type: boolean
+                      type:
+                        enum:
+                        - explicit
+                        - wildcard
+                        type: string
+                      urlLength:
+                        type: integer
+                    type: object
+                  type: array
+                fullPath:
+                  type: string
+                general:
+                  properties:
+                    allowedResponseCodes:
+                      items:
+                        format: int32
+                        maximum: 999
+                        minimum: 100
+                        type: integer
+                      type: array
+                    customXffHeaders:
+                      items:
+                        type: string
+                      type: array
+                    enforcementReadinessPeriod:
+                      type: integer
+                    maskCreditCardNumbersInRequest:
+                      type: boolean
+                    trustXff:
+                      type: boolean
+                  type: object
+                header-settings:
+                  properties:
+                    maximumHttpHeaderLength:
+                      pattern: any|\d+
+                      type: string
+                  type: object
+                headers:
+                  items:
+                    properties:
+                      base64Decoding:
+                        type: boolean
+                      checkSignatures:
+                        type: boolean
+                      htmlNormalization:
+                        type: boolean
+                      id:
+                        type: string
+                      kind:
+                        type: string
+                      lastUpdateMicros:
+                        type: integer
+                      mandatory:
+                        type: boolean
+                      maskValueInLogs:
+                        type: boolean
+                      name:
+                        type: string
+                      normalizationViolations:
+                        type: boolean
+                      percentDecoding:
+                        type: boolean
+                      selfLink:
+                        type: string
+                      type:
+                        type: string
+                      urlNormalization:
+                        type: boolean
+                    type: object
+                  type: array
+                json-profiles:
+                  items:
+                    properties:
+                      defenseAttributes:
+                        properties:
+                          maximumArrayLength:
+                            pattern: any|\d+
+                            type: string
+                          maximumStructureDepth:
+                            pattern: any|\d+
+                            type: string
+                          maximumTotalLengthOfJSONData:
+                            pattern: any|\d+
+                            type: string
+                          maximumValueLength:
+                            pattern: any|\d+
+                            type: string
+                          tolerateJSONParsingWarnings:
+                            type: boolean
+                        type: object
+                      description:
+                        type: string
+                      hasValidationFiles:
+                        type: boolean
+                      name:
+                        enum:
+                        - Default
+                        type: string
+                    type: object
+                  type: array
+                json-validation-files:
+                  items:
+                    properties:
+                      contents:
+                        type: string
+                      fileName:
+                        type: string
+                      isBase64:
+                        type: boolean
+                    type: object
+                  type: array
+                methods:
+                  items:
+                    properties:
+                      name:
+                        enum:
+                        - GET
+                        - POST
+                        - HEAD
+                        - OPTIONS
+                        - DELETE
+                        - PATCH
+                        - PUT
+                        - ACL
+                        type: string
+                    type: object
+                  type: array
+                name:
+                  type: string
+                parameters:
+                  items:
+                    properties:
+                      allowEmptyValue:
+                        type: boolean
+                      allowRepeatedParameterName:
+                        type: boolean
+                      attackSignaturesCheck:
+                        type: boolean
+                      checkMaxValueLength:
+                        type: boolean
+                      checkMetachars:
+                        type: boolean
+                      level:
+                        enum:
+                        - Global
+                        type: string
+                      metacharsOnParameterValueCheck:
+                        type: boolean
+                      name:
+                        enum:
+                        - '*'
+                        type: string
+                      nameMetacharOverrides:
+                        items:
+                          properties:
+                            isAllowed:
+                              type: boolean
+                            metachar:
+                              type: string
+                          type: object
+                        type: array
+                      parameterLocation:
+                        type: string
+                      performStaging:
+                        type: boolean
+                      sensitiveParameter:
+                        type: boolean
+                      signatureOverrides:
+                        items:
+                          properties:
+                            enabled:
+                              type: boolean
+                            signatureId:
+                              type: integer
+                          type: object
+                        type: array
+                      type:
+                        type: string
+                      valueMetacharOverrides:
+                        items:
+                          properties:
+                            isAllowed:
+                              type: boolean
+                            metachar:
+                              type: string
+                          type: object
+                        type: array
+                      valueType:
+                        type: string
+                    type: object
+                  type: array
+                response-pages:
+                  items:
+                    properties:
+                      ajaxActionType:
+                        enum:
+                        - alert-popup
+                        - custom
+                        - redirect
+                        type: string
+                      ajaxCustomContent:
+                        type: boolean
+                      ajaxPopupMessage:
+                        type: string
+                      ajaxRedirectUrl:
+                        type: string
+                      responseActionType:
+                        enum:
+                        - custom
+                        - default
+                        - erase-cookies
+                        - redirect
+                        - soap-fault
+                        type: string
+                      responseContent:
+                        type: string
+                      responseHeader:
+                        type: string
+                      responsePageType:
+                        enum:
+                        - ajax
+                        - ajax-login
+                        - captcha
+                        - captcha-fail
+                        - default
+                        - failed-login-honeypot
+                        - failed-login-honeypot-ajax
+                        - hijack
+                        - leaked-credentials
+                        - leaked-credentials-ajax
+                        - mobile
+                        - persistent-flow
+                        - xml
+                        type: string
+                      responseRedirectUrl:
+                        type: string
+                    type: object
+                  type: array
+                sensitive-parameters:
+                  items:
+                    properties:
+                      name:
+                        type: string
+                    type: object
+                  type: array
+                server-technologies:
+                  items:
+                    properties:
+                      serverTechnologyName:
+                        enum:
+                        - Jenkins
+                        - SharePoint
+                        - Oracle Application Server
+                        - Python
+                        - Oracle Identity Manager
+                        - Spring Boot
+                        - CouchDB
+                        - SQLite
+                        - Handlebars
+                        - Mustache
+                        - Prototype
+                        - Zend
+                        - Redis
+                        - Underscore.js
+                        - Ember.js
+                        - ZURB Foundation
+                        - ef.js
+                        - Vue.js
+                        - UIKit
+                        - TYPO3 CMS
+                        - RequireJS
+                        - React
+                        - MooTools
+                        - Laravel
+                        - GraphQL
+                        - Google Web Toolkit
+                        - Express.js
+                        - CodeIgniter
+                        - Backbone.js
+                        - AngularJS
+                        - JavaScript
+                        - Nginx
+                        - Jetty
+                        - Joomla
+                        - JavaServer Faces (JSF)
+                        - Ruby
+                        - MongoDB
+                        - Django
+                        - Node.js
+                        - Citrix
+                        - JBoss
+                        - Elasticsearch
+                        - Apache Struts
+                        - XML
+                        - PostgreSQL
+                        - IBM DB2
+                        - Sybase/ASE
+                        - CGI
+                        - Proxy Servers
+                        - SSI (Server Side Includes)
+                        - Cisco
+                        - Novell
+                        - Macromedia JRun
+                        - BEA Systems WebLogic Server
+                        - Lotus Domino
+                        - MySQL
+                        - Oracle
+                        - Microsoft SQL Server
+                        - PHP
+                        - Outlook Web Access
+                        - Apache/NCSA HTTP Server
+                        - Apache Tomcat
+                        - WordPress
+                        - Macromedia ColdFusion
+                        - Unix/Linux
+                        - Microsoft Windows
+                        - ASP.NET
+                        - Front Page Server Extensions (FPSE)
+                        - IIS
+                        - WebDAV
+                        - ASP
+                        - Java Servlets/JSP
+                        - jQuery
+                        type: string
+                    type: object
+                  type: array
+                signature-sets:
+                  items:
+                    properties:
+                      alarm:
+                        type: boolean
+                      block:
+                        type: boolean
+                      name:
+                        enum:
+                        - Command Execution Signatures
+                        - Cross Site Scripting Signatures
+                        - Directory Indexing Signatures
+                        - Information Leakage Signatures
+                        - OS Command Injection Signatures
+                        - Path Traversal Signatures
+                        - Predictable Resource Location Signatures
+                        - Remote File Include Signatures
+                        - SQL Injection Signatures
+                        - XPath Injection Signatures
+                        - Buffer Overflow Signatures
+                        - Denial of Service Signatures
+                        - Vulnerability Scanner Signatures
+                        type: string
+                    type: object
+                  type: array
+                signature-settings:
+                  properties:
+                    attackSignatureFalsePositiveMode:
+                      enum:
+                      - detect
+                      - detect-and-allow
+                      - disabled
+                      type: string
+                    minimumAccuracyForAutoAddedSignatures:
+                      enum:
+                      - high
+                      - low
+                      - medium
+                      type: string
+                  type: object
+                signatures:
+                  items:
+                    properties:
+                      enabled:
+                        type: boolean
+                      signatureId:
+                        type: integer
+                    type: object
+                  type: array
+                softwareVersion:
+                  type: string
+                template:
+                  properties:
+                    name:
+                      type: string
+                  type: object
+                urls:
+                  items:
+                    properties:
+                      method:
+                        enum:
+                        - '*'
+                        type: string
+                      name:
+                        enum:
+                        - '*'
+                        type: string
+                      protocol:
+                        enum:
+                        - http
+                        - https
+                        type: string
+                    type: object
+                  type: array
+                whitelist-ips:
+                  items:
+                    properties:
+                      blockRequests:
+                        enum:
+                        - always
+                        - never
+                        type: string
+                      ipAddress:
+                        pattern: '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
+                        type: string
+                      ipMask:
+                        pattern: '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
+                        type: string
+                    type: object
+                  type: array
+                xml-profiles:
+                  items:
+                    properties:
+                      attackSignaturesCheck:
+                        type: boolean
+                      defenseAttributes:
+                        properties:
+                          allowCDATA:
+                            type: boolean
+                          allowDTDs:
+                            type: boolean
+                          allowExternalReferences:
+                            type: boolean
+                          allowProcessingInstructions:
+                            type: boolean
+                          maximumAttributeValueLength:
+                            pattern: any|\d+
+                            type: string
+                          maximumAttributesPerElement:
+                            pattern: any|\d+
+                            type: string
+                          maximumChildrenPerElement:
+                            pattern: any|\d+
+                            type: string
+                          maximumDocumentDepth:
+                            pattern: any|\d+
+                            type: string
+                          maximumDocumentSize:
+                            pattern: any|\d+
+                            type: string
+                          maximumElements:
+                            pattern: any|\d+
+                            type: string
+                          maximumNSDeclarations:
+                            pattern: any|\d+
+                            type: string
+                          maximumNameLength:
+                            pattern: any|\d+
+                            type: string
+                          maximumNamespaceLength:
+                            pattern: any|\d+
+                            type: string
+                          tolerateCloseTagShorthand:
+                            type: boolean
+                          tolerateLeadingWhiteSpace:
+                            type: boolean
+                          tolerateNumericNames:
+                            type: boolean
+                        type: object
+                      description:
+                        type: string
+                      enableWss:
+                        type: boolean
+                      followSchemaLinks:
+                        type: boolean
+                      name:
+                        type: string
+                    type: object
+                  type: array
+                xml-validation-files:
+                  items:
+                    properties:
+                      contents:
+                        type: string
+                      fileName:
+                        type: string
+                      isBase64:
+                        type: boolean
+                    type: object
+                  type: array
+              type: object
+          type: object
+      type: object
+  version: v1beta1
+  versions:
+  - name: v1beta1
+    served: true
+    storage: true
