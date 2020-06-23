@@ -219,7 +219,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		}
 	}
 
-	if input.ReportIngressStatus && input.IsLeaderElectionEnabled {
+	if input.IsLeaderElectionEnabled {
 		lbc.addLeaderHandler(createLeaderHandler(lbc))
 	}
 
