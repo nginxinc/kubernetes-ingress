@@ -998,9 +998,9 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		vsrs = removeVirtualServerRouteByKey(vsrkey, vsrs)
 	}
 
-	reason := "Ignored"
+	reason := "NoVirtualServerFound"
 	for _, vsr := range vsrs {
-		msg := fmt.Sprintf("Ignored by VirtualServer %v/%v", vs.Namespace, vs.Name)
+		msg := fmt.Sprintf("No VirtualServer references VirtualServerRoute %v/%v", vsr.Namespace, vsr.Name)
 		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, "Ignored", msg)
 		if lbc.reportVsVsrStatusEnabled() {
 			var emptyVSS []*conf_v1.VirtualServer
