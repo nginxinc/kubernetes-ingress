@@ -46,7 +46,7 @@ ARG GIT_COMMIT
 WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/cmd/nginx-ingress
 COPY . /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/
 RUN CGO_ENABLED=0 GOFLAGS='-mod=vendor' \
-	go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o /nginx-ingress
+	go build -trimpath -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o /nginx-ingress
 
 
 FROM base AS container
