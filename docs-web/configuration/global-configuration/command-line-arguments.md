@@ -98,6 +98,10 @@ Below we describe the available command-line arguments:
 
 	Enable support for NGINX Plus
 
+.. option:: -nginx-reload-timeout <value>
+
+    Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start. (default is 4000. Default is 20000 instead if `enable-app-protect` is true)
+
 .. option:: -nginx-status
 
 	Enable the NGINX stub_status, or the NGINX Plus API. (default true)

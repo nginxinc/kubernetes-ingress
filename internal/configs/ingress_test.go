@@ -22,7 +22,8 @@ func TestGenerateNginxCfg(t *testing.T) {
 		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
 	}
 
-	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", &StaticConfigParams{})
+	apRes := make(map[string]string)
+	result := generateNginxCfg(&cafeIngressEx, pems, apRes, false, configParams, false, false, "", &StaticConfigParams{})
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result, expected)
@@ -63,7 +64,8 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
 	}
 
-	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, true, false, "/etc/nginx/secrets/default-cafe-jwk", &StaticConfigParams{})
+	apRes := make(map[string]string)
+	result := generateNginxCfg(&cafeIngressEx, pems, apRes, false, configParams, true, false, "/etc/nginx/secrets/default-cafe-jwk", &StaticConfigParams{})
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -80,7 +82,8 @@ func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 		"cafe.example.com": pemFileNameForMissingTLSSecret,
 	}
 
-	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", &StaticConfigParams{})
+	apRes := make(map[string]string)
+	result := generateNginxCfg(&cafeIngressEx, pems, apRes, false, configParams, false, false, "", &StaticConfigParams{})
 
 	expectedCiphers := "NULL"
 	resultCiphers := result.Servers[0].SSLCiphers
@@ -96,7 +99,8 @@ func TestGenerateNginxCfgWithWildcardTLSSecret(t *testing.T) {
 		"cafe.example.com": pemFileNameForWildcardTLSSecret,
 	}
 
-	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", &StaticConfigParams{})
+	apRes := make(map[string]string)
+	result := generateNginxCfg(&cafeIngressEx, pems, apRes, false, configParams, false, false, "", &StaticConfigParams{})
 
 	resultServer := result.Servers[0]
 	if !reflect.DeepEqual(resultServer.SSLCertificate, pemFileNameForWildcardTLSSecret) {
@@ -271,7 +275,8 @@ func TestGenerateNginxCfgForMergeableIngresses(t *testing.T) {
 	minionJwtKeyFileNames := make(map[string]string)
 	configParams := NewDefaultConfigParams()
 
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, "", minionJwtKeyFileNames, configParams, false, false, &StaticConfigParams{})
+	masterApRes := make(map[string]string)
+	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, masterApRes, "", minionJwtKeyFileNames, configParams, false, false, &StaticConfigParams{})
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result, expected)
@@ -296,7 +301,8 @@ func TestGenerateNginxConfigForCrossNamespaceMergeableIngresses(t *testing.T) {
 	minionJwtKeyFileNames := make(map[string]string)
 	configParams := NewDefaultConfigParams()
 
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, "", minionJwtKeyFileNames, configParams, false, false, &StaticConfigParams{})
+	emptyApResources := make(map[string]string)
+	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, emptyApResources, "", minionJwtKeyFileNames, configParams, false, false, &StaticConfigParams{})
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result, expected)
@@ -366,7 +372,8 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	configParams := NewDefaultConfigParams()
 	isPlus := true
 
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, "/etc/nginx/secrets/default-cafe-jwk", minionJwtKeyFileNames, configParams, isPlus, false, &StaticConfigParams{})
+	masterApRes := make(map[string]string)
+	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, masterApRes, "/etc/nginx/secrets/default-cafe-jwk", minionJwtKeyFileNames, configParams, isPlus, false, &StaticConfigParams{})
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -722,7 +729,8 @@ func TestGenerateNginxCfgForSpiffe(t *testing.T) {
 		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
 	}
 
-	result := generateNginxCfg(&cafeIngressEx, pems, false, configParams, false, false, "", &StaticConfigParams{SpiffeCerts: true})
+	apResources := make(map[string]string)
+	result := generateNginxCfg(&cafeIngressEx, pems, apResources, false, configParams, false, false, "", &StaticConfigParams{SpiffeCerts: true})
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result, expected)

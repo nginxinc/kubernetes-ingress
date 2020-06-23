@@ -382,3 +382,37 @@ func TestParseTime(t *testing.T) {
 		}
 	}
 }
+
+func TestVerifyThresholds(t *testing.T) {
+	validInput := []string{
+		"high=3 low=1",
+		"high=12 low=2",
+		"high=100 low=3",
+		"high=12 low=10",
+		"high=100 low=11",
+		"low=1 high=3",
+		"low=2 high=12",
+		"low=3 high=100",
+		"low=10 high=12",
+		"low=11 high=100",
+	}
+	invalidInput := []string{
+		"high=101 low=10",
+		"high=101 low=999",
+		"high=1 high=1",
+		"low=1 low=20",
+		"low=",
+		"high=12",
+		"a string",
+	}
+	for _, input := range validInput {
+		if res := VerifyAppProtectThresholds(input); !res {
+			t.Errorf("VerifyAppProtectThresholds(%s) returned %v,expected true", input, res)
+		}
+	}
+	for _, input := range invalidInput {
+		if VerifyAppProtectThresholds(input) {
+			t.Errorf("VerifyAppProtectThresholds(%s) returned true,expected false", input)
+		}
+	}
+}

@@ -29,6 +29,7 @@ import (
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -37,6 +38,8 @@ import (
 )
 
 var (
+	dynClient dynamic.Interface
+
 	// Set during build
 	version   string
 	gitCommit string
@@ -61,6 +64,8 @@ var (
 	Format: <namespace>/<name>`)
 
 	nginxPlus = flag.Bool("nginx-plus", false, "Enable support for NGINX Plus")
+
+	appProtect = flag.Bool("enable-app-protect", false, "Enable support for NGINX App Protect. Requires -nginx-plus.")
 
 	ingressClass = flag.String("ingress-class", "nginx",
 		`A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class
@@ -117,6 +122,10 @@ var (
 
 	nginxDebug = flag.Bool("nginx-debug", false,
 		"Enable debugging for NGINX. Uses the nginx-debug binary. Requires 'error-log-level: debug' in the ConfigMap.")
+
+	nginxReloadTimeout = flag.Int("nginx-reload-timeout", 0,
+		`Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
+		Default is 4000 (default is 20000 instead if enable-app-protect is true)`)
 
 	wildcardTLSSecret = flag.String("wildcard-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
@@ -187,6 +196,10 @@ func main() {
 		glog.Fatalf("enable-tls-passthrough flag requires -enable-custom-resources")
 	}
 
+	if *appProtect && !*nginxPlus {
+		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
+	}
+
 	glog.Infof("Starting NGINX Ingress controller Version=%v GitCommit=%v\n", version, gitCommit)
 
 	var config *rest.Config
@@ -212,6 +225,12 @@ func main() {
 		glog.Fatalf("Failed to create client: %v.", err)
 	}
 
+	if *appProtect {
+		dynClient, err = dynamic.NewForConfig(config)
+		if err != nil {
+			glog.Fatalf("Failed to create dynamic client: %v.", err)
+		}
+	}
 	var confClient k8s_nginx.Interface
 	if *enableCustomResources {
 		confClient, err = k8s_nginx.NewForConfig(config)
@@ -293,7 +312,18 @@ func main() {
 	if useFakeNginxManager {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
-		nginxManager = nginx.NewLocalManager("/etc/nginx/", nginxBinaryPath, managerCollector)
+		nginxManager = nginx.NewLocalManager("/etc/nginx/", nginxBinaryPath, managerCollector, parseReloadTimeout(*appProtect, *nginxReloadTimeout))
+	}
+
+	var aPPluginDone chan error
+	var aPAgentDone chan error
+
+	if *appProtect {
+		aPPluginDone = make(chan error, 1)
+		aPAgentDone = make(chan error, 1)
+
+		nginxManager.AppProtectAgentStart(aPAgentDone)
+		nginxManager.AppProtectPluginStart(aPPluginDone)
 	}
 
 	if *defaultServerSecret != "" {
@@ -352,6 +382,7 @@ func main() {
 	}
 
 	cfgParams := configs.NewDefaultConfigParams()
+
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
 		if err != nil {
@@ -361,7 +392,7 @@ func main() {
 		if err != nil {
 			glog.Fatalf("Error when getting %v: %v", *nginxConfigMaps, err)
 		}
-		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus)
+		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus, *appProtect)
 		if cfgParams.MainServerSSLDHParamFileContent != nil {
 			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
 			if err != nil {
@@ -383,7 +414,6 @@ func main() {
 			}
 		}
 	}
-
 	staticCfgParams := &configs.StaticConfigParams{
 		HealthStatus:                   *healthStatus,
 		HealthStatusURI:                *healthStatusURI,
@@ -393,6 +423,7 @@ func main() {
 		StubStatusOverUnixSocketForOSS: *enablePrometheusMetrics,
 		TLSPassthrough:                 *enableTLSPassthrough,
 		SpiffeCerts:                    *spireAgentAddress != "",
+		MainAppProtectLoadModule:       *appProtect,
 	}
 
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
@@ -453,10 +484,12 @@ func main() {
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
 		ConfClient:                   confClient,
+		DynClient:                    dynClient,
 		ResyncPeriod:                 30 * time.Second,
 		Namespace:                    *watchNamespace,
 		NginxConfigurator:            cnf,
 		DefaultServerSecret:          *defaultServerSecret,
+		AppProtectEnabled:            *appProtect,
 		IsNginxPlus:                  *nginxPlus,
 		IngressClass:                 *ingressClass,
 		UseIngressClassOnly:          *useIngressClassOnly,
@@ -477,7 +510,11 @@ func main() {
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
 
-	go handleTermination(lbc, nginxManager, nginxDone)
+	if *appProtect {
+		go handleTerminationWithAppProtect(lbc, nginxManager, nginxDone, aPAgentDone, aPPluginDone)
+	} else {
+		go handleTermination(lbc, nginxManager, nginxDone)
+	}
 	lbc.Run()
 
 	for {
@@ -626,4 +663,44 @@ func validateLocation(location string) error {
 		return fmt.Errorf("invalid location format: %v", msg)
 	}
 	return nil
+}
+
+func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, nginxDone, agentDone, pluginDone chan error) {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGTERM)
+
+	select {
+	case err := <-nginxDone:
+		glog.Fatalf("nginx command exited unexpectedly with status: %v", err)
+	case err := <-pluginDone:
+		glog.Fatalf("AppProtectPlugin command exited unexpectedly with status: %v", err)
+	case err := <-agentDone:
+		glog.Fatalf("AppProtectAgent command exited unexpectedly with status: %v", err)
+	case <-signalChan:
+		glog.Infof("Received SIGTERM, shutting down")
+		lbc.Stop()
+		nginxManager.Quit()
+		<-nginxDone
+		nginxManager.AppProtectPluginQuit()
+		<-pluginDone
+		nginxManager.AppProtectAgentQuit()
+		<-agentDone
+	}
+	glog.Info("Exiting successfully")
+	os.Exit(0)
+}
+
+func parseReloadTimeout(appProtectEnabled bool, timeout int) int {
+	defaultTimeout := 4000
+	defaultTimeoutAppProtect := 20000
+
+	if timeout != 0 {
+		return timeout
+	}
+
+	if appProtectEnabled {
+		return defaultTimeoutAppProtect
+	}
+
+	return defaultTimeout
 }

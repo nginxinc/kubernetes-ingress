@@ -124,3 +124,39 @@ func TestValidateLocation(t *testing.T) {
 		}
 	}
 }
+
+func TestParseReloadTimeout(t *testing.T) {
+	tests := []struct {
+		timeout           int
+		appProtectEnabled bool
+		expected          int
+	}{
+		{
+			timeout:           0,
+			appProtectEnabled: true,
+			expected:          20000,
+		},
+		{
+			timeout:           0,
+			appProtectEnabled: false,
+			expected:          4000,
+		},
+		{
+			timeout:           1000,
+			appProtectEnabled: true,
+			expected:          1000,
+		},
+		{
+			timeout:           1000,
+			appProtectEnabled: false,
+			expected:          1000,
+		},
+	}
+
+	for _, test := range tests {
+		result := parseReloadTimeout(test.appProtectEnabled, test.timeout)
+		if result != test.expected {
+			t.Errorf("parseReloadTimeout(%v, %v) returned %v but expected %v", test.appProtectEnabled, test.timeout, result, test.expected)
+		}
+	}
+}

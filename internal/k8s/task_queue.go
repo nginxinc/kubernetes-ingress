@@ -9,6 +9,7 @@ import (
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/workqueue"
 )
@@ -117,6 +118,10 @@ const (
 	globalConfiguration
 	// transportserver resource
 	transportserver
+	// appprotectpolicy resource
+	appProtectPolicy
+	// appProtectlogconf resource
+	appProtectLogConf
 )
 
 // task is an element of a taskQueue
@@ -152,6 +157,14 @@ func newTask(key string, obj interface{}) (task, error) {
 		k = globalConfiguration
 	case *conf_v1alpha1.TransportServer:
 		k = transportserver
+	case *unstructured.Unstructured:
+		if objectKind := obj.(*unstructured.Unstructured).GetKind(); objectKind == appProtectPolicyGVK.Kind {
+			k = appProtectPolicy
+		} else if objectKind == appProtectLogConfGVK.Kind {
+			k = appProtectLogConf
+		} else {
+			return task{}, fmt.Errorf("Unknow unstructured kind: %v", objectKind)
+		}
 	default:
 		return task{}, fmt.Errorf("Unknow type: %v", t)
 	}
