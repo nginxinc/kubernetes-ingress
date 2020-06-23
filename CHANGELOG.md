@@ -3,8 +3,7 @@
 ### 1.7.2
 
 CHANGES:
-* Update NGINX version to X.Y.Z.
-* Update NGINX Plus version to RX.
+* Update NGINX Plus version to R22.
 
 HELM CHART:
 * The version of the Helm chart is now 0.5.2.
