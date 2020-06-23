@@ -317,7 +317,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 		AddFunc: func(obj interface{}) {
 			vs := obj.(*conf_v1.VirtualServer)
 			if !lbc.HasCorrectIngressClass(vs.Spec.IngressClass) {
-				glog.Infof("Ignoring VS %v based on class %v", vs.Name, vs.Spec.IngressClass)
+				glog.Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
 				return
 			}
 			glog.V(3).Infof("Adding VirtualServer: %v", vs.Name)

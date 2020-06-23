@@ -1750,7 +1750,7 @@ func (lbc *LoadBalancerController) getVirtualServers() []*conf_v1.VirtualServer 
 		vs := obj.(*conf_v1.VirtualServer)
 
 		if !lbc.HasCorrectIngressClass(vs.Spec.IngressClass) {
-			glog.V(3).Infof("Ignoring VSR %v based on class %v", vs.Name, vs.Spec.IngressClass)
+			glog.V(3).Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
 			continue
 		}
 
@@ -1773,7 +1773,7 @@ func (lbc *LoadBalancerController) getVirtualServerRoutes() []*conf_v1.VirtualSe
 		vsr := obj.(*conf_v1.VirtualServerRoute)
 
 		if !lbc.HasCorrectIngressClass(vsr.Spec.IngressClass) {
-			glog.V(3).Infof("Ignoring VSR %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
+			glog.V(3).Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
 			continue
 		}
 
