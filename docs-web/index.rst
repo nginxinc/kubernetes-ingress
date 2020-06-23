@@ -12,6 +12,7 @@ NGINX Ingress Controller
    configuration/index
    logging-and-monitoring/index
    troubleshooting
+   app-protect/index
    third-party-modules/index
    releases
    Technical Specifications <technical-specifications>

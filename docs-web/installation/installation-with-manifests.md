@@ -23,6 +23,13 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     ```
     $ kubectl apply -f rbac/rbac.yaml
     ```
+   
+3. (App Protect only) Apply the App Protect Role Binding as well:  
+    
+    ```
+    $ kubectl apply -f rbac/ap-rbac.yaml
+    ```
+    
 **Note**: To perform this step you must be a cluster admin. Follow the documentation of your Kubernetes platform to configure the admin access. For GKE, see the [Role-Based Access Control](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control) doc.
 
 ## 2. Create Common Resources
@@ -59,6 +66,16 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
     **Note**: Make sure to references this resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument.
 
 > **Feature Status**: The TransportServer and GlobalConfiguration resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
+
+### Resources for NGINX App Protect
+
+If you would like to use the App Protect module, create the following additional resources:
+
+1. Create a custom resource definition for `APPolicy` and `APLogConf`:
+   
+   ```
+   $ kubectl apply -f common/ap-custom-resource-definitions.yaml 
+   ```
 
 ## 3. Deploy the Ingress Controller
 

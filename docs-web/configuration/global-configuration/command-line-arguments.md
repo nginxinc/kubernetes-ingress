@@ -176,4 +176,13 @@ Below we describe the available command-line arguments:
 	Specifies the address of a running Spire agent. **For use with NGINX Service Mesh only**.
 
 	- If the argument is set, but the Ingress Controller is unable to connect to the Spire Agent, the Ingress Controller will fail to start.
+
+.. option:: -enable-app-protect
+
+	 Enables support for App Protect.
+
+   Requires :option:`-nginx-plus` and :option:`-enable-custom-resources`.
+
+	 - If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.
+	 
 ```
