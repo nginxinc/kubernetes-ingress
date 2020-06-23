@@ -1409,6 +1409,8 @@ func getStatusFromEventTitle(eventTitle string) string {
 	case "AddedOrUpdated", "Updated":
 		return conf_v1.StateValid
 	}
+
+	return ""
 }
 
 func (lbc *LoadBalancerController) updateVirtualServersStatusFromEvents() error {
@@ -1424,7 +1426,7 @@ func (lbc *LoadBalancerController) updateVirtualServersStatusFromEvents() error 
 		}
 
 		if len(events.Items) == 0 {
-			break
+			continue
 		}
 
 		var timestamp time.Time
@@ -1443,7 +1445,7 @@ func (lbc *LoadBalancerController) updateVirtualServersStatusFromEvents() error 
 	return nil
 }
 
-func (lbc *LoadBalancerController) updateVirtualServerRoutessStatusFromEvents() error {
+func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() error {
 	var allErrs []error
 	for _, obj := range lbc.virtualServerRouteLister.List() {
 		vsr := obj.(*conf_v1.VirtualServerRoute)
@@ -1456,7 +1458,7 @@ func (lbc *LoadBalancerController) updateVirtualServerRoutessStatusFromEvents() 
 		}
 
 		if len(events.Items) == 0 {
-			break
+			continue
 		}
 
 		var timestamp time.Time
