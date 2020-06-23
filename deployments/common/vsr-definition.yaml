@@ -55,7 +55,7 @@ spec:
         spec:
           type: object
           properties:
-            class:
+            ingressClassName:
               type: string
             host:
               type: string

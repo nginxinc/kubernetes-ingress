@@ -28,7 +28,7 @@ type VirtualServer struct {
 
 // VirtualServerSpec is the spec of the VirtualServer resource.
 type VirtualServerSpec struct {
-	IngressClass string     `json:"class"`
+	IngressClass string     `json:"ingressClassName"`
 	Host         string     `json:"host"`
 	TLS          *TLS       `json:"tls"`
 	Upstreams    []Upstream `json:"upstreams"`
@@ -227,7 +227,7 @@ type VirtualServerRoute struct {
 }
 
 type VirtualServerRouteSpec struct {
-	IngressClass string     `json:"class"`
+	IngressClass string     `json:"ingressClassName"`
 	Host         string     `json:"host"`
 	Upstreams    []Upstream `json:"upstreams"`
 	Subroutes    []Route    `json:"subroutes"`

@@ -95,7 +95,7 @@ spec:
      - A list of routes.
      - `[]route <#virtualserver-route>`_
      - No
-   * - ``class``
+   * - ``ingressClassName``
      - Specifies which Ingress controller must handle the VirtualServer resource.
      - ``string``
      - No
@@ -277,8 +277,8 @@ Note that each subroute must have a `path` that starts with the same prefix (her
      - A list of subroutes.
      - `[]subroute <#virtualserverroute-subroute>`_
      - No
-   * - ``class``
-     - Specifies which Ingress controller must handle the VirtualServerRoute resource. Must be the same as the ``class`` of the VirtualServer that references this resource.
+   * - ``ingressClassName``
+     - Specifies which Ingress controller must handle the VirtualServerRoute resource. Must be the same as the ``ingressClassName`` of the VirtualServer that references this resource.
      - ``string``_
      - No
 ```
