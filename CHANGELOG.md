@@ -9,7 +9,7 @@ HELM CHART:
 * The version of the Helm chart is now 0.5.2.
 
 UPGRADE:
-* For NGINX, use the 1.7.2 image from our DockerHub: `nginx/nginx-ingress:1.7.2`, `nginx/nginx-ingress:1.7.2-alpine` or 'nginx/nginx-ingress:1.7.2-ubi
+* For NGINX, use the 1.7.2 image from our DockerHub: `nginx/nginx-ingress:1.7.2`, `nginx/nginx-ingress:1.7.2-alpine` or `nginx/nginx-ingress:1.7.2-ubi`
 * For NGINX Plus, please build your own image using the 1.7.2 source code.
 * For Helm, use version 0.5.2 of the chart.
 
