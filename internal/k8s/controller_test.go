@@ -1638,7 +1638,7 @@ func TestGetStatusFromEventTitle(t *testing.T) {
 	}{
 		{
 			eventTitle: "",
-			expected:   "Unknown",
+			expected:   "",
 		},
 		{
 			eventTitle: "AddedOrUpdatedWithError",
@@ -1678,7 +1678,7 @@ func TestGetStatusFromEventTitle(t *testing.T) {
 		},
 		{
 			eventTitle: "New State",
-			expected:   "Unknown",
+			expected:   "",
 		},
 	}
 
