@@ -84,6 +84,17 @@ RUN  mkdir -p /var/lib/nginx \
   && apt-get remove --purge -y libcap2-bin \
   && rm /etc/nginx/conf.d/*
 
+RUN printf "MODULE = ALL;\nLOG_LEVEL = TS_CRIT;\nFILE = 2;\n" > /etc/app_protect/bd/logger.cfg \
+  &&  printf "[config_set_compiler]\nlog_level=fatal\n" >> /etc/app_protect/tools/asm_logging.conf \
+  && for v in \
+  asm_config_server \
+  lock_factory \
+  bd_agent \
+  import_export_policy \
+  set_active \
+  ; do sed -i "/\[$v/a log_level=fatal" "/etc/app_protect/tools/asm_logging.conf" \
+  ; done
+
 COPY --chown=nginx:0 build/appprotect/log-default.json /etc/nginx  
 
 EXPOSE 80 443

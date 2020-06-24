@@ -1,12 +1,12 @@
-{{- if .Values.controller.appprotect.createCustomResources }}
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
   name: aplogconfs.appprotect.f5.com
   labels:
-    {{- include "nginx-ingress.labels" . | nindent 4 }}
+  {{- include "nginx-ingress.labels" . | nindent 4 }}
 spec:
   preserveUnknownFields: false
   group: appprotect.f5.com
@@ -68,15 +68,22 @@ spec:
   - name: v1beta1
     served: true
     storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  labels:
-    {{- include "nginx-ingress.labels" . | nindent 4 }}
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
   name: appolicies.appprotect.f5.com
+  labels:
+{{- include "nginx-ingress.labels" . | nindent 4 }}
 spec:
   preserveUnknownFields: false
   group: appprotect.f5.com
@@ -180,33 +187,42 @@ spec:
                             type: string
                           enabled:
                             type: boolean
-                          learn:
-                            type: boolean
+                          maxDecodingPasses:
+                            type: integer
                         type: object
                       type: array
-                    signature-sets:
+                    http-protocols:
                       items:
                         properties:
-                          alarm:
-                            type: boolean
-                          block:
-                            type: boolean
-                          name:
+                          description:
                             enum:
-                            - Command Execution Signatures
-                            - Cross Site Scripting Signatures
-                            - Directory Indexing Signatures
-                            - Information Leakage Signatures
-                            - OS Command Injection Signatures
-                            - Path Traversal Signatures
-                            - Predictable Resource Location Signatures
-                            - Remote File Include Signatures
-                            - SQL Injection Signatures
-                            - XPath Injection Signatures
-                            - Buffer Overflow Signatures
-                            - Denial of Service Signatures
-                            - Vulnerability Scanner Signatures
+                            - Unparsable request content
+                            - Several Content-Length headers
+                            - 'POST request with Content-Length: 0'
+                            - Null in request
+                            - No Host header in HTTP/1.1 request
+                            - Multiple host headers
+                            - Host header contains IP address
+                            - High ASCII characters in headers
+                            - Header name with no header value
+                            - CRLF characters before request start
+                            - Content length should be a positive number
+                            - Chunked request with Content-Length header
+                            - Check maximum number of parameters
+                            - Check maximum number of headers
+                            - Body in GET or HEAD requests
+                            - Bad multipart/form-data request parsing
+                            - Bad multipart parameters parsing
+                            - Bad HTTP version
+                            - Bad host header value
                             type: string
+                          enabled:
+                            type: boolean
+                          maxHeaders:
+                            description: optional
+                            type: integer
+                          maxParams:
+                            type: integer
                         type: object
                       type: array
                     violations:
@@ -216,6 +232,8 @@ spec:
                             type: boolean
                           block:
                             type: boolean
+                          description:
+                            type: string
                           name:
                             enum:
                             - VIOL_XML_SOAP_ATTACHMENT
@@ -314,6 +332,39 @@ spec:
                         type: object
                       type: array
                   type: object
+                caseInsensitive:
+                  type: boolean
+                character-sets:
+                  items:
+                    properties:
+                      characterSet:
+                        items:
+                          properties:
+                            isAllowed:
+                              type: boolean
+                            metachar:
+                              type: string
+                          type: object
+                        type: array
+                      characterSetType:
+                        enum:
+                        - gwt-content
+                        - header
+                        - json-content
+                        - parameter-name
+                        - parameter-value
+                        - plain-text-content
+                        - url
+                        - xml-content
+                        type: string
+                    type: object
+                  type: array
+                cookie-settings:
+                  properties:
+                    maximumCookieHeaderLength:
+                      pattern: any|\d+
+                      type: string
+                  type: object
                 cookies:
                   items:
                     properties:
@@ -323,12 +374,31 @@ spec:
                         type: boolean
                       enforcementType:
                         type: string
-                      isBase64:
-                        type: boolean
+                      insertSameSiteAttribute:
+                        enum:
+                        - lax
+                        - none
+                        - none-value
+                        - strict
+                        type: string
                       name:
                         type: string
                       securedOverHttpsConnection:
                         type: boolean
+                      signatureOverrides:
+                        items:
+                          properties:
+                            enabled:
+                              type: boolean
+                            signatureId:
+                              type: integer
+                          type: object
+                        type: array
+                      type:
+                        enum:
+                        - explicit
+                        - wildcard
+                        type: string
                     type: object
                   type: array
                 data-guard:
@@ -355,6 +425,10 @@ spec:
                     usSocialSecurityNumbers:
                       type: boolean
                   type: object
+                description:
+                  type: string
+                enablePassiveMode:
+                  type: boolean
                 enforcementMode:
                   enum:
                   - transparent
@@ -384,11 +458,16 @@ spec:
                       responseCheck:
                         type: boolean
                       type:
+                        enum:
+                        - explicit
+                        - wildcard
                         type: string
                       urlLength:
                         type: integer
                     type: object
                   type: array
+                fullPath:
+                  type: string
                 general:
                   properties:
                     allowedResponseCodes:
@@ -402,8 +481,18 @@ spec:
                       items:
                         type: string
                       type: array
+                    enforcementReadinessPeriod:
+                      type: integer
+                    maskCreditCardNumbersInRequest:
+                      type: boolean
                     trustXff:
                       type: boolean
+                  type: object
+                header-settings:
+                  properties:
+                    maximumHttpHeaderLength:
+                      pattern: any|\d+
+                      type: string
                   type: object
                 headers:
                   items:
@@ -438,73 +527,50 @@ spec:
                         type: boolean
                     type: object
                   type: array
-                http-protocols:
-                  items:
-                    properties:
-                      description:
-                        enum:
-                        - Unparsable request content
-                        - Several Content-Length headers
-                        - 'POST request with Content-Length: 0'
-                        - Null in request
-                        - No Host header in HTTP/1.1 request
-                        - Multiple host headers
-                        - Host header contains IP address
-                        - High ASCII characters in headers
-                        - Header name with no header value
-                        - CRLF characters before request start
-                        - Content length should be a positive number
-                        - Chunked request with Content-Length header
-                        - Check maximum number of parameters
-                        - Check maximum number of headers
-                        - Body in GET or HEAD requests
-                        - Bad multipart/form-data request parsing
-                        - Bad multipart parameters parsing
-                        - Bad HTTP version
-                        - Bad host header value
-                        type: string
-                      enabled:
-                        type: boolean
-                      maxHeaders:
-                        description: optional
-                        type: integer
-                      maxParams:
-                        type: integer
-                    type: object
-                  type: array
                 json-profiles:
                   items:
                     properties:
                       defenseAttributes:
                         properties:
                           maximumArrayLength:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumStructureDepth:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumTotalLengthOfJSONData:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumValueLength:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           tolerateJSONParsingWarnings:
                             type: boolean
                         type: object
                       description:
                         type: string
-                      handleJsonValuesAsParameters:
+                      hasValidationFiles:
                         type: boolean
                       name:
+                        enum:
+                        - Default
                         type: string
-                      validationFiles:
-                        items:
-                          type: string
-                        type: array
+                    type: object
+                  type: array
+                json-validation-files:
+                  items:
+                    properties:
+                      contents:
+                        type: string
+                      fileName:
+                        type: string
+                      isBase64:
+                        type: boolean
                     type: object
                   type: array
                 methods:
                   items:
                     properties:
-                      actAsMethod:
-                        type: string
                       name:
                         enum:
                         - GET
@@ -534,19 +600,50 @@ spec:
                       checkMetachars:
                         type: boolean
                       level:
+                        enum:
+                        - Global
                         type: string
                       metacharsOnParameterValueCheck:
                         type: boolean
                       name:
+                        enum:
+                        - '*'
                         type: string
+                      nameMetacharOverrides:
+                        items:
+                          properties:
+                            isAllowed:
+                              type: boolean
+                            metachar:
+                              type: string
+                          type: object
+                        type: array
                       parameterLocation:
                         type: string
                       performStaging:
                         type: boolean
                       sensitiveParameter:
                         type: boolean
+                      signatureOverrides:
+                        items:
+                          properties:
+                            enabled:
+                              type: boolean
+                            signatureId:
+                              type: integer
+                          type: object
+                        type: array
                       type:
                         type: string
+                      valueMetacharOverrides:
+                        items:
+                          properties:
+                            isAllowed:
+                              type: boolean
+                            metachar:
+                              type: string
+                          type: object
+                        type: array
                       valueType:
                         type: string
                     type: object
@@ -554,13 +651,47 @@ spec:
                 response-pages:
                   items:
                     properties:
+                      ajaxActionType:
+                        enum:
+                        - alert-popup
+                        - custom
+                        - redirect
+                        type: string
+                      ajaxCustomContent:
+                        type: boolean
+                      ajaxPopupMessage:
+                        type: string
+                      ajaxRedirectUrl:
+                        type: string
                       responseActionType:
+                        enum:
+                        - custom
+                        - default
+                        - erase-cookies
+                        - redirect
+                        - soap-fault
                         type: string
                       responseContent:
                         type: string
                       responseHeader:
                         type: string
                       responsePageType:
+                        enum:
+                        - ajax
+                        - ajax-login
+                        - captcha
+                        - captcha-fail
+                        - default
+                        - failed-login-honeypot
+                        - failed-login-honeypot-ajax
+                        - hijack
+                        - leaked-credentials
+                        - leaked-credentials-ajax
+                        - mobile
+                        - persistent-flow
+                        - xml
+                        type: string
+                      responseRedirectUrl:
                         type: string
                     type: object
                   type: array
@@ -652,18 +783,80 @@ spec:
                         type: string
                     type: object
                   type: array
+                signature-sets:
+                  items:
+                    properties:
+                      alarm:
+                        type: boolean
+                      block:
+                        type: boolean
+                      name:
+                        enum:
+                        - Command Execution Signatures
+                        - Cross Site Scripting Signatures
+                        - Directory Indexing Signatures
+                        - Information Leakage Signatures
+                        - OS Command Injection Signatures
+                        - Path Traversal Signatures
+                        - Predictable Resource Location Signatures
+                        - Remote File Include Signatures
+                        - SQL Injection Signatures
+                        - XPath Injection Signatures
+                        - Buffer Overflow Signatures
+                        - Denial of Service Signatures
+                        - Vulnerability Scanner Signatures
+                        type: string
+                    type: object
+                  type: array
                 signature-settings:
                   properties:
                     attackSignatureFalsePositiveMode:
+                      enum:
+                      - detect
+                      - detect-and-allow
+                      - disabled
                       type: string
                     minimumAccuracyForAutoAddedSignatures:
+                      enum:
+                      - high
+                      - low
+                      - medium
                       type: string
                   type: object
+                signatures:
+                  items:
+                    properties:
+                      enabled:
+                        type: boolean
+                      signatureId:
+                        type: integer
+                    type: object
+                  type: array
+                softwareVersion:
+                  type: string
                 template:
                   properties:
                     name:
                       type: string
                   type: object
+                urls:
+                  items:
+                    properties:
+                      method:
+                        enum:
+                        - '*'
+                        type: string
+                      name:
+                        enum:
+                        - '*'
+                        type: string
+                      protocol:
+                        enum:
+                        - http
+                        - https
+                        type: string
+                    type: object
+                  type: array
                 whitelist-ips:
                   items:
                     properties:
@@ -672,23 +865,19 @@ spec:
                         - always
                         - never
                         type: string
-                      ignoreIpReputation:
-                        type: boolean
                       ipAddress:
                         pattern: '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
                         type: string
                       ipMask:
                         pattern: '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
                         type: string
-                      neverLearnRequests:
-                        type: boolean
-                      neverLogRequests:
-                        type: boolean
                     type: object
                   type: array
                 xml-profiles:
                   items:
                     properties:
+                      attackSignaturesCheck:
+                        type: boolean
                       defenseAttributes:
                         properties:
                           allowCDATA:
@@ -700,23 +889,32 @@ spec:
                           allowProcessingInstructions:
                             type: boolean
                           maximumAttributeValueLength:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumAttributesPerElement:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumChildrenPerElement:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumDocumentDepth:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumDocumentSize:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumElements:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumNSDeclarations:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumNameLength:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           maximumNamespaceLength:
-                            type: integer
+                            pattern: any|\d+
+                            type: string
                           tolerateCloseTagShorthand:
                             type: boolean
                           tolerateLeadingWhiteSpace:
@@ -726,21 +924,23 @@ spec:
                         type: object
                       description:
                         type: string
-                      isDefault:
+                      enableWss:
+                        type: boolean
+                      followSchemaLinks:
                         type: boolean
                       name:
                         type: string
-                      sensitiveData:
-                        items:
-                          properties:
-                            namespace:
-                              type: string
-                            paramName:
-                              type: string
-                            paramType:
-                              type: string
-                          type: object
-                        type: array
+                    type: object
+                  type: array
+                xml-validation-files:
+                  items:
+                    properties:
+                      contents:
+                        type: string
+                      fileName:
+                        type: string
+                      isBase64:
+                        type: boolean
                     type: object
                   type: array
               type: object
@@ -751,4 +951,9 @@ spec:
   - name: v1beta1
     served: true
     storage: true
-{{- end }}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
