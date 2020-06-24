@@ -1008,9 +1008,9 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 	reason := "NoVirtualServerFound"
 	for _, vsr := range orphanedVSRs {
 		msg := fmt.Sprintf("No VirtualServer references VirtualServerRoute %v/%v", vsr.Namespace, vsr.Name)
-		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, "Ignored", msg)
+		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, reason, msg)
 		if lbc.reportVsVsrStatusEnabled() {
-			var emptyVSS []*conf_v1.VirtualServer
+			var emptyVSes []*conf_v1.VirtualServer
 			err := lbc.statusUpdater.UpdateVirtualServerRouteStatusWithReferencedBy(vsr, conf_v1.StateInvalid, reason, msg, emptyVSS)
 			if err != nil {
 				glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
