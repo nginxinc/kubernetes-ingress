@@ -905,10 +905,11 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
 		}
 
-		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, "Rejected", "VirtualServer %v is invalid and was rejected: %v", key, validationErr)
+		reason = "Rejected"
+		msg := fmt.Sprintf("VirtualServer %v is invalid and was rejected: %v", key, validationErr)
+
+		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, reason, msg)
 		if lbc.reportVsVsrStatusEnabled() {
-			reason = "AddedOrUpdatedWithError"
-			msg := fmt.Sprintf("Configuration for %v was added or updated %s", key, validationErr)
 			err = lbc.statusUpdater.UpdateVirtualServerStatus(vs, conf_v1.StateInvalid, reason, msg)
 		}
 
