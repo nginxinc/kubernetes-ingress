@@ -1,4 +1,6 @@
-FROM debian:stretch-slim
+ARG GOLANG_CONTAINER=golang:latest
+
+FROM debian:stretch-slim as base
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
@@ -86,7 +88,10 @@ COPY --chown=nginx:0 build/appprotect/log-default.json /etc/nginx
 
 EXPOSE 80 443
 
-COPY nginx-ingress internal/configs/version1/nginx-plus.ingress.tmpl internal/configs/version1/nginx-plus.tmpl internal/configs/version2/nginx-plus.virtualserver.tmpl  /
+COPY internal/configs/version1/nginx-plus.ingress.tmpl \
+	internal/configs/version1/nginx-plus.tmpl \
+	internal/configs/version2/nginx-plus.virtualserver.tmpl \
+	internal/configs/version2/nginx-plus.transportserver.tmpl /
 
 # Uncomment the line below if you would like to add the default.pem to the image
 # and use it as a certificate and key for the default server
@@ -95,3 +100,19 @@ COPY nginx-ingress internal/configs/version1/nginx-plus.ingress.tmpl internal/co
 USER nginx
 
 ENTRYPOINT ["/nginx-ingress"]
+
+FROM base AS local
+COPY nginx-ingress /
+
+
+FROM $GOLANG_CONTAINER AS builder
+ARG VERSION
+ARG GIT_COMMIT
+WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/cmd/nginx-ingress
+COPY . /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/
+RUN CGO_ENABLED=0 GOFLAGS='-mod=vendor' \
+	go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o /nginx-ingress
+
+
+FROM base AS container
+COPY --from=builder /nginx-ingress /
