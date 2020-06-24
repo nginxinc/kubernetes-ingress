@@ -886,7 +886,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 
 	vs := obj.(*conf_v1.VirtualServer)
 
-	if !lbc.HasCorrectIngressClass(vs.Spec.IngressClass) {
+	if !lbc.HasCorrectIngressClass(vs) {
 		glog.V(2).Infof("Ignoring VS %v based on class %v", vs.Name, vs.Spec.IngressClass)
 		return
 	}
@@ -1005,7 +1005,7 @@ func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 
 	vsr := obj.(*conf_v1.VirtualServerRoute)
 
-	if !lbc.HasCorrectIngressClass(vsr.Spec.IngressClass) {
+	if !lbc.HasCorrectIngressClass(vsr) {
 		glog.V(2).Infof("Ignoring VSR %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
 		return
 	}
@@ -1749,7 +1749,7 @@ func (lbc *LoadBalancerController) getVirtualServers() []*conf_v1.VirtualServer 
 	for _, obj := range lbc.virtualServerLister.List() {
 		vs := obj.(*conf_v1.VirtualServer)
 
-		if !lbc.HasCorrectIngressClass(vs.Spec.IngressClass) {
+		if !lbc.HasCorrectIngressClass(vs) {
 			glog.V(3).Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
 			continue
 		}
@@ -1772,7 +1772,7 @@ func (lbc *LoadBalancerController) getVirtualServerRoutes() []*conf_v1.VirtualSe
 	for _, obj := range lbc.virtualServerRouteLister.List() {
 		vsr := obj.(*conf_v1.VirtualServerRoute)
 
-		if !lbc.HasCorrectIngressClass(vsr.Spec.IngressClass) {
+		if !lbc.HasCorrectIngressClass(vsr) {
 			glog.V(3).Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
 			continue
 		}
@@ -2391,17 +2391,18 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *extensio
 }
 
 // HasCorrectIngressClass checks if resource ingress class annotation (if exists) or ingressClass string for VS/VSR is matching with ingress controller class
-// If annotation is absent and use-ingress-class-only enabled - ingress resource would ignore
 func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool {
 	var class string
 	switch obj.(type) {
-	case string:
-		class = obj.(string)
+	case *conf_v1.VirtualServer:
+		vs := obj.(*conf_v1.VirtualServer)
+		class = vs.Spec.IngressClass
+	case *conf_v1.VirtualServerRoute:
+		vsr := obj.(*conf_v1.VirtualServerRoute)
+		class = vsr.Spec.IngressClass
 	case *extensions.Ingress:
 		ing := obj.(*extensions.Ingress)
-		if ingClass, exists := ing.Annotations[ingressClassKey]; exists {
-			class = ingClass
-		}
+		class = ing.Annotations[ingressClassKey]
 	default:
 		return false
 	}

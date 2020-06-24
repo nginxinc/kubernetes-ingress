@@ -316,7 +316,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vs := obj.(*conf_v1.VirtualServer)
-			if !lbc.HasCorrectIngressClass(vs.Spec.IngressClass) {
+			if !lbc.HasCorrectIngressClass(vs) {
 				glog.Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
 				return
 			}
@@ -337,7 +337,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 					return
 				}
 			}
-			if !lbc.HasCorrectIngressClass(vs.Spec.IngressClass) {
+			if !lbc.HasCorrectIngressClass(vs) {
 				glog.Infof("Ignoring VS %v based on class %v", vs.Name, vs.Spec.IngressClass)
 				return
 			}
@@ -347,7 +347,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 		UpdateFunc: func(old, cur interface{}) {
 			curVs := cur.(*conf_v1.VirtualServer)
 			oldVs := old.(*conf_v1.VirtualServer)
-			if !lbc.HasCorrectIngressClass(curVs.Spec.IngressClass) {
+			if !lbc.HasCorrectIngressClass(curVs) {
 				glog.Infof("Ignoring VS %v based on class %v", curVs.Name, curVs.Spec.IngressClass)
 				return
 			}
@@ -363,7 +363,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vsr := obj.(*conf_v1.VirtualServerRoute)
-			if !lbc.HasCorrectIngressClass(vsr.Spec.IngressClass) {
+			if !lbc.HasCorrectIngressClass(vsr) {
 				glog.Infof("Ignoring VSR %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
 				return
 			}
@@ -384,7 +384,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 					return
 				}
 			}
-			if !lbc.HasCorrectIngressClass(vsr.Spec.IngressClass) {
+			if !lbc.HasCorrectIngressClass(vsr) {
 				glog.Infof("Ignoring VSR %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
 				return
 			}
@@ -394,7 +394,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 		UpdateFunc: func(old, cur interface{}) {
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
 			oldVsr := old.(*conf_v1.VirtualServerRoute)
-			if !lbc.HasCorrectIngressClass(curVsr.Spec.IngressClass) {
+			if !lbc.HasCorrectIngressClass(curVsr) {
 				glog.Infof("Ignoring VSR %v based on class %v", curVsr.Name, curVsr.Spec.IngressClass)
 				return
 			}

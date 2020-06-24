@@ -170,115 +170,106 @@ func TestHasCorrectIngressClass(t *testing.T) {
 
 func TestHasCorrectIngressClassVS(t *testing.T) {
 	ingressClass := "ing-ctrl"
+	lbcIngOnlyTrue := &LoadBalancerController{
+		ingressClass:        ingressClass,
+		useIngressClassOnly: true,
+		metricsCollector:    collectors.NewControllerFakeCollector(),
+	}
 
 	var testsWithIngressClassOnlyVS = []struct {
 		lbc      *LoadBalancerController
-		ing      *conf_v1.VirtualServerSpec
+		ing      *conf_v1.VirtualServer
 		expected bool
 	}{
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&conf_v1.VirtualServerSpec{
-				IngressClass: "",
+			lbcIngOnlyTrue,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: "",
+				},
 			},
 			false,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&conf_v1.VirtualServerSpec{
-				IngressClass: "gce",
+			lbcIngOnlyTrue,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: "gce",
+				},
 			},
 			false,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&conf_v1.VirtualServerSpec{
-				IngressClass: ingressClass,
+			lbcIngOnlyTrue,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: ingressClass,
+				},
 			},
 			true,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&conf_v1.VirtualServerSpec{},
+			lbcIngOnlyTrue,
+			&conf_v1.VirtualServer{},
 			false,
 		},
 	}
+
+	lbcIngOnlyFalse := &LoadBalancerController{
+		ingressClass:        ingressClass,
+		useIngressClassOnly: false,
+		metricsCollector:    collectors.NewControllerFakeCollector(),
+	}
 	var testsWithoutIngressClassOnlyVS = []struct {
 		lbc      *LoadBalancerController
-		ing      *conf_v1.VirtualServerSpec
+		ing      *conf_v1.VirtualServer
 		expected bool
 	}{
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&conf_v1.VirtualServerSpec{
-				IngressClass: "",
+			lbcIngOnlyFalse,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: "",
+				},
 			},
 			true,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&conf_v1.VirtualServerSpec{
-				IngressClass: "gce",
+			lbcIngOnlyFalse,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: "gce",
+				},
 			},
 			false,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&conf_v1.VirtualServerSpec{
-				IngressClass: ingressClass,
+			lbcIngOnlyFalse,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: ingressClass,
+				},
 			},
 			true,
 		},
 		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&conf_v1.VirtualServerSpec{},
+			lbcIngOnlyFalse,
+			&conf_v1.VirtualServer{},
 			true,
 		},
 	}
 
 	for _, test := range testsWithIngressClassOnlyVS {
-		if result := test.lbc.HasCorrectIngressClass(test.ing.IngressClass); result != test.expected {
+		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
 			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ingressClassKey=%v, ing.IngressClass=%v; got %v, expected %v",
-				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.IngressClass, result, test.expected)
+				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.Spec.IngressClass, result, test.expected)
 		}
 	}
 
 	for _, test := range testsWithoutIngressClassOnlyVS {
-		if result := test.lbc.HasCorrectIngressClass(test.ing.IngressClass); result != test.expected {
+		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
 			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ingressClassKey=%v, ing.IngressClass=%v; got %v, expected %v",
-				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.IngressClass, result, test.expected)
+				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.Spec.IngressClass, result, test.expected)
 		}
 	}
 }
