@@ -38,7 +38,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress controller image.
-    tag: edge
+    tag: "edge"
 
     ## The pull policy for the Ingress controller image.
     pullPolicy: IfNotPresent

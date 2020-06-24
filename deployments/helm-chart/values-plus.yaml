@@ -2,4 +2,4 @@ controller:
   nginxplus: true
   image:
     repository: nginx-plus-ingress
-    tag: "1.6.3"
+    tag: "edge"
