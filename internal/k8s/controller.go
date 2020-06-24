@@ -886,11 +886,6 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 
 	vs := obj.(*conf_v1.VirtualServer)
 
-	if !lbc.HasCorrectIngressClass(vs) {
-		glog.V(2).Infof("Ignoring VS %v based on class %v", vs.Name, vs.Spec.IngressClass)
-		return
-	}
-
 	validationErr := validation.ValidateVirtualServer(vs, lbc.isNginxPlus)
 	if validationErr != nil {
 		err := lbc.configurator.DeleteVirtualServer(key)
@@ -1004,11 +999,6 @@ func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 	glog.V(2).Infof("Adding or Updating VirtualServerRoute: %v\n", key)
 
 	vsr := obj.(*conf_v1.VirtualServerRoute)
-
-	if !lbc.HasCorrectIngressClass(vsr) {
-		glog.V(2).Infof("Ignoring VSR %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
-		return
-	}
 
 	validationErr := validation.ValidateVirtualServerRoute(vsr, lbc.isNginxPlus)
 	if validationErr != nil {
@@ -2001,6 +1991,10 @@ func newVirtualServerRouteErrorFromVSR(virtualServerRoute *conf_v1.VirtualServer
 }
 
 func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.VirtualServer) (*configs.VirtualServerEx, []virtualServerRouteError) {
+	if !lbc.HasCorrectIngressClass(virtualServer) {
+		glog.V(2).Infof("Ignoring VirtualServer %v based on class %v", virtualServer.Name, virtualServer.Spec.IngressClass)
+		return &configs.VirtualServerEx{}, nil
+	}
 	virtualServerEx := configs.VirtualServerEx{
 		VirtualServer: virtualServer,
 	}
