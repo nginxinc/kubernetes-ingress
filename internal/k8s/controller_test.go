@@ -1736,3 +1736,62 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 		})
 	}
 }
+
+func TestGetStatusFromEventTitle(t *testing.T) {
+	tests := []struct {
+		eventTitle string
+		expected   string
+	}{
+		{
+			eventTitle: "",
+			expected:   "",
+		},
+		{
+			eventTitle: "AddedOrUpdatedWithError",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "Rejected",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "NoVirtualServersFound",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "Missing Secret",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "UpdatedWithError",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "AddedOrUpdatedWithWarning",
+			expected:   "Warning",
+		},
+		{
+			eventTitle: "UpdatedWithWarning",
+			expected:   "Warning",
+		},
+		{
+			eventTitle: "AddedOrUpdated",
+			expected:   "Valid",
+		},
+		{
+			eventTitle: "Updated",
+			expected:   "Valid",
+		},
+		{
+			eventTitle: "New State",
+			expected:   "",
+		},
+	}
+
+	for _, test := range tests {
+		result := getStatusFromEventTitle(test.eventTitle)
+		if result != test.expected {
+			t.Errorf("getStatusFromEventTitle(%v) returned %v but expected %v", test.eventTitle, result, test.expected)
+		}
+	}
+}
