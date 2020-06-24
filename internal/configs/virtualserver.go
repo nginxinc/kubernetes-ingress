@@ -555,7 +555,7 @@ func generateRewrites(path string, proxy *conf_v1.ActionProxy, internal bool, or
 	}
 
 	if isRegex {
-		rewrites = append(rewrites, fmt.Sprintf(`"^%v$" "%v" break`, trimmedPath, proxy.RewritePath))
+		rewrites = append(rewrites, fmt.Sprintf(`"^%v" "%v" break`, trimmedPath, proxy.RewritePath))
 	} else if internal {
 		rewrites = append(rewrites, fmt.Sprintf(`"^%v(.*)$" "%v$1" break`, trimmedPath, proxy.RewritePath))
 	}

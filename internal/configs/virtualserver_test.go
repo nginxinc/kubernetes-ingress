@@ -3906,15 +3906,6 @@ func TestGenerateRewrites(t *testing.T) {
 			expected:     []string{`^ $request_uri`, `"^/path(.*)$" "/rewrite$1" break`},
 		},
 		{
-			path:     "/_internal_path",
-			internal: true,
-			proxy: &conf_v1.ActionProxy{
-				RewritePath: "/rewrite",
-			},
-			originalPath: "/path",
-			expected:     []string{`^ $request_uri`, `"^/path(.*)$" "/rewrite$1" break`},
-		},
-		{
 			path:     "~/regex",
 			internal: true,
 			proxy: &conf_v1.ActionProxy{
@@ -3929,7 +3920,7 @@ func TestGenerateRewrites(t *testing.T) {
 			proxy: &conf_v1.ActionProxy{
 				RewritePath: "/rewrite",
 			},
-			expected: []string{`"^/regex$" "/rewrite" break`},
+			expected: []string{`"^/regex" "/rewrite" break`},
 		},
 	}
 
@@ -4166,6 +4157,7 @@ func TestGenerateProxyIgnoreHeaders(t *testing.T) {
 			proxy: &conf_v1.ActionProxy{
 				ResponseHeaders: nil,
 			},
+			expected: "",
 		},
 		{
 			proxy: &conf_v1.ActionProxy{
