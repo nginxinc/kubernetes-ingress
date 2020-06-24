@@ -1382,7 +1382,7 @@ func TestFindVirtualServerRoutesForService(t *testing.T) {
 	}
 }
 
-func TestCheckForVirtualServerRoute(t *testing.T) {
+func TestFindOrphanedVirtualServerRoute(t *testing.T) {
 	vsr1 := conf_v1.VirtualServerRoute{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "vsr-1",
@@ -1424,12 +1424,11 @@ func TestCheckForVirtualServerRoute(t *testing.T) {
 
 	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr4, &vsr5}
 
-	result := filterOutVirtualServerRoutes(vsrs, handledVSRs)
+	result := findOrphanedVirtualServerRoutes(vsrs, handledVSRs)
 
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("checkForVirtualServerRoute return %v but expected %v", result, expected)
+		t.Errorf("findOrphanedVirtualServerRoutes return %v but expected %v", result, expected)
 	}
-
 }
 
 func TestFindTransportServersForService(t *testing.T) {

@@ -906,6 +906,11 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		}
 
 		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, "Rejected", "VirtualServer %v is invalid and was rejected: %v", key, validationErr)
+		if lbc.reportVsVsrStatusEnabled() {
+			reason = "AddedOrUpdatedWithError"
+			msg := fmt.Sprintf("Configuration for %v was added or updated %s", key, validationErr)
+			err = lbc.statusUpdater.UpdateVirtualServerStatus(vs, conf_v1.StateInvalid, reason, msg)
+		}
 
 		reason := "NoVirtualServerFound"
 		for _, vsr := range previousVSRs {
@@ -998,7 +1003,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		handledVSRs = append(handledVSRs, vsr)
 	}
 
-	orphanedVSRs := filterOutVirtualServerRoutes(previousVSRs, handledVSRs)
+	orphanedVSRs := findOrphanedVirtualServerRoutes(previousVSRs, handledVSRs)
 	reason := "NoVirtualServerFound"
 	for _, vsr := range orphanedVSRs {
 		msg := fmt.Sprintf("No VirtualServer references VirtualServerRoute %v/%v", vsr.Namespace, vsr.Name)
@@ -1013,14 +1018,14 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 	}
 }
 
-func filterOutVirtualServerRoutes(previousVSRs []*conf_v1.VirtualServerRoute, handledVSRs []*conf_v1.VirtualServerRoute) []*conf_v1.VirtualServerRoute {
+func findOrphanedVirtualServerRoutes(previousVSRs []*conf_v1.VirtualServerRoute, handledVSRs []*conf_v1.VirtualServerRoute) []*conf_v1.VirtualServerRoute {
 	var orphanedVSRs []*conf_v1.VirtualServerRoute
-	for _, r := range previousVSRs {
+	for _, prev := range previousVSRs {
 		isIn := false
-		key := fmt.Sprintf("%s/%s", r.Namespace, r.Name)
-		for _, r1 := range handledVSRs {
-			vsrKey := fmt.Sprintf("%s/%s", r1.Namespace, r1.Name)
-			if key == vsrKey {
+		prevKey := fmt.Sprintf("%s/%s", r.Namespace, r.Name)
+		for _, handled := range handledVSRs {
+			handledKey := fmt.Sprintf("%s/%s", r1.Namespace, r1.Name)
+			if prevKey == handledKey {
 				isIn = true
 				break
 			}
