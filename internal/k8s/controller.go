@@ -905,7 +905,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
 		}
 
-		reason = "Rejected"
+		reason := "Rejected"
 		msg := fmt.Sprintf("VirtualServer %v is invalid and was rejected: %v", key, validationErr)
 
 		lbc.recorder.Eventf(vs, api_v1.EventTypeWarning, reason, msg)
@@ -913,7 +913,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 			err = lbc.statusUpdater.UpdateVirtualServerStatus(vs, conf_v1.StateInvalid, reason, msg)
 		}
 
-		reason := "NoVirtualServerFound"
+		reason = "NoVirtualServerFound"
 		for _, vsr := range previousVSRs {
 			msg := fmt.Sprintf("No VirtualServer references VirtualServerRoute %v/%v", vsr.Namespace, vsr.Name)
 			lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, reason, msg)
@@ -1011,7 +1011,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		lbc.recorder.Eventf(vsr, api_v1.EventTypeWarning, reason, msg)
 		if lbc.reportVsVsrStatusEnabled() {
 			var emptyVSes []*conf_v1.VirtualServer
-			err := lbc.statusUpdater.UpdateVirtualServerRouteStatusWithReferencedBy(vsr, conf_v1.StateInvalid, reason, msg, emptyVSS)
+			err := lbc.statusUpdater.UpdateVirtualServerRouteStatusWithReferencedBy(vsr, conf_v1.StateInvalid, reason, msg, emptyVSes)
 			if err != nil {
 				glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
@@ -1023,16 +1023,16 @@ func findOrphanedVirtualServerRoutes(previousVSRs []*conf_v1.VirtualServerRoute,
 	var orphanedVSRs []*conf_v1.VirtualServerRoute
 	for _, prev := range previousVSRs {
 		isIn := false
-		prevKey := fmt.Sprintf("%s/%s", r.Namespace, r.Name)
+		prevKey := fmt.Sprintf("%s/%s", prev.Namespace, prev.Name)
 		for _, handled := range handledVSRs {
-			handledKey := fmt.Sprintf("%s/%s", r1.Namespace, r1.Name)
+			handledKey := fmt.Sprintf("%s/%s", handled.Namespace, handled.Name)
 			if prevKey == handledKey {
 				isIn = true
 				break
 			}
 		}
 		if !isIn {
-			orphanedVSRs = append(orphanedVSRs, r)
+			orphanedVSRs = append(orphanedVSRs, prev)
 		}
 	}
 	return orphanedVSRs
