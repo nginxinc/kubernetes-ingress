@@ -25,7 +25,7 @@ import (
 	"strconv"
 	"strings"
 
-	fuzz "github.com/google/gofuzz"
+	"github.com/google/gofuzz"
 	"k8s.io/klog"
 )
 

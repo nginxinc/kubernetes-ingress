@@ -16,11 +16,10 @@ package compiler
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"regexp"
 	"sort"
 	"strconv"
-
-	"gopkg.in/yaml.v2"
 )
 
 // compiler helper functions, usually called from generated code
