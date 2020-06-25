@@ -12,7 +12,7 @@ from settings import TEST_DATA
     "crd_ingress_controller, virtual_server_setup",
     [
         (
-            {"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],},
+            {"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"]},
             {"example": "virtual-server-status", "app_type": "simple",},
         )
     ],

@@ -15,7 +15,7 @@ from settings import TEST_DATA
     "crd_ingress_controller, v_s_route_setup",
     [
         (
-            {"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],},
+            {"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"]},
             {"example": "virtual-server-route-status"},
         )
     ],
@@ -189,12 +189,11 @@ class TestVirtualServerRouteStatus:
             and response_s["status"]["state"] == "Valid"
         )
 
-    @pytest.mark.skip
-    def test_status_invalid_vs(
+    def test_status_invalid_vsr_in_vs(
         self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup
     ):
         """
-        Test VirtualServerRoute status with invalid reference in vs yaml
+        Test VirtualServerRoute status with invalid vsr reference in vs yaml
         """
 
         patch_src = f"{TEST_DATA}/virtual-server-route-status/virtual-server-invalid.yaml"
@@ -218,19 +217,18 @@ class TestVirtualServerRouteStatus:
         self.patch_valid_vs(kube_apis, v_s_route_setup)
         assert (
             response_m["status"]
-            and response_m["status"]["reason"] == "Rejected"
+            and response_m["status"]["reason"] == "NoVirtualServerFound"
             and not response_m["status"]["referencedBy"]
             and response_m["status"]["state"] == "Invalid"
         )
 
         assert (
             response_s["status"]
-            and response_s["status"]["reason"] == "Rejected"
+            and response_s["status"]["reason"] == "NoVirtualServerFound"
             and not response_s["status"]["referencedBy"]
             and response_s["status"]["state"] == "Invalid"
         )
 
-    @pytest.mark.skip
     def test_status_remove_vs(
         self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup
     ):
@@ -259,14 +257,14 @@ class TestVirtualServerRouteStatus:
 
         assert (
             response_m["status"]
-            and response_m["status"]["reason"] == "Rejected"
+            and response_m["status"]["reason"] == "NoVirtualServerFound"
             and not response_m["status"]["referencedBy"]
             and response_m["status"]["state"] == "Invalid"
         )
 
         assert (
             response_s["status"]
-            and response_s["status"]["reason"] == "Rejected"
+            and response_s["status"]["reason"] == "NoVirtualServerFound"
             and not response_s["status"]["referencedBy"]
             and response_s["status"]["state"] == "Invalid"
         )
