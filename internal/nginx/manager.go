@@ -35,6 +35,12 @@ type ServerConfig struct {
 	SlowStart   string
 }
 
+//AppProtectDebugLogConfigFileContent holds the content of the file to be written when nginx ebug is enabled. It will enable NGINX App Protect debug logs
+const AppProtectDebugLogConfigFileContent = "MODULE = IO_PLUGIN;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\nMODULE = ECARD_POLICY;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\n"
+
+//APPProtectLogConfigFileName is the location of the NGINX App Protect logging configuration file
+const APPProtectLogConfigFileName = "/etc/app_protect/bd/logger.cfg"
+
 // The Manager interface updates NGINX configuration, starts, reloads and quits NGINX,
 // updates NGINX Plus upstream servers.
 type Manager interface {
@@ -59,7 +65,7 @@ type Manager interface {
 	UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error
 	UpdateStreamServersInPlus(upstream string, servers []string) error
 	SetOpenTracing(openTracing bool)
-	AppProtectAgentStart(apaDone chan error)
+	AppProtectAgentStart(apaDone chan error, debug bool)
 	AppProtectAgentQuit()
 	AppProtectPluginStart(appDone chan error)
 	AppProtectPluginQuit()
@@ -90,7 +96,6 @@ type LocalManager struct {
 	appProtectPluginPid          int
 	appProtectAgentStartCmd      string
 	appProtectAgentPid           int
-	appProtectPluginLog          *os.File
 	appProtectPluginParams       string
 }
 
@@ -423,7 +428,18 @@ func (lm *LocalManager) SetOpenTracing(openTracing bool) {
 }
 
 // AppProtectAgentStart starts the AppProtect agent
-func (lm *LocalManager) AppProtectAgentStart(apaDone chan error) {
+func (lm *LocalManager) AppProtectAgentStart(apaDone chan error, debug bool) {
+	if debug {
+		glog.V(3).Info("Starting AppProtect Agent in debug mode")
+		err := os.Remove(APPProtectLogConfigFileName)
+		if err != nil {
+			glog.Fatalf("Failed removing App Protect Log configuration file")
+		}
+		err = createFileAndWrite(APPProtectLogConfigFileName, []byte(AppProtectDebugLogConfigFileContent))
+		if err != nil {
+			glog.Fatalf("Failed Writing App Protect Log configuration file")
+		}		
+	}
 	glog.V(3).Info("Starting AppProtect Agent")
 
 	cmd := exec.Command(lm.appProtectAgentStartCmd)
@@ -450,15 +466,10 @@ func (lm *LocalManager) AppProtectAgentQuit() {
 func (lm *LocalManager) AppProtectPluginStart(appDone chan error) {
 	glog.V(3).Info("Starting AppProtect Plugin")
 	startupParams := strings.Fields(lm.appProtectPluginParams)
-	var err error
 	cmd := exec.Command(lm.appProtectPluginStartCmd, startupParams...)
-	lm.appProtectPluginLog, err = os.Create("/var/log/app_protect/bd-socket-plugin.log")
-	if err != nil {
-		glog.Fatalf("error opening AppProtect Plugin log: %v", err)
-	}
 
-	cmd.Stdout = lm.appProtectPluginLog
-	cmd.Stderr = lm.appProtectPluginLog
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "LD_LIBRARY_PATH=/usr/lib64/bd")
 
@@ -475,12 +486,8 @@ func (lm *LocalManager) AppProtectPluginStart(appDone chan error) {
 // AppProtectPluginQuit gracefully ends AppProtect Agent.
 func (lm *LocalManager) AppProtectPluginQuit() {
 	glog.V(3).Info("Quitting AppProtect Plugin")
-	err := lm.appProtectPluginLog.Close()
-	if err != nil {
-		glog.V(3).Infof("Error closing AppProtectPlugin Log: %v", err)
-	}
 	killcmd := fmt.Sprintf("kill %d", lm.appProtectPluginPid)
-	if err = shellOut(killcmd); err != nil {
+	if err := shellOut(killcmd); err != nil {
 		glog.Fatalf("Failed to quit AppProtect Plugin: %v", err)
 	}
 }

@@ -322,7 +322,7 @@ func main() {
 		aPPluginDone = make(chan error, 1)
 		aPAgentDone = make(chan error, 1)
 
-		nginxManager.AppProtectAgentStart(aPAgentDone)
+		nginxManager.AppProtectAgentStart(aPAgentDone, *nginxDebug)
 		nginxManager.AppProtectPluginStart(aPPluginDone)
 	}
 
