@@ -84,11 +84,10 @@ func newUpstreamNamerForTransportServer(transportServer *conf_v1alpha1.Transport
 
 func (namer *upstreamNamer) GetNameForUpstreamFromAction(action *conf_v1.Action) string {
 	var upstream string
-	// Validation of the Action ensures only one (Pass or Proxy) is available.
-	if action.Pass != "" {
-		upstream = action.Pass
-	} else {
+	if action.Proxy != nil && action.Proxy.Upstream != "" {
 		upstream = action.Proxy.Upstream
+	} else {
+		upstream = action.Pass
 	}
 
 	return fmt.Sprintf("%s_%s", namer.prefix, upstream)
