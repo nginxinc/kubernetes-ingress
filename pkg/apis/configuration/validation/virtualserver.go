@@ -562,19 +562,19 @@ func validateRoute(route v1.Route, fieldPath *field.Path, upstreamNames sets.Str
 	fieldCount := 0
 
 	if route.Action != nil {
-		allErrs = append(allErrs, validateAction(route.Action, fieldPath.Child("action"), upstreamNames)...)
+		allErrs = append(allErrs, validateAction(route.Action, fieldPath.Child("action"), upstreamNames, route.Path, false)...)
 		fieldCount++
 	}
 
 	if len(route.Splits) > 0 {
-		allErrs = append(allErrs, validateSplits(route.Splits, fieldPath.Child("splits"), upstreamNames)...)
+		allErrs = append(allErrs, validateSplits(route.Splits, fieldPath.Child("splits"), upstreamNames, route.Path)...)
 		fieldCount++
 	}
 
 	// Matches are optional. that's why we don't do fieldCount++
 	if len(route.Matches) > 0 {
 		for i, m := range route.Matches {
-			allErrs = append(allErrs, validateMatch(m, fieldPath.Child("matches").Index(i), upstreamNames)...)
+			allErrs = append(allErrs, validateMatch(m, fieldPath.Child("matches").Index(i), upstreamNames, route.Path)...)
 		}
 	}
 
@@ -706,6 +706,10 @@ func countActions(action *v1.Action) int {
 		count++
 	}
 
+	if action.Proxy != nil {
+		count++
+	}
+
 	return count
 }
 
@@ -746,11 +750,11 @@ var validRedirectVariableNames = map[string]bool{
 	"host":                   true,
 }
 
-func validateAction(action *v1.Action, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+func validateAction(action *v1.Action, fieldPath *field.Path, upstreamNames sets.String, path string, internal bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if countActions(action) != 1 {
-		return append(allErrs, field.Required(fieldPath, "action must specify exactly one of `pass`, `redirect` or `return`"))
+		return append(allErrs, field.Required(fieldPath, "action must specify exactly one of `pass`, `redirect`, `return` or `proxy`"))
 	}
 
 	if action.Pass != "" {
@@ -763,6 +767,10 @@ func validateAction(action *v1.Action, fieldPath *field.Path, upstreamNames sets
 
 	if action.Return != nil {
 		allErrs = append(allErrs, validateActionReturn(action.Return, fieldPath.Child("return"), returnBodySpecialVariables, returnBodyVariables)...)
+	}
+
+	if action.Proxy != nil {
+		allErrs = append(allErrs, validateActionProxy(action.Proxy, fieldPath.Child("proxy"), upstreamNames, path, internal)...)
 	}
 
 	return allErrs
@@ -990,7 +998,137 @@ func validateReferencedUpstream(name string, fieldPath *field.Path, upstreamName
 	return allErrs
 }
 
-func validateSplits(splits []v1.Split, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+func validateActionProxy(p *v1.ActionProxy, fieldPath *field.Path, upstreamNames sets.String, path string, internal bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allErrs = append(allErrs, validateReferencedUpstream(p.Upstream, fieldPath.Child("upstream"), upstreamNames)...)
+	allErrs = append(allErrs, validateActionProxyRequestHeaders(p.RequestHeaders, fieldPath.Child("requestHeaders"))...)
+	allErrs = append(allErrs, validateActionProxyResponseHeaders(p.ResponseHeaders, fieldPath.Child("responseHeaders"))...)
+
+	if strings.HasPrefix(path, "~") || internal {
+		allErrs = append(allErrs, validateActionProxyRewritePathForRegexp(p.RewritePath, fieldPath.Child("rewritePath"))...)
+	} else {
+		allErrs = append(allErrs, validateActionProxyRewritePath(p.RewritePath, fieldPath.Child("rewritePath"))...)
+	}
+
+	return allErrs
+}
+
+func validateStringNoVariables(s string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	for i, char := range s {
+		charLen := len(string(char))
+		if string(char) == "$" && i+charLen < len(s) {
+			if _, err := strconv.Atoi(string(s[i+charLen])); err != nil {
+				return append(allErrs, field.Invalid(fieldPath, s, "`$` character can be only followed by a number"))
+			}
+		}
+	}
+
+	return allErrs
+}
+
+func validateActionProxyRewritePath(rewritePath string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if rewritePath == "" {
+		return allErrs
+	}
+
+	allErrs = append(allErrs, validateStringNoVariables(rewritePath, fieldPath)...)
+
+	return append(allErrs, validatePath(rewritePath, fieldPath)...)
+}
+
+func validateActionProxyRewritePathForRegexp(rewritePath string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if rewritePath == "" {
+		return allErrs
+	}
+
+	allErrs = append(allErrs, validateStringNoVariables(rewritePath, fieldPath)...)
+
+	if !escapedStringsFmtRegexp.MatchString(rewritePath) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, "/rewrite$1", "/images")
+		allErrs = append(allErrs, field.Invalid(fieldPath, rewritePath, msg))
+	}
+
+	return allErrs
+}
+
+func validateActionProxyRequestHeaders(requestHeaders *v1.ProxyRequestHeaders, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if requestHeaders == nil {
+		return allErrs
+	}
+
+	for i, header := range requestHeaders.Set {
+		allErrs = append(allErrs, validateHeader(header, fieldPath.Index(i))...)
+	}
+
+	return allErrs
+}
+
+func validateActionProxyResponseHeaders(responseHeaders *v1.ProxyResponseHeaders, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if responseHeaders == nil {
+		return allErrs
+	}
+
+	for i, header := range responseHeaders.Hide {
+		for _, msg := range validation.IsHTTPHeaderName(header) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("hide").Index(i), header, msg))
+		}
+	}
+
+	for i, header := range responseHeaders.Pass {
+		for _, msg := range validation.IsHTTPHeaderName(header) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("pass").Index(i), header, msg))
+		}
+	}
+
+	for i, header := range responseHeaders.Add {
+		allErrs = append(allErrs, validateHeader(header.Header, fieldPath.Child("add").Index(i))...)
+	}
+
+	allErrs = append(allErrs, validateIgnoreHeaders(responseHeaders.Ignore, fieldPath.Child("ignore"))...)
+
+	return allErrs
+}
+
+var validIgnoreHeaders = map[string]bool{
+	"X-Accel-Redirect":   true,
+	"X-Accel-Expires":    true,
+	"X-Accel-Limit-Rate": true,
+	"X-Accel-Buffering":  true,
+	"X-Accel-Charset":    true,
+	"Expires":            true,
+	"Cache-Control":      true,
+	"Set-Cookie":         true,
+	"Vary":               true,
+}
+
+func validateIgnoreHeaders(ignoreHeaders []string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if len(ignoreHeaders) == 0 {
+		return allErrs
+	}
+
+	for i, h := range ignoreHeaders {
+		if !validIgnoreHeaders[h] {
+			msg := fmt.Sprintf("not a valid ignore header name. Accepted headers are : %v", mapToPrettyString(validIgnoreHeaders))
+			allErrs = append(allErrs, field.Invalid(fieldPath.Index(i), h, msg))
+		}
+	}
+
+	return allErrs
+}
+
+func validateSplits(splits []v1.Split, fieldPath *field.Path, upstreamNames sets.String, path string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(splits) < 2 {
@@ -1009,7 +1147,7 @@ func validateSplits(splits []v1.Split, fieldPath *field.Path, upstreamNames sets
 		if s.Action == nil {
 			allErrs = append(allErrs, field.Required(idxPath.Child("action"), ""))
 		} else {
-			allErrs = append(allErrs, validateAction(s.Action, idxPath.Child("action"), upstreamNames)...)
+			allErrs = append(allErrs, validateAction(s.Action, idxPath.Child("action"), upstreamNames, path, true)...)
 		}
 
 		totalWeight += s.Weight
@@ -1079,7 +1217,7 @@ func validatePath(path string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateMatch(match v1.Match, fieldPath *field.Path, upstreamNames sets.String) field.ErrorList {
+func validateMatch(match v1.Match, fieldPath *field.Path, upstreamNames sets.String, path string) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(match.Conditions) == 0 {
@@ -1093,12 +1231,12 @@ func validateMatch(match v1.Match, fieldPath *field.Path, upstreamNames sets.Str
 	fieldCount := 0
 
 	if match.Action != nil {
-		allErrs = append(allErrs, validateAction(match.Action, fieldPath.Child("action"), upstreamNames)...)
+		allErrs = append(allErrs, validateAction(match.Action, fieldPath.Child("action"), upstreamNames, path, true)...)
 		fieldCount++
 	}
 
 	if len(match.Splits) > 0 {
-		allErrs = append(allErrs, validateSplits(match.Splits, fieldPath.Child("splits"), upstreamNames)...)
+		allErrs = append(allErrs, validateSplits(match.Splits, fieldPath.Child("splits"), upstreamNames, path)...)
 		fieldCount++
 	}
 

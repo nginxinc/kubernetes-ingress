@@ -82,6 +82,17 @@ func newUpstreamNamerForTransportServer(transportServer *conf_v1alpha1.Transport
 	}
 }
 
+func (namer *upstreamNamer) GetNameForUpstreamFromAction(action *conf_v1.Action) string {
+	var upstream string
+	if action.Proxy != nil && action.Proxy.Upstream != "" {
+		upstream = action.Proxy.Upstream
+	} else {
+		upstream = action.Pass
+	}
+
+	return fmt.Sprintf("%s_%s", namer.prefix, upstream)
+}
+
 func (namer *upstreamNamer) GetNameForUpstream(upstream string) string {
 	return fmt.Sprintf("%s_%s", namer.prefix, upstream)
 }
@@ -273,16 +284,16 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 
 			matchesRoutes++
 		} else if len(r.Splits) > 0 {
-			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams, r.ErrorPages, errorPageIndex)
+			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams, r.ErrorPages, errorPageIndex, r.Path)
 
 			splitClients = append(splitClients, cfg.SplitClients...)
 			locations = append(locations, cfg.Locations...)
 			internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
 		} else {
-			upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(r.Action.Pass)
+			upstreamName := virtualServerUpstreamNamer.GetNameForUpstreamFromAction(r.Action)
 			upstream := crUpstreams[upstreamName]
 			proxySSLName := generateProxySSLName(upstream.Service, virtualServerEx.VirtualServer.Namespace)
-			loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, r.ErrorPages, false, errorPageIndex, proxySSLName)
+			loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, r.ErrorPages, false, errorPageIndex, proxySSLName, r.Path)
 			locations = append(locations, loc)
 		}
 	}
@@ -313,16 +324,16 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 
 				matchesRoutes++
 			} else if len(r.Splits) > 0 {
-				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams, errorPages, errorPageIndex)
+				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams, errorPages, errorPageIndex, r.Path)
 
 				splitClients = append(splitClients, cfg.SplitClients...)
 				locations = append(locations, cfg.Locations...)
 				internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
 			} else {
-				upstreamName := upstreamNamer.GetNameForUpstream(r.Action.Pass)
+				upstreamName := upstreamNamer.GetNameForUpstreamFromAction(r.Action)
 				upstream := crUpstreams[upstreamName]
 				proxySSLName := generateProxySSLName(upstream.Service, vsr.Namespace)
-				loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false, errorPageIndex, proxySSLName)
+				loc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false, errorPageIndex, proxySSLName, r.Path)
 				locations = append(locations, loc)
 			}
 		}
@@ -518,10 +529,55 @@ func upstreamHasKeepalive(upstream conf_v1.Upstream, cfgParams *ConfigParams) bo
 	return cfgParams.Keepalive != 0
 }
 
-func generateProxyPass(tlsEnabled bool, upstreamName string, internal bool) string {
-	proxyPass := fmt.Sprintf("%v://%v", generateProxyPassProtocol(tlsEnabled), upstreamName)
+func generateRewrites(path string, proxy *conf_v1.ActionProxy, internal bool, originalPath string) []string {
+	if proxy == nil || proxy.RewritePath == "" {
+		return nil
+	}
+
+	if originalPath != "" {
+		path = originalPath
+	}
+
+	isRegex := false
+	if strings.HasPrefix(path, "~") {
+		isRegex = true
+	}
+
+	trimmedPath := strings.TrimPrefix(strings.TrimPrefix(path, "~"), "*")
+	trimmedPath = strings.TrimSpace(trimmedPath)
+
+	var rewrites []string
 
 	if internal {
+		// For internal locations (splits locations) only, recover the original request_uri.
+		rewrites = append(rewrites, "^ $request_uri")
+	}
+
+	if isRegex {
+		rewrites = append(rewrites, fmt.Sprintf(`"^%v" "%v" break`, trimmedPath, proxy.RewritePath))
+	} else if internal {
+		rewrites = append(rewrites, fmt.Sprintf(`"^%v(.*)$" "%v$1" break`, trimmedPath, proxy.RewritePath))
+	}
+
+	return rewrites
+}
+
+func generateProxyPassRewrite(path string, proxy *conf_v1.ActionProxy, internal bool) string {
+	if proxy == nil || internal {
+		return ""
+	}
+
+	if strings.HasPrefix(path, "/") || strings.HasPrefix(path, "=") {
+		return proxy.RewritePath
+	}
+
+	return ""
+}
+
+func generateProxyPass(tlsEnabled bool, upstreamName string, internal bool, proxy *conf_v1.ActionProxy) string {
+	proxyPass := fmt.Sprintf("%v://%v", generateProxyPassProtocol(tlsEnabled), upstreamName)
+
+	if internal && (proxy == nil || proxy.RewritePath == "") {
 		return fmt.Sprintf("%v$request_uri", proxyPass)
 	}
 
@@ -582,7 +638,7 @@ func generateReturnBlock(text string, code int, defaultCode int) *version2.Retur
 }
 
 func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, action *conf_v1.Action,
-	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int, proxySSLName string) version2.Location {
+	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int, proxySSLName string, originalPath string) version2.Location {
 	if action.Redirect != nil {
 		returnBlock := generateReturnBlock(action.Redirect.URL, action.Redirect.Code, 301)
 		return generateLocationForReturnBlock(path, cfgParams.LocationSnippets, returnBlock, "")
@@ -597,11 +653,82 @@ func generateLocation(path string, upstreamName string, upstream conf_v1.Upstrea
 		return generateLocationForReturnBlock(path, cfgParams.LocationSnippets, returnBlock, defaultType)
 	}
 
-	return generateLocationForProxying(path, upstreamName, upstream, cfgParams, errorPages, internal, errPageIndex, proxySSLName)
+	return generateLocationForProxying(path, upstreamName, upstream, cfgParams, errorPages, internal, errPageIndex, proxySSLName, action.Proxy, originalPath)
+}
+
+func generateProxySetHeaders(proxy *conf_v1.ActionProxy) []version2.Header {
+	if proxy == nil || proxy.RequestHeaders == nil {
+		return nil
+	}
+
+	var headers []version2.Header
+	for _, h := range proxy.RequestHeaders.Set {
+		headers = append(headers, version2.Header{
+			Name:  h.Name,
+			Value: h.Value,
+		})
+	}
+
+	return headers
+}
+
+func generateProxyPassRequestHeaders(proxy *conf_v1.ActionProxy) bool {
+	if proxy == nil || proxy.RequestHeaders == nil {
+		return true
+	}
+
+	if proxy.RequestHeaders.Pass != nil {
+		return *proxy.RequestHeaders.Pass
+	}
+
+	return true
+}
+
+func generateProxyHideHeaders(proxy *conf_v1.ActionProxy) []string {
+	if proxy == nil || proxy.ResponseHeaders == nil {
+		return nil
+	}
+
+	return proxy.ResponseHeaders.Hide
+}
+
+func generateProxyPassHeaders(proxy *conf_v1.ActionProxy) []string {
+	if proxy == nil || proxy.ResponseHeaders == nil {
+		return nil
+	}
+
+	return proxy.ResponseHeaders.Pass
+}
+
+func generateProxyIgnoreHeaders(proxy *conf_v1.ActionProxy) string {
+	if proxy == nil || proxy.ResponseHeaders == nil {
+		return ""
+	}
+
+	return strings.Join(proxy.ResponseHeaders.Ignore, " ")
+}
+
+func generateProxyAddHeaders(proxy *conf_v1.ActionProxy) []version2.AddHeader {
+	if proxy == nil || proxy.ResponseHeaders == nil {
+		return nil
+	}
+
+	var addHeaders []version2.AddHeader
+	for _, h := range proxy.ResponseHeaders.Add {
+		addHeaders = append(addHeaders, version2.AddHeader{
+			Header: version2.Header{
+				Name:  h.Name,
+				Value: h.Value,
+			},
+			Always: h.Always,
+		})
+	}
+
+	return addHeaders
 }
 
 func generateLocationForProxying(path string, upstreamName string, upstream conf_v1.Upstream,
-	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int, proxySSLName string) version2.Location {
+	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int, proxySSLName string, proxy *conf_v1.ActionProxy, originalPath string) version2.Location {
 	return version2.Location{
 		Path:                     generatePath(path),
 		Internal:                 internal,
@@ -614,11 +741,19 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 		ProxyBuffering:           generateBool(upstream.ProxyBuffering, cfgParams.ProxyBuffering),
 		ProxyBuffers:             generateBuffers(upstream.ProxyBuffers, cfgParams.ProxyBuffers),
 		ProxyBufferSize:          generateString(upstream.ProxyBufferSize, cfgParams.ProxyBufferSize),
-		ProxyPass:                generateProxyPass(upstream.TLS.Enable, upstreamName, internal),
+		ProxyPass:                generateProxyPass(upstream.TLS.Enable, upstreamName, internal, proxy),
 		ProxyNextUpstream:        generateString(upstream.ProxyNextUpstream, "error timeout"),
 		ProxyNextUpstreamTimeout: generateString(upstream.ProxyNextUpstreamTimeout, "0s"),
 		ProxyNextUpstreamTries:   upstream.ProxyNextUpstreamTries,
 		ProxyInterceptErrors:     generateProxyInterceptErrors(errorPages),
+		ProxyPassRequestHeaders:  generateProxyPassRequestHeaders(proxy),
+		ProxySetHeaders:          generateProxySetHeaders(proxy),
+		ProxyHideHeaders:         generateProxyHideHeaders(proxy),
+		ProxyPassHeaders:         generateProxyPassHeaders(proxy),
+		ProxyIgnoreHeaders:       generateProxyIgnoreHeaders(proxy),
+		AddHeaders:               generateProxyAddHeaders(proxy),
+		ProxyPassRewrite:         generateProxyPassRewrite(path, proxy, internal),
+		Rewrites:                 generateRewrites(path, proxy, internal, originalPath),
 		HasKeepalive:             upstreamHasKeepalive(upstream, cfgParams),
 		ErrorPages:               generateErrorPages(errPageIndex, errorPages),
 		ProxySSLName:             proxySSLName,
@@ -646,7 +781,7 @@ type routingCfg struct {
 }
 
 func generateSplits(splits []conf_v1.Split, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream,
-	variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, errPageIndex int) (version2.SplitClient, []version2.Location) {
+	variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, errPageIndex int, originalPath string) (version2.SplitClient, []version2.Location) {
 	var distributions []version2.Distribution
 
 	for i, s := range splits {
@@ -667,10 +802,10 @@ func generateSplits(splits []conf_v1.Split, upstreamNamer *upstreamNamer, crUpst
 
 	for i, s := range splits {
 		path := fmt.Sprintf("/%vsplits_%d_split_%d", internalLocationPrefix, scIndex, i)
-		upstreamName := upstreamNamer.GetNameForUpstream(s.Action.Pass)
+		upstreamName := upstreamNamer.GetNameForUpstreamFromAction(s.Action)
 		upstream := crUpstreams[upstreamName]
 		proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
-		loc := generateLocation(path, upstreamName, upstream, s.Action, cfgParams, errorPages, true, errPageIndex, proxySSLName)
+		loc := generateLocation(path, upstreamName, upstream, s.Action, cfgParams, errorPages, true, errPageIndex, proxySSLName, originalPath)
 		locations = append(locations, loc)
 	}
 
@@ -678,8 +813,8 @@ func generateSplits(splits []conf_v1.Split, upstreamNamer *upstreamNamer, crUpst
 }
 
 func generateDefaultSplitsConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream,
-	variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, errPageIndex int) routingCfg {
-	sc, locs := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex, cfgParams, errorPages, errPageIndex)
+	variableNamer *variableNamer, scIndex int, cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, errPageIndex int, originalPath string) routingCfg {
+	sc, locs := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex, cfgParams, errorPages, errPageIndex, originalPath)
 
 	splitClientVarName := variableNamer.GetNameForSplitClientVariable(scIndex)
 
@@ -769,32 +904,32 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 
 	for i, m := range route.Matches {
 		if len(m.Splits) > 0 {
-			sc, locs := generateSplits(m.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex+scLocalIndex, cfgParams, errorPages, errPageIndex)
+			sc, locs := generateSplits(m.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex+scLocalIndex, cfgParams, errorPages, errPageIndex, route.Path)
 			scLocalIndex++
 
 			splitClients = append(splitClients, sc)
 			locations = append(locations, locs...)
 		} else {
 			path := fmt.Sprintf("/%vmatches_%d_match_%d", internalLocationPrefix, index, i)
-			upstreamName := upstreamNamer.GetNameForUpstream(m.Action.Pass)
+			upstreamName := upstreamNamer.GetNameForUpstreamFromAction(m.Action)
 			upstream := crUpstreams[upstreamName]
 			proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
-			loc := generateLocation(path, upstreamName, upstream, m.Action, cfgParams, errorPages, true, errPageIndex, proxySSLName)
+			loc := generateLocation(path, upstreamName, upstream, m.Action, cfgParams, errorPages, true, errPageIndex, proxySSLName, route.Path)
 			locations = append(locations, loc)
 		}
 	}
 
 	// Generate default splits or default action
 	if len(route.Splits) > 0 {
-		sc, locs := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex+scLocalIndex, cfgParams, errorPages, errPageIndex)
+		sc, locs := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex+scLocalIndex, cfgParams, errorPages, errPageIndex, route.Path)
 		splitClients = append(splitClients, sc)
 		locations = append(locations, locs...)
 	} else {
 		path := fmt.Sprintf("/%vmatches_%d_default", internalLocationPrefix, index)
-		upstreamName := upstreamNamer.GetNameForUpstream(route.Action.Pass)
+		upstreamName := upstreamNamer.GetNameForUpstreamFromAction(route.Action)
 		upstream := crUpstreams[upstreamName]
 		proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
-		loc := generateLocation(path, upstreamName, upstream, route.Action, cfgParams, errorPages, true, errPageIndex, proxySSLName)
+		loc := generateLocation(path, upstreamName, upstream, route.Action, cfgParams, errorPages, true, errPageIndex, proxySSLName, route.Path)
 		locations = append(locations, loc)
 	}
 
