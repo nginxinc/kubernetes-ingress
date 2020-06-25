@@ -15,7 +15,7 @@ from settings import TEST_DATA
     "crd_ingress_controller, v_s_route_setup",
     [
         (
-            {"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],},
+            {"type": "complete", "extra_args": [f"-enable-custom-resources"],},
             {"example": "virtual-server-route-status"},
         )
     ],
@@ -217,14 +217,14 @@ class TestVirtualServerRouteStatus:
         self.patch_valid_vs(kube_apis, v_s_route_setup)
         assert (
             response_m["status"]
-            and response_m["status"]["reason"] == "Ignored"
+            and response_m["status"]["reason"] == "NoVirtualServerFound"
             and not response_m["status"]["referencedBy"]
             and response_m["status"]["state"] == "Invalid"
         )
 
         assert (
             response_s["status"]
-            and response_s["status"]["reason"] == "Ignored"
+            and response_s["status"]["reason"] == "NoVirtualServerFound"
             and not response_s["status"]["referencedBy"]
             and response_s["status"]["state"] == "Invalid"
         )
