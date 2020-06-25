@@ -338,7 +338,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 				}
 			}
 			if !lbc.HasCorrectIngressClass(vs) {
-				glog.Infof("Ignoring VS %v based on class %v", vs.Name, vs.Spec.IngressClass)
+				glog.Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
 				return
 			}
 			glog.V(3).Infof("Removing VirtualServer: %v", vs.Name)
@@ -348,7 +348,7 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 			curVs := cur.(*conf_v1.VirtualServer)
 			oldVs := old.(*conf_v1.VirtualServer)
 			if !lbc.HasCorrectIngressClass(curVs) {
-				glog.Infof("Ignoring VS %v based on class %v", curVs.Name, curVs.Spec.IngressClass)
+				glog.Infof("Ignoring VirtualServer %v based on class %v", curVs.Name, curVs.Spec.IngressClass)
 				return
 			}
 			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
@@ -364,7 +364,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 		AddFunc: func(obj interface{}) {
 			vsr := obj.(*conf_v1.VirtualServerRoute)
 			if !lbc.HasCorrectIngressClass(vsr) {
-				glog.Infof("Ignoring VSR %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
+				glog.Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
 				return
 			}
 			glog.V(3).Infof("Adding VirtualServerRoute: %v", vsr.Name)
@@ -385,7 +385,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 				}
 			}
 			if !lbc.HasCorrectIngressClass(vsr) {
-				glog.Infof("Ignoring VSR %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
+				glog.Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
 				return
 			}
 			glog.V(3).Infof("Removing VirtualServerRoute: %v", vsr.Name)
@@ -395,7 +395,7 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
 			oldVsr := old.(*conf_v1.VirtualServerRoute)
 			if !lbc.HasCorrectIngressClass(curVsr) {
-				glog.Infof("Ignoring VSR %v based on class %v", curVsr.Name, curVsr.Spec.IngressClass)
+				glog.Infof("Ignoring VirtualServerRoute %v based on class %v", curVsr.Name, curVsr.Spec.IngressClass)
 				return
 			}
 			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
