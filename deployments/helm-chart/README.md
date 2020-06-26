@@ -142,8 +142,8 @@ Parameter | Description | Default
 `controller.volumeMounts` | The volumeMounts of the Ingress controller pods. | []
 `controller.resources` | The resources of the Ingress controller pods. | {}
 `controller.replicaCount` | The number of replicas of the Ingress controller deployment. | 1
-`controller.ingressClass` | A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation `"kubernetes.io/ingress.class"` or the "ingressClassName" field in VirtualServer/VirtualServerRoute equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag. | nginx
-`controller.useIngressClassOnly` | Ignore Ingress resources without the `"kubernetes.io/ingress.class"` annotation or the "ingressClassName" field in VirtualServer/VirtualServerRoute. | false
+`controller.ingressClass` | A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation `"kubernetes.io/ingress.class"` or the `"ingressClassName"` field in VirtualServer/VirtualServerRoute equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag. | nginx
+`controller.useIngressClassOnly` | Ignore Ingress resources without the `"kubernetes.io/ingress.class"` annotation or the `"ingressClassName"` field in VirtualServer/VirtualServerRoute. | false
 `controller.watchNamespace` | Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces. | ""
 `controller.enableCustomResources` | Enable the custom resources. | true
 `controller.enableTLSPassthrough` | Enable TLS Passthrough on port 443. Requires `controller.enableCustomResources`. | false 
