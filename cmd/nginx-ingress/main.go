@@ -64,7 +64,7 @@ var (
 
 	ingressClass = flag.String("ingress-class", "nginx",
 		`A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class
-	- i.e. have the annotation "kubernetes.io/ingress.class" equal to the class. Additionally,
+	- i.e. have the annotation "kubernetes.io/ingress.class" or the "ingressClassName" field in VirtualServer/VirtualServerRoute equal to the class. Additionally,
 	the Ingress controller processes Ingress resources that do not have that annotation,
 	which can be disabled by setting the "-use-ingress-class-only" flag`)
 
