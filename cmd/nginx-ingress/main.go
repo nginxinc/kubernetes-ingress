@@ -69,7 +69,7 @@ var (
 	which can be disabled by setting the "-use-ingress-class-only" flag`)
 
 	useIngressClassOnly = flag.Bool("use-ingress-class-only", false,
-		`Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation`)
+		`Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation or the "ingressClassName" field in VirtualServer/VirtualServerRoute`)
 
 	defaultServerSecret = flag.String("default-server-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of the default server. Format: <namespace>/<name>.

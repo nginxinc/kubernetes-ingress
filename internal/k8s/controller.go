@@ -2156,7 +2156,8 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 		vsr := obj.(*conf_v1.VirtualServerRoute)
 
 		if !lbc.HasCorrectIngressClass(vsr) {
-			glog.V(3).Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
+			glog.Warningf("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
+			virtualServerRouteErrors = append(virtualServerRouteErrors, newVirtualServerRouteErrorFromVSR(vsr, errors.New("VirtualServerRoute with incorrect class name")))
 			continue
 		}
 
