@@ -2883,7 +2883,7 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 		return
 	}
 
-	ings := lbc.findIngressesForAppProtectPolicy(namespace, name)
+	ings := lbc.findIngressesForAppProtectResource(namespace, name, configs.AppProtectPolicyAnnotation)
 
 	glog.V(2).Infof("Found %v Ingresses with App Protect Policy %v", len(ings), key)
 
@@ -2908,6 +2908,7 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 	}
 	err = lbc.handleAppProtectPolicyUpdate(policy, ings)
 	if err != nil {
+		lbc.recorder.Eventf(policy, api_v1.EventTypeWarning, "AddedOrUpdatedWithError", "App Protect Policy %v was added or updated with error: %v", key, err)
 		glog.Errorf("Error adding or updating AppProtectPolicy %v: %v", key, err)
 		return
 	}
@@ -2971,7 +2972,7 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 		return
 	}
 
-	ings := lbc.findIngressesForAppProtectLogConf(namespace, name)
+	ings := lbc.findIngressesForAppProtectResource(namespace, name, configs.AppProtectLogConfAnnotation)
 
 	glog.V(2).Infof("Found %v Ingresses with App Protect LogConfig %v", len(ings), key)
 
@@ -2996,6 +2997,7 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 	}
 	err = lbc.handleAppProtectLogConfUpdate(logConf, ings)
 	if err != nil {
+		lbc.recorder.Eventf(logConf, api_v1.EventTypeWarning, "AddedOrUpdatedWithError", "App Protect Log Configuration %v was added or updated with error: %v", key, err)
 		glog.V(3).Infof("Error adding or updating AppProtectLogConf %v : %v", key, err)
 		return
 	}
@@ -3078,4 +3080,23 @@ func (lbc *LoadBalancerController) findIngressesForAppProtectLogConf(logConfName
 		}
 	}
 	return apLCIngs
+}
+
+func (lbc *LoadBalancerController) findIngressesForAppProtectResource(namespace string, name string, annotationRef string ) (apIngs []extensions.Ingress) {
+	ings, mIngs := lbc.GetManagedIngresses()
+	for i := range ings {
+		if pol, exists := ings[i].Annotations[annotationRef]; exists {
+			if pol == namespace + "/" + name || ( namespace == ings[i].Namespace && pol == name ) {
+				apIngs = append(apIngs, ings[i])
+			}
+		}
+	}
+	for _, mIng := range mIngs {
+		if pol, exists := mIng.Master.Ingress.Annotations[annotationRef]; exists {
+			if pol == namespace + "/" + name || ( mIng.Master.Ingress.Namespace == namespace && pol == name ) {
+				apIngs = append(apIngs, *mIng.Master.Ingress)
+			}
+		}
+	}
+	return apIngs
 }
