@@ -38,7 +38,7 @@ import (
 )
 
 var (
-	
+
 	// Set during build
 	version   string
 	gitCommit string
@@ -691,8 +691,8 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 }
 
 func parseReloadTimeout(appProtectEnabled bool, timeout int) int {
-	defaultTimeout := 4000
-	defaultTimeoutAppProtect := 20000
+	const defaultTimeout = 4000
+	const defaultTimeoutAppProtect = 20000
 
 	if timeout != 0 {
 		return timeout
