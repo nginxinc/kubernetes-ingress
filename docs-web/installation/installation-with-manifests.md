@@ -74,7 +74,8 @@ If you would like to use the App Protect module, create the following additional
 1. Create a custom resource definition for `APPolicy` and `APLogConf`:
    
    ```
-   $ kubectl apply -f common/ap-custom-resource-definitions.yaml 
+   $ kubectl apply -f common/ap-logconf-definition.yaml 
+   $ kubectl apply -f common/ap-policy-definition.yaml 
    ```
 
 ## 3. Deploy the Ingress Controller
