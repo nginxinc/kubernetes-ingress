@@ -1,0 +1,8 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: Policy 
+metadata:
+  name: invalid-policy 
+spec:
+  accessControl:
+    deny:
+    - 192.168.0.0/255

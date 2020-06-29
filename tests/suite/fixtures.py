@@ -304,6 +304,7 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     name = "nginx-ingress"
     vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/vs-definition.yaml")
     vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/vsr-definition.yaml")
+    pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/policy-definition.yaml")
     ts_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/ts-definition.yaml")
     gc_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/gc-definition.yaml")
 
@@ -316,6 +317,8 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
                              f"{DEPLOYMENTS}/common/vs-definition.yaml")
         create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, vsr_crd_name,
                              f"{DEPLOYMENTS}/common/vsr-definition.yaml")
+        create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, pol_crd_name,
+                             f"{DEPLOYMENTS}/common/policy-definition.yaml")
         create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, ts_crd_name,
                              f"{DEPLOYMENTS}/common/ts-definition.yaml")
         create_crd_from_yaml(kube_apis.api_extensions_v1_beta1, gc_crd_name,
@@ -331,6 +334,7 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
         print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
         delete_crd(kube_apis.api_extensions_v1_beta1, vs_crd_name)
         delete_crd(kube_apis.api_extensions_v1_beta1, vsr_crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, pol_crd_name)
         delete_crd(kube_apis.api_extensions_v1_beta1, ts_crd_name)
         delete_crd(kube_apis.api_extensions_v1_beta1, gc_crd_name)
         print("Restore the ClusterRole:")
@@ -341,6 +345,7 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
     def fin():
         delete_crd(kube_apis.api_extensions_v1_beta1, vs_crd_name)
         delete_crd(kube_apis.api_extensions_v1_beta1, vsr_crd_name)
+        delete_crd(kube_apis.api_extensions_v1_beta1, pol_crd_name)
         delete_crd(kube_apis.api_extensions_v1_beta1, ts_crd_name)
         delete_crd(kube_apis.api_extensions_v1_beta1, gc_crd_name)
         print("Restore the ClusterRole:")

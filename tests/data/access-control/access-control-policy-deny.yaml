@@ -1,0 +1,8 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: Policy 
+metadata:
+  name: deny-policy
+spec:
+  accessControl:
+    deny:
+    - 10.0.0.1

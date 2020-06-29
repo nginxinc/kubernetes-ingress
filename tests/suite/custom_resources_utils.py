@@ -88,6 +88,81 @@ def read_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> objec
         raise
 
 
+def create_policy_from_yaml(
+    custom_objects: CustomObjectsApi, yaml_manifest, namespace
+) -> str:
+    """
+    Create a Policy based on yaml file.
+
+    :param custom_objects: CustomObjectsApi
+    :param yaml_manifest: an absolute path to file
+    :param namespace:
+    :return: str
+    """
+    print("Create a Policy:")
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    try:
+        custom_objects.create_namespaced_custom_object(
+            "k8s.nginx.org", "v1alpha1", namespace, "policies", dep
+        )
+        print(f"Policy created with name '{dep['metadata']['name']}'")
+        return dep["metadata"]["name"]
+    except ApiException as ex:
+        logging.exception(
+            f"Exception: {ex} occured while creating Policy: {dep['metadata']['name']}"
+        )
+        raise
+
+
+def delete_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
+    """
+    Delete a Policy.
+
+    :param custom_objects: CustomObjectsApi
+    :param namespace: namespace
+    :param name:
+    :return:
+    """
+    print(f"Delete a Policy: {name}")
+    delete_options = client.V1DeleteOptions()
+
+    custom_objects.delete_namespaced_custom_object(
+        "k8s.nginx.org", "v1alpha1", namespace, "policies", name, delete_options
+    )
+    ensure_item_removal(
+        custom_objects.get_namespaced_custom_object,
+        "k8s.nginx.org",
+        "v1alpha1",
+        namespace,
+        "policies",
+        name,
+    )
+    print(f"Policy was removed with name '{name}'")
+
+
+def read_policy(custom_objects: CustomObjectsApi, namespace, name) -> object:
+    """
+    Get policy information (kubectl describe output)
+
+    :param custom_objects: CustomObjectsApi
+    :param namespace: The policy's namespace	
+    :param name: policy's name
+    :return: object
+    """
+    print(f"Getting info for policy {name} in namespace {namespace}")
+    try:
+        response = custom_objects.get_namespaced_custom_object(
+            "k8s.nginx.org", "v1alpha1", namespace, "policies", name
+        )
+        pprint(response)
+        return response
+
+    except ApiException as ex:
+        logging.exception(f"Exception occured: {ex} while getting reading Policy")
+        raise
+
+
 def create_virtual_server_from_yaml(
     custom_objects: CustomObjectsApi, yaml_manifest, namespace
 ) -> str:
