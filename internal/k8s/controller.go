@@ -291,14 +291,14 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 	lbc.syncQueue.Enqueue(item)
 }
 
-// AddappProtectPolicyHandler create dynamic informers for custom appprotect policy resource
+// AddappProtectPolicyHandler creates dynamic informers for custom appprotect policy resource
 func (lbc *LoadBalancerController) addAppProtectPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.appProtectPolicyInformer = lbc.dynInformerFactory.ForResource(appProtectPolicyGVR).Informer()
 	lbc.appProtectPolicyLister = lbc.appProtectPolicyInformer.GetStore()
 	lbc.appProtectPolicyInformer.AddEventHandler(handlers)
 }
 
-// AddappProtectLogConfHandler create dynamic informer for custom appprotect logging config resource
+// AddappProtectLogConfHandler creates dynamic informer for custom appprotect logging config resource
 func (lbc *LoadBalancerController) addAppProtectLogConfHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.appProtectLogConfInformer = lbc.dynInformerFactory.ForResource(appProtectLogConfGVR).Informer()
 	lbc.appProtectLogConfLister = lbc.appProtectLogConfInformer.GetStore()
@@ -2208,7 +2208,7 @@ func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *extensions.In
 	logConfNsN := ParseResourceReferenceAnnotation(ing.Namespace, ing.Annotations[configs.AppProtectLogConfAnnotation])
 
 	if _, exists := ing.Annotations[configs.AppProtectLogConfDstAnnotation]; !exists {
-		return nil, "", fmt.Errorf("Error: app-protect-security-log requires app-protect-security-log-destination in %v", ing.Name)
+		return nil, "", fmt.Errorf("Error: %v requires %v in %v", configs.AppProtectLogConfAnnotation, configs.AppProtectLogConfDstAnnotation, ing.Name)
 	}
 
 	logDst = ing.Annotations[configs.AppProtectLogConfDstAnnotation]
@@ -2242,19 +2242,17 @@ func (lbc *LoadBalancerController) getAppProtectPolicy(ing *extensions.Ingress) 
 
 	apPolicyObj, exists, err := lbc.appProtectPolicyLister.GetByKey(polNsN)
 	if err != nil {
-		err = fmt.Errorf("Error retirieving App Protect Policy name for Ingress %v: %v ", ing.Name, err)
-		return nil, err
+		return nil, fmt.Errorf("Error retirieving App Protect Policy name for Ingress %v: %v ", ing.Name, err)
 	}
 
 	if !exists {
-		return nil, fmt.Errorf("Error retrieving App Protect Log Config for Ingress %v: %v does not exist", ing.Name, polNsN)
+		return nil, fmt.Errorf("Error retrieving App Protect Policy for Ingress %v: %v does not exist", ing.Name, polNsN)
 	}
 
 	apPolicy = apPolicyObj.(*unstructured.Unstructured)
 	err = ValidateAppProtectPolicy(apPolicy)
 	if err != nil {
-		err = fmt.Errorf("Error validating App Protect Policy %v for Ingress %v: %v", apPolicy.GetName(), ing.Name, err)
-		return nil, err
+		return nil, fmt.Errorf("Error validating App Protect Policy %v for Ingress %v: %v", apPolicy.GetName(), ing.Name, err)
 	}
 	return apPolicy, nil
 }
@@ -2892,7 +2890,7 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 	if !polExists {
 		err = lbc.handleAppProtectPolicyDeletion(key, ings)
 		if err != nil {
-			glog.Errorf("Error deleting AppProtectPolicy %v", key)
+			glog.Errorf("Error deleting AppProtectPolicy %v: %v", key, err)
 		}
 		return
 	}
@@ -2903,14 +2901,14 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 	if err != nil {
 		err = lbc.handleAppProtectPolicyDeletion(key, ings)
 		if err != nil {
-			glog.Errorf("Error deleting AppProtectPolicy %v after it failed to validate", key)
+			glog.Errorf("Error deleting AppProtectPolicy %v after it failed to validate: %v", key, err)
 		}
 		lbc.recorder.Eventf(policy, api_v1.EventTypeWarning, "Rejected", "%v was rejected: %v", key, err)
 		return
 	}
 	err = lbc.handleAppProtectPolicyUpdate(policy, ings)
 	if err != nil {
-		glog.Errorf("Error adding or updating AppProtectPolicy %v : %v", key, err)
+		glog.Errorf("Error adding or updating AppProtectPolicy %v: %v", key, err)
 		return
 	}
 	lbc.recorder.Eventf(policy, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectPolicy %v was added or updated", key)
@@ -2981,18 +2979,18 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 		glog.V(3).Infof("Deleting AppProtectLogConf %v", key)
 		err = lbc.handleAppProtectLogConfDeletion(key, ings)
 		if err != nil {
-			glog.Errorf("Error deleting App Protect LogConfig %v", key)
+			glog.Errorf("Error deleting App Protect LogConfig %v: %v", key, err)
 		}
 		return
 	}
 
 	logConf := obj.(*unstructured.Unstructured)
 
-	err = ValidateAppProtectLogConf(obj.(*unstructured.Unstructured))
+	err = ValidateAppProtectLogConf(logConf)
 	if err != nil {
 		err = lbc.handleAppProtectLogConfDeletion(key, ings)
 		if err != nil {
-			glog.Errorf("Error deleting App Protect LogConfig  %v after it failed to validate", key)
+			glog.Errorf("Error deleting App Protect LogConfig  %v after it failed to validate: %v", key, err)
 		}
 		return
 	}
@@ -3026,7 +3024,6 @@ func (lbc *LoadBalancerController) handleAppProtectLogConfUpdate(logConf *unstru
 }
 
 func (lbc *LoadBalancerController) handleAppProtectLogConfDeletion(key string, ings []extensions.Ingress) error {
-
 	eventType := api_v1.EventTypeNormal
 	title := "Updated"
 	message := fmt.Sprintf("Configuration was updated due to deleted App Protect Log Configuration %v", key)

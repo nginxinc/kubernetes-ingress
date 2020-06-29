@@ -57,7 +57,7 @@ func ValidateAppProtectLogConf(logConf *unstructured.Unstructured) error {
 
 var logDstEx = regexp.MustCompile(`syslog:server=((?:\d{1,3}\.){3}\d{1,3}|localhost):\d{1,5}`)
 
-//ValidateAppProtectLogDestinationAnnotation validates annotation for log destination configuration
+// ValidateAppProtectLogDestinationAnnotation validates annotation for log destination configuration
 func ValidateAppProtectLogDestinationAnnotation(dstAntn string) error {
 	errormsg := "Error parsing App Protect Log config: Destination Annotation must follow format: syslog:server=<ip-address | localhost>:<port>"
 	if !logDstEx.MatchString(dstAntn) {
@@ -87,7 +87,7 @@ func ValidateAppProtectLogDestinationAnnotation(dstAntn string) error {
 	return nil
 }
 
-//ParseResourceReferenceAnnotation returns a namespace/name string
+// ParseResourceReferenceAnnotation returns a namespace/name string
 func ParseResourceReferenceAnnotation(ns, antn string) string {
 	if !strings.Contains(antn, "/") {
 		return ns + "/" + antn

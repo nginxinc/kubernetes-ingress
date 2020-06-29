@@ -38,10 +38,9 @@ func (*FakeManager) CreateConfig(name string, content []byte) {
 }
 
 //CreateAppProtectResourceFile provides a fake implementation of CreateAppProtectResourceFile
-func (*FakeManager) CreateAppProtectResourceFile(name string, content []byte) error {
+func (*FakeManager) CreateAppProtectResourceFile(name string, content []byte) {
 	glog.V(3).Infof("Writing Ap Resource File %v", name)
 	glog.V(3).Info(string(content))
-	return nil
 }
 
 //DeleteAppProtectResourceFile provides a fake implementation of DeleteAppProtectResourceFile

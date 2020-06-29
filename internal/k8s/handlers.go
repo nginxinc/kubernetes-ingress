@@ -17,8 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-var napconfigFolder = "/etc/nginx/waf/nac-policies/"
-
 // createConfigMapHandlers builds the handler funcs for config maps
 func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{

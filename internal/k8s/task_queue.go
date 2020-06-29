@@ -118,7 +118,7 @@ const (
 	globalConfiguration
 	// transportserver resource
 	transportserver
-	// appprotectpolicy resource
+	// appProtectPolicy resource
 	appProtectPolicy
 	// appProtectlogconf resource
 	appProtectLogConf

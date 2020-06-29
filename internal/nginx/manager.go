@@ -24,8 +24,12 @@ const JWKSecretFileMode = 0644
 const configFileMode = 0644
 const jsonFileForOpenTracingTracer = "/var/lib/nginx/tracer-config.json"
 
-//Configuration of App-Protect plugin
-const apPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 307200000 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
+// appPluginParams is the configuration of App-Protect plugin
+const appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 307200000 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
+
+const appProtectPluginStartCmd = "/usr/share/ts/bin/bd-socket-plugin"
+const appProtectAgentStartCmd = "/opt/app_protect/bin/bd_agent"
+
 
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
 type ServerConfig struct {
@@ -35,11 +39,11 @@ type ServerConfig struct {
 	SlowStart   string
 }
 
-//AppProtectDebugLogConfigFileContent holds the content of the file to be written when nginx ebug is enabled. It will enable NGINX App Protect debug logs
-const AppProtectDebugLogConfigFileContent = "MODULE = IO_PLUGIN;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\nMODULE = ECARD_POLICY;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\n"
+// AppProtectDebugLogConfigFileContent holds the content of the file to be written when nginx debug is enabled. It will enable NGINX App Protect debug logs
+const appProtectDebugLogConfigFileContent = "MODULE = IO_PLUGIN;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\nMODULE = ECARD_POLICY;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\n"
 
-//APPProtectLogConfigFileName is the location of the NGINX App Protect logging configuration file
-const APPProtectLogConfigFileName = "/etc/app_protect/bd/logger.cfg"
+// APPProtectLogConfigFileName is the location of the NGINX App Protect logging configuration file
+const aPPProtectLogConfigFileName = "/etc/app_protect/bd/logger.cfg"
 
 // The Manager interface updates NGINX configuration, starts, reloads and quits NGINX,
 // updates NGINX Plus upstream servers.
@@ -52,7 +56,7 @@ type Manager interface {
 	CreateTLSPassthroughHostsConfig(content []byte)
 	CreateSecret(name string, content []byte, mode os.FileMode) string
 	DeleteSecret(name string)
-	CreateAppProtectResourceFile(name string, content []byte) error
+	CreateAppProtectResourceFile(name string, content []byte)
 	DeleteAppProtectResourceFile(name string)
 	GetFilenameForSecret(name string) string
 	CreateDHParam(content string) (string, error)
@@ -74,7 +78,6 @@ type Manager interface {
 // LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
 // updates NGINX Plus upstream servers. It assumes that NGINX is running in the same container.
 type LocalManager struct {
-	nginxPid                     int
 	confdPath                    string
 	streamConfdPath              string
 	secretsPath                  string
@@ -92,11 +95,8 @@ type LocalManager struct {
 	plusConfigVersionCheckClient *http.Client
 	metricsCollector             collectors.ManagerCollector
 	OpenTracing                  bool
-	appProtectPluginStartCmd     string
 	appProtectPluginPid          int
-	appProtectAgentStartCmd      string
 	appProtectAgentPid           int
-	appProtectPluginParams       string
 }
 
 // NewLocalManager creates a LocalManager.
@@ -121,9 +121,6 @@ func NewLocalManager(confPath string, binaryFilename string, mc collectors.Manag
 		reloadCmd:                   fmt.Sprintf("%v -s %v", binaryFilename, "reload"),
 		quitCmd:                     fmt.Sprintf("%v -s %v", binaryFilename, "quit"),
 		metricsCollector:            mc,
-		appProtectPluginStartCmd:    "/usr/share/ts/bin/bd-socket-plugin",
-		appProtectAgentStartCmd:     "/opt/app_protect/bin/bd_agent",
-		appProtectPluginParams:      apPluginParams,
 	}
 
 	return &manager
@@ -235,17 +232,16 @@ func (lm *LocalManager) CreateDHParam(content string) (string, error) {
 	return lm.dhparamFilename, nil
 }
 
-//CreateAppProtectResourceFile writes contents of An App Protect resource to a file
-func (lm *LocalManager) CreateAppProtectResourceFile(name string, content []byte) error {
+// CreateAppProtectResourceFile writes contents of An App Protect resource to a file
+func (lm *LocalManager) CreateAppProtectResourceFile(name string, content []byte){
 	glog.V(3).Infof("Writing App Protect Resource to %v", name)
 	err := createFileAndWrite(name, content)
 	if err != nil {
 		glog.Fatalf("Failed to write App Protect Resource to %v: %v", name, err)
 	}
-	return nil
 }
 
-//DeleteAppProtectResourceFile removes an App Protect policy file from storage
+// DeleteAppProtectResourceFile removes an App Protect resource file from storage
 func (lm *LocalManager) DeleteAppProtectResourceFile(name string) {
 	if err := os.Remove(name); err != nil {
 		glog.Warningf("Failed to delete App Protect Resource from %v: %v", name, err)
@@ -266,7 +262,6 @@ func (lm *LocalManager) Start(done chan error) {
 	go func() {
 		done <- cmd.Wait()
 	}()
-	lm.nginxPid = cmd.Process.Pid
 	err := lm.verifyClient.WaitForCorrectVersion(lm.configVersion)
 	if err != nil {
 		glog.Fatalf("Could not get newest config version: %v", err)
@@ -431,18 +426,18 @@ func (lm *LocalManager) SetOpenTracing(openTracing bool) {
 func (lm *LocalManager) AppProtectAgentStart(apaDone chan error, debug bool) {
 	if debug {
 		glog.V(3).Info("Starting AppProtect Agent in debug mode")
-		err := os.Remove(APPProtectLogConfigFileName)
+		err := os.Remove(aPPProtectLogConfigFileName)
 		if err != nil {
 			glog.Fatalf("Failed removing App Protect Log configuration file")
 		}
-		err = createFileAndWrite(APPProtectLogConfigFileName, []byte(AppProtectDebugLogConfigFileContent))
+		err = createFileAndWrite(aPPProtectLogConfigFileName, []byte(appProtectDebugLogConfigFileContent))
 		if err != nil {
 			glog.Fatalf("Failed Writing App Protect Log configuration file")
 		}		
 	}
 	glog.V(3).Info("Starting AppProtect Agent")
 
-	cmd := exec.Command(lm.appProtectAgentStartCmd)
+	cmd := exec.Command(appProtectAgentStartCmd)
 	if err := cmd.Start(); err != nil {
 		glog.Fatalf("Failed to start AppProtect Agent: %v", err)
 	}
@@ -450,7 +445,6 @@ func (lm *LocalManager) AppProtectAgentStart(apaDone chan error, debug bool) {
 	go func() {
 		apaDone <- cmd.Wait()
 	}()
-
 }
 
 // AppProtectAgentQuit gracefully ends AppProtect Agent.
@@ -465,8 +459,8 @@ func (lm *LocalManager) AppProtectAgentQuit() {
 // AppProtectPluginStart starts the AppProtect plugin.
 func (lm *LocalManager) AppProtectPluginStart(appDone chan error) {
 	glog.V(3).Info("Starting AppProtect Plugin")
-	startupParams := strings.Fields(lm.appProtectPluginParams)
-	cmd := exec.Command(lm.appProtectPluginStartCmd, startupParams...)
+	startupParams := strings.Fields(appPluginParams)
+	cmd := exec.Command(appProtectPluginStartCmd, startupParams...)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stdout

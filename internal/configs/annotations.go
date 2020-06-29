@@ -11,13 +11,13 @@ import (
 // JWTKeyAnnotation is the annotation where the Secret with a JWK is specified.
 const JWTKeyAnnotation = "nginx.com/jwt-key"
 
-//AppProtectPolicyAnnotation is where the NGINX App Protect policy is specified
+// AppProtectPolicyAnnotation is where the NGINX App Protect policy is specified
 const AppProtectPolicyAnnotation = "appprotect.f5.com/app-protect-policy"
 
-//AppProtectLogConfAnnotation is where the NGINX AppProtect Log Configuration is specified
+// AppProtectLogConfAnnotation is where the NGINX AppProtect Log Configuration is specified
 const AppProtectLogConfAnnotation = "appprotect.f5.com/app-protect-security-log"
 
-//AppProtectLogConfDstAnnotation is where the NGINX AppProtect Log Configuration is specified
+// AppProtectLogConfDstAnnotation is where the NGINX AppProtect Log Configuration is specified
 const AppProtectLogConfDstAnnotation = "appprotect.f5.com/app-protect-security-log-destination"
 
 var masterBlacklist = map[string]bool{

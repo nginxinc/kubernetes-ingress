@@ -406,8 +406,8 @@ func TestVerifyThresholds(t *testing.T) {
 		"a string",
 	}
 	for _, input := range validInput {
-		if res := VerifyAppProtectThresholds(input); !res {
-			t.Errorf("VerifyAppProtectThresholds(%s) returned %v,expected true", input, res)
+		if !VerifyAppProtectThresholds(input) {
+			t.Errorf("VerifyAppProtectThresholds(%s) returned false,expected true", input)
 		}
 	}
 	for _, input := range invalidInput {

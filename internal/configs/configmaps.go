@@ -454,7 +454,6 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool) *Con
 	}
 
 	if hasAppProtect {
-
 		if appProtectFailureModeAction, exists := cfgm.Data["app-protect-failure-mode-action"]; exists {
 			if appProtectFailureModeAction == "pass" || appProtectFailureModeAction == "drop" {
 				cfgParams.MainAppProtectFailureModeAction = appProtectFailureModeAction

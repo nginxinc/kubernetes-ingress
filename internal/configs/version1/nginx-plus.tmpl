@@ -57,7 +57,7 @@ http {
     {{if .AppProtectFailureModeAction}}app_protect_failure_mode_action {{.AppProtectFailureModeAction}};{{end}}
     {{if .AppProtectCookieSeed}}app_protect_cookie_seed {{.AppProtectCookieSeed}};{{end}}
     {{if .AppProtectCPUThresholds}}app_protect_cpu_thresholds {{.AppProtectCPUThresholds}};{{end}}
-	{{if .AppProtectPhysicalMemoryThresholds}}app_protect_physical_memory_util_thresholds {{.AppProtectPhysicalMemoryThresholds}};{{end}}
+    {{if .AppProtectPhysicalMemoryThresholds}}app_protect_physical_memory_util_thresholds {{.AppProtectPhysicalMemoryThresholds}};{{end}}
     {{- end}}
     sendfile        on;
     #tcp_nopush     on;

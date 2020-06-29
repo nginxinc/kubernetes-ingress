@@ -962,23 +962,16 @@ func (cnf *Configurator) updateApResources(ingEx *IngressEx) map[string]string {
 	if ingEx.AppProtectPolicy != nil {
 		policyFileName := appProtectPolicyFileNameFromIngEx(ingEx)
 		policyContent := generateApResourceFileContent(ingEx.AppProtectPolicy)
-		err := cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
-		if err != nil {
-			glog.Warningf("Error creating file %v: %v", policyFileName, err)
-		} else {
-			apRes[appProtectPolicyKey] = policyFileName
-		}
+		cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
+		apRes[appProtectPolicyKey] = policyFileName
+	
 	}
 
 	if ingEx.AppProtectLogConf != nil {
 		logConfFileName := appProtectLogConfFileNameFromIngEx(ingEx)
 		logConfContent := generateApResourceFileContent(ingEx.AppProtectLogConf)
-		err := cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
-		if err != nil {
-			glog.Warningf("Error creating file %v: %v", logConfFileName, err)
-		} else {
-			apRes[appProtectLogConfKey] = logConfFileName + " " + ingEx.AppProtectLogDst
-		}
+		cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
+		apRes[appProtectLogConfKey] = logConfFileName + " " + ingEx.AppProtectLogDst
 	}
 
 	return apRes
@@ -999,7 +992,7 @@ func generateApResourceFileContent(apResource *unstructured.Unstructured) []byte
 	return data
 }
 
-//AddOrUpdateAppProtectResource updates Ingresses that use App Protect Resources
+// AddOrUpdateAppProtectResource updates Ingresses that use App Protect Resources
 func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Unstructured, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
 	for i := range ingExes {
 		err := cnf.addOrUpdateIngress(&ingExes[i])
@@ -1022,7 +1015,7 @@ func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Un
 	return nil
 }
 
-//DeleteAppProtectPolicy updates Ingresses that use AP Policy after that policy is deleted
+// DeleteAppProtectPolicy updates Ingresses that use AP Policy after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceame string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
 	fName := strings.Replace(polNamespaceame, "/", "_", 1)
 	polFileName := appProtectPolicyFolder + fName
@@ -1049,7 +1042,7 @@ func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceame string, ingExes 
 	return nil
 }
 
-//DeleteAppProtectLogConf updates Ingresses that use AP Log Configuration after that policy is deleted
+// DeleteAppProtectLogConf updates Ingresses that use AP Log Configuration after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceame string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
 	fName := strings.Replace(logConfNamespaceame, "/", "_", 1)
 	logConfFileName := appProtectLogConfFolder + fName

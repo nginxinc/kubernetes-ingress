@@ -38,8 +38,7 @@ import (
 )
 
 var (
-	dynClient dynamic.Interface
-
+	
 	// Set during build
 	version   string
 	gitCommit string
@@ -124,8 +123,8 @@ var (
 		"Enable debugging for NGINX. Uses the nginx-debug binary. Requires 'error-log-level: debug' in the ConfigMap.")
 
 	nginxReloadTimeout = flag.Int("nginx-reload-timeout", 0,
-		`Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
-		Default is 4000 (default is 20000 instead if enable-app-protect is true)`)
+		`The timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
+		The default is 4000 (or 20000 if -enable-app-protect is true). If set to 0, the default value will be used`)
 
 	wildcardTLSSecret = flag.String("wildcard-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
@@ -225,6 +224,7 @@ func main() {
 		glog.Fatalf("Failed to create client: %v.", err)
 	}
 
+	var dynClient dynamic.Interface
 	if *appProtect {
 		dynClient, err = dynamic.NewForConfig(config)
 		if err != nil {
