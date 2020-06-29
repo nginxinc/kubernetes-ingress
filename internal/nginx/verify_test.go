@@ -28,7 +28,7 @@ func getTestHTTPClient() *http.Client {
 }
 
 func TestVerifyClient(t *testing.T) {
-	c := verifyClient{
+	c := VerifyClient{
 		client:  getTestHTTPClient(),
 		timeout: 25,
 	}

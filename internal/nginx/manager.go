@@ -30,7 +30,6 @@ const appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memo
 const appProtectPluginStartCmd = "/usr/share/ts/bin/bd-socket-plugin"
 const appProtectAgentStartCmd = "/opt/app_protect/bin/bd_agent"
 
-
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
 type ServerConfig struct {
 	MaxFails    int
@@ -87,7 +86,7 @@ type LocalManager struct {
 	dhparamFilename              string
 	tlsPassthroughHostsFilename  string
 	verifyConfigGenerator        *verifyConfigGenerator
-	verifyClient                 *verifyClient
+	verifyClient                 *VerifyClient
 	configVersion                int
 	reloadCmd                    string
 	quitCmd                      string
@@ -117,7 +116,7 @@ func NewLocalManager(confPath string, binaryFilename string, mc collectors.Manag
 		binaryFilename:              binaryFilename,
 		verifyConfigGenerator:       verifyConfigGenerator,
 		configVersion:               0,
-		verifyClient:                newVerifyClient(timeout),
+		verifyClient:                NewVerifyClient(timeout),
 		reloadCmd:                   fmt.Sprintf("%v -s %v", binaryFilename, "reload"),
 		quitCmd:                     fmt.Sprintf("%v -s %v", binaryFilename, "quit"),
 		metricsCollector:            mc,
@@ -233,7 +232,7 @@ func (lm *LocalManager) CreateDHParam(content string) (string, error) {
 }
 
 // CreateAppProtectResourceFile writes contents of An App Protect resource to a file
-func (lm *LocalManager) CreateAppProtectResourceFile(name string, content []byte){
+func (lm *LocalManager) CreateAppProtectResourceFile(name string, content []byte) {
 	glog.V(3).Infof("Writing App Protect Resource to %v", name)
 	err := createFileAndWrite(name, content)
 	if err != nil {
@@ -433,7 +432,7 @@ func (lm *LocalManager) AppProtectAgentStart(apaDone chan error, debug bool) {
 		err = createFileAndWrite(appProtectLogConfigFileName, []byte(appProtectDebugLogConfigFileContent))
 		if err != nil {
 			glog.Fatalf("Failed Writing App Protect Log configuration file")
-		}		
+		}
 	}
 	glog.V(3).Info("Starting AppProtect Agent")
 
