@@ -15,19 +15,21 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 
 ## Installing the Chart
 
-### Installing CRDs
+### Installing the CRDs
 
-The VirtualServer and VirtualServerRoute resources are new load balancing configuration, introduced in release 1.5 as an alternative to the Ingress resource. The resources enable use cases not supported with the Ingress resource, such as [traffic splitting](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples-of-custom-resources/traffic-splitting) and [advanced content-based routing](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples-of-custom-resources/advanced-routing).
+By default, Helm installs a number of custom resource definitions (CRDs). Those CRDs are required for the VirtualServer, VirtualServerRoute and TransportServer custom resources.
 
-To see additional examples of using the resources for specific use cases, see [examples of custom resources](https://github.com/nginxinc/kubernetes-ingress/blob/master/examples-of-custom-resources).
+If you do not use those resources (which corresponds to `controller.enableCustomResources` set to `false`), you can skip the installation of the CRDs:
 
 * Using Helm 3.x client:
 
-    Helm will install CRDs by default. Specify `helm install --skip-crds` to skip installation of CRDs.
+    Specify `--skip-crds` for the helm install command.
 
 * Using a Helm 2.x client:
 
-    Helm will install CRDs if `controller.enableCustomResources` is set.
+    Set `controller.enableCustomResources` to `false`.
+
+> **Note**: If the CRDs are already installed in the cluster, Helm will skip the CRDs installation.
 
 ### Installing via Helm Repository
 
@@ -106,15 +108,19 @@ To see additional examples of using the resources for specific use cases, see [e
 
 > **Tip**: List all releases using `helm list`
 
-### Running Multiple Ingress Controllers
-
-It is recommended to set `controller.reportIngressStatus.enableLeaderElection` so that only one Ingress Controller deployment reports the Ingress, VirtualServer and VirtualServerRoute status.
-
-> **Note**: CRDs are shared between releases and are not namespaced. Great caution should be taken when removing CRDs as all deployed Custom Resources will also be deleted. It is however, safe to delete a release, the CRDs will be left behind for this reason and must be removed manually via `kubectl`.
-
-See [running multiple ingress controllers](https://docs.nginx.com/nginx-ingress-controller/installation/running-multiple-ingress-controllers/) for more details.
-
 ## Upgrading the Chart
+
+### Upgrading the CRDs
+
+Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, run the following command to upgrade the CRDs:
+
+```console
+$ kubectl apply -f crds/
+```
+
+> **Note**: Make sure to check the [release notes](https://www.github.com/nginxinc/kubernetes-ingress/releases) for a new release for any special upgrade procedures.
+
+### Upgrading the Release
 
 To upgrade the release `my-release`
 
@@ -130,15 +136,9 @@ To upgrade the release `my-release`
     $ helm upgrade -n my-release
     ```
 
-### Updating CRDs
-
-Helm does not assist in updating of CRDs. Updates should be done via `kubectl`. See [release notes](https://www.github.com/nginxinc/kubernetes-ingress/releases) for detailed instructions for a specific release upgrade.
-
-```console
-$ kubectl apply -f crds/
-```
-
 ## Uninstalling the Chart
+
+### Uninstalling the Release
 
 To uninstall/delete the release `my-release`
 
@@ -156,13 +156,21 @@ To uninstall/delete the release `my-release`
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
-### Uninstalling CRDs
+### Uninstalling the CRDs
 
-> **Note**: The following command will delete all Ingress Controller related Custom Resources in your cluster across all namespaces. Please ensure there are no Custom Resources in any namespace that you want to keep.
+Uninstalling the release does not remove the CRDs. To remove the CRDs, run:
 
 ```console
 $ kubectl delete crds transportservers.k8s.nginx.org virtualservers.k8s.nginx.org virtualserverroutes.k8s.nginx.org
 ```
+
+> **Note**: The following command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other Ingress Controller releases running in the cluster.
+
+## Running Multiple Ingress Controllers
+
+If you are running multiple Ingress Controller releases in your cluster with enabled custom resources, the releases will share a single version of the CRDs. As a result, make sure that the Ingress Controller versions match the version of the CRDs. Additionally, when uninstalling a release, ensure that you don’t remove the CRDs until there are no other Ingress Controller releases running in the cluster.
+
+See [running multiple ingress controllers](https://docs.nginx.com/nginx-ingress-controller/installation/running-multiple-ingress-controllers/) for more details.
 
 ## Configuration
 
