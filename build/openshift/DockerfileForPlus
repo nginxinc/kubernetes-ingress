@@ -9,7 +9,7 @@ LABEL name="NGINX Ingress Controller" \
       maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>" \
       vendor="NGINX Inc <kubernetes@nginx.com>"
 
-ENV NGINX_PLUS_VERSION 21-1.el8.ngx
+ENV NGINX_PLUS_VERSION 22-1.el8.ngx
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
