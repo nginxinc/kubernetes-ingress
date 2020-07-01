@@ -99,6 +99,8 @@ spec:
      - No
    * - ``ingressClassName``
      - Specifies which Ingress controller must handle the VirtualServer resource.
+     - ``string``
+     - No
    * - ``http-snippets``
      - Sets a custom snippet in the http context.
      - ``string``
