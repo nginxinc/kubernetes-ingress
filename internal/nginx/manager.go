@@ -39,11 +39,11 @@ type ServerConfig struct {
 	SlowStart   string
 }
 
-// AppProtectDebugLogConfigFileContent holds the content of the file to be written when nginx debug is enabled. It will enable NGINX App Protect debug logs
+// appProtectDebugLogConfigFileContent holds the content of the file to be written when nginx debug is enabled. It will enable NGINX App Protect debug logs
 const appProtectDebugLogConfigFileContent = "MODULE = IO_PLUGIN;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\nMODULE = ECARD_POLICY;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\n"
 
-// APPProtectLogConfigFileName is the location of the NGINX App Protect logging configuration file
-const aPPProtectLogConfigFileName = "/etc/app_protect/bd/logger.cfg"
+// appProtectLogConfigFileName is the location of the NGINX App Protect logging configuration file
+const appProtectLogConfigFileName = "/etc/app_protect/bd/logger.cfg"
 
 // The Manager interface updates NGINX configuration, starts, reloads and quits NGINX,
 // updates NGINX Plus upstream servers.
@@ -426,11 +426,11 @@ func (lm *LocalManager) SetOpenTracing(openTracing bool) {
 func (lm *LocalManager) AppProtectAgentStart(apaDone chan error, debug bool) {
 	if debug {
 		glog.V(3).Info("Starting AppProtect Agent in debug mode")
-		err := os.Remove(aPPProtectLogConfigFileName)
+		err := os.Remove(appProtectLogConfigFileName)
 		if err != nil {
 			glog.Fatalf("Failed removing App Protect Log configuration file")
 		}
-		err = createFileAndWrite(aPPProtectLogConfigFileName, []byte(appProtectDebugLogConfigFileContent))
+		err = createFileAndWrite(appProtectLogConfigFileName, []byte(appProtectDebugLogConfigFileContent))
 		if err != nil {
 			glog.Fatalf("Failed Writing App Protect Log configuration file")
 		}		

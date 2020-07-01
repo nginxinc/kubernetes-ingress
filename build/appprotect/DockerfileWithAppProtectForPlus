@@ -99,7 +99,7 @@ COPY --chown=nginx:0 build/appprotect/log-default.json /etc/nginx
 EXPOSE 80 443
 
 COPY internal/configs/version1/nginx-plus.ingress.tmpl \
-internal/configs/version1/nginx-plus.tmpl \
+	internal/configs/version1/nginx-plus.tmpl \
 	internal/configs/version2/nginx-plus.virtualserver.tmpl \
 	internal/configs/version2/nginx-plus.transportserver.tmpl /
 

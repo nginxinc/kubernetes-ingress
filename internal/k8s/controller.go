@@ -291,14 +291,14 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 	lbc.syncQueue.Enqueue(item)
 }
 
-// AddappProtectPolicyHandler creates dynamic informers for custom appprotect policy resource
+// addappProtectPolicyHandler creates dynamic informers for custom appprotect policy resource
 func (lbc *LoadBalancerController) addAppProtectPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.appProtectPolicyInformer = lbc.dynInformerFactory.ForResource(appProtectPolicyGVR).Informer()
 	lbc.appProtectPolicyLister = lbc.appProtectPolicyInformer.GetStore()
 	lbc.appProtectPolicyInformer.AddEventHandler(handlers)
 }
 
-// AddappProtectLogConfHandler creates dynamic informer for custom appprotect logging config resource
+// addappProtectLogConfHandler creates dynamic informer for custom appprotect logging config resource
 func (lbc *LoadBalancerController) addAppProtectLogConfHandler(handlers cache.ResourceEventHandlerFuncs) {
 	lbc.appProtectLogConfInformer = lbc.dynInformerFactory.ForResource(appProtectLogConfGVR).Informer()
 	lbc.appProtectLogConfLister = lbc.appProtectLogConfInformer.GetStore()
@@ -2865,44 +2865,6 @@ func (lbc *LoadBalancerController) handleAppProtectLogConfDeletion(key string, i
 
 	lbc.emitEventForIngresses(eventType, title, message, ings)
 	return nil
-}
-
-func (lbc *LoadBalancerController) findIngressesForAppProtectPolicy(policyNamespace string, policyName string) (apIngs []extensions.Ingress) {
-	ings, mIngs := lbc.GetManagedIngresses()
-	for i := range ings {
-		if pol, exists := ings[i].Annotations[configs.AppProtectPolicyAnnotation]; exists {
-			if pol == policyNamespace+"/"+policyName || pol == policyName {
-				apIngs = append(apIngs, ings[i])
-			}
-		}
-	}
-	for _, mIng := range mIngs {
-		if pol, exists := mIng.Master.Ingress.Annotations[configs.AppProtectLogConfAnnotation]; exists {
-			if pol == policyNamespace+"/"+policyName || pol == policyName {
-				apIngs = append(apIngs, *mIng.Master.Ingress)
-			}
-		}
-	}
-	return apIngs
-}
-
-func (lbc *LoadBalancerController) findIngressesForAppProtectLogConf(logConfNamespace string, logConfName string) (apLCIngs []extensions.Ingress) {
-	ings, mIngs := lbc.GetManagedIngresses()
-	for i := range ings {
-		if pol, exists := ings[i].Annotations[configs.AppProtectLogConfAnnotation]; exists {
-			if pol == logConfNamespace+"/"+logConfName || pol == logConfName {
-				apLCIngs = append(apLCIngs, ings[i])
-			}
-		}
-	}
-	for _, mIng := range mIngs {
-		if pol, exists := mIng.Master.Ingress.Annotations[configs.AppProtectLogConfAnnotation]; exists {
-			if pol == logConfNamespace+"/"+logConfName || pol == logConfName {
-				apLCIngs = append(apLCIngs, *mIng.Master.Ingress)
-			}
-		}
-	}
-	return apLCIngs
 }
 
 func (lbc *LoadBalancerController) findIngressesForAppProtectResource(namespace string, name string, annotationRef string ) (apIngs []extensions.Ingress) {
