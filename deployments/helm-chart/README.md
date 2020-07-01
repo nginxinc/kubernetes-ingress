@@ -17,7 +17,7 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
 
 ### Installing the CRDs
 
-By default, Helm installs a number of custom resource definitions (CRDs). Those CRDs are required for the VirtualServer, VirtualServerRoute and TransportServer custom resources.
+By default, Helm installs a number of custom resource definitions (CRDs). Those CRDs are required for the VirtualServer, VirtualServerRoute, TransportServer and GlobalConfiguration custom resources.
 
 If you do not use those resources (which corresponds to `controller.enableCustomResources` set to `false`), you can skip the installation of the CRDs:
 
@@ -161,7 +161,7 @@ The command removes all the Kubernetes components associated with the chart and 
 Uninstalling the release does not remove the CRDs. To remove the CRDs, run:
 
 ```console
-$ kubectl delete crds transportservers.k8s.nginx.org virtualservers.k8s.nginx.org virtualserverroutes.k8s.nginx.org
+$ kubectl delete crds transportservers.k8s.nginx.org virtualservers.k8s.nginx.org virtualserverroutes.k8s.nginx.org globalconfigurations.k8s.nginx.org
 ```
 
 > **Note**: The following command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other Ingress Controller releases running in the cluster.
@@ -209,7 +209,9 @@ Parameter | Description | Default
 `controller.useIngressClassOnly` | Ignore Ingress resources without the `"kubernetes.io/ingress.class"` annotation or the `"ingressClassName"` field in VirtualServer/VirtualServerRoute. | false
 `controller.watchNamespace` | Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces. | ""
 `controller.enableCustomResources` | Enable the custom resources. | true
-`controller.enableTLSPassthrough` | Enable TLS Passthrough on port 443. Requires `controller.enableCustomResources`. | false 
+`controller.enableTLSPassthrough` | Enable TLS Passthrough on port 443. Requires `controller.enableCustomResources`. | false
+`controller.globalConfiguration.create` | Creates the GlobalConfiguration custom resource. Requires `controller.enableCustomResources`. | false
+`controller.globalConfiguration.spec` | The spec of the GlobalConfiguration for customizing NGINX configuration. | {}
 `controller.enableSnippets` | Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources. | false
 `controller.healthStatus` | Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller. | false
 `controller.healthStatusURI` | Sets the URI of health status location in the default server. Requires `contoller.healthStatus`. | "/nginx-health"

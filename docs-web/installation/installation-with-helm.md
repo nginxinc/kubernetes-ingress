@@ -15,7 +15,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 
 ### Installing the CRDs
 
-By default, Helm installs a number of custom resource definitions (CRDs). Those CRDs are required for the VirtualServer, VirtualServerRoute and TransportServer custom resources.
+By default, Helm installs a number of custom resource definitions (CRDs). Those CRDs are required for the VirtualServer, VirtualServerRoute, TransportServer and GlobalConfiguration custom resources.
 
 If you do not use those resources (which corresponds to `controller.enableCustomResources` set to `false`), you can skip the installation of the CRDs:
 
@@ -158,7 +158,7 @@ The command removes all the Kubernetes components associated with the chart and 
 Uninstalling the release does not remove the CRDs. To remove the CRDs, run:
 
 ```console
-$ kubectl delete crds transportservers.k8s.nginx.org virtualservers.k8s.nginx.org virtualserverroutes.k8s.nginx.org
+$ kubectl delete crds transportservers.k8s.nginx.org virtualservers.k8s.nginx.org virtualserverroutes.k8s.nginx.org globalconfigurations.k8s.nginx.org
 ```
 
 > **Note**: The following command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other Ingress Controller releases running in the cluster.
@@ -273,6 +273,12 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``controller.enableTLSPassthrough``
      - Enable TLS Passthrough on port 443. Requires ``controller.enableCustomResources``.
      - false
+   * - ``controller.globalConfiguration.create``
+     - Creates the GlobalConfiguration custom resource. Requires ``controller.enableCustomResources``.
+     - false
+   * - ``controller.globalConfiguration.spec``
+     - The spec of the GlobalConfiguration for customizing NGINX configuration.
+     - {}
    * - ``controller.enableSnippets``
      - Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources.
      - false
