@@ -60,6 +60,7 @@ spec:
                   enum:
                   - all
                   - illegal
+                  - blocked
                   type: string
               type: object
           type: object
@@ -127,8 +128,7 @@ spec:
                 type: object
               type: array
             policy:
-              description: Foo is an example field of APPolicyConfig. Edit APPolicyConfig_types.go
-                to remove/update
+              description: Defines the App Protect policy
               properties:
                 applicationLanguage:
                   enum:
@@ -214,7 +214,6 @@ spec:
                           enabled:
                             type: boolean
                           maxHeaders:
-                            description: optional
                             type: integer
                           maxParams:
                             type: integer
@@ -476,8 +475,6 @@ spec:
                       items:
                         type: string
                       type: array
-                    enforcementReadinessPeriod:
-                      type: integer
                     maskCreditCardNumbersInRequest:
                       type: boolean
                     trustXff:
@@ -498,12 +495,6 @@ spec:
                         type: boolean
                       htmlNormalization:
                         type: boolean
-                      id:
-                        type: string
-                      kind:
-                        type: string
-                      lastUpdateMicros:
-                        type: integer
                       mandatory:
                         type: boolean
                       maskValueInLogs:
@@ -514,8 +505,6 @@ spec:
                         type: boolean
                       percentDecoding:
                         type: boolean
-                      selfLink:
-                        type: string
                       type:
                         type: string
                       urlNormalization:
@@ -567,15 +556,6 @@ spec:
                   items:
                     properties:
                       name:
-                        enum:
-                        - GET
-                        - POST
-                        - HEAD
-                        - OPTIONS
-                        - DELETE
-                        - PATCH
-                        - PUT
-                        - ACL
                         type: string
                     type: object
                   type: array
@@ -596,7 +576,7 @@ spec:
                         type: boolean
                       level:
                         enum:
-                        - Global
+                        - global
                         type: string
                       metacharsOnParameterValueCheck:
                         type: boolean
@@ -615,8 +595,6 @@ spec:
                         type: array
                       parameterLocation:
                         type: string
-                      performStaging:
-                        type: boolean
                       sensitiveParameter:
                         type: boolean
                       signatureOverrides:

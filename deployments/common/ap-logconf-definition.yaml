@@ -57,6 +57,7 @@ spec:
                   enum:
                   - all
                   - illegal
+                  - blocked
                   type: string
               type: object
           type: object

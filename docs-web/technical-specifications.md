@@ -75,7 +75,7 @@ NGINX Plus images are not available through DockerHub.
       - 
     * - Debian-based image with App Protect
       - ``appprotect/DockerfileWithAppProtectForPlus``
-      - ``debian:buster-slim``
+      - ``debian:stretch-slim``
       - NGINX Plus App Protect module 
 ```
 

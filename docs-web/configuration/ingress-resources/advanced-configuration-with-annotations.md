@@ -343,7 +343,7 @@ The table below summarizes the available annotations.
     
 ### App Protect
 
-**Note**: The App Protect annotations only work if App Protect module is [installed](https://docs.nginx.com/nginx-ingress-controller/app-protect/installation/).
+**Note**: The App Protect annotations only work if App Protect module is [installed](/nginx-ingress-controller/app-protect/installation/).
 
 ```eval_rst
 .. list-table::
@@ -356,7 +356,8 @@ The table below summarizes the available annotations.
      - Example
    * - ``appprotect.f5.com/app-protect-policy``
      - N/A
-     - The name of the App Protect Policy for the Ingress Resource. Format is ``namespace/name``. If no namespace is specified, the same namespace of the Ingress Resource is used.
+     - The name of the App Protect Policy for the Ingress Resource. Format is ``namespace/name``. If no namespace is specified, the same namespace of the Ingress Resource is used. If not specified but ``appprotect.f5.com/app-protect-enable`` is true, a default policy id applied.
+     If the referenced policy resource does not exist, or policy is invalid, this annotation will be ignored, and the default policy will be applied. 
      - N/A
      - `Example for App Protect <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/appprotect>`_.
    * - ``appprotect.f5.com/app-protect-enable``
@@ -371,12 +372,12 @@ The table below summarizes the available annotations.
      - `Example for App Protect <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/appprotect>`_.
    * - ``appprotect.f5.com/app-protect-security-log``
      - N/A
-     - The App Protect log configuration for the Ingress Resource. Format is ``namespace/name``. If no namespace is specified, the same namespace as the Ingress Resource is used.
+     - The App Protect log configuration for the Ingress Resource. Format is ``namespace/name``. If no namespace is specified, the same namespace as the Ingress Resource is used. If not specified the  default is used which is:  filter: ``illegal``, format: ``default``
      - N/A
      - `Example for App Protect <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/appprotect>`_.
    * - ``appprotect.f5.com/app-protect-security-log-destination``
      - N/A
-     - The destination of the security log. For more information check the `DESTINATION argument </nginx-app-protect/troubleshooting/#app-protect-security-log>`_.
-     - N/A
+     - The destination of the security log. For more information check the `DESTINATION argument </nginx-app-protect/troubleshooting/#app-protect-security-log>`_. 
+     - ``syslog:server=localhost:514``
      - `Example for App Protect <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/appprotect>`_.
 ```

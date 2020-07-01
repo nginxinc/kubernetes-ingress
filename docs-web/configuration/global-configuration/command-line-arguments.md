@@ -181,7 +181,7 @@ Below we describe the available command-line arguments:
 
 	 Enables support for App Protect.
 
-   Requires :option:`-nginx-plus` and :option:`-enable-custom-resources`.
+   Requires :option:`-nginx-plus`
 
 	 - If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.
 	 

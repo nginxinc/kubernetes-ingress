@@ -24,7 +24,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     $ kubectl apply -f rbac/rbac.yaml
     ```
    
-3. (App Protect only) Apply the App Protect Role Binding as well:  
+3. (App Protect only) Create the App Protect role and role binding:  
     
     ```
     $ kubectl apply -f rbac/ap-rbac.yaml

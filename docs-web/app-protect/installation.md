@@ -4,7 +4,7 @@
 
 This document provides an overview of the steps required to use NGINX App Protect with your NGINX Ingress Controller deployment. You can visit the linked documents to find additional information and instructions.
 
-You can also [install the Ingress Controller with App Protect by using Helm](/nginx-ingress-controller/installation/installation-with-helm/).
+You can also [install the Ingress Controller with App Protect by using Helm](/nginx-ingress-controller/installation/installation-with-helm/). Use the `controller.appprotect.*` parameters of the chart.
 
 ## Build the Docker Image
 
@@ -28,7 +28,7 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
     
     > **Important**: You must have an admin role to configure RBAC in your Kubernetes cluster.
 
-2. [Create the common Kubernetes resources](nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources).
+2. [Create the common Kubernetes resources](/nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources).
 3. Enable the App Protect module by adding the `enable-app-protect` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect) to your Deployment or DaemonSet file.
 4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#deploy-the-ingress-controller).
 
