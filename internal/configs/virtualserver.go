@@ -327,7 +327,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			locSnippets := r.LocationSnippets
 			// use referenced VirtualServer location snippet if the route does not define any
 			if r.LocationSnippets == "" {
-				locSnippets = vsrLocationSnippetsFromVs[r.Route]
+				locSnippets = vsrLocationSnippetsFromVs[vsrNamespaceName]
 			}
 
 			if len(r.Matches) > 0 {
