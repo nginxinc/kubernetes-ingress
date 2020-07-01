@@ -65,6 +65,11 @@ func (tq *taskQueue) Requeue(task task, err error) {
 	tq.queue.Add(task)
 }
 
+func (tq *taskQueue) Len() int {
+	glog.V(3).Infof("The queue has %v element(s)", tq.queue.Len())
+	return tq.queue.Len()
+}
+
 // RequeueAfter adds the task to the queue after the given duration
 func (tq *taskQueue) RequeueAfter(t task, err error, after time.Duration) {
 	glog.Errorf("Requeuing %v after %s, err %v", t.Key, after.String(), err)
