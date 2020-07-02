@@ -37,6 +37,7 @@ spec:
               items:
                 properties: {}
                 type: object
+                x-kubernetes-preserve-unknown-fields: true
               type: array
             policy:
               description: Defines the App Protect policy
@@ -677,6 +678,7 @@ spec:
                   items:
                     properties: {}
                     type: object
+                    x-kubernetes-preserve-unknown-fields: true
                   type: array
                 signature-settings:
                   properties:
