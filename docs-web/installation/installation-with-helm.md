@@ -4,14 +4,36 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 
 ## Prerequisites
 
-  - Kubernetes 1.12+.
-  - Helm 2.8.x+.
+  - A [Kubernetes Version Supported by the Ingress Controller](/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
+  - Helm 2.16+ or 3.0+.
   - Git.
   - If you’d like to use NGINX Plus:
     - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
     - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
 
 ## Installing the Chart
+
+### Adding the Helm Repository
+
+This step is required if you're installing the chart via the helm repository.
+
+```console
+$ helm repo add nginx-edge https://helm.nginx.com/edge
+$ helm repo update
+```
+
+### Getting the Chart Sources
+
+This step is required you're installing the chart using its sources, upgrading or deleting the chart.
+
+1. Clone the Ingress controller repo:
+    ```console
+    $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    ```
+2. Change your working directory to /deployments/helm-chart:
+    ```console
+    $ cd kubernetes-ingress/deployments/helm-chart
+    ```
 
 ### Installing the CRDs
 
@@ -23,6 +45,8 @@ If you do not use those resources (which corresponds to `controller.enableCustom
 
     Specify `--skip-crds` for the helm install command.
 
+    > **Note**: The following warning is expected and can be ignored: `skipping unknown hook: "crd-install"`.
+
 * Using a Helm 2.x client:
 
     Set `controller.enableCustomResources` to `false`.
@@ -31,73 +55,59 @@ If you do not use those resources (which corresponds to `controller.enableCustom
 
 ### Installing via Helm Repository
 
-1. Add NGINX Helm repository:
-    ```console
-    $ helm repo add nginx-edge https://helm.nginx.com/edge
-    $ helm repo update
-    ```
+To install the chart with the release name my-release (my-release is the name that you choose):
 
-2. To install the chart with the release name my-release (my-release is the name that you choose):
+  * Using Helm 3.x client:
 
-    * Using Helm 3.x client:
+      For NGINX:
+      ```console
+      $ helm install my-release nginx-edge/nginx-ingress --devel
+      ```
 
-        For NGINX:
-        ```console
-        $ helm install my-release nginx-edge/nginx-ingress
-        ```
+      For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
+      ```console
+      $ helm install my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true --devel
+      ```
 
-        For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
-        ```console
-        $ helm install my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
-        ```
+  * Using Helm 2.x client:
 
-    * Using Helm 2.x client:
+      For NGINX:
+      ```console
+      $ helm install --name my-release nginx-edge/nginx-ingress --devel
+      ```
 
-        For NGINX:
-        ```console
-        $ helm install --name my-release nginx-edge/nginx-ingress
-        ```
-
-        For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
-        ```console
-        $ helm install --name my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
-        ```
+      For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
+      ```console
+      $ helm install --name my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true --devel
+      ```
 
 ### Installing Using Chart Sources
 
-1. Clone the Ingress controller repo:
-    ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress/
-    ```
-2. Change your working directory to /deployments/helm-chart:
-    ```console
-    $ cd kubernetes-ingress/deployments/helm-chart
-    ```
-3. To install the chart with the release name my-release (my-release is the name that you choose):
+To install the chart with the release name my-release (my-release is the name that you choose):
 
-    * Using Helm 3.x client:
+  * Using Helm 3.x client:
 
-        For NGINX:
-        ```console
-        $ helm install my-release .
-        ```
+      For NGINX:
+      ```console
+      $ helm install my-release .
+      ```
 
-        For NGINX Plus:
-        ```console
-        $ helm install my-release -f values-plus.yaml .
-        ```
+      For NGINX Plus:
+      ```console
+      $ helm install my-release -f values-plus.yaml .
+      ```
 
-    * Using Helm 2.x client:
+  * Using Helm 2.x client:
 
-        For NGINX:
-        ```console
-        $ helm install --name my-release .
-        ```
+      For NGINX:
+      ```console
+      $ helm install --name my-release .
+      ```
 
-        For NGINX Plus:
-        ```console
-        $ helm install --name my-release -f values-plus.yaml .
-        ```
+      For NGINX Plus:
+      ```console
+      $ helm install --name my-release -f values-plus.yaml .
+      ```
 
     The command deploys the Ingress controller in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
 
@@ -112,32 +122,33 @@ If you do not use those resources (which corresponds to `controller.enableCustom
 Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, run the following command to upgrade the CRDs:
 
 ```console
-$ kubectl apply -f crds/
+$ kubectl apply -f deployments/helm-chart/crds/
 ```
+> **Note**: The following warning is expected and can be ignored: `Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply`.
 
 > **Note**: Make sure to check the [release notes](https://www.github.com/nginxinc/kubernetes-ingress/releases) for a new release for any special upgrade procedures.
 
 ### Upgrading the Release
 
-To upgrade the release `my-release`
+To upgrade the release `my-release`:
 
-* Using Helm 3.x client:
+#### Upgrade Using Chart Sources:
 
-    ```console
-    $ helm upgrade my-release
-    ```
+```console
+$ helm upgrade my-release .
+```
 
-* Using Helm 2.x client:
+#### Upgrade via Helm Repository:
 
-    ```console
-    $ helm upgrade -n my-release
-    ```
+```console
+$ helm upgrade my-release nginx-edge/nginx-ingress
+```
 
 ## Uninstalling the Chart
 
 ### Uninstalling the Release
 
-To uninstall/delete the release `my-release`
+To uninstall/delete the release `my-release`:
 
 * Using Helm 3.x client:
 
@@ -148,7 +159,7 @@ To uninstall/delete the release `my-release`
 * Using Helm 2.x client:
 
     ```console
-    $ helm delete my-release
+    $ helm delete --purge my-release
     ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -157,11 +168,10 @@ The command removes all the Kubernetes components associated with the chart and 
 
 Uninstalling the release does not remove the CRDs. To remove the CRDs, run:
 
-```console
-$ kubectl delete crds transportservers.k8s.nginx.org virtualservers.k8s.nginx.org virtualserverroutes.k8s.nginx.org globalconfigurations.k8s.nginx.org
-```
-
 > **Note**: The following command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other Ingress Controller releases running in the cluster.
+```console
+$ kubectl delete -f deployments/helm-chart/crds/
+```
 
 ## Running Multiple Ingress Controllers
 
@@ -384,12 +394,6 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``prometheus.port``
      - Configures the port to scrape the metrics.
      - 9113
-```
-
-Example:
-```console
-$ cd kubernetes-ingress/helm-chart
-$ helm install my-release . --set controller.replicaCount=5
 ```
 
 ## Notes
