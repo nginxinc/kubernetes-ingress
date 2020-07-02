@@ -7,7 +7,7 @@ import (
 )
 
 func TestValidatePort(t *testing.T) {
-	badPorts := []int{80, 443, 1, 1022, 65536}
+	badPorts := []int{80, 443, 1, 1023, 65536}
 	for _, badPort := range badPorts {
 		err := validatePort(badPort)
 		if err == nil {
@@ -15,7 +15,7 @@ func TestValidatePort(t *testing.T) {
 		}
 	}
 
-	goodPorts := []int{8080, 8081, 8082, 1023, 65535}
+	goodPorts := []int{8080, 8081, 8082, 1024, 65535}
 	for _, goodPort := range goodPorts {
 		err := validatePort(goodPort)
 		if err != nil {

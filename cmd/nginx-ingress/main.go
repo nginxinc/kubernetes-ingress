@@ -110,7 +110,7 @@ var (
 	nginxStatusAllowCIDRs = flag.String("nginx-status-allow-cidrs", "127.0.0.1", `Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas.`)
 
 	nginxStatusPort = flag.Int("nginx-status-port", 8080,
-		"Set the port where the NGINX stub_status or the NGINX Plus API is exposed. [1023 - 65535]")
+		"Set the port where the NGINX stub_status or the NGINX Plus API is exposed. [1024 - 65535]")
 
 	nginxStatus = flag.Bool("nginx-status", true,
 		"Enable the NGINX stub_status, or the NGINX Plus API.")
@@ -127,7 +127,7 @@ var (
 		"Enable exposing NGINX or NGINX Plus metrics in the Prometheus format")
 
 	prometheusMetricsListenPort = flag.Int("prometheus-metrics-listen-port", 9113,
-		"Set the port where the Prometheus metrics are exposed. [1023 - 65535]")
+		"Set the port where the Prometheus metrics are exposed. [1024 - 65535]")
 
 	enableCustomResources = flag.Bool("enable-custom-resources", true,
 		"Enable custom resources")
@@ -561,8 +561,8 @@ func validateResourceName(lock string) error {
 
 // validatePort makes sure a given port is inside the valid port range for its usage
 func validatePort(port int) error {
-	if port < 1023 || port > 65535 {
-		return fmt.Errorf("port outside of valid port range [1023 - 65535]: %v", port)
+	if port < 1024 || port > 65535 {
+		return fmt.Errorf("port outside of valid port range [1024 - 65535]: %v", port)
 	}
 	return nil
 }

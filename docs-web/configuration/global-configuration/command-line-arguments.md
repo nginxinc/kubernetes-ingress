@@ -115,7 +115,7 @@ Below we describe the available command-line arguments:
 
 	Set the port where the NGINX stub_status or the NGINX Plus API is exposed.
 
-	Format: ``[1023 - 65535]`` (default 8080)
+	Format: ``[1024 - 65535]`` (default 8080)
 
 .. option:: -proxy <string>
 
@@ -169,7 +169,7 @@ Below we describe the available command-line arguments:
 
 	Sets the port where the Prometheus metrics are exposed.
 
-	Format: ``[1023 - 65535]`` (default 9113)
+	Format: ``[1024 - 65535]`` (default 9113)
 
 .. option:: -spire-agent-address <string>
 
