@@ -191,11 +191,11 @@ Below we describe the available command-line arguments:
 
 .. option:: -ready-status
 
-	Enables liveness endpoint "/nginx-ready". The endpoint returns a success code when NGINX has loaded all the config after startup.
+	Enables readiness endpoint "/nginx-ready". The endpoint returns a success code when NGINX has loaded all the config after startup.
 
 .. option:: -ready-status-port
 
-	The HTTP port for the liveness endpoint.
+	The HTTP port for the readiness endpoint.
 
 	Format: ``[1024 - 65535]`` (default 8081)
 
