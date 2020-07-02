@@ -605,6 +605,10 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 		msg := fmt.Sprintf("Configuration for %v/%v was updated %s", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, vsEventWarningMessage)
 		lbc.recorder.Eventf(vsEx.VirtualServer, vsEventType, vsEventTitle, msg)
 
+		if updateErr != nil {
+			vsState = conf_v1.StateInvalid
+		}
+
 		if lbc.reportVsVsrStatusEnabled() {
 			err = lbc.statusUpdater.UpdateVirtualServerStatus(vsEx.VirtualServer, vsState, vsEventTitle, msg)
 
@@ -628,6 +632,10 @@ func (lbc *LoadBalancerController) syncConfig(task task) {
 
 			msg := fmt.Sprintf("Configuration for %v/%v was updated %s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
 			lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, msg)
+
+			if updateErr != nil {
+				vsrState = conf_v1.StateInvalid
+			}
 
 			if lbc.reportVsVsrStatusEnabled() {
 				err = lbc.statusUpdater.UpdateVirtualServerRouteStatus(vsr, vsrState, vsrEventTitle, vsrEventWarningMessage)
@@ -991,6 +999,10 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 		}
 		msg := fmt.Sprintf("Configuration for %v/%v was added or updated %s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
 		lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, msg)
+
+		if addErr != nil {
+			state = conf_v1.StateInvalid
+		}
 
 		if lbc.reportVsVsrStatusEnabled() {
 			vss := []*conf_v1.VirtualServer{vs}
@@ -1505,6 +1517,11 @@ func (lbc *LoadBalancerController) updateVirtualServersStatusFromEvents() error 
 			allErrs = append(allErrs, err)
 		}
 	}
+
+	if len(allErrs) > 0 {
+		return fmt.Errorf("not all VirtualServers statuses were updated: %v", allErrs)
+	}
+
 	return nil
 }
 
@@ -1544,7 +1561,7 @@ func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() e
 	}
 
 	if len(allErrs) > 0 {
-		return fmt.Errorf("not all VirtualServer or VirtualServerRoutes statuses were updated: %v", allErrs)
+		return fmt.Errorf("not all VirtualServerRoutes statuses were updated: %v", allErrs)
 	}
 
 	return nil
