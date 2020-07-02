@@ -3,7 +3,6 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.5
-    "helm.sh/hook": crd-install
   creationTimestamp: null
   name: aplogconfs.appprotect.f5.com
   labels:

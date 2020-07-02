@@ -13,6 +13,19 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
     - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](../../build/README.md).
     - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
 
+## Getting the Chart Sources
+
+This step is required if you're installing the chart using its sources. Additionally, the step is also required for managing the custom resource definitions (CRDs), which the Ingress Controller requires by default: upgrading/deleting the CRDs, or installing the CRDs for Helm 2.x.
+
+1. Clone the Ingress controller repo:
+    ```console
+    $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    ```
+2. Change your working directory to /deployments/helm-chart:
+    ```console
+    $ cd kubernetes-ingress/deployments/helm-chart
+    ```
+
 ## Installing the Chart
 
 ### Adding the Helm Repository
@@ -24,36 +37,15 @@ $ helm repo add nginx-edge https://helm.nginx.com/edge
 $ helm repo update
 ```
 
-### Getting the Chart Sources
-
-This step is required you're installing the chart using its sources, upgrading or deleting the chart.
-
-1. Clone the Ingress controller repo:
-    ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress/
-    ```
-2. Change your working directory to /deployments/helm-chart:
-    ```console
-    $ cd kubernetes-ingress/deployments/helm-chart
-    ```
-
 ### Installing the CRDs
 
-By default, Helm installs a number of custom resource definitions (CRDs). Those CRDs are required for the VirtualServer, VirtualServerRoute, TransportServer and GlobalConfiguration custom resources.
+By default, the Ingress Controller requires a number of custom resource definitions (CRDs) installed in the cluster. Helm 3.x client will install those CRDs. If you're using a Helm 2.x client, you need to install the CRDs via `kubectl`:
 
-If you do not use those resources (which corresponds to `controller.enableCustomResources` set to `false`), you can skip the installation of the CRDs:
+```console
+$ kubectl create -f crds/
+```
 
-* Using Helm 3.x client:
-
-    Specify `--skip-crds` for the helm install command.
-
-    > **Note**: The following warning is expected and can be ignored: `skipping unknown hook: "crd-install"`.
-
-* Using a Helm 2.x client:
-
-    Set `controller.enableCustomResources` to `false`.
-
-> **Note**: If the CRDs are already installed in the cluster, Helm will skip the CRDs installation.
+If you do not use the custom resources that require those CRDs (which corresponds to `controller.enableCustomResources` set to `false` and `controller.appprotect.enable` set to `false`), you can skip the installation of the CRDs. For Helm 2.x, no action is needed, as it does not install the CRDs. For Helm 3.x, specify `--skip-crds` for the helm install command.
 
 ### Installing via Helm Repository
 
@@ -124,7 +116,7 @@ To install the chart with the release name my-release (my-release is the name th
 Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, run the following command to upgrade the CRDs:
 
 ```console
-$ kubectl apply -f deployments/helm-chart/crds/
+$ kubectl apply -f crds/
 ```
 > **Note**: The following warning is expected and can be ignored: `Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply`.
 
@@ -164,14 +156,14 @@ To uninstall/delete the release `my-release`:
     $ helm delete --purge my-release
     ```
 
-The command removes all the Kubernetes components associated with the chart and deletes the release.
+The command removes all the Kubernetes components associated with the release and deletes the release.
 
 ### Uninstalling the CRDs
 
 Uninstalling the release does not remove the CRDs. To remove the CRDs, run:
 
 ```console
-$ kubectl delete -f deployments/helm-chart/crds/
+$ kubectl delete -f crds/
 ```
 > **Note**: This command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other Ingress Controller releases running in the cluster.
 

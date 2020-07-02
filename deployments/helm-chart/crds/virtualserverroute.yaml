@@ -4,8 +4,6 @@ metadata:
   name: virtualserverroutes.k8s.nginx.org
   labels:
     app.kubernetes.io/name: "nginx-ingress"
-  annotations:
-    "helm.sh/hook": crd-install
 spec:
   group: k8s.nginx.org
   versions:
