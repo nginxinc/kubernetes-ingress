@@ -195,9 +195,6 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``controller.appprotect.enable``
      - Enables the App Protect module in the Ingress Controller.
      - false
-   * - ``controller.appprotect.createCustomResources``
-     - Creates the Custom Resources required for App Protect to work.
-     - false 
    * - ``controller.hostNetwork``
      - Enables the Ingress controller pods to use the host's network namespace.
      - false

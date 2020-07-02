@@ -16,8 +16,6 @@ controller:
 
   ## Support for App Protect
   appprotect:
-    ## Create the Custom Resources required for App Protect to work.
-    createCustomResources: false
     ## Enable the App Protect module in the Ingress Controller.
     enable: false
   
