@@ -44,6 +44,7 @@ rules:
   verbs:
   - create
   - patch
+  - list
 - apiGroups:
   - extensions
   resources:

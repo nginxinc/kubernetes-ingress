@@ -35,21 +35,7 @@ spec:
           properties:
             modifications:
               items:
-                properties:
-                  action:
-                    type: string
-                  description:
-                    type: string
-                  entity:
-                    properties:
-                      name:
-                        type: string
-                    type: object
-                  entityChanges:
-                    properties:
-                      type:
-                        type: string
-                    type: object
+                properties: {}
                 type: object
               type: array
             policy:
@@ -431,6 +417,9 @@ spec:
                       percentDecoding:
                         type: boolean
                       type:
+                        enum:
+                        - explicit
+                        - wildcard
                         type: string
                       urlNormalization:
                         type: boolean
@@ -532,6 +521,9 @@ spec:
                           type: object
                         type: array
                       type:
+                        enum:
+                        - explicit
+                        - wildcard
                         type: string
                       valueMetacharOverrides:
                         items:
@@ -683,27 +675,7 @@ spec:
                   type: array
                 signature-sets:
                   items:
-                    properties:
-                      alarm:
-                        type: boolean
-                      block:
-                        type: boolean
-                      name:
-                        enum:
-                        - Command Execution Signatures
-                        - Cross Site Scripting Signatures
-                        - Directory Indexing Signatures
-                        - Information Leakage Signatures
-                        - OS Command Injection Signatures
-                        - Path Traversal Signatures
-                        - Predictable Resource Location Signatures
-                        - Remote File Include Signatures
-                        - SQL Injection Signatures
-                        - XPath Injection Signatures
-                        - Buffer Overflow Signatures
-                        - Denial of Service Signatures
-                        - Vulnerability Scanner Signatures
-                        type: string
+                    properties: {}
                     type: object
                   type: array
                 signature-settings:

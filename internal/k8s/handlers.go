@@ -97,7 +97,7 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ingress := obj.(*v1beta1.Ingress)
-			if !lbc.IsNginxIngress(ingress) {
+			if !lbc.HasCorrectIngressClass(ingress) {
 				glog.Infof("Ignoring Ingress %v based on Annotation %v", ingress.Name, ingressClassKey)
 				return
 			}
@@ -118,7 +118,7 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 					return
 				}
 			}
-			if !lbc.IsNginxIngress(ingress) {
+			if !lbc.HasCorrectIngressClass(ingress) {
 				return
 			}
 			if isMinion(ingress) {
@@ -137,7 +137,7 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 		UpdateFunc: func(old, current interface{}) {
 			c := current.(*v1beta1.Ingress)
 			o := old.(*v1beta1.Ingress)
-			if !lbc.IsNginxIngress(c) {
+			if !lbc.HasCorrectIngressClass(c) {
 				return
 			}
 			if hasChanges(o, c) {
@@ -320,6 +320,10 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vs := obj.(*conf_v1.VirtualServer)
+			if !lbc.HasCorrectIngressClass(vs) {
+				glog.Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
+				return
+			}
 			glog.V(3).Infof("Adding VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
@@ -337,12 +341,20 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 					return
 				}
 			}
+			if !lbc.HasCorrectIngressClass(vs) {
+				glog.Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
+				return
+			}
 			glog.V(3).Infof("Removing VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVs := cur.(*conf_v1.VirtualServer)
 			oldVs := old.(*conf_v1.VirtualServer)
+			if !lbc.HasCorrectIngressClass(curVs) {
+				glog.Infof("Ignoring VirtualServer %v based on class %v", curVs.Name, curVs.Spec.IngressClass)
+				return
+			}
 			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
 				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
 				lbc.AddSyncQueue(curVs)
@@ -355,6 +367,10 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vsr := obj.(*conf_v1.VirtualServerRoute)
+			if !lbc.HasCorrectIngressClass(vsr) {
+				glog.Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
+				return
+			}
 			glog.V(3).Infof("Adding VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
@@ -372,12 +388,20 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 					return
 				}
 			}
+			if !lbc.HasCorrectIngressClass(vsr) {
+				glog.Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
+				return
+			}
 			glog.V(3).Infof("Removing VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
 			oldVsr := old.(*conf_v1.VirtualServerRoute)
+			if !lbc.HasCorrectIngressClass(curVsr) {
+				glog.Infof("Ignoring VirtualServerRoute %v based on class %v", curVsr.Name, curVsr.Spec.IngressClass)
+				return
+			}
 			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
 				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)

@@ -356,8 +356,7 @@ The table below summarizes the available annotations.
      - Example
    * - ``appprotect.f5.com/app-protect-policy``
      - N/A
-     - The name of the App Protect Policy for the Ingress Resource. Format is ``namespace/name``. If no namespace is specified, the same namespace of the Ingress Resource is used. If not specified but ``appprotect.f5.com/app-protect-enable`` is true, a default policy id applied.
-     If the referenced policy resource does not exist, or policy is invalid, this annotation will be ignored, and the default policy will be applied. 
+     - The name of the App Protect Policy for the Ingress Resource. Format is ``namespace/name``. If no namespace is specified, the same namespace of the Ingress Resource is used. If not specified but ``appprotect.f5.com/app-protect-enable`` is true, a default policy id applied. If the referenced policy resource does not exist, or policy is invalid, this annotation will be ignored, and the default policy will be applied. 
      - N/A
      - `Example for App Protect <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/appprotect>`_.
    * - ``appprotect.f5.com/app-protect-enable``

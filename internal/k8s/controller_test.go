@@ -23,7 +23,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func TestIsNginxIngress(t *testing.T) {
+func TestHasCorrectIngressClass(t *testing.T) {
 	ingressClass := "ing-ctrl"
 
 	var testsWithoutIngressClassOnly = []struct {
@@ -145,27 +145,133 @@ func TestIsNginxIngress(t *testing.T) {
 	}
 
 	for _, test := range testsWithoutIngressClassOnly {
-		if result := test.lbc.IsNginxIngress(test.ing); result != test.expected {
+		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
 			classAnnotation := "N/A"
 			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
 				classAnnotation = class
 			}
-			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
+			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
 				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
 		}
 	}
 
 	for _, test := range testsWithIngressClassOnly {
-		if result := test.lbc.IsNginxIngress(test.ing); result != test.expected {
+		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
 			classAnnotation := "N/A"
 			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
 				classAnnotation = class
 			}
-			t.Errorf("lbc.IsNginxIngress(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
+			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
 				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
 		}
 	}
 
+}
+
+func TestHasCorrectIngressClassVS(t *testing.T) {
+	ingressClass := "ing-ctrl"
+	lbcIngOnlyTrue := &LoadBalancerController{
+		ingressClass:        ingressClass,
+		useIngressClassOnly: true,
+		metricsCollector:    collectors.NewControllerFakeCollector(),
+	}
+
+	var testsWithIngressClassOnlyVS = []struct {
+		lbc      *LoadBalancerController
+		ing      *conf_v1.VirtualServer
+		expected bool
+	}{
+		{
+			lbcIngOnlyTrue,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: "",
+				},
+			},
+			false,
+		},
+		{
+			lbcIngOnlyTrue,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: "gce",
+				},
+			},
+			false,
+		},
+		{
+			lbcIngOnlyTrue,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: ingressClass,
+				},
+			},
+			true,
+		},
+		{
+			lbcIngOnlyTrue,
+			&conf_v1.VirtualServer{},
+			false,
+		},
+	}
+
+	lbcIngOnlyFalse := &LoadBalancerController{
+		ingressClass:        ingressClass,
+		useIngressClassOnly: false,
+		metricsCollector:    collectors.NewControllerFakeCollector(),
+	}
+	var testsWithoutIngressClassOnlyVS = []struct {
+		lbc      *LoadBalancerController
+		ing      *conf_v1.VirtualServer
+		expected bool
+	}{
+		{
+			lbcIngOnlyFalse,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: "",
+				},
+			},
+			true,
+		},
+		{
+			lbcIngOnlyFalse,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: "gce",
+				},
+			},
+			false,
+		},
+		{
+			lbcIngOnlyFalse,
+			&conf_v1.VirtualServer{
+				Spec: conf_v1.VirtualServerSpec{
+					IngressClass: ingressClass,
+				},
+			},
+			true,
+		},
+		{
+			lbcIngOnlyFalse,
+			&conf_v1.VirtualServer{},
+			true,
+		},
+	}
+
+	for _, test := range testsWithIngressClassOnlyVS {
+		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
+			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ingressClassKey=%v, ing.IngressClass=%v; got %v, expected %v",
+				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.Spec.IngressClass, result, test.expected)
+		}
+	}
+
+	for _, test := range testsWithoutIngressClassOnlyVS {
+		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
+			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ingressClassKey=%v, ing.IngressClass=%v; got %v, expected %v",
+				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.Spec.IngressClass, result, test.expected)
+		}
+	}
 }
 
 func TestCreateMergableIngresses(t *testing.T) {
@@ -1382,6 +1488,55 @@ func TestFindVirtualServerRoutesForService(t *testing.T) {
 	}
 }
 
+func TestFindOrphanedVirtualServerRoute(t *testing.T) {
+	vsr1 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-1",
+			Namespace: "ns-1",
+		},
+	}
+
+	vsr2 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-2",
+			Namespace: "ns-1",
+		},
+	}
+
+	vsr3 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-3",
+			Namespace: "ns-2",
+		},
+	}
+
+	vsr4 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-4",
+			Namespace: "ns-1",
+		},
+	}
+
+	vsr5 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-5",
+			Namespace: "ns-3",
+		},
+	}
+
+	vsrs := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr3, &vsr4, &vsr5}
+
+	handledVSRs := []*conf_v1.VirtualServerRoute{&vsr3}
+
+	expected := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2, &vsr4, &vsr5}
+
+	result := findOrphanedVirtualServerRoutes(vsrs, handledVSRs)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("findOrphanedVirtualServerRoutes return %v but expected %v", result, expected)
+	}
+}
+
 func TestFindTransportServersForService(t *testing.T) {
 	ts1 := conf_v1alpha1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -1628,5 +1783,64 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 				t.Errorf("getEndpointsBySubselectedPods() = %v, want %v", gotEndps, test.expectedEps)
 			}
 		})
+	}
+}
+
+func TestGetStatusFromEventTitle(t *testing.T) {
+	tests := []struct {
+		eventTitle string
+		expected   string
+	}{
+		{
+			eventTitle: "",
+			expected:   "",
+		},
+		{
+			eventTitle: "AddedOrUpdatedWithError",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "Rejected",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "NoVirtualServersFound",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "Missing Secret",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "UpdatedWithError",
+			expected:   "Invalid",
+		},
+		{
+			eventTitle: "AddedOrUpdatedWithWarning",
+			expected:   "Warning",
+		},
+		{
+			eventTitle: "UpdatedWithWarning",
+			expected:   "Warning",
+		},
+		{
+			eventTitle: "AddedOrUpdated",
+			expected:   "Valid",
+		},
+		{
+			eventTitle: "Updated",
+			expected:   "Valid",
+		},
+		{
+			eventTitle: "New State",
+			expected:   "",
+		},
+	}
+
+	for _, test := range tests {
+		result := getStatusFromEventTitle(test.eventTitle)
+		if result != test.expected {
+			t.Errorf("getStatusFromEventTitle(%v) returned %v but expected %v", test.eventTitle, result, test.expected)
+		}
 	}
 }

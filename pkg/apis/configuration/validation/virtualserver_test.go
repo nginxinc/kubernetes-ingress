@@ -843,13 +843,43 @@ func TestValidateAction(t *testing.T) {
 					Code: 302,
 				},
 			},
-
 			msg: "redirect action with status code set",
+		},
+		{
+			action: &v1.Action{
+				Proxy: &v1.ActionProxy{
+					Upstream:    "test",
+					RewritePath: "/rewrite",
+					RequestHeaders: &v1.ProxyRequestHeaders{
+						Set: []v1.Header{
+							{
+								Name:  "Header-Name",
+								Value: "value",
+							},
+						},
+					},
+					ResponseHeaders: &v1.ProxyResponseHeaders{
+						Hide:   []string{"header-name"},
+						Pass:   []string{"header-name"},
+						Ignore: []string{"Expires"},
+						Add: []v1.AddHeader{
+							{
+								Header: v1.Header{
+									Name:  "Header-Name",
+									Value: "value",
+								},
+								Always: true,
+							},
+						},
+					},
+				},
+			},
+			msg: "proxy action with rewritePath, requestHeaders and responseHeaders",
 		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateAction(test.action, field.NewPath("action"), upstreamNames)
+		allErrs := validateAction(test.action, field.NewPath("action"), upstreamNames, "", false)
 		if len(allErrs) > 0 {
 			t.Errorf("validateAction() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -892,10 +922,18 @@ func TestValidateActionFails(t *testing.T) {
 			},
 			msg: "redirect action with invalid status code set",
 		},
+		{
+			action: &v1.Action{
+				Proxy: &v1.ActionProxy{
+					Upstream: "",
+				},
+			},
+			msg: "proxy action with missing upstream field",
+		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateAction(test.action, field.NewPath("action"), upstreamNames)
+		allErrs := validateAction(test.action, field.NewPath("action"), upstreamNames, "", false)
 		if len(allErrs) == 0 {
 			t.Errorf("validateAction() returned no errors for invalid input for the case of %s", test.msg)
 		}
@@ -1241,7 +1279,9 @@ func TestValidateSplits(t *testing.T) {
 		{
 			Weight: 10,
 			Action: &v1.Action{
-				Pass: "test-2",
+				Proxy: &v1.ActionProxy{
+					Upstream: "test-2",
+				},
 			},
 		},
 	}
@@ -1250,7 +1290,7 @@ func TestValidateSplits(t *testing.T) {
 		"test-2": {},
 	}
 
-	allErrs := validateSplits(splits, field.NewPath("splits"), upstreamNames)
+	allErrs := validateSplits(splits, field.NewPath("splits"), upstreamNames, "")
 	if len(allErrs) > 0 {
 		t.Errorf("validateSplits() returned errors %v for valid input", allErrs)
 	}
@@ -1363,7 +1403,7 @@ func TestValidateSplitsFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateSplits(test.splits, field.NewPath("splits"), test.upstreamNames)
+		allErrs := validateSplits(test.splits, field.NewPath("splits"), test.upstreamNames, "")
 		if len(allErrs) == 0 {
 			t.Errorf("validateSplits() returned no errors for invalid input for the case of %s", test.msg)
 		}
@@ -1600,7 +1640,7 @@ func TestValidateMatch(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateMatch(test.match, field.NewPath("match"), test.upstreamNames)
+		allErrs := validateMatch(test.match, field.NewPath("match"), test.upstreamNames, "")
 		if len(allErrs) > 0 {
 			t.Errorf("validateMatch() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -1690,7 +1730,7 @@ func TestValidateMatchFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateMatch(test.match, field.NewPath("match"), test.upstreamNames)
+		allErrs := validateMatch(test.match, field.NewPath("match"), test.upstreamNames, "")
 		if len(allErrs) == 0 {
 			t.Errorf("validateMatch() returned no errors for invalid input for the case of %s", test.msg)
 		}
@@ -2819,6 +2859,312 @@ func TestValidateActionReturnFails(t *testing.T) {
 		allErrs := validateActionReturn(test, field.NewPath("return"), returnBodySpecialVariables, returnBodyVariables)
 		if len(allErrs) == 0 {
 			t.Errorf("validateActionReturn(%v) returned no errors for invalid input", test)
+		}
+	}
+}
+
+func TestValidateActionProxy(t *testing.T) {
+	upstreamNames := map[string]sets.Empty{
+		"upstream1": {},
+	}
+	path := "/path"
+	actionProxy := &v1.ActionProxy{
+		Upstream:    "upstream1",
+		RewritePath: "/test",
+	}
+
+	allErrs := validateActionProxy(actionProxy, field.NewPath("proxy"), upstreamNames, path, false)
+
+	if len(allErrs) != 0 {
+		t.Errorf("validateActionProxy(%+v, %v, %v) returned errors for valid input: %v", actionProxy, upstreamNames, path, allErrs)
+	}
+}
+
+func TestValidateActionProxyFails(t *testing.T) {
+	upstreamNames := map[string]sets.Empty{
+		"upstream1": {},
+	}
+	path := "/path"
+	actionProxy := &v1.ActionProxy{
+		Upstream: "",
+	}
+
+	allErrs := validateActionProxy(actionProxy, field.NewPath("proxy"), upstreamNames, path, false)
+
+	if len(allErrs) == 0 {
+		t.Errorf("validateActionProxy(%+v, %v, %v) returned no errors for invalid input", actionProxy, upstreamNames, path)
+	}
+}
+
+func TestValidateActionProxyRewritePath(t *testing.T) {
+	tests := []string{"/rewrite", "/rewrite", `/$2`}
+	for _, test := range tests {
+		allErrs := validateActionProxyRewritePath(test, field.NewPath("rewritePath"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateActionProxyRewritePath(%v) returned errors for valid input: %v", test, allErrs)
+		}
+	}
+}
+
+func TestValidateActionProxyRewritePathFails(t *testing.T) {
+	tests := []string{`/\d{3}`, `(`, "$request_uri"}
+	for _, test := range tests {
+		allErrs := validateActionProxyRewritePath(test, field.NewPath("rewritePath"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateActionProxyRewritePath(%v) returned no errors for invalid input", test)
+		}
+	}
+}
+
+func TestValidateActionProxyRewritePathForRegexp(t *testing.T) {
+	tests := []string{"/rewrite$1", "test", `/$2`, `\"test\"`}
+	for _, test := range tests {
+		allErrs := validateActionProxyRewritePathForRegexp(test, field.NewPath("rewritePath"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateActionProxyRewritePathForRegexp(%v) returned errors for valid input: %v", test, allErrs)
+		}
+	}
+}
+
+func TestValidateActionProxyRewritePathForRegexpFails(t *testing.T) {
+	tests := []string{"$request_uri", `"test"`, `test\`}
+	for _, test := range tests {
+		allErrs := validateActionProxyRewritePathForRegexp(test, field.NewPath("rewritePath"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateActionProxyRewritePathForRegexp(%v) returned no errors for invalid input", test)
+		}
+	}
+}
+
+func TestValidateActionProxyRequestHeaders(t *testing.T) {
+	requestHeaders := &v1.ProxyRequestHeaders{
+		Set: []v1.Header{
+			{
+				Name:  "Host",
+				Value: "nginx.org",
+			},
+		},
+	}
+
+	allErrs := validateActionProxyRequestHeaders(requestHeaders, field.NewPath("requestHeaders"))
+	if len(allErrs) != 0 {
+		t.Errorf("validateActionProxyRequestHeaders(%v) returned errors for valid input: %v", requestHeaders, allErrs)
+	}
+}
+
+func TestValidateActionProxyRequestHeadersFails(t *testing.T) {
+	requestHeaders := &v1.ProxyRequestHeaders{
+		Set: []v1.Header{
+			{
+				Name:  "in va lid",
+				Value: "",
+			},
+			{
+				Name:  "Host",
+				Value: "$var",
+			},
+			{
+				Name:  "",
+				Value: "nginx.org",
+			},
+		},
+	}
+
+	allErrs := validateActionProxyRequestHeaders(requestHeaders, field.NewPath("requestHeaders"))
+	if len(allErrs) == 0 {
+		t.Errorf("validateActionProxyRequestHeaders(%v) returned no errors for invalid input", requestHeaders)
+	}
+}
+
+func TestValidateActionProxyResponseHeaders(t *testing.T) {
+	tests := []struct {
+		responseHeaders *v1.ProxyResponseHeaders
+	}{
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Hide:   []string{"Header"},
+				Pass:   []string{"Header"},
+				Ignore: []string{"Expires"},
+				Add: []v1.AddHeader{
+					{
+						Header: v1.Header{
+							Name:  "Host",
+							Value: "nginx.org",
+						},
+						Always: false,
+					},
+				},
+			},
+		},
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Hide: []string{"Header"},
+			},
+		},
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Pass: []string{"Header"},
+			},
+		},
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Ignore: []string{"Expires"},
+			},
+		},
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Add: []v1.AddHeader{
+					{
+						Header: v1.Header{
+							Name:  "Host",
+							Value: "nginx.org",
+						},
+						Always: false,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateActionProxyResponseHeaders(test.responseHeaders, field.NewPath("responseHeaders"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateActionProxyResponseHeaders(%v) returned errors for valid input: %v", test.responseHeaders, allErrs)
+		}
+	}
+}
+
+func TestValidateActionProxyResponseHeadersFails(t *testing.T) {
+	tests := []struct {
+		responseHeaders *v1.ProxyResponseHeaders
+		msg             string
+	}{
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Hide:   []string{""},
+				Pass:   []string{""},
+				Ignore: []string{""},
+				Add: []v1.AddHeader{
+					{
+						Header: v1.Header{
+							Name:  "",
+							Value: "nginx.org",
+						},
+					},
+				},
+			},
+			msg: "all fields invalid",
+		},
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Hide: []string{"invalid header"},
+			},
+			msg: "invalid hide headers",
+		},
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Pass: []string{"$invalid"},
+			},
+			msg: "invalid pass headers",
+		},
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Ignore: []string{"1234 invalid"},
+			},
+			msg: "invalid ignore headers",
+		},
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Add: []v1.AddHeader{
+					{
+						Header: v1.Header{
+							Name:  "$invalid 123",
+							Value: "nginx.org",
+						},
+						Always: false,
+					},
+				},
+			},
+			msg: "invalid Add header name",
+		},
+		{
+			responseHeaders: &v1.ProxyResponseHeaders{
+				Add: []v1.AddHeader{
+					{
+						Header: v1.Header{
+							Name:  "Host",
+							Value: "$invalid",
+						},
+						Always: false,
+					},
+				},
+			},
+			msg: "invalid Add header value",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateActionProxyResponseHeaders(test.responseHeaders, field.NewPath("responseHeaders"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateActionProxyResponseHeaders(%v) returned no errors for invalid input for the case of %v", test.responseHeaders, test.msg)
+		}
+	}
+}
+
+func TestValidateIgnoreHeaders(t *testing.T) {
+	var ignoreHeaders []string
+
+	for header := range validIgnoreHeaders {
+		ignoreHeaders = append(ignoreHeaders, header)
+	}
+
+	allErrs := validateIgnoreHeaders(ignoreHeaders, field.NewPath("ignoreHeaders"))
+	if len(allErrs) != 0 {
+		t.Errorf("validateIgnoreHeaders(%v) returned errors for valid input: %v", ignoreHeaders, allErrs)
+	}
+}
+
+func TestValidateIgnoreHeadersFails(t *testing.T) {
+	ignoreHeaders := []string{
+		"Host",
+		"Connection",
+	}
+
+	allErrs := validateIgnoreHeaders(ignoreHeaders, field.NewPath("ignoreHeaders"))
+	if len(allErrs) == 0 {
+		t.Errorf("validateIgnoreHeaders(%v) returned no errors for invalid input", ignoreHeaders)
+	}
+}
+
+func TestValidateStringNoVariables(t *testing.T) {
+	tests := []string{
+		"string",
+		"endWith$",
+		"withNumber$1",
+		"abcййй",
+		"abcййй$1",
+		"",
+	}
+
+	for _, test := range tests {
+		allErrs := validateStringNoVariables(test, field.NewPath("rewritePath"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateStringNoVariables(%v) returned errors for valid input: %v", test, allErrs)
+		}
+	}
+}
+
+func TestValidateStringNoVariablesFails(t *testing.T) {
+	tests := []string{
+		"$var",
+		"abcйй$й",
+		"$$",
+	}
+
+	for _, test := range tests {
+		allErrs := validateStringNoVariables(test, field.NewPath("rewritePath"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateStringNoVariables(%v) returned no errors for invalid input", test)
 		}
 	}
 }

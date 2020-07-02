@@ -62,7 +62,7 @@ Below we describe the available command-line arguments:
 
 .. option:: -ingress-class <string>
 
-	A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class (in other words, have the annotation "kubernetes.io/ingress.class").
+	A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class (i.e. have the annotation "kubernetes.io/ingress.class" or the "ingressClassName" field in VirtualServer/VirtualServerRoute").
 	Additionally, the Ingress controller processes Ingress resources that do not have that annotation, which can be disabled by setting the :option:`-use-ingress-class-only` flag (default "nginx").
 
 .. option:: -ingress-template-path <string>
@@ -136,7 +136,7 @@ Below we describe the available command-line arguments:
 
 .. option:: -use-ingress-class-only
 
-	Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation.
+	Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation or the "ingressClassName" field in VirtualServer/VirtualServerRoute.
 
 .. option:: -v <value>
 

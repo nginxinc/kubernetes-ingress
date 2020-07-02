@@ -254,6 +254,16 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 	return nil
 }
 
+// GetVirtualServerRoutesForVirtualServer returns the virtualServerRoutes that a virtualServer
+// references, if that virtualServer exists
+func (cnf *Configurator) GetVirtualServerRoutesForVirtualServer(key string) []*conf_v1.VirtualServerRoute {
+	vsFileName := getFileNameForVirtualServerFromKey(key)
+	if cnf.virtualServers[vsFileName] != nil {
+		return cnf.virtualServers[vsFileName].VirtualServerRoutes
+	}
+	return nil
+}
+
 func (cnf *Configurator) updateTLSPassthroughHostsConfig() error {
 	cfg, duplicatedHosts := generateTLSPassthroughHostsConfig(cnf.tlsPassthroughPairs)
 

@@ -13,17 +13,33 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 
 ## Installing the Chart
 
+### Installing the CRDs
+
+By default, Helm installs a number of custom resource definitions (CRDs). Those CRDs are required for the VirtualServer, VirtualServerRoute and TransportServer custom resources.
+
+If you do not use those resources (which corresponds to `controller.enableCustomResources` set to `false`), you can skip the installation of the CRDs:
+
+* Using Helm 3.x client:
+
+    Specify `--skip-crds` for the helm install command.
+
+* Using a Helm 2.x client:
+
+    Set `controller.enableCustomResources` to `false`.
+
+> **Note**: If the CRDs are already installed in the cluster, Helm will skip the CRDs installation.
+
 ### Installing via Helm Repository
 
 1. Add NGINX Helm repository:
-    ```
+    ```console
     $ helm repo add nginx-edge https://helm.nginx.com/edge
     $ helm repo update
     ```
 
 2. To install the chart with the release name my-release (my-release is the name that you choose):
 
-     * Using Helm 3.x client:
+    * Using Helm 3.x client:
 
         For NGINX:
         ```console
@@ -47,7 +63,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
         $ helm install --name my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
         ```
 
-## Installing Using Chart Sources
+### Installing Using Chart Sources
 
 1. Clone the Ingress controller repo:
     ```console
@@ -89,7 +105,37 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 
 > **Tip**: List all releases using `helm list`
 
+## Upgrading the Chart
+
+### Upgrading the CRDs
+
+Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, run the following command to upgrade the CRDs:
+
+```console
+$ kubectl apply -f crds/
+```
+
+> **Note**: Make sure to check the [release notes](https://www.github.com/nginxinc/kubernetes-ingress/releases) for a new release for any special upgrade procedures.
+
+### Upgrading the Release
+
+To upgrade the release `my-release`
+
+* Using Helm 3.x client:
+
+    ```console
+    $ helm upgrade my-release
+    ```
+
+* Using Helm 2.x client:
+
+    ```console
+    $ helm upgrade -n my-release
+    ```
+
 ## Uninstalling the Chart
+
+### Uninstalling the Release
 
 To uninstall/delete the release `my-release`
 
@@ -106,6 +152,22 @@ To uninstall/delete the release `my-release`
     ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
+
+### Uninstalling the CRDs
+
+Uninstalling the release does not remove the CRDs. To remove the CRDs, run:
+
+```console
+$ kubectl delete crds transportservers.k8s.nginx.org virtualservers.k8s.nginx.org virtualserverroutes.k8s.nginx.org
+```
+
+> **Note**: The following command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other Ingress Controller releases running in the cluster.
+
+## Running Multiple Ingress Controllers
+
+If you are running multiple Ingress Controller releases in your cluster with enabled custom resources, the releases will share a single version of the CRDs. As a result, make sure that the Ingress Controller versions match the version of the CRDs. Additionally, when uninstalling a release, ensure that you don’t remove the CRDs until there are no other Ingress Controller releases running in the cluster.
+
+See [running multiple ingress controllers](/nginx-ingress-controller/installation/running-multiple-ingress-controllers/) for more details.
 
 ## Configuration
 
@@ -206,10 +268,10 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
      - The number of replicas of the Ingress controller deployment.
      - 1
    * - ``controller.ingressClass``
-     - A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation ``"kubernetes.io/ingress.class"`` equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag.
+     - A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class - i.e. have the annotation ``"kubernetes.io/ingress.class"``  or the ``"ingressClassName"`` field in VirtualServer/VirtualServerRoute equal to the class. Additionally, the Ingress controller processes Ingress resources that do not have that annotation which can be disabled by setting the "-use-ingress-class-only" flag.
      - nginx
    * - ``controller.useIngressClassOnly``
-     - Ignore Ingress resources without the ``"kubernetes.io/ingress.class"`` annotation.
+     - Ignore Ingress resources without the ``"kubernetes.io/ingress.class"`` annotation or the ``"ingressClassName"`` field in VirtualServer/VirtualServerRoute.
      - false
    * - ``controller.watchNamespace``
      - Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces.
