@@ -277,7 +277,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
      - Creates the GlobalConfiguration custom resource. Requires ``controller.enableCustomResources``.
      - false
    * - ``controller.globalConfiguration.spec``
-     - The spec of the GlobalConfiguration for customizing NGINX configuration.
+     - The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller.
      - {}
    * - ``controller.enableSnippets``
      - Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources.

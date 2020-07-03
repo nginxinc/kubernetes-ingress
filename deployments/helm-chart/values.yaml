@@ -128,7 +128,7 @@ controller:
     ## Creates the GlobalConfiguration custom resource. Requires controller.enableCustomResources.
     create: false
 
-    ## The spec of the GlobalConfiguration for customizing NGINX configuration.
+    ## The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller.
     spec: {}
       # listeners:
       # - name: dns-udp
