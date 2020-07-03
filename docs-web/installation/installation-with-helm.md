@@ -189,6 +189,12 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``controller.nginxplus``
      - Deploys the Ingress controller for NGINX Plus.
      - false
+   * - ``controller.nginxReloadTimeout``
+     - The timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start. The default is 4000 (or 20000 if `controller.appprotect.enable` is true). If set to 0, the default value will be used.
+     - 0 
+   * - ``controller.appprotect.enable``
+     - Enables the App Protect module in the Ingress Controller.
+     - false
    * - ``controller.hostNetwork``
      - Enables the Ingress controller pods to use the host's network namespace.
      - false

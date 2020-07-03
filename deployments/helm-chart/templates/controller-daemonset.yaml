@@ -90,6 +90,8 @@ spec:
 {{ toYaml .Values.controller.resources | indent 10 }}
         args:
           - -nginx-plus={{ .Values.controller.nginxplus }}
+          - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
+          - -enable-app-protect={{ .Values.controller.appprotect.enable }}
           - -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
 {{- if .Values.controller.defaultTLS.secret }}
           - -default-server-tls-secret={{ .Values.controller.defaultTLS.secret }}

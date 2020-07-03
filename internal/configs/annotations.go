@@ -11,6 +11,15 @@ import (
 // JWTKeyAnnotation is the annotation where the Secret with a JWK is specified.
 const JWTKeyAnnotation = "nginx.com/jwt-key"
 
+// AppProtectPolicyAnnotation is where the NGINX App Protect policy is specified
+const AppProtectPolicyAnnotation = "appprotect.f5.com/app-protect-policy"
+
+// AppProtectLogConfAnnotation is where the NGINX AppProtect Log Configuration is specified
+const AppProtectLogConfAnnotation = "appprotect.f5.com/app-protect-security-log"
+
+// AppProtectLogConfDstAnnotation is where the NGINX AppProtect Log Configuration is specified
+const AppProtectLogConfDstAnnotation = "appprotect.f5.com/app-protect-security-log-destination"
+
 var masterBlacklist = map[string]bool{
 	"nginx.org/rewrites":                      true,
 	"nginx.org/ssl-services":                  true,
@@ -23,17 +32,21 @@ var masterBlacklist = map[string]bool{
 }
 
 var minionBlacklist = map[string]bool{
-	"nginx.org/proxy-hide-headers":       true,
-	"nginx.org/proxy-pass-headers":       true,
-	"nginx.org/redirect-to-https":        true,
-	"ingress.kubernetes.io/ssl-redirect": true,
-	"nginx.org/hsts":                     true,
-	"nginx.org/hsts-max-age":             true,
-	"nginx.org/hsts-include-subdomains":  true,
-	"nginx.org/server-tokens":            true,
-	"nginx.org/listen-ports":             true,
-	"nginx.org/listen-ports-ssl":         true,
-	"nginx.org/server-snippets":          true,
+	"nginx.org/proxy-hide-headers":                      true,
+	"nginx.org/proxy-pass-headers":                      true,
+	"nginx.org/redirect-to-https":                       true,
+	"ingress.kubernetes.io/ssl-redirect":                true,
+	"nginx.org/hsts":                                    true,
+	"nginx.org/hsts-max-age":                            true,
+	"nginx.org/hsts-include-subdomains":                 true,
+	"nginx.org/server-tokens":                           true,
+	"nginx.org/listen-ports":                            true,
+	"nginx.org/listen-ports-ssl":                        true,
+	"nginx.org/server-snippets":                         true,
+	"appprotect.f5.com/app_protect_enable":              true,
+	"appprotect.f5.com/app_protect_policy":              true,
+	"appprotect.f5.com/app_protect_security_log_enable": true,
+	"appprotect.f5.com/app_protect_security_log":        true,
 }
 
 var minionInheritanceList = map[string]bool{
@@ -54,7 +67,7 @@ var minionInheritanceList = map[string]bool{
 	"nginx.org/fail-timeout":             true,
 }
 
-func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool) ConfigParams {
+func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool) ConfigParams {
 	cfgParams := *baseCfgParams
 
 	if lbMethod, exists := ingEx.Ingress.Annotations["nginx.org/lb-method"]; exists {
@@ -308,6 +321,32 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		cfgParams.FailTimeout = failTimeout
 	}
 
+	if hasAppProtect {
+		if appProtectEnable, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "appprotect.f5.com/app-protect-enable", ingEx.Ingress); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				if appProtectEnable {
+					cfgParams.AppProtectEnable = "on"
+				} else {
+					cfgParams.AppProtectEnable = "off"
+				}
+			}
+		}
+
+		if appProtectLogEnable, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "appprotect.f5.com/app-protect-security-log-enable", ingEx.Ingress); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				if appProtectLogEnable {
+					cfgParams.AppProtectLogEnable = "on"
+				} else {
+					cfgParams.AppProtectLogEnable = "off"
+				}
+			}
+		}
+
+	}
 	return cfgParams
 }
 

@@ -406,4 +406,20 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - Sets the tracer configuration in JSON format.
      - N/A
      - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/master/examples/opentracing/README.md>`_.
+   * - ``app-protect-cookie-seed``
+     - Sets the ``app_protect_cookie_seed`` `global directive </nginx-app-protect/configuration/#global-directives>`_.
+     - Random automatically generated string
+     - 
+   * - ``app-protect-failure-mode-action``
+     - Sets the ``app_protect_failure_mode_action`` `global directive </nginx-app-protect/configuration/#global-directives>`_.
+     - ``pass``
+     - 
+   * - ``app-protect-cpu-thresholds``
+     - Sets the ``app_protect_cpu_thresholds`` `global directive </nginx-app-protect/configuration/#global-directives>`_.
+     - ``high=100 low=100``
+     - 
+   * - ``app-protect-physical-memory-util-thresholds``
+     - Sets the ``app_protect_physical_memory_util_thresholds`` `global directive </nginx-app-protect/configuration/#global-directives>`_.
+     - ``high=100 low=100``
+     - 
 ```

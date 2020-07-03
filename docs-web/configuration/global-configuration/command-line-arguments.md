@@ -102,6 +102,10 @@ Below we describe the available command-line arguments:
 
 	Enable support for NGINX Plus
 
+.. option:: -nginx-reload-timeout <value>
+
+    Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start. (default is 4000. Default is 20000 instead if `enable-app-protect` is true)
+
 .. option:: -nginx-status
 
 	Enable the NGINX stub_status, or the NGINX Plus API. (default true)
@@ -176,4 +180,13 @@ Below we describe the available command-line arguments:
 	Specifies the address of a running Spire agent. **For use with NGINX Service Mesh only**.
 
 	- If the argument is set, but the Ingress Controller is unable to connect to the Spire Agent, the Ingress Controller will fail to start.
+
+.. option:: -enable-app-protect
+
+	 Enables support for App Protect.
+
+   Requires :option:`-nginx-plus`
+
+	 - If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.
+	 
 ```

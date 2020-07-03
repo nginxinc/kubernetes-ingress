@@ -15,7 +15,9 @@ pid        /var/lib/nginx/nginx.pid;
 {{- if .OpenTracingLoadModule}}
 load_module modules/ngx_http_opentracing_module.so;
 {{- end}}
-
+{{- if .AppProtectLoadModule}}
+load_module modules/ngx_http_app_protect_module.so;
+{{- end}}
 {{- if .MainSnippets}}
 {{range $value := .MainSnippets}}
 {{$value}}{{end}}
@@ -51,6 +53,12 @@ http {
     access_log  /var/log/nginx/access.log  main;
     {{end}}
 
+    {{- if .AppProtectLoadModule}}
+    {{if .AppProtectFailureModeAction}}app_protect_failure_mode_action {{.AppProtectFailureModeAction}};{{end}}
+    {{if .AppProtectCookieSeed}}app_protect_cookie_seed {{.AppProtectCookieSeed}};{{end}}
+    {{if .AppProtectCPUThresholds}}app_protect_cpu_thresholds {{.AppProtectCPUThresholds}};{{end}}
+    {{if .AppProtectPhysicalMemoryThresholds}}app_protect_physical_memory_util_thresholds {{.AppProtectPhysicalMemoryThresholds}};{{end}}
+    {{- end}}
     sendfile        on;
     #tcp_nopush     on;
 

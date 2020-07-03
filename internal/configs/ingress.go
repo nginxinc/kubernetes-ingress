@@ -10,18 +10,24 @@ import (
 	extensions "k8s.io/api/extensions/v1beta1"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const emptyHost = ""
+const appProtectPolicyKey = "policy"
+const appProtectLogConfKey = "logconf"
 
 // IngressEx holds an Ingress along with the resources that are referenced in this Ingress.
 type IngressEx struct {
-	Ingress          *extensions.Ingress
-	TLSSecrets       map[string]*api_v1.Secret
-	JWTKey           JWTKey
-	Endpoints        map[string][]string
-	HealthChecks     map[string]*api_v1.Probe
-	ExternalNameSvcs map[string]bool
+	Ingress           *extensions.Ingress
+	TLSSecrets        map[string]*api_v1.Secret
+	JWTKey            JWTKey
+	Endpoints         map[string][]string
+	HealthChecks      map[string]*api_v1.Probe
+	ExternalNameSvcs  map[string]bool
+	AppProtectPolicy  *unstructured.Unstructured
+	AppProtectLogConf *unstructured.Unstructured
+	AppProtectLogDst  string
 }
 
 // JWTKey represents a secret that holds JSON Web Key.
@@ -44,9 +50,10 @@ type MergeableIngresses struct {
 	Minions []*IngressEx
 }
 
-func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, baseCfgParams *ConfigParams, isPlus bool,
-	isResolverConfigured bool, jwtKeyFileName string, staticParams *StaticConfigParams) version1.IngressNginxConfig {
-	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus)
+func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[string]string, isMinion bool, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, jwtKeyFileName string, staticParams *StaticConfigParams) version1.IngressNginxConfig {
+	hasAppProtect := staticParams.MainAppProtectLoadModule
+	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus, hasAppProtect)
+
 	wsServices := getWebsocketServices(ingEx)
 	spServices := getSessionPersistenceServices(ingEx)
 	rewrites := getRewrites(ingEx)
@@ -107,6 +114,8 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, b
 			Ports:                 cfgParams.Ports,
 			SSLPorts:              cfgParams.SSLPorts,
 			TLSPassthrough:        staticParams.TLSPassthrough,
+			AppProtectEnable:      cfgParams.AppProtectEnable,
+			AppProtectLogEnable:   cfgParams.AppProtectLogEnable,
 		}
 
 		if pemFile, ok := pems[serverName]; ok {
@@ -116,6 +125,11 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, isMinion bool, b
 			if pemFile == pemFileNameForMissingTLSSecret {
 				server.SSLCiphers = "NULL"
 			}
+		}
+
+		if hasAppProtect {
+			server.AppProtectPolicy = apResources[appProtectPolicyKey]
+			server.AppProtectLogConf = apResources[appProtectLogConfKey]
 		}
 
 		if !isMinion && ingEx.JWTKey.Name != "" {
@@ -371,8 +385,9 @@ func upstreamMapToSlice(upstreams map[string]version1.Upstream) []version1.Upstr
 	return result
 }
 
-func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, masterPems map[string]string, masterJwtKeyFileName string,
+func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, masterPems map[string]string, masterApResources map[string]string, masterJwtKeyFileName string,
 	minionJwtKeyFileNames map[string]string, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams) version1.IngressNginxConfig {
+
 	var masterServer version1.Server
 	var locations []version1.Location
 	var upstreams []version1.Upstream
@@ -384,9 +399,9 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 		glog.Errorf("Ingress Resource %v/%v with the annotation 'nginx.org/mergeable-ingress-type' set to 'master' cannot contain the '%v' annotation(s). They will be ignored",
 			mergeableIngs.Master.Ingress.Namespace, mergeableIngs.Master.Ingress.Name, strings.Join(removedAnnotations, ","))
 	}
-
 	isMinion := false
-	masterNginxCfg := generateNginxCfg(mergeableIngs.Master, masterPems, isMinion, baseCfgParams, isPlus, isResolverConfigured, masterJwtKeyFileName, staticParams)
+
+	masterNginxCfg := generateNginxCfg(mergeableIngs.Master, masterPems, masterApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, masterJwtKeyFileName, staticParams)
 
 	masterServer = masterNginxCfg.Servers[0]
 	masterServer.Locations = []version1.Location{}
@@ -414,7 +429,9 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 		pems := make(map[string]string)
 		jwtKeyFileName := minionJwtKeyFileNames[objectMetaToFileName(&minion.Ingress.ObjectMeta)]
 		isMinion := true
-		nginxCfg := generateNginxCfg(minion, pems, isMinion, baseCfgParams, isPlus, isResolverConfigured, jwtKeyFileName, staticParams)
+		// App Protect Resources not allowed in minions - pass empty map
+		dummyApResources := make(map[string]string)
+		nginxCfg := generateNginxCfg(minion, pems, dummyApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, jwtKeyFileName, staticParams)
 
 		for _, server := range nginxCfg.Servers {
 			for _, loc := range server.Locations {

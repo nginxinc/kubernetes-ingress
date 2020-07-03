@@ -16,12 +16,12 @@ import (
 
 // verifyClient is a client for verifying the config version.
 type verifyClient struct {
-	client     *http.Client
-	maxRetries int
+	client  *http.Client
+	timeout int
 }
 
 // newVerifyClient returns a new client pointed at the config version socket.
-func newVerifyClient() *verifyClient {
+func newVerifyClient(timeout int) *verifyClient {
 	return &verifyClient{
 		client: &http.Client{
 			Transport: &http.Transport{
@@ -30,7 +30,7 @@ func newVerifyClient() *verifyClient {
 				},
 			},
 		},
-		maxRetries: 160,
+		timeout: timeout,
 	}
 }
 
@@ -62,7 +62,8 @@ func (c *verifyClient) GetConfigVersion() (int, error) {
 // which ensures that a new worker process has been started for that config version.
 func (c *verifyClient) WaitForCorrectVersion(expectedVersion int) error {
 	sleep := 25 * time.Millisecond
-	for i := 1; i <= c.maxRetries; i++ {
+	maxRetries := c.timeout / 25
+	for i := 1; i <= maxRetries; i++ {
 		time.Sleep(sleep)
 
 		version, err := c.GetConfigVersion()
@@ -75,7 +76,7 @@ func (c *verifyClient) WaitForCorrectVersion(expectedVersion int) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("could not get expected version: %v", expectedVersion)
+	return fmt.Errorf("could not get expected version: %v after %v ms", expectedVersion, c.timeout)
 }
 
 const configVersionTemplateString = `server {
