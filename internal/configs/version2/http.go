@@ -93,6 +93,9 @@ type Location struct {
 	ErrorPages               []ErrorPage
 	ProxySSLName             string
 	InternalProxyPass        string
+	Allow                     []string
+	Deny                      []string
+	PoliciesErrorReturn       *Return
 }
 
 // ReturnLocation defines a location for returning a fixed response.

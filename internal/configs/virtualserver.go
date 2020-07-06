@@ -257,8 +257,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 	var maps []version2.Map
 	var errorPageLocations []version2.ErrorPageLocation
 	var vsrErrorPagesFromVs = make(map[string][]conf_v1.ErrorPage)
-	var vsrLocationSnippetsFromVs = make(map[string]string)
 	var vsrErrorPagesRouteIndex = make(map[string]int)
+	var vsrLocationSnippetsFromVs = make(map[string]string)
+	var vsrPoliciesFromVs = make(map[string][]conf_v1.PolicyReference)
 	matchesRoutes := 0
 
 	variableNamer := newVariableNamer(virtualServerEx.VirtualServer)
@@ -270,32 +271,39 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 
 		// ignore routes that reference VirtualServerRoute
 		if r.Route != "" {
+			name := r.Route
+			if !strings.Contains(name, "/") {
+				name = fmt.Sprintf("%v/%v", virtualServerEx.VirtualServer.Namespace, r.Route)
+			}
+
 			// store route location snippet for the referenced VirtualServerRoute in case they don't define their own
 			if r.LocationSnippets != "" {
-				name := r.Route
-				if !strings.Contains(name, "/") {
-					name = fmt.Sprintf("%v/%v", virtualServerEx.VirtualServer.Namespace, r.Route)
-				}
 				vsrLocationSnippetsFromVs[name] = r.LocationSnippets
 			}
 
 			// store route error pages and route index for the referenced VirtualServerRoute in case they don't define their own
 			if len(r.ErrorPages) > 0 {
-				name := r.Route
-				if !strings.Contains(name, "/") {
-					name = fmt.Sprintf("%v/%v", virtualServerEx.VirtualServer.Namespace, r.Route)
-				}
 				vsrErrorPagesFromVs[name] = r.ErrorPages
 				vsrErrorPagesRouteIndex[name] = errorPageIndex
 			}
+
+			// store route policies for the referenced VirtualServerRoute in case they don't define their own
+			if len(r.Policies) > 0 {
+				vsrPoliciesFromVs[name] = r.Policies
+			}
+
 			continue
 		}
 
 		vsLocSnippets := r.LocationSnippets
+		routePoliciesCfg := vsc.generatePolicies(virtualServerEx.VirtualServer, virtualServerEx.VirtualServer.Namespace,
+			r.Policies, virtualServerEx.Policies)
 
 		if len(r.Matches) > 0 {
 			cfg := generateMatchesConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, matchesRoutes, len(splitClients),
 				vsc.cfgParams, r.ErrorPages, errorPageIndex, vsLocSnippets, vsc.enableSnippets, len(returnLocations))
+			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
+
 			maps = append(maps, cfg.Maps...)
 			locations = append(locations, cfg.Locations...)
 			internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
@@ -305,6 +313,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		} else if len(r.Splits) > 0 {
 			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients),
 				vsc.cfgParams, r.ErrorPages, errorPageIndex, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations))
+			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 
 			splitClients = append(splitClients, cfg.SplitClients...)
 			locations = append(locations, cfg.Locations...)
@@ -314,8 +323,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			upstreamName := virtualServerUpstreamNamer.GetNameForUpstreamFromAction(r.Action)
 			upstream := crUpstreams[upstreamName]
 			proxySSLName := generateProxySSLName(upstream.Service, virtualServerEx.VirtualServer.Namespace)
+
 			loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, r.ErrorPages, false,
 				errorPageIndex, proxySSLName, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations))
+			addPoliciesCfgToLocation(routePoliciesCfg, &loc)
+
 			locations = append(locations, loc)
 			if returnLoc != nil {
 				returnLocations = append(returnLocations, *returnLoc)
@@ -331,7 +343,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			errorPageLocations = append(errorPageLocations, generateErrorPageLocations(errorPageIndex, r.ErrorPages)...)
 			errorPages := r.ErrorPages
 			vsrNamespaceName := fmt.Sprintf("%v/%v", vsr.Namespace, vsr.Name)
-			// use referenced VirtualServer error pages if the route does not define any
+			// use the VirtualServer error pages if the route does not define any
 			if r.ErrorPages == nil {
 				if vsErrorPages, ok := vsrErrorPagesFromVs[vsrNamespaceName]; ok {
 					errorPages = vsErrorPages
@@ -340,14 +352,23 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			}
 
 			locSnippets := r.LocationSnippets
-			// use referenced VirtualServer location snippet if the route does not define any
+			// use the  VirtualServer location snippet if the route does not define any
 			if r.LocationSnippets == "" {
 				locSnippets = vsrLocationSnippetsFromVs[vsrNamespaceName]
+			}
+
+			routePoliciesCfg := vsc.generatePolicies(vsr, vsr.Namespace, r.Policies, virtualServerEx.Policies)
+			// use the VirtualServer route policies if the route does not define any
+			if len(r.Policies) == 0 {
+				routePoliciesCfg = vsc.generatePolicies(virtualServerEx.VirtualServer, virtualServerEx.VirtualServer.Namespace,
+					vsrPoliciesFromVs[vsrNamespaceName], virtualServerEx.Policies)
 			}
 
 			if len(r.Matches) > 0 {
 				cfg := generateMatchesConfig(r, upstreamNamer, crUpstreams, variableNamer, matchesRoutes, len(splitClients),
 					vsc.cfgParams, errorPages, errorPageIndex, locSnippets, vsc.enableSnippets, len(returnLocations))
+				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
+
 				maps = append(maps, cfg.Maps...)
 				locations = append(locations, cfg.Locations...)
 				internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
@@ -357,6 +378,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			} else if len(r.Splits) > 0 {
 				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams,
 					errorPages, errorPageIndex, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations))
+				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
+
 				splitClients = append(splitClients, cfg.SplitClients...)
 				locations = append(locations, cfg.Locations...)
 				internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
@@ -365,8 +388,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 				upstreamName := upstreamNamer.GetNameForUpstreamFromAction(r.Action)
 				upstream := crUpstreams[upstreamName]
 				proxySSLName := generateProxySSLName(upstream.Service, vsr.Namespace)
+
 				loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false,
 					errorPageIndex, proxySSLName, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations))
+				addPoliciesCfgToLocation(routePoliciesCfg, &loc)
+
 				locations = append(locations, loc)
 				if returnLoc != nil {
 					returnLocations = append(returnLocations, *returnLoc)
@@ -456,6 +482,18 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 		Allow:       allow,
 		Deny:        deny,
 		ErrorReturn: policyErrorReturn,
+	}
+}
+
+func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
+	location.Allow = cfg.Allow
+	location.Deny = cfg.Deny
+	location.PoliciesErrorReturn = cfg.ErrorReturn
+}
+
+func addPoliciesCfgToLocations(cfg policiesCfg, locations []version2.Location) {
+	for i := range locations {
+		addPoliciesCfgToLocation(cfg, &locations[i])
 	}
 }
 

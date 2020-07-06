@@ -135,6 +135,8 @@ var virtualServerCfg = VirtualServerConfig{
 			{
 				Path:                     "/",
 				Snippets:                 []string{"# location snippet"},
+				Allow:                    []string{"127.0.0.1"},
+				Deny:                     []string{"127.0.0.1"},
 				ProxyConnectTimeout:      "30s",
 				ProxyReadTimeout:         "31s",
 				ProxySendTimeout:         "32s",

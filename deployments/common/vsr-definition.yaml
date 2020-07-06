@@ -383,6 +383,17 @@ spec:
                                 type: integer
                   path:
                     type: string
+                  policies:
+                    type: array
+                    items:
+                      description: PolicyReference references a policy by name and
+                        an optional namespace.
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        namespace:
+                          type: string
                   route:
                     type: string
                   splits:

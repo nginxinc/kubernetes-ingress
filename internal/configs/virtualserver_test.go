@@ -1827,6 +1827,38 @@ func TestGeneratePoliciesFails(t *testing.T) {
 	}
 }
 
+func TestAddPoliciesCfgToLocations(t *testing.T) {
+	cfg := policiesCfg{
+		Allow: []string{"127.0.0.1"},
+		Deny:  []string{"127.0.0.2"},
+		ErrorReturn: &version2.Return{
+			Code: 400,
+		},
+	}
+
+	locations := []version2.Location{
+		{
+			Path: "/",
+		},
+	}
+
+	expectedLocations := []version2.Location{
+		{
+			Path:  "/",
+			Allow: []string{"127.0.0.1"},
+			Deny:  []string{"127.0.0.2"},
+			PoliciesErrorReturn: &version2.Return{
+				Code: 400,
+			},
+		},
+	}
+
+	addPoliciesCfgToLocations(cfg, locations)
+	if !reflect.DeepEqual(locations, expectedLocations) {
+		t.Errorf("addPoliciesCfgToLocations() returned \n%+v but expected \n%+v", locations, expectedLocations)
+	}
+}
+
 func TestGenerateUpstream(t *testing.T) {
 	name := "test-upstream"
 	upstream := conf_v1.Upstream{Service: name, Port: 80}

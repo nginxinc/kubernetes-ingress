@@ -2091,21 +2091,66 @@ func findVirtualServersForSecret(virtualServers []*conf_v1.VirtualServer, secret
 }
 
 func (lbc *LoadBalancerController) getVirtualServersForPolicy(policyNamespace string, policyName string) []*conf_v1.VirtualServer {
-	return findVirtualServersForPolicy(lbc.getVirtualServers(), policyNamespace, policyName)
+	var result []*conf_v1.VirtualServer
+
+	allVirtualServers := lbc.getVirtualServers()
+
+	// find VirtualServers that reference VirtualServerRoutes that reference the policy
+	virtualServerRoutes := findVirtualServerRoutesForPolicy(lbc.getVirtualServerRoutes(), policyNamespace, policyName)
+	for _, vsr := range virtualServerRoutes {
+		virtualServers := findVirtualServersForVirtualServerRoute(allVirtualServers, vsr)
+		result = append(result, virtualServers...)
+	}
+
+	// find VirtualServers that reference the policy
+	virtualServers := findVirtualServersForPolicy(lbc.getVirtualServers(), policyNamespace, policyName)
+	result = append(result, virtualServers...)
+
+	return result
 }
 
 func findVirtualServersForPolicy(virtualServers []*conf_v1.VirtualServer, policyNamespace string, policyName string) []*conf_v1.VirtualServer {
 	var result []*conf_v1.VirtualServer
 
 	for _, vs := range virtualServers {
-		for _, p := range vs.Spec.Policies {
-			namespace := p.Namespace
-			if namespace == "" {
-				namespace = vs.Namespace
-			}
+		if isPolicyReferenced(vs.Spec.Policies, vs.Namespace, policyNamespace, policyName) {
+			result = append(result, vs)
+			continue
+		}
 
-			if p.Name == policyName && namespace == policyNamespace {
+		for _, r := range vs.Spec.Routes {
+			if isPolicyReferenced(r.Policies, vs.Namespace, policyNamespace, policyName) {
 				result = append(result, vs)
+				break
+			}
+		}
+	}
+
+	return result
+}
+
+func isPolicyReferenced(policies []conf_v1.PolicyReference, resourceNamespace string, policyNamespace string, policyName string) bool {
+	for _, p := range policies {
+		namespace := p.Namespace
+		if namespace == "" {
+			namespace = resourceNamespace
+		}
+
+		if p.Name == policyName && namespace == policyNamespace {
+			return true
+		}
+	}
+
+	return false
+}
+
+func findVirtualServerRoutesForPolicy(virtualServerRoutes []*conf_v1.VirtualServerRoute, policyNamespace string, policyName string) []*conf_v1.VirtualServerRoute {
+	var result []*conf_v1.VirtualServerRoute
+
+	for _, vsr := range virtualServerRoutes {
+		for _, r := range vsr.Spec.Subroutes {
+			if isPolicyReferenced(r.Policies, vsr.Namespace, policyNamespace, policyName) {
+				result = append(result, vsr)
 				break
 			}
 		}
@@ -2459,36 +2504,9 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 		}
 	}
 
-	policies := make(map[string]*conf_v1alpha1.Policy)
-
-	for _, p := range virtualServer.Spec.Policies {
-		polNamespace := p.Namespace
-		if polNamespace == "" {
-			polNamespace = virtualServer.Namespace
-		}
-
-		policyKey := fmt.Sprintf("%s/%s", polNamespace, p.Name)
-
-		policyObj, exists, err := lbc.policyLister.GetByKey(policyKey)
-		if err != nil {
-			glog.Warningf("Failed to get policy %s for VirtualServer %s/%s: %v", p.Name, polNamespace, virtualServer.Name, err)
-			continue
-		}
-
-		if !exists {
-			glog.Warningf("Policy %s doesn't exist for VirtualServer %s/%s", p.Name, polNamespace, virtualServer.Name)
-			continue
-		}
-
-		policy := policyObj.(*conf_v1alpha1.Policy)
-
-		err = validation.ValidatePolicy(policy)
-		if err != nil {
-			glog.Warningf("Policy %s is invalid for VirtualServer %s/%s: %v", policyKey, virtualServer.Namespace, virtualServer.Name, err)
-			continue
-		}
-
-		policies[policyKey] = policy
+	policies, policyErrors := lbc.getPolicies(virtualServer.Spec.Policies, virtualServer.Namespace)
+	for _, err := range policyErrors {
+		glog.Warningf("Error getting policy for VirtualServer %s/%s: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
 
 	endpoints := make(map[string][]string)
@@ -2521,8 +2539,13 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 	var virtualServerRoutes []*conf_v1.VirtualServerRoute
 	var virtualServerRouteErrors []virtualServerRouteError
 
-	// gather all referenced VirtualServerRoutes
 	for _, r := range virtualServer.Spec.Routes {
+		vsRoutePolicies, policyErrors := lbc.getPolicies(r.Policies, virtualServer.Namespace)
+		for _, err := range policyErrors {
+			glog.Warningf("Error getting policy for VirtualServer %s/%s: %v", virtualServer.Namespace, virtualServer.Name, err)
+		}
+		policies = append(policies, vsRoutePolicies...)
+
 		if r.Route == "" {
 			continue
 		}
@@ -2564,6 +2587,14 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 
 		virtualServerRoutes = append(virtualServerRoutes, vsr)
 
+		for _, sr := range vsr.Spec.Subroutes {
+			vsrSubroutePolicies, policyErrors := lbc.getPolicies(sr.Policies, vsr.Namespace)
+			for _, err := range policyErrors {
+				glog.Warningf("Error getting policy for VirtualServerRoute %s/%s: %v", vsr.Namespace, vsr.Name, err)
+			}
+			policies = append(policies, vsrSubroutePolicies...)
+		}
+
 		for _, u := range vsr.Spec.Upstreams {
 			endpointsKey := configs.GenerateEndpointsKey(vsr.Namespace, u.Service, u.Subselector, u.Port)
 
@@ -2589,9 +2620,57 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 	virtualServerEx.Endpoints = endpoints
 	virtualServerEx.VirtualServerRoutes = virtualServerRoutes
 	virtualServerEx.ExternalNameSvcs = externalNameSvcs
-	virtualServerEx.Policies = policies
+	virtualServerEx.Policies = createPolicyMap(policies)
 
 	return &virtualServerEx, virtualServerRouteErrors
+}
+
+func createPolicyMap(policies []*conf_v1alpha1.Policy) map[string]*conf_v1alpha1.Policy {
+	result := make(map[string]*conf_v1alpha1.Policy)
+
+	for _, p := range policies {
+		key := fmt.Sprintf("%s/%s", p.Namespace, p.Name)
+		result[key] = p
+	}
+
+	return result
+}
+
+func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReference, defaultNamespace string) ([]*conf_v1alpha1.Policy, []error) {
+	var result []*conf_v1alpha1.Policy
+	var errors []error
+
+	for _, p := range policies {
+		polNamespace := p.Namespace
+		if polNamespace == "" {
+			polNamespace = defaultNamespace
+		}
+
+		policyKey := fmt.Sprintf("%s/%s", polNamespace, p.Name)
+
+		policyObj, exists, err := lbc.policyLister.GetByKey(policyKey)
+		if err != nil {
+			errors = append(errors, fmt.Errorf("Failed to get policy %s: %v", policyKey, err))
+			continue
+		}
+
+		if !exists {
+			errors = append(errors, fmt.Errorf("Policy %s doesn't exist", policyKey))
+			continue
+		}
+
+		policy := policyObj.(*conf_v1alpha1.Policy)
+
+		err = validation.ValidatePolicy(policy)
+		if err != nil {
+			errors = append(errors, fmt.Errorf("Policy %s is invalid: %v", policyKey, err))
+			continue
+		}
+
+		result = append(result, policy)
+	}
+
+	return result, errors
 }
 
 func (lbc *LoadBalancerController) createTransportServer(transportServer *conf_v1alpha1.TransportServer) *configs.TransportServerEx {

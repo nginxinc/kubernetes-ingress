@@ -164,6 +164,24 @@ server {
         {{ $snippet }}
         {{ end }}
 
+        {{ with $l.PoliciesErrorReturn }}
+        return {{ .Code }};
+        {{ end }}
+
+        {{ range $allow := $l.Allow }}
+        allow {{ $allow }};
+        {{ end }}
+        {{ if gt (len $l.Allow) 0 }}
+        deny all;
+        {{ end }}
+
+        {{ range $deny := $l.Deny }}
+        deny {{ $deny }};
+        {{ end }}
+        {{ if gt (len $l.Deny) 0 }}
+        allow all;
+        {{ end }}
+
         {{ range $e := $l.ErrorPages }}
         error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";
         {{ end }}

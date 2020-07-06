@@ -1,6 +1,6 @@
 # Policy Resource
 
-The Policy resource allows you to configure features like authentication, rate-limiting, and WAF, which you can add to your [VirtualServer resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/). In the initial release, we are introducing support for access control based on the client IP address. 
+The Policy resource allows you to configure features like authentication, rate-limiting, and WAF, which you can add to your [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/). In the initial release, we are introducing support for access control based on the client IP address. 
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
@@ -23,7 +23,7 @@ This document is the reference documentation for the Policy resource. An example
 
 ## Prerequisites
 
-Policies work together with [VirtualServer resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/), which you need to create separately. 
+Policies work together with [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/), which you need to create separately. 
 
 ## Policy Specification
 
@@ -94,7 +94,7 @@ accessControl:
 
 #### AccessControl Merging Behavior
 
-A VirtualServer can reference multiple access control policies. For example, here we reference two policies, each with configured allow lists:
+A VirtualServer/VirtualServerRoute can reference multiple access control policies. For example, here we reference two policies, each with configured allow lists:
 ```yaml
 policies:
 - name: allow-policy-one

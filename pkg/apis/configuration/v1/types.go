@@ -119,13 +119,14 @@ type SessionCookie struct {
 
 // Route defines a route.
 type Route struct {
-	Path             string      `json:"path"`
-	Route            string      `json:"route"`
-	Action           *Action     `json:"action"`
-	Splits           []Split     `json:"splits"`
-	Matches          []Match     `json:"matches"`
-	ErrorPages       []ErrorPage `json:"errorPages"`
-	LocationSnippets string      `json:"location-snippets"`
+	Path             string            `json:"path"`
+	Policies         []PolicyReference `json:"policies"`
+	Route            string            `json:"route"`
+	Action           *Action           `json:"action"`
+	Splits           []Split           `json:"splits"`
+	Matches          []Match           `json:"matches"`
+	ErrorPages       []ErrorPage       `json:"errorPages"`
+	LocationSnippets string            `json:"location-snippets"`
 }
 
 // Action defines an action.

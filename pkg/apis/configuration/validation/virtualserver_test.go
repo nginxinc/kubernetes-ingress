@@ -645,7 +645,7 @@ func TestValidateVirtualServerRoutes(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateVirtualServerRoutes(test.routes, field.NewPath("routes"), test.upstreamNames)
+		allErrs := validateVirtualServerRoutes(test.routes, field.NewPath("routes"), test.upstreamNames, "default")
 		if len(allErrs) > 0 {
 			t.Errorf("validateVirtualServerRoutes() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -693,7 +693,7 @@ func TestValidateVirtualServerRoutesFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateVirtualServerRoutes(test.routes, field.NewPath("routes"), test.upstreamNames)
+		allErrs := validateVirtualServerRoutes(test.routes, field.NewPath("routes"), test.upstreamNames, "default")
 		if len(allErrs) == 0 {
 			t.Errorf("validateVirtualServerRoutes() returned no errors for the case of %s", test.msg)
 		}
@@ -786,7 +786,7 @@ func TestValidateRoute(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateRoute(test.route, field.NewPath("route"), test.upstreamNames, test.isRouteFieldForbidden)
+		allErrs := validateRoute(test.route, field.NewPath("route"), test.upstreamNames, test.isRouteFieldForbidden, "default")
 		if len(allErrs) > 0 {
 			t.Errorf("validateRoute() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -917,7 +917,7 @@ func TestValidateRouteFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateRoute(test.route, field.NewPath("route"), test.upstreamNames, test.isRouteFieldForbidden)
+		allErrs := validateRoute(test.route, field.NewPath("route"), test.upstreamNames, test.isRouteFieldForbidden, "default")
 		if len(allErrs) == 0 {
 			t.Errorf("validateRoute() returned no errors for invalid input for the case of %s", test.msg)
 		}
@@ -2017,7 +2017,8 @@ func TestValidateVirtualServerRouteSubroutes(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateVirtualServerRouteSubroutes(test.routes, field.NewPath("subroutes"), test.upstreamNames, test.pathPrefix)
+		allErrs := validateVirtualServerRouteSubroutes(test.routes, field.NewPath("subroutes"), test.upstreamNames,
+			test.pathPrefix, "default")
 		if len(allErrs) > 0 {
 			t.Errorf("validateVirtualServerRouteSubroutes() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}
@@ -2082,7 +2083,8 @@ func TestValidateVirtualServerRouteSubroutesFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateVirtualServerRouteSubroutes(test.routes, field.NewPath("subroutes"), test.upstreamNames, test.pathPrefix)
+		allErrs := validateVirtualServerRouteSubroutes(test.routes, field.NewPath("subroutes"), test.upstreamNames,
+			test.pathPrefix, "default")
 		if len(allErrs) == 0 {
 			t.Errorf("validateVirtualServerRouteSubroutes() returned no errors for the case of %s", test.msg)
 		}

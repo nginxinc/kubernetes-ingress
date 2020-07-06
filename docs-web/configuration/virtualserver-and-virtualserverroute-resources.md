@@ -217,6 +217,10 @@ The route defines rules for matching client requests to actions like passing a r
      - The path of the route. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix (must start with ``/``\ ) or an exact match (must start with ``=``\ ), the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``. In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all routes of the VirtualServer. Check the `location <https://nginx.org/en/docs/http/ngx_http_core_module.html#location>`_ directive for more information.
      - ``string``
      - Yes
+   * - ``policies``
+     - A list of policies. The policies override the policies of the same type defined in the ``spec`` of the VirtualServer. The overriding is done by NGINX: the route policies are configured in the ``location`` context, which overrides the spec policies of the same type defined in the ``server`` context. 
+     - `[]policy <#virtualserver-policy>`_
+     - No
    * - ``action``
      - The default action to perform for a request.
      - `action <#action>`_
@@ -346,6 +350,10 @@ action:
      - The path of the subroute. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix, the path must start with the same path as the path of the route of the VirtualServer that references this resource. In the case of an exact or regex match, the path must be the same as the path of the route of the VirtualServer that references this resource. In the case of a prefix or an exact match, the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``.  In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all subroutes of the VirtualServerRoute.
      - ``string``
      - Yes
+   * - ``policies``
+     - A list of policies. The policies override *all* policies defined in the route of the VirtualServer that references this resource. This is done by the Ingress Controller: the route policies of the VirtualServer will not be present in the generated configuration. The policies also override the policies of the same type defined in the ``spec`` of the VirtualServer. This overriding is done by NGINX: the subroute policies are configured in the ``location`` context, which overrides the spec policies of the same type defined in the ``server`` context.
+     - `[]policy <#virtualserver-policy>`_
+     - No
    * - ``action``
      - The default action to perform for a request.
      - `action <#action>`_

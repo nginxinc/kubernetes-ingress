@@ -1,8 +1,11 @@
 package k8s
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 	"unsafe"
@@ -1666,7 +1669,12 @@ func TestFindVirtualServersForPolicy(t *testing.T) {
 			Namespace: "ns-1",
 		},
 		Spec: conf_v1.VirtualServerSpec{
-			Policies: nil,
+			Policies: []conf_v1.PolicyReference{
+				{
+					Name:      "test-policy",
+					Namespace: "ns-1",
+				},
+			},
 		},
 	}
 	vs2 := conf_v1.VirtualServer{
@@ -1677,7 +1685,8 @@ func TestFindVirtualServersForPolicy(t *testing.T) {
 		Spec: conf_v1.VirtualServerSpec{
 			Policies: []conf_v1.PolicyReference{
 				{
-					Name: "some-policy",
+					Name:      "some-policy",
+					Namespace: "ns-1",
 				},
 			},
 		},
@@ -1688,10 +1697,14 @@ func TestFindVirtualServersForPolicy(t *testing.T) {
 			Namespace: "ns-1",
 		},
 		Spec: conf_v1.VirtualServerSpec{
-			Policies: []conf_v1.PolicyReference{
+			Routes: []conf_v1.Route{
 				{
-					Name:      "test-policy",
-					Namespace: "some-namespace",
+					Policies: []conf_v1.PolicyReference{
+						{
+							Name:      "test-policy",
+							Namespace: "ns-1",
+						},
+					},
 				},
 			},
 		},
@@ -1702,36 +1715,144 @@ func TestFindVirtualServersForPolicy(t *testing.T) {
 			Namespace: "ns-1",
 		},
 		Spec: conf_v1.VirtualServerSpec{
-			Policies: []conf_v1.PolicyReference{
+			Routes: []conf_v1.Route{
+				{
+					Policies: []conf_v1.PolicyReference{
+						{
+							Name:      "some-policy",
+							Namespace: "ns-1",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	virtualServers := []*conf_v1.VirtualServer{&vs1, &vs2, &vs3, &vs4}
+
+	expected := []*conf_v1.VirtualServer{&vs1, &vs3}
+
+	result := findVirtualServersForPolicy(virtualServers, "ns-1", "test-policy")
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("findVirtualServersForPolicy() returned %v but expected %v", result, expected)
+	}
+}
+
+func TestIsPolicyIsReferenced(t *testing.T) {
+	tests := []struct {
+		policies          []conf_v1.PolicyReference
+		resourceNamespace string
+		policyNamespace   string
+		policyName        string
+		expected          bool
+		msg               string
+	}{
+		{
+			policies: []conf_v1.PolicyReference{
+				{
+					Name: "test-policy",
+				},
+			},
+			resourceNamespace: "ns-1",
+			policyNamespace:   "ns-1",
+			policyName:        "test-policy",
+			expected:          true,
+			msg:               "reference with implicit namespace",
+		},
+		{
+			policies: []conf_v1.PolicyReference{
 				{
 					Name:      "test-policy",
 					Namespace: "ns-1",
 				},
 			},
+			resourceNamespace: "ns-1",
+			policyNamespace:   "ns-1",
+			policyName:        "test-policy",
+			expected:          true,
+			msg:               "reference with explicit namespace",
 		},
-	}
-	vs5 := conf_v1.VirtualServer{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "vs-5",
-			Namespace: "ns-1",
+		{
+			policies: []conf_v1.PolicyReference{
+				{
+					Name: "test-policy",
+				},
+			},
+			resourceNamespace: "ns-2",
+			policyNamespace:   "ns-1",
+			policyName:        "test-policy",
+			expected:          false,
+			msg:               "wrong namespace with implicit namespace",
 		},
-		Spec: conf_v1.VirtualServerSpec{
-			Policies: []conf_v1.PolicyReference{
+		{
+			policies: []conf_v1.PolicyReference{
 				{
 					Name:      "test-policy",
-					Namespace: "",
+					Namespace: "ns-2",
+				},
+			},
+			resourceNamespace: "ns-2",
+			policyNamespace:   "ns-1",
+			policyName:        "test-policy",
+			expected:          false,
+			msg:               "wrong namespace with explicit namespace",
+		},
+	}
+
+	for _, test := range tests {
+		result := isPolicyReferenced(test.policies, test.resourceNamespace, test.policyNamespace, test.policyName)
+		if result != test.expected {
+			t.Errorf("isPolicyReferenced() returned %v but expected %v for the case of %s", result,
+				test.expected, test.msg)
+		}
+	}
+}
+
+func TestFindVirtualServerRoutesForPolicy(t *testing.T) {
+	vsr1 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-1",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.VirtualServerRouteSpec{
+			Subroutes: []conf_v1.Route{
+				{
+					Policies: []conf_v1.PolicyReference{
+						{
+							Name:      "test-policy",
+							Namespace: "ns-1",
+						},
+					},
+				},
+			},
+		},
+	}
+	vsr2 := conf_v1.VirtualServerRoute{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "vsr-2",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.VirtualServerRouteSpec{
+			Subroutes: []conf_v1.Route{
+				{
+					Policies: []conf_v1.PolicyReference{
+						{
+							Name:      "some-policy",
+							Namespace: "ns-1",
+						},
+					},
 				},
 			},
 		},
 	}
 
-	virtualServers := []*conf_v1.VirtualServer{&vs1, &vs2, &vs3, &vs4, &vs5}
+	virtualServerRoutes := []*conf_v1.VirtualServerRoute{&vsr1, &vsr2}
 
-	expected := []*conf_v1.VirtualServer{&vs4, &vs5}
+	expected := []*conf_v1.VirtualServerRoute{&vsr1}
 
-	result := findVirtualServersForPolicy(virtualServers, "ns-1", "test-policy")
+	result := findVirtualServerRoutesForPolicy(virtualServerRoutes, "ns-1", "test-policy")
 	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("findVirtualServersForPolicy returned %v but expected %v", result, expected)
+		t.Errorf("findVirtualServerRoutesForPolicy() returned %v but expected %v", result, expected)
 	}
 }
 
@@ -1919,4 +2040,150 @@ func TestGetStatusFromEventTitle(t *testing.T) {
 			t.Errorf("getStatusFromEventTitle(%v) returned %v but expected %v", test.eventTitle, result, test.expected)
 		}
 	}
+}
+
+func TestGetPolicies(t *testing.T) {
+	validPolicy := &conf_v1alpha1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1alpha1.PolicySpec{
+			AccessControl: &conf_v1alpha1.AccessControl{
+				Allow: []string{"127.0.0.1"},
+			},
+		},
+	}
+
+	invalidPolicy := &conf_v1alpha1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "invalid-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1alpha1.PolicySpec{},
+	}
+
+	lbc := LoadBalancerController{
+		policyLister: &cache.FakeCustomStore{
+			GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
+				switch key {
+				case "default/valid-policy":
+					return validPolicy, true, nil
+				case "default/invalid-policy":
+					return invalidPolicy, true, nil
+				case "nginx-ingress/valid-policy":
+					return nil, false, nil
+				default:
+					return nil, false, errors.New("GetByKey error")
+				}
+			},
+		},
+	}
+
+	policyRefs := []conf_v1.PolicyReference{
+		{
+			Name: "valid-policy",
+			// Namespace is implicit here
+		},
+		{
+			Name:      "invalid-policy",
+			Namespace: "default",
+		},
+		{
+			Name:      "valid-policy", // doesn't exist
+			Namespace: "nginx-ingress",
+		},
+		{
+			Name:      "some-policy", // will make lister return error
+			Namespace: "nginx-ingress",
+		},
+	}
+
+	expectedPolicies := []*conf_v1alpha1.Policy{validPolicy}
+	expectedErrors := []error{
+		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`"),
+		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
+		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
+	}
+
+	result, errors := lbc.getPolicies(policyRefs, "default")
+	if !reflect.DeepEqual(result, expectedPolicies) {
+		t.Errorf("lbc.getPolicies() returned %v but expected %v", result, expectedPolicies)
+	}
+	if !reflect.DeepEqual(errors, expectedErrors) {
+		t.Errorf("lbc.getPolicies() returned %v but expected %v", errors, expectedErrors)
+	}
+}
+
+func TestCreatePolicyMap(t *testing.T) {
+	policies := []*conf_v1alpha1.Policy{
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "policy-1",
+				Namespace: "default",
+			},
+		},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "policy-2",
+				Namespace: "default",
+			},
+		},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "policy-1",
+				Namespace: "default",
+			},
+		},
+		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "policy-1",
+				Namespace: "nginx-ingress",
+			},
+		},
+	}
+
+	expected := map[string]*conf_v1alpha1.Policy{
+		"default/policy-1": {
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "policy-1",
+				Namespace: "default",
+			},
+		},
+		"default/policy-2": {
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "policy-2",
+				Namespace: "default",
+			},
+		},
+		"nginx-ingress/policy-1": {
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "policy-1",
+				Namespace: "nginx-ingress",
+			},
+		},
+	}
+
+	result := createPolicyMap(policies)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("createPolicyMap() returned \n%s but expected \n%s", policyMapToString(result), policyMapToString(expected))
+	}
+}
+
+func policyMapToString(policies map[string]*conf_v1alpha1.Policy) string {
+	var keys []string
+	for k := range policies {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var b strings.Builder
+
+	b.WriteString("[ ")
+	for _, k := range keys {
+		fmt.Fprintf(&b, "%q: '%s/%s', ", k, policies[k].Namespace, policies[k].Name)
+	}
+	b.WriteString("]")
+
+	return b.String()
 }

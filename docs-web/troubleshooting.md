@@ -108,7 +108,7 @@ Events:
 ```
 Note that in the events section, we have a `Normal` event with the `AddedOrUpdated` reason, which informs us that the policy was successfully accepted.
 
-However, the fact that a policy was accepted doesn't guarantee that the NGINX configuration was successfully applied. To confirm that, check the events of the VirtualServer resources that reference that policy.
+However, the fact that a policy was accepted doesn't guarantee that the NGINX configuration was successfully applied. To confirm that, check the events of the VirtualServer and VirtualServerRoute resources that reference that policy.
 
 ### Checking the Events of the ConfigMap Resource
 
