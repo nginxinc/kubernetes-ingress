@@ -5,7 +5,7 @@ The Ingress controller allows you to customize your templates through a [ConfigM
 * `ingress-template` - Sets the Ingress NGINX configuration template for an Ingress resource.
 * `virtualserver-template` - Sets the NGINX configuration template for an VirtualServer resource.
 
-## Ingress Example
+## Example
 ```yaml
 kind: ConfigMap
 apiVersion: v1
@@ -24,21 +24,6 @@ data:
       {{if $upstream.LBMethod }}{{$upstream.LBMethod}};{{end}}
     ...
     }{{end}}
-```
-
-## VirtualServer Example
-```yaml
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: nginx-config
-  namespace: nginx-ingress
-data:
-  main-template: |
-    worker_processes  {{.WorkerProcesses}};
-    ...
-        include /etc/nginx/conf.d/*.conf;
-    }
   virtualserver-template: |
     {{ range $u := .Upstreams }}
     upstream {{ $u.Name }} {

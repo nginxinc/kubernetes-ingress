@@ -1,3 +1,3 @@
 # Custom Templates
 
-The Ingress Controller uses templates to generate NGINX configuration for VirtualServer resources and the main NGINX configuration file. You can customize the templates and apply them via the ConfigMap. See the [corresponding example](../../examples/custom-templates/README.md).
+The Ingress Controller uses a template to generate NGINX configuration for VirtualServer resources. You can customize the template and apply it via the ConfigMap. See the [combined custom templates](../../examples/custom-templates/README.md) example, which shows how to customize the template for the VirtualServer resource as well as the other templates used by the Ingress Controller.
