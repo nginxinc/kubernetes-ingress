@@ -353,6 +353,10 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool) *Con
 		cfgParams.IngressTemplate = &ingressTemplate
 	}
 
+	if virtualServerTemplate, exists := cfgm.Data["virtualserver-template"]; exists {
+		cfgParams.VirtualServerTemplate = &virtualServerTemplate
+	}
+
 	if mainStreamSnippets, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "stream-snippets", cfgm, "\n"); exists {
 		if err != nil {
 			glog.Error(err)

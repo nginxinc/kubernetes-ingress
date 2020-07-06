@@ -382,6 +382,10 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - Sets the NGINX configuration template for an Ingress resource.
      - By default the template is read from the file on the container.
      - `Custom Templates </nginx-ingress-controller/configuration/global-configuration/custom-templates>`_.
+   * - ``virtualserver-template``
+     - Sets the NGINX configuration template for an VirtualServer resource.
+     - By default the template is read from the file on the container.
+     - `Custom Templates </nginx-ingress-controller/configuration/global-configuration/custom-templates>`_.
 ```
 
 ### Modules

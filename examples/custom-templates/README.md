@@ -1,10 +1,11 @@
 # Custom Templates
 
-The Ingress controller allows you to customize your templates through a [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) via the following keys:
+The Ingress controller allows you to customize your templates through a [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#snippets-and-custom-templates) via the following keys:
 * `main-template` - Sets the main NGINX configuration template.
 * `ingress-template` - Sets the Ingress NGINX configuration template for an Ingress resource.
+* `virtualserver-template` - Sets the NGINX configuration template for an VirtualServer resource.
 
-## Example
+## Ingress Example
 ```yaml
 kind: ConfigMap
 apiVersion: v1
@@ -13,7 +14,6 @@ metadata:
   namespace: nginx-ingress
 data:
   main-template: |
-    user  nginx;
     worker_processes  {{.WorkerProcesses}};
     ...
         include /etc/nginx/conf.d/*.conf;
@@ -25,9 +25,32 @@ data:
     ...
     }{{end}}
 ```
+
+## VirtualServer Example
+```yaml
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  main-template: |
+    worker_processes  {{.WorkerProcesses}};
+    ...
+        include /etc/nginx/conf.d/*.conf;
+    }
+  virtualserver-template: |
+    {{ range $u := .Upstreams }}
+    upstream {{ $u.Name }} {
+      {{ if ne $u.UpstreamZoneSize "0" }}zone {{ $u.Name }} {{ $u.UpstreamZoneSize }};{{ end }}
+    ...
+    }
+    {{ end }}
+```
+
 **Notes:**
 * The templates are truncated for the clarity of the example.
-* The templates for NGINX (the main `nginx.tmpl` and the Ingress `nginx.ingress.tmpl`) and NGINX Plus (the main `nginx-plus.tmpl` and the Ingress `nginx-plus.ingress.tmpl`) are located at [internal/configs/templates](../../internal/configs/version1/).
+* The templates for NGINX (the main `nginx.tmpl` and the Ingress `nginx.ingress.tmpl`) and NGINX Plus (the main `nginx-plus.tmpl` and the Ingress `nginx-plus.ingress.tmpl`) are located at [internal/configs/version1](../../internal/configs/version1/). The VirtualServer templates for NGINX (`nginx.virtualserver.tmpl`) and NGINX Plus (`nginx-plus.virtualserver.tmpl`) are located at [internal/configs/version2](../../internal/configs/version2/).
 
 ## Troubleshooting
 * If a custom template contained within the ConfigMap is invalid on startup, the Ingress controller will fail to start, the error will be reported in the Ingress controller logs.

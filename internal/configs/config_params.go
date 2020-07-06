@@ -84,8 +84,9 @@ type ConfigParams struct {
 	MainServerSSLPreferServerCiphers bool
 	MainServerSSLProtocols           string
 
-	IngressTemplate *string
-	MainTemplate    *string
+	IngressTemplate       *string
+	VirtualServerTemplate *string
+	MainTemplate          *string
 
 	JWTKey      string
 	JWTLoginURL string
