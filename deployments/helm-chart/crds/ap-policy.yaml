@@ -553,6 +553,8 @@ spec:
                         type: string
                       ajaxCustomContent:
                         type: boolean
+                      ajaxEnabled:
+                        type: boolean
                       ajaxPopupMessage:
                         type: string
                       ajaxRedirectUrl:
@@ -717,6 +719,8 @@ spec:
                 urls:
                   items:
                     properties:
+                      description:
+                        type: string
                       method:
                         enum:
                         - '*'
@@ -739,6 +743,7 @@ spec:
                         enum:
                         - always
                         - never
+                        - policy-default
                         type: string
                       ipAddress:
                         pattern: '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
