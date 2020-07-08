@@ -523,14 +523,7 @@ func main() {
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
-<<<<<<< HEAD
 
-	if *appProtect {
-		go handleTerminationWithAppProtect(lbc, nginxManager, nginxDone, aPAgentDone, aPPluginDone)
-	} else {
-		go handleTermination(lbc, nginxManager, nginxDone)
-	}
-=======
 	if *readyStatus {
 		go func() {
 			port := fmt.Sprintf(":%v", *readyStatusPort)
@@ -538,8 +531,13 @@ func main() {
 			glog.Fatal(http.ListenAndServe(port, nil))
 		}()
 	}
-	go handleTermination(lbc, nginxManager, nginxDone)
->>>>>>> 8611280a... Add readiness endpoint
+
+	if *appProtect {
+		go handleTerminationWithAppProtect(lbc, nginxManager, nginxDone, aPAgentDone, aPPluginDone)
+	} else {
+		go handleTermination(lbc, nginxManager, nginxDone)
+	}
+
 	lbc.Run()
 
 	for {

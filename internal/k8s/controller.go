@@ -838,6 +838,12 @@ func (lbc *LoadBalancerController) sync(task task) {
 	case appProtectLogConf:
 		lbc.syncAppProtectLogConf(task)
 	}
+
+	if lbc.firstRun && lbc.syncQueue.Len() == 0 {
+		lbc.firstRun = false
+		lbc.isNginxReady = true
+		glog.V(3).Infof("NGINX is ready")
+	}
 }
 
 func (lbc *LoadBalancerController) syncPolicy(task task) {
@@ -939,11 +945,6 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 		}
 	}
 
-	if lbc.firstRun && lbc.syncQueue.Len() == 0 {
-		lbc.firstRun = false
-		lbc.isNginxReady = true
-		glog.V(3).Infof("NGINX is ready")
-	}
 }
 
 func (lbc *LoadBalancerController) syncTransportServer(task task) {
