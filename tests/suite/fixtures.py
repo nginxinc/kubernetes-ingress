@@ -19,7 +19,7 @@ from suite.resources_utils import create_namespace_with_name_from_yaml, delete_n
     delete_service, replace_configmap_from_yaml, delete_testing_namespaces
 from suite.resources_utils import create_ingress_controller, delete_ingress_controller, configure_rbac, cleanup_rbac
 from suite.resources_utils import create_service_from_yaml, get_service_node_ports, wait_for_public_ip
-from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml
+from suite.resources_utils import create_configmap_from_yaml, create_secret_from_yaml, configure_rbac_with_ap
 from suite.yaml_utils import get_first_vs_host_from_yaml, get_paths_from_vs_yaml, get_paths_from_vsr_yaml, \
     get_route_namespace_from_vs_yaml, get_name_from_yaml
 
@@ -352,6 +352,93 @@ def crd_ingress_controller(cli_arguments, kube_apis, ingress_controller_prerequi
         patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")
         delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments['deployment-type'], namespace)
+
+    request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="class")
+def crd_ingress_controller_with_ap(
+    cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, request
+) -> None:
+    """
+    Create an Ingress Controller with AppProtect CRD enabled.
+    :param cli_arguments: pytest context
+    :param kube_apis: client apis
+    :param ingress_controller_prerequisites
+    :param ingress_controller_endpoint:
+    :param request: pytest fixture to parametrize this method
+        {extra_args: }
+        'extra_args' list of IC arguments
+    :return:
+    """
+    namespace = ingress_controller_prerequisites.namespace
+    name = "nginx-ingress"
+    try:
+        print(
+            "--------------------Create roles and bindings for AppProtect------------------------"
+        )
+        rbac = configure_rbac_with_ap(kube_apis.rbac_v1_beta1)
+
+        print("------------------------- Register AP CRD -----------------------------------")
+        ap_pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/ap-policy-definition.yaml")
+        ap_log_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/ap-logconf-definition.yaml")
+        create_crd_from_yaml(
+            kube_apis.api_extensions_v1_beta1,
+            ap_pol_crd_name,
+            f"{DEPLOYMENTS}/common/ap-policy-definition.yaml",
+        )
+        create_crd_from_yaml(
+            kube_apis.api_extensions_v1_beta1,
+            ap_log_crd_name,
+            f"{DEPLOYMENTS}/common/ap-logconf-definition.yaml",
+        )
+
+        print("------------------------- Create IC -----------------------------------")
+        name = create_ingress_controller(
+            kube_apis.v1,
+            kube_apis.apps_v1_api,
+            cli_arguments,
+            namespace,
+            request.param.get("extra_args", None),
+        )
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+    except Exception as ex:
+        print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
+        delete_crd(
+            kube_apis.api_extensions_v1_beta1,
+            ap_pol_crd_name,
+        )
+        delete_crd(
+            kube_apis.api_extensions_v1_beta1,
+            ap_log_crd_name,
+        )
+        print("Remove ap-rbac")
+        cleanup_rbac(kube_apis.rbac_v1_beta1, rbac)
+        print("Remove the IC:")
+        delete_ingress_controller(
+            kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
+        )
+
+    def fin():
+        print("--------------Cleanup----------------")
+        delete_crd(
+            kube_apis.api_extensions_v1_beta1,
+            ap_pol_crd_name,
+        )
+        delete_crd(
+            kube_apis.api_extensions_v1_beta1,
+            ap_log_crd_name,
+        )
+        print("Remove ap-rbac")
+        cleanup_rbac(kube_apis.rbac_v1_beta1, rbac)
+        print("Remove the IC:")
+        delete_ingress_controller(
+            kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
+        )
 
     request.addfinalizer(fin)
 

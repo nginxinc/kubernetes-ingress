@@ -1,0 +1,31 @@
+apiVersion: appprotect.f5.com/v1beta1
+kind: APPolicy
+metadata: 
+  name: file-block
+spec:
+  policy:
+    name: file-block
+    template:
+      name: POLICY_TEMPLATE_NGINX_BASE
+    applicationLanguage: utf-8
+    enforcementMode: blocking
+    blocking-settings:
+      violations:
+      - name: VIOL_FILETYPE
+        alarm: true
+        block: true
+    filetypes:
+    - name: "*"
+      type: wildcard
+      allowed: true
+      checkPostDataLength: false
+      postDataLength: 4096
+      checkRequestLength: false
+      requestLength: 8192
+      checkUrlLength: true
+      urlLength: 2048
+      checkQueryStringLength: true
+      queryStringLength: 2048
+      responseCheck: false
+    - name: bat
+      allowed: false

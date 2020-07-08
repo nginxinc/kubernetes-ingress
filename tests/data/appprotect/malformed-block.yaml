@@ -1,0 +1,27 @@
+apiVersion: appprotect.f5.com/v1beta1
+kind: APPolicy
+metadata: 
+  name: malformed-block
+spec:
+  policy:
+    name: malformed-block
+    template:
+      name: POLICY_TEMPLATE_NGINX_BASE
+    applicationLanguage: utf-8
+    enforcementMode: blocking
+    blocking-settings:
+      violations:
+      - name: VIOL_JSON_FORMAT
+        alarm: true
+        block: true
+      - name: VIOL_JSON_MALFORMED
+        alarm: true
+        block: true
+      - name: VIOL_XML_FORMAT
+        alarm: true
+        block: true
+      - name: VIOL_XML_MALFORMED
+        alarm: true
+        block: true
+
+

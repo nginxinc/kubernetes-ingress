@@ -88,6 +88,27 @@ def read_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> objec
         raise
 
 
+def read_ap_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
+    """
+    Get AppProtect CRD information (kubectl describe output)
+    :param custom_objects: CustomObjectsApi
+    :param namespace: The custom resource's namespace	
+    :param plural: the custom resource's plural name
+    :param name: the custom object's name
+    :return: object
+    """
+    print(f"Getting info for {name} in namespace {namespace}")
+    try:
+        response = custom_objects.get_namespaced_custom_object(
+            "appprotect.f5.com", "v1beta1", namespace, plural, name
+        )
+        return response
+
+    except ApiException as ex:
+        logging.exception(f"Exception occured: {ex} while getting reading CRD")
+        raise
+
+
 def create_policy_from_yaml(
     custom_objects: CustomObjectsApi, yaml_manifest, namespace
 ) -> str:
@@ -188,6 +209,72 @@ def create_virtual_server_from_yaml(
             f"Exception: {ex} occured while creating VirtualServer: {dep['metadata']['name']}"
         )
         raise
+
+
+def create_ap_logconf_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
+    """
+    Create a logconf for AppProtect based on yaml file.
+    :param custom_objects: CustomObjectsApi
+    :param yaml_manifest: an absolute path to file
+    :param namespace:
+    :return: str
+    """
+    print("Create Ap logconf:")
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    custom_objects.create_namespaced_custom_object("appprotect.f5.com", "v1beta1", namespace, "aplogconfs", dep)
+    print(f"AP logconf created with name '{dep['metadata']['name']}'")
+    return dep['metadata']['name']
+
+
+def create_ap_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
+    """
+    Create a policy for AppProtect based on yaml file.
+    :param custom_objects: CustomObjectsApi
+    :param yaml_manifest: an absolute path to file
+    :param namespace:
+    :return: str
+    """
+    print("Create AP Policy:")
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    custom_objects.create_namespaced_custom_object("appprotect.f5.com", "v1beta1", namespace, "appolicies", dep)
+    print(f"AP Policy created with name '{dep['metadata']['name']}'")
+    return dep['metadata']['name']
+
+
+def delete_ap_logconf(custom_objects: CustomObjectsApi, name, namespace) -> None:
+    """
+    Delete a AppProtect logconf.
+    :param custom_objects: CustomObjectsApi
+    :param namespace: namespace
+    :param name:
+    :return:
+    """
+    print(f"Delete AP logconf: {name}")
+    delete_options = client.V1DeleteOptions()
+    custom_objects.delete_namespaced_custom_object("appprotect.f5.com",
+                                                   "v1beta1", namespace, "aplogconfs", name, delete_options)
+    ensure_item_removal(custom_objects.get_namespaced_custom_object,
+                        "appprotect.f5.com", "v1beta1", namespace, "aplogconfs", name)
+    print(f"AP logconf was removed with name: {name}")
+
+
+def delete_ap_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
+    """
+    Delete a AppProtect policy.
+    :param custom_objects: CustomObjectsApi
+    :param namespace: namespace
+    :param name:
+    :return:
+    """
+    print(f"Delete a AP policy: {name}")
+    delete_options = client.V1DeleteOptions()
+    custom_objects.delete_namespaced_custom_object("appprotect.f5.com",
+                                                   "v1beta1", namespace, "appolicies", name, delete_options)
+    ensure_item_removal(custom_objects.get_namespaced_custom_object,
+                        "appprotect.f5.com", "v1beta1", namespace, "appolicies", name)
+    print(f"AP policy was removed with name: {name}")
 
 
 def delete_virtual_server(custom_objects: CustomObjectsApi, name, namespace) -> None:
