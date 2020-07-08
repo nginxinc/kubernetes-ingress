@@ -81,7 +81,8 @@ pytest_plugins = ["suite.fixtures"]
 
 def pytest_collection_modifyitems(config, items) -> None:
     """
-    Skip the tests marked with '@pytest.mark.skip_for_nginx_oss' for Nginx OSS runs.
+    Skip tests marked with '@pytest.mark.skip_for_nginx_oss' for Nginx OSS runs.
+    Skip tests marked with '@pytest.mark.appprotect' for non AP images.
 
     :param config: pytest config
     :param items: pytest collected test-items
@@ -97,6 +98,11 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "skip_for_nginx_plus" in item.keywords:
                 item.add_marker(skip_for_nginx_plus)
+    if "-ap" not in config.getoption("--image"):
+        appprotect = pytest.mark.skip(reason="Skip AppProtect test in non-AP image")
+        for item in items:
+            if "appprotect" in item.keywords:
+                item.add_marker(appprotect)
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)

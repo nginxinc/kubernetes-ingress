@@ -126,7 +126,7 @@ def assert_valid_responses(response) -> None:
 
 
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.ap
+@pytest.mark.appprotect
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
