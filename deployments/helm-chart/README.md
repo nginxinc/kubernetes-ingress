@@ -170,10 +170,10 @@ The command removes all the Kubernetes components associated with the chart and 
 
 Uninstalling the release does not remove the CRDs. To remove the CRDs, run:
 
-> **Note**: The following command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other Ingress Controller releases running in the cluster.
 ```console
 $ kubectl delete -f deployments/helm-chart/crds/
 ```
+> **Note**: This command will delete all the corresponding custom resources in your cluster across all namespaces. Please ensure there are no custom resources that you want to keep and there are no other Ingress Controller releases running in the cluster.
 
 ## Running Multiple Ingress Controllers
 
