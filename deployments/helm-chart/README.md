@@ -39,6 +39,11 @@ $ helm repo update
 
 ### Installing the CRDs
 
+**Note**: If you're using Kubernetes 1.14, make sure to add `--validate=false` to the `kubectl create` command below. Otherwise, you will get an error validating data:
+```
+ValidationError(CustomResourceDefinition.spec): unknown field "preserveUnknownFields" in io.k8s.apiextensions-apiserver.pkg.apis.api extensions.v1beta1.CustomResourceDefinitionSpec
+```
+
 By default, the Ingress Controller requires a number of custom resource definitions (CRDs) installed in the cluster. Helm 3.x client will install those CRDs. If you're using a Helm 2.x client, you need to install the CRDs via `kubectl`:
 
 ```console
@@ -112,6 +117,8 @@ To install the chart with the release name my-release (my-release is the name th
 ## Upgrading the Chart
 
 ### Upgrading the CRDs
+
+**Note**: If you're using Kubernetes 1.14, make sure to add `--validate=false` to the `kubectl apply` command below.
 
 Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, run the following command to upgrade the CRDs:
 
@@ -248,7 +255,7 @@ Parameter | Description | Default
 `controller.pod.annotations` | The annotations of the Ingress Controller pod. | {}
 `controller.appprotect.enable` | Enables the App Protect module in the Ingress Controller. | false
 `controller.readyStatus.enable` | Enables the readiness endpoint `"/nginx-ready"`. The endpoint returns a success code when NGINX has loaded all the config after the startup. This also configures a readiness probe for the Ingress Controller pods that uses the readiness endpoint. | true
-`controller.readyStaus.port` | The HTTP port for the readiness endpoint. | 8081
+`controller.readyStatus.port` | The HTTP port for the readiness endpoint. | 8081
 `rbac.create` | Configures RBAC. | true
 `prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
