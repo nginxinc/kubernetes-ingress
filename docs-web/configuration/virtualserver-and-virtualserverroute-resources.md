@@ -412,7 +412,7 @@ tls:
      - ``string``
      - Yes
    * - ``service``
-     - The name of a `service <https://kubernetes.io/docs/concepts/services-networking/service/>`_. The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type `ExternalName <https://kubernetes.io/docs/concepts/services-networking/service/#externalname>`_ are also supported (check the `prerequisites <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/externalname-services#prerequisites>`_\ ).
+     - The name of a `service <https://kubernetes.io/docs/concepts/services-networking/service/>`_. The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type `ExternalName <https://kubernetes.io/docs/concepts/services-networking/service/#externalname>`_ are also supported (check the `prerequisites <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.0/examples/externalname-services#prerequisites>`_\ ).
      - ``string``
      - Yes
    * - ``subselector``
@@ -902,7 +902,7 @@ proxy:
      - `action.Proxy.ResponseHeaders <#action-proxy-responseheaders>`_
      - No
    * - ``rewritePath``
-     - The rewritten URI. If the route path is a regular expression (starts with ~), the rewritePath can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the `rewrite <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples-of-custom-resources/rewrites>`_ example.
+     - The rewritten URI. If the route path is a regular expression (starts with ~), the rewritePath can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the `rewrite <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.0/examples-of-custom-resources/rewrites>`_ example.
      - ``string``
      - No
 ```

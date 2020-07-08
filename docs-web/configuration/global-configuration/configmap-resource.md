@@ -149,19 +149,19 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``resolver-addresses``
      - Sets the value of the `resolver <https://nginx.org/en/docs/http/ngx_http_core_module.html#resolver>`_ addresses. Note: If you use a DNS name (ex., ``kube-dns.kube-system.svc.cluster.local``\ ) as a resolver address, NGINX Plus will resolve it using the system resolver during the start and on every configuration reload. As a consequence, If the name cannot be resolved or the DNS server doesn't respond, NGINX Plus will fail to start or reload. To avoid this, consider using only IP addresses as resolver addresses. Supported in NGINX Plus only.
      - N/A
-     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/externalname-services>`_.
+     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.0/examples/externalname-services>`_.
    * - ``resolver-ipv6``
      - Enables IPv6 resolution in the resolver. Supported in NGINX Plus only.
      - ``True``
-     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/externalname-services>`_.
+     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.0/examples/externalname-services>`_.
    * - ``resolver-valid``
      - Sets the time NGINX caches the resolved DNS records. Supported in NGINX Plus only.
      - TTL value of a DNS record
-     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/externalname-services>`_.
+     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.0/examples/externalname-services>`_.
    * - ``resolver-timeout``
      - Sets the `resolver_timeout <https://nginx.org/en/docs/http/ngx_http_core_module.html#resolver_timeout>`_ for name resolution. Supported in NGINX Plus only.
      - ``30s``
-     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/externalname-services>`_.
+     - `Support for Type ExternalName Services <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.0/examples/externalname-services>`_.
    * - ``keepalive-timeout``
      - Sets the value of the `keepalive_timeout <https://nginx.org/en/docs/http/ngx_http_core_module.html#keepalive_timeout>`_ directive.
      - ``65s``
@@ -309,7 +309,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``proxy-protocol``
      - Enables PROXY Protocol for incoming connections.
      - ``False``
-     - `Proxy Protocol <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/proxy-protocol>`_.
+     - `Proxy Protocol <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.0/examples/proxy-protocol>`_.
 ```
 
 ### Backend Services (Upstreams)
@@ -373,7 +373,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``stream-snippets``
      - Sets a custom snippet in stream context.
      - N/A
-     - `Support for  TCP/UDP Load Balancing <https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/tcp-udp>`_.
+     - `Support for  TCP/UDP Load Balancing <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.0/examples/tcp-udp>`_.
    * - ``main-template``
      - Sets the main NGINX configuration template.
      - By default the template is read from the file in the container.

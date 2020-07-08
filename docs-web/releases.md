@@ -1,6 +1,67 @@
 # Releases 
 
+## NGINX Ingress Controller 1.8.0
+
+### 1.8.0
+
+14 July 2020
+
+OVERVIEW:
+
+Release 1.8.0 includes:
+* Support for NGINX App Protect Web Application Firewall. 
+* Support for configuration snippets and custom template for VirtualServer and VirtualServerRoute resources.
+* Support for request/response header manipulation and request URI rewriting for VirtualServer/VirtualServerRoute.
+* Introducing a new configuration resource - Policy - with the first policy for IP-based access control. 
+
+You will find the complete changelog for release 1.8.0, including bug fixes, improvements, and changes below.
+
+FEATURES FOR VIRTUALSERVER AND VIRTUALSERVERROUTE RESOURCES:
+* [1036](https://github.com/nginxinc/kubernetes-ingress/pull/1036): Add VirtualServer custom template support.
+* [1028](https://github.com/nginxinc/kubernetes-ingress/pull/1028): Add access control policy. 
+* [1019](https://github.com/nginxinc/kubernetes-ingress/pull/1019): Add VirtualServer/VirtualServerRoute snippets support.
+* [1006](https://github.com/nginxinc/kubernetes-ingress/pull/1006): Add request/response modifiers to VS and VSR.
+* [994](https://github.com/nginxinc/kubernetes-ingress/pull/994): Support Class Field in VS/VSR.
+* [973](https://github.com/nginxinc/kubernetes-ingress/pull/973): Add status to VirtualServer and VirtualServerRoute.
+
+FEATURES:
+* [1035](https://github.com/nginxinc/kubernetes-ingress/pull/1035): Support for App Protect module.
+* [1029](https://github.com/nginxinc/kubernetes-ingress/pull/1029): Add readiness endpoint.
+
+IMPROVEMENTS:
+* [995](https://github.com/nginxinc/kubernetes-ingress/pull/995): Emit event for orphaned VirtualServerRoutes.
+* Documentation improvements: [946](https://github.com/nginxinc/kubernetes-ingress/pull/946) thanks to [谭九鼎](https://github.com/imba-tjd), [948](https://github.com/nginxinc/kubernetes-ingress/pull/948), [972](https://github.com/nginxinc/kubernetes-ingress/pull/972), [965](https://github.com/nginxinc/kubernetes-ingress/pull/965).
+
+BUGFIXES:
+* [1030](https://github.com/nginxinc/kubernetes-ingress/pull/1030): Fix port range validation in cli arguments.
+* [953](https://github.com/nginxinc/kubernetes-ingress/pull/953): Fix error logging of master/minion ingresses.
+
+HELM CHART:
+* The version of the helm chart is now 0.6.0.
+* Add new parameters to the Chart: `controller.appprotect.enable`, `controller.globalConfiguration.create`, `controller.globalConfiguration.spec`, `controller.readyStatus.enable`, `controller.readyStaus.port`, `controller.config.annotations`, `controller.reportIngressStatus.annotations`. Added in  [1035](https://github.com/nginxinc/kubernetes-ingress/pull/1035), [1034](https://github.com/nginxinc/kubernetes-ingress/pull/1034), [1029](https://github.com/nginxinc/kubernetes-ingress/pull/1029), [1003](https://github.com/nginxinc/kubernetes-ingress/pull/1003) thanks to [RubyLangdon](https://github.com/RubyLangdon). 
+* [1047](https://github.com/nginxinc/kubernetes-ingress/pull/1047) and [1009](https://github.com/nginxinc/kubernetes-ingress/pull/1009): Change how Helm manages the custom resource defintions (CRDs) to support installing multiple Ingress Controller releases. **Note**: If you're using the custom resources (`controller.enableCustomResources` is set to `true`), this is a breaking change. See the HELM UPGRADE section below for the upgrade instructions.
+
+CHANGES:
+* Update NGINX version to 1.19.1.
+* Update NGINX Plus to R22.
+* [1029](https://github.com/nginxinc/kubernetes-ingress/pull/1029): Add readiness endpoint. The Ingress Controller now exposes a readiness endpoint on port `8081` and the path `/nginx-ready`. The endpoint returns a `200` response after the Ingress Controller finishes the initial configuration of NGINX at the start. The pod template was updated to use that endpoint in a readiness probe. 
+* [980](https://github.com/nginxinc/kubernetes-ingress/pull/980): Enable leader election by default.
+
+UPGRADE:
+* For NGINX, use the 1.8.0 image from our DockerHub: `nginx/nginx-ingress:1.8.0`, `nginx/nginx-ingress:1.8.0-alpine` or `nginx-ingress:1.8.0-ubi`
+* For NGINX Plus, please build your own image using the 1.8.0 source code.
+* For Helm, use version 0.6.0 of the chart.
+
+HELM UPGRADE:
+
+If you're using custom resources like VirtualServer and TransportServer (`controller.enableCustomResources` is set to `true`), after you run the `helm upgrade` command, the CRDs and the corresponding custom resources will be removed from the cluster. Before upgrading, make sure to back up the custom resources. After running the `helm upgrade` command, run `kubectl apply -f deployments/helm-chart/crds` to re-install the CRDs and then restore the custom resources.
+
+NOTES:
+* As part of installing a release, Helm will install the CRDs unless that step is disabled (see the [corresponding doc](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/)). The installed CRDs include  the CRDs for all Ingress Controller features, including the ones disabled by default (like App Protect with `aplogconfs.appprotect.f5.com` and `appolicies.appprotect.f5.com` CRDs).
+
 ## NGINX Ingress Controller 1.7.2
+
+23 June 2020
 
 CHANGES:
 * Update NGINX Plus version to R22.
@@ -15,6 +76,8 @@ UPGRADE:
 
 ## NGINX Ingress Controller 1.7.1
 
+4 June 2020
+
 CHANGES:
 * Update NGINX version to 1.19.0.
 
@@ -27,6 +90,8 @@ UPGRADE:
 * For Helm, use version 0.5.1 of the chart.
 
 ## NGINX Ingress Controller 1.7.0
+
+30 April 2020
 
 OVERVIEW:
 
@@ -83,6 +148,8 @@ When upgrading using the [manifests](/nginx-ingress-controller/installation/inst
 
 ## NGINX Ingress Controller 1.6.3
 
+6 March 2020
+
 CHANGES:
 * Update NGINX version to 1.17.9.
 
@@ -95,6 +162,8 @@ UPGRADE:
 * For Helm, use version 0.4.3 of the chart.
 
 ## NGINX Ingress Controller 1.6.2
+
+6 February 2020
 
 CHANGES:
 * Update NGINX version to 1.17.8.
@@ -109,6 +178,8 @@ UPGRADE:
 
 ## NGINX Ingress Controller 1.6.1
 
+14 January 2020
+
 CHANGES:
 * Update NGINX version to 1.17.7.
 
@@ -121,6 +192,8 @@ UPGRADE:
 * For Helm, use version 0.4.1 of the chart.
 
 ## NGINX Ingress Controller 1.6.0
+
+19 December 2019
 
 OVERVIEW:
 
