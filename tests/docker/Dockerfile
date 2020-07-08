@@ -12,4 +12,4 @@ WORKDIR /workspace/tests
 RUN pip install -r requirements.txt
 RUN rm -rf '.pytest_cache'
 
-ENTRYPOINT [ "pytest", "-m", ""not ap""]
+ENTRYPOINT [ "pytest", "-m", "'not ap'"]
