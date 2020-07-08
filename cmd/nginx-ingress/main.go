@@ -527,8 +527,9 @@ func main() {
 	if *readyStatus {
 		go func() {
 			port := fmt.Sprintf(":%v", *readyStatusPort)
-			http.HandleFunc("/nginx-ready", ready(lbc))
-			glog.Fatal(http.ListenAndServe(port, nil))
+			s := http.NewServeMux()
+			s.HandleFunc("/nginx-ready", ready(lbc))
+			glog.Fatal(http.ListenAndServe(port, s))
 		}()
 	}
 
