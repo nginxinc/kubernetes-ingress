@@ -65,6 +65,7 @@ func (tq *taskQueue) Requeue(task task, err error) {
 	tq.queue.Add(task)
 }
 
+// Len returns the length of the queue
 func (tq *taskQueue) Len() int {
 	glog.V(3).Infof("The queue has %v element(s)", tq.queue.Len())
 	return tq.queue.Len()

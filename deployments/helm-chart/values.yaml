@@ -259,6 +259,7 @@ controller:
 
   ## The PriorityClass of the ingress controller pods.
   priorityClassName:
+
   readyStatus:
     ## Enables readiness endpoint "/nginx-ready". The endpoint returns a success code when NGINX has loaded all the config after startup.
     enable: false
