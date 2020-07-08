@@ -736,5 +736,6 @@ func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
+		fmt.Fprintln(w, "Ready")
 	}
 }
