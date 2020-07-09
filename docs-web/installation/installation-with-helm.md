@@ -387,7 +387,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
      - {}
    * - ``controller.readyStatus.enable``
      - Enables the readiness endpoint `"/nginx-ready"`. The endpoint returns a success code when NGINX has loaded all the config after the startup. This also configures a readiness probe for the Ingress Controller pods that uses the readiness endpoint.
-     - false
+     - true
    * - ``controller.readyStaus.port``
      - The HTTP port for the readiness endpoint.
      - 8081
