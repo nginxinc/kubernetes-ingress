@@ -146,8 +146,6 @@ spec:
           - -global-configuration=$(POD_NAMESPACE)/{{ .Release.Name }}
 {{- end }}
 {{- end }}
-{{- if .Values.controller.readyStatus.enable }}
-          - -ready-status
+          - -ready-status={{ .Values.controller.readyStatus.enable }}
           - -ready-status-port={{ .Values.controller.readyStatus.port }}
-{{- end }}
 {{- end }}
