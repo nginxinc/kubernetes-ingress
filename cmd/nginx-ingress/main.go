@@ -155,7 +155,7 @@ var (
 		`Specifies the address of the running Spire agent. For use with NGINX Service Mesh only. If the flag is set,
 			but the Ingress Controller is not able to connect with the Spire Agent, the Ingress Controller will fail to start.`)
 
-	readyStatus = flag.Bool("ready-status", false, "Enables the readiness endpoint '/nginx-ready'. The endpoint returns a success code when NGINX has loaded all the config after the startup")
+	readyStatus = flag.Bool("ready-status", true, "Enables the readiness endpoint '/nginx-ready'. The endpoint returns a success code when NGINX has loaded all the config after the startup")
 
 	readyStatusPort = flag.Int("ready-status-port", 8081, "Set the port where the readiness endpoint is exposed. [1024 - 65535]")
 )
