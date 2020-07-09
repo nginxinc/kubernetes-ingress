@@ -148,6 +148,6 @@ spec:
 {{- end }}
 {{- if .Values.controller.readyStatus.enable }}
           - -ready-status
-          - -ready-status-port={{ .Values.controller.readyStaus.port }}
+          - -ready-status-port={{ .Values.controller.readyStatus.port }}
 {{- end }}
 {{- end }}
