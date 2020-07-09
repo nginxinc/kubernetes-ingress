@@ -519,7 +519,6 @@ func main() {
 		GlobalConfigurationValidator: globalConfigurationValidator,
 		TransportServerValidator:     transportServerValidator,
 		SpireAgentAddress:            *spireAgentAddress,
-		FirstRun:                     *readyStatus,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

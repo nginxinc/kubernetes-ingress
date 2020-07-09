@@ -145,7 +145,6 @@ type LoadBalancerController struct {
 	transportServerValidator      *validation.TransportServerValidator
 	spiffeController              *spiffeController
 	syncLock                      sync.Mutex
-	firstRun                      bool
 	isNginxReady                  bool
 }
 
@@ -177,7 +176,6 @@ type NewLoadBalancerControllerInput struct {
 	GlobalConfigurationValidator *validation.GlobalConfigurationValidator
 	TransportServerValidator     *validation.TransportServerValidator
 	SpireAgentAddress            string
-	FirstRun                     bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -203,7 +201,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		metricsCollector:             input.MetricsCollector,
 		globalConfigurationValidator: input.GlobalConfigurationValidator,
 		transportServerValidator:     input.TransportServerValidator,
-		firstRun:                     input.FirstRun,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -839,8 +836,7 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncAppProtectLogConf(task)
 	}
 
-	if lbc.firstRun && lbc.syncQueue.Len() == 0 {
-		lbc.firstRun = false
+	if !lbc.isNginxReady && lbc.syncQueue.Len() == 0 {
 		lbc.isNginxReady = true
 		glog.V(3).Infof("NGINX is ready")
 	}
