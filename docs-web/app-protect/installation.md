@@ -17,6 +17,7 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
     ```bash
     make DOCKERFILE=appprotect/DockerfileWithAppProtectForPlus PREFIX=<your Docker registry domain>/nginx-plus-ingress
     ```
+    Alternatively, if You are want to run on an [OpenShift](https://www.openshift.com/) cluster You can use the `DOCKERFILE=appprotect/DockerfileWithAppProtectForPlusForOpenShift` build parameter.
 
 - [Push the image to your local Docker registry](/nginx-ingress-controller/installation/building-ingress-controller-image/#building-the-image-and-pushing-it-to-the-private-registry).
 

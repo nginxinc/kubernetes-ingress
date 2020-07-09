@@ -76,7 +76,11 @@ NGINX Plus images are not available through DockerHub.
     * - Debian-based image with App Protect
       - ``appprotect/DockerfileWithAppProtectForPlus``
       - ``debian:stretch-slim``
-      - NGINX Plus App Protect module 
+      - NGINX Plus App Protect module
+    * - Ubi-based image with App Protect
+      - ``appprotect/DockerfileWithAppProtectForPlusForOpenShift``
+      - ``registry.access.redhat.com/ubi7/ubi``
+      - NGINX Plus App Protect module   
 ```
 
 \* -- Dockerfile paths are relative to the ``build`` folder of the Ingress Controller git repo.

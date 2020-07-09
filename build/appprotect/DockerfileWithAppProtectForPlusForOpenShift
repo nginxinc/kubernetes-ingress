@@ -1,0 +1,134 @@
+ARG GOLANG_CONTAINER=golang:latest
+
+FROM registry.access.redhat.com/ubi7/ubi AS base
+
+LABEL name="NGINX Ingress Controller" \
+      description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+      summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+      io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift" \
+      maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>" \
+      vendor="NGINX Inc <kubernetes@nginx.com>"
+
+ENV NGINX_PLUS_VERSION 21-1.el7.ngx
+ENV APPPROTECT_VERSION 21+2.52.1-1.el7.ngx
+ENV APPPROTECT_SIG_VERSION 2020.07.06-1.el7.ngx
+ARG IC_VERSION
+
+# Download certificate and key from the customer portal (https://cs.nginx.com)
+# and copy to the build context
+RUN mkdir /etc/ssl/nginx/
+COPY nginx-repo.crt nginx-repo.key /etc/ssl/nginx/
+
+# Make sure the certificate and key have correct permissions
+RUN chmod 644 /etc/ssl/nginx/*
+
+# Copy RHEL account data
+COPY rhel_license /tmp/
+
+# Install NGINX Plus
+RUN set -x \
+	&& groupadd --system --gid 101 nginx \
+	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
+	&& source /tmp/rhel_license \
+	&& yum install -y wget ca-certificates \
+	&& wget https://nginx.org/keys/nginx_signing.key \
+	&& \
+	NGINX_GPGKEY=nginx_signing.key; \
+	found=''; \
+	for server in \
+		ha.pool.sks-keyservers.net \
+		hkp://p80.pool.sks-keyservers.net:80 \
+		pgp.mit.edu \
+	; do \
+		echo "Fetching GPG key $NGINX_GPGKEY from $server"; \
+		rpm --define="%_hkp_keyserver $server" --import $NGINX_GPGKEY && found=yes && break; \
+	done; \
+	test -z "$found" && echo >&2 "error: failed to fetch GPG key $NGINX_GPGKEY" && exit 1; \
+	wget -P /etc/yum.repos.d https://cs.nginx.com/static/files/nginx-plus-7.repo \
+	&& wget -P /etc/yum.repos.d https://cs.nginx.com/static/files/app-protect-signatures-7.repo \
+	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
+	&& subscription-manager attach --auto \
+	&& yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional rhel-7-server-optional-rpms \
+	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+	&& yum clean all \
+	&& yum install -y nginx-plus-$NGINX_PLUS_VERSION app-protect-$APPPROTECT_VERSION \
+	&& yum install -y app-protect-attack-signatures${APPPROTECT_SIG_VERSION:+-$APPPROTECT_SIG_VERSION} \
+	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
+	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
+	&& yum remove -y wget \
+	&& rm -rf /etc/ssl/nginx \
+	&& rm /etc/yum.repos.d/nginx-plus-7.repo \
+	&& rm nginx_signing.key /tmp/rhel_license
+
+
+# forward nginx access and error logs to stdout and stderr of the ingress
+# controller process
+RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
+	&& ln -sf /proc/1/fd/1 /var/log/nginx/stream-access.log \
+	&& ln -sf /proc/1/fd/2 /var/log/nginx/error.log
+
+RUN  mkdir -p /var/lib/nginx \
+	&& mkdir -p /etc/nginx/stream-conf.d \
+	&& mkdir -p /etc/nginx/secrets \
+	&& mkdir -p /etc/nginx/waf \
+	&& mkdir -p /etc/nginx/waf/nac-policies \
+	&& mkdir -p /etc/nginx/waf/nac-logconfs \
+	&& mkdir -p /var/log/app_protect \
+	&& mkdir -p /opt/app_protect \
+	&& chown -R nginx:0 /etc/app_protect \
+	&& chown -R nginx:0 /usr/share/ts \
+	&& chown -R nginx:0 /etc/nginx \
+	&& chown -R nginx:0 /var/cache/nginx \
+	&& chown -R nginx:0 /var/lib/nginx/ \
+	&& chown -R nginx:0 /var/log/app_protect/ \
+	&& chown -R nginx:0 /opt/app_protect/ \
+	&& chown -R nginx:0 /var/log/nginx/ \
+	&& rm /etc/nginx/conf.d/*
+
+RUN printf "MODULE = ALL;\nLOG_LEVEL = TS_CRIT;\nFILE = 2;\n" > /etc/app_protect/bd/logger.cfg \
+	&&  printf "[config_set_compiler]\nlog_level=fatal\n" >> /etc/app_protect/tools/asm_logging.conf \
+	&& for v in \
+		asm_config_server \
+		lock_factory \
+		bd_agent \
+		import_export_policy \
+		set_active \
+	; do sed -i "/\[$v/a log_level=fatal" "/etc/app_protect/tools/asm_logging.conf" \
+	; done
+
+COPY --chown=nginx:0 build/appprotect/log-default.json /etc/nginx  
+
+EXPOSE 80 443
+
+COPY internal/configs/version1/nginx-plus.ingress.tmpl \
+	internal/configs/version1/nginx-plus.tmpl \
+	internal/configs/version2/nginx-plus.virtualserver.tmpl \
+	internal/configs/version2/nginx-plus.transportserver.tmpl /
+
+# Uncomment the line below if you would like to add the default.pem to the image
+# and use it as a certificate and key for the default server
+# ADD default.pem /etc/nginx/secrets/default
+
+RUN mkdir licenses
+COPY LICENSE /licenses
+
+USER nginx
+
+ENTRYPOINT ["/nginx-ingress"]
+
+
+FROM base AS local
+COPY nginx-ingress /
+
+
+FROM $GOLANG_CONTAINER AS builder
+ARG VERSION
+ARG GIT_COMMIT
+WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/cmd/nginx-ingress
+COPY . /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/
+RUN CGO_ENABLED=0 GOFLAGS='-mod=vendor' \
+	go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o /tmp/nginx-ingress
+
+
+FROM base AS container
+COPY --from=builder /tmp/nginx-ingress /
