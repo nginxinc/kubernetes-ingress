@@ -297,7 +297,6 @@ class TestAppProtect:
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_valid_responses(response)
 
-    @pytest.mark.ap_log
     def test_ap_sec_logs_on(
         self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
@@ -310,7 +309,7 @@ class TestAppProtect:
 
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
 
-        wait_before_test(15)
+        wait_before_test(20)
         syslog_ep = (
             kube_apis.v1.read_namespaced_endpoints("syslog-svc", test_namespace)
             .subsets[0]
