@@ -4,10 +4,10 @@ FROM debian:stretch-slim as base
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV APPPROTECT_VERSION 21+2.52.1-1~stretch
+ENV APPPROTECT_VERSION 22+3.74.0-1~stretch
 ENV APPPROTECT_SIG_VERSION 2020.06.18-1~stretch
-ENV NGINX_PLUS_VERSION 21-1~stretch
-ENV NGINX_PLUS_RELEASE R21
+ENV NGINX_PLUS_VERSION 22-1~stretch
+ENV NGINX_PLUS_RELEASE R22
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)

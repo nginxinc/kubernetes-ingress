@@ -9,8 +9,8 @@ LABEL name="NGINX Ingress Controller" \
       maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>" \
       vendor="NGINX Inc <kubernetes@nginx.com>"
 
-ENV NGINX_PLUS_VERSION 21-1.el7.ngx
-ENV APPPROTECT_VERSION 21+2.52.1-1.el7.ngx
+ENV NGINX_PLUS_VERSION 22-1.el7.ngx
+ENV APPPROTECT_VERSION 22+3.74.0-1.el7.ngx
 ENV APPPROTECT_SIG_VERSION 2020.07.06-1.el7.ngx
 ARG IC_VERSION
 
