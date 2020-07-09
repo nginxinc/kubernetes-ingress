@@ -310,7 +310,7 @@ class TestAppProtect:
 
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
 
-        wait_before_test(10)
+        wait_before_test(15)
         syslog_ep = (
             kube_apis.v1.read_namespaced_endpoints("syslog-svc", test_namespace)
             .subsets[0]
