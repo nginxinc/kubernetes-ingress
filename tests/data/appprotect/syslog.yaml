@@ -24,9 +24,10 @@ kind: Service
 metadata:
   name: syslog-svc
 spec:
+  clusterIP: 10.96.0.50
   ports:
   - port: 514
     targetPort: 514
-    protocol: UDP
+    protocol: TCP
   selector:
     app: syslog
