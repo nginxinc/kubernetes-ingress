@@ -191,7 +191,7 @@ Below we describe the available command-line arguments:
 
 .. option:: -ready-status
 
- 	Enables the readiness endpoint "/nginx-ready". The endpoint returns a success code when NGINX has loaded all the config after the startup.
+ 	Enables the readiness endpoint "/nginx-ready". The endpoint returns a success code when NGINX has loaded all the config after the startup. (default true)
 
 .. option:: -ready-status-port
 
