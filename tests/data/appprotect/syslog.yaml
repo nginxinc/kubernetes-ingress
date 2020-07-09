@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: syslog 
-        image: balabit/syslog-ng
+        image: balabit/syslog-ng:3.28.1
         ports:
         - containerPort: 514
         - containerPort: 601 
@@ -24,7 +24,6 @@ kind: Service
 metadata:
   name: syslog-svc
 spec:
-  clusterIP: 10.96.0.50
   ports:
   - port: 514
     targetPort: 514
