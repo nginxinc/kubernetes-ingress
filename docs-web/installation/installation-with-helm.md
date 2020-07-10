@@ -24,9 +24,7 @@ This step is required if you're installing the chart using its sources. Addition
     $ cd kubernetes-ingress/deployments/helm-chart
     ```
 
-## Installing the Chart
-
-### Adding the Helm Repository
+## Adding the Helm Repository
 
 This step is required if you're installing the chart via the helm repository.
 
@@ -34,6 +32,8 @@ This step is required if you're installing the chart via the helm repository.
 $ helm repo add nginx-edge https://helm.nginx.com/edge
 $ helm repo update
 ```
+
+## Installing the Chart
 
 ### Installing the CRDs
 
