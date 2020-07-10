@@ -50,5 +50,4 @@ The NGINX Ingress Controller imposes the following restrictions on Ingress resou
 
 The Ingress resource only allows you to use basic NGINX features -- host and path-based routing and TLS termination. Advanced features like rewriting the request URI or inserting additional response headers are available through annotations. See the [Advanced Configuration with Annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations) doc.
 
-
-
+The Ingress Controller generates NGINX configuration by executing a template file that contains configuration options. These options are set via the Ingress resource and the Ingress Controller's ConfigMap. Advanced NGINX users who require more control over the generated NGINX configurations can use snippets to insert raw NGINX config. See [Advanced Configuration with Snippets](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-snippets) for more information. Additionally, it is possible to customize the template. See [Custom Templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates/) for instructions.
