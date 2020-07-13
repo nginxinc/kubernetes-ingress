@@ -20,19 +20,22 @@ The table below summarizes the key difference between nginxinc/kubernetes-ingres
 | Merging Ingress rules with the same host | Supported | Supported via [Mergeable Ingresses](../examples/mergeable-ingress-types) | Supported via [Mergeable Ingresses](../examples/mergeable-ingress-types) |
 | HTTP load balancing extensions - Annotations | See the [supported annotations](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/) | See the [supported annotations](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/) | See the [supported annotations](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/)|
 | HTTP load balancing extensions -- ConfigMap | See the [supported ConfigMap keys](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/) | See the [supported ConfigMap keys](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) | See the [supported ConfigMap keys](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) |
-| TCP/UDP | Supported via a ConfigMap | Supported via a ConfigMap with native NGINX configuration | Supported via a ConfigMap with native NGINX configuration |
+| TCP/UDP | Supported via a ConfigMap | Supported via custom resources | Supported via custom resources |
 | Websocket  | Supported | Supported via an [annotation](../examples/websocket) | Supported via an [annotation](../examples/websocket) |
-| TCP SSL Passthrough | Supported via a ConfigMap | Not supported | Not supported |
+| TCP SSL Passthrough | Supported via a ConfigMap | Supported via custom resources | Supported via custom resources |
 | JWT validation | Not supported | Not supported | Supported |
 | Session persistence | Supported via a third-party module | Not supported | Supported |
 | Canary testing (by header, cookie, weight) | Supported via annotations | Supported via custom resources | Supported via custom resources |
 | Configuration templates *1 | See the [template](https://github.com/kubernetes/ingress-nginx/blob/master/rootfs/etc/nginx/template/nginx.tmpl) | See the [templates](../internal/configs/version1) | See the [templates](../internal/configs/version1) |
 | **Load balancing configuration via Custom Resources** |
-| HTTP load balancing | Not supported | See [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/) resources. | See [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/) resources. |
+| HTTP load balancing | Not supported | See [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/) resources | See [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/) resources |
+| TCP/UDP load balancing | Not supported | See [TransportServer](https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/) resource | See [TransportServer](https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/) resource |
+| TCP SSL Passthrough load balancing | Not supported | See [TransportServer](https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/) resource | See [TransportServer](https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/) resource |
 | **Deployment** |
 | Command-line arguments *2 | See the [arguments](https://kubernetes.github.io/ingress-nginx/user-guide/cli-arguments/) | See the [arguments](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/) | See the [arguments](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/) |
 | TLS certificate and key for the default server | Required as a command-line argument/ auto-generated | Required as a command-line argument | Required as a command-line argument |
 | Helm chart | Supported | Supported | Supported |
+| Operator | Not supported | Supported | Supported |
 | **Operational** |
 | Reporting the IP address(es) of the Ingress controller into Ingress resources | Supported | Supported | Supported |
 | Extended Status | Supported via a third-party module | Not supported | Supported |
