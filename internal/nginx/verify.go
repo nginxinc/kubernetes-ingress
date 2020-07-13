@@ -15,14 +15,14 @@ import (
 )
 
 // VerifyClient is a client for verifying the config version.
-type VerifyClient struct {
+type verifyClient struct {
 	client  *http.Client
 	timeout int
 }
 
 // NewVerifyClient returns a new client pointed at the config version socket.
-func NewVerifyClient(timeout int) *VerifyClient {
-	return &VerifyClient{
+func NewVerifyClient(timeout int) *verifyClient {
+	return &verifyClient{
 		client: &http.Client{
 			Transport: &http.Transport{
 				DialContext: func(_ context.Context, _, _ string) (net.Conn, error) {
@@ -36,7 +36,7 @@ func NewVerifyClient(timeout int) *VerifyClient {
 
 // GetConfigVersion get version number that we put in the nginx config to verify that we're using
 // the correct config.
-func (c *VerifyClient) GetConfigVersion() (int, error) {
+func (c *verifyClient) GetConfigVersion() (int, error) {
 	resp, err := c.client.Get("http://config-version/configVersion")
 	if err != nil {
 		return 0, fmt.Errorf("error getting client: %v", err)
@@ -60,7 +60,7 @@ func (c *VerifyClient) GetConfigVersion() (int, error) {
 
 // WaitForCorrectVersion calls the config version endpoint until it gets the expectedVersion,
 // which ensures that a new worker process has been started for that config version.
-func (c *VerifyClient) WaitForCorrectVersion(expectedVersion int) error {
+func (c *verifyClient) WaitForCorrectVersion(expectedVersion int) error {
 	sleep := 25 * time.Millisecond
 	maxRetries := c.timeout / 25
 	for i := 1; i <= maxRetries; i++ {

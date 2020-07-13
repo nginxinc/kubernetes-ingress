@@ -1,8 +1,17 @@
 package collectors
 
 import (
+	"bufio"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"os/user"
+	"strconv"
+	"strings"
+	"syscall"
 	"time"
 
+	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -11,6 +20,7 @@ type ManagerCollector interface {
 	IncNginxReloadCount()
 	IncNginxReloadErrors()
 	UpdateLastReloadTime(ms time.Duration)
+	UpdateWorkerProcessCount(prevVersion int, confVersion int)
 	Register(registry *prometheus.Registry) error
 }
 
@@ -21,10 +31,12 @@ type LocalManagerMetricsCollector struct {
 	reloadsError     prometheus.Counter
 	lastReloadStatus prometheus.Gauge
 	lastReloadTime   prometheus.Gauge
+	processTotal     *prometheus.GaugeVec
 }
 
 // NewLocalManagerMetricsCollector creates a new LocalManagerMetricsCollector
 func NewLocalManagerMetricsCollector(constLabels map[string]string) *LocalManagerMetricsCollector {
+	labelNames := []string{"oldGeneration", "currentGeneration"}
 	nc := &LocalManagerMetricsCollector{
 		reloadsTotal: prometheus.NewCounter(
 			prometheus.CounterOpts{
@@ -58,6 +70,16 @@ func NewLocalManagerMetricsCollector(constLabels map[string]string) *LocalManage
 				ConstLabels: constLabels,
 			},
 		),
+
+		processTotal: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name:        "controller_nginx_worker_processes_total",
+				Namespace:   metricsNamespace,
+				Help:        "Number of NGINX worker processes",
+				ConstLabels: constLabels,
+			},
+			labelNames,
+		),
 	}
 	return nc
 }
@@ -88,12 +110,54 @@ func (nc *LocalManagerMetricsCollector) UpdateLastReloadTime(duration time.Durat
 	nc.lastReloadTime.Set(float64(duration / time.Millisecond))
 }
 
+// UpdateWorkerProcessCount sets the number of NGINX worker processes
+func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(prevConfigVersion int, currentConfigVersion int) {
+	workerProcesses := 0
+	procFolders, err := ioutil.ReadDir("/proc")
+	if err != nil {
+		glog.Errorf("error %v", err)
+	}
+	processes := []string{}
+	for _, f := range procFolders {
+		u, err := user.LookupId(fmt.Sprint(f.Sys().(*syscall.Stat_t).Uid))
+		if err != nil {
+			glog.Errorf("Error %v", err)
+		}
+		if u.Name == "nginx user" {
+			// store pids of the processes
+			processes = append(processes, f.Name())
+		}
+	}
+	for _, file := range processes {
+		statusFile := fmt.Sprintf("/proc/%v/status", file)
+		f, err := os.Open(statusFile)
+		if err != nil {
+			glog.Errorf("Error in opening file %v", statusFile)
+		}
+
+		scanner := bufio.NewScanner(f)
+
+		for scanner.Scan() {
+			if strings.Contains(scanner.Text(), "PPid") {
+				words := strings.Split(scanner.Text(), "\t")
+				ppid := words[len(words)-1]
+
+				if ppid != "0" {
+					workerProcesses++
+				}
+			}
+		}
+	}
+	nc.processTotal.WithLabelValues(strconv.Itoa(prevConfigVersion), strconv.Itoa(currentConfigVersion)).Set(float64(workerProcesses))
+}
+
 // Describe implements prometheus.Collector interface Describe method
 func (nc *LocalManagerMetricsCollector) Describe(ch chan<- *prometheus.Desc) {
 	nc.reloadsTotal.Describe(ch)
 	nc.reloadsError.Describe(ch)
 	nc.lastReloadStatus.Describe(ch)
 	nc.lastReloadTime.Describe(ch)
+	nc.processTotal.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface Collect method
@@ -102,6 +166,7 @@ func (nc *LocalManagerMetricsCollector) Collect(ch chan<- prometheus.Metric) {
 	nc.reloadsError.Collect(ch)
 	nc.lastReloadStatus.Collect(ch)
 	nc.lastReloadTime.Collect(ch)
+	nc.processTotal.Collect(ch)
 }
 
 // Register registers all the metrics of the collector
@@ -128,3 +193,7 @@ func (nc *ManagerFakeCollector) IncNginxReloadErrors() {}
 
 // UpdateLastReloadTime implements a fake UpdateLastReloadTime
 func (nc *ManagerFakeCollector) UpdateLastReloadTime(ms time.Duration) {}
+
+// UpdateWorkerProcessCount implements a fake UpdateWorkerPorcessCount
+func (nc *ManagerFakeCollector) UpdateWorkerProcessCount(prevConfVersion int, currConfVersion int) {
+}

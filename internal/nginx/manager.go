@@ -86,7 +86,7 @@ type LocalManager struct {
 	dhparamFilename              string
 	tlsPassthroughHostsFilename  string
 	verifyConfigGenerator        *verifyConfigGenerator
-	verifyClient                 *VerifyClient
+	verifyClient                 *verifyClient
 	configVersion                int
 	reloadCmd                    string
 	quitCmd                      string
@@ -270,6 +270,7 @@ func (lm *LocalManager) Start(done chan error) {
 // Reload reloads NGINX.
 func (lm *LocalManager) Reload() error {
 	// write a new config version
+	oldConfig := lm.configVersion
 	lm.configVersion++
 	lm.UpdateConfigVersionFile(lm.OpenTracing)
 
@@ -288,6 +289,7 @@ func (lm *LocalManager) Reload() error {
 	}
 
 	lm.metricsCollector.IncNginxReloadCount()
+	lm.metricsCollector.UpdateWorkerProcessCount(oldConfig, lm.configVersion)
 
 	t2 := time.Now()
 	lm.metricsCollector.UpdateLastReloadTime(t2.Sub(t1))

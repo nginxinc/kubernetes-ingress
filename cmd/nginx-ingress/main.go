@@ -299,17 +299,14 @@ func main() {
 	var registry *prometheus.Registry
 	var managerCollector collectors.ManagerCollector
 	var controllerCollector collectors.ControllerCollector
-	var processCollector collectors.ProcessCollector
 	constLabels := map[string]string{"class": *ingressClass}
 	managerCollector = collectors.NewManagerFakeCollector()
 	controllerCollector = collectors.NewControllerFakeCollector()
-	processCollector = collectors.NewProcessFakeCollector()
 
 	if *enablePrometheusMetrics {
 		registry = prometheus.NewRegistry()
 		managerCollector = collectors.NewLocalManagerMetricsCollector(constLabels)
 		controllerCollector = collectors.NewControllerMetricsCollector(*enableCustomResources, constLabels)
-		processCollector = collectors.NewProcessMetricCollector(constLabels)
 
 		err = managerCollector.Register(registry)
 		if err != nil {
@@ -319,11 +316,6 @@ func main() {
 		err = controllerCollector.Register(registry)
 		if err != nil {
 			glog.Errorf("Error registering Controller Prometheus metrics: %v", err)
-		}
-
-		err = processCollector.Register(registry)
-		if err != nil {
-			glog.Errorf("Error registering Process Prometheus mectrics: %v", err)
 		}
 	}
 
@@ -524,7 +516,6 @@ func main() {
 		GlobalConfiguration:          *globalConfiguration,
 		AreCustomResourcesEnabled:    *enableCustomResources,
 		MetricsCollector:             controllerCollector,
-		ProcessCollector:             processCollector,
 		GlobalConfigurationValidator: globalConfigurationValidator,
 		TransportServerValidator:     transportServerValidator,
 		SpireAgentAddress:            *spireAgentAddress,

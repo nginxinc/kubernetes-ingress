@@ -17,14 +17,9 @@ limitations under the License.
 package k8s
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"os"
-	"os/exec"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -45,7 +40,6 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 
 	"sort"
 
@@ -147,7 +141,6 @@ type LoadBalancerController struct {
 	wildcardTLSSecret             string
 	areCustomResourcesEnabled     bool
 	metricsCollector              collectors.ControllerCollector
-	processCollector              collectors.ProcessCollector
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
 	spiffeController              *spiffeController
@@ -180,7 +173,6 @@ type NewLoadBalancerControllerInput struct {
 	GlobalConfiguration          string
 	AreCustomResourcesEnabled    bool
 	MetricsCollector             collectors.ControllerCollector
-	ProcessCollector             collectors.ProcessCollector
 	GlobalConfigurationValidator *validation.GlobalConfigurationValidator
 	TransportServerValidator     *validation.TransportServerValidator
 	SpireAgentAddress            string
@@ -207,7 +199,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		wildcardTLSSecret:            input.WildcardTLSSecret,
 		areCustomResourcesEnabled:    input.AreCustomResourcesEnabled,
 		metricsCollector:             input.MetricsCollector,
-		processCollector:             input.ProcessCollector,
 		globalConfigurationValidator: input.GlobalConfigurationValidator,
 		transportServerValidator:     input.TransportServerValidator,
 	}
@@ -821,7 +812,6 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.updateIngressMetrics()
 	case configMap:
 		lbc.syncConfig(task)
-		lbc.updateWorkerProcessMetric()
 	case endpoints:
 		lbc.syncEndpoint(task)
 	case secret:
@@ -836,7 +826,6 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.updateVirtualServerMetrics()
 	case globalConfiguration:
 		lbc.syncGlobalConfiguration(task)
-		lbc.updateWorkerProcessMetric()
 	case transportserver:
 		lbc.syncTransportServer(task)
 	case policy:
@@ -851,83 +840,6 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.isNginxReady = true
 		glog.V(3).Infof("NGINX is ready")
 	}
-}
-
-func (lbc *LoadBalancerController) updateWorkerProcessMetric() {
-	// get the current config version
-	client := nginx.NewVerifyClient(4000)
-	currentConfigVersion, err := client.GetConfigVersion()
-	if err != nil {
-		glog.Errorf("Error in getting the latest configuration version")
-	}
-
-	lsCmd := exec.Command("ls", "-l", "/proc")
-	grepCmd := exec.Command("grep", "-i", "nginx")
-	awkCmd := exec.Command("awk", "NF>1{print $NF}")
-
-	reader, writer := io.Pipe()
-	lsCmd.Stdout = writer
-	grepCmd.Stdin = reader
-
-	secReader, secWriter := io.Pipe()
-	grepCmd.Stdout = secWriter
-	awkCmd.Stdin = secReader
-
-	var buff bytes.Buffer
-	awkCmd.Stdout = &buff
-
-	lsCmd.Start()
-	grepCmd.Start()
-	lsCmd.Wait()
-	writer.Close()
-	awkCmd.Start()
-	grepCmd.Wait()
-	secWriter.Close()
-	awkCmd.Wait()
-
-	processes := buff.Bytes()
-	pids := bytes.Split(processes, []byte{10})
-
-	workerProcesses := 0
-	emptyByte := []byte{}
-	for _, p := range pids {
-		res := bytes.Compare(p, emptyByte)
-		if res == 0 {
-			continue
-		}
-
-		process := string(p)
-
-		file := fmt.Sprintf("/proc/%v/status", process)
-		_, err := os.Stat(file)
-		if os.IsNotExist(err) {
-			glog.Errorf("file %v does not exist", file)
-			continue
-		}
-
-		catCmd := exec.Command("cat", file)
-		awk := exec.Command("awk", "/PPid/ {print $2}")
-
-		thirdReader, thirdWriter := io.Pipe()
-
-		catCmd.Stdout = thirdWriter
-		awk.Stdin = thirdReader
-
-		var output bytes.Buffer
-		awk.Stdout = &output
-
-		catCmd.Start()
-		awk.Start()
-		catCmd.Wait()
-		thirdWriter.Close()
-		awk.Wait()
-
-		if output.String() != "0" {
-			workerProcesses++
-		}
-	}
-
-	lbc.processCollector.SetWorkerProcessCount(strconv.Itoa(currentConfigVersion), workerProcesses)
 }
 
 func (lbc *LoadBalancerController) syncPolicy(task task) {
