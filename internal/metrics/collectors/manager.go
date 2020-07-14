@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/user"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -20,7 +19,7 @@ type ManagerCollector interface {
 	IncNginxReloadCount()
 	IncNginxReloadErrors()
 	UpdateLastReloadTime(ms time.Duration)
-	UpdateWorkerProcessCount(prevVersion int, confVersion int)
+	UpdateWorkerProcessCount(confVersion string)
 	Register(registry *prometheus.Registry) error
 }
 
@@ -36,7 +35,7 @@ type LocalManagerMetricsCollector struct {
 
 // NewLocalManagerMetricsCollector creates a new LocalManagerMetricsCollector
 func NewLocalManagerMetricsCollector(constLabels map[string]string) *LocalManagerMetricsCollector {
-	labelNames := []string{"oldGeneration", "currentGeneration"}
+	labelNames := []string{"generations"}
 	nc := &LocalManagerMetricsCollector{
 		reloadsTotal: prometheus.NewCounter(
 			prometheus.CounterOpts{
@@ -111,7 +110,7 @@ func (nc *LocalManagerMetricsCollector) UpdateLastReloadTime(duration time.Durat
 }
 
 // UpdateWorkerProcessCount sets the number of NGINX worker processes
-func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(prevConfigVersion int, currentConfigVersion int) {
+func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(configVersion string) {
 	workerProcesses := 0
 	procFolders, err := ioutil.ReadDir("/proc")
 	if err != nil {
@@ -148,7 +147,7 @@ func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(prevConfigVersi
 			}
 		}
 	}
-	nc.processTotal.WithLabelValues(strconv.Itoa(prevConfigVersion), strconv.Itoa(currentConfigVersion)).Set(float64(workerProcesses))
+	nc.processTotal.WithLabelValues(configVersion).Set(float64(workerProcesses))
 }
 
 // Describe implements prometheus.Collector interface Describe method
@@ -195,5 +194,5 @@ func (nc *ManagerFakeCollector) IncNginxReloadErrors() {}
 func (nc *ManagerFakeCollector) UpdateLastReloadTime(ms time.Duration) {}
 
 // UpdateWorkerProcessCount implements a fake UpdateWorkerPorcessCount
-func (nc *ManagerFakeCollector) UpdateWorkerProcessCount(prevConfVersion int, currConfVersion int) {
+func (nc *ManagerFakeCollector) UpdateWorkerProcessCount(confVersion string) {
 }

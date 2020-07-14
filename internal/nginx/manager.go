@@ -270,7 +270,7 @@ func (lm *LocalManager) Start(done chan error) {
 // Reload reloads NGINX.
 func (lm *LocalManager) Reload() error {
 	// write a new config version
-	oldConfig := lm.configVersion
+	lm.metricsCollector.UpdateWorkerProcessCount("old")
 	lm.configVersion++
 	lm.UpdateConfigVersionFile(lm.OpenTracing)
 
@@ -289,7 +289,7 @@ func (lm *LocalManager) Reload() error {
 	}
 
 	lm.metricsCollector.IncNginxReloadCount()
-	lm.metricsCollector.UpdateWorkerProcessCount(oldConfig, lm.configVersion)
+	lm.metricsCollector.UpdateWorkerProcessCount("new")
 
 	t2 := time.Now()
 	lm.metricsCollector.UpdateLastReloadTime(t2.Sub(t1))
