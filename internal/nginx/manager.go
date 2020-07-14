@@ -116,7 +116,7 @@ func NewLocalManager(confPath string, binaryFilename string, mc collectors.Manag
 		binaryFilename:              binaryFilename,
 		verifyConfigGenerator:       verifyConfigGenerator,
 		configVersion:               0,
-		verifyClient:                NewVerifyClient(timeout),
+		verifyClient:                newVerifyClient(timeout),
 		reloadCmd:                   fmt.Sprintf("%v -s %v", binaryFilename, "reload"),
 		quitCmd:                     fmt.Sprintf("%v -s %v", binaryFilename, "quit"),
 		metricsCollector:            mc,
@@ -270,7 +270,6 @@ func (lm *LocalManager) Start(done chan error) {
 // Reload reloads NGINX.
 func (lm *LocalManager) Reload() error {
 	// write a new config version
-	lm.metricsCollector.UpdateWorkerProcessCount("old")
 	lm.configVersion++
 	lm.UpdateConfigVersionFile(lm.OpenTracing)
 
@@ -289,7 +288,7 @@ func (lm *LocalManager) Reload() error {
 	}
 
 	lm.metricsCollector.IncNginxReloadCount()
-	lm.metricsCollector.UpdateWorkerProcessCount("new")
+	lm.metricsCollector.UpdateWorkerProcessCount("current")
 
 	t2 := time.Now()
 	lm.metricsCollector.UpdateLastReloadTime(t2.Sub(t1))

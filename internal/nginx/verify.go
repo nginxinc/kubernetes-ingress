@@ -14,14 +14,14 @@ import (
 	"github.com/golang/glog"
 )
 
-// VerifyClient is a client for verifying the config version.
+// verifyClient is a client for verifying the config version.
 type verifyClient struct {
 	client  *http.Client
 	timeout int
 }
 
-// NewVerifyClient returns a new client pointed at the config version socket.
-func NewVerifyClient(timeout int) *verifyClient {
+// newVerifyClient returns a new client pointed at the config version socket.
+func newVerifyClient(timeout int) *verifyClient {
 	return &verifyClient{
 		client: &http.Client{
 			Transport: &http.Transport{

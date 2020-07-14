@@ -26,16 +26,17 @@ type ManagerCollector interface {
 // LocalManagerMetricsCollector implements NginxManagerCollector interface and prometheus.Collector interface
 type LocalManagerMetricsCollector struct {
 	// Metrics
-	reloadsTotal     prometheus.Counter
-	reloadsError     prometheus.Counter
-	lastReloadStatus prometheus.Gauge
-	lastReloadTime   prometheus.Gauge
-	processTotal     *prometheus.GaugeVec
+	reloadsTotal          prometheus.Counter
+	reloadsError          prometheus.Counter
+	lastReloadStatus      prometheus.Gauge
+	lastReloadTime        prometheus.Gauge
+	workerProcessTotal    *prometheus.GaugeVec
+	oldWorkerProcessTotal float64
 }
 
 // NewLocalManagerMetricsCollector creates a new LocalManagerMetricsCollector
 func NewLocalManagerMetricsCollector(constLabels map[string]string) *LocalManagerMetricsCollector {
-	labelNames := []string{"generations"}
+	labelNames := []string{"generation"}
 	nc := &LocalManagerMetricsCollector{
 		reloadsTotal: prometheus.NewCounter(
 			prometheus.CounterOpts{
@@ -70,7 +71,7 @@ func NewLocalManagerMetricsCollector(constLabels map[string]string) *LocalManage
 			},
 		),
 
-		processTotal: prometheus.NewGaugeVec(
+		workerProcessTotal: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name:        "controller_nginx_worker_processes_total",
 				Namespace:   metricsNamespace,
@@ -116,7 +117,7 @@ func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(configVersion s
 	if err != nil {
 		glog.Errorf("error %v", err)
 	}
-	processes := []string{}
+	var processes = []string
 	for _, f := range procFolders {
 		u, err := user.LookupId(fmt.Sprint(f.Sys().(*syscall.Stat_t).Uid))
 		if err != nil {
@@ -147,7 +148,9 @@ func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(configVersion s
 			}
 		}
 	}
-	nc.processTotal.WithLabelValues(configVersion).Set(float64(workerProcesses))
+	nc.workerProcessTotal.WithLabelValues(configVersion).Set(float64(workerProcesses))
+	nc.workerProcessTotal.WithLabelValues("old").Set(nc.oldWorkerProcessTotal)
+	nc.oldWorkerProcessTotal = float64(workerProcesses)
 }
 
 // Describe implements prometheus.Collector interface Describe method
@@ -156,7 +159,7 @@ func (nc *LocalManagerMetricsCollector) Describe(ch chan<- *prometheus.Desc) {
 	nc.reloadsError.Describe(ch)
 	nc.lastReloadStatus.Describe(ch)
 	nc.lastReloadTime.Describe(ch)
-	nc.processTotal.Describe(ch)
+	nc.workerProcessTotal.Describe(ch)
 }
 
 // Collect implements the prometheus.Collector interface Collect method
@@ -165,7 +168,7 @@ func (nc *LocalManagerMetricsCollector) Collect(ch chan<- prometheus.Metric) {
 	nc.reloadsError.Collect(ch)
 	nc.lastReloadStatus.Collect(ch)
 	nc.lastReloadTime.Collect(ch)
-	nc.processTotal.Collect(ch)
+	nc.workerProcessTotal.Collect(ch)
 }
 
 // Register registers all the metrics of the collector
