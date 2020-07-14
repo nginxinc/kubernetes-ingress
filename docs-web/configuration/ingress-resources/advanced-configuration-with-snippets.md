@@ -69,7 +69,9 @@ server {
 
 See the [snippets annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#snippets-and-custom-templates) documentation for more information.
 
-## Disadvantages of using snippets
+## Disadvantages of Using Snippets
+
+Snippets have the following disadvantages:
 
 * *Complexity*. To use snippets, you will need to:
   * Understand NGINX configuration primitives and implement a correct NGINX configuration.
@@ -81,27 +83,26 @@ See the [snippets annotations](/nginx-ingress-controller/configuration/ingress-r
 
 ## Troubleshooting
 
-* If a snippet includes an invalid NGINX configuration, the Ingress Controller will fail to reload NGINX. The error will be reported in the Ingress Controller logs and an event with the error will be associated with the Ingress resource:
+If a snippet includes an invalid NGINX configuration, the Ingress Controller will fail to reload NGINX. The error will be reported in the Ingress Controller logs and an event with the error will be associated with the Ingress resource:
 
-    An example of an error from the logs:
-    ```
-    [emerg] 31#31: unknown directive "badd_header" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54
-    Event(v1.ObjectReference{Kind:"Ingress", Namespace:"default", Name:"cafe-ingress-with-snippets", UID:"f9656dc9-63a6-41dd-a499-525b0e0309bb", APIVersion:"extensions/v1beta1", ResourceVersion:"2322030", FieldPath:""}): type: 'Warning' reason: 'AddedOrUpdatedWithError' Configuration for default/cafe-ingress-with-snippets was added or updated, but not applied: Error reloading NGINX for default/cafe-ingress-with-snippets: nginx reload failed: Command /usr/sbin/nginx -s reload stdout: ""
-    stderr: "nginx: [emerg] unknown directive \"badd_header\" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54\n"
-    finished with error: exit status 1
-    ```
+An example of an error from the logs:
+```
+[emerg] 31#31: unknown directive "badd_header" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54
+Event(v1.ObjectReference{Kind:"Ingress", Namespace:"default", Name:"cafe-ingress-with-snippets", UID:"f9656dc9-63a6-41dd-a499-525b0e0309bb", APIVersion:"extensions/v1beta1", ResourceVersion:"2322030", FieldPath:""}): type: 'Warning' reason: 'AddedOrUpdatedWithError' Configuration for default/cafe-ingress-with-snippets was added or updated, but not applied: Error reloading NGINX for default/cafe-ingress-with-snippets: nginx reload failed: Command /usr/sbin/nginx -s reload stdout: ""
+stderr: "nginx: [emerg] unknown directive \"badd_header\" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54\n"
+finished with error: exit status 1
+```
 
-  An example of an event with an error (you can view events associated with the Ingress by running `kubectl describe -n nginx-ingress ingress nginx-ingress`):
-
-    ```
-    Events:
-    Type     Reason                   Age                From                      Message
-    ----     ------                   ----               ----                      -------
-    Normal   AddedOrUpdated           52m (x3 over 61m)  nginx-ingress-controller  Configuration for default/cafe-ingress-with-snippets was added or updated
-    finished with error: exit status 1
-    Warning  AddedOrUpdatedWithError  54s (x2 over 89s)  nginx-ingress-controller  Configuration for default/cafe-ingress-with-snippets was added or updated, but not applied: Error reloading NGINX for default/cafe-ingress-with-snippets: nginx reload failed: Command /usr/sbin/nginx -s reload stdout: ""
-    stderr: "nginx: [emerg] unknown directive \"badd_header\" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54\n"
-    finished with error: exit status 1
-    ```
+An example of an event with an error (you can view events associated with the Ingress by running `kubectl describe -n nginx-ingress ingress nginx-ingress`):
+```
+Events:
+Type     Reason                   Age                From                      Message
+----     ------                   ----               ----                      -------
+Normal   AddedOrUpdated           52m (x3 over 61m)  nginx-ingress-controller  Configuration for default/cafe-ingress-with-snippets was added or updated
+finished with error: exit status 1
+Warning  AddedOrUpdatedWithError  54s (x2 over 89s)  nginx-ingress-controller  Configuration for default/cafe-ingress-with-snippets was added or updated, but not applied: Error reloading NGINX for default/cafe-ingress-with-snippets: nginx reload failed: Command /usr/sbin/nginx -s reload stdout: ""
+stderr: "nginx: [emerg] unknown directive \"badd_header\" in /etc/nginx/conf.d/default-cafe-ingress-with-snippets.conf:54\n"
+finished with error: exit status 1
+```
 
 Additionally, to help troubleshoot snippets, a number of Prometheus metrics show the stats about failed reloads – `controller_nginx_last_reload_status` and `controller_nginx_reload_errors_total`.
