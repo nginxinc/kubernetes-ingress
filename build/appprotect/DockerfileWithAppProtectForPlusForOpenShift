@@ -14,6 +14,7 @@ ENV APPPROTECT_PLUGIN_VERSION 3.90.2-1.el7.ngx
 ENV APPPROTECT_ENGINE_VERSION 4.1.1-1.el7.ngx
 ENV APPPROTECT_COMPILER_VERSION 4.1.1-1.el7.ngx
 ENV APPPROTECT_SIG_VERSION 2020.07.17-1.el7.ngx
+ENV APPPROTECT_THREAT_CAMPAIGNS_VERSION 2020.07.09-1.el7.ngx
 ENV NGINX_PLUS_VERSION 22-1.el7.ngx
 ARG IC_VERSION
 
@@ -61,6 +62,7 @@ RUN set -x \
 	    app-protect-compiler-$APPPROTECT_COMPILER_VERSION \
 	    app-protect-$APPPROTECT_MODULE_VERSION \
 	&& yum install -y app-protect-attack-signatures${APPPROTECT_SIG_VERSION:+-$APPPROTECT_SIG_VERSION} \
+	&& yum install -y app-protect-threat-campaigns{APPPROTECT_THREAT_CAMPAIGNS_VERSION:+-$APPPROTECT_THREAT_CAMPAIGNS_VERSION} \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& yum remove -y wget \

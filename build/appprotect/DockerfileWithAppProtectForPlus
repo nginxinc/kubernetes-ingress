@@ -9,6 +9,7 @@ ENV APPPROTECT_PLUGIN_VERSION 3.90.2-1~stretch
 ENV APPPROTECT_ENGINE_VERSION 4.1.1-1~stretch
 ENV APPPROTECT_COMPILER_VERSION 4.1.1-1~stretch
 ENV APPPROTECT_SIG_VERSION 2020.07.17-1~stretch
+ENV APPPROTECT_THREAT_CAMPAIGNS_VERSION 2020.07.09-1~stretch
 ENV NGINX_PLUS_VERSION 22-1~stretch
 ENV NGINX_PLUS_RELEASE R22
 ARG IC_VERSION
@@ -56,6 +57,7 @@ RUN set -x \
 	    app-protect-compiler=$APPPROTECT_COMPILER_VERSION \
 	    app-protect=$APPPROTECT_MODULE_VERSION \
 	&& apt-get install -y app-protect-attack-signatures${APPPROTECT_SIG_VERSION:+=$APPPROTECT_SIG_VERSION} \
+	&& apt-get install -y app-protect-threat-campaigns${APPPROTECT_THREAT_CAMPAIGNS_VERSION:+=$APPPROTECT_THREAT_CAMPAIGNS_VERSION} \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& apt-get remove --purge --auto-remove -y gnupg1 wget\
