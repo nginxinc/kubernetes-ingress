@@ -70,7 +70,6 @@ func NewLocalManagerMetricsCollector(constLabels map[string]string) *LocalManage
 				ConstLabels: constLabels,
 			},
 		),
-
 		workerProcessTotal: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name:        "controller_nginx_worker_processes_total",
@@ -114,10 +113,10 @@ func (nc *LocalManagerMetricsCollector) UpdateLastReloadTime(duration time.Durat
 func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(configVersion string) {
 	totalWorkerProcesses, err := getWorkerProcesses()
 	if err != nil {
-		glog.Errorf("Error unable to collect process metrics : %v", err)
+		glog.Errorf("unable to collect process metrics : %v", err)
 		return
 	}
-	nc.workerProcessTotal.WithLabelValues(configVersion).Set(float64(totalWorkerProcesses))
+	nc.workerProcessTotal.WithLabelValues(configVersion).Set(totalWorkerProcesses)
 	nc.workerProcessTotal.WithLabelValues("old").Set(nc.oldWorkerProcessTotal)
 	nc.oldWorkerProcessTotal = totalWorkerProcesses
 }
@@ -126,34 +125,43 @@ func getWorkerProcesses() (float64, error) {
 	var workerProcesses float64
 	procFolders, err := ioutil.ReadDir("/proc")
 	if err != nil {
-		return 0, fmt.Errorf("Error in reading directory /proc : %v", err)
+		return 0, fmt.Errorf("unable to read directory /proc : %v", err)
 	}
-	var processes []string
+	masterPidFile, err := os.Open("/var/lib/nginx/nginx.pid")
+	if err != nil {
+		return float64(0), err
+	}
+	var masterPid string
+	masterPidScanner := bufio.NewScanner(masterPidFile)
+	for masterPidScanner.Scan() {
+		masterPid = masterPidScanner.Text()
+	}
+	if err := masterPidScanner.Err(); err != nil {
+		return 0, err
+	}
+
 	for _, f := range procFolders {
 		u, err := user.LookupId(fmt.Sprint(f.Sys().(*syscall.Stat_t).Uid))
 		if err != nil {
-			return 0, fmt.Errorf("Error could not find user for file %v : %v", f.Name(), err)
+			return 0, fmt.Errorf("could not find user ID for file %v : %v", f.Name(), err)
 		}
 		if u.Name == "nginx user" {
-			processes = append(processes, f.Name())
-		}
-	}
-	for _, file := range processes {
-		statusFile := fmt.Sprintf("/proc/%v/status", file)
-		f, err := os.Open(statusFile)
-		if err != nil {
-			return 0, fmt.Errorf("Error in opening file %v", statusFile)
-		}
+			statusFile := fmt.Sprintf("/proc/%v/status", f.Name())
+			f, err := os.Open(statusFile)
+			if err != nil {
+				return 0, fmt.Errorf("unable to open file %v", statusFile)
+			}
 
-		scanner := bufio.NewScanner(f)
+			scanner := bufio.NewScanner(f)
 
-		for scanner.Scan() {
-			if strings.Contains(scanner.Text(), "PPid") {
-				words := strings.Split(scanner.Text(), "\t")
-				ppid := words[len(words)-1]
+			for scanner.Scan() {
+				if strings.HasPrefix(scanner.Text(), "PPid") {
+					ppidLineSplit := strings.Split(scanner.Text(), "\t")
+					ppid := ppidLineSplit[len(ppidLineSplit)-1]
 
-				if ppid != "0" {
-					workerProcesses++
+					if ppid != masterPid {
+						workerProcesses++
+					}
 				}
 			}
 		}
@@ -204,6 +212,6 @@ func (nc *ManagerFakeCollector) IncNginxReloadErrors() {}
 // UpdateLastReloadTime implements a fake UpdateLastReloadTime
 func (nc *ManagerFakeCollector) UpdateLastReloadTime(ms time.Duration) {}
 
-// UpdateWorkerProcessCount implements a fake UpdateWorkerPorcessCount
+// UpdateWorkerProcessCount implements a fake UpdateWorkerProcessCount
 func (nc *ManagerFakeCollector) UpdateWorkerProcessCount(confVersion string) {
 }
