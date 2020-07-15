@@ -129,8 +129,10 @@ func getWorkerProcesses() (float64, error) {
 	}
 	masterPidFile, err := os.Open("/var/lib/nginx/nginx.pid")
 	if err != nil {
-		return float64(0), fmt.Errorf("unable to get master PID : %v", err)
+		return 0, fmt.Errorf("unable to get master PID : %v", err)
 	}
+	defer masterPidFile.Close()
+
 	var masterPid string
 	masterPidScanner := bufio.NewScanner(masterPidFile)
 	for masterPidScanner.Scan() {
