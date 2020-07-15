@@ -15,7 +15,7 @@ You can see how the Secure App is implemented in the `secure-app.yaml` file.
 ## Prerequisites  
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller:
-    * As part of Step 2 of those instructions, make sure to deploy the custom resource defintion for the TranportServer resource.
+    * As part of Step 2 of those instructions, make sure to deploy the custom resource definition for the TransportServer resource.
     * Set the [`-enable-custom-resources`](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-custom-resources) and [`-enable-tls-passthrough`](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-tls-passthrough) command-line arguments of the Ingress Controller to enable the TLS Passthrough feature.
 1. Save the public IP address of the Ingress Controller into a shell variable:
     ```

@@ -2,7 +2,7 @@
 
 The project includes automated tests for testing the Ingress Controller in a Kubernetes cluster. The tests are written in Python3 and use the pytest framework.
 
-Below you will find the instructions on how to run the tests against a Minikube cluster. However, you are not limited to Minkube and can use other types of Kubernetes clusters. See the [Configuring the Tests](#configuring-the-tests) section to find out about various configuration options.
+Below you will find the instructions on how to run the tests against a Minikube cluster. However, you are not limited to Minikube and can use other types of Kubernetes clusters. See the [Configuring the Tests](#configuring-the-tests) section to find out about various configuration options.
 
 ## Running Tests in Minikube
 
