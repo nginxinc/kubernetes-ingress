@@ -112,19 +112,29 @@ func (nc *LocalManagerMetricsCollector) UpdateLastReloadTime(duration time.Durat
 
 // UpdateWorkerProcessCount sets the number of NGINX worker processes
 func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(configVersion string) {
-	workerProcesses := 0
+	totalWorkerProcesses, err := getWorkerProcesses()
+	if err != nil {
+		glog.Errorf("Error unable to collect process metrics : %v", err)
+		return
+	}
+	nc.workerProcessTotal.WithLabelValues(configVersion).Set(float64(totalWorkerProcesses))
+	nc.workerProcessTotal.WithLabelValues("old").Set(nc.oldWorkerProcessTotal)
+	nc.oldWorkerProcessTotal = totalWorkerProcesses
+}
+
+func getWorkerProcesses() (float64, error) {
+	var workerProcesses float64
 	procFolders, err := ioutil.ReadDir("/proc")
 	if err != nil {
-		glog.Errorf("error %v", err)
+		return 0, fmt.Errorf("Error in reading directory /proc : %v", err)
 	}
-	var processes = []string
+	var processes []string
 	for _, f := range procFolders {
 		u, err := user.LookupId(fmt.Sprint(f.Sys().(*syscall.Stat_t).Uid))
 		if err != nil {
-			glog.Errorf("Error %v", err)
+			return 0, fmt.Errorf("Error could not find user for file %v : %v", f.Name(), err)
 		}
 		if u.Name == "nginx user" {
-			// store pids of the processes
 			processes = append(processes, f.Name())
 		}
 	}
@@ -132,7 +142,7 @@ func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(configVersion s
 		statusFile := fmt.Sprintf("/proc/%v/status", file)
 		f, err := os.Open(statusFile)
 		if err != nil {
-			glog.Errorf("Error in opening file %v", statusFile)
+			return 0, fmt.Errorf("Error in opening file %v", statusFile)
 		}
 
 		scanner := bufio.NewScanner(f)
@@ -148,9 +158,7 @@ func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(configVersion s
 			}
 		}
 	}
-	nc.workerProcessTotal.WithLabelValues(configVersion).Set(float64(workerProcesses))
-	nc.workerProcessTotal.WithLabelValues("old").Set(nc.oldWorkerProcessTotal)
-	nc.oldWorkerProcessTotal = float64(workerProcesses)
+	return workerProcesses, nil
 }
 
 // Describe implements prometheus.Collector interface Describe method
