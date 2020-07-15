@@ -129,7 +129,7 @@ func getWorkerProcesses() (float64, error) {
 	}
 	masterPidFile, err := os.Open("/var/lib/nginx/nginx.pid")
 	if err != nil {
-		return float64(0), err
+		return float64(0), fmt.Errorf("unable to get master PID : %v", err)
 	}
 	var masterPid string
 	masterPidScanner := bufio.NewScanner(masterPidFile)
@@ -137,7 +137,7 @@ func getWorkerProcesses() (float64, error) {
 		masterPid = masterPidScanner.Text()
 	}
 	if err := masterPidScanner.Err(); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("could not read /var/lib/nginx/ngin.pid : %v", err)
 	}
 
 	for _, f := range procFolders {
@@ -151,6 +151,7 @@ func getWorkerProcesses() (float64, error) {
 			if err != nil {
 				return 0, fmt.Errorf("unable to open file %v", statusFile)
 			}
+			defer f.Close()
 
 			scanner := bufio.NewScanner(f)
 
