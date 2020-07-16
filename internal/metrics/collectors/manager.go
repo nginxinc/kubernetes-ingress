@@ -19,7 +19,7 @@ type ManagerCollector interface {
 	IncNginxReloadCount()
 	IncNginxReloadErrors()
 	UpdateLastReloadTime(ms time.Duration)
-	UpdateWorkerProcessCount(confVersion string)
+	UpdateWorkerProcessCount()
 	Register(registry *prometheus.Registry) error
 }
 
@@ -110,13 +110,13 @@ func (nc *LocalManagerMetricsCollector) UpdateLastReloadTime(duration time.Durat
 }
 
 // UpdateWorkerProcessCount sets the number of NGINX worker processes
-func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount(configVersion string) {
+func (nc *LocalManagerMetricsCollector) UpdateWorkerProcessCount() {
 	totalWorkerProcesses, err := getWorkerProcesses()
 	if err != nil {
 		glog.Errorf("unable to collect process metrics : %v", err)
 		return
 	}
-	nc.workerProcessTotal.WithLabelValues(configVersion).Set(totalWorkerProcesses)
+	nc.workerProcessTotal.WithLabelValues("current").Set(totalWorkerProcesses)
 	nc.workerProcessTotal.WithLabelValues("old").Set(nc.oldWorkerProcessTotal)
 	nc.oldWorkerProcessTotal = totalWorkerProcesses
 }
@@ -139,7 +139,7 @@ func getWorkerProcesses() (float64, error) {
 		masterPid = masterPidScanner.Text()
 	}
 	if err := masterPidScanner.Err(); err != nil {
-		return 0, fmt.Errorf("could not read /var/lib/nginx/ngin.pid : %v", err)
+		return 0, fmt.Errorf("could not read /var/lib/nginx/nginx.pid : %v", err)
 	}
 
 	for _, f := range procFolders {
@@ -153,7 +153,6 @@ func getWorkerProcesses() (float64, error) {
 			if err != nil {
 				return 0, fmt.Errorf("unable to open file %v", statusFile)
 			}
-			defer f.Close()
 
 			scanner := bufio.NewScanner(f)
 
@@ -162,10 +161,13 @@ func getWorkerProcesses() (float64, error) {
 					ppidLineSplit := strings.Split(scanner.Text(), "\t")
 					ppid := ppidLineSplit[len(ppidLineSplit)-1]
 
-					if ppid != masterPid {
+					if ppid == masterPid {
 						workerProcesses++
 					}
 				}
+			}
+			if err := f.Close(); err != nil {
+				glog.Errorf("unable to close file %v : %v", f, err)
 			}
 		}
 	}
@@ -216,5 +218,5 @@ func (nc *ManagerFakeCollector) IncNginxReloadErrors() {}
 func (nc *ManagerFakeCollector) UpdateLastReloadTime(ms time.Duration) {}
 
 // UpdateWorkerProcessCount implements a fake UpdateWorkerProcessCount
-func (nc *ManagerFakeCollector) UpdateWorkerProcessCount(confVersion string) {
+func (nc *ManagerFakeCollector) UpdateWorkerProcessCount() {
 }

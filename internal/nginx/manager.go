@@ -288,7 +288,7 @@ func (lm *LocalManager) Reload() error {
 	}
 
 	lm.metricsCollector.IncNginxReloadCount()
-	lm.metricsCollector.UpdateWorkerProcessCount("current")
+	lm.metricsCollector.UpdateWorkerProcessCount()
 
 	t2 := time.Now()
 	lm.metricsCollector.UpdateLastReloadTime(t2.Sub(t1))
