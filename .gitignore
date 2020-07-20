@@ -33,6 +33,9 @@ cmd/nginx-ingress/nginx-ingress
 *.crt
 *.key
 
+# RHEL license
+rhel_license
+
 # Visual Studio Code settings
 .vscode
 

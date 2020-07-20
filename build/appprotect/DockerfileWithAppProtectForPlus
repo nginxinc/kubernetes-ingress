@@ -4,8 +4,11 @@ FROM debian:stretch-slim as base
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV APPPROTECT_VERSION 22+3.74.0-1~stretch
-ENV APPPROTECT_SIG_VERSION 2020.06.18-1~stretch
+ENV APPPROTECT_MODULE_VERSION 22+3.90.2-1~stretch
+ENV APPPROTECT_PLUGIN_VERSION 3.90.2-1~stretch
+ENV APPPROTECT_ENGINE_VERSION 4.1.1-1~stretch
+ENV APPPROTECT_COMPILER_VERSION 4.1.1-1~stretch
+ENV APPPROTECT_SIG_VERSION 2020.07.17-1~stretch
 ENV NGINX_PLUS_VERSION 22-1~stretch
 ENV NGINX_PLUS_RELEASE R22
 ARG IC_VERSION
@@ -46,7 +49,12 @@ RUN set -x \
 	&& echo "Acquire::https::app-protect-sigs.nginx.com::Verify-Host \"true\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
 	&& echo "Acquire::https::app-protect-sigs.nginx.com::SslCert     \"/etc/ssl/nginx/nginx-repo.crt\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
 	&& echo "Acquire::https::app-protect-sigs.nginx.com::SslKey      \"/etc/ssl/nginx/nginx-repo.key\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
-	&& apt-get update && apt-get install -y nginx-plus=$NGINX_PLUS_VERSION app-protect=$APPPROTECT_VERSION \ 
+	&& apt-get update && apt-get install -y nginx-plus=$NGINX_PLUS_VERSION \
+	    nginx-plus-module-appprotect=$APPPROTECT_MODULE_VERSION \
+	    app-protect-plugin=$APPPROTECT_PLUGIN_VERSION \
+	    app-protect-engine=$APPPROTECT_ENGINE_VERSION \
+	    app-protect-compiler=$APPPROTECT_COMPILER_VERSION \
+	    app-protect=$APPPROTECT_MODULE_VERSION \
 	&& apt-get install -y app-protect-attack-signatures${APPPROTECT_SIG_VERSION:+=$APPPROTECT_SIG_VERSION} \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \

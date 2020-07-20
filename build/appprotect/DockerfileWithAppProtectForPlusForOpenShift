@@ -9,9 +9,12 @@ LABEL name="NGINX Ingress Controller" \
       maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>" \
       vendor="NGINX Inc <kubernetes@nginx.com>"
 
+ENV APPPROTECT_MODULE_VERSION 22+3.90.2-1.el7.ngx
+ENV APPPROTECT_PLUGIN_VERSION 3.90.2-1.el7.ngx
+ENV APPPROTECT_ENGINE_VERSION 4.1.1-1.el7.ngx
+ENV APPPROTECT_COMPILER_VERSION 4.1.1-1.el7.ngx
+ENV APPPROTECT_SIG_VERSION 2020.07.17-1.el7.ngx
 ENV NGINX_PLUS_VERSION 22-1.el7.ngx
-ENV APPPROTECT_VERSION 22+3.74.0-1.el7.ngx
-ENV APPPROTECT_SIG_VERSION 2020.07.06-1.el7.ngx
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
@@ -51,7 +54,12 @@ RUN set -x \
 	&& yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional rhel-7-server-optional-rpms \
 	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
 	&& yum clean all \
-	&& yum install -y nginx-plus-$NGINX_PLUS_VERSION app-protect-$APPPROTECT_VERSION \
+	&& yum install -y nginx-plus-$NGINX_PLUS_VERSION \
+	    nginx-plus-module-appprotect-$APPPROTECT_MODULE_VERSION \
+	    app-protect-plugin-$APPPROTECT_PLUGIN_VERSION \
+	    app-protect-engine-$APPPROTECT_ENGINE_VERSION \
+	    app-protect-compiler-$APPPROTECT_COMPILER_VERSION \
+	    app-protect-$APPPROTECT_MODULE_VERSION \
 	&& yum install -y app-protect-attack-signatures${APPPROTECT_SIG_VERSION:+-$APPPROTECT_SIG_VERSION} \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
