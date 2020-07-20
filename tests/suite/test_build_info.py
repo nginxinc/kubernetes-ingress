@@ -2,7 +2,7 @@ import pytest, logging, io
 from kubernetes.client.rest import ApiException
 from suite.resources_utils import get_first_pod_name
 
-
+@pytest.mark.ingresses
 @pytest.mark.smoke
 class TestBuildVersion:
     def test_build_version(
