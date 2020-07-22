@@ -8,7 +8,7 @@ Snippets are also available through the [ConfigMap](/nginx-ingress-controller/co
 
 The example below shows how to use snippets to customize the NGINX configuration template using annotations.
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: cafe-ingress-with-snippets

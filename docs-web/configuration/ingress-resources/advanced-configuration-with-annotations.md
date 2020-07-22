@@ -12,7 +12,7 @@ Customization and fine-tuning is also available through the [ConfigMap](/nginx-i
 
 Here is an example of using annotations to customize the configuration for a particular Ingress resource:
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: cafe-ingress-with-annotations

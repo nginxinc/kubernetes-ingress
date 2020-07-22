@@ -2,6 +2,7 @@ package configs
 
 import (
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -182,7 +183,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			ssl := sslServices[path.Backend.ServiceName] || staticParams.SpiffeCerts
 			proxySSLName := generateProxySSLName(path.Backend.ServiceName, ingEx.Ingress.Namespace)
 			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &cfgParams, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
-				ssl, grpcServices[path.Backend.ServiceName], proxySSLName)
+				ssl, grpcServices[path.Backend.ServiceName], proxySSLName, *path.PathType)
 			if isMinion && ingEx.JWTKey.Name != "" {
 				loc.JWTAuth = &version1.JWTAuth{
 					Key:   jwtKeyFileName,
@@ -209,9 +210,10 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
 			ssl := sslServices[ingEx.Ingress.Spec.Backend.ServiceName] || staticParams.SpiffeCerts
 			proxySSLName := generateProxySSLName(ingEx.Ingress.Spec.Backend.ServiceName, ingEx.Ingress.Namespace)
+			pathtype := extensions.PathTypePrefix
 
 			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &cfgParams, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName],
-				ssl, grpcServices[ingEx.Ingress.Spec.Backend.ServiceName], proxySSLName)
+				ssl, grpcServices[ingEx.Ingress.Spec.Backend.ServiceName], proxySSLName, pathtype)
 			locations = append(locations, loc)
 
 			if cfgParams.HealthCheckEnabled {
@@ -250,7 +252,10 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 	}
 }
 
-func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, websocket bool, rewrite string, ssl bool, grpc bool, proxySSLName string) version1.Location {
+func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, websocket bool, rewrite string, ssl bool, grpc bool, proxySSLName string, pathType extensions.PathType) version1.Location {
+	if reflect.DeepEqual(pathType, extensions.PathTypeExact) {
+		path = "= " + path
+	}
 	loc := version1.Location{
 		Path:                 path,
 		Upstream:             upstream,

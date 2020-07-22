@@ -33,7 +33,7 @@ Consider the following excerpt from the template, which was extended to support 
 
 Consider the following Ingress resource and note how we set two annotations:
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: example-ingress
