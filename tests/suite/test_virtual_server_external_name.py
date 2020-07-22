@@ -89,6 +89,7 @@ class TestVSWithExternalNameService:
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"Configuration for {text} was added or updated"
         vs_event_update_text = f"Configuration for {text} was updated"
+        wait_before_test()
         events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
         initial_count = assert_event_and_get_count(vs_event_text, events_vs)
         initial_count_up = assert_event_and_get_count(vs_event_update_text, events_vs)
@@ -97,7 +98,7 @@ class TestVSWithExternalNameService:
         external_svc = read_service(kube_apis.v1, vs_externalname_setup.external_svc, virtual_server_setup.namespace)
         external_svc.spec.external_name = "demo.nginx.com"
         replace_service(kube_apis.v1, vs_externalname_setup.external_svc, virtual_server_setup.namespace, external_svc)
-        wait_before_test(1)
+        wait_before_test()
 
         wait_for_event_count_increases(kube_apis, vs_event_text, initial_count, virtual_server_setup.namespace)
         events_step_1 = get_events(kube_apis.v1, virtual_server_setup.namespace)
@@ -110,7 +111,7 @@ class TestVSWithExternalNameService:
         replace_configmap(kube_apis.v1, config_map_name,
                           ingress_controller_prerequisites.namespace,
                           ingress_controller_prerequisites.config_map)
-        wait_before_test(1)
+        wait_before_test()
 
         events_step_2 = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_event_and_count(vs_event_warning_text, 1, events_step_2)

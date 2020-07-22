@@ -194,7 +194,6 @@ class TestAppProtect:
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_invalid_responses(response)
 
-
     def test_ap_enable_false_policy_correct(
         self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
@@ -225,7 +224,6 @@ class TestAppProtect:
             print(response.text)
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_valid_responses(response)
-
 
     def test_ap_enable_true_policy_incorrect(
         self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
@@ -297,7 +295,6 @@ class TestAppProtect:
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_valid_responses(response)
 
-    
     def test_ap_sec_logs_on(
         self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
