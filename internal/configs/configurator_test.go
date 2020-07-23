@@ -37,7 +37,7 @@ func createTestConfigurator() (*Configurator, error) {
 
 	manager := nginx.NewFakeManager("/etc/nginx")
 
-	return NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), NewDefaultGlobalConfigParams(), templateExecutor, templateExecutorV2, false, false), nil
+	return NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), NewDefaultGlobalConfigParams(), templateExecutor, templateExecutorV2, false, false, nil, false), nil
 }
 
 func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
@@ -53,7 +53,7 @@ func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
 
 	manager := nginx.NewFakeManager("/etc/nginx")
 
-	return NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), NewDefaultGlobalConfigParams(), templateExecutor, &version2.TemplateExecutor{}, false, false), nil
+	return NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), NewDefaultGlobalConfigParams(), templateExecutor, &version2.TemplateExecutor{}, false, false, nil, false), nil
 }
 
 func TestAddOrUpdateIngress(t *testing.T) {
@@ -450,5 +450,56 @@ func TestAddInternalRouteConfig(t *testing.T) {
 	}
 	if cnf.staticCfgParams.PodName != "nginx-ingress" {
 		t.Errorf("AddInternalRouteConfig failed to set PodName field of staticCfgParams")
+	}
+}
+
+func TestFindRemovedKeys(t *testing.T) {
+	tests := []struct {
+		currentKeys []string
+		newKeys     map[string]bool
+		expected    []string
+	}{
+		{
+			currentKeys: []string{"key1", "key2"},
+			newKeys:     map[string]bool{"key1": true, "key2": true},
+			expected:    nil,
+		},
+		{
+			currentKeys: []string{"key1", "key2"},
+			newKeys:     map[string]bool{"key2": true, "key3": true},
+			expected:    []string{"key1"},
+		},
+		{
+			currentKeys: []string{"key1", "key2"},
+			newKeys:     map[string]bool{"key3": true, "key4": true},
+			expected:    []string{"key1", "key2"},
+		},
+		{
+			currentKeys: []string{"key1", "key2"},
+			newKeys:     map[string]bool{"key3": true},
+			expected:    []string{"key1", "key2"},
+		},
+	}
+	for _, test := range tests {
+		result := findRemovedKeys(test.currentKeys, test.newKeys)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("findRemovedKeys(%v, %v) returned %v but expected %v", test.currentKeys, test.newKeys, result, test.expected)
+		}
+	}
+}
+
+func TestCreateUpstreamServerLabels(t *testing.T) {
+	expected := []string{"coffee-svc", "ingress", "cafe", "default"}
+	result := createUpstreamServerLabels("coffee-svc", "ingress", "cafe", "default")
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("createUpstreamServerLabels(%v, %v, %v, %v) returned %v but expected %v", "coffee-svc", "ingress", "cafe", "default", result, expected)
+	}
+}
+
+func TestCreateServerZoneLabels(t *testing.T) {
+	expected := []string{"ingress", "cafe", "default"}
+	result := createServerZoneLabels("ingress", "cafe", "default")
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("createServerZoneLabels(%v, %v, %v) returned %v but expected %v", "ingress", "cafe", "default", result, expected)
 	}
 }

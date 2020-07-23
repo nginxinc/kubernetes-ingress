@@ -1,5 +1,13 @@
 package version1
 
+// UpstreamLabels describes the Prometheus labels for an NGINX upstream.
+type UpstreamLabels struct {
+	Service           string
+	ResourceType      string
+	ResourceName      string
+	ResourceNamespace string
+}
+
 // IngressNginxConfig describes an NGINX configuration.
 type IngressNginxConfig struct {
 	Upstreams         []Upstream
@@ -25,6 +33,7 @@ type Upstream struct {
 	Queue            int64
 	QueueTimeout     int64
 	UpstreamZoneSize string
+	UpstreamLabels   UpstreamLabels
 }
 
 // UpstreamServer describes a server in an NGINX upstream.

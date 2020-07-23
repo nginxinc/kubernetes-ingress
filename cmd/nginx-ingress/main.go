@@ -25,6 +25,7 @@ import (
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	conf_scheme "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/scheme"
 	"github.com/nginxinc/nginx-plus-go-client/client"
+	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -483,6 +484,7 @@ func main() {
 	nginxManager.Start(nginxDone)
 
 	var plusClient *client.NginxClient
+
 	if *nginxPlus && !useFakeNginxManager {
 		httpClient := getSocketClient("/var/lib/nginx/nginx-plus-api.sock")
 		plusClient, err = client.NewNginxClient(httpClient, "http://nginx-plus-api/api")
@@ -492,9 +494,14 @@ func main() {
 		nginxManager.SetPlusClients(plusClient, httpClient)
 	}
 
+	var plusCollector *nginxCollector.NginxPlusCollector
 	if *enablePrometheusMetrics {
 		if *nginxPlus {
-			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusClient, registry, constLabels)
+			upstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
+			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels)
+			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels)
+			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry)
 		} else {
 			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
 			client, err := metrics.NewNginxMetricsClient(httpClient)
@@ -506,7 +513,8 @@ func main() {
 	}
 
 	isWildcardEnabled := *wildcardTLSSecret != ""
-	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, globalCfgParams, templateExecutor, templateExecutorV2, *nginxPlus, isWildcardEnabled)
+	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, globalCfgParams, templateExecutor,
+		templateExecutorV2, *nginxPlus, isWildcardEnabled, plusCollector, *enablePrometheusMetrics)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough)

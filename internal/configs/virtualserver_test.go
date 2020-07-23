@@ -381,6 +381,12 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
 			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
 				Name: "vs_default_cafe_tea",
 				Servers: []version2.UpstreamServer{
 					{
@@ -390,6 +396,12 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
 				Name: "vs_default_cafe_tea-latest",
 				Servers: []version2.UpstreamServer{
 					{
@@ -399,6 +411,12 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
 				Name: "vs_default_cafe_coffee",
 				Servers: []version2.UpstreamServer{
 					{
@@ -408,6 +426,12 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
 				Name: "vs_default_cafe_vsr_default_coffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
@@ -417,6 +441,12 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "sub-tea-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subtea",
+					ResourceNamespace: "default",
+				},
 				Name: "vs_default_cafe_vsr_default_subtea_subtea",
 				Servers: []version2.UpstreamServer{
 					{
@@ -426,6 +456,12 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "subcoffee",
+					ResourceNamespace: "default",
+				},
 				Name: "vs_default_cafe_vsr_default_subcoffee_coffee",
 				Servers: []version2.UpstreamServer{
 					{
@@ -616,6 +652,12 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
 			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
 				Name: "vs_default_cafe_tea",
 				Servers: []version2.UpstreamServer{
 					{
@@ -776,6 +818,12 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 		Upstreams: []version2.Upstream{
 			{
 				Name: "vs_default_cafe_tea-v1",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc-v1",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.20:80",
@@ -784,6 +832,12 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 			},
 			{
 				Name: "vs_default_cafe_tea-v2",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc-v2",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.21:80",
@@ -792,6 +846,12 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 			},
 			{
 				Name: "vs_default_cafe_vsr_default_coffee_coffee-v1",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc-v1",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.30:80",
@@ -800,6 +860,12 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 			},
 			{
 				Name: "vs_default_cafe_vsr_default_coffee_coffee-v2",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc-v2",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.31:80",
@@ -1023,6 +1089,12 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	expected := version2.VirtualServerConfig{
 		Upstreams: []version2.Upstream{
 			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc-v1",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
 				Name: "vs_default_cafe_tea-v1",
 				Servers: []version2.UpstreamServer{
 					{
@@ -1032,6 +1104,12 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 			},
 			{
 				Name: "vs_default_cafe_tea-v2",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc-v2",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.21:80",
@@ -1040,6 +1118,12 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 			},
 			{
 				Name: "vs_default_cafe_vsr_default_coffee_coffee-v1",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc-v1",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.30:80",
@@ -1048,6 +1132,12 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 			},
 			{
 				Name: "vs_default_cafe_vsr_default_coffee_coffee-v2",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "coffee-svc-v2",
+					ResourceType:      "virtualserverroute",
+					ResourceName:      "coffee",
+					ResourceNamespace: "default",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "10.0.0.31:80",
@@ -1876,6 +1966,9 @@ func TestGenerateUpstream(t *testing.T) {
 
 	expected := version2.Upstream{
 		Name: "test-upstream",
+		UpstreamLabels: version2.UpstreamLabels{
+			Service: "test-upstream",
+		},
 		Servers: []version2.UpstreamServer{
 			{
 				Address: "192.168.10.10:8080",
@@ -1890,7 +1983,7 @@ func TestGenerateUpstream(t *testing.T) {
 	}
 
 	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{})
-	result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, upstream, false, endpoints)
+	result := vsc.generateUpstream(nil, name, upstream, false, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -1919,6 +2012,9 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service: "test-upstream",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "192.168.10.10:8080",
@@ -1933,6 +2029,9 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service: "test-upstream",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "192.168.10.10:8080",
@@ -1947,6 +2046,9 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 			&ConfigParams{Keepalive: 21},
 			version2.Upstream{
 				Name: "test-upstream",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service: "test-upstream",
+				},
 				Servers: []version2.UpstreamServer{
 					{
 						Address: "192.168.10.10:8080",
@@ -1959,7 +2061,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 
 	for _, test := range tests {
 		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{})
-		result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, test.upstream, false, endpoints)
+		result := vsc.generateUpstream(nil, name, test.upstream, false, endpoints)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
@@ -1978,6 +2080,9 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 
 	expected := version2.Upstream{
 		Name: name,
+		UpstreamLabels: version2.UpstreamLabels{
+			Service: "test-upstream",
+		},
 		Servers: []version2.UpstreamServer{
 			{
 				Address: "example.com",
@@ -1987,7 +2092,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	}
 
 	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{})
-	result := vsc.generateUpstream(&conf_v1.VirtualServer{}, name, upstream, true, endpoints)
+	result := vsc.generateUpstream(nil, name, upstream, true, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
@@ -2636,6 +2741,12 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 	expected := []version2.Upstream{
 		{
 			Name: "vs_default_cafe_tea",
+			UpstreamLabels: version2.UpstreamLabels{
+				Service:           "tea-svc",
+				ResourceType:      "virtualserver",
+				ResourceNamespace: "default",
+				ResourceName:      "cafe",
+			},
 			Servers: []version2.UpstreamServer{
 				{
 					Address: "10.0.0.20:80",
@@ -2643,11 +2754,23 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 			},
 		},
 		{
-			Name:    "vs_default_cafe_test",
+			Name: "vs_default_cafe_test",
+			UpstreamLabels: version2.UpstreamLabels{
+				Service:           "test-svc",
+				ResourceType:      "virtualserver",
+				ResourceNamespace: "default",
+				ResourceName:      "cafe",
+			},
 			Servers: nil,
 		},
 		{
 			Name: "vs_default_cafe_subselector-test",
+			UpstreamLabels: version2.UpstreamLabels{
+				Service:           "test-svc",
+				ResourceType:      "virtualserver",
+				ResourceNamespace: "default",
+				ResourceName:      "cafe",
+			},
 			Servers: []version2.UpstreamServer{
 				{
 					Address: "10.0.0.30:80",
@@ -2656,6 +2779,12 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 		},
 		{
 			Name: "vs_default_cafe_vsr_default_coffee_coffee",
+			UpstreamLabels: version2.UpstreamLabels{
+				Service:           "coffee-svc",
+				ResourceType:      "virtualserverroute",
+				ResourceNamespace: "default",
+				ResourceName:      "coffee",
+			},
 			Servers: []version2.UpstreamServer{
 				{
 					Address: "10.0.0.40:80",
@@ -2664,6 +2793,12 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 		},
 		{
 			Name: "vs_default_cafe_vsr_default_coffee_subselector-test",
+			UpstreamLabels: version2.UpstreamLabels{
+				Service:           "test-svc",
+				ResourceType:      "virtualserverroute",
+				ResourceNamespace: "default",
+				ResourceName:      "coffee",
+			},
 			Servers: []version2.UpstreamServer{
 				{
 					Address: "10.0.0.50:80",
@@ -4374,6 +4509,9 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 			}},
 			isPlus: true,
 			expected: version2.Upstream{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service: "test-queue",
+				},
 				Name: "test-upstream-queue",
 				Queue: &version2.Queue{
 					Size:    10,
@@ -4387,6 +4525,9 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 			upstream: conf_v1.Upstream{Service: serviceName, Port: 80, Queue: &conf_v1.UpstreamQueue{Size: 10, Timeout: ""}},
 			isPlus:   true,
 			expected: version2.Upstream{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service: "test-queue",
+				},
 				Name: "test-upstream-queue-with-default-timeout",
 				Queue: &version2.Queue{
 					Size:    10,
@@ -4400,6 +4541,9 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 			upstream: conf_v1.Upstream{Service: serviceName, Port: 80, Queue: nil},
 			isPlus:   false,
 			expected: version2.Upstream{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service: "test-queue",
+				},
 				Name: "test-upstream-queue-nil",
 			},
 			msg: "upstream queue with nil for OSS",
@@ -4408,7 +4552,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 
 	for _, test := range tests {
 		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{})
-		result := vsc.generateUpstream(&conf_v1.VirtualServer{}, test.name, test.upstream, false, []string{})
+		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
@@ -5118,6 +5262,50 @@ func TestGenerateProxyAddHeaders(t *testing.T) {
 		result := generateProxyAddHeaders(test.proxy)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateProxyAddHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+		}
+	}
+}
+
+func TestGetUpstreamResourceLabels(t *testing.T) {
+	var tests = []struct {
+		owner    runtime.Object
+		expected version2.UpstreamLabels
+	}{
+		{
+			owner:    nil,
+			expected: version2.UpstreamLabels{},
+		},
+		{
+			owner: &conf_v1.VirtualServer{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Namespace: "namespace",
+					Name:      "name",
+				},
+			},
+			expected: version2.UpstreamLabels{
+				ResourceNamespace: "namespace",
+				ResourceName:      "name",
+				ResourceType:      "virtualserver",
+			},
+		},
+		{
+			owner: &conf_v1.VirtualServerRoute{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Namespace: "namespace",
+					Name:      "name",
+				},
+			},
+			expected: version2.UpstreamLabels{
+				ResourceNamespace: "namespace",
+				ResourceName:      "name",
+				ResourceType:      "virtualserverroute",
+			},
+		},
+	}
+	for _, test := range tests {
+		result := getUpstreamResourceLabels(test.owner)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("getUpstreamResourceLabels(%+v) returned %+v but expected %+v", test.owner, result, test.expected)
 		}
 	}
 }

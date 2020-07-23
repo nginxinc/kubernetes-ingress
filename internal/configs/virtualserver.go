@@ -497,6 +497,29 @@ func addPoliciesCfgToLocations(cfg policiesCfg, locations []version2.Location) {
 	}
 }
 
+func getUpstreamResourceLabels(owner runtime.Object) version2.UpstreamLabels {
+	var resourceType, resourceName, resourceNamespace string
+
+	switch owner.(type) {
+	case *conf_v1.VirtualServer:
+		vs := owner.(*conf_v1.VirtualServer)
+		resourceType = "virtualserver"
+		resourceName = vs.Name
+		resourceNamespace = vs.Namespace
+	case *conf_v1.VirtualServerRoute:
+		vsr := owner.(*conf_v1.VirtualServerRoute)
+		resourceType = "virtualserverroute"
+		resourceName = vsr.Name
+		resourceNamespace = vsr.Namespace
+	}
+
+	return version2.UpstreamLabels{
+		ResourceType:      resourceType,
+		ResourceName:      resourceName,
+		ResourceNamespace: resourceNamespace,
+	}
+}
+
 func (vsc *virtualServerConfigurator) generateUpstream(owner runtime.Object, upstreamName string, upstream conf_v1.Upstream, isExternalNameSvc bool, endpoints []string) version2.Upstream {
 	var upsServers []version2.UpstreamServer
 	for _, e := range endpoints {
@@ -509,8 +532,12 @@ func (vsc *virtualServerConfigurator) generateUpstream(owner runtime.Object, ups
 
 	lbMethod := generateLBMethod(upstream.LBMethod, vsc.cfgParams.LBMethod)
 
+	upstreamLabels := getUpstreamResourceLabels(owner)
+	upstreamLabels.Service = upstream.Service
+
 	ups := version2.Upstream{
 		Name:             upstreamName,
+		UpstreamLabels:   upstreamLabels,
 		Servers:          upsServers,
 		Resolve:          isExternalNameSvc,
 		LBMethod:         lbMethod,

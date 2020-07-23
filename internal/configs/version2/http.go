@@ -1,5 +1,13 @@
 package version2
 
+// UpstreamLabels describes the Prometheus labels for an NGINX upstream.
+type UpstreamLabels struct {
+	Service           string
+	ResourceType      string
+	ResourceName      string
+	ResourceNamespace string
+}
+
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
 	Server        Server
@@ -25,6 +33,7 @@ type Upstream struct {
 	UpstreamZoneSize string
 	Queue            *Queue
 	SessionCookie    *SessionCookie
+	UpstreamLabels   UpstreamLabels
 }
 
 // UpstreamServer defines an upstream server.
@@ -93,9 +102,9 @@ type Location struct {
 	ErrorPages               []ErrorPage
 	ProxySSLName             string
 	InternalProxyPass        string
-	Allow                     []string
-	Deny                      []string
-	PoliciesErrorReturn       *Return
+	Allow                    []string
+	Deny                     []string
+	PoliciesErrorReturn      *Return
 }
 
 // ReturnLocation defines a location for returning a fixed response.

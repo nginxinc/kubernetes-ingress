@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/golang/glog"
-	plusClient "github.com/nginxinc/nginx-plus-go-client/client"
 	prometheusClient "github.com/nginxinc/nginx-prometheus-exporter/client"
 	nginxCollector "github.com/nginxinc/nginx-prometheus-exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
@@ -28,8 +27,8 @@ func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClien
 }
 
 // RunPrometheusListenerForNginxPlus runs an http server to expose Prometheus metrics for NGINX Plus
-func RunPrometheusListenerForNginxPlus(port int, plusClient *plusClient.NginxClient, registry *prometheus.Registry, constLabels map[string]string) {
-	registry.MustRegister(nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", constLabels))
+func RunPrometheusListenerForNginxPlus(port int, nginxPlusCollector *nginxCollector.NginxPlusCollector, registry *prometheus.Registry) {
+	registry.MustRegister(nginxPlusCollector)
 	runServer(strconv.Itoa(port), registry)
 }
 

@@ -293,7 +293,13 @@ func createUpstream(ingEx *IngressEx, name string, backend *extensions.IngressBa
 
 	if isPlus {
 		queue, timeout := upstreamRequiresQueue(backend.ServiceName+backend.ServicePort.String(), ingEx, cfg)
-		ups = version1.Upstream{Name: name, StickyCookie: stickyCookie, Queue: queue, QueueTimeout: timeout}
+		upstreamLabels := version1.UpstreamLabels{
+			Service:           backend.ServiceName,
+			ResourceType:      "ingress",
+			ResourceName:      ingEx.Ingress.Name,
+			ResourceNamespace: ingEx.Ingress.Namespace,
+		}
+		ups = version1.Upstream{Name: name, StickyCookie: stickyCookie, Queue: queue, QueueTimeout: timeout, UpstreamLabels: upstreamLabels}
 	} else {
 		ups = version1.NewUpstreamWithDefaultServer(name)
 	}
