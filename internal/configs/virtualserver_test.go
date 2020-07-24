@@ -471,7 +471,8 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 		},
-		HTTPSnippets: []string{""},
+		HTTPSnippets:  []string{""},
+		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
@@ -667,7 +668,8 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 				Keepalive: 16,
 			},
 		},
-		HTTPSnippets: []string{""},
+		HTTPSnippets:  []string{""},
+		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
@@ -903,7 +905,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 				},
 			},
 		},
-		HTTPSnippets: []string{""},
+		HTTPSnippets:  []string{""},
+		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName: "cafe.example.com",
 			StatusZone: "cafe.example.com",
@@ -1203,7 +1206,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 				},
 			},
 		},
-		HTTPSnippets: []string{""},
+		HTTPSnippets:  []string{""},
+		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName: "cafe.example.com",
 			StatusZone: "cafe.example.com",
@@ -1503,7 +1507,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 				},
 			},
 		},
-		HTTPSnippets: []string{""},
+		HTTPSnippets:  []string{""},
+		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName: "example.com",
 			StatusZone: "example.com",
@@ -1749,6 +1754,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 func TestGeneratePolicies(t *testing.T) {
 	var owner runtime.Object // nil is OK for the unit test
 	ownerNamespace := "default"
+	vsNamespace := "default"
+	vsName := "test"
 
 	tests := []struct {
 		policyRefs []conf_v1.PolicyReference
@@ -1827,12 +1834,115 @@ func TestGeneratePolicies(t *testing.T) {
 			},
 			msg: "merging",
 		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "rateLimit-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/rateLimit-policy": {
+					Spec: conf_v1alpha1.PolicySpec{
+						RateLimit: &conf_v1alpha1.RateLimit{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							LogLevel: "notice",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				LimitReqZones: []version2.LimitReqZone{
+					{
+						Key:      "test",
+						ZoneSize: "10M",
+						Rate:     "10r/s",
+						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+					},
+				},
+				LimitReqOptions: version2.LimitReqOptions{
+					LogLevel:   "notice",
+					RejectCode: 503,
+				},
+				LimitReqs: []version2.LimitReq{
+					{
+						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+					},
+				},
+			},
+			msg: "rate limit reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "rateLimit-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "rateLimit-policy2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/rateLimit-policy": {
+					Spec: conf_v1alpha1.PolicySpec{
+						RateLimit: &conf_v1alpha1.RateLimit{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+							LogLevel: "info",
+						},
+					},
+				},
+				"default/rateLimit-policy2": {
+					Spec: conf_v1alpha1.PolicySpec{
+						RateLimit: &conf_v1alpha1.RateLimit{
+							Key:      "test2",
+							ZoneSize: "20M",
+							Rate:     "20r/s",
+							LogLevel: "error",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				LimitReqZones: []version2.LimitReqZone{
+					{
+						Key:      "test",
+						ZoneSize: "10M",
+						Rate:     "10r/s",
+						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+					},
+					{
+						Key:      "test2",
+						ZoneSize: "20M",
+						Rate:     "20r/s",
+						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					},
+				},
+				LimitReqOptions: version2.LimitReqOptions{
+					LogLevel:   "info",
+					RejectCode: 503,
+				},
+				LimitReqs: []version2.LimitReq{
+					{
+						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+					},
+					{
+						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					},
+				},
+			},
+			msg: "multi rate limit reference",
+		},
 	}
 
 	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
 
 	for _, test := range tests {
-		result := vsc.generatePolicies(owner, ownerNamespace, test.policyRefs, test.policies)
+		result := vsc.generatePolicies(owner, ownerNamespace, vsNamespace, vsName, test.policyRefs, test.policies)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generatePolicies() returned \n%+v but expected \n%+v for the case of %s", result, test.expected,
 				test.msg)
@@ -1846,6 +1956,8 @@ func TestGeneratePolicies(t *testing.T) {
 func TestGeneratePoliciesFails(t *testing.T) {
 	var owner runtime.Object // nil is OK for the unit test
 	ownerNamespace := "default"
+	vsNamespace := "default"
+	vsName := "test"
 
 	tests := []struct {
 		policyRefs []conf_v1.PolicyReference
@@ -1862,8 +1974,6 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			policies: map[string]*conf_v1alpha1.Policy{},
 			expected: policiesCfg{
-				Allow: []string{},
-				Deny:  []string{},
 				ErrorReturn: &version2.Return{
 					Code: 500,
 				},
@@ -1906,13 +2016,54 @@ func TestGeneratePoliciesFails(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
 
 	for _, test := range tests {
-		result := vsc.generatePolicies(owner, ownerNamespace, test.policyRefs, test.policies)
+		result := vsc.generatePolicies(owner, ownerNamespace, vsNamespace, vsName, test.policyRefs, test.policies)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generatePolicies() returned \n%+v but expected \n%+v for the case of %s", result, test.expected,
 				test.msg)
 		}
 		if len(vsc.warnings) == 0 {
 			t.Errorf("generatePolicies() returned no warnings for the case of %s", test.msg)
+		}
+	}
+}
+
+func TestRemoveDuplicates(t *testing.T) {
+	tests := []struct {
+		rlz      []version2.LimitReqZone
+		expected []version2.LimitReqZone
+	}{
+		{
+			rlz: []version2.LimitReqZone{
+				{ZoneName: "test"},
+				{ZoneName: "test"},
+				{ZoneName: "test2"},
+				{ZoneName: "test3"},
+			},
+			expected: []version2.LimitReqZone{
+				{ZoneName: "test"},
+				{ZoneName: "test2"},
+				{ZoneName: "test3"},
+			},
+		},
+		{
+			rlz: []version2.LimitReqZone{
+				{ZoneName: "test"},
+				{ZoneName: "test"},
+				{ZoneName: "test2"},
+				{ZoneName: "test3"},
+				{ZoneName: "test3"},
+			},
+			expected: []version2.LimitReqZone{
+				{ZoneName: "test"},
+				{ZoneName: "test2"},
+				{ZoneName: "test3"},
+			},
+		},
+	}
+	for _, test := range tests {
+		result := removeDuplicateLimitReqZones(test.rlz)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("removeDuplicates() returned \n%v, but expected \n%v", result, test.expected)
 		}
 	}
 }

@@ -2105,17 +2105,17 @@ func TestGetPolicies(t *testing.T) {
 
 	expectedPolicies := []*conf_v1alpha1.Policy{validPolicy}
 	expectedErrors := []error{
-		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`"),
+		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`"),
 		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
 		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
 	}
 
 	result, errors := lbc.getPolicies(policyRefs, "default")
 	if !reflect.DeepEqual(result, expectedPolicies) {
-		t.Errorf("lbc.getPolicies() returned %v but expected %v", result, expectedPolicies)
+		t.Errorf("lbc.getPolicies() returned \n%v but \nexpected %v", result, expectedPolicies)
 	}
 	if !reflect.DeepEqual(errors, expectedErrors) {
-		t.Errorf("lbc.getPolicies() returned %v but expected %v", errors, expectedErrors)
+		t.Errorf("lbc.getPolicies() returned \n%v but expected \n%v", errors, expectedErrors)
 	}
 }
 

@@ -2147,10 +2147,6 @@ func TestValidateUpstreamLBMethodFails(t *testing.T) {
 	}
 }
 
-func createPointerFromInt(n int) *int {
-	return &n
-}
-
 func TestValidatePositiveIntOrZeroFromPointer(t *testing.T) {
 	tests := []struct {
 		number *int
@@ -2273,24 +2269,6 @@ func TestValidateBuffer(t *testing.T) {
 		allErrs = validateBuffer(test, field.NewPath("buffers-field"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateBuffer didn't return error for invalid input %v.", test)
-		}
-	}
-}
-
-func TestValidateSize(t *testing.T) {
-	var validInput = []string{"", "4k", "8K", "16m", "32M"}
-	for _, test := range validInput {
-		allErrs := validateSize(test, field.NewPath("size-field"))
-		if len(allErrs) != 0 {
-			t.Errorf("validateSize(%q) returned an error for valid input", test)
-		}
-	}
-
-	var invalidInput = []string{"55mm", "2mG", "6kb", "-5k", "1L", "5G"}
-	for _, test := range invalidInput {
-		allErrs := validateSize(test, field.NewPath("size-field"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateSize(%q) didn't return error for invalid input.", test)
 		}
 	}
 }
@@ -2730,53 +2708,6 @@ func TestValidateRedirectStatusCodeFails(t *testing.T) {
 		allErrs := validateRedirectStatusCode(test.code, field.NewPath("code"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateRedirectStatusCode(%v) returned no errors for invalid input", test.code)
-		}
-	}
-}
-
-func TestValidateVariable(t *testing.T) {
-	var validVars = map[string]bool{
-		"scheme":                 true,
-		"http_x_forwarded_proto": true,
-		"request_uri":            true,
-		"host":                   true,
-	}
-
-	tests := []struct {
-		nVar string
-	}{
-		{"scheme"},
-		{"http_x_forwarded_proto"},
-		{"request_uri"},
-		{"host"},
-	}
-	for _, test := range tests {
-		allErrs := validateVariable(test.nVar, validVars, field.NewPath("url"))
-		if len(allErrs) != 0 {
-			t.Errorf("validateVariable(%v) returned errors %v for valid input", test.nVar, allErrs)
-		}
-	}
-}
-
-func TestValidateVariableFails(t *testing.T) {
-	var validVars = map[string]bool{
-		"host": true,
-	}
-
-	tests := []struct {
-		nVar string
-	}{
-		{""},
-		{"hostinvalid.com"},
-		{"$a"},
-		{"host${host}"},
-		{"host${host}}"},
-		{"host$${host}"},
-	}
-	for _, test := range tests {
-		allErrs := validateVariable(test.nVar, validVars, field.NewPath("url"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateVariable(%v) returned no errors for invalid input", test.nVar)
 		}
 	}
 }
@@ -3281,69 +3212,6 @@ func TestValidateStringNoVariablesFails(t *testing.T) {
 	}
 }
 
-func TestValidateStringWithVariables(t *testing.T) {
-	testStrings := []string{
-		"",
-		"${scheme}",
-		"${scheme}${host}",
-		"foo.bar",
-	}
-	validVars := map[string]bool{"scheme": true, "host": true}
-
-	for _, test := range testStrings {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), nil, validVars)
-		if len(allErrs) != 0 {
-			t.Errorf("validateStringWithVariables(%v) returned errors for valid input: %v", test, allErrs)
-		}
-	}
-
-	specialVars := []string{"arg", "http", "cookie"}
-	testStringsSpecial := []string{
-		"${arg_username}",
-		"${http_header_name}",
-		"${cookie_cookie_name}",
-	}
-
-	for _, test := range testStringsSpecial {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), specialVars, validVars)
-		if len(allErrs) != 0 {
-			t.Errorf("validateStringWithVariables(%v) returned errors for valid input: %v", test, allErrs)
-		}
-	}
-}
-
-func TestValidateStringWithVariablesFail(t *testing.T) {
-	testStrings := []string{
-		"$scheme}",
-		"${sch${eme}${host}",
-		"host$",
-		"${host",
-		"${invalid}",
-	}
-	validVars := map[string]bool{"scheme": true, "host": true}
-
-	for _, test := range testStrings {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), nil, validVars)
-		if len(allErrs) == 0 {
-			t.Errorf("validateStringWithVariables(%v) returned no errors for invalid input", test)
-		}
-	}
-
-	specialVars := []string{"arg", "http", "cookie"}
-	testStringsSpecial := []string{
-		"${arg_username%}",
-		"${http_header-name}",
-		"${cookie_cookie?name}",
-	}
-
-	for _, test := range testStringsSpecial {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), specialVars, validVars)
-		if len(allErrs) == 0 {
-			t.Errorf("validateStringWithVariables(%v) returned no errors for invalid input", test)
-		}
-	}
-}
-
 func TestValidateActionReturnCode(t *testing.T) {
 	codes := []int{200, 201, 400, 404, 500, 502, 599}
 	for _, c := range codes {
@@ -3360,26 +3228,6 @@ func TestValidateActionReturnCodeFails(t *testing.T) {
 		allErrs := validateActionReturnCode(c, field.NewPath("code"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateActionReturnCode(%v) returned no errors for invalid input", c)
-		}
-	}
-}
-
-func TestValidateSpecialVariable(t *testing.T) {
-	specialVars := []string{"arg_username", "arg_user_name", "http_header_name", "cookie_cookie_name"}
-	for _, v := range specialVars {
-		allErrs := validateSpecialVariable(v, field.NewPath("variable"))
-		if len(allErrs) != 0 {
-			t.Errorf("validateSpecialVariable(%v) returned errors for valid case: %v", v, allErrs)
-		}
-	}
-}
-
-func TestValidateSpecialVariableFails(t *testing.T) {
-	specialVars := []string{"arg_invalid%", "http_header+invalid", "cookie_cookie_name?invalid"}
-	for _, v := range specialVars {
-		allErrs := validateSpecialVariable(v, field.NewPath("variable"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateSpecialVariable(%v) returned no errors for invalid case", v)
 		}
 	}
 }

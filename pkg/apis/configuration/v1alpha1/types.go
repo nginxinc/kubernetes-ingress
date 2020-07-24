@@ -114,16 +114,29 @@ type Policy struct {
 
 // PolicySpec is the spec of the Policy resource.
 // The spec includes multiple fields, where each field represents a different policy.
-// Note: currently we have only one policy -- AccessControl, but we will support more in the future.
 // Only one policy (field) is allowed.
 type PolicySpec struct {
 	AccessControl *AccessControl `json:"accessControl"`
+	RateLimit     *RateLimit     `json:"rateLimit"`
 }
 
 // AccessControl defines an access policy based on the source IP of a request.
 type AccessControl struct {
 	Allow []string `json:"allow"`
 	Deny  []string `json:"deny"`
+}
+
+// RateLimit defines a rate limit policy.
+type RateLimit struct {
+	Rate       string `json:"rate"`
+	Key        string `json:"key"`
+	Delay      *int   `json:"delay"`
+	NoDelay    *bool  `json:"noDelay"`
+	Burst      *int   `json:"burst"`
+	ZoneSize   string `json:"zoneSize"`
+	DryRun     *bool  `json:"dryRun"`
+	LogLevel   string `json:"logLevel"`
+	RejectCode *int   `json:"rejectCode"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

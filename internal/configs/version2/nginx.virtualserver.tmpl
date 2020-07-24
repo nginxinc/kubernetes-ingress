@@ -34,6 +34,10 @@ map {{ $m.Source }} {{ $m.Variable }} {
 {{- $snippet }}
 {{ end }}
 
+{{ range $z := .LimitReqZones }}
+limit_req_zone {{ $z.Key }} zone={{ $z.ZoneName }}:{{ $z.ZoneSize }} rate={{ $z.Rate }};
+{{ end }}
+
 {{ $s := .Server }}
 server {
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
@@ -93,6 +97,23 @@ server {
     allow all;
     {{ end }}
 
+    {{ if $s.LimitReqOptions.DryRun }}
+    limit_req_dry_run on;
+    {{ end }}
+
+    {{ with $level := $s.LimitReqOptions.LogLevel }}
+    limit_req_log_level {{ $level }};
+    {{ end }}
+
+    {{ with $code := $s.LimitReqOptions.RejectCode }}
+    limit_req_status {{ $code }};
+    {{ end }}
+
+    {{ range $rl := $s.LimitReqs }}
+    limit_req zone={{ $rl.ZoneName }}{{ if $rl.Burst }} burst={{ $rl.Burst }}{{ end }}
+        {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
+    {{ end }}
+
     {{ range $snippet := $s.Snippets }}
     {{- $snippet }}
     {{ end }}
@@ -149,6 +170,23 @@ server {
         {{ end }}
         {{ if gt (len $l.Deny) 0 }}
         allow all;
+        {{ end }}
+
+        {{ if $l.LimitReqOptions.DryRun }}
+        limit_req_dry_run on;
+        {{ end }}
+
+        {{ with $level := $l.LimitReqOptions.LogLevel }}
+        limit_req_log_level {{ $level }};
+        {{ end }}
+
+        {{ with $code := $l.LimitReqOptions.RejectCode }}
+        limit_req_status {{ $code }};
+        {{ end }}
+
+        {{ range $rl := $l.LimitReqs }}
+        limit_req zone={{ $rl.ZoneName }}{{ if $rl.Burst }} burst={{ $rl.Burst }}{{ end }}
+            {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
         {{ end }}
 
         {{ range $e := $l.ErrorPages }}

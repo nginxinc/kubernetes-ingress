@@ -1,6 +1,6 @@
 # Policy Resource
 
-The Policy resource allows you to configure features like authentication, rate-limiting, and WAF, which you can add to your [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/). In the initial release, we are introducing support for access control based on the client IP address. 
+The Policy resource allows you to configure features like access control and rate-limiting, which you can add to your [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/)..
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
@@ -16,6 +16,7 @@ This document is the reference documentation for the Policy resource. An example
   - [Policy Specification](#policy-specification)
     - [AccessControl](#accesscontrol)
       - [AccessControl Merging Behavior](#accesscontrol-merging-behavior)
+    - [RateLimit](#ratelimit)
   - [Using Policy](#using-policy)
     - [Validation](#validation)
       - [Structural Validation](#structural-validation)
@@ -50,8 +51,14 @@ spec:
    * - ``accessControl``
      - The access control policy based on the client IP address.
      - `accessControl <#accesscontrol>`_
-     - Yes
+     - No*
+   * - ``rateLimit``
+     - The rate limit policy controls the rate of processing requests per a defined key.
+     - `rateLimit <#ratelimit>`_
+     - No*
 ```
+
+\* A policy must include exactly one policy.
 
 ### AccessControl
 
@@ -108,6 +115,78 @@ Referencing both allow and deny policies, as shown in the example below, is not 
 - name: allow-policy-one
 - name: allow-policy-two
 ```
+
+### RateLimit
+
+The rate limit policy configures NGINX to limit the processing rate of requests.
+
+For example, the following policy will limit all subsequent requests coming from a single IP address once a rate of 10 requests per second is exceeded:
+```yaml
+rateLimit:
+  rate: 10r/s
+  zoneSize: 10M
+  key: ${binary_remote_addr}
+```
+
+> Note: The feature is implemented using the NGINX [ngx_http_limit_req_module](https://nginx.org/en/docs/http/ngx_http_limit_req_module.html).
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``rate``
+     - The rate of requests permitted. The rate is specified in requests per second (r/s) or requests per minute (r/m).
+     - ``string``
+     - Yes
+   * - ``key``
+     - The key which the rate limit is applied. Can contain text, variables, or a combination of them. Variables must be surrounded by ``${}``. For example: ``${$binary_remote_addr}``. Accepted variables are ``$binary_remote_addr``, ``$request_uri``, ``$url``, ``$http_``, ``$args``, ``$arg_``, ``$cookie_``.
+     - ``string``
+     - Yes
+   * - ``zoneSize``
+     - Size of the shared memory zone. Only positive values are allowed. Allowed suffixes are ``k`` or ``m``, if none are present ``k`` is assumed.
+     - ``string``
+     - Yes
+   * - ``delay``
+     - The delay parameter specifies a limit at which excessive requests become delayed. If not set all excessive requests are delayed.
+     - ``int``
+     - No*
+   * - ``noDelay``
+     - Disables the delaying of excessive requests while requests are being limited. Overrides ``delay`` if both are set.
+     - ``bool``
+     - No*
+   * - ``burst``
+     - Excessive requests are delayed until their number exceeds the ``burst`` size in which case the request is terminated with an error.
+     - ``int``
+     - No*
+   * - ``dryRun``
+     - Enables the dry run mode. In this mode, requests processing rate is not limited, however, in the shared memory zone, the number of excessive requests is accounted as usual.
+     - ``bool``
+     - No*
+   * - ``logLevel``
+     - Sets the desired logging level for cases when the server refuses to process requests due to rate exceeding, or delays request processing. Allowed values are ``info``, ``notice``, ``warn`` or ``error``. Default is ``error``.
+     - ``string``
+     - No*
+   * - ``rejectCode``
+     - Sets the status code to return in response to rejected requests. Must fall into the range ``400..600``. Default is ``503``.
+     - ``string``
+     - No*
+```
+
+> For each policy referenced in a VirtualServer and/or its VirtualServerRoutes, the Ingress Controller will generate a singe rate limiting zone defined by the [`limit_req_zone`](http://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) directive. If two VirtualServer resources reference the same policy, the Ingress Controller will generate two different rate limiting zones, one zone per VirtualServer.
+
+### RateLimit Merging Behavior
+A VirtualServer/VirtualServerRoute can reference multiple rate limit policies. For example, here we reference two policies:
+```yaml
+policies:
+- name: rate-limit-policy-one
+- name: rate-limit-policy-two
+```
+
+When you reference more than one rate limit policy, the Ingress Controller will configure NGINX to use all referenced rate limits. However, all referenced policy will use the `dryRun`, `logLevel` and `rejectCode` parameters from the first reference (`rate-limit-policy-one` in the example above).
 
 ## Using Policy
 

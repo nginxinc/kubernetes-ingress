@@ -10,6 +10,11 @@ const nginxPlusTransportServerTmpl = "nginx-plus.transportserver.tmpl"
 const nginxTransportServerTmpl = "nginx.transportserver.tmpl"
 
 var virtualServerCfg = VirtualServerConfig{
+	LimitReqZones: []LimitReqZone{
+		{
+			ZoneName: "pol_rl_test_test_test", Rate: "10r/s", ZoneSize: "10m", Key: "$url",
+		},
+	},
 	Upstreams: []Upstream{
 		{
 			Name: "test-upstream",
@@ -120,7 +125,18 @@ var virtualServerCfg = VirtualServerConfig{
 		RealIPRecursive: true,
 		Allow:           []string{"127.0.0.1"},
 		Deny:            []string{"127.0.0.1"},
-		Snippets:        []string{"# server snippet"},
+		LimitReqs: []LimitReq{
+			{
+				ZoneName: "pol_rl_test_test_test",
+				Delay:    10,
+				Burst:    5,
+			},
+		},
+		LimitReqOptions: LimitReqOptions{
+			LogLevel:   "error",
+			RejectCode: 503,
+		},
+		Snippets: []string{"# server snippet"},
 		InternalRedirectLocations: []InternalRedirectLocation{
 			{
 				Path:        "/split",
@@ -133,10 +149,15 @@ var virtualServerCfg = VirtualServerConfig{
 		},
 		Locations: []Location{
 			{
-				Path:                     "/",
-				Snippets:                 []string{"# location snippet"},
-				Allow:                    []string{"127.0.0.1"},
-				Deny:                     []string{"127.0.0.1"},
+				Path:     "/",
+				Snippets: []string{"# location snippet"},
+				Allow:    []string{"127.0.0.1"},
+				Deny:     []string{"127.0.0.1"},
+				LimitReqs: []LimitReq{
+					{
+						ZoneName: "loc_pol_rl_test_test_test",
+					},
+				},
 				ProxyConnectTimeout:      "30s",
 				ProxyReadTimeout:         "31s",
 				ProxySendTimeout:         "32s",

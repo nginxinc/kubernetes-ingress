@@ -191,30 +191,33 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(owner runtime
 }
 
 // GenerateVirtualServerConfig generates a full configuration for a VirtualServer
-func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerEx *VirtualServerEx, tlsPemFileName string) (version2.VirtualServerConfig, Warnings) {
+func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx, tlsPemFileName string) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
 
-	policiesCfg := vsc.generatePolicies(virtualServerEx.VirtualServer, virtualServerEx.VirtualServer.Namespace,
-		virtualServerEx.VirtualServer.Spec.Policies, virtualServerEx.Policies)
+	policiesCfg := vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace,
+		vsEx.VirtualServer.Name, vsEx.VirtualServer.Spec.Policies, vsEx.Policies)
 
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
 	crUpstreams := make(map[string]conf_v1.Upstream)
 
-	virtualServerUpstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
+	virtualServerUpstreamNamer := newUpstreamNamerForVirtualServer(vsEx.VirtualServer)
 	var upstreams []version2.Upstream
 	var statusMatches []version2.StatusMatch
 	var healthChecks []version2.HealthCheck
+	var limitReqZones []version2.LimitReqZone
+
+	limitReqZones = append(limitReqZones, policiesCfg.LimitReqZones...)
 
 	// generate upstreams for VirtualServer
-	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
+	for _, u := range vsEx.VirtualServer.Spec.Upstreams {
 		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
-		upstreamNamespace := virtualServerEx.VirtualServer.Namespace
-		endpoints := vsc.generateEndpointsForUpstream(virtualServerEx.VirtualServer, upstreamNamespace, u, virtualServerEx)
+		upstreamNamespace := vsEx.VirtualServer.Namespace
+		endpoints := vsc.generateEndpointsForUpstream(vsEx.VirtualServer, upstreamNamespace, u, vsEx)
 
 		// isExternalNameSvc is always false for OSS
-		_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
-		ups := vsc.generateUpstream(virtualServerEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
+		_, isExternalNameSvc := vsEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
+		ups := vsc.generateUpstream(vsEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
 		upstreams = append(upstreams, ups)
 
 		u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
@@ -228,15 +231,15 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		}
 	}
 	// generate upstreams for each VirtualServerRoute
-	for _, vsr := range virtualServerEx.VirtualServerRoutes {
-		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
+	for _, vsr := range vsEx.VirtualServerRoutes {
+		upstreamNamer := newUpstreamNamerForVirtualServerRoute(vsEx.VirtualServer, vsr)
 		for _, u := range vsr.Spec.Upstreams {
 			upstreamName := upstreamNamer.GetNameForUpstream(u.Name)
 			upstreamNamespace := vsr.Namespace
-			endpoints := vsc.generateEndpointsForUpstream(vsr, upstreamNamespace, u, virtualServerEx)
+			endpoints := vsc.generateEndpointsForUpstream(vsr, upstreamNamespace, u, vsEx)
 
 			// isExternalNameSvc is always false for OSS
-			_, isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
+			_, isExternalNameSvc := vsEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
 			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
 			upstreams = append(upstreams, ups)
 			u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
@@ -263,10 +266,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 	var vsrPoliciesFromVs = make(map[string][]conf_v1.PolicyReference)
 	matchesRoutes := 0
 
-	variableNamer := newVariableNamer(virtualServerEx.VirtualServer)
+	variableNamer := newVariableNamer(vsEx.VirtualServer)
 
 	// generates config for VirtualServer routes
-	for _, r := range virtualServerEx.VirtualServer.Spec.Routes {
+	for _, r := range vsEx.VirtualServer.Spec.Routes {
 		errorPageIndex := len(errorPageLocations)
 		errorPageLocations = append(errorPageLocations, generateErrorPageLocations(errorPageIndex, r.ErrorPages)...)
 
@@ -274,7 +277,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		if r.Route != "" {
 			name := r.Route
 			if !strings.Contains(name, "/") {
-				name = fmt.Sprintf("%v/%v", virtualServerEx.VirtualServer.Namespace, r.Route)
+				name = fmt.Sprintf("%v/%v", vsEx.VirtualServer.Namespace, r.Route)
 			}
 
 			// store route location snippet for the referenced VirtualServerRoute in case they don't define their own
@@ -297,8 +300,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		}
 
 		vsLocSnippets := r.LocationSnippets
-		routePoliciesCfg := vsc.generatePolicies(virtualServerEx.VirtualServer, virtualServerEx.VirtualServer.Namespace,
-			r.Policies, virtualServerEx.Policies)
+		routePoliciesCfg := vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name,
+			r.Policies, vsEx.Policies)
+		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 		if len(r.Matches) > 0 {
 			cfg := generateMatchesConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, matchesRoutes, len(splitClients),
@@ -323,7 +327,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		} else {
 			upstreamName := virtualServerUpstreamNamer.GetNameForUpstreamFromAction(r.Action)
 			upstream := crUpstreams[upstreamName]
-			proxySSLName := generateProxySSLName(upstream.Service, virtualServerEx.VirtualServer.Namespace)
+			proxySSLName := generateProxySSLName(upstream.Service, vsEx.VirtualServer.Namespace)
 
 			loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, r.ErrorPages, false,
 				errorPageIndex, proxySSLName, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations))
@@ -337,8 +341,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 	}
 
 	// generate config for subroutes of each VirtualServerRoute
-	for _, vsr := range virtualServerEx.VirtualServerRoutes {
-		upstreamNamer := newUpstreamNamerForVirtualServerRoute(virtualServerEx.VirtualServer, vsr)
+	for _, vsr := range vsEx.VirtualServerRoutes {
+		upstreamNamer := newUpstreamNamerForVirtualServerRoute(vsEx.VirtualServer, vsr)
 		for _, r := range vsr.Spec.Subroutes {
 			errorPageIndex := len(errorPageLocations)
 			errorPageLocations = append(errorPageLocations, generateErrorPageLocations(errorPageIndex, r.ErrorPages)...)
@@ -358,12 +362,14 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 				locSnippets = vsrLocationSnippetsFromVs[vsrNamespaceName]
 			}
 
-			routePoliciesCfg := vsc.generatePolicies(vsr, vsr.Namespace, r.Policies, virtualServerEx.Policies)
+			routePoliciesCfg := vsc.generatePolicies(vsr, vsr.Namespace, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name,
+				r.Policies, vsEx.Policies)
 			// use the VirtualServer route policies if the route does not define any
 			if len(r.Policies) == 0 {
-				routePoliciesCfg = vsc.generatePolicies(virtualServerEx.VirtualServer, virtualServerEx.VirtualServer.Namespace,
-					vsrPoliciesFromVs[vsrNamespaceName], virtualServerEx.Policies)
+				routePoliciesCfg = vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace,
+					vsEx.VirtualServer.Name, vsrPoliciesFromVs[vsrNamespaceName], vsEx.Policies)
 			}
+			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 			if len(r.Matches) > 0 {
 				cfg := generateMatchesConfig(r, upstreamNamer, crUpstreams, variableNamer, matchesRoutes, len(splitClients),
@@ -402,20 +408,21 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 		}
 	}
 
-	ssl := generateSSLConfig(virtualServerEx.VirtualServer.Spec.TLS, tlsPemFileName, vsc.cfgParams)
-	tlsRedirectConfig := generateTLSRedirectConfig(virtualServerEx.VirtualServer.Spec.TLS)
-	httpSnippets := generateSnippets(vsc.enableSnippets, virtualServerEx.VirtualServer.Spec.HTTPSnippets, []string{""})
-	serverSnippets := generateSnippets(vsc.enableSnippets, virtualServerEx.VirtualServer.Spec.ServerSnippets, vsc.cfgParams.ServerSnippets)
+	ssl := generateSSLConfig(vsEx.VirtualServer.Spec.TLS, tlsPemFileName, vsc.cfgParams)
+	tlsRedirectConfig := generateTLSRedirectConfig(vsEx.VirtualServer.Spec.TLS)
+	httpSnippets := generateSnippets(vsc.enableSnippets, vsEx.VirtualServer.Spec.HTTPSnippets, []string{""})
+	serverSnippets := generateSnippets(vsc.enableSnippets, vsEx.VirtualServer.Spec.ServerSnippets, vsc.cfgParams.ServerSnippets)
 
 	vsCfg := version2.VirtualServerConfig{
 		Upstreams:     upstreams,
 		SplitClients:  splitClients,
 		Maps:          maps,
 		StatusMatches: statusMatches,
+		LimitReqZones: removeDuplicateLimitReqZones(limitReqZones),
 		HTTPSnippets:  httpSnippets,
 		Server: version2.Server{
-			ServerName:                virtualServerEx.VirtualServer.Spec.Host,
-			StatusZone:                virtualServerEx.VirtualServer.Spec.Host,
+			ServerName:                vsEx.VirtualServer.Spec.Host,
+			StatusZone:                vsEx.VirtualServer.Spec.Host,
 			ProxyProtocol:             vsc.cfgParams.ProxyProtocol,
 			SSL:                       ssl,
 			ServerTokens:              vsc.cfgParams.ServerTokens,
@@ -432,6 +439,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 			TLSPassthrough:            vsc.isTLSPassthrough,
 			Allow:                     policiesCfg.Allow,
 			Deny:                      policiesCfg.Deny,
+			LimitReqOptions:           policiesCfg.LimitReqOptions,
+			LimitReqs:                 policiesCfg.LimitReqs,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
 		},
 		SpiffeCerts: vsc.spiffeCerts,
@@ -441,15 +450,21 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(virtualServerE
 }
 
 type policiesCfg struct {
-	Allow       []string
-	Deny        []string
-	ErrorReturn *version2.Return
+	Allow           []string
+	Deny            []string
+	LimitReqOptions version2.LimitReqOptions
+	LimitReqZones   []version2.LimitReqZone
+	LimitReqs       []version2.LimitReq
+	ErrorReturn     *version2.Return
 }
 
-func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, ownerNamespace string, policyRefs []conf_v1.PolicyReference,
-	policies map[string]*conf_v1alpha1.Policy) policiesCfg {
+func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, ownerNamespace string, vsNamespace string,
+	vsName string, policyRefs []conf_v1.PolicyReference, policies map[string]*conf_v1alpha1.Policy) policiesCfg {
 	var policyErrorReturn *version2.Return
 	var allow, deny []string
+	var limitReqOptions version2.LimitReqOptions
+	var limitReqZones []version2.LimitReqZone
+	var limitReqs []version2.LimitReq
 	var policyError bool
 
 	for _, p := range policyRefs {
@@ -465,6 +480,28 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 				allow = append(allow, pol.Spec.AccessControl.Allow...)
 				deny = append(deny, pol.Spec.AccessControl.Deny...)
 			}
+			if pol.Spec.RateLimit != nil {
+				rlZoneName := fmt.Sprintf("pol_rl_%v_%v_%v_%v", polNamespace, p.Name, vsNamespace, vsName)
+				limitReqs = append(limitReqs, generateLimitReq(rlZoneName, pol.Spec.RateLimit))
+				limitReqZones = append(limitReqZones, generateLimitReqZone(rlZoneName, pol.Spec.RateLimit))
+				if len(limitReqs) == 1 {
+					limitReqOptions = generateLimitReqOptions(pol.Spec.RateLimit)
+				} else {
+					curOptions := generateLimitReqOptions(pol.Spec.RateLimit)
+					if curOptions.DryRun != limitReqOptions.DryRun {
+						vsc.addWarningf(owner, "RateLimit policy %v with limit request option dryRun=%v is overridden to dryRun=%v by the first policy reference in this context",
+							key, curOptions.DryRun, limitReqOptions.DryRun)
+					}
+					if curOptions.LogLevel != limitReqOptions.LogLevel {
+						vsc.addWarningf(owner, "RateLimit policy %v with limit request option logLevel=%v is overridden to logLevel=%v by the first policy reference in this context",
+							key, curOptions.LogLevel, limitReqOptions.LogLevel)
+					}
+					if curOptions.RejectCode != limitReqOptions.RejectCode {
+						vsc.addWarningf(owner, "RateLimit policy %v with limit request option rejectCode=%v is overridden to rejectCode=%v by the first policy reference in this context",
+							key, curOptions.RejectCode, limitReqOptions.RejectCode)
+					}
+				}
+			}
 		} else {
 			vsc.addWarningf(owner, "Policy %s is missing or invalid", key)
 			policyError = true
@@ -472,23 +509,79 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 		}
 	}
 	if policyError {
-		allow = []string{}
-		deny = []string{}
-		policyErrorReturn = &version2.Return{Code: 500}
+		return policiesCfg{
+			ErrorReturn: &version2.Return{Code: 500},
+		}
 	} else if len(allow) > 0 && len(deny) > 0 {
 		vsc.addWarningf(owner, "AccessControl policy (or policies) with deny rules is overridden by policy (or policies) with allow rules")
 	}
 
 	return policiesCfg{
-		Allow:       allow,
-		Deny:        deny,
-		ErrorReturn: policyErrorReturn,
+		Allow:           allow,
+		Deny:            deny,
+		LimitReqOptions: limitReqOptions,
+		LimitReqZones:   limitReqZones,
+		LimitReqs:       limitReqs,
+		ErrorReturn:     policyErrorReturn,
 	}
+}
+
+func generateLimitReq(zoneName string, rateLimitPol *conf_v1alpha1.RateLimit) version2.LimitReq {
+	var limitReq version2.LimitReq
+
+	limitReq.ZoneName = zoneName
+
+	if rateLimitPol.Burst != nil {
+		limitReq.Burst = *rateLimitPol.Burst
+	}
+	if rateLimitPol.Delay != nil {
+		limitReq.Delay = *rateLimitPol.Delay
+	}
+
+	limitReq.NoDelay = generateBool(rateLimitPol.NoDelay, false)
+	if limitReq.NoDelay {
+		limitReq.Delay = 0
+	}
+
+	return limitReq
+}
+
+func generateLimitReqZone(zoneName string, rateLimitPol *conf_v1alpha1.RateLimit) version2.LimitReqZone {
+	return version2.LimitReqZone{
+		ZoneName: zoneName,
+		Key:      rateLimitPol.Key,
+		ZoneSize: rateLimitPol.ZoneSize,
+		Rate:     rateLimitPol.Rate,
+	}
+}
+
+func generateLimitReqOptions(rateLimitPol *conf_v1alpha1.RateLimit) version2.LimitReqOptions {
+	return version2.LimitReqOptions{
+		DryRun:     generateBool(rateLimitPol.DryRun, false),
+		LogLevel:   generateString(rateLimitPol.LogLevel, "error"),
+		RejectCode: generateIntFromPointer(rateLimitPol.RejectCode, 503),
+	}
+}
+
+func removeDuplicateLimitReqZones(rlz []version2.LimitReqZone) []version2.LimitReqZone {
+	encountered := make(map[string]bool)
+	result := []version2.LimitReqZone{}
+
+	for _, v := range rlz {
+		if !encountered[v.ZoneName] {
+			encountered[v.ZoneName] = true
+			result = append(result, v)
+		}
+	}
+
+	return result
 }
 
 func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.Allow = cfg.Allow
 	location.Deny = cfg.Deny
+	location.LimitReqOptions = cfg.LimitReqOptions
+	location.LimitReqs = cfg.LimitReqs
 	location.PoliciesErrorReturn = cfg.ErrorReturn
 }
 
@@ -527,7 +620,6 @@ func (vsc *virtualServerConfigurator) generateUpstream(owner runtime.Object, ups
 		s := version2.UpstreamServer{
 			Address: e,
 		}
-
 		upsServers = append(upsServers, s)
 	}
 

@@ -35,10 +35,9 @@ spec:
         metadata:
           type: object
         spec:
-          description: 'PolicySpec is the spec of the Policy resource. The spec includes
-            multiple fields, where each field represents a different policy. Note:
-            currently we have only one policy -- AccessControl, but we will support
-            more in the future. Only one policy (field) is allowed.'
+          description: PolicySpec is the spec of the Policy resource. The spec includes
+            multiple fields, where each field represents a different policy. Only
+            one policy (field) is allowed.
           type: object
           properties:
             accessControl:
@@ -54,3 +53,25 @@ spec:
                   type: array
                   items:
                     type: string
+            rateLimit:
+              description: RateLimit defines a rate limit policy.
+              type: object
+              properties:
+                burst:
+                  type: integer
+                delay:
+                  type: integer
+                dryRun:
+                  type: boolean
+                key:
+                  type: string
+                logLevel:
+                  type: string
+                noDelay:
+                  type: boolean
+                rate:
+                  type: string
+                rejectCode:
+                  type: integer
+                zoneSize:
+                  type: string

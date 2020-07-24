@@ -1,5 +1,7 @@
 package version2
 
+import "fmt"
+
 // UpstreamLabels describes the Prometheus labels for an NGINX upstream.
 type UpstreamLabels struct {
 	Service           string
@@ -15,6 +17,7 @@ type VirtualServerConfig struct {
 	SplitClients  []SplitClient
 	Maps          []Map
 	StatusMatches []StatusMatch
+	LimitReqZones []LimitReqZone
 	HTTPSnippets  []string
 	SpiffeCerts   bool
 }
@@ -61,6 +64,8 @@ type Server struct {
 	TLSPassthrough            bool
 	Allow                     []string
 	Deny                      []string
+	LimitReqOptions           LimitReqOptions
+	LimitReqs                 []LimitReq
 	PoliciesErrorReturn       *Return
 }
 
@@ -105,6 +110,8 @@ type Location struct {
 	Allow                    []string
 	Deny                     []string
 	PoliciesErrorReturn      *Return
+	LimitReqOptions          LimitReqOptions
+	LimitReqs                []LimitReq
 }
 
 // ReturnLocation defines a location for returning a fixed response.
@@ -223,4 +230,39 @@ type StatusMatch struct {
 type Queue struct {
 	Size    int
 	Timeout string
+}
+
+// LimitReqZone defines a rate limit shared memory zone.
+type LimitReqZone struct {
+	Key      string
+	ZoneName string
+	ZoneSize string
+	Rate     string
+}
+
+func (rlz LimitReqZone) String() string {
+	return fmt.Sprintf("{Key %q, ZoneName %q, ZoneSize %v, Rate %q}", rlz.Key, rlz.ZoneName, rlz.ZoneSize, rlz.Rate)
+}
+
+// LimitReq defines a rate limit.
+type LimitReq struct {
+	ZoneName string
+	Burst    int
+	NoDelay  bool
+	Delay    int
+}
+
+func (rl LimitReq) String() string {
+	return fmt.Sprintf("{ZoneName %q, Burst %q, NoDelay %v, Delay %q}", rl.ZoneName, rl.Burst, rl.NoDelay, rl.Delay)
+}
+
+// LimitReqOptions defines rate limit options.
+type LimitReqOptions struct {
+	DryRun     bool
+	LogLevel   string
+	RejectCode int
+}
+
+func (rl LimitReqOptions) String() string {
+	return fmt.Sprintf("{DryRun %v, LogLevel %q, RejectCode %q}", rl.DryRun, rl.LogLevel, rl.RejectCode)
 }
