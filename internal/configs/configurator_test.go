@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
@@ -426,5 +427,28 @@ func TestGenerateTLSPassthroughHostsConfig(t *testing.T) {
 
 	if !reflect.DeepEqual(resultDuplicatedHosts, expectedDuplicatedHosts) {
 		t.Errorf("generateTLSPassthroughHostsConfig() returned %v but expected %v", resultDuplicatedHosts, expectedDuplicatedHosts)
+	}
+}
+
+func TestAddInternalRouteConfig(t *testing.T) {
+	cnf, err := createTestConfigurator()
+	if err != nil {
+		t.Errorf("Failed to create a test configurator: %v", err)
+	}
+	// set pod name in env
+	err = os.Setenv("POD_NAME", "nginx-ingress")
+	if err != nil {
+		t.Errorf("Failed to set pod name in environment: %v", err)
+	}
+	err = cnf.AddInternalRouteConfig()
+	if err != nil {
+		t.Errorf("AddInternalRouteConfig returned:  \n%v, but expected: \n%v", err, nil)
+	}
+
+	if !cnf.staticCfgParams.EnableInternalRoutes {
+		t.Errorf("AddInternalRouteConfig failed to set EnableInteralRoutes field of staticCfgParams to true")
+	}
+	if cnf.staticCfgParams.PodName != "nginx-ingress" {
+		t.Errorf("AddInternalRouteConfig failed to set PodName field of staticCfgParams")
 	}
 }

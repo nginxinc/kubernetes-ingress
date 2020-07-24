@@ -2,11 +2,11 @@ package version1
 
 // IngressNginxConfig describes an NGINX configuration.
 type IngressNginxConfig struct {
-	Upstreams   []Upstream
-	Servers     []Server
-	Keepalive   string
-	Ingress     Ingress
-	SpiffeCerts bool
+	Upstreams         []Upstream
+	Servers           []Server
+	Keepalive         string
+	Ingress           Ingress
+	SpiffeClientCerts bool
 }
 
 // Ingress holds information about an Ingress resource.
@@ -90,6 +90,8 @@ type Server struct {
 	AppProtectPolicy    string
 	AppProtectLogConf   string
 	AppProtectLogEnable string
+
+	SpiffeCerts bool
 }
 
 // JWTRedirectLocation describes a location for redirecting client requests to a login URL for JWT Authentication.
@@ -179,6 +181,8 @@ type MainConfig struct {
 	AppProtectCookieSeed               string
 	AppProtectCPUThresholds            string
 	AppProtectPhysicalMemoryThresholds string
+	InternalRouteServer                bool
+	InternalRouteServerName            string
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

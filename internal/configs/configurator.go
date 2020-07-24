@@ -693,7 +693,7 @@ func (cnf *Configurator) updatePlusEndpointsForTransportServer(transportServerEx
 }
 
 func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
-	ingCfg := parseAnnotations(ingEx, cnf.cfgParams, cnf.isPlus, cnf.staticCfgParams.MainAppProtectLoadModule)
+	ingCfg := parseAnnotations(ingEx, cnf.cfgParams, cnf.isPlus, cnf.staticCfgParams.MainAppProtectLoadModule, cnf.staticCfgParams.EnableInternalRoutes)
 
 	cfg := nginx.ServerConfig{
 		MaxFails:    ingCfg.MaxFails,
@@ -990,7 +990,7 @@ func (cnf *Configurator) updateApResources(ingEx *IngressEx) map[string]string {
 		policyContent := generateApResourceFileContent(ingEx.AppProtectPolicy)
 		cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
 		apRes[appProtectPolicyKey] = policyFileName
-	
+
 	}
 
 	if ingEx.AppProtectLogConf != nil {
@@ -1092,5 +1092,22 @@ func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceame string, ing
 		return fmt.Errorf("Error when reloading NGINX when removing App Protect Log Configuration: %v", err)
 	}
 
+	return nil
+}
+
+// AddInternalRouteConfig adds internal route server to NGINX Configuration and
+// reloads NGINX
+func (cnf *Configurator) AddInternalRouteConfig() error {
+	cnf.staticCfgParams.EnableInternalRoutes = true
+	cnf.staticCfgParams.PodName = os.Getenv("POD_NAME")
+	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cnf.cfgParams)
+	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
+	if err != nil {
+		return fmt.Errorf("Error when writing main Config: %v", err)
+	}
+	cnf.nginxManager.CreateMainConfig(mainCfgContent)
+	if err := cnf.nginxManager.Reload(); err != nil {
+		return fmt.Errorf("Error when reloading nginx: %v", err)
+	}
 	return nil
 }

@@ -9,8 +9,9 @@ import (
 	api_v1 "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 )
 
 const emptyHost = ""
@@ -52,7 +53,7 @@ type MergeableIngresses struct {
 
 func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[string]string, isMinion bool, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, jwtKeyFileName string, staticParams *StaticConfigParams) version1.IngressNginxConfig {
 	hasAppProtect := staticParams.MainAppProtectLoadModule
-	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus, hasAppProtect)
+	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus, hasAppProtect, staticParams.EnableInternalRoutes)
 
 	wsServices := getWebsocketServices(ingEx)
 	spServices := getSessionPersistenceServices(ingEx)
@@ -116,6 +117,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			TLSPassthrough:        staticParams.TLSPassthrough,
 			AppProtectEnable:      cfgParams.AppProtectEnable,
 			AppProtectLogEnable:   cfgParams.AppProtectLogEnable,
+			SpiffeCerts:           cfgParams.SpiffeServerCerts,
 		}
 
 		if pemFile, ok := pems[serverName]; ok {
@@ -179,7 +181,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 				upstreams[upsName] = upstream
 			}
 
-			ssl := sslServices[path.Backend.ServiceName] || staticParams.SpiffeCerts
+			ssl := isSSLEnabled(sslServices[path.Backend.ServiceName], cfgParams, staticParams)
 			proxySSLName := generateProxySSLName(path.Backend.ServiceName, ingEx.Ingress.Namespace)
 			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &cfgParams, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
 				ssl, grpcServices[path.Backend.ServiceName], proxySSLName)
@@ -207,7 +209,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 
 		if !rootLocation && ingEx.Ingress.Spec.Backend != nil {
 			upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
-			ssl := sslServices[ingEx.Ingress.Spec.Backend.ServiceName] || staticParams.SpiffeCerts
+			ssl := isSSLEnabled(sslServices[ingEx.Ingress.Spec.Backend.ServiceName], cfgParams, staticParams)
 			proxySSLName := generateProxySSLName(ingEx.Ingress.Spec.Backend.ServiceName, ingEx.Ingress.Namespace)
 
 			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &cfgParams, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName],
@@ -246,7 +248,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			Namespace:   ingEx.Ingress.Namespace,
 			Annotations: ingEx.Ingress.Annotations,
 		},
-		SpiffeCerts: staticParams.SpiffeCerts,
+		SpiffeClientCerts: staticParams.SpiffeCerts && !cfgParams.SpiffeServerCerts,
 	}
 }
 
@@ -451,10 +453,14 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	masterServer.Locations = locations
 
 	return version1.IngressNginxConfig{
-		Servers:     []version1.Server{masterServer},
-		Upstreams:   upstreams,
-		Keepalive:   keepalive,
-		Ingress:     masterNginxCfg.Ingress,
-		SpiffeCerts: staticParams.SpiffeCerts,
+		Servers:           []version1.Server{masterServer},
+		Upstreams:         upstreams,
+		Keepalive:         keepalive,
+		Ingress:           masterNginxCfg.Ingress,
+		SpiffeClientCerts: staticParams.SpiffeCerts && !baseCfgParams.SpiffeServerCerts,
 	}
+}
+
+func isSSLEnabled(isSSLService bool, cfgParams ConfigParams, staticCfgParams *StaticConfigParams) bool {
+	return isSSLService || staticCfgParams.SpiffeCerts && !cfgParams.SpiffeServerCerts
 }

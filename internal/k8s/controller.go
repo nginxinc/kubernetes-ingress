@@ -144,6 +144,7 @@ type LoadBalancerController struct {
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
 	spiffeController              *spiffeController
+	internalRoutesEnabled         bool
 	syncLock                      sync.Mutex
 	isNginxReady                  bool
 }
@@ -176,6 +177,7 @@ type NewLoadBalancerControllerInput struct {
 	GlobalConfigurationValidator *validation.GlobalConfigurationValidator
 	TransportServerValidator     *validation.TransportServerValidator
 	SpireAgentAddress            string
+	InternalRoutesEnabled        bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -201,6 +203,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		metricsCollector:             input.MetricsCollector,
 		globalConfigurationValidator: input.GlobalConfigurationValidator,
 		transportServerValidator:     input.TransportServerValidator,
+		internalRoutesEnabled:        input.InternalRoutesEnabled,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -465,7 +468,7 @@ func (lbc *LoadBalancerController) Run() {
 	}
 
 	if lbc.spiffeController != nil {
-		err := lbc.spiffeController.Start(lbc.ctx.Done())
+		err := lbc.spiffeController.Start(lbc.ctx.Done(), lbc.addInternalRouteServer)
 		if err != nil {
 			glog.Fatal(err)
 		}
@@ -3344,4 +3347,12 @@ func (lbc *LoadBalancerController) findIngressesForAppProtectResource(namespace 
 // IsNginxReady returns ready status of NGINX
 func (lbc *LoadBalancerController) IsNginxReady() bool {
 	return lbc.isNginxReady
+}
+
+func (lbc *LoadBalancerController) addInternalRouteServer() {
+	if lbc.internalRoutesEnabled {
+		if err := lbc.configurator.AddInternalRouteConfig(); err != nil {
+			glog.Warningf("failed to configure internal route server: %v", err)
+		}
+	}
 }

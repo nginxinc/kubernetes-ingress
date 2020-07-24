@@ -32,8 +32,8 @@ func NewSpiffeController(sync func(*workload.X509SVIDs), spireAgentAddr string) 
 
 // Start starts the Spiffe Workload API Client and waits for the Spiffe certs to be written to disk.
 // If the certs are not available after 30 seconds an error is returned.
-// On success, start kicks off the Spiffe Controller's run loop.
-func (sc *spiffeController) Start(stopCh <-chan struct{}) error {
+// On success, calls onStart function and kicks off the Spiffe Controller's run loop.
+func (sc *spiffeController) Start(stopCh <-chan struct{}, onStart func()) error {
 	glog.V(3).Info("Starting SPIFFE Workload API Client")
 	err := sc.client.Start()
 	if err != nil {
@@ -56,6 +56,7 @@ func (sc *spiffeController) Start(stopCh <-chan struct{}) error {
 		}
 		time.Sleep(duration)
 	}
+	onStart()
 	go sc.Run(stopCh)
 	return nil
 }

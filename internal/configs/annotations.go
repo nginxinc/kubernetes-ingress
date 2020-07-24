@@ -20,6 +20,9 @@ const AppProtectLogConfAnnotation = "appprotect.f5.com/app-protect-security-log"
 // AppProtectLogConfDstAnnotation is where the NGINX AppProtect Log Configuration is specified
 const AppProtectLogConfDstAnnotation = "appprotect.f5.com/app-protect-security-log-destination"
 
+// nginxMeshInternalRoute specifies if the ingress resource is an internal route.
+const nginxMeshInternalRouteAnnotation = "nsm.nginx.com/internal-route"
+
 var masterBlacklist = map[string]bool{
 	"nginx.org/rewrites":                      true,
 	"nginx.org/ssl-services":                  true,
@@ -67,7 +70,7 @@ var minionInheritanceList = map[string]bool{
 	"nginx.org/fail-timeout":             true,
 }
 
-func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool) ConfigParams {
+func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool, enableInternalRoutes bool) ConfigParams {
 	cfgParams := *baseCfgParams
 
 	if lbMethod, exists := ingEx.Ingress.Annotations["nginx.org/lb-method"]; exists {
@@ -346,6 +349,15 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 			}
 		}
 
+	}
+	if enableInternalRoutes {
+		if spiffeServerCerts, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, nginxMeshInternalRouteAnnotation, ingEx.Ingress); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				cfgParams.SpiffeServerCerts = spiffeServerCerts
+			}
+		}
 	}
 	return cfgParams
 }

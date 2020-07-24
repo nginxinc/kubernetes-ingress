@@ -4,8 +4,9 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	v1 "k8s.io/api/core/v1"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
@@ -542,6 +543,8 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		AppProtectCookieSeed:               config.MainAppProtectCookieSeed,
 		AppProtectCPUThresholds:            config.MainAppProtectCPUThresholds,
 		AppProtectPhysicalMemoryThresholds: config.MainAppProtectPhysicalMemoryThresholds,
+		InternalRouteServer:                staticCfgParams.EnableInternalRoutes,
+		InternalRouteServerName:            staticCfgParams.PodName,
 	}
 	return nginxCfg
 }

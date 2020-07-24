@@ -152,8 +152,11 @@ var (
 		"Enable TLS Passthrough on port 443. Requires -enable-custom-resources")
 
 	spireAgentAddress = flag.String("spire-agent-address", "",
-		`Specifies the address of the running Spire agent. For use with NGINX Service Mesh only. If the flag is set,
+		`Specifies the address of the running Spire agent. Requires -nginx-plus and is for use with NGINX Service Mesh only. If the flag is set,
 			but the Ingress Controller is not able to connect with the Spire Agent, the Ingress Controller will fail to start.`)
+
+	enableInternalRoutes = flag.Bool("enable-internal-routes", false,
+		`Enable support for internal routes with NGINX Service Mesh. Requires -spire-agent-address and -nginx-plus. Is for use with NGINX Service Mesh only.`)
 
 	readyStatus = flag.Bool("ready-status", true, "Enables the readiness endpoint '/nginx-ready'. The endpoint returns a success code when NGINX has loaded all the config after the startup")
 
@@ -209,6 +212,14 @@ func main() {
 
 	if *appProtect && !*nginxPlus {
 		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
+	}
+
+	if *spireAgentAddress != "" && !*nginxPlus {
+		glog.Fatal("spire-agent-address support is for NGINX Plus only")
+	}
+
+	if *enableInternalRoutes && *spireAgentAddress == "" {
+		glog.Fatal("enable-internal-routes flag requires spire-agent-address")
 	}
 
 	glog.Infof("Starting NGINX Ingress controller Version=%v GitCommit=%v\n", version, gitCommit)
@@ -519,6 +530,7 @@ func main() {
 		GlobalConfigurationValidator: globalConfigurationValidator,
 		TransportServerValidator:     transportServerValidator,
 		SpireAgentAddress:            *spireAgentAddress,
+		InternalRoutesEnabled:        *enableInternalRoutes,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

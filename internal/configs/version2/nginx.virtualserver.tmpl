@@ -210,15 +210,6 @@ server {
             {{ range $h := $l.AddHeaders }}
         add_header {{ $h.Name }} "{{ $h.Value }}" {{ if $h.Always }}always{{ end }};
             {{ end }}
-            {{ if $.SpiffeCerts }}
-        proxy_ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
-        proxy_ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
-        proxy_ssl_trusted_certificate /etc/nginx/secrets/spiffe_rootca.pem;
-        proxy_ssl_server_name on;
-        proxy_ssl_verify on;
-        proxy_ssl_verify_depth 25;
-        proxy_ssl_name {{ $l.ProxySSLName }};
-            {{ end }}
         proxy_pass {{ $l.ProxyPass }}{{ $l.ProxyPassRewrite }};
         proxy_next_upstream {{ $l.ProxyNextUpstream }};
         proxy_next_upstream_timeout {{ $l.ProxyNextUpstreamTimeout }};

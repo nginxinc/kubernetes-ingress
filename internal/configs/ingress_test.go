@@ -5,11 +5,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 )
 
 func TestGenerateNginxCfg(t *testing.T) {
@@ -715,14 +716,11 @@ func createExpectedConfigForCrossNamespaceMergeableCafeIngress() version1.Ingres
 func TestGenerateNginxCfgForSpiffe(t *testing.T) {
 	cafeIngressEx := createCafeIngressEx()
 	configParams := NewDefaultConfigParams()
-	configParams.SpiffeCerts = true
 
 	expected := createExpectedConfigForCafeIngressEx()
-	expected.SpiffeCerts = true
-	for _, s := range expected.Servers {
-		for i := range s.Locations {
-			s.Locations[i].SSL = true
-		}
+	expected.SpiffeClientCerts = true
+	for i := range expected.Servers[0].Locations {
+		expected.Servers[0].Locations[i].SSL = true
 	}
 
 	pems := map[string]string{
@@ -734,5 +732,92 @@ func TestGenerateNginxCfgForSpiffe(t *testing.T) {
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result, expected)
+	}
+}
+
+func TestGenerateNginxCfgForInternalRoute(t *testing.T) {
+	internalRouteAnnotation := "nsm.nginx.com/internal-route"
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations[internalRouteAnnotation] = "true"
+	configParams := NewDefaultConfigParams()
+
+	expected := createExpectedConfigForCafeIngressEx()
+	expected.Servers[0].SpiffeCerts = true
+	expected.Ingress.Annotations[internalRouteAnnotation] = "true"
+
+	pems := map[string]string{
+		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
+	}
+
+	apResources := make(map[string]string)
+	result := generateNginxCfg(&cafeIngressEx, pems, apResources, false, configParams, false, false, "", &StaticConfigParams{SpiffeCerts: true, EnableInternalRoutes: true})
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("generateNginxCfg returned \n%+v,  but expected \n%+v", result, expected)
+	}
+}
+
+func TestIsSSLEnabled(t *testing.T) {
+	type testCase struct {
+		IsSSLService,
+		SpiffeServerCerts,
+		SpiffeCerts,
+		Expected bool
+	}
+	var testCases = []testCase{
+		{
+			IsSSLService:      false,
+			SpiffeServerCerts: false,
+			SpiffeCerts:       false,
+			Expected:          false,
+		},
+		{
+			IsSSLService:      false,
+			SpiffeServerCerts: true,
+			SpiffeCerts:       true,
+			Expected:          false,
+		},
+		{
+			IsSSLService:      false,
+			SpiffeServerCerts: false,
+			SpiffeCerts:       true,
+			Expected:          true,
+		},
+		{
+			IsSSLService:      false,
+			SpiffeServerCerts: true,
+			SpiffeCerts:       false,
+			Expected:          false,
+		},
+		{
+			IsSSLService:      true,
+			SpiffeServerCerts: true,
+			SpiffeCerts:       true,
+			Expected:          true,
+		},
+		{
+			IsSSLService:      true,
+			SpiffeServerCerts: false,
+			SpiffeCerts:       true,
+			Expected:          true,
+		},
+		{
+			IsSSLService:      true,
+			SpiffeServerCerts: true,
+			SpiffeCerts:       false,
+			Expected:          true,
+		},
+		{
+			IsSSLService:      true,
+			SpiffeServerCerts: false,
+			SpiffeCerts:       false,
+			Expected:          true,
+		},
+	}
+	for i, tc := range testCases {
+		actual := isSSLEnabled(tc.IsSSLService, ConfigParams{SpiffeServerCerts: tc.SpiffeServerCerts}, &StaticConfigParams{SpiffeCerts: tc.SpiffeCerts})
+		if actual != tc.Expected {
+			t.Errorf("isSSLEnabled returned %v but expected %v for the case %v", actual, tc.Expected, i)
+		}
 	}
 }

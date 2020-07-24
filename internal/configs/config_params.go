@@ -96,7 +96,7 @@ type ConfigParams struct {
 	Ports    []int
 	SSLPorts []int
 
-	SpiffeCerts bool
+	SpiffeServerCerts bool
 }
 
 // StaticConfigParams holds immutable NGINX configuration parameters that affect the main NGINX config.
@@ -110,7 +110,9 @@ type StaticConfigParams struct {
 	TLSPassthrough                 bool
 	EnableSnippets                 bool
 	SpiffeCerts                    bool
+	EnableInternalRoutes           bool
 	MainAppProtectLoadModule       bool
+	PodName                        string
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.
