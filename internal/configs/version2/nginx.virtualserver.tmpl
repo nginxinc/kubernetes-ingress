@@ -31,7 +31,7 @@ map {{ $m.Source }} {{ $m.Variable }} {
 {{ end }}
 
 {{ range $snippet := .HTTPSnippets }}
-{{ $snippet }}
+{{- $snippet }}
 {{ end }}
 
 {{ $s := .Server }}
@@ -94,7 +94,7 @@ server {
     {{ end }}
 
     {{ range $snippet := $s.Snippets }}
-    {{ $snippet }}
+    {{- $snippet }}
     {{ end }}
 
     {{ range $l := $s.InternalRedirectLocations }}
@@ -130,7 +130,7 @@ server {
         internal;
         {{ end }}
         {{ range $snippet := $l.Snippets }}
-        {{ $snippet }}
+        {{- $snippet }}
         {{ end }}
 
         {{ with $l.PoliciesErrorReturn }}
