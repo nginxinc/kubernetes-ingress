@@ -1,0 +1,323 @@
+import requests, logging
+import pytest, json
+import os, re, yaml
+from datetime import datetime
+from settings import TEST_DATA, DEPLOYMENTS
+from suite.custom_resources_utils import (
+    create_ap_logconf_from_yaml,
+    create_ap_policy_from_yaml,
+    delete_ap_policy,
+    delete_ap_logconf,
+)
+from kubernetes.client import V1ContainerPort
+from suite.resources_utils import (
+    wait_before_test,
+    create_example_app,
+    wait_until_all_pods_are_ready,
+    create_items_from_yaml,
+    delete_items_from_yaml,
+    delete_common_app,
+    ensure_connection_to_public_endpoint,
+    create_ingress,
+    create_ingress_with_ap_annotations,
+    replace_ingress_with_ap_annotations,
+    ensure_response_from_backend,
+    wait_before_test,
+    get_events,
+    get_ingress_nginx_template_conf,
+    get_first_pod_name,
+    wait_for_event_increment,
+    get_file_contents,
+)
+from suite.custom_resources_utils import read_ap_crd
+from suite.yaml_utils import get_first_ingress_host_from_yaml
+
+ap_policy = "dataguard-alarm"
+valid_resp_addr = "Server address:"
+valid_resp_name = "Server name:"
+invalid_resp_title = "Request Rejected"
+invalid_resp_body = "The requested URL was rejected. Please consult with your administrator."
+test_count = 0
+reload_ap = []
+reload_ap_path = []
+reload_ap_with_ingress = []
+
+
+class AppProtectSetup:
+    """
+    Encapsulate the example details.
+    Attributes:
+        req_url (str):
+    """
+
+    def __init__(self, req_url):
+        self.req_url = req_url
+
+
+@pytest.fixture(scope="class")
+def enable_prometheus_port(
+    cli_arguments, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_ap
+) -> None:
+
+    namespace = ingress_controller_prerequisites.namespace
+    port = V1ContainerPort(9113, None, None, "prometheus", "TCP")
+    print("------------------------- Enable 9113 port in IC ----------------------------")
+    body = kube_apis.apps_v1_api.read_namespaced_deployment("nginx-ingress", namespace)
+    body.spec.template.spec.containers[0].ports.append(port)
+    kube_apis.apps_v1_api.patch_namespaced_deployment("nginx-ingress", namespace, body)
+    wait_until_all_pods_are_ready(kube_apis.v1, namespace)
+
+
+@pytest.fixture(scope="class")
+def appprotect_setup(
+    request, kube_apis, ingress_controller_endpoint, test_namespace
+) -> AppProtectSetup:
+    """
+    Deploy simple application and all the AppProtect(dataguard-alarm) resources under test in one namespace.
+
+    :param request: pytest fixture
+    :param kube_apis: client apis
+    :param ingress_controller_endpoint: public endpoint
+    :param test_namespace:
+    :return: BackendSetup
+    """
+
+    print("------------------------- Deploy simple backend application -------------------------")
+    create_example_app(kube_apis, "simple", test_namespace)
+    req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
+    wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
+    ensure_connection_to_public_endpoint(
+        ingress_controller_endpoint.public_ip,
+        ingress_controller_endpoint.port,
+        ingress_controller_endpoint.port_ssl,
+    )
+
+    print("------------------------- Deploy Secret -----------------------------")
+    src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
+    create_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
+
+    print("------------------------- Deploy logconf -----------------------------")
+    src_log_yaml = f"{TEST_DATA}/appprotect/logconf.yaml"
+    log_name = create_ap_logconf_from_yaml(kube_apis.custom_objects, src_log_yaml, test_namespace)
+
+    print(f"------------------------- Deploy dataguard-alarm appolicy ---------------------------")
+    src_pol_yaml = f"{TEST_DATA}/appprotect/{ap_policy}.yaml"
+    pol_name = create_ap_policy_from_yaml(kube_apis.custom_objects, src_pol_yaml, test_namespace)
+
+    def fin():
+        print("Clean up:")
+        delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
+        delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
+        delete_common_app(kube_apis, "simple", test_namespace)
+        src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
+        delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
+        with open("reload_ap.json", "w+") as f:
+            json.dump(reload_ap, f, ensure_ascii=False, indent=4)
+        with open("reload_ap_path.json", "w+") as f:
+            json.dump(reload_ap_path, f, ensure_ascii=False, indent=4)
+        with open("reload_ap_with_ingress.json", "w+") as f:
+            json.dump(reload_ap_with_ingress, f, ensure_ascii=False, indent=4)
+
+    request.addfinalizer(fin)
+
+    return AppProtectSetup(req_url)
+
+
+def assert_invalid_responses(response) -> None:
+    """
+    Assert responses when policy config is blocking requests
+    :param response: Response
+    """
+    assert invalid_resp_title in response.text
+    assert invalid_resp_body in response.text
+    assert response.status_code == 200
+
+
+@pytest.mark.ap_reload_perf
+@pytest.mark.parametrize(
+    "crd_ingress_controller_with_ap",
+    [
+        {
+            "extra_args": [
+                f"-enable-custom-resources",
+                f"-enable-app-protect",
+                f"-enable-prometheus-metrics",
+            ]
+        }
+    ],
+    indirect=["crd_ingress_controller_with_ap"],
+)
+class TestAppProtect:
+    @pytest.mark.ap_create
+    def test_ap_perf_create_ingress(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller_endpoint,
+        crd_ingress_controller_with_ap,
+        appprotect_setup,
+        enable_prometheus_port,
+        test_namespace,
+    ):
+        """
+        Test reload times for creating AP ingress
+        """
+
+        src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
+        create_ingress_with_ap_annotations(
+            kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", "127.0.0.1:514"
+        )
+        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
+
+        print("--------- Run test while AppProtect module is enabled with correct policy ---------")
+        # events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
+        ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
+        # wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
+        wait_before_test(40)
+        response = ""
+        # if wait_status:
+        #     print("----------------------- Send request ----------------------")
+        response = requests.get(
+            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
+        )
+        print(response.text)
+        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        resp = requests.get(req_url)
+        resp_decoded = resp.content.decode("utf-8")
+        reload_metric = ""
+        for line in resp_decoded.splitlines():
+            if "last_reload_milliseconds{class" in line:
+                reload_metric = re.findall("\d+", line)[0]
+                reload_ap.append(
+                    {
+                        f"Reload time (creating AP ingress) ": reload_metric,
+                        "TimeStamp": str(datetime.utcnow()),
+                    }
+                )
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+        assert_invalid_responses(response)
+    
+    @pytest.mark.ap_path
+    def test_ap_perf_ingress_path_change(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller_endpoint,
+        crd_ingress_controller_with_ap,
+        appprotect_setup,
+        enable_prometheus_port,
+        test_namespace,
+    ):
+        """
+        Test reload times for changing paths 
+        """
+
+        src1_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
+        print(src1_ing_yaml)
+        src2_ing_yaml = os.path.join(os.path.dirname(__file__), "../data/appprotect-ingress.yaml")
+        print(src2_ing_yaml)
+        create_ingress_with_ap_annotations(
+            kube_apis, src1_ing_yaml, test_namespace, ap_policy, "True", "True", "127.0.0.1:514"
+        )
+        ingress_host = get_first_ingress_host_from_yaml(src1_ing_yaml)
+
+        print("--------- Run test while AppProtect module is enabled with correct policy ---------")
+        # events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
+        ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
+        # wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
+        wait_before_test(30)
+        replace_ingress_with_ap_annotations(
+            kube_apis,
+            src2_ing_yaml,
+            "appprotect-ingress",
+            test_namespace,
+            ap_policy,
+            "True",
+            "True",
+            "127.0.0.1:514",
+        )
+        ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
+        wait_before_test(30)
+        response = ""
+        # if wait_status:
+        #     print("----------------------- Send request ----------------------")
+        response = requests.get(
+            appprotect_setup.req_url + "/v1/<script>", headers={"host": ingress_host}, verify=False
+        )
+        print(response.text)
+        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        resp = requests.get(req_url)
+        resp_decoded = resp.content.decode("utf-8")
+        reload_metric = ""
+        for line in resp_decoded.splitlines():
+            if "last_reload_milliseconds{class" in line:
+                reload_metric = re.findall("\d+", line)[0]
+                reload_ap_path.append(
+                    {
+                        f"Reload time (changing paths in AP ingress) ": f"{reload_metric} ms",
+                        "TimeStamp": str(datetime.utcnow()),
+                    }
+                )
+        delete_items_from_yaml(kube_apis, src2_ing_yaml, test_namespace)
+        assert_invalid_responses(response)
+
+
+    @pytest.mark.ap_multiple
+    def test_ap_perf_multiple_ingress(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller_endpoint,
+        crd_ingress_controller_with_ap,
+        appprotect_setup,
+        enable_prometheus_port,
+        test_namespace,
+    ):
+        """
+        Test reload times for creating AP ingress while a simple ingress exists.
+        """
+
+        src1_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
+        print(src1_ing_yaml)
+        src2_ing_yaml = os.path.join(os.path.dirname(__file__), "../data/non-ap-ingress.yaml")
+        print(src2_ing_yaml)
+
+        with open(src2_ing_yaml) as f:
+            doc = yaml.safe_load(f)
+        # create ingress without AP annotation
+        create_ingress(kube_apis.extensions_v1_beta1, test_namespace, doc)
+        wait_before_test(10)
+        # create ingress with AP annotations
+        create_ingress_with_ap_annotations(
+            kube_apis, src1_ing_yaml, test_namespace, ap_policy, "True", "True", "127.0.0.1:514"
+        )
+        ingress_host = get_first_ingress_host_from_yaml(src1_ing_yaml)
+
+        print("--------- Run test while AppProtect module is enabled with correct policy ---------")
+        # events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
+        ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
+        # wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
+        wait_before_test(30)
+        response = ""
+        # if wait_status:
+        #     print("----------------------- Send request ----------------------")
+        response = requests.get(
+            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
+        )
+        print(response.text)
+        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        resp = requests.get(req_url)
+        resp_decoded = resp.content.decode("utf-8")
+        reload_metric = ""
+        for line in resp_decoded.splitlines():
+            if "last_reload_milliseconds{class" in line:
+                reload_metric = re.findall("\d+", line)[0]
+                reload_ap_with_ingress.append(
+                    {
+                        f"Reload time (creating AP ingress alongside a simple ingress) ": f"{reload_metric} ms",
+                        "TimeStamp": str(datetime.utcnow()),
+                    }
+                )
+        delete_items_from_yaml(kube_apis, src1_ing_yaml, test_namespace)
+        delete_items_from_yaml(kube_apis, src2_ing_yaml, test_namespace)
+        assert_invalid_responses(response)

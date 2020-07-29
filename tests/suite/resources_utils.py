@@ -977,6 +977,36 @@ def create_ingress_with_ap_annotations(
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log-destination"] = f"syslog:server={syslog_ep}"
         create_ingress(kube_apis.extensions_v1_beta1, namespace, doc)
 
+def replace_ingress_with_ap_annotations(
+    kube_apis, yaml_manifest, name, namespace, policy_name, ap_pol_st, ap_log_st, syslog_ep
+) -> None:
+    """
+    Replace an ingress with AppProtect annotations
+    :param kube_apis: KubeApis
+    :param yaml_manifest: an absolute path to ingress yaml
+    :param namespace: namespace
+    :param policy_name: AppProtect policy
+    :param ap_log_st: True/False for enabling/disabling AppProtect security logging
+    :param ap_pol_st: True/False for enabling/disabling AppProtect module for partucular ingress
+    :param syslog_ep: Destination endpoint for security logs
+    :return:
+    """
+    print("Load ingress yaml and set AppProtect annotations")
+    policy = f"{namespace}/{policy_name}"
+    logconf = f"{namespace}/logconf"
+
+    with open(yaml_manifest) as f:
+        doc = yaml.safe_load(f)
+
+        doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-policy"] = policy
+        doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-enable"] = ap_pol_st
+        doc["metadata"]["annotations"][
+            "appprotect.f5.com/app-protect-security-log-enable"
+        ] = ap_log_st
+        doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log"] = logconf
+        doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log-destination"] = f"syslog:server={syslog_ep}"
+        replace_ingress(kube_apis.extensions_v1_beta1, name, namespace, doc)
+
 
 def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
     """

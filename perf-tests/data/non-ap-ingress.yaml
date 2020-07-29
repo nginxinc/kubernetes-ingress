@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: non-ap-ingress
+spec:
+  tls:
+  - hosts:
+    - appprotect.example.com
+    secretName: appprotect-secret
+  rules:
+  - host: appprotect.example.com
+    http:
+      paths:
+      - path: /backend1
+        backend:
+          serviceName: backend1-svc
+          servicePort: 80
+      - path: /backend2
+        backend:
+          serviceName: backend2-svc
+          servicePort: 80
