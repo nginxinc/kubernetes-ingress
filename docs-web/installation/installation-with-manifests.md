@@ -47,6 +47,14 @@ In this section, we create resources common for most of the Ingress Controller i
     $ kubectl apply -f common/nginx-config.yaml
     ```
 
+1. Create an IngressClass resource (for Kubernetes >= 1.18):
+    ```
+     $ kubectl apply -f common/ingress-class.yaml
+    ```
+    If you would like to set the Ingress Controller as the default ingress, uncomment the annotation `ingressclass.kubernetes.io/is-default-class`. With this annotation set to true all the new Ingresses without an ingressClassName field specified will be assigned this IngressClass.
+
+    ***Note**: The Ingress Controller will fail to start without an IngressClass resource.
+
 ### Create Custom Resources
 
 **Note**: If you're using Kubernetes 1.14, make sure to add `--validate=false` to the `kubectl apply` commands below. Otherwise, you will get an error validating data:

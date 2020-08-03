@@ -30,6 +30,7 @@ import (
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+	util_version "k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -68,13 +69,23 @@ var (
 	appProtect = flag.Bool("enable-app-protect", false, "Enable support for NGINX App Protect. Requires -nginx-plus.")
 
 	ingressClass = flag.String("ingress-class", "nginx",
-		`A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class
-	- i.e. have the annotation "kubernetes.io/ingress.class" or the "ingressClassName" field in VirtualServer/VirtualServerRoute equal to the class. Additionally,
-	the Ingress controller processes Ingress resources that do not have that annotation,
-	which can be disabled by setting the "-use-ingress-class-only" flag`)
+		`A class of the Ingress controller.
+
+	For Kubernetes >= 1.18, a corresponding IngressClass resource with the name equal to the class must be deployed. Otherwise,
+	the Ingress Controller will fail to start.
+	The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
+
+	For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class
+	- i.e have the annotation "kubernetes.io/ingress.class" equal to the class.
+	Additionally, the Ingress Controller processes resources that do not have the class set,
+	which can be disabled by setting the "-use-ingress-class-only" flag
+	
+	The Ingress Controller processes all the VirtualServer/VirtualServerRoute resources that do not have the "ingressClassName" field for all versions of kubernetes.`)
 
 	useIngressClassOnly = flag.Bool("use-ingress-class-only", false,
-		`Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation or the "ingressClassName" field in VirtualServer/VirtualServerRoute`)
+		`For kubernetes versions >= 1.18 this flag will be IGNORED.
+
+	Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation`)
 
 	defaultServerSecret = flag.String("default-server-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of the default server. Format: <namespace>/<name>.
@@ -254,6 +265,32 @@ func main() {
 	kubeClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		glog.Fatalf("Failed to create client: %v.", err)
+	}
+
+	k8sVersion, err := k8s.GetK8sVersion(kubeClient)
+	if err != nil {
+		glog.Fatalf("error retrieving k8s version: %v", err)
+	}
+
+	minK8sVersion := minVersion("1.14.0")
+	if !k8sVersion.AtLeast(minK8sVersion) {
+		glog.Fatalf("Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions.", minK8sVersion)
+	}
+
+	// Ingress V1 is only available from k8s > 1.18
+	ingressV1Version := minVersion("1.18.0")
+	if k8sVersion.AtLeast(ingressV1Version) {
+		*useIngressClassOnly = true
+		glog.Warningln("The '-use-ingress-class-only' flag will be deprecated and has no effect on versions of kubernetes >= 1.18.0. Processing ONLY resources that have the 'ingressClassName' field in Ingress equal to the class.")
+
+		ingressClassRes, err := kubeClient.NetworkingV1beta1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
+		if err != nil {
+			glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
+		}
+
+		if ingressClassRes != nil && ingressClassRes.Spec.Controller != k8s.IngressControllerName {
+			glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v", ingressClassRes.Name, ingressClassRes.Spec.Controller)
+		}
 	}
 
 	var dynClient dynamic.Interface
@@ -788,4 +825,13 @@ func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "Ready")
 	}
+}
+
+func minVersion(min string) (v *util_version.Version) {
+	minVer, err := util_version.ParseGeneric(min)
+	if err != nil {
+		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
+	}
+
+	return minVer
 }

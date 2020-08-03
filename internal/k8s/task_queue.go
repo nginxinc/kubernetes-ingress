@@ -8,7 +8,7 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/workqueue"
@@ -142,8 +142,8 @@ type task struct {
 func newTask(key string, obj interface{}) (task, error) {
 	var k kind
 	switch t := obj.(type) {
-	case *v1beta1.Ingress:
-		ing := obj.(*v1beta1.Ingress)
+	case *networking.Ingress:
+		ing := obj.(*networking.Ingress)
 		if isMinion(ing) {
 			k = ingressMinion
 		} else {

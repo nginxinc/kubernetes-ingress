@@ -14,11 +14,12 @@ import (
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	api_v1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	typednetworking "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
+
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
-	networkingv1beta1 "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
 )
 
 // statusUpdater reports Ingress, VirtualServer and VirtualServerRoute status information via the kubernetes
@@ -39,8 +40,8 @@ type statusUpdater struct {
 }
 
 // UpdateManagedAndMergeableIngresses handles the full return format of LoadBalancerController.getManagedIngresses
-func (su *statusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []v1beta1.Ingress, mergableIngExes map[string]*configs.MergeableIngresses) error {
-	ings := []v1beta1.Ingress{}
+func (su *statusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []networking.Ingress, mergableIngExes map[string]*configs.MergeableIngresses) error {
+	ings := []networking.Ingress{}
 	ings = append(ings, managedIngresses...)
 	for _, mergableIngEx := range mergableIngExes {
 		for _, minion := range mergableIngEx.Minions {
@@ -52,7 +53,7 @@ func (su *statusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []v
 
 // UpdateMergableIngresses is a convience passthru to update Ingresses with our configs.MergableIngresses type
 func (su *statusUpdater) UpdateMergableIngresses(mergableIngresses *configs.MergeableIngresses) error {
-	ings := []v1beta1.Ingress{}
+	ings := []networking.Ingress{}
 	ingExes := []*configs.IngressEx{}
 
 	ingExes = append(ingExes, mergableIngresses.Master)
@@ -65,17 +66,17 @@ func (su *statusUpdater) UpdateMergableIngresses(mergableIngresses *configs.Merg
 }
 
 // ClearIngressStatus clears the Ingress status.
-func (su *statusUpdater) ClearIngressStatus(ing v1beta1.Ingress) error {
+func (su *statusUpdater) ClearIngressStatus(ing networking.Ingress) error {
 	return su.updateIngressWithStatus(ing, []api_v1.LoadBalancerIngress{})
 }
 
 // UpdateIngressStatus updates the status on the selected Ingress.
-func (su *statusUpdater) UpdateIngressStatus(ing v1beta1.Ingress) error {
+func (su *statusUpdater) UpdateIngressStatus(ing networking.Ingress) error {
 	return su.updateIngressWithStatus(ing, su.status)
 }
 
 // updateIngressWithStatus sets the provided status on the selected Ingress.
-func (su *statusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []api_v1.LoadBalancerIngress) error {
+func (su *statusUpdater) updateIngressWithStatus(ing networking.Ingress, status []api_v1.LoadBalancerIngress) error {
 	if reflect.DeepEqual(ing.Status.LoadBalancer.Ingress, status) {
 		return nil
 	}
@@ -114,7 +115,7 @@ func (su *statusUpdater) updateIngressWithStatus(ing v1beta1.Ingress, status []a
 
 // BulkUpdateIngressStatus sets the status field on the selected Ingresses, specifically
 // the External IP field.
-func (su *statusUpdater) BulkUpdateIngressStatus(ings []v1beta1.Ingress) error {
+func (su *statusUpdater) BulkUpdateIngressStatus(ings []networking.Ingress) error {
 	if len(ings) < 1 {
 		glog.V(3).Info("no ingresses to update")
 		return nil
@@ -135,7 +136,7 @@ func (su *statusUpdater) BulkUpdateIngressStatus(ings []v1beta1.Ingress) error {
 // retryStatusUpdate fetches a fresh copy of the Ingress from the k8s API, checks if it still needs to be
 // updated, and then attempts to update. We often need to fetch fresh copies due to the
 // k8s API using ResourceVersion to stop updates on stale items.
-func (su *statusUpdater) retryStatusUpdate(clientIngress networkingv1beta1.IngressInterface, ingCopy *v1beta1.Ingress) error {
+func (su *statusUpdater) retryStatusUpdate(clientIngress typednetworking.IngressInterface, ingCopy *networking.Ingress) error {
 	apiIng, err := clientIngress.Get(context.TODO(), ingCopy.Name, metav1.GetOptions{})
 	if err != nil {
 		glog.V(3).Infof("error getting ingress resource: %v", err)

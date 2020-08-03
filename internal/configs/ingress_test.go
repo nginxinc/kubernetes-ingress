@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -128,11 +128,11 @@ func TestPathOrDefaultReturnActual(t *testing.T) {
 }
 
 func TestGenerateIngressPath(t *testing.T) {
-	exact := v1beta1.PathTypeExact
-	prefix := v1beta1.PathTypePrefix
-	impSpec := v1beta1.PathTypeImplementationSpecific
+	exact := networking.PathTypeExact
+	prefix := networking.PathTypePrefix
+	impSpec := networking.PathTypeImplementationSpecific
 	tests := []struct {
-		pathType *v1beta1.PathType
+		pathType *networking.PathType
 		path     string
 		expected string
 	}{
@@ -248,7 +248,7 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 }
 
 func createCafeIngressEx() IngressEx {
-	cafeIngress := v1beta1.Ingress{
+	cafeIngress := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe-ingress",
 			Namespace: "default",
@@ -256,29 +256,29 @@ func createCafeIngressEx() IngressEx {
 				"kubernetes.io/ingress.class": "nginx",
 			},
 		},
-		Spec: v1beta1.IngressSpec{
-			TLS: []v1beta1.IngressTLS{
+		Spec: networking.IngressSpec{
+			TLS: []networking.IngressTLS{
 				{
 					Hosts:      []string{"cafe.example.com"},
 					SecretName: "cafe-secret",
 				},
 			},
-			Rules: []v1beta1.IngressRule{
+			Rules: []networking.IngressRule{
 				{
 					Host: "cafe.example.com",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
+					IngressRuleValue: networking.IngressRuleValue{
+						HTTP: &networking.HTTPIngressRuleValue{
+							Paths: []networking.HTTPIngressPath{
 								{
 									Path: "/coffee",
-									Backend: v1beta1.IngressBackend{
+									Backend: networking.IngressBackend{
 										ServiceName: "coffee-svc",
 										ServicePort: intstr.FromString("80"),
 									},
 								},
 								{
 									Path: "/tea",
-									Backend: v1beta1.IngressBackend{
+									Backend: networking.IngressBackend{
 										ServiceName: "tea-svc",
 										ServicePort: intstr.FromString("80"),
 									},
@@ -426,7 +426,7 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 }
 
 func createMergeableCafeIngress() *MergeableIngresses {
-	master := v1beta1.Ingress{
+	master := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe-ingress-master",
 			Namespace: "default",
@@ -435,19 +435,19 @@ func createMergeableCafeIngress() *MergeableIngresses {
 				"nginx.org/mergeable-ingress-type": "master",
 			},
 		},
-		Spec: v1beta1.IngressSpec{
-			TLS: []v1beta1.IngressTLS{
+		Spec: networking.IngressSpec{
+			TLS: []networking.IngressTLS{
 				{
 					Hosts:      []string{"cafe.example.com"},
 					SecretName: "cafe-secret",
 				},
 			},
-			Rules: []v1beta1.IngressRule{
+			Rules: []networking.IngressRule{
 				{
 					Host: "cafe.example.com",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{ // HTTP must not be nil for Master
-							Paths: []v1beta1.HTTPIngressPath{},
+					IngressRuleValue: networking.IngressRuleValue{
+						HTTP: &networking.HTTPIngressRuleValue{ // HTTP must not be nil for Master
+							Paths: []networking.HTTPIngressPath{},
 						},
 					},
 				},
@@ -455,7 +455,7 @@ func createMergeableCafeIngress() *MergeableIngresses {
 		},
 	}
 
-	coffeeMinion := v1beta1.Ingress{
+	coffeeMinion := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe-ingress-coffee-minion",
 			Namespace: "default",
@@ -464,16 +464,16 @@ func createMergeableCafeIngress() *MergeableIngresses {
 				"nginx.org/mergeable-ingress-type": "minion",
 			},
 		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
+		Spec: networking.IngressSpec{
+			Rules: []networking.IngressRule{
 				{
 					Host: "cafe.example.com",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
+					IngressRuleValue: networking.IngressRuleValue{
+						HTTP: &networking.HTTPIngressRuleValue{
+							Paths: []networking.HTTPIngressPath{
 								{
 									Path: "/coffee",
-									Backend: v1beta1.IngressBackend{
+									Backend: networking.IngressBackend{
 										ServiceName: "coffee-svc",
 										ServicePort: intstr.FromString("80"),
 									},
@@ -486,7 +486,7 @@ func createMergeableCafeIngress() *MergeableIngresses {
 		},
 	}
 
-	teaMinion := v1beta1.Ingress{
+	teaMinion := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe-ingress-tea-minion",
 			Namespace: "default",
@@ -495,16 +495,16 @@ func createMergeableCafeIngress() *MergeableIngresses {
 				"nginx.org/mergeable-ingress-type": "minion",
 			},
 		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
+		Spec: networking.IngressSpec{
+			Rules: []networking.IngressRule{
 				{
 					Host: "cafe.example.com",
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
+					IngressRuleValue: networking.IngressRuleValue{
+						HTTP: &networking.HTTPIngressRuleValue{
+							Paths: []networking.HTTPIngressPath{
 								{
 									Path: "/tea",
-									Backend: v1beta1.IngressBackend{
+									Backend: networking.IngressBackend{
 										ServiceName: "tea-svc",
 										ServicePort: intstr.FromString("80"),
 									},

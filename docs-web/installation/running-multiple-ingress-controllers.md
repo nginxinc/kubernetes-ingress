@@ -12,6 +12,7 @@ This document explains the following topics:
 The smooth coexistence of multiple Ingress Controllers in one cluster is provided by the Ingress class concept, which mandates the following:
 * Every Ingress Controller must only handle Ingress resources for its particular class. 
 * Ingress resources should be annotated with the `kubernetes.io/ingress.class` annotation set to the value, which corresponds to the class of the Ingress Controller the user wants to use. 
+* When using versions of Kubernetes >= 1.18, Ingress resources should have the `ingressClassName` field set to the value, which corresponds to the class of the Ingress Controller the user wants to use. 
 * VirtualServer and VirtualServerRoute resources should have the `ingressClassName` field set to the value, which corresponds to the class of the Ingress Controller the user wants to use.
 
 ### Configuring Ingress Class

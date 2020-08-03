@@ -66,8 +66,15 @@ Below we describe the available command-line arguments:
 
 .. option:: -ingress-class <string>
 
-	A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class (i.e. have the annotation "kubernetes.io/ingress.class" or the "ingressClassName" field in VirtualServer/VirtualServerRoute").
-	Additionally, the Ingress controller processes Ingress resources that do not have that annotation, which can be disabled by setting the :option:`-use-ingress-class-only` flag (default "nginx").
+	A class of the Ingress controller.
+
+	For Kubernetes >= 1.18, a corresponding IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start.
+	The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
+
+	For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class - i.e have the annotation "kubernetes.io/ingress.class" (for Ingress resources) or field "ingressClassName" (for VirtualServer/VirtualServerRoute resources) equal to the class.
+	Additionally, the Ingress Controller processes resources that do not have the class set, which can be disabled by setting the "-use-ingress-class-only" flag (default "nginx").
+
+	The Ingress Controller processes all the VirtualServer/VirtualServerRoute resources that do not have the "ingressClassName" field.
 
 .. option:: -ingress-template-path <string>
 
@@ -140,7 +147,9 @@ Below we describe the available command-line arguments:
 
 .. option:: -use-ingress-class-only
 
-	Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation or the "ingressClassName" field in VirtualServer/VirtualServerRoute.
+	For kubernetes versions >= 1.18 this flag will be IGNORED.
+
+	Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation.
 
 .. option:: -v <value>
 

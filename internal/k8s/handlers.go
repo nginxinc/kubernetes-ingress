@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1beta1"
 	"k8s.io/client-go/tools/cache"
 
 	"fmt"
@@ -96,7 +96,7 @@ func createEndpointHandlers(lbc *LoadBalancerController) cache.ResourceEventHand
 func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			ingress := obj.(*v1beta1.Ingress)
+			ingress := obj.(*networking.Ingress)
 			if !lbc.HasCorrectIngressClass(ingress) {
 				glog.Infof("Ignoring Ingress %v based on Annotation %v", ingress.Name, ingressClassKey)
 				return
@@ -105,14 +105,14 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			lbc.AddSyncQueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
-			ingress, isIng := obj.(*v1beta1.Ingress)
+			ingress, isIng := obj.(*networking.Ingress)
 			if !isIng {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
 					glog.V(3).Infof("Error received unexpected object: %v", obj)
 					return
 				}
-				ingress, ok = deletedState.Obj.(*v1beta1.Ingress)
+				ingress, ok = deletedState.Obj.(*networking.Ingress)
 				if !ok {
 					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Ingress object: %v", deletedState.Obj)
 					return
@@ -135,8 +135,8 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			}
 		},
 		UpdateFunc: func(old, current interface{}) {
-			c := current.(*v1beta1.Ingress)
-			o := old.(*v1beta1.Ingress)
+			c := current.(*networking.Ingress)
+			o := old.(*networking.Ingress)
 			if !lbc.HasCorrectIngressClass(c) {
 				return
 			}

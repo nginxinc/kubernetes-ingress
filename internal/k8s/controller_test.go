@@ -28,6 +28,8 @@ import (
 
 func TestHasCorrectIngressClass(t *testing.T) {
 	ingressClass := "ing-ctrl"
+	incorrectIngressClass := "gce"
+	emptyClass := ""
 
 	var testsWithoutIngressClassOnly = []struct {
 		lbc      *LoadBalancerController
@@ -42,7 +44,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: ""},
+					Annotations: map[string]string{ingressClassKey: emptyClass},
 				},
 			},
 			true,
@@ -55,7 +57,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: "gce"},
+					Annotations: map[string]string{ingressClassKey: incorrectIngressClass},
 				},
 			},
 			false,
@@ -101,7 +103,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: ""},
+					Annotations: map[string]string{ingressClassKey: emptyClass},
 				},
 			},
 			false,
@@ -114,7 +116,7 @@ func TestHasCorrectIngressClass(t *testing.T) {
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: "gce"},
+					Annotations: map[string]string{ingressClassKey: incorrectIngressClass},
 				},
 			},
 			false,
@@ -144,6 +146,61 @@ func TestHasCorrectIngressClass(t *testing.T) {
 				},
 			},
 			false,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: true, // always true for k8s >= 1.18
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&networking.Ingress{
+				Spec: networking.IngressSpec{
+					IngressClassName: &incorrectIngressClass,
+				},
+			},
+			false,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: true, // always true for k8s >= 1.18
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&networking.Ingress{
+				Spec: networking.IngressSpec{
+					IngressClassName: &emptyClass,
+				},
+			},
+			false,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: true, // always true for k8s >= 1.18
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&networking.Ingress{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Annotations: map[string]string{ingressClassKey: incorrectIngressClass},
+				},
+				Spec: networking.IngressSpec{
+					IngressClassName: &ingressClass,
+				},
+			},
+			false,
+		},
+		{
+			&LoadBalancerController{
+				ingressClass:        ingressClass,
+				useIngressClassOnly: true, // always true for k8s >= 1.18
+				metricsCollector:    collectors.NewControllerFakeCollector(),
+			},
+			&networking.Ingress{
+				Spec: networking.IngressSpec{
+					IngressClassName: &ingressClass,
+				},
+			},
+			true,
 		},
 	}
 
@@ -191,7 +248,7 @@ func TestHasCorrectIngressClassVS(t *testing.T) {
 					IngressClass: "",
 				},
 			},
-			false,
+			true,
 		},
 		{
 			lbcIngOnlyTrue,
@@ -214,7 +271,7 @@ func TestHasCorrectIngressClassVS(t *testing.T) {
 		{
 			lbcIngOnlyTrue,
 			&conf_v1.VirtualServer{},
-			false,
+			true,
 		},
 	}
 

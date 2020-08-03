@@ -27,7 +27,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/spiffe/go-spiffe/workload"
 
-	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -60,6 +59,8 @@ import (
 
 const (
 	ingressClassKey = "kubernetes.io/ingress.class"
+	// IngressControllerName holds Ingress Controller name
+	IngressControllerName = "nginx.org/ingress-controller"
 )
 
 var (
@@ -287,7 +288,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 }
 
 // UpdateManagedAndMergeableIngresses invokes the UpdateManagedAndMergeableIngresses method on the Status Updater
-func (lbc *LoadBalancerController) UpdateManagedAndMergeableIngresses(ingresses []v1beta1.Ingress, mergeableIngresses map[string]*configs.MergeableIngresses) error {
+func (lbc *LoadBalancerController) UpdateManagedAndMergeableIngresses(ingresses []networking.Ingress, mergeableIngresses map[string]*configs.MergeableIngresses) error {
 	return lbc.statusUpdater.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
 }
 
@@ -493,6 +494,7 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.configMapController.Run(lbc.ctx.Done())
 	}
 	go lbc.ingressController.Run(lbc.ctx.Done())
+
 	if lbc.areCustomResourcesEnabled {
 		go lbc.virtualServerController.Run(lbc.ctx.Done())
 		go lbc.virtualServerRouteController.Run(lbc.ctx.Done())
@@ -3032,6 +3034,7 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *networki
 // HasCorrectIngressClass checks if resource ingress class annotation (if exists) or ingressClass string for VS/VSR is matching with ingress controller class
 func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool {
 	var class string
+	var isIngress bool
 	switch obj.(type) {
 	case *conf_v1.VirtualServer:
 		vs := obj.(*conf_v1.VirtualServer)
@@ -3040,13 +3043,22 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 		vsr := obj.(*conf_v1.VirtualServerRoute)
 		class = vsr.Spec.IngressClass
 	case *networking.Ingress:
+		isIngress = true
 		ing := obj.(*networking.Ingress)
 		class = ing.Annotations[ingressClassKey]
+		if class == "" && ing.Spec.IngressClassName != nil {
+			class = *ing.Spec.IngressClassName
+		} else {
+			// the annotation takes precedence over the field
+			glog.Warningln("Using the DEPRECATED annotation 'kubernetes.io/ingress.class'. The 'ingressClassName' field will be ignored.")
+		}
+
 	default:
 		return false
 	}
 
-	if lbc.useIngressClassOnly {
+	// useIngressClassOnly only applies for Ingress resources
+	if lbc.useIngressClassOnly && isIngress {
 		return class == lbc.ingressClass
 	}
 	return class == lbc.ingressClass || class == ""

@@ -69,6 +69,12 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingressclasses
+  verbs:
+  - get
 {{- if .Values.controller.reportIngressStatus.enable }}
 - apiGroups:
   - networking.k8s.io

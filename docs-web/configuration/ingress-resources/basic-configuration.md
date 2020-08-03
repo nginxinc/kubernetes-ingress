@@ -63,6 +63,16 @@ Starting from Kubernetes 1.18, you can use the following new features:
         serviceName: coffee-svc
         servicePort: 80
   ```
+* The `ingressClassName` field is now supported. When using this filed you need to create the `IngressClass` resource with the corresponding `name`, for example create the following resource:
+  ```yaml
+    apiVersion: networking.k8s.io/v1beta1
+    kind: IngressClass
+    metadata:
+      name: nginx
+    spec:
+      controller: nginx.org/ingress-controller 
+  ```
+  and then set `spec.IngressClassName` to `nginx` in the `Ingress` resource.
 
 ## Restrictions
 

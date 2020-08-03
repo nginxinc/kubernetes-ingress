@@ -21,10 +21,14 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1beta1"
+
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/version"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -36,28 +40,28 @@ type storeToIngressLister struct {
 
 // GetByKeySafe calls Store.GetByKeySafe and returns a copy of the ingress so it is
 // safe to modify.
-func (s *storeToIngressLister) GetByKeySafe(key string) (ing *v1beta1.Ingress, exists bool, err error) {
+func (s *storeToIngressLister) GetByKeySafe(key string) (ing *networking.Ingress, exists bool, err error) {
 	item, exists, err := s.Store.GetByKey(key)
 	if !exists || err != nil {
 		return nil, exists, err
 	}
-	ing = item.(*v1beta1.Ingress).DeepCopy()
+	ing = item.(*networking.Ingress).DeepCopy()
 	return
 }
 
 // List lists all Ingress' in the store.
-func (s *storeToIngressLister) List() (ing v1beta1.IngressList, err error) {
+func (s *storeToIngressLister) List() (ing networking.IngressList, err error) {
 	for _, m := range s.Store.List() {
-		ing.Items = append(ing.Items, *(m.(*v1beta1.Ingress)).DeepCopy())
+		ing.Items = append(ing.Items, *(m.(*networking.Ingress)).DeepCopy())
 	}
 	return ing, nil
 }
 
 // GetServiceIngress gets all the Ingress' that have rules pointing to a service.
 // Note that this ignores services without the right nodePorts.
-func (s *storeToIngressLister) GetServiceIngress(svc *v1.Service) (ings []v1beta1.Ingress, err error) {
+func (s *storeToIngressLister) GetServiceIngress(svc *v1.Service) (ings []networking.Ingress, err error) {
 	for _, m := range s.Store.List() {
-		ing := *m.(*v1beta1.Ingress).DeepCopy()
+		ing := *m.(*networking.Ingress).DeepCopy()
 		if ing.Namespace != svc.Namespace {
 			continue
 		}
@@ -154,17 +158,17 @@ type storeToSecretLister struct {
 }
 
 // isMinion determines is an ingress is a minion or not
-func isMinion(ing *v1beta1.Ingress) bool {
+func isMinion(ing *networking.Ingress) bool {
 	return ing.Annotations["nginx.org/mergeable-ingress-type"] == "minion"
 }
 
 // isMaster determines is an ingress is a master or not
-func isMaster(ing *v1beta1.Ingress) bool {
+func isMaster(ing *networking.Ingress) bool {
 	return ing.Annotations["nginx.org/mergeable-ingress-type"] == "master"
 }
 
 // hasChanges determines if current ingress has changes compared to old ingress
-func hasChanges(old *v1beta1.Ingress, current *v1beta1.Ingress) bool {
+func hasChanges(old *networking.Ingress, current *networking.Ingress) bool {
 	old.Status.LoadBalancer.Ingress = current.Status.LoadBalancer.Ingress
 	old.ResourceVersion = current.ResourceVersion
 	return !reflect.DeepEqual(old, current)
@@ -178,4 +182,21 @@ func ParseNamespaceName(value string) (ns string, name string, err error) {
 		return "", "", fmt.Errorf("%q must follow the format <namespace>/<name>", value)
 	}
 	return res[0], res[1], nil
+}
+
+// GetK8sVersion returns the running version of k8s
+func GetK8sVersion(client kubernetes.Interface) (v *version.Version, err error) {
+
+	serverVersion, err := client.Discovery().ServerVersion()
+	if err != nil {
+		return nil, err
+	}
+
+	runningVersion, err := version.ParseGeneric(serverVersion.String())
+	if err != nil {
+		return nil, fmt.Errorf("unexpected error parsing running Kubernetes version: %v", err)
+	}
+	glog.V(3).Infof("Kubernetes version: %v", runningVersion)
+
+	return runningVersion, nil
 }
