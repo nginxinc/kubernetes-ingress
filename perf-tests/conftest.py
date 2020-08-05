@@ -3,7 +3,8 @@
 import os
 import pytest
 import sys
-sys.path.insert(0, '../tests')
+
+sys.path.insert(0, "../tests")
 from kubernetes.config.kube_config import KUBE_CONFIG_DEFAULT_LOCATION
 from settings import (
     DEFAULT_IMAGE,
@@ -22,16 +23,10 @@ def pytest_addoption(parser) -> None:
     :return:
     """
     parser.addoption(
-        "--context",
-        action="store",
-        default="",
-        help="The context to use in the kubeconfig file.",
+        "--context", action="store", default="", help="The context to use in the kubeconfig file.",
     )
     parser.addoption(
-        "--image",
-        action="store",
-        default=DEFAULT_IMAGE,
-        help="The Ingress Controller image.",
+        "--image", action="store", default=DEFAULT_IMAGE, help="The Ingress Controller image.",
     )
     parser.addoption(
         "--image-pull-policy",
@@ -74,8 +69,18 @@ def pytest_addoption(parser) -> None:
         default="no",
         help="Show IC logs in stdout on test failure",
     )
-    parser.addoption('--repeat', action='store',
-        help='Number of times to repeat each test')
+    parser.addoption(
+        "--users", action="store", default="10", help="No. of users for response perf tests",
+    )
+    parser.addoption(
+        "--hatch_rate", action="store", default="5", help="No. of users hatched per second",
+    )
+    parser.addoption(
+        "--time",
+        action="store",
+        default="10",
+        help="Duration for AP response perf tests in seconds",
+    )
 
 
 # import fixtures into pytest global namespace
@@ -124,17 +129,9 @@ def pytest_runtest_makereport(item) -> None:
     rep = outcome.get_result()
 
     # we only look at actual failing test calls, not setup/teardown
-    if (
-        rep.when == "call"
-        and rep.failed
-        and item.config.getoption("--show-ic-logs") == "yes"
-    ):
+    if rep.when == "call" and rep.failed and item.config.getoption("--show-ic-logs") == "yes":
         pod_namespace = item.funcargs["ingress_controller_prerequisites"].namespace
         pod_name = get_first_pod_name(item.funcargs["kube_apis"].v1, pod_namespace)
         print("\n===================== IC Logs Start =====================")
-        print(
-            item.funcargs["kube_apis"].v1.read_namespaced_pod_log(
-                pod_name, pod_namespace
-            )
-        )
+        print(item.funcargs["kube_apis"].v1.read_namespaced_pod_log(pod_name, pod_namespace))
         print("\n===================== IC Logs End =====================")

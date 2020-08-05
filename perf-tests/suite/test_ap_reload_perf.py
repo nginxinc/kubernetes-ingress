@@ -1,6 +1,6 @@
 import requests, logging
 import pytest, json
-import os, re, yaml
+import os, re, yaml, subprocess
 from datetime import datetime
 from settings import TEST_DATA, DEPLOYMENTS
 from suite.custom_resources_utils import (
@@ -37,7 +37,6 @@ valid_resp_addr = "Server address:"
 valid_resp_name = "Server name:"
 invalid_resp_title = "Request Rejected"
 invalid_resp_body = "The requested URL was rejected. Please consult with your administrator."
-test_count = 0
 reload_ap = []
 reload_ap_path = []
 reload_ap_with_ingress = []
@@ -122,6 +121,18 @@ def appprotect_setup(
 
     return AppProtectSetup(req_url)
 
+@pytest.fixture
+def setup_users(request):
+    return request.config.getoption("--users")
+
+@pytest.fixture
+def setup_rate(request):
+    return request.config.getoption("--hatch_rate")
+
+@pytest.fixture
+def setup_time(request):
+    return request.config.getoption("--time")
+
 
 def assert_invalid_responses(response) -> None:
     """
@@ -133,7 +144,7 @@ def assert_invalid_responses(response) -> None:
     assert response.status_code == 200
 
 
-@pytest.mark.ap_reload_perf
+@pytest.mark.ap_perf
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [
@@ -148,7 +159,6 @@ def assert_invalid_responses(response) -> None:
     indirect=["crd_ingress_controller_with_ap"],
 )
 class TestAppProtect:
-    @pytest.mark.ap_create
     def test_ap_perf_create_ingress(
         self,
         kube_apis,
@@ -170,13 +180,8 @@ class TestAppProtect:
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 
         print("--------- Run test while AppProtect module is enabled with correct policy ---------")
-        # events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
-        # wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
         wait_before_test(40)
-        response = ""
-        # if wait_status:
-        #     print("----------------------- Send request ----------------------")
         response = requests.get(
             appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
         )
@@ -196,8 +201,7 @@ class TestAppProtect:
                 )
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_invalid_responses(response)
-    
-    @pytest.mark.ap_path
+
     def test_ap_perf_ingress_path_change(
         self,
         kube_apis,
@@ -239,8 +243,6 @@ class TestAppProtect:
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
         wait_before_test(30)
         response = ""
-        # if wait_status:
-        #     print("----------------------- Send request ----------------------")
         response = requests.get(
             appprotect_setup.req_url + "/v1/<script>", headers={"host": ingress_host}, verify=False
         )
@@ -261,8 +263,6 @@ class TestAppProtect:
         delete_items_from_yaml(kube_apis, src2_ing_yaml, test_namespace)
         assert_invalid_responses(response)
 
-
-    @pytest.mark.ap_multiple
     def test_ap_perf_multiple_ingress(
         self,
         kube_apis,
@@ -287,20 +287,15 @@ class TestAppProtect:
         # create ingress without AP annotation
         create_ingress(kube_apis.extensions_v1_beta1, test_namespace, doc)
         wait_before_test(10)
-        # create ingress with AP annotations
+        #  create ingress with AP annotations
         create_ingress_with_ap_annotations(
             kube_apis, src1_ing_yaml, test_namespace, ap_policy, "True", "True", "127.0.0.1:514"
         )
         ingress_host = get_first_ingress_host_from_yaml(src1_ing_yaml)
 
         print("--------- Run test while AppProtect module is enabled with correct policy ---------")
-        # events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
-        # wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
         wait_before_test(30)
-        response = ""
-        # if wait_status:
-        #     print("----------------------- Send request ----------------------")
         response = requests.get(
             appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
         )
@@ -320,4 +315,63 @@ class TestAppProtect:
                 )
         delete_items_from_yaml(kube_apis, src1_ing_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src2_ing_yaml, test_namespace)
+        assert_invalid_responses(response)
+
+    @pytest.mark.ap_resp
+    def test_ap_perf_response(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        ingress_controller_endpoint,
+        crd_ingress_controller_with_ap,
+        appprotect_setup,
+        enable_prometheus_port,
+        test_namespace,
+        setup_users,
+        setup_time, 
+        setup_rate,
+    ):
+        """
+        Test response times for AP ingress by runnig locust as a subprocess.
+        """
+
+        src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
+        print(src_ing_yaml)
+
+        #  create ingress with AP annotations
+        create_ingress_with_ap_annotations(
+            kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", "127.0.0.1:514"
+        )
+        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
+
+        print("--------- Run test while AppProtect module is enabled with correct policy ---------")
+        ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
+        wait_before_test(30)
+        response = ""
+        response = requests.get(
+            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
+        )
+        print(appprotect_setup.req_url + "/<script>")
+        print(ingress_host)
+        print(response.text)
+        # run response time tests using locust.io
+        subprocess.run(
+            [
+                "locust",
+                "-f", 
+                "suite/ap_request_perf.py",
+                "--headless",
+                "--host",
+                appprotect_setup.req_url,
+                "--csv",
+                "ap_response_times", 
+                "-u",
+                setup_users, # total no. of users
+                "-r",
+                setup_rate, # no. of users hatched per second
+                "-t",
+                setup_time, # locust session duration in seconds
+            ]
+        )
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_invalid_responses(response)
