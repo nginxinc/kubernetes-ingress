@@ -27,19 +27,18 @@ Run the tests:
     ```bash
     $ cd perf_tests
     $ pip3 install -r requirements.txt
-    $ pytest -v -s -m ap_perf --count=<number_of_times_to_run_the_tests> --node-ip=$(minikube ip) --users=<INT> --hatch_rate=<INT> --time=<INT>
+    $ pytest -v -s -m ap_perf --count=<INT> --node-ip=$(minikube ip) --users=<INT> --hatch-rate=<INT> --time=<INT>
     ```
 
-The tests will use the Ingress Controller for NGINX with the default *nginx/nginx-ingress:edge* image. See the section below to learn how to configure the tests including the image and the type of NGINX -- NGINX or NGINX Plus.
+The tests will use the Ingress Controller for NGINX with the image built from `DockerfileWithAppProtectForPlus`. See the section below to learn how to configure the tests including the image and the type of NGINX -- NGINX or NGINX Plus.
 Refer the [Configuring the Tests](#configuring-the-tests) section for valid arguments.
 
 ## Configuring the Tests
 
 The table below shows various configuration options for the performance tests. Use command line arguments to run tests with Python3
 
-
 | Command-line Argument | Description | Default |
-| :----------------------- | :------------ | :------------ | :----------------------- |
+| :----------------------- | :------------ | :----------------------- |
 | `--context` | The context to use in the kubeconfig file. | `""` |
 | `--image` | The Ingress Controller image. | `nginx/nginx-ingress:edge` |
 | `--image-pull-policy` | The pull policy of the Ingress Controller image. | `IfNotPresent` |
@@ -51,6 +50,7 @@ The table below shows various configuration options for the performance tests. U
 | `N/A` | A path to a folder with a kubeconfig file. | `~/.kube/` |
 | `--show-ic-logs` | A flag to control accumulating IC logs in stdout. | `no` |
 | `N/A` | Any additional pytest command-line arguments (i.e `-m "smoke"`) | `""` |
+| `--count` | Number of times to repeat tests | `1` |
 | `--users` | Total no. of users/locusts for response perf tests. | `10` |
-| `--hatch_rate` | No. of users hatched per second. | `5` |
+| `--hatch-rate` | No. of users hatched per second. | `5` |
 | `--time` | Duration for AP response perf tests in seconds. | `10` |

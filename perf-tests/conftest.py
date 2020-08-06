@@ -73,7 +73,7 @@ def pytest_addoption(parser) -> None:
         "--users", action="store", default="10", help="No. of users for response perf tests",
     )
     parser.addoption(
-        "--hatch_rate", action="store", default="5", help="No. of users hatched per second",
+        "--hatch-rate", action="store", default="5", help="No. of users hatched per second",
     )
     parser.addoption(
         "--time",

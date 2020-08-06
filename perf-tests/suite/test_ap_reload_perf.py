@@ -121,13 +121,16 @@ def appprotect_setup(
 
     return AppProtectSetup(req_url)
 
+
 @pytest.fixture
 def setup_users(request):
     return request.config.getoption("--users")
 
+
 @pytest.fixture
 def setup_rate(request):
-    return request.config.getoption("--hatch_rate")
+    return request.config.getoption("--hatch-rate")
+
 
 @pytest.fixture
 def setup_time(request):
@@ -158,7 +161,22 @@ def assert_invalid_responses(response) -> None:
     ],
     indirect=["crd_ingress_controller_with_ap"],
 )
-class TestAppProtect:
+class TestAppProtectPerf:
+    def collect_prom_reload_metrics(self, metric_list, scenario, ip, port) -> None:
+        req_url = f"http://{ip}:{port}/metrics"
+        resp = requests.get(req_url)
+        resp_decoded = resp.content.decode("utf-8")
+        reload_metric = ""
+        for line in resp_decoded.splitlines():
+            if "last_reload_milliseconds{class" in line:
+                reload_metric = re.findall("\d+", line)[0]
+                metric_list.append(
+                    {
+                        f"Reload time ({scenario}) ": f"{reload_metric}ms",
+                        "TimeStamp": str(datetime.utcnow()),
+                    }
+                )
+
     def test_ap_perf_create_ingress(
         self,
         kube_apis,
@@ -186,19 +204,12 @@ class TestAppProtect:
             appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
         )
         print(response.text)
-        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
-        resp = requests.get(req_url)
-        resp_decoded = resp.content.decode("utf-8")
-        reload_metric = ""
-        for line in resp_decoded.splitlines():
-            if "last_reload_milliseconds{class" in line:
-                reload_metric = re.findall("\d+", line)[0]
-                reload_ap.append(
-                    {
-                        f"Reload time (creating AP ingress) ": reload_metric,
-                        "TimeStamp": str(datetime.utcnow()),
-                    }
-                )
+        self.collect_prom_reload_metrics(
+            reload_ap,
+            "creating AP ingress",
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.metrics_port,
+        )
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_invalid_responses(response)
 
@@ -226,9 +237,7 @@ class TestAppProtect:
         ingress_host = get_first_ingress_host_from_yaml(src1_ing_yaml)
 
         print("--------- Run test while AppProtect module is enabled with correct policy ---------")
-        # events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
-        # wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
         wait_before_test(30)
         replace_ingress_with_ap_annotations(
             kube_apis,
@@ -247,19 +256,12 @@ class TestAppProtect:
             appprotect_setup.req_url + "/v1/<script>", headers={"host": ingress_host}, verify=False
         )
         print(response.text)
-        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
-        resp = requests.get(req_url)
-        resp_decoded = resp.content.decode("utf-8")
-        reload_metric = ""
-        for line in resp_decoded.splitlines():
-            if "last_reload_milliseconds{class" in line:
-                reload_metric = re.findall("\d+", line)[0]
-                reload_ap_path.append(
-                    {
-                        f"Reload time (changing paths in AP ingress) ": f"{reload_metric} ms",
-                        "TimeStamp": str(datetime.utcnow()),
-                    }
-                )
+        self.collect_prom_reload_metrics(
+            reload_ap_path,
+            "changing paths in AP ingress",
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.metrics_port,
+        )
         delete_items_from_yaml(kube_apis, src2_ing_yaml, test_namespace)
         assert_invalid_responses(response)
 
@@ -300,19 +302,12 @@ class TestAppProtect:
             appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
         )
         print(response.text)
-        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
-        resp = requests.get(req_url)
-        resp_decoded = resp.content.decode("utf-8")
-        reload_metric = ""
-        for line in resp_decoded.splitlines():
-            if "last_reload_milliseconds{class" in line:
-                reload_metric = re.findall("\d+", line)[0]
-                reload_ap_with_ingress.append(
-                    {
-                        f"Reload time (creating AP ingress alongside a simple ingress) ": f"{reload_metric} ms",
-                        "TimeStamp": str(datetime.utcnow()),
-                    }
-                )
+        self.collect_prom_reload_metrics(
+            reload_ap_with_ingress,
+            "creating AP ingress alongside a simple ingress",
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.metrics_port,
+        )
         delete_items_from_yaml(kube_apis, src1_ing_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src2_ing_yaml, test_namespace)
         assert_invalid_responses(response)
@@ -328,11 +323,11 @@ class TestAppProtect:
         enable_prometheus_port,
         test_namespace,
         setup_users,
-        setup_time, 
+        setup_time,
         setup_rate,
     ):
         """
-        Test response times for AP ingress by runnig locust as a subprocess.
+        Test response times for AP ingress by running locust as a subprocess.
         """
 
         src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
@@ -358,19 +353,19 @@ class TestAppProtect:
         subprocess.run(
             [
                 "locust",
-                "-f", 
+                "-f",
                 "suite/ap_request_perf.py",
                 "--headless",
                 "--host",
                 appprotect_setup.req_url,
                 "--csv",
-                "ap_response_times", 
+                "ap_response_times",
                 "-u",
-                setup_users, # total no. of users
+                setup_users,  # total no. of users
                 "-r",
-                setup_rate, # no. of users hatched per second
+                setup_rate,  # no. of users hatched per second
                 "-t",
-                setup_time, # locust session duration in seconds
+                setup_time,  # locust session duration in seconds
             ]
         )
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)

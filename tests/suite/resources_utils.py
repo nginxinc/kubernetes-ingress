@@ -957,7 +957,7 @@ def create_ingress_with_ap_annotations(
     :param namespace: namespace
     :param policy_name: AppProtect policy
     :param ap_log_st: True/False for enabling/disabling AppProtect security logging
-    :param ap_pol_st: True/False for enabling/disabling AppProtect module for partucular ingress
+    :param ap_pol_st: True/False for enabling/disabling AppProtect module for particular ingress
     :param syslog_ep: Destination endpoint for security logs
     :return:
     """
@@ -987,7 +987,7 @@ def replace_ingress_with_ap_annotations(
     :param namespace: namespace
     :param policy_name: AppProtect policy
     :param ap_log_st: True/False for enabling/disabling AppProtect security logging
-    :param ap_pol_st: True/False for enabling/disabling AppProtect module for partucular ingress
+    :param ap_pol_st: True/False for enabling/disabling AppProtect module for particular ingress
     :param syslog_ep: Destination endpoint for security logs
     :return:
     """
