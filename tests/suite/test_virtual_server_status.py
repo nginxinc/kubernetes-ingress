@@ -100,6 +100,7 @@ class TestVirtualServerStatus:
             "virtualservers",
             virtual_server_setup.vs_name,
         )
+        self.patch_valid_vs(kube_apis, virtual_server_setup)
         assert (
             response["status"]
             and response["status"]["reason"] == "AddedOrUpdatedWithWarning"
