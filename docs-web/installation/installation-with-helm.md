@@ -18,11 +18,11 @@ This step is required if you're installing the chart using its sources. Addition
 1. Clone the Ingress controller repo:
     ```console
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
-    $ git checkout v1.8.1
     ```
 2. Change your working directory to /deployments/helm-chart:
     ```console
     $ cd kubernetes-ingress/deployments/helm-chart
+    $ git checkout v1.8.1
     ```
 
 ## Adding the Helm Repository

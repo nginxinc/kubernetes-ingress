@@ -64,6 +64,9 @@ Below we describe the available command-line arguments:
 	Adds a location "/nginx-health" to the default server. The location responds with the 200 status code for any request.
 	Useful for external health-checking of the Ingress controller.
 
+.. option:: -health-status-uri 
+	Sets the URI of health status location in the default server. Requires :option:`-health-status`
+
 .. option:: -ingress-class <string>
 
 	A class of the Ingress controller. The Ingress controller only processes Ingress resources that belong to its class (i.e. have the annotation "kubernetes.io/ingress.class" or the "ingressClassName" field in VirtualServer/VirtualServerRoute").

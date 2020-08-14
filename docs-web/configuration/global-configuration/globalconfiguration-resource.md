@@ -2,7 +2,7 @@
 
 The GlobalConfiguration resource allows you to define the global configuration parameters of the Ingress Controller. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-In Release 1.7, the resource supports configuring listeners for TCP and UDP load balancing. Listeners are required by [TransportServer resources](/nginx-ingress-controller/configuration/transportserver-resource).
+In Release 1.8, the resource supports configuring listeners for TCP and UDP load balancing. Listeners are required by [TransportServer resources](/nginx-ingress-controller/configuration/transportserver-resource).
 
 > **Feature Status**: The GlobalConfiguration resource is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resource specification in the next releases.
 

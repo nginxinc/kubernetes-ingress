@@ -7,4 +7,5 @@ Installation
    building-ingress-controller-image
    installation-with-manifests
    installation-with-helm
+   installation-with-operator
    running-multiple-ingress-controllers
