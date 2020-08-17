@@ -373,7 +373,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``stream-snippets``
      - Sets a custom snippet in stream context.
      - N/A
-     - `Support for  TCP/UDP Load Balancing <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.1/examples/tcp-udp>`_.
+     - `Support for TCP/UDP Load Balancing <https://github.com/nginxinc/kubernetes-ingress/tree/v1.8.1/examples/tcp-udp>`_.
    * - ``main-template``
      - Sets the main NGINX configuration template.
      - By default the template is read from the file in the container.
