@@ -11,7 +11,7 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX 
 
-All images include NGINX 1.19.1.
+All images include NGINX 1.19.2.
 The supported architecture is x86-64.
 
 ```eval_rst
@@ -25,7 +25,7 @@ The supported architecture is x86-64.
       - DockerHub image
     * - Debian-based image
       - ``Dockerfile``
-      - ``nginx:1.19.1``, which is based on ``debian:buster-slim``
+      - ``nginx:1.19.2``, which is based on ``debian:buster-slim``
       - 
       - ``nginx/nginx-ingress:1.8.1``
     * - Alpine-based image

@@ -118,7 +118,7 @@ metadata:
   name: logconf
 spec:
   filter: 
-    request_types: all
+    request_type: all
   content: 
     format: default
     max_request_size: any
