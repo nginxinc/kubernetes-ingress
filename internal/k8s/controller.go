@@ -152,6 +152,7 @@ type LoadBalancerController struct {
 	internalRoutesEnabled         bool
 	syncLock                      sync.Mutex
 	isNginxReady                  bool
+	isLatencyMetricsEnabled       bool
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -183,6 +184,7 @@ type NewLoadBalancerControllerInput struct {
 	TransportServerValidator     *validation.TransportServerValidator
 	SpireAgentAddress            string
 	InternalRoutesEnabled        bool
+	IsLatencyMetricsEnabled      bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -209,6 +211,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		globalConfigurationValidator: input.GlobalConfigurationValidator,
 		transportServerValidator:     input.TransportServerValidator,
 		internalRoutesEnabled:        input.InternalRoutesEnabled,
+		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -2386,7 +2389,7 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 			}
 		}
 
-		if lbc.isNginxPlus {
+		if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
 			for _, endpoint := range podEndps {
 				ingEx.PodsByIP[endpoint.Address] = endpoint.PodName
 			}
@@ -2433,7 +2436,7 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 				}
 			}
 
-			if lbc.isNginxPlus {
+			if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
 				for _, endpoint := range podEndps {
 					ingEx.PodsByIP[endpoint.Address] = endpoint.PodName
 				}
@@ -2572,7 +2575,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 		endps := getIPAddressesFromEndpoints(podEndps)
 		endpoints[endpointsKey] = endps
 
-		if lbc.isNginxPlus {
+		if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
 			for _, endpoint := range podEndps {
 				podsByIP[endpoint.Address] = endpoint.PodName
 			}
@@ -2660,7 +2663,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 			endps := getIPAddressesFromEndpoints(podEndps)
 			endpoints[endpointsKey] = endps
 
-			if lbc.isNginxPlus {
+			if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
 				for _, endpoint := range podEndps {
 					podsByIP[endpoint.Address] = endpoint.PodName
 				}

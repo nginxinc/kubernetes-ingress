@@ -53,6 +53,11 @@ http {
     access_log  /var/log/nginx/access.log  main;
     {{end}}
 
+    {{if .LatencyMetrics}}
+    log_format response_time '{"upstreamAddress":"$upstream_addr", "upstreamResponseTime":"$upstream_response_time", "proxyHost":"$proxy_host", "upstreamStatus": "$upstream_status"}';
+    access_log syslog:server=unix:/var/lib/nginx/nginx-syslog.sock,nohostname,tag=nginx response_time;
+    {{end}}
+
     {{- if .AppProtectLoadModule}}
     {{if .AppProtectFailureModeAction}}app_protect_failure_mode_action {{.AppProtectFailureModeAction}};{{end}}
     {{if .AppProtectCookieSeed}}app_protect_cookie_seed {{.AppProtectCookieSeed}};{{end}}

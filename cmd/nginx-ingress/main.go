@@ -162,6 +162,9 @@ var (
 	readyStatus = flag.Bool("ready-status", true, "Enables the readiness endpoint '/nginx-ready'. The endpoint returns a success code when NGINX has loaded all the config after the startup")
 
 	readyStatusPort = flag.Int("ready-status-port", 8081, "Set the port where the readiness endpoint is exposed. [1024 - 65535]")
+
+	enableLatencyMetrics = flag.Bool("enable-latency-metrics", false,
+		"Enable collection of latency metrics for upstreams. Requires -enable-prometheus-metrics")
 )
 
 func main() {
@@ -221,6 +224,11 @@ func main() {
 
 	if *enableInternalRoutes && *spireAgentAddress == "" {
 		glog.Fatal("enable-internal-routes flag requires spire-agent-address")
+	}
+
+	if *enableLatencyMetrics && !*enablePrometheusMetrics {
+		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
+		*enableLatencyMetrics = false
 	}
 
 	glog.Infof("Starting NGINX Ingress controller Version=%v GitCommit=%v\n", version, gitCommit)
@@ -311,9 +319,11 @@ func main() {
 	var registry *prometheus.Registry
 	var managerCollector collectors.ManagerCollector
 	var controllerCollector collectors.ControllerCollector
+	var latencyCollector collectors.LatencyCollector
 	constLabels := map[string]string{"class": *ingressClass}
 	managerCollector = collectors.NewManagerFakeCollector()
 	controllerCollector = collectors.NewControllerFakeCollector()
+	latencyCollector = collectors.NewLatencyFakeCollector()
 
 	if *enablePrometheusMetrics {
 		registry = prometheus.NewRegistry()
@@ -455,6 +465,7 @@ func main() {
 		EnableSnippets:                 *enableSnippets,
 		SpiffeCerts:                    *spireAgentAddress != "",
 		MainAppProtectLoadModule:       *appProtect,
+		EnableLatencyMetrics:           *enableLatencyMetrics,
 	}
 
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
@@ -495,11 +506,13 @@ func main() {
 	}
 
 	var plusCollector *nginxCollector.NginxPlusCollector
+	var syslogListener metrics.SyslogListener
+	syslogListener = metrics.NewSyslogFakeServer()
 	if *enablePrometheusMetrics {
+		upstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
+		upstreamServerPeerVariableLabelNames := []string{"pod_name"}
 		if *nginxPlus {
-			upstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
 			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
-			upstreamServerPeerVariableLabelNames := []string{"pod_name"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames)
 			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels)
 			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry)
@@ -511,11 +524,19 @@ func main() {
 			}
 			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, constLabels)
 		}
+		if *enableLatencyMetrics {
+			latencyCollector = collectors.NewLatencyMetricsCollector(constLabels, upstreamServerVariableLabels, upstreamServerPeerVariableLabelNames)
+			if err := latencyCollector.Register(registry); err != nil {
+				glog.Errorf("Error registering Latency Prometheus metrics: %v", err)
+			}
+			syslogListener = metrics.NewLatencyMetricsListener("/var/lib/nginx/nginx-syslog.sock", latencyCollector)
+			go syslogListener.Run()
+		}
 	}
 
 	isWildcardEnabled := *wildcardTLSSecret != ""
 	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, globalCfgParams, templateExecutor,
-		templateExecutorV2, *nginxPlus, isWildcardEnabled, plusCollector, *enablePrometheusMetrics)
+		templateExecutorV2, *nginxPlus, isWildcardEnabled, plusCollector, *enablePrometheusMetrics, latencyCollector, *enableLatencyMetrics)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough)
@@ -546,6 +567,7 @@ func main() {
 		TransportServerValidator:     transportServerValidator,
 		SpireAgentAddress:            *spireAgentAddress,
 		InternalRoutesEnabled:        *enableInternalRoutes,
+		IsLatencyMetricsEnabled:      *enableLatencyMetrics,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
@@ -560,9 +582,9 @@ func main() {
 	}
 
 	if *appProtect {
-		go handleTerminationWithAppProtect(lbc, nginxManager, nginxDone, aPAgentDone, aPPluginDone)
+		go handleTerminationWithAppProtect(lbc, nginxManager, syslogListener, nginxDone, aPAgentDone, aPPluginDone)
 	} else {
-		go handleTermination(lbc, nginxManager, nginxDone)
+		go handleTermination(lbc, nginxManager, syslogListener, nginxDone)
 	}
 
 	lbc.Run()
@@ -589,7 +611,7 @@ func createGlobalConfigurationValidator() *cr_validation.GlobalConfigurationVali
 	return cr_validation.NewGlobalConfigurationValidator(forbiddenListenerPorts)
 }
 
-func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, nginxDone chan error) {
+func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone chan error) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
@@ -606,17 +628,18 @@ func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manag
 		}
 		exited = true
 	case <-signalChan:
-		glog.Infof("Received SIGTERM, shutting down")
+		glog.Info("Received SIGTERM, shutting down")
 	}
 
-	glog.Infof("Shutting down the controller")
+	glog.Info("Shutting down the controller")
 	lbc.Stop()
 
 	if !exited {
-		glog.Infof("Shutting down NGINX")
+		glog.Info("Shutting down NGINX")
 		nginxManager.Quit()
 		<-nginxDone
 	}
+	listener.Stop()
 
 	glog.Infof("Exiting with a status: %v", exitStatus)
 	os.Exit(exitStatus)
@@ -715,7 +738,7 @@ func validateLocation(location string) error {
 	return nil
 }
 
-func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, nginxDone, agentDone, pluginDone chan error) {
+func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone, agentDone, pluginDone chan error) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
@@ -735,6 +758,7 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 		<-pluginDone
 		nginxManager.AppProtectAgentQuit()
 		<-agentDone
+		listener.Stop()
 	}
 	glog.Info("Exiting successfully")
 	os.Exit(0)

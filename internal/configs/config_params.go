@@ -113,6 +113,7 @@ type StaticConfigParams struct {
 	EnableInternalRoutes           bool
 	MainAppProtectLoadModule       bool
 	PodName                        string
+	EnableLatencyMetrics           bool
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.

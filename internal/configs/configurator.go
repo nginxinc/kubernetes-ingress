@@ -27,6 +27,8 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	latCollector "github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 )
 
 const pemFileNameForMissingTLSSecret = "/etc/nginx/secrets/default"
@@ -70,28 +72,29 @@ type metricLabelsIndex struct {
 
 // Configurator configures NGINX.
 type Configurator struct {
-	nginxManager        nginx.Manager
-	staticCfgParams     *StaticConfigParams
-	cfgParams           *ConfigParams
-	globalCfgParams     *GlobalConfigParams
-	templateExecutor    *version1.TemplateExecutor
-	templateExecutorV2  *version2.TemplateExecutor
-	ingresses           map[string]*IngressEx
-	minions             map[string]map[string]bool
-	virtualServers      map[string]*VirtualServerEx
-	tlsPassthroughPairs map[string]tlsPassthroughPair
-	isWildcardEnabled   bool
-	isPlus              bool
-	labelUpdater        collector.LabelUpdater
-	metricLabelsIndex   *metricLabelsIndex
-	isPrometheusEnabled bool
+	nginxManager            nginx.Manager
+	staticCfgParams         *StaticConfigParams
+	cfgParams               *ConfigParams
+	globalCfgParams         *GlobalConfigParams
+	templateExecutor        *version1.TemplateExecutor
+	templateExecutorV2      *version2.TemplateExecutor
+	ingresses               map[string]*IngressEx
+	minions                 map[string]map[string]bool
+	virtualServers          map[string]*VirtualServerEx
+	tlsPassthroughPairs     map[string]tlsPassthroughPair
+	isWildcardEnabled       bool
+	isPlus                  bool
+	labelUpdater            collector.LabelUpdater
+	metricLabelsIndex       *metricLabelsIndex
+	isPrometheusEnabled     bool
+	latencyCollector        latCollector.LatencyCollector
+	isLatencyMetricsEnabled bool
 }
 
 // NewConfigurator creates a new Configurator.
 func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams, globalCfgParams *GlobalConfigParams,
 	templateExecutor *version1.TemplateExecutor, templateExecutorV2 *version2.TemplateExecutor, isPlus bool, isWildcardEnabled bool,
-	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool) *Configurator {
-
+	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool, latencyCollector latCollector.LatencyCollector, isLatencyMetricsEnabled bool) *Configurator {
 	metricLabelsIndex := &metricLabelsIndex{
 		ingressUpstreams:           make(map[string][]string),
 		virtualServerUpstreams:     make(map[string][]string),
@@ -102,21 +105,23 @@ func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigPa
 	}
 
 	cnf := Configurator{
-		nginxManager:        nginxManager,
-		staticCfgParams:     staticCfgParams,
-		cfgParams:           config,
-		globalCfgParams:     globalCfgParams,
-		ingresses:           make(map[string]*IngressEx),
-		virtualServers:      make(map[string]*VirtualServerEx),
-		templateExecutor:    templateExecutor,
-		templateExecutorV2:  templateExecutorV2,
-		minions:             make(map[string]map[string]bool),
-		tlsPassthroughPairs: make(map[string]tlsPassthroughPair),
-		isPlus:              isPlus,
-		isWildcardEnabled:   isWildcardEnabled,
-		labelUpdater:        labelUpdater,
-		metricLabelsIndex:   metricLabelsIndex,
-		isPrometheusEnabled: isPrometheusEnabled,
+		nginxManager:            nginxManager,
+		staticCfgParams:         staticCfgParams,
+		cfgParams:               config,
+		globalCfgParams:         globalCfgParams,
+		ingresses:               make(map[string]*IngressEx),
+		virtualServers:          make(map[string]*VirtualServerEx),
+		templateExecutor:        templateExecutor,
+		templateExecutorV2:      templateExecutorV2,
+		minions:                 make(map[string]map[string]bool),
+		tlsPassthroughPairs:     make(map[string]tlsPassthroughPair),
+		isPlus:                  isPlus,
+		isWildcardEnabled:       isWildcardEnabled,
+		labelUpdater:            labelUpdater,
+		metricLabelsIndex:       metricLabelsIndex,
+		isPrometheusEnabled:     isPrometheusEnabled,
+		latencyCollector:        latencyCollector,
+		isLatencyMetricsEnabled: isLatencyMetricsEnabled,
 	}
 	return &cnf
 }
@@ -170,33 +175,47 @@ func (cnf *Configurator) updateIngressMetricsLabels(ingEx *IngressEx, upstreams 
 	key := fmt.Sprintf("%v/%v", ingEx.Ingress.Namespace, ingEx.Ingress.Name)
 	removedUpstreams := findRemovedKeys(cnf.metricLabelsIndex.ingressUpstreams[key], newUpstreams)
 	cnf.metricLabelsIndex.ingressUpstreams[key] = newUpstreamsNames
-	cnf.labelUpdater.UpdateUpstreamServerLabels(upstreamServerLabels)
-	cnf.labelUpdater.DeleteUpstreamServerLabels(removedUpstreams)
+	cnf.latencyCollector.UpdateUpstreamServerLabels(upstreamServerLabels)
+	cnf.latencyCollector.DeleteUpstreamServerLabels(removedUpstreams)
 
 	removedPeers := findRemovedKeys(cnf.metricLabelsIndex.ingressUpstreamPeers[key], newPeers)
 	cnf.metricLabelsIndex.ingressUpstreamPeers[key] = newPeersIPs
-	cnf.labelUpdater.UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels)
-	cnf.labelUpdater.DeleteUpstreamServerPeerLabels(removedPeers)
+	cnf.latencyCollector.UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels)
+	cnf.latencyCollector.DeleteUpstreamServerPeerLabels(removedPeers)
+	cnf.latencyCollector.DeleteMetrics(removedPeers)
 
-	serverZoneLabels := make(map[string][]string)
-	newZones := make(map[string]bool)
-	var newZonesNames []string
-	for _, rule := range ingEx.Ingress.Spec.Rules {
-		serverZoneLabels[rule.Host] = createServerZoneLabels("ingress", ingEx.Ingress.Name, ingEx.Ingress.Namespace)
-		newZones[rule.Host] = true
-		newZonesNames = append(newZonesNames, rule.Host)
+	if cnf.isPlus {
+		cnf.labelUpdater.UpdateUpstreamServerLabels(upstreamServerLabels)
+		cnf.labelUpdater.DeleteUpstreamServerLabels(removedUpstreams)
+		cnf.labelUpdater.UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels)
+		cnf.labelUpdater.DeleteUpstreamServerPeerLabels(removedPeers)
+		serverZoneLabels := make(map[string][]string)
+		newZones := make(map[string]bool)
+		var newZonesNames []string
+		for _, rule := range ingEx.Ingress.Spec.Rules {
+			serverZoneLabels[rule.Host] = createServerZoneLabels("ingress", ingEx.Ingress.Name, ingEx.Ingress.Namespace)
+			newZones[rule.Host] = true
+			newZonesNames = append(newZonesNames, rule.Host)
+		}
+
+		removedZones := findRemovedKeys(cnf.metricLabelsIndex.ingressServerZones[key], newZones)
+		cnf.metricLabelsIndex.ingressServerZones[key] = newZonesNames
+		cnf.labelUpdater.UpdateServerZoneLabels(serverZoneLabels)
+		cnf.labelUpdater.DeleteServerZoneLabels(removedZones)
 	}
-
-	removedZones := findRemovedKeys(cnf.metricLabelsIndex.ingressServerZones[key], newZones)
-	cnf.metricLabelsIndex.ingressServerZones[key] = newZonesNames
-	cnf.labelUpdater.UpdateServerZoneLabels(serverZoneLabels)
-	cnf.labelUpdater.DeleteServerZoneLabels(removedZones)
 }
 
 func (cnf *Configurator) deleteIngressMetricsLabels(key string) {
-	cnf.labelUpdater.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.ingressUpstreams[key])
-	cnf.labelUpdater.DeleteServerZoneLabels(cnf.metricLabelsIndex.ingressServerZones[key])
-	cnf.labelUpdater.DeleteUpstreamServerPeerLabels(cnf.metricLabelsIndex.ingressUpstreamPeers[key])
+	cnf.latencyCollector.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.ingressUpstreams[key])
+	cnf.latencyCollector.DeleteUpstreamServerPeerLabels(cnf.metricLabelsIndex.ingressUpstreamPeers[key])
+	cnf.latencyCollector.DeleteMetrics(cnf.metricLabelsIndex.ingressUpstreamPeers[key])
+
+	if cnf.isPlus {
+		cnf.labelUpdater.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.ingressUpstreams[key])
+		cnf.labelUpdater.DeleteServerZoneLabels(cnf.metricLabelsIndex.ingressServerZones[key])
+		cnf.labelUpdater.DeleteUpstreamServerPeerLabels(cnf.metricLabelsIndex.ingressUpstreamPeers[key])
+	}
+
 	delete(cnf.metricLabelsIndex.ingressUpstreams, key)
 	delete(cnf.metricLabelsIndex.ingressServerZones, key)
 	delete(cnf.metricLabelsIndex.ingressUpstreamPeers, key)
@@ -230,10 +249,9 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
 	cnf.nginxManager.CreateConfig(name, content)
 
 	cnf.ingresses[name] = ingEx
-	if cnf.isPlus && cnf.isPrometheusEnabled {
+	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateIngressMetricsLabels(ingEx, nginxCfg.Upstreams)
 	}
-
 	return nil
 }
 
@@ -275,7 +293,7 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 		minionName := objectMetaToFileName(&minion.Ingress.ObjectMeta)
 		cnf.minions[name][minionName] = true
 	}
-	if cnf.isPlus && cnf.isPrometheusEnabled {
+	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateIngressMetricsLabels(mergeableIngs.Master, nginxCfg.Upstreams)
 	}
 
@@ -308,33 +326,49 @@ func (cnf *Configurator) updateVirtualServerMetricsLabels(virtualServerEx *Virtu
 
 	removedPeers := findRemovedKeys(cnf.metricLabelsIndex.virtualServerUpstreamPeers[key], newPeers)
 	cnf.metricLabelsIndex.virtualServerUpstreamPeers[key] = newPeersIPs
-	cnf.labelUpdater.UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels)
-	cnf.labelUpdater.DeleteUpstreamServerPeerLabels(removedPeers)
+	cnf.latencyCollector.UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels)
+	cnf.latencyCollector.DeleteUpstreamServerPeerLabels(removedPeers)
 
 	removedUpstreams := findRemovedKeys(cnf.metricLabelsIndex.virtualServerUpstreams[key], newUpstreams)
-	cnf.labelUpdater.UpdateUpstreamServerLabels(labels)
+	cnf.latencyCollector.UpdateUpstreamServerLabels(labels)
 	cnf.metricLabelsIndex.virtualServerUpstreams[key] = newUpstreamsNames
-	cnf.labelUpdater.DeleteUpstreamServerLabels(removedUpstreams)
 
-	serverZoneLabels := make(map[string][]string)
-	newZones := make(map[string]bool)
-	newZonesNames := []string{virtualServerEx.VirtualServer.Spec.Host}
+	cnf.latencyCollector.DeleteUpstreamServerLabels(removedUpstreams)
+	cnf.latencyCollector.DeleteMetrics(removedPeers)
 
-	serverZoneLabels[virtualServerEx.VirtualServer.Spec.Host] = createServerZoneLabels(
-		"virtualserver", virtualServerEx.VirtualServer.Name, virtualServerEx.VirtualServer.Namespace)
+	if cnf.isPlus {
+		cnf.labelUpdater.UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels)
+		cnf.labelUpdater.DeleteUpstreamServerPeerLabels(removedPeers)
+		cnf.labelUpdater.UpdateUpstreamServerLabels(labels)
+		cnf.labelUpdater.DeleteUpstreamServerLabels(removedUpstreams)
 
-	newZones[virtualServerEx.VirtualServer.Spec.Host] = true
+		serverZoneLabels := make(map[string][]string)
+		newZones := make(map[string]bool)
+		newZonesNames := []string{virtualServerEx.VirtualServer.Spec.Host}
 
-	removedZones := findRemovedKeys(cnf.metricLabelsIndex.virtualServerServerZones[key], newZones)
-	cnf.metricLabelsIndex.virtualServerServerZones[key] = newZonesNames
-	cnf.labelUpdater.UpdateServerZoneLabels(serverZoneLabels)
-	cnf.labelUpdater.DeleteServerZoneLabels(removedZones)
+		serverZoneLabels[virtualServerEx.VirtualServer.Spec.Host] = createServerZoneLabels(
+			"virtualserver", virtualServerEx.VirtualServer.Name, virtualServerEx.VirtualServer.Namespace)
+
+		newZones[virtualServerEx.VirtualServer.Spec.Host] = true
+
+		removedZones := findRemovedKeys(cnf.metricLabelsIndex.virtualServerServerZones[key], newZones)
+		cnf.metricLabelsIndex.virtualServerServerZones[key] = newZonesNames
+		cnf.labelUpdater.UpdateServerZoneLabels(serverZoneLabels)
+		cnf.labelUpdater.DeleteServerZoneLabels(removedZones)
+	}
 }
 
 func (cnf *Configurator) deleteVirtualServerMetricsLabels(key string) {
-	cnf.labelUpdater.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.virtualServerUpstreams[key])
-	cnf.labelUpdater.DeleteServerZoneLabels(cnf.metricLabelsIndex.virtualServerServerZones[key])
-	cnf.labelUpdater.DeleteUpstreamServerPeerLabels(cnf.metricLabelsIndex.virtualServerUpstreamPeers[key])
+	cnf.latencyCollector.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.virtualServerUpstreams[key])
+	cnf.latencyCollector.DeleteUpstreamServerPeerLabels(cnf.metricLabelsIndex.virtualServerUpstreamPeers[key])
+	cnf.latencyCollector.DeleteMetrics(cnf.metricLabelsIndex.virtualServerUpstreamPeers[key])
+
+	if cnf.isPlus {
+		cnf.labelUpdater.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.virtualServerUpstreams[key])
+		cnf.labelUpdater.DeleteServerZoneLabels(cnf.metricLabelsIndex.virtualServerServerZones[key])
+		cnf.labelUpdater.DeleteUpstreamServerPeerLabels(cnf.metricLabelsIndex.virtualServerUpstreamPeers[key])
+	}
+
 	delete(cnf.metricLabelsIndex.virtualServerUpstreams, key)
 	delete(cnf.metricLabelsIndex.virtualServerServerZones, key)
 	delete(cnf.metricLabelsIndex.virtualServerUpstreamPeers, key)
@@ -375,10 +409,9 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 
 	cnf.virtualServers[name] = virtualServerEx
 
-	if cnf.isPlus && cnf.isPrometheusEnabled {
+	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.updateVirtualServerMetricsLabels(virtualServerEx, vsCfg.Upstreams)
 	}
-
 	return warnings, nil
 }
 
@@ -651,7 +684,7 @@ func (cnf *Configurator) DeleteIngress(key string) error {
 	delete(cnf.ingresses, name)
 	delete(cnf.minions, name)
 
-	if cnf.isPlus && cnf.isPrometheusEnabled {
+	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.deleteIngressMetricsLabels(key)
 	}
 
@@ -668,7 +701,7 @@ func (cnf *Configurator) DeleteVirtualServer(key string) error {
 	cnf.nginxManager.DeleteConfig(name)
 
 	delete(cnf.virtualServers, name)
-	if cnf.isPlus && cnf.isPrometheusEnabled {
+	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
 		cnf.deleteVirtualServerMetricsLabels(fmt.Sprintf(key))
 	}
 

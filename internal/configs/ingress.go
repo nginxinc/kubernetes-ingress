@@ -74,7 +74,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 	if ingEx.Ingress.Spec.Backend != nil {
 		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
 		upstream := createUpstream(ingEx, name, ingEx.Ingress.Spec.Backend, spServices[ingEx.Ingress.Spec.Backend.ServiceName], &cfgParams,
-			isPlus, isResolverConfigured)
+			isPlus, isResolverConfigured, staticParams.EnableLatencyMetrics)
 		upstreams[name] = upstream
 
 		if cfgParams.HealthCheckEnabled {
@@ -178,7 +178,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			}
 
 			if _, exists := upstreams[upsName]; !exists {
-				upstream := createUpstream(ingEx, upsName, &path.Backend, spServices[path.Backend.ServiceName], &cfgParams, isPlus, isResolverConfigured)
+				upstream := createUpstream(ingEx, upsName, &path.Backend, spServices[path.Backend.ServiceName], &cfgParams, isPlus, isResolverConfigured, staticParams.EnableLatencyMetrics)
 				upstreams[upsName] = upstream
 			}
 
@@ -301,20 +301,22 @@ func upstreamRequiresQueue(name string, ingEx *IngressEx, cfg *ConfigParams) (n 
 }
 
 func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBackend, stickyCookie string, cfg *ConfigParams,
-	isPlus bool, isResolverConfigured bool) version1.Upstream {
+	isPlus bool, isResolverConfigured bool, isLatencyMetricsEnabled bool) version1.Upstream {
 	var ups version1.Upstream
-
+	labels := version1.UpstreamLabels{
+		Service:           backend.ServiceName,
+		ResourceType:      "ingress",
+		ResourceName:      ingEx.Ingress.Name,
+		ResourceNamespace: ingEx.Ingress.Namespace,
+	}
 	if isPlus {
 		queue, timeout := upstreamRequiresQueue(backend.ServiceName+backend.ServicePort.String(), ingEx, cfg)
-		upstreamLabels := version1.UpstreamLabels{
-			Service:           backend.ServiceName,
-			ResourceType:      "ingress",
-			ResourceName:      ingEx.Ingress.Name,
-			ResourceNamespace: ingEx.Ingress.Namespace,
-		}
-		ups = version1.Upstream{Name: name, StickyCookie: stickyCookie, Queue: queue, QueueTimeout: timeout, UpstreamLabels: upstreamLabels}
+		ups = version1.Upstream{Name: name, StickyCookie: stickyCookie, Queue: queue, QueueTimeout: timeout, UpstreamLabels: labels}
 	} else {
 		ups = version1.NewUpstreamWithDefaultServer(name)
+		if isLatencyMetricsEnabled {
+			ups.UpstreamLabels = labels
+		}
 	}
 
 	endps, exists := ingEx.Endpoints[backend.ServiceName+backend.ServicePort.String()]

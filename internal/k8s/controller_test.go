@@ -742,7 +742,7 @@ func getMergableDefaults() (cafeMaster, coffeeMinion, teaMinion networking.Ingre
 	cafeMasterIngEx, _ := lbc.createIngress(&cafeMaster)
 	ingExMap["default-cafe-master"] = cafeMasterIngEx
 
-	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &configs.GlobalConfigParams{}, &version1.TemplateExecutor{}, &version2.TemplateExecutor{}, false, false, nil, false)
+	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &configs.GlobalConfigParams{}, &version1.TemplateExecutor{}, &version2.TemplateExecutor{}, false, false, nil, false, nil, false)
 
 	// edit private field ingresses to use in testing
 	pointerVal := reflect.ValueOf(cnf)
@@ -956,7 +956,7 @@ func TestFindProbeForPods(t *testing.T) {
 
 func TestGetServicePortForIngressPort(t *testing.T) {
 	fakeClient := fake.NewSimpleClientset()
-	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &configs.GlobalConfigParams{}, &version1.TemplateExecutor{}, &version2.TemplateExecutor{}, false, false, nil, false)
+	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &configs.GlobalConfigParams{}, &version1.TemplateExecutor{}, &version2.TemplateExecutor{}, false, false, nil, false, nil, false)
 	lbc := LoadBalancerController{
 		client:           fakeClient,
 		ingressClass:     "nginx",
@@ -1113,7 +1113,7 @@ func TestFindIngressesForSecret(t *testing.T) {
 
 			manager := nginx.NewFakeManager("/etc/nginx")
 
-			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &configs.GlobalConfigParams{}, templateExecutor, templateExecutorV2, false, false, nil, false)
+			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &configs.GlobalConfigParams{}, templateExecutor, templateExecutorV2, false, false, nil, false, nil, false)
 			lbc := LoadBalancerController{
 				client:           fakeClient,
 				ingressClass:     "nginx",
@@ -1304,7 +1304,7 @@ func TestFindIngressesForSecretWithMinions(t *testing.T) {
 
 			manager := nginx.NewFakeManager("/etc/nginx")
 
-			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &configs.GlobalConfigParams{}, templateExecutor, templateExecutorV2, false, false, nil, false)
+			cnf := configs.NewConfigurator(manager, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &configs.GlobalConfigParams{}, templateExecutor, templateExecutorV2, false, false, nil, false, nil, false)
 			lbc := LoadBalancerController{
 				client:           fakeClient,
 				ingressClass:     "nginx",
