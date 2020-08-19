@@ -164,7 +164,7 @@ class TestAccessControlPoliciesVsr:
         print(f"Response: {resp.status_code}\n{resp.text}")
         assert resp.status_code == 200
 
-        print(f"Create deny policy")
+        print(f"Create allow policy")
         pol_name = create_policy_from_yaml(
             kube_apis.custom_objects, allow_pol_src, v_s_route_setup.route_m.namespace
         )
