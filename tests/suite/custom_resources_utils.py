@@ -324,8 +324,8 @@ def patch_virtual_server_from_yaml(
             "k8s.nginx.org", "v1", namespace, "virtualservers", name, dep
         )
         print(f"VirtualServer updated with name '{dep['metadata']['name']}'")
-    except ApiException as ex:
-        logging.exception(f"Failed with exception {ex} while patching VirtualServer: {name}")
+    except ApiException:
+        logging.exception(f"Failed with exception while patching VirtualServer: {name}")
         raise
 
 
@@ -367,8 +367,8 @@ def patch_v_s_route_from_yaml(
             "k8s.nginx.org", "v1", namespace, "virtualserverroutes", name, dep
         )
         print(f"VirtualServerRoute updated with name '{dep['metadata']['name']}'")
-    except ApiException as ex:
-        logging.exception(f"Failed with exception {ex} while patching VirtualServerRoute: {name}")
+    except ApiException:
+        logging.exception(f"Failed with exception while patching VirtualServerRoute: {name}")
         raise
 
 
