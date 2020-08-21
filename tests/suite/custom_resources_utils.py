@@ -85,7 +85,6 @@ def read_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> objec
 
     except ApiException as ex:
         logging.exception(f"Exception occured: {ex} while getting reading CRD")
-        raise
 
 
 def read_ap_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
@@ -106,7 +105,6 @@ def read_ap_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> ob
 
     except ApiException as ex:
         logging.exception(f"Exception occured: {ex} while getting reading CRD")
-        raise
 
 
 def create_policy_from_yaml(
@@ -129,11 +127,10 @@ def create_policy_from_yaml(
         )
         print(f"Policy created with name '{dep['metadata']['name']}'")
         return dep["metadata"]["name"]
-    except ApiException as ex:
+    except ApiException:
         logging.exception(
-            f"Exception: {ex} occured while creating Policy: {dep['metadata']['name']}"
+            f"Exception occured while creating Policy: {dep['metadata']['name']}"
         )
-        raise
 
 
 def delete_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
@@ -179,9 +176,8 @@ def read_policy(custom_objects: CustomObjectsApi, namespace, name) -> object:
         pprint(response)
         return response
 
-    except ApiException as ex:
-        logging.exception(f"Exception occured: {ex} while getting reading Policy")
-        raise
+    except ApiException:
+        logging.exception(f"Exception occured while getting reading Policy")
 
 
 def create_virtual_server_from_yaml(
@@ -326,7 +322,6 @@ def patch_virtual_server_from_yaml(
         print(f"VirtualServer updated with name '{dep['metadata']['name']}'")
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServer: {name}")
-        raise
 
 
 def patch_virtual_server(custom_objects: CustomObjectsApi, name, namespace, body) -> str:
@@ -369,7 +364,6 @@ def patch_v_s_route_from_yaml(
         print(f"VirtualServerRoute updated with name '{dep['metadata']['name']}'")
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServerRoute: {name}")
-        raise
 
 
 def get_vs_nginx_template_conf(
