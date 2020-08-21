@@ -82,8 +82,9 @@ def read_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> objec
         pprint(response)
         return response
 
-    except ApiException as ex:
-        logging.exception(f"Exception occured: {ApiException.ge}while getting reading CRD")
+    except ApiException:
+        logging.exception(f"Exception occured while getting reading CRD")
+        raise
 
 
 def read_ap_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
@@ -102,8 +103,9 @@ def read_ap_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> ob
         )
         return response
 
-    except ApiException as ex:
-        logging.exception(f"Exception occured: {ex} while getting reading CRD")
+    except ApiException:
+        logging.exception(f"Exception occured while getting reading CRD")
+        raise
 
 
 def create_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
