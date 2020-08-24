@@ -120,16 +120,12 @@ class TestAppProtect:
         """
         print("------------- Run test for AP policy: dataguard-alarm --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
-        events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
-        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
-        wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
-        wait_before_test(15)
-        if wait_status:
-            print("----------------------- Send valid request ----------------------")
-            resp_valid = requests.get(
-                backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False
-            )
-            print(resp_valid.text)
+        wait_before_test(40)
+        print("----------------------- Send valid request ----------------------")
+        resp_valid = requests.get(
+            backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False
+        )
+        print(resp_valid.text)
         assert valid_resp_addr in resp_valid.text
         assert valid_resp_name in resp_valid.text
         assert resp_valid.status_code == 200
@@ -152,17 +148,13 @@ class TestAppProtect:
         """   
         print("------------- Run test for AP policy: file-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
-        events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
-        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
-        wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
-        wait_before_test(15)
+        wait_before_test(40)
         resp_valid = ""
-        if wait_status:
-            print("----------------------- Send valid request ----------------------")
-            resp_valid = requests.get(
-                backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False
-            )
-            print(resp_valid.text)
+        print("----------------------- Send valid request ----------------------")
+        resp_valid = requests.get(
+            backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False
+        )
+        print(resp_valid.text)
         assert valid_resp_addr in resp_valid.text
         assert valid_resp_name in resp_valid.text
         assert resp_valid.status_code == 200
@@ -187,16 +179,11 @@ class TestAppProtect:
         """
         print("------------- Run test for AP policy: malformed-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
-        events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
-        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
-        wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
-        wait_before_test(15)
-        resp_valid = ""
-        if wait_status:
-            print("----------------------- Send valid request with no body ----------------------")
-            headers = {"host": backend_setup.ingress_host}
-            resp_valid = requests.get(backend_setup.req_url, headers=headers, verify=False)
-            print(resp_valid.text)
+        wait_before_test(40)
+        print("----------------------- Send valid request with no body ----------------------")
+        headers = {"host": backend_setup.ingress_host}
+        resp_valid = requests.get(backend_setup.req_url, headers=headers, verify=False)
+        print(resp_valid.text)
         assert valid_resp_addr in resp_valid.text
         assert valid_resp_name in resp_valid.text
         assert resp_valid.status_code == 200
