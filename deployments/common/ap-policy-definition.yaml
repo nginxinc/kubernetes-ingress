@@ -868,6 +868,21 @@ spec:
                     name:
                       type: string
                   type: object
+                threat-campaigns:
+                  items:
+                    properties:
+                      isEnabled:
+                        type: boolean
+                      name:
+                        type: string
+                    type: object
+                  type: array
+                threatCampaignReference:
+                  properties:
+                    link:
+                      pattern: ^http
+                      type: string
+                  type: object
                 urlReference:
                   properties:
                     link:
