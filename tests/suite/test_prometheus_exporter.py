@@ -43,7 +43,8 @@ def enable_exporter_port(cli_arguments, kube_apis,
                                            'nginx_ingress_controller_nginx_last_reload_milliseconds',
                                            'nginx_ingress_controller_nginx_last_reload_status{class="nginx"} 1',
                                            'nginx_ingress_controller_nginx_reload_errors_total{class="nginx"} 0',
-                                           'nginx_ingress_controller_nginx_reloads_total{class="nginx"}'])
+                                           'nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="endpoints"}',
+                                           'nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="other"}'])
                           ],
                          indirect=["ingress_controller"])
 class TestPrometheusExporter:
