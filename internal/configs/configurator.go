@@ -60,10 +60,12 @@ type tlsPassthroughPair struct {
 // metricLabelsIndex keeps the relations between Ingress Controller resources and NGINX configuration.
 // Used to be able to add Prometheus Metrics variable labels grouped by resource key.
 type metricLabelsIndex struct {
-	ingressUpstreams         map[string][]string
-	virtualServerUpstreams   map[string][]string
-	ingressServerZones       map[string][]string
-	virtualServerServerZones map[string][]string
+	ingressUpstreams           map[string][]string
+	virtualServerUpstreams     map[string][]string
+	ingressServerZones         map[string][]string
+	virtualServerServerZones   map[string][]string
+	ingressUpstreamPeers       map[string][]string
+	virtualServerUpstreamPeers map[string][]string
 }
 
 // Configurator configures NGINX.
@@ -80,7 +82,7 @@ type Configurator struct {
 	tlsPassthroughPairs map[string]tlsPassthroughPair
 	isWildcardEnabled   bool
 	isPlus              bool
-	nginxPlusCollector  *collector.NginxPlusCollector
+	labelUpdater        collector.LabelUpdater
 	metricLabelsIndex   *metricLabelsIndex
 	isPrometheusEnabled bool
 }
@@ -88,13 +90,15 @@ type Configurator struct {
 // NewConfigurator creates a new Configurator.
 func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams, globalCfgParams *GlobalConfigParams,
 	templateExecutor *version1.TemplateExecutor, templateExecutorV2 *version2.TemplateExecutor, isPlus bool, isWildcardEnabled bool,
-	plusCollector *collector.NginxPlusCollector, isPrometheusEnabled bool) *Configurator {
+	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool) *Configurator {
 
 	metricLabelsIndex := &metricLabelsIndex{
-		ingressUpstreams:         make(map[string][]string),
-		virtualServerUpstreams:   make(map[string][]string),
-		ingressServerZones:       make(map[string][]string),
-		virtualServerServerZones: make(map[string][]string),
+		ingressUpstreams:           make(map[string][]string),
+		virtualServerUpstreams:     make(map[string][]string),
+		ingressServerZones:         make(map[string][]string),
+		virtualServerServerZones:   make(map[string][]string),
+		ingressUpstreamPeers:       make(map[string][]string),
+		virtualServerUpstreamPeers: make(map[string][]string),
 	}
 
 	cnf := Configurator{
@@ -110,7 +114,7 @@ func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigPa
 		tlsPassthroughPairs: make(map[string]tlsPassthroughPair),
 		isPlus:              isPlus,
 		isWildcardEnabled:   isWildcardEnabled,
-		nginxPlusCollector:  plusCollector,
+		labelUpdater:        labelUpdater,
 		metricLabelsIndex:   metricLabelsIndex,
 		isPrometheusEnabled: isPrometheusEnabled,
 	}
@@ -145,18 +149,34 @@ func (cnf *Configurator) updateIngressMetricsLabels(ingEx *IngressEx, upstreams 
 	newUpstreams := make(map[string]bool)
 	var newUpstreamsNames []string
 
+	upstreamServerPeerLabels := make(map[string][]string)
+	newPeers := make(map[string]bool)
+	var newPeersIPs []string
+
 	for _, u := range upstreams {
 		upstreamServerLabels[u.Name] = createUpstreamServerLabels(u.UpstreamLabels.Service, u.UpstreamLabels.ResourceType, u.UpstreamLabels.ResourceName, u.UpstreamLabels.ResourceNamespace)
 		newUpstreams[u.Name] = true
 		newUpstreamsNames = append(newUpstreamsNames, u.Name)
+		for _, server := range u.UpstreamServers {
+			s := fmt.Sprintf("%v:%v", server.Address, server.Port)
+			podName := ingEx.PodsByIP[s]
+			labelKey := fmt.Sprintf("%v/%v", u.Name, s)
+			upstreamServerPeerLabels[labelKey] = []string{podName}
+			newPeers[labelKey] = true
+			newPeersIPs = append(newPeersIPs, labelKey)
+		}
 	}
 
 	key := fmt.Sprintf("%v/%v", ingEx.Ingress.Namespace, ingEx.Ingress.Name)
-
 	removedUpstreams := findRemovedKeys(cnf.metricLabelsIndex.ingressUpstreams[key], newUpstreams)
 	cnf.metricLabelsIndex.ingressUpstreams[key] = newUpstreamsNames
-	cnf.nginxPlusCollector.UpdateUpstreamServerLabels(upstreamServerLabels)
-	cnf.nginxPlusCollector.DeleteUpstreamServerLabels(removedUpstreams)
+	cnf.labelUpdater.UpdateUpstreamServerLabels(upstreamServerLabels)
+	cnf.labelUpdater.DeleteUpstreamServerLabels(removedUpstreams)
+
+	removedPeers := findRemovedKeys(cnf.metricLabelsIndex.ingressUpstreamPeers[key], newPeers)
+	cnf.metricLabelsIndex.ingressUpstreamPeers[key] = newPeersIPs
+	cnf.labelUpdater.UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels)
+	cnf.labelUpdater.DeleteUpstreamServerPeerLabels(removedPeers)
 
 	serverZoneLabels := make(map[string][]string)
 	newZones := make(map[string]bool)
@@ -169,15 +189,17 @@ func (cnf *Configurator) updateIngressMetricsLabels(ingEx *IngressEx, upstreams 
 
 	removedZones := findRemovedKeys(cnf.metricLabelsIndex.ingressServerZones[key], newZones)
 	cnf.metricLabelsIndex.ingressServerZones[key] = newZonesNames
-	cnf.nginxPlusCollector.UpdateServerZoneLabels(serverZoneLabels)
-	cnf.nginxPlusCollector.DeleteServerZoneLabels(removedZones)
+	cnf.labelUpdater.UpdateServerZoneLabels(serverZoneLabels)
+	cnf.labelUpdater.DeleteServerZoneLabels(removedZones)
 }
 
 func (cnf *Configurator) deleteIngressMetricsLabels(key string) {
-	cnf.nginxPlusCollector.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.ingressUpstreams[key])
-	cnf.nginxPlusCollector.DeleteServerZoneLabels(cnf.metricLabelsIndex.ingressServerZones[key])
+	cnf.labelUpdater.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.ingressUpstreams[key])
+	cnf.labelUpdater.DeleteServerZoneLabels(cnf.metricLabelsIndex.ingressServerZones[key])
+	cnf.labelUpdater.DeleteUpstreamServerPeerLabels(cnf.metricLabelsIndex.ingressUpstreamPeers[key])
 	delete(cnf.metricLabelsIndex.ingressUpstreams, key)
 	delete(cnf.metricLabelsIndex.ingressServerZones, key)
+	delete(cnf.metricLabelsIndex.ingressUpstreamPeers, key)
 }
 
 // AddOrUpdateIngress adds or updates NGINX configuration for the Ingress resource.
@@ -208,7 +230,6 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
 	cnf.nginxManager.CreateConfig(name, content)
 
 	cnf.ingresses[name] = ingEx
-
 	if cnf.isPlus && cnf.isPrometheusEnabled {
 		cnf.updateIngressMetricsLabels(ingEx, nginxCfg.Upstreams)
 	}
@@ -254,7 +275,6 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 		minionName := objectMetaToFileName(&minion.Ingress.ObjectMeta)
 		cnf.minions[name][minionName] = true
 	}
-
 	if cnf.isPlus && cnf.isPrometheusEnabled {
 		cnf.updateIngressMetricsLabels(mergeableIngs.Master, nginxCfg.Upstreams)
 	}
@@ -267,18 +287,34 @@ func (cnf *Configurator) updateVirtualServerMetricsLabels(virtualServerEx *Virtu
 	newUpstreams := make(map[string]bool)
 	var newUpstreamsNames []string
 
+	upstreamServerPeerLabels := make(map[string][]string)
+	newPeers := make(map[string]bool)
+	var newPeersIPs []string
+
 	for _, u := range upstreams {
 		labels[u.Name] = createUpstreamServerLabels(u.UpstreamLabels.Service, u.UpstreamLabels.ResourceType, u.UpstreamLabels.ResourceName, u.UpstreamLabels.ResourceNamespace)
 		newUpstreams[u.Name] = true
 		newUpstreamsNames = append(newUpstreamsNames, u.Name)
+		for _, server := range u.Servers {
+			podName := virtualServerEx.PodsByIP[server.Address]
+			labelKey := fmt.Sprintf("%v/%v", u.Name, server.Address)
+			upstreamServerPeerLabels[labelKey] = []string{podName}
+			newPeers[labelKey] = true
+			newPeersIPs = append(newPeersIPs, labelKey)
+		}
 	}
 
 	key := fmt.Sprintf("%v/%v", virtualServerEx.VirtualServer.Namespace, virtualServerEx.VirtualServer.Name)
 
+	removedPeers := findRemovedKeys(cnf.metricLabelsIndex.virtualServerUpstreamPeers[key], newPeers)
+	cnf.metricLabelsIndex.virtualServerUpstreamPeers[key] = newPeersIPs
+	cnf.labelUpdater.UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels)
+	cnf.labelUpdater.DeleteUpstreamServerPeerLabels(removedPeers)
+
 	removedUpstreams := findRemovedKeys(cnf.metricLabelsIndex.virtualServerUpstreams[key], newUpstreams)
-	cnf.nginxPlusCollector.UpdateUpstreamServerLabels(labels)
+	cnf.labelUpdater.UpdateUpstreamServerLabels(labels)
 	cnf.metricLabelsIndex.virtualServerUpstreams[key] = newUpstreamsNames
-	cnf.nginxPlusCollector.DeleteUpstreamServerLabels(removedUpstreams)
+	cnf.labelUpdater.DeleteUpstreamServerLabels(removedUpstreams)
 
 	serverZoneLabels := make(map[string][]string)
 	newZones := make(map[string]bool)
@@ -291,15 +327,17 @@ func (cnf *Configurator) updateVirtualServerMetricsLabels(virtualServerEx *Virtu
 
 	removedZones := findRemovedKeys(cnf.metricLabelsIndex.virtualServerServerZones[key], newZones)
 	cnf.metricLabelsIndex.virtualServerServerZones[key] = newZonesNames
-	cnf.nginxPlusCollector.UpdateServerZoneLabels(serverZoneLabels)
-	cnf.nginxPlusCollector.DeleteServerZoneLabels(removedZones)
+	cnf.labelUpdater.UpdateServerZoneLabels(serverZoneLabels)
+	cnf.labelUpdater.DeleteServerZoneLabels(removedZones)
 }
 
 func (cnf *Configurator) deleteVirtualServerMetricsLabels(key string) {
-	cnf.nginxPlusCollector.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.virtualServerUpstreams[key])
-	cnf.nginxPlusCollector.DeleteServerZoneLabels(cnf.metricLabelsIndex.virtualServerServerZones[key])
+	cnf.labelUpdater.DeleteUpstreamServerLabels(cnf.metricLabelsIndex.virtualServerUpstreams[key])
+	cnf.labelUpdater.DeleteServerZoneLabels(cnf.metricLabelsIndex.virtualServerServerZones[key])
+	cnf.labelUpdater.DeleteUpstreamServerPeerLabels(cnf.metricLabelsIndex.virtualServerUpstreamPeers[key])
 	delete(cnf.metricLabelsIndex.virtualServerUpstreams, key)
 	delete(cnf.metricLabelsIndex.virtualServerServerZones, key)
+	delete(cnf.metricLabelsIndex.virtualServerUpstreamPeers, key)
 }
 
 // AddOrUpdateVirtualServer adds or updates NGINX configuration for the VirtualServer resource.

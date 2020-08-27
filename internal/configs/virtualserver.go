@@ -37,6 +37,7 @@ type VirtualServerEx struct {
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
 	Policies            map[string]*conf_v1alpha1.Policy
+	PodsByIP            map[string]string
 }
 
 func (vsx *VirtualServerEx) String() string {

@@ -1933,12 +1933,16 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 		desc        string
 		targetPort  int32
 		svcEps      v1.Endpoints
-		expectedEps []string
+		expectedEps []podEndpoint
 	}{
 		{
-			desc:        "find one endpoint",
-			targetPort:  80,
-			expectedEps: []string{"1.2.3.4:80"},
+			desc:       "find one endpoint",
+			targetPort: 80,
+			expectedEps: []podEndpoint{
+				{
+					Address: "1.2.3.4:80",
+				},
+			},
 		},
 		{
 			desc:        "targetPort mismatch",

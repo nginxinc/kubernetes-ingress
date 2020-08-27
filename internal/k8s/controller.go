@@ -85,6 +85,11 @@ var (
 	}
 )
 
+type podEndpoint struct {
+	Address string
+	PodName string
+}
+
 // LoadBalancerController watches Kubernetes API and
 // reconfigures NGINX via NginxController when needed
 type LoadBalancerController struct {
@@ -2262,6 +2267,14 @@ func findVirtualServersForVirtualServerRouteKey(virtualServers []*conf_v1.Virtua
 	return result
 }
 
+func getIPAddressesFromEndpoints(endpoints []podEndpoint) []string {
+	var endps []string
+	for _, ep := range endpoints {
+		endps = append(endps, ep.Address)
+	}
+	return endps
+}
+
 func (lbc *LoadBalancerController) getAndValidateSecret(secretKey string) (*api_v1.Secret, error) {
 	secretObject, secretExists, err := lbc.secretLister.GetByKey(secretKey)
 	if err != nil {
@@ -2342,15 +2355,16 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 	ingEx.Endpoints = make(map[string][]string)
 	ingEx.HealthChecks = make(map[string]*api_v1.Probe)
 	ingEx.ExternalNameSvcs = make(map[string]bool)
+	ingEx.PodsByIP = make(map[string]string)
 
 	if ing.Spec.Backend != nil {
-		endps := []string{}
+		podEndps := []podEndpoint{}
 		var external bool
 		svc, err := lbc.getServiceForIngressBackend(ing.Spec.Backend, ing.Namespace)
 		if err != nil {
 			glog.V(3).Infof("Error getting service %v: %v", ing.Spec.Backend.ServiceName, err)
 		} else {
-			endps, external, err = lbc.getEndpointsForIngressBackend(ing.Spec.Backend, svc)
+			podEndps, external, err = lbc.getEndpointsForIngressBackend(ing.Spec.Backend, svc)
 			if err == nil && external && lbc.isNginxPlus {
 				ingEx.ExternalNameSvcs[svc.Name] = true
 			}
@@ -2359,6 +2373,9 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 		if err != nil {
 			glog.Warningf("Error retrieving endpoints for the service %v: %v", ing.Spec.Backend.ServiceName, err)
 		}
+
+		endps := getIPAddressesFromEndpoints(podEndps)
+
 		// endps is empty if there was any error before this point
 		ingEx.Endpoints[ing.Spec.Backend.ServiceName+ing.Spec.Backend.ServicePort.String()] = endps
 
@@ -2366,6 +2383,12 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 			healthCheck := lbc.getHealthChecksForIngressBackend(ing.Spec.Backend, ing.Namespace)
 			if healthCheck != nil {
 				ingEx.HealthChecks[ing.Spec.Backend.ServiceName+ing.Spec.Backend.ServicePort.String()] = healthCheck
+			}
+		}
+
+		if lbc.isNginxPlus {
+			for _, endpoint := range podEndps {
+				ingEx.PodsByIP[endpoint.Address] = endpoint.PodName
 			}
 		}
 	}
@@ -2381,13 +2404,13 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 		}
 
 		for _, path := range rule.HTTP.Paths {
-			endps := []string{}
+			podEndps := []podEndpoint{}
 			var external bool
 			svc, err := lbc.getServiceForIngressBackend(&path.Backend, ing.Namespace)
 			if err != nil {
 				glog.V(3).Infof("Error getting service %v: %v", &path.Backend.ServiceName, err)
 			} else {
-				endps, external, err = lbc.getEndpointsForIngressBackend(&path.Backend, svc)
+				podEndps, external, err = lbc.getEndpointsForIngressBackend(&path.Backend, svc)
 				if err == nil && external && lbc.isNginxPlus {
 					ingEx.ExternalNameSvcs[svc.Name] = true
 				}
@@ -2396,6 +2419,9 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 			if err != nil {
 				glog.Warningf("Error retrieving endpoints for the service %v: %v", path.Backend.ServiceName, err)
 			}
+
+			endps := getIPAddressesFromEndpoints(podEndps)
+
 			// endps is empty if there was any error before this point
 			ingEx.Endpoints[path.Backend.ServiceName+path.Backend.ServicePort.String()] = endps
 
@@ -2404,6 +2430,12 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 				healthCheck := lbc.getHealthChecksForIngressBackend(&path.Backend, ing.Namespace)
 				if healthCheck != nil {
 					ingEx.HealthChecks[path.Backend.ServiceName+path.Backend.ServicePort.String()] = healthCheck
+				}
+			}
+
+			if lbc.isNginxPlus {
+				for _, endpoint := range podEndps {
+					ingEx.PodsByIP[endpoint.Address] = endpoint.PodName
 				}
 			}
 		}
@@ -2514,18 +2546,19 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 
 	endpoints := make(map[string][]string)
 	externalNameSvcs := make(map[string]bool)
+	podsByIP := make(map[string]string)
 
 	for _, u := range virtualServer.Spec.Upstreams {
 		endpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, u.Service, u.Subselector, u.Port)
 
-		var endps []string
+		var podEndps []podEndpoint
 		var err error
 
 		if len(u.Subselector) > 0 {
-			endps, err = lbc.getEndpointsForSubselector(virtualServer.Namespace, u)
+			podEndps, err = lbc.getEndpointsForSubselector(virtualServer.Namespace, u)
 		} else {
 			var external bool
-			endps, external, err = lbc.getEndpointsForUpstream(virtualServer.Namespace, u.Service, u.Port)
+			podEndps, external, err = lbc.getEndpointsForUpstream(virtualServer.Namespace, u.Service, u.Port)
 
 			if err == nil && external && lbc.isNginxPlus {
 				externalNameSvcs[configs.GenerateExternalNameSvcKey(virtualServer.Namespace, u.Service)] = true
@@ -2536,7 +2569,14 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
 		}
 
+		endps := getIPAddressesFromEndpoints(podEndps)
 		endpoints[endpointsKey] = endps
+
+		if lbc.isNginxPlus {
+			for _, endpoint := range podEndps {
+				podsByIP[endpoint.Address] = endpoint.PodName
+			}
+		}
 	}
 
 	var virtualServerRoutes []*conf_v1.VirtualServerRoute
@@ -2601,13 +2641,13 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 		for _, u := range vsr.Spec.Upstreams {
 			endpointsKey := configs.GenerateEndpointsKey(vsr.Namespace, u.Service, u.Subselector, u.Port)
 
-			var endps []string
+			var podEndps []podEndpoint
 			var err error
 			if len(u.Subselector) > 0 {
-				endps, err = lbc.getEndpointsForSubselector(vsr.Namespace, u)
+				podEndps, err = lbc.getEndpointsForSubselector(vsr.Namespace, u)
 			} else {
 				var external bool
-				endps, external, err = lbc.getEndpointsForUpstream(vsr.Namespace, u.Service, u.Port)
+				podEndps, external, err = lbc.getEndpointsForUpstream(vsr.Namespace, u.Service, u.Port)
 
 				if err == nil && external && lbc.isNginxPlus {
 					externalNameSvcs[configs.GenerateExternalNameSvcKey(vsr.Namespace, u.Service)] = true
@@ -2616,7 +2656,15 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 			if err != nil {
 				glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
 			}
+
+			endps := getIPAddressesFromEndpoints(podEndps)
 			endpoints[endpointsKey] = endps
+
+			if lbc.isNginxPlus {
+				for _, endpoint := range podEndps {
+					podsByIP[endpoint.Address] = endpoint.PodName
+				}
+			}
 		}
 	}
 
@@ -2624,6 +2672,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 	virtualServerEx.VirtualServerRoutes = virtualServerRoutes
 	virtualServerEx.ExternalNameSvcs = externalNameSvcs
 	virtualServerEx.Policies = createPolicyMap(policies)
+	virtualServerEx.PodsByIP = podsByIP
 
 	return &virtualServerEx, virtualServerRouteErrors
 }
@@ -2680,7 +2729,7 @@ func (lbc *LoadBalancerController) createTransportServer(transportServer *conf_v
 	endpoints := make(map[string][]string)
 
 	for _, u := range transportServer.Spec.Upstreams {
-		endps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port))
+		podEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port))
 		if err != nil {
 			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
 		}
@@ -2692,6 +2741,7 @@ func (lbc *LoadBalancerController) createTransportServer(transportServer *conf_v
 		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
 		endpointsKey := configs.GenerateEndpointsKey(transportServer.Namespace, u.Service, nil, uint16(u.Port))
 
+		endps := getIPAddressesFromEndpoints(podEndps)
 		endpoints[endpointsKey] = endps
 	}
 
@@ -2701,7 +2751,7 @@ func (lbc *LoadBalancerController) createTransportServer(transportServer *conf_v
 	}
 }
 
-func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstreamService string, upstreamPort uint16) (endps []string, isExternal bool, err error) {
+func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstreamService string, upstreamPort uint16) (endps []podEndpoint, isExternal bool, err error) {
 	svc, err := lbc.getServiceForUpstream(namespace, upstreamService, upstreamPort)
 	if err != nil {
 		return nil, false, fmt.Errorf("Error getting service %v: %v", upstreamService, err)
@@ -2720,7 +2770,7 @@ func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, ups
 	return endps, isExternal, err
 }
 
-func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, upstream conf_v1.Upstream) (endps []string, err error) {
+func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, upstream conf_v1.Upstream) (endps []podEndpoint, err error) {
 	svc, err := lbc.getServiceForUpstream(namespace, upstream.Service, upstream.Port)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting service %v: %v", upstream.Service, err)
@@ -2750,7 +2800,7 @@ func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, 
 	return endps, err
 }
 
-func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetPort int32, subselector map[string]string, svc *api_v1.Service) (endps []string, err error) {
+func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetPort int32, subselector map[string]string, svc *api_v1.Service) (endps []podEndpoint, err error) {
 	pods, err := lbc.podLister.ListByNamespace(svc.Namespace, labels.Merge(svc.Spec.Selector, subselector).AsSelector())
 	if err != nil {
 		return nil, fmt.Errorf("Error getting pods in namespace %v that match the selector %v: %v", svc.Namespace, labels.Merge(svc.Spec.Selector, subselector), err)
@@ -2766,7 +2816,7 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 	return endps, nil
 }
 
-func getEndpointsBySubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEps api_v1.Endpoints) (endps []string) {
+func getEndpointsBySubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEps api_v1.Endpoints) (endps []podEndpoint) {
 	for _, pod := range pods {
 		for _, subset := range svcEps.Subsets {
 			for _, port := range subset.Ports {
@@ -2775,14 +2825,26 @@ func getEndpointsBySubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEps 
 				}
 				for _, address := range subset.Addresses {
 					if address.IP == pod.Status.PodIP {
-						podEndpoint := fmt.Sprintf("%v:%v", pod.Status.PodIP, targetPort)
-						endps = append(endps, podEndpoint)
+						addr := fmt.Sprintf("%v:%v", pod.Status.PodIP, targetPort)
+
+						podEnd := podEndpoint{
+							Address: addr,
+							PodName: getPodName(address.TargetRef),
+						}
+						endps = append(endps, podEnd)
 					}
 				}
 			}
 		}
 	}
 	return endps
+}
+
+func getPodName(pod *api_v1.ObjectReference) string {
+	if pod != nil {
+		return pod.Name
+	}
+	return ""
 }
 
 func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *networking.IngressBackend, namespace string) *api_v1.Probe {
@@ -2834,13 +2896,18 @@ func compareContainerPortAndServicePort(containerPort api_v1.ContainerPort, svcP
 	return false
 }
 
-func (lbc *LoadBalancerController) getExternalEndpointsForIngressBackend(backend *networking.IngressBackend, svc *api_v1.Service) []string {
-	endpoint := fmt.Sprintf("%s:%d", svc.Spec.ExternalName, int32(backend.ServicePort.IntValue()))
-	endpoints := []string{endpoint}
+func (lbc *LoadBalancerController) getExternalEndpointsForIngressBackend(backend *networking.IngressBackend, svc *api_v1.Service) []podEndpoint {
+	address := fmt.Sprintf("%s:%d", svc.Spec.ExternalName, int32(backend.ServicePort.IntValue()))
+	endpoints := []podEndpoint{
+		{
+			Address: address,
+			PodName: "",
+		},
+	}
 	return endpoints
 }
 
-func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networking.IngressBackend, svc *api_v1.Service) (result []string, isExternal bool, err error) {
+func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networking.IngressBackend, svc *api_v1.Service) (result []podEndpoint, isExternal bool, err error) {
 	endps, err := lbc.endpointLister.GetServiceEndpoints(svc)
 	if err != nil {
 		if svc.Spec.Type == api_v1.ServiceTypeExternalName {
@@ -2862,7 +2929,7 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 	return result, false, nil
 }
 
-func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, ingSvcPort intstr.IntOrString, svc *api_v1.Service) ([]string, error) {
+func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, ingSvcPort intstr.IntOrString, svc *api_v1.Service) ([]podEndpoint, error) {
 	var targetPort int32
 	var err error
 
@@ -2883,10 +2950,14 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, i
 	for _, subset := range endps.Subsets {
 		for _, port := range subset.Ports {
 			if port.Port == targetPort {
-				var endpoints []string
+				var endpoints []podEndpoint
 				for _, address := range subset.Addresses {
-					endpoint := fmt.Sprintf("%v:%v", address.IP, port.Port)
-					endpoints = append(endpoints, endpoint)
+					addr := fmt.Sprintf("%v:%v", address.IP, port.Port)
+					podEnd := podEndpoint{
+						Address: addr,
+						PodName: address.TargetRef.Name,
+					}
+					endpoints = append(endpoints, podEnd)
 				}
 				return endpoints, nil
 			}

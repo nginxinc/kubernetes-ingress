@@ -26,6 +26,7 @@ type IngressEx struct {
 	Endpoints         map[string][]string
 	HealthChecks      map[string]*api_v1.Probe
 	ExternalNameSvcs  map[string]bool
+	PodsByIP          map[string]string
 	AppProtectPolicy  *unstructured.Unstructured
 	AppProtectLogConf *unstructured.Unstructured
 	AppProtectLogDst  string
