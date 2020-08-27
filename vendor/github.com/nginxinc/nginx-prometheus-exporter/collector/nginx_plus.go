@@ -1,12 +1,23 @@
 package collector
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
 	plusclient "github.com/nginxinc/nginx-plus-go-client/client"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+// LabelUpdater updates the labels of upstream server and server zone metrics
+type LabelUpdater interface {
+	UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels map[string][]string)
+	DeleteUpstreamServerPeerLabels(peers []string)
+	UpdateUpstreamServerLabels(upstreamServerLabelValues map[string][]string)
+	DeleteUpstreamServerLabels(upstreamNames []string)
+	UpdateServerZoneLabels(serverZoneLabelValues map[string][]string)
+	DeleteServerZoneLabels(zoneNames []string)
+}
 
 // NginxPlusCollector collects NGINX Plus metrics. It implements prometheus.Collector interface.
 type NginxPlusCollector struct {
@@ -26,7 +37,26 @@ type NginxPlusCollector struct {
 	variableLabelNames          VariableLabelNames
 	upstreamServerLabels        map[string][]string
 	serverZoneLabels            map[string][]string
+	upstreamServerPeerLabels    map[string][]string
 	variableLabelsMutex         sync.RWMutex
+}
+
+// UpdateUpstreamServerPeerLabels updates the Upstream Server Peer Labels
+func (c *NginxPlusCollector) UpdateUpstreamServerPeerLabels(upstreamServerPeerLabels map[string][]string) {
+	c.variableLabelsMutex.Lock()
+	for k, v := range upstreamServerPeerLabels {
+		c.upstreamServerPeerLabels[k] = v
+	}
+	c.variableLabelsMutex.Unlock()
+}
+
+// DeleteUpstreamServerPeerLabels deletes the Upstream Server Peer Labels
+func (c *NginxPlusCollector) DeleteUpstreamServerPeerLabels(peers []string) {
+	c.variableLabelsMutex.Lock()
+	for _, k := range peers {
+		delete(c.upstreamServerPeerLabels, k)
+	}
+	c.variableLabelsMutex.Unlock()
 }
 
 // UpdateUpstreamServerLabels updates the Upstream Server Labels
@@ -77,27 +107,38 @@ func (c *NginxPlusCollector) getServerZoneLabelValues(zoneName string) []string 
 	return c.serverZoneLabels[zoneName]
 }
 
+func (c *NginxPlusCollector) getUpstreamServerPeerLabelValues(peer string) []string {
+	c.variableLabelsMutex.RLock()
+	defer c.variableLabelsMutex.RUnlock()
+	return c.upstreamServerPeerLabels[peer]
+}
+
 // VariableLabelNames holds all the variable label names for the different metrics
 type VariableLabelNames struct {
-	UpstreamServerVariableLabelNames []string
-	ServerZoneVariableLabelNames     []string
+	UpstreamServerVariableLabelNames     []string
+	ServerZoneVariableLabelNames         []string
+	UpstreamServerPeerVariableLabelNames []string
 }
 
 // NewVariableLabels creates a new struct for VariableNames for the collector
-func NewVariableLabelNames(upstreamServerVariableLabelNames []string, serverZoneVariableLabelNames []string) VariableLabelNames {
+func NewVariableLabelNames(upstreamServerVariableLabelNames []string, serverZoneVariableLabelNames []string,
+	upstreamServerPeerVariableLabelNames []string) VariableLabelNames {
 	return VariableLabelNames{
-		UpstreamServerVariableLabelNames: upstreamServerVariableLabelNames,
-		ServerZoneVariableLabelNames:     serverZoneVariableLabelNames,
+		UpstreamServerVariableLabelNames:     upstreamServerVariableLabelNames,
+		ServerZoneVariableLabelNames:         serverZoneVariableLabelNames,
+		UpstreamServerPeerVariableLabelNames: upstreamServerPeerVariableLabelNames,
 	}
 }
 
 // NewNginxPlusCollector creates an NginxPlusCollector.
 func NewNginxPlusCollector(nginxClient *plusclient.NginxClient, namespace string, variableLabelNames VariableLabelNames, constLabels map[string]string) *NginxPlusCollector {
+	upstreamServerVariableLabelNames := append(variableLabelNames.UpstreamServerVariableLabelNames, variableLabelNames.UpstreamServerPeerVariableLabelNames...)
 	return &NginxPlusCollector{
-		variableLabelNames:   variableLabelNames,
-		upstreamServerLabels: make(map[string][]string),
-		serverZoneLabels:     make(map[string][]string),
-		nginxClient:          nginxClient,
+		variableLabelNames:       variableLabelNames,
+		upstreamServerLabels:     make(map[string][]string),
+		serverZoneLabels:         make(map[string][]string),
+		upstreamServerPeerLabels: make(map[string][]string),
+		nginxClient:              nginxClient,
 		totalMetrics: map[string]*prometheus.Desc{
 			"connections_accepted":  newGlobalMetric(namespace, "connections_accepted", "Accepted client connections", constLabels),
 			"connections_dropped":   newGlobalMetric(namespace, "connections_dropped", "Dropped client connections", constLabels),
@@ -139,23 +180,23 @@ func NewNginxPlusCollector(nginxClient *plusclient.NginxClient, namespace string
 			"zombies": newStreamUpstreamMetric(namespace, "zombies", "Servers removed from the group but still processing active client connections", constLabels),
 		},
 		upstreamServerMetrics: map[string]*prometheus.Desc{
-			"state":                   newUpstreamServerMetric(namespace, "state", "Current state", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"active":                  newUpstreamServerMetric(namespace, "active", "Active connections", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"requests":                newUpstreamServerMetric(namespace, "requests", "Total client requests", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"responses_1xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", variableLabelNames.UpstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "1xx"})),
-			"responses_2xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", variableLabelNames.UpstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "2xx"})),
-			"responses_3xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", variableLabelNames.UpstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "3xx"})),
-			"responses_4xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", variableLabelNames.UpstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "4xx"})),
-			"responses_5xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", variableLabelNames.UpstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "5xx"})),
-			"sent":                    newUpstreamServerMetric(namespace, "sent", "Bytes sent to this server", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"received":                newUpstreamServerMetric(namespace, "received", "Bytes received to this server", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"fails":                   newUpstreamServerMetric(namespace, "fails", "Active connections", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"unavail":                 newUpstreamServerMetric(namespace, "unavail", "How many times the server became unavailable for client requests (state 'unavail') due to the number of unsuccessful attempts reaching the max_fails threshold", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"header_time":             newUpstreamServerMetric(namespace, "header_time", "Average time to get the response header from the server", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"response_time":           newUpstreamServerMetric(namespace, "response_time", "Average time to get the full response from the server", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"health_checks_checks":    newUpstreamServerMetric(namespace, "health_checks_checks", "Total health check requests", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"health_checks_fails":     newUpstreamServerMetric(namespace, "health_checks_fails", "Failed health checks", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
-			"health_checks_unhealthy": newUpstreamServerMetric(namespace, "health_checks_unhealthy", "How many times the server became unhealthy (state 'unhealthy')", variableLabelNames.UpstreamServerVariableLabelNames, constLabels),
+			"state":                   newUpstreamServerMetric(namespace, "state", "Current state", upstreamServerVariableLabelNames, constLabels),
+			"active":                  newUpstreamServerMetric(namespace, "active", "Active connections", upstreamServerVariableLabelNames, constLabels),
+			"requests":                newUpstreamServerMetric(namespace, "requests", "Total client requests", upstreamServerVariableLabelNames, constLabels),
+			"responses_1xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", upstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "1xx"})),
+			"responses_2xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", upstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "2xx"})),
+			"responses_3xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", upstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "3xx"})),
+			"responses_4xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", upstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "4xx"})),
+			"responses_5xx":           newUpstreamServerMetric(namespace, "responses", "Total responses sent to clients", upstreamServerVariableLabelNames, MergeLabels(constLabels, prometheus.Labels{"code": "5xx"})),
+			"sent":                    newUpstreamServerMetric(namespace, "sent", "Bytes sent to this server", upstreamServerVariableLabelNames, constLabels),
+			"received":                newUpstreamServerMetric(namespace, "received", "Bytes received to this server", upstreamServerVariableLabelNames, constLabels),
+			"fails":                   newUpstreamServerMetric(namespace, "fails", "Active connections", upstreamServerVariableLabelNames, constLabels),
+			"unavail":                 newUpstreamServerMetric(namespace, "unavail", "How many times the server became unavailable for client requests (state 'unavail') due to the number of unsuccessful attempts reaching the max_fails threshold", upstreamServerVariableLabelNames, constLabels),
+			"header_time":             newUpstreamServerMetric(namespace, "header_time", "Average time to get the response header from the server", upstreamServerVariableLabelNames, constLabels),
+			"response_time":           newUpstreamServerMetric(namespace, "response_time", "Average time to get the full response from the server", upstreamServerVariableLabelNames, constLabels),
+			"health_checks_checks":    newUpstreamServerMetric(namespace, "health_checks_checks", "Total health check requests", upstreamServerVariableLabelNames, constLabels),
+			"health_checks_fails":     newUpstreamServerMetric(namespace, "health_checks_fails", "Failed health checks", upstreamServerVariableLabelNames, constLabels),
+			"health_checks_unhealthy": newUpstreamServerMetric(namespace, "health_checks_unhealthy", "How many times the server became unhealthy (state 'unhealthy')", upstreamServerVariableLabelNames, constLabels),
 		},
 		streamUpstreamServerMetrics: map[string]*prometheus.Desc{
 			"state":                   newStreamUpstreamServerMetric(namespace, "state", "Current state", constLabels),
@@ -349,6 +390,18 @@ func (c *NginxPlusCollector) Collect(ch chan<- prometheus.Metric) {
 				}
 			} else {
 				labelValues = append(labelValues, varLabelValues...)
+			}
+
+			upstreamServer := fmt.Sprintf("%v/%v", name, peer.Server)
+			varPeerLabelValues := c.getUpstreamServerPeerLabelValues(upstreamServer)
+			if c.variableLabelNames.UpstreamServerPeerVariableLabelNames != nil && len(varPeerLabelValues) != len(c.variableLabelNames.UpstreamServerPeerVariableLabelNames) {
+				log.Printf("wrong number of labels for upstream peer %v. For labels %v, got values: %v. Empty labels will be used instead",
+					peer.Server, c.variableLabelNames.UpstreamServerPeerVariableLabelNames, varPeerLabelValues)
+				for range c.variableLabelNames.UpstreamServerPeerVariableLabelNames {
+					labelValues = append(labelValues, "")
+				}
+			} else {
+				labelValues = append(labelValues, varPeerLabelValues...)
 			}
 
 			ch <- prometheus.MustNewConstMetric(c.upstreamServerMetrics["state"],

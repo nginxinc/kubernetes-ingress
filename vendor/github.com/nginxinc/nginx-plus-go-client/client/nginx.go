@@ -108,7 +108,9 @@ func (internalError *internalError) Wrap(err string) *internalError {
 // https://nginx.org/en/docs/http/ngx_http_api_module.html
 type Stats struct {
 	NginxInfo         NginxInfo
+	Processes         Processes
 	Connections       Connections
+	Slabs             Slabs
 	HTTPRequests      HTTPRequests
 	SSL               SSL
 	ServerZones       ServerZones
@@ -138,6 +140,32 @@ type Connections struct {
 	Dropped  uint64
 	Active   uint64
 	Idle     uint64
+}
+
+// Slabs is map of slab stats by zone name.
+type Slabs map[string]Slab
+
+// Slab represents slab related stats.
+type Slab struct {
+	Pages Pages
+	Slots Slots
+}
+
+// Pages represents the slab memory usage stats.
+type Pages struct {
+	Used uint64
+	Free uint64
+}
+
+// Slots is a map of slots by slot size
+type Slots map[string]Slot
+
+// Slot represents slot related stats.
+type Slot struct {
+	Used  uint64
+	Free  uint64
+	Reqs  uint64
+	Fails uint64
 }
 
 // HTTPRequests represents HTTP request related stats.
@@ -343,6 +371,11 @@ type ResolverResponses struct {
 	Refused  int64
 	Timedout int64
 	Unknown  int64
+}
+
+// Processes represents processes related stats
+type Processes struct {
+	Respawned int64
 }
 
 // NewNginxClient creates an NginxClient.
@@ -903,65 +936,77 @@ func determineStreamUpdates(updatedServers []StreamUpstreamServer, nginxServers 
 	return
 }
 
-// GetStats gets connection, request, ssl, zone, stream zone, upstream and stream upstream related stats from the NGINX Plus API.
+// GetStats gets process, slab, connection, request, ssl, zone, stream zone, upstream and stream upstream related stats from the NGINX Plus API.
 func (client *NginxClient) GetStats() (*Stats, error) {
-	info, err := client.getNginxInfo()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get stats %v", err)
-	}
-
-	cons, err := client.getConnections()
+	info, err := client.GetNginxInfo()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
 
-	requests, err := client.getHTTPRequests()
+	processes, err := client.GetProcesses()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stats: %v", err)
+	}
+
+	slabs, err := client.GetSlabs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stats: %v", err)
+	}
+
+	cons, err := client.GetConnections()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stats: %v", err)
+	}
+
+	requests, err := client.GetHTTPRequests()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get stats: %v", err)
 	}
 
-	ssl, err := client.getSSL()
+	ssl, err := client.GetSSL()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
 
-	zones, err := client.getServerZones()
+	zones, err := client.GetServerZones()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
 
-	upstreams, err := client.getUpstreams()
+	upstreams, err := client.GetUpstreams()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
 
-	streamZones, err := client.getStreamServerZones()
+	streamZones, err := client.GetStreamServerZones()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
 
-	streamUpstreams, err := client.getStreamUpstreams()
+	streamUpstreams, err := client.GetStreamUpstreams()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
 
-	streamZoneSync, err := client.getStreamZoneSync()
+	streamZoneSync, err := client.GetStreamZoneSync()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
 
-	locationZones, err := client.getLocationZones()
+	locationZones, err := client.GetLocationZones()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
 
-	resolvers, err := client.getResolvers()
+	resolvers, err := client.GetResolvers()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %v", err)
 	}
 
 	return &Stats{
 		NginxInfo:         *info,
+		Processes:         *processes,
+		Slabs:             *slabs,
 		Connections:       *cons,
 		HTTPRequests:      *requests,
 		SSL:               *ssl,
@@ -975,7 +1020,8 @@ func (client *NginxClient) GetStats() (*Stats, error) {
 	}, nil
 }
 
-func (client *NginxClient) getNginxInfo() (*NginxInfo, error) {
+// GetNginxInfo returns Nginx stats.
+func (client *NginxClient) GetNginxInfo() (*NginxInfo, error) {
 	var info NginxInfo
 	err := client.get("nginx", &info)
 	if err != nil {
@@ -984,7 +1030,18 @@ func (client *NginxClient) getNginxInfo() (*NginxInfo, error) {
 	return &info, nil
 }
 
-func (client *NginxClient) getConnections() (*Connections, error) {
+// GetSlabs returns Slabs stats.
+func (client *NginxClient) GetSlabs() (*Slabs, error) {
+	var slabs Slabs
+	err := client.get("slabs", &slabs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get slabs: %v", err)
+	}
+	return &slabs, nil
+}
+
+// GetConnections returns Connections stats.
+func (client *NginxClient) GetConnections() (*Connections, error) {
 	var cons Connections
 	err := client.get("connections", &cons)
 	if err != nil {
@@ -993,7 +1050,8 @@ func (client *NginxClient) getConnections() (*Connections, error) {
 	return &cons, nil
 }
 
-func (client *NginxClient) getHTTPRequests() (*HTTPRequests, error) {
+// GetHTTPRequests returns http/requests stats.
+func (client *NginxClient) GetHTTPRequests() (*HTTPRequests, error) {
 	var requests HTTPRequests
 	err := client.get("http/requests", &requests)
 	if err != nil {
@@ -1002,7 +1060,8 @@ func (client *NginxClient) getHTTPRequests() (*HTTPRequests, error) {
 	return &requests, nil
 }
 
-func (client *NginxClient) getSSL() (*SSL, error) {
+// GetSSL returns SSL stats.
+func (client *NginxClient) GetSSL() (*SSL, error) {
 	var ssl SSL
 	err := client.get("ssl", &ssl)
 	if err != nil {
@@ -1011,7 +1070,8 @@ func (client *NginxClient) getSSL() (*SSL, error) {
 	return &ssl, nil
 }
 
-func (client *NginxClient) getServerZones() (*ServerZones, error) {
+// GetServerZones returns http/server_zones stats.
+func (client *NginxClient) GetServerZones() (*ServerZones, error) {
 	var zones ServerZones
 	err := client.get("http/server_zones", &zones)
 	if err != nil {
@@ -1020,7 +1080,8 @@ func (client *NginxClient) getServerZones() (*ServerZones, error) {
 	return &zones, err
 }
 
-func (client *NginxClient) getStreamServerZones() (*StreamServerZones, error) {
+// GetStreamServerZones returns stream/server_zones stats.
+func (client *NginxClient) GetStreamServerZones() (*StreamServerZones, error) {
 	var zones StreamServerZones
 	err := client.get("stream/server_zones", &zones)
 	if err != nil {
@@ -1034,7 +1095,8 @@ func (client *NginxClient) getStreamServerZones() (*StreamServerZones, error) {
 	return &zones, err
 }
 
-func (client *NginxClient) getUpstreams() (*Upstreams, error) {
+// GetUpstreams returns http/upstreams stats.
+func (client *NginxClient) GetUpstreams() (*Upstreams, error) {
 	var upstreams Upstreams
 	err := client.get("http/upstreams", &upstreams)
 	if err != nil {
@@ -1043,7 +1105,8 @@ func (client *NginxClient) getUpstreams() (*Upstreams, error) {
 	return &upstreams, nil
 }
 
-func (client *NginxClient) getStreamUpstreams() (*StreamUpstreams, error) {
+// GetStreamUpstreams returns stream/upstreams stats.
+func (client *NginxClient) GetStreamUpstreams() (*StreamUpstreams, error) {
 	var upstreams StreamUpstreams
 	err := client.get("stream/upstreams", &upstreams)
 	if err != nil {
@@ -1057,7 +1120,8 @@ func (client *NginxClient) getStreamUpstreams() (*StreamUpstreams, error) {
 	return &upstreams, nil
 }
 
-func (client *NginxClient) getStreamZoneSync() (*StreamZoneSync, error) {
+// GetStreamZoneSync returns stream/zone_sync stats.
+func (client *NginxClient) GetStreamZoneSync() (*StreamZoneSync, error) {
 	var streamZoneSync StreamZoneSync
 	err := client.get("stream/zone_sync", &streamZoneSync)
 	if err != nil {
@@ -1072,7 +1136,8 @@ func (client *NginxClient) getStreamZoneSync() (*StreamZoneSync, error) {
 	return &streamZoneSync, err
 }
 
-func (client *NginxClient) getLocationZones() (*LocationZones, error) {
+// GetLocationZones returns http/location_zones stats.
+func (client *NginxClient) GetLocationZones() (*LocationZones, error) {
 	var locationZones LocationZones
 	err := client.get("http/location_zones", &locationZones)
 	if err != nil {
@@ -1082,7 +1147,8 @@ func (client *NginxClient) getLocationZones() (*LocationZones, error) {
 	return &locationZones, err
 }
 
-func (client *NginxClient) getResolvers() (*Resolvers, error) {
+// GetResolvers returns Resolvers stats.
+func (client *NginxClient) GetResolvers() (*Resolvers, error) {
 	var resolvers Resolvers
 	err := client.get("resolvers", &resolvers)
 	if err != nil {
@@ -1090,6 +1156,17 @@ func (client *NginxClient) getResolvers() (*Resolvers, error) {
 	}
 
 	return &resolvers, err
+}
+
+// GetProcesses returns Processes stats.
+func (client *NginxClient) GetProcesses() (*Processes, error) {
+	var processes Processes
+	err := client.get("processes", &processes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get processes: %v", err)
+	}
+
+	return &processes, err
 }
 
 // KeyValPairs are the key-value pairs stored in a zone.
