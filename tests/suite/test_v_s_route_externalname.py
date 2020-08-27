@@ -138,7 +138,7 @@ class TestVSRWithExternalNameService:
         vsr_event_text = f"Configuration for {text_vsr} was added or updated"
         vs_event_text = f"Configuration for {text_vs} was added or updated"
         vs_event_update_text = f"Configuration for {text_vs} was updated"
-        wait_before_test()
+        wait_before_test(5)
         initial_events = get_events(kube_apis.v1, vsr_externalname_setup.route.namespace)
         initial_count_vsr = assert_event_and_get_count(vsr_event_text, initial_events)
         initial_count_vs = assert_event_and_get_count(vs_event_text, initial_events)
@@ -149,7 +149,7 @@ class TestVSRWithExternalNameService:
         external_svc.spec.external_name = "demo.nginx.com"
         replace_service(kube_apis.v1,
                         vsr_externalname_setup.external_svc, vsr_externalname_setup.namespace, external_svc)
-        wait_before_test()
+        wait_before_test(5)
 
         wait_for_event_count_increases(kube_apis, vsr_event_text,
                                        initial_count_vsr, vsr_externalname_setup.route.namespace)
@@ -164,7 +164,7 @@ class TestVSRWithExternalNameService:
         replace_configmap(kube_apis.v1, config_map_name,
                           ingress_controller_prerequisites.namespace,
                           ingress_controller_prerequisites.config_map)
-        wait_before_test()
+        wait_before_test(5)
 
         events_step_2 = get_events(kube_apis.v1, vsr_externalname_setup.route.namespace)
         assert_event_and_count(vsr_event_warning_text, 1, events_step_2)

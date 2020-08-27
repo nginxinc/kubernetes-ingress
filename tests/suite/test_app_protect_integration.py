@@ -22,7 +22,6 @@ from suite.resources_utils import (
     get_events,
     get_ingress_nginx_template_conf,
     get_first_pod_name,
-    wait_for_event_increment,
     get_file_contents,
 )
 from suite.custom_resources_utils import read_ap_crd
@@ -151,9 +150,8 @@ class TestAppProtect:
         create_ingress_with_ap_annotations(
             kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", "127.0.0.1:514"
         )
-        events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
-        wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
-        wait_before_test(5)
+
+        wait_before_test(40)
         pod_name = get_first_pod_name(kube_apis.v1, "nginx-ingress")
 
         result_conf = get_ingress_nginx_template_conf(
@@ -177,20 +175,17 @@ class TestAppProtect:
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 
         print("--------- Run test while AppProtect module is enabled with correct policy ---------")
-        events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
-        ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
-        wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
+
         ap_crd_info = read_ap_crd(kube_apis.custom_objects, test_namespace, "appolicies", ap_policy)
         assert_ap_crd_info(ap_crd_info)
-        wait_before_test(10)
-
-        response = ""
-        if wait_status:
-            print("----------------------- Send request ----------------------")
-            response = requests.get(
-                appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
-            )
-            print(response.text)
+        wait_before_test(40)
+        ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
+        
+        print("----------------------- Send request ----------------------")
+        response = requests.get(
+            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
+        )
+        print(response.text)
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_invalid_responses(response)
 
@@ -209,19 +204,17 @@ class TestAppProtect:
         print(
             "--------- Run test while AppProtect module is disabled with correct policy ---------"
         )
-        events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
-        ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
-        wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
+
         ap_crd_info = read_ap_crd(kube_apis.custom_objects, test_namespace, "appolicies", ap_policy)
         assert_ap_crd_info(ap_crd_info)
-        wait_before_test(10)
-        response = ""
-        if wait_status:
-            print("----------------------- Send request ----------------------")
-            response = requests.get(
-                appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
-            )
-            print(response.text)
+        wait_before_test(40)
+        ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
+
+        print("----------------------- Send request ----------------------")
+        response = requests.get(
+            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
+        )
+        print(response.text)
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_valid_responses(response)
 
@@ -246,17 +239,15 @@ class TestAppProtect:
         print(
             "--------- Run test while AppProtect module is enabled with incorrect policy ---------"
         )
-        events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
+
+        wait_before_test(40)
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
-        wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
-        wait_before_test(10)
-        response = ""
-        if wait_status:
-            print("----------------------- Send request ----------------------")
-            response = requests.get(
-                appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
-            )
-            print(response.text)
+
+        print("----------------------- Send request ----------------------")
+        response = requests.get(
+            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
+        )
+        print(response.text)
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_invalid_responses(response)
 
@@ -281,17 +272,15 @@ class TestAppProtect:
         print(
             "--------- Run test while AppProtect module is disabled with incorrect policy ---------"
         )
-        events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
+
+        wait_before_test(40)
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
-        wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
-        wait_before_test(10)
-        response = ""
-        if wait_status:
-            print("----------------------- Send request ----------------------")
-            response = requests.get(
-                appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
-            )
-            print(response.text)
+
+        print("----------------------- Send request ----------------------")
+        response = requests.get(
+            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
+        )
+        print(response.text)
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_valid_responses(response)
 
@@ -327,18 +316,14 @@ class TestAppProtect:
             "--------- Run test while AppProtect module is enabled with correct policy ---------"
         )
 
-        events_before_ingress = len(get_events(kube_apis.v1, test_namespace))
+        wait_before_test(40)
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host)
-        wait_status = wait_for_event_increment(kube_apis, test_namespace, events_before_ingress)
-        wait_before_test(10)
 
-        response = ""
-        if wait_status:
-            print("----------------------- Send invalid request ----------------------")
-            response = requests.get(
-                appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
-            )
-            print(response.text)
+        print("----------------------- Send invalid request ----------------------")
+        response = requests.get(
+            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
+        )
+        print(response.text)
         wait_before_test(5)
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
 
