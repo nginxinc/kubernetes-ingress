@@ -253,11 +253,11 @@ jobs:
           nodes:
             - role: control-plane
             - role: worker
-              image: kindest/node:v${{ K8S_VERSION }}
+              image: kindest/node:v${{ env.K8S_VERSION }}
             - role: worker
-              image: kindest/node:v${{ K8S_VERSION }}
+              image: kindest/node:v${{ env.K8S_VERSION }}
             - role: worker
-              image: kindest/node:v${{ K8S_VERSION }}
+              image: kindest/node:v${{ env.K8S_VERSION }}
           EOF
       - name: Deploy Kubernetes
         id: k8s
