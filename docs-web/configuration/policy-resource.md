@@ -17,6 +17,7 @@ This document is the reference documentation for the Policy resource. An example
     - [AccessControl](#accesscontrol)
       - [AccessControl Merging Behavior](#accesscontrol-merging-behavior)
     - [RateLimit](#ratelimit)
+      - [RateLimit Merging Behavior](#ratelimit-merging-behavior)
   - [Using Policy](#using-policy)
     - [Validation](#validation)
       - [Structural Validation](#structural-validation)
@@ -178,7 +179,7 @@ rateLimit:
 
 > For each policy referenced in a VirtualServer and/or its VirtualServerRoutes, the Ingress Controller will generate a singe rate limiting zone defined by the [`limit_req_zone`](http://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) directive. If two VirtualServer resources reference the same policy, the Ingress Controller will generate two different rate limiting zones, one zone per VirtualServer.
 
-### RateLimit Merging Behavior
+#### RateLimit Merging Behavior
 A VirtualServer/VirtualServerRoute can reference multiple rate limit policies. For example, here we reference two policies:
 ```yaml
 policies:
