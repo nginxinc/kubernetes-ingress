@@ -151,9 +151,9 @@ jobs:
     name: Smoke Tests
     runs-on: ${{ matrix.os }}
     needs: [build, binary, unit-tests]
-    # if: 
-    #   github.event.pull_request.opened || 
-    #   github.event.pull_request.merged
+    if: 
+      github.event.pull_request.opened || 
+      github.event.pull_request.merged
     strategy:
       matrix:
         include:
@@ -268,7 +268,6 @@ jobs:
           echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.type }}-${{ matrix.marker }}')
       - name: Setup Kubeconfig
         run: |
-          kubectl api-versions --kubeconfig kube-${{ github.run_id }}
           sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
       - name: Run Smoke Tests
         run: |
@@ -301,9 +300,9 @@ jobs:
     env:
       NGINX_HTTP_PORT: 32000
       NGINX_HTTPS_PORT: 32001
-    # if: 
-    #   github.event.pull_request.opened || 
-    #   github.event.pull_request.merged
+    if: 
+      github.event.pull_request.opened || 
+      github.event.pull_request.merged
     strategy:
       matrix:
         include:
@@ -337,7 +336,7 @@ jobs:
       - name: Deploy Kubernetes
         id: k8s
         run: |
-          kind create cluster --name ${{ github.run_id }} --wait ${{ env.K8S_TIMEOUT }}
+          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ env.K8S_VERSION }} --wait ${{ env.K8S_TIMEOUT }}
           kind load docker-image ${{ matrix.image }}:${{ matrix.tag }} --name ${{ github.run_id }}
       - name: Install Chart
         run: >
@@ -363,7 +362,7 @@ jobs:
     name: Release Images
     runs-on: ${{ matrix.os }}
     needs: [smoke-tests, helm-tests]
-    # if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     strategy:
       matrix:
         include:
@@ -392,13 +391,13 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           tag_with_ref: false
           tags: ${{ matrix.tag }}
-          push: false
+          push: true
 
   package-helm:
     name: Package Helm Chart
     runs-on: ubuntu-18.04
     needs: [smoke-tests, helm-tests, release-docker]
-    # if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -422,7 +421,7 @@ jobs:
     env:
       GIT_COMMITTER_NAME: NGINX Kubernetes Team
       GIT_COMMITTER_EMAIL: kubernetes@nginx.com
-    # if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -440,11 +439,9 @@ jobs:
       - name: Push Helm Chart
         run: |
           helm repo index edge --url https://helm.nginx.com/edge
-          ls -la edge/
-          git status
-          echo git add -A
-          echo git commit -m "NGINX Ingress Controller - Edge Release (latest)"
-          echo git push -u origin master
+          git add -A
+          git commit -m "NGINX Ingress Controller - Edge Release (latest)"
+          git push -u origin master
 
   job-failure:
     name: Report Failures

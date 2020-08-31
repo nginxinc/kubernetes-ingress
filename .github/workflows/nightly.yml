@@ -150,6 +150,14 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: oss
+            k8s: 1.19.0
+          - os: ubuntu-18.04
+            path: build
+            file: Dockerfile
+            image: nginx-ingress
+            tag: ${{ github.sha }}
+            marker: ''
+            type: oss
             k8s: 1.18.8
           - os: ubuntu-18.04
             path: build
@@ -177,12 +185,12 @@ jobs:
             k8s: 1.15.11
           - os: ubuntu-18.04
             path: build
-            file: Dockerfile
-            image: nginx-ingress
+            file: DockerfileForPlus
+            image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: ''
-            type: oss
-            k8s: 1.14.10
+            type: plus
+            k8s: 1.19.0
           - os: ubuntu-18.04
             path: build
             file: DockerfileForPlus
@@ -216,13 +224,13 @@ jobs:
             type: plus
             k8s: 1.15.11
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            path: build/appprotect
+            file: DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}
-            marker: ''
-            type: plus
-            k8s: 1.14.10
+            tag: ${{ github.sha }}-ap
+            marker: '-m appprotect'
+            type: plus-ap
+            k8s: 1.19.0
           - os: ubuntu-18.04
             path: build/appprotect
             file: DockerfileWithAppProtectForPlus
@@ -255,14 +263,6 @@ jobs:
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.15.11
-          - os: ubuntu-18.04
-            path: build/appprotect
-            file: DockerfileWithAppProtectForPlus
-            image: nginx-plus-ingress
-            tag: ${{ github.sha }}-ap
-            marker: '-m appprotect'
-            type: plus-ap
-            k8s: 1.14.10
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -296,13 +296,16 @@ jobs:
           nodes:
             - role: control-plane
             - role: worker
+              image: kindest/node:v${{ matrix.k8s }}
             - role: worker
+              image: kindest/node:v${{ matrix.k8s }}
             - role: worker
+              image: kindest/node:v${{ matrix.k8s }}
           EOF
       - name: Deploy Kubernetes
         id: k8s
         run: |
-          kind create cluster --name ${{ github.run_id }} --config kind-config.yaml --image=kindest/node:v${{ matrix.k8s }} --kubeconfig kube-${{ github.run_id }} --wait ${{ env.K8S_TIMEOUT }}
+          kind create cluster --name ${{ github.run_id }} --config kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ env.K8S_TIMEOUT }}
           kind load docker-image ${{ matrix.image }}:${{ matrix.tag }} --name ${{ github.run_id }}
           echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
           echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.type }}')
