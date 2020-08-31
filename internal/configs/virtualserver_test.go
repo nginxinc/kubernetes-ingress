@@ -1892,7 +1892,6 @@ func TestGeneratePolicies(t *testing.T) {
 							Key:      "test",
 							ZoneSize: "10M",
 							Rate:     "10r/s",
-							LogLevel: "info",
 						},
 					},
 				},
@@ -1902,7 +1901,6 @@ func TestGeneratePolicies(t *testing.T) {
 							Key:      "test2",
 							ZoneSize: "20M",
 							Rate:     "20r/s",
-							LogLevel: "error",
 						},
 					},
 				},
@@ -1923,7 +1921,7 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 				},
 				LimitReqOptions: version2.LimitReqOptions{
-					LogLevel:   "info",
+					LogLevel:   "error",
 					RejectCode: 503,
 				},
 				LimitReqs: []version2.LimitReq{
@@ -4198,7 +4196,7 @@ func TestUpstreamHasKeepalive(t *testing.T) {
 			conf_v1.Upstream{Keepalive: &noKeepalive},
 			&ConfigParams{Keepalive: keepalive},
 			false,
-			"upstream keepalive set to 0, configparam keepive set",
+			"upstream keepalive set to 0, configparam keepalive set",
 		},
 		{
 			conf_v1.Upstream{Keepalive: &keepalive},
