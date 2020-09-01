@@ -86,9 +86,9 @@ func validateRateLimit(rateLimit *v1alpha1.RateLimit, fieldPath *field.Path) fie
 	}
 
 	if rateLimit.RejectCode != nil {
-		if *rateLimit.RejectCode < 400 || *rateLimit.RejectCode > 600 {
+		if *rateLimit.RejectCode < 400 || *rateLimit.RejectCode > 599 {
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("rejectCode"), rateLimit.RejectCode,
-				"must be within the range [400-600]"))
+				"must be within the range [400-599]"))
 		}
 	}
 

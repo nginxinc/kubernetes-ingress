@@ -43,12 +43,12 @@ Note that the VirtualServer references the policy `rate-limit-policy` created in
 
 Let's test the configuration. If you access the application more than one request per second, NGINX will start rejecting your requests:
 ```
-$ curl --resolve auth.example.com:$IC_HTTP_PORT:$IC_IP http://auth.example.com:$IC_HTTP_PORT/
+$ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP http://webapp.example.com:$IC_HTTP_PORT/
 Server address: 10.8.1.19:8080
-Server name: auth-dc88fc766-zr7f8
+Server name: webapp-dc88fc766-zr7f8
 . . .
 
-$ curl --resolve auth.example.com:$IC_HTTP_PORT:$IC_IP http://auth.example.com:$IC_HTTP_PORT/
+$ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP http://webapp.example.com:$IC_HTTP_PORT/
 <html>
 <head><title>503 Service Temporarily Unavailable</title></head>
 <body>

@@ -1957,11 +1957,15 @@ func TestGeneratePoliciesFails(t *testing.T) {
 	vsNamespace := "default"
 	vsName := "test"
 
+	dryRunOverride := true
+	rejectCodeOverride := 505
+
 	tests := []struct {
-		policyRefs []conf_v1.PolicyReference
-		policies   map[string]*conf_v1alpha1.Policy
-		expected   policiesCfg
-		msg        string
+		policyRefs       []conf_v1.PolicyReference
+		policies         map[string]*conf_v1alpha1.Policy
+		expected         policiesCfg
+		expectedWarnings Warnings
+		msg              string
 	}{
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -1974,6 +1978,11 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			expected: policiesCfg{
 				ErrorReturn: &version2.Return{
 					Code: 500,
+				},
+			},
+			expectedWarnings: map[runtime.Object][]string{
+				nil: {
+					"Policy default/allow-policy is missing or invalid",
 				},
 			},
 			msg: "missing policy",
@@ -2007,20 +2016,96 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				Allow: []string{"127.0.0.1"},
 				Deny:  []string{"127.0.0.2"},
 			},
+			expectedWarnings: map[runtime.Object][]string{
+				nil: {
+					"AccessControl policy (or policies) with deny rules is overridden by policy (or policies) with allow rules",
+				},
+			},
 			msg: "conflicting policies",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "rateLimit-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "rateLimit-policy2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/rateLimit-policy": {
+					Spec: conf_v1alpha1.PolicySpec{
+						RateLimit: &conf_v1alpha1.RateLimit{
+							Key:      "test",
+							ZoneSize: "10M",
+							Rate:     "10r/s",
+						},
+					},
+				},
+				"default/rateLimit-policy2": {
+					Spec: conf_v1alpha1.PolicySpec{
+						RateLimit: &conf_v1alpha1.RateLimit{
+							Key:        "test2",
+							ZoneSize:   "20M",
+							Rate:       "20r/s",
+							DryRun:     &dryRunOverride,
+							LogLevel:   "info",
+							RejectCode: &rejectCodeOverride,
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				LimitReqZones: []version2.LimitReqZone{
+					{
+						Key:      "test",
+						ZoneSize: "10M",
+						Rate:     "10r/s",
+						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+					},
+					{
+						Key:      "test2",
+						ZoneSize: "20M",
+						Rate:     "20r/s",
+						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					},
+				},
+				LimitReqOptions: version2.LimitReqOptions{
+					LogLevel:   "error",
+					RejectCode: 503,
+				},
+				LimitReqs: []version2.LimitReq{
+					{
+						ZoneName: "pol_rl_default_rateLimit-policy_default_test",
+					},
+					{
+						ZoneName: "pol_rl_default_rateLimit-policy2_default_test",
+					},
+				},
+			},
+			expectedWarnings: map[runtime.Object][]string{
+				nil: {
+					"RateLimit policy default/rateLimit-policy2 with limit request option dryRun=true is overridden to dryRun=false by the first policy reference in this context",
+					"RateLimit policy default/rateLimit-policy2 with limit request option logLevel=info is overridden to logLevel=error by the first policy reference in this context",
+					"RateLimit policy default/rateLimit-policy2 with limit request option rejectCode=505 is overridden to rejectCode=503 by the first policy reference in this context",
+				},
+			},
+			msg: "rate limit policy limit request option override",
 		},
 	}
 
-	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
-
 	for _, test := range tests {
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
+
 		result := vsc.generatePolicies(owner, ownerNamespace, vsNamespace, vsName, test.policyRefs, test.policies)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generatePolicies() returned \n%+v but expected \n%+v for the case of %s", result, test.expected,
 				test.msg)
 		}
-		if len(vsc.warnings) == 0 {
-			t.Errorf("generatePolicies() returned no warnings for the case of %s", test.msg)
+		if !reflect.DeepEqual(vsc.warnings, test.expectedWarnings) {
+			t.Errorf("generatePolicies() returned warnings of \n%v but expected \n%v for the case of %s", vsc.warnings, test.expectedWarnings, test.msg)
 		}
 	}
 }

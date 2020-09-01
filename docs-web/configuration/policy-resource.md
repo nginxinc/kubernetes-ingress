@@ -1,6 +1,6 @@
 # Policy Resource
 
-The Policy resource allows you to configure features like access control and rate-limiting, which you can add to your [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/)..
+The Policy resource allows you to configure features like access control and rate-limiting, which you can add to your [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/).
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
@@ -144,7 +144,7 @@ rateLimit:
      - ``string``
      - Yes
    * - ``key``
-     - The key which the rate limit is applied. Can contain text, variables, or a combination of them. Variables must be surrounded by ``${}``. For example: ``${$binary_remote_addr}``. Accepted variables are ``$binary_remote_addr``, ``$request_uri``, ``$url``, ``$http_``, ``$args``, ``$arg_``, ``$cookie_``.
+     - The key which the rate limit is applied. Can contain text, variables, or a combination of them. Variables must be surrounded by ``${}``. For example: ``${binary_remote_addr}``. Accepted variables are ``$binary_remote_addr``, ``$request_uri``, ``$url``, ``$http_``, ``$args``, ``$arg_``, ``$cookie_``.
      - ``string``
      - Yes
    * - ``zoneSize``
@@ -172,7 +172,7 @@ rateLimit:
      - ``string``
      - No*
    * - ``rejectCode``
-     - Sets the status code to return in response to rejected requests. Must fall into the range ``400..600``. Default is ``503``.
+     - Sets the status code to return in response to rejected requests. Must fall into the range ``400..599``. Default is ``503``.
      - ``string``
      - No*
 ```

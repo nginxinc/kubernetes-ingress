@@ -202,7 +202,7 @@ func TestValidateRateLimitFails(t *testing.T) {
 		},
 		{
 			rateLimit: createInvalidRateLimit(func(r *v1alpha1.RateLimit) {
-				r.RejectCode = createPointerFromInt(301)
+				r.RejectCode = createPointerFromInt(600)
 			}),
 			msg: "invalid rateLimit rejectCode",
 		},
