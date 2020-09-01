@@ -41,7 +41,7 @@ Note that the VirtualServer references the policy `rate-limit-policy` created in
 
 ## Step 4 - Test the Configuration
 
-Let's test the configuration. If you access the application more than one request per second, NGINX will start rejecting your requests:
+Let's test the configuration. If you access the application at a rate that exceeds one request per second, NGINX will start rejecting your requests:
 ```
 $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP http://webapp.example.com:$IC_HTTP_PORT/
 Server address: 10.8.1.19:8080

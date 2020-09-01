@@ -144,7 +144,7 @@ rateLimit:
      - ``string``
      - Yes
    * - ``key``
-     - The key which the rate limit is applied. Can contain text, variables, or a combination of them. Variables must be surrounded by ``${}``. For example: ``${binary_remote_addr}``. Accepted variables are ``$binary_remote_addr``, ``$request_uri``, ``$url``, ``$http_``, ``$args``, ``$arg_``, ``$cookie_``.
+     - The key to which the rate limit is applied. Can contain text, variables, or a combination of them. Variables must be surrounded by ``${}``. For example: ``${binary_remote_addr}``. Accepted variables are ``$binary_remote_addr``, ``$request_uri``, ``$url``, ``$http_``, ``$args``, ``$arg_``, ``$cookie_``.
      - ``string``
      - Yes
    * - ``zoneSize``
@@ -160,11 +160,11 @@ rateLimit:
      - ``bool``
      - No*
    * - ``burst``
-     - Excessive requests are delayed until their number exceeds the ``burst`` size in which case the request is terminated with an error.
+     - Excessive requests are delayed until their number exceeds the ``burst`` size, in which case the request is terminated with an error.
      - ``int``
      - No*
    * - ``dryRun``
-     - Enables the dry run mode. In this mode, requests processing rate is not limited, however, in the shared memory zone, the number of excessive requests is accounted as usual.
+     - Enables the dry run mode. In this mode, the rate limit is not actually applied, but the the number of excessive requests is accounted as usual in the shared memory zone.
      - ``bool``
      - No*
    * - ``logLevel``
@@ -177,7 +177,7 @@ rateLimit:
      - No*
 ```
 
-> For each policy referenced in a VirtualServer and/or its VirtualServerRoutes, the Ingress Controller will generate a singe rate limiting zone defined by the [`limit_req_zone`](http://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) directive. If two VirtualServer resources reference the same policy, the Ingress Controller will generate two different rate limiting zones, one zone per VirtualServer.
+> For each policy referenced in a VirtualServer and/or its VirtualServerRoutes, the Ingress Controller will generate a single rate limiting zone defined by the [`limit_req_zone`](http://nginx.org/en/docs/http/ngx_http_limit_req_module.html#limit_req_zone) directive. If two VirtualServer resources reference the same policy, the Ingress Controller will generate two different rate limiting zones, one zone per VirtualServer.
 
 #### RateLimit Merging Behavior
 A VirtualServer/VirtualServerRoute can reference multiple rate limit policies. For example, here we reference two policies:
@@ -187,7 +187,7 @@ policies:
 - name: rate-limit-policy-two
 ```
 
-When you reference more than one rate limit policy, the Ingress Controller will configure NGINX to use all referenced rate limits. However, all referenced policy will use the `dryRun`, `logLevel` and `rejectCode` parameters from the first reference (`rate-limit-policy-one` in the example above).
+When you reference more than one rate limit policy, the Ingress Controller will configure NGINX to use all referenced rate limits. When you define multiple policies, each additional policy inherits the `dryRun`, `logLevel`, and `rejectCode` parameters from the first policy referenced (`rate-limit-policy-one`, in the example above).
 
 ## Using Policy
 
