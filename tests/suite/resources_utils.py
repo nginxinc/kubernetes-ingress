@@ -5,7 +5,7 @@ import yaml
 import pytest
 import requests
 
-from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1beta1Api, V1Service, AppsV1Api
+from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1Api, V1Service, AppsV1Api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes import client
@@ -27,11 +27,11 @@ class RBACAuthorization:
         self.binding = binding
 
 
-def configure_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api) -> RBACAuthorization:
+def configure_rbac(rbac_v1: RbacAuthorizationV1Api) -> RBACAuthorization:
     """
     Create cluster and binding.
 
-    :param rbac_v1_beta1: RbacAuthorizationV1beta1Api
+    :param rbac_v1: RbacAuthorizationV1Api
     :return: RBACAuthorization
     """
     with open(f'{DEPLOYMENTS}/rbac/rbac.yaml') as f:
@@ -42,20 +42,20 @@ def configure_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api) -> RBACAuthorizat
             if dep["kind"] == "ClusterRole":
                 print("Create cluster role")
                 role_name = dep['metadata']['name']
-                rbac_v1_beta1.create_cluster_role(dep)
+                rbac_v1.create_cluster_role(dep)
                 print(f"Created role '{role_name}'")
             elif dep["kind"] == "ClusterRoleBinding":
                 print("Create binding")
                 binding_name = dep['metadata']['name']
-                rbac_v1_beta1.create_cluster_role_binding(dep)
+                rbac_v1.create_cluster_role_binding(dep)
                 print(f"Created binding '{binding_name}'")
         return RBACAuthorization(role_name, binding_name)
 
 
-def configure_rbac_with_ap(rbac_v1_beta1: RbacAuthorizationV1beta1Api) -> RBACAuthorization:
+def configure_rbac_with_ap(rbac_v1: RbacAuthorizationV1Api) -> RBACAuthorization:
     """
     Create cluster and binding for AppProtect module.
-    :param rbac_v1_beta1: RbacAuthorizationV1beta1Api
+    :param rbac_v1: RbacAuthorizationV1Api
     :return: RBACAuthorization
     """
     with open(f"{DEPLOYMENTS}/rbac/ap-rbac.yaml") as f:
@@ -66,21 +66,21 @@ def configure_rbac_with_ap(rbac_v1_beta1: RbacAuthorizationV1beta1Api) -> RBACAu
             if dep["kind"] == "ClusterRole":
                 print("Create cluster role for AppProtect")
                 role_name = dep["metadata"]["name"]
-                rbac_v1_beta1.create_cluster_role(dep)
+                rbac_v1.create_cluster_role(dep)
                 print(f"Created role '{role_name}'")
             elif dep["kind"] == "ClusterRoleBinding":
                 print("Create binding for AppProtect")
                 binding_name = dep["metadata"]["name"]
-                rbac_v1_beta1.create_cluster_role_binding(dep)
+                rbac_v1.create_cluster_role_binding(dep)
                 print(f"Created binding '{binding_name}'")
         return RBACAuthorization(role_name, binding_name)
 
 
-def patch_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api, yaml_manifest) -> RBACAuthorization:
+def patch_rbac(rbac_v1: RbacAuthorizationV1Api, yaml_manifest) -> RBACAuthorization:
     """
     Patch a clusterrole and a binding.
 
-    :param rbac_v1_beta1: RbacAuthorizationV1beta1Api
+    :param rbac_v1: RbacAuthorizationV1Api
     :param yaml_manifest: an absolute path to yaml manifest
     :return: RBACAuthorization
     """
@@ -92,28 +92,28 @@ def patch_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api, yaml_manifest) -> RBA
             if dep["kind"] == "ClusterRole":
                 print("Patch the cluster role")
                 role_name = dep['metadata']['name']
-                rbac_v1_beta1.patch_cluster_role(role_name, dep)
+                rbac_v1.patch_cluster_role(role_name, dep)
                 print(f"Patched the role '{role_name}'")
             elif dep["kind"] == "ClusterRoleBinding":
                 print("Patch the binding")
                 binding_name = dep['metadata']['name']
-                rbac_v1_beta1.patch_cluster_role_binding(binding_name, dep)
+                rbac_v1.patch_cluster_role_binding(binding_name, dep)
                 print(f"Patched the binding '{binding_name}'")
         return RBACAuthorization(role_name, binding_name)
 
 
-def cleanup_rbac(rbac_v1_beta1: RbacAuthorizationV1beta1Api, rbac: RBACAuthorization) -> None:
+def cleanup_rbac(rbac_v1: RbacAuthorizationV1Api, rbac: RBACAuthorization) -> None:
     """
     Delete binding and cluster role.
 
-    :param rbac_v1_beta1: RbacAuthorizationV1beta1Api
+    :param rbac_v1: RbacAuthorizationV1Api
     :param rbac: RBACAuthorization
     :return:
     """
     delete_options = client.V1DeleteOptions()
     print("Delete binding and cluster role")
-    rbac_v1_beta1.delete_cluster_role_binding(rbac.binding, delete_options)
-    rbac_v1_beta1.delete_cluster_role(rbac.role, delete_options)
+    rbac_v1.delete_cluster_role_binding(rbac.binding, delete_options)
+    rbac_v1.delete_cluster_role(rbac.role, delete_options)
 
 
 def create_deployment_from_yaml(apps_v1_api: AppsV1Api, namespace, yaml_manifest) -> str:
