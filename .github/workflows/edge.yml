@@ -11,7 +11,6 @@ on:
       - opened
       - reopened
       - synchronize
-      - closed
 
 defaults:
   run:
@@ -152,7 +151,7 @@ jobs:
     needs: [build, binary, unit-tests]
     if: 
       github.event.pull_request.opened || 
-      github.event.pull_request.merged
+      (github.event_name == 'push' && github.ref == 'refs/heads/master')
     strategy:
       matrix:
         include:
@@ -301,7 +300,7 @@ jobs:
       NGINX_HTTPS_PORT: 32001
     if: 
       github.event.pull_request.opened || 
-      github.event.pull_request.merged
+      (github.event_name == 'push' && github.ref == 'refs/heads/master')
     strategy:
       matrix:
         include:
@@ -361,7 +360,7 @@ jobs:
     name: Release Images
     runs-on: ${{ matrix.os }}
     needs: [smoke-tests, helm-tests]
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     strategy:
       matrix:
         include:
@@ -396,7 +395,7 @@ jobs:
     name: Package Helm Chart
     runs-on: ubuntu-18.04
     needs: [smoke-tests, helm-tests, release-docker]
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -420,7 +419,7 @@ jobs:
     env:
       GIT_COMMITTER_NAME: NGINX Kubernetes Team
       GIT_COMMITTER_EMAIL: kubernetes@nginx.com
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
