@@ -137,7 +137,7 @@ class TestVirtualServer:
     def test_responses_after_rbac_misconfiguration_on_the_fly(self, kube_apis, crd_ingress_controller,
                                                               virtual_server_setup):
         print("Step 10: remove virtualservers from the ClusterRole and check")
-        patch_rbac(kube_apis.rbac_v1_beta1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
+        patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
         wait_before_test(1)
         resp = requests.get(virtual_server_setup.backend_1_url,
                             headers={"host": virtual_server_setup.vs_host})
@@ -147,7 +147,7 @@ class TestVirtualServer:
         assert resp.status_code == 200
 
         print("Step 11: restore ClusterRole and check")
-        patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
+        patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         wait_before_test(1)
         resp = requests.get(virtual_server_setup.backend_1_url,
                             headers={"host": virtual_server_setup.vs_host})
@@ -190,6 +190,6 @@ class TestVirtualServerInitialRBACMisconfiguration:
         assert resp.status_code == 404
 
         print("Step 2: configure RBAC and check")
-        patch_rbac(kube_apis.rbac_v1_beta1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
+        patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
         wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
