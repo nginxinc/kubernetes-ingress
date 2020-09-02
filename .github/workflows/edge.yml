@@ -24,6 +24,8 @@ env:
   K8S_TIMEOUT: 1m
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge
+  GIT_NAME: NGINX Kubernetes Team
+  GIT_MAIL: kubernetes@nginx.com
 
 jobs:
 
@@ -416,9 +418,6 @@ jobs:
     name: Release Helm Chart
     runs-on: ubuntu-18.04
     needs: [smoke-tests, helm-tests, release-docker, package-helm]
-    env:
-      GIT_COMMITTER_NAME: NGINX Kubernetes Team
-      GIT_COMMITTER_EMAIL: kubernetes@nginx.com
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Repository
@@ -438,7 +437,7 @@ jobs:
         run: |
           helm repo index edge --url https://helm.nginx.com/edge
           git add -A
-          git commit -m "NGINX Ingress Controller - Edge Release (latest)"
+          git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' commit -m "NGINX Ingress Controller - Edge Release (latest)"
           git push -u origin master
 
   job-failure:
