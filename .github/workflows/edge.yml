@@ -408,7 +408,7 @@ jobs:
       - name: Upload Chart
         uses: actions/upload-artifact@v2
         with:
-          name: nginx-ingress-${{ env.HELM_CHART_VERSION }}.tgz
+          name: helm-chart
           path: ${{ github.workspace }}/nginx-ingress-${{ env.HELM_CHART_VERSION }}.tgz
 
   release-helm:
@@ -428,8 +428,8 @@ jobs:
       - name: Retrieve latest Helm Chart
         uses: actions/download-artifact@v2
         with:
-          name: nginx-ingress-${{ env.HELM_CHART_VERSION }}.tgz
-          path: ${{ github.workspace }}/edge/nginx-ingress-${{ env.HELM_CHART_VERSION }}.tgz
+          name: helm-chart
+          path: ${{ github.workspace }}/edge
       - name: Push Helm Chart
         run: |
           helm repo index edge --url https://helm.nginx.com/edge
