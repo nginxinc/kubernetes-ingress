@@ -164,9 +164,13 @@ func (cnf *Configurator) updateIngressMetricsLabels(ingEx *IngressEx, upstreams 
 		newUpstreamsNames = append(newUpstreamsNames, u.Name)
 		for _, server := range u.UpstreamServers {
 			s := fmt.Sprintf("%v:%v", server.Address, server.Port)
-			podName := ingEx.PodsByIP[s]
+			podInfo := ingEx.PodsByIP[s]
 			labelKey := fmt.Sprintf("%v/%v", u.Name, s)
-			upstreamServerPeerLabels[labelKey] = []string{podName}
+			upstreamServerPeerLabels[labelKey] = []string{podInfo.Name}
+			if cnf.staticCfgParams.NginxServiceMesh {
+				ownerLabelVal := fmt.Sprintf("%s/%s", podInfo.OwnerType, podInfo.OwnerName)
+				upstreamServerPeerLabels[labelKey] = append(upstreamServerPeerLabels[labelKey], ownerLabelVal)
+			}
 			newPeers[labelKey] = true
 			newPeersIPs = append(newPeersIPs, labelKey)
 		}
@@ -314,9 +318,13 @@ func (cnf *Configurator) updateVirtualServerMetricsLabels(virtualServerEx *Virtu
 		newUpstreams[u.Name] = true
 		newUpstreamsNames = append(newUpstreamsNames, u.Name)
 		for _, server := range u.Servers {
-			podName := virtualServerEx.PodsByIP[server.Address]
+			podInfo := virtualServerEx.PodsByIP[server.Address]
 			labelKey := fmt.Sprintf("%v/%v", u.Name, server.Address)
-			upstreamServerPeerLabels[labelKey] = []string{podName}
+			upstreamServerPeerLabels[labelKey] = []string{podInfo.Name}
+			if cnf.staticCfgParams.NginxServiceMesh {
+				ownerLabelVal := fmt.Sprintf("%s/%s", podInfo.OwnerType, podInfo.OwnerName)
+				upstreamServerPeerLabels[labelKey] = append(upstreamServerPeerLabels[labelKey], ownerLabelVal)
+			}
 			newPeers[labelKey] = true
 			newPeersIPs = append(newPeersIPs, labelKey)
 		}

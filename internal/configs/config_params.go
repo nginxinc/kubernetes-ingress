@@ -109,7 +109,7 @@ type StaticConfigParams struct {
 	StubStatusOverUnixSocketForOSS bool
 	TLSPassthrough                 bool
 	EnableSnippets                 bool
-	SpiffeCerts                    bool
+	NginxServiceMesh               bool
 	EnableInternalRoutes           bool
 	MainAppProtectLoadModule       bool
 	PodName                        string

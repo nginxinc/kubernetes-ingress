@@ -1986,6 +1986,7 @@ func TestFormatWarningsMessages(t *testing.T) {
 }
 
 func TestGetEndpointsBySubselectedPods(t *testing.T) {
+	boolPointer := func(b bool) *bool { return &b }
 	tests := []struct {
 		desc        string
 		targetPort  int32
@@ -1998,6 +1999,10 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 			expectedEps: []podEndpoint{
 				{
 					Address: "1.2.3.4:80",
+					MeshPodOwner: configs.MeshPodOwner{
+						OwnerType: "deployment",
+						OwnerName: "deploy-1",
+					},
 				},
 			},
 		},
@@ -2010,6 +2015,15 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 
 	pods := []*v1.Pod{
 		{
+			ObjectMeta: meta_v1.ObjectMeta{
+				OwnerReferences: []meta_v1.OwnerReference{
+					{
+						Kind:       "Deployment",
+						Name:       "deploy-1",
+						Controller: boolPointer(true),
+					},
+				},
+			},
 			Status: v1.PodStatus{
 				PodIP: "1.2.3.4",
 			},
@@ -2229,6 +2243,94 @@ func TestCreatePolicyMap(t *testing.T) {
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("createPolicyMap() returned \n%s but expected \n%s", policyMapToString(result), policyMapToString(expected))
 	}
+}
+
+func TestGetPodOwnerTypeAndName(t *testing.T) {
+	tests := []struct {
+		desc    string
+		expType string
+		expName string
+		pod     *v1.Pod
+	}{
+		{
+			desc:    "deployment",
+			expType: "deployment",
+			expName: "deploy-name",
+			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("Deployment", "deploy-name", true)},
+		},
+		{
+			desc:    "stateful set",
+			expType: "statefulset",
+			expName: "statefulset-name",
+			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("StatefulSet", "statefulset-name", true)},
+		},
+		{
+			desc:    "daemon set",
+			expType: "daemonset",
+			expName: "daemonset-name",
+			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("DaemonSet", "daemonset-name", true)},
+		},
+		{
+			desc:    "replica set with no pod hash",
+			expType: "deployment",
+			expName: "replicaset-name",
+			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("ReplicaSet", "replicaset-name", false)},
+		},
+		{
+			desc:    "replica set with pod hash",
+			expType: "deployment",
+			expName: "replicaset-name",
+			pod: &v1.Pod{
+				ObjectMeta: createTestObjMeta("ReplicaSet", "replicaset-name-67c6f7c5fd", true),
+			},
+		},
+		{
+			desc:    "nil controller should use default values",
+			expType: "deployment",
+			expName: "deploy-name",
+			pod: &v1.Pod{
+				ObjectMeta: meta_v1.ObjectMeta{
+					OwnerReferences: []meta_v1.OwnerReference{
+						{
+							Name:       "deploy-name",
+							Controller: nil,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			actualType, actualName := getPodOwnerTypeAndName(test.pod)
+			if actualType != test.expType {
+				t.Errorf("getPodOwnerTypeAndName() returned %s for owner type but expected %s", actualType, test.expType)
+			}
+			if actualName != test.expName {
+				t.Errorf("getPodOwnerTypeAndName() returned %s for owner name but expected %s", actualName, test.expName)
+			}
+		})
+	}
+}
+
+func createTestObjMeta(kind, name string, podHashLabel bool) meta_v1.ObjectMeta {
+	controller := true
+	meta := meta_v1.ObjectMeta{
+		OwnerReferences: []meta_v1.OwnerReference{
+			{
+				Kind:       kind,
+				Name:       name,
+				Controller: &controller,
+			},
+		},
+	}
+	if podHashLabel {
+		meta.Labels = map[string]string{
+			"pod-template-hash": "67c6f7c5fd",
+		}
+	}
+	return meta
 }
 
 func policyMapToString(policies map[string]*conf_v1alpha1.Policy) string {

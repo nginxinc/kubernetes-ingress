@@ -89,6 +89,8 @@ var (
 type podEndpoint struct {
 	Address string
 	PodName string
+	// MeshPodOwner is used for NGINX Service Mesh metrics
+	configs.MeshPodOwner
 }
 
 // LoadBalancerController watches Kubernetes API and
@@ -2360,7 +2362,7 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 	ingEx.Endpoints = make(map[string][]string)
 	ingEx.HealthChecks = make(map[string]*api_v1.Probe)
 	ingEx.ExternalNameSvcs = make(map[string]bool)
-	ingEx.PodsByIP = make(map[string]string)
+	ingEx.PodsByIP = make(map[string]configs.PodInfo)
 
 	if ing.Spec.Backend != nil {
 		podEndps := []podEndpoint{}
@@ -2393,7 +2395,10 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 
 		if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
 			for _, endpoint := range podEndps {
-				ingEx.PodsByIP[endpoint.Address] = endpoint.PodName
+				ingEx.PodsByIP[endpoint.Address] = configs.PodInfo{
+					Name:         endpoint.PodName,
+					MeshPodOwner: endpoint.MeshPodOwner,
+				}
 			}
 		}
 	}
@@ -2440,7 +2445,10 @@ func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*conf
 
 			if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
 				for _, endpoint := range podEndps {
-					ingEx.PodsByIP[endpoint.Address] = endpoint.PodName
+					ingEx.PodsByIP[endpoint.Address] = configs.PodInfo{
+						Name:         endpoint.PodName,
+						MeshPodOwner: endpoint.MeshPodOwner,
+					}
 				}
 			}
 		}
@@ -2551,7 +2559,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 
 	endpoints := make(map[string][]string)
 	externalNameSvcs := make(map[string]bool)
-	podsByIP := make(map[string]string)
+	podsByIP := make(map[string]configs.PodInfo)
 
 	for _, u := range virtualServer.Spec.Upstreams {
 		endpointsKey := configs.GenerateEndpointsKey(virtualServer.Namespace, u.Service, u.Subselector, u.Port)
@@ -2579,7 +2587,10 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 
 		if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
 			for _, endpoint := range podEndps {
-				podsByIP[endpoint.Address] = endpoint.PodName
+				podsByIP[endpoint.Address] = configs.PodInfo{
+					Name:         endpoint.PodName,
+					MeshPodOwner: endpoint.MeshPodOwner,
+				}
 			}
 		}
 	}
@@ -2667,7 +2678,10 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 
 			if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
 				for _, endpoint := range podEndps {
-					podsByIP[endpoint.Address] = endpoint.PodName
+					podsByIP[endpoint.Address] = configs.PodInfo{
+						Name: endpoint.PodName,
+						MeshPodOwner: endpoint.MeshPodOwner,
+					}
 				}
 			}
 		}
@@ -2831,10 +2845,14 @@ func getEndpointsBySubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEps 
 				for _, address := range subset.Addresses {
 					if address.IP == pod.Status.PodIP {
 						addr := fmt.Sprintf("%v:%v", pod.Status.PodIP, targetPort)
-
+						ownerType, ownerName := getPodOwnerTypeAndName(pod)
 						podEnd := podEndpoint{
 							Address: addr,
 							PodName: getPodName(address.TargetRef),
+							MeshPodOwner: configs.MeshPodOwner{
+								OwnerType: ownerType,
+								OwnerName: ownerName,
+							},
 						}
 						endps = append(endps, podEnd)
 					}
@@ -2960,7 +2978,12 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, i
 					addr := fmt.Sprintf("%v:%v", address.IP, port.Port)
 					podEnd := podEndpoint{
 						Address: addr,
-						PodName: address.TargetRef.Name,
+					}
+					if address.TargetRef != nil {
+						parentType, parentName := lbc.getPodOwnerTypeAndNameFromAddress(address.TargetRef.Namespace, address.TargetRef.Name)
+						podEnd.OwnerType = parentType
+						podEnd.OwnerName = parentName
+						podEnd.PodName = address.TargetRef.Name
 					}
 					endpoints = append(endpoints, podEnd)
 				}
@@ -2970,6 +2993,35 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, i
 	}
 
 	return nil, fmt.Errorf("No endpoints for target port %v in service %s", targetPort, svc.Name)
+}
+
+func (lbc *LoadBalancerController) getPodOwnerTypeAndNameFromAddress(ns, name string) (parentType, parentName string) {
+	obj, exists, err := lbc.podLister.GetByKey(fmt.Sprintf("%s/%s", ns, name))
+	if err != nil {
+		glog.Warningf("could not get pod by key %s/%s: %v", ns, name, err)
+		return "", ""
+	}
+	if exists {
+		pod := obj.(*api_v1.Pod)
+		return getPodOwnerTypeAndName(pod)
+	}
+	return "", ""
+}
+
+func getPodOwnerTypeAndName(pod *api_v1.Pod) (parentType, parentName string) {
+	parentType = "deployment"
+	for _, owner := range pod.GetOwnerReferences() {
+		parentName = owner.Name
+		if owner.Controller != nil && *owner.Controller {
+			if owner.Kind == "StatefulSet" || owner.Kind == "DaemonSet" {
+				parentType = strings.ToLower(owner.Kind)
+			}
+			if owner.Kind == "ReplicaSet" && strings.HasSuffix(owner.Name, pod.Labels["pod-template-hash"]) {
+				parentName = strings.TrimSuffix(owner.Name, "-"+pod.Labels["pod-template-hash"])
+			}
+		}
+	}
+	return parentType, parentName
 }
 
 func (lbc *LoadBalancerController) getServicePortForIngressPort(ingSvcPort intstr.IntOrString, svc *api_v1.Service) *api_v1.ServicePort {
