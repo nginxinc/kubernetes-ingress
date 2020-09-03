@@ -166,6 +166,9 @@ type MainConfig struct {
 	ResolverIPV6                       bool
 	ResolverTimeout                    string
 	ResolverValid                      string
+	RealIPHeader                       string
+	RealIPRecursive                    bool
+	SetRealIPFrom                      []string
 	ServerNamesHashBucketSize          string
 	ServerNamesHashMaxSize             string
 	ServerTokens                       string
