@@ -869,7 +869,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 
 	if polExists {
 		pol := obj.(*conf_v1alpha1.Policy)
-		err := validation.ValidatePolicy(pol)
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus)
 		if err != nil {
 			lbc.recorder.Eventf(pol, api_v1.EventTypeWarning, "Rejected", "Policy %v is invalid and was rejected: %v", key, err)
 		} else {
@@ -1511,14 +1511,23 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 		glog.Warningf("Failed to find Ingress resources for Secret %v: %v", key, err)
 		lbc.syncQueue.RequeueAfter(task, err, 5*time.Second)
 	}
+	glog.V(2).Infof("Found %v Ingresses with Secret %v", len(ings), key)
 
 	var virtualServers []*conf_v1.VirtualServer
+
 	if lbc.areCustomResourcesEnabled {
 		virtualServers = lbc.getVirtualServersForSecret(namespace, name)
+
+		jwkSecretPols := lbc.getPoliciesForSecret(namespace, name)
+		for _, pol := range jwkSecretPols {
+			vsList := lbc.getVirtualServersForPolicy(pol.Namespace, pol.Name)
+			virtualServers = append(virtualServers, vsList...)
+		}
+
+		virtualServers = removeDuplicateVirtualServers(virtualServers)
+
 		glog.V(2).Infof("Found %v VirtualServers with Secret %v", len(virtualServers), key)
 	}
-
-	glog.V(2).Infof("Found %v Ingresses with Secret %v", len(ings), key)
 
 	if !secrExists {
 		glog.V(2).Infof("Deleting Secret: %v\n", key)
@@ -1542,6 +1551,20 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 	if len(ings)+len(virtualServers) > 0 {
 		lbc.handleSecretUpdate(secret, ings, virtualServers)
 	}
+}
+
+func removeDuplicateVirtualServers(virtualServers []*conf_v1.VirtualServer) []*conf_v1.VirtualServer {
+	encountered := make(map[string]bool)
+	var uniqueVirtualServers []*conf_v1.VirtualServer
+	for _, vs := range virtualServers {
+		vsKey := fmt.Sprintf("%v/%v", vs.Namespace, vs.Name)
+		if !encountered[vsKey] {
+			encountered[vsKey] = true
+			uniqueVirtualServers = append(uniqueVirtualServers, vs)
+		}
+	}
+
+	return uniqueVirtualServers
 }
 
 func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
@@ -1604,7 +1627,18 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 	kind, _ := GetSecretKind(secret)
 
 	if kind == JWK {
-		lbc.configurator.AddOrUpdateJWKSecret(secret)
+		virtualServerExes := lbc.virtualServersToVirtualServerExes(virtualServers)
+
+		err := lbc.configurator.AddOrUpdateJWKSecret(secret, virtualServerExes)
+		if err != nil {
+			glog.Errorf("Error when updating Secret %v: %v", secretNsName, err)
+			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, err)
+
+			eventType = api_v1.EventTypeWarning
+			title = "UpdatedWithError"
+			message = fmt.Sprintf("Configuration was updated due to updated secret %v, but not applied: %v", secretNsName, err)
+			state = conf_v1.StateInvalid
+		}
 	} else {
 		regular, mergeable := lbc.createIngresses(ings)
 
@@ -2282,7 +2316,7 @@ func getIPAddressesFromEndpoints(endpoints []podEndpoint) []string {
 	return endps
 }
 
-func (lbc *LoadBalancerController) getAndValidateSecret(secretKey string) (*api_v1.Secret, error) {
+func (lbc *LoadBalancerController) getSecret(secretKey string) (*api_v1.Secret, error) {
 	secretObject, secretExists, err := lbc.secretLister.GetByKey(secretKey)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving secret %v", secretKey)
@@ -2291,8 +2325,29 @@ func (lbc *LoadBalancerController) getAndValidateSecret(secretKey string) (*api_
 		return nil, fmt.Errorf("secret %v not found", secretKey)
 	}
 	secret := secretObject.(*api_v1.Secret)
+	return secret, nil
+}
+
+func (lbc *LoadBalancerController) getAndValidateSecret(secretKey string) (*api_v1.Secret, error) {
+	secret, err := lbc.getSecret(secretKey)
+	if err != nil {
+		return nil, err
+	}
 
 	err = ValidateTLSSecret(secret)
+	if err != nil {
+		return nil, fmt.Errorf("error validating secret %v", secretKey)
+	}
+	return secret, nil
+}
+
+func (lbc *LoadBalancerController) getAndValidateJWTSecret(secretKey string) (*api_v1.Secret, error) {
+	secret, err := lbc.getSecret(secretKey)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ValidateJWKSecret(secret)
 	if err != nil {
 		return nil, fmt.Errorf("error validating secret %v", secretKey)
 	}
@@ -2540,6 +2595,7 @@ func newVirtualServerRouteErrorFromVSR(virtualServerRoute *conf_v1.VirtualServer
 func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.VirtualServer) (*configs.VirtualServerEx, []virtualServerRouteError) {
 	virtualServerEx := configs.VirtualServerEx{
 		VirtualServer: virtualServer,
+		JWTKeys:       make(map[string]*api_v1.Secret),
 	}
 
 	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
@@ -2555,6 +2611,11 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 	policies, policyErrors := lbc.getPolicies(virtualServer.Spec.Policies, virtualServer.Namespace)
 	for _, err := range policyErrors {
 		glog.Warningf("Error getting policy for VirtualServer %s/%s: %v", virtualServer.Namespace, virtualServer.Name, err)
+	}
+
+	err := lbc.addJWTSecrets(policies, virtualServerEx.JWTKeys)
+	if err != nil {
+		glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
 
 	endpoints := make(map[string][]string)
@@ -2605,6 +2666,11 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 		}
 		policies = append(policies, vsRoutePolicies...)
 
+		err = lbc.addJWTSecrets(vsRoutePolicies, virtualServerEx.JWTKeys)
+		if err != nil {
+			glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		}
+
 		if r.Route == "" {
 			continue
 		}
@@ -2652,6 +2718,11 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 				glog.Warningf("Error getting policy for VirtualServerRoute %s/%s: %v", vsr.Namespace, vsr.Name, err)
 			}
 			policies = append(policies, vsrSubroutePolicies...)
+
+			err = lbc.addJWTSecrets(vsrSubroutePolicies, virtualServerEx.JWTKeys)
+			if err != nil {
+				glog.Warningf("Error getting JWT secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+			}
 		}
 
 		for _, u := range vsr.Spec.Upstreams {
@@ -2707,14 +2778,32 @@ func createPolicyMap(policies []*conf_v1alpha1.Policy) map[string]*conf_v1alpha1
 	return result
 }
 
-func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReference, defaultNamespace string) ([]*conf_v1alpha1.Policy, []error) {
+func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1alpha1.Policy {
+	var policies []*conf_v1alpha1.Policy
+
+	for _, obj := range lbc.policyLister.List() {
+		pol := obj.(*conf_v1alpha1.Policy)
+
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus)
+		if err != nil {
+			glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
+			continue
+		}
+
+		policies = append(policies, pol)
+	}
+
+	return policies
+}
+
+func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReference, ownerNamespace string) ([]*conf_v1alpha1.Policy, []error) {
 	var result []*conf_v1alpha1.Policy
 	var errors []error
 
 	for _, p := range policies {
 		polNamespace := p.Namespace
 		if polNamespace == "" {
-			polNamespace = defaultNamespace
+			polNamespace = ownerNamespace
 		}
 
 		policyKey := fmt.Sprintf("%s/%s", polNamespace, p.Name)
@@ -2732,7 +2821,7 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 
 		policy := policyObj.(*conf_v1alpha1.Policy)
 
-		err = validation.ValidatePolicy(policy)
+		err = validation.ValidatePolicy(policy, lbc.isNginxPlus)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Policy %s is invalid: %v", policyKey, err))
 			continue
@@ -2742,6 +2831,42 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 	}
 
 	return result, errors
+}
+
+func (lbc *LoadBalancerController) addJWTSecrets(policies []*conf_v1alpha1.Policy, jwtKeys map[string]*api_v1.Secret) error {
+	for _, pol := range policies {
+		if pol.Spec.JWTAuth == nil {
+			continue
+		}
+		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.JWTAuth.Secret)
+		secret, err := lbc.getAndValidateJWTSecret(secretKey)
+		if err != nil {
+			return fmt.Errorf("Error getting or validating the JWT secret %v for the policy %v/%v: %v", secretKey, pol.Namespace, pol.Name, err)
+		}
+		jwtKeys[secretKey] = secret
+	}
+
+	return nil
+}
+
+func (lbc *LoadBalancerController) getPoliciesForSecret(secretNamespace string, secretName string) []*conf_v1alpha1.Policy {
+	return findPoliciesForSecret(lbc.getAllPolicies(), secretNamespace, secretName)
+}
+
+func findPoliciesForSecret(policies []*conf_v1alpha1.Policy, secretNamespace string, secretName string) []*conf_v1alpha1.Policy {
+	var res []*conf_v1alpha1.Policy
+
+	for _, pol := range policies {
+		if pol.Spec.JWTAuth == nil {
+			continue
+		}
+
+		if pol.Spec.JWTAuth.Secret == secretName && pol.Namespace == secretNamespace {
+			res = append(res, pol)
+		}
+	}
+
+	return res
 }
 
 func (lbc *LoadBalancerController) createTransportServer(transportServer *conf_v1alpha1.TransportServer) *configs.TransportServerEx {

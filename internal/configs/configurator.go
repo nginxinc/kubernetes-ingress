@@ -406,8 +406,11 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	if virtualServerEx.TLSSecret != nil {
 		tlsPemFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.TLSSecret)
 	}
+
+	jwtKeys := cnf.addOrUpdateJWKSecretsForVirtualServer(virtualServerEx.JWTKeys)
+
 	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
-	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName)
+	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName, jwtKeys)
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
@@ -580,8 +583,41 @@ func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
 	return cnf.nginxManager.CreateSecret(name, data, nginx.JWKSecretFileMode)
 }
 
-func (cnf *Configurator) AddOrUpdateJWKSecret(secret *api_v1.Secret) {
+// AddOrUpdateJWKSecret adds a JWK secret to the filesystem or updates it if it already exists.
+func (cnf *Configurator) AddOrUpdateJWKSecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) error {
 	cnf.addOrUpdateJWKSecret(secret)
+
+	if len(virtualServerExes) > 0 {
+		for _, vsEx := range virtualServerExes {
+			// It is safe to ignore warnings here as no new warnings should appear when adding or updating a secret
+			_, err := cnf.addOrUpdateVirtualServer(vsEx)
+			if err != nil {
+				return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
+			}
+		}
+
+		if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
+			return fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
+		}
+	}
+	return nil
+}
+
+// addOrUpdateJWKSecretsForVirtualServer adds JWK secrets to the filesystem or updates them if they already exist.
+// Returns map[jwkKeyName]jwtKeyFilename
+func (cnf *Configurator) addOrUpdateJWKSecretsForVirtualServer(jwtKeys map[string]*api_v1.Secret) map[string]string {
+	if !cnf.isPlus {
+		return nil
+	}
+
+	jwkSecrets := make(map[string]string)
+
+	for jwkKeyName, jwkKey := range jwtKeys {
+		filename := cnf.addOrUpdateJWKSecret(jwkKey)
+		jwkSecrets[jwkKeyName] = filename
+	}
+
+	return jwkSecrets
 }
 
 // AddOrUpdateTLSSecret adds or updates a file with the content of the TLS secret.

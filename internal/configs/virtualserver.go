@@ -50,6 +50,7 @@ type VirtualServerEx struct {
 	VirtualServer       *conf_v1.VirtualServer
 	Endpoints           map[string][]string
 	TLSSecret           *api_v1.Secret
+	JWTKeys             map[string]*api_v1.Secret
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
 	Policies            map[string]*conf_v1alpha1.Policy
@@ -207,11 +208,11 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(owner runtime
 }
 
 // GenerateVirtualServerConfig generates a full configuration for a VirtualServer
-func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx, tlsPemFileName string) (version2.VirtualServerConfig, Warnings) {
+func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx, tlsPemFileName string, jwtKeys map[string]string) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
 
 	policiesCfg := vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace,
-		vsEx.VirtualServer.Name, vsEx.VirtualServer.Spec.Policies, vsEx.Policies)
+		vsEx.VirtualServer.Name, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, jwtKeys)
 
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
@@ -317,7 +318,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 
 		vsLocSnippets := r.LocationSnippets
 		routePoliciesCfg := vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name,
-			r.Policies, vsEx.Policies)
+			r.Policies, vsEx.Policies, jwtKeys)
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 		if len(r.Matches) > 0 {
@@ -379,11 +380,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			}
 
 			routePoliciesCfg := vsc.generatePolicies(vsr, vsr.Namespace, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name,
-				r.Policies, vsEx.Policies)
+				r.Policies, vsEx.Policies, jwtKeys)
 			// use the VirtualServer route policies if the route does not define any
 			if len(r.Policies) == 0 {
 				routePoliciesCfg = vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace,
-					vsEx.VirtualServer.Name, vsrPoliciesFromVs[vsrNamespaceName], vsEx.Policies)
+					vsEx.VirtualServer.Name, vsrPoliciesFromVs[vsrNamespaceName], vsEx.Policies, jwtKeys)
 			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
@@ -457,6 +458,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			Deny:                      policiesCfg.Deny,
 			LimitReqOptions:           policiesCfg.LimitReqOptions,
 			LimitReqs:                 policiesCfg.LimitReqs,
+			JWTAuth:                   policiesCfg.JWTAuth,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
 		},
 		SpiffeCerts: vsc.spiffeCerts,
@@ -471,16 +473,18 @@ type policiesCfg struct {
 	LimitReqOptions version2.LimitReqOptions
 	LimitReqZones   []version2.LimitReqZone
 	LimitReqs       []version2.LimitReq
+	JWTAuth         *version2.JWTAuth
 	ErrorReturn     *version2.Return
 }
 
 func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, ownerNamespace string, vsNamespace string,
-	vsName string, policyRefs []conf_v1.PolicyReference, policies map[string]*conf_v1alpha1.Policy) policiesCfg {
+	vsName string, policyRefs []conf_v1.PolicyReference, policies map[string]*conf_v1alpha1.Policy, jwtKeys map[string]string) policiesCfg {
 	var policyErrorReturn *version2.Return
 	var allow, deny []string
 	var limitReqOptions version2.LimitReqOptions
 	var limitReqZones []version2.LimitReqZone
 	var limitReqs []version2.LimitReq
+	var JWTAuth *version2.JWTAuth
 	var policyError bool
 
 	for _, p := range policyRefs {
@@ -496,6 +500,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 				allow = append(allow, pol.Spec.AccessControl.Allow...)
 				deny = append(deny, pol.Spec.AccessControl.Deny...)
 			}
+
 			if pol.Spec.RateLimit != nil {
 				rlZoneName := fmt.Sprintf("pol_rl_%v_%v_%v_%v", polNamespace, p.Name, vsNamespace, vsName)
 				limitReqs = append(limitReqs, generateLimitReq(rlZoneName, pol.Spec.RateLimit))
@@ -505,17 +510,37 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 				} else {
 					curOptions := generateLimitReqOptions(pol.Spec.RateLimit)
 					if curOptions.DryRun != limitReqOptions.DryRun {
-						vsc.addWarningf(owner, "RateLimit policy %v with limit request option dryRun=%v is overridden to dryRun=%v by the first policy reference in this context",
+						vsc.addWarningf(owner, "RateLimit policy %q with limit request option dryRun=%v is overridden to dryRun=%v by the first policy reference in this context",
 							key, curOptions.DryRun, limitReqOptions.DryRun)
 					}
 					if curOptions.LogLevel != limitReqOptions.LogLevel {
-						vsc.addWarningf(owner, "RateLimit policy %v with limit request option logLevel=%v is overridden to logLevel=%v by the first policy reference in this context",
+						vsc.addWarningf(owner, "RateLimit policy %q with limit request option logLevel=%v is overridden to logLevel=%v by the first policy reference in this context",
 							key, curOptions.LogLevel, limitReqOptions.LogLevel)
 					}
 					if curOptions.RejectCode != limitReqOptions.RejectCode {
-						vsc.addWarningf(owner, "RateLimit policy %v with limit request option rejectCode=%v is overridden to rejectCode=%v by the first policy reference in this context",
+						vsc.addWarningf(owner, "RateLimit policy %q with limit request option rejectCode=%v is overridden to rejectCode=%v by the first policy reference in this context",
 							key, curOptions.RejectCode, limitReqOptions.RejectCode)
 					}
+				}
+			}
+
+			if pol.Spec.JWTAuth != nil {
+				if JWTAuth != nil {
+					vsc.addWarningf(owner, "Multiple jwt policies in the same context is not valid. JWT policy %q will be ignored", key)
+					continue
+				}
+
+				jwtSecretKey := fmt.Sprintf("%v/%v", polNamespace, pol.Spec.JWTAuth.Secret)
+				if _, existsOnFilesystem := jwtKeys[jwtSecretKey]; !existsOnFilesystem {
+					vsc.addWarningf(owner, `JWT policy %q references a JWKSecret %q which does not exist`, key, jwtSecretKey)
+					policyError = true
+					break
+				}
+
+				JWTAuth = &version2.JWTAuth{
+					Secret: jwtKeys[jwtSecretKey],
+					Realm:  pol.Spec.JWTAuth.Realm,
+					Token:  pol.Spec.JWTAuth.Token,
 				}
 			}
 		} else {
@@ -538,6 +563,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 		LimitReqOptions: limitReqOptions,
 		LimitReqZones:   limitReqZones,
 		LimitReqs:       limitReqs,
+		JWTAuth:         JWTAuth,
 		ErrorReturn:     policyErrorReturn,
 	}
 }
@@ -598,6 +624,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.Deny = cfg.Deny
 	location.LimitReqOptions = cfg.LimitReqOptions
 	location.LimitReqs = cfg.LimitReqs
+	location.JWTAuth = cfg.JWTAuth
 	location.PoliciesErrorReturn = cfg.ErrorReturn
 }
 

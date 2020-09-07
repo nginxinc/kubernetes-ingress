@@ -18,6 +18,8 @@ This document is the reference documentation for the Policy resource. An example
       - [AccessControl Merging Behavior](#accesscontrol-merging-behavior)
     - [RateLimit](#ratelimit)
       - [RateLimit Merging Behavior](#ratelimit-merging-behavior)
+    - [JWT](#jwt)
+      - [JWT Merging Behavior](#jwt-merging-behavior)
   - [Using Policy](#using-policy)
     - [Validation](#validation)
       - [Structural Validation](#structural-validation)
@@ -188,6 +190,53 @@ policies:
 ```
 
 When you reference more than one rate limit policy, the Ingress Controller will configure NGINX to use all referenced rate limits. When you define multiple policies, each additional policy inherits the `dryRun`, `logLevel`, and `rejectCode` parameters from the first policy referenced (`rate-limit-policy-one`, in the example above).
+
+### JWT
+
+> Note: The feature is only available in NGINX Plus.
+
+The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens.
+
+For example, the following policy will reject all requests that do not include a valid JWT in the HTTP header `token`:
+```yaml
+jwt:
+  secret: jwk-secret
+  realm: "My API"
+```
+
+> Note: The feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``secret``
+     - The name of the Kubernetes secret that stores the JWK. It must be in the same namespace as the Policy resource. The JWK must be stored in the secret under the key ``jwk``, otherwise the secret will be rejected as invalid.
+     - ``string``
+     - Yes
+   * - ``realm``
+     - The realm of the JWT.
+     - ``string``
+     - Yes
+   * - ``token``
+     - The token specifies a variable that contains the JSON Web Token. By default the JWT is passed in the ``Authorization`` header as a Bearer Token. JWT may be also passed as a cookie or a part of a query string, for example: ``$cookie_auth_token``. Accepted variables are ``$http_``, ``$arg_``, ``$cookie_``.
+     - ``string``
+     - No
+```
+
+#### JWT Merging Behavior
+
+A VirtualServer/VirtualServerRoute can reference multiple JWT policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+```yaml
+policies:
+- name: jwt-policy-one
+- name: jwt-policy-two
+```
+In this example the Ingress Controller will use the configuration from the first policy reference `jwt-policy-one`, and ignores `jwt-policy-two`.
 
 ## Using Policy
 

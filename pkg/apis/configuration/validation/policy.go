@@ -13,12 +13,12 @@ import (
 )
 
 // ValidatePolicy validates a Policy.
-func ValidatePolicy(policy *v1alpha1.Policy) error {
-	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"))
+func ValidatePolicy(policy *v1alpha1.Policy, isPlus bool) error {
+	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus)
 	return allErrs.ToAggregate()
 }
 
-func validatePolicySpec(spec *v1alpha1.PolicySpec, fieldPath *field.Path) field.ErrorList {
+func validatePolicySpec(spec *v1alpha1.PolicySpec, fieldPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -33,8 +33,22 @@ func validatePolicySpec(spec *v1alpha1.PolicySpec, fieldPath *field.Path) field.
 		fieldCount++
 	}
 
+	if spec.JWTAuth != nil {
+		if !isPlus {
+			return append(allErrs, field.Forbidden(fieldPath.Child("jwt"), "jwt secrets are only supported in NGINX Plus"))
+		}
+
+		allErrs = append(allErrs, validateJWT(spec.JWTAuth, fieldPath.Child("jwt"))...)
+		fieldCount++
+	}
+
 	if fieldCount != 1 {
-		allErrs = append(allErrs, field.Invalid(fieldPath, "", "must specify exactly one of: `accessControl`, `rateLimit`"))
+		msg := "must specify exactly one of: `accessControl`, `rateLimit`"
+		if isPlus {
+			msg = fmt.Sprint(msg, ", `jwt`")
+		}
+
+		allErrs = append(allErrs, field.Invalid(fieldPath, "", msg))
 	}
 
 	return allErrs
@@ -95,6 +109,21 @@ func validateRateLimit(rateLimit *v1alpha1.RateLimit, fieldPath *field.Path) fie
 	return allErrs
 }
 
+func validateJWT(jwt *v1alpha1.JWTAuth, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	allErrs = append(allErrs, validateJWTRealm(jwt.Realm, fieldPath.Child("realm"))...)
+
+	if jwt.Secret == "" {
+		return append(allErrs, field.Required(fieldPath.Child("secret"), ""))
+	}
+	allErrs = append(allErrs, validateSecretName(jwt.Secret, fieldPath.Child("secret"))...)
+
+	allErrs = append(allErrs, validateJWTToken(jwt.Token, fieldPath.Child("token"))...)
+
+	return allErrs
+}
+
 const rateFmt = `[1-9]\d*r/[sSmM]`
 const rateErrMsg = "must consist of numeric characters followed by a valid rate suffix. 'r/s|r/m"
 
@@ -138,7 +167,7 @@ func validateRateLimitZoneSize(zoneSize string, fieldPath *field.Path) field.Err
 
 var rateLimitKeySpecialVariables = []string{"arg_", "http_", "cookie_"}
 
-// rateLimitVariables includes NGINX variables allowed to be used in a rateLimit policy key.
+// rateLimitKeyVariables includes NGINX variables allowed to be used in a rateLimit policy key.
 var rateLimitKeyVariables = map[string]bool{
 	"binary_remote_addr": true,
 	"request_uri":        true,
@@ -163,6 +192,38 @@ func validateRateLimitKey(key string, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
+var jwtTokenSpecialVariables = []string{"arg_", "http_", "cookie_"}
+
+func validateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if token == "" {
+		return allErrs
+	}
+
+	nginxVars := strings.Split(token, "$")
+	if len(nginxVars) != 2 {
+		return append(allErrs, field.Invalid(fieldPath, token, "must have 1 var"))
+	}
+	nVar := token[1:]
+
+	special := false
+	for _, specialVar := range jwtTokenSpecialVariables {
+		if strings.HasPrefix(nVar, specialVar) {
+			special = true
+			break
+		}
+	}
+
+	if special {
+		allErrs = append(allErrs, validateSpecialVariable(nVar, fieldPath)...)
+	} else {
+		return append(allErrs, field.Invalid(fieldPath, token, "must only have special vars"))
+	}
+
+	return allErrs
+}
+
 var validLogLevels = map[string]bool{
 	"info":   true,
 	"notice": true,
@@ -176,6 +237,26 @@ func validateRateLimitLogLevel(logLevel string, fieldPath *field.Path) field.Err
 	if !validLogLevels[logLevel] {
 		allErrs = append(allErrs, field.Invalid(fieldPath, logLevel, fmt.Sprintf("Accepted values: %s",
 			mapToPrettyString(validLogLevels))))
+	}
+
+	return allErrs
+}
+
+const jwtRealmFmt = `([^"$\\]|\\[^$])*`
+const jwtRealmFmtErrMsg string = `a valid realm must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
+
+var jwtRealmFmtRegexp = regexp.MustCompile("^" + jwtRealmFmt + "$")
+
+func validateJWTRealm(realm string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if realm == "" {
+		return append(allErrs, field.Required(fieldPath, ""))
+	}
+
+	if !jwtRealmFmtRegexp.MatchString(realm) {
+		msg := validation.RegexError(jwtRealmFmtErrMsg, jwtRealmFmt, "MyAPI", "My Product API")
+		allErrs = append(allErrs, field.Invalid(fieldPath, realm, msg))
 	}
 
 	return allErrs

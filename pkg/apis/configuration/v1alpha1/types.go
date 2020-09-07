@@ -118,6 +118,7 @@ type Policy struct {
 type PolicySpec struct {
 	AccessControl *AccessControl `json:"accessControl"`
 	RateLimit     *RateLimit     `json:"rateLimit"`
+	JWTAuth       *JWTAuth       `json:"jwt"`
 }
 
 // AccessControl defines an access policy based on the source IP of a request.
@@ -137,6 +138,13 @@ type RateLimit struct {
 	DryRun     *bool  `json:"dryRun"`
 	LogLevel   string `json:"logLevel"`
 	RejectCode *int   `json:"rejectCode"`
+}
+
+// JWTAuth holds JWT authentication configuration.
+type JWTAuth struct {
+	Realm  string `json:"realm"`
+	Secret string `json:"secret"`
+	Token  string `json:"token"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

@@ -53,6 +53,16 @@ spec:
                   type: array
                   items:
                     type: string
+            jwt:
+              description: JWTAuth holds JWT authentication configuration.
+              type: object
+              properties:
+                realm:
+                  type: string
+                secret:
+                  type: string
+                token:
+                  type: string
             rateLimit:
               description: RateLimit defines a rate limit policy.
               type: object

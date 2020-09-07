@@ -131,6 +131,11 @@ server {
         {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
     {{ end }}
 
+    {{ with $s.JWTAuth }}
+    auth_jwt "{{ .Realm }}"{{ if .Token }} token={{ .Token }}{{ end }};
+    auth_jwt_key_file {{ .Secret }};
+    {{ end }}
+
     {{ range $snippet := $s.Snippets }}
     {{- $snippet }}
     {{ end }}
@@ -218,6 +223,11 @@ server {
         {{ range $rl := $l.LimitReqs }}
         limit_req zone={{ $rl.ZoneName }}{{ if $rl.Burst }} burst={{ $rl.Burst }}{{ end }}
             {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
+        {{ end }}
+
+        {{ with $l.JWTAuth }}
+        auth_jwt "{{ .Realm }}"{{ if .Token }} token={{ .Token }}{{ end }};
+        auth_jwt_key_file {{ .Secret }};
         {{ end }}
 
         {{ range $e := $l.ErrorPages }}

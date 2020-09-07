@@ -16,6 +16,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1beta1"
@@ -2139,6 +2140,7 @@ func TestGetPolicies(t *testing.T) {
 	}
 
 	lbc := LoadBalancerController{
+		isNginxPlus: true,
 		policyLister: &cache.FakeCustomStore{
 			GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
 				switch key {
@@ -2176,7 +2178,7 @@ func TestGetPolicies(t *testing.T) {
 
 	expectedPolicies := []*conf_v1alpha1.Policy{validPolicy}
 	expectedErrors := []error{
-		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`"),
+		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `jwt`"),
 		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
 		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
 	}
@@ -2349,4 +2351,298 @@ func policyMapToString(policies map[string]*conf_v1alpha1.Policy) string {
 	b.WriteString("]")
 
 	return b.String()
+}
+
+func TestRemoveDuplicateVirtualServers(t *testing.T) {
+	tests := []struct {
+		virtualServers []*conf_v1.VirtualServer
+		expected       []*conf_v1.VirtualServer
+	}{
+		{
+			[]*conf_v1.VirtualServer{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-1",
+						Namespace: "ns-1",
+					},
+				},
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-2",
+						Namespace: "ns-1",
+					},
+				},
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-2",
+						Namespace: "ns-1",
+					},
+				},
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-3",
+						Namespace: "ns-1",
+					},
+				},
+			},
+			[]*conf_v1.VirtualServer{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-1",
+						Namespace: "ns-1",
+					},
+				},
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-2",
+						Namespace: "ns-1",
+					},
+				},
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-3",
+						Namespace: "ns-1",
+					},
+				},
+			},
+		},
+		{
+			[]*conf_v1.VirtualServer{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-3",
+						Namespace: "ns-2",
+					},
+				},
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-3",
+						Namespace: "ns-1",
+					},
+				},
+			},
+			[]*conf_v1.VirtualServer{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-3",
+						Namespace: "ns-2",
+					},
+				},
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "vs-3",
+						Namespace: "ns-1",
+					},
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		result := removeDuplicateVirtualServers(test.virtualServers)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("removeDuplicateVirtualServers() returned \n%v but expected \n%v", result, test.expected)
+		}
+	}
+}
+
+func TestFindPoliciesForSecret(t *testing.T) {
+	jwtPol1 := &conf_v1alpha1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "jwt-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1alpha1.PolicySpec{
+			JWTAuth: &conf_v1alpha1.JWTAuth{
+				Secret: "jwk-secret",
+			},
+		},
+	}
+
+	jwtPol2 := &conf_v1alpha1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "jwt-policy",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1alpha1.PolicySpec{
+			JWTAuth: &conf_v1alpha1.JWTAuth{
+				Secret: "jwk-secret",
+			},
+		},
+	}
+
+	tests := []struct {
+		policies        []*conf_v1alpha1.Policy
+		secretNamespace string
+		secretName      string
+		expected        []*conf_v1alpha1.Policy
+		msg             string
+	}{
+		{
+			policies:        []*conf_v1alpha1.Policy{jwtPol1},
+			secretNamespace: "default",
+			secretName:      "jwk-secret",
+			expected:        []*v1alpha1.Policy{jwtPol1},
+			msg:             "Find policy in default ns",
+		},
+		{
+			policies:        []*conf_v1alpha1.Policy{jwtPol2},
+			secretNamespace: "default",
+			secretName:      "jwk-secret",
+			expected:        nil,
+			msg:             "Ignore policies in other namespaces",
+		},
+		{
+			policies:        []*conf_v1alpha1.Policy{jwtPol1, jwtPol2},
+			secretNamespace: "default",
+			secretName:      "jwk-secret",
+			expected:        []*v1alpha1.Policy{jwtPol1},
+			msg:             "Find policy in default ns, ignore other",
+		},
+	}
+	for _, test := range tests {
+		result := findPoliciesForSecret(test.policies, test.secretNamespace, test.secretName)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("findPoliciesForSecret() returned \n%v but expected \n%v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestAddJWTSecrets(t *testing.T) {
+	validSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-jwk-secret",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{"jwk": nil},
+	}
+
+	invalidSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "invalid-jwk-secret",
+			Namespace: "default",
+		},
+		Data: nil,
+	}
+
+	tests := []struct {
+		policies        []*conf_v1alpha1.Policy
+		expectedJWTKeys map[string]*v1.Secret
+		wantErr         bool
+		msg             string
+	}{
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "jwt-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						JWTAuth: &conf_v1alpha1.JWTAuth{
+							Secret: "valid-jwk-secret",
+							Realm:  "My API",
+						},
+					},
+				},
+			},
+			expectedJWTKeys: map[string]*v1.Secret{
+				"default/valid-jwk-secret": validSecret,
+			},
+			wantErr: false,
+			msg:     "test getting valid secret",
+		},
+		{
+			policies:        []*conf_v1alpha1.Policy{},
+			expectedJWTKeys: map[string]*v1.Secret{},
+			wantErr:         false,
+			msg:             "test getting valid secret with no policy",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "jwt-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						AccessControl: &conf_v1alpha1.AccessControl{
+							Allow: []string{"127.0.0.1"},
+						},
+					},
+				},
+			},
+			expectedJWTKeys: map[string]*v1.Secret{},
+			wantErr:         false,
+			msg:             "test getting valid secret with wrong policy",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "jwt-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						JWTAuth: &conf_v1alpha1.JWTAuth{
+							Secret: "non-existing-jwk-secret",
+							Realm:  "My API",
+						},
+					},
+				},
+			},
+			expectedJWTKeys: map[string]*v1.Secret{},
+			wantErr:         true,
+			msg:             "test getting secret that does not exist",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "jwt-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						JWTAuth: &conf_v1alpha1.JWTAuth{
+							Secret: "invalid-jwk-secret",
+							Realm:  "My API",
+						},
+					},
+				},
+			},
+			expectedJWTKeys: map[string]*v1.Secret{},
+			wantErr:         true,
+			msg:             "test getting invalid secret",
+		},
+	}
+
+	for _, test := range tests {
+		lbc := LoadBalancerController{
+			secretLister: storeToSecretLister{
+				&cache.FakeCustomStore{
+					GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
+						switch key {
+						case "default/valid-jwk-secret":
+							return validSecret, true, nil
+						case "default/invalid-jwk-secret":
+							return invalidSecret, true, errors.New("secret is missing jwk key in data")
+						default:
+							return nil, false, errors.New("GetByKey error")
+						}
+					},
+				},
+			},
+		}
+
+		jwtKeys := make(map[string]*v1.Secret)
+
+		err := lbc.addJWTSecrets(test.policies, jwtKeys)
+		if (err != nil) != test.wantErr {
+			t.Errorf("addJWTSecrets() returned %v, for the case of %v", err, test.msg)
+		}
+
+		if !reflect.DeepEqual(jwtKeys, test.expectedJWTKeys) {
+			t.Errorf("addJWTSecrets() returned \n%+v but expected \n%+v", jwtKeys, test.expectedJWTKeys)
+		}
+
+	}
 }

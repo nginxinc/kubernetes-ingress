@@ -66,6 +66,7 @@ type Server struct {
 	Deny                      []string
 	LimitReqOptions           LimitReqOptions
 	LimitReqs                 []LimitReq
+	JWTAuth                   *JWTAuth
 	PoliciesErrorReturn       *Return
 }
 
@@ -109,9 +110,10 @@ type Location struct {
 	InternalProxyPass        string
 	Allow                    []string
 	Deny                     []string
-	PoliciesErrorReturn      *Return
 	LimitReqOptions          LimitReqOptions
 	LimitReqs                []LimitReq
+	JWTAuth                  *JWTAuth
+	PoliciesErrorReturn      *Return
 }
 
 // ReturnLocation defines a location for returning a fixed response.
@@ -265,4 +267,11 @@ type LimitReqOptions struct {
 
 func (rl LimitReqOptions) String() string {
 	return fmt.Sprintf("{DryRun %v, LogLevel %q, RejectCode %q}", rl.DryRun, rl.LogLevel, rl.RejectCode)
+}
+
+// JWTAuth holds JWT authentication configuration.
+type JWTAuth struct {
+	Secret string
+	Realm  string
+	Token  string
 }

@@ -136,6 +136,10 @@ var virtualServerCfg = VirtualServerConfig{
 			LogLevel:   "error",
 			RejectCode: 503,
 		},
+		JWTAuth: &JWTAuth{
+			Realm:  "My Api",
+			Secret: "jwk-secret",
+		},
 		Snippets: []string{"# server snippet"},
 		InternalRedirectLocations: []InternalRedirectLocation{
 			{

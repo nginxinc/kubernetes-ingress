@@ -597,7 +597,8 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	isResolverConfigured := false
 	tlsPemFileName := ""
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{TLSPassthrough: true})
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
+	jwtKeys := make(map[string]string)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName, jwtKeys)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -701,7 +702,8 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	tlsPemFileName := ""
 	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true}
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams)
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
+	jwtKeys := make(map[string]string)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName, jwtKeys)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -969,7 +971,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	isResolverConfigured := false
 	tlsPemFileName := ""
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
+	jwtKeys := make(map[string]string)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName, jwtKeys)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -1270,7 +1273,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	isResolverConfigured := false
 	tlsPemFileName := ""
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
+	jwtKeys := make(map[string]string)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName, jwtKeys)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -1741,7 +1745,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 	isResolverConfigured := false
 	tlsPemFileName := ""
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
+	jwtKeys := make(map[string]string)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName, jwtKeys)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -1760,6 +1765,7 @@ func TestGeneratePolicies(t *testing.T) {
 	tests := []struct {
 		policyRefs []conf_v1.PolicyReference
 		policies   map[string]*conf_v1alpha1.Policy
+		jwtKeys    map[string]string
 		expected   policiesCfg
 		msg        string
 	}{
@@ -1779,6 +1785,7 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 				},
 			},
+			jwtKeys: nil,
 			expected: policiesCfg{
 				Allow: []string{"127.0.0.1"},
 			},
@@ -1829,6 +1836,7 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 				},
 			},
+			jwtKeys: nil,
 			expected: policiesCfg{
 				Allow: []string{"127.0.0.1", "127.0.0.2"},
 			},
@@ -1853,6 +1861,7 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 				},
 			},
+			jwtKeys: nil,
 			expected: policiesCfg{
 				LimitReqZones: []version2.LimitReqZone{
 					{
@@ -1905,6 +1914,7 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 				},
 			},
+			jwtKeys: nil,
 			expected: policiesCfg{
 				LimitReqZones: []version2.LimitReqZone{
 					{
@@ -1935,12 +1945,40 @@ func TestGeneratePolicies(t *testing.T) {
 			},
 			msg: "multi rate limit reference",
 		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "jwt-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/jwt-policy": {
+					Spec: conf_v1alpha1.PolicySpec{
+						JWTAuth: &conf_v1alpha1.JWTAuth{
+							Realm:  "My Test API",
+							Secret: "jwt-secret",
+						},
+					},
+				},
+			},
+			jwtKeys: map[string]string{
+				"default/jwt-secret": "/etc/nginx/secrets/default-jwt-secret",
+			},
+			expected: policiesCfg{
+				JWTAuth: &version2.JWTAuth{
+					Secret: "/etc/nginx/secrets/default-jwt-secret",
+					Realm:  "My Test API",
+				},
+			},
+			msg: "jwt reference",
+		},
 	}
 
 	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
 
 	for _, test := range tests {
-		result := vsc.generatePolicies(owner, ownerNamespace, vsNamespace, vsName, test.policyRefs, test.policies)
+		result := vsc.generatePolicies(owner, ownerNamespace, vsNamespace, vsName, test.policyRefs, test.policies, test.jwtKeys)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generatePolicies() returned \n%+v but expected \n%+v for the case of %s", result, test.expected,
 				test.msg)
@@ -1963,6 +2001,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 	tests := []struct {
 		policyRefs       []conf_v1.PolicyReference
 		policies         map[string]*conf_v1alpha1.Policy
+		jwtKeys          map[string]string
 		expected         policiesCfg
 		expectedWarnings Warnings
 		msg              string
@@ -1975,6 +2014,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				},
 			},
 			policies: map[string]*conf_v1alpha1.Policy{},
+			jwtKeys:  nil,
 			expected: policiesCfg{
 				ErrorReturn: &version2.Return{
 					Code: 500,
@@ -2012,6 +2052,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 				},
 			},
+			jwtKeys: nil,
 			expected: policiesCfg{
 				Allow: []string{"127.0.0.1"},
 				Deny:  []string{"127.0.0.2"},
@@ -2057,6 +2098,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 				},
 			},
+			jwtKeys: nil,
 			expected: policiesCfg{
 				LimitReqZones: []version2.LimitReqZone{
 					{
@@ -2087,19 +2129,95 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: map[runtime.Object][]string{
 				nil: {
-					"RateLimit policy default/rateLimit-policy2 with limit request option dryRun=true is overridden to dryRun=false by the first policy reference in this context",
-					"RateLimit policy default/rateLimit-policy2 with limit request option logLevel=info is overridden to logLevel=error by the first policy reference in this context",
-					"RateLimit policy default/rateLimit-policy2 with limit request option rejectCode=505 is overridden to rejectCode=503 by the first policy reference in this context",
+					`RateLimit policy "default/rateLimit-policy2" with limit request option dryRun=true is overridden to dryRun=false by the first policy reference in this context`,
+					`RateLimit policy "default/rateLimit-policy2" with limit request option logLevel=info is overridden to logLevel=error by the first policy reference in this context`,
+					`RateLimit policy "default/rateLimit-policy2" with limit request option rejectCode=505 is overridden to rejectCode=503 by the first policy reference in this context`,
 				},
 			},
 			msg: "rate limit policy limit request option override",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "jwt-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/jwt-policy": {
+					Spec: conf_v1alpha1.PolicySpec{
+						JWTAuth: &conf_v1alpha1.JWTAuth{
+							Realm:  "test",
+							Secret: "jwt-secret",
+						},
+					},
+				},
+			},
+			jwtKeys: nil,
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: map[runtime.Object][]string{
+				nil: {
+					`JWT policy "default/jwt-policy" references a JWKSecret "default/jwt-secret" which does not exist`,
+				},
+			},
+			msg: "jwt reference missing secret",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "jwt-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "jwt-policy2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/jwt-policy": {
+					Spec: conf_v1alpha1.PolicySpec{
+						JWTAuth: &conf_v1alpha1.JWTAuth{
+							Realm:  "test",
+							Secret: "jwt-secret",
+						},
+					},
+				},
+				"default/jwt-policy2": {
+					Spec: conf_v1alpha1.PolicySpec{
+						JWTAuth: &conf_v1alpha1.JWTAuth{
+							Realm:  "test",
+							Secret: "jwt-secret2",
+						},
+					},
+				},
+			},
+			jwtKeys: map[string]string{
+				"default/jwt-secret":  "/etc/nginx/secrets/default-jwt-secret",
+				"default/jwt-secret2": "",
+			},
+			expected: policiesCfg{
+				JWTAuth: &version2.JWTAuth{
+					Secret: "/etc/nginx/secrets/default-jwt-secret",
+					Realm:  "test",
+				},
+			},
+			expectedWarnings: map[runtime.Object][]string{
+				nil: {
+					`Multiple jwt policies in the same context is not valid. JWT policy "default/jwt-policy2" will be ignored`,
+				},
+			},
+			msg: "multi jwt reference",
 		},
 	}
 
 	for _, test := range tests {
 		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
 
-		result := vsc.generatePolicies(owner, ownerNamespace, vsNamespace, vsName, test.policyRefs, test.policies)
+		result := vsc.generatePolicies(owner, ownerNamespace, vsNamespace, vsName, test.policyRefs, test.policies, test.jwtKeys)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generatePolicies() returned \n%+v but expected \n%+v for the case of %s", result, test.expected,
 				test.msg)

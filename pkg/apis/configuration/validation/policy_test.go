@@ -15,8 +15,9 @@ func TestValidatePolicy(t *testing.T) {
 			},
 		},
 	}
+	isPlus := false
 
-	err := ValidatePolicy(policy)
+	err := ValidatePolicy(policy, isPlus)
 	if err != nil {
 		t.Errorf("ValidatePolicy() returned error %v for valid input", err)
 	}
@@ -26,8 +27,9 @@ func TestValidatePolicyFails(t *testing.T) {
 	policy := &v1alpha1.Policy{
 		Spec: v1alpha1.PolicySpec{},
 	}
+	isPlus := false
 
-	err := ValidatePolicy(policy)
+	err := ValidatePolicy(policy, isPlus)
 	if err == nil {
 		t.Errorf("ValidatePolicy() returned no error for invalid input")
 	}
@@ -45,7 +47,7 @@ func TestValidatePolicyFails(t *testing.T) {
 		},
 	}
 
-	err = ValidatePolicy(multiPolicy)
+	err = ValidatePolicy(multiPolicy, isPlus)
 	if err == nil {
 		t.Errorf("ValidatePolicy() returned no error for invalid input")
 	}
@@ -221,6 +223,97 @@ func TestValidateRateLimitFails(t *testing.T) {
 	}
 }
 
+func TestValidateJWT(t *testing.T) {
+	tests := []struct {
+		jwt *v1alpha1.JWTAuth
+		msg string
+	}{
+		{
+			jwt: &v1alpha1.JWTAuth{
+				Realm:  "My Product API",
+				Secret: "my-jwk",
+			},
+			msg: "basic",
+		},
+		{
+			jwt: &v1alpha1.JWTAuth{
+				Realm:  "My Product API",
+				Secret: "my-jwk",
+				Token:  "$cookie_auth_token",
+			},
+			msg: "jwt with token",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateJWT(test.jwt, field.NewPath("jwt"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateJWT() returned errors %v for valid input for the case of %v", allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateJWTFails(t *testing.T) {
+	tests := []struct {
+		msg string
+		jwt *v1alpha1.JWTAuth
+	}{
+		{
+			jwt: &v1alpha1.JWTAuth{
+				Realm: "My Product API",
+			},
+			msg: "missing secret",
+		},
+		{
+			jwt: &v1alpha1.JWTAuth{
+				Secret: "my-jwk",
+			},
+			msg: "missing realm",
+		},
+		{
+			jwt: &v1alpha1.JWTAuth{
+				Realm:  "My Product API",
+				Secret: "my-jwk",
+				Token:  "$uri",
+			},
+			msg: "invalid variable use in token",
+		},
+		{
+			jwt: &v1alpha1.JWTAuth{
+				Realm:  "My Product API",
+				Secret: "my-\"jwk",
+			},
+			msg: "invalid secret name",
+		},
+		{
+			jwt: &v1alpha1.JWTAuth{
+				Realm:  "My \"Product API",
+				Secret: "my-jwk",
+			},
+			msg: "invalid realm due to escaped string",
+		},
+		{
+			jwt: &v1alpha1.JWTAuth{
+				Realm:  "My Product ${api}",
+				Secret: "my-jwk",
+			},
+			msg: "invalid variable use in realm with curly braces",
+		},
+		{
+			jwt: &v1alpha1.JWTAuth{
+				Realm:  "My Product $api",
+				Secret: "my-jwk",
+			},
+			msg: "invalid variable use in realm without curly braces",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateJWT(test.jwt, field.NewPath("jwt"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateJWT() returned no errors for invalid input for the case of %v", test.msg)
+		}
+	}
+}
+
 func TestValidateIPorCIDR(t *testing.T) {
 	validInput := []string{
 		"192.168.1.1",
@@ -336,6 +429,68 @@ func TestValidateRateLimitLogLevel(t *testing.T) {
 		allErrs := validateRateLimitLogLevel(test, field.NewPath("logLevel"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateRateLimitLogLevel(%q) didn't return error for invalid input", test)
+		}
+	}
+}
+
+func TestValidateJWTToken(t *testing.T) {
+	validTests := []struct {
+		token string
+		msg   string
+	}{
+		{
+			token: "",
+			msg:   "no token set",
+		},
+		{
+			token: "$http_token",
+			msg:   "http special variable usage",
+		},
+		{
+			token: "$arg_token",
+			msg:   "arg special variable usage",
+		},
+		{
+			token: "$cookie_token",
+			msg:   "cookie special variable usage",
+		},
+	}
+	for _, test := range validTests {
+		allErrs := validateJWTToken(test.token, field.NewPath("token"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateJWTToken(%v) returned an error for valid input for the case of %v", test.token, test.msg)
+		}
+	}
+
+	invalidTests := []struct {
+		token string
+		msg   string
+	}{
+		{
+			token: "http_token",
+			msg:   "missing $ prefix",
+		},
+		{
+			token: "${http_token}",
+			msg:   "usage of $ and curly braces",
+		},
+		{
+			token: "$http_token$http_token",
+			msg:   "multi variable usage",
+		},
+		{
+			token: "something$http_token",
+			msg:   "non variable usage",
+		},
+		{
+			token: "$uri",
+			msg:   "non special variable usage",
+		},
+	}
+	for _, test := range invalidTests {
+		allErrs := validateJWTToken(test.token, field.NewPath("token"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateJWTToken(%v) didn't return error for invalid input for the case of %v", test.token, test.msg)
 		}
 	}
 }
