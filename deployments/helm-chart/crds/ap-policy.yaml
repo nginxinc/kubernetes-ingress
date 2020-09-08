@@ -125,6 +125,7 @@ spec:
                         properties:
                           description:
                             enum:
+                            - Unescaped space in URL
                             - Unparsable request content
                             - Several Content-Length headers
                             - 'POST request with Content-Length: 0'
@@ -164,99 +165,52 @@ spec:
                             type: string
                           name:
                             enum:
-                            - VIOL_XML_SOAP_ATTACHMENT
-                            - VIOL_DATA_GUARD
-                            - VIOL_THREAT_CAMPAIGN
-                            - VIOL_LOGIN_URL_EXPIRED
-                            - VIOL_LOGIN_URL_BYPASSED
-                            - VIOL_REQUEST_MAX_LENGTH
-                            - VIOL_VIRUS
-                            - VIOL_EVASION
-                            - VIOL_XML_WEB_SERVICES_SECURITY
-                            - VIOL_XML_FORMAT
-                            - VIOL_XML_SCHEMA
-                            - VIOL_XML_MALFORMED
-                            - VIOL_CSRF
-                            - VIOL_ENCODING
-                            - VIOL_HTTP_PROTOCOL
-                            - VIOL_GEOLOCATION
-                            - VIOL_QUERY_STRING_LENGTH
-                            - VIOL_REQUEST_LENGTH
-                            - VIOL_COOKIE_LENGTH
-                            - VIOL_URL_LENGTH
-                            - VIOL_CSRF_EXPIRED
-                            - VIOL_BRUTE_FORCE
-                            - VIOL_XML_SOAP_METHOD
-                            - VIOL_PARAMETER_VALUE_METACHAR
-                            - VIOL_PARAMETER_NAME_METACHAR
-                            - VIOL_URL_METACHAR
-                            - VIOL_PARAMETER_REPEATED
-                            - VIOL_JSON_FORMAT
-                            - VIOL_HEADER_LENGTH
-                            - VIOL_PARAMETER_MULTIPART_NULL_VALUE
-                            - VIOL_POST_DATA_LENGTH
-                            - VIOL_PARAMETER_EMPTY_VALUE
-                            - VIOL_PARAMETER
-                            - VIOL_FLOW_DISALLOWED_INPUT
-                            - VIOL_DYNAMIC_SESSION
-                            - VIOL_METHOD
-                            - VIOL_FLOW
-                            - VIOL_URL
-                            - VIOL_FILETYPE
-                            - VIOL_PARAMETER_VALUE_REGEXP
-                            - VIOL_FLOW_MANDATORY_PARAMS
-                            - VIOL_ATTACK_SIGNATURE
-                            - VIOL_PARAMETER_NUMERIC_VALUE
-                            - VIOL_PARAMETER_DATA_TYPE
-                            - VIOL_PARAMETER_VALUE_LENGTH
-                            - VIOL_PARAMETER_DYNAMIC_VALUE
-                            - VIOL_PARAMETER_STATIC_VALUE
+                            - VIOL_ASM_COOKIE_MODIFIED
+                            - VIOL_BLACKLISTED_IP
                             - VIOL_COOKIE_EXPIRED
-                            - VIOL_ASM_COOKIE_HIJACKING
-                            - VIOL_SESSION_AWARENESS
-                            - VIOL_FLOW_ENTRY_POINT
-                            - VIOL_JSON_MALFORMED
+                            - VIOL_COOKIE_LENGTH
                             - VIOL_COOKIE_MALFORMED
                             - VIOL_COOKIE_MODIFIED
-                            - VIOL_ASM_COOKIE_MODIFIED
-                            - VIOL_HTTP_RESPONSE_STATUS
-                            - VIOL_URL_CONTENT_TYPE
-                            - VIOL_HEADER_METACHAR
-                            - VIOL_GWT_MALFORMED
+                            - VIOL_DATA_GUARD
+                            - VIOL_ENCODING
+                            - VIOL_EVASION
+                            - VIOL_FILETYPE
                             - VIOL_FILE_UPLOAD
-                            - VIOL_MALICIOUS_IP
-                            - VIOL_PARAMETER_VALUE_BASE64
-                            - VIOL_GWT_FORMAT
-                            - VIOL_MANDATORY_HEADER
-                            - VIOL_REDIRECT
-                            - VIOL_WEBSOCKET_BAD_REQUEST
-                            - VIOL_WEBSOCKET_FRAMING_PROTOCOL
-                            - VIOL_WEBSOCKET_FRAME_MASKING
-                            - VIOL_WEBSOCKET_FRAME_LENGTH
-                            - VIOL_WEBSOCKET_TEXT_NULL_VALUE
-                            - VIOL_CROSS_ORIGIN_REQUEST
-                            - VIOL_WEBSOCKET_TEXT_MESSAGE_NOT_ALLOWED
-                            - VIOL_WEBSOCKET_BINARY_MESSAGE_NOT_ALLOWED
-                            - VIOL_WEBSOCKET_EXTENSION
-                            - VIOL_WEBSOCKET_FRAMES_PER_MESSAGE_COUNT
-                            - VIOL_WEBSOCKET_BINARY_MESSAGE_LENGTH
-                            - VIOL_PLAINTEXT_FORMAT
-                            - VIOL_BLACKLISTED_IP
-                            - VIOL_THREAT_CAMPAIGN
-                            - VIOL_PARAMETER_ARRAY_VALUE
+                            - VIOL_FILE_UPLOAD_IN_BODY
+                            - VIOL_HEADER_LENGTH
+                            - VIOL_HEADER_METACHAR
+                            - VIOL_HTTP_PROTOCOL
+                            - VIOL_HTTP_RESPONSE_STATUS
+                            - VIOL_JSON_FORMAT
+                            - VIOL_JSON_MALFORMED
                             - VIOL_JSON_SCHEMA
                             - VIOL_MANDATORY_PARAMETER
-                            - VIOL_PARAMETER_LOCATION
-                            - VIOL_MALICIOUS_DEVICE
-                            - VIOL_BLOCKING_CONDITION
-                            - VIOL_THREAT_ANALYSIS
-                            - VIOL_LEAKED_CREDENTIALS
-                            - VIOL_HOSTNAME
-                            - VIOL_HOSTNAME_MISMATCH
-                            - VIOL_CONVICTION
                             - VIOL_MANDATORY_REQUEST_BODY
+                            - VIOL_METHOD
+                            - VIOL_PARAMETER
+                            - VIOL_PARAMETER_DATA_TYPE
+                            - VIOL_PARAMETER_EMPTY_VALUE
+                            - VIOL_PARAMETER_LOCATION
+                            - VIOL_PARAMETER_MULTIPART_NULL_VALUE
+                            - VIOL_PARAMETER_NAME_METACHAR
+                            - VIOL_PARAMETER_NUMERIC_VALUE
+                            - VIOL_PARAMETER_REPEATED
+                            - VIOL_PARAMETER_STATIC_VALUE
+                            - VIOL_PARAMETER_VALUE_LENGTH
+                            - VIOL_PARAMETER_VALUE_METACHAR
+                            - VIOL_POST_DATA_LENGTH
+                            - VIOL_QUERY_STRING_LENGTH
                             - VIOL_RATING_THREAT
                             - VIOL_RATING_NEED_EXAMINATION
+                            - VIOL_REQUEST_MAX_LENGTH
+                            - VIOL_REQUEST_LENGTH
+                            - VIOL_THREAT_CAMPAIGN
+                            - VIOL_URL
+                            - VIOL_URL_CONTENT_TYPE
+                            - VIOL_URL_LENGTH
+                            - VIOL_URL_METACHAR
+                            - VIOL_XML_FORMAT
+                            - VIOL_XML_MALFORMED
                             type: string
                         type: object
                       type: array
@@ -527,10 +481,46 @@ spec:
                         type: string
                       hasValidationFiles:
                         type: boolean
+                      metacharOverrides:
+                        items:
+                          properties:
+                            isAllowed:
+                              type: boolean
+                            metachar:
+                              type: string
+                          type: object
+                        type: array
                       name:
                         enum:
                         - Default
                         type: string
+                      signatureOverrides:
+                        items:
+                          properties:
+                            enabled:
+                              type: boolean
+                            signatureId:
+                              type: integer
+                          type: object
+                        type: array
+                      validationFiles:
+                        items:
+                          properties:
+                            importUrl:
+                              type: string
+                            isPrimary:
+                              type: boolean
+                            jsonValidationFile:
+                              properties:
+                                contents:
+                                  type: string
+                                fileName:
+                                  type: string
+                                isBase64:
+                                  type: boolean
+                              type: object
+                          type: object
+                        type: array
                     type: object
                   type: array
                 json-validation-files:
@@ -571,6 +561,14 @@ spec:
                   type: array
                 name:
                   type: string
+                open-api-files:
+                  items:
+                    properties:
+                      link:
+                        pattern: ^http
+                        type: string
+                    type: object
+                  type: array
                 parameterReference:
                   properties:
                     link:
@@ -584,21 +582,72 @@ spec:
                         type: boolean
                       allowRepeatedParameterName:
                         type: boolean
+                      arraySerializationFormat:
+                        enum:
+                        - csv
+                        - form
+                        - label
+                        - matrix
+                        - multi
+                        - multipart
+                        - pipe
+                        - ssv
+                        - tsv
+                        type: string
                       attackSignaturesCheck:
+                        type: boolean
+                      checkMaxValue:
                         type: boolean
                       checkMaxValueLength:
                         type: boolean
                       checkMetachars:
                         type: boolean
+                      checkMinValue:
+                        type: boolean
+                      checkMinValueLength:
+                        type: boolean
+                      checkMultipleOfValue:
+                        type: boolean
+                      contentProfile:
+                        properties:
+                          name:
+                            type: string
+                        type: object
+                      dataType:
+                        enum:
+                        - alpha-numeric
+                        - binary
+                        - boolean
+                        - decimal
+                        - email
+                        - integer
+                        - none
+                        - phone
+                        type: string
+                      disallowFileUploadOfExecutables:
+                        type: boolean
+                      enableRegularExpression:
+                        type: boolean
+                      exclusiveMax:
+                        type: boolean
+                      exclusiveMin:
+                        type: boolean
+                      isCookie:
+                        type: boolean
+                      isHeader:
+                        type: boolean
                       level:
                         enum:
                         - global
+                        - url
                         type: string
+                      maximumLength:
+                        type: integer
                       metacharsOnParameterValueCheck:
                         type: boolean
+                      minimumLength:
+                        type: integer
                       name:
-                        enum:
-                        - '*'
                         type: string
                       nameMetacharOverrides:
                         items:
@@ -609,7 +658,22 @@ spec:
                               type: string
                           type: object
                         type: array
+                      objectSerializationStyle:
+                        type: string
+                      parameterEnumValues:
+                        items:
+                          type: string
+                        type: array
                       parameterLocation:
+                        enum:
+                        - any
+                        - cookie
+                        - form-data
+                        - header
+                        - path
+                        - query
+                        type: string
+                      regularExpression:
                         type: string
                       sensitiveParameter:
                         type: boolean
@@ -622,6 +686,8 @@ spec:
                               type: integer
                           type: object
                         type: array
+                      staticValues:
+                        type: string
                       type:
                         enum:
                         - explicit
@@ -637,6 +703,18 @@ spec:
                           type: object
                         type: array
                       valueType:
+                        enum:
+                        - array
+                        - auto-detect
+                        - dynamic-content
+                        - dynamic-parameter-name
+                        - ignore
+                        - json
+                        - object
+                        - openapi-array
+                        - static-content
+                        - user-input
+                        - xml
                         type: string
                     type: object
                   type: array
@@ -795,6 +873,17 @@ spec:
                       pattern: ^http
                       type: string
                   type: object
+                signature-requirements:
+                  properties:
+                    maxRevisionDatetime:
+                      format: date-time
+                      type: string
+                    minRevisionDatetime:
+                      format: date-time
+                      type: string
+                    tag:
+                      type: string
+                  type: object
                 signature-sets:
                   items:
                     properties:
@@ -894,21 +983,316 @@ spec:
                 urls:
                   items:
                     properties:
+                      attackSignaturesCheck:
+                        type: boolean
                       description:
                         type: string
+                      disallowFileUploadOfExecutables:
+                        type: boolean
+                      isAllowed:
+                        type: boolean
+                      mandatoryBody:
+                        type: boolean
+                      metacharOverrides:
+                        items:
+                          properties:
+                            isAllowed:
+                              type: boolean
+                            metachar:
+                              type: string
+                          type: object
+                        type: array
+                      metacharsOnUrlCheck:
+                        type: boolean
                       method:
                         enum:
+                        - ACL
+                        - BCOPY
+                        - BDELETE
+                        - BMOVE
+                        - BPROPFIND
+                        - BPROPPATCH
+                        - CHECKIN
+                        - CHECKOUT
+                        - CONNECT
+                        - COPY
+                        - DELETE
+                        - GET
+                        - HEAD
+                        - LINK
+                        - LOCK
+                        - MERGE
+                        - MKCOL
+                        - MKWORKSPACE
+                        - MOVE
+                        - NOTIFY
+                        - OPTIONS
+                        - PATCH
+                        - POLL
+                        - POST
+                        - PROPFIND
+                        - PROPPATCH
+                        - PUT
+                        - REPORT
+                        - RPC_IN_DATA
+                        - RPC_OUT_DATA
+                        - SEARCH
+                        - SUBSCRIBE
+                        - TRACE
+                        - TRACK
+                        - UNLINK
+                        - UNLOCK
+                        - UNSUBSCRIBE
+                        - VERSION_CONTROL
+                        - X-MS-ENUMATTS
                         - '*'
                         type: string
+                      methodOverrides:
+                        items:
+                          properties:
+                            allowed:
+                              type: boolean
+                            method:
+                              enum:
+                              - ACL
+                              - BCOPY
+                              - BDELETE
+                              - BMOVE
+                              - BPROPFIND
+                              - BPROPPATCH
+                              - CHECKIN
+                              - CHECKOUT
+                              - CONNECT
+                              - COPY
+                              - DELETE
+                              - GET
+                              - HEAD
+                              - LINK
+                              - LOCK
+                              - MERGE
+                              - MKCOL
+                              - MKWORKSPACE
+                              - MOVE
+                              - NOTIFY
+                              - OPTIONS
+                              - PATCH
+                              - POLL
+                              - POST
+                              - PROPFIND
+                              - PROPPATCH
+                              - PUT
+                              - REPORT
+                              - RPC_IN_DATA
+                              - RPC_OUT_DATA
+                              - SEARCH
+                              - SUBSCRIBE
+                              - TRACE
+                              - TRACK
+                              - UNLINK
+                              - UNLOCK
+                              - UNSUBSCRIBE
+                              - VERSION_CONTROL
+                              - X-MS-ENUMATTS
+                              type: string
+                          type: object
+                        type: array
+                      methodsOverrideOnUrlCheck:
+                        type: boolean
                       name:
-                        enum:
-                        - '*'
                         type: string
+                      positionalParameters:
+                        items:
+                          properties:
+                            parameter:
+                              properties:
+                                allowEmptyValue:
+                                  type: boolean
+                                allowRepeatedParameterName:
+                                  type: boolean
+                                arraySerializationFormat:
+                                  enum:
+                                  - csv
+                                  - form
+                                  - label
+                                  - matrix
+                                  - multi
+                                  - multipart
+                                  - pipe
+                                  - ssv
+                                  - tsv
+                                  type: string
+                                attackSignaturesCheck:
+                                  type: boolean
+                                checkMaxValue:
+                                  type: boolean
+                                checkMaxValueLength:
+                                  type: boolean
+                                checkMetachars:
+                                  type: boolean
+                                checkMinValue:
+                                  type: boolean
+                                checkMinValueLength:
+                                  type: boolean
+                                checkMultipleOfValue:
+                                  type: boolean
+                                contentProfile:
+                                  properties:
+                                    name:
+                                      type: string
+                                  type: object
+                                dataType:
+                                  enum:
+                                  - alpha-numeric
+                                  - binary
+                                  - boolean
+                                  - decimal
+                                  - email
+                                  - integer
+                                  - none
+                                  - phone
+                                  type: string
+                                disallowFileUploadOfExecutables:
+                                  type: boolean
+                                enableRegularExpression:
+                                  type: boolean
+                                exclusiveMax:
+                                  type: boolean
+                                exclusiveMin:
+                                  type: boolean
+                                isCookie:
+                                  type: boolean
+                                isHeader:
+                                  type: boolean
+                                level:
+                                  enum:
+                                  - global
+                                  - url
+                                  type: string
+                                maximumLength:
+                                  type: integer
+                                metacharsOnParameterValueCheck:
+                                  type: boolean
+                                minimumLength:
+                                  type: integer
+                                name:
+                                  type: string
+                                nameMetacharOverrides:
+                                  items:
+                                    properties:
+                                      isAllowed:
+                                        type: boolean
+                                      metachar:
+                                        type: string
+                                    type: object
+                                  type: array
+                                objectSerializationStyle:
+                                  type: string
+                                parameterEnumValues:
+                                  items:
+                                    type: string
+                                  type: array
+                                parameterLocation:
+                                  enum:
+                                  - any
+                                  - cookie
+                                  - form-data
+                                  - header
+                                  - path
+                                  - query
+                                  type: string
+                                regularExpression:
+                                  type: string
+                                sensitiveParameter:
+                                  type: boolean
+                                signatureOverrides:
+                                  items:
+                                    properties:
+                                      enabled:
+                                        type: boolean
+                                      signatureId:
+                                        type: integer
+                                    type: object
+                                  type: array
+                                staticValues:
+                                  type: string
+                                type:
+                                  enum:
+                                  - explicit
+                                  - wildcard
+                                  type: string
+                                valueMetacharOverrides:
+                                  items:
+                                    properties:
+                                      isAllowed:
+                                        type: boolean
+                                      metachar:
+                                        type: string
+                                    type: object
+                                  type: array
+                                valueType:
+                                  enum:
+                                  - array
+                                  - auto-detect
+                                  - dynamic-content
+                                  - dynamic-parameter-name
+                                  - ignore
+                                  - json
+                                  - object
+                                  - openapi-array
+                                  - static-content
+                                  - user-input
+                                  - xml
+                                  type: string
+                              type: object
+                            urlSegmentIndex:
+                              type: integer
+                          type: object
+                        type: array
                       protocol:
                         enum:
                         - http
                         - https
                         type: string
+                      signatureOverrides:
+                        items:
+                          properties:
+                            enabled:
+                              type: boolean
+                            signatureId:
+                              type: integer
+                          type: object
+                        type: array
+                      type:
+                        enum:
+                        - explicit
+                        - wildcard
+                        type: string
+                      urlContentProfiles:
+                        items:
+                          properties:
+                            headerName:
+                              type: string
+                            headerOrder:
+                              type: string
+                            headerValue:
+                              type: string
+                            name:
+                              type: string
+                            type:
+                              enum:
+                              - apply-content-signatures
+                              - apply-value-and-content-signatures
+                              - disallow
+                              - do-nothing
+                              - form-data
+                              - gwt
+                              - json
+                              - xml
+                              type: string
+                          type: object
+                        type: array
+                      wildcardOrder:
+                        type: integer
                     type: object
                   type: array
                 whitelist-ips:
