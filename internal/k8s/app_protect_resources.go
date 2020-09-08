@@ -55,13 +55,21 @@ func ValidateAppProtectLogConf(logConf *unstructured.Unstructured) error {
 	return nil
 }
 
-var logDstEx = regexp.MustCompile(`syslog:server=((?:\d{1,3}\.){3}\d{1,3}|localhost):\d{1,5}`)
+var logDstEx = regexp.MustCompile(`(?:syslog:server=((?:\d{1,3}\.){3}\d{1,3}|localhost):\d{1,5})|stderr|(?:\/[\S]+)+`)
+var logDstFileEx = regexp.MustCompile(`(?:\/[\S]+)+`)
 
 // ValidateAppProtectLogDestinationAnnotation validates annotation for log destination configuration
 func ValidateAppProtectLogDestinationAnnotation(dstAntn string) error {
-	errormsg := "Error parsing App Protect Log config: Destination Annotation must follow format: syslog:server=<ip-address | localhost>:<port>"
+	errormsg := "Error parsing App Protect Log config: Destination Annotation must follow format: syslog:server=<ip-address | localhost>:<port> or stderr or absolute path to file"
 	if !logDstEx.MatchString(dstAntn) {
 		return fmt.Errorf("%s Log Destination did not follow format", errormsg)
+	}
+	if dstAntn == "stderr" {
+		return nil
+	}
+	
+	if logDstFileEx.MatchString(dstAntn) {
+		return nil
 	}
 
 	dstchunks := strings.Split(dstAntn, ":")
