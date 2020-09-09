@@ -186,7 +186,6 @@ func ParseNamespaceName(value string) (ns string, name string, err error) {
 
 // GetK8sVersion returns the running version of k8s
 func GetK8sVersion(client kubernetes.Interface) (v *version.Version, err error) {
-
 	serverVersion, err := client.Discovery().ServerVersion()
 	if err != nil {
 		return nil, err
