@@ -274,15 +274,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
      - The number of replicas of the Ingress controller deployment.
      - 1
    * - ``controller.ingressClass``
-     - A class of the Ingress controller.
-     For Kubernetes >= 1.18, a corresponding IngressClass resource with the name equal to the class must be deployed. Otherwise,
-     the Ingress Controller will fail to start.
-     The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
-
-     For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class - i.e have the annotation "kubernetes.io/ingress.class" equal to the class.
-     Additionally, the Ingress Controller processes resources that do not have the class set, which can be disabled by setting the "-use-ingress-class-only" flag.
-    
-     The Ingress Controller processes all the VirtualServer/VirtualServerRoute resources that do not have the "ingressClassName" field for all versions of kubernetes.
+     - A class of the Ingress controller. For Kubernetes >= 1.18, the Ingress controller only processes resources that belong to its class - i.e. have the ``"ingressClassName"`` field resource equal to the class. For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class - i.e have the annotation ``"kubernetes.io/ingress.class"`` equal to the class. Additionally, the Ingress Controller processes resources that do not have the class set, which can be disabled by setting the ``controller.useIngressClassOnly`` flag. The Ingress Controller processes all the VirtualServer/VirtualServerRoute resources that do not have the ``"ingressClassName"`` field for all versions of kubernetes.
      - nginx
    * - ``controller.useIngressClassOnly``
      - Ignore Ingress resources without the ``"kubernetes.io/ingress.class"`` annotation. For kubernetes versions >= 1.18 this flag will be IGNORED.

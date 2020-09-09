@@ -288,7 +288,7 @@ func main() {
 			glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
 		}
 
-		if ingressClassRes != nil && ingressClassRes.Spec.Controller != k8s.IngressControllerName {
+		if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
 			glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v", ingressClassRes.Name, ingressClassRes.Spec.Controller)
 		}
 	}
