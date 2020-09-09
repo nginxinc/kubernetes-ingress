@@ -51,9 +51,9 @@ In this section, we create resources common for most of the Ingress Controller i
     ```
     $ kubectl apply -f common/ingress-class.yaml
     ```
-    If you would like to set the Ingress Controller as the default ingress, uncomment the annotation `ingressclass.kubernetes.io/is-default-class`. With this annotation set to true all the new Ingresses without an ingressClassName field specified will be assigned this IngressClass.
+    If you would like to set the Ingress Controller as the default one, uncomment the annotation `ingressclass.kubernetes.io/is-default-class`. With this annotation set to true all the new Ingresses without an ingressClassName field specified will be assigned this IngressClass.
 
-    ***Note**: The Ingress Controller will fail to start without an IngressClass resource.
+    **Note**: The Ingress Controller will fail to start without an IngressClass resource.
 
 ### Create Custom Resources
 
