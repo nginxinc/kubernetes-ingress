@@ -62,6 +62,7 @@ jobs:
     name: Build Docker Images
     runs-on: ${{ matrix.os }}
     needs: [binary, unit-tests]
+    if: github.repository == 'nginxinc/kubernetes-ingress'
     strategy:
       matrix:
         include:
@@ -151,9 +152,7 @@ jobs:
     name: Smoke Tests
     runs-on: ${{ matrix.os }}
     needs: [build, binary, unit-tests]
-    if: 
-      github.event.pull_request.opened || 
-      (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    if: github.repository == 'nginxinc/kubernetes-ingress'
     strategy:
       matrix:
         include:
@@ -297,9 +296,7 @@ jobs:
     env:
       NGINX_HTTP_PORT: 32000
       NGINX_HTTPS_PORT: 32001
-    if: 
-      github.event.pull_request.opened || 
-      (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    if: github.repository == 'nginxinc/kubernetes-ingress'
     strategy:
       matrix:
         include:
@@ -437,20 +434,47 @@ jobs:
           git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' commit -m "NGINX Ingress Controller - Edge Release (latest)"
           git push -u origin master
 
-  job-failure:
-    name: Report Failures
+  notify:
+    name: Notify
     runs-on: ubuntu-18.04
-    if: 
-      failure() && github.ref == 'refs/heads/master'
+    needs: release-helm
+    if: always() && github.ref == 'refs/heads/master'
     steps:
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@master
+      - name: Workflow Status
+        id: check
+        uses: martialonline/workflow-status@v1
+      - name: Calculate SHA
+        id: commit
+        run: echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+      - name: Send Notification
+        uses: 8398a7/action-slack@v3
+        if: contains(steps.check.outputs.status, 'failed')
+        with:
+          status: custom
+          custom_payload: |
+            {
+              username: 'Github',
+              icon_emoji: ':octocat:',
+              mention: 'channel',
+              attachments: [{
+                color: '${{ steps.check.outputs.status }}' == 'success' ? 'good' : '${{ steps.check.outputs.status }}' == 'failed' ? 'danger' : 'warning',
+                fields: [{
+                  title: 'Commit',
+                  value: '${{ steps.commit.outputs.sha }}',
+                  short: true
+                },
+                {
+                  title: 'Author',
+                  value: '${{ github.actor }}',
+                  short: true
+                },
+                {
+                  title: 'Pipeline URL',
+                  value: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+                  short: false
+                }]
+              }]
+            }
         env:
-          SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
-          SLACK_COLOR: '#3278BD'
-          SLACK_ICON_EMOJI: ':github:'
-          SLACK_TITLE: Pipeline Failure
-          SLACK_MESSAGE: 'The pipeline has failed, please check the logs.'
-          SLACK_FOOTER: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
-          SLACK_USERNAME: GitHub-Actions
-          SLACK_WEBHOOK: ${{ secrets.SLACK_HOOK }}
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

@@ -410,3 +410,48 @@ jobs:
           SLACK_FOOTER: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
           SLACK_USERNAME: GitHub-Actions
           SLACK_WEBHOOK: ${{ secrets.SLACK_HOOK }}
+
+  notify:
+    name: Notify
+    runs-on: ubuntu-18.04
+    needs: helm-tests
+    if: always() && github.ref == 'refs/heads/master'
+    steps:
+      - name: Workflow Status
+        id: check
+        uses: martialonline/workflow-status@v1
+      - name: Calculate SHA
+        id: commit
+        run: echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+      - name: Send Notification
+        uses: 8398a7/action-slack@v3
+        if: contains(steps.check.outputs.status, 'failed')
+        with:
+          status: custom
+          custom_payload: |
+            {
+              username: 'Github',
+              icon_emoji: ':octocat:',
+              mention: 'channel',
+              attachments: [{
+                color: '${{ steps.check.outputs.status }}' == 'success' ? 'good' : '${{ steps.check.outputs.status }}' == 'failed' ? 'danger' : 'warning',
+                fields: [{
+                  title: 'Commit',
+                  value: '${{ steps.commit.outputs.sha }}',
+                  short: true
+                },
+                {
+                  title: 'Author',
+                  value: '${{ github.actor }}',
+                  short: true
+                },
+                {
+                  title: 'Pipeline URL',
+                  value: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+                  short: false
+                }]
+              }]
+            }
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
