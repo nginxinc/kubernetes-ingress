@@ -79,7 +79,7 @@ Starting from Kubernetes 1.18, you can use the following new features:
       - host: cafe.example.com
     . . .
   ```
-  When using this filed you need to create the `IngressClass` resource with the corresponding `name`. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](https://deploy-preview-1133--nginx-kubernetes-ingress.netlify.app/nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources) section.
+  When using this filed you need to create the `IngressClass` resource with the corresponding `name`. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](/nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources) section.
 
 ## Restrictions
 

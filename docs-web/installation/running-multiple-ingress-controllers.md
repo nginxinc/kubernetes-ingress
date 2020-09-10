@@ -21,7 +21,7 @@ The default Ingress class of NGINX Ingress Controller is `nginx`, which means th
 
 **Notes**: 
 * For Kubernetes < 1.18, if the class is not set in an Ingress configuration resource, the Ingress Controller will handle the resource. This is controlled via the `-use-ingress-class-only` argument. 
-* For Kubernetes >= 1.18, if the class is not set in an Ingress resource, Kubernetes will set it to the class of the default Ingress Controller. To make the Ingress Controller the default one, the `ingressclass.kubernetes.io/is-default-class` must be set on the IngressClass resource. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](https://deploy-preview-1133--nginx-kubernetes-ingress.netlify.app/nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources) section.
+* For Kubernetes >= 1.18, if the class is not set in an Ingress resource, Kubernetes will set it to the class of the default Ingress Controller. To make the Ingress Controller the default one, the `ingressclass.kubernetes.io/is-default-class` must be set on the IngressClass resource. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](/nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources) section.
 * For VirtualServer and VirtualServerRoute resources, the Ingress Controller will always handle resources with an empty class.
 
 ## Running NGINX Ingress Controller and Another Ingress Controller
