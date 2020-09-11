@@ -8,7 +8,7 @@ COPY tests tests
 COPY deployments deployments
 
 WORKDIR /workspace/tests
-
+RUN sudo apt-get update && sudo apt-get install -y kubectl
 RUN pip install -r requirements.txt
 RUN rm -rf '.pytest_cache'
 
