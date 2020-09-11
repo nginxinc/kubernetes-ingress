@@ -4,6 +4,7 @@ import time
 import os
 import pytest
 import yaml
+import subprocess
 
 from kubernetes import config, client
 from kubernetes.client import (
@@ -273,6 +274,15 @@ def ingress_controller_prerequisites(
     print("------------------------- Create IC Prerequisites  -----------------------------------")
     rbac = configure_rbac(kube_apis.rbac_v1)
     namespace = create_ns_and_sa_from_yaml(kube_apis.v1, f"{DEPLOYMENTS}/common/ns-and-sa.yaml")
+    # ing_class_res = f"{DEPLOYMENTS}/common/ingress-class.yaml"
+    subprocess.run(
+        [
+            "kubectl",
+            "apply",
+            "-f",
+            f"{DEPLOYMENTS}/common/ingress-class.yaml"
+        ]
+    )
     config_map_yaml = f"{DEPLOYMENTS}/common/nginx-config.yaml"
     create_configmap_from_yaml(kube_apis.v1, namespace, config_map_yaml)
     with open(config_map_yaml) as f:
@@ -284,6 +294,14 @@ def ingress_controller_prerequisites(
     def fin():
         print("Clean up prerequisites")
         delete_namespace(kube_apis.v1, namespace)
+        subprocess.run(
+            [
+                "kubectl",
+                "delete",
+                "-f",
+                f"{DEPLOYMENTS}/common/ingress-class.yaml"
+            ]
+        )
         cleanup_rbac(kube_apis.rbac_v1, rbac)
 
     request.addfinalizer(fin)
