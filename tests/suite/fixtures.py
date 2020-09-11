@@ -277,7 +277,7 @@ def ingress_controller_prerequisites(
     print("Create IngressClass resource:")
     subprocess.run(
         [
-            "/bin/kubectl",
+            "kubectl",
             "apply",
             "-f",
             f"{DEPLOYMENTS}/common/ingress-class.yaml"
@@ -296,7 +296,7 @@ def ingress_controller_prerequisites(
         delete_namespace(kube_apis.v1, namespace)
         subprocess.run(
             [
-                "/bin/kubectl",
+                "kubectl",
                 "delete",
                 "-f",
                 f"{DEPLOYMENTS}/common/ingress-class.yaml"
