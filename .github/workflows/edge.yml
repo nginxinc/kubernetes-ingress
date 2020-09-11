@@ -273,7 +273,7 @@ jobs:
           --network=kind \
           -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
           -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ matrix.tag }} \
-          -v $(which kubectl):/usr/local/bin/kubectl \
+          -v $(which kubectl):/bin/kubectl \
           --context=kind-${{ github.run_id }} \
           --image=${{ matrix.image }}:${{ matrix.tag }} \
           --image-pull-policy=Never \
