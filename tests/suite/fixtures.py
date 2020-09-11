@@ -274,7 +274,7 @@ def ingress_controller_prerequisites(
     print("------------------------- Create IC Prerequisites  -----------------------------------")
     rbac = configure_rbac(kube_apis.rbac_v1)
     namespace = create_ns_and_sa_from_yaml(kube_apis.v1, f"{DEPLOYMENTS}/common/ns-and-sa.yaml")
-    # ing_class_res = f"{DEPLOYMENTS}/common/ingress-class.yaml"
+    print("Create IngressClass resource:")
     subprocess.run(
         [
             "kubectl",
