@@ -68,49 +68,49 @@ jobs:
         include:
           - os: ubuntu-18.04
             file: build/Dockerfile
-            path: '.'
+            context: '.'
             target: local
             image: nginx-ingress
             type: oss
           - os: ubuntu-18.04
             file: build/DockerfileForAlpine
-            path: '.'
+            context: '.'
             target: local
             image: nginx-ingress-alpine
             type: oss
           - os: ubuntu-18.04
             file: build/DockerfileForPlus
-            path: '.'
+            context: '.'
             target: local
             image: nginx-plus-ingress
             type: plus
           - os: ubuntu-18.04
             file: build/DockerfileWithOpentracing
-            path: '.'
+            context: '.'
             target: local
             image: nginx-ingress-opentracing
             type: oss
           - os: ubuntu-18.04
             file: build/DockerfileWithOpentracingForPlus
-            path: '.'
+            context: '.'
             target: local
             image: nginx-plus-ingress-opentracing
             type: plus
           - os: ubuntu-18.04
             file: build/openshift/Dockerfile
-            path: '.'
+            context: '.'
             target: local
             image: nginx-ingress-openshift
             type: oss
           - os: ubuntu-18.04
             file: build/openshift/DockerfileForPlus
-            path: '.'
+            context: '.'
             target: local
             image: nginx-plus-ingress-openshift
             type: plus
           - os: ubuntu-18.04
             file: build/appprotect/DockerfileWithAppProtectForPlus
-            path: '.'
+            context: '.'
             target: local
             image: nginx-plus-ingress-ap
             type: plus-ap
@@ -139,13 +139,12 @@ jobs:
           echo "${KEY}" | base64 --decode > nginx-repo.key
         if: matrix.type == 'plus-ap'
       - name: Build Docker Image ${{ matrix.image }}
-        uses: docker/build-push-action@v1
+        uses: docker/build-push-action@v2
         with:
-          repository: ${{ matrix.image }}
-          dockerfile: ${{ matrix.file }}
-          path: ${{ matrix.path }}
+          file: ${{ matrix.file }}
+          context: ${{ matrix.context }}
           target: ${{ matrix.target }}
-          tag_with_sha: true
+          tags: ${{ matrix.image }}:${{ github.sha }}
           push: false
 
   smoke-tests:
@@ -242,8 +241,9 @@ jobs:
         run: docker build -t test-runner:${{ matrix.tag }} -f tests/docker/Dockerfile .
       - name: Build ${{ matrix.image }} Container
         run: |
-          make container BUILD_IN_CONTAINER=1 DOCKERFILEPATH=${{ matrix.path }} \
-          DOCKERFILE=${{ matrix.file }} PREFIX=${{ matrix.image }} TAG=${{ matrix.tag }}
+          make container BUILD_IN_CONTAINER=1 \
+          DOCKERFILEPATH=${{ matrix.path }} DOCKERFILE=${{ matrix.file }} \
+          PREFIX=${{ matrix.image }} TAG=${{ matrix.tag }} GIT_COMMIT=${{ github.sha }}
       - name: Configure Kubernetes
         run: |
           cat <<EOF > kind-config.yaml
@@ -325,8 +325,9 @@ jobs:
           echo "${KEY}" | base64 --decode > nginx-repo.key
       - name: Build ${{ matrix.image }} Container
         run: |
-          make container BUILD_IN_CONTAINER=1 DOCKERFILEPATH=${{ matrix.path }} \
-          DOCKERFILE=${{ matrix.file }} PREFIX=${{ matrix.image }} TAG=${{ matrix.tag }}
+          make container BUILD_IN_CONTAINER=1 \
+          DOCKERFILEPATH=${{ matrix.path }} DOCKERFILE=${{ matrix.file }} \
+          PREFIX=${{ matrix.image }} TAG=${{ matrix.tag }} GIT_COMMIT=${{ github.sha }}
       - name: Deploy Kubernetes
         id: k8s
         run: |
@@ -375,16 +376,17 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Push to Dockerhub
-        uses: docker/build-push-action@v1
+      - name: DockerHub Login
+        uses: docker/login-action@v1 
         with:
-          repository: nginx/nginx-ingress
-          dockerfile: ${{ matrix.file }}
-          path: '.'
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          tag_with_ref: false
-          tags: ${{ matrix.tag }}
+      - name: Push to Dockerhub
+        uses: docker/build-push-action@v2
+        with:
+          file: ${{ matrix.file }}
+          context: '.'
+          tags: nginx/nginx-ingress:${{ matrix.tag }}
           push: true
 
   package-helm:
@@ -431,7 +433,8 @@ jobs:
         run: |
           helm repo index edge --url https://helm.nginx.com/edge
           git add -A
-          git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' commit -m "NGINX Ingress Controller - Edge Release (latest)"
+          git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' \
+          commit -m "NGINX Ingress Controller - Edge Release (latest)"
           git push -u origin master
 
   notify:
@@ -459,7 +462,7 @@ jobs:
               attachments: [{
                 color: '${{ steps.check.outputs.status }}' == 'success' ? 'good' : '${{ steps.check.outputs.status }}' == 'failed' ? 'danger' : 'warning',
                 fields: [{
-                  title: 'Commit',
+                  title: 'Failed Commit',
                   value: '${{ steps.commit.outputs.sha }}',
                   short: true
                 },
@@ -467,6 +470,11 @@ jobs:
                   title: 'Author',
                   value: '${{ github.actor }}',
                   short: true
+                },
+                {
+                  title: 'Commit Message',
+                  value: '${{ github.event.head_commit.message }}',
+                  short: false
                 },
                 {
                   title: 'Pipeline URL',
