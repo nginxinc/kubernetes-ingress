@@ -67,7 +67,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
 @pytest.mark.parametrize('ingress_controller, expected_responses',
                          [
                              pytest.param({"extra_args": ["-ingress-class=custom"]},
-                                          {"custom-class": 200, "nginx-class": 404, "no-class": 200},
+                                          {"custom-class": 200, "nginx-class": 404, "no-class": 404},
                                           id="custom-ingress-class"),
                              pytest.param({"extra_args": ["-use-ingress-class-only"]},
                                           {"custom-class": 404, "nginx-class": 200, "no-class": 404},
@@ -76,7 +76,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
                                           {"custom-class": 200, "nginx-class": 404, "no-class": 404},
                                           id="both-args-set"),
                              pytest.param({"extra_args": None},
-                                          {"custom-class": 404, "nginx-class": 200, "no-class": 200},
+                                          {"custom-class": 404, "nginx-class": 200, "no-class": 404},
                                           id="no-args-set")
                           ],
                          indirect=["ingress_controller"])
