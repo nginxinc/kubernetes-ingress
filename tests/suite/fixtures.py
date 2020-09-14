@@ -316,7 +316,7 @@ def ingress_controller_prerequisites(
                 "kubectl",
                 "delete",
                 "-f",
-                f"{TEST_DATA}/ingress-class/resource/custom-ngress-class-res.yaml"
+                f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml"
             ]
         ) 
         cleanup_rbac(kube_apis.rbac_v1, rbac)
