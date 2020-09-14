@@ -56,8 +56,8 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
         delete_common_app(kube_apis, "simple", test_namespace)
         for item in ingresses_under_test:
             src_ing_yaml = f"{TEST_DATA}/ingress-class/{item}-ingress.yaml"
-            delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
-
+            delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)   
+            
     request.addfinalizer(fin)
 
     return BackendSetup(req_url, ingress_hosts)
