@@ -15,7 +15,6 @@ require (
 	github.com/prometheus/common v0.13.0 // indirect
 	github.com/spiffe/go-spiffe v1.0.0
 	golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6 // indirect
-	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/tools v0.0.0-20200325203130-f53864d0dba1 // indirect
 	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
