@@ -184,13 +184,13 @@ jobs:
           #   tag: ${{ github.sha }}
           #   marker: 'policies'
           #   type: oss
-          - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
-            image: nginx-plus-ingress
-            tag: ${{ github.sha }}
-            marker: 'ingresses'
-            type: plus
+          # - os: ubuntu-18.04
+          #   path: build
+          #   file: DockerfileForPlus
+          #   image: nginx-plus-ingress
+          #   tag: ${{ github.sha }}
+          #   marker: 'ingresses'
+          #   type: plus
           # - os: ubuntu-18.04
           #   path: build
           #   file: DockerfileForPlus
@@ -198,13 +198,13 @@ jobs:
           #   tag: ${{ github.sha }}
           #   marker: 'vsr'
           #   type: plus
-          # - os: ubuntu-18.04
-          #   path: build
-          #   file: DockerfileForPlus
-          #   image: nginx-plus-ingress
-          #   tag: ${{ github.sha }}
-          #   marker: 'vs'
-          #   type: plus
+          - os: ubuntu-18.04
+            path: build
+            file: DockerfileForPlus
+            image: nginx-plus-ingress
+            tag: ${{ github.sha }}
+            marker: 'vs'
+            type: plus
           # - os: ubuntu-18.04
           #   path: build
           #   file: DockerfileForPlus
