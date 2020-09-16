@@ -123,7 +123,7 @@ type LoadBalancerController struct {
 	virtualServerRouteLister      cache.Store
 	appProtectPolicyLister        cache.Store
 	appProtectLogConfLister       cache.Store
-	globalConfiguratonLister      cache.Store
+	globalConfigurationLister     cache.Store
 	transportServerLister         cache.Store
 	policyLister                  cache.Store
 	syncQueue                     *taskQueue
@@ -433,7 +433,7 @@ func (lbc *LoadBalancerController) addVirtualServerRouteHandler(handlers cache.R
 }
 
 func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.ResourceEventHandlerFuncs, namespace string, name string) {
-	lbc.globalConfiguratonLister, lbc.globalConfigurationController = cache.NewInformer(
+	lbc.globalConfigurationLister, lbc.globalConfigurationController = cache.NewInformer(
 		cache.NewListWatchFromClient(
 			lbc.confClient.K8sV1alpha1().RESTClient(),
 			"globalconfigurations",
@@ -1018,7 +1018,7 @@ func (lbc *LoadBalancerController) syncTransportServer(task task) {
 
 func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 	key := task.Key
-	obj, gcExists, err := lbc.globalConfiguratonLister.GetByKey(key)
+	obj, gcExists, err := lbc.globalConfigurationLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -2501,7 +2501,7 @@ func (lbc *LoadBalancerController) getAppProtectPolicy(ing *networking.Ingress) 
 
 	apPolicyObj, exists, err := lbc.appProtectPolicyLister.GetByKey(polNsN)
 	if err != nil {
-		return nil, fmt.Errorf("Error retirieving App Protect Policy name for Ingress %v: %v ", ing.Name, err)
+		return nil, fmt.Errorf("Error retrieving App Protect Policy name for Ingress %v: %v ", ing.Name, err)
 	}
 
 	if !exists {
@@ -2679,7 +2679,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 			if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
 				for _, endpoint := range podEndps {
 					podsByIP[endpoint.Address] = configs.PodInfo{
-						Name: endpoint.PodName,
+						Name:         endpoint.PodName,
 						MeshPodOwner: endpoint.MeshPodOwner,
 					}
 				}
@@ -3387,7 +3387,7 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 
 	namespace, name, err := ParseNamespaceName(key)
 	if err != nil {
-		glog.Warningf("Log Configurtion key %v is invalid: %v", key, err)
+		glog.Warningf("Log Configuration key %v is invalid: %v", key, err)
 		return
 	}
 

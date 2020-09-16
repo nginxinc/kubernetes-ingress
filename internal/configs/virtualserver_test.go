@@ -2146,7 +2146,7 @@ func TestRemoveDuplicates(t *testing.T) {
 	for _, test := range tests {
 		result := removeDuplicateLimitReqZones(test.rlz)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("removeDuplicates() returned \n%v, but expected \n%v", result, test.expected)
+			t.Errorf("removeDuplicateLimitReqZones() returned \n%v, but expected \n%v", result, test.expected)
 		}
 	}
 }

@@ -470,7 +470,7 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 
 	cnf.nginxManager.CreateStreamConfig(name, content)
 
-	// update TLS Passhrough Hosts config in case we have a TLS Passthrough TransportServer
+	// update TLS Passthrough Hosts config in case we have a TLS Passthrough TransportServer
 	// only TLS Passthrough TransportServers have non-empty hosts
 	if transportServerEx.TransportServer.Spec.Host != "" {
 		key := generateNamespaceNameKey(&transportServerEx.TransportServer.ObjectMeta)
@@ -739,7 +739,7 @@ func (cnf *Configurator) deleteTransportServer(key string) error {
 	name := getFileNameForTransportServerFromKey(key)
 	cnf.nginxManager.DeleteStreamConfig(name)
 
-	// update TLS Passhrough Hosts config in case we have a TLS Passthrough TransportServer
+	// update TLS Passthrough Hosts config in case we have a TLS Passthrough TransportServer
 	if _, exists := cnf.tlsPassthroughPairs[key]; exists {
 		delete(cnf.tlsPassthroughPairs, key)
 
@@ -1261,8 +1261,8 @@ func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Un
 }
 
 // DeleteAppProtectPolicy updates Ingresses that use AP Policy after that policy is deleted
-func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceame string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
-	fName := strings.Replace(polNamespaceame, "/", "_", 1)
+func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
+	fName := strings.Replace(polNamespaceName, "/", "_", 1)
 	polFileName := appProtectPolicyFolder + fName
 	cnf.nginxManager.DeleteAppProtectResourceFile(polFileName)
 
@@ -1288,8 +1288,8 @@ func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceame string, ingExes 
 }
 
 // DeleteAppProtectLogConf updates Ingresses that use AP Log Configuration after that policy is deleted
-func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceame string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
-	fName := strings.Replace(logConfNamespaceame, "/", "_", 1)
+func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
+	fName := strings.Replace(logConfNamespaceName, "/", "_", 1)
 	logConfFileName := appProtectLogConfFolder + fName
 	cnf.nginxManager.DeleteAppProtectResourceFile(logConfFileName)
 
