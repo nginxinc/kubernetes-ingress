@@ -156,48 +156,48 @@ jobs:
     strategy:
       matrix:
         include:
-          # - os: ubuntu-18.04
-          #   path: build
-          #   file: Dockerfile
-          #   image: nginx-ingress
-          #   tag: ${{ github.sha }}
-          #   marker: 'ingresses'
-          #   type: oss
-          # - os: ubuntu-18.04
-          #   path: build
-          #   file: Dockerfile
-          #   image: nginx-ingress
-          #   tag: ${{ github.sha }}
-          #   marker: 'vsr'
-          #   type: oss
-          # - os: ubuntu-18.04
-          #   path: build
-          #   file: Dockerfile
-          #   image: nginx-ingress
-          #   tag: ${{ github.sha }}
-          #   marker: 'vs'
-          #   type: oss
-          # - os: ubuntu-18.04
-          #   path: build
-          #   file: Dockerfile
-          #   image: nginx-ingress
-          #   tag: ${{ github.sha }}
-          #   marker: 'policies'
-          #   type: oss
-          # - os: ubuntu-18.04
-          #   path: build
-          #   file: DockerfileForPlus
-          #   image: nginx-plus-ingress
-          #   tag: ${{ github.sha }}
-          #   marker: 'ingresses'
-          #   type: plus
-          # - os: ubuntu-18.04
-          #   path: build
-          #   file: DockerfileForPlus
-          #   image: nginx-plus-ingress
-          #   tag: ${{ github.sha }}
-          #   marker: 'vsr'
-          #   type: plus
+          - os: ubuntu-18.04
+            path: build
+            file: Dockerfile
+            image: nginx-ingress
+            tag: ${{ github.sha }}
+            marker: 'ingresses'
+            type: oss
+          - os: ubuntu-18.04
+            path: build
+            file: Dockerfile
+            image: nginx-ingress
+            tag: ${{ github.sha }}
+            marker: 'vsr'
+            type: oss
+          - os: ubuntu-18.04
+            path: build
+            file: Dockerfile
+            image: nginx-ingress
+            tag: ${{ github.sha }}
+            marker: 'vs'
+            type: oss
+          - os: ubuntu-18.04
+            path: build
+            file: Dockerfile
+            image: nginx-ingress
+            tag: ${{ github.sha }}
+            marker: 'policies'
+            type: oss
+          - os: ubuntu-18.04
+            path: build
+            file: DockerfileForPlus
+            image: nginx-plus-ingress
+            tag: ${{ github.sha }}
+            marker: 'ingresses'
+            type: plus
+          - os: ubuntu-18.04
+            path: build
+            file: DockerfileForPlus
+            image: nginx-plus-ingress
+            tag: ${{ github.sha }}
+            marker: 'vsr'
+            type: plus
           - os: ubuntu-18.04
             path: build
             file: DockerfileForPlus
@@ -205,20 +205,20 @@ jobs:
             tag: ${{ github.sha }}
             marker: 'vs'
             type: plus
-          # - os: ubuntu-18.04
-          #   path: build
-          #   file: DockerfileForPlus
-          #   image: nginx-plus-ingress
-          #   tag: ${{ github.sha }}
-          #   marker: 'policies'
-          #   type: plus
-          # - os: ubuntu-18.04
-          #   path: build/appprotect
-          #   file: DockerfileWithAppProtectForPlus
-          #   image: nginx-plus-ingress
-          #   tag: ${{ github.sha }}-ap
-          #   marker: 'appprotect'
-          #   type: plus-ap
+          - os: ubuntu-18.04
+            path: build
+            file: DockerfileForPlus
+            image: nginx-plus-ingress
+            tag: ${{ github.sha }}
+            marker: 'policies'
+            type: plus
+          - os: ubuntu-18.04
+            path: build/appprotect
+            file: DockerfileWithAppProtectForPlus
+            image: nginx-plus-ingress
+            tag: ${{ github.sha }}-ap
+            marker: 'appprotect'
+            type: plus-ap
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
