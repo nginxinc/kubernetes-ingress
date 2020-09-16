@@ -74,7 +74,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
     return BackendSetup(req_url, ingress_hosts)
 
 
-@pytest.mark.vsp
+@pytest.mark.ingresses
 class TestIngressClassArgs:
     @pytest.mark.parametrize(
         "ingress_controller, expected_responses",
