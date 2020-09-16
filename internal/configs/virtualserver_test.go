@@ -699,7 +699,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	tlsPemFileName := ""
-	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, SpiffeCerts: true}
+	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true}
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams)
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, tlsPemFileName)
 	if !reflect.DeepEqual(result, expected) {

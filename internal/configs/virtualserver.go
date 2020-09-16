@@ -29,6 +29,22 @@ var incompatibleLBMethodsForSlowStart = map[string]bool{
 	"random two least_time=last_byte": true,
 }
 
+// MeshPodOwner contains the type and name of the K8s resource that owns the pod.
+// This owner information is needed for NGINX Service Mesh metrics.
+type MeshPodOwner struct {
+	// OwnerType is one of the following: statefulset, daemonset, deployment.
+	OwnerType string
+	// OwnerName is the name of the statefulset, daemonset, or deployment.
+	OwnerName string
+}
+
+// PodInfo contains the name of the Pod and the MeshPodOwner information
+// which is used for NGINX Service Mesh metrics.
+type PodInfo struct {
+	Name string
+	MeshPodOwner
+}
+
 // VirtualServerEx holds a VirtualServer along with the resources that are referenced in this VirtualServer.
 type VirtualServerEx struct {
 	VirtualServer       *conf_v1.VirtualServer
@@ -37,7 +53,7 @@ type VirtualServerEx struct {
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
 	Policies            map[string]*conf_v1alpha1.Policy
-	PodsByIP            map[string]string
+	PodsByIP            map[string]PodInfo
 }
 
 func (vsx *VirtualServerEx) String() string {
@@ -168,7 +184,7 @@ func newVirtualServerConfigurator(cfgParams *ConfigParams, isPlus bool, isResolv
 		isTLSPassthrough:     staticParams.TLSPassthrough,
 		enableSnippets:       staticParams.EnableSnippets,
 		warnings:             make(map[runtime.Object][]string),
-		spiffeCerts:          staticParams.SpiffeCerts,
+		spiffeCerts:          staticParams.NginxServiceMesh,
 	}
 }
 

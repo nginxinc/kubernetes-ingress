@@ -180,6 +180,7 @@ class TestVirtualServer:
                            {"example": "virtual-server", "app_type": "simple"})],
                          indirect=True)
 class TestVirtualServerInitialRBACMisconfiguration:
+    @pytest.mark.skip(reason="issues with ingressClass")
     def test_responses_after_rbac_misconfiguration(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("\nStep 1: rbac misconfiguration from the very start")
         resp = requests.get(virtual_server_setup.backend_1_url,

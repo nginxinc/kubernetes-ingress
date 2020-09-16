@@ -24,7 +24,7 @@ The table below categorizes some potential problems with the Ingress Controller 
      - Misconfigured APLogConf or APPolicy.
    * - APLogConf, APPolicy or Ingress Resource.
      - The configuration is not applied.
-     - Check the events of the APLogConf, APPolicy and Ingress Resource, check the logs.
+     - Check the events of the APLogConf, APPolicy and Ingress Resource, check the logs, replace the policy.
      - APLogConf or APPolicy is invalid.
    * - NGINX.
      - The Ingress Controller NGINX verification timeouts while starting for the first time or while reloading after a change.
@@ -76,6 +76,16 @@ Events:
   Normal  AddedOrUpdated  2m25s  nginx-ingress-controller  AppProtectPolicy default/dataguard-alarm was added or updated
 ```
 Note that in the events section, we have a `Normal` event with the `AddedOrUpdated` reason, which informs us that the configuration was successfully applied.
+
+### Replace the policy
+
+NOTE: This method only applies if using [external references](https://docs.nginx.com/nginx-app-protect/configuration/#external-references) 
+If items on the external reference change but the spec of the ApPolicy remains unchanged (even when re-applying the policy), kubernetes will not detect the update.
+In this case you can force-replace the resource. This will remove the resource and add it again, triggering a reload. For example:
+
+```
+kubectl replace appolicy -f your-policy-manifest.yaml --force
+```
 
 ### Check the Availability of APPolicy External References.
 

@@ -26,7 +26,7 @@ type IngressEx struct {
 	Endpoints         map[string][]string
 	HealthChecks      map[string]*api_v1.Probe
 	ExternalNameSvcs  map[string]bool
-	PodsByIP          map[string]string
+	PodsByIP          map[string]PodInfo
 	AppProtectPolicy  *unstructured.Unstructured
 	AppProtectLogConf *unstructured.Unstructured
 	AppProtectLogDst  string
@@ -250,7 +250,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			Namespace:   ingEx.Ingress.Namespace,
 			Annotations: ingEx.Ingress.Annotations,
 		},
-		SpiffeClientCerts: staticParams.SpiffeCerts && !cfgParams.SpiffeServerCerts,
+		SpiffeClientCerts: staticParams.NginxServiceMesh && !cfgParams.SpiffeServerCerts,
 	}
 }
 
@@ -478,10 +478,10 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 		Upstreams:         upstreams,
 		Keepalive:         keepalive,
 		Ingress:           masterNginxCfg.Ingress,
-		SpiffeClientCerts: staticParams.SpiffeCerts && !baseCfgParams.SpiffeServerCerts,
+		SpiffeClientCerts: staticParams.NginxServiceMesh && !baseCfgParams.SpiffeServerCerts,
 	}
 }
 
 func isSSLEnabled(isSSLService bool, cfgParams ConfigParams, staticCfgParams *StaticConfigParams) bool {
-	return isSSLService || staticCfgParams.SpiffeCerts && !cfgParams.SpiffeServerCerts
+	return isSSLService || staticCfgParams.NginxServiceMesh && !cfgParams.SpiffeServerCerts
 }

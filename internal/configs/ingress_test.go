@@ -766,7 +766,7 @@ func TestGenerateNginxCfgForSpiffe(t *testing.T) {
 	}
 
 	apResources := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, pems, apResources, false, configParams, false, false, "", &StaticConfigParams{SpiffeCerts: true})
+	result := generateNginxCfg(&cafeIngressEx, pems, apResources, false, configParams, false, false, "", &StaticConfigParams{NginxServiceMesh: true})
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result, expected)
@@ -788,7 +788,7 @@ func TestGenerateNginxCfgForInternalRoute(t *testing.T) {
 	}
 
 	apResources := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, pems, apResources, false, configParams, false, false, "", &StaticConfigParams{SpiffeCerts: true, EnableInternalRoutes: true})
+	result := generateNginxCfg(&cafeIngressEx, pems, apResources, false, configParams, false, false, "", &StaticConfigParams{NginxServiceMesh: true, EnableInternalRoutes: true})
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateNginxCfg returned \n%+v,  but expected \n%+v", result, expected)
@@ -799,61 +799,61 @@ func TestIsSSLEnabled(t *testing.T) {
 	type testCase struct {
 		IsSSLService,
 		SpiffeServerCerts,
-		SpiffeCerts,
+		NginxServiceMesh,
 		Expected bool
 	}
 	var testCases = []testCase{
 		{
 			IsSSLService:      false,
 			SpiffeServerCerts: false,
-			SpiffeCerts:       false,
+			NginxServiceMesh:  false,
 			Expected:          false,
 		},
 		{
 			IsSSLService:      false,
 			SpiffeServerCerts: true,
-			SpiffeCerts:       true,
+			NginxServiceMesh:  true,
 			Expected:          false,
 		},
 		{
 			IsSSLService:      false,
 			SpiffeServerCerts: false,
-			SpiffeCerts:       true,
+			NginxServiceMesh:  true,
 			Expected:          true,
 		},
 		{
 			IsSSLService:      false,
 			SpiffeServerCerts: true,
-			SpiffeCerts:       false,
+			NginxServiceMesh:  false,
 			Expected:          false,
 		},
 		{
 			IsSSLService:      true,
 			SpiffeServerCerts: true,
-			SpiffeCerts:       true,
+			NginxServiceMesh:  true,
 			Expected:          true,
 		},
 		{
 			IsSSLService:      true,
 			SpiffeServerCerts: false,
-			SpiffeCerts:       true,
+			NginxServiceMesh:  true,
 			Expected:          true,
 		},
 		{
 			IsSSLService:      true,
 			SpiffeServerCerts: true,
-			SpiffeCerts:       false,
+			NginxServiceMesh:  false,
 			Expected:          true,
 		},
 		{
 			IsSSLService:      true,
 			SpiffeServerCerts: false,
-			SpiffeCerts:       false,
+			NginxServiceMesh:  false,
 			Expected:          true,
 		},
 	}
 	for i, tc := range testCases {
-		actual := isSSLEnabled(tc.IsSSLService, ConfigParams{SpiffeServerCerts: tc.SpiffeServerCerts}, &StaticConfigParams{SpiffeCerts: tc.SpiffeCerts})
+		actual := isSSLEnabled(tc.IsSSLService, ConfigParams{SpiffeServerCerts: tc.SpiffeServerCerts}, &StaticConfigParams{NginxServiceMesh: tc.NginxServiceMesh})
 		if actual != tc.Expected {
 			t.Errorf("isSSLEnabled returned %v but expected %v for the case %v", actual, tc.Expected, i)
 		}

@@ -500,7 +500,7 @@ func main() {
 		StubStatusOverUnixSocketForOSS: *enablePrometheusMetrics,
 		TLSPassthrough:                 *enableTLSPassthrough,
 		EnableSnippets:                 *enableSnippets,
-		SpiffeCerts:                    *spireAgentAddress != "",
+		NginxServiceMesh:               *spireAgentAddress != "",
 		MainAppProtectLoadModule:       *appProtect,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
 	}
@@ -548,6 +548,9 @@ func main() {
 	if *enablePrometheusMetrics {
 		upstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
 		upstreamServerPeerVariableLabelNames := []string{"pod_name"}
+		if staticCfgParams.NginxServiceMesh {
+			upstreamServerPeerVariableLabelNames = append(upstreamServerPeerVariableLabelNames, "pod_owner")
+		}
 		if *nginxPlus {
 			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
 			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames)
