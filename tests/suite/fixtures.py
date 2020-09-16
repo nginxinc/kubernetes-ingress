@@ -1,7 +1,7 @@
 """Describe project shared pytest fixtures."""
 
 import time
-import os
+import os, re
 import pytest
 import yaml
 import subprocess
@@ -129,11 +129,13 @@ class IngressControllerPrerequisites:
     Attributes:
         namespace (str): namespace name
         config_map (str): config_map name
+        minorVer (int): k8s minor version
     """
 
-    def __init__(self, config_map, namespace):
+    def __init__(self, config_map, namespace, minorVer):
         self.namespace = namespace
         self.config_map = config_map
+        self.minorVer = minorVer
 
 
 @pytest.fixture(autouse=True)
@@ -274,23 +276,35 @@ def ingress_controller_prerequisites(
     print("------------------------- Create IC Prerequisites  -----------------------------------")
     rbac = configure_rbac(kube_apis.rbac_v1)
     namespace = create_ns_and_sa_from_yaml(kube_apis.v1, f"{DEPLOYMENTS}/common/ns-and-sa.yaml")
-    print("Create IngressClass resources:")
-    subprocess.run(
-        [
-            "kubectl",
-            "apply",
-            "-f",
-            f"{DEPLOYMENTS}/common/ingress-class.yaml"
-        ]
-    )
-    subprocess.run(
-        [
-            "kubectl",
-            "apply",
-            "-f",
-            f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml"
-        ]
-    ) 
+    k8sVersionBin = subprocess.run(
+                    [
+                        "kubectl",
+                        "version"
+                    ],
+                    capture_output=True
+                )
+    k8sVersion = (k8sVersionBin.stdout).decode('ascii')
+    serverVersion = k8sVersion[k8sVersion.find("Server Version:") :].lstrip()
+    minorSerVer = serverVersion[serverVersion.find("Minor") :].lstrip()[0:10]
+    k8sMinorVersion = int("".join(filter(str.isdigit, minorSerVer)))
+    if (k8sMinorVersion >= 18):
+        print("Create IngressClass resources:")
+        subprocess.run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                f"{DEPLOYMENTS}/common/ingress-class.yaml"
+            ]
+        )
+        subprocess.run(
+            [
+                "kubectl",
+                "apply",
+                "-f",
+                f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml"
+            ]
+        ) 
     config_map_yaml = f"{DEPLOYMENTS}/common/nginx-config.yaml"
     create_configmap_from_yaml(kube_apis.v1, namespace, config_map_yaml)
     with open(config_map_yaml) as f:
@@ -302,28 +316,29 @@ def ingress_controller_prerequisites(
     def fin():
         print("Clean up prerequisites")
         delete_namespace(kube_apis.v1, namespace)
-        print("Delete IngressClass resources:")
-        subprocess.run(
-            [
-                "kubectl",
-                "delete",
-                "-f",
-                f"{DEPLOYMENTS}/common/ingress-class.yaml"
-            ]
-        )
-        subprocess.run(
-            [
-                "kubectl",
-                "delete",
-                "-f",
-                f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml"
-            ]
-        ) 
+        if (k8sMinorVersion >= 18):
+            print("Delete IngressClass resources:")
+            subprocess.run(
+                [
+                    "kubectl",
+                    "delete",
+                    "-f",
+                    f"{DEPLOYMENTS}/common/ingress-class.yaml"
+                ]
+            )
+            subprocess.run(
+                [
+                    "kubectl",
+                    "delete",
+                    "-f",
+                    f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml"
+                ]
+            ) 
         cleanup_rbac(kube_apis.rbac_v1, rbac)
 
     request.addfinalizer(fin)
 
-    return IngressControllerPrerequisites(config_map, namespace)
+    return IngressControllerPrerequisites(config_map, namespace, k8sMinorVersion)
 
 
 @pytest.fixture(scope="session")
