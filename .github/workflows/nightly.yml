@@ -162,7 +162,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: oss
-            k8s: 1.19.0
+            k8s: 1.19.2
           - os: ubuntu-18.04
             path: build
             file: Dockerfile
@@ -170,7 +170,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: oss
-            k8s: 1.18.8
+            k8s: 1.18.9
           - os: ubuntu-18.04
             path: build
             file: Dockerfile
@@ -178,7 +178,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: oss
-            k8s: 1.17.5
+            k8s: 1.17.12
           - os: ubuntu-18.04
             path: build
             file: Dockerfile
@@ -186,7 +186,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: oss
-            k8s: 1.16.9
+            k8s: 1.16.15
           - os: ubuntu-18.04
             path: build
             file: Dockerfile
@@ -194,7 +194,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: oss
-            k8s: 1.15.11
+            k8s: 1.15.12
           - os: ubuntu-18.04
             path: build
             file: DockerfileForPlus
@@ -202,7 +202,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: plus
-            k8s: 1.19.0
+            k8s: 1.19.2
           - os: ubuntu-18.04
             path: build
             file: DockerfileForPlus
@@ -210,7 +210,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: plus
-            k8s: 1.18.8
+            k8s: 1.18.9
           - os: ubuntu-18.04
             path: build
             file: DockerfileForPlus
@@ -218,7 +218,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: plus
-            k8s: 1.17.5
+            k8s: 1.17.12
           - os: ubuntu-18.04
             path: build
             file: DockerfileForPlus
@@ -226,7 +226,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: plus
-            k8s: 1.16.9
+            k8s: 1.16.15
           - os: ubuntu-18.04
             path: build
             file: DockerfileForPlus
@@ -234,7 +234,7 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: plus
-            k8s: 1.15.11
+            k8s: 1.15.12
           - os: ubuntu-18.04
             path: build/appprotect
             file: DockerfileWithAppProtectForPlus
@@ -242,7 +242,7 @@ jobs:
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
-            k8s: 1.19.0
+            k8s: 1.19.2
           - os: ubuntu-18.04
             path: build/appprotect
             file: DockerfileWithAppProtectForPlus
@@ -250,7 +250,7 @@ jobs:
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
-            k8s: 1.18.8
+            k8s: 1.18.9
           - os: ubuntu-18.04
             path: build/appprotect
             file: DockerfileWithAppProtectForPlus
@@ -258,7 +258,7 @@ jobs:
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
-            k8s: 1.17.5
+            k8s: 1.17.12
           - os: ubuntu-18.04
             path: build/appprotect
             file: DockerfileWithAppProtectForPlus
@@ -266,7 +266,7 @@ jobs:
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
-            k8s: 1.16.9
+            k8s: 1.16.15
           - os: ubuntu-18.04
             path: build/appprotect
             file: DockerfileWithAppProtectForPlus
@@ -274,7 +274,7 @@ jobs:
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
-            k8s: 1.15.11
+            k8s: 1.15.12
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
