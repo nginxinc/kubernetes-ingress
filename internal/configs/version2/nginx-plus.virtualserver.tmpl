@@ -78,6 +78,12 @@ server {
         {{ end }}
     {{ end }}
 
+    {{ with $s.IngressMTLS }}
+    ssl_client_certificate {{ .ClientCert }};
+    ssl_verify_client {{ .VerifyClient }};
+    ssl_verify_depth {{ .VerifyDepth }};
+    {{ end }}
+
     {{ with $s.TLSRedirect }}
     if ({{ .BasedOn }} = 'http') {
         return {{ .Code }} https://$host$request_uri;

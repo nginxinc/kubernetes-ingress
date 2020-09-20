@@ -140,6 +140,11 @@ var virtualServerCfg = VirtualServerConfig{
 			Realm:  "My Api",
 			Secret: "jwk-secret",
 		},
+		IngressMTLS: &IngressMTLS{
+			ClientCert:   "ingress-mtls-secret",
+			VerifyClient: "on",
+			VerifyDepth:  2,
+		},
 		Snippets: []string{"# server snippet"},
 		InternalRedirectLocations: []InternalRedirectLocation{
 			{

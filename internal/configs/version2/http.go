@@ -67,6 +67,7 @@ type Server struct {
 	LimitReqOptions           LimitReqOptions
 	LimitReqs                 []LimitReq
 	JWTAuth                   *JWTAuth
+	IngressMTLS               *IngressMTLS
 	PoliciesErrorReturn       *Return
 }
 
@@ -76,6 +77,13 @@ type SSL struct {
 	Certificate    string
 	CertificateKey string
 	Ciphers        string
+}
+
+// IngressMTLS defines TLS configuration for a server. This is a subset of TLS specifically for clients auth.
+type IngressMTLS struct {
+	ClientCert   string
+	VerifyClient string
+	VerifyDepth  int
 }
 
 // Location defines a location.

@@ -51,6 +51,7 @@ type VirtualServerEx struct {
 	Endpoints           map[string][]string
 	TLSSecret           *api_v1.Secret
 	JWTKeys             map[string]*api_v1.Secret
+	IngressMTLSCert     *api_v1.Secret
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
 	Policies            map[string]*conf_v1alpha1.Policy
@@ -208,11 +209,11 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(owner runtime
 }
 
 // GenerateVirtualServerConfig generates a full configuration for a VirtualServer
-func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx, tlsPemFileName string, jwtKeys map[string]string) (version2.VirtualServerConfig, Warnings) {
+func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx, tlsPemFileName string, jwtKeys map[string]string, ingressMTLSPemFileName string) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
 
 	policiesCfg := vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace,
-		vsEx.VirtualServer.Name, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, jwtKeys)
+		vsEx.VirtualServer.Name, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, jwtKeys, ingressMTLSPemFileName, "server", tlsPemFileName)
 
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
@@ -317,8 +318,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 		}
 
 		vsLocSnippets := r.LocationSnippets
+		// ingressMTLSPemFileName argument is always empty for route policies
 		routePoliciesCfg := vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name,
-			r.Policies, vsEx.Policies, jwtKeys)
+			r.Policies, vsEx.Policies, jwtKeys, "", "route", tlsPemFileName)
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 		if len(r.Matches) > 0 {
@@ -378,13 +380,13 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			if r.LocationSnippets == "" {
 				locSnippets = vsrLocationSnippetsFromVs[vsrNamespaceName]
 			}
-
+			// ingressMTLSPemFileName argument is always empty for route policies
 			routePoliciesCfg := vsc.generatePolicies(vsr, vsr.Namespace, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name,
-				r.Policies, vsEx.Policies, jwtKeys)
+				r.Policies, vsEx.Policies, jwtKeys, "", "route", tlsPemFileName)
 			// use the VirtualServer route policies if the route does not define any
 			if len(r.Policies) == 0 {
 				routePoliciesCfg = vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace,
-					vsEx.VirtualServer.Name, vsrPoliciesFromVs[vsrNamespaceName], vsEx.Policies, jwtKeys)
+					vsEx.VirtualServer.Name, vsrPoliciesFromVs[vsrNamespaceName], vsEx.Policies, jwtKeys, "", "route", tlsPemFileName)
 			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
@@ -459,6 +461,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			LimitReqOptions:           policiesCfg.LimitReqOptions,
 			LimitReqs:                 policiesCfg.LimitReqs,
 			JWTAuth:                   policiesCfg.JWTAuth,
+			IngressMTLS:               policiesCfg.IngressMTLS,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
 		},
 		SpiffeCerts: vsc.spiffeCerts,
@@ -474,17 +477,20 @@ type policiesCfg struct {
 	LimitReqZones   []version2.LimitReqZone
 	LimitReqs       []version2.LimitReq
 	JWTAuth         *version2.JWTAuth
+	IngressMTLS     *version2.IngressMTLS
 	ErrorReturn     *version2.Return
 }
 
+// TODO refactor generatePolicies
 func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, ownerNamespace string, vsNamespace string,
-	vsName string, policyRefs []conf_v1.PolicyReference, policies map[string]*conf_v1alpha1.Policy, jwtKeys map[string]string) policiesCfg {
+	vsName string, policyRefs []conf_v1.PolicyReference, policies map[string]*conf_v1alpha1.Policy, jwtKeys map[string]string, ingressMTLSPemFileName string, context string, tlsPemFileName string) policiesCfg {
 	var policyErrorReturn *version2.Return
 	var allow, deny []string
 	var limitReqOptions version2.LimitReqOptions
 	var limitReqZones []version2.LimitReqZone
 	var limitReqs []version2.LimitReq
 	var JWTAuth *version2.JWTAuth
+	var ingressMTLS *version2.IngressMTLS
 	var policyError bool
 
 	for _, p := range policyRefs {
@@ -499,9 +505,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 			if pol.Spec.AccessControl != nil {
 				allow = append(allow, pol.Spec.AccessControl.Allow...)
 				deny = append(deny, pol.Spec.AccessControl.Deny...)
-			}
-
-			if pol.Spec.RateLimit != nil {
+			} else if pol.Spec.RateLimit != nil {
 				rlZoneName := fmt.Sprintf("pol_rl_%v_%v_%v_%v", polNamespace, p.Name, vsNamespace, vsName)
 				limitReqs = append(limitReqs, generateLimitReq(rlZoneName, pol.Spec.RateLimit))
 				limitReqZones = append(limitReqZones, generateLimitReqZone(rlZoneName, pol.Spec.RateLimit))
@@ -522,9 +526,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 							key, curOptions.RejectCode, limitReqOptions.RejectCode)
 					}
 				}
-			}
-
-			if pol.Spec.JWTAuth != nil {
+			} else if pol.Spec.JWTAuth != nil {
 				if JWTAuth != nil {
 					vsc.addWarningf(owner, "Multiple jwt policies in the same context is not valid. JWT policy %q will be ignored", key)
 					continue
@@ -542,6 +544,43 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 					Realm:  pol.Spec.JWTAuth.Realm,
 					Token:  pol.Spec.JWTAuth.Token,
 				}
+			} else if pol.Spec.IngressMTLS != nil {
+				if tlsPemFileName == "" {
+					vsc.addWarningf(owner, `TLS configuration needed for IngressMTLS policy`)
+					policyError = true
+					break
+				}
+				if context != "server" {
+					vsc.addWarningf(owner, `IngressMTLS policy is not allowed in the %v context`, context)
+					policyError = true
+					break
+				}
+				if ingressMTLS != nil {
+					vsc.addWarningf(owner, "Multiple ingressMTLS policies are not allowed. IngressMTLS policy %q will be ignored", key)
+					continue
+				}
+
+				if ingressMTLSPemFileName == "" {
+					vsc.addWarningf(owner, `IngressMTLS policy %q references a Secret which does not exist`, key)
+					policyError = true
+					break
+				}
+
+				verifyDepth := 1
+				verifyClient := "on"
+				if pol.Spec.IngressMTLS.VerifyDepth != nil {
+					verifyDepth = *pol.Spec.IngressMTLS.VerifyDepth
+				}
+				if pol.Spec.IngressMTLS.VerifyClient != "" {
+					verifyClient = pol.Spec.IngressMTLS.VerifyClient
+				}
+
+				ingressMTLS = &version2.IngressMTLS{
+					ClientCert:   ingressMTLSPemFileName,
+					VerifyClient: verifyClient,
+					VerifyDepth:  verifyDepth,
+				}
+
 			}
 		} else {
 			vsc.addWarningf(owner, "Policy %s is missing or invalid", key)
@@ -564,6 +603,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 		LimitReqZones:   limitReqZones,
 		LimitReqs:       limitReqs,
 		JWTAuth:         JWTAuth,
+		IngressMTLS:     ingressMTLS,
 		ErrorReturn:     policyErrorReturn,
 	}
 }

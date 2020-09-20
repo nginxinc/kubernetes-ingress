@@ -2178,7 +2178,7 @@ func TestGetPolicies(t *testing.T) {
 
 	expectedPolicies := []*conf_v1alpha1.Policy{validPolicy}
 	expectedErrors := []error{
-		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `jwt`"),
+		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `jwt`"),
 		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
 		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
 	}
@@ -2470,6 +2470,18 @@ func TestFindPoliciesForSecret(t *testing.T) {
 		},
 	}
 
+	ingTLSPol := &conf_v1alpha1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "ingress-tmls-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1alpha1.PolicySpec{
+			IngressMTLS: &conf_v1alpha1.IngressMTLS{
+				ClientCertSecret: "ingress-mtls-secret",
+			},
+		},
+	}
+
 	tests := []struct {
 		policies        []*conf_v1alpha1.Policy
 		secretNamespace string
@@ -2497,6 +2509,20 @@ func TestFindPoliciesForSecret(t *testing.T) {
 			secretName:      "jwk-secret",
 			expected:        []*v1alpha1.Policy{jwtPol1},
 			msg:             "Find policy in default ns, ignore other",
+		},
+		{
+			policies:        []*conf_v1alpha1.Policy{ingTLSPol},
+			secretNamespace: "default",
+			secretName:      "ingress-mtls-secret",
+			expected:        []*v1alpha1.Policy{ingTLSPol},
+			msg:             "Find policy in default ns",
+		},
+		{
+			policies:        []*conf_v1alpha1.Policy{jwtPol1, ingTLSPol},
+			secretNamespace: "default",
+			secretName:      "ingress-mtls-secret",
+			expected:        []*v1alpha1.Policy{ingTLSPol},
+			msg:             "Find policy in default ns, ignore other types",
 		},
 	}
 	for _, test := range tests {
@@ -2642,6 +2668,138 @@ func TestAddJWTSecrets(t *testing.T) {
 
 		if !reflect.DeepEqual(jwtKeys, test.expectedJWTKeys) {
 			t.Errorf("addJWTSecrets() returned \n%+v but expected \n%+v", jwtKeys, test.expectedJWTKeys)
+		}
+
+	}
+}
+
+func TestGetIngressMTLSSecret(t *testing.T) {
+	validSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-ingress-mtls-secret",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{"ca.crt": nil},
+	}
+
+	invalidSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "invalid-ingress-mtls-secret",
+			Namespace: "default",
+		},
+		Data: nil,
+	}
+
+	tests := []struct {
+		policies                  []*conf_v1alpha1.Policy
+		expectedIngressMTLSSecret *v1.Secret
+		wantErr                   bool
+		msg                       string
+	}{
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+							ClientCertSecret: "valid-ingress-mtls-secret",
+						},
+					},
+				},
+			},
+			expectedIngressMTLSSecret: validSecret,
+			wantErr:                   false,
+			msg:                       "test getting valid secret",
+		},
+		{
+			policies:                  []*conf_v1alpha1.Policy{},
+			expectedIngressMTLSSecret: nil,
+			wantErr:                   false,
+			msg:                       "test getting valid secret with no policy",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						AccessControl: &conf_v1alpha1.AccessControl{
+							Allow: []string{"127.0.0.1"},
+						},
+					},
+				},
+			},
+			expectedIngressMTLSSecret: nil,
+			wantErr:                   false,
+			msg:                       "test getting valid secret with wrong policy",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+							ClientCertSecret: "non-existing-ingress-mtls-secret",
+						},
+					},
+				},
+			},
+			expectedIngressMTLSSecret: nil,
+			wantErr:                   true,
+			msg:                       "test getting secret that does not exist",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+							ClientCertSecret: "invalid-ingress-mtls-secret",
+						},
+					},
+				},
+			},
+			expectedIngressMTLSSecret: nil,
+			wantErr:                   true,
+			msg:                       "test getting invalid secret",
+		},
+	}
+
+	for _, test := range tests {
+		lbc := LoadBalancerController{
+			secretLister: storeToSecretLister{
+				&cache.FakeCustomStore{
+					GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
+						switch key {
+						case "default/valid-ingress-mtls-secret":
+							return validSecret, true, nil
+						case "default/invalid-ingress-mtls-secret":
+							return invalidSecret, true, errors.New("secret is missing ingress-mtls key in data")
+						default:
+							return nil, false, errors.New("GetByKey error")
+						}
+					},
+				},
+			},
+		}
+
+		secret, err := lbc.getIngressMTLSSecret(test.policies)
+		if (err != nil) != test.wantErr {
+			t.Errorf("getIngressMTLSSecret() returned %v, for the case of %v", err, test.msg)
+		}
+		if !reflect.DeepEqual(secret, test.expectedIngressMTLSSecret) {
+			t.Errorf("getIngressMTLSSecret() returned \n%+v but expected \n%+v", secret, test.expectedIngressMTLSSecret)
 		}
 
 	}

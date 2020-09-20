@@ -42,8 +42,13 @@ func validatePolicySpec(spec *v1alpha1.PolicySpec, fieldPath *field.Path, isPlus
 		fieldCount++
 	}
 
+	if spec.IngressMTLS != nil {
+		allErrs = append(allErrs, validateIngressMTLS(spec.IngressMTLS, fieldPath.Child("ingressMTLS"))...)
+		fieldCount++
+	}
+
 	if fieldCount != 1 {
-		msg := "must specify exactly one of: `accessControl`, `rateLimit`"
+		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`"
 		if isPlus {
 			msg = fmt.Sprint(msg, ", `jwt`")
 		}
@@ -121,6 +126,38 @@ func validateJWT(jwt *v1alpha1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 
 	allErrs = append(allErrs, validateJWTToken(jwt.Token, fieldPath.Child("token"))...)
 
+	return allErrs
+}
+
+func validateIngressMTLS(ingressMTLS *v1alpha1.IngressMTLS, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ingressMTLS.ClientCertSecret == "" {
+		return append(allErrs, field.Required(fieldPath.Child("clientCertSecret"), ""))
+	}
+	allErrs = append(allErrs, validateSecretName(ingressMTLS.ClientCertSecret, fieldPath.Child("clientCertSecret"))...)
+
+	allErrs = append(allErrs, validateIngressMTLSVerifyClient(ingressMTLS.VerifyClient, fieldPath.Child("verifyClient"))...)
+
+	if ingressMTLS.VerifyDepth != nil {
+		allErrs = append(allErrs, validatePositiveIntOrZero(*ingressMTLS.VerifyDepth, fieldPath.Child("verifyDepth"))...)
+	}
+	return allErrs
+
+}
+
+var validateVerifyClientKeyParameters = map[string]bool{
+	"on":             true,
+	"off":            true,
+	"optional":       true,
+	"optional_no_ca": true,
+}
+
+func validateIngressMTLSVerifyClient(verifyClient string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if verifyClient != "" {
+		allErrs = append(allErrs, validateParameter(verifyClient, validateVerifyClientKeyParameters, fieldPath)...)
+	}
 	return allErrs
 }
 

@@ -179,3 +179,14 @@ func mapToPrettyString(m map[string]bool) string {
 
 	return strings.Join(out, ", ")
 }
+
+// validateParameter validates a parameter against a map of valid parameters for the directive
+func validateParameter(nPar string, validParams map[string]bool, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !validParams[nPar] {
+		msg := fmt.Sprintf("'%v' contains an invalid NGINX parameter. Accepted parameters are: %v", nPar, mapToPrettyString(validParams))
+		allErrs = append(allErrs, field.Invalid(fieldPath, nPar, msg))
+	}
+	return allErrs
+}

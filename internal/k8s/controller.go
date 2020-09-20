@@ -1521,8 +1521,8 @@ func (lbc *LoadBalancerController) syncSecret(task task) {
 	if lbc.areCustomResourcesEnabled {
 		virtualServers = lbc.getVirtualServersForSecret(namespace, name)
 
-		jwkSecretPols := lbc.getPoliciesForSecret(namespace, name)
-		for _, pol := range jwkSecretPols {
+		secretPols := lbc.getPoliciesForSecret(namespace, name)
+		for _, pol := range secretPols {
 			vsList := lbc.getVirtualServersForPolicy(pol.Namespace, pol.Name)
 			virtualServers = append(virtualServers, vsList...)
 		}
@@ -1633,6 +1633,19 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 		virtualServerExes := lbc.virtualServersToVirtualServerExes(virtualServers)
 
 		err := lbc.configurator.AddOrUpdateJWKSecret(secret, virtualServerExes)
+		if err != nil {
+			glog.Errorf("Error when updating Secret %v: %v", secretNsName, err)
+			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, err)
+
+			eventType = api_v1.EventTypeWarning
+			title = "UpdatedWithError"
+			message = fmt.Sprintf("Configuration was updated due to updated secret %v, but not applied: %v", secretNsName, err)
+			state = conf_v1.StateInvalid
+		}
+	} else if kind == IngressMTLS {
+		virtualServerExes := lbc.virtualServersToVirtualServerExes(virtualServers)
+
+		err := lbc.configurator.AddOrUpdateIngressMTLSSecret(secret, virtualServerExes)
 		if err != nil {
 			glog.Errorf("Error when updating Secret %v: %v", secretNsName, err)
 			lbc.recorder.Eventf(secret, api_v1.EventTypeWarning, "UpdatedWithError", "%v was updated, but not applied: %v", secretNsName, err)
@@ -2357,6 +2370,19 @@ func (lbc *LoadBalancerController) getAndValidateJWTSecret(secretKey string) (*a
 	return secret, nil
 }
 
+func (lbc *LoadBalancerController) getAndValidateIngressMTLSSecret(secretKey string) (*api_v1.Secret, error) {
+	secret, err := lbc.getSecret(secretKey)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ValidateIngressMTLSSecret(secret)
+	if err != nil {
+		return nil, fmt.Errorf("error validating secret %v", secretKey)
+	}
+	return secret, nil
+}
+
 func (lbc *LoadBalancerController) createIngress(ing *networking.Ingress) (*configs.IngressEx, error) {
 	ingEx := &configs.IngressEx{
 		Ingress: ing,
@@ -2621,6 +2647,13 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 		glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
 
+	secret, err := lbc.getIngressMTLSSecret(policies)
+	if err != nil {
+		glog.Warningf("Error getting IngressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+	} else {
+		virtualServerEx.IngressMTLSCert = secret
+	}
+
 	endpoints := make(map[string][]string)
 	externalNameSvcs := make(map[string]bool)
 	podsByIP := make(map[string]configs.PodInfo)
@@ -2852,6 +2885,22 @@ func (lbc *LoadBalancerController) addJWTSecrets(policies []*conf_v1alpha1.Polic
 	return nil
 }
 
+func (lbc *LoadBalancerController) getIngressMTLSSecret(policies []*conf_v1alpha1.Policy) (*api_v1.Secret, error) {
+	for _, pol := range policies {
+		if pol.Spec.IngressMTLS == nil {
+			continue
+		}
+		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.IngressMTLS.ClientCertSecret)
+		secret, err := lbc.getAndValidateIngressMTLSSecret(secretKey)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting or validating the IngressMTLS secret %v for the policy %v/%v: %v", secretKey, pol.Namespace, pol.Name, err)
+		}
+		return secret, nil
+	}
+
+	return nil, nil
+}
+
 func (lbc *LoadBalancerController) getPoliciesForSecret(secretNamespace string, secretName string) []*conf_v1alpha1.Policy {
 	return findPoliciesForSecret(lbc.getAllPolicies(), secretNamespace, secretName)
 }
@@ -2860,11 +2909,9 @@ func findPoliciesForSecret(policies []*conf_v1alpha1.Policy, secretNamespace str
 	var res []*conf_v1alpha1.Policy
 
 	for _, pol := range policies {
-		if pol.Spec.JWTAuth == nil {
-			continue
-		}
-
-		if pol.Spec.JWTAuth.Secret == secretName && pol.Namespace == secretNamespace {
+		if pol.Spec.IngressMTLS != nil && pol.Spec.IngressMTLS.ClientCertSecret == secretName && pol.Namespace == secretNamespace {
+			res = append(res, pol)
+		} else if pol.Spec.JWTAuth != nil && pol.Spec.JWTAuth.Secret == secretName && pol.Namespace == secretNamespace {
 			res = append(res, pol)
 		}
 	}

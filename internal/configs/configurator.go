@@ -45,6 +45,9 @@ const WildcardSecretName = "wildcard"
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
 
+// IngressMTLSKey is the key of the data field of a Secret where the cert must be stored.
+const IngressMTLSKey = "ca.crt"
+
 // SPIFFE filenames and modes
 const (
 	spiffeCertFileName   = "spiffe_cert.pem"
@@ -402,16 +405,21 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 }
 
 func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
-	tlsPemFileName := ""
+	var tlsPemFileName string
+	var ingressMTLSFileName string
+	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
+
 	if virtualServerEx.TLSSecret != nil {
 		tlsPemFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.TLSSecret)
+	}
+	if virtualServerEx.IngressMTLSCert != nil {
+		ingressMTLSFileName = cnf.addOrUpdateIngressMTLSecret(virtualServerEx.IngressMTLSCert)
 	}
 
 	jwtKeys := cnf.addOrUpdateJWKSecretsForVirtualServer(virtualServerEx.JWTKeys)
 
 	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
-	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName, jwtKeys)
-	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
+	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName, jwtKeys, ingressMTLSFileName)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
 		return warnings, fmt.Errorf("Error generating VirtualServer config: %v: %v", name, err)
@@ -577,6 +585,12 @@ func (cnf *Configurator) updateJWKSecret(ingEx *IngressEx) string {
 	return cnf.nginxManager.GetFilenameForSecret(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
 }
 
+func (cnf *Configurator) addOrUpdateIngressMTLSecret(secret *api_v1.Secret) string {
+	name := objectMetaToFileName(&secret.ObjectMeta)
+	data := GenerateCAFileContent(secret)
+	return cnf.nginxManager.CreateSecret(name, data, nginx.TLSSecretFileMode)
+}
+
 func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := secret.Data[JWTKeyKey]
@@ -590,6 +604,26 @@ func (cnf *Configurator) AddOrUpdateJWKSecret(secret *api_v1.Secret, virtualServ
 	if len(virtualServerExes) > 0 {
 		for _, vsEx := range virtualServerExes {
 			// It is safe to ignore warnings here as no new warnings should appear when adding or updating a secret
+			_, err := cnf.addOrUpdateVirtualServer(vsEx)
+			if err != nil {
+				return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
+			}
+		}
+
+		if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
+			return fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
+		}
+	}
+	return nil
+}
+
+// AddOrUpdateIngressMTLSSecret adds a IngressMTLS secret to the filesystem or updates it if it already exists.
+func (cnf *Configurator) AddOrUpdateIngressMTLSSecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) error {
+	cnf.addOrUpdateIngressMTLSecret(secret)
+
+	if len(virtualServerExes) > 0 {
+		for _, vsEx := range virtualServerExes {
+			// TODO we need to read warnings, this will be fixed in upcoming work
 			_, err := cnf.addOrUpdateVirtualServer(vsEx)
 			if err != nil {
 				return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
@@ -680,6 +714,15 @@ func GenerateCertAndKeyFileContent(secret *api_v1.Secret) []byte {
 	res.Write(secret.Data[api_v1.TLSCertKey])
 	res.WriteString("\n")
 	res.Write(secret.Data[api_v1.TLSPrivateKeyKey])
+
+	return res.Bytes()
+}
+
+// GenerateCAFileContent generates a pem file content from the TLS secret.
+func GenerateCAFileContent(secret *api_v1.Secret) []byte {
+	var res bytes.Buffer
+
+	res.Write(secret.Data[IngressMTLSKey])
 
 	return res.Bytes()
 }

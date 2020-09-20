@@ -500,3 +500,100 @@ func TestValidateJWTToken(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateIngressMTLS(t *testing.T) {
+	tests := []struct {
+		ing *v1alpha1.IngressMTLS
+		msg string
+	}{
+		{
+			ing: &v1alpha1.IngressMTLS{
+				ClientCertSecret: "mtls-secret",
+			},
+			msg: "default",
+		},
+		{
+			ing: &v1alpha1.IngressMTLS{
+				ClientCertSecret: "mtls-secret",
+				VerifyClient:     "on",
+				VerifyDepth:      createPointerFromInt(1),
+			},
+			msg: "all parameters with default value",
+		},
+		{
+			ing: &v1alpha1.IngressMTLS{
+				ClientCertSecret: "ingress-mtls-secret",
+				VerifyClient:     "optional",
+				VerifyDepth:      createPointerFromInt(2),
+			},
+			msg: "optional parameters",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateIngressMTLS(test.ing, field.NewPath("ingressMTLS"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateIngressMTLS() returned errors %v for valid input for the case of %v", allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateIngressMTLSInvalid(t *testing.T) {
+	tests := []struct {
+		ing *v1alpha1.IngressMTLS
+		msg string
+	}{
+		{
+			ing: &v1alpha1.IngressMTLS{
+				VerifyClient: "on",
+			},
+			msg: "no secret",
+		},
+		{
+			ing: &v1alpha1.IngressMTLS{
+				ClientCertSecret: "-foo-",
+			},
+			msg: "invalid secret name",
+		},
+		{
+			ing: &v1alpha1.IngressMTLS{
+				ClientCertSecret: "mtls-secret",
+				VerifyClient:     "foo",
+			},
+			msg: "invalid verify client",
+		},
+		{
+			ing: &v1alpha1.IngressMTLS{
+				ClientCertSecret: "ingress-mtls-secret",
+				VerifyClient:     "on",
+				VerifyDepth:      createPointerFromInt(-1),
+			},
+			msg: "invalid depth",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateIngressMTLS(test.ing, field.NewPath("ingressMTLS"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateIngressMTLS() returned no errors for invalid input for the case of %v", test.msg)
+		}
+	}
+}
+
+func TestValidateIngressMTLSVerifyClient(t *testing.T) {
+	var validInput = []string{"on", "off", "optional", "optional_no_ca"}
+
+	for _, test := range validInput {
+		allErrs := validateIngressMTLSVerifyClient(test, field.NewPath("verifyClient"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateIngressMTLSVerifyClient(%q) returned errors %v for valid input", allErrs, test)
+		}
+	}
+
+	var invalidInput = []string{"true", "false"}
+
+	for _, test := range invalidInput {
+		allErrs := validateIngressMTLSVerifyClient(test, field.NewPath("verifyClient"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateIngressMTLSVerifyClient(%q) didn't return error for invalid input", test)
+		}
+	}
+}

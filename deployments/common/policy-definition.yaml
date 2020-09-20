@@ -53,6 +53,16 @@ spec:
                   type: array
                   items:
                     type: string
+            ingressMTLS:
+              description: IngressMTLS defines an Ingress MTLS policy.
+              type: object
+              properties:
+                clientCertSecret:
+                  type: string
+                verifyClient:
+                  type: string
+                verifyDepth:
+                  type: integer
             jwt:
               description: JWTAuth holds JWT authentication configuration.
               type: object
