@@ -74,10 +74,8 @@ func ValidateAppProtectLogDestinationAnnotation(dstAntn string) error {
 
 	dstchunks := strings.Split(dstAntn, ":")
 
-	port, err := strconv.Atoi(dstchunks[2])
-	if err != nil {
-		return fmt.Errorf("Error parsing port: %v", err)
-	}
+	// This error can be ingored since the regex check ensures this string will be parsable
+	port, _ := strconv.Atoi(dstchunks[2])
 
 	if port > 65535 || port < 1 {
 		return fmt.Errorf("Error parsing port: %v not a valid port number", port)
