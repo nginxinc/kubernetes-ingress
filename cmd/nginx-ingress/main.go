@@ -580,6 +580,7 @@ func main() {
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough)
+	virtualServerValidator := cr_validation.NewVirtualServerValidator(*nginxPlus)
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
@@ -605,6 +606,7 @@ func main() {
 		MetricsCollector:             controllerCollector,
 		GlobalConfigurationValidator: globalConfigurationValidator,
 		TransportServerValidator:     transportServerValidator,
+		VirtualServerValidator:       virtualServerValidator,
 		SpireAgentAddress:            *spireAgentAddress,
 		InternalRoutesEnabled:        *enableInternalRoutes,
 		IsLatencyMetricsEnabled:      *enableLatencyMetrics,

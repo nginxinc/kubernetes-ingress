@@ -29,7 +29,7 @@ func validatePolicySpec(spec *v1alpha1.PolicySpec, fieldPath *field.Path, isPlus
 	}
 
 	if spec.RateLimit != nil {
-		allErrs = append(allErrs, validateRateLimit(spec.RateLimit, fieldPath.Child("rateLimit"))...)
+		allErrs = append(allErrs, validateRateLimit(spec.RateLimit, fieldPath.Child("rateLimit"), isPlus)...)
 		fieldCount++
 	}
 
@@ -80,12 +80,12 @@ func validateAccessControl(accessControl *v1alpha1.AccessControl, fieldPath *fie
 	return allErrs
 }
 
-func validateRateLimit(rateLimit *v1alpha1.RateLimit, fieldPath *field.Path) field.ErrorList {
+func validateRateLimit(rateLimit *v1alpha1.RateLimit, fieldPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateRateLimitZoneSize(rateLimit.ZoneSize, fieldPath.Child("zoneSize"))...)
 	allErrs = append(allErrs, validateRate(rateLimit.Rate, fieldPath.Child("rate"))...)
-	allErrs = append(allErrs, validateRateLimitKey(rateLimit.Key, fieldPath.Child("key"))...)
+	allErrs = append(allErrs, validateRateLimitKey(rateLimit.Key, fieldPath.Child("key"), isPlus)...)
 
 	if rateLimit.Delay != nil {
 		allErrs = append(allErrs, validatePositiveInt(*rateLimit.Delay, fieldPath.Child("delay"))...)
@@ -175,7 +175,7 @@ var rateLimitKeyVariables = map[string]bool{
 	"args":               true,
 }
 
-func validateRateLimitKey(key string, fieldPath *field.Path) field.ErrorList {
+func validateRateLimitKey(key string, fieldPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if key == "" {
@@ -187,7 +187,7 @@ func validateRateLimitKey(key string, fieldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, field.Invalid(fieldPath, key, msg))
 	}
 
-	allErrs = append(allErrs, validateStringWithVariables(key, fieldPath, rateLimitKeySpecialVariables, rateLimitKeyVariables)...)
+	allErrs = append(allErrs, validateStringWithVariables(key, fieldPath, rateLimitKeySpecialVariables, rateLimitKeyVariables, isPlus)...)
 
 	return allErrs
 }
@@ -216,7 +216,9 @@ func validateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
 	}
 
 	if special {
-		allErrs = append(allErrs, validateSpecialVariable(nVar, fieldPath)...)
+		// validateJWTToken is called only when NGINX Plus is running
+		isPlus := true
+		allErrs = append(allErrs, validateSpecialVariable(nVar, fieldPath, isPlus)...)
 	} else {
 		return append(allErrs, field.Invalid(fieldPath, token, "must only have special vars"))
 	}

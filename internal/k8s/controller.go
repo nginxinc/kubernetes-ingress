@@ -151,6 +151,7 @@ type LoadBalancerController struct {
 	metricsCollector              collectors.ControllerCollector
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
+	virtualServerValidator        *validation.VirtualServerValidator
 	spiffeController              *spiffeController
 	internalRoutesEnabled         bool
 	syncLock                      sync.Mutex
@@ -185,6 +186,7 @@ type NewLoadBalancerControllerInput struct {
 	MetricsCollector             collectors.ControllerCollector
 	GlobalConfigurationValidator *validation.GlobalConfigurationValidator
 	TransportServerValidator     *validation.TransportServerValidator
+	VirtualServerValidator       *validation.VirtualServerValidator
 	SpireAgentAddress            string
 	InternalRoutesEnabled        bool
 	IsLatencyMetricsEnabled      bool
@@ -213,6 +215,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		metricsCollector:             input.MetricsCollector,
 		globalConfigurationValidator: input.GlobalConfigurationValidator,
 		transportServerValidator:     input.TransportServerValidator,
+		virtualServerValidator:       input.VirtualServerValidator,
 		internalRoutesEnabled:        input.InternalRoutesEnabled,
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
 	}
@@ -1111,7 +1114,7 @@ func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 	glog.V(2).Infof("Adding or Updating VirtualServer: %v\n", key)
 	vs := obj.(*conf_v1.VirtualServer)
 
-	validationErr := validation.ValidateVirtualServer(vs, lbc.isNginxPlus)
+	validationErr := lbc.virtualServerValidator.ValidateVirtualServer(vs)
 	if validationErr != nil {
 		err := lbc.configurator.DeleteVirtualServer(key)
 		if err != nil {
@@ -1275,7 +1278,7 @@ func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 
 	vsr := obj.(*conf_v1.VirtualServerRoute)
 
-	validationErr := validation.ValidateVirtualServerRoute(vsr, lbc.isNginxPlus)
+	validationErr := lbc.virtualServerValidator.ValidateVirtualServerRoute(vsr)
 	if validationErr != nil {
 		reason := "Rejected"
 		msg := fmt.Sprintf("VirtualServerRoute %s is invalid and was rejected: %v", key, validationErr)
@@ -2219,7 +2222,7 @@ func (lbc *LoadBalancerController) getVirtualServers() []*conf_v1.VirtualServer 
 			continue
 		}
 
-		err := validation.ValidateVirtualServer(vs, lbc.isNginxPlus)
+		err := lbc.virtualServerValidator.ValidateVirtualServer(vs)
 		if err != nil {
 			glog.V(3).Infof("Skipping invalid VirtualServer %s/%s: %v", vs.Namespace, vs.Name, err)
 			continue
@@ -2242,7 +2245,7 @@ func (lbc *LoadBalancerController) getVirtualServerRoutes() []*conf_v1.VirtualSe
 			continue
 		}
 
-		err := validation.ValidateVirtualServerRoute(vsr, lbc.isNginxPlus)
+		err := lbc.virtualServerValidator.ValidateVirtualServerRoute(vsr)
 		if err != nil {
 			glog.V(3).Infof("Skipping invalid VirtualServerRoute %s/%s: %v", vsr.Namespace, vsr.Name, err)
 			continue
@@ -2703,7 +2706,7 @@ func (lbc *LoadBalancerController) createVirtualServer(virtualServer *conf_v1.Vi
 			continue
 		}
 
-		err = validation.ValidateVirtualServerRouteForVirtualServer(vsr, virtualServer.Spec.Host, r.Path, lbc.isNginxPlus)
+		err = lbc.virtualServerValidator.ValidateVirtualServerRouteForVirtualServer(vsr, virtualServer.Spec.Host, r.Path)
 		if err != nil {
 			glog.Warningf("VirtualServer %s/%s references invalid VirtualServerRoute %s: %v", virtualServer.Name, virtualServer.Namespace, vsrKey, err)
 			virtualServerRouteErrors = append(virtualServerRouteErrors, newVirtualServerRouteErrorFromVSR(vsr, err))
