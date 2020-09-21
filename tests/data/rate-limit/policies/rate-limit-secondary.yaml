@@ -1,0 +1,9 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: Policy
+metadata:
+  name: rate-limit-secondary
+spec:
+  rateLimit:
+    rate: 10r/s
+    key: ${binary_remote_addr}
+    zoneSize: 10M
