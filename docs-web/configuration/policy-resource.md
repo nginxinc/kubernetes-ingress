@@ -59,6 +59,10 @@ spec:
      - The rate limit policy controls the rate of processing requests per a defined key.
      - `rateLimit <#ratelimit>`_
      - No*
+   * - ``JWT``
+     - The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens.
+     - `jwt <#jwt>`_
+     - No*
 ```
 
 \* A policy must include exactly one policy.
@@ -114,6 +118,7 @@ When you reference more than one access control policy, the Ingress Controller w
 
 Referencing both allow and deny policies, as shown in the example below, is not supported. If both allow and deny lists are referenced, the Ingress Controller uses just the allow list policies. 
 ```yaml
+policies:
 - name: deny-policy
 - name: allow-policy-one
 - name: allow-policy-two
@@ -202,6 +207,7 @@ For example, the following policy will reject all requests that do not include a
 jwt:
   secret: jwk-secret
   realm: "My API"
+  token: $http_token
 ```
 
 > Note: The feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
