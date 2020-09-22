@@ -106,7 +106,7 @@ class TestRateLimitingPolcies:
         )
         wait_before_test()
         occur = []
-        t_end = time.time() + 0.9
+        t_end = time.time() + 1
         resp = requests.get(
             virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
         )
@@ -197,7 +197,7 @@ class TestRateLimitingPolcies:
         )
         wait_before_test()
         occur = []
-        t_end = time.time() + 0.9
+        t_end = time.time() + 1
         resp = requests.get(
             virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
         )
@@ -238,7 +238,7 @@ class TestRateLimitingPolcies:
         )
         wait_before_test()
         occur = []
-        t_end = time.time() + 0.9
+        t_end = time.time() + 1
         resp = requests.get(
             virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
         )
