@@ -193,7 +193,7 @@ When you reference more than one rate limit policy, the Ingress Controller will 
 
 ### JWT
 
-> Note: The feature is only available in NGINX Plus.
+> Note: This feature is only available in NGINX Plus.
 
 The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens.
 

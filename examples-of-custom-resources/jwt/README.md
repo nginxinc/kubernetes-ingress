@@ -30,7 +30,7 @@ $ kubectl apply -f jwk-secret.yaml
 
 ## Step 3 - Deploy the JWT Policy
 
-Create a policy with the name `jwt-policy` that references the secret from the previous step and only permits requests to our web application with a valid JWT provided:
+Create a policy with the name `jwt-policy` that references the secret from the previous step and only permits requests to our web application that contain a valid JWT:
 ```
 $ kubectl apply -f jwt.yaml
 ```
