@@ -5,7 +5,7 @@ metadata:
 spec:
   host: virtual-server.example.com
   policies:
-  - name: invalid-policy
+  - name: rate-limit-invalid
   upstreams:
   - name: backend2
     service: backend2-svc
