@@ -72,20 +72,20 @@ class TestRateLimitingPolcies:
         )
         wait_before_test()
         occur = []
-        t_end = time.time() + 0.9
+        t_end = time.perf_counter() + 1
         resp = requests.get(
             virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
         )
         print(resp.status_code)
         assert resp.status_code == 200
-        while time.time() < t_end:
+        while time.perf_counter() < t_end:
             resp = requests.get(
                 virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
             )
             occur.append(resp.status_code)
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
-        assert occur.count(200) == 0
+        assert occur.count(200) <= 1
 
     @pytest.mark.parametrize("src", [rl_vs_sec_src])
     def test_rl_policy_10rs(
@@ -106,12 +106,12 @@ class TestRateLimitingPolcies:
         )
         wait_before_test()
         occur = []
-        t_end = time.time() + 1
+        t_end = time.perf_counter() + 1
         resp = requests.get(
             virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
         )
         assert resp.status_code == 200
-        while time.time() < t_end:
+        while time.perf_counter() < t_end:
             resp = requests.get(
                 virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
             )
@@ -197,12 +197,12 @@ class TestRateLimitingPolcies:
         )
         wait_before_test()
         occur = []
-        t_end = time.time() + 1
+        t_end = time.perf_counter() + 1
         resp = requests.get(
             virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
         )
         assert resp.status_code == 200
-        while time.time() < t_end:
+        while time.perf_counter() < t_end:
             resp = requests.get(
                 virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
             )
@@ -238,12 +238,12 @@ class TestRateLimitingPolcies:
         )
         wait_before_test()
         occur = []
-        t_end = time.time() + 1
+        t_end = time.perf_counter() + 1
         resp = requests.get(
             virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
         )
         assert resp.status_code == 200
-        while time.time() < t_end:
+        while time.perf_counter() < t_end:
             resp = requests.get(
                 virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
             )
