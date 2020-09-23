@@ -118,7 +118,7 @@ class TestRateLimitingPolcies:
             occur.append(resp.status_code)
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
-        assert occur.count(200) == (rate_sec - 1)
+        assert rate_sec >= occur.count(200) >= (rate_sec - 2)
 
     @pytest.mark.parametrize("src", [rl_vs_invalid])
     def test_rl_policy_invalid(
@@ -210,7 +210,7 @@ class TestRateLimitingPolcies:
         delete_policy(kube_apis.custom_objects, pol_name_pri, test_namespace)
         delete_policy(kube_apis.custom_objects, pol_name_sec, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
-        assert 200 not in occur
+        assert occur.count(200) <= 1
 
     @pytest.mark.parametrize("src", [rl_vs_override_spec_route])
     def test_rl_override_spec_route(
@@ -251,4 +251,4 @@ class TestRateLimitingPolcies:
         delete_policy(kube_apis.custom_objects, pol_name_pri, test_namespace)
         delete_policy(kube_apis.custom_objects, pol_name_sec, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
-        assert occur.count(200) == (rate_sec - 1)
+        assert rate_sec >= occur.count(200) >= (rate_sec - 2)
