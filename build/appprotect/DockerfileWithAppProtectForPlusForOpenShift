@@ -27,13 +27,13 @@ COPY nginx-repo.crt nginx-repo.key /etc/ssl/nginx/
 RUN chmod 644 /etc/ssl/nginx/*
 
 # Copy RHEL account data
-# COPY rhel_license /tmp/
+COPY rhel_license /tmp/
 
 # Install NGINX Plus
 RUN set -x \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
-	# && source /tmp/rhel_license \
+	&& source /tmp/rhel_license \
 	&& yum install -y wget ca-certificates \
 	&& wget https://nginx.org/keys/nginx_signing.key \
 	&& \
@@ -68,7 +68,7 @@ RUN set -x \
 	&& yum remove -y wget \
 	&& rm -rf /etc/ssl/nginx \
 	&& rm /etc/yum.repos.d/nginx-plus-7.repo \
-	&& rm nginx_signing.key
+	&& rm nginx_signing.key /tmp/rhel_license
 
 
 # forward nginx access and error logs to stdout and stderr of the ingress
