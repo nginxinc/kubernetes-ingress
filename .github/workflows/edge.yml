@@ -143,7 +143,7 @@ jobs:
         run: |
           echo "${CRT}" | base64 --decode > nginx-repo.crt
           echo "${KEY}" | base64 --decode > nginx-repo.key
-        if: matrix.type == 'plus-ap'
+        if: matrix.type == 'plus-ap' or matrix.type == 'plus-ap-openshift'
       - name: Fetch RedHat License
         env:
           RHEL_LICENSE: ${{ secrets.RHEL_LICENSE }}
