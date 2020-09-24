@@ -101,7 +101,7 @@ class TestVSRCannedResponses:
         req_host = f"{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         req_url = f"http://{req_host}{v_s_route_setup.route_s.paths[0]}"
         text = f"{v_s_route_setup.namespace}/{v_s_route_setup.route_m.name}"
-        vsr_m_event_text = f"VirtualServerRoute {text} is invalid and was rejected: "
+        vsr_m_event_text = f"VirtualServerRoute {text} was rejected with error:"
         vsr_src = f"{TEST_DATA}/virtual-server-route-canned-responses/route-multiple-invalid.yaml"
         patch_v_s_route_from_yaml(kube_apis.custom_objects,
                                   v_s_route_setup.route_m.name, vsr_src, v_s_route_setup.namespace)

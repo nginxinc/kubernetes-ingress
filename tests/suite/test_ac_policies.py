@@ -354,7 +354,7 @@ class TestAccessControlPoliciesVs:
         assert resp.status_code == 500 and "500 Internal Server Error" in resp.text
         assert (
             vs_info["status"]["state"] == "Warning"
-            and vs_info["status"]["reason"] == "UpdatedWithWarning"
+            and vs_info["status"]["reason"] == "AddedOrUpdatedWithWarning"
         )
 
     def test_route_override_spec(

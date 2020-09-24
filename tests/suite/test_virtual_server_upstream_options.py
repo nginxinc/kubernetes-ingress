@@ -123,7 +123,7 @@ class TestVirtualServerUpstreamOptions:
                                             crd_ingress_controller, virtual_server_setup, restore_configmap,
                                             config_map_file, expected_strings, unexpected_strings):
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-        vs_event_text = f"Configuration for {text} was updated"
+        vs_event_text = f"Configuration for {text} was added or updated"
         print(f"Case 3: key specified in ConfigMap, no option in VS")
         patch_virtual_server_from_yaml(kube_apis.custom_objects, virtual_server_setup.vs_name,
                                        f"{TEST_DATA}/virtual-server-upstream-options/standard/virtual-server.yaml",
@@ -233,7 +233,7 @@ class TestVirtualServerUpstreamOptionValidation:
             "upstreams[1].buffers.number", "upstreams[1].buffers.size", "upstreams[1].buffer-size"
         ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-        vs_event_text = f"VirtualServer {text} is invalid and was rejected: "
+        vs_event_text = f"VirtualServer {text} was rejected with error:"
         vs_file = f"{TEST_DATA}/virtual-server-upstream-options/virtual-server-with-invalid-keys.yaml"
         patch_virtual_server_from_yaml(kube_apis.custom_objects,
                                        virtual_server_setup.vs_name,
@@ -366,7 +366,7 @@ class TestOptionsSpecificForPlus:
                                 crd_ingress_controller, virtual_server_setup, options):
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-        vs_event_text = f"Configuration for {text} was added or updated with warning(s): Slow start will be disabled"
+        vs_event_text = f"Configuration for {text} was added or updated ; with warning(s): Slow start will be disabled"
         print(f"Case 0: verify a warning")
         new_body = generate_item_with_upstream_options(
             f"{TEST_DATA}/virtual-server-upstream-options/standard/virtual-server.yaml",
@@ -410,7 +410,7 @@ class TestOptionsSpecificForPlus:
             "upstreams[1].sessionCookie.expires", "upstreams[1].sessionCookie.domain"
         ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-        vs_event_text = f"VirtualServer {text} is invalid and was rejected: "
+        vs_event_text = f"VirtualServer {text} was rejected with error:"
         vs_file = f"{TEST_DATA}/virtual-server-upstream-options/plus-virtual-server-with-invalid-keys.yaml"
         patch_virtual_server_from_yaml(kube_apis.custom_objects,
                                        virtual_server_setup.vs_name,

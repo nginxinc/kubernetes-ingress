@@ -9,8 +9,8 @@ from suite.yaml_utils import get_configmap_fields_from_yaml
 
 def assert_update_events_emitted(virtual_server_setup, new_list, previous_list, expected_amount):
     item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-    text_valid = f"Configuration for {item_name} was updated"
-    text_invalid = "was updated but was not applied"
+    text_valid = f"Configuration for {item_name} was added or updated"
+    text_invalid = "but was not applied"
     new_event = new_list[len(new_list) - 1]
     assert len(new_list) - len(previous_list) == expected_amount
     assert text_valid in new_event.message and text_invalid not in new_event.message
@@ -18,7 +18,7 @@ def assert_update_events_emitted(virtual_server_setup, new_list, previous_list, 
 
 def assert_not_applied_events_emitted(virtual_server_setup, new_list, previous_list, expected_amount):
     item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-    text_invalid = f"Configuration for {item_name} was updated but was not applied"
+    text_invalid = f"Configuration for {item_name} was added or updated ; but was not applied"
     new_event = new_list[len(new_list) - 1]
     assert len(new_list) - len(previous_list) == expected_amount
     assert text_invalid in new_event.message
@@ -26,8 +26,8 @@ def assert_not_applied_events_emitted(virtual_server_setup, new_list, previous_l
 
 def assert_update_event_count_increased(virtual_server_setup, new_list, previous_list):
     item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-    text_valid = f"Configuration for {item_name} was updated"
-    text_invalid = "was updated but was not applied"
+    text_valid = f"Configuration for {item_name} was added or updated"
+    text_invalid = "but was not applied"
     for i in range(len(previous_list)-1, 0, -1):
         if text_valid in previous_list[i].message and text_invalid not in previous_list[i].message:
             assert new_list[i].count - previous_list[i].count == 1, "We expect the counter to increase"
@@ -158,7 +158,7 @@ class TestVirtualServerConfigMapNoTls:
                                                    virtual_server_setup.vs_name,
                                                    ic_pod_name,
                                                    ingress_controller_prerequisites.namespace)
-        assert_update_events_emitted(virtual_server_setup, step_1_events, initial_list, ic_pods_amount)
+        assert_update_event_count_increased(virtual_server_setup, step_1_events, initial_list)
         assert_keys_without_validation(step_1_config, expected_values)
 
         print("Step 2: update ConfigMap with invalid keys without validation rules")
@@ -299,7 +299,7 @@ class TestVirtualServerConfigMapWithTls:
                                                    virtual_server_setup.vs_name,
                                                    ic_pod_name,
                                                    ingress_controller_prerequisites.namespace)
-        assert_update_events_emitted(virtual_server_setup, step_1_events, initial_list, ic_pods_amount)
+        assert_update_event_count_increased(virtual_server_setup, step_1_events, initial_list)
         assert_ssl_keys(step_1_config)
 
         print("Step 2: update ConfigMap with invalid ssl keys")

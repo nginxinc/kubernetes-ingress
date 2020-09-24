@@ -10,7 +10,7 @@ from suite.resources_utils import wait_before_test, get_events, get_first_pod_na
 
 def assert_reject_events_emitted(virtual_server_setup, new_list, previous_list, expected_amount):
     item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-    text_invalid = f"VirtualServer {item_name} is invalid and was rejected"
+    text_invalid = f"VirtualServer {item_name} was rejected with error"
     new_event = new_list[len(new_list) - 1]
     assert len(new_list) - len(previous_list) == expected_amount
     assert text_invalid in new_event.message

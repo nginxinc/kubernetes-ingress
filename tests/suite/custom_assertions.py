@@ -47,6 +47,26 @@ def assert_event_and_count(event_text, count, events_list) -> None:
     pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
 
 
+def assert_event_with_full_equality_and_count(event_text, count, events_list) -> None:
+    """
+    Search for the event in the list and compare its counter with an expected value.
+
+    :param event_text: event text
+    :param count: expected value
+    :param events_list: list of events
+    :return:
+    """
+
+    for i in range(len(events_list) - 1, -1, -1):
+        # some events have trailing whitespace
+        message_stripped = events_list[i].message.rstrip()
+
+        if event_text == message_stripped:
+            assert events_list[i].count == count
+            return
+    pytest.fail(f"Failed to find the event \"{event_text}\" in the list. Exiting...")
+
+
 def assert_event_and_get_count(event_text, events_list) -> int:
     """
     Search for the event in the list and return its counter.

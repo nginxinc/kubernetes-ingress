@@ -126,14 +126,14 @@ class TestVirtualServerRouteStatus:
         assert (
             response_m["status"]
             and response_m["status"]["reason"] == "Rejected"
-            and response_m["status"]["referencedBy"]
+            and not response_m["status"]["referencedBy"]
             and response_m["status"]["state"] == "Invalid"
         )
 
         assert (
             response_s["status"]
             and response_s["status"]["reason"] == "Rejected"
-            and response_s["status"]["referencedBy"]
+            and not response_s["status"]["referencedBy"]
             and response_s["status"]["state"] == "Invalid"
         )
     
@@ -184,9 +184,9 @@ class TestVirtualServerRouteStatus:
 
         assert (
             response_s["status"]
-            and response_s["status"]["reason"] == "AddedOrUpdated"
-            and response_s["status"]["referencedBy"]
-            and response_s["status"]["state"] == "Valid"
+            and response_s["status"]["reason"] == "Ignored"
+            and not response_s["status"]["referencedBy"]
+            and response_s["status"]["state"] == "Warning"
         )
 
     def test_status_invalid_vsr_in_vs(
@@ -217,16 +217,16 @@ class TestVirtualServerRouteStatus:
         self.patch_valid_vs(kube_apis, v_s_route_setup)
         assert (
             response_m["status"]
-            and response_m["status"]["reason"] == "NoVirtualServerFound"
+            and response_m["status"]["reason"] == "Ignored"
             and not response_m["status"]["referencedBy"]
-            and response_m["status"]["state"] == "Invalid"
+            and response_m["status"]["state"] == "Warning"
         )
 
         assert (
             response_s["status"]
-            and response_s["status"]["reason"] == "NoVirtualServerFound"
+            and response_s["status"]["reason"] == "Ignored"
             and not response_s["status"]["referencedBy"]
-            and response_s["status"]["state"] == "Invalid"
+            and response_s["status"]["state"] == "Warning"
         )
 
     def test_status_remove_vs(
@@ -259,12 +259,12 @@ class TestVirtualServerRouteStatus:
             response_m["status"]
             and response_m["status"]["reason"] == "NoVirtualServerFound"
             and not response_m["status"]["referencedBy"]
-            and response_m["status"]["state"] == "Invalid"
+            and response_m["status"]["state"] == "Warning"
         )
 
         assert (
             response_s["status"]
             and response_s["status"]["reason"] == "NoVirtualServerFound"
             and not response_s["status"]["referencedBy"]
-            and response_s["status"]["state"] == "Invalid"
+            and response_s["status"]["state"] == "Warning"
         )

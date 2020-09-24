@@ -2,7 +2,7 @@ import pytest
 
 from settings import TEST_DATA
 from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count, wait_and_assert_status_code, \
-    wait_for_event_count_increases
+    wait_for_event_count_increases, assert_event_with_full_equality_and_count
 from suite.custom_resources_utils import get_vs_nginx_template_conf
 from suite.resources_utils import replace_configmap_from_yaml, \
     ensure_connection_to_public_endpoint, replace_configmap, create_service_from_yaml, get_first_pod_name, get_events, \
@@ -88,11 +88,9 @@ class TestVSWithExternalNameService:
                           crd_ingress_controller, virtual_server_setup, vs_externalname_setup):
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
         vs_event_text = f"Configuration for {text} was added or updated"
-        vs_event_update_text = f"Configuration for {text} was updated"
         wait_before_test(5)
         events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
         initial_count = assert_event_and_get_count(vs_event_text, events_vs)
-        initial_count_up = assert_event_and_get_count(vs_event_update_text, events_vs)
 
         print("Step 1: Update external host in externalName service")
         external_svc = read_service(kube_apis.v1, vs_externalname_setup.external_svc, virtual_server_setup.namespace)
@@ -103,11 +101,10 @@ class TestVSWithExternalNameService:
         wait_for_event_count_increases(kube_apis, vs_event_text, initial_count, virtual_server_setup.namespace)
         events_step_1 = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_event_and_count(vs_event_text, initial_count + 1, events_step_1)
-        assert_event_and_count(vs_event_update_text, initial_count_up, events_step_1)
 
         print("Step 2: Remove resolver from ConfigMap to trigger an error")
         config_map_name = ingress_controller_prerequisites.config_map["metadata"]["name"]
-        vs_event_warning_text = f"Configuration for {text} was updated with warning(s):"
+        vs_event_warning_text = f"Configuration for {text} was added or updated ; with warning(s):"
         replace_configmap(kube_apis.v1, config_map_name,
                           ingress_controller_prerequisites.namespace,
                           ingress_controller_prerequisites.config_map)
@@ -115,4 +112,4 @@ class TestVSWithExternalNameService:
 
         events_step_2 = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_event_and_count(vs_event_warning_text, 1, events_step_2)
-        assert_event_and_count(vs_event_update_text, initial_count_up, events_step_2)
+        assert_event_with_full_equality_and_count(vs_event_text, initial_count + 1, events_step_2)

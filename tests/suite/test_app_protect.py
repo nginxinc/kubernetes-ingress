@@ -88,13 +88,13 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
 
     def fin():
         print("Clean up:")
+        src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
         delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
         delete_common_app(kube_apis, "simple", test_namespace)
         src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
         delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
-        src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
-        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
     request.addfinalizer(fin)
 

@@ -70,7 +70,7 @@ class TestVSRRedirects:
         req_host = f"{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         req_url = f"http://{req_host}{v_s_route_setup.route_s.paths[0]}"
         text = f"{v_s_route_setup.namespace}/{v_s_route_setup.route_m.name}"
-        event_text = f"VirtualServerRoute {text} is invalid and was rejected: "
+        event_text = f"VirtualServerRoute {text} was rejected with error:"
         invalid_fields = [
             "spec.subroutes[0].action.redirect.code", "spec.subroutes[1].action.redirect.url"
         ]

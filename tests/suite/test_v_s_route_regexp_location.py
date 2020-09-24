@@ -61,7 +61,7 @@ class TestRegexpLocation:
                                  v_s_route_setup, v_s_route_app_setup):
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         text_vs = f"{v_s_route_setup.namespace}/{v_s_route_setup.vs_name}"
-        vs_event_text = f'VirtualServer {text_vs} is invalid and was rejected: ' \
+        vs_event_text = f'VirtualServer {text_vs} was rejected with error: ' \
                         f'spec.routes[1].path: Duplicate value: "=/exact-match$request"'
         vs_src_yaml = f"{TEST_DATA}" \
                       f"/virtual-server-route-regexp-location/standard/virtual-server-invalid-duplicate-routes.yaml"
@@ -80,9 +80,8 @@ class TestRegexpLocation:
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         text_vs = f"{v_s_route_setup.namespace}/{v_s_route_setup.vs_name}"
         text_vsr_s = f"{v_s_route_setup.route_m.namespace}/{v_s_route_setup.route_m.name}"
-        vs_event_text = f'Ignored by VirtualServer {text_vs}: spec.subroutes: Invalid value: "subroutes": ' \
-                        f'must have only one subroute if regex match or exact match are being used'
-        vsr_event_text = f'VirtualServerRoute {text_vsr_s} is invalid and was rejected: ' \
+        vs_event_text = f'Configuration for {text_vs} was added or updated with warning(s)'
+        vsr_event_text = f'VirtualServerRoute {text_vsr_s} was rejected with error: ' \
                          f'spec.subroutes[1].path: Duplicate value: "=/backends/exact-match$request"'
         vs_src_yaml = f"{TEST_DATA}" \
                       f"/virtual-server-route-regexp-location/standard/virtual-server-exact.yaml"

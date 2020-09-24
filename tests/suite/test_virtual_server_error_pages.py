@@ -59,7 +59,7 @@ class TestVSErrorPages:
             "spec.routes[1].errorPages[0].return.headers[0].value: Invalid value: \"schema\""
         ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-        vs_event_text = f"VirtualServer {text} is invalid and was rejected: "
+        vs_event_text = f"VirtualServer {text} was rejected with error:"
         vs_file = f"{TEST_DATA}/virtual-server-error-pages/virtual-server-invalid.yaml"
         patch_virtual_server_from_yaml(kube_apis.custom_objects,
                                        virtual_server_setup.vs_name,

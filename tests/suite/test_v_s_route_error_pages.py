@@ -73,8 +73,8 @@ class TestVSRErrorPages:
         ]
         text_s = f"{v_s_route_setup.route_s.namespace}/{v_s_route_setup.route_s.name}"
         text_m = f"{v_s_route_setup.route_m.namespace}/{v_s_route_setup.route_m.name}"
-        vsr_s_event_text = f"VirtualServerRoute {text_s} is invalid and was rejected: "
-        vsr_m_event_text = f"VirtualServerRoute {text_m} is invalid and was rejected: "
+        vsr_s_event_text = f"VirtualServerRoute {text_s} was rejected with error:"
+        vsr_m_event_text = f"VirtualServerRoute {text_m} was rejected with error:"
         patch_v_s_route_from_yaml(kube_apis.custom_objects,
                                   v_s_route_setup.route_s.name,
                                   f"{TEST_DATA}/virtual-server-route-error-pages/route-single-invalid.yaml",

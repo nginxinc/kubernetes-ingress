@@ -136,13 +136,13 @@ class TestVSRWithExternalNameService:
         text_vsr = f"{vsr_externalname_setup.route.namespace}/{vsr_externalname_setup.route.name}"
         text_vs = f"{vsr_externalname_setup.namespace}/{vsr_externalname_setup.vs_name}"
         vsr_event_text = f"Configuration for {text_vsr} was added or updated"
+        vsr_event_warning_text = f"Configuration for {text_vsr} was added or updated with warning(s):"
         vs_event_text = f"Configuration for {text_vs} was added or updated"
-        vs_event_update_text = f"Configuration for {text_vs} was updated"
         wait_before_test(5)
         initial_events = get_events(kube_apis.v1, vsr_externalname_setup.route.namespace)
         initial_count_vsr = assert_event_and_get_count(vsr_event_text, initial_events)
+        initial_warning_count_vsr = assert_event_and_get_count(vsr_event_warning_text, initial_events)
         initial_count_vs = assert_event_and_get_count(vs_event_text, initial_events)
-        initial_count_vs_up = assert_event_and_get_count(vs_event_update_text, initial_events)
 
         print("Step 1: Update external host in externalName service")
         external_svc = read_service(kube_apis.v1, vsr_externalname_setup.external_svc, vsr_externalname_setup.namespace)
@@ -156,10 +156,8 @@ class TestVSRWithExternalNameService:
         events_step_1 = get_events(kube_apis.v1, vsr_externalname_setup.route.namespace)
         assert_event_and_count(vsr_event_text, initial_count_vsr + 1, events_step_1)
         assert_event_and_count(vs_event_text, initial_count_vs + 1, events_step_1)
-        assert_event_and_count(vs_event_update_text, initial_count_vs_up, events_step_1)
 
         print("Step 2: Remove resolver from ConfigMap to trigger an error")
-        vsr_event_warning_text = f"Configuration for {text_vsr} was updated with warning(s):"
         config_map_name = ingress_controller_prerequisites.config_map["metadata"]["name"]
         replace_configmap(kube_apis.v1, config_map_name,
                           ingress_controller_prerequisites.namespace,
@@ -167,5 +165,5 @@ class TestVSRWithExternalNameService:
         wait_before_test(5)
 
         events_step_2 = get_events(kube_apis.v1, vsr_externalname_setup.route.namespace)
-        assert_event_and_count(vsr_event_warning_text, 1, events_step_2)
-        assert_event_and_count(vs_event_update_text, initial_count_vs_up + 1, events_step_2)
+        assert_event_and_count(vsr_event_warning_text, initial_warning_count_vsr + 1, events_step_2)
+        assert_event_and_count(vs_event_text, initial_count_vs + 2, events_step_2)

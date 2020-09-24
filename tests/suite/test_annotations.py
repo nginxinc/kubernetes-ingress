@@ -101,13 +101,13 @@ def annotations_setup(request,
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
     upstream_names = []
     if request.param == 'mergeable':
-        event_text = f"Configuration for {test_namespace}/{ingress_name}(Master) was added or updated"
-        error_text = f"{event_text} but was not applied: Error reloading NGINX"
+        event_text = f"Configuration for {test_namespace}/{ingress_name} was added or updated"
+        error_text = f"{event_text} ; but was not applied: Error reloading NGINX"
         for minion in minions_info:
             upstream_names.append(f"{test_namespace}-{minion['name']}-{ingress_host}-{minion['svc_name']}-80")
     else:
         event_text = f"Configuration for {test_namespace}/{ingress_name} was added or updated"
-        error_text = f"{event_text}, but not applied: Error reloading NGINX"
+        error_text = f"{event_text} ; but was not applied: Error reloading NGINX"
         upstream_names.append(f"{test_namespace}-{ingress_name}-{ingress_host}-backend1-svc-80")
         upstream_names.append(f"{test_namespace}-{ingress_name}-{ingress_host}-backend2-svc-80")
 
@@ -147,7 +147,7 @@ def annotations_grpc_setup(request,
                                 f"{TEST_DATA}/common/configmap-with-grpc.yaml")
     ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
     event_text = f"Configuration for {test_namespace}/{ingress_name} was added or updated"
-    error_text = f"{event_text}, but not applied: Error reloading NGINX"
+    error_text = f"{event_text} ; but was not applied: Error reloading NGINX"
 
     def fin():
         print("Clean up gRPC Annotations Example:")

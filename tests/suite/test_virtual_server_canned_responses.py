@@ -89,7 +89,7 @@ class TestVSCannedResponse:
             "spec.routes[0].action.return.code", "spec.routes[0].action.return.body"
         ]
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-        vs_event_text = f"VirtualServer {text} is invalid and was rejected: "
+        vs_event_text = f"VirtualServer {text} was rejected with error:"
         vs_src = f"{TEST_DATA}/virtual-server-canned-responses/virtual-server-invalid.yaml"
         patch_virtual_server_from_yaml(kube_apis.custom_objects, virtual_server_setup.vs_name, vs_src,
                                        virtual_server_setup.namespace)

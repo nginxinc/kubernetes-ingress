@@ -62,7 +62,7 @@ class TestVSRedirects:
 
     def test_validation_flow(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
-        event_text = f"VirtualServer {text} is invalid and was rejected: "
+        event_text = f"VirtualServer {text} was rejected with error:"
         invalid_fields = ["spec.routes[0].action.redirect.code", "spec.routes[1].action.redirect.url"]
         vs_src = f"{TEST_DATA}/virtual-server-redirects/virtual-server-invalid.yaml"
         patch_virtual_server_from_yaml(kube_apis.custom_objects, virtual_server_setup.vs_name, vs_src,
