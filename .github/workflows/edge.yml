@@ -140,16 +140,12 @@ jobs:
         env:
           CRT: ${{ secrets.NGINX_AP_CRT }}
           KEY: ${{ secrets.NGINX_AP_KEY }}
+          RHEL_LICENSE: ${{ secrets.RHEL_LICENSE }}
         run: |
           echo "${CRT}" | base64 --decode > nginx-repo.crt
           echo "${KEY}" | base64 --decode > nginx-repo.key
-        if: matrix.type == 'plus-ap' or matrix.type == 'plus-ap-openshift'
-      - name: Fetch RedHat License
-        env:
-          RHEL_LICENSE: ${{ secrets.RHEL_LICENSE }}
-        run: |
           echo "${RHEL_LICENSE}" | base64 --decode > rhel_license
-        if: matrix.type == 'plus-ap-openshift'
+        if: matrix.type == 'plus-ap' || matrix.type == 'plus-ap-openshift'
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
         with:
