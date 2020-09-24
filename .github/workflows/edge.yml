@@ -114,6 +114,12 @@ jobs:
             target: local
             image: nginx-plus-ingress-ap
             type: plus-ap
+          - os: ubuntu-18.04
+            file: build/appprotect/DockerfileWithAppProtectForPlusForOpenShift
+            context: '.'
+            target: local
+            image: nginx-plus-ingress-ap-openshift
+            type: plus-ap
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
