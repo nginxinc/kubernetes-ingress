@@ -30,8 +30,7 @@ RUN chmod 644 /etc/ssl/nginx/*
 COPY rhel_license /tmp/
 
 # Install NGINX Plus
-RUN set -x \
-	&& groupadd --system --gid 101 nginx \
+RUN groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& source /tmp/rhel_license \
 	&& yum install -y wget ca-certificates \

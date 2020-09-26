@@ -425,9 +425,11 @@ jobs:
       - name: Workflow Status
         id: check
         uses: martialonline/workflow-status@v1
-      - name: Calculate SHA
+      - name: Output Variables
         id: commit
-        run: echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+        run: |
+          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
       - name: Send Notification
         uses: 8398a7/action-slack@v3
         if: 
@@ -441,7 +443,8 @@ jobs:
               icon_emoji: ':octocat:',
               mention: 'channel',
               attachments: [{
-                color: '${{ steps.check.outputs.status }}' == 'success' ? 'good' : '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
+                title: '${{ steps.commit.outputs.repo }} ${{ github.workflow }} pipeline has failed',
+                color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
                 fields: [{
                   title: 'Commit Hash',
                   value: '${{ steps.commit.outputs.sha }}',
