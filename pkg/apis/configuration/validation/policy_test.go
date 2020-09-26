@@ -149,8 +149,11 @@ func TestValidateRateLimit(t *testing.T) {
 			msg: "ratelimit all fields set",
 		},
 	}
+
+	isPlus := false
+
 	for _, test := range tests {
-		allErrs := validateRateLimit(test.rateLimit, field.NewPath("rateLimit"))
+		allErrs := validateRateLimit(test.rateLimit, field.NewPath("rateLimit"), isPlus)
 		if len(allErrs) > 0 {
 			t.Errorf("validateRateLimit() returned errors %v for valid input for the case of %v", allErrs, test.msg)
 		}
@@ -215,8 +218,11 @@ func TestValidateRateLimitFails(t *testing.T) {
 			msg: "invalid rateLimit logLevel",
 		},
 	}
+
+	isPlus := false
+
 	for _, test := range tests {
-		allErrs := validateRateLimit(test.rateLimit, field.NewPath("rateLimit"))
+		allErrs := validateRateLimit(test.rateLimit, field.NewPath("rateLimit"), isPlus)
 		if len(allErrs) == 0 {
 			t.Errorf("validateRateLimit() returned no errors for invalid input for the case of %v", test.msg)
 		}

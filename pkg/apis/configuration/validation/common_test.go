@@ -52,10 +52,105 @@ func TestValidateVariableFails(t *testing.T) {
 	}
 }
 
-func TestValidateSpecialVariable(t *testing.T) {
-	specialVars := []string{"arg_username", "arg_user_name", "http_header_name", "cookie_cookie_name"}
+func TestParseSpecialVariable(t *testing.T) {
+	tests := []struct {
+		specialVar    string
+		expectedName  string
+		expectedValue string
+	}{
+		{
+			specialVar:    "arg_username",
+			expectedName:  "arg",
+			expectedValue: "username",
+		},
+		{
+			specialVar:    "arg_user_name",
+			expectedName:  "arg",
+			expectedValue: "user_name",
+		},
+		{
+			specialVar:    "jwt_header_username",
+			expectedName:  "jwt_header",
+			expectedValue: "username",
+		},
+		{
+			specialVar:    "jwt_header_user_name",
+			expectedName:  "jwt_header",
+			expectedValue: "user_name",
+		},
+		{
+			specialVar:    "jwt_claim_username",
+			expectedName:  "jwt_claim",
+			expectedValue: "username",
+		},
+		{
+			specialVar:    "jwt_claim_user_name",
+			expectedName:  "jwt_claim",
+			expectedValue: "user_name",
+		},
+	}
+
+	for _, test := range tests {
+		name, value, allErrs := parseSpecialVariable(test.specialVar, field.NewPath("variable"))
+		if name != test.expectedName {
+			t.Errorf("parseSpecialVariable(%v) returned name %v but expected %v", test.specialVar, name, test.expectedName)
+		}
+		if value != test.expectedValue {
+			t.Errorf("parseSpecialVariable(%v) returned value %v but expected %v", test.specialVar, value, test.expectedValue)
+		}
+		if len(allErrs) != 0 {
+			t.Errorf("parseSpecialVariable(%v) returned errors for valid case: %v", test.specialVar, allErrs)
+		}
+	}
+}
+
+func TestParseSpecialVariableFails(t *testing.T) {
+	specialVars := []string{
+		"arg",
+		"jwt_header",
+		"jwt_claim",
+	}
+
 	for _, v := range specialVars {
-		allErrs := validateSpecialVariable(v, field.NewPath("variable"))
+		_, _, allErrs := parseSpecialVariable(v, field.NewPath("variable"))
+		if len(allErrs) == 0 {
+			t.Errorf("parseSpecialVariable(%v) returned no errors for invalid case", v)
+		}
+	}
+}
+
+func TestValidateSpecialVariable(t *testing.T) {
+	specialVars := []string{
+		"arg_username",
+		"arg_user_name",
+		"http_header_name",
+		"cookie_cookie_name",
+	}
+
+	isPlus := false
+
+	for _, v := range specialVars {
+		allErrs := validateSpecialVariable(v, field.NewPath("variable"), isPlus)
+		if len(allErrs) != 0 {
+			t.Errorf("validateSpecialVariable(%v) returned errors for valid case: %v", v, allErrs)
+		}
+	}
+}
+
+func TestValidateSpecialVariableForPlus(t *testing.T) {
+	specialVars := []string{
+		"arg_username",
+		"arg_user_name",
+		"http_header_name",
+		"cookie_cookie_name",
+		"jwt_header_alg",
+		"jwt_claim_user",
+	}
+
+	isPlus := true
+
+	for _, v := range specialVars {
+		allErrs := validateSpecialVariable(v, field.NewPath("variable"), isPlus)
 		if len(allErrs) != 0 {
 			t.Errorf("validateSpecialVariable(%v) returned errors for valid case: %v", v, allErrs)
 		}
@@ -63,9 +158,41 @@ func TestValidateSpecialVariable(t *testing.T) {
 }
 
 func TestValidateSpecialVariableFails(t *testing.T) {
-	specialVars := []string{"arg_invalid%", "http_header+invalid", "cookie_cookie_name?invalid"}
+	specialVars := []string{
+		"arg",
+		"arg_invalid%",
+		"http_header+invalid",
+		"cookie_cookie_name?invalid",
+		"jwt_header_alg",
+		"jwt_claim_user",
+		"some_var",
+	}
+
+	isPlus := false
+
 	for _, v := range specialVars {
-		allErrs := validateSpecialVariable(v, field.NewPath("variable"))
+		allErrs := validateSpecialVariable(v, field.NewPath("variable"), isPlus)
+		if len(allErrs) == 0 {
+			t.Errorf("validateSpecialVariable(%v) returned no errors for invalid case", v)
+		}
+	}
+}
+
+func TestValidateSpecialVariableForPlusFails(t *testing.T) {
+	specialVars := []string{
+		"arg",
+		"arg_invalid%",
+		"http_header+invalid",
+		"cookie_cookie_name?invalid",
+		"jwt_header_+invalid",
+		"wt_claim_invalid?",
+		"some_var",
+	}
+
+	isPlus := true
+
+	for _, v := range specialVars {
+		allErrs := validateSpecialVariable(v, field.NewPath("variable"), isPlus)
 		if len(allErrs) == 0 {
 			t.Errorf("validateSpecialVariable(%v) returned no errors for invalid case", v)
 		}
@@ -73,6 +200,8 @@ func TestValidateSpecialVariableFails(t *testing.T) {
 }
 
 func TestValidateStringWithVariables(t *testing.T) {
+	isPlus := false
+
 	testStrings := []string{
 		"",
 		"${scheme}",
@@ -82,7 +211,7 @@ func TestValidateStringWithVariables(t *testing.T) {
 	validVars := map[string]bool{"scheme": true, "host": true}
 
 	for _, test := range testStrings {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), nil, validVars)
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), nil, validVars, isPlus)
 		if len(allErrs) != 0 {
 			t.Errorf("validateStringWithVariables(%v) returned errors for valid input: %v", test, allErrs)
 		}
@@ -96,7 +225,7 @@ func TestValidateStringWithVariables(t *testing.T) {
 	}
 
 	for _, test := range testStringsSpecial {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), specialVars, validVars)
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), specialVars, validVars, isPlus)
 		if len(allErrs) != 0 {
 			t.Errorf("validateStringWithVariables(%v) returned errors for valid input: %v", test, allErrs)
 		}
@@ -104,6 +233,8 @@ func TestValidateStringWithVariables(t *testing.T) {
 }
 
 func TestValidateStringWithVariablesFail(t *testing.T) {
+	isPlus := false
+
 	testStrings := []string{
 		"$scheme}",
 		"${sch${eme}${host}",
@@ -114,7 +245,7 @@ func TestValidateStringWithVariablesFail(t *testing.T) {
 	validVars := map[string]bool{"scheme": true, "host": true}
 
 	for _, test := range testStrings {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), nil, validVars)
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), nil, validVars, isPlus)
 		if len(allErrs) == 0 {
 			t.Errorf("validateStringWithVariables(%v) returned no errors for invalid input", test)
 		}
@@ -128,7 +259,7 @@ func TestValidateStringWithVariablesFail(t *testing.T) {
 	}
 
 	for _, test := range testStringsSpecial {
-		allErrs := validateStringWithVariables(test, field.NewPath("string"), specialVars, validVars)
+		allErrs := validateStringWithVariables(test, field.NewPath("string"), specialVars, validVars, isPlus)
 		if len(allErrs) == 0 {
 			t.Errorf("validateStringWithVariables(%v) returned no errors for invalid input", test)
 		}
