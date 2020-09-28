@@ -300,6 +300,9 @@ func createCafeIngressEx() IngressEx {
 			"tea-svc80":    {"10.0.0.2:80"},
 		},
 		ExternalNameSvcs: map[string]bool{},
+		ValidHosts: map[string]bool{
+			"cafe.example.com": true,
+		},
 	}
 	return cafeIngressEx
 }
@@ -532,6 +535,9 @@ func createMergeableCafeIngress() *MergeableIngresses {
 				"coffee-svc80": {"10.0.0.1:80"},
 				"tea-svc80":    {"10.0.0.2:80"},
 			},
+			ValidHosts: map[string]bool{
+				"cafe.example.com": true,
+			},
 		},
 		Minions: []*IngressEx{
 			{
@@ -539,11 +545,23 @@ func createMergeableCafeIngress() *MergeableIngresses {
 				Endpoints: map[string][]string{
 					"coffee-svc80": {"10.0.0.1:80"},
 				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/coffee": true,
+				},
 			},
 			{
 				Ingress: &teaMinion,
 				Endpoints: map[string][]string{
 					"tea-svc80": {"10.0.0.2:80"},
+				},
+				ValidHosts: map[string]bool{
+					"cafe.example.com": true,
+				},
+				ValidMinionPaths: map[string]bool{
+					"/tea": true,
 				},
 			}},
 	}

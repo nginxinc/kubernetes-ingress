@@ -51,10 +51,11 @@ func createLeaderHandler(lbc *LoadBalancerController) leaderelection.LeaderCallb
 		OnStartedLeading: func(ctx context.Context) {
 			glog.V(3).Info("started leading")
 			if lbc.reportIngressStatus {
-				glog.V(3).Info("updating ingress status")
+				ingresses := lbc.configuration.GetResourcesWithFilter(resourceFilter{Ingresses: true})
 
-				ingresses, mergeableIngresses := lbc.GetManagedIngresses()
-				err := lbc.UpdateManagedAndMergeableIngresses(ingresses, mergeableIngresses)
+				glog.V(3).Infof("Updating status for %v Ingresses", len(ingresses))
+
+				err := lbc.statusUpdater.UpdateExternalEndpointsForResources(ingresses)
 				if err != nil {
 					glog.V(3).Infof("error updating status when starting leading: %v", err)
 				}
@@ -62,6 +63,7 @@ func createLeaderHandler(lbc *LoadBalancerController) leaderelection.LeaderCallb
 
 			if lbc.areCustomResourcesEnabled {
 				glog.V(3).Info("updating VirtualServer and VirtualServerRoutes status")
+
 				err := lbc.updateVirtualServersStatusFromEvents()
 				if err != nil {
 					glog.V(3).Infof("error updating VirtualServers status when starting leading: %v", err)

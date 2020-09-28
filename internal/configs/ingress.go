@@ -27,6 +27,8 @@ type IngressEx struct {
 	HealthChecks      map[string]*api_v1.Probe
 	ExternalNameSvcs  map[string]bool
 	PodsByIP          map[string]PodInfo
+	ValidHosts        map[string]bool
+	ValidMinionPaths  map[string]bool
 	AppProtectPolicy  *unstructured.Unstructured
 	AppProtectLogConf *unstructured.Unstructured
 	AppProtectLogDst  string
@@ -87,8 +89,16 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 	var servers []version1.Server
 
 	for _, rule := range ingEx.Ingress.Spec.Rules {
-		if rule.IngressRuleValue.HTTP == nil {
+		// skipping invalid hosts
+		if !ingEx.ValidHosts[rule.Host] {
 			continue
+		}
+
+		httpIngressRuleValue := rule.HTTP
+
+		if httpIngressRuleValue == nil {
+			// the code in this loop expects non-nil
+			httpIngressRuleValue = &networking.HTTPIngressRuleValue{}
 		}
 
 		serverName := rule.Host
@@ -158,7 +168,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 
 		grpcOnly := true
 		if len(grpcServices) > 0 {
-			for _, path := range rule.HTTP.Paths {
+			for _, path := range httpIngressRuleValue.Paths {
 				if _, exists := grpcServices[path.Backend.ServiceName]; !exists {
 					grpcOnly = false
 					break
@@ -168,7 +178,12 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			grpcOnly = false
 		}
 
-		for _, path := range rule.HTTP.Paths {
+		for _, path := range httpIngressRuleValue.Paths {
+			// skip invalid paths for minions
+			if isMinion && !ingEx.ValidMinionPaths[path.Path] {
+				continue
+			}
+
 			upsName := getNameForUpstream(ingEx.Ingress, rule.Host, &path.Backend)
 
 			if cfgParams.HealthCheckEnabled {
@@ -417,6 +432,9 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	healthChecks := make(map[string]version1.HealthCheck)
 	var keepalive string
 
+	// replace master with a deepcopy because we will modify it
+	mergeableIngs.Master.Ingress = mergeableIngs.Master.Ingress.DeepCopy()
+
 	removedAnnotations := filterMasterAnnotations(mergeableIngs.Master.Ingress.Annotations)
 	if len(removedAnnotations) != 0 {
 		glog.Errorf("Ingress Resource %v/%v with the annotation 'nginx.org/mergeable-ingress-type' set to 'master' cannot contain the '%v' annotation(s). They will be ignored",
@@ -437,6 +455,9 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 
 	minions := mergeableIngs.Minions
 	for _, minion := range minions {
+		// replace minion with a deepcopy because we will modify it
+		minion.Ingress = minion.Ingress.DeepCopy()
+
 		// Remove the default backend so that "/" will not be generated
 		minion.Ingress.Spec.Backend = nil
 

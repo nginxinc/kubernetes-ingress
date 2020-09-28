@@ -884,3 +884,73 @@ func TestAppProtectResourceIsReferenced(t *testing.T) {
 		t.Error("IsReferencedByVirtualServer() returned true but expected false")
 	}
 }
+
+func TestIsPolicyIsReferenced(t *testing.T) {
+	tests := []struct {
+		policies          []conf_v1.PolicyReference
+		resourceNamespace string
+		policyNamespace   string
+		policyName        string
+		expected          bool
+		msg               string
+	}{
+		{
+			policies: []conf_v1.PolicyReference{
+				{
+					Name: "test-policy",
+				},
+			},
+			resourceNamespace: "ns-1",
+			policyNamespace:   "ns-1",
+			policyName:        "test-policy",
+			expected:          true,
+			msg:               "reference with implicit namespace",
+		},
+		{
+			policies: []conf_v1.PolicyReference{
+				{
+					Name:      "test-policy",
+					Namespace: "ns-1",
+				},
+			},
+			resourceNamespace: "ns-1",
+			policyNamespace:   "ns-1",
+			policyName:        "test-policy",
+			expected:          true,
+			msg:               "reference with explicit namespace",
+		},
+		{
+			policies: []conf_v1.PolicyReference{
+				{
+					Name: "test-policy",
+				},
+			},
+			resourceNamespace: "ns-2",
+			policyNamespace:   "ns-1",
+			policyName:        "test-policy",
+			expected:          false,
+			msg:               "wrong namespace with implicit namespace",
+		},
+		{
+			policies: []conf_v1.PolicyReference{
+				{
+					Name:      "test-policy",
+					Namespace: "ns-2",
+				},
+			},
+			resourceNamespace: "ns-2",
+			policyNamespace:   "ns-1",
+			policyName:        "test-policy",
+			expected:          false,
+			msg:               "wrong namespace with explicit namespace",
+		},
+	}
+
+	for _, test := range tests {
+		result := isPolicyReferenced(test.policies, test.resourceNamespace, test.policyNamespace, test.policyName)
+		if result != test.expected {
+			t.Errorf("isPolicyReferenced() returned %v but expected %v for the case of %s", result,
+				test.expected, test.msg)
+		}
+	}
+}

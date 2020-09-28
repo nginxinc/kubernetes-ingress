@@ -51,7 +51,7 @@ func TestStatusUpdate(t *testing.T) {
 		namespace:             "namespace",
 		externalServiceName:   "service-name",
 		externalStatusAddress: "123.123.123.123",
-		ingLister:             &ingLister,
+		ingressLister:         &ingLister,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 	err = su.ClearIngressStatus(ing)

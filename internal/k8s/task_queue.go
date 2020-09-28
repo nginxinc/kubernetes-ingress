@@ -106,8 +106,6 @@ type kind int
 const (
 	// ingress resource
 	ingress = iota
-	// ingressMinion resource, which is a Minion Ingress resource
-	ingressMinion
 	// endpoints resource
 	endpoints
 	// configMap resource
@@ -143,12 +141,7 @@ func newTask(key string, obj interface{}) (task, error) {
 	var k kind
 	switch t := obj.(type) {
 	case *networking.Ingress:
-		ing := obj.(*networking.Ingress)
-		if isMinion(ing) {
-			k = ingressMinion
-		} else {
-			k = ingress
-		}
+		k = ingress
 	case *v1.Endpoints:
 		k = endpoints
 	case *v1.ConfigMap:

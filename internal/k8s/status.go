@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
@@ -20,6 +19,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/cache"
 )
 
 // statusUpdater reports Ingress, VirtualServer and VirtualServerRoute status information via the kubernetes
@@ -35,34 +35,61 @@ type statusUpdater struct {
 	externalEndpoints        []v1.ExternalEndpoint
 	status                   []api_v1.LoadBalancerIngress
 	keyFunc                  func(obj interface{}) (string, error)
-	ingLister                *storeToIngressLister
+	ingressLister            *storeToIngressLister
+	virtualServerLister      cache.Store
+	virtualServerRouteLister cache.Store
 	confClient               k8s_nginx.Interface
 }
 
-// UpdateManagedAndMergeableIngresses handles the full return format of LoadBalancerController.getManagedIngresses
-func (su *statusUpdater) UpdateManagedAndMergeableIngresses(managedIngresses []networking.Ingress, mergableIngExes map[string]*configs.MergeableIngresses) error {
-	ings := []networking.Ingress{}
-	ings = append(ings, managedIngresses...)
-	for _, mergableIngEx := range mergableIngExes {
-		for _, minion := range mergableIngEx.Minions {
-			ings = append(ings, *minion.Ingress)
+func (su *statusUpdater) UpdateExternalEndpointsForResources(resource []Resource) error {
+	failed := false
+
+	for _, r := range resource {
+		err := su.UpdateExternalEndpointsForResource(r)
+		if err != nil {
+			failed = true
 		}
 	}
-	return su.BulkUpdateIngressStatus(ings)
+
+	if failed {
+		return fmt.Errorf("not all Resources updated")
+	}
+
+	return nil
 }
 
-// UpdateMergableIngresses is a convience passthru to update Ingresses with our configs.MergableIngresses type
-func (su *statusUpdater) UpdateMergableIngresses(mergableIngresses *configs.MergeableIngresses) error {
-	ings := []networking.Ingress{}
-	ingExes := []*configs.IngressEx{}
+func (su *statusUpdater) UpdateExternalEndpointsForResource(r Resource) error {
+	switch impl := r.(type) {
+	case *FullIngress:
+		var ings []networking.Ingress
+		ings = append(ings, *impl.Ingress)
 
-	ingExes = append(ingExes, mergableIngresses.Master)
-	ingExes = append(ingExes, mergableIngresses.Minions...)
+		for _, fm := range impl.Minions {
+			ings = append(ings, *fm.Ingress)
+		}
 
-	for _, ingEx := range ingExes {
-		ings = append(ings, *ingEx.Ingress)
+		return su.BulkUpdateIngressStatus(ings)
+	case *FullVirtualServer:
+		failed := false
+
+		err := su.updateVirtualServerExternalEndpoints(impl.VirtualServer)
+		if err != nil {
+			failed = true
+		}
+
+		for _, vsr := range impl.VirtualServerRoutes {
+			err := su.updateVirtualServerRouteExternalEndpoints(vsr)
+			if err != nil {
+				failed = true
+			}
+		}
+
+		if failed {
+			return fmt.Errorf("not all Resources updated")
+		}
 	}
-	return su.BulkUpdateIngressStatus(ings)
+
+	return nil
 }
 
 // ClearIngressStatus clears the Ingress status.
@@ -77,24 +104,24 @@ func (su *statusUpdater) UpdateIngressStatus(ing networking.Ingress) error {
 
 // updateIngressWithStatus sets the provided status on the selected Ingress.
 func (su *statusUpdater) updateIngressWithStatus(ing networking.Ingress, status []api_v1.LoadBalancerIngress) error {
-	if reflect.DeepEqual(ing.Status.LoadBalancer.Ingress, status) {
-		return nil
-	}
-
-	// Get a pristine Ingress from the Store. Required because annotations can be modified
-	// for mergable Ingress objects and the update status API call will update annotations, not just status.
+	// Get an up-to-date Ingress from the Store
 	key, err := su.keyFunc(&ing)
 	if err != nil {
 		glog.V(3).Infof("error getting key for ing: %v", err)
 		return err
 	}
-	ingCopy, exists, err := su.ingLister.GetByKeySafe(key)
+	ingCopy, exists, err := su.ingressLister.GetByKeySafe(key)
 	if err != nil {
 		glog.V(3).Infof("error getting ing from Store by key: %v", err)
 		return err
 	}
 	if !exists {
 		glog.V(3).Infof("ing doesn't exist in Store")
+		return nil
+	}
+
+	// No need to update status
+	if reflect.DeepEqual(ingCopy.Status.LoadBalancer.Ingress, status) {
 		return nil
 	}
 
@@ -314,17 +341,29 @@ func hasVsStatusChanged(vs *conf_v1.VirtualServer, state string, reason string, 
 
 // UpdateVirtualServerStatus updates the status of a VirtualServer.
 func (su *statusUpdater) UpdateVirtualServerStatus(vs *conf_v1.VirtualServer, state string, reason string, message string) error {
-	if !hasVsStatusChanged(vs, state, reason, message) {
+	// Get an up-to-date VirtualServer from the Store
+	vsLatest, exists, err := su.virtualServerLister.Get(vs)
+	if err != nil {
+		glog.V(3).Infof("error getting VirtualServer from Store: %v", err)
+		return err
+	}
+	if !exists {
+		glog.V(3).Infof("VirtualServer doesn't exist in Store")
 		return nil
 	}
 
-	vsCopy := vs.DeepCopy()
+	vsCopy := vsLatest.(*conf_v1.VirtualServer).DeepCopy()
+
+	if !hasVsStatusChanged(vsCopy, state, reason, message) {
+		return nil
+	}
+
 	vsCopy.Status.State = state
 	vsCopy.Status.Reason = reason
 	vsCopy.Status.Message = message
 	vsCopy.Status.ExternalEndpoints = su.externalEndpoints
 
-	_, err := su.confClient.K8sV1().VirtualServers(vsCopy.Namespace).UpdateStatus(context.TODO(), vsCopy, metav1.UpdateOptions{})
+	_, err = su.confClient.K8sV1().VirtualServers(vsCopy.Namespace).UpdateStatus(context.TODO(), vsCopy, metav1.UpdateOptions{})
 	if err != nil {
 		glog.V(3).Infof("error setting VirtualServer %v/%v status, retrying: %v", vsCopy.Namespace, vsCopy.Name, err)
 		return su.retryUpdateVirtualServerStatus(vsCopy)
@@ -360,14 +399,26 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *con
 		referencedByString = fmt.Sprintf("%v/%v", vs.Namespace, vs.Name)
 	}
 
-	vsrCopy := vsr.DeepCopy()
+	// Get an up-to-date VirtualServerRoute from the Store
+	vsrLatest, exists, err := su.virtualServerRouteLister.Get(vsr)
+	if err != nil {
+		glog.V(3).Infof("error getting VirtualServerRoute from Store: %v", err)
+		return err
+	}
+	if !exists {
+		glog.V(3).Infof("VirtualServerRoute doesn't exist in Store")
+		return nil
+	}
+
+	vsrCopy := vsrLatest.(*conf_v1.VirtualServerRoute).DeepCopy()
+
 	vsrCopy.Status.State = state
 	vsrCopy.Status.Reason = reason
 	vsrCopy.Status.Message = message
 	vsrCopy.Status.ReferencedBy = referencedByString
 	vsrCopy.Status.ExternalEndpoints = su.externalEndpoints
 
-	_, err := su.confClient.K8sV1().VirtualServerRoutes(vsrCopy.Namespace).UpdateStatus(context.TODO(), vsrCopy, metav1.UpdateOptions{})
+	_, err = su.confClient.K8sV1().VirtualServerRoutes(vsrCopy.Namespace).UpdateStatus(context.TODO(), vsrCopy, metav1.UpdateOptions{})
 	if err != nil {
 		glog.V(3).Infof("error setting VirtualServerRoute %v/%v status, retrying: %v", vsrCopy.Namespace, vsrCopy.Name, err)
 		return su.retryUpdateVirtualServerRouteStatus(vsrCopy)
@@ -379,18 +430,29 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *con
 // This method does not clear or update the referencedBy field of the status.
 // If you need to update the referencedBy field, use UpdateVirtualServerRouteStatusWithReferencedBy instead.
 func (su *statusUpdater) UpdateVirtualServerRouteStatus(vsr *conf_v1.VirtualServerRoute, state string, reason string, message string) error {
-
-	if !hasVsrStatusChanged(vsr, state, reason, message, "") {
+	// Get an up-to-date VirtualServerRoute from the Store
+	vsrLatest, exists, err := su.virtualServerRouteLister.Get(vsr)
+	if err != nil {
+		glog.V(3).Infof("error getting VirtualServerRoute from Store: %v", err)
+		return err
+	}
+	if !exists {
+		glog.V(3).Infof("VirtualServerRoute doesn't exist in Store")
 		return nil
 	}
 
-	vsrCopy := vsr.DeepCopy()
+	vsrCopy := vsrLatest.(*conf_v1.VirtualServerRoute).DeepCopy()
+
+	if !hasVsrStatusChanged(vsrCopy, state, reason, message, "") {
+		return nil
+	}
+
 	vsrCopy.Status.State = state
 	vsrCopy.Status.Reason = reason
 	vsrCopy.Status.Message = message
 	vsrCopy.Status.ExternalEndpoints = su.externalEndpoints
 
-	_, err := su.confClient.K8sV1().VirtualServerRoutes(vsrCopy.Namespace).UpdateStatus(context.TODO(), vsrCopy, metav1.UpdateOptions{})
+	_, err = su.confClient.K8sV1().VirtualServerRoutes(vsrCopy.Namespace).UpdateStatus(context.TODO(), vsrCopy, metav1.UpdateOptions{})
 	if err != nil {
 		glog.V(3).Infof("error setting VirtualServerRoute %v/%v status, retrying: %v", vsrCopy.Namespace, vsrCopy.Name, err)
 		return su.retryUpdateVirtualServerRouteStatus(vsrCopy)
@@ -399,10 +461,21 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatus(vsr *conf_v1.VirtualServ
 }
 
 func (su *statusUpdater) updateVirtualServerExternalEndpoints(vs *conf_v1.VirtualServer) error {
-	vsCopy := vs.DeepCopy()
+	// Get a pristine VirtualServer from the Store
+	vsLatest, exists, err := su.virtualServerLister.Get(vs)
+	if err != nil {
+		glog.V(3).Infof("error getting VirtualServer from Store: %v", err)
+		return err
+	}
+	if !exists {
+		glog.V(3).Infof("VirtualServer doesn't exist in Store")
+		return nil
+	}
+
+	vsCopy := vsLatest.(*conf_v1.VirtualServer).DeepCopy()
 	vsCopy.Status.ExternalEndpoints = su.externalEndpoints
 
-	_, err := su.confClient.K8sV1().VirtualServers(vsCopy.Namespace).UpdateStatus(context.TODO(), vsCopy, metav1.UpdateOptions{})
+	_, err = su.confClient.K8sV1().VirtualServers(vsCopy.Namespace).UpdateStatus(context.TODO(), vsCopy, metav1.UpdateOptions{})
 	if err != nil {
 		glog.V(3).Infof("error setting VirtualServer %v/%v status, retrying: %v", vsCopy.Namespace, vsCopy.Name, err)
 		return su.retryUpdateVirtualServerStatus(vsCopy)
@@ -411,47 +484,26 @@ func (su *statusUpdater) updateVirtualServerExternalEndpoints(vs *conf_v1.Virtua
 }
 
 func (su *statusUpdater) updateVirtualServerRouteExternalEndpoints(vsr *conf_v1.VirtualServerRoute) error {
-	vsrCopy := vsr.DeepCopy()
+	// Get an up-to-date VirtualServerRoute from the Store
+	vsrLatest, exists, err := su.virtualServerRouteLister.Get(vsr)
+	if err != nil {
+		glog.V(3).Infof("error getting VirtualServerRoute from Store: %v", err)
+		return err
+	}
+	if !exists {
+		glog.V(3).Infof("VirtualServerRoute doesn't exist in Store")
+		return nil
+	}
+
+	vsrCopy := vsrLatest.(*conf_v1.VirtualServerRoute).DeepCopy()
 	vsrCopy.Status.ExternalEndpoints = su.externalEndpoints
 
-	_, err := su.confClient.K8sV1().VirtualServerRoutes(vsrCopy.Namespace).UpdateStatus(context.TODO(), vsrCopy, metav1.UpdateOptions{})
+	_, err = su.confClient.K8sV1().VirtualServerRoutes(vsrCopy.Namespace).UpdateStatus(context.TODO(), vsrCopy, metav1.UpdateOptions{})
 	if err != nil {
 		glog.V(3).Infof("error setting VirtualServerRoute %v/%v status, retrying: %v", vsrCopy.Namespace, vsrCopy.Name, err)
 		return su.retryUpdateVirtualServerRouteStatus(vsrCopy)
 	}
 	return err
-}
-
-// UpdateVsVsrExternalEndpoints updates all the external endpoints for the given VirtualServer and VirtualServerRoutes statuses.
-func (su *statusUpdater) UpdateVsVsrExternalEndpoints(vss []*conf_v1.VirtualServer, vsrs []*conf_v1.VirtualServerRoute) error {
-	if len(vss) < 1 && len(vsrs) < 1 {
-		glog.V(3).Info("no VirtualServers or VirtualServerRoutes to update")
-		return nil
-	}
-
-	var errorMsg string
-	for _, vs := range vss {
-		err := su.updateVirtualServerExternalEndpoints(vs)
-		if err != nil {
-			errorMsg = "not all VirtualServers updated"
-		}
-	}
-
-	for _, vsr := range vsrs {
-		err := su.updateVirtualServerRouteExternalEndpoints(vsr)
-		if err != nil {
-			if errorMsg != "" {
-				errorMsg += ", "
-			}
-			errorMsg += "not all VirtualServerRoutes updated"
-		}
-	}
-
-	if errorMsg != "" {
-		return fmt.Errorf(errorMsg)
-	}
-
-	return nil
 }
 
 func (su *statusUpdater) generateExternalEndpointsFromStatus(status []api_v1.LoadBalancerIngress) []conf_v1.ExternalEndpoint {

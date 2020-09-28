@@ -207,3 +207,18 @@ func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServer(namesp
 func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServerRoute(namespace string, name string, vsr *v1.VirtualServerRoute) bool {
 	return false
 }
+
+func isPolicyReferenced(policies []v1.PolicyReference, resourceNamespace string, policyNamespace string, policyName string) bool {
+	for _, p := range policies {
+		namespace := p.Namespace
+		if namespace == "" {
+			namespace = resourceNamespace
+		}
+
+		if p.Name == policyName && namespace == policyNamespace {
+			return true
+		}
+	}
+
+	return false
+}

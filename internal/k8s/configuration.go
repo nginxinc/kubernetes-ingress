@@ -299,6 +299,7 @@ type Configuration struct {
 	problems map[string]ConfigurationProblem
 
 	hasCorrectIngressClass func(interface{}) bool
+	virtualServerValidator *validation.VirtualServerValidator
 
 	secretReferenceChecker     *secretReferenceChecker
 	serviceReferenceChecker    *serviceReferenceChecker
@@ -306,13 +307,11 @@ type Configuration struct {
 	appPolicyReferenceChecker  *appProtectResourceReferenceChecker
 	appLogConfReferenceChecker *appProtectResourceReferenceChecker
 
-	isPlus bool
-
 	lock sync.RWMutex
 }
 
 // NewConfiguration creates a new Configuration.
-func NewConfiguration(hasCorrectIngressClass func(interface{}) bool, isPlus bool) *Configuration {
+func NewConfiguration(hasCorrectIngressClass func(interface{}) bool, isPlus bool, virtualServerValidator *validation.VirtualServerValidator) *Configuration {
 	return &Configuration{
 		hosts:                      make(map[string]Resource),
 		ingresses:                  make(map[string]*networking.Ingress),
@@ -320,12 +319,12 @@ func NewConfiguration(hasCorrectIngressClass func(interface{}) bool, isPlus bool
 		virtualServerRoutes:        make(map[string]*conf_v1.VirtualServerRoute),
 		problems:                   make(map[string]ConfigurationProblem),
 		hasCorrectIngressClass:     hasCorrectIngressClass,
+		virtualServerValidator:     virtualServerValidator,
 		secretReferenceChecker:     newSecretReferenceChecker(isPlus),
 		serviceReferenceChecker:    newServiceReferenceChecker(),
 		policyReferenceChecker:     newPolicyReferenceChecker(),
 		appPolicyReferenceChecker:  newAppProtectResourceReferenceChecker(configs.AppProtectPolicyAnnotation),
 		appLogConfReferenceChecker: newAppProtectResourceReferenceChecker(configs.AppProtectLogConfAnnotation),
-		isPlus:                     isPlus,
 	}
 }
 
@@ -406,7 +405,7 @@ func (c *Configuration) AddOrUpdateVirtualServer(vs *conf_v1.VirtualServer) ([]R
 	if !c.hasCorrectIngressClass(vs) {
 		delete(c.virtualServers, key)
 	} else {
-		validationError = validation.ValidateVirtualServer(vs, c.isPlus)
+		validationError = c.virtualServerValidator.ValidateVirtualServer(vs)
 		if validationError != nil {
 			delete(c.virtualServers, key)
 		} else {
@@ -438,7 +437,7 @@ func (c *Configuration) AddOrUpdateVirtualServer(vs *conf_v1.VirtualServer) ([]R
 			Object:  vs,
 			IsError: true,
 			Reason:  "Rejected",
-			Message: validationError.Error(),
+			Message: fmt.Sprintf("VirtualServer %s was rejected with error: %s", getResourceKey(&vs.ObjectMeta), validationError.Error()),
 		}
 		problems = append(problems, p)
 	}
@@ -472,7 +471,7 @@ func (c *Configuration) AddOrUpdateVirtualServerRoute(vsr *conf_v1.VirtualServer
 	if !c.hasCorrectIngressClass(vsr) {
 		delete(c.virtualServerRoutes, key)
 	} else {
-		validationError = validation.ValidateVirtualServerRoute(vsr, c.isPlus)
+		validationError = c.virtualServerValidator.ValidateVirtualServerRoute(vsr)
 		if validationError != nil {
 			delete(c.virtualServerRoutes, key)
 		} else {
@@ -487,7 +486,7 @@ func (c *Configuration) AddOrUpdateVirtualServerRoute(vsr *conf_v1.VirtualServer
 			Object:  vsr,
 			IsError: true,
 			Reason:  "Rejected",
-			Message: validationError.Error(),
+			Message: fmt.Sprintf("VirtualServerRoute %s was rejected with error: %s", getResourceKey(&vsr.ObjectMeta), validationError.Error()),
 		}
 		problems = append(problems, p)
 	}
@@ -554,6 +553,12 @@ func (c *Configuration) GetResourcesWithFilter(filter resourceFilter) []Resource
 // FindResourcesForService finds resources that reference the specified service.
 func (c *Configuration) FindResourcesForService(svcNamespace string, svcName string) []Resource {
 	return c.findResourcesForResourceReference(svcNamespace, svcName, c.serviceReferenceChecker)
+}
+
+// FindResourcesForEndpoints finds resources that reference the specified endpoints.
+func (c *Configuration) FindResourcesForEndpoints(endpointsNamespace string, endpointsName string) []Resource {
+	// Resources reference not endpoints but the corresponding service, which has the same namespace and name
+	return c.FindResourcesForService(endpointsNamespace, endpointsName)
 }
 
 // FindResourcesForSecret finds resources that reference the specified secret.
@@ -1018,7 +1023,7 @@ func (c *Configuration) buildVirtualServerRoutes(vs *conf_v1.VirtualServer) ([]*
 			continue
 		}
 
-		err := validation.ValidateVirtualServerRouteForVirtualServer(vsr, vs.Spec.Host, r.Path, c.isPlus)
+		err := c.virtualServerValidator.ValidateVirtualServerRouteForVirtualServer(vsr, vs.Spec.Host, r.Path)
 		if err != nil {
 			warning := fmt.Sprintf("VirtualServerRoute %s is invalid: %v", vsrKey, err)
 			warnings = append(warnings, warning)

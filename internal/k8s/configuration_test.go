@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -15,7 +16,8 @@ func createTestConfiguration() *Configuration {
 		ingressClass:        "nginx",
 		useIngressClassOnly: true,
 	}
-	return NewConfiguration(lbc.HasCorrectIngressClass, false)
+	isPlus := false
+	return NewConfiguration(lbc.HasCorrectIngressClass, isPlus, validation.NewVirtualServerValidator(isPlus))
 }
 
 func TestAddIngressForRegularIngress(t *testing.T) {
@@ -1064,7 +1066,7 @@ func TestAddInvalidVirtualServer(t *testing.T) {
 			Object:  vs,
 			IsError: true,
 			Reason:  "Rejected",
-			Message: "spec.host: Required value",
+			Message: "VirtualServer default/virtualserver was rejected with error: spec.host: Required value",
 		},
 	}
 
@@ -1281,7 +1283,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 			Object:  invalidVSR1,
 			IsError: true,
 			Reason:  "Rejected",
-			Message: "spec.host: Required value",
+			Message: "VirtualServerRoute default/virtualserverroute-1 was rejected with error: spec.host: Required value",
 		},
 	}
 
@@ -1552,7 +1554,7 @@ func TestAddInvalidVirtualServerRoute(t *testing.T) {
 			Object:  vsr,
 			IsError: true,
 			Reason:  "Rejected",
-			Message: "spec.host: Required value",
+			Message: "VirtualServerRoute default/virtualserverroute was rejected with error: spec.host: Required value",
 		},
 	}
 
@@ -1936,7 +1938,7 @@ func TestChooseObjectMetaWinner(t *testing.T) {
 }
 
 func TestSquashResourceChanges(t *testing.T) {
-	fullIngress := &FullIngress{
+	fullIng := &FullIngress{
 		Ingress: createTestIngress("test", "foo.example.com"),
 	}
 
@@ -1953,17 +1955,17 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 				{
 					Op:       Delete,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 			},
 			expected: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 			},
 			msg: "squash deletes",
@@ -1972,17 +1974,17 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 			},
 			expected: []ResourceChange{
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 			},
 			msg: "squash updates",
@@ -1991,17 +1993,17 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 			},
 			expected: []ResourceChange{
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 			},
 			msg: "squash update and delete",
@@ -2014,7 +2016,7 @@ func TestSquashResourceChanges(t *testing.T) {
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 			},
 			expected: []ResourceChange{
@@ -2024,7 +2026,7 @@ func TestSquashResourceChanges(t *testing.T) {
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 			},
 			msg: "preserve the order",
@@ -2033,7 +2035,7 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 				{
 					Op:       AddOrUpdate,
@@ -2043,7 +2045,7 @@ func TestSquashResourceChanges(t *testing.T) {
 			expected: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 				{
 					Op:       AddOrUpdate,
@@ -2056,11 +2058,11 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 				{
 					Op:       Delete,
@@ -2074,7 +2076,7 @@ func TestSquashResourceChanges(t *testing.T) {
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIngress,
+					Resource: fullIng,
 				},
 			},
 			msg: "squashed delete and update must follow delete",

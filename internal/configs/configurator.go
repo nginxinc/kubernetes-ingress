@@ -598,43 +598,49 @@ func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
 }
 
 // AddOrUpdateJWKSecret adds a JWK secret to the filesystem or updates it if it already exists.
-func (cnf *Configurator) AddOrUpdateJWKSecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) error {
+func (cnf *Configurator) AddOrUpdateJWKSecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	cnf.addOrUpdateJWKSecret(secret)
+
+	allWarnings := newWarnings()
 
 	if len(virtualServerExes) > 0 {
 		for _, vsEx := range virtualServerExes {
-			// It is safe to ignore warnings here as no new warnings should appear when adding or updating a secret
-			_, err := cnf.addOrUpdateVirtualServer(vsEx)
+			warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
 			if err != nil {
-				return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
+				return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
 			}
+			allWarnings.Add(warnings)
 		}
 
 		if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
-			return fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
+			return allWarnings, fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
 		}
 	}
-	return nil
+
+	return allWarnings, nil
 }
 
 // AddOrUpdateIngressMTLSSecret adds a IngressMTLS secret to the filesystem or updates it if it already exists.
-func (cnf *Configurator) AddOrUpdateIngressMTLSSecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) error {
+func (cnf *Configurator) AddOrUpdateIngressMTLSSecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	cnf.addOrUpdateIngressMTLSecret(secret)
+
+	allWarnings := newWarnings()
 
 	if len(virtualServerExes) > 0 {
 		for _, vsEx := range virtualServerExes {
-			// TODO we need to read warnings, this will be fixed in upcoming work
-			_, err := cnf.addOrUpdateVirtualServer(vsEx)
+			warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
 			if err != nil {
-				return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
+				return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
 			}
+			allWarnings.Add(warnings)
 		}
 
 		if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
-			return fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
+			return allWarnings, fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
 		}
 	}
-	return nil
+
+	return allWarnings, nil
 }
 
 // addOrUpdateJWKSecretsForVirtualServer adds JWK secrets to the filesystem or updates them if they already exist.
@@ -654,36 +660,43 @@ func (cnf *Configurator) addOrUpdateJWKSecretsForVirtualServer(jwtKeys map[strin
 	return jwkSecrets
 }
 
-// AddOrUpdateTLSSecret adds or updates a file with the content of the TLS secret.
-func (cnf *Configurator) AddOrUpdateTLSSecret(secret *api_v1.Secret, ingExes []IngressEx, mergeableIngresses []MergeableIngresses, virtualServerExes []*VirtualServerEx) error {
-	cnf.addOrUpdateTLSSecret(secret)
-	for i := range ingExes {
-		err := cnf.addOrUpdateIngress(&ingExes[i])
+// AddOrUpdateResources adds or updates configuration for resources.
+func (cnf *Configurator) AddOrUpdateResources(ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
+	allWarnings := newWarnings()
+
+	for _, ingEx := range ingExes {
+		err := cnf.addOrUpdateIngress(ingEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingExes[i].Ingress.Namespace, ingExes[i].Ingress.Name, err)
+			return allWarnings, fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 		}
 	}
 
-	for i := range mergeableIngresses {
-		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
+	for _, m := range mergeableIngresses {
+		err := cnf.addOrUpdateMergeableIngress(m)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+			return allWarnings, fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
 		}
 	}
 
 	for _, vsEx := range virtualServerExes {
-		// It is safe to ignore warnings here as no new warnings should appear when adding or updating a secret
-		_, err := cnf.addOrUpdateVirtualServer(vsEx)
+		warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
+			return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
 		}
+		allWarnings.Add(warnings)
 	}
 
 	if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
+		return allWarnings, fmt.Errorf("Error when reloading NGINX when updating resources: %v", err)
 	}
 
-	return nil
+	return allWarnings, nil
+}
+
+// AddOrUpdateTLSSecret adds or updates a file with the content of the TLS secret.
+func (cnf *Configurator) AddOrUpdateTLSSecret(secret *api_v1.Secret, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
+	cnf.addOrUpdateTLSSecret(secret)
+	return cnf.AddOrUpdateResources(ingExes, mergeableIngresses, virtualServerExes)
 }
 
 func (cnf *Configurator) addOrUpdateTLSSecret(secret *api_v1.Secret) string {
@@ -729,38 +742,40 @@ func GenerateCAFileContent(secret *api_v1.Secret) []byte {
 
 // DeleteSecret deletes the file associated with the secret and the configuration files for Ingress and VirtualServer resources.
 // NGINX is reloaded only when the total number of the resources > 0.
-func (cnf *Configurator) DeleteSecret(key string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses, virtualServerExes []*VirtualServerEx) error {
+func (cnf *Configurator) DeleteSecret(key string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	cnf.nginxManager.DeleteSecret(keyToFileName(key))
 
-	for i := range ingExes {
-		err := cnf.addOrUpdateIngress(&ingExes[i])
+	allWarnings := newWarnings()
+
+	for _, ingEx := range ingExes {
+		err := cnf.addOrUpdateIngress(ingEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingExes[i].Ingress.Namespace, ingExes[i].Ingress.Name, err)
+			return allWarnings, fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 		}
 	}
 
-	for i := range mergeableIngresses {
-		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
+	for _, m := range mergeableIngresses {
+		err := cnf.addOrUpdateMergeableIngress(m)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+			return allWarnings, fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
 		}
 	}
 
 	for _, vsEx := range virtualServerExes {
-		// It is safe to ignore warnings here as no new warnings should appear when deleting a secret
-		_, err := cnf.addOrUpdateVirtualServer(vsEx)
+		warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
+			return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
 		}
+		allWarnings.Add(warnings)
 	}
 
 	if len(ingExes)+len(mergeableIngresses)+len(virtualServerExes) > 0 {
 		if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
-			return fmt.Errorf("Error when reloading NGINX when deleting Secret %v: %v", key, err)
+			return allWarnings, fmt.Errorf("Error when reloading NGINX when deleting Secret %v: %v", key, err)
 		}
 	}
 
-	return nil
+	return allWarnings, nil
 }
 
 // DeleteIngress deletes NGINX configuration for the Ingress resource.
@@ -1041,7 +1056,7 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 }
 
 // UpdateConfig updates NGINX configuration parameters.
-func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*IngressEx, mergeableIngs map[string]*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
+func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*IngressEx, mergeableIngs []*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	cnf.cfgParams = cfgParams
 	allWarnings := newWarnings()
 
@@ -1317,18 +1332,18 @@ func generateApResourceFileContent(apResource *unstructured.Unstructured) []byte
 }
 
 // AddOrUpdateAppProtectResource updates Ingresses that use App Protect Resources
-func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Unstructured, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
-	for i := range ingExes {
-		err := cnf.addOrUpdateIngress(&ingExes[i])
+func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Unstructured, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses) error {
+	for _, ingEx := range ingExes {
+		err := cnf.addOrUpdateIngress(ingEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingExes[i].Ingress.Namespace, ingExes[i].Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 		}
 	}
 
-	for i := range mergeableIngresses {
-		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
+	for _, m := range mergeableIngresses {
+		err := cnf.addOrUpdateMergeableIngress(m)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
 		}
 	}
 
@@ -1340,22 +1355,22 @@ func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Un
 }
 
 // DeleteAppProtectPolicy updates Ingresses that use AP Policy after that policy is deleted
-func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
+func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses) error {
 	fName := strings.Replace(polNamespaceName, "/", "_", 1)
 	polFileName := appProtectPolicyFolder + fName
 	cnf.nginxManager.DeleteAppProtectResourceFile(polFileName)
 
-	for i := range ingExes {
-		err := cnf.addOrUpdateIngress(&ingExes[i])
+	for _, ingEx := range ingExes {
+		err := cnf.addOrUpdateIngress(ingEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingExes[i].Ingress.Namespace, ingExes[i].Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 		}
 	}
 
-	for i := range mergeableIngresses {
-		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
+	for _, m := range mergeableIngresses {
+		err := cnf.addOrUpdateMergeableIngress(m)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
 		}
 	}
 
@@ -1367,22 +1382,22 @@ func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes
 }
 
 // DeleteAppProtectLogConf updates Ingresses that use AP Log Configuration after that policy is deleted
-func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, ingExes []IngressEx, mergeableIngresses []MergeableIngresses) error {
+func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses) error {
 	fName := strings.Replace(logConfNamespaceName, "/", "_", 1)
 	logConfFileName := appProtectLogConfFolder + fName
 	cnf.nginxManager.DeleteAppProtectResourceFile(logConfFileName)
 
-	for i := range ingExes {
-		err := cnf.addOrUpdateIngress(&ingExes[i])
+	for _, ingEx := range ingExes {
+		err := cnf.addOrUpdateIngress(ingEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingExes[i].Ingress.Namespace, ingExes[i].Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 		}
 	}
 
-	for i := range mergeableIngresses {
-		err := cnf.addOrUpdateMergeableIngress(&mergeableIngresses[i])
+	for _, m := range mergeableIngresses {
+		err := cnf.addOrUpdateMergeableIngress(m)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", mergeableIngresses[i].Master.Ingress.Namespace, mergeableIngresses[i].Master.Ingress.Name, err)
+			return fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
 		}
 	}
 

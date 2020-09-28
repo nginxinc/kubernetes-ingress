@@ -97,10 +97,6 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ingress := obj.(*networking.Ingress)
-			if !lbc.HasCorrectIngressClass(ingress) {
-				glog.Infof("Ignoring Ingress %v based on Annotation %v", ingress.Name, ingressClassKey)
-				return
-			}
 			glog.V(3).Infof("Adding Ingress: %v", ingress.Name)
 			lbc.AddSyncQueue(obj)
 		},
@@ -118,28 +114,12 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 					return
 				}
 			}
-			if !lbc.HasCorrectIngressClass(ingress) {
-				return
-			}
-			if isMinion(ingress) {
-				master, err := lbc.FindMasterForMinion(ingress)
-				if err != nil {
-					glog.Infof("Ignoring Ingress %v(Minion): %v", ingress.Name, err)
-					return
-				}
-				glog.V(3).Infof("Removing Ingress: %v(Minion) for %v(Master)", ingress.Name, master.Name)
-				lbc.AddSyncQueue(master)
-			} else {
-				glog.V(3).Infof("Removing Ingress: %v", ingress.Name)
-				lbc.AddSyncQueue(obj)
-			}
+			glog.V(3).Infof("Removing Ingress: %v", ingress.Name)
+			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, current interface{}) {
 			c := current.(*networking.Ingress)
 			o := old.(*networking.Ingress)
-			if !lbc.HasCorrectIngressClass(c) {
-				return
-			}
 			if hasChanges(o, c) {
 				glog.V(3).Infof("Ingress %v changed, syncing", c.Name)
 				lbc.AddSyncQueue(c)
@@ -196,23 +176,25 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 }
 
 // createServiceHandlers builds the handler funcs for services.
-// In the handlers below, we need to enqueue Ingress or other affected resources
-// so that we can catch a change like a change of the port field of a service port (for such a change Kubernetes doesn't
+//
+// In the update handlers below we catch two cases:
+// (1) the service is the external service
+// (2) the service had a change like a change of the port field of a service port (for such a change Kubernetes doesn't
 // update the corresponding endpoints resource, that we monitor as well)
 // or a change of the externalName field of an ExternalName service.
+//
+// In both cases we enqueue the service to be processed by syncService
+// Also, because TransportServers aren't processed by syncService,
+// we enqueue them, so they get processed by syncTransportServer.
 func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			svc := obj.(*v1.Service)
-			if lbc.IsExternalServiceForStatus(svc) {
-				lbc.AddSyncQueue(svc)
-				return
-			}
+
 			glog.V(3).Infof("Adding service: %v", svc.Name)
-			lbc.EnqueueIngressForService(svc)
+			lbc.AddSyncQueue(svc)
 
 			if lbc.areCustomResourcesEnabled {
-				lbc.EnqueueVirtualServersForService(svc)
 				lbc.EnqueueTransportServerForService(svc)
 			}
 		},
@@ -230,16 +212,11 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 					return
 				}
 			}
-			if lbc.IsExternalServiceForStatus(svc) {
-				lbc.AddSyncQueue(svc)
-				return
-			}
 
 			glog.V(3).Infof("Removing service: %v", svc.Name)
-			lbc.EnqueueIngressForService(svc)
+			lbc.AddSyncQueue(svc)
 
 			if lbc.areCustomResourcesEnabled {
-				lbc.EnqueueVirtualServersForService(svc)
 				lbc.EnqueueTransportServerForService(svc)
 			}
 		},
@@ -253,10 +230,9 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 				oldSvc := old.(*v1.Service)
 				if hasServiceChanges(oldSvc, curSvc) {
 					glog.V(3).Infof("Service %v changed, syncing", curSvc.Name)
-					lbc.EnqueueIngressForService(curSvc)
+					lbc.AddSyncQueue(curSvc)
 
 					if lbc.areCustomResourcesEnabled {
-						lbc.EnqueueVirtualServersForService(curSvc)
 						lbc.EnqueueTransportServerForService(curSvc)
 					}
 				}
@@ -320,10 +296,6 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vs := obj.(*conf_v1.VirtualServer)
-			if !lbc.HasCorrectIngressClass(vs) {
-				glog.Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
-				return
-			}
 			glog.V(3).Infof("Adding VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
@@ -341,20 +313,12 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 					return
 				}
 			}
-			if !lbc.HasCorrectIngressClass(vs) {
-				glog.Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
-				return
-			}
 			glog.V(3).Infof("Removing VirtualServer: %v", vs.Name)
 			lbc.AddSyncQueue(vs)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVs := cur.(*conf_v1.VirtualServer)
 			oldVs := old.(*conf_v1.VirtualServer)
-			if !lbc.HasCorrectIngressClass(curVs) {
-				glog.Infof("Ignoring VirtualServer %v based on class %v", curVs.Name, curVs.Spec.IngressClass)
-				return
-			}
 			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
 				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
 				lbc.AddSyncQueue(curVs)
@@ -367,10 +331,6 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vsr := obj.(*conf_v1.VirtualServerRoute)
-			if !lbc.HasCorrectIngressClass(vsr) {
-				glog.Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
-				return
-			}
 			glog.V(3).Infof("Adding VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
@@ -388,20 +348,12 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 					return
 				}
 			}
-			if !lbc.HasCorrectIngressClass(vsr) {
-				glog.Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
-				return
-			}
 			glog.V(3).Infof("Removing VirtualServerRoute: %v", vsr.Name)
 			lbc.AddSyncQueue(vsr)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
 			oldVsr := old.(*conf_v1.VirtualServerRoute)
-			if !lbc.HasCorrectIngressClass(curVsr) {
-				glog.Infof("Ignoring VirtualServerRoute %v based on class %v", curVsr.Name, curVsr.Spec.IngressClass)
-				return
-			}
 			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
 				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
 				lbc.AddSyncQueue(curVsr)
