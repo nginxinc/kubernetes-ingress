@@ -443,7 +443,7 @@ jobs:
         run: |
           counter=0
           max_attempts=5
-          until $(curl -s http://localhost:8080 | grep -i nginx); do
+          until $(curl --output /dev/null -s --head --fail http://localhost:8080); do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
@@ -453,7 +453,7 @@ jobs:
         run: |
           counter=0
           max_attempts=5
-          until $(curl -ks https://localhost:8443 | grep -i nginx); do
+          until $(curl --output /dev/null -ks --head --fail https://localhost:8443); do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
