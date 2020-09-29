@@ -411,7 +411,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: local
           tags: ${{ matrix.image }}:${{ matrix.tag }}
-          push: false
+          load: true
       - name: Deploy Kubernetes
         id: k8s
         run: |
