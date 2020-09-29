@@ -378,6 +378,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Retrieve Binary
+        uses: actions/download-artifact@v2
+        with:
+          name: nginx-ingress
+          path: ${{ github.workspace }}/nginx-ingress
       - name: Fetch N+ Certificates
         env:
           CRT: ${{ secrets.NGINX_CRT }}
@@ -386,11 +391,27 @@ jobs:
           echo "${CRT}" | base64 --decode > nginx-repo.crt
           echo "${KEY}" | base64 --decode > nginx-repo.key
         if: matrix.type == 'plus'
-      - name: Build ${{ matrix.image }} Container
-        run: |
-          make container BUILD_IN_CONTAINER=1 \
-          DOCKERFILEPATH=${{ matrix.path }} DOCKERFILE=${{ matrix.file }} \
-          PREFIX=${{ matrix.image }} TAG=${{ matrix.tag }} GIT_COMMIT=${{ github.sha }}
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          driver-opts: network=host
+      - name: Docker build cache
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Build Docker Image ${{ matrix.image }}
+        uses: docker/build-push-action@v2
+        with:
+          file: ${{ matrix.path }}/${{ matrix.file }}
+          context: .
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          target: local
+          tags: ${{ matrix.image }}:${{ matrix.tag }}
+          push: false
       - name: Deploy Kubernetes
         id: k8s
         run: |
@@ -412,9 +433,25 @@ jobs:
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8080:80 &
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8443:443 &
       - name: Test HTTP
-        run: curl -s http://localhost:8080 | grep -i nginx
+        run: |
+          counter=0
+          max_attempts=5
+          until $(curl --output /dev/null -s --head --fail http://localhost:8080 | grep -i nginx); do
+              if [ ${counter} -eq ${max_attempts} ]; then
+                exit 1
+              fi
+              printf '.'; counter=$(($counter+1)); sleep 5
+          done
       - name: Test HTTPS
-        run: curl -ks https://localhost:8443 | grep -i nginx
+        run: |
+          counter=0
+          max_attempts=5
+          until $(curl --output /dev/null -ks --head --fail https://localhost:8443 | grep -i nginx); do
+              if [ ${counter} -eq ${max_attempts} ]; then
+                exit 1
+              fi
+              printf '.'; counter=$(($counter+1)); sleep 5
+          done
 
   notify:
     name: Notify
