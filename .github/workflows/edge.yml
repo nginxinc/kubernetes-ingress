@@ -402,9 +402,11 @@ jobs:
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress ${{ env.NGINX_HTTPS_PORT }}:443 &
       - name: Test HTTP
         run: |
+          curl --output /dev/null -s --fail http://localhost:${{ env.NGINX_HTTP_PORT }}
+          echo $?
           counter=0
           max_attempts=${{ env.HELM_TEST_RETRIES }}
-          until $(curl --output /dev/null -s --head --fail http://localhost:${{ env.NGINX_HTTP_PORT }}); do
+          until $(curl --output /dev/null -s --fail http://localhost:${{ env.NGINX_HTTP_PORT }}); do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
@@ -414,7 +416,7 @@ jobs:
         run: |
           counter=0
           max_attempts=${{ env.HELM_TEST_RETRIES }}
-          until $(curl --output /dev/null -ks --head --fail https://localhost:${{ env.NGINX_HTTPS_PORT }}); do
+          until $(curl --output /dev/null -ks --fail https://localhost:${{ env.NGINX_HTTPS_PORT }}); do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
