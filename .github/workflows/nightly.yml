@@ -361,8 +361,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: [build, binary, unit-tests]
     env:
-      NGINX_HTTP_PORT: 32000
-      NGINX_HTTPS_PORT: 32001
+      NGINX_HTTP_PORT: 8080
+      NGINX_HTTPS_PORT: 8443
+      HELM_TEST_RETRIES: 5
     strategy:
       matrix:
         include:
@@ -437,13 +438,13 @@ jobs:
         working-directory: ${{ github.workspace }}/deployments/helm-chart
       - name: Expose Test Ingresses
         run: |
-          kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8080:80 &
-          kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8443:443 &
+          kubectl port-forward service/${{ matrix.type }}-nginx-ingress ${{ env.NGINX_HTTP_PORT }}:80 &
+          kubectl port-forward service/${{ matrix.type }}-nginx-ingress ${{ env.NGINX_HTTPS_PORT }}:443 &
       - name: Test HTTP
         run: |
           counter=0
-          max_attempts=5
-          until $(curl --output /dev/null -s --head --fail http://localhost:8080); do
+          max_attempts=${{ env.HELM_TEST_RETRIES }}
+          until $(curl --output /dev/null -s --head --fail http://localhost:${{ env.NGINX_HTTP_PORT }}); do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
@@ -452,8 +453,8 @@ jobs:
       - name: Test HTTPS
         run: |
           counter=0
-          max_attempts=5
-          until $(curl --output /dev/null -ks --head --fail https://localhost:8443); do
+          max_attempts=${{ env.HELM_TEST_RETRIES }}
+          until $(curl --output /dev/null -ks --head --fail https://localhost:${{ env.NGINX_HTTPS_PORT }}); do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
