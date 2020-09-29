@@ -393,7 +393,7 @@ jobs:
           --set controller.image.tag=${{ matrix.tag }}
           --set controller.service.type=NodePort
           --set controller.nginxplus=$([[ "${{ matrix.type }}" = "plus" ]] && echo "true" || echo "false")
-          --debug
+          --wait
         working-directory: ${{ github.workspace }}/deployments/helm-chart
       - name: Expose Test Ingresses
         run: |
