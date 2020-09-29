@@ -40,11 +40,16 @@ jobs:
         run: make binary BUILD_IN_CONTAINER=0
         env:
           GOFLAGS: '-mod=vendor -gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
-      - name: Upload Binary
-        uses: actions/upload-artifact@v2
+      # - name: Upload Binary
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: nginx-ingress
+      #     path: ${{ github.workspace }}/nginx-ingress
+      - name: Cache Artifacts
+        uses: actions/cache@v2
         with:
-          name: nginx-ingress
           path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
   unit-tests:
     name: Unit Tests
@@ -167,7 +172,10 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: ${{ matrix.target }}
           tags: ${{ matrix.image }}:${{ github.sha }}
-          push: false
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+            IC_VERSION=${{ env.VERSION }}-${{ github.sha }}
+            VERSION=${{ env.VERSION }}
 
   smoke-tests:
     name: Smoke Tests
@@ -338,11 +346,16 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Retrieve Binary
-        uses: actions/download-artifact@v2
+      # - name: Retrieve Binary
+      #   uses: actions/download-artifact@v2
+      #   with:
+      #     name: nginx-ingress
+      #     path: ${{ github.workspace }}/nginx-ingress
+      - name: Cache Artifacts
+        uses: actions/cache@v2
         with:
-          name: nginx-ingress
           path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Fetch N+ Certificates
         env:
           CRT: ${{ secrets.NGINX_CRT }}

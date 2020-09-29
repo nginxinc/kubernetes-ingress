@@ -154,7 +154,10 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: ${{ matrix.target }}
           tags: ${{ matrix.image }}:${{ github.sha }}
-          push: false
+          build-args: |
+            GIT_COMMIT=${{ github.sha }}
+            IC_VERSION=${{ env.VERSION }}-${{ github.sha }}
+            VERSION=${{ env.VERSION }}
 
   smoke-tests:
     name: Smoke Tests
