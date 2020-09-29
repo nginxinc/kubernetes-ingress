@@ -40,12 +40,7 @@ jobs:
         run: make binary BUILD_IN_CONTAINER=0
         env:
           GOFLAGS: '-mod=vendor -gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
-      # - name: Upload Binary
-      #   uses: actions/upload-artifact@v2
-      #   with:
-      #     name: nginx-ingress
-      #     path: ${{ github.workspace }}/nginx-ingress
-      - name: Cache Artifacts
+      - name: Store Artifacts in Cache 
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/nginx-ingress
@@ -129,12 +124,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      # - name: Retrieve Binary
-      #   uses: actions/download-artifact@v2
-      #   with:
-      #     name: nginx-ingress
-      #     path: ${{ github.workspace }}/nginx-ingress
-      - name: Cache Artifacts
+      - name: Fetch Cached Artifacts
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/nginx-ingress
@@ -351,12 +341,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      # - name: Retrieve Binary
-      #   uses: actions/download-artifact@v2
-      #   with:
-      #     name: nginx-ingress
-      #     path: ${{ github.workspace }}/nginx-ingress
-      - name: Cache Artifacts
+      - name: Fetch Cached Artifacts
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/nginx-ingress
@@ -412,15 +397,13 @@ jobs:
         working-directory: ${{ github.workspace }}/deployments/helm-chart
       - name: Expose Test Ingresses
         run: |
-          kubectl get pods -A
-          kubectl describe pod -l app=${{ matrix.type }}-nginx-ingress
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8080:80 &
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8443:443 &
       - name: Test HTTP
         run: |
           counter=0
           max_attempts=5
-          until $(curl --output /dev/null -s --head --fail http://localhost:8080 | grep -i nginx); do
+          until $(curl -s http://localhost:8080 | grep -i nginx); do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
@@ -430,7 +413,7 @@ jobs:
         run: |
           counter=0
           max_attempts=5
-          until $(curl --output /dev/null -ks --head --fail https://localhost:8443 | grep -i nginx); do
+          until $(curl -ks https://localhost:8443 | grep -i nginx); do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi

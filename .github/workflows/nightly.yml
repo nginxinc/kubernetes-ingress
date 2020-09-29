@@ -28,11 +28,11 @@ jobs:
         run: make binary BUILD_IN_CONTAINER=0
         env:
           GOFLAGS: '-mod=vendor -gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
-      - name: Upload Binary
-        uses: actions/upload-artifact@v2
+      - name: Store Artifacts in Cache 
+        uses: actions/cache@v2
         with:
-          name: nginx-ingress
           path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
 
   unit-tests:
     name: Unit Tests
@@ -111,11 +111,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Retrieve Binary
-        uses: actions/download-artifact@v2
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2
         with:
-          name: nginx-ingress
           path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Fetch N+ Certificates
         env:
           CRT: ${{ secrets.NGINX_CRT }}
@@ -381,11 +381,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Retrieve Binary
-        uses: actions/download-artifact@v2
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2
         with:
-          name: nginx-ingress
           path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Fetch N+ Certificates
         env:
           CRT: ${{ secrets.NGINX_CRT }}
@@ -414,6 +414,10 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: local
           tags: ${{ matrix.image }}:${{ matrix.tag }}
+          build-args: |
+            GIT_COMMIT=${{ matrix.tag }}
+            IC_VERSION=${{ env.VERSION }}-${{ matrix.tag }}
+            VERSION=${{ env.VERSION }}
           load: true
       - name: Deploy Kubernetes
         id: k8s
@@ -439,21 +443,21 @@ jobs:
         run: |
           counter=0
           max_attempts=5
-          until $(curl --output /dev/null -s --head --fail http://localhost:8080 | grep -i nginx); do
-              if [ ${counter} -eq ${max_attempts} ]; then
-                exit 1
-              fi
-              printf '.'; counter=$(($counter+1)); sleep 5
+          until $(curl -s http://localhost:8080 | grep -i nginx); do
+            if [ ${counter} -eq ${max_attempts} ]; then
+              exit 1
+            fi
+            printf '.'; counter=$(($counter+1)); sleep 5
           done
       - name: Test HTTPS
         run: |
           counter=0
           max_attempts=5
-          until $(curl --output /dev/null -ks --head --fail https://localhost:8443 | grep -i nginx); do
-              if [ ${counter} -eq ${max_attempts} ]; then
-                exit 1
-              fi
-              printf '.'; counter=$(($counter+1)); sleep 5
+          until $(curl -ks https://localhost:8443 | grep -i nginx); do
+            if [ ${counter} -eq ${max_attempts} ]; then
+              exit 1
+            fi
+            printf '.'; counter=$(($counter+1)); sleep 5
           done
 
   notify:
