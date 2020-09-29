@@ -402,26 +402,23 @@ jobs:
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress ${{ env.NGINX_HTTPS_PORT }}:443 &
       - name: Test HTTP
         run: |
-          curl http://localhost:${{ env.NGINX_HTTP_PORT }}
-          curl --output /dev/null -s --fail http://localhost:${{ env.NGINX_HTTP_PORT }}
-          echo $?
           counter=0
           max_attempts=${{ env.HELM_TEST_RETRIES }}
-          until $(curl --output /dev/null -s --fail http://localhost:${{ env.NGINX_HTTP_PORT }}); do
+          until [ $(curl --write-out %{http_code} -s --output /dev/null http://localhost:${{ env.NGINX_HTTP_PORT }}) -eq 404 ]; do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
-            printf '.'; counter=$(($counter+1)); sleep 5
+            printf '.'; counter=$(($counter+1)); sleep 5;
           done
       - name: Test HTTPS
         run: |
           counter=0
           max_attempts=${{ env.HELM_TEST_RETRIES }}
-          until $(curl --output /dev/null -ks --fail https://localhost:${{ env.NGINX_HTTPS_PORT }}); do
+          until [ $(curl --write-out %{http_code} -ks --output /dev/null https://localhost:${{ env.NGINX_HTTPS_PORT }}) -eq 404 ]; do
             if [ ${counter} -eq ${max_attempts} ]; then
               exit 1
             fi
-            printf '.'; counter=$(($counter+1)); sleep 5
+            printf '.'; counter=$(($counter+1)); sleep 5;
           done
 
   release-docker:
