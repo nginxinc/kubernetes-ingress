@@ -26,6 +26,7 @@ env:
   HELM_CHART_VERSION: 0.0.0-edge
   GIT_NAME: NGINX Kubernetes Team
   GIT_MAIL: kubernetes@nginx.com
+  VERSION: edge
 
 jobs:
 
@@ -370,6 +371,10 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: local
           tags: ${{ matrix.image }}:${{ matrix.tag }}
+          build-args: |
+            GIT_COMMIT=${{ matrix.tag }}
+            IC_VERSION=${{ env.VERSION }}-${{ matrix.tag }}
+            VERSION=${{ env.VERSION }}
           load: true
       - name: Deploy Kubernetes
         id: k8s
@@ -385,10 +390,12 @@ jobs:
           --set controller.image.tag=${{ matrix.tag }}
           --set controller.service.type=NodePort
           --set controller.nginxplus=$([[ "${{ matrix.type }}" = "plus" ]] && echo "true" || echo "false")
-          --wait --debug
+          --debug
         working-directory: ${{ github.workspace }}/deployments/helm-chart
       - name: Expose Test Ingresses
         run: |
+          kubectl get pods -A
+          kubectl describe pod -l app=${{ matrix.type }}-nginx-ingress
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8080:80 &
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8443:443 &
       - name: Test HTTP
@@ -396,20 +403,20 @@ jobs:
           counter=0
           max_attempts=5
           until $(curl --output /dev/null -s --head --fail http://localhost:8080 | grep -i nginx); do
-              if [ ${counter} -eq ${max_attempts} ]; then
-                exit 1
-              fi
-              printf '.'; counter=$(($counter+1)); sleep 5
+            if [ ${counter} -eq ${max_attempts} ]; then
+              exit 1
+            fi
+            printf '.'; counter=$(($counter+1)); sleep 5
           done
       - name: Test HTTPS
         run: |
           counter=0
           max_attempts=5
           until $(curl --output /dev/null -ks --head --fail https://localhost:8443 | grep -i nginx); do
-              if [ ${counter} -eq ${max_attempts} ]; then
-                exit 1
-              fi
-              printf '.'; counter=$(($counter+1)); sleep 5
+            if [ ${counter} -eq ${max_attempts} ]; then
+              exit 1
+            fi
+            printf '.'; counter=$(($counter+1)); sleep 5
           done
 
   release-docker:
