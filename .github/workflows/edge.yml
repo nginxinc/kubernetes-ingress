@@ -402,6 +402,7 @@ jobs:
           kubectl port-forward service/${{ matrix.type }}-nginx-ingress ${{ env.NGINX_HTTPS_PORT }}:443 &
       - name: Test HTTP
         run: |
+          curl http://localhost:${{ env.NGINX_HTTP_PORT }}
           curl --output /dev/null -s --fail http://localhost:${{ env.NGINX_HTTP_PORT }}
           echo $?
           counter=0
