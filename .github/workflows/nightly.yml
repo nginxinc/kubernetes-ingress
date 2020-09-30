@@ -323,6 +323,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: local
           tags: ${{ matrix.image }}:${{ matrix.tag }}
+          load: true
       - name: Build Test-Runner Container
         uses: docker/build-push-action@v2
         with:
@@ -331,6 +332,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           tags: test-runner:${{ matrix.tag }}
+          load: true
       - name: Configure Kubernetes
         run: |
           cat <<EOF > kind-config.yaml
