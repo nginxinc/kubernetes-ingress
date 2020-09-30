@@ -66,7 +66,7 @@ spec:
      - `jwt <#jwt>`_
      - No*
    * - ``IngressMTLS``
-     - The IngressMTLS policy controls client verification.
+     - The IngressMTLS policy configures client certificate verification.
      - `ingressMTLS <#ingressmtls>`_
      - No*
 ```
@@ -252,13 +252,13 @@ In this example the Ingress Controller will use the configuration from the first
 
 ### IngressMTLS
 
-The IngressMTLS policy controls client validation.
+The IngressMTLS policy configures client certificate verification.
 
-For example, the following policy will verify a client using the CA certificate specified in the `ingress-mtls-secret`:
+For example, the following policy will verify a client certificate using the CA certificate specified in the `ingress-mtls-secret`:
 ```yaml
 ingressMTLS:
   clientCertSecret: ingress-mtls-secret
-  verifyClient: "on"
+  verifyClient: on
   verifyDepth: 1
 ```
 
@@ -277,18 +277,18 @@ ingressMTLS:
      - ``string``
      - Yes
    * - ``verifyClient``
-     - Verification for the client. Possible values are ``on``, ``off``, ``optional``, ``optional_no_ca``
+     - Verification for the client. Possible values are ``on``, ``off``, ``optional``, ``optional_no_ca``. The default is ``on``.
      - ``string``
      - No
    * - ``verifyDepth``
-     - Sets the verification depth in the client certificates chain.
+     - Sets the verification depth in the client certificates chain. The default is ``1``.
      - ``int``
      - No
 ```
 
 #### IngressMTLS Merging Behavior
 
-A VirtualServer/VirtualServerRoute can reference multiple IngressMTLS policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+A VirtualServer can reference only a single IngressMTLS policy. Every subsequent reference will be ignored. For example, here we reference two policies:
 ```yaml
 policies:
 - name: ingress-mtls-policy-one

@@ -11,7 +11,7 @@ In this example, we deploy a web application, configure load balancing for it vi
     ```
 1. Save the HTTP port of the Ingress Controller into a shell variable:
     ```
-    $ IC_HTTP_PORTS=<port number>
+    $ IC_HTTPS_PORT=<port number>
     ```
 
 ## Step 1 - Deploy a Web Application
