@@ -61,11 +61,11 @@ spec:
      - The rate limit policy controls the rate of processing requests per a defined key.
      - `rateLimit <#ratelimit>`_
      - No*
-   * - ``JWT``
+   * - ``jwt``
      - The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens.
      - `jwt <#jwt>`_
      - No*
-   * - ``IngressMTLS``
+   * - ``ingressMTLS``
      - The IngressMTLS policy configures client certificate verification.
      - `ingressMTLS <#ingressmtls>`_
      - No*
@@ -261,6 +261,12 @@ ingressMTLS:
   verifyClient: on
   verifyDepth: 1
 ```
+
+A VirtualServer that references an IngressMTLS policy must:
+* Enable [TLS termination](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-tls).
+* Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route `](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-route) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute-subroute).
+
+If the conditions above are not met, NGINX will send `500` error response to clients.
 
 > Note: The feature is implemented using the NGINX [ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 

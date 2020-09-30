@@ -56,7 +56,7 @@ spec:
                   items:
                     type: string
             ingressMTLS:
-              description: IngressMTLS defines an mTLS policy for the ingress side.
+              description: IngressMTLS defines an Ingress MTLS policy.
               type: object
               properties:
                 clientCertSecret:

@@ -1999,7 +1999,7 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			jwtKeys: nil,
-			context: "server",
+			context: "spec",
 			expected: policiesCfg{
 				IngressMTLS: &version2.IngressMTLS{
 					ClientCert:   ingressMTLSCertPath,
@@ -2268,7 +2268,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				},
 			},
 			jwtKeys:        nil,
-			context:        "server",
+			context:        "spec",
 			tlsPemFileName: "/etc/nginx/secrets/default-tls-secret",
 			expected: policiesCfg{
 				ErrorReturn: &version2.Return{
@@ -2310,7 +2310,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				},
 			},
 			jwtKeys:             nil,
-			context:             "server",
+			context:             "spec",
 			ingressMTLSFileName: "/etc/nginx/secrets/default-ingress-mtls-secret",
 			tlsPemFileName:      "/etc/nginx/secrets/default-tls-secret",
 			expected: policiesCfg{

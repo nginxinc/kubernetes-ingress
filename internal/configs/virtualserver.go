@@ -16,9 +16,14 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
 
-const nginx502Server = "unix:/var/lib/nginx/nginx-502-server.sock"
-const internalLocationPrefix = "internal_location_"
-const nginx418Server = "unix:/var/lib/nginx/nginx-418-server.sock"
+const (
+	nginx502Server         = "unix:/var/lib/nginx/nginx-502-server.sock"
+	internalLocationPrefix = "internal_location_"
+	nginx418Server         = "unix:/var/lib/nginx/nginx-418-server.sock"
+	specContext            = "spec"
+	routeContext           = "route"
+	subRouteContext        = "subroute"
+)
 
 var incompatibleLBMethodsForSlowStart = map[string]bool{
 	"random":                          true,
@@ -213,7 +218,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 	vsc.clearWarnings()
 
 	policiesCfg := vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace,
-		vsEx.VirtualServer.Name, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, jwtKeys, ingressMTLSPemFileName, "server", tlsPemFileName)
+		vsEx.VirtualServer.Name, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, jwtKeys, ingressMTLSPemFileName, specContext, tlsPemFileName)
 
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
@@ -320,7 +325,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 		vsLocSnippets := r.LocationSnippets
 		// ingressMTLSPemFileName argument is always empty for route policies
 		routePoliciesCfg := vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name,
-			r.Policies, vsEx.Policies, jwtKeys, "", "route", tlsPemFileName)
+			r.Policies, vsEx.Policies, jwtKeys, "", routeContext, tlsPemFileName)
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 		if len(r.Matches) > 0 {
@@ -382,11 +387,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			}
 			// ingressMTLSPemFileName argument is always empty for route policies
 			routePoliciesCfg := vsc.generatePolicies(vsr, vsr.Namespace, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name,
-				r.Policies, vsEx.Policies, jwtKeys, "", "route", tlsPemFileName)
+				r.Policies, vsEx.Policies, jwtKeys, "", subRouteContext, tlsPemFileName)
 			// use the VirtualServer route policies if the route does not define any
 			if len(r.Policies) == 0 {
 				routePoliciesCfg = vsc.generatePolicies(vsEx.VirtualServer, vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Namespace,
-					vsEx.VirtualServer.Name, vsrPoliciesFromVs[vsrNamespaceName], vsEx.Policies, jwtKeys, "", "route", tlsPemFileName)
+					vsEx.VirtualServer.Name, vsrPoliciesFromVs[vsrNamespaceName], vsEx.Policies, jwtKeys, "", subRouteContext, tlsPemFileName)
 			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
@@ -550,7 +555,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 					policyError = true
 					break
 				}
-				if context != "server" {
+				if context != specContext {
 					vsc.addWarningf(owner, `IngressMTLS policy is not allowed in the %v context`, context)
 					policyError = true
 					break
