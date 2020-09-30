@@ -19,9 +19,8 @@ defaults:
 env:
   DOCKER_BUILDKIT: 1
   GOLANG_VERSION: 1.15
-  PYTHON_VERSION: 3.8
   K8S_VERSION: 1.19.1
-  K8S_TIMEOUT: 1m
+  K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge
   GIT_NAME: NGINX Kubernetes Team
@@ -36,8 +35,17 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Output Variables
+        id: commit
+        run: |
+          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
       - name: Build Binary
-        run: make binary BUILD_IN_CONTAINER=0
+        run: >
+          make binary
+          BUILD_IN_CONTAINER=0
+          VERSION=${{ env.VERSION }}
+          IC_VERSION=${{ env.VERSION }}-${{ steps.commit.outputs.sha }}
+          GIT_COMMIT=${{ steps.commit.outputs.sha }}
         env:
           GOFLAGS: '-mod=vendor -gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
       - name: Store Artifacts in Cache 
@@ -57,7 +65,7 @@ jobs:
         with:
           go-version: '${{ env.GOLANG_VERSION }}'
       - name: Run Tests
-        run: go test ./...
+        run: make test
 
   build:
     name: Build Docker Images
@@ -167,10 +175,6 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: ${{ matrix.target }}
           tags: ${{ matrix.image }}:${{ github.sha }}
-          build-args: |
-            GIT_COMMIT=${{ github.sha }}
-            IC_VERSION=${{ env.VERSION }}-${{ github.sha }}
-            VERSION=${{ env.VERSION }}
 
   smoke-tests:
     name: Smoke Tests
@@ -181,64 +185,55 @@ jobs:
       matrix:
         include:
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: 'ingresses'
             type: oss
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: 'vsr'
             type: oss
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: 'vs'
             type: oss
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: 'policies'
             type: oss
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: 'ingresses'
             type: plus
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: 'vsr'
             type: plus
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: 'vs'
             type: plus
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: 'policies'
             type: plus
           - os: ubuntu-18.04
-            path: build/appprotect
-            file: DockerfileWithAppProtectForPlus
+            file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: 'appprotect'
@@ -246,6 +241,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Fetch N+ Certificates
         env:
           CRT: ${{ secrets.NGINX_CRT }}
@@ -262,13 +262,34 @@ jobs:
           echo "${CRT}" | base64 --decode > nginx-repo.crt
           echo "${KEY}" | base64 --decode > nginx-repo.key
         if: matrix.type == 'plus-ap'
-      - name: Build Test Container
-        run: docker build -t test-runner:${{ matrix.tag }} -f tests/docker/Dockerfile .
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          driver-opts: network=host
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
       - name: Build ${{ matrix.image }} Container
-        run: |
-          make container BUILD_IN_CONTAINER=1 \
-          DOCKERFILEPATH=${{ matrix.path }} DOCKERFILE=${{ matrix.file }} \
-          PREFIX=${{ matrix.image }} TAG=${{ matrix.tag }} GIT_COMMIT=${{ github.sha }}
+        uses: docker/build-push-action@v2
+        with:
+          file: ${{ matrix.file }}
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          target: local
+          tags: ${{ matrix.image }}:${{ matrix.tag }}
+      - name: Build Test-Runner Container
+        uses: docker/build-push-action@v2
+        with:
+          file: tests/docker/Dockerfile 
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          tags: test-runner:${{ matrix.tag }}
       - name: Configure Kubernetes
         run: |
           cat <<EOF > kind-config.yaml
@@ -328,14 +349,12 @@ jobs:
       matrix:
         include:
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             type: oss
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             type: plus
@@ -369,16 +388,12 @@ jobs:
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
         with:
-          file: ${{ matrix.path }}/${{ matrix.file }}
-          context: .
+          file: ${{ matrix.file }}
+          context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: local
           tags: ${{ matrix.image }}:${{ matrix.tag }}
-          build-args: |
-            GIT_COMMIT=${{ matrix.tag }}
-            IC_VERSION=${{ env.VERSION }}-${{ matrix.tag }}
-            VERSION=${{ env.VERSION }}
           load: true
       - name: Deploy Kubernetes
         id: k8s
@@ -444,6 +459,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
         with:
@@ -467,6 +487,7 @@ jobs:
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
+          target: local
           tags: nginx/nginx-ingress:${{ matrix.tag }}
           push: true
 

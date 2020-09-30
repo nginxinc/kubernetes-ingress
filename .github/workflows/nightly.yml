@@ -11,8 +11,7 @@ defaults:
 env:
   DOCKER_BUILDKIT: 1
   GOLANG_VERSION: 1.15
-  PYTHON_VERSION: 3.8
-  K8S_TIMEOUT: 1m
+  K8S_TIMEOUT: 90s
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge
 
@@ -24,8 +23,17 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Output Variables
+        id: commit
+        run: |
+          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
       - name: Build Binary
-        run: make binary BUILD_IN_CONTAINER=0
+        run: >
+          make binary
+          BUILD_IN_CONTAINER=0
+          VERSION=${{ env.VERSION }}
+          IC_VERSION=${{ env.VERSION }}-${{ steps.commit.outputs.sha }}
+          GIT_COMMIT=${{ steps.commit.outputs.sha }}
         env:
           GOFLAGS: '-mod=vendor -gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
       - name: Store Artifacts in Cache 
@@ -167,120 +175,105 @@ jobs:
       matrix:
         include:
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: oss
             k8s: 1.19.1
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: oss
             k8s: 1.18.8
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: oss
             k8s: 1.17.11
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: oss
             k8s: 1.16.15
           - os: ubuntu-18.04
-            path: build
-            file: Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: oss
             k8s: 1.15.12
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: plus
             k8s: 1.19.1
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: plus
             k8s: 1.18.8
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: plus
             k8s: 1.17.11
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: plus
             k8s: 1.16.15
           - os: ubuntu-18.04
-            path: build
-            file: DockerfileForPlus
+            file: build/DockerfileForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: ''
             type: plus
             k8s: 1.15.12
           - os: ubuntu-18.04
-            path: build/appprotect
-            file: DockerfileWithAppProtectForPlus
+            file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.19.1
           - os: ubuntu-18.04
-            path: build/appprotect
-            file: DockerfileWithAppProtectForPlus
+            file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.18.8
           - os: ubuntu-18.04
-            path: build/appprotect
-            file: DockerfileWithAppProtectForPlus
+            file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.17.11
           - os: ubuntu-18.04
-            path: build/appprotect
-            file: DockerfileWithAppProtectForPlus
+            file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.16.15
           - os: ubuntu-18.04
-            path: build/appprotect
-            file: DockerfileWithAppProtectForPlus
+            file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
@@ -289,6 +282,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Fetch N+ Certificates
         env:
           CRT: ${{ secrets.NGINX_CRT }}
@@ -305,13 +303,34 @@ jobs:
           echo "${CRT}" | base64 --decode > nginx-repo.crt
           echo "${KEY}" | base64 --decode > nginx-repo.key
         if: matrix.type == 'plus-ap'
-      - name: Build Test Container
-        run: docker build -t test-runner:${{ matrix.tag }} -f tests/docker/Dockerfile .
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          driver-opts: network=host
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
       - name: Build ${{ matrix.image }} Container
-        run: |
-          make container BUILD_IN_CONTAINER=1 \
-          DOCKERFILEPATH=${{ matrix.path }} DOCKERFILE=${{ matrix.file }} \
-          PREFIX=${{ matrix.image }} TAG=${{ matrix.tag }} GIT_COMMIT=${{ github.sha }}
+        uses: docker/build-push-action@v2
+        with:
+          file: ${{ matrix.file }}
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          target: local
+          tags: ${{ matrix.image }}:${{ matrix.tag }}
+      - name: Build Test-Runner Container
+        uses: docker/build-push-action@v2
+        with:
+          file: tests/docker/Dockerfile 
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          tags: test-runner:${{ matrix.tag }}
       - name: Configure Kubernetes
         run: |
           cat <<EOF > kind-config.yaml
@@ -326,14 +345,14 @@ jobs:
       - name: Deploy Kubernetes
         id: k8s
         run: |
-          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ matrix.k8s }} --config kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ env.K8S_TIMEOUT }}
+          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ env.K8S_VERSION }} --config kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ env.K8S_TIMEOUT }}
           kind load docker-image ${{ matrix.image }}:${{ matrix.tag }} --name ${{ github.run_id }}
           echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
-          echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.type }}')
+          echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.type }}-${{ matrix.marker }}')
       - name: Setup Kubeconfig
         run: |
           sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
-      - name: Smoke Tests v${{ matrix.k8s }}
+      - name: Run Smoke Tests
         run: |
           touch tests-${{ steps.k8s.outputs.cluster }}.html
           docker run --rm \
@@ -348,13 +367,15 @@ jobs:
           --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
           --html=tests-${{ steps.k8s.outputs.cluster }}.html \
           --self-contained-html \
-          ${{ matrix.marker }}
+          --show-ic-logs=yes \
+          -m ${{ matrix.marker }}
         working-directory: ./tests
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
         with:
-          name: test-results-${{ steps.k8s.outputs.cluster }}-${{ matrix.k8s }}
+          name: test-results-${{ steps.k8s.outputs.cluster }}
           path: ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html
+        if: always()
 
   helm-tests:
     name: Helm Tests
