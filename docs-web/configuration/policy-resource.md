@@ -20,7 +20,7 @@ This document is the reference documentation for the Policy resource. An example
       - [RateLimit Merging Behavior](#ratelimit-merging-behavior)
     - [JWT](#jwt)
       - [JWT Merging Behavior](#jwt-merging-behavior)
-    - [IngressMTLS] (#ingressmtls)
+    - [IngressMTLS](#ingressmtls)
       - [IngressMTLS Merging Behavior](#ingressmtls-merging-behavior)
   - [Using Policy](#using-policy)
     - [Validation](#validation)
@@ -286,7 +286,7 @@ ingressMTLS:
      - No
 ```
 
-#### JWT Merging Behavior
+#### IngressMTLS Merging Behavior
 
 A VirtualServer/VirtualServerRoute can reference multiple IngressMTLS policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
 ```yaml

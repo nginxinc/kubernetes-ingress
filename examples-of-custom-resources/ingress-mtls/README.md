@@ -35,7 +35,7 @@ Create a policy with the name `ingress-mtls-policy` that references the secret f
 $ kubectl apply -f ingress-mtls.yaml
 ```
 
-## Step 3 - Configure Load Balancing and TLS Termination
+## Step 4 - Configure Load Balancing and TLS Termination
 1. Create the secret with the TLS certificate and key:
     ```
     $ kubectl create -f tls-secret.yaml
@@ -48,7 +48,7 @@ $ kubectl apply -f ingress-mtls.yaml
 
 Note that the VirtualServer references the policy `ingress-mtls-policy` created in Step 3.
 
-## Step 4 - Test the Configuration
+## Step 5 - Test the Configuration
 
 If you attempt to access the application without providing a valid Client certificate and key, NGINX will reject your requests for that VirtualServer:
 ```
