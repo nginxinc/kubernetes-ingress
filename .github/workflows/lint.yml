@@ -18,13 +18,12 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-18.04
-    continue-on-error: true
-    if: github.ref != 'refs/heads/master'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Lint Code
         uses: golangci/golangci-lint-action@v2
+        continue-on-error: true
         with:
           version: 'v${{ env.GOLANGCI_VERSION }}'
           args: --timeout ${{ env.GOLANGCI_TIMEOUT }}
