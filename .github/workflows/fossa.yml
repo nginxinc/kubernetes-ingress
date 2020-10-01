@@ -1,0 +1,69 @@
+name: Fossa
+
+on:
+  push:
+    branches:
+      - retire-travis
+      # - master
+
+jobs:
+
+  scan:
+    name: Fossa
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Run Fossa and upload build analysis
+        uses: fossa-contrib/fossa-action@v1
+        with:
+          fossa-api-key: ${{ secrets.FOSSA_TOKEN }}
+          github-token: ${{ github.token }}
+
+  notify:
+    name: Notify
+    runs-on: ubuntu-18.04
+    needs: scan
+    if: always()
+    steps:
+      - name: Workflow Status
+        id: check
+        uses: martialonline/workflow-status@v1
+      - name: Output Variables
+        id: commit
+        run: |
+          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
+      - name: Send Notification
+        uses: 8398a7/action-slack@v3
+        if: steps.check.outputs.status == 'failure'
+        with:
+          status: custom
+          custom_payload: |
+            {
+              username: 'Fossa',
+              icon_emoji: ':confused:',
+              mention: 'channel',
+              attachments: [{
+                title: '${{ steps.commit.outputs.repo }} ${{ github.workflow }} license scan has failed',
+                color: 'danger',
+                fields: [{
+                  title: 'Commit Hash',
+                  value: '${{ steps.commit.outputs.sha }}',
+                  short: true
+                },
+                {
+                  title: 'Author',
+                  value: '${{ github.actor }}',
+                  short: true
+                },
+                {
+                  title: 'Job URL',
+                  value: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+                  short: false
+                }]
+              }]
+            }
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
