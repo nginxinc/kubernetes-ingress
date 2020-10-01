@@ -5,5 +5,5 @@ metadata:
 spec:
   ingressMTLS:
     clientCertSecret: ingress-mtls-secret
-    verifyClient: on
+    verifyClient: "on"
     verifyDepth: 1
