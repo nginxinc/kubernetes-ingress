@@ -962,7 +962,7 @@ value: My-Value
      - ``string``
      - Yes
    * - ``value``
-     - The value of the header. Supports NGINX variables*. Variables must be inclosed in curly brackets. For example: ``${scheme}``.
+     - The value of the header. Supports NGINX variables*. Variables must be enclosed in curly brackets. For example: ``${scheme}``.
      - ``string``
      - No
 ```

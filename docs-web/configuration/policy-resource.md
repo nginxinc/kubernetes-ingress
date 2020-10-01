@@ -228,9 +228,9 @@ action:
       - name: alg
         value: ${jwt_header_alg} 
 ```
-We use `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of two headers that NGINX will pass to the upstream servers. 
+We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of two headers that NGINX will pass to the upstream servers. 
 
-The value of  the `${jwt_claim_user}` variable is the `user` claim of a JWT. For other claims, use `${jwt_claim_name}`, where `name` is the name of the claim. Note that nested claims and claims that include a dot "." are not supported. Similarly, use `${jwt_header_name}` where `name` is the name of a header. In our example, we use the `alg` header. 
+The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For other claims, use `${jwt_claim_name}`, where `name` is the name of the claim. Note that nested claims and claims that include a period (`.`) are not supported. Similarly, use `${jwt_header_name}` where `name` is the name of a header. In our example, we use the `alg` header. 
  
 
 > Note: The feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
@@ -297,7 +297,7 @@ action:
       - name: client-cert
         value: ${ssl_client_escaped_cert} # client certificate in the PEM format (urlencoded) 
 ```
-We use `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of two headers that NGINX will pass to the upstream servers. See the [list of the variables](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#variables) of the `ngx_http_ssl_module` module that you can use to pass the client certificate details.
+We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of the two headers that NGINX will pass to the upstream servers. See the [list of embedded variables](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#variables) that are supported by the `ngx_http_ssl_module`, which you can use to pass the client certificate details.
 
 > Note: The feature is implemented using the NGINX [ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 
