@@ -216,6 +216,23 @@ jwt:
   token: $http_token
 ```
 
+You can pass the JWT claims and JOSE headers to the upstream servers. For example:
+```yaml
+action:
+  proxy:
+    upstream: webapp
+    requestHeaders:
+      set:
+      - name: user 
+        value: ${jwt_claim_user}
+      - name: alg
+        value: ${jwt_header_alg} 
+```
+We use `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of two headers that NGINX will pass to the upstream servers. 
+
+The value of  the `${jwt_claim_user}` variable is the `user` claim of a JWT. For other claims, use `${jwt_claim_name}`, where `name` is the name of the claim. Note that nested claims and claims that include a dot "." are not supported. Similarly, use `${jwt_header_name}` where `name` is the name of a header. In our example, we use the `alg` header. 
+ 
+
 > Note: The feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
 
 ```eval_rst
@@ -267,6 +284,20 @@ A VirtualServer that references an IngressMTLS policy must:
 * Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route `](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-route) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute-subroute).
 
 If the conditions above are not met, NGINX will send `500` error response to clients.
+
+You can pass the client certificate details, including the certificate, to the upstream servers. For example:
+```yaml
+action:
+  proxy:
+    upstream: webapp
+    requestHeaders:
+      set:
+      - name: client-cert-subj-dn
+        value: ${ssl_client_s_dn} # subject DN
+      - name: client-cert
+        value: ${ssl_client_escaped_cert} # client certificate in the PEM format (urlencoded) 
+```
+We use `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of two headers that NGINX will pass to the upstream servers. See the [list of the variables](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#variables) of the `ngx_http_ssl_module` module that you can use to pass the client certificate details.
 
 > Note: The feature is implemented using the NGINX [ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 
