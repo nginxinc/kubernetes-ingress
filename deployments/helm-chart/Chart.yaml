@@ -11,6 +11,6 @@ keywords:
   - ingress
   - nginx
 maintainers:
-  - name: NGINX Kubernetes Team
+  - name: nginxinc
     email: kubernetes@nginx.com
 
