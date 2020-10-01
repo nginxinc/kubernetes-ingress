@@ -19,7 +19,6 @@ defaults:
 env:
   DOCKER_BUILDKIT: 1
   GOLANG_VERSION: 1.15
-  GOLANGCI_VERSION: 1.29
   K8S_VERSION: 1.19.1
   K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
@@ -67,19 +66,6 @@ jobs:
           go-version: '${{ env.GOLANG_VERSION }}'
       - name: Run Tests
         run: go test ./...
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-18.04
-    continue-on-error: true
-    if: github.ref != 'refs/heads/master'
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
-      - name: Lint Code
-        uses: golangci/golangci-lint-action@v2
-        with:
-          version: 'v${{ env.GOLANGCI_VERSION }}'
 
   build:
     name: Build Docker Images
