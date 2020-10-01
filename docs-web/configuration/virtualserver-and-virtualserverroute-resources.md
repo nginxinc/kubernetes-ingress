@@ -816,7 +816,7 @@ redirect:
      - Type
      - Required
    * - ``url``
-     - The URL to redirect the request to. Supported NGINX variables: ``$scheme``\ , ``$http_x_forwarded_proto``\ , ``$request_uri``\ , ``$host``. Variables must be inclosed in curly braces. For example: ``${host}${request_uri}``.
+     - The URL to redirect the request to. Supported NGINX variables: ``$scheme``\ , ``$http_x_forwarded_proto``\ , ``$request_uri``\ , ``$host``. Variables must be enclosed in curly braces. For example: ``${host}${request_uri}``.
      - ``string``
      - Yes
    * - ``code``
@@ -854,7 +854,7 @@ return:
      - ``string``
      - No
    * - ``body``
-     - The body of the response. Supports NGINX variables*. Variables must be inclosed in curly brackets. For example: ``Request is ${request_uri}\n``.
+     - The body of the response. Supports NGINX variables*. Variables must be enclosed in curly brackets. For example: ``Request is ${request_uri}\n``.
      - ``string``
      - Yes
 ```
@@ -1025,7 +1025,7 @@ always: true
      - ``string``
      - Yes
    * - ``value``
-     - The value of the header. Supports NGINX variables*. Variables must be inclosed in curly brackets. For example: ``${scheme}``.
+     - The value of the header. Supports NGINX variables*. Variables must be enclosed in curly brackets. For example: ``${scheme}``.
      - ``string``
      - No
    * - ``always``
@@ -1253,7 +1253,7 @@ redirect:
      - ``int``
      - No
    * - ``url``
-     - The URL to redirect the request to. Supported NGINX variables: ``$scheme``\ and ``$http_x_forwarded_proto``\. Variables must be inclosed in curly braces. For example: ``${scheme}``.
+     - The URL to redirect the request to. Supported NGINX variables: ``$scheme``\ and ``$http_x_forwarded_proto``\. Variables must be enclosed in curly braces. For example: ``${scheme}``.
      - ``string``
      - Yes
 ```
@@ -1293,7 +1293,7 @@ return:
      - ``string``
      - No
    * - ``body``
-     - The body of the response. Supported NGINX variable: ``$upstream_status`` \ . Variables must be inclosed in curly braces. For example: ``${upstream_status}``.
+     - The body of the response. Supported NGINX variable: ``$upstream_status`` \ . Variables must be enclosed in curly braces. For example: ``${upstream_status}``.
      - ``string``
      - Yes
    * - ``headers``
@@ -1324,7 +1324,7 @@ value: ${upstream_status}
      - ``string``
      - Yes
    * - ``value``
-     - The value of the header. Supported NGINX variable: ``$upstream_status`` \ . Variables must be inclosed in curly braces. For example: ``${upstream_status}``.
+     - The value of the header. Supported NGINX variable: ``$upstream_status`` \ . Variables must be enclosed in curly braces. For example: ``${upstream_status}``.
      - ``string``
      - No
 ```
