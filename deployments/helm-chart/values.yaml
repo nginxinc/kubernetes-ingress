@@ -65,7 +65,8 @@ controller:
     ## The secret with a TLS certificate and key for the default HTTPS server.
     ## The value must follow the following format: `<namespace>/<name>`.
     ## Used as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters.
-    secret: #<namespace>/<secret_name>
+    ## Format: <namespace>/<secret_name>
+    secret:
 
   wildcardTLS:
     ## The base64-encoded TLS certificate for every Ingress host that has TLS enabled but no secret specified.
@@ -79,7 +80,8 @@ controller:
     ## The secret with a TLS certificate and key for every Ingress host that has TLS enabled but no secret specified.
     ## The value must follow the following format: `<namespace>/<name>`.
     ## Used as an alternative to specifying a certificate and key using `controller.wildcardTLS.cert` and `controller.wildcardTLS.key` parameters.
-    secret: #<namespace>/<secret_name>
+    ## Format: <namespace>/<secret_name>
+    secret:
 
   ## The node selector for pod assignment for the Ingress controller pods.
   nodeSelector: {}
