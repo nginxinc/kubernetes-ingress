@@ -6,6 +6,14 @@ on:
       - retire-travis
       # - master
 
+defaults:
+  run:
+    shell: bash
+
+env:
+  FOSSA_VER: v1.1.0
+  FOSSA_URL: https://github.com/fossas/fossa-cli/releases/download
+
 jobs:
 
   scan:
@@ -14,11 +22,21 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Run Fossa and upload build analysis
-        uses: fossa-contrib/fossa-action@v1
-        with:
-          fossa-api-key: ${{ secrets.FOSSA_TOKEN }}
-          github-token: ${{ github.token }}
+      - name: Configure Fossa CLI
+        run: |
+          wget ${{ env.FOSSA_URL }}/${{ env.FOSSA_VER }}/fossa-cli_${{ env.FOSSA_VER }}_linux_amd64.tar.gz
+          tar xzf fossa-cli_${{ env.FOSSA_VER }}_linux_amd64.tar.gz
+          ./fossa init
+      - name: Run License Scan
+        env:
+          FOSSA_API_KEY: ${{ secrets.FOSSA_TOKEN }}
+          GO111MODULE: on
+        run: ./fossa analyze -t ${GITHUB_REPOSITORY#*/} -b ${GITHUB_REF##*/}
+      # - name: Run Fossa and upload build analysis
+      #   uses: fossa-contrib/fossa-action@v1
+      #   with:
+      #     fossa-api-key: ${{ secrets.FOSSA_TOKEN }}
+      #     github-token: ${{ github.token }}
 
   notify:
     name: Notify
