@@ -23,6 +23,8 @@ This document is the reference documentation for the Policy resource. An example
     - [IngressMTLS](#ingressmtls)
       - [IngressMTLS Merging Behavior](#ingressmtls-merging-behavior)
   - [Using Policy](#using-policy)
+    - [Applying Policies](#applying-policies)
+    - [Invalid Policies](#invalid-policies)
     - [Validation](#validation)
       - [Structural Validation](#structural-validation)
       - [Comprehensive Validation](#comprehensive-validation)
@@ -283,7 +285,7 @@ A VirtualServer that references an IngressMTLS policy must:
 * Enable [TLS termination](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-tls).
 * Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route `](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-route) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute-subroute).
 
-If the conditions above are not met, NGINX will send `500` error response to clients.
+If the conditions above are not met, NGINX will send the `500` status code to clients.
 
 You can pass the client certificate details, including the certificate, to the upstream servers. For example:
 ```yaml
@@ -351,6 +353,86 @@ webapp-policy   27m
 ```
 
 For `kubectl get` and similar commands, you can also use the short name `pol` instead of `policy`.
+
+### Applying Policies
+
+You can apply policies to both VirtualServer and VirtualServerRoute resources. For example:
+  * VirtualServer:
+    ```yaml
+    apiVersion: k8s.nginx.org/v1
+    kind: VirtualServer
+    metadata:
+      name: cafe
+      namespace: cafe
+    spec:
+      host: cafe.example.com
+      tls:
+        secret: cafe-secret
+      policies: # spec policies
+      - policy1
+      upstreams:
+      - name: coffee 
+        service: coffee-svc
+        port: 80
+      routes:
+      - path: /tea
+        policies: # route policies
+        - policy2
+        route: tea/tea
+      - path: /coffee 
+        policies: # route policies
+        - policy3
+        action:
+          pass: coffee
+      ```
+
+      For VirtualServer, you can apply a policy:
+      - to all routes (spec policies)
+      - to a specific route (route policies)
+
+      Route policies of the *same type* override spec policies. In the example above, if the type of the policies `policy-1` and `policy-3` is `accessControl`, then for requests to `cafe.example.com/coffee`, NGINX will apply `policy-3`.
+
+      The overriding is enforced by NGINX: the spec policies are implemented in the `server` context of the config, the route policies --  the `location` context. As a result, the route policies of the same type win.
+  * VirtualServerRoute, which is referenced by the VirtualServer above:
+    ```yaml
+    apiVersion: k8s.nginx.org/v1
+    kind: VirtualServerRoute
+    metadata:
+      name: tea 
+      namespace: tea
+    spec:
+      host: cafe.example.com
+      upstreams:
+      - name: tea 
+        service: tea-svc
+        port: 80
+      subroutes: # subroute policies
+      - path: /tea 
+        policies:
+        - policy4
+        action:
+          pass: tea
+    ```
+    
+    For VirtualServerRoute, you can apply a policy to a subroute (subroute policies).
+
+    Subroute policies of the same type override spec policies. In the example above, if the type of the policies `policy-1` (in the VirtualServer) and `policy-4` is `accessControl`, then for requests to `cafe.example.com/tea`, NGINX will apply `policy-4`. As with the VirtualServer, the overriding is enforced by NGINX.
+
+    Subroute policies always override route policies no matter the types. For example, the policy `policy-2` in the VirtualServer route will be ignored for the subroute `/tea`, because the subroute has its own policies (in our case, only one policy `policy4`). If the subroute didn't have any policies, then the `policy-2` would be applied. This overriding is enforced by the Ingress Controller -- the `location` context for the subroute will either have route policies or subroute policies, but not both.
+
+### Invalid Policies
+
+NGINX will treat a policy as invalid if one of the following conditions is met:
+* The policy doesn't pass the [comprehensive validation](#comprehensive-validation).
+* The policy isn't present in the cluster.
+* The policy doesn't meet its type-specific requirements. For example, an `ingressMTLS` policy requires TLS termination enabled in the VirtualServer. 
+
+
+For an invalid policy, NGINX returns the 500 status code for client requests with the following rules:
+* If a policy is referenced in a VirtualServer `route` or a VirtualServerRoute `subroute`, then NGINX will return the 500 status code for requests for the URIs of that route/subroute.
+* If a policy is referenced in the VirtualServer `spec`, then NGINX will return the 500 status code for requests for all URIs of that VirtualServer.
+
+If a policy is invalid, the VirtualServer or VirtualServerRoute will have the [status](/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status#virtualserver-and-virtualserverroute-resources) with the state `Warning` and the message explaining why the policy wasn't considered invalid.
 
 ### Validation
 

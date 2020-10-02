@@ -218,7 +218,7 @@ The route defines rules for matching client requests to actions like passing a r
      - ``string``
      - Yes
    * - ``policies``
-     - A list of policies. The policies override the policies of the same type defined in the ``spec`` of the VirtualServer. The overriding is done by NGINX: the route policies are configured in the ``location`` context, which overrides the spec policies of the same type defined in the ``server`` context. 
+     - A list of policies. The policies override the policies of the same type defined in the ``spec`` of the VirtualServer. See `Applying Policies </nginx-ingress-controller/configuration/policy-resource/#applying-policies>`_ for more details. 
      - `[]policy <#virtualserver-policy>`_
      - No
    * - ``action``
@@ -351,7 +351,7 @@ action:
      - ``string``
      - Yes
    * - ``policies``
-     - A list of policies. The policies override *all* policies defined in the route of the VirtualServer that references this resource. This is done by the Ingress Controller: the route policies of the VirtualServer will not be present in the generated configuration. The policies also override the policies of the same type defined in the ``spec`` of the VirtualServer. This overriding is done by NGINX: the subroute policies are configured in the ``location`` context, which overrides the spec policies of the same type defined in the ``server`` context.
+     - A list of policies. The policies override *all* policies defined in the route of the VirtualServer that references this resource. The policies also override the policies of the same type defined in the ``spec`` of the VirtualServer. See `Applying Policies </nginx-ingress-controller/configuration/policy-resource/#applying-policies>`_ for more details. 
      - `[]policy <#virtualserver-policy>`_
      - No
    * - ``action``
