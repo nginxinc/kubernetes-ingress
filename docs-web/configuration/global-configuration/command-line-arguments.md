@@ -204,6 +204,11 @@ Below we describe the available command-line arguments:
 
     - If the argument is set, but `nginx-plus` is set to false, or the `spire-agent-address` is not provided, the Ingress Controller will fail to start.
 
+.. option:: -enable-latency-metrics
+
+	Enable collection of latency metrics for upstreams.
+    Requires :option:`-enable-prometheus-metrics`.
+
 .. option:: -enable-app-protect
 
 	 Enables support for App Protect.
