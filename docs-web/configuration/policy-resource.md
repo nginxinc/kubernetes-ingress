@@ -392,7 +392,7 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
 
       Route policies of the *same type* override spec policies. In the example above, if the type of the policies `policy-1` and `policy-3` is `accessControl`, then for requests to `cafe.example.com/coffee`, NGINX will apply `policy-3`.
 
-      The overriding is enforced by NGINX: the spec policies are implemented in the `server` context of the config, the route policies --  the `location` context. As a result, the route policies of the same type win.
+      The overriding is enforced by NGINX: the spec policies are implemented in the `server` context of the config, and the route policies are implemented in the `location` context. As a result, the route policies of the same type win.
   * VirtualServerRoute, which is referenced by the VirtualServer above:
     ```yaml
     apiVersion: k8s.nginx.org/v1
