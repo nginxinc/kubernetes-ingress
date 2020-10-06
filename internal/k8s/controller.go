@@ -1609,7 +1609,7 @@ func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, ings 
 func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ings []networking.Ingress, virtualServers []*conf_v1.VirtualServer) {
 	secretNsName := secret.Namespace + "/" + secret.Name
 
-	err := lbc.ValidateSecret(secret)
+	kind, err := GetSecretKind(secret)
 	if err != nil {
 		// Secret becomes Invalid
 		glog.Errorf("Couldn't validate secret %v: %v", secretNsName, err)
@@ -1625,9 +1625,6 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, ing
 	title := "Updated"
 	message := fmt.Sprintf("Configuration was updated due to updated secret %v", secretNsName)
 	state := conf_v1.StateValid
-
-	// we can safely ignore the error because the secret is valid in this function
-	kind, _ := GetSecretKind(secret)
 
 	if kind == JWK {
 		virtualServerExes := lbc.virtualServersToVirtualServerExes(virtualServers)
@@ -3300,23 +3297,6 @@ func (lbc *LoadBalancerController) isHealthCheckEnabled(ing *networking.Ingress)
 		return healthCheckEnabled
 	}
 	return false
-}
-
-// ValidateSecret validates that the secret follows the TLS Secret format.
-// For NGINX Plus, it also checks if the secret follows the JWK Secret format.
-func (lbc *LoadBalancerController) ValidateSecret(secret *api_v1.Secret) error {
-	err1 := ValidateTLSSecret(secret)
-	if !lbc.isNginxPlus {
-		return err1
-	}
-
-	err2 := ValidateJWKSecret(secret)
-
-	if err1 == nil || err2 == nil {
-		return nil
-	}
-
-	return fmt.Errorf("Secret is not a TLS or JWK secret")
 }
 
 // getMinionsForHost returns a list of all minion ingress resources for a given master

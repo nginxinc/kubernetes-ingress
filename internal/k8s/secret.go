@@ -14,7 +14,7 @@ const IngressMTLSKey = "ca.crt"
 
 const (
 	// TLS Secret
-	TLS = iota
+	TLS = iota + 1
 	// JWK Secret
 	JWK
 	// IgressMTLS Secret
@@ -23,11 +23,17 @@ const (
 
 // ValidateTLSSecret validates the secret. If it is valid, the function returns nil.
 func ValidateTLSSecret(secret *v1.Secret) error {
-	if _, exists := secret.Data[v1.TLSCertKey]; !exists {
+	_, certExists := secret.Data[v1.TLSCertKey]
+	_, keyExists := secret.Data[v1.TLSPrivateKeyKey]
+
+	if certExists && keyExists {
+		return nil
+	}
+	if !certExists {
 		return fmt.Errorf("Secret doesn't have %v", v1.TLSCertKey)
 	}
 
-	if _, exists := secret.Data[v1.TLSPrivateKeyKey]; !exists {
+	if !keyExists {
 		return fmt.Errorf("Secret doesn't have %v", v1.TLSPrivateKeyKey)
 	}
 

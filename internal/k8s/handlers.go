@@ -153,7 +153,8 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			secret := obj.(*v1.Secret)
-			if err := lbc.ValidateSecret(secret); err != nil {
+			if _, err := GetSecretKind(secret); err != nil {
+				glog.V(3).Infof("Ignoring unknown secret: %v", secret.Name)
 				return
 			}
 			glog.V(3).Infof("Adding Secret: %v", secret.Name)
@@ -173,7 +174,8 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 					return
 				}
 			}
-			if err := lbc.ValidateSecret(secret); err != nil {
+			if _, err := GetSecretKind(secret); err != nil {
+				glog.V(3).Infof("Ignoring unknown secret: %v", secret.Name)
 				return
 			}
 
@@ -181,9 +183,11 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, cur interface{}) {
-			errOld := lbc.ValidateSecret(old.(*v1.Secret))
-			errCur := lbc.ValidateSecret(cur.(*v1.Secret))
+			curSecret := cur.(*v1.Secret)
+			_, errOld := GetSecretKind(old.(*v1.Secret))
+			_, errCur := GetSecretKind(curSecret)
 			if errOld != nil && errCur != nil {
+				glog.V(3).Infof("Ignoring unknown secret: %v", curSecret.Name)
 				return
 			}
 
