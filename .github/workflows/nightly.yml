@@ -3,12 +3,6 @@ name: Nightly
 on:
   schedule:
     - cron:  '0 4 * * *'
-  pull_request:
-    branches:
-      - master
-    types:
-      - opened
-      - synchronize
 
 defaults:
   run:
@@ -509,7 +503,7 @@ jobs:
               icon_emoji: ':octocat:',
               mention: 'channel',
               attachments: [{
-                title: '${{ steps.commit.outputs.repo }} ${{ github.workflow }} pipeline has failed',
+                title: '[${{ steps.commit.outputs.repo }}] ${{ github.workflow }} pipeline has failed',
                 color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
                 fields: [{
                   title: 'Commit Hash',
