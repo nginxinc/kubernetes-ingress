@@ -3,6 +3,11 @@ name: Nightly
 on:
   schedule:
     - cron:  '0 4 * * *'
+  pull_request:
+    branches:
+      - master
+    types:
+      - opened
 
 defaults:
   run:
@@ -350,7 +355,7 @@ jobs:
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ matrix.k8s }} --config kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ env.K8S_TIMEOUT }}
           kind load docker-image ${{ matrix.image }}:${{ matrix.tag }} --name ${{ github.run_id }}
           echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
-          echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.type }}-${{ matrix.marker }}')
+          echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.type }}')
       - name: Setup Kubeconfig
         run: |
           sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
@@ -374,7 +379,7 @@ jobs:
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
         with:
-          name: test-results-${{ steps.k8s.outputs.cluster }}
+          name: test-results-${{ steps.k8s.outputs.cluster }}-${{ matrix.k8s }}
           path: ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html
         if: always()
 
