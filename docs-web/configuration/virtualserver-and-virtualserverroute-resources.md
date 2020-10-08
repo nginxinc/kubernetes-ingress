@@ -82,7 +82,7 @@ spec:
      - Type
      - Required
    * - ``host``
-     - The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.
+     - The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also `Handling Host Collisions </nginx-ingress-controller/configuration/handling-host-collisions>`_.
      - ``string``
      - Yes
    * - ``tls``
