@@ -601,7 +601,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 					break
 				}
 				if egressMTLS != nil {
-					vsc.addWarningf(owner, "Multiple egressMTLS policies are not allowed. EgressMTLS policy %q will be ignored", key)
+					vsc.addWarningf(owner, "Multiple egressMTLS policies in the same context is not valid. EgressMTLS policy %q will be ignored", key)
 					continue
 				}
 

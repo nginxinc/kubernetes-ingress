@@ -627,7 +627,7 @@ func TestValidateEgressMTLS(t *testing.T) {
 	for _, test := range tests {
 		allErrs := validateEgressMTLS(test.eg, field.NewPath("egressMTLS"))
 		if len(allErrs) != 0 {
-			t.Errorf("validateIngressMTLS() returned errors %v for valid input for the case of %v", allErrs, test.msg)
+			t.Errorf("validateEgressMTLS() returned errors %v for valid input for the case of %v", allErrs, test.msg)
 		}
 	}
 }

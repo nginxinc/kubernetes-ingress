@@ -9,4 +9,4 @@ spec:
     verifyServer: on
     verifyDepth: 2
     serverName: on
-    sslName: "secure-app.example.com"
+    sslName: secure-app.example.com

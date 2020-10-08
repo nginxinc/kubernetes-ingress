@@ -1,6 +1,6 @@
 # Egress MTLS
 
-In this example, we deploy a web application, configure load balancing for it via a VirtualServer, and apply an Egress MTLS policy.
+In this example, we deploy a secure web application, configure load balancing for it via a VirtualServer, and apply an Egress MTLS policy.
 
 ## Prerequisites
 
@@ -18,12 +18,12 @@ In this example, we deploy a web application, configure load balancing for it vi
 
 Create the application deployment, service and secret:
 ```
-$ kubectl apply -f secure-webapp.yaml
+$ kubectl apply -f secure-app.yaml
 ```
 
 ## Step 2 - Deploy the Egress MLTS Secret
 
-Create a secret with the name `egress-mtls-secret` that will be used for authentication to the Secure Web Application:
+Create a secret with the name `egress-mtls-secret` that will be used for authentication to application:
 ```
 $ kubectl apply -f egress-mtls-secret.yaml
 ```
@@ -49,7 +49,7 @@ Create a VirtualServer resource for the web application:
 $ kubectl apply -f virtual-server.yaml
 ```
 
-Note that the VirtualServer references the policy `egress-mtls-policy` created in Step 3.
+Note that the VirtualServer references the policy `egress-mtls-policy` created in Step 4.
 
 ## Step 6 - Test the Configuration
 
