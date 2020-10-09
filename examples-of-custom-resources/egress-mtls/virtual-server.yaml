@@ -8,9 +8,11 @@ spec:
   - name: secure-app
     service: secure-app
     port: 8443
+    tls:
+      enable: true
   routes:
   - path: /
     policies:
-        - name: egress-mtls-policy
+    - name: egress-mtls-policy
     action:
       pass: secure-app

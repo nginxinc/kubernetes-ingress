@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
@@ -1103,12 +1104,34 @@ func TestFindPoliciesForSecret(t *testing.T) {
 
 	ingTLSPol := &conf_v1alpha1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "ingress-tmls-policy",
+			Name:      "ingress-mtls-policy",
 			Namespace: "default",
 		},
 		Spec: conf_v1alpha1.PolicySpec{
 			IngressMTLS: &conf_v1alpha1.IngressMTLS{
 				ClientCertSecret: "ingress-mtls-secret",
+			},
+		},
+	}
+	egTLSPol := &conf_v1alpha1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "egress-mtls-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1alpha1.PolicySpec{
+			EgressMTLS: &conf_v1alpha1.EgressMTLS{
+				TLSSecret: "egress-mtls-secret",
+			},
+		},
+	}
+	egTLSPol2 := &conf_v1alpha1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "egress-trusted-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1alpha1.PolicySpec{
+			EgressMTLS: &conf_v1alpha1.EgressMTLS{
+				TrustedCertSecret: "egress-trusted-secret",
 			},
 		},
 	}
@@ -1155,11 +1178,39 @@ func TestFindPoliciesForSecret(t *testing.T) {
 			expected:        []*v1alpha1.Policy{ingTLSPol},
 			msg:             "Find policy in default ns, ignore other types",
 		},
+		{
+			policies:        []*conf_v1alpha1.Policy{egTLSPol},
+			secretNamespace: "default",
+			secretName:      "egress-mtls-secret",
+			expected:        []*v1alpha1.Policy{egTLSPol},
+			msg:             "Find policy in default ns",
+		},
+		{
+			policies:        []*conf_v1alpha1.Policy{jwtPol1, egTLSPol},
+			secretNamespace: "default",
+			secretName:      "egress-mtls-secret",
+			expected:        []*v1alpha1.Policy{egTLSPol},
+			msg:             "Find policy in default ns, ignore other types",
+		},
+		{
+			policies:        []*conf_v1alpha1.Policy{egTLSPol2},
+			secretNamespace: "default",
+			secretName:      "egress-trusted-secret",
+			expected:        []*v1alpha1.Policy{egTLSPol2},
+			msg:             "Find policy in default ns",
+		},
+		{
+			policies:        []*conf_v1alpha1.Policy{egTLSPol, egTLSPol2},
+			secretNamespace: "default",
+			secretName:      "egress-trusted-secret",
+			expected:        []*v1alpha1.Policy{egTLSPol2},
+			msg:             "Find policy in default ns, ignore other types",
+		},
 	}
 	for _, test := range tests {
 		result := findPoliciesForSecret(test.policies, test.secretNamespace, test.secretName)
-		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("findPoliciesForSecret() returned \n%v but expected \n%v for the case of %s", result, test.expected, test.msg)
+		if diff := cmp.Diff(test.expected, result); diff != "" {
+			t.Errorf("findPoliciesForSecret() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }
@@ -1433,5 +1484,191 @@ func TestGetIngressMTLSSecret(t *testing.T) {
 			t.Errorf("getIngressMTLSSecret() returned \n%+v but expected \n%+v", secret, test.expectedIngressMTLSSecret)
 		}
 
+	}
+}
+
+func TestGetEgressMTLSSecrets(t *testing.T) {
+	validSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-egress-mtls-secret",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{"tls.key": nil, "tls.crt": nil},
+	}
+	validSecret2 := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-egress-trusted-secret",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{"ca.crt": nil},
+	}
+
+	invalidSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "invalid-egress-mtls-secret",
+			Namespace: "default",
+		},
+		Data: nil,
+	}
+
+	tests := []struct {
+		policies                  []*conf_v1alpha1.Policy
+		expectedEgressMTLSSecrets map[string]*v1.Secret
+		wantErr                   bool
+		msg                       string
+	}{
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "egress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+							TLSSecret: "valid-egress-mtls-secret",
+						},
+					},
+				},
+			},
+			expectedEgressMTLSSecrets: map[string]*v1.Secret{
+				"default/valid-egress-mtls-secret": validSecret,
+			},
+			wantErr: false,
+			msg:     "test getting valid TLS secret",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "egress-egress-trusted-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+							TrustedCertSecret: "valid-egress-trusted-secret",
+						},
+					},
+				},
+			},
+			expectedEgressMTLSSecrets: map[string]*v1.Secret{
+				"default/valid-egress-trusted-secret": validSecret2,
+			},
+			wantErr: false,
+			msg:     "test getting valid TrustedCA secret",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "egress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+							TLSSecret:         "valid-egress-mtls-secret",
+							TrustedCertSecret: "valid-egress-trusted-secret",
+						},
+					},
+				},
+			},
+			expectedEgressMTLSSecrets: map[string]*v1.Secret{
+				"default/valid-egress-mtls-secret":    validSecret,
+				"default/valid-egress-trusted-secret": validSecret2,
+			},
+			wantErr: false,
+			msg:     "test getting valid secrets",
+		},
+		{
+			policies:                  []*conf_v1alpha1.Policy{},
+			expectedEgressMTLSSecrets: map[string]*v1.Secret{},
+			wantErr:                   false,
+			msg:                       "test getting valid secret with no policy",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						AccessControl: &conf_v1alpha1.AccessControl{
+							Allow: []string{"127.0.0.1"},
+						},
+					},
+				},
+			},
+			expectedEgressMTLSSecrets: map[string]*v1.Secret{},
+			wantErr:                   false,
+			msg:                       "test getting valid secret with wrong policy",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "egress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+							TLSSecret: "non-existing-ingress-mtls-secret",
+						},
+					},
+				},
+			},
+			expectedEgressMTLSSecrets: map[string]*v1.Secret{},
+			wantErr:                   true,
+			msg:                       "test getting secret that does not exist",
+		},
+		{
+			policies: []*conf_v1alpha1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "egress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+							TLSSecret: "invalid-egress-mtls-secret",
+						},
+					},
+				},
+			},
+			expectedEgressMTLSSecrets: map[string]*v1.Secret{},
+			wantErr:                   true,
+			msg:                       "test getting invalid secret",
+		},
+	}
+
+	for _, test := range tests {
+		lbc := LoadBalancerController{
+			secretLister: storeToSecretLister{
+				&cache.FakeCustomStore{
+					GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
+						switch key {
+						case "default/valid-egress-mtls-secret":
+							return validSecret, true, nil
+						case "default/valid-egress-trusted-secret":
+							return validSecret2, true, nil
+						case "default/invalid-ingress-mtls-secret":
+							return invalidSecret, true, errors.New("secret is missing ingress-mtls key in data")
+						default:
+							return nil, false, errors.New("GetByKey error")
+						}
+					},
+				},
+			},
+		}
+
+		egressTLSSecrets := make(map[string]*v1.Secret)
+
+		err := lbc.getEgressMTLSSecrets(test.policies, egressTLSSecrets)
+		if (err != nil) != test.wantErr {
+			t.Errorf("getEgressMTLSSecrets() returned %v, for the case of %v", err, test.msg)
+		}
+		if diff := cmp.Diff(test.expectedEgressMTLSSecrets, egressTLSSecrets); diff != "" {
+			t.Errorf("getEgressMTLSSecrets() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		}
 	}
 }

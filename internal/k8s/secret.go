@@ -9,7 +9,7 @@ import (
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
 
-// ingressMTLSKey is the key of the data field of a Secret where the certificate authority must be stored.
+// CAKey is the key of the data field of a Secret where the certificate authority must be stored.
 const CAKey = "ca.crt"
 
 const (

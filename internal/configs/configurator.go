@@ -45,8 +45,8 @@ const WildcardSecretName = "wildcard"
 // JWTKeyKey is the key of the data field of a Secret where the JWK must be stored.
 const JWTKeyKey = "jwk"
 
-// IngressMTLSKey is the key of the data field of a Secret where the cert must be stored.
-const IngressMTLSKey = "ca.crt"
+// CAKey is the key of the data field of a Secret where the cert must be stored.
+const CAKey = "ca.crt"
 
 // SPIFFE filenames and modes
 const (
@@ -407,8 +407,6 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
 	var tlsPemFileName string
 	var ingressMTLSFileName string
-	var egressMTLSFileName string
-	var trustedCAFileName string
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 
 	if virtualServerEx.TLSSecret != nil {
@@ -417,17 +415,12 @@ func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServer
 	if virtualServerEx.IngressMTLSCert != nil {
 		ingressMTLSFileName = cnf.addOrUpdateCASecret(virtualServerEx.IngressMTLSCert)
 	}
-	if virtualServerEx.TrustedCASecret != nil {
-		trustedCAFileName = cnf.addOrUpdateCASecret(virtualServerEx.TrustedCASecret)
-	}
-	if virtualServerEx.EgressTLSSecret != nil {
-		egressMTLSFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.EgressTLSSecret)
-	}
 
 	jwtKeys := cnf.addOrUpdateJWKSecretsForVirtualServer(virtualServerEx.JWTKeys)
+	egressMTLSSecrets := cnf.addOrUpdateEgressMTLSecretsForVirtualServer(virtualServerEx.EgressTLSSecrets)
 
 	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
-	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName, jwtKeys, ingressMTLSFileName, egressMTLSFileName, trustedCAFileName)
+	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName, jwtKeys, ingressMTLSFileName, egressMTLSSecrets)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
 		return warnings, fmt.Errorf("Error generating VirtualServer config: %v: %v", name, err)
@@ -668,6 +661,25 @@ func (cnf *Configurator) addOrUpdateJWKSecretsForVirtualServer(jwtKeys map[strin
 	return jwkSecrets
 }
 
+func (cnf *Configurator) addOrUpdateEgressMTLSecretsForVirtualServer(egressMTLSsecrets map[string]*api_v1.Secret) map[string]string {
+
+	secrets := make(map[string]string)
+	var filename string
+
+	for v, k := range egressMTLSsecrets {
+		if _, exists := k.Data[api_v1.TLSCertKey]; exists {
+			filename = cnf.addOrUpdateTLSSecret(k)
+		}
+		if _, exists := k.Data[CAKey]; exists {
+			filename = cnf.addOrUpdateCASecret(k)
+
+		}
+		secrets[v] = filename
+	}
+
+	return secrets
+}
+
 // AddOrUpdateResources adds or updates configuration for resources.
 func (cnf *Configurator) AddOrUpdateResources(ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
@@ -743,7 +755,7 @@ func GenerateCertAndKeyFileContent(secret *api_v1.Secret) []byte {
 func GenerateCAFileContent(secret *api_v1.Secret) []byte {
 	var res bytes.Buffer
 
-	res.Write(secret.Data[IngressMTLSKey])
+	res.Write(secret.Data[CAKey])
 
 	return res.Bytes()
 }

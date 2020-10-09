@@ -15,6 +15,7 @@ In this example, we deploy a secure web application, configure load balancing fo
     ```
 
 ## Step 1 - Deploy a Secure Web Application
+The application requires clients to use TLS and present a client TLS certificate which it will verify.
 
 Create the application deployment, service and secret:
 ```
