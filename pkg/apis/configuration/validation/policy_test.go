@@ -612,14 +612,15 @@ func TestValidateEgressMTLS(t *testing.T) {
 		{
 			eg: &v1alpha1.EgressMTLS{
 				TrustedCertSecret: "tls-secret",
-				VerifyServer:      createPointerFromBool(true),
+				VerifyServer:      true,
 				VerifyDepth:       createPointerFromInt(2),
+				ServerName:        false,
 			},
 			msg: "verify server set to true",
 		},
 		{
 			eg: &v1alpha1.EgressMTLS{
-				VerifyServer: createPointerFromBool(false),
+				VerifyServer: false,
 			},
 			msg: "verify server set to false",
 		},
@@ -645,7 +646,7 @@ func TestValidateEgressMTLSInvalid(t *testing.T) {
 	}{
 		{
 			eg: &v1alpha1.EgressMTLS{
-				VerifyServer: createPointerFromBool(true),
+				VerifyServer: true,
 			},
 			msg: "verify server set to true",
 		},
@@ -658,7 +659,7 @@ func TestValidateEgressMTLSInvalid(t *testing.T) {
 		{
 			eg: &v1alpha1.EgressMTLS{
 				TrustedCertSecret: "ingress-mtls-secret",
-				VerifyServer:      createPointerFromBool(true),
+				VerifyServer:      true,
 				VerifyDepth:       createPointerFromInt(-1),
 			},
 			msg: "invalid depth",

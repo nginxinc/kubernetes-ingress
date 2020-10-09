@@ -155,7 +155,7 @@ func validateEgressMTLS(egressMTLS *v1alpha1.EgressMTLS, fieldPath *field.Path) 
 
 	allErrs = append(allErrs, validateSecretName(egressMTLS.TLSSecret, fieldPath.Child("tlsSecret"))...)
 
-	if egressMTLS.VerifyServer != nil && *egressMTLS.VerifyServer && egressMTLS.TrustedCertSecret == "" {
+	if egressMTLS.VerifyServer && egressMTLS.TrustedCertSecret == "" {
 		return append(allErrs, field.Required(fieldPath.Child("trustedCertSecret"), "must be set when verifyServer is 'true'"))
 	}
 	allErrs = append(allErrs, validateSecretName(egressMTLS.TrustedCertSecret, fieldPath.Child("trustedCertSecret"))...)

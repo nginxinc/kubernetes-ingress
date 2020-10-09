@@ -619,10 +619,10 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 					CertificateKey: egressMTLSPemFileName,
 					Ciphers:        generateString(pol.Spec.EgressMTLS.Ciphers, "DEFAULT"),
 					Protocols:      generateString(pol.Spec.EgressMTLS.Protocols, "TLSv1 TLSv1.1 TLSv1.2"),
-					VerifyServer:   generateBool(pol.Spec.EgressMTLS.VerifyServer, false),
+					VerifyServer:   pol.Spec.EgressMTLS.VerifyServer,
 					VerifyDepth:    generateIntFromPointer(pol.Spec.EgressMTLS.VerifyDepth, 1),
 					SessionReuse:   generateBool(pol.Spec.EgressMTLS.SessionReuse, true),
-					ServerName:     generateBool(pol.Spec.EgressMTLS.ServerName, false),
+					ServerName:     pol.Spec.EgressMTLS.ServerName,
 					TrustedCert:    trustedCAFileName,
 					SSLName:        generateString(pol.Spec.EgressMTLS.SSLName, "$proxy_host"),
 				}

@@ -159,13 +159,13 @@ type IngressMTLS struct {
 // EgressMTLS defines an Egress MTLS policy.
 type EgressMTLS struct {
 	TLSSecret         string `json:"tlsSecret"`
-	VerifyServer      *bool  `json:"verifyServer"`
+	VerifyServer      bool   `json:"verifyServer"`
 	VerifyDepth       *int   `json:"verifyDepth"`
 	Protocols         string `json:"protocols"`
 	SessionReuse      *bool  `json:"sessionReuse"`
 	Ciphers           string `json:"ciphers"`
 	TrustedCertSecret string `json:"trustedCertSecret"`
-	ServerName        *bool  `json:"serverName"`
+	ServerName        bool   `json:"serverName"`
 	SSLName           string `json:"sslName"`
 }
 

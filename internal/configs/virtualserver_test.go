@@ -2032,7 +2032,7 @@ func TestGeneratePolicies(t *testing.T) {
 					Spec: conf_v1alpha1.PolicySpec{
 						EgressMTLS: &conf_v1alpha1.EgressMTLS{
 							TLSSecret:         "egress-mtls-secret",
-							ServerName:        createPointerFromBool(true),
+							ServerName:        true,
 							SessionReuse:      createPointerFromBool(false),
 							TrustedCertSecret: "egress-trusted-ca-secret",
 						},
@@ -2054,6 +2054,7 @@ func TestGeneratePolicies(t *testing.T) {
 					ServerName:     true,
 					SessionReuse:   false,
 					VerifyDepth:    1,
+					VerifyServer:   false,
 					TrustedCert:    "/etc/nginx/secrets/default-egress-trusted-ca-secret",
 					SSLName:        "$proxy_host",
 				},
