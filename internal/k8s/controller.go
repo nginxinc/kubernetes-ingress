@@ -2092,7 +2092,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		err = lbc.addEgressMTLSSecrets(policies, virtualServerEx.EgressTLSSecrets)
 		if err != nil {
 			glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
-    }
+		}
 		err = lbc.addJWTSecrets(vsRoutePolicies, virtualServerEx.JWTKeys)
 		if err != nil {
 			glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
