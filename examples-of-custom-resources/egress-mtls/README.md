@@ -31,7 +31,7 @@ $ kubectl apply -f egress-mtls-secret.yaml
 
 ## Step 3 - Deploy the Trusted CA Secret
 
-Create a secret with the name `egress-trusted-ca-secret` that will be used to verify the certificates of the Secure Web Application:
+Create a secret with the name `egress-trusted-ca-secret` that will be used to verify the certificate of the application:
 ```
 $ kubectl apply -f egress-trusted-ca-secret.yaml
 ```
