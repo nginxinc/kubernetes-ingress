@@ -469,6 +469,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			LimitReqs:                 policiesCfg.LimitReqs,
 			JWTAuth:                   policiesCfg.JWTAuth,
 			IngressMTLS:               policiesCfg.IngressMTLS,
+			EgressMTLS:                policiesCfg.EgressMTLS,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
 		},
 		SpiffeCerts: vsc.spiffeCerts,

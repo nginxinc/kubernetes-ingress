@@ -68,6 +68,7 @@ type Server struct {
 	LimitReqs                 []LimitReq
 	JWTAuth                   *JWTAuth
 	IngressMTLS               *IngressMTLS
+	EgressMTLS                *EgressMTLS
 	PoliciesErrorReturn       *Return
 }
 

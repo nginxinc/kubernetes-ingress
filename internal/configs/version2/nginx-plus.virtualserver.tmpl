@@ -142,6 +142,24 @@ server {
     auth_jwt_key_file {{ .Secret }};
     {{ end }}
 
+    {{ with $s.EgressMTLS }}
+        {{ if .Certificate }}
+    proxy_ssl_certificate {{ .Certificate }};
+    proxy_ssl_certificate_key {{ .CertificateKey }};
+        {{ end }}
+        {{ if .TrustedCert }}
+    proxy_ssl_trusted_certificate {{ .TrustedCert }};
+        {{ end }}
+
+    proxy_ssl_verify {{ if .VerifyServer }}on{{else}}off{{end}};
+    proxy_ssl_verify_depth {{ .VerifyDepth }};
+    proxy_ssl_protocols {{ .Protocols }};
+    proxy_ssl_ciphers {{ .Ciphers }};
+    proxy_ssl_session_reuse {{ if .SessionReuse }}on{{else}}off{{end}};
+    proxy_ssl_server_name {{ if .ServerName }}on{{else}}off{{end}};
+    proxy_ssl_name {{ .SSLName }};
+    {{ end }}
+
     {{ range $snippet := $s.Snippets }}
     {{- $snippet }}
     {{ end }}
