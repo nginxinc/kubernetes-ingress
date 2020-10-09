@@ -2039,7 +2039,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		virtualServerEx.IngressMTLSCert = ingressSecret
 	}
 
-	err = lbc.getEgressMTLSSecrets(policies, virtualServerEx.EgressTLSSecrets)
+	err = lbc.addEgressMTLSSecrets(policies, virtualServerEx.EgressTLSSecrets)
 	if err != nil {
 		glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
@@ -2089,7 +2089,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		}
 		policies = append(policies, vsRoutePolicies...)
 
-		err = lbc.getEgressMTLSSecrets(policies, virtualServerEx.EgressTLSSecrets)
+		err = lbc.addEgressMTLSSecrets(policies, virtualServerEx.EgressTLSSecrets)
 		if err != nil {
 			glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 		}
@@ -2108,7 +2108,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 				glog.Warningf("Error getting JWT secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
 
-			err = lbc.getEgressMTLSSecrets(policies, virtualServerEx.EgressTLSSecrets)
+			err = lbc.addEgressMTLSSecrets(policies, virtualServerEx.EgressTLSSecrets)
 			if err != nil {
 				glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 			}
@@ -2254,7 +2254,7 @@ func (lbc *LoadBalancerController) getIngressMTLSSecret(policies []*conf_v1alpha
 	return nil, nil
 }
 
-func (lbc *LoadBalancerController) getEgressMTLSSecrets(policies []*conf_v1alpha1.Policy, egressSecrets map[string]*api_v1.Secret) error {
+func (lbc *LoadBalancerController) addEgressMTLSSecrets(policies []*conf_v1alpha1.Policy, egressSecrets map[string]*api_v1.Secret) error {
 	for _, pol := range policies {
 		if pol.Spec.EgressMTLS == nil {
 			continue

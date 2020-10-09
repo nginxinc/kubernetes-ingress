@@ -58,7 +58,6 @@ type VirtualServerEx struct {
 	JWTKeys             map[string]*api_v1.Secret
 	IngressMTLSCert     *api_v1.Secret
 	EgressTLSSecrets    map[string]*api_v1.Secret
-	TrustedCASecret     *api_v1.Secret
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
 	Policies            map[string]*conf_v1alpha1.Policy
@@ -597,19 +596,33 @@ func (vsc *virtualServerConfigurator) generatePolicies(owner runtime.Object, own
 					continue
 				}
 
-				egressMTLSPemFileName := fmt.Sprintf("%v/%v", polNamespace, pol.Spec.EgressMTLS.TLSSecret)
-				trustedCAFileName := fmt.Sprintf("%v/%v", polNamespace, pol.Spec.EgressMTLS.TrustedCertSecret)
+				egressTLSSecret := fmt.Sprintf("%v/%v", polNamespace, pol.Spec.EgressMTLS.TLSSecret)
+				TrustedCertSecret := fmt.Sprintf("%v/%v", polNamespace, pol.Spec.EgressMTLS.TrustedCertSecret)
+
+				trustedCAFileName, trustedEsists := egressMTLSSecrets[TrustedCertSecret]
+				if pol.Spec.EgressMTLS.TrustedCertSecret != "" && !trustedEsists {
+					vsc.addWarningf(owner, `EgressMTLS policy %q references a Secret which does not exist`, key)
+					policyError = true
+					break
+				}
+
+				egressMTLSPemFileName, tlsExists := egressMTLSSecrets[egressTLSSecret]
+				if pol.Spec.EgressMTLS.TLSSecret != "" && !tlsExists {
+					vsc.addWarningf(owner, `EgressMTLS policy %q references a Secret which does not exist`, key)
+					policyError = true
+					break
+				}
 
 				egressMTLS = &version2.EgressMTLS{
-					Certificate:    egressMTLSSecrets[egressMTLSPemFileName],
-					CertificateKey: egressMTLSSecrets[egressMTLSPemFileName],
+					Certificate:    egressMTLSPemFileName,
+					CertificateKey: egressMTLSPemFileName,
 					Ciphers:        generateString(pol.Spec.EgressMTLS.Ciphers, "DEFAULT"),
 					Protocols:      generateString(pol.Spec.EgressMTLS.Protocols, "TLSv1 TLSv1.1 TLSv1.2"),
 					VerifyServer:   generateBool(pol.Spec.EgressMTLS.VerifyServer, false),
 					VerifyDepth:    generateIntFromPointer(pol.Spec.EgressMTLS.VerifyDepth, 1),
 					SessionReuse:   generateBool(pol.Spec.EgressMTLS.SessionReuse, true),
 					ServerName:     generateBool(pol.Spec.EgressMTLS.ServerName, false),
-					TrustedCert:    egressMTLSSecrets[trustedCAFileName],
+					TrustedCert:    trustedCAFileName,
 					SSLName:        generateString(pol.Spec.EgressMTLS.SSLName, "$proxy_host"),
 				}
 

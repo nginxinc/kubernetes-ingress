@@ -2493,6 +2493,74 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			msg: "multi egress mtls",
 		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "egress-mtls-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/egress-mtls-policy": {
+					Spec: conf_v1alpha1.PolicySpec{
+						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+							TrustedCertSecret: "egress-tusted-secret",
+							SSLName:           "foo.com",
+						},
+					},
+				},
+			},
+			jwtKeys: nil,
+			context: "route",
+			egressMTLSSecrets: map[string]string{
+				"default/egress-mtls-secret": "/etc/nginx/secrets/default-egress-mtls-secret",
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: map[runtime.Object][]string{
+				nil: {
+					`EgressMTLS policy "default/egress-mtls-policy" references a Secret which does not exist`,
+				},
+			},
+			msg: "egress mtls referencing missing CA secret",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "egress-mtls-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/egress-mtls-policy": {
+					Spec: conf_v1alpha1.PolicySpec{
+						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+							TLSSecret: "egress-mtls-secret",
+							SSLName:   "foo.com",
+						},
+					},
+				},
+			},
+			jwtKeys: nil,
+			context: "route",
+			egressMTLSSecrets: map[string]string{
+				"default/egress-trusted-secret": "/etc/nginx/secrets/default-egress-trusted-secret",
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: map[runtime.Object][]string{
+				nil: {
+					`EgressMTLS policy "default/egress-mtls-policy" references a Secret which does not exist`,
+				},
+			},
+			msg: "egress mtls referencing missing tls secret",
+		},
 	}
 
 	for _, test := range tests {

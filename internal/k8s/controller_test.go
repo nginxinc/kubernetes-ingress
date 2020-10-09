@@ -1487,7 +1487,7 @@ func TestGetIngressMTLSSecret(t *testing.T) {
 	}
 }
 
-func TestGetEgressMTLSSecrets(t *testing.T) {
+func TestAddEgressMTLSSecrets(t *testing.T) {
 	validSecret := &v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-egress-mtls-secret",
@@ -1651,8 +1651,8 @@ func TestGetEgressMTLSSecrets(t *testing.T) {
 							return validSecret, true, nil
 						case "default/valid-egress-trusted-secret":
 							return validSecret2, true, nil
-						case "default/invalid-ingress-mtls-secret":
-							return invalidSecret, true, errors.New("secret is missing ingress-mtls key in data")
+						case "default/invalid-egress-mtls-secret":
+							return invalidSecret, true, errors.New("secret is missing egress-mtls key in data")
 						default:
 							return nil, false, errors.New("GetByKey error")
 						}
@@ -1663,12 +1663,12 @@ func TestGetEgressMTLSSecrets(t *testing.T) {
 
 		egressTLSSecrets := make(map[string]*v1.Secret)
 
-		err := lbc.getEgressMTLSSecrets(test.policies, egressTLSSecrets)
+		err := lbc.addEgressMTLSSecrets(test.policies, egressTLSSecrets)
 		if (err != nil) != test.wantErr {
-			t.Errorf("getEgressMTLSSecrets() returned %v, for the case of %v", err, test.msg)
+			t.Errorf("addEgressMTLSSecrets() returned %v, for the case of %v", err, test.msg)
 		}
 		if diff := cmp.Diff(test.expectedEgressMTLSSecrets, egressTLSSecrets); diff != "" {
-			t.Errorf("getEgressMTLSSecrets() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			t.Errorf("addEgressMTLSSecrets() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }
