@@ -27,7 +27,7 @@ func RunPrometheusListenerForNginx(port int, client *prometheusClient.NginxClien
 }
 
 // RunPrometheusListenerForNginxPlus runs an http server to expose Prometheus metrics for NGINX Plus
-func RunPrometheusListenerForNginxPlus(port int, nginxPlusCollector *nginxCollector.NginxPlusCollector, registry *prometheus.Registry) {
+func RunPrometheusListenerForNginxPlus(port int, nginxPlusCollector prometheus.Collector, registry *prometheus.Registry) {
 	registry.MustRegister(nginxPlusCollector)
 	runServer(strconv.Itoa(port), registry)
 }
