@@ -27,7 +27,7 @@ Consider the following two resources:
     metadata:
       name: cafe-virtual-server
     spec:
-      host: cafe.example.co
+      host: cafe.example.com
       . . .
     ```
 
