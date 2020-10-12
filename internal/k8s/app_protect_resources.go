@@ -67,7 +67,7 @@ func ValidateAppProtectLogDestinationAnnotation(dstAntn string) error {
 	if dstAntn == "stderr" {
 		return nil
 	}
-	
+
 	if logDstFileEx.MatchString(dstAntn) {
 		return nil
 	}
