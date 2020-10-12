@@ -2649,19 +2649,16 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *networki
 func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool {
 	var class string
 	var isIngress bool
-	switch obj.(type) {
+	switch obj := obj.(type) {
 	case *conf_v1.VirtualServer:
-		vs := obj.(*conf_v1.VirtualServer)
-		class = vs.Spec.IngressClass
+		class = obj.Spec.IngressClass
 	case *conf_v1.VirtualServerRoute:
-		vsr := obj.(*conf_v1.VirtualServerRoute)
-		class = vsr.Spec.IngressClass
+		class = obj.Spec.IngressClass
 	case *networking.Ingress:
 		isIngress = true
-		ing := obj.(*networking.Ingress)
-		class = ing.Annotations[ingressClassKey]
-		if class == "" && ing.Spec.IngressClassName != nil {
-			class = *ing.Spec.IngressClassName
+		class = obj.Annotations[ingressClassKey]
+		if class == "" && obj.Spec.IngressClassName != nil {
+			class = *obj.Spec.IngressClassName
 		} else {
 			// the annotation takes precedence over the field
 			glog.Warningln("Using the DEPRECATED annotation 'kubernetes.io/ingress.class'. The 'ingressClassName' field will be ignored.")

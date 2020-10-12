@@ -2,7 +2,7 @@ package k8s
 
 import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	networking "k8s.io/api/networking/v1beta1"
 )
 

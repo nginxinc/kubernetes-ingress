@@ -840,7 +840,7 @@ func validateActionReturnCode(code int, fieldPath *field.Path) field.ErrorList {
 		return allErrs
 	}
 
-	msg := fmt.Sprintf("must be a valid status code either 2XX, 4XX or 5XX, for example, 200 or 402.")
+	msg := "must be a valid status code either 2XX, 4XX or 5XX, for example, 200 or 402."
 	return append(allErrs, field.Invalid(fieldPath, code, msg))
 }
 

@@ -725,17 +725,15 @@ func addPoliciesCfgToLocations(cfg policiesCfg, locations []version2.Location) {
 func getUpstreamResourceLabels(owner runtime.Object) version2.UpstreamLabels {
 	var resourceType, resourceName, resourceNamespace string
 
-	switch owner.(type) {
+	switch owner := owner.(type) {
 	case *conf_v1.VirtualServer:
-		vs := owner.(*conf_v1.VirtualServer)
 		resourceType = "virtualserver"
-		resourceName = vs.Name
-		resourceNamespace = vs.Namespace
+		resourceName = owner.Name
+		resourceNamespace = owner.Namespace
 	case *conf_v1.VirtualServerRoute:
-		vsr := owner.(*conf_v1.VirtualServerRoute)
 		resourceType = "virtualserverroute"
-		resourceName = vsr.Name
-		resourceNamespace = vsr.Namespace
+		resourceName = owner.Name
+		resourceNamespace = owner.Namespace
 	}
 
 	return version2.UpstreamLabels{
