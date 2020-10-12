@@ -56,7 +56,7 @@ Events:
   ----     ------    ----  ----                      -------
   Warning  Rejected  66s   nginx-ingress-controller  All hosts are taken by other resources
 ```
-> Note: Ingress resources allow configuring multiple hosts. As a result, an Ingress resource can be the winner for some of its hosts and a loser for the rest. For example, if `cafe-ingress` had an additional rule host rule `pub.example.com`, the Ingress Controller would not reject the Ingress: it would allow `cafe-ingress` to handle `pub.example.com`.
+> Note: You can configure multiple hosts for Ingress resources. As a result, it's possible that an Ingress resource can be the winner for some of its hosts and a loser for the others. For example, if `cafe-ingress` had an additional rule host rule -- `pub.example.com` -- the Ingress Controller would not reject the Ingress. Rather, it would allow `cafe-ingress` to handle `pub.example.com`.
 
 Similarly, if `cafe-ingress` was created first, it will win `cafe.example.com` and the Ingress Controller will reject `cafe-virtual-server`.
 
