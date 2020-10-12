@@ -62,6 +62,6 @@ Similarly, if `cafe-ingress` was created first, it will win `cafe.example.com`, 
 
 ## Merging Configuration for the Same Host
 
-It is possible to merge configuration for multiple Ingress resources for the same host. One common use case for that is distributing such resources across multiple namespaces. See the [Cross-namespace Configuration](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/) doc.
+It is possible to merge configuration for multiple Ingress resources for the same host. One common use case for this approach is distributing resources across multiple namespaces. See the [Cross-namespace Configuration](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/) doc for more information.
 
 It is *not* possible to merge the configurations for multiple VirtualServer resources for the same host. However, you can split the VirtualServers into multiple VirtualServerRoute resources, which a single VirtualServer can then reference. See the [corresponding example](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples-of-custom-resources/cross-namespace-configuration) on GitHub.
