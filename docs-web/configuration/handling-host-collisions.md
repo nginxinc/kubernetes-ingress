@@ -35,7 +35,7 @@ If a user creates both resources in the cluster, a host collision will occur. As
 
 > If multiple resources contend for the same host, the Ingress Controller will pick the winner based on the `creationTimestamp` of the resources: the oldest resource will win. In case there are more than one oldest resources (their `creationTimestamp` is the same),  the Ingress Controller will choose the resource with the smallest `uid`. Note: the `creationTimestamp` and `uid` fields are part of the resource [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.19/#objectmeta-v1-meta). 
 
-In our example, if `cafe-virtual-server` was created first, it will  win the host `cafe.example.com`, and the Ingress Controller will reject `cafe-ingress`. The winning and losing will be reflected in the events and the status field of the resources:
+In our example, if `cafe-virtual-server` was created first, it will win the host `cafe.example.com` and the Ingress Controller will reject `cafe-ingress`. This will be reflected in the events and in the resource's status field:
 ```
 $ kubectl describe vs cafe-virtual-server
 . . .
