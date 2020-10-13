@@ -374,7 +374,7 @@ egressMTLS:
      - No
    * - ``verifyServer``
      - Enables verification of the upstream HTTPS server certificate.
-     - ``bool`
+     - ``bool``
      - No
    * - ``verifyDepth``
      - Sets the verification depth in the client certificates chain. The default is ``1``.
@@ -382,29 +382,30 @@ egressMTLS:
      - No
    * - ``sessionReuse``
      - Enables reuse of SSL sessions to the upstreams. The default is ``true``.
-     - ``bool`
+     - ``bool``
      - No
    * - ``serverName``
      - Enables passing of the server name through ``Server Name Indication`` extension.
-     - ``bool`
+     - ``bool``
      - No
    * - ``sslName``
      - Allows overriding the server name used to verify the certificate of the upstream HTTPS server.
-     - ``string`
+     - ``string``
      - No
    * - ``ciphers``
      - Specifies the enabled ciphers for requests to an upstream HTTPS server. The default is ``DEFAULT``.
-     - ``string`
+     - ``string``
      - No
    * - ``protocols``
      - Specifies the protocols for requests to an upstream HTTPS server. The default is ``TLSv1 TLSv1.1 TLSv1.2``.
-     - ``string`
+     - ``string``
      - No
 ```
+> Note: the value is not validated by the Ingress Controller. As a result, NGINX can fail to reload the configuration. To ensure that the configuration for a VirtualServer/VirtualServerRoute that references the policy was successfully applied, check its [status](/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status/#virtualserver-and-virtualserverroute-resources). The validation will be added in the future releases.
 
 #### EgressMTLS Merging Behavior
 
-A VirtualServer/VirtualServerRoute can reference only a single EgressMTLS policy. Every subsequent reference will be ignored. For example, here we reference two policies:
+A VirtualServer/VirtualServerRoute can reference multiple EgressMTLS policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
 ```yaml
 policies:
 - name: egress-mtls-policy-one
