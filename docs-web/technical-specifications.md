@@ -27,12 +27,12 @@ The supported architecture is x86-64.
       - ``Dockerfile``
       - ``nginx:1.19.3``, which is based on ``debian:buster-slim``
       - 
-      - ``nginx/nginx-ingress:1.8.1``
+      - ``nginx/nginx-ingress:1.9.0``
     * - Alpine-based image
       - ``DockerfileForAlpine``
       - ``nginx:1.19.3-alpine``, which is based on ``alpine:3.10``
       - 
-      - ``nginx/nginx-ingress:1.8.1-alpine``
+      - ``nginx/nginx-ingress:1.9.0-alpine``
     * - Debian-based image with Opentracing
       - ``DockerfileWithOpentracing``
       - ``nginx:1.19.3``, which is based on ``debian:buster-slim``
@@ -42,7 +42,7 @@ The supported architecture is x86-64.
       - ``openshift/Dockerfile``
       - ``registry.access.redhat.com/ubi8/ubi:8.1``
       - 
-      - ``nginx/nginx-ingress:1.8.1-ubi``
+      - ``nginx/nginx-ingress:1.9.0-ubi``
 ```
 \* -- Dockerfile paths are relative to the ``build`` folder of the Ingress Controller git repo.
 
