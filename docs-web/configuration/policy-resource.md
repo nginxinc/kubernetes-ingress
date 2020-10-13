@@ -373,7 +373,7 @@ egressMTLS:
      - ``string``
      - No
    * - ``verifyServer``
-     - Verification of the upstream HTTPS server certificate.
+     - Enables verification of the upstream HTTPS server certificate.
      - ``bool`
      - No
    * - ``verifyDepth``
