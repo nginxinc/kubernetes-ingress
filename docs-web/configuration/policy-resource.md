@@ -377,7 +377,7 @@ egressMTLS:
      - ``bool``
      - No
    * - ``verifyDepth``
-     - Sets the verification depth in the client certificates chain. The default is ``1``.
+     - Sets the verification depth in the proxied HTTPS server certificates chain. The default is ``1``.
      - ``int``
      - No
    * - ``sessionReuse``
