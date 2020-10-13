@@ -22,6 +22,8 @@ This document is the reference documentation for the Policy resource. An example
       - [JWT Merging Behavior](#jwt-merging-behavior)
     - [IngressMTLS](#ingressmtls)
       - [IngressMTLS Merging Behavior](#ingressmtls-merging-behavior)
+    - [EgressMTLS](#egressmtls)
+      - [EgressMTLS Merging Behavior](#egressmtls-merging-behavior)
   - [Using Policy](#using-policy)
     - [Applying Policies](#applying-policies)
     - [Invalid Policies](#invalid-policies)
@@ -70,6 +72,10 @@ spec:
    * - ``ingressMTLS``
      - The IngressMTLS policy configures client certificate verification.
      - `ingressMTLS <#ingressmtls>`_
+     - No*
+   * - ``egressMTLS``
+     - The EgressMTLS policy configures upstreams authentication and certificate verification.
+     - `egressMTLS <#egressmtls>`_
      - No*
 ```
 
@@ -334,6 +340,77 @@ policies:
 - name: ingress-mtls-policy-two
 ```
 In this example the Ingress Controller will use the configuration from the first policy reference `ingress-mtls-policy-one`, and ignores `ingress-mtls-policy-two`.
+
+### EgressMTLS
+
+The EgressMTLS policy configures upstreams authentication and certificate verification.
+
+For example, the following policy will use `egress-mtls-secret` to authenticate with the upstream application and `egress-trusted-ca-secret` to verify the certificate of the application:
+```yaml
+egressMTLS:
+  tlsSecret: egress-mtls-secret
+  trustedCertSecret: egress-trusted-ca-secret
+  verifyServer: on
+  verifyDepth: 2
+```
+
+> Note: The feature is implemented using the NGINX [ngx_http_proxy_module](https://nginx.org/en/docs/http/ngx_http_proxy_module.html).
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``tlsSecret``
+     - The name of the Kubernetes secret that stores the TLS certificate and key. It must be in the same namespace as the Policy resource. The certificate must be stored in the secret under the key ``tls.crt`` and ``tls.key``, otherwise the secret will be rejected as invalid.
+     - ``string``
+     - No
+   * - ``trustedCertSecret``
+     - The name of the Kubernetes secret that stores the CA certificate. It must be in the same namespace as the Policy resource. The certificate must be stored in the secret under the key ``ca.crt``, otherwise the secret will be rejected as invalid.
+     - ``string``
+     - No
+   * - ``verifyServer``
+     - Verification of the upstream HTTPS server certificate.
+     - ``bool`
+     - No
+   * - ``verifyDepth``
+     - Sets the verification depth in the client certificates chain. The default is ``1``.
+     - ``int``
+     - No
+   * - ``sessionReuse``
+     - Enables reuse of SSL sessions to the upstreams. The default is ``true``.
+     - ``bool`
+     - No
+   * - ``serverName``
+     - Enables passing of the server name through ``Server Name Indication`` extension.
+     - ``bool`
+     - No
+   * - ``sslName``
+     - Allows overriding the server name used to verify the certificate of the upstream HTTPS server.
+     - ``string`
+     - No
+   * - ``ciphers``
+     - Specifies the enabled ciphers for requests to an upstream HTTPS server. The default is ``DEFAULT``.
+     - ``string`
+     - No
+   * - ``protocols``
+     - Specifies the protocols for requests to an upstream HTTPS server. The default is ``TLSv1 TLSv1.1 TLSv1.2``.
+     - ``string`
+     - No
+```
+
+#### EgressMTLS Merging Behavior
+
+A VirtualServer/VirtualServerRoute can reference only a single EgressMTLS policy. Every subsequent reference will be ignored. For example, here we reference two policies:
+```yaml
+policies:
+- name: egress-mtls-policy-one
+- name: egress-mtls-policy-two
+```
+In this example the Ingress Controller will use the configuration from the first policy reference `egress-mtls-policy-one`, and ignores `egress-mtls-policy-two`.
 
 ## Using Policy
 
