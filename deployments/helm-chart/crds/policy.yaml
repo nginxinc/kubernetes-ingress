@@ -67,6 +67,8 @@ spec:
                   type: boolean
                 sessionReuse:
                   type: boolean
+                sslName:
+                  type: string
                 tlsSecret:
                   type: string
                 trustedCertSecret:
