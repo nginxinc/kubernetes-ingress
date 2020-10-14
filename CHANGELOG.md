@@ -5,49 +5,52 @@
 OVERVIEW:
 
 Release 1.9.0 includes:
-* Improved Prometheus metrics.
-* Support for Rate Limiting, JWT, IngressMTLS, EgressMTLS via the policy resource.
+* Support for new Prometheus metrics and enhancements of the existing ones, including configuration reload reason, NGINX worker processes count, upstream latency, and more.
+* Support for rate limiting, JWT authentication, ingress(client) and egress(upstream) mutual TLS via the Policy resource.
+* Support for the latest Ingress resource features and the IngressClass resource.
 * Support for NGINX Service Mesh.
 
 You will find the complete changelog for release 1.9.0, including bug fixes, improvements, and changes below.
 
-FEATURES:
-
-FEATURES FOR VIRTUALSERVER AND VIRTUALSERVERROUTE RESOURCES:
-* [1133](https://github.com/nginxinc/kubernetes-ingress/pull/1133) Add support for IngressClass resources
-* [1075](https://github.com/nginxinc/kubernetes-ingress/pull/1075) Add support for NGINX Service Mesh internal routes
-
 FEATURES FOR POLICY RESOURCE:
-* [1180](https://github.com/nginxinc/kubernetes-ingress/pull/1180) Add support for EgressMTLS
-* [1166](https://github.com/nginxinc/kubernetes-ingress/pull/1166) Add IngressMTLS policy support
-* [1154](https://github.com/nginxinc/kubernetes-ingress/pull/1154) Add JWT policy support
-* [1120](https://github.com/nginxinc/kubernetes-ingress/pull/1120) Add RateLimit policy support
+* [1180](https://github.com/nginxinc/kubernetes-ingress/pull/1180) Add support for EgressMTLS.
+* [1166](https://github.com/nginxinc/kubernetes-ingress/pull/1166) Add IngressMTLS policy support.
+* [1154](https://github.com/nginxinc/kubernetes-ingress/pull/1154) Add JWT policy support.
+* [1120](https://github.com/nginxinc/kubernetes-ingress/pull/1120) Add RateLimit policy support.
+* [1058](https://github.com/nginxinc/kubernetes-ingress/pull/1058) Support policies in VS routes and VSR subroutes.
 
 FEATURES FOR NGINX APP PROTECT:
-* [1147](https://github.com/nginxinc/kubernetes-ingress/pull/1147) Add option to specify other log destinations in AppProtect
-* [1131](https://github.com/nginxinc/kubernetes-ingress/pull/1131) Update packages and CRDs to AppProtect 2.0
-* [1100](https://github.com/nginxinc/kubernetes-ingress/pull/1100) Add external references to AppProtect
-* [1085](https://github.com/nginxinc/kubernetes-ingress/pull/1085) Add installation of threat campaigns package
+* [1147](https://github.com/nginxinc/kubernetes-ingress/pull/1147) Add option to specify other log destinations in AppProtect.
+* [1131](https://github.com/nginxinc/kubernetes-ingress/pull/1131) Update packages and CRDs to AppProtect 2.0. This update includes features such as: [JSON Schema Validation](https://docs.nginx.com/nginx-app-protect/configuration#applying-a-json-schema), [User-Defined URLs](https://docs.nginx.com/nginx-app-protect/configuration/#user-defined-urls) and [User-Defined Parameters](https://docs.nginx.com/nginx-app-protect/configuration/#user-defined-parameters). See the [release notes](https://docs.nginx.com/nginx-app-protect/releases/#release-2-0) for a complete feature list.
+* [1100](https://github.com/nginxinc/kubernetes-ingress/pull/1100) Add external references to AppProtect.
+* [1085](https://github.com/nginxinc/kubernetes-ingress/pull/1085) Add installation of threat campaigns package.
+
+FEATURES:
+* [1133](https://github.com/nginxinc/kubernetes-ingress/pull/1133) Add support for IngressClass resources.
+* [1130](https://github.com/nginxinc/kubernetes-ingress/pull/1130) Add prometheus latency collector.
+* [1076](https://github.com/nginxinc/kubernetes-ingress/pull/1076) Add prometheus worker process metrics.
+* [1075](https://github.com/nginxinc/kubernetes-ingress/pull/1075) Add support for NGINX Service Mesh internal routes.
 
 IMPROVEMENTS:
-* [1178](https://github.com/nginxinc/kubernetes-ingress/pull/1178) Resolve host collisions in VirtualServer and Ingresses
-* [1137](https://github.com/nginxinc/kubernetes-ingress/pull/1137) Add pod_owner label to metrics when -spire-agent-address is set
-* [1130](https://github.com/nginxinc/kubernetes-ingress/pull/1130) Add prometheus latency collector
-* [1107](https://github.com/nginxinc/kubernetes-ingress/pull/1107) Extend Upstream Servers with pod_name label
-* [1099](https://github.com/nginxinc/kubernetes-ingress/pull/1099) Add reason label to total_reload metrics
-* [1088](https://github.com/nginxinc/kubernetes-ingress/pull/1088) Extend Upstream Servers and Server Zones metrics, thanks to @Rulox
-* [1076](https://github.com/nginxinc/kubernetes-ingress/pull/1076) Add prometheus worker process metrics
-* Documentation improvements: [1083](https://github.com/nginxinc/kubernetes-ingress/pull/1083), [1092](https://github.com/nginxinc/kubernetes-ingress/pull/1092), [1089](https://github.com/nginxinc/kubernetes-ingress/pull/1089), [1174](https://github.com/nginxinc/kubernetes-ingress/pull/1174), [1175](https://github.com/nginxinc/kubernetes-ingress/pull/1175), [1171](https://github.com/nginxinc/kubernetes-ingress/pull/1171)
+* [1178](https://github.com/nginxinc/kubernetes-ingress/pull/1178) Resolve host collisions in VirtualServer and Ingresses.
+* [1158](https://github.com/nginxinc/kubernetes-ingress/pull/1158) Support variables in action proxy headers.
+* [1137](https://github.com/nginxinc/kubernetes-ingress/pull/1137) Add pod_owner label to metrics when -spire-agent-address is set.
+* [1107](https://github.com/nginxinc/kubernetes-ingress/pull/1107) Extend Upstream Servers with pod_name label.
+* [1099](https://github.com/nginxinc/kubernetes-ingress/pull/1099) Add reason label to total_reload metrics.
+* [1088](https://github.com/nginxinc/kubernetes-ingress/pull/1088) Extend Upstream Servers and Server Zones metrics, thanks to [Raúl](https://github.com/Rulox).
+* [1080](https://github.com/nginxinc/kubernetes-ingress/pull/1080) Support pathType field in the Ingress resource.
+* [1078](https://github.com/nginxinc/kubernetes-ingress/pull/1078) Remove trailing blank lines in vs/vsr snippets.
+* Documentation improvements: [1083](https://github.com/nginxinc/kubernetes-ingress/pull/1083), [1092](https://github.com/nginxinc/kubernetes-ingress/pull/1092), [1089](https://github.com/nginxinc/kubernetes-ingress/pull/1089), [1174](https://github.com/nginxinc/kubernetes-ingress/pull/1174), [1175](https://github.com/nginxinc/kubernetes-ingress/pull/1175), [1171](https://github.com/nginxinc/kubernetes-ingress/pull/1171).
 
 BUGFIXES:
-* [1179](https://github.com/nginxinc/kubernetes-ingress/pull/1179) Fix TransportServers in debian AppProtect image
-* [1129](https://github.com/nginxinc/kubernetes-ingress/pull/1129) Support real-ip in default server
-* [1110](https://github.com/nginxinc/kubernetes-ingress/pull/1110) Add missing threat campaigns key to AppProtect CRD
-* [1078](https://github.com/nginxinc/kubernetes-ingress/pull/1078) Fix trailing blank lines in vs/vsr snippets
+* [1179](https://github.com/nginxinc/kubernetes-ingress/pull/1179) Fix TransportServers in debian AppProtect image.
+* [1129](https://github.com/nginxinc/kubernetes-ingress/pull/1129) Support real-ip in default server.
+* [1110](https://github.com/nginxinc/kubernetes-ingress/pull/1110) Add missing threat campaigns key to AppProtect CRD.
 
 HELM CHART:
-* The version of the helm chart is now 0.6.2
-* [1105](https://github.com/nginxinc/kubernetes-ingress/pull/1105) Fix GlobalConfiguration support in helm chart
+* The version of the helm chart is now 0.7.0
+* [1105](https://github.com/nginxinc/kubernetes-ingress/pull/1105) Fix GlobalConfiguration support in helm chart.
+* Add new parameters to the Chart: `controller.setAsDefaultIngress`, `controller.enableLatencyMetrics`. Added in [1133](https://github.com/nginxinc/kubernetes-ingress/pull/1133) and [1148](https://github.com/nginxinc/kubernetes-ingress/pull/1148).
 
 CHANGES:
 * [1182](https://github.com/nginxinc/kubernetes-ingress/pull/1182) Update NGINX version to 1.19.3.
@@ -55,18 +58,17 @@ CHANGES:
 UPGRADE:
 * For NGINX, use the 1.9.0 image from our DockerHub: `nginx/nginx-ingress:1.9.0`, `nginx/nginx-ingress:1.9.0-alpine` or `nginx-ingress:1.9.0-ubi`
 * For NGINX Plus, please build your own image using the 1.9.0 source code.
-* For Helm, use version 0.6.2 of the chart.
+* For Helm, use version 0.7.0 of the chart.
+
+For Kubernetes >= 1.18, when upgrading using the [manifests](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), make sure to update the [ClusterRole](deployments/rbac/rbac.yaml) and create the [IngressClass resource](deployments/common/ingress-class.yaml), which is required for Kubernetes >= 1.18. Otherwise, the Ingress Controller will fail to start. If you run multiple NGINX Ingress Controllers in the cluster, each Ingress Controller has to have its own IngressClass resource. As the `-use-ingress-class-only` argument is now ignored (see NOTES), make sure your Ingress resources have the `ingressClassName` field or the `kubernetes.io/ingress.class` annotation set to the name of the IngressClass resource. Otherwise, the Ingress Controller will ignore them.
+
+HELM UPGRADE:
+* If you're using custom resources like VirtualServer and TransportServer (`controller.enableCustomResources` is set to `true`), after you run the `helm upgrade` command, the CRDs will not be upgraded. After running the `helm upgrade` command, run `kubectl apply -f deployments/helm-chart/crds` to upgrade the CRDs.
+* For Kubernetes >= 1.18, a dedicated IngressClass resource, which is configured by `controller.ingressClass`, is required per helm release. Ensure `controller.ingressClass` is not set to the name of the IngressClass of other releases or Ingress Controllers. As the `controller.useIngressClassOnly` parameter is now ignored (see NOTES), make sure your Ingress resources have the `ingressClassName` field or the `kubernetes.io/ingress.class` annotation set to the value of `controller.ingressClass`. Otherwise, the Ingress Controller will ignore them.
 
 NOTES:
-* When using version of k8s >= 1.18 the `-use-ingress-class-only` cli arg is now ignored and the Ingress Controller will only handle resources with the appropriate class set.
-* A unique ingressClass is required per helm release. When making additional releases ensure `controller.ingressClass` is not set to the name of an already existing ingressClass.
-
-RESOURCES:
-* Documentation -- https://docs.nginx.com/nginx-ingress-controller/
-* Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v1.9.0/examples and https://github.com/nginxinc/kubernetes-ingress/tree/v1.9.0/examples-of-custom-resources
-* Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/v1.9.0/deployments/helm-chart
-* Operator -- https://github.com/nginxinc/nginx-ingress-operator/
-
+* When using Kubernetes >= 1.18, the `-use-ingress-class-only` command-line argument is now ignored, and the Ingress Controller will only process resources that belong to its class. See [IngressClass doc](https://docs.nginx.com/nginx-ingress-controller/installation/running-multiple-ingress-controllers/#ingress-class) to learn more.
+* For Kubernetes >= 1.18, a dedicated IngressClass resource, which is configured by `controller.ingressClass`, is required per helm release. When upgrading or installing releases, ensure `controller.ingressClass` is not set to the name of the IngressClass of other releases or Ingress Controllers.
 
 ### 1.8.1
 
