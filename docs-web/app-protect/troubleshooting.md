@@ -29,7 +29,7 @@ The table below categorizes some potential problems with the Ingress Controller 
    * - NGINX.
      - The Ingress Controller NGINX verification timeouts while starting for the first time or while reloading after a change.
      - Check the logs for ``Unable to fetch version: X`` message. Check the Availability of APPolicy External References.
-     - Too many Ingress Resources with App Protect enabled. Check the `NGINX fails to start/reload section <#nginx-fails-to-start-or-reload>`_ of the Known Issues.     
+     - Too many Ingress Resources with App Protect enabled. Check the `NGINX fails to start/reload section <#nginx-fails-to-start-or-reload>`_ of the Known Issues.
 ```
 
 ## Troubleshooting Methods
@@ -80,7 +80,7 @@ Note that in the events section, we have a `Normal` event with the `AddedOrUpdat
 ### Replace the policy
 
 NOTE: This method only applies if using [external references](https://docs.nginx.com/nginx-app-protect/configuration/#external-references) 
-If items on the external reference change but the spec of the ApPolicy remains unchanged (even when re-applying the policy), kubernetes will not detect the update.
+If items on the external reference change but the spec of the APPolicy remains unchanged (even when re-applying the policy), kubernetes will not detect the update.
 In this case you can force-replace the resource. This will remove the resource and add it again, triggering a reload. For example:
 
 ```
@@ -131,4 +131,3 @@ This timeout should be more than enough to verify configurations. However, when 
 You can increase this timeout by setting the `nginx-reload-timeout` [cli-argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-nginx-reload-timeout).
 
 If you are using external references in your Nginx App Protect policies, verify if the servers hosting the referenced resources are available and that their response time is as short as possible (see the Check the Availability of APPolicy External References section). If the references are not available during the Ingress Controller startup, the pod will fail to start. In case the resources are not available during a reload, the reload will fail, and NGINX Plus will use the previous correct configuration.
-

@@ -32,7 +32,7 @@ Here is a breakdown of what this Ingress resource definition means:
     * In the `hosts` field, we apply the certificate and key to our `cafe.example.com` host.
 * In the `spec.rules` field, we define a host with domain name `cafe.example.com`.
 * In the `paths` field, we define two path‑based rules:
-  * The rule with the path `/tea` instructs NGINX to distribute the requests with the  `/tea` URI among the pods of the *tea* service, which is deployed with the name `tea‑svc` in the cluster.
+  * The rule with the path `/tea` instructs NGINX to distribute the requests with the `/tea` URI among the pods of the *tea* service, which is deployed with the name `tea‑svc` in the cluster.
   * The rule with the path `/coffee` instructs NGINX to distribute the requests with the `/coffee` URI among the pods of the *coffee* service, which is deployed with the name `coffee‑svc` in the cluster.
   * Both rules instruct NGINX to distribute the requests to `port 80` of the corresponding service (the `servicePort` field).
 
