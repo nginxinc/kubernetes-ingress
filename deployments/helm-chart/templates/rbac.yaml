@@ -12,6 +12,7 @@ rules:
   resources: 
   - appolicies
   - aplogconfs
+  - apusersigs
   verbs: 
   - get 
   - watch

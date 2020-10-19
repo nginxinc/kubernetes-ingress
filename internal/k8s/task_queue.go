@@ -116,6 +116,7 @@ const (
 	policy
 	appProtectPolicy
 	appProtectLogConf
+	appProtectUserSig
 	nginxCisConnector
 )
 
@@ -156,6 +157,8 @@ func newTask(key string, obj interface{}) (task, error) {
 			k = appProtectLogConf
 		} else if objectKind == nginxCisConnectorGVK.Kind {
 			k = nginxCisConnector
+		} else if objectKind == appProtectUserSigGVK.Kind {
+			k = appProtectUserSig
 		} else {
 			return task{}, fmt.Errorf("Unknown unstructured kind: %v", objectKind)
 		}

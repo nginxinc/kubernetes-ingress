@@ -36,6 +36,8 @@ const pemFileNameForMissingTLSSecret = "/etc/nginx/secrets/default"
 const pemFileNameForWildcardTLSSecret = "/etc/nginx/secrets/wildcard"
 const appProtectPolicyFolder = "/etc/nginx/waf/nac-policies/"
 const appProtectLogConfFolder = "/etc/nginx/waf/nac-logconfs/"
+const appProtectUserSigFolder = "/etc/nginx/waf/nac-usersigs/"
+const appProtectUserSigIndex = "/etc/nginx/waf/nac-usersigs/index.conf"
 
 // DefaultServerSecretName is the filename of the Secret with a TLS cert and a key for the default server.
 const DefaultServerSecretName = "default"
@@ -1265,6 +1267,10 @@ func appProtectLogConfFileNameFromIngEx(ingEx *IngressEx) string {
 	return fmt.Sprintf("%s%s_%s", appProtectLogConfFolder, ingEx.AppProtectLogConf.GetNamespace(), ingEx.AppProtectLogConf.GetName())
 }
 
+func appProtectUserSigFileNameFromUnstruct(unst *unstructured.Unstructured) string {
+	return fmt.Sprintf("%s%s_%s", appProtectUserSigFolder, unst.GetNamespace(), unst.GetName())
+}
+
 func generateApResourceFileContent(apResource *unstructured.Unstructured) []byte {
 	// Safe to ignore errors since validation already checked those
 	spec, _, _ := unstructured.NestedMap(apResource.Object, "spec")
@@ -1291,7 +1297,6 @@ func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Un
 		}
 		allWarnings.Add(warnings)
 	}
-
 	if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
 		return allWarnings, fmt.Errorf("Error when reloading NGINX when updating %v: %v", resource.GetKind(), err)
 	}
@@ -1301,9 +1306,11 @@ func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Un
 
 // DeleteAppProtectPolicy updates Ingresses that use AP Policy after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses) (Warnings, error) {
-	fName := strings.Replace(polNamespaceName, "/", "_", 1)
-	polFileName := appProtectPolicyFolder + fName
-	cnf.nginxManager.DeleteAppProtectResourceFile(polFileName)
+	if len(ingExes) > 0 || len(mergeableIngresses) > 0 {
+		fName := strings.Replace(polNamespaceName, "/", "_", 1)
+		polFileName := appProtectPolicyFolder + fName
+		cnf.nginxManager.DeleteAppProtectResourceFile(polFileName)
+	}
 
 	allWarnings := newWarnings()
 
@@ -1332,10 +1339,11 @@ func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes
 
 // DeleteAppProtectLogConf updates Ingresses that use AP Log Configuration after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses) (Warnings, error) {
-	fName := strings.Replace(logConfNamespaceName, "/", "_", 1)
-	logConfFileName := appProtectLogConfFolder + fName
-	cnf.nginxManager.DeleteAppProtectResourceFile(logConfFileName)
-
+	if len(ingExes) > 0 || len(mergeableIngresses) > 0 {
+		fName := strings.Replace(logConfNamespaceName, "/", "_", 1)
+		logConfFileName := appProtectLogConfFolder + fName
+		cnf.nginxManager.DeleteAppProtectResourceFile(logConfFileName)
+	}
 	allWarnings := newWarnings()
 
 	for _, ingEx := range ingExes {
@@ -1359,6 +1367,41 @@ func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, in
 	}
 
 	return allWarnings, nil
+}
+
+// RefreshAppProtectUserSigs writes all valid uds files to fs and reloads
+func (cnf *Configurator) RefreshAppProtectUserSigs(userSigs []*unstructured.Unstructured, delPols []string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses) (Warnings, error) {
+	allWarnings := newWarnings()
+	for _, ingEx := range ingExes {
+		warnings, err := cnf.addOrUpdateIngress(ingEx)
+		if err != nil {
+			return allWarnings, fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
+		}
+		allWarnings.Add(warnings)
+	}
+
+	for _, m := range mergeableIngresses {
+		warnings, err := cnf.addOrUpdateMergeableIngress(m)
+		if err != nil {
+			return allWarnings, fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
+		}
+		allWarnings.Add(warnings)
+	}
+
+	for _, file := range delPols {
+		cnf.nginxManager.DeleteAppProtectResourceFile(file)
+	}
+
+	var builder strings.Builder
+	cnf.nginxManager.ClearAppProtectFolder(appProtectUserSigFolder)
+	for _, sig := range userSigs {
+		fName := appProtectUserSigFileNameFromUnstruct(sig)
+		data := generateApResourceFileContent(sig)
+		cnf.nginxManager.CreateAppProtectResourceFile(fName, data)
+		fmt.Fprintf(&builder, "app_protect_user_defined_signatures %s;\n", fName)
+	}
+	cnf.nginxManager.CreateAppProtectResourceFile(appProtectUserSigIndex, []byte(builder.String()))
+	return allWarnings, cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate)
 }
 
 // AddInternalRouteConfig adds internal route server to NGINX Configuration and

@@ -75,21 +75,23 @@ RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
 	&& ln -sf /proc/1/fd/2 /var/log/nginx/error.log
 
 RUN  mkdir -p /var/lib/nginx \
-		/etc/nginx/stream-conf.d \
-		/etc/nginx/secrets \
-		/etc/nginx/waf \
-		/etc/nginx/waf/nac-policies \
-		/etc/nginx/waf/nac-logconfs \
-		/var/log/app_protect \
-		/opt/app_protect \
+				/etc/nginx/stream-conf.d \
+				/etc/nginx/secrets \
+				/etc/nginx/waf \
+				/etc/nginx/waf/nac-policies \
+				/etc/nginx/waf/nac-logconfs \
+				/etc/nginx/waf/nac-usersigs \
+				/var/log/app_protect \
+				/opt/app_protect \
+	&& touch /etc/nginx/waf/nac-usersigs/index.conf \
 	&& chown -R nginx:0 /etc/app_protect \
-			    /usr/share/ts \
-			    /etc/nginx \
-			    /var/cache/nginx \
-			    /var/lib/nginx/ \
-			    /var/log/app_protect/ \
-			    /opt/app_protect/ \
-			    /var/log/nginx/ \
+						/usr/share/ts \
+						/etc/nginx \
+						/var/cache/nginx \
+						/var/lib/nginx/ \
+						/var/log/app_protect/ \
+						/opt/app_protect/ \
+						/var/log/nginx/ \
 	&& rm /etc/nginx/conf.d/*
 
 RUN printf "MODULE = ALL;\nLOG_LEVEL = TS_CRIT;\nFILE = 2;\n" > /etc/app_protect/bd/logger.cfg \

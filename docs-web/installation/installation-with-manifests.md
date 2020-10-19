@@ -84,11 +84,12 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
 
 If you would like to use the App Protect module, create the following additional resources:
 
-1. Create a custom resource definition for `APPolicy` and `APLogConf`:
+1. Create a custom resource definition for `APPolicy`, `APLogConf` and `APUserSig`:
 
    ```
    $ kubectl apply -f common/crds/appprotect.f5.com_aplogconfs.yaml
    $ kubectl apply -f common/crds/appprotect.f5.com_appolicies.yaml
+   $ kubectl apply -f common/crds/appprotect.f5.com_apusersigs.yaml
    ```
 
 ## 3. Deploy the Ingress Controller

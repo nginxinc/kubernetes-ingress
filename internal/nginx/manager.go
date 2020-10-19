@@ -2,6 +2,7 @@ package nginx
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -63,6 +64,7 @@ type Manager interface {
 	DeleteSecret(name string)
 	CreateAppProtectResourceFile(name string, content []byte)
 	DeleteAppProtectResourceFile(name string)
+	ClearAppProtectFolder(name string)
 	GetFilenameForSecret(name string) string
 	CreateDHParam(content string) (string, error)
 	CreateOpenTracingTracerConfig(content string) error
@@ -248,8 +250,22 @@ func (lm *LocalManager) CreateAppProtectResourceFile(name string, content []byte
 
 // DeleteAppProtectResourceFile removes an App Protect resource file from storage
 func (lm *LocalManager) DeleteAppProtectResourceFile(name string) {
-	if err := os.Remove(name); err != nil {
-		glog.Warningf("Failed to delete App Protect Resource from %v: %v", name, err)
+	// This check is done to avoid errors in case eg. a policy is referenced, but it never became valid.
+	if _, err := os.Stat(name); !os.IsNotExist(err) {
+		if err := os.Remove(name); err != nil {
+			glog.Fatalf("Failed to delete App Protect Resource from %v: %v", name, err)
+		}
+	}
+}
+
+// ClearAppProtectFolder clears contents of a config folder
+func (lm *LocalManager) ClearAppProtectFolder(name string) {
+	files, err := ioutil.ReadDir(name)
+	if err != nil {
+		glog.Fatalf("Failed to read the App Protect folder %s: %v", name, err)
+	}
+	for _, file := range files {
+		lm.DeleteAppProtectResourceFile(fmt.Sprintf("%s/%s", name, file.Name()))
 	}
 }
 

@@ -48,6 +48,11 @@ func (*FakeManager) DeleteAppProtectResourceFile(name string) {
 	glog.V(3).Infof("Deleting Ap Resource File %v", name)
 }
 
+//ClearAppProtectFolder provides a fake implementation of ClearAppProtectFolder
+func (*FakeManager) ClearAppProtectFolder(name string) {
+	glog.V(3).Infof("Deleting Ap Resource folder %v", name)
+}
+
 // DeleteConfig provides a fake implementation of DeleteConfig.
 func (*FakeManager) DeleteConfig(name string) {
 	glog.V(3).Infof("Deleting config %v", name)

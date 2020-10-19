@@ -585,3 +585,30 @@ func createAppProtectLogConfHandlers(lbc *LoadBalancerController) cache.Resource
 	}
 	return handlers
 }
+
+func createAppProtectUserSigHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	handlers := cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			sig := obj.(*unstructured.Unstructured)
+			glog.V(3).Infof("Adding AppProtectUserSig: %v", sig.GetName())
+			lbc.AddSyncQueue(sig)
+		},
+		UpdateFunc: func(oldObj, obj interface{}) {
+			oldSig := oldObj.(*unstructured.Unstructured)
+			newSig := obj.(*unstructured.Unstructured)
+			updated, err := compareSpecs(oldSig, newSig)
+			if err != nil {
+				glog.V(3).Infof("Error when comparing UserSigs %v", err)
+				lbc.AddSyncQueue(newSig)
+			}
+			if updated {
+				glog.V(3).Infof("ApUserSig %v changed, syncing", oldSig.GetName())
+				lbc.AddSyncQueue(newSig)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			lbc.AddSyncQueue(obj)
+		},
+	}
+	return handlers
+}

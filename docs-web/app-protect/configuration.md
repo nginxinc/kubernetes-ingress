@@ -124,3 +124,64 @@ spec:
     max_request_size: any
     max_message_size: 5k
 ```
+## App Protect User Defined Signatures
+
+You can define App Protect [User Defined Signatures](https://docs.nginx.com/nginx-app-protect/configuration/#user-defined-signature-definitions) for your Ingress resources by creating an `APUserSig` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
+
+To add the [User Defined Signatures](https://docs.nginx.com/nginx-app-protect/configuration/#user-defined-signature-definitions) to an Ingress resource:
+
+1. Create an `APUserSig` Custom resource manifest. 
+2. Add the desired User defined signature to the `spec` field in the `APUserSig` resource. 
+
+   > **Note**: The fields from the JSON must be presented in the YAML *exactly* the same, in name and level. The Ingress Controller will transform the YAML into a valid JSON App Protect User Defined signature. There is no need to reference the user defined signature resource in the ingress resource.
+
+For example, say you want to create the following user defined signature:
+
+```json
+{  "softwareVersion": "15.1.0",
+    "tag": "Fruits",
+    "revisionDatetime": "2020-01-22T18:32:02Z",
+    "signatures": [
+      {
+      "name": "Apple_medium_acc",
+      "rule": "content:\"apple\"; nocase;",
+      "signatureType": "request",
+      "attackType": {
+         "name": "Brute Force Attack"
+      },
+      "systems": [
+         {"name": "Microsoft Windows"},
+         {"name": "Unix/Linux"}
+                     ],
+      "risk": "medium",
+      "accuracy": "medium",
+      "description": "Medium accuracy user defined signature with tag (Fruits)"
+      }
+   ]
+}
+```
+
+You would add that config in the `spec` of your `APUserSig` resource as follows:
+
+```yaml
+apiVersion: appprotect.f5.com/v1beta1
+kind: APUserSig
+metadata:
+  name: apple
+spec:
+  revisionDatetime: '2020-01-22T18:32:02Z'
+  signatures:
+  - accuracy: medium
+    attackType:
+      name: Brute Force Attack
+    description: Medium accuracy user defined signature with tag (Fruits)
+    name: Apple_medium_acc
+    risk: medium
+    rule: content:"apple"; nocase;
+    signatureType: request
+    systems:
+    - name: Microsoft Windows
+    - name: Unix/Linux
+  softwareVersion: 15.1.0
+  tag: Fruits
+```
