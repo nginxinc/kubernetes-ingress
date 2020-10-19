@@ -71,7 +71,9 @@ jobs:
     name: Build Docker Images
     runs-on: ${{ matrix.os }}
     needs: [binary, unit-tests]
-    if: github.event.pull_request.head.repo.full_name == 'nginxinc/kubernetes-ingress'
+    if: 
+      github.event.pull_request.head.repo.full_name == 'nginxinc/kubernetes-ingress' ||
+      github.event_name == 'push'
     strategy:
       matrix:
         include:
@@ -180,7 +182,9 @@ jobs:
     name: Smoke Tests
     runs-on: ${{ matrix.os }}
     needs: [build, binary, unit-tests]
-    if: github.event.pull_request.head.repo.full_name == 'nginxinc/kubernetes-ingress'
+    if: 
+      github.event.pull_request.head.repo.full_name == 'nginxinc/kubernetes-ingress' ||
+      github.event_name == 'push'
     strategy:
       matrix:
         include:
@@ -344,7 +348,9 @@ jobs:
       NGINX_HTTP_PORT: 8080
       NGINX_HTTPS_PORT: 8443
       HELM_TEST_RETRIES: 5
-    if: github.event.pull_request.head.repo.full_name == 'nginxinc/kubernetes-ingress'
+    if: 
+      github.event.pull_request.head.repo.full_name == 'nginxinc/kubernetes-ingress' ||
+      github.event_name == 'push'
     strategy:
       matrix:
         include:
