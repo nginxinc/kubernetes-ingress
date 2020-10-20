@@ -296,7 +296,7 @@
       "dashes": false,
       "datasource": "Prometheus",
       "decimals": 2,
-      "description": "Bytes received from clients and  sent to clients.",
+      "description": "Bytes received from clients and sent to clients.",
       "editable": true,
       "error": false,
       "fieldConfig": {
@@ -859,7 +859,7 @@
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "Sucess Rates Over Time",
+          "title": "Success Rates Over Time",
           "tooltip": {
             "shared": true,
             "sort": 0,
