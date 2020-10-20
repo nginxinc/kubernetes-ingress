@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - 'docs/**'
+      - 'docs-web/**'
+      - 'examples/**'
+      - '**.md'
   pull_request:
     branches:
       - master
@@ -11,6 +16,11 @@ on:
       - opened
       - reopened
       - synchronize
+    paths-ignore:
+      - 'docs/**'
+      - 'docs-web/**'
+      - 'examples/**'
+      - '**.md'
 
 defaults:
   run:
