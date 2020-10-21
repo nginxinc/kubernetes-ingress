@@ -9,10 +9,10 @@ on:
       - reopened
       - synchronize
     paths-ignore:
-      - 'docs/**'
-      - 'docs-web/**'
-      - 'examples/**'
-      - '**.md'
+    - 'docs/**'
+    - 'docs-web/**'
+    - 'examples/**'
+    - '**.md'
 
 defaults:
   run:
