@@ -8,6 +8,7 @@ on:
       - 'docs/**'
       - 'docs-web/**'
       - 'examples/**'
+      - 'examples-of-custom-resources/**'
       - '**.md'
 
 defaults:

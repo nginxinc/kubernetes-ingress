@@ -8,6 +8,7 @@ on:
       - 'docs/**'
       - 'docs-web/**'
       - 'examples/**'
+      - 'examples-of-custom-resources/**'
       - '**.md'
   pull_request:
     branches:
@@ -16,6 +17,7 @@ on:
       - 'docs/**'
       - 'docs-web/**'
       - 'examples/**'
+      - 'examples-of-custom-resources/**'
       - '**.md'
     types:
       - opened
