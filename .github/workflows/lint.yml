@@ -4,6 +4,11 @@ on:
   pull_request:
     branches:
       - master
+    paths-ignore:
+      - 'docs/**'
+      - 'docs-web/**'
+      - 'examples/**'
+      - '**.md'
     types:
       - opened
       - reopened
@@ -27,7 +32,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Lint Code
         uses: golangci/golangci-lint-action@v2
-        continue-on-error: true
         with:
           version: 'v${{ env.GOLANGCI_VERSION }}'
           args: --timeout ${{ env.GOLANGCI_TIMEOUT }}
