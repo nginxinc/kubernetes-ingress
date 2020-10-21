@@ -4,15 +4,12 @@ on:
   pull_request:
     branches:
       - master
+    paths-ignore:
+      - 'docs/**'
     types:
       - opened
       - reopened
       - synchronize
-    paths-ignore:
-    - 'docs/**'
-    - 'docs-web/**'
-    - 'examples/**'
-    - '**.md'
 
 defaults:
   run:
