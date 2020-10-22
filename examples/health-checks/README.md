@@ -11,7 +11,7 @@ The Ingress controller provides the following annotations for configuring active
 * Optional: `nginx.com/health-checks-mandatory: "true"` -- configures active health checks as mandatory. With the default active health checks, when an endpoint is added to NGINX Plus via the API or after a configuration reload, NGINX Plus considers the endpoint to be healthy. With mandatory health checks, when an endpoint is added to NGINX Plus or after a configuration reload, NGINX Plus considers the endpoint to be unhealthy until its health check passes. The default is `false`.
 * Optional: `nginx.com/health-checks-mandatory-queue: "500"` -- configures a [queue](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#queue) for temporary storing incoming requests during the time when NGINX Plus is checking the health of the endpoints after a configuration reload. If the queue is not configured or the queue is full, NGINX Plus will drop an incoming request returning the `502` code to the client. The queue is configured only when health checks are mandatory. The timeout parameter of the queue is configured with the value of the timeoutSeconds field of the corresponding Readiness Probe. Choose the size of the queue according with your requirements such as the expected number of requests per second and the timeout. The default is `0`.
 
-# Example
+# Example (test)
 
 In the following example we enable active health checks in the cafe-ingress Ingress:
 ```yaml

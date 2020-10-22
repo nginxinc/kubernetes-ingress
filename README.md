@@ -3,7 +3,7 @@
 
 # 🚀 *Help make the NGINX Ingress Controller better by participating in our [survey](https://forms.office.com/Pages/ResponsePage.aspx?id=L_093Ttq0UCb4L-DJ9gcUM6Dh1A0cORCorfgZAMdkwJUREhJUFAyM1ZHRzZLSzQyMUlCNFhXVkZENy4u)!* 🚀
 
-# NGINX Ingress Controller
+# NGINX Ingress Controller (test)
 
 This repo provides an implementation of an Ingress controller for NGINX and NGINX Plus. 
 
