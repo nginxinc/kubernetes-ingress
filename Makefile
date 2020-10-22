@@ -7,7 +7,7 @@ PREFIX = nginx/nginx-ingress
 GOLANG_CONTAINER = golang:1.15
 GOFLAGS ?= -mod=vendor
 DOCKERFILEPATH = build
-DOCKERFILE = Dockerfile # note, this can be overwritten e.g. can be DOCKERFILE=DockerFileForPlus
+DOCKERFILE = Dockerfile # note, that this can be overwritten e.g. can be DOCKERFILE=DockerFileForPlus
 
 BUILD_IN_CONTAINER = 1
 PUSH_TO_GCR =
