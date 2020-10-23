@@ -52,7 +52,7 @@ jobs:
     steps:
       - name: Workflow Status
         id: check
-        uses: martialonline/workflow-status@v1
+        uses: martialonline/workflow-status@v2
       - name: Output Variables
         id: commit
         run: |
