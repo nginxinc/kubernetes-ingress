@@ -38,12 +38,7 @@ message X509SVID {
     // CA certificates belonging to the Trust Domain
     // ASN.1 DER encoded
     bytes bundle = 4;
-
-    // List of trust domains the SVID federates with, which corresponds to
-    // keys in the federated_bundles map in the X509SVIDResponse message.
-    repeated string federates_with = 5;
 }
-
 
 message JWTSVID {
     string spiffe_id = 1;

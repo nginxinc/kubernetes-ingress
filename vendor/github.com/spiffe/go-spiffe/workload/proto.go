@@ -40,7 +40,7 @@ func protoToX509SVIDs(protoSVIDs *workload.X509SVIDResponse) (*X509SVIDs, error)
 	return svids, nil
 }
 
-func protoToX509SVID(svid *workload.X509SVID, allFederatedBundles map[string][]*x509.Certificate) (*X509SVID, error) {
+func protoToX509SVID(svid *workload.X509SVID, federatedTrustBundles map[string][]*x509.Certificate) (*X509SVID, error) {
 	certificates, err := x509.ParseCertificates(svid.GetX509Svid())
 	if err != nil {
 		return nil, err
@@ -65,15 +65,9 @@ func protoToX509SVID(svid *workload.X509SVID, allFederatedBundles map[string][]*
 	}
 	trustBundlePool := internal.CertPoolFromCerts(trustBundle)
 
-	federatedTrustBundles := make(map[string][]*x509.Certificate)
 	federatedTrustBundlePools := make(map[string]*x509.CertPool)
-	for _, federatesWith := range svid.GetFederatesWith() {
-		bundle, ok := allFederatedBundles[federatesWith]
-		if !ok {
-			return nil, fmt.Errorf("missing bundle for federated domain %q", federatesWith)
-		}
-		federatedTrustBundles[federatesWith] = bundle
-		federatedTrustBundlePools[federatesWith] = internal.CertPoolFromCerts(bundle)
+	for trustDomainID, federatedTrustBundle := range federatedTrustBundles {
+		federatedTrustBundlePools[trustDomainID] = internal.CertPoolFromCerts(federatedTrustBundle)
 	}
 
 	return &X509SVID{
