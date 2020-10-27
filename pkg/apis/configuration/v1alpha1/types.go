@@ -14,6 +14,7 @@ const (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:validation:Optional
+// +kubebuilder:resource:shortName=gc
 
 // GlobalConfiguration defines the GlobalConfiguration resource.
 type GlobalConfiguration struct {
@@ -48,6 +49,7 @@ type GlobalConfigurationList struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:validation:Optional
+// +kubebuilder:resource:shortName=ts
 
 // TransportServer defines the TransportServer resource.
 type TransportServer struct {
@@ -103,6 +105,7 @@ type TransportServerList struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:validation:Optional
+// +kubebuilder:resource:shortName=pol
 
 // Policy defines a Policy for VirtualServer and VirtualServerRoute resources.
 type Policy struct {

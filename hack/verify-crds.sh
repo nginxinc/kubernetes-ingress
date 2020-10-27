@@ -6,8 +6,8 @@ set -o pipefail
 
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE}")/..
 
-DIFFROOT="${SCRIPT_ROOT}/deployments/common/"
-TMP_DIFFROOT="${SCRIPT_ROOT}/_tmp/deployments/common/"
+DIFFROOT="${SCRIPT_ROOT}/deployments/common/${1}/"
+TMP_DIFFROOT="${SCRIPT_ROOT}/_tmp/deployments/common/${1}/"
 _tmp="${SCRIPT_ROOT}/_tmp"
 
 cleanup() {
@@ -20,7 +20,7 @@ cleanup
 mkdir -p "${TMP_DIFFROOT}"
 cp -a "${DIFFROOT}"/* "${TMP_DIFFROOT}"
 
-go run sigs.k8s.io/controller-tools/cmd/controller-gen schemapatch:manifests=./deployments/common/ paths="./pkg/apis/configuration/..." output:dir=${TMP_DIFFROOT}
+go run sigs.k8s.io/controller-tools/cmd/controller-gen schemapatch:manifests=./deployments/common/${1}/  paths="./pkg/apis/configuration/..." output:dir=${TMP_DIFFROOT}
 echo "diffing ${DIFFROOT} against potentially updated crds"
 ret=0
 diff -Naupr "${DIFFROOT}" "${TMP_DIFFROOT}" || ret=$?

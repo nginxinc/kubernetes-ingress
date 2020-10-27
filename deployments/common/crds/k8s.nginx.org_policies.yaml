@@ -1,0 +1,128 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.0
+  creationTimestamp: null
+  name: policies.k8s.nginx.org
+spec:
+  group: k8s.nginx.org
+  names:
+    kind: Policy
+    listKind: PolicyList
+    plural: policies
+    shortNames:
+    - pol
+    singular: policy
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Policy defines a Policy for VirtualServer and VirtualServerRoute
+          resources.
+        type: object
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PolicySpec is the spec of the Policy resource. The spec includes
+              multiple fields, where each field represents a different policy. Only
+              one policy (field) is allowed.
+            type: object
+            properties:
+              accessControl:
+                description: AccessControl defines an access policy based on the source
+                  IP of a request.
+                type: object
+                properties:
+                  allow:
+                    type: array
+                    items:
+                      type: string
+                  deny:
+                    type: array
+                    items:
+                      type: string
+              egressMTLS:
+                description: EgressMTLS defines an Egress MTLS policy.
+                type: object
+                properties:
+                  ciphers:
+                    type: string
+                  protocols:
+                    type: string
+                  serverName:
+                    type: boolean
+                  sessionReuse:
+                    type: boolean
+                  sslName:
+                    type: string
+                  tlsSecret:
+                    type: string
+                  trustedCertSecret:
+                    type: string
+                  verifyDepth:
+                    type: integer
+                  verifyServer:
+                    type: boolean
+              ingressMTLS:
+                description: IngressMTLS defines an Ingress MTLS policy.
+                type: object
+                properties:
+                  clientCertSecret:
+                    type: string
+                  verifyClient:
+                    type: string
+                  verifyDepth:
+                    type: integer
+              jwt:
+                description: JWTAuth holds JWT authentication configuration.
+                type: object
+                properties:
+                  realm:
+                    type: string
+                  secret:
+                    type: string
+                  token:
+                    type: string
+              rateLimit:
+                description: RateLimit defines a rate limit policy.
+                type: object
+                properties:
+                  burst:
+                    type: integer
+                  delay:
+                    type: integer
+                  dryRun:
+                    type: boolean
+                  key:
+                    type: string
+                  logLevel:
+                    type: string
+                  noDelay:
+                    type: boolean
+                  rate:
+                    type: string
+                  rejectCode:
+                    type: integer
+                  zoneSize:
+                    type: string
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

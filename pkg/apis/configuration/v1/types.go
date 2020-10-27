@@ -16,6 +16,13 @@ const (
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +kubebuilder:validation:Optional
+// +kubebuilder:resource:shortName=vs
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="Current state of the VirtualServer. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller."
+// +kubebuilder:printcolumn:name="Host",type=string,JSONPath=`.spec.host`
+// +kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.status.externalEndpoints[*].ip`
+// +kubebuilder:printcolumn:name="Ports",type=string,JSONPath=`.status.externalEndpoints[*].ports`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
 // VirtualServer defines the VirtualServer resource.
 type VirtualServer struct {
@@ -164,7 +171,7 @@ type ProxyRequestHeaders struct {
 	Set  []Header `json:"set"`
 }
 
-// ProxyRequestHeaders defines the response headers manipulation in an ActionProxy.
+// ProxyResponseHeaders defines the response headers manipulation in an ActionProxy.
 type ProxyResponseHeaders struct {
 	Hide   []string    `json:"hide"`
 	Pass   []string    `json:"pass"`
@@ -172,7 +179,7 @@ type ProxyResponseHeaders struct {
 	Add    []AddHeader `json:"add"`
 }
 
-// Header defines an HTTP Header with an optional Always field to use with the add_header NGINX directive.
+// AddHeader defines an HTTP Header with an optional Always field to use with the add_header NGINX directive.
 type AddHeader struct {
 	Header `json:",inline"`
 	Always bool `json:"always"`
@@ -257,7 +264,16 @@ type VirtualServerList struct {
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:validation:Optional
+// +kubebuilder:resource:shortName=vsr
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="Current state of the VirtualServerRoute. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller."
+// +kubebuilder:printcolumn:name="Host",type=string,JSONPath=`.spec.host`
+// +kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.status.externalEndpoints[*].ip`
+// +kubebuilder:printcolumn:name="Ports",type=string,JSONPath=`.status.externalEndpoints[*].ports`
+// +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
+// VirtualServerRoute defines the VirtualServerRoute resource.
 type VirtualServerRoute struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -266,6 +282,7 @@ type VirtualServerRoute struct {
 	Status VirtualServerRouteStatus `json:"status"`
 }
 
+// VirtualServerRouteSpec is the spec of the VirtualServerRoute resource.
 type VirtualServerRouteSpec struct {
 	IngressClass string     `json:"ingressClassName"`
 	Host         string     `json:"host"`
