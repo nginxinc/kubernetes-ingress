@@ -10,8 +10,10 @@ import (
 )
 
 // TransportServerLister helps list TransportServers.
+// All objects returned here must be treated as read-only.
 type TransportServerLister interface {
 	// List lists all TransportServers in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.TransportServer, err error)
 	// TransportServers returns an object that can list and get TransportServers.
 	TransportServers(namespace string) TransportServerNamespaceLister
@@ -42,10 +44,13 @@ func (s *transportServerLister) TransportServers(namespace string) TransportServ
 }
 
 // TransportServerNamespaceLister helps list and get TransportServers.
+// All objects returned here must be treated as read-only.
 type TransportServerNamespaceLister interface {
 	// List lists all TransportServers in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1alpha1.TransportServer, err error)
 	// Get retrieves the TransportServer from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1alpha1.TransportServer, error)
 	TransportServerNamespaceListerExpansion
 }

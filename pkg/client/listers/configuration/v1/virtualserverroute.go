@@ -10,8 +10,10 @@ import (
 )
 
 // VirtualServerRouteLister helps list VirtualServerRoutes.
+// All objects returned here must be treated as read-only.
 type VirtualServerRouteLister interface {
 	// List lists all VirtualServerRoutes in the indexer.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.VirtualServerRoute, err error)
 	// VirtualServerRoutes returns an object that can list and get VirtualServerRoutes.
 	VirtualServerRoutes(namespace string) VirtualServerRouteNamespaceLister
@@ -42,10 +44,13 @@ func (s *virtualServerRouteLister) VirtualServerRoutes(namespace string) Virtual
 }
 
 // VirtualServerRouteNamespaceLister helps list and get VirtualServerRoutes.
+// All objects returned here must be treated as read-only.
 type VirtualServerRouteNamespaceLister interface {
 	// List lists all VirtualServerRoutes in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*v1.VirtualServerRoute, err error)
 	// Get retrieves the VirtualServerRoute from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
 	Get(name string) (*v1.VirtualServerRoute, error)
 	VirtualServerRouteNamespaceListerExpansion
 }
