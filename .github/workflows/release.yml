@@ -1,11 +1,15 @@
 name: Release
 
 on:
-  schedule:
-    - cron: '0 */4 * * *'
   push:
     branches:
       - release-1.9
+    paths-ignore:
+      - 'docs/**'
+      - 'docs-web/**'
+      - 'examples/**'
+      - 'examples-of-custom-resources/**'
+      - '**.md'
   create:
     tags:
       - 'v[0-9].[0-9].[0-9]+*'
@@ -616,12 +620,12 @@ jobs:
   notify:
     name: Notify
     runs-on: ubuntu-18.04
-    needs: helm-tests
+    needs: release-helm
     if: always() && contains(github.ref, 'release')
     steps:
       - name: Workflow Status
         id: check
-        uses: martialonline/workflow-status@v1
+        uses: martialonline/workflow-status@v2
       - name: Send Notification
         uses: 8398a7/action-slack@v3
         if: 
