@@ -62,18 +62,20 @@ In this section, we create resources common for most of the Ingress Controller i
 ValidationError(CustomResourceDefinition.spec): unknown field "preserveUnknownFields" in io.k8s.apiextensions-apiserver.pkg.apis.api extensions.v1beta1.CustomResourceDefinitionSpec
 ```
 
+**Note**: There are two different sets of custom resource definitions: one for Kubernetes <= v1.15 and one for Kubernetes >= v1.16. For Kubernetes <= v1.15 substitute `crds` with `crds-v1beta1` in the following commands.
+
 1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources), [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and [Policy](/nginx-ingress-controller/configuration/policy-resource) resources:
     ```
-    $ kubectl apply -f common/vs-definition.yaml
-    $ kubectl apply -f common/vsr-definition.yaml
-    $ kubectl apply -f common/ts-definition.yaml
-    $ kubectl apply -f common/policy-definition.yaml
+    $ kubectl apply -f common/crds/k8s.nginx.org_virtualservers.yaml
+    $ kubectl apply -f common/crds/k8s.nginx.org_virtualserverroutes.yaml
+    $ kubectl apply -f common/crds/k8s.nginx.org_transportservers.yaml
+    $ kubectl apply -f common/crds/k8s.nginx.org_policies.yaml
     ```
 
 If you would like to use the TCP and UDP load balancing features of the Ingress Controller, create the following additional resources: 
 1. Create a custom resource definition for [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resource:
     ```
-    $ kubectl apply -f common/gc-definition.yaml
+    $ kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
     ```
 1. Create a GlobalConfiguration resource:
     ```
@@ -92,8 +94,8 @@ If you would like to use the App Protect module, create the following additional
 1. Create a custom resource definition for `APPolicy` and `APLogConf`:
    
    ```
-   $ kubectl apply -f common/ap-logconf-definition.yaml 
-   $ kubectl apply -f common/ap-policy-definition.yaml 
+   $ kubectl apply -f common/crds-v1beta1/ap-logconf-definition.yaml 
+   $ kubectl apply -f common/crds-v1beta1/ap-policy-definition.yaml 
    ```
 
 ## 3. Deploy the Ingress Controller
