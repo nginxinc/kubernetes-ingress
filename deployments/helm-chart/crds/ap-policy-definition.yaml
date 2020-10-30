@@ -5,8 +5,6 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
   name: appolicies.appprotect.f5.com
-  labels:
-    app.kubernetes.io/name: "nginx-ingress"
 spec:
   group: appprotect.f5.com
   names:
