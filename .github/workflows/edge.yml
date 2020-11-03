@@ -51,13 +51,8 @@ jobs:
         id: commit
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
-      - name: Setup Golang Environment
-        uses: actions/setup-go@v2
-        with:
-          go-version: '${{ env.GOLANG_VERSION }}'
       - name: Build Binary
         run: >
-          go mod verify && go mod vendor &&
           make binary
           BUILD_IN_CONTAINER=0
           VERSION=${{ env.VERSION }}
@@ -81,8 +76,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: '${{ env.GOLANG_VERSION }}'
-      - run: |
-          go mod verify && go mod vendor
       - name: Run Tests
         run: go test ./...
 
@@ -349,7 +342,7 @@ jobs:
           --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
           --html=tests-${{ steps.k8s.outputs.cluster }}.html \
           --self-contained-html \
-          --show-ic-logs=yes \
+          --show-ic-logs=yes --profile\
           -m ${{ matrix.marker }}
         working-directory: ./tests
       - name: Upload Test Results
@@ -572,7 +565,7 @@ jobs:
     steps:
       - name: Workflow Status
         id: check
-        uses: martialonline/workflow-status@v2
+        uses: martialonline/workflow-status@v1
       - name: Output Variables
         id: commit
         run: |
