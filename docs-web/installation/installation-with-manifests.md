@@ -57,11 +57,6 @@ In this section, we create resources common for most of the Ingress Controller i
 
 ### Create Custom Resources
 
-**Note**: If you're using Kubernetes 1.14, make sure to add `--validate=false` to the `kubectl apply` commands below. Otherwise, you will get an error validating data:
-```
-ValidationError(CustomResourceDefinition.spec): unknown field "preserveUnknownFields" in io.k8s.apiextensions-apiserver.pkg.apis.api extensions.v1beta1.CustomResourceDefinitionSpec
-```
-
 **Note**: There are two different sets of custom resource definitions: one for Kubernetes <= v1.15 and one for Kubernetes >= v1.16. For Kubernetes <= v1.15 substitute `crds` with `crds-v1beta1` in the following commands.
 
 1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources), [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and [Policy](/nginx-ingress-controller/configuration/policy-resource) resources:
@@ -86,8 +81,6 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
 > **Feature Status**: The TransportServer, GlobalConfiguration and Policy resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
 
 ### Resources for NGINX App Protect
-
-**Note**: If you're using Kubernetes 1.14, make sure to add `--validate=false` to the `kubectl apply` commands below.
 
 If you would like to use the App Protect module, create the following additional resources:
 
