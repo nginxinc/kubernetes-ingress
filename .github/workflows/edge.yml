@@ -81,7 +81,7 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: '${{ env.GOLANG_VERSION }}'
-      - run: |	
+      - run: |
           go mod verify && go mod vendor
       - name: Run Tests
         run: go test ./...
@@ -349,7 +349,7 @@ jobs:
           --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
           --html=tests-${{ steps.k8s.outputs.cluster }}.html \
           --self-contained-html \
-          --show-ic-logs=yes --profile\
+          --show-ic-logs=yes --profile \
           -m ${{ matrix.marker }}
         working-directory: ./tests
       - name: Upload Test Results
