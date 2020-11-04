@@ -274,7 +274,7 @@ class TestRateLimitingPolciesVsr:
         assert resp.status_code == 500
 
     @pytest.mark.parametrize("src", [rl_vsr_override_vs_spec_src, rl_vsr_override_vs_route_src])
-    def test_overide_vs_vsr(
+    def test_override_vs_vsr(
         self,
         kube_apis,
         crd_ingress_controller,
