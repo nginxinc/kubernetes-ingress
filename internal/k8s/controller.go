@@ -1473,7 +1473,7 @@ func (lbc *LoadBalancerController) handleRegularSecretDeletion(key string, resou
 func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, resources []Resource) {
 	secretNsName := secret.Namespace + "/" + secret.Name
 
-	kind, err := GetSecretKind(secret)
+	err := ValidateSecret(secret)
 	if err != nil {
 		// Secret becomes Invalid
 		glog.Errorf("Couldn't validate secret %v: %v", secretNsName, err)
@@ -1488,13 +1488,14 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, res
 	var warnings configs.Warnings
 	var addOrUpdateErr error
 
-	if kind == JWK {
+	switch secret.Type {
+	case SecretTypeJWK:
 		_, _, virtualServerExes := lbc.createExtendedResources(resources)
 		warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateJWKSecret(secret, virtualServerExes)
-	} else if kind == CA {
+	case SecretTypeCA:
 		_, _, virtualServerExes := lbc.createExtendedResources(resources)
 		warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateCASecret(secret, virtualServerExes)
-	} else {
+	default:
 		ingressExes, mergeableIngresses, virtualServerExes := lbc.createExtendedResources(resources)
 		warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateTLSSecret(secret, ingressExes, mergeableIngresses, virtualServerExes)
 	}

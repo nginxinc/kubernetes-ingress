@@ -1,31 +1,103 @@
 package k8s
 
 import (
-	"errors"
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestGetSecretKind(t *testing.T) {
+func TestValidateJWKSecret(t *testing.T) {
+	secret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "jwk-secret",
+			Namespace: "default",
+		},
+		Type: SecretTypeJWK,
+		Data: map[string][]byte{
+			"jwk": nil,
+		},
+	}
 
-	var tests = []struct {
-		secret   *v1.Secret
-		expected int
+	err := ValidateJWKSecret(secret)
+	if err != nil {
+		t.Errorf("ValidateJWKSecret() returned error %v", err)
+	}
+}
+
+func TestValidateJWKSecretFails(t *testing.T) {
+	tests := []struct {
+		secret *v1.Secret
+		msg    string
 	}{
 		{
 			secret: &v1.Secret{
 				ObjectMeta: meta_v1.ObjectMeta{
-					Name:      "tls-secret",
+					Name:      "jwk-secret",
 					Namespace: "default",
 				},
+				Type: "some-type",
 				Data: map[string][]byte{
-					"tls.key": nil,
-					"tls.crt": nil,
+					"jwk": nil,
 				},
 			},
-			expected: TLS,
+			msg: "Incorrect type for JWK secret",
+		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "jwk-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeJWK,
+			},
+			msg: "Missing jwk for JWK secret",
+		},
+	}
+
+	for _, test := range tests {
+		err := ValidateJWKSecret(test.secret)
+		if err == nil {
+			t.Errorf("ValidateJWKSecret() returned no error for the case of %s", test.msg)
+		}
+	}
+}
+
+func TestValidateCASecret(t *testing.T) {
+	secret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "ingress-mtls-secret",
+			Namespace: "default",
+		},
+		Type: SecretTypeCA,
+		Data: map[string][]byte{
+			"ca.crt": nil,
+		},
+	}
+
+	err := ValidateCASecret(secret)
+	if err != nil {
+		t.Errorf("ValidateCASecret() returned error %v", err)
+	}
+}
+
+func TestValidateCASecretFails(t *testing.T) {
+	tests := []struct {
+		secret *v1.Secret
+		msg    string
+	}{
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "ingress-mtls-secret",
+					Namespace: "default",
+				},
+				Type: "some-type",
+				Data: map[string][]byte{
+					"ca.crt": nil,
+				},
+			},
+			msg: "Incorrect type for CA secret",
 		},
 		{
 			secret: &v1.Secret{
@@ -33,112 +105,170 @@ func TestGetSecretKind(t *testing.T) {
 					Name:      "ingress-mtls-secret",
 					Namespace: "default",
 				},
+				Type: SecretTypeCA,
+			},
+			msg: "Missing ca.crt for CA secret",
+		},
+	}
+
+	for _, test := range tests {
+		err := ValidateCASecret(test.secret)
+		if err == nil {
+			t.Errorf("ValidateCASecret() returned no error for the case of %s", test.msg)
+		}
+	}
+}
+
+func TestValidateTLSSecret(t *testing.T) {
+	secret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "tls-secret",
+			Namespace: "default",
+		},
+		Type: v1.SecretTypeTLS,
+	}
+
+	err := ValidateTLSSecret(secret)
+	if err != nil {
+		t.Errorf("ValidateTLSSecret() returned error %v", err)
+	}
+}
+
+func TestValidateTLSSecretFails(t *testing.T) {
+	secret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "tls-secret",
+			Namespace: "default",
+		},
+		Type: "some type",
+	}
+
+	err := ValidateTLSSecret(secret)
+	if err == nil {
+		t.Errorf("ValidateTLSSecret() returned no error")
+	}
+}
+
+func TestValidateSecret(t *testing.T) {
+	tests := []struct {
+		secret *v1.Secret
+		msg    string
+	}{
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "tls-secret",
+					Namespace: "default",
+				},
+				Type: v1.SecretTypeTLS,
+			},
+			msg: "Valid TLS secret",
+		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "ingress-mtls-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeCA,
 				Data: map[string][]byte{
 					"ca.crt": nil,
 				},
 			},
-			expected: CA,
+			msg: "Valid CA secret",
 		}, {
 			secret: &v1.Secret{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "jwk-secret",
 					Namespace: "default",
 				},
+				Type: SecretTypeJWK,
 				Data: map[string][]byte{
 					"jwk": nil,
 				},
 			},
-			expected: JWK,
+			msg: "Valid JWK secret",
 		},
 	}
 
 	for _, test := range tests {
-
-		secret, err := GetSecretKind(test.secret)
+		err := ValidateSecret(test.secret)
 		if err != nil {
-			t.Errorf("GetSecretKind() returned an unexpected error: %v", err)
-		}
-		if secret != test.expected {
-			t.Errorf("GetSecretKind() return %v but expected %v", secret, test.expected)
+			t.Errorf("ValidateSecret() returned error %v for the case of %s", err, test.msg)
 		}
 	}
 }
 
-func TestGetSecretKindUnkown(t *testing.T) {
-	s := &v1.Secret{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "foo-secret",
-			Namespace: "default",
+func TestValidateSecretFails(t *testing.T) {
+	tests := []struct {
+		secret *v1.Secret
+		msg    string
+	}{
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "tls-secret",
+					Namespace: "default",
+				},
+			},
+			msg: "Missing type for TLS secret",
 		},
-		Data: map[string][]byte{
-			"foo.bar": nil,
-		},
-	}
-	e := errors.New("Unknown Secret")
-
-	secret, err := GetSecretKind(s)
-	if secret != 0 {
-		t.Errorf("GetSecretKind() returned an unexpected secret: %v", secret)
-	}
-	if err.Error() != e.Error() {
-		t.Errorf("GetSecretKind() return %v but expected %v", err, e)
-	}
-
-}
-
-func TestValidateTLSSecretFail(t *testing.T) {
-
-	s := &v1.Secret{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "tls-secret",
-			Namespace: "default",
-		},
-		Data: map[string][]byte{
-			"tls.crt": nil,
-		},
-	}
-	e := errors.New("Secret doesn't have tls.key")
-
-	err := ValidateTLSSecret(s)
-	if err.Error() != e.Error() {
-		t.Errorf("ValidateTLSSecret() return %v but expected %v", err, e)
-	}
-}
-
-func TesValidateCASecretFail(t *testing.T) {
-
-	s := &v1.Secret{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "mtls-secret",
-			Namespace: "default",
-		},
-		Data: map[string][]byte{
-			"ca.cert": nil,
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "ingress-mtls-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeCA,
+			},
+			msg: "Missing ca.crt for CA secret",
+		}, {
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "jwk-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeJWK,
+			},
+			msg: "Missing jwk for JWK secret",
 		},
 	}
-	e := errors.New("Secret doesn't have ca.crt")
 
-	err := ValidateCASecret(s)
-	if err.Error() != e.Error() {
-		t.Errorf("ValidateCASecret() return %v but expected %v", err, e)
+	for _, test := range tests {
+		err := ValidateSecret(test.secret)
+		if err == nil {
+			t.Errorf("ValidateSecret() returned no error for the case of %s", test.msg)
+		}
 	}
 }
 
-func TestValidateJWKSecretFail(t *testing.T) {
-
-	s := &v1.Secret{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "mtls-secret",
-			Namespace: "default",
+func TestHasCorrectSecretType(t *testing.T) {
+	tests := []struct {
+		secretType v1.SecretType
+		expected   bool
+	}{
+		{
+			secretType: v1.SecretTypeTLS,
+			expected:   true,
 		},
-		Data: map[string][]byte{
-			"jwka": nil,
+		{
+			secretType: SecretTypeCA,
+			expected:   true,
+		},
+		{
+			secretType: SecretTypeJWK,
+			expected:   true,
+		},
+		{
+			secretType: "some-type",
+			expected:   false,
 		},
 	}
-	e := errors.New("Secret doesn't have jwk")
 
-	err := ValidateJWKSecret(s)
-	if err.Error() != e.Error() {
-		t.Errorf("ValidateJWKSecret() return %v but expected %v", err, e)
+	for _, test := range tests {
+		result := IsSupportedSecretType(test.secretType)
+		if result != test.expected {
+			t.Errorf("IsSupportedSecretType(%v) returned %v but expected %v", test.secretType, result, test.expected)
+		}
 	}
 }

@@ -17,6 +17,7 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	api_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1221,6 +1222,7 @@ func TestAddJWTSecrets(t *testing.T) {
 			Name:      "valid-jwk-secret",
 			Namespace: "default",
 		},
+		Type: SecretTypeJWK,
 		Data: map[string][]byte{"jwk": nil},
 	}
 
@@ -1361,6 +1363,7 @@ func TestGetIngressMTLSSecret(t *testing.T) {
 			Name:      "valid-ingress-mtls-secret",
 			Namespace: "default",
 		},
+		Type: SecretTypeCA,
 		Data: map[string][]byte{"ca.crt": nil},
 	}
 
@@ -1493,6 +1496,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			Name:      "valid-egress-mtls-secret",
 			Namespace: "default",
 		},
+		Type: api_v1.SecretTypeTLS,
 		Data: map[string][]byte{"tls.key": nil, "tls.crt": nil},
 	}
 	validSecret2 := &v1.Secret{
@@ -1500,6 +1504,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			Name:      "valid-egress-trusted-secret",
 			Namespace: "default",
 		},
+		Type: SecretTypeCA,
 		Data: map[string][]byte{"ca.crt": nil},
 	}
 

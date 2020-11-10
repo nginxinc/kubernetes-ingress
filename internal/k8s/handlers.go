@@ -133,8 +133,8 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			secret := obj.(*v1.Secret)
-			if _, err := GetSecretKind(secret); err != nil {
-				glog.V(3).Infof("Ignoring unknown secret: %v", secret.Name)
+			if !IsSupportedSecretType(secret.Type) {
+				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
 				return
 			}
 			glog.V(3).Infof("Adding Secret: %v", secret.Name)
@@ -154,8 +154,8 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 					return
 				}
 			}
-			if _, err := GetSecretKind(secret); err != nil {
-				glog.V(3).Infof("Ignoring unknown secret: %v", secret.Name)
+			if !IsSupportedSecretType(secret.Type) {
+				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", secret.Name, secret.Type)
 				return
 			}
 
@@ -163,11 +163,10 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			lbc.AddSyncQueue(obj)
 		},
 		UpdateFunc: func(old, cur interface{}) {
+			// A secret cannot change its type. That's why we only need to check the type of the current secret.
 			curSecret := cur.(*v1.Secret)
-			_, errOld := GetSecretKind(old.(*v1.Secret))
-			_, errCur := GetSecretKind(curSecret)
-			if errOld != nil && errCur != nil {
-				glog.V(3).Infof("Ignoring unknown secret: %v", curSecret.Name)
+			if !IsSupportedSecretType(curSecret.Type) {
+				glog.V(3).Infof("Ignoring Secret %v of unsupported type %v", curSecret.Name, curSecret.Type)
 				return
 			}
 
