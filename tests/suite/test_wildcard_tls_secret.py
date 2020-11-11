@@ -6,7 +6,7 @@ from suite.ssl_utils import get_server_certificate_subject
 from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml,\
     create_secret_from_yaml, delete_secret, create_example_app, delete_common_app,\
     is_secret_present, wait_until_all_pods_are_ready, create_ingress_controller,\
-    delete_ingress_controller, replace_secret, wait_before_test, ensure_connection_to_public_endpoint
+    delete_ingress_controller, wait_before_test, ensure_connection_to_public_endpoint
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 
 paths = ["backend1", "backend2"]
@@ -116,9 +116,10 @@ class TestTLSWildcardSecrets:
     def test_certificate_subject_remains_with_invalid_secret(self, kube_apis, ingress_controller_prerequisites,
                                                              wildcard_tls_secret_ingress_controller,
                                                              wildcard_tls_secret_setup):
-        replace_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
-                       ingress_controller_prerequisites.namespace,
-                       f"{TEST_DATA}/wildcard-tls-secret/invalid-wildcard-tls-secret.yaml")
+        delete_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
+                      ingress_controller_prerequisites.namespace)
+        create_secret_from_yaml(kube_apis.v1, ingress_controller_prerequisites.namespace,
+                                f"{TEST_DATA}/wildcard-tls-secret/invalid-wildcard-tls-secret.yaml")
         wait_before_test(1)
         subject_dict = get_server_certificate_subject(wildcard_tls_secret_setup.public_endpoint.public_ip,
                                                       wildcard_tls_secret_setup.ingress_host,
@@ -130,9 +131,10 @@ class TestTLSWildcardSecrets:
     def test_certificate_subject_updates_after_secret_update(self, kube_apis, ingress_controller_prerequisites,
                                                              wildcard_tls_secret_ingress_controller,
                                                              wildcard_tls_secret_setup):
-        replace_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
-                       ingress_controller_prerequisites.namespace,
-                       f"{TEST_DATA}/wildcard-tls-secret/gb-wildcard-tls-secret.yaml")
+        delete_secret(kube_apis.v1, wildcard_tls_secret_ingress_controller.secret_name,
+                      ingress_controller_prerequisites.namespace)
+        create_secret_from_yaml(kube_apis.v1, ingress_controller_prerequisites.namespace,
+                            f"{TEST_DATA}/wildcard-tls-secret/gb-wildcard-tls-secret.yaml")
         wait_before_test(1)
         subject_dict = get_server_certificate_subject(wildcard_tls_secret_setup.public_endpoint.public_ip,
                                                       wildcard_tls_secret_setup.ingress_host,

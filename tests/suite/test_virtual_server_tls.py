@@ -88,14 +88,16 @@ class TestVirtualServerTLS:
         assert_us_subject(virtual_server_setup)
 
         print("\nStep 5: deploy invalid secret and check")
-        replace_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace,
+        delete_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace)
+        create_secret_from_yaml(kube_apis.v1, virtual_server_setup.namespace,
                        f"{TEST_DATA}/virtual-server-tls/invalid-tls-secret.yaml")
         wait_before_test(1)
         assert_ssl_error(virtual_server_setup)
 
         print("\nStep 6: restore secret and check")
-        replace_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace,
-                       f"{TEST_DATA}/virtual-server-tls/tls-secret.yaml")
+        delete_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace)
+        create_secret_from_yaml(kube_apis.v1, virtual_server_setup.namespace,
+                                f"{TEST_DATA}/virtual-server-tls/tls-secret.yaml")
         wait_before_test(1)
         assert_us_subject(virtual_server_setup)
 
