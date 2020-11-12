@@ -13,6 +13,7 @@ ENV APPPROTECT_SIG_VERSION 2020.12.30-1~buster
 ENV APPPROTECT_THREAT_CAMPAIGNS_VERSION 2021.01.03-1~buster
 ENV NGINX_PLUS_VERSION 23-1~buster
 ENV NGINX_PLUS_RELEASE R23
+ENV NGINX_NJS_VERSION 23+0.5.0-1~buster
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
@@ -49,7 +50,7 @@ RUN --mount=type=secret,id=nginx-repo.crt \
 	&& echo "Acquire::https::app-protect-sigs.nginx.com::Verify-Host \"true\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
 	&& echo "Acquire::https::app-protect-sigs.nginx.com::SslCert     \"/etc/ssl/nginx/nginx-repo.crt\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
 	&& echo "Acquire::https::app-protect-sigs.nginx.com::SslKey      \"/etc/ssl/nginx/nginx-repo.key\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
-	&& apt-get update && apt-get install -y nginx-plus=$NGINX_PLUS_VERSION \
+	&& apt-get update && apt-get install -y nginx-plus=$NGINX_PLUS_VERSION nginx-plus-module-njs=${NGINX_NJS_VERSION} \
 	    nginx-plus-module-appprotect=$APPPROTECT_MODULE_VERSION \
 	    app-protect-plugin=$APPPROTECT_PLUGIN_VERSION \
 	    app-protect-engine=$APPPROTECT_ENGINE_VERSION \
@@ -83,6 +84,7 @@ RUN mkdir -p /var/lib/nginx \
 				/etc/nginx/waf/nac-usersigs \
 				/var/log/app_protect \
 				/opt/app_protect \
+				/etc/nginx/oidc \
 	&& touch /etc/nginx/waf/nac-usersigs/index.conf \
 	&& chown -R nginx:0 /etc/app_protect \
 						/usr/share/ts \
@@ -106,7 +108,7 @@ RUN printf "MODULE = ALL;\nLOG_LEVEL = TS_CRIT;\nFILE = 2;\n" > /etc/app_protect
 	; do sed -i "/\[$v/a log_level=fatal" "/etc/app_protect/tools/asm_logging.conf" \
 	; done
 
-COPY --chown=nginx:0 build/appprotect/log-default.json /etc/nginx  
+COPY --chown=nginx:0 build/appprotect/log-default.json /etc/nginx
 
 EXPOSE 80 443
 
@@ -114,6 +116,8 @@ COPY internal/configs/version1/nginx-plus.ingress.tmpl \
 	internal/configs/version1/nginx-plus.tmpl \
 	internal/configs/version2/nginx-plus.virtualserver.tmpl \
 	internal/configs/version2/nginx-plus.transportserver.tmpl /
+
+COPY internal/configs/oidc/* /etc/nginx/oidc/
 
 # Uncomment the line below if you would like to add the default.pem to the image
 # and use it as a certificate and key for the default server

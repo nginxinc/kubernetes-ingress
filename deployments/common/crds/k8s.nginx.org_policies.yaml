@@ -88,6 +88,24 @@ spec:
                       type: string
                     token:
                       type: string
+                oidc:
+                  description: OIDC defines an Open ID Connect policy.
+                  type: object
+                  properties:
+                    authEndpoint:
+                      type: string
+                    clientID:
+                      type: string
+                    clientSecret:
+                      type: string
+                    jwksURI:
+                      type: string
+                    redirectURI:
+                      type: string
+                    scope:
+                      type: string
+                    tokenEndpoint:
+                      type: string
                 rateLimit:
                   description: 'RateLimit defines a rate limit policy. policy status: preview'
                   type: object

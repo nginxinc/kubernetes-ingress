@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"regexp"
 
 	api_v1 "k8s.io/api/core/v1"
 )
@@ -15,11 +16,17 @@ const JWTKeyKey = "jwk"
 // CAKey is the key of the data field of a Secret where the certificate authority must be stored.
 const CAKey = "ca.crt"
 
+// ClientSecretKey is the key of the data field of a Secret where the OIDC client secret must be stored.
+const ClientSecretKey = "client-secret"
+
 // SecretTypeCA contains a certificate authority for TLS certificate verification.
 const SecretTypeCA api_v1.SecretType = "nginx.org/ca"
 
 // SecretTypeJWK contains a JWK (JSON Web Key) for validating JWTs (JSON Web Tokens).
 const SecretTypeJWK api_v1.SecretType = "nginx.org/jwk"
+
+// SecretTypeOIDC contains an OIDC client secret for use in oauth flows.
+const SecretTypeOIDC api_v1.SecretType = "nginx.org/oidc"
 
 // ValidateTLSSecret validates the secret. If it is valid, the function returns nil.
 func ValidateTLSSecret(secret *api_v1.Secret) error {
@@ -79,9 +86,29 @@ func ValidateCASecret(secret *api_v1.Secret) error {
 	return nil
 }
 
+// ValidateOIDCSecret validates the secret. If it is valid, the function returns nil.
+func ValidateOIDCSecret(secret *api_v1.Secret) error {
+	if secret.Type != SecretTypeOIDC {
+		return fmt.Errorf("OIDC secret must be of the type %v", SecretTypeOIDC)
+	}
+
+	clientSecret, exists := secret.Data[ClientSecretKey]
+	if !exists {
+		return fmt.Errorf("OIDC secret must have the data field %v", ClientSecretKey)
+	}
+
+	if msg, ok := isValidClientSecretValue(string(clientSecret)); !ok {
+		return fmt.Errorf("OIDC client secret %v is invalid: %s", clientSecret, msg)
+	}
+	return nil
+}
+
 // IsSupportedSecretType checks if the secret type is supported.
 func IsSupportedSecretType(secretType api_v1.SecretType) bool {
-	return secretType == api_v1.SecretTypeTLS || secretType == SecretTypeCA || secretType == SecretTypeJWK
+	return secretType == api_v1.SecretTypeTLS ||
+		secretType == SecretTypeCA ||
+		secretType == SecretTypeJWK ||
+		secretType == SecretTypeOIDC
 }
 
 // ValidateSecret validates the secret. If it is valid, the function returns nil.
@@ -93,7 +120,18 @@ func ValidateSecret(secret *api_v1.Secret) error {
 		return ValidateJWKSecret(secret)
 	case SecretTypeCA:
 		return ValidateCASecret(secret)
+	case SecretTypeOIDC:
+		return ValidateOIDCSecret(secret)
 	}
 
 	return fmt.Errorf("Secret is of the unsupported type %v", secret.Type)
+}
+
+var clientSecretValueFmtRegexp = regexp.MustCompile(`^([^"$\\]|\\[^$])*$`)
+
+func isValidClientSecretValue(s string) (string, bool) {
+	if ok := clientSecretValueFmtRegexp.MatchString(s); !ok {
+		return `It must contain valid ASCII characters, must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`, false
+	}
+	return "", true
 }

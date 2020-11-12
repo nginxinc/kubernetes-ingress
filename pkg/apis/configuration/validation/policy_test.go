@@ -38,6 +38,23 @@ func TestValidatePolicy(t *testing.T) {
 			enablePreviewPolicies: true,
 			msg:                   "use jwt(plus only) policy",
 		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					OIDC: &v1.OIDC{
+						AuthEndpoint:  "https://foo.bar/auth",
+						TokenEndpoint: "https://foo.bar/token",
+						JWKSURI:       "https://foo.bar/certs",
+						ClientID:      "random-string",
+						ClientSecret:  "random-secret",
+						Scope:         "openid",
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: true,
+			msg:                   "use OIDC (plus only)",
+		},
 	}
 	for _, test := range tests {
 		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies)
@@ -46,6 +63,7 @@ func TestValidatePolicy(t *testing.T) {
 		}
 	}
 }
+
 func TestValidatePolicyFails(t *testing.T) {
 	tests := []struct {
 		policy                *v1.Policy
@@ -141,6 +159,40 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                false,
 			enablePreviewPolicies: false,
 			msg:                   "egressMTLS policy with preview policies disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					OIDC: &v1.OIDC{
+						AuthEndpoint:  "https://foo.bar/auth",
+						TokenEndpoint: "https://foo.bar/token",
+						JWKSURI:       "https://foo.bar/certs",
+						ClientID:      "random-string",
+						ClientSecret:  "random-secret",
+						Scope:         "openid",
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: false,
+			msg:                   "OIDC policy with preview policies disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					OIDC: &v1.OIDC{
+						AuthEndpoint:  "https://foo.bar/auth",
+						TokenEndpoint: "https://foo.bar/token",
+						JWKSURI:       "https://foo.bar/certs",
+						ClientID:      "random-string",
+						ClientSecret:  "random-secret",
+						Scope:         "openid",
+					},
+				},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: true,
+			msg:                   "OIDC policy in OSS",
 		},
 	}
 	for _, test := range tests {
@@ -498,7 +550,7 @@ func TestValidatePositiveInt(t *testing.T) {
 }
 
 func TestValidateRateLimitZoneSize(t *testing.T) {
-	var validInput = []string{"32", "32k", "32K", "10m"}
+	validInput := []string{"32", "32k", "32K", "10m"}
 
 	for _, test := range validInput {
 		allErrs := validateRateLimitZoneSize(test, field.NewPath("size"))
@@ -507,7 +559,7 @@ func TestValidateRateLimitZoneSize(t *testing.T) {
 		}
 	}
 
-	var invalidInput = []string{"", "31", "31k", "0", "0M"}
+	invalidInput := []string{"", "31", "31k", "0", "0M"}
 
 	for _, test := range invalidInput {
 		allErrs := validateRateLimitZoneSize(test, field.NewPath("size"))
@@ -518,7 +570,7 @@ func TestValidateRateLimitZoneSize(t *testing.T) {
 }
 
 func TestValidateRateLimitLogLevel(t *testing.T) {
-	var validInput = []string{"error", "info", "warn", "notice"}
+	validInput := []string{"error", "info", "warn", "notice"}
 
 	for _, test := range validInput {
 		allErrs := validateRateLimitLogLevel(test, field.NewPath("logLevel"))
@@ -527,7 +579,7 @@ func TestValidateRateLimitLogLevel(t *testing.T) {
 		}
 	}
 
-	var invalidInput = []string{"warn ", "info error", ""}
+	invalidInput := []string{"warn ", "info error", ""}
 
 	for _, test := range invalidInput {
 		allErrs := validateRateLimitLogLevel(test, field.NewPath("logLevel"))
@@ -677,7 +729,7 @@ func TestValidateIngressMTLSInvalid(t *testing.T) {
 }
 
 func TestValidateIngressMTLSVerifyClient(t *testing.T) {
-	var validInput = []string{"on", "off", "optional", "optional_no_ca"}
+	validInput := []string{"on", "off", "optional", "optional_no_ca"}
 
 	for _, test := range validInput {
 		allErrs := validateIngressMTLSVerifyClient(test, field.NewPath("verifyClient"))
@@ -686,7 +738,7 @@ func TestValidateIngressMTLSVerifyClient(t *testing.T) {
 		}
 	}
 
-	var invalidInput = []string{"true", "false"}
+	invalidInput := []string{"true", "false"}
 
 	for _, test := range invalidInput {
 		allErrs := validateIngressMTLSVerifyClient(test, field.NewPath("verifyClient"))
@@ -774,6 +826,181 @@ func TestValidateEgressMTLSInvalid(t *testing.T) {
 		allErrs := validateEgressMTLS(test.eg, field.NewPath("egressMTLS"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateEgressMTLS() returned no errors for invalid input for the case of %v", test.msg)
+		}
+	}
+}
+
+func TestValidateOIDCValid(t *testing.T) {
+	tests := []struct {
+		oidc *v1.OIDC
+		msg  string
+	}{
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "https://accounts.google.com/o/oauth2/v2/auth",
+				TokenEndpoint: "https://oauth2.googleapis.com/token",
+				JWKSURI:       "https://www.googleapis.com/oauth2/v3/certs",
+				ClientID:      "random-string",
+				ClientSecret:  "random-secret",
+				Scope:         "openid",
+				RedirectURI:   "/foo",
+			},
+			msg: "verify full oidc",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/authorize",
+				TokenEndpoint: "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/token",
+				JWKSURI:       "https://login.microsoftonline.com/dd-fff-eee-1234-9be/discovery/v2.0/keys",
+				ClientID:      "ff",
+				ClientSecret:  "ff",
+				Scope:         "openid+profile",
+				RedirectURI:   "/_codexe",
+			},
+			msg: "verify azure endpoint",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/auth",
+				TokenEndpoint: "http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/token",
+				JWKSURI:       "http://keycloak.default.svc.cluster.local:8080/auth/realms/master/protocol/openid-connect/certs",
+				ClientID:      "bar",
+				ClientSecret:  "foo",
+				Scope:         "openid",
+			},
+			msg: "domain with port number",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/auth",
+				TokenEndpoint: "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/token",
+				JWKSURI:       "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/certs",
+				ClientID:      "client",
+				ClientSecret:  "secret",
+				Scope:         "openid",
+			},
+			msg: "ip address",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateOIDC(test.oidc, field.NewPath("oidc"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateOIDC() returned errors %v for valid input for the case of %v", allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateOIDCInvalid(t *testing.T) {
+	tests := []struct {
+		oidc *v1.OIDC
+		msg  string
+	}{
+		{
+			oidc: &v1.OIDC{
+				RedirectURI: "/foo",
+			},
+			msg: "missing required field",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/authorize",
+				TokenEndpoint: "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/token",
+				JWKSURI:       "https://login.microsoftonline.com/dd-fff-eee-1234-9be/discovery/v2.0/keys",
+				ClientID:      "ff",
+				ClientSecret:  "-ff-",
+				Scope:         "openid+profile",
+			},
+			msg: "invalid secret name",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "http://foo.\bar.com",
+				TokenEndpoint: "http://keycloak.default",
+				JWKSURI:       "http://keycloak.default",
+				ClientID:      "bar",
+				ClientSecret:  "foo",
+				Scope:         "openid",
+			},
+			msg: "invalid URL",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/auth",
+				TokenEndpoint: "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/token",
+				JWKSURI:       "http://127.0.0.1:8080/auth/realms/master/protocol/openid-connect/certs",
+				ClientID:      "$foo$bar",
+				ClientSecret:  "secret",
+				Scope:         "openid",
+			},
+			msg: "ip address",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateOIDC(test.oidc, field.NewPath("oidc"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateOIDC() returned no errors for invalid input for the case of %v", test.msg)
+		}
+	}
+}
+
+func TestValidateClientID(t *testing.T) {
+	validInput := []string{"myid", "your.id", "id-sf-sjfdj.com", "foo_bar~vni"}
+
+	for _, test := range validInput {
+		allErrs := validateClientID(test, field.NewPath("clientID"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateClientID(%q) returned errors %v for valid input", allErrs, test)
+		}
+	}
+
+	invalidInput := []string{"$boo", "foo$bar", `foo_bar"vni`, `client\`}
+
+	for _, test := range invalidInput {
+		allErrs := validateClientID(test, field.NewPath("clientID"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateClientID(%q) didn't return error for invalid input", test)
+		}
+	}
+}
+
+func TestValidateOIDCScope(t *testing.T) {
+	validInput := []string{"openid", "openid+profile", "openid+email", "openid+phone"}
+
+	for _, test := range validInput {
+		allErrs := validateOIDCScope(test, field.NewPath("scope"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateOIDCScope(%q) returned errors %v for valid input", allErrs, test)
+		}
+	}
+
+	invalidInput := []string{"profile", "openid+web", `openid+foobar.com`}
+
+	for _, test := range invalidInput {
+		allErrs := validateOIDCScope(test, field.NewPath("scope"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateOIDCScope(%q) didn't return error for invalid input", test)
+		}
+	}
+}
+
+func TestValidatURL(t *testing.T) {
+	validInput := []string{"http://google.com/auth", "https://foo.bar/baz", "http://127.0.0.1/bar", "http://openid.connect.com:8080/foo"}
+
+	for _, test := range validInput {
+		allErrs := validateURL(test, field.NewPath("authEndpoint"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateURL(%q) returned errors %v for valid input", allErrs, test)
+		}
+	}
+
+	invalidInput := []string{"www.google..foo.com", "http://{foo.bar", `https://google.foo\bar`, "http://foo.bar:8080", "http://foo.bar:812345/fooo"}
+
+	for _, test := range invalidInput {
+		allErrs := validateURL(test, field.NewPath("authEndpoint"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateURL(%q) didn't return error for invalid input", test)
 		}
 	}
 }

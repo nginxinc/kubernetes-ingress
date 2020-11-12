@@ -12,14 +12,14 @@ type UpstreamLabels struct {
 
 // VirtualServerConfig holds NGINX configuration for a VirtualServer.
 type VirtualServerConfig struct {
-	Server        Server
-	Upstreams     []Upstream
-	SplitClients  []SplitClient
-	Maps          []Map
-	StatusMatches []StatusMatch
-	LimitReqZones []LimitReqZone
 	HTTPSnippets  []string
+	LimitReqZones []LimitReqZone
+	Maps          []Map
+	Server        Server
 	SpiffeCerts   bool
+	SplitClients  []SplitClient
+	StatusMatches []StatusMatch
+	Upstreams     []Upstream
 }
 
 // Upstream defines an upstream.
@@ -69,6 +69,7 @@ type Server struct {
 	JWTAuth                   *JWTAuth
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
+	OIDC                      *OIDC
 	PoliciesErrorReturn       *Return
 	VSNamespace               string
 	VSName                    string
@@ -101,6 +102,16 @@ type EgressMTLS struct {
 	SessionReuse   bool
 	ServerName     bool
 	SSLName        string
+}
+
+type OIDC struct {
+	AuthEndpoint  string
+	ClientID      string
+	ClientSecret  string
+	JwksURI       string
+	Scope         string
+	TokenEndpoint string
+	RedirectURI   string
 }
 
 // Location defines a location.
@@ -139,6 +150,7 @@ type Location struct {
 	LimitReqs                []LimitReq
 	JWTAuth                  *JWTAuth
 	EgressMTLS               *EgressMTLS
+	OIDC                     *bool
 	PoliciesErrorReturn      *Return
 	ServiceName              string
 	IsVSR                    bool

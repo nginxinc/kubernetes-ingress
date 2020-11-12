@@ -750,6 +750,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
 	}
 }
+
 func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
@@ -1829,20 +1830,37 @@ func TestGeneratePolicies(t *testing.T) {
 		tls: true,
 		secretRefs: map[string]*secrets.SecretReference{
 			"default/ingress-mtls-secret": {
-				Type: "nginx.org/ca",
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeCA,
+				},
 				Path: ingressMTLSCertPath,
 			},
 			"default/egress-mtls-secret": {
-				Type: api_v1.SecretTypeTLS,
+				Secret: &api_v1.Secret{
+					Type: api_v1.SecretTypeTLS,
+				},
 				Path: "/etc/nginx/secrets/default-egress-mtls-secret",
 			},
 			"default/egress-trusted-ca-secret": {
-				Type: "nginx.org/ca",
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeCA,
+				},
 				Path: "/etc/nginx/secrets/default-egress-trusted-ca-secret",
 			},
 			"default/jwt-secret": {
-				Type: secrets.SecretTypeJWK,
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeJWK,
+				},
 				Path: "/etc/nginx/secrets/default-jwt-secret",
+			},
+			"default/oidc-secret": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeOIDC,
+					Data: map[string][]byte{
+						"client-secret": []byte("super_secret_123"),
+					},
+				},
+				Path: "/etc/nginx/secrets/default-oidc-secret",
 			},
 		},
 	}
@@ -2123,6 +2141,37 @@ func TestGeneratePolicies(t *testing.T) {
 			},
 			msg: "egressMTLS reference",
 		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "oidc-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/oidc-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						OIDC: &conf_v1.OIDC{
+							AuthEndpoint:  "http://example.com/auth",
+							TokenEndpoint: "http://example.com/token",
+							JWKSURI:       "http://example.com/jwks",
+							ClientID:      "client-id",
+							ClientSecret:  "oidc-secret",
+							Scope:         "scope",
+							RedirectURI:   "/redirect",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				OIDC: createPointerFromBool(true),
+			},
+			msg: "oidc reference",
+		},
 	}
 
 	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
@@ -2313,7 +2362,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			policyOpts: policyOptions{
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/jwt-secret": {
-						Type:  secrets.SecretTypeJWK,
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeJWK,
+						},
 						Error: errors.New("secret is invalid"),
 					},
 				},
@@ -2354,7 +2405,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			policyOpts: policyOptions{
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/jwt-secret": {
-						Type: secrets.SecretTypeCA,
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+						},
 					},
 				},
 			},
@@ -2410,11 +2463,15 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			policyOpts: policyOptions{
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/jwt-secret": {
-						Type: secrets.SecretTypeJWK,
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeJWK,
+						},
 						Path: "/etc/nginx/secrets/default-jwt-secret",
 					},
 					"default/jwt-secret2": {
-						Type: secrets.SecretTypeJWK,
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeJWK,
+						},
 						Path: "/etc/nginx/secrets/default-jwt-secret2",
 					},
 				},
@@ -2497,7 +2554,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				tls: true,
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/ingress-mtls-secret": {
-						Type: api_v1.SecretTypeTLS,
+						Secret: &api_v1.Secret{
+							Type: api_v1.SecretTypeTLS,
+						},
 					},
 				},
 			},
@@ -2549,7 +2608,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				tls: true,
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/ingress-mtls-secret": {
-						Type: secrets.SecretTypeCA,
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+						},
 						Path: "/etc/nginx/secrets/default-ingress-mtls-secret",
 					},
 				},
@@ -2593,7 +2654,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				tls: true,
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/ingress-mtls-secret": {
-						Type: secrets.SecretTypeCA,
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+						},
 						Path: "/etc/nginx/secrets/default-ingress-mtls-secret",
 					},
 				},
@@ -2635,7 +2698,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				tls: false,
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/ingress-mtls-secret": {
-						Type: secrets.SecretTypeCA,
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+						},
 						Path: "/etc/nginx/secrets/default-ingress-mtls-secret",
 					},
 				},
@@ -2691,7 +2756,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			policyOpts: policyOptions{
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/egress-mtls-secret": {
-						Type: api_v1.SecretTypeTLS,
+						Secret: &api_v1.Secret{
+							Type: api_v1.SecretTypeTLS,
+						},
 						Path: "/etc/nginx/secrets/default-egress-mtls-secret",
 					},
 				},
@@ -2740,7 +2807,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			policyOpts: policyOptions{
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/egress-trusted-secret": {
-						Type:  secrets.SecretTypeCA,
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+						},
 						Error: errors.New("secret is invalid"),
 					},
 				},
@@ -2782,7 +2851,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			policyOpts: policyOptions{
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/egress-mtls-secret": {
-						Type: secrets.SecretTypeCA,
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+						},
 					},
 				},
 			},
@@ -2823,7 +2894,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			policyOpts: policyOptions{
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/egress-trusted-secret": {
-						Type: api_v1.SecretTypeTLS,
+						Secret: &api_v1.Secret{
+							Type: api_v1.SecretTypeTLS,
+						},
 					},
 				},
 			},
@@ -2864,7 +2937,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			policyOpts: policyOptions{
 				secretRefs: map[string]*secrets.SecretReference{
 					"default/egress-mtls-secret": {
-						Type:  api_v1.SecretTypeTLS,
+						Secret: &api_v1.Secret{
+							Type: api_v1.SecretTypeTLS,
+						},
 						Error: errors.New("secret is invalid"),
 					},
 				},
@@ -3359,7 +3434,6 @@ func TestGenerateReturnBlock(t *testing.T) {
 			t.Errorf("generateReturnBlock() returned %v but expected %v", result, test.expected)
 		}
 	}
-
 }
 
 func TestGenerateLocationForReturn(t *testing.T) {
@@ -3558,7 +3632,9 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputCfgParams: &ConfigParams{},
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/secret": {
-					Type: secrets.SecretTypeCA,
+					Secret: &api_v1.Secret{
+						Type: secrets.SecretTypeCA,
+					},
 				},
 			},
 			expectedSSL: &version2.SSL{
@@ -3578,7 +3654,9 @@ func TestGenerateSSLConfig(t *testing.T) {
 			},
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/secret": {
-					Type: api_v1.SecretTypeTLS,
+					Secret: &api_v1.Secret{
+						Type: api_v1.SecretTypeTLS,
+					},
 					Path: "secret.pem",
 				},
 			},
@@ -4132,7 +4210,6 @@ func TestGenerateSplits(t *testing.T) {
 	if !reflect.DeepEqual(resultReturnLocations, expectedReturnLocations) {
 		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultReturnLocations, expectedReturnLocations)
 	}
-
 }
 
 func TestGenerateDefaultSplitsConfig(t *testing.T) {
@@ -5600,7 +5677,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	upstream := conf_v1.Upstream{Service: serviceName, Port: 80, SlowStart: "10s"}
 	expected := ""
 
-	var tests = []string{
+	tests := []string{
 		"random",
 		"ip_hash",
 		"hash 123",
@@ -5622,7 +5699,6 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 			t.Errorf("generateSlowStartForPlus returned no warnings for %v but warnings expected", upstream)
 		}
 	}
-
 }
 
 func TestGenerateSlowStartForPlus(t *testing.T) {
@@ -5751,7 +5827,6 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 	}
-
 }
 
 func TestGenerateQueueForPlus(t *testing.T) {
@@ -5783,7 +5858,6 @@ func TestGenerateQueueForPlus(t *testing.T) {
 			t.Errorf("generateQueueForPlus() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 	}
-
 }
 
 func TestGenerateSessionCookie(t *testing.T) {
@@ -6090,7 +6164,6 @@ func TestIsTLSEnabled(t *testing.T) {
 			t.Errorf("isTLSEnabled(%v, %v) returned %v but expected %v", test.upstream, test.spiffeCert, result, test.expected)
 		}
 	}
-
 }
 
 func TestGenerateRewrites(t *testing.T) {
@@ -6461,7 +6534,7 @@ func TestGenerateProxyAddHeaders(t *testing.T) {
 }
 
 func TestGetUpstreamResourceLabels(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		owner    runtime.Object
 		expected version2.UpstreamLabels
 	}{

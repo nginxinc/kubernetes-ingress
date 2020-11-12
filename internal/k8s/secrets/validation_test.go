@@ -230,6 +230,75 @@ func TestValidateTLSSecretFails(t *testing.T) {
 	}
 }
 
+func TestValidateOIDCSecret(t *testing.T) {
+	secret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "oidc-secret",
+			Namespace: "default",
+		},
+		Type: SecretTypeOIDC,
+		Data: map[string][]byte{
+			"client-secret": nil,
+		},
+	}
+
+	err := ValidateOIDCSecret(secret)
+	if err != nil {
+		t.Errorf("ValidateOIDCSecret() returned error %v", err)
+	}
+}
+
+func TestValidateOIDCSecretFails(t *testing.T) {
+	tests := []struct {
+		secret *v1.Secret
+		msg    string
+	}{
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "oidc-secret",
+					Namespace: "default",
+				},
+				Type: "some-type",
+				Data: map[string][]byte{
+					"client-secret": nil,
+				},
+			},
+			msg: "Incorrect type for OIDC secret",
+		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "oidc-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeOIDC,
+			},
+			msg: "Missing client-secret for OIDC secret",
+		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "oidc-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeOIDC,
+				Data: map[string][]byte{
+					"client-secret": []byte("hello$$$"),
+				},
+			},
+			msg: "Invalid characters in OIDC client secret",
+		},
+	}
+
+	for _, test := range tests {
+		err := ValidateOIDCSecret(test.secret)
+		if err == nil {
+			t.Errorf("ValidateOIDCSecret() returned no error for the case of %s", test.msg)
+		}
+	}
+}
+
 func TestValidateSecret(t *testing.T) {
 	tests := []struct {
 		secret *v1.Secret
@@ -261,7 +330,8 @@ func TestValidateSecret(t *testing.T) {
 				},
 			},
 			msg: "Valid CA secret",
-		}, {
+		},
+		{
 			secret: &v1.Secret{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "jwk-secret",
@@ -273,6 +343,19 @@ func TestValidateSecret(t *testing.T) {
 				},
 			},
 			msg: "Valid JWK secret",
+		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "oidc-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeOIDC,
+				Data: map[string][]byte{
+					"client-secret": nil,
+				},
+			},
+			msg: "Valid OIDC secret",
 		},
 	}
 
@@ -346,6 +429,10 @@ func TestHasCorrectSecretType(t *testing.T) {
 		},
 		{
 			secretType: SecretTypeJWK,
+			expected:   true,
+		},
+		{
+			secretType: SecretTypeOIDC,
 			expected:   true,
 		},
 		{

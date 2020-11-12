@@ -79,22 +79,22 @@ func TestAddOrUpdateSecret(t *testing.T) {
 	// Get the secret
 
 	expectedSecretRef := &SecretReference{
-		Type:  api_v1.SecretTypeTLS,
-		Path:  "testpath",
-		Error: nil,
+		Secret: validSecret,
+		Path:   "testpath",
+		Error:  nil,
 	}
 	expectedManager = &fakeSecretFileManager{
 		AddedOrUpdatedSecret: validSecret,
 	}
 
 	manager.Reset()
-	secretRef := store.GetSecretReference("default/tls-secret")
+	secretRef := store.GetSecret("default/tls-secret")
 
 	if diff := cmp.Diff(expectedSecretRef, secretRef, cmp.Comparer(errorComparer)); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(expectedManager, manager); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 
 	// Make the secret invalid
@@ -113,20 +113,20 @@ func TestAddOrUpdateSecret(t *testing.T) {
 	// Get the secret
 
 	expectedSecretRef = &SecretReference{
-		Type:  api_v1.SecretTypeTLS,
-		Path:  "",
-		Error: errors.New("Failed to validate TLS cert and key: asn1: syntax error: sequence truncated"),
+		Secret: invalidSecret,
+		Path:   "",
+		Error:  errors.New("Failed to validate TLS cert and key: asn1: syntax error: sequence truncated"),
 	}
 	expectedManager = &fakeSecretFileManager{}
 
 	manager.Reset()
-	secretRef = store.GetSecretReference("default/tls-secret")
+	secretRef = store.GetSecret("default/tls-secret")
 
 	if diff := cmp.Diff(expectedSecretRef, secretRef, cmp.Comparer(errorComparer)); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(expectedManager, manager); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 
 	// Restore the valid secret
@@ -143,22 +143,22 @@ func TestAddOrUpdateSecret(t *testing.T) {
 	// Get the secret
 
 	expectedSecretRef = &SecretReference{
-		Type:  api_v1.SecretTypeTLS,
-		Path:  "testpath",
-		Error: nil,
+		Secret: validSecret,
+		Path:   "testpath",
+		Error:  nil,
 	}
 	expectedManager = &fakeSecretFileManager{
 		AddedOrUpdatedSecret: validSecret,
 	}
 
 	manager.Reset()
-	secretRef = store.GetSecretReference("default/tls-secret")
+	secretRef = store.GetSecret("default/tls-secret")
 
 	if diff := cmp.Diff(expectedSecretRef, secretRef, cmp.Comparer(errorComparer)); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(expectedManager, manager); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 
 	// Update the secret
@@ -178,20 +178,20 @@ func TestAddOrUpdateSecret(t *testing.T) {
 	// Get the secret
 
 	expectedSecretRef = &SecretReference{
-		Type:  api_v1.SecretTypeTLS,
-		Path:  "testpath",
-		Error: nil,
+		Secret: validSecret,
+		Path:   "testpath",
+		Error:  nil,
 	}
 	expectedManager = &fakeSecretFileManager{}
 
 	manager.Reset()
-	secretRef = store.GetSecretReference("default/tls-secret")
+	secretRef = store.GetSecret("default/tls-secret")
 
 	if diff := cmp.Diff(expectedSecretRef, secretRef, cmp.Comparer(errorComparer)); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(expectedManager, manager); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 }
 
@@ -225,22 +225,22 @@ func TestDeleteSecretValidSecret(t *testing.T) {
 	// Get the secret
 
 	expectedSecretRef := &SecretReference{
-		Type:  api_v1.SecretTypeTLS,
-		Path:  "testpath",
-		Error: nil,
+		Secret: validSecret,
+		Path:   "testpath",
+		Error:  nil,
 	}
 	expectedManager = &fakeSecretFileManager{
 		AddedOrUpdatedSecret: validSecret,
 	}
 
 	manager.Reset()
-	secretRef := store.GetSecretReference("default/tls-secret")
+	secretRef := store.GetSecret("default/tls-secret")
 
 	if diff := cmp.Diff(expectedSecretRef, secretRef, cmp.Comparer(errorComparer)); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(expectedManager, manager); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 
 	// Delete the secret
@@ -259,20 +259,18 @@ func TestDeleteSecretValidSecret(t *testing.T) {
 	// Get the secret
 
 	expectedSecretRef = &SecretReference{
-		Type:  "",
-		Path:  "",
 		Error: errors.New("secret doesn't exist or of an unsupported type"),
 	}
 	expectedManager = &fakeSecretFileManager{}
 
 	manager.Reset()
-	secretRef = store.GetSecretReference("default/tls-secret")
+	secretRef = store.GetSecret("default/tls-secret")
 
 	if diff := cmp.Diff(expectedSecretRef, secretRef, cmp.Comparer(errorComparer)); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 	if diff := cmp.Diff(expectedManager, manager); diff != "" {
-		t.Errorf("GetSecretReference() returned unexpected result (-want +got):\n%s", diff)
+		t.Errorf("GetSecret() returned unexpected result (-want +got):\n%s", diff)
 	}
 }
 

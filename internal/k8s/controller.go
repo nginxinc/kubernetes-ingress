@@ -1243,7 +1243,6 @@ func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vs
 
 		if lbc.reportVsVsrStatusEnabled() {
 			err := lbc.statusUpdater.UpdateVirtualServerStatus(vsConfig.VirtualServer, state, eventTitle, msg)
-
 			if err != nil {
 				glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vsConfig.VirtualServer.Namespace, vsConfig.VirtualServer.Name, err)
 			}
@@ -1979,7 +1978,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 		secretName := tls.SecretName
 		secretKey := ing.Namespace + "/" + secretName
 
-		secretRef := lbc.secretStore.GetSecretReference(secretKey)
+		secretRef := lbc.secretStore.GetSecret(secretKey)
 		if secretRef.Error != nil {
 			glog.Warningf("Error trying to get the secret %v for Ingress %v: %v", secretName, ing.Name, secretRef.Error)
 		}
@@ -1992,7 +1991,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 			secretName := jwtKey
 			secretKey := ing.Namespace + "/" + secretName
 
-			secretRef := lbc.secretStore.GetSecretReference(secretKey)
+			secretRef := lbc.secretStore.GetSecret(secretKey)
 			if secretRef.Error != nil {
 				glog.Warningf("Error trying to get the secret %v for Ingress %v/%v: %v", secretName, ing.Namespace, ing.Name, secretRef.Error)
 			}
@@ -2168,7 +2167,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
 		secretKey := virtualServer.Namespace + "/" + virtualServer.Spec.TLS.Secret
 
-		secretRef := lbc.secretStore.GetSecretReference(secretKey)
+		secretRef := lbc.secretStore.GetSecret(secretKey)
 		if secretRef.Error != nil {
 			glog.Warningf("Error trying to get the secret %v for VirtualServer %v: %v", secretKey, virtualServer.Name, secretRef.Error)
 		}
@@ -2194,6 +2193,11 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
 		glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+	}
+
+	err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, policies)
+	if err != nil {
+		glog.Warningf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
 
 	endpoints := make(map[string][]string)
@@ -2241,13 +2245,17 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		}
 		policies = append(policies, vsRoutePolicies...)
 
-		err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, policies)
+		err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
 		if err != nil {
 			glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 		}
 		err = lbc.addJWTSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
 		if err != nil {
 			glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		}
+		err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
+		if err != nil {
+			glog.Warningf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 		}
 	}
 
@@ -2264,9 +2272,14 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 				glog.Warningf("Error getting JWT secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
 
-			err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, policies)
+			err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
 			if err != nil {
-				glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+				glog.Warningf("Error getting EgressMTLS secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+			}
+
+			err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
+			if err != nil {
+				glog.Warningf("Error getting OIDC secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
 		}
 
@@ -2385,7 +2398,7 @@ func (lbc *LoadBalancerController) addJWTSecretRefs(secretRefs map[string]*secre
 		}
 
 		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.JWTAuth.Secret)
-		secretRef := lbc.secretStore.GetSecretReference(secretKey)
+		secretRef := lbc.secretStore.GetSecret(secretKey)
 
 		secretRefs[secretKey] = secretRef
 
@@ -2404,7 +2417,7 @@ func (lbc *LoadBalancerController) addIngressMTLSSecretRefs(secretRefs map[strin
 		}
 
 		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.IngressMTLS.ClientCertSecret)
-		secretRef := lbc.secretStore.GetSecretReference(secretKey)
+		secretRef := lbc.secretStore.GetSecret(secretKey)
 
 		secretRefs[secretKey] = secretRef
 
@@ -2421,7 +2434,7 @@ func (lbc *LoadBalancerController) addEgressMTLSSecretRefs(secretRefs map[string
 		}
 		if pol.Spec.EgressMTLS.TLSSecret != "" {
 			secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.EgressMTLS.TLSSecret)
-			secretRef := lbc.secretStore.GetSecretReference(secretKey)
+			secretRef := lbc.secretStore.GetSecret(secretKey)
 
 			secretRefs[secretKey] = secretRef
 
@@ -2431,13 +2444,32 @@ func (lbc *LoadBalancerController) addEgressMTLSSecretRefs(secretRefs map[string
 		}
 		if pol.Spec.EgressMTLS.TrustedCertSecret != "" {
 			secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.EgressMTLS.TrustedCertSecret)
-			secretRef := lbc.secretStore.GetSecretReference(secretKey)
+			secretRef := lbc.secretStore.GetSecret(secretKey)
 
 			secretRefs[secretKey] = secretRef
 
 			if secretRef.Error != nil {
 				return secretRef.Error
 			}
+		}
+	}
+
+	return nil
+}
+
+func (lbc *LoadBalancerController) addOIDCSecretRefs(secretRefs map[string]*secrets.SecretReference, policies []*conf_v1.Policy) error {
+	for _, pol := range policies {
+		if pol.Spec.OIDC == nil {
+			continue
+		}
+
+		secretKey := fmt.Sprintf("%v/%v", pol.Namespace, pol.Spec.OIDC.ClientSecret)
+		secretRef := lbc.secretStore.GetSecret(secretKey)
+
+		secretRefs[secretKey] = secretRef
+
+		if secretRef.Error != nil {
+			return secretRef.Error
 		}
 	}
 
@@ -2894,7 +2926,6 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 
 	lbc.processAppProtectChanges(changes)
 	lbc.processAppProtectProblems(problems)
-
 }
 
 func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
@@ -2921,7 +2952,6 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 
 	lbc.processAppProtectChanges(changes)
 	lbc.processAppProtectProblems(problems)
-
 }
 
 func (lbc *LoadBalancerController) syncAppProtectUserSig(task task) {

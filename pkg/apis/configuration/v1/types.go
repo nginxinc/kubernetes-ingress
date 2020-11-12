@@ -336,6 +336,7 @@ type PolicySpec struct {
 	JWTAuth       *JWTAuth       `json:"jwt"`
 	IngressMTLS   *IngressMTLS   `json:"ingressMTLS"`
 	EgressMTLS    *EgressMTLS    `json:"egressMTLS"`
+	OIDC          *OIDC          `json:"oidc"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -397,4 +398,15 @@ type EgressMTLS struct {
 	TrustedCertSecret string `json:"trustedCertSecret"`
 	ServerName        bool   `json:"serverName"`
 	SSLName           string `json:"sslName"`
+}
+
+// OIDC defines an Open ID Connect policy.
+type OIDC struct {
+	AuthEndpoint  string `json:"authEndpoint"`
+	TokenEndpoint string `json:"tokenEndpoint"`
+	JWKSURI       string `json:"jwksURI"`
+	ClientID      string `json:"clientID"`
+	ClientSecret  string `json:"clientSecret"`
+	Scope         string `json:"scope"`
+	RedirectURI   string `json:"redirectURI"`
 }

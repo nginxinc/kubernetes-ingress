@@ -193,6 +193,12 @@ type virtualServerConfigurator struct {
 	enableSnippets       bool
 	warnings             Warnings
 	spiffeCerts          bool
+	oidcPolCfg           *oidcPolicyCfg
+}
+
+type oidcPolicyCfg struct {
+	oidc *version2.OIDC
+	key  string
 }
 
 func (vsc *virtualServerConfigurator) addWarningf(obj runtime.Object, msgFmt string, args ...interface{}) {
@@ -224,6 +230,7 @@ func newVirtualServerConfigurator(
 		enableSnippets:       staticParams.EnableSnippets,
 		warnings:             make(map[runtime.Object][]string),
 		spiffeCerts:          staticParams.NginxServiceMesh,
+		oidcPolCfg:           &oidcPolicyCfg{},
 	}
 }
 
@@ -339,10 +346,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 	var splitClients []version2.SplitClient
 	var maps []version2.Map
 	var errorPageLocations []version2.ErrorPageLocation
-	var vsrErrorPagesFromVs = make(map[string][]conf_v1.ErrorPage)
-	var vsrErrorPagesRouteIndex = make(map[string]int)
-	var vsrLocationSnippetsFromVs = make(map[string]string)
-	var vsrPoliciesFromVs = make(map[string][]conf_v1.PolicyReference)
+	vsrErrorPagesFromVs := make(map[string][]conf_v1.ErrorPage)
+	vsrErrorPagesRouteIndex := make(map[string]int)
+	vsrLocationSnippetsFromVs := make(map[string]string)
+	vsrPoliciesFromVs := make(map[string][]conf_v1.PolicyReference)
 	isVSR := false
 	matchesRoutes := 0
 
@@ -387,6 +394,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			vsName:         vsEx.VirtualServer.Name,
 		}
 		routePoliciesCfg := vsc.generatePolicies(ownerDetails, r.Policies, vsEx.Policies, routeContext, policyOpts)
+		if policiesCfg.OIDC != nil {
+			routePoliciesCfg.OIDC = policiesCfg.OIDC
+		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
 		if len(r.Matches) > 0 {
@@ -487,6 +497,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 				context = subRouteContext
 			}
 			routePoliciesCfg := vsc.generatePolicies(ownerDetails, policyRefs, vsEx.Policies, context, policyOpts)
+			if policiesCfg.OIDC != nil {
+				routePoliciesCfg.OIDC = policiesCfg.OIDC
+			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 			if len(r.Matches) > 0 {
 				cfg := generateMatchesConfig(
@@ -578,6 +591,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			JWTAuth:                   policiesCfg.JWTAuth,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
+			OIDC:                      vsc.oidcPolCfg.oidc,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
 			VSNamespace:               vsEx.VirtualServer.Namespace,
 			VSName:                    vsEx.VirtualServer.Name,
@@ -597,6 +611,7 @@ type policiesCfg struct {
 	JWTAuth         *version2.JWTAuth
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
+	OIDC            *bool
 	ErrorReturn     *version2.Return
 }
 
@@ -683,19 +698,23 @@ func (p *policiesCfg) addJWTAuthConfig(
 	}
 
 	jwtSecretKey := fmt.Sprintf("%v/%v", polNamespace, jwtAuth.Secret)
-	secret := secretRefs[jwtSecretKey]
-	if secret.Type != "" && secret.Type != secrets.SecretTypeJWK {
-		res.addWarningf("JWT policy %q references a Secret of an incorrect type %q", polKey, secret.Type)
+	secretRef := secretRefs[jwtSecretKey]
+	var secretType api_v1.SecretType
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
+	}
+	if secretType != "" && secretType != secrets.SecretTypeJWK {
+		res.addWarningf("JWT policy %q references a Secret of an incorrect type %q", polKey, secretType)
 		res.isError = true
 		return res
-	} else if secret.Error != nil {
-		res.addWarningf("JWT policy %q references an invalid Secret: %v", polKey, secret.Error)
+	} else if secretRef.Error != nil {
+		res.addWarningf("JWT policy %q references an invalid Secret: %v", polKey, secretRef.Error)
 		res.isError = true
 		return res
 	}
 
 	p.JWTAuth = &version2.JWTAuth{
-		Secret: secret.Path,
+		Secret: secretRef.Path,
 		Realm:  jwtAuth.Realm,
 		Token:  jwtAuth.Token,
 	}
@@ -727,13 +746,17 @@ func (p *policiesCfg) addIngressMTLSConfig(
 	}
 
 	secretKey := fmt.Sprintf("%v/%v", polNamespace, ingressMTLS.ClientCertSecret)
-	secret := secretRefs[secretKey]
-	if secret.Type != "" && secret.Type != secrets.SecretTypeCA {
-		res.addWarningf("IngressMTLS policy %q references a Secret of an incorrect type %q", polKey, secret.Type)
+	secretRef := secretRefs[secretKey]
+	var secretType api_v1.SecretType
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
+	}
+	if secretType != "" && secretType != secrets.SecretTypeCA {
+		res.addWarningf("IngressMTLS policy %q references a Secret of an incorrect type %q", polKey, secretType)
 		res.isError = true
 		return res
-	} else if secret.Error != nil {
-		res.addWarningf("IngressMTLS policy %q references an invalid Secret: %v", polKey, secret.Error)
+	} else if secretRef.Error != nil {
+		res.addWarningf("IngressMTLS policy %q references an invalid Secret: %v", polKey, secretRef.Error)
 		res.isError = true
 		return res
 	}
@@ -748,7 +771,7 @@ func (p *policiesCfg) addIngressMTLSConfig(
 	}
 
 	p.IngressMTLS = &version2.IngressMTLS{
-		ClientCert:   secret.Path,
+		ClientCert:   secretRef.Path,
 		VerifyClient: verifyClient,
 		VerifyDepth:  verifyDepth,
 	}
@@ -775,18 +798,22 @@ func (p *policiesCfg) addEgressMTLSConfig(
 	if egressMTLS.TLSSecret != "" {
 		egressTLSSecret := fmt.Sprintf("%v/%v", polNamespace, egressMTLS.TLSSecret)
 
-		tlsSecret := secretRefs[egressTLSSecret]
-		if tlsSecret.Type != "" && tlsSecret.Type != api_v1.SecretTypeTLS {
-			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, tlsSecret.Type)
+		secretRef := secretRefs[egressTLSSecret]
+		var secretType api_v1.SecretType
+		if secretRef.Secret != nil {
+			secretType = secretRef.Secret.Type
+		}
+		if secretType != "" && secretType != api_v1.SecretTypeTLS {
+			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, secretType)
 			res.isError = true
 			return res
-		} else if tlsSecret.Error != nil {
-			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, tlsSecret.Error)
+		} else if secretRef.Error != nil {
+			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, secretRef.Error)
 			res.isError = true
 			return res
 		}
 
-		tlsSecretPath = tlsSecret.Path
+		tlsSecretPath = secretRef.Path
 	}
 
 	var trustedSecretPath string
@@ -794,18 +821,22 @@ func (p *policiesCfg) addEgressMTLSConfig(
 	if egressMTLS.TrustedCertSecret != "" {
 		trustedCertSecret := fmt.Sprintf("%v/%v", polNamespace, egressMTLS.TrustedCertSecret)
 
-		trustedSecret := secretRefs[trustedCertSecret]
-		if trustedSecret.Type != "" && trustedSecret.Type != secrets.SecretTypeCA {
-			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, trustedSecret.Type)
+		secretRef := secretRefs[trustedCertSecret]
+		var secretType api_v1.SecretType
+		if secretRef.Secret != nil {
+			secretType = secretRef.Secret.Type
+		}
+		if secretType != "" && secretType != secrets.SecretTypeCA {
+			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, secretType)
 			res.isError = true
 			return res
-		} else if trustedSecret.Error != nil {
-			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, trustedSecret.Error)
+		} else if secretRef.Error != nil {
+			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, secretRef.Error)
 			res.isError = true
 			return res
 		}
 
-		trustedSecretPath = trustedSecret.Path
+		trustedSecretPath = secretRef.Path
 	}
 
 	p.EgressMTLS = &version2.EgressMTLS{
@@ -820,6 +851,84 @@ func (p *policiesCfg) addEgressMTLSConfig(
 		TrustedCert:    trustedSecretPath,
 		SSLName:        generateString(egressMTLS.SSLName, "$proxy_host"),
 	}
+	return res
+}
+
+func (p *policiesCfg) addOIDCConfig(
+	oidc *conf_v1.OIDC,
+	polKey string,
+	polNamespace string,
+	secretRefs map[string]*secrets.SecretReference,
+	oidcPolCfg *oidcPolicyCfg,
+) *validationResults {
+	res := newValidationResults()
+	if p.OIDC != nil {
+		res.addWarningf(
+			"Multiple oidc policies in the same context is not valid. OIDC policy %q will be ignored",
+			polKey,
+		)
+		return res
+	}
+
+	if oidcPolCfg.oidc != nil {
+		if oidcPolCfg.key != polKey {
+			res.addWarningf(
+				"Only one OIDC policy is allowed in a VirtualServer and its VirtualServerRoutes. Can't use %q. Use %q",
+				polKey,
+				oidcPolCfg.key,
+			)
+			res.isError = true
+			return res
+		}
+	} else {
+		secretKey := fmt.Sprintf("%v/%v", polNamespace, oidc.ClientSecret)
+		secretRef, exists := secretRefs[secretKey]
+		if !exists {
+			res.addWarningf("OIDC policy %q references a non-existent Secret %v", polKey, secretKey)
+			res.isError = true
+			return res
+		}
+
+		var secretType api_v1.SecretType
+		if secretRef.Secret != nil {
+			secretType = secretRef.Secret.Type
+		}
+		if secretType != "" && secretType != secrets.SecretTypeOIDC {
+			res.addWarningf("OIDC policy %q references a Secret of an incorrect type %q", polKey, secretType)
+			res.isError = true
+			return res
+		} else if secretRef.Error != nil {
+			res.addWarningf("OIDC policy %q references an invalid Secret: %v", polKey, secretRef.Error)
+			res.isError = true
+			return res
+		}
+
+		clientSecret, exists := secretRef.Secret.Data[ClientSecretKey]
+		if !exists {
+			res.addWarningf("OIDC policy %q references a Secret without the data field %v", polKey, ClientSecretKey)
+			res.isError = true
+			return res
+		}
+
+		redirectURI := oidc.RedirectURI
+		if redirectURI == "" {
+			redirectURI = "/_codexch"
+		}
+
+		oidcPolCfg.oidc = &version2.OIDC{
+			AuthEndpoint:  oidc.AuthEndpoint,
+			TokenEndpoint: oidc.TokenEndpoint,
+			JwksURI:       oidc.JWKSURI,
+			ClientID:      oidc.ClientID,
+			ClientSecret:  string(clientSecret),
+			Scope:         oidc.Scope,
+			RedirectURI:   redirectURI,
+		}
+	}
+
+	trueVal := true
+	p.OIDC = &trueVal
+
 	return res
 }
 
@@ -867,6 +976,8 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 				)
 			case pol.Spec.EgressMTLS != nil:
 				res = config.addEgressMTLSConfig(pol.Spec.EgressMTLS, key, polNamespace, policyOpts.secretRefs)
+			case pol.Spec.OIDC != nil:
+				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
 			default:
 				res = newValidationResults()
 			}
@@ -945,6 +1056,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.LimitReqs = cfg.LimitReqs
 	location.JWTAuth = cfg.JWTAuth
 	location.EgressMTLS = cfg.EgressMTLS
+	location.OIDC = cfg.OIDC
 	location.PoliciesErrorReturn = cfg.ErrorReturn
 }
 
@@ -1272,7 +1384,6 @@ func generateReturnBlock(text string, code int, defaultCode int) *version2.Retur
 func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, action *conf_v1.Action,
 	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int, proxySSLName string,
 	originalPath string, locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string) (version2.Location, *version2.ReturnLocation) {
-
 	locationSnippets := generateSnippets(enableSnippets, locSnippets, cfgParams.LocationSnippets)
 
 	if action.Redirect != nil {
@@ -1485,7 +1596,6 @@ func generateSplits(
 	vsrName string,
 	vsrNamespace string,
 ) (version2.SplitClient, []version2.Location, []version2.ReturnLocation) {
-
 	var distributions []version2.Distribution
 
 	for i, s := range splits {
@@ -1539,7 +1649,6 @@ func generateDefaultSplitsConfig(
 	vsrName string,
 	vsrNamespace string,
 ) routingCfg {
-
 	sc, locs, returnLocs := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex, cfgParams,
 		errorPages, errPageIndex, originalPath, locSnippets, enableSnippets, retLocIndex, isVSR, vsrName, vsrNamespace)
 
@@ -1797,21 +1906,23 @@ func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tl
 		return nil
 	}
 
-	secret := secretRefs[fmt.Sprintf("%s/%s", namespace, tls.Secret)]
-
+	secretRef := secretRefs[fmt.Sprintf("%s/%s", namespace, tls.Secret)]
+	var secretType api_v1.SecretType
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
+	}
 	var name string
 	var ciphers string
-
-	if secret.Type != "" && secret.Type != api_v1.SecretTypeTLS {
+	if secretType != "" && secretType != api_v1.SecretTypeTLS {
 		name = pemFileNameForMissingTLSSecret
 		ciphers = "NULL"
-		vsc.addWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tls.Secret, secret.Type, api_v1.SecretTypeTLS)
-	} else if secret.Error != nil {
+		vsc.addWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tls.Secret, secretType, api_v1.SecretTypeTLS)
+	} else if secretRef.Error != nil {
 		name = pemFileNameForMissingTLSSecret
 		ciphers = "NULL"
-		vsc.addWarningf(owner, "TLS secret %s is invalid: %v", tls.Secret, secret.Error)
+		vsc.addWarningf(owner, "TLS secret %s is invalid: %v", tls.Secret, secretRef.Error)
 	} else {
-		name = secret.Path
+		name = secretRef.Path
 	}
 
 	ssl := version2.SSL{

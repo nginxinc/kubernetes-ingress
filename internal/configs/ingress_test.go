@@ -40,7 +40,9 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 	cafeIngressEx.Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token"
 	cafeIngressEx.Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.example.com"
 	cafeIngressEx.SecretRefs["cafe-jwk"] = &secrets.SecretReference{
-		Type: "nginx.org/jwk",
+		Secret: &v1.Secret{
+			Type: secrets.SecretTypeJWK,
+		},
 		Path: "/etc/nginx/secrets/default-cafe-jwk",
 	}
 
@@ -310,7 +312,9 @@ func createCafeIngressEx() IngressEx {
 		},
 		SecretRefs: map[string]*secrets.SecretReference{
 			"cafe-secret": {
-				Type: v1.SecretTypeTLS,
+				Secret: &v1.Secret{
+					Type: v1.SecretTypeTLS,
+				},
 				Path: "/etc/nginx/secrets/default-cafe-secret",
 			},
 		},
@@ -367,7 +371,9 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	mergeableIngresses.Master.Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token"
 	mergeableIngresses.Master.Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.example.com"
 	mergeableIngresses.Master.SecretRefs["cafe-jwk"] = &secrets.SecretReference{
-		Type: secrets.SecretTypeJWK,
+		Secret: &v1.Secret{
+			Type: secrets.SecretTypeJWK,
+		},
 		Path: "/etc/nginx/secrets/default-cafe-jwk",
 	}
 
@@ -376,7 +382,9 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token_coffee"
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.cofee.example.com"
 	mergeableIngresses.Minions[0].SecretRefs["coffee-jwk"] = &secrets.SecretReference{
-		Type: secrets.SecretTypeJWK,
+		Secret: &v1.Secret{
+			Type: secrets.SecretTypeJWK,
+		},
 		Path: "/etc/nginx/secrets/default-coffee-jwk",
 	}
 
@@ -530,7 +538,9 @@ func createMergeableCafeIngress() *MergeableIngresses {
 			},
 			SecretRefs: map[string]*secrets.SecretReference{
 				"cafe-secret": {
-					Type:  v1.SecretTypeTLS,
+					Secret: &v1.Secret{
+						Type: v1.SecretTypeTLS,
+					},
 					Path:  "/etc/nginx/secrets/default-cafe-secret",
 					Error: nil,
 				},
@@ -901,7 +911,9 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-secret": {
-					Type: v1.SecretTypeTLS,
+					Secret: &v1.Secret{
+						Type: v1.SecretTypeTLS,
+					},
 					Path: "/etc/nginx/secrets/default-cafe-secret",
 				},
 			},
@@ -920,7 +932,9 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-secret": {
-					Type: v1.SecretTypeTLS,
+					Secret: &v1.Secret{
+						Type: v1.SecretTypeTLS,
+					},
 					Path: "/etc/nginx/secrets/default-cafe-secret",
 				},
 			},
@@ -943,7 +957,9 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-secret": {
-					Type:  v1.SecretTypeTLS,
+					Secret: &v1.Secret{
+						Type: v1.SecretTypeTLS,
+					},
 					Error: errors.New("invalid secret"),
 				},
 			},
@@ -971,7 +987,9 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-secret": {
-					Type: secrets.SecretTypeCA,
+					Secret: &v1.Secret{
+						Type: secrets.SecretTypeCA,
+					},
 					Path: "/etc/nginx/secrets/default-cafe-secret",
 				},
 			},
@@ -999,7 +1017,9 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-secret": {
-					Type:  secrets.SecretTypeCA,
+					Secret: &v1.Secret{
+						Type: secrets.SecretTypeCA,
+					},
 					Path:  "",
 					Error: errors.New("CA secret must have the data field ca.crt"),
 				},
@@ -1087,7 +1107,9 @@ func TestGenerateJWTConfig(t *testing.T) {
 		{
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-jwk": {
-					Type: secrets.SecretTypeJWK,
+					Secret: &v1.Secret{
+						Type: secrets.SecretTypeJWK,
+					},
 					Path: "/etc/nginx/secrets/default-cafe-jwk",
 				},
 			},
@@ -1109,7 +1131,9 @@ func TestGenerateJWTConfig(t *testing.T) {
 		{
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-jwk": {
-					Type: secrets.SecretTypeJWK,
+					Secret: &v1.Secret{
+						Type: secrets.SecretTypeJWK,
+					},
 					Path: "/etc/nginx/secrets/default-cafe-jwk",
 				},
 			},
@@ -1136,7 +1160,9 @@ func TestGenerateJWTConfig(t *testing.T) {
 		{
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-jwk": {
-					Type:  secrets.SecretTypeJWK,
+					Secret: &v1.Secret{
+						Type: secrets.SecretTypeJWK,
+					},
 					Path:  "/etc/nginx/secrets/default-cafe-jwk",
 					Error: errors.New("invalid secret"),
 				},
@@ -1163,7 +1189,9 @@ func TestGenerateJWTConfig(t *testing.T) {
 		{
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-jwk": {
-					Type: secrets.SecretTypeCA,
+					Secret: &v1.Secret{
+						Type: secrets.SecretTypeCA,
+					},
 					Path: "/etc/nginx/secrets/default-cafe-jwk",
 				},
 			},
@@ -1189,7 +1217,9 @@ func TestGenerateJWTConfig(t *testing.T) {
 		{
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-jwk": {
-					Type:  secrets.SecretTypeCA,
+					Secret: &v1.Secret{
+						Type: secrets.SecretTypeCA,
+					},
 					Path:  "",
 					Error: errors.New("CA secret must have the data field ca.crt"),
 				},

@@ -6,6 +6,7 @@ FROM debian:buster-slim AS base
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
 ENV NGINX_PLUS_VERSION 23-1~buster
+ENV NGINX_NJS_VERSION 23+0.5.0-1~buster
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
@@ -36,7 +37,7 @@ RUN --mount=type=secret,id=nginx-repo.crt \
 	&& echo "Acquire::https::plus-pkgs.nginx.com::SslKey      \"/etc/ssl/nginx/nginx-repo.key\";" >> /etc/apt/apt.conf.d/90nginx \
 	&& echo "Acquire::https::plus-pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90nginx \
 	&& printf "deb https://plus-pkgs.nginx.com/debian buster nginx-plus\n" > /etc/apt/sources.list.d/nginx-plus.list \
-	&& apt-get update && apt-get install -y nginx-plus=${NGINX_PLUS_VERSION} \
+	&& apt-get update && apt-get install -y nginx-plus=${NGINX_PLUS_VERSION} nginx-plus-module-njs=${NGINX_NJS_VERSION} \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
 	          'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& apt-get remove --purge --auto-remove -y gnupg1 \
@@ -54,9 +55,10 @@ RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
 RUN mkdir -p /var/lib/nginx \
 		/etc/nginx/secrets \
 		/etc/nginx/stream-conf.d \
+		/etc/nginx/oidc \
 	&& chown -R nginx:0 /etc/nginx \
-			    /var/cache/nginx \
-			    /var/lib/nginx/ \
+				/var/cache/nginx \
+				/var/lib/nginx/ \
 	&& apt-get remove --purge -y libcap2-bin \
 	&& rm /etc/nginx/conf.d/*
 
@@ -66,6 +68,8 @@ COPY internal/configs/version1/nginx-plus.ingress.tmpl \
 	internal/configs/version1/nginx-plus.tmpl \
 	internal/configs/version2/nginx-plus.virtualserver.tmpl \
 	internal/configs/version2/nginx-plus.transportserver.tmpl /
+
+COPY internal/configs/oidc/* /etc/nginx/oidc/
 
 # Uncomment the line below if you would like to add the default.pem to the image
 # and use it as a certificate and key for the default server

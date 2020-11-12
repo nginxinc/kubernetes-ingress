@@ -259,18 +259,21 @@ func generateJWTConfig(owner runtime.Object, secretRefs map[string]*secrets.Secr
 	redirectLocationName string) (*version1.JWTAuth, *version1.JWTRedirectLocation, Warnings) {
 	warnings := newWarnings()
 
-	secret := secretRefs[cfgParams.JWTKey]
-
-	if secret.Type != "" && secret.Type != secrets.SecretTypeJWK {
-		warnings.AddWarningf(owner, "JWK secret %s is of a wrong type '%s', must be '%s'", cfgParams.JWTKey, secret.Type, secrets.SecretTypeJWK)
-	} else if secret.Error != nil {
-		warnings.AddWarningf(owner, "JWK secret %s is invalid: %v", cfgParams.JWTKey, secret.Error)
+	secretRef := secretRefs[cfgParams.JWTKey]
+	var secretType api_v1.SecretType
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
+	}
+	if secretType != "" && secretType != secrets.SecretTypeJWK {
+		warnings.AddWarningf(owner, "JWK secret %s is of a wrong type '%s', must be '%s'", cfgParams.JWTKey, secretType, secrets.SecretTypeJWK)
+	} else if secretRef.Error != nil {
+		warnings.AddWarningf(owner, "JWK secret %s is invalid: %v", cfgParams.JWTKey, secretRef.Error)
 	}
 
 	// Key is configured for all cases, including when the secret is (1) invalid or (2) of a wrong type.
 	// For (1) and (2), NGINX Plus will reject such a key at runtime and return 500 to clients.
 	jwtAuth := &version1.JWTAuth{
-		Key:   secret.Path,
+		Key:   secretRef.Path,
 		Realm: cfgParams.JWTRealm,
 		Token: cfgParams.JWTToken,
 	}
@@ -312,15 +315,19 @@ func addSSLConfig(server *version1.Server, owner runtime.Object, host string, in
 	var pemFile string
 
 	if tlsSecret != "" {
-		secret := secretRefs[tlsSecret]
-		if secret.Type != "" && secret.Type != api_v1.SecretTypeTLS {
+		secretRef := secretRefs[tlsSecret]
+		var secretType api_v1.SecretType
+		if secretRef.Secret != nil {
+			secretType = secretRef.Secret.Type
+		}
+		if secretType != "" && secretType != api_v1.SecretTypeTLS {
 			pemFile = pemFileNameForMissingTLSSecret
-			warnings.AddWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tlsSecret, secret.Type, api_v1.SecretTypeTLS)
-		} else if secret.Error != nil {
+			warnings.AddWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tlsSecret, secretType, api_v1.SecretTypeTLS)
+		} else if secretRef.Error != nil {
 			pemFile = pemFileNameForMissingTLSSecret
-			warnings.AddWarningf(owner, "TLS secret %s is invalid: %v", tlsSecret, secret.Error)
+			warnings.AddWarningf(owner, "TLS secret %s is invalid: %v", tlsSecret, secretRef.Error)
 		} else {
-			pemFile = secret.Path
+			pemFile = secretRef.Path
 		}
 	} else if isWildcardEnabled {
 		pemFile = pemFileNameForWildcardTLSSecret

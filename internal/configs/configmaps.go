@@ -549,6 +549,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		InternalRouteServer:                staticCfgParams.EnableInternalRoutes,
 		InternalRouteServerName:            staticCfgParams.PodName,
 		LatencyMetrics:                     staticCfgParams.EnableLatencyMetrics,
+		PreviewPolicies:                    staticCfgParams.EnablePreviewPolicies,
 	}
 	return nginxCfg
 }

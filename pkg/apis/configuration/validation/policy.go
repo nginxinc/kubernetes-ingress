@@ -3,6 +3,7 @@ package validation
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -68,10 +69,23 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus bool,
 		fieldCount++
 	}
 
+	if spec.OIDC != nil {
+		if !enablePreviewPolicies {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("oidc"),
+				"oidc is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+		}
+		if !isPlus {
+			return append(allErrs, field.Forbidden(fieldPath.Child("oidc"), "OIDC is only supported in NGINX Plus"))
+		}
+
+		allErrs = append(allErrs, validateOIDC(spec.OIDC, fieldPath.Child("oidc"))...)
+		fieldCount++
+	}
+
 	if fieldCount != 1 {
 		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`"
 		if isPlus {
-			msg = fmt.Sprint(msg, ", `jwt`")
+			msg = fmt.Sprint(msg, ", `jwt`, `oidc`")
 		}
 
 		allErrs = append(allErrs, field.Invalid(fieldPath, "", msg))
@@ -185,6 +199,128 @@ func validateEgressMTLS(egressMTLS *v1.EgressMTLS, fieldPath *field.Path) field.
 	return allErrs
 }
 
+func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if oidc.AuthEndpoint == "" {
+		return append(allErrs, field.Required(fieldPath.Child("authEndpoint"), ""))
+	}
+	if oidc.TokenEndpoint == "" {
+		return append(allErrs, field.Required(fieldPath.Child("tokenEndpoint"), ""))
+	}
+	if oidc.JWKSURI == "" {
+		return append(allErrs, field.Required(fieldPath.Child("jwksURI"), ""))
+	}
+	if oidc.ClientID == "" {
+		return append(allErrs, field.Required(fieldPath.Child("clientID"), ""))
+	}
+	if oidc.ClientSecret == "" {
+		return append(allErrs, field.Required(fieldPath.Child("clientSecret"), ""))
+	}
+
+	if oidc.Scope != "" {
+		allErrs = append(allErrs, validateOIDCScope(oidc.Scope, fieldPath.Child("scope"))...)
+	}
+
+	if oidc.RedirectURI != "" {
+		allErrs = append(allErrs, validatePath(oidc.RedirectURI, fieldPath.Child("redirectURI"))...)
+	}
+
+	allErrs = append(allErrs, validateURL(oidc.AuthEndpoint, fieldPath.Child("authEndpoint"))...)
+	allErrs = append(allErrs, validateURL(oidc.TokenEndpoint, fieldPath.Child("tokenEndpoint"))...)
+	allErrs = append(allErrs, validateURL(oidc.JWKSURI, fieldPath.Child("jwksURI"))...)
+	allErrs = append(allErrs, validateSecretName(oidc.ClientSecret, fieldPath.Child("clientSecret"))...)
+	allErrs = append(allErrs, validateClientID(oidc.ClientID, fieldPath.Child("clientID"))...)
+
+	return allErrs
+}
+
+func validateClientID(client string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// isValidHeaderValue checks for $ and " in the string
+	if isValidHeaderValue(client) != nil {
+		allErrs = append(allErrs, field.Invalid(
+			fieldPath,
+			client,
+			`invalid string. String must contain valid ASCII characters, must have all '"' escaped and must not contain any '$' or end with an unescaped '\'
+		`))
+	}
+
+	return allErrs
+}
+
+var validScopes = map[string]bool{
+	"openid":  true,
+	"profile": true,
+	"email":   true,
+	"address": true,
+	"phone":   true,
+}
+
+// https://openid.net/specs/openid-connect-core-1_0.html#ScopeClaims
+func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !strings.Contains(scope, "openid") {
+		return append(allErrs, field.Required(fieldPath, "openid scope"))
+	}
+
+	s := strings.Split(scope, "+")
+	for _, v := range s {
+		if !validScopes[v] {
+			msg := fmt.Sprintf("invalid Scope. Accepted scopes are: %v", mapToPrettyString(validScopes))
+			allErrs = append(allErrs, field.Invalid(fieldPath, v, msg))
+		}
+	}
+
+	return allErrs
+}
+
+func validateURL(name string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	u, err := url.Parse(name)
+	if err != nil {
+		return append(allErrs, field.Invalid(fieldPath, name, err.Error()))
+	}
+	var msg string
+	if u.Scheme == "" {
+		msg = "scheme required, please use the prefix http(s)://"
+		return append(allErrs, field.Invalid(fieldPath, name, msg))
+	}
+	if u.Host == "" {
+		msg = "hostname required"
+		return append(allErrs, field.Invalid(fieldPath, name, msg))
+	}
+	if u.Path == "" {
+		msg = "path required"
+		return append(allErrs, field.Invalid(fieldPath, name, msg))
+	}
+
+	host, port, err := net.SplitHostPort(u.Host)
+	if err != nil {
+		host = u.Host
+	}
+
+	allErrs = append(allErrs, validateSSLName(host, fieldPath)...)
+	if port != "" {
+		allErrs = append(allErrs, validatePortNumber(port, fieldPath)...)
+	}
+
+	return allErrs
+}
+
+func validatePortNumber(port string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	portInt, _ := strconv.Atoi(port)
+	msg := validation.IsValidPortNum(portInt)
+	if msg != nil {
+		allErrs = append(allErrs, field.Invalid(fieldPath, port, msg[0]))
+	}
+	return allErrs
+}
+
 func validateSSLName(name string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -211,8 +347,10 @@ func validateIngressMTLSVerifyClient(verifyClient string, fieldPath *field.Path)
 	return allErrs
 }
 
-const rateFmt = `[1-9]\d*r/[sSmM]`
-const rateErrMsg = "must consist of numeric characters followed by a valid rate suffix. 'r/s|r/m"
+const (
+	rateFmt    = `[1-9]\d*r/[sSmM]`
+	rateErrMsg = "must consist of numeric characters followed by a valid rate suffix. 'r/s|r/m"
+)
 
 var rateRegexp = regexp.MustCompile("^" + rateFmt + "$")
 
@@ -331,8 +469,10 @@ func validateRateLimitLogLevel(logLevel string, fieldPath *field.Path) field.Err
 	return allErrs
 }
 
-const jwtRealmFmt = `([^"$\\]|\\[^$])*`
-const jwtRealmFmtErrMsg string = `a valid realm must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
+const (
+	jwtRealmFmt              = `([^"$\\]|\\[^$])*`
+	jwtRealmFmtErrMsg string = `a valid realm must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
+)
 
 var jwtRealmFmtRegexp = regexp.MustCompile("^" + jwtRealmFmt + "$")
 

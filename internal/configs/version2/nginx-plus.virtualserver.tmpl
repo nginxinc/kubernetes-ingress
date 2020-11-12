@@ -64,6 +64,22 @@ server {
     set $resource_name "{{$s.VSName}}";
     set $resource_namespace "{{$s.VSNamespace}}";
 
+    {{ with $oidc := $s.OIDC }}
+    include oidc/oidc.conf;
+
+    set $oidc_pkce_enable 0;
+    set $oidc_logout_redirect "/_logout";
+    set $oidc_hmac_key "{{ $s.VSName }}";
+
+    set $oidc_authz_endpoint "{{ $oidc.AuthEndpoint }}";
+    set $oidc_token_endpoint "{{ $oidc.TokenEndpoint }}";
+    set $oidc_jwt_keyfile "{{ $oidc.JwksURI }}";
+    set $oidc_scopes "{{ $oidc.Scope }}";
+    set $oidc_client "{{ $oidc.ClientID }}";
+    set $oidc_client_secret "{{ $oidc.ClientSecret }}";
+    set $redir_location "{{ $oidc.RedirectURI }}";
+    {{ end }}
+
     {{ with $ssl := $s.SSL }}
         {{ if $s.TLSPassthrough }}
     listen unix:/var/lib/nginx/passthrough-https.sock{{ if $ssl.HTTP2 }} http2{{ end }} proxy_protocol;
@@ -282,6 +298,12 @@ server {
         proxy_ssl_name {{ .SSLName }};
         {{ end }}
 
+        {{ if $l.OIDC }}
+        auth_jwt "" token=$session_jwt;
+        error_page 401 = @do_oidc_flow;
+        auth_jwt_key_request /_jwks_uri;
+        proxy_set_header username $jwt_claim_sub;
+        {{ end }}
 
         {{ range $e := $l.ErrorPages }}
         error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";

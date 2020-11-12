@@ -80,7 +80,7 @@ var (
 	- i.e have the annotation "kubernetes.io/ingress.class" equal to the class.
 	Additionally, the Ingress Controller processes resources that do not have the class set,
 	which can be disabled by setting the "-use-ingress-class-only" flag
-	
+
 	The Ingress Controller processes all the VirtualServer/VirtualServerRoute resources that do not have the "ingressClassName" field for all versions of kubernetes.`)
 
 	useIngressClassOnly = flag.Bool("use-ingress-class-only", false,
@@ -112,7 +112,7 @@ var (
 	(default for NGINX "nginx.transportserver.tmpl"; default for NGINX Plus "nginx-plus.transportserver.tmpl")`)
 
 	externalService = flag.String("external-service", "",
-		`Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. 
+		`Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally.
 	The external address of the service is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. For Ingress resources only: Requires -report-ingress-status.`)
 
 	nginxCisConnector = flag.String("nginx-cis-connector", "",
@@ -165,7 +165,7 @@ var (
 
 	globalConfiguration = flag.String("global-configuration", "",
 		`A GlobalConfiguration resource for global configuration of the Ingress Controller. Requires -enable-custom-resources. If the flag is set,
-		but the Ingress controller is not able to fetch the corresponding resource from Kubernetes API, the Ingress Controller 
+		but the Ingress controller is not able to fetch the corresponding resource from Kubernetes API, the Ingress Controller
 		will fail to start. Format: <namespace>/<name>`)
 
 	enableTLSPassthrough = flag.Bool("enable-tls-passthrough", false,
@@ -521,6 +521,7 @@ func main() {
 		NginxServiceMesh:               *spireAgentAddress != "",
 		MainAppProtectLoadModule:       *appProtect,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
+		EnablePreviewPolicies:          *enablePreviewPolicies,
 	}
 
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
@@ -790,8 +791,10 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	return secret, nil
 }
 
-const locationFmt = `/[^\s{};]*`
-const locationErrMsg = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
+const (
+	locationFmt    = `/[^\s{};]*`
+	locationErrMsg = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
+)
 
 var locationRegexp = regexp.MustCompile("^" + locationFmt + "$")
 

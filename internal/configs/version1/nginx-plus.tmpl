@@ -23,6 +23,10 @@ load_module modules/ngx_http_app_protect_module.so;
 {{$value}}{{end}}
 {{- end}}
 
+{{if .PreviewPolicies}}
+load_module modules/ngx_http_js_module.so;
+{{- end}}
+
 events {
     worker_connections  {{.WorkerConnections}};
 }
@@ -103,6 +107,10 @@ http {
     resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
     {{end}}
+
+    {{if .PreviewPolicies}}
+    include oidc/oidc_common.conf;
+    {{- end}}
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
