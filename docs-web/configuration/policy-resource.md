@@ -252,7 +252,7 @@ The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For 
      - Type
      - Required
    * - ``secret``
-     - The name of the Kubernetes secret that stores the JWK. It must be in the same namespace as the Policy resource. The JWK must be stored in the secret under the key ``jwk``, otherwise the secret will be rejected as invalid.
+     - The name of the Kubernetes secret that stores the JWK. It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/jwk``, and the JWK must be stored in the secret under the key ``jwk``, otherwise the secret will be rejected as invalid.
      - ``string``
      - Yes
    * - ``realm``
@@ -318,7 +318,7 @@ We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/conf
      - Type
      - Required
    * - ``clientCertSecret``
-     - The name of the Kubernetes secret that stores the CA certificate. It must be in the same namespace as the Policy resource. The certificate must be stored in the secret under the key ``ca.crt``, otherwise the secret will be rejected as invalid.
+     - The name of the Kubernetes secret that stores the CA certificate. It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/ca``, and the certificate must be stored in the secret under the key ``ca.crt``, otherwise the secret will be rejected as invalid.
      - ``string``
      - Yes
    * - ``verifyClient``
@@ -365,11 +365,11 @@ egressMTLS:
      - Type
      - Required
    * - ``tlsSecret``
-     - The name of the Kubernetes secret that stores the TLS certificate and key. It must be in the same namespace as the Policy resource. The certificate must be stored in the secret under the key ``tls.crt`` and ``tls.key``, otherwise the secret will be rejected as invalid.
+     - The name of the Kubernetes secret that stores the TLS certificate and key. It must be in the same namespace as the Policy resource. The secret must be of the type ``kubernetes.io/tls``, the certificate must be stored in the secret under the key ``tls.crt``, and the key must be stored under the key ``tls.key``, otherwise the secret will be rejected as invalid.
      - ``string``
      - No
    * - ``trustedCertSecret``
-     - The name of the Kubernetes secret that stores the CA certificate. It must be in the same namespace as the Policy resource. The certificate must be stored in the secret under the key ``ca.crt``, otherwise the secret will be rejected as invalid.
+     - The name of the Kubernetes secret that stores the CA certificate. It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/ca``, and the certificate must be stored in the secret under the key ``ca.crt``, otherwise the secret will be rejected as invalid.
      - ``string``
      - No
    * - ``verifyServer``

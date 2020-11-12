@@ -133,7 +133,7 @@ redirect:
      - Type
      - Required
    * - ``secret``
-     - The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must contain keys named ``tls.crt`` and ``tls.key`` that contain the certificate and private key as described `here <https://kubernetes.io/docs/concepts/services-networking/ingress/#tls>`_. If the secret doesn't exist, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer.
+     - The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that contain the certificate and private key as described `here <https://kubernetes.io/docs/concepts/services-networking/ingress/#tls>`_. If the secret doesn't exist, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer.
      - ``string``
      - No
    * - ``redirect``
