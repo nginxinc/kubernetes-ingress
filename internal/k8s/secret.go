@@ -1,6 +1,9 @@
 package k8s
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 
 	v1 "k8s.io/api/core/v1"
@@ -25,7 +28,11 @@ func ValidateTLSSecret(secret *v1.Secret) error {
 	}
 
 	// Kubernetes ensures that 'tls.crt' and 'tls.key' are present for secrets of v1.SecretTypeTLS type
-	// no need to validate that
+
+	_, err := tls.X509KeyPair(secret.Data[v1.TLSCertKey], secret.Data[v1.TLSPrivateKeyKey])
+	if err != nil {
+		return fmt.Errorf("Failed to validate TLS cert and key: %v", err)
+	}
 
 	return nil
 }
@@ -40,6 +47,9 @@ func ValidateJWKSecret(secret *v1.Secret) error {
 		return fmt.Errorf("JWK secret must have the data field %v", JWTKeyKey)
 	}
 
+	// we don't validate the contents of secret.Data[JWTKeyKey], because invalid contents will not make NGINX Plus
+	// fail to reload: NGINX Plus will return 500 responses for the affected URLs.
+
 	return nil
 }
 
@@ -51,6 +61,19 @@ func ValidateCASecret(secret *v1.Secret) error {
 
 	if _, exists := secret.Data[CAKey]; !exists {
 		return fmt.Errorf("CA secret must have the data field %v", CAKey)
+	}
+
+	block, _ := pem.Decode(secret.Data[CAKey])
+	if block == nil {
+		return fmt.Errorf("The data field %s must hold a valid CERTIFICATE PEM block", CAKey)
+	}
+	if block.Type != "CERTIFICATE" {
+		return fmt.Errorf("The data field %s must hold a valid CERTIFICATE PEM block, but got '%s'", CAKey, block.Type)
+	}
+
+	_, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return fmt.Errorf("Failed to validate certificate: %v", err)
 	}
 
 	return nil

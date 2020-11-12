@@ -1364,7 +1364,7 @@ func TestGetIngressMTLSSecret(t *testing.T) {
 			Namespace: "default",
 		},
 		Type: SecretTypeCA,
-		Data: map[string][]byte{"ca.crt": nil},
+		Data: map[string][]byte{"ca.crt": validCACert},
 	}
 
 	invalidSecret := &v1.Secret{
@@ -1497,15 +1497,15 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			Namespace: "default",
 		},
 		Type: api_v1.SecretTypeTLS,
-		Data: map[string][]byte{"tls.key": nil, "tls.crt": nil},
+		Data: map[string][]byte{"tls.crt": validCert, "tls.key": validKey},
 	}
-	validSecret2 := &v1.Secret{
+	validCASecret := &v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-egress-trusted-secret",
 			Namespace: "default",
 		},
 		Type: SecretTypeCA,
-		Data: map[string][]byte{"ca.crt": nil},
+		Data: map[string][]byte{"ca.crt": validCACert},
 	}
 
 	invalidSecret := &v1.Secret{
@@ -1557,7 +1557,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 				},
 			},
 			expectedEgressMTLSSecrets: map[string]*v1.Secret{
-				"default/valid-egress-trusted-secret": validSecret2,
+				"default/valid-egress-trusted-secret": validCASecret,
 			},
 			wantErr: false,
 			msg:     "test getting valid TrustedCA secret",
@@ -1579,7 +1579,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			},
 			expectedEgressMTLSSecrets: map[string]*v1.Secret{
 				"default/valid-egress-mtls-secret":    validSecret,
-				"default/valid-egress-trusted-secret": validSecret2,
+				"default/valid-egress-trusted-secret": validCASecret,
 			},
 			wantErr: false,
 			msg:     "test getting valid secrets",
@@ -1655,7 +1655,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 						case "default/valid-egress-mtls-secret":
 							return validSecret, true, nil
 						case "default/valid-egress-trusted-secret":
-							return validSecret2, true, nil
+							return validCASecret, true, nil
 						case "default/invalid-egress-mtls-secret":
 							return invalidSecret, true, errors.New("secret is missing egress-mtls key in data")
 						default:
