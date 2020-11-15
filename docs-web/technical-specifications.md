@@ -40,7 +40,7 @@ The supported architecture is x86-64.
       - 
     * - Ubi-based image
       - ``openshift/Dockerfile``
-      - ``registry.access.redhat.com/ubi8/ubi:8.1``
+      - ``registry.access.redhat.com/ubi8/ubi:8.3``
       - 
       - ``nginx/nginx-ingress:1.9.0-ubi``
 ```
@@ -71,7 +71,7 @@ NGINX Plus images are not available through DockerHub.
       - NGINX Plus OpenTracing module, C++ OpenTracing binding for Jaeger 0.4.2 
     * - Ubi-based image
       - ``openshift/DockerfileForPlus``
-      - ``registry.access.redhat.com/ubi8/ubi:8.1``
+      - ``registry.access.redhat.com/ubi8/ubi:8.3``
       - 
     * - Debian-based image with App Protect
       - ``appprotect/DockerfileWithAppProtectForPlus``
