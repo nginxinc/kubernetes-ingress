@@ -1,6 +1,6 @@
 ARG GOLANG_CONTAINER=golang:latest
 
-FROM registry.access.redhat.com/ubi8/ubi:8.1 AS base
+FROM registry.access.redhat.com/ubi8/ubi:8.3 AS base
 
 LABEL name="NGINX Ingress Controller" \
       description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
