@@ -70,6 +70,7 @@ type Server struct {
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
 	PoliciesErrorReturn       *Return
+	Namespace                 string
 }
 
 // SSL defines SSL configuration for a server.
@@ -138,6 +139,7 @@ type Location struct {
 	JWTAuth                  *JWTAuth
 	EgressMTLS               *EgressMTLS
 	PoliciesErrorReturn      *Return
+	ServiceName              string
 }
 
 // ReturnLocation defines a location for returning a fixed response.

@@ -200,7 +200,8 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			ssl := isSSLEnabled(sslServices[path.Backend.ServiceName], cfgParams, staticParams)
 			proxySSLName := generateProxySSLName(path.Backend.ServiceName, ingEx.Ingress.Namespace)
 			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &cfgParams, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
-				ssl, grpcServices[path.Backend.ServiceName], proxySSLName, path.PathType)
+				ssl, grpcServices[path.Backend.ServiceName], proxySSLName, path.PathType, path.Backend.ServiceName)
+			glog.Errorf("Service Name : %v", path.Backend)
 			if isMinion && ingEx.JWTKey.Name != "" {
 				loc.JWTAuth = &version1.JWTAuth{
 					Key:   jwtKeyFileName,
@@ -230,7 +231,7 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			pathtype := networking.PathTypePrefix
 
 			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &cfgParams, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName],
-				ssl, grpcServices[ingEx.Ingress.Spec.Backend.ServiceName], proxySSLName, &pathtype)
+				ssl, grpcServices[ingEx.Ingress.Spec.Backend.ServiceName], proxySSLName, &pathtype, ingEx.Ingress.Spec.Backend.ServiceName)
 			locations = append(locations, loc)
 
 			if cfgParams.HealthCheckEnabled {
@@ -280,7 +281,7 @@ func generateIngressPath(path string, pathType *networking.PathType) string {
 	return path
 }
 
-func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, websocket bool, rewrite string, ssl bool, grpc bool, proxySSLName string, pathType *networking.PathType) version1.Location {
+func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, websocket bool, rewrite string, ssl bool, grpc bool, proxySSLName string, pathType *networking.PathType, serviceName string) version1.Location {
 	loc := version1.Location{
 		Path:                 generateIngressPath(path, pathType),
 		Upstream:             upstream,
@@ -298,6 +299,7 @@ func createLocation(path string, upstream version1.Upstream, cfg *ConfigParams, 
 		ProxyMaxTempFileSize: cfg.ProxyMaxTempFileSize,
 		ProxySSLName:         proxySSLName,
 		LocationSnippets:     cfg.LocationSnippets,
+		ServiceName:          serviceName,
 	}
 
 	return loc

@@ -39,12 +39,12 @@ http {
     {{if .LogFormat -}}
     log_format  main {{if .LogFormatEscaping}}escape={{ .LogFormatEscaping }} {{end}}
                      {{range $i, $value := .LogFormat -}}
-                     {{with $value}}'{{if $i}} {{end}}{{$value}}'
+                     {{with $value}}'{{if $i}} {{end}}{{$value}} resource_type="$resource_type" resource_name="$resource_name" resource_namespace="$resource_namespace" service="$service"'
                      {{end}}{{end}};
     {{- else -}}
     log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
                       '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"';
+                      '"$http_user_agent" "$http_x_forwarded_for" resource_type="$resource_type" resource_name="$resource_name" resource_namespace="$resource_namespace" service="$service"';
     {{- end}}
 
     {{if .AccessLogOff}}
@@ -106,6 +106,10 @@ http {
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
         set $default_connection_header "";
+        set $resource_type "";
+        set $resource_name "";
+        set $resource_namespace "";
+        set $service "";
 
         listen 80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
 

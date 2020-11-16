@@ -61,6 +61,10 @@ server {
     server_name {{ $s.ServerName }};
     status_zone {{ $s.StatusZone }};
 
+    set $resource_type "virtualserver";
+	set $resource_name "{{$s.ServerName}}";
+	set $resource_namespace "{{$s.Namespace}}";
+
     {{ with $ssl := $s.SSL }}
         {{ if $s.TLSPassthrough }}
     listen unix:/var/lib/nginx/passthrough-https.sock{{ if $ssl.HTTP2 }} http2{{ end }} proxy_protocol;
@@ -172,6 +176,7 @@ server {
 
     {{ range $hc := $s.HealthChecks }}
     location @hc-{{ $hc.Name }} {
+        set $service "nil";
         {{ range $n, $v := $hc.Headers }}
         proxy_set_header {{ $n }} "{{ $v }}";
         {{ end }}
@@ -186,6 +191,7 @@ server {
 
     {{ range $e := $s.ErrorPageLocations }}
     location {{ $e.Name }} {
+        set $service "nil";
         {{ if $e.DefaultType }}
         default_type "{{ $e.DefaultType }}";
         {{ end }}
@@ -199,6 +205,7 @@ server {
 
     {{ range $l := $s.ReturnLocations }}
     location {{ $l.Name }} {
+        set $service "nil";
         default_type "{{ $l.DefaultType }}";
         # status code is ignored here, using 0
         return 0 "{{ $l.Return.Text }}";
@@ -207,6 +214,7 @@ server {
 
     {{ range $l := $s.Locations }}
     location {{ $l.Path }} {
+        set $service "{{$l.ServiceName}}";
         {{ if $l.Internal }}
         internal;
         {{ end }}

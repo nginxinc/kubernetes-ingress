@@ -605,6 +605,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
+			Namespace:                 vsEx.VirtualServer.Namespace,
 		},
 		SpiffeCerts: vsc.spiffeCerts,
 	}
@@ -1404,6 +1405,7 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 		HasKeepalive:             upstreamHasKeepalive(upstream, cfgParams),
 		ErrorPages:               generateErrorPages(errPageIndex, errorPages),
 		ProxySSLName:             proxySSLName,
+		ServiceName:              upstream.Service,
 	}
 }
 

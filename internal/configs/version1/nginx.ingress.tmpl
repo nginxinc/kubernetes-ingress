@@ -1,5 +1,5 @@
 # configuration for {{.Ingress.Namespace}}/{{.Ingress.Name}}
-
+{{$ingress := .Ingress}}
 {{range $upstream := .Upstreams}}
 upstream {{$upstream.Name}} {
 	{{if ne $upstream.UpstreamZoneSize "0"}}zone {{$upstream.Name}} {{$upstream.UpstreamZoneSize}};{{end}}
@@ -42,6 +42,10 @@ server {
 	server_tokens {{$server.ServerTokens}};
 
 	server_name {{$server.Name}};
+
+	set $resource_type "Ing"
+	set $resource_name {{$ingress.Name}}
+	set $resource_namespace {{$ingress.Namespace}}
 
 	{{range $proxyHideHeader := $server.ProxyHideHeaders}}
 	proxy_hide_header {{$proxyHideHeader}};{{end}}

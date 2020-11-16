@@ -206,6 +206,7 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 				Locations: []version1.Location{
 					{
 						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
 						Upstream:            coffeeUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",
@@ -216,6 +217,7 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 					},
 					{
 						Path:                "/tea",
+						ServiceName:         "tea-svc",
 						Upstream:            teaUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",
@@ -610,6 +612,7 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 				Locations: []version1.Location{
 					{
 						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
 						Upstream:            coffeeUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",
@@ -628,6 +631,7 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 					},
 					{
 						Path:                "/tea",
+						ServiceName:         "tea-svc",
 						Upstream:            teaUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",
@@ -710,6 +714,7 @@ func createExpectedConfigForCrossNamespaceMergeableCafeIngress() version1.Ingres
 				Locations: []version1.Location{
 					{
 						Path:                "/coffee",
+						ServiceName:         "coffee-svc",
 						Upstream:            coffeeUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",
@@ -728,6 +733,7 @@ func createExpectedConfigForCrossNamespaceMergeableCafeIngress() version1.Ingres
 					},
 					{
 						Path:                "/tea",
+						ServiceName:         "tea-svc",
 						Upstream:            teaUpstream,
 						ProxyConnectTimeout: "60s",
 						ProxyReadTimeout:    "60s",

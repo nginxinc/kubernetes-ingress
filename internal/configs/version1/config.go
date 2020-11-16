@@ -101,6 +101,8 @@ type Server struct {
 	AppProtectLogEnable string
 
 	SpiffeCerts bool
+
+	ServiceName string
 }
 
 // JWTRedirectLocation describes a location for redirecting client requests to a login URL for JWT Authentication.
@@ -136,6 +138,7 @@ type Location struct {
 	ProxyMaxTempFileSize string
 	ProxySSLName         string
 	JWTAuth              *JWTAuth
+	ServiceName          string
 
 	MinionIngress *Ingress
 }
