@@ -1,4 +1,4 @@
-{{- if semverCompare ">=1.18.0" .Capabilities.KubeVersion.GitVersion }}
+{{- if semverCompare ">=1.18.0-0" .Capabilities.KubeVersion.GitVersion }}
 apiVersion: networking.k8s.io/v1beta1
 kind: IngressClass
 metadata:
