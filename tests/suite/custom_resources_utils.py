@@ -360,7 +360,6 @@ def delete_and_create_vs_from_yaml(
         create_virtual_server_from_yaml(
             custom_objects, yaml_manifest, namespace
         )
-        print(f"VirtualServer updated (delete and create) with name '{dep['metadata']['name']}'")
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServer: {name}")
         raise
