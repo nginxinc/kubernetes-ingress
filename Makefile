@@ -55,7 +55,16 @@ ifneq ($(BUILD_IN_CONTAINER),1)
 	CGO_ENABLED=0 GO111MODULE=on GOFLAGS='$(GOFLAGS)' GOOS=linux go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 endif
 
-container: test verify-codegen verify-crds binary certificate-and-key
+prepare-license-secrets:
+ifneq (,$(findstring PlusForOpenShift,$(DOCKERFILE)))
+	mkdir -p tempdir && base64 nginx-repo.crt > tempdir/nginx-repo.crt && base64 nginx-repo.key > tempdir/nginx-repo.key && base64 rhel_license > tempdir/rhel_license
+DOCKER_BUILD_OPTIONS += --secret id=nginx-repo.crt,src=tempdir/nginx-repo.crt --secret id=nginx-repo.key,src=tempdir/nginx-repo.key --secret id=rhel_license,src=tempdir/rhel_license
+else ifneq (,$(findstring Plus,$(DOCKERFILE)))
+	mkdir -p tempdir && base64 nginx-repo.crt > tempdir/nginx-repo.crt && base64 nginx-repo.key > tempdir/nginx-repo.key
+DOCKER_BUILD_OPTIONS += --secret id=nginx-repo.crt,src=tempdir/nginx-repo.crt --secret id=nginx-repo.key,src=tempdir/nginx-repo.key 
+endif
+
+container: test verify-codegen verify-crds binary certificate-and-key prepare-license-secrets
 ifeq ($(BUILD_IN_CONTAINER),1)
 	docker build $(DOCKER_BUILD_OPTIONS) --build-arg IC_VERSION=$(VERSION)-$(GIT_COMMIT) --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg VERSION=$(VERSION) --build-arg GOLANG_CONTAINER=$(GOLANG_CONTAINER) --target container -f $(DOCKERFILEPATH)/$(DOCKERFILE) -t $(PREFIX):$(TAG) .
 else
@@ -71,3 +80,4 @@ endif
 
 clean:
 	rm -f nginx-ingress
+	rm -rf tempdir

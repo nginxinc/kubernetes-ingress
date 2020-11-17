@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.0-experimental
 ARG GOLANG_CONTAINER=golang:latest
 
 FROM registry.access.redhat.com/ubi7/ubi AS base
@@ -19,18 +20,15 @@ ENV NGINX_PLUS_VERSION 22-1.el7.ngx
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
-# and copy to the build context
-RUN mkdir /etc/ssl/nginx/
-COPY nginx-repo.crt nginx-repo.key /etc/ssl/nginx/
-
-# Make sure the certificate and key have correct permissions
-RUN chmod 644 /etc/ssl/nginx/*
-
-# Copy RHEL account data
-COPY rhel_license /tmp/
-
-# Install NGINX Plus
-RUN groupadd --system --gid 101 nginx \
+# and install NGINX Plus
+RUN --mount=type=secret,id=nginx-repo.crt \
+	--mount=type=secret,id=nginx-repo.key \
+	--mount=type=secret,id=rhel_license \
+	set -x \
+	&& mkdir -p /etc/ssl/nginx && base64 --decode /run/secrets/nginx-repo.crt > /etc/ssl/nginx/nginx-repo.crt  \
+	&& base64 --decode /run/secrets/nginx-repo.key > /etc/ssl/nginx/nginx-repo.key \
+	&& base64 --decode /run/secrets/rhel_license > /tmp/rhel_license \
+	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& source /tmp/rhel_license \
 	&& yum install -y wget ca-certificates \

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.0-experimental
 ARG GOLANG_CONTAINER=golang:latest
 
 FROM debian:stretch-slim as base
@@ -15,14 +16,12 @@ ENV NGINX_PLUS_RELEASE R22
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
-# and copy to the build context
-COPY nginx-repo.crt nginx-repo.key /etc/ssl/nginx/
-
-# Make sure the certificate and key have correct permissions
-RUN chmod 644 /etc/ssl/nginx/*
-
-# Install NGINX Plus
-RUN set -x \
+# and install NGINX Plus
+RUN --mount=type=secret,id=nginx-repo.crt \
+	--mount=type=secret,id=nginx-repo.key \
+	set -x \
+	&& mkdir -p /etc/ssl/nginx && base64 --decode /run/secrets/nginx-repo.crt > /etc/ssl/nginx/nginx-repo.crt  \
+	&& base64 --decode /run/secrets/nginx-repo.key > /etc/ssl/nginx/nginx-repo.key \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y apt-transport-https ca-certificates gnupg1 libcap2-bin wget \
 	&& \

@@ -30,6 +30,7 @@ nginx-plus-ingress
 cmd/nginx-ingress/nginx-ingress
 
 # NGINX Plus license files
+tempdir/
 *.crt
 *.key
 
