@@ -11,7 +11,7 @@ from suite.custom_resources_utils import (
     read_crd,
     delete_virtual_server,
     create_virtual_server_from_yaml,
-    patch_virtual_server_from_yaml,
+    delete_and_create_vs_from_yaml,
     create_policy_from_yaml,
     delete_policy,
     read_policy,
@@ -104,7 +104,7 @@ class TestJWTPolicies:
         )
 
         print(f"Patch vs with policy: {jwt_vs_single_src}")
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             jwt_vs_single_src,
@@ -123,7 +123,7 @@ class TestJWTPolicies:
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         delete_secret(kube_apis.v1, secret, test_namespace)
 
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             std_vs_src,
@@ -157,7 +157,7 @@ class TestJWTPolicies:
         )
 
         print(f"Patch vs with policy: {jwt_vs_single_src}")
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             jwt_vs_single_src,
@@ -177,7 +177,7 @@ class TestJWTPolicies:
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         delete_secret(kube_apis.v1, secret, test_namespace)
 
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             std_vs_src,
@@ -221,7 +221,7 @@ class TestJWTPolicies:
         else:
             pytest.fail("Invalid configuration")
 
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             vs_src,
@@ -239,7 +239,7 @@ class TestJWTPolicies:
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         delete_secret(kube_apis.v1, secret, test_namespace)
 
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             std_vs_src,
@@ -273,7 +273,7 @@ class TestJWTPolicies:
         )
 
         print(f"Patch vs with policy: {jwt_pol_valid_src}")
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             jwt_vs_single_src,
@@ -290,7 +290,7 @@ class TestJWTPolicies:
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
 
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             std_vs_src,
@@ -316,7 +316,7 @@ class TestJWTPolicies:
         )
 
         print(f"Patch vs with policy: {jwt_pol_valid_src}")
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             jwt_vs_single_src,
@@ -334,7 +334,7 @@ class TestJWTPolicies:
 
         delete_secret(kube_apis.v1, secret, test_namespace)
 
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             std_vs_src,
@@ -362,7 +362,7 @@ class TestJWTPolicies:
 
         print(f"Patch vs with multiple policy in spec context")
         print(f"Patch vs with policy in order: {jwt_pol_multi_src} and {jwt_pol_valid_src}")
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             jwt_vs_multi_1_src,
@@ -374,7 +374,7 @@ class TestJWTPolicies:
         print(resp1.status_code)
 
         print(f"Patch vs with policy in order: {jwt_pol_valid_src} and {jwt_pol_multi_src}")
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             jwt_vs_multi_2_src,
@@ -385,7 +385,7 @@ class TestJWTPolicies:
         print(resp2.status_code)
 
         print(f"Patch vs with multiple policy in route context")
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             jwt_vs_override_route,
@@ -399,7 +399,7 @@ class TestJWTPolicies:
         delete_policy(kube_apis.custom_objects, pol_name_2, test_namespace)
         delete_secret(kube_apis.v1, secret, test_namespace)
 
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             std_vs_src,
@@ -431,7 +431,7 @@ class TestJWTPolicies:
         )
 
         print(f"Patch vs with invalid policy in route and valid policy in spec")
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             jwt_vs_override_spec_route_1,
@@ -443,7 +443,7 @@ class TestJWTPolicies:
         print(resp1.status_code)
 
         print(f"Patch vs with valid policy in route and invalid policy in spec")
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             jwt_vs_override_spec_route_2,
@@ -457,7 +457,7 @@ class TestJWTPolicies:
         delete_policy(kube_apis.custom_objects, pol_name_2, test_namespace)
         delete_secret(kube_apis.v1, secret, test_namespace)
 
-        patch_virtual_server_from_yaml(
+        delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             std_vs_src,
