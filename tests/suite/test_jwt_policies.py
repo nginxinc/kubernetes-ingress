@@ -41,7 +41,7 @@ jwt_vs_override_spec_route_2 = (
 valid_token = f"{TEST_DATA}/jwt-policy/token.jwt"
 invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
 
-
+@pytest.mark.skip_for_nginx_oss
 @pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
