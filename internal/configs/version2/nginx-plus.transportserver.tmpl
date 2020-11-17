@@ -12,6 +12,10 @@ upstream {{ $u.Name }} {
 
 {{ $s := .Server }}
 server {
+    set $resource_type "transportserver";
+    set $resource_name "{{$s.Name}}";
+    set $resource_namespace "{{$s.Namespace}}";
+
     {{ if $s.TLSPassthrough }}
     listen {{ $s.UnixSocket }} proxy_protocol;
     set_real_ip_from unix:;

@@ -49,6 +49,8 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			ProxyRequests:  proxyRequests,
 			ProxyResponses: proxyResponses,
 			ProxyPass:      upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
+			Name:           transportServerEx.TransportServer.Name,
+			Namespace:      transportServerEx.TransportServer.Namespace,
 		},
 		Upstreams: upstreams,
 	}

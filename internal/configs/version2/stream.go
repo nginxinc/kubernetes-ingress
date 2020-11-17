@@ -27,6 +27,8 @@ type StreamServer struct {
 	ProxyRequests  *int
 	ProxyResponses *int
 	ProxyPass      string
+	Name           string
+	Namespace      string
 }
 
 // TLSPassthroughHostsConfig defines a mapping between TLS Passthrough hosts and the corresponding unix sockets.

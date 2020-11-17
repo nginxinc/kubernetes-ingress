@@ -110,6 +110,8 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 			UDP:        false,
 			StatusZone: "tcp-listener",
 			ProxyPass:  "ts_default_tcp-server_tcp-app",
+			Name:       "tcp-server",
+			Namespace:  "default",
 		},
 	}
 
@@ -178,6 +180,8 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 			ProxyRequests:  &udpRequests,
 			ProxyResponses: &udpResponses,
 			ProxyPass:      "ts_default_udp-server_udp-app",
+			Name:           "udp-server",
+			Namespace:      "default",
 		},
 	}
 
