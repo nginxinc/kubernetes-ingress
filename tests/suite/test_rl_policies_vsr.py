@@ -25,8 +25,13 @@ rl_vsr_invalid_src = (
 rl_vsr_override_src = (
     f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-override-subroute.yaml"
 )
-rl_vsr_override_vs_spec_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-vsr-spec-override.yaml"
-rl_vsr_override_vs_route_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-vsr-route-override.yaml"
+rl_vsr_override_vs_spec_src = (
+    f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-vsr-spec-override.yaml"
+)
+rl_vsr_override_vs_route_src = (
+    f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-vsr-route-override.yaml"
+)
+
 
 @pytest.mark.policies
 @pytest.mark.parametrize(
@@ -310,10 +315,7 @@ class TestRateLimitingPolciesVsr:
         )
         # patch vs with 1rps policy
         patch_virtual_server_from_yaml(
-            kube_apis.custom_objects,
-            v_s_route_setup.vs_name,
-            src,
-            v_s_route_setup.namespace
+            kube_apis.custom_objects, v_s_route_setup.vs_name, src, v_s_route_setup.namespace
         )
         wait_before_test()
         occur = []
@@ -330,15 +332,11 @@ class TestRateLimitingPolciesVsr:
                 headers={"host": v_s_route_setup.vs_host},
             )
             occur.append(resp.status_code)
-        
+
         delete_policy(kube_apis.custom_objects, pol_name_vs, v_s_route_setup.route_m.namespace)
         delete_policy(kube_apis.custom_objects, pol_name_vsr, v_s_route_setup.route_m.namespace)
         self.restore_default_vsr(kube_apis, v_s_route_setup)
         patch_virtual_server_from_yaml(
-            kube_apis.custom_objects,
-            v_s_route_setup.vs_name,
-            std_vs_src,
-            v_s_route_setup.namespace
+            kube_apis.custom_objects, v_s_route_setup.vs_name, std_vs_src, v_s_route_setup.namespace
         )
         assert rate_sec >= occur.count(200) >= (rate_sec - 2)
-        

@@ -329,14 +329,15 @@ def patch_virtual_server_from_yaml(
     :return:
     """
     print(f"Update a VirtualServer: {name}")
-    with open(yaml_manifest) as f:
-        dep = yaml.safe_load(f)
 
-    try:
-        custom_objects.patch_namespaced_custom_object(
-            "k8s.nginx.org", "v1", namespace, "virtualservers", name, dep
+    try: 
+        delete_virtual_server(
+            custom_objects, name, namespace
         )
-        print(f"VirtualServer updated with name '{dep['metadata']['name']}'")
+        create_virtual_server_from_yaml(
+            custom_objects, yaml_manifest, namespace
+        )
+
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServer: {name}")
         raise

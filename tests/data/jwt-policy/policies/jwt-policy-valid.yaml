@@ -1,0 +1,9 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: Policy
+metadata:
+  name: jwt-policy-valid
+spec:
+  jwt:
+    realm: MyProductAPI
+    secret: jwk-secret-valid
+    token: $http_token
