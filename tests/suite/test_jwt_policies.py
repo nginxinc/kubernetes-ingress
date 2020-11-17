@@ -42,7 +42,6 @@ valid_token = f"{TEST_DATA}/jwt-policy/token.jwt"
 invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
 
 
-@pytest.mark.jwt
 @pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
@@ -196,6 +195,7 @@ class TestJWTPolicies:
         else:
             pytest.fail(f"Not a valid case or parameter")
 
+    @pytest.mark.smoke
     @pytest.mark.parametrize("policy", [jwt_pol_valid_src, jwt_pol_invalid_src])
     def test_jwt_policy(
         self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, policy,
