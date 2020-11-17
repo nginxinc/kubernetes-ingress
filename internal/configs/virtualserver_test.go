@@ -47,7 +47,7 @@ func TestVirtualServerExString(t *testing.T) {
 	for _, test := range tests {
 		result := test.input.String()
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("VirtualServerEx.String() returned %v but expected %v", result, test.expected)
+			t.Errorf("VirtualServerEx.String() returned %v but expected %v", result, test.expected)
 		}
 	}
 }
@@ -74,7 +74,7 @@ func TestGenerateEndpointsKey(t *testing.T) {
 	for _, test := range tests {
 		result := GenerateEndpointsKey(serviceNamespace, serviceName, test.subselector, port)
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("GenerateEndpointsKey() returned %q but expected %q", result, test.expected)
+			t.Errorf("GenerateEndpointsKey() returned %q but expected %q", result, test.expected)
 		}
 
 	}
@@ -94,7 +94,7 @@ func TestUpstreamNamerForVirtualServer(t *testing.T) {
 
 	result := upstreamNamer.GetNameForUpstream(upstream)
 	if result != expected {
-		cmp.Diff(result, expected) //("GetNameForUpstream() returned %q but expected %q", result, expected)
+		t.Errorf("GetNameForUpstream() returned %q but expected %q", result, expected)
 	}
 }
 
@@ -118,7 +118,7 @@ func TestUpstreamNamerForVirtualServerRoute(t *testing.T) {
 
 	result := upstreamNamer.GetNameForUpstream(upstream)
 	if result != expected {
-		cmp.Diff(result, expected) //("GetNameForUpstream() returned %q but expected %q", result, expected)
+		t.Errorf("GetNameForUpstream() returned %q but expected %q", result, expected)
 	}
 }
 
@@ -159,7 +159,7 @@ func TestVariableNamer(t *testing.T) {
 
 	result := variableNamer.GetNameForSplitClientVariable(index)
 	if result != expected {
-		cmp.Diff(result, expected) //("GetNameForSplitClientVariable() returned %q but expected %q", result, expected)
+		t.Errorf("GetNameForSplitClientVariable() returned %q but expected %q", result, expected)
 	}
 
 	// GetNameForVariableForMatchesRouteMap()
@@ -171,7 +171,7 @@ func TestVariableNamer(t *testing.T) {
 
 	result = variableNamer.GetNameForVariableForMatchesRouteMap(matchesIndex, matchIndex, conditionIndex)
 	if result != expected {
-		cmp.Diff(result, expected) //("GetNameForVariableForMatchesRouteMap() returned %q but expected %q", result, expected)
+		t.Errorf("GetNameForVariableForMatchesRouteMap() returned %q but expected %q", result, expected)
 	}
 
 	// GetNameForVariableForMatchesRouteMainMap()
@@ -181,7 +181,7 @@ func TestVariableNamer(t *testing.T) {
 
 	result = variableNamer.GetNameForVariableForMatchesRouteMainMap(matchesIndex)
 	if result != expected {
-		cmp.Diff(result, expected) //("GetNameForVariableForMatchesRouteMainMap() returned %q but expected %q", result, expected)
+		t.Errorf("GetNameForVariableForMatchesRouteMainMap() returned %q but expected %q", result, expected)
 	}
 }
 
@@ -485,6 +485,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
+			Namespace:       "default",
 			ProxyProtocol:   true,
 			ServerTokens:    "off",
 			SetRealIPFrom:   []string{"0.0.0.0/0"},
@@ -544,6 +545,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "coffee-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ServiceName:              "coffee-svc",
 				},
 				{
 					Path:                     "/subtea",
@@ -554,7 +556,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "sub-tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
-					ServiceName:              "coffee-svc",
+					ServiceName:              "sub-tea-svc",
 				},
 
 				{
@@ -628,7 +630,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		egressMTLSSecrets,
 	)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
 
 	if len(warnings) != 0 {
@@ -702,6 +704,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
+			Namespace:       "default",
 			ProxyProtocol:   true,
 			ServerTokens:    "off",
 			SetRealIPFrom:   []string{"0.0.0.0/0"},
@@ -742,7 +745,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 		egressMTLSSecrets,
 	)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
 
 	if len(warnings) != 0 {
@@ -949,6 +952,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 		Server: version2.Server{
 			ServerName: "cafe.example.com",
 			StatusZone: "cafe.example.com",
+			Namespace:  "default",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/tea",
@@ -1023,7 +1027,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 		egressMTLSSecrets,
 	)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
 
 	if len(warnings) != 0 {
@@ -1263,6 +1267,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 		Server: version2.Server{
 			ServerName: "cafe.example.com",
 			StatusZone: "cafe.example.com",
+			Namespace:  "default",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/tea",
@@ -1337,7 +1342,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 		egressMTLSSecrets,
 	)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
 
 	if len(warnings) != 0 {
@@ -1577,6 +1582,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 		Server: version2.Server{
 			ServerName: "example.com",
 			StatusZone: "example.com",
+			Namespace:  "default",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/splits-with-return",
@@ -1817,7 +1823,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 		egressMTLSSecrets,
 	)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
 
 	if len(warnings) != 0 {
@@ -2145,7 +2151,7 @@ func TestGeneratePolicies(t *testing.T) {
 	for _, test := range tests {
 		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, test.policyOpts)
 		if diff := cmp.Diff(test.expected, result); diff != "" {
-			cmp.Diff(result, test.expected) //("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 		if len(vsc.warnings) > 0 {
 			t.Errorf("generatePolicies() returned unexpected warnings %v for the case of %s", vsc.warnings, test.msg)
@@ -2654,7 +2660,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 
 		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, test.policyOpts)
 		if diff := cmp.Diff(test.expected, result); diff != "" {
-			cmp.Diff(result, test.expected) //("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 		if !reflect.DeepEqual(vsc.warnings, test.expectedWarnings) {
 			t.Errorf(
@@ -2703,7 +2709,7 @@ func TestRemoveDuplicates(t *testing.T) {
 	for _, test := range tests {
 		result := removeDuplicateLimitReqZones(test.rlz)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("removeDuplicateLimitReqZones() returned \n%v, but expected \n%v", result, test.expected)
+			t.Errorf("removeDuplicateLimitReqZones() returned \n%v, but expected \n%v", result, test.expected)
 		}
 	}
 }
@@ -2736,7 +2742,7 @@ func TestAddPoliciesCfgToLocations(t *testing.T) {
 
 	addPoliciesCfgToLocations(cfg, locations)
 	if !reflect.DeepEqual(locations, expectedLocations) {
-		cmp.Diff(locations, expectedLocations) //("addPoliciesCfgToLocations() returned \n%+v but expected \n%+v", locations, expectedLocations)
+		t.Errorf("addPoliciesCfgToLocations() returned \n%+v but expected \n%+v", locations, expectedLocations)
 	}
 }
 
@@ -2776,7 +2782,7 @@ func TestGenerateUpstream(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{})
 	result := vsc.generateUpstream(nil, name, upstream, false, endpoints)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("generateUpstream() returned %v but expected %v", result, expected)
+		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
 
 	if len(vsc.warnings) != 0 {
@@ -2854,12 +2860,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{})
 		result := vsc.generateUpstream(nil, name, test.upstream, false, endpoints)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateUpstream() returned %v but expected %v for the case of %v",
-				result,
-				test.expected,
-				test.msg,
-			)
+			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 
 		if len(vsc.warnings) != 0 {
@@ -2890,7 +2891,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{})
 	result := vsc.generateUpstream(nil, name, upstream, true, endpoints)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("generateUpstream() returned %v but expected %v", result, expected)
+		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
 	}
 
 	if len(vsc.warnings) != 0 {
@@ -2934,14 +2935,7 @@ func TestGenerateProxyPass(t *testing.T) {
 	for _, test := range tests {
 		result := generateProxyPass(test.tlsEnabled, test.upstreamName, test.internal, nil)
 		if result != test.expected {
-			t.Errorf(
-				"generateProxyPass(%v, %v, %v) returned %v but expected %v",
-				test.tlsEnabled,
-				test.upstreamName,
-				test.internal,
-				result,
-				test.expected,
-			)
+			t.Errorf("generateProxyPass(%v, %v, %v) returned %v but expected %v", test.tlsEnabled, test.upstreamName, test.internal, result, test.expected)
 		}
 	}
 }
@@ -2968,12 +2962,7 @@ func TestGenerateProxyPassProtocol(t *testing.T) {
 	for _, test := range tests {
 		result := generateProxyPassProtocol(test.upstream.TLS.Enable)
 		if result != test.expected {
-			t.Errorf(
-				"generateProxyPassProtocol(%v) returned %v but expected %v",
-				test.upstream.TLS.Enable,
-				result,
-				test.expected,
-			)
+			t.Errorf("generateProxyPassProtocol(%v) returned %v but expected %v", test.upstream.TLS.Enable, result, test.expected)
 		}
 	}
 }
@@ -2996,7 +2985,7 @@ func TestGenerateString(t *testing.T) {
 	for _, test := range tests {
 		result := generateString(test.inputS, "error timeout")
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("generateString() return %v but expected %v", result, test.expected)
+			t.Errorf("generateString() return %v but expected %v", result, test.expected)
 		}
 	}
 }
@@ -3036,7 +3025,7 @@ func TestGenerateSnippets(t *testing.T) {
 	for _, test := range tests {
 		result := generateSnippets(test.enableSnippets, test.s, test.defaultS)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("generateSnippets() return %v, but expected %v", result, test.expected)
+			t.Errorf("generateSnippets() return %v, but expected %v", result, test.expected)
 		}
 	}
 }
@@ -3059,7 +3048,7 @@ func TestGenerateBuffer(t *testing.T) {
 	for _, test := range tests {
 		result := generateBuffers(test.inputS, "8 4k")
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("generateBuffer() return %v but expected %v", result, test.expected)
+			t.Errorf("generateBuffer() return %v but expected %v", result, test.expected)
 		}
 	}
 }
@@ -3096,7 +3085,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 		ProxyNextUpstreamTimeout: "0s",
 		ProxyNextUpstreamTries:   0,
 		ProxyPassRequestHeaders:  true,
-		ServiceName:              "nil",
+		ServiceName:              "",
 	}
 
 	result := generateLocationForProxying(
@@ -3113,7 +3102,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 		vsLocSnippets,
 	)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("generateLocationForProxying() returned \n%v but expected \n%v", result, expected)
+		t.Errorf("generateLocationForProxying() returned \n%+v but expected \n%+v", result, expected)
 	}
 }
 
@@ -3147,7 +3136,7 @@ func TestGenerateReturnBlock(t *testing.T) {
 	for _, test := range tests {
 		result := generateReturnBlock(test.text, test.code, test.defaultCode)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("generateReturnBlock() returned %v but expected %v", result, test.expected)
+			t.Errorf("generateReturnBlock() returned %v but expected %v", result, test.expected)
 		}
 	}
 
@@ -3226,12 +3215,12 @@ func TestGenerateLocationForReturn(t *testing.T) {
 	for _, test := range tests {
 		location, returnLocation := generateLocationForReturn(path, snippets, test.actionReturn, returnLocationIndex)
 		if !reflect.DeepEqual(location, test.expectedLocation) {
-			cmp.Diff(location, test.expectedLocation) //("generateLocationForReturn() returned  \n%+v but expected \n%+v for the case of %s",
-			//location, test.expectedLocation, test.msg)
+			t.Errorf("generateLocationForReturn() returned  \n%+v but expected \n%+v for the case of %s",
+				location, test.expectedLocation, test.msg)
 		}
 		if !reflect.DeepEqual(returnLocation, test.expectedReturnLocation) {
-			cmp.Diff(returnLocation, test.expectedReturnLocation) //("generateLocationForReturn() returned  \n%+v but expected \n%+v for the case of %s",
-			//returnLocation, test.expectedReturnLocation, test.msg)
+			t.Errorf("generateLocationForReturn() returned  \n%+v but expected \n%+v for the case of %s",
+				returnLocation, test.expectedReturnLocation, test.msg)
 		}
 	}
 }
@@ -3288,8 +3277,8 @@ func TestGenerateLocationForRedirect(t *testing.T) {
 	for _, test := range tests {
 		result := generateLocationForRedirect("/", []string{"# location snippet"}, test.redirect)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("generateLocationForReturn() returned \n%+v but expected \n%+v for the case of %s",
-			//result, test.expected, test.msg)
+			t.Errorf("generateLocationForReturn() returned \n%+v but expected \n%+v for the case of %s",
+				result, test.expected, test.msg)
 		}
 	}
 }
@@ -3351,12 +3340,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 	for _, test := range tests {
 		result := generateSSLConfig(test.inputTLS, test.inputTLSPemFileName, test.inputCfgParams)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateSSLConfig() returned %v but expected %v for the case of %s",
-				result,
-				test.expected,
-				test.msg,
-			)
+			t.Errorf("generateSSLConfig() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
 	}
 }
@@ -3420,12 +3404,7 @@ func TestGenerateRedirectConfig(t *testing.T) {
 	for _, test := range tests {
 		result := generateTLSRedirectConfig(test.inputTLS)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateTLSRedirectConfig() returned %v but expected %v for the case of %s",
-				result,
-				test.expected,
-				test.msg,
-			)
+			t.Errorf("generateTLSRedirectConfig() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
 	}
 }
@@ -3451,7 +3430,7 @@ func TestGenerateTLSRedirectBasedOn(t *testing.T) {
 	for _, test := range tests {
 		result := generateTLSRedirectBasedOn(test.basedOn)
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("generateTLSRedirectBasedOn(%v) returned %v but expected %v", test.basedOn, result, test.expected)
+			t.Errorf("generateTLSRedirectBasedOn(%v) returned %v but expected %v", test.basedOn, result, test.expected)
 		}
 	}
 }
@@ -3640,7 +3619,7 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 
 	result := createUpstreamsForPlus(&virtualServerEx, &ConfigParams{}, &StaticConfigParams{})
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("createUpstreamsForPlus returned \n%v but expected \n%v", result, expected)
+		t.Errorf("createUpstreamsForPlus returned \n%v but expected \n%v", result, expected)
 	}
 }
 
@@ -3666,7 +3645,7 @@ func TestCreateUpstreamServersConfigForPlus(t *testing.T) {
 
 	result := createUpstreamServersConfigForPlus(upstream)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("createUpstreamServersConfigForPlus returned %v but expected %v", result, expected)
+		t.Errorf("createUpstreamServersConfigForPlus returned %v but expected %v", result, expected)
 	}
 }
 
@@ -3676,7 +3655,7 @@ func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
 
 	result := createUpstreamServersConfigForPlus(noUpstream)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("createUpstreamServersConfigForPlus returned %v but expected %v", result, expected)
+		t.Errorf("createUpstreamServersConfigForPlus returned %v but expected %v", result, expected)
 	}
 }
 
@@ -3804,6 +3783,7 @@ func TestGenerateSplits(t *testing.T) {
 			ProxySSLName:            "coffee-v1.default.svc",
 			ProxyPassRequestHeaders: true,
 			Snippets:                []string{locSnippet},
+			ServiceName:             "coffee-v1",
 		},
 		{
 			Path:                     "/internal_location_splits_1_split_1",
@@ -3828,6 +3808,7 @@ func TestGenerateSplits(t *testing.T) {
 			ProxySSLName:            "coffee-v2.default.svc",
 			ProxyPassRequestHeaders: true,
 			Snippets:                []string{locSnippet},
+			ServiceName:             "coffee-v2",
 		},
 		{
 			Path:                 "/internal_location_splits_1_split_2",
@@ -3869,13 +3850,13 @@ func TestGenerateSplits(t *testing.T) {
 		returnLocationIndex,
 	)
 	if !reflect.DeepEqual(resultSplitClient, expectedSplitClient) {
-		cmp.Diff(resultSplitClient, expectedSplitClient) //("generateSplits() returned \n%+v but expected \n%+v", resultSplitClient, expectedSplitClient)
+		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultSplitClient, expectedSplitClient)
 	}
 	if !reflect.DeepEqual(resultLocations, expectedLocations) {
-		cmp.Diff(resultLocations, expectedLocations) //("generateSplits() returned \n%+v but expected \n%+v", resultLocations, expectedLocations)
+		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultLocations, expectedLocations)
 	}
 	if !reflect.DeepEqual(resultReturnLocations, expectedReturnLocations) {
-		cmp.Diff(resultReturnLocations, expectedReturnLocations) //("generateSplits() returned \n%+v but expected \n%+v", resultReturnLocations, expectedReturnLocations)
+		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultReturnLocations, expectedReturnLocations)
 	}
 
 }
@@ -3935,6 +3916,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				Internal:                 true,
 				ProxySSLName:             "coffee-v1.default.svc",
 				ProxyPassRequestHeaders:  true,
+				ServiceName:              "coffee-v1",
 			},
 			{
 				Path:                     "/internal_location_splits_1_split_1",
@@ -3945,6 +3927,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				Internal:                 true,
 				ProxySSLName:             "coffee-v2.default.svc",
 				ProxyPassRequestHeaders:  true,
+				ServiceName:              "coffee-v2",
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -3968,7 +3951,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams,
 		route.ErrorPages, 0, "", locSnippet, enableSnippets, 0)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
+		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
 }
 
@@ -4234,6 +4217,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "coffee-v1",
 			},
 			{
 				Path:                     "/internal_location_splits_2_split_0",
@@ -4257,6 +4241,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "coffee-v1",
 			},
 			{
 				Path:                     "/internal_location_splits_2_split_1",
@@ -4280,6 +4265,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "coffee-v2",
 			},
 			{
 				Path:                     "/internal_location_matches_1_default",
@@ -4303,6 +4289,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "tea.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "tea",
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -4351,7 +4338,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		0,
 	)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
+		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
 }
 
@@ -4531,6 +4518,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "coffee-v1",
 			},
 			{
 				Path:                     "/internal_location_splits_2_split_1",
@@ -4554,6 +4542,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "coffee-v2",
 			},
 			{
 				Path:                     "/internal_location_splits_3_split_0",
@@ -4577,6 +4566,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "coffee-v2",
 			},
 			{
 				Path:                     "/internal_location_splits_3_split_1",
@@ -4600,6 +4590,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "coffee-v1",
 			},
 			{
 				Path:                     "/internal_location_splits_4_split_0",
@@ -4623,6 +4614,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "coffee-v1",
 			},
 			{
 				Path:                     "/internal_location_splits_4_split_1",
@@ -4646,6 +4638,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ServiceName:             "coffee-v2",
 			},
 		},
 		InternalRedirectLocation: version2.InternalRedirectLocation{
@@ -4720,7 +4713,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		0,
 	)
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
+		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
 }
 
@@ -4780,20 +4773,10 @@ func TestGenerateValueForMatchesRouteMap(t *testing.T) {
 	for _, test := range tests {
 		resultValue, resultIsNegative := generateValueForMatchesRouteMap(test.input)
 		if resultValue != test.expectedValue {
-			t.Errorf(
-				"generateValueForMatchesRouteMap(%q) returned %q but expected %q as the value",
-				test.input,
-				resultValue,
-				test.expectedValue,
-			)
+			t.Errorf("generateValueForMatchesRouteMap(%q) returned %q but expected %q as the value", test.input, resultValue, test.expectedValue)
 		}
 		if resultIsNegative != test.expectedIsNegative {
-			t.Errorf(
-				"generateValueForMatchesRouteMap(%q) returned %v but expected %v as the isNegative",
-				test.input,
-				resultIsNegative,
-				test.expectedIsNegative,
-			)
+			t.Errorf("generateValueForMatchesRouteMap(%q) returned %v but expected %v as the isNegative", test.input, resultIsNegative, test.expectedIsNegative)
 		}
 	}
 }
@@ -4837,13 +4820,7 @@ func TestGenerateParametersForMatchesRouteMap(t *testing.T) {
 	for _, test := range tests {
 		result := generateParametersForMatchesRouteMap(test.inputMatchedValue, test.inputSuccessfulResult)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateParametersForMatchesRouteMap(%q, %q) returned %v but expected %v",
-				test.inputMatchedValue,
-				test.inputSuccessfulResult,
-				result,
-				test.expected,
-			)
+			t.Errorf("generateParametersForMatchesRouteMap(%q, %q) returned %v but expected %v", test.inputMatchedValue, test.inputSuccessfulResult, result, test.expected)
 		}
 	}
 }
@@ -4882,12 +4859,7 @@ func TestGetNameForSourceForMatchesRouteMapFromCondition(t *testing.T) {
 	for _, test := range tests {
 		result := getNameForSourceForMatchesRouteMapFromCondition(test.input)
 		if result != test.expected {
-			t.Errorf(
-				"getNameForSourceForMatchesRouteMapFromCondition() returned %q but expected %q for input %v",
-				result,
-				test.expected,
-				test.input,
-			)
+			t.Errorf("getNameForSourceForMatchesRouteMapFromCondition() returned %q but expected %q for input %v", result, test.expected, test.input)
 		}
 	}
 }
@@ -4915,7 +4887,7 @@ func TestGenerateLBMethod(t *testing.T) {
 	for _, test := range tests {
 		result := generateLBMethod(test.input, defaultMethod)
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("generateLBMethod() returned %q but expected %q for input '%v'", result, test.expected, test.input)
+			t.Errorf("generateLBMethod() returned %q but expected %q for input '%v'", result, test.expected, test.input)
 		}
 	}
 }
@@ -4953,12 +4925,7 @@ func TestUpstreamHasKeepalive(t *testing.T) {
 	for _, test := range tests {
 		result := upstreamHasKeepalive(test.upstream, test.cfgParams)
 		if result != test.expected {
-			t.Errorf(
-				"upstreamHasKeepalive() returned %v, but expected %v for the case of %v",
-				result,
-				test.expected,
-				test.msg,
-			)
+			t.Errorf("upstreamHasKeepalive() returned %v, but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 	}
 }
@@ -4987,7 +4954,7 @@ func TestNewHealthCheckWithDefaults(t *testing.T) {
 	result := newHealthCheckWithDefaults(conf_v1.Upstream{}, upstreamName, baseCfgParams)
 
 	if !reflect.DeepEqual(result, expected) {
-		cmp.Diff(result, expected) //("newHealthCheckWithDefaults returned \n%v but expected \n%v", result, expected)
+		t.Errorf("newHealthCheckWithDefaults returned \n%v but expected \n%v", result, expected)
 	}
 }
 
@@ -5111,12 +5078,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 	for _, test := range tests {
 		result := generateHealthCheck(test.upstream, test.upstreamName, baseCfgParams)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateHealthCheck returned \n%v but expected \n%v \n for case: %v",
-				result,
-				test.expected,
-				test.msg,
-			)
+			t.Errorf("generateHealthCheck returned \n%v but expected \n%v \n for case: %v", result, test.expected, test.msg)
 		}
 	}
 }
@@ -5297,14 +5259,8 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 		)
 		result := vsc.generateEndpointsForUpstream(test.vsEx.VirtualServer, namespace, test.upstream, test.vsEx)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateEndpointsForUpstream(isPlus=%v, isResolverConfigured=%v) returned %v, but expected %v for case: %v",
-				test.isPlus,
-				test.isResolverConfigured,
-				result,
-				test.expected,
-				test.msg,
-			)
+			t.Errorf("generateEndpointsForUpstream(isPlus=%v, isResolverConfigured=%v) returned %v, but expected %v for case: %v",
+				test.isPlus, test.isResolverConfigured, result, test.expected, test.msg)
 		}
 
 		if len(vsc.warnings) == 0 && test.warningsExpected {
@@ -5343,12 +5299,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
-			t.Errorf(
-				"generateSlowStartForPlus returned %v, but expected %v for lbMethod %v",
-				result,
-				expected,
-				lbMethod,
-			)
+			t.Errorf("generateSlowStartForPlus returned %v, but expected %v for lbMethod %v", result, expected, lbMethod)
 		}
 
 		if len(vsc.warnings) == 0 {
@@ -5382,7 +5333,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{})
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
+			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
 		}
 
 		if len(vsc.warnings) != 0 {
@@ -5410,7 +5361,7 @@ func TestCreateEndpointsFromUpstream(t *testing.T) {
 
 	endpoints := createEndpointsFromUpstream(ups)
 	if !reflect.DeepEqual(endpoints, expected) {
-		cmp.Diff(endpoints, expected) //("createEndpointsFromUpstream returned %v, but expected %v", endpoints, expected)
+		t.Errorf("createEndpointsFromUpstream returned %v, but expected %v", endpoints, expected)
 	}
 }
 
@@ -5481,12 +5432,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{})
 		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateUpstream() returned %v but expected %v for the case of %v",
-				result,
-				test.expected,
-				test.msg,
-			)
+			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 	}
 
@@ -5518,12 +5464,7 @@ func TestGenerateQueueForPlus(t *testing.T) {
 	for _, test := range tests {
 		result := generateQueueForPlus(test.upstreamQueue, "60s")
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateQueueForPlus() returned %v but expected %v for the case of %v",
-				result,
-				test.expected,
-				test.msg,
-			)
+			t.Errorf("generateQueueForPlus() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
 		}
 	}
 
@@ -5554,12 +5495,7 @@ func TestGenerateSessionCookie(t *testing.T) {
 	for _, test := range tests {
 		result := generateSessionCookie(test.sc)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateSessionCookie() returned %v, but expected %v for the case of: %v",
-				result,
-				test.expected,
-				test.msg,
-			)
+			t.Errorf("generateSessionCookie() returned %v, but expected %v for the case of: %v", result, test.expected, test.msg)
 		}
 	}
 }
@@ -5590,7 +5526,7 @@ func TestGeneratePath(t *testing.T) {
 	for _, test := range tests {
 		result := generatePath(test.path)
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("generatePath() returned %v, but expected %v.", result, test.expected)
+			t.Errorf("generatePath() returned %v, but expected %v.", result, test.expected)
 		}
 	}
 }
@@ -5621,13 +5557,7 @@ func TestGenerateErrorPageName(t *testing.T) {
 	for _, test := range tests {
 		result := generateErrorPageName(test.routeIndex, test.index)
 		if result != test.expected {
-			t.Errorf(
-				"generateErrorPageName(%v, %v) returned %v but expected %v",
-				test.routeIndex,
-				test.index,
-				result,
-				test.expected,
-			)
+			t.Errorf("generateErrorPageName(%v, %v) returned %v but expected %v", test.routeIndex, test.index, result, test.expected)
 		}
 	}
 }
@@ -5650,7 +5580,7 @@ func TestGenerateErrorPageCodes(t *testing.T) {
 	for _, test := range tests {
 		result := generateErrorPageCodes(test.codes)
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("generateErrorPageCodes(%v) returned %v but expected %v", test.codes, result, test.expected)
+			t.Errorf("generateErrorPageCodes(%v) returned %v but expected %v", test.codes, result, test.expected)
 		}
 	}
 }
@@ -5711,13 +5641,7 @@ func TestGenerateErrorPages(t *testing.T) {
 	for i, test := range tests {
 		result := generateErrorPages(i, test.errorPages)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateErrorPages(%v, %v) returned %v but expected %v",
-				test.upstreamName,
-				test.errorPages,
-				result,
-				test.expected,
-			)
+			t.Errorf("generateErrorPages(%v, %v) returned %v but expected %v", test.upstreamName, test.errorPages, result, test.expected)
 		}
 	}
 }
@@ -5788,13 +5712,7 @@ func TestGenerateErrorPageLocations(t *testing.T) {
 	for i, test := range tests {
 		result := generateErrorPageLocations(i, test.errorPages)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf(
-				"generateErrorPageLocations(%v, %v) returned %v but expected %v",
-				test.upstreamName,
-				test.errorPages,
-				result,
-				test.expected,
-			)
+			t.Errorf("generateErrorPageLocations(%v, %v) returned %v but expected %v", test.upstreamName, test.errorPages, result, test.expected)
 		}
 	}
 }
@@ -5853,13 +5771,7 @@ func TestIsTLSEnabled(t *testing.T) {
 	for _, test := range tests {
 		result := isTLSEnabled(test.upstream, test.spiffeCert)
 		if result != test.expected {
-			t.Errorf(
-				"isTLSEnabled(%v, %v) returned %v but expected %v",
-				test.upstream,
-				test.spiffeCert,
-				result,
-				test.expected,
-			)
+			t.Errorf("isTLSEnabled(%v, %v) returned %v but expected %v", test.upstream, test.spiffeCert, result, test.expected)
 		}
 	}
 
@@ -5921,8 +5833,8 @@ func TestGenerateRewrites(t *testing.T) {
 	for _, test := range tests {
 		result := generateRewrites(test.path, test.proxy, test.internal, test.originalPath)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("generateRewrites(%v, %v, %v, %v) returned \n %v but expected \n %v",
-			//test.path, test.proxy, test.internal, test.originalPath, result, test.expected)
+			t.Errorf("generateRewrites(%v, %v, %v, %v) returned \n %v but expected \n %v",
+				test.path, test.proxy, test.internal, test.originalPath, result, test.expected)
 		}
 	}
 }
@@ -5970,8 +5882,8 @@ func TestGenerateProxyPassRewrite(t *testing.T) {
 	for _, test := range tests {
 		result := generateProxyPassRewrite(test.path, test.proxy, test.internal)
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("generateProxyPassRewrite(%v, %v, %v) returned %v but expected %v",
-			//	test.path, test.proxy, test.internal, result, test.expected)
+			t.Errorf("generateProxyPassRewrite(%v, %v, %v) returned %v but expected %v",
+				test.path, test.proxy, test.internal, result, test.expected)
 		}
 	}
 }
@@ -6020,7 +5932,7 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 	for _, test := range tests {
 		result := generateProxySetHeaders(test.proxy)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("generateProxySetHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+			t.Errorf("generateProxySetHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
 		}
 	}
 }
@@ -6069,12 +5981,7 @@ func TestGenerateProxyPassRequestHeaders(t *testing.T) {
 	for _, test := range tests {
 		result := generateProxyPassRequestHeaders(test.proxy)
 		if result != test.expected {
-			t.Errorf(
-				"generateProxyPassRequestHeaders(%v) returned %v but expected %v",
-				test.proxy,
-				result,
-				test.expected,
-			)
+			t.Errorf("generateProxyPassRequestHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
 		}
 	}
 }
@@ -6106,7 +6013,7 @@ func TestGenerateProxyHideHeaders(t *testing.T) {
 	for _, test := range tests {
 		result := generateProxyHideHeaders(test.proxy)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("generateProxyHideHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+			t.Errorf("generateProxyHideHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
 		}
 	}
 }
@@ -6138,7 +6045,7 @@ func TestGenerateProxyPassHeaders(t *testing.T) {
 	for _, test := range tests {
 		result := generateProxyPassHeaders(test.proxy)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("generateProxyPassHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+			t.Errorf("generateProxyPassHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
 		}
 	}
 }
@@ -6171,7 +6078,7 @@ func TestGenerateProxyIgnoreHeaders(t *testing.T) {
 	for _, test := range tests {
 		result := generateProxyIgnoreHeaders(test.proxy)
 		if result != test.expected {
-			cmp.Diff(result, test.expected) //("generateProxyIgnoreHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+			t.Errorf("generateProxyIgnoreHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
 		}
 	}
 }
@@ -6232,7 +6139,7 @@ func TestGenerateProxyAddHeaders(t *testing.T) {
 	for _, test := range tests {
 		result := generateProxyAddHeaders(test.proxy)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("generateProxyAddHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+			t.Errorf("generateProxyAddHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
 		}
 	}
 }
@@ -6276,7 +6183,7 @@ func TestGetUpstreamResourceLabels(t *testing.T) {
 	for _, test := range tests {
 		result := getUpstreamResourceLabels(test.owner)
 		if !reflect.DeepEqual(result, test.expected) {
-			cmp.Diff(result, test.expected) //("getUpstreamResourceLabels(%+v) returned %+v but expected %+v", test.owner, result, test.expected)
+			t.Errorf("getUpstreamResourceLabels(%+v) returned %+v but expected %+v", test.owner, result, test.expected)
 		}
 	}
 }
