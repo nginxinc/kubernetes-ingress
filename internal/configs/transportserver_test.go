@@ -103,6 +103,12 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 						Address: "10.0.0.20:5001",
 					},
 				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
 			},
 		},
 		Server: version2.StreamServer{
@@ -112,6 +118,76 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 			ProxyPass:  "ts_default_tcp-server_tcp-app",
 			Name:       "tcp-server",
 			Namespace:  "default",
+		},
+	}
+
+	isPlus := true
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, isPlus)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("generateTransportServerConfig() returned \n%+v but expected \n%+v", result, expected)
+	}
+}
+
+func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
+	transportServerEx := TransportServerEx{
+		TransportServer: &conf_v1alpha1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "tcp-server",
+				Namespace: "default",
+			},
+			Spec: conf_v1alpha1.TransportServerSpec{
+				Listener: conf_v1alpha1.TransportServerListener{
+					Name:     "tls-passthrough",
+					Protocol: "TLS_PASSTHROUGH",
+				},
+				Host: "example.com",
+				Upstreams: []conf_v1alpha1.Upstream{
+					{
+						Name:    "tcp-app",
+						Service: "tcp-app-svc",
+						Port:    5001,
+					},
+				},
+				Action: &conf_v1alpha1.Action{
+					Pass: "tcp-app",
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tcp-app-svc:5001": {
+				"10.0.0.20:5001",
+			},
+		},
+	}
+
+	listenerPort := 2020
+
+	expected := version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address: "10.0.0.20:5001",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+			},
+		},
+		Server: version2.StreamServer{
+			TLSPassthrough: true,
+			UnixSocket:     "unix:/var/lib/nginx/passthrough-default_tcp-server.sock",
+			Port:           2020,
+			UDP:            false,
+			StatusZone:     "example.com",
+			ProxyPass:      "ts_default_tcp-server_tcp-app",
+			Name:           "tcp-server",
+			Namespace:      "default",
 		},
 	}
 
@@ -170,6 +246,12 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 					{
 						Address: "10.0.0.20:5001",
 					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "udp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "udp-app-svc",
 				},
 			},
 		},

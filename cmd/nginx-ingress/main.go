@@ -559,8 +559,13 @@ func main() {
 			upstreamServerPeerVariableLabelNames = append(upstreamServerPeerVariableLabelNames, "pod_owner")
 		}
 		if *nginxPlus {
+			streamUpstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
+			streamUpstreamServerPeerVariableLabelNames := []string{"pod_name"}
+
 			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
-			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames)
+			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
+				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames)
 			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels)
 			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry)
 		} else {
@@ -616,6 +621,7 @@ func main() {
 		VirtualServerValidator:       virtualServerValidator,
 		SpireAgentAddress:            *spireAgentAddress,
 		InternalRoutesEnabled:        *enableInternalRoutes,
+		IsPrometheusEnabled:          *enablePrometheusMetrics,
 		IsLatencyMetricsEnabled:      *enableLatencyMetrics,
 	}
 

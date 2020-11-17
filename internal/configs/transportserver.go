@@ -13,6 +13,7 @@ const nginxNonExistingUnixSocket = "unix:/var/lib/nginx/non-existing-unix-socket
 type TransportServerEx struct {
 	TransportServer *conf_v1alpha1.TransportServer
 	Endpoints       map[string][]string
+	PodsByIP        map[string]string
 }
 
 func (tsEx *TransportServerEx) String() string {
@@ -38,6 +39,12 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 		proxyRequests = transportServerEx.TransportServer.Spec.UpstreamParameters.UDPRequests
 		proxyResponses = transportServerEx.TransportServer.Spec.UpstreamParameters.UDPResponses
 	}
+	statusZone := ""
+	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName {
+		statusZone = transportServerEx.TransportServer.Spec.Host
+	} else {
+		statusZone = transportServerEx.TransportServer.Spec.Listener.Name
+	}
 
 	return version2.TransportServerConfig{
 		Server: version2.StreamServer{
@@ -45,7 +52,7 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			UnixSocket:     generateUnixSocket(transportServerEx),
 			Port:           listenerPort,
 			UDP:            transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP",
-			StatusZone:     transportServerEx.TransportServer.Spec.Listener.Name,
+			StatusZone:     statusZone,
 			ProxyRequests:  proxyRequests,
 			ProxyResponses: proxyResponses,
 			ProxyPass:      upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
@@ -75,6 +82,11 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 		endpoints := transportServerEx.Endpoints[endpointsKey]
 
 		ups := generateStreamUpstream(name, endpoints, isPlus)
+
+		ups.UpstreamLabels.Service = u.Service
+		ups.UpstreamLabels.ResourceType = "transportserver"
+		ups.UpstreamLabels.ResourceName = transportServerEx.TransportServer.Name
+		ups.UpstreamLabels.ResourceNamespace = transportServerEx.TransportServer.Namespace
 
 		upstreams = append(upstreams, ups)
 	}
