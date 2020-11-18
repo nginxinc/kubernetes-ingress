@@ -28,6 +28,9 @@ jobs:
         id: commit
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+      - name: Check if CRDs changed
+        run: |
+          make update-crds && git diff --name-only --exit-code deployments/common/crds*
       - name: Build Binary
         run: >
           go mod verify && go mod vendor &&
@@ -38,7 +41,7 @@ jobs:
           GIT_COMMIT=${{ steps.commit.outputs.sha }}
         env:
           GOFLAGS: '-mod=vendor -gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
-      - name: Store Artifacts in Cache 
+      - name: Store Artifacts in Cache
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/nginx-ingress
@@ -350,7 +353,7 @@ jobs:
       - name: Build Test-Runner Container
         uses: docker/build-push-action@v2
         with:
-          file: tests/docker/Dockerfile 
+          file: tests/docker/Dockerfile
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -463,7 +466,7 @@ jobs:
           kind load docker-image ${{ matrix.image }}:${{ matrix.tag }} --name ${{ github.run_id }}
       - name: Install Chart
         run: >
-          helm install 
+          helm install
           ${{ matrix.type }}
           .
           --set controller.image.repository=${{ matrix.image }}
@@ -513,8 +516,8 @@ jobs:
           echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
       - name: Send Notification
         uses: 8398a7/action-slack@v3
-        if: 
-          steps.check.outputs.status == 'failure' || 
+        if:
+          steps.check.outputs.status == 'failure' ||
           steps.check.outputs.status == 'cancelled'
         with:
           status: custom

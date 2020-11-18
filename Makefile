@@ -31,12 +31,6 @@ ifneq ($(BUILD_IN_CONTAINER),1)
 	./hack/verify-codegen.sh
 endif
 
-verify-crds:
-ifneq ($(BUILD_IN_CONTAINER),1)
-	./hack/verify-crds.sh crds
-	./hack/verify-crds.sh crds-v1beta1
-endif
-
 update-codegen:
 	./hack/update-codegen.sh
 
@@ -61,10 +55,10 @@ ifneq (,$(findstring PlusForOpenShift,$(DOCKERFILE)))
 DOCKER_BUILD_OPTIONS += --secret id=nginx-repo.crt,src=tempdir/nginx-repo.crt --secret id=nginx-repo.key,src=tempdir/nginx-repo.key --secret id=rhel_license,src=tempdir/rhel_license
 else ifneq (,$(findstring Plus,$(DOCKERFILE)))
 	mkdir -p tempdir && base64 nginx-repo.crt > tempdir/nginx-repo.crt && base64 nginx-repo.key > tempdir/nginx-repo.key
-DOCKER_BUILD_OPTIONS += --secret id=nginx-repo.crt,src=tempdir/nginx-repo.crt --secret id=nginx-repo.key,src=tempdir/nginx-repo.key 
+DOCKER_BUILD_OPTIONS += --secret id=nginx-repo.crt,src=tempdir/nginx-repo.crt --secret id=nginx-repo.key,src=tempdir/nginx-repo.key
 endif
 
-container: test verify-codegen verify-crds binary certificate-and-key prepare-license-secrets
+container: test verify-codegen update-crds binary certificate-and-key prepare-license-secrets
 ifeq ($(BUILD_IN_CONTAINER),1)
 	docker build $(DOCKER_BUILD_OPTIONS) --build-arg IC_VERSION=$(VERSION)-$(GIT_COMMIT) --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg VERSION=$(VERSION) --build-arg GOLANG_CONTAINER=$(GOLANG_CONTAINER) --target container -f $(DOCKERFILEPATH)/$(DOCKERFILE) -t $(PREFIX):$(TAG) .
 else
