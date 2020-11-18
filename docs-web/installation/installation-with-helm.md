@@ -373,6 +373,9 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``controller.serviceAccount.imagePullSecrets``
      - The names of the secrets containing docker registry credentials.
      - []
+   * - ``controller.serviceAccount.imagePullSecretName``
+     - The name of the secret containing docker registry credentials. Secret must exist in the same namespace as the helm release.
+     - ""
    * - ``controller.reportIngressStatus.enable``
      - Update the address field in the status of Ingresses resources with an external address of the Ingress controller. You must also specify the source of the external address either through an external service via ``controller.reportIngressStatus.externalService`` or the ``external-status-address`` entry in the ConfigMap via ``controller.config.entries``. **Note:** ``controller.config.entries.external-status-address`` takes precedence if both are set.
      - true
