@@ -94,7 +94,7 @@ You can customize an existing Dockerfile or use it as a reference to create a ne
 
 ## Supported Helm Versions
 
-The Ingress Controller supports installation via Helm. The supported versions of Helm are 2.16+ and 3.0+.
+The Ingress Controller supports installation via Helm 3.0+.
 
 ## Recommended Hardware
 

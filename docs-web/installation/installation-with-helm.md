@@ -5,7 +5,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 ## Prerequisites
 
   - A [Kubernetes Version Supported by the Ingress Controller](/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
-  - Helm 2.16+ or 3.0+.
+  - Helm 3.0+.
   - Git.
   - If you’d like to use NGINX Plus:
     - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
@@ -13,7 +13,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 
 ## Getting the Chart Sources
 
-This step is required if you're installing the chart using its sources. Additionally, the step is also required for managing the custom resource definitions (CRDs), which the Ingress Controller requires by default: upgrading/deleting the CRDs, or installing the CRDs for Helm 2.x.
+This step is required if you're installing the chart using its sources. Additionally, the step is also required for managing the custom resource definitions (CRDs), which the Ingress Controller requires by default, or for upgrading/deleting the CRDs.
 
 1. Clone the Ingress controller repo:
     ```console
@@ -37,73 +37,40 @@ $ helm repo update
 
 ### Installing the CRDs
 
-By default, the Ingress Controller requires a number of custom resource definitions (CRDs) installed in the cluster. Helm 3.x client will install those CRDs. If you're using a Helm 2.x client, you need to install the CRDs via `kubectl`:
+By default, the Ingress Controller requires a number of custom resource definitions (CRDs) installed in the cluster. The helm client will install those CRDs. 
 
-```console
-$ kubectl create -f crds/
-```
-
-If you do not use the custom resources that require those CRDs (which corresponds to `controller.enableCustomResources` set to `false` and `controller.appprotect.enable` set to `false`), you can skip the installation of the CRDs. For Helm 2.x, no action is needed, as it does not install the CRDs. For Helm 3.x, specify `--skip-crds` for the helm install command.
+If you do not use the custom resources that require those CRDs (which corresponds to `controller.enableCustomResources` set to `false` and `controller.appprotect.enable` set to `false`). The installation of the CRDs can be skipped by specifying `--skip-crds` for the helm install command.
 
 ### Installing via Helm Repository
 
 To install the chart with the release name my-release (my-release is the name that you choose):
 
-  * Using Helm 3.x client:
+For NGINX:
+```console
+$ helm install my-release nginx-edge/nginx-ingress --devel
+```
 
-      For NGINX:
-      ```console
-      $ helm install my-release nginx-edge/nginx-ingress --devel
-      ```
-
-      For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
-      ```console
-      $ helm install my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true --devel
-      ```
-
-  * Using Helm 2.x client:
-
-      For NGINX:
-      ```console
-      $ helm install --name my-release nginx-edge/nginx-ingress --devel
-      ```
-
-      For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
-      ```console
-      $ helm install --name my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true --devel
-      ```
-
+For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
+```console
+$ helm install my-release nginx-edge/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true --devel
+```
 ### Installing Using Chart Sources
 
 To install the chart with the release name my-release (my-release is the name that you choose):
 
-  * Using Helm 3.x client:
+For NGINX:
+```console
+$ helm install my-release .
+```
 
-      For NGINX:
-      ```console
-      $ helm install my-release .
-      ```
+For NGINX Plus:
+```console
+$ helm install my-release -f values-plus.yaml .
+```
 
-      For NGINX Plus:
-      ```console
-      $ helm install my-release -f values-plus.yaml .
-      ```
+The command deploys the Ingress controller in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
 
-  * Using Helm 2.x client:
-
-      For NGINX:
-      ```console
-      $ helm install --name my-release .
-      ```
-
-      For NGINX Plus:
-      ```console
-      $ helm install --name my-release -f values-plus.yaml .
-      ```
-
-    The command deploys the Ingress controller in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
-
-    When deploying the Ingress controller, make sure to use your own TLS certificate and key for the default server rather than the default pre-generated ones. Read the [Configuration](#configuration) section below to see how to configure a TLS certificate and key for the default server. Note that the default server returns the Not Found page with the 404 status code for all requests for domains for which there are no Ingress rules defined.
+When deploying the Ingress controller, make sure to use your own TLS certificate and key for the default server rather than the default pre-generated ones. Read the [Configuration](#configuration) section below to see how to configure a TLS certificate and key for the default server. Note that the default server returns the Not Found page with the 404 status code for all requests for domains for which there are no Ingress rules defined.
 
 > **Tip**: List all releases using `helm list`
 
@@ -142,19 +109,11 @@ $ helm upgrade my-release nginx-edge/nginx-ingress
 
 To uninstall/delete the release `my-release`:
 
-* Using Helm 3.x client:
+```console
+$ helm uninstall my-release
+```
 
-    ```console
-    $ helm uninstall my-release
-    ```
-
-* Using Helm 2.x client:
-
-    ```console
-    $ helm delete --purge my-release
-    ```
-
-The command removes all the Kubernetes components associated with the chart and deletes the release.
+The command removes all the Kubernetes components associated with the release.
 
 ### Uninstalling the CRDs
 
