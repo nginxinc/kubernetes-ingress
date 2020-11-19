@@ -31,7 +31,7 @@ defaults:
 env:
   DOCKER_BUILDKIT: 1
   GOLANG_VERSION: 1.15
-  K8S_VERSION: 1.20.0
+  K8S_VERSION: 1.20.2
   K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge
@@ -43,7 +43,7 @@ jobs:
 
   binary:
     name: Build Binary
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -60,8 +60,7 @@ jobs:
           make update-crds && git diff --name-only --exit-code deployments/common/crds*
       - name: Build Binary
         run: >
-          make binary
-          BUILD_IN_CONTAINER=0
+          make build
           VERSION=${{ env.VERSION }}
           IC_VERSION=${{ env.VERSION }}-${{ steps.commit.outputs.sha }}
           GIT_COMMIT=${{ steps.commit.outputs.sha }}
@@ -75,7 +74,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -96,56 +95,56 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             file: build/Dockerfile
             context: '.'
             target: local
-            image: nginx-ingress
+            image: debian
             type: oss
-          - os: ubuntu-18.04
-            file: build/DockerfileForAlpine
+          - os: ubuntu-20.04
+            file: build/Dockerfile
             context: '.'
             target: local
-            image: nginx-ingress-alpine
+            image: alpine
             type: oss
-          - os: ubuntu-18.04
-            file: build/DockerfileForPlus
+          - os: ubuntu-20.04
+            file: build/Dockerfile
             context: '.'
             target: local
-            image: nginx-plus-ingress
+            image: debian-plus
             type: plus
-          - os: ubuntu-18.04
-            file: build/DockerfileWithOpentracing
+          - os: ubuntu-20.04
+            file: build/Dockerfile
             context: '.'
             target: local
-            image: nginx-ingress-opentracing
+            image: opentracing
             type: oss
-          - os: ubuntu-18.04
-            file: build/DockerfileWithOpentracingForPlus
+          - os: ubuntu-20.04
+            file: build/Dockerfile
             context: '.'
             target: local
-            image: nginx-plus-ingress-opentracing
+            image: opentracing-plus
             type: plus
-          - os: ubuntu-18.04
-            file: build/openshift/Dockerfile
+          - os: ubuntu-20.04
+            file: build/Dockerfile
             context: '.'
             target: local
-            image: nginx-ingress-openshift
+            image: openshift
             type: oss
-          - os: ubuntu-18.04
-            file: build/openshift/DockerfileForPlus
+          - os: ubuntu-20.04
+            file: build/Dockerfile
             context: '.'
             target: local
-            image: nginx-plus-ingress-openshift
+            image: openshift-plus
             type: plus
-          - os: ubuntu-18.04
-            file: build/appprotect/DockerfileWithAppProtectForPlus
+          - os: ubuntu-20.04
+            file: build/Dockerfile
             context: '.'
             target: local
-            image: nginx-plus-ingress-ap
+            image: debian-plus-ap
             type: plus-ap
-          - os: ubuntu-18.04
-            file: build/appprotect/DockerfileWithAppProtectForPlusForOpenShift
+          - os: ubuntu-20.04
+            file: build/DockerfileWithAppProtectForPlusForOpenShift
             context: '.'
             target: local
             image: nginx-plus-ingress-ap-openshift
@@ -178,6 +177,8 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: ${{ matrix.target }}
           tags: ${{ matrix.image }}:${{ github.sha }}
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
         if: matrix.type == 'oss'
       - name: Build Plus Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
@@ -189,8 +190,11 @@ jobs:
           target: ${{ matrix.target }}
           tags: ${{ matrix.image }}:${{ github.sha }}
           secrets: |
-            nginx-repo.crt=${{ secrets.NGINX_CRT }}
-            nginx-repo.key=${{ secrets.NGINX_KEY }}
+            "nginx-repo.crt=${{ secrets.KIC_NGINX_CRT }}"
+            "nginx-repo.key=${{ secrets.KIC_NGINX_KEY }}"
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            PLUS=-plus
         if: matrix.type == 'plus'
       - name: Build AP Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
@@ -202,9 +206,12 @@ jobs:
           target: ${{ matrix.target }}
           tags: ${{ matrix.image }}:${{ github.sha }}
           secrets: |
-            nginx-repo.crt=${{ secrets.NGINX_AP_CRT }}
-            nginx-repo.key=${{ secrets.NGINX_AP_KEY }}
-            rhel_license=${{ secrets.RHEL_LICENSE }}
+            "nginx-repo.crt=${{ secrets.KIC_NGINX_AP_CRT }}"
+            "nginx-repo.key=${{ secrets.KIC_NGINX_AP_KEY }}"
+            "rhel_license=${{ secrets.KIC_RHEL_LICENSE }}"
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            PLUS=-plus
         if: matrix.type == 'plus-ap' || matrix.type == 'plus-ap-openshift'
 
   smoke-tests:
@@ -217,56 +224,47 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-18.04
-            file: build/Dockerfile
+          - os: ubuntu-20.04
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: 'ingresses'
             type: oss
-          - os: ubuntu-18.04
-            file: build/Dockerfile
+          - os: ubuntu-20.04
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: 'vsr'
             type: oss
-          - os: ubuntu-18.04
-            file: build/Dockerfile
+          - os: ubuntu-20.04
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: 'vs'
             type: oss
-          - os: ubuntu-18.04
-            file: build/Dockerfile
+          - os: ubuntu-20.04
             image: nginx-ingress
             tag: ${{ github.sha }}
             marker: 'policies'
             type: oss
-          - os: ubuntu-18.04
-            file: build/DockerfileForPlus
+          - os: ubuntu-20.04
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: 'ingresses'
             type: plus
-          - os: ubuntu-18.04
-            file: build/DockerfileForPlus
+          - os: ubuntu-20.04
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: 'vsr'
             type: plus
-          - os: ubuntu-18.04
-            file: build/DockerfileForPlus
+          - os: ubuntu-20.04
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: 'vs'
             type: plus
-          - os: ubuntu-18.04
-            file: build/DockerfileForPlus
+          - os: ubuntu-20.04
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: 'policies'
             type: plus
-          - os: ubuntu-18.04
-            file: build/appprotect/DockerfileWithAppProtectForPlus
+          - os: ubuntu-20.04
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: 'appprotect'
@@ -293,18 +291,20 @@ jobs:
       - name: Build ${{ matrix.image }} Container
         uses: docker/build-push-action@v2
         with:
-          file: ${{ matrix.file }}
+          file: build/Dockerfile
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: local
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           load: true
+          build-args: |
+            BUILD_OS=debian
         if: matrix.type == 'oss'
       - name: Build Plus Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
         with:
-          file: ${{ matrix.file }}
+          file: build/Dockerfile
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -312,13 +312,16 @@ jobs:
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           load: true
           secrets: |
-            nginx-repo.crt=${{ secrets.NGINX_CRT }}
-            nginx-repo.key=${{ secrets.NGINX_KEY }}
+            "nginx-repo.crt=${{ secrets.KIC_NGINX_CRT }}"
+            "nginx-repo.key=${{ secrets.KIC_NGINX_KEY }}"
+          build-args: |
+            BUILD_OS=debian-plus
+            PLUS=-plus
         if: matrix.type == 'plus'
       - name: Build AP Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
         with:
-          file: ${{ matrix.file }}
+          file: build/Dockerfile
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -326,8 +329,11 @@ jobs:
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           load: true
           secrets: |
-            nginx-repo.crt=${{ secrets.NGINX_AP_CRT }}
-            nginx-repo.key=${{ secrets.NGINX_AP_KEY }}
+            "nginx-repo.crt=${{ secrets.KIC_NGINX_AP_CRT }}"
+            "nginx-repo.key=${{ secrets.KIC_NGINX_AP_KEY }}"
+          build-args: |
+            BUILD_OS=debian-plus-ap
+            PLUS=-plus
         if: matrix.type == 'plus-ap'
       - name: Build Test-Runner Container
         uses: docker/build-push-action@v2
@@ -396,13 +402,11 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-18.04
-            file: build/Dockerfile
+          - os: ubuntu-20.04
             image: nginx-ingress
             tag: ${{ github.sha }}
             type: oss
-          - os: ubuntu-18.04
-            file: build/DockerfileForPlus
+          - os: ubuntu-20.04
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             type: plus
@@ -428,7 +432,19 @@ jobs:
       - name: Build Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
         with:
-          file: ${{ matrix.file }}
+          file: build/Dockerfile
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          target: local
+          tags: ${{ matrix.image }}:${{ matrix.tag }}
+          load: true
+          build-args: |
+            BUILD_OS=debian
+      - name: Build Plus Docker Image ${{ matrix.image }}
+        uses: docker/build-push-action@v2
+        with:
+          file: build/Dockerfile
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -436,8 +452,12 @@ jobs:
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           load: true
           secrets: |
-            nginx-repo.crt=${{ secrets.NGINX_CRT }}
-            nginx-repo.key=${{ secrets.NGINX_KEY }}
+            "nginx-repo.crt=${{ secrets.KIC_NGINX_CRT }}"
+            "nginx-repo.key=${{ secrets.KIC_NGINX_KEY }}"
+          build-args: |
+            BUILD_OS=debian-plus
+            PLUS=-plus
+        if: matrix.type == 'plus'
       - name: Deploy Kubernetes
         id: k8s
         run: |
@@ -487,15 +507,15 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             file: build/Dockerfile
             image: nginx-ingress
             tag: edge
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             file: build/DockerfileForAlpine
             image: nginx-ingress
             tag: edge-alpine
-          - os: ubuntu-18.04
+          - os: ubuntu-20.04
             file: build/openshift/Dockerfile
             image: nginx-ingress
             tag: edge-ubi
@@ -536,7 +556,7 @@ jobs:
 
   package-helm:
     name: Package Helm Chart
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: [smoke-tests, helm-tests, release-docker]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
@@ -556,7 +576,7 @@ jobs:
 
   release-helm:
     name: Release Helm Chart
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: [smoke-tests, helm-tests, release-docker, package-helm]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
@@ -583,7 +603,7 @@ jobs:
 
   notify:
     name: Notify
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: release-helm
     if: always() && github.ref == 'refs/heads/master'
     steps:

@@ -22,6 +22,7 @@ class RBACAuthorization:
         role (str): cluster role name
         binding (str): cluster role binding name
     """
+
     def __init__(self, role: str, binding: str):
         self.role = role
         self.binding = binding
@@ -976,6 +977,7 @@ def create_ingress_with_ap_annotations(
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log"] = logconf
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log-destination"] = f"syslog:server={syslog_ep}"
         create_ingress(kube_apis.extensions_v1_beta1, namespace, doc)
+
 
 def replace_ingress_with_ap_annotations(
     kube_apis, yaml_manifest, name, namespace, policy_name, ap_pol_st, ap_log_st, syslog_ep

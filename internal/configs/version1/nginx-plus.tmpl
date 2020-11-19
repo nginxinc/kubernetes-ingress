@@ -9,7 +9,7 @@ worker_shutdown_timeout {{.WorkerShutdownTimeout}};{{end}}
 
 daemon off;
 
-error_log  /var/log/nginx/error.log {{.ErrorLogLevel}};
+error_log  stderr {{.ErrorLogLevel}};
 pid        /var/lib/nginx/nginx.pid;
 
 {{- if .OpenTracingLoadModule}}
@@ -54,7 +54,7 @@ http {
     {{if .AccessLogOff}}
     access_log off;
     {{else}}
-    access_log  /var/log/nginx/access.log  main;
+    access_log  /dev/stdout  main;
     {{end}}
 
     {{if .LatencyMetrics}}
@@ -245,7 +245,7 @@ stream {
                       '$session_time "$ssl_preread_server_name"';
     {{- end}}
 
-    access_log  /var/log/nginx/stream-access.log  stream-main;
+    access_log  /dev/stdout  stream-main;
 
     {{range $value := .StreamSnippets}}
     {{$value}}{{end}}
