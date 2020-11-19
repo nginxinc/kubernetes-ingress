@@ -23,13 +23,13 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     ```
     $ kubectl apply -f rbac/rbac.yaml
     ```
-   
-3. (App Protect only) Create the App Protect role and role binding:  
-    
+
+3. (App Protect only) Create the App Protect role and role binding:
+
     ```
     $ kubectl apply -f rbac/ap-rbac.yaml
     ```
-    
+
 **Note**: To perform this step you must be a cluster admin. Follow the documentation of your Kubernetes platform to configure the admin access. For GKE, see the [Role-Based Access Control](https://cloud.google.com/kubernetes-engine/docs/how-to/role-based-access-control) doc.
 
 ## 2. Create Common Resources
@@ -67,7 +67,7 @@ In this section, we create resources common for most of the Ingress Controller i
     $ kubectl apply -f common/crds/k8s.nginx.org_policies.yaml
     ```
 
-If you would like to use the TCP and UDP load balancing features of the Ingress Controller, create the following additional resources: 
+If you would like to use the TCP and UDP load balancing features of the Ingress Controller, create the following additional resources:
 1. Create a custom resource definition for [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resource:
     ```
     $ kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
@@ -85,10 +85,10 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
 If you would like to use the App Protect module, create the following additional resources:
 
 1. Create a custom resource definition for `APPolicy` and `APLogConf`:
-   
+
    ```
-   $ kubectl apply -f common/crds-v1beta1/ap-logconf-definition.yaml 
-   $ kubectl apply -f common/crds-v1beta1/ap-policy-definition.yaml 
+   $ kubectl apply -f common/crds/appprotect.f5.com_aplogconfs.yaml
+   $ kubectl apply -f common/crds/appprotect.f5.com_appolicies.yaml
    ```
 
 ## 3. Deploy the Ingress Controller

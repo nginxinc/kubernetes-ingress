@@ -304,7 +304,7 @@ def ingress_controller_prerequisites(
                 "-f",
                 f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml"
             ]
-        ) 
+        )
     config_map_yaml = f"{DEPLOYMENTS}/common/nginx-config.yaml"
     create_configmap_from_yaml(kube_apis.v1, namespace, config_map_yaml)
     with open(config_map_yaml) as f:
@@ -333,7 +333,7 @@ def ingress_controller_prerequisites(
                     "-f",
                     f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml"
                 ]
-            ) 
+            )
         cleanup_rbac(kube_apis.rbac_v1, rbac)
 
     request.addfinalizer(fin)
@@ -535,17 +535,17 @@ def crd_ingress_controller_with_ap(
         rbac = configure_rbac_with_ap(kube_apis.rbac_v1)
 
         print("------------------------- Register AP CRD -----------------------------------")
-        ap_pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/ap-policy-definition.yaml")
-        ap_log_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/ap-logconf-definition.yaml")
+        ap_pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_appolicies.yaml")
+        ap_log_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_aplogconfs.yaml")
         create_crd_from_yaml(
             kube_apis.api_extensions_v1_beta1,
             ap_pol_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/ap-policy-definition.yaml",
+            f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_appolicies.yaml",
         )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1_beta1,
             ap_log_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/ap-logconf-definition.yaml",
+            f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_aplogconfs.yaml",
         )
 
         print("------------------------- Create IC -----------------------------------")
