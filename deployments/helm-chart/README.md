@@ -75,7 +75,6 @@ The command deploys the Ingress controller in your Kubernetes cluster in the def
 
 When deploying the Ingress controller, make sure to use your own TLS certificate and key for the default server rather than the default pre-generated ones. Read the [Configuration](#Configuration) section below to see how to configure a TLS certificate and key for the default server. Note that the default server returns the Not Found page with the 404 status code for all requests for domains for which there are no Ingress rules defined.
 
-> **Tip**: List all releases using `helm list`
 
 ## Upgrading the Chart
 
