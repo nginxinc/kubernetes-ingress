@@ -153,6 +153,8 @@ server {
 		set $service {{$location.ServiceName}};
 		{{with $location.MinionIngress}}
 		# location for minion {{$location.MinionIngress.Namespace}}/{{$location.MinionIngress.Name}}
+		set resource_name "{{$location.MinionIngress.Name}}";
+		set resource_namespace "{{$location.MinionIngressNamespace}}";
 		{{end}}
 		{{if $location.GRPC}}
 		{{if not $server.GRPCOnly}}

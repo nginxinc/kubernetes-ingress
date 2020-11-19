@@ -45,8 +45,8 @@ server {
     server_name {{ $s.ServerName }};
 
     set $resource_type "virtualserver";
-	set $resource_name "{{$s.ServerName}}";
-	set $resource_namespace "{{$s.Namespace}}";
+    set $resource_name "{{$s.ServerName}}";
+    set $resource_namespace "{{$s.Namespace}}";
 
 
     {{ with $ssl := $s.SSL }}
