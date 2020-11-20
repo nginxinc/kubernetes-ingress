@@ -1,5 +1,21 @@
 # Changelog
 
+### 1.9.1
+
+CHANGES:
+* Fix deployment of ingressclass resource via helm on some versions of Kubernetes.
+* Update the base ubi images to 8.3.
+* Renew CA cert for egress-mtls example.
+* Add `controller.serviceAccount.imagePullSecretName` parameter to the helm chart. **Note**: `controller.serviceAccount.imagePullSecrets` is deprecated and will be removed in the future `1.10.0` release.
+
+HELM CHART:
+* The version of the Helm chart is now 0.7.1.
+
+UPGRADE:
+* For NGINX, use the 1.9.1 image from our DockerHub: `nginx/nginx-ingress:1.9.1`, `nginx/nginx-ingress:1.9.1-alpine` or `nginx/nginx-ingress:1.9.1-ubi`
+* For NGINX Plus, please build your own image using the 1.9.1 source code.
+* For Helm, use version 0.7.1 of the chart.
+
 ### 1.9.0
 
 OVERVIEW:
