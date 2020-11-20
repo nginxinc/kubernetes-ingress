@@ -500,7 +500,7 @@ jobs:
   notify:
     name: Notify
     runs-on: ubuntu-18.04
-    needs: helm-tests
+    needs: [helm-tests, smoke-tests]
     if: always() && github.ref == 'refs/heads/master'
     steps:
       - name: Workflow Status
