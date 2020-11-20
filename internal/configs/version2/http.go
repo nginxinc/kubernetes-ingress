@@ -140,6 +140,9 @@ type Location struct {
 	EgressMTLS               *EgressMTLS
 	PoliciesErrorReturn      *Return
 	ServiceName              string
+	IsVSR                    bool
+	VSRName                  string
+	VSRNamespace             string
 }
 
 // ReturnLocation defines a location for returning a fixed response.

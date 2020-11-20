@@ -37,11 +37,11 @@ http {
     log_format  main {{if .LogFormatEscaping}}escape={{ .LogFormatEscaping }} {{end}}
                      {{range $i, $value := .LogFormat -}}
                      {{with $value}}'{{if $i}} {{end}}{{$value}}'
-                     {{end}}{{end}} "$resource_type";
+                     {{end}}{{end}};
     {{- else -}}
     log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
                       '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"' "$resource_type";
+                      '"$http_user_agent" "$http_x_forwarded_for"';
     {{- end}}
 
     {{if .AccessLogOff}}

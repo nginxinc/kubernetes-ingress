@@ -127,7 +127,6 @@ server {
 
 	{{- range $healthCheck := $server.HealthChecks}}
 	location @hc-{{$healthCheck.UpstreamName}} {
-		set $service "nil";
 		{{- range $name, $header := $healthCheck.Headers}}
 		proxy_set_header {{$name}} "{{$header}}";
 		{{- end }}
@@ -150,11 +149,11 @@ server {
 
 	{{range $location := $server.Locations}}
 	location {{$location.Path}} {
-		set $service {{$location.ServiceName}};
+		set $service "{{$location.ServiceName}}";
 		{{with $location.MinionIngress}}
 		# location for minion {{$location.MinionIngress.Namespace}}/{{$location.MinionIngress.Name}}
 		set resource_name "{{$location.MinionIngress.Name}}";
-		set resource_namespace "{{$location.MinionIngressNamespace}}";
+		set resource_namespace "{{$location.MinionIngress.Namespace}}";
 		{{end}}
 		{{if $location.GRPC}}
 		{{if not $server.GRPCOnly}}

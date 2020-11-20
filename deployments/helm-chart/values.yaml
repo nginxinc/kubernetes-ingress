@@ -20,7 +20,7 @@ controller:
     enable: false
 
   ## Enables the Ingress controller pods to use the host's network namespace.
-  hostNetwork: false
+  hostNetwork: true
 
   ## Enables debugging for NGINX. Uses the nginx-debug binary. Requires error-log-level: debug in the ConfigMap via `controller.config.entries`.
   nginxDebug: false
@@ -168,7 +168,7 @@ controller:
 
   ## Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
   ## Useful for external health-checking of the Ingress controller.
-  healthStatus: false
+  healthStatus: true
 
   ## Sets the URI of health status location in the default server. Requires contoller.healthStatus.
   healthStatusURI: "/nginx-health"

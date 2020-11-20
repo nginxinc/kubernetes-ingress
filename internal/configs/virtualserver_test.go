@@ -3086,21 +3086,12 @@ func TestGenerateLocationForProxying(t *testing.T) {
 		ProxyNextUpstreamTries:   0,
 		ProxyPassRequestHeaders:  true,
 		ServiceName:              "",
+		IsVSR:                    false,
+		VSRName:                  "",
+		VSRNamespace:             "",
 	}
 
-	result := generateLocationForProxying(
-		path,
-		upstreamName,
-		conf_v1.Upstream{},
-		&cfgParams,
-		nil,
-		false,
-		0,
-		"",
-		nil,
-		"",
-		vsLocSnippets,
-	)
+	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0, "", nil, "", vsLocSnippets, false, "", "")
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateLocationForProxying() returned \n%+v but expected \n%+v", result, expected)
 	}

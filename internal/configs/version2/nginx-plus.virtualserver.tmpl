@@ -176,7 +176,6 @@ server {
 
     {{ range $hc := $s.HealthChecks }}
     location @hc-{{ $hc.Name }} {
-        set $service "nil";
         {{ range $n, $v := $hc.Headers }}
         proxy_set_header {{ $n }} "{{ $v }}";
         {{ end }}
@@ -214,7 +213,13 @@ server {
 
     {{ range $l := $s.Locations }}
     location {{ $l.Path }} {
-        set $service "{{$l.ServiceName}}";
+        set $service "{{ $l.ServiceName }}";
+        {{ if $l.IsVSR }}
+        set $resource_type "virtualserverroute";
+        set $resource_name "{{ $l.VSRName }}";
+        set $resource_namespace "{{ $l.VSRNamespace }}";
+        {{ end }}
+
         {{ if $l.Internal }}
         internal;
         {{ end }}
