@@ -21,8 +21,6 @@ const appProtectLogConfKey = "logconf"
 // IngressEx holds an Ingress along with the resources that are referenced in this Ingress.
 type IngressEx struct {
 	Ingress           *networking.Ingress
-	TLSSecrets        map[string]*api_v1.Secret
-	JWTKey            JWTKey
 	Endpoints         map[string][]string
 	HealthChecks      map[string]*api_v1.Probe
 	ExternalNameSvcs  map[string]bool
@@ -32,6 +30,7 @@ type IngressEx struct {
 	AppProtectPolicy  *unstructured.Unstructured
 	AppProtectLogConf *unstructured.Unstructured
 	AppProtectLogDst  string
+	SecretRefs        map[string]*SecretReference
 }
 
 // JWTKey represents a secret that holds JSON Web Key.
@@ -54,7 +53,8 @@ type MergeableIngresses struct {
 	Minions []*IngressEx
 }
 
-func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[string]string, isMinion bool, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, jwtKeyFileName string, staticParams *StaticConfigParams) version1.IngressNginxConfig {
+func generateNginxCfg(ingEx *IngressEx, apResources map[string]string, isMinion bool, baseCfgParams *ConfigParams, isPlus bool,
+	isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool) version1.IngressNginxConfig {
 	hasAppProtect := staticParams.MainAppProtectLoadModule
 	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus, hasAppProtect, staticParams.EnableInternalRoutes)
 
@@ -131,33 +131,18 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			SpiffeCerts:           cfgParams.SpiffeServerCerts,
 		}
 
-		if pemFile, ok := pems[serverName]; ok {
-			server.SSL = true
-			server.SSLCertificate = pemFile
-			server.SSLCertificateKey = pemFile
-			if pemFile == pemFileNameForMissingTLSSecret {
-				server.SSLCiphers = "NULL"
-			}
-		}
+		addSSLConfig(&server, rule.Host, ingEx.Ingress.Spec.TLS, ingEx.SecretRefs, isWildcardEnabled)
 
 		if hasAppProtect {
 			server.AppProtectPolicy = apResources[appProtectPolicyKey]
 			server.AppProtectLogConf = apResources[appProtectLogConfKey]
 		}
 
-		if !isMinion && ingEx.JWTKey.Name != "" {
-			server.JWTAuth = &version1.JWTAuth{
-				Key:   jwtKeyFileName,
-				Realm: cfgParams.JWTRealm,
-				Token: cfgParams.JWTToken,
-			}
-
-			if cfgParams.JWTLoginURL != "" {
-				server.JWTAuth.RedirectLocationName = getNameForRedirectLocation(ingEx.Ingress)
-				server.JWTRedirectLocations = append(server.JWTRedirectLocations, version1.JWTRedirectLocation{
-					Name:     server.JWTAuth.RedirectLocationName,
-					LoginURL: cfgParams.JWTLoginURL,
-				})
+		if !isMinion && cfgParams.JWTKey != "" {
+			jwtAuth, redirectLoc := generateJWTConfig(ingEx.SecretRefs, &cfgParams, getNameForRedirectLocation(ingEx.Ingress))
+			server.JWTAuth = jwtAuth
+			if redirectLoc != nil {
+				server.JWTRedirectLocations = append(server.JWTRedirectLocations, *redirectLoc)
 			}
 		}
 
@@ -201,21 +186,15 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			proxySSLName := generateProxySSLName(path.Backend.ServiceName, ingEx.Ingress.Namespace)
 			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &cfgParams, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
 				ssl, grpcServices[path.Backend.ServiceName], proxySSLName, path.PathType, path.Backend.ServiceName)
-			if isMinion && ingEx.JWTKey.Name != "" {
-				loc.JWTAuth = &version1.JWTAuth{
-					Key:   jwtKeyFileName,
-					Realm: cfgParams.JWTRealm,
-					Token: cfgParams.JWTToken,
-				}
 
-				if cfgParams.JWTLoginURL != "" {
-					loc.JWTAuth.RedirectLocationName = getNameForRedirectLocation(ingEx.Ingress)
-					server.JWTRedirectLocations = append(server.JWTRedirectLocations, version1.JWTRedirectLocation{
-						Name:     loc.JWTAuth.RedirectLocationName,
-						LoginURL: cfgParams.JWTLoginURL,
-					})
+			if isMinion && cfgParams.JWTKey != "" {
+				jwtAuth, redirectLoc := generateJWTConfig(ingEx.SecretRefs, &cfgParams, getNameForRedirectLocation(ingEx.Ingress))
+				loc.JWTAuth = jwtAuth
+				if redirectLoc != nil {
+					server.JWTRedirectLocations = append(server.JWTRedirectLocations, *redirectLoc)
 				}
 			}
+
 			locations = append(locations, loc)
 
 			if loc.Path == "/" {
@@ -266,6 +245,82 @@ func generateNginxCfg(ingEx *IngressEx, pems map[string]string, apResources map[
 			Annotations: ingEx.Ingress.Annotations,
 		},
 		SpiffeClientCerts: staticParams.NginxServiceMesh && !cfgParams.SpiffeServerCerts,
+	}
+}
+
+func generateJWTConfig(secretRefs map[string]*SecretReference, cfgParams *ConfigParams, redirectLocationName string) (*version1.JWTAuth, *version1.JWTRedirectLocation) {
+	secret := secretRefs[cfgParams.JWTKey]
+
+	if secret.Error != nil {
+		// TO-DO: add a warning
+	} else if secret.Type != SecretTypeJWK {
+		// TO-DO: add a warning
+	}
+
+	// Key is configured for all cases, including when the secret is (1) invalid or (2) of a wrong type.
+	// For (1) and (2), NGINX Plus will reject such a key at runtime and return 500 to clients.
+	jwtAuth := &version1.JWTAuth{
+		Key:   secret.Path,
+		Realm: cfgParams.JWTRealm,
+		Token: cfgParams.JWTToken,
+	}
+
+	var redirectLocation *version1.JWTRedirectLocation
+
+	if cfgParams.JWTLoginURL != "" {
+		jwtAuth.RedirectLocationName = redirectLocationName
+		redirectLocation = &version1.JWTRedirectLocation{
+			Name:     redirectLocationName,
+			LoginURL: cfgParams.JWTLoginURL,
+		}
+	}
+
+	return jwtAuth, redirectLocation
+}
+
+func addSSLConfig(server *version1.Server, host string, ingressTLS []networking.IngressTLS, secretRefs map[string]*SecretReference, isWildcardEnabled bool) {
+	var tlsEnabled bool
+	var tlsSecret string
+
+	for _, tls := range ingressTLS {
+		for _, h := range tls.Hosts {
+			if h == host {
+				tlsEnabled = true
+				tlsSecret = tls.SecretName
+				break
+			}
+		}
+	}
+
+	if !tlsEnabled {
+		return
+	}
+
+	var pemFile string
+
+	if tlsSecret != "" {
+		secret := secretRefs[tlsSecret]
+		if secret.Error != nil {
+			pemFile = pemFileNameForMissingTLSSecret
+			// TO-DO: add a warning
+		} else if secret.Type != api_v1.SecretTypeTLS {
+			pemFile = pemFileNameForMissingTLSSecret
+			// TO-DO: add a warning
+		} else {
+			pemFile = secret.Path
+		}
+	} else if isWildcardEnabled {
+		pemFile = pemFileNameForWildcardTLSSecret
+	} else {
+		pemFile = pemFileNameForMissingTLSSecret
+		// TO-DO: add a warning
+	}
+
+	server.SSL = true
+	server.SSLCertificate = pemFile
+	server.SSLCertificateKey = pemFile
+	if pemFile == pemFileNameForMissingTLSSecret {
+		server.SSLCiphers = "NULL"
 	}
 }
 
@@ -424,8 +479,9 @@ func upstreamMapToSlice(upstreams map[string]version1.Upstream) []version1.Upstr
 	return result
 }
 
-func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, masterPems map[string]string, masterApResources map[string]string, masterJwtKeyFileName string,
-	minionJwtKeyFileNames map[string]string, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams) version1.IngressNginxConfig {
+func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, masterApResources map[string]string,
+	baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams,
+	isWildcardEnabled bool) version1.IngressNginxConfig {
 
 	var masterServer version1.Server
 	var locations []version1.Location
@@ -443,7 +499,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	}
 	isMinion := false
 
-	masterNginxCfg := generateNginxCfg(mergeableIngs.Master, masterPems, masterApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, masterJwtKeyFileName, staticParams)
+	masterNginxCfg := generateNginxCfg(mergeableIngs.Master, masterApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
 
 	masterServer = masterNginxCfg.Servers[0]
 	masterServer.Locations = []version1.Location{}
@@ -471,12 +527,10 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 				minion.Ingress.Namespace, minion.Ingress.Name, strings.Join(removedAnnotations, ","))
 		}
 
-		pems := make(map[string]string)
-		jwtKeyFileName := minionJwtKeyFileNames[objectMetaToFileName(&minion.Ingress.ObjectMeta)]
 		isMinion := true
 		// App Protect Resources not allowed in minions - pass empty map
 		dummyApResources := make(map[string]string)
-		nginxCfg := generateNginxCfg(minion, pems, dummyApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, jwtKeyFileName, staticParams)
+		nginxCfg := generateNginxCfg(minion, dummyApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
 
 		for _, server := range nginxCfg.Servers {
 			for _, loc := range server.Locations {

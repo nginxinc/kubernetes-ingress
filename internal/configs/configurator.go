@@ -243,11 +243,17 @@ func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) error {
 
 func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) error {
 	apResources := cnf.updateApResources(ingEx)
-	pems := cnf.updateTLSSecrets(ingEx)
-	jwtKeyFileName := cnf.updateJWKSecret(ingEx)
+
+	if jwtKey, exists := ingEx.Ingress.Annotations[JWTKeyAnnotation]; exists {
+		// LocalSecretStore will not set Path if the secret is not on the filesystem.
+		// However, NGINX configuration for an Ingress resource, to handle the case of a missing secret,
+		// relies on the path to be always configured.
+		ingEx.SecretRefs[jwtKey].Path = cnf.nginxManager.GetFilenameForSecret(ingEx.Ingress.Namespace + "-" + jwtKey)
+	}
 
 	isMinion := false
-	nginxCfg := generateNginxCfg(ingEx, pems, apResources, isMinion, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), jwtKeyFileName, cnf.staticCfgParams)
+	nginxCfg := generateNginxCfg(ingEx, apResources, isMinion, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(),
+		cnf.staticCfgParams, cnf.isWildcardEnabled)
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
 	if err != nil {
@@ -277,15 +283,18 @@ func (cnf *Configurator) AddOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 
 func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIngresses) error {
 	masterApResources := cnf.updateApResources(mergeableIngs.Master)
-	masterPems := cnf.updateTLSSecrets(mergeableIngs.Master)
-	masterJwtKeyFileName := cnf.updateJWKSecret(mergeableIngs.Master)
-	minionJwtKeyFileNames := make(map[string]string)
+
 	for _, minion := range mergeableIngs.Minions {
-		minionName := objectMetaToFileName(&minion.Ingress.ObjectMeta)
-		minionJwtKeyFileNames[minionName] = cnf.updateJWKSecret(minion)
+		if jwtKey, exists := minion.Ingress.Annotations[JWTKeyAnnotation]; exists {
+			// LocalSecretStore will not set Path if the secret is not on the filesystem.
+			// However, NGINX configuration for an Ingress resource, to handle the case of a missing secret,
+			// relies on the path to be always configured.
+			minion.SecretRefs[jwtKey].Path = cnf.nginxManager.GetFilenameForSecret(minion.Ingress.Namespace + "-" + jwtKey)
+		}
 	}
 
-	nginxCfg := generateNginxCfgForMergeableIngresses(mergeableIngs, masterPems, masterApResources, masterJwtKeyFileName, minionJwtKeyFileNames, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
+	nginxCfg := generateNginxCfgForMergeableIngresses(mergeableIngs, masterApResources, cnf.cfgParams, cnf.isPlus,
+		cnf.IsResolverConfigured(), cnf.staticCfgParams, cnf.isWildcardEnabled)
 
 	name := objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
@@ -405,22 +414,10 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 }
 
 func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
-	var tlsPemFileName string
-	var ingressMTLSFileName string
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 
-	if virtualServerEx.TLSSecret != nil {
-		tlsPemFileName = cnf.addOrUpdateTLSSecret(virtualServerEx.TLSSecret)
-	}
-	if virtualServerEx.IngressMTLSCert != nil {
-		ingressMTLSFileName = cnf.addOrUpdateCASecret(virtualServerEx.IngressMTLSCert)
-	}
-
-	jwtKeys := cnf.addOrUpdateJWKSecretsForVirtualServer(virtualServerEx.JWTKeys)
-	egressMTLSSecrets := cnf.addOrUpdateEgressMTLSecretsForVirtualServer(virtualServerEx.EgressTLSSecrets)
-
 	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
-	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, tlsPemFileName, jwtKeys, ingressMTLSFileName, egressMTLSSecrets)
+	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
 		return warnings, fmt.Errorf("Error generating VirtualServer config: %v: %v", name, err)
@@ -550,42 +547,6 @@ func generateTLSPassthroughHostsConfig(tlsPassthroughPairs map[string]tlsPassthr
 	return &cfg, duplicatedHosts
 }
 
-func (cnf *Configurator) updateTLSSecrets(ingEx *IngressEx) map[string]string {
-	pems := make(map[string]string)
-
-	for _, tls := range ingEx.Ingress.Spec.TLS {
-		secretName := tls.SecretName
-
-		pemFileName := pemFileNameForMissingTLSSecret
-		if secretName == "" && cnf.isWildcardEnabled {
-			pemFileName = pemFileNameForWildcardTLSSecret
-		} else if secret, exists := ingEx.TLSSecrets[secretName]; exists {
-			pemFileName = cnf.addOrUpdateTLSSecret(secret)
-		}
-
-		for _, host := range tls.Hosts {
-			pems[host] = pemFileName
-		}
-		if len(tls.Hosts) == 0 {
-			pems[emptyHost] = pemFileName
-		}
-	}
-
-	return pems
-}
-
-func (cnf *Configurator) updateJWKSecret(ingEx *IngressEx) string {
-	if !cnf.isPlus || ingEx.JWTKey.Name == "" {
-		return ""
-	}
-
-	if ingEx.JWTKey.Secret != nil {
-		cnf.addOrUpdateJWKSecret(ingEx.JWTKey.Secret)
-	}
-
-	return cnf.nginxManager.GetFilenameForSecret(ingEx.Ingress.Namespace + "-" + ingEx.JWTKey.Name)
-}
-
 func (cnf *Configurator) addOrUpdateCASecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := GenerateCAFileContent(secret)
@@ -596,88 +557,6 @@ func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
 	name := objectMetaToFileName(&secret.ObjectMeta)
 	data := secret.Data[JWTKeyKey]
 	return cnf.nginxManager.CreateSecret(name, data, nginx.JWKSecretFileMode)
-}
-
-// AddOrUpdateJWKSecret adds a JWK secret to the filesystem or updates it if it already exists.
-func (cnf *Configurator) AddOrUpdateJWKSecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) (Warnings, error) {
-	cnf.addOrUpdateJWKSecret(secret)
-
-	allWarnings := newWarnings()
-
-	if len(virtualServerExes) > 0 {
-		for _, vsEx := range virtualServerExes {
-			warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
-			if err != nil {
-				return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
-			}
-			allWarnings.Add(warnings)
-		}
-
-		if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
-			return allWarnings, fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
-		}
-	}
-
-	return allWarnings, nil
-}
-
-// AddOrUpdateCASecret adds a CA secret to the filesystem or updates it if it already exists.
-func (cnf *Configurator) AddOrUpdateCASecret(secret *api_v1.Secret, virtualServerExes []*VirtualServerEx) (Warnings, error) {
-	cnf.addOrUpdateCASecret(secret)
-
-	allWarnings := newWarnings()
-
-	if len(virtualServerExes) > 0 {
-		for _, vsEx := range virtualServerExes {
-			warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
-			if err != nil {
-				return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
-			}
-			allWarnings.Add(warnings)
-		}
-
-		if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
-			return allWarnings, fmt.Errorf("Error when reloading NGINX when updating Secret: %v", err)
-		}
-	}
-
-	return allWarnings, nil
-}
-
-// addOrUpdateJWKSecretsForVirtualServer adds JWK secrets to the filesystem or updates them if they already exist.
-// Returns map[jwkKeyName]jwtKeyFilename
-func (cnf *Configurator) addOrUpdateJWKSecretsForVirtualServer(jwtKeys map[string]*api_v1.Secret) map[string]string {
-	if !cnf.isPlus {
-		return nil
-	}
-
-	jwkSecrets := make(map[string]string)
-
-	for jwkKeyName, jwkKey := range jwtKeys {
-		filename := cnf.addOrUpdateJWKSecret(jwkKey)
-		jwkSecrets[jwkKeyName] = filename
-	}
-
-	return jwkSecrets
-}
-
-func (cnf *Configurator) addOrUpdateEgressMTLSecretsForVirtualServer(egressMTLSsecrets map[string]*api_v1.Secret) map[string]string {
-
-	secrets := make(map[string]string)
-	var filename string
-
-	for v, k := range egressMTLSsecrets {
-		if _, exists := k.Data[api_v1.TLSCertKey]; exists {
-			filename = cnf.addOrUpdateTLSSecret(k)
-		}
-		if _, exists := k.Data[CAKey]; exists {
-			filename = cnf.addOrUpdateCASecret(k)
-
-		}
-		secrets[v] = filename
-	}
-
-	return secrets
 }
 
 // AddOrUpdateResources adds or updates configuration for resources.
@@ -711,12 +590,6 @@ func (cnf *Configurator) AddOrUpdateResources(ingExes []*IngressEx, mergeableIng
 	}
 
 	return allWarnings, nil
-}
-
-// AddOrUpdateTLSSecret adds or updates a file with the content of the TLS secret.
-func (cnf *Configurator) AddOrUpdateTLSSecret(secret *api_v1.Secret, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
-	cnf.addOrUpdateTLSSecret(secret)
-	return cnf.AddOrUpdateResources(ingExes, mergeableIngresses, virtualServerExes)
 }
 
 func (cnf *Configurator) addOrUpdateTLSSecret(secret *api_v1.Secret) string {
@@ -758,44 +631,6 @@ func GenerateCAFileContent(secret *api_v1.Secret) []byte {
 	res.Write(secret.Data[CAKey])
 
 	return res.Bytes()
-}
-
-// DeleteSecret deletes the file associated with the secret and the configuration files for Ingress and VirtualServer resources.
-// NGINX is reloaded only when the total number of the resources > 0.
-func (cnf *Configurator) DeleteSecret(key string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
-	cnf.nginxManager.DeleteSecret(keyToFileName(key))
-
-	allWarnings := newWarnings()
-
-	for _, ingEx := range ingExes {
-		err := cnf.addOrUpdateIngress(ingEx)
-		if err != nil {
-			return allWarnings, fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
-		}
-	}
-
-	for _, m := range mergeableIngresses {
-		err := cnf.addOrUpdateMergeableIngress(m)
-		if err != nil {
-			return allWarnings, fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
-		}
-	}
-
-	for _, vsEx := range virtualServerExes {
-		warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
-		if err != nil {
-			return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
-		}
-		allWarnings.Add(warnings)
-	}
-
-	if len(ingExes)+len(mergeableIngresses)+len(virtualServerExes) > 0 {
-		if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
-			return allWarnings, fmt.Errorf("Error when reloading NGINX when deleting Secret %v: %v", key, err)
-		}
-	}
-
-	return allWarnings, nil
 }
 
 // DeleteIngress deletes NGINX configuration for the Ingress resource.
@@ -1443,4 +1278,21 @@ func (cnf *Configurator) AddInternalRouteConfig() error {
 		return fmt.Errorf("Error when reloading nginx: %v", err)
 	}
 	return nil
+}
+
+// AddOrUpdateSecret adds or updates a secret.
+func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
+	switch secret.Type {
+	case SecretTypeCA:
+		return cnf.addOrUpdateCASecret(secret)
+	case SecretTypeJWK:
+		return cnf.addOrUpdateJWKSecret(secret)
+	default:
+		return cnf.addOrUpdateTLSSecret(secret)
+	}
+}
+
+// DeleteSecret deletes a secret.
+func (cnf *Configurator) DeleteSecret(key string) {
+	cnf.nginxManager.DeleteSecret(keyToFileName(key))
 }

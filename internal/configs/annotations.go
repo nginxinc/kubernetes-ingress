@@ -277,7 +277,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 			cfgParams.JWTRealm = jwtRealm
 		}
 		if jwtKey, exists := ingEx.Ingress.Annotations[JWTKeyAnnotation]; exists {
-			cfgParams.JWTKey = fmt.Sprintf("%v/%v", ingEx.Ingress.Namespace, jwtKey)
+			cfgParams.JWTKey = jwtKey
 		}
 		if jwtToken, exists := ingEx.Ingress.Annotations["nginx.com/jwt-token"]; exists {
 			cfgParams.JWTToken = jwtToken

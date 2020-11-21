@@ -55,13 +55,11 @@ type VirtualServerEx struct {
 	VirtualServer       *conf_v1.VirtualServer
 	Endpoints           map[string][]string
 	TLSSecret           *api_v1.Secret
-	JWTKeys             map[string]*api_v1.Secret
-	IngressMTLSCert     *api_v1.Secret
-	EgressTLSSecrets    map[string]*api_v1.Secret
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
 	Policies            map[string]*conf_v1alpha1.Policy
 	PodsByIP            map[string]PodInfo
+	SecretRefs          map[string]*SecretReference
 }
 
 func (vsx *VirtualServerEx) String() string {
@@ -257,14 +255,16 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(
 }
 
 // GenerateVirtualServerConfig generates a full configuration for a VirtualServer
-func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
-	vsEx *VirtualServerEx,
-	tlsPemFileName string,
-	jwtKeys map[string]string,
-	ingressMTLSPemFileName string,
-	egressMTLSSecrets map[string]string,
-) (version2.VirtualServerConfig, Warnings) {
+func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
+
+	sslConfig := generateSSLConfig(vsEx.VirtualServer.Spec.TLS, vsEx.VirtualServer.Namespace, vsEx.SecretRefs, vsc.cfgParams)
+	tlsRedirectConfig := generateTLSRedirectConfig(vsEx.VirtualServer.Spec.TLS)
+
+	policyOpts := policyOptions{
+		tls:        sslConfig != nil,
+		secretRefs: vsEx.SecretRefs,
+	}
 
 	ownerDetails := policyOwnerDetails{
 		owner:          vsEx.VirtualServer,
@@ -272,19 +272,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		vsNamespace:    vsEx.VirtualServer.Namespace,
 		vsName:         vsEx.VirtualServer.Name,
 	}
-	policyOpts := policyOptions{
-		jwtKeys:                jwtKeys,
-		ingressMTLSPemFileName: ingressMTLSPemFileName,
-		tlsPemFileName:         tlsPemFileName,
-		egressMTLSSecrets:      egressMTLSSecrets,
-	}
-	policiesCfg := vsc.generatePolicies(
-		ownerDetails,
-		vsEx.VirtualServer.Spec.Policies,
-		vsEx.Policies,
-		specContext,
-		policyOpts,
-	)
+	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
 
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
@@ -396,18 +384,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		}
 
 		vsLocSnippets := r.LocationSnippets
-		// ingressMTLSPemFileName argument is always empty for route policies
 		ownerDetails := policyOwnerDetails{
 			owner:          vsEx.VirtualServer,
 			ownerNamespace: vsEx.VirtualServer.Namespace,
 			vsNamespace:    vsEx.VirtualServer.Namespace,
 			vsName:         vsEx.VirtualServer.Name,
-		}
-		policyOpts := policyOptions{
-			jwtKeys:                jwtKeys,
-			ingressMTLSPemFileName: "",
-			tlsPemFileName:         tlsPemFileName,
-			egressMTLSSecrets:      egressMTLSSecrets,
 		}
 		routePoliciesCfg := vsc.generatePolicies(ownerDetails, r.Policies, vsEx.Policies, routeContext, policyOpts)
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
@@ -507,13 +488,6 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				policyRefs = r.Policies
 				context = subRouteContext
 			}
-			// ingressMTLSPemFileName argument is always empty for route policies
-			policyOpts := policyOptions{
-				jwtKeys:                jwtKeys,
-				ingressMTLSPemFileName: "",
-				tlsPemFileName:         tlsPemFileName,
-				egressMTLSSecrets:      egressMTLSSecrets,
-			}
 			routePoliciesCfg := vsc.generatePolicies(ownerDetails, policyRefs, vsEx.Policies, context, policyOpts)
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
@@ -566,8 +540,6 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		}
 	}
 
-	ssl := generateSSLConfig(vsEx.VirtualServer.Spec.TLS, tlsPemFileName, vsc.cfgParams)
-	tlsRedirectConfig := generateTLSRedirectConfig(vsEx.VirtualServer.Spec.TLS)
 	httpSnippets := generateSnippets(vsc.enableSnippets, vsEx.VirtualServer.Spec.HTTPSnippets, []string{""})
 	serverSnippets := generateSnippets(
 		vsc.enableSnippets,
@@ -586,7 +558,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			ServerName:                vsEx.VirtualServer.Spec.Host,
 			StatusZone:                vsEx.VirtualServer.Spec.Host,
 			ProxyProtocol:             vsc.cfgParams.ProxyProtocol,
-			SSL:                       ssl,
+			SSL:                       sslConfig,
 			ServerTokens:              vsc.cfgParams.ServerTokens,
 			SetRealIPFrom:             vsc.cfgParams.SetRealIPFrom,
 			RealIPHeader:              vsc.cfgParams.RealIPHeader,
@@ -639,10 +611,8 @@ type policyOwnerDetails struct {
 }
 
 type policyOptions struct {
-	jwtKeys                map[string]string
-	ingressMTLSPemFileName string
-	tlsPemFileName         string
-	egressMTLSSecrets      map[string]string
+	tls        bool
+	secretRefs map[string]*SecretReference
 }
 
 type validationResults struct {
@@ -703,7 +673,7 @@ func (p *policiesCfg) addJWTAuthConfig(
 	jwtAuth *conf_v1alpha1.JWTAuth,
 	polKey string,
 	polNamespace string,
-	jwtKeys map[string]string,
+	secretRefs map[string]*SecretReference,
 ) *validationResults {
 	res := newValidationResults()
 	if p.JWTAuth != nil {
@@ -712,14 +682,19 @@ func (p *policiesCfg) addJWTAuthConfig(
 	}
 
 	jwtSecretKey := fmt.Sprintf("%v/%v", polNamespace, jwtAuth.Secret)
-	if _, existsOnFilesystem := jwtKeys[jwtSecretKey]; !existsOnFilesystem {
-		res.addWarningf("JWT policy %q references a JWKSecret %q which does not exist", polKey, jwtSecretKey)
+	secret := secretRefs[jwtSecretKey]
+	if secret.Error != nil {
+		res.addWarningf("JWT policy %q references an invalid Secret: %v", polKey, secret.Error)
+		res.isError = true
+		return res
+	} else if secret.Type != SecretTypeJWK {
+		res.addWarningf("JWT policy %q references a Secret of an incorrect type %q", polKey, secret.Type)
 		res.isError = true
 		return res
 	}
 
 	p.JWTAuth = &version2.JWTAuth{
-		Secret: jwtKeys[jwtSecretKey],
+		Secret: secret.Path,
 		Realm:  jwtAuth.Realm,
 		Token:  jwtAuth.Token,
 	}
@@ -729,12 +704,13 @@ func (p *policiesCfg) addJWTAuthConfig(
 func (p *policiesCfg) addIngressMTLSConfig(
 	ingressMTLS *conf_v1alpha1.IngressMTLS,
 	polKey string,
+	polNamespace string,
 	context string,
-	tlsPemFileName string,
-	ingressMTLSPemFileName string,
+	tls bool,
+	secretRefs map[string]*SecretReference,
 ) *validationResults {
 	res := newValidationResults()
-	if tlsPemFileName == "" {
+	if !tls {
 		res.addWarningf("TLS configuration needed for IngressMTLS policy")
 		res.isError = true
 		return res
@@ -749,8 +725,14 @@ func (p *policiesCfg) addIngressMTLSConfig(
 		return res
 	}
 
-	if ingressMTLSPemFileName == "" {
-		res.addWarningf("IngressMTLS policy %q references a Secret which does not exist", polKey)
+	secretKey := fmt.Sprintf("%v/%v", polNamespace, ingressMTLS.ClientCertSecret)
+	secret := secretRefs[secretKey]
+	if secret.Error != nil {
+		res.addWarningf("IngressMTLS policy %q references an invalid Secret: %v", polKey, secret.Error)
+		res.isError = true
+		return res
+	} else if secret.Type != SecretTypeCA {
+		res.addWarningf("IngressMTLS policy %q references a Secret of an incorrect type %q", polKey, secret.Type)
 		res.isError = true
 		return res
 	}
@@ -765,7 +747,7 @@ func (p *policiesCfg) addIngressMTLSConfig(
 	}
 
 	p.IngressMTLS = &version2.IngressMTLS{
-		ClientCert:   ingressMTLSPemFileName,
+		ClientCert:   secret.Path,
 		VerifyClient: verifyClient,
 		VerifyDepth:  verifyDepth,
 	}
@@ -776,7 +758,7 @@ func (p *policiesCfg) addEgressMTLSConfig(
 	egressMTLS *conf_v1alpha1.EgressMTLS,
 	polKey string,
 	polNamespace string,
-	egressMTLSSecrets map[string]string,
+	secretRefs map[string]*SecretReference,
 ) *validationResults {
 	res := newValidationResults()
 	if p.EgressMTLS != nil {
@@ -787,33 +769,54 @@ func (p *policiesCfg) addEgressMTLSConfig(
 		return res
 	}
 
-	egressTLSSecret := fmt.Sprintf("%v/%v", polNamespace, egressMTLS.TLSSecret)
-	TrustedCertSecret := fmt.Sprintf("%v/%v", polNamespace, egressMTLS.TrustedCertSecret)
+	var tlsSecretPath string
 
-	trustedCAFileName, trustedExists := egressMTLSSecrets[TrustedCertSecret]
-	if egressMTLS.TrustedCertSecret != "" && !trustedExists {
-		res.addWarningf("EgressMTLS policy %q references a Secret which does not exist", polKey)
-		res.isError = true
-		return res
+	if egressMTLS.TLSSecret != "" {
+		egressTLSSecret := fmt.Sprintf("%v/%v", polNamespace, egressMTLS.TLSSecret)
+
+		tlsSecret := secretRefs[egressTLSSecret]
+		if tlsSecret.Error != nil {
+			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, tlsSecret.Error)
+			res.isError = true
+			return res
+		} else if tlsSecret.Type != api_v1.SecretTypeTLS {
+			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, tlsSecret.Type)
+			res.isError = true
+			return res
+		}
+
+		tlsSecretPath = tlsSecret.Path
 	}
 
-	egressMTLSPemFileName, tlsExists := egressMTLSSecrets[egressTLSSecret]
-	if egressMTLS.TLSSecret != "" && !tlsExists {
-		res.addWarningf("EgressMTLS policy %q references a Secret which does not exist", polKey)
-		res.isError = true
-		return res
+	var trustedSecretPath string
+
+	if egressMTLS.TrustedCertSecret != "" {
+		trustedCertSecret := fmt.Sprintf("%v/%v", polNamespace, egressMTLS.TrustedCertSecret)
+
+		trustedSecret := secretRefs[trustedCertSecret]
+		if trustedSecret.Error != nil {
+			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, trustedSecret.Error)
+			res.isError = true
+			return res
+		} else if trustedSecret.Type != SecretTypeCA {
+			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, trustedSecret.Type)
+			res.isError = true
+			return res
+		}
+
+		trustedSecretPath = trustedSecret.Path
 	}
 
 	p.EgressMTLS = &version2.EgressMTLS{
-		Certificate:    egressMTLSPemFileName,
-		CertificateKey: egressMTLSPemFileName,
+		Certificate:    tlsSecretPath,
+		CertificateKey: tlsSecretPath,
 		Ciphers:        generateString(egressMTLS.Ciphers, "DEFAULT"),
 		Protocols:      generateString(egressMTLS.Protocols, "TLSv1 TLSv1.1 TLSv1.2"),
 		VerifyServer:   egressMTLS.VerifyServer,
 		VerifyDepth:    generateIntFromPointer(egressMTLS.VerifyDepth, 1),
 		SessionReuse:   generateBool(egressMTLS.SessionReuse, true),
 		ServerName:     egressMTLS.ServerName,
-		TrustedCert:    trustedCAFileName,
+		TrustedCert:    trustedSecretPath,
 		SSLName:        generateString(egressMTLS.SSLName, "$proxy_host"),
 	}
 	return res
@@ -851,17 +854,18 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 					ownerDetails.vsName,
 				)
 			case pol.Spec.JWTAuth != nil:
-				res = config.addJWTAuthConfig(pol.Spec.JWTAuth, key, polNamespace, policyOpts.jwtKeys)
+				res = config.addJWTAuthConfig(pol.Spec.JWTAuth, key, polNamespace, policyOpts.secretRefs)
 			case pol.Spec.IngressMTLS != nil:
 				res = config.addIngressMTLSConfig(
 					pol.Spec.IngressMTLS,
 					key,
+					polNamespace,
 					context,
-					policyOpts.tlsPemFileName,
-					policyOpts.ingressMTLSPemFileName,
+					policyOpts.tls,
+					policyOpts.secretRefs,
 				)
 			case pol.Spec.EgressMTLS != nil:
-				res = config.addEgressMTLSConfig(pol.Spec.EgressMTLS, key, polNamespace, policyOpts.egressMTLSSecrets)
+				res = config.addEgressMTLSConfig(pol.Spec.EgressMTLS, key, polNamespace, policyOpts.secretRefs)
 			default:
 				res = newValidationResults()
 			}
@@ -1776,7 +1780,7 @@ func getNameForSourceForMatchesRouteMapFromCondition(condition conf_v1.Condition
 	return condition.Variable
 }
 
-func generateSSLConfig(tls *conf_v1.TLS, tlsPemFileName string, cfgParams *ConfigParams) *version2.SSL {
+func generateSSLConfig(tls *conf_v1.TLS, namespace string, secretRefs map[string]*SecretReference, cfgParams *ConfigParams) *version2.SSL {
 	if tls == nil {
 		return nil
 	}
@@ -1785,14 +1789,21 @@ func generateSSLConfig(tls *conf_v1.TLS, tlsPemFileName string, cfgParams *Confi
 		return nil
 	}
 
+	secret := secretRefs[fmt.Sprintf("%s/%s", namespace, tls.Secret)]
+
 	var name string
 	var ciphers string
 
-	if tlsPemFileName != "" {
-		name = tlsPemFileName
-	} else {
+	if secret.Error != nil {
 		name = pemFileNameForMissingTLSSecret
 		ciphers = "NULL"
+		// TO-DO: add a warning
+	} else if secret.Type != api_v1.SecretTypeTLS {
+		name = pemFileNameForMissingTLSSecret
+		ciphers = "NULL"
+		// TO-DO: add a warning
+	} else {
+		name = secret.Path
 	}
 
 	ssl := version2.SSL{

@@ -1,10 +1,12 @@
 package configs
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,17 +21,12 @@ func TestGenerateNginxCfg(t *testing.T) {
 
 	expected := createExpectedConfigForCafeIngressEx()
 
-	pems := map[string]string{
-		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
-	}
-
 	apRes := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, pems, apRes, false, configParams, false, false, "", &StaticConfigParams{})
+	result := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, false)
 
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
 	}
-
 }
 
 func TestGenerateNginxCfgForJWT(t *testing.T) {
@@ -38,12 +35,10 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 	cafeIngressEx.Ingress.Annotations["nginx.com/jwt-realm"] = "Cafe App"
 	cafeIngressEx.Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token"
 	cafeIngressEx.Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.example.com"
-	cafeIngressEx.JWTKey = JWTKey{"cafe-jwk", &v1.Secret{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "cafe-jwk",
-			Namespace: "default",
-		},
-	}}
+	cafeIngressEx.SecretRefs["cafe-jwk"] = &SecretReference{
+		Type: "nginx.org/jwk",
+		Path: "/etc/nginx/secrets/default-cafe-jwk",
+	}
 
 	configParams := NewDefaultConfigParams()
 
@@ -61,12 +56,8 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 		},
 	}
 
-	pems := map[string]string{
-		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
-	}
-
 	apRes := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, pems, apRes, false, configParams, true, false, "/etc/nginx/secrets/default-cafe-jwk", &StaticConfigParams{})
+	result := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, true, false, &StaticConfigParams{}, false)
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -78,13 +69,11 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 
 func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.SecretRefs["cafe-secret"].Error = errors.New("secret doesn't exist")
 	configParams := NewDefaultConfigParams()
-	pems := map[string]string{
-		"cafe.example.com": pemFileNameForMissingTLSSecret,
-	}
 
 	apRes := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, pems, apRes, false, configParams, false, false, "", &StaticConfigParams{})
+	result := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, false)
 
 	expectedCiphers := "NULL"
 	resultCiphers := result.Servers[0].SSLCiphers
@@ -95,13 +84,11 @@ func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 
 func TestGenerateNginxCfgWithWildcardTLSSecret(t *testing.T) {
 	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Spec.TLS[0].SecretName = ""
 	configParams := NewDefaultConfigParams()
-	pems := map[string]string{
-		"cafe.example.com": pemFileNameForWildcardTLSSecret,
-	}
 
 	apRes := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, pems, apRes, false, configParams, false, false, "", &StaticConfigParams{})
+	result := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, true)
 
 	resultServer := result.Servers[0]
 	if !reflect.DeepEqual(resultServer.SSLCertificate, pemFileNameForWildcardTLSSecret) {
@@ -294,9 +281,6 @@ func createCafeIngressEx() IngressEx {
 	}
 	cafeIngressEx := IngressEx{
 		Ingress: &cafeIngress,
-		TLSSecrets: map[string]*v1.Secret{
-			"cafe-secret": {},
-		},
 		Endpoints: map[string][]string{
 			"coffee-svc80": {"10.0.0.1:80"},
 			"tea-svc80":    {"10.0.0.2:80"},
@@ -304,6 +288,12 @@ func createCafeIngressEx() IngressEx {
 		ExternalNameSvcs: map[string]bool{},
 		ValidHosts: map[string]bool{
 			"cafe.example.com": true,
+		},
+		SecretRefs: map[string]*SecretReference{
+			"cafe-secret": {
+				Type: v1.SecretTypeTLS,
+				Path: "/etc/nginx/secrets/default-cafe-secret",
+			},
 		},
 	}
 	return cafeIngressEx
@@ -313,17 +303,13 @@ func TestGenerateNginxCfgForMergeableIngresses(t *testing.T) {
 	mergeableIngresses := createMergeableCafeIngress()
 	expected := createExpectedConfigForMergeableCafeIngress()
 
-	masterPems := map[string]string{
-		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
-	}
-	minionJwtKeyFileNames := make(map[string]string)
 	configParams := NewDefaultConfigParams()
 
 	masterApRes := make(map[string]string)
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, masterApRes, "", minionJwtKeyFileNames, configParams, false, false, &StaticConfigParams{})
+	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, false, false, &StaticConfigParams{}, false)
 
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
 	}
 }
 
@@ -339,19 +325,14 @@ func TestGenerateNginxConfigForCrossNamespaceMergeableIngresses(t *testing.T) {
 	}
 
 	expected := createExpectedConfigForCrossNamespaceMergeableCafeIngress()
-	masterPems := map[string]string{
-		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
-	}
-	minionJwtKeyFileNames := make(map[string]string)
 	configParams := NewDefaultConfigParams()
 
 	emptyApResources := make(map[string]string)
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, emptyApResources, "", minionJwtKeyFileNames, configParams, false, false, &StaticConfigParams{})
+	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, emptyApResources, configParams, false, false, &StaticConfigParams{}, false)
 
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
 	}
-
 }
 
 func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
@@ -360,28 +341,18 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	mergeableIngresses.Master.Ingress.Annotations["nginx.com/jwt-realm"] = "Cafe"
 	mergeableIngresses.Master.Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token"
 	mergeableIngresses.Master.Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.example.com"
-	mergeableIngresses.Master.JWTKey = JWTKey{
-		"cafe-jwk",
-		&v1.Secret{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      "cafe-jwk",
-				Namespace: "default",
-			},
-		},
+	mergeableIngresses.Master.SecretRefs["cafe-jwk"] = &SecretReference{
+		Type: SecretTypeJWK,
+		Path: "/etc/nginx/secrets/default-cafe-jwk",
 	}
 
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-key"] = "coffee-jwk"
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-realm"] = "Coffee"
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token_coffee"
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.cofee.example.com"
-	mergeableIngresses.Minions[0].JWTKey = JWTKey{
-		"coffee-jwk",
-		&v1.Secret{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      "coffee-jwk",
-				Namespace: "default",
-			},
-		},
+	mergeableIngresses.Minions[0].SecretRefs["coffee-jwk"] = &SecretReference{
+		Type: SecretTypeJWK,
+		Path: "/etc/nginx/secrets/default-coffee-jwk",
 	}
 
 	expected := createExpectedConfigForMergeableCafeIngress()
@@ -408,16 +379,13 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 		},
 	}
 
-	masterPems := map[string]string{
-		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
-	}
 	minionJwtKeyFileNames := make(map[string]string)
 	minionJwtKeyFileNames[objectMetaToFileName(&mergeableIngresses.Minions[0].Ingress.ObjectMeta)] = "/etc/nginx/secrets/default-coffee-jwk"
 	configParams := NewDefaultConfigParams()
 	isPlus := true
 
 	masterApRes := make(map[string]string)
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterPems, masterApRes, "/etc/nginx/secrets/default-cafe-jwk", minionJwtKeyFileNames, configParams, isPlus, false, &StaticConfigParams{})
+	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, isPlus, false, &StaticConfigParams{}, false)
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -525,20 +493,19 @@ func createMergeableCafeIngress() *MergeableIngresses {
 	mergeableIngresses := &MergeableIngresses{
 		Master: &IngressEx{
 			Ingress: &master,
-			TLSSecrets: map[string]*v1.Secret{
-				"cafe-secret": {
-					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "cafe-secret",
-						Namespace: "default",
-					},
-				},
-			},
 			Endpoints: map[string][]string{
 				"coffee-svc80": {"10.0.0.1:80"},
 				"tea-svc80":    {"10.0.0.2:80"},
 			},
 			ValidHosts: map[string]bool{
 				"cafe.example.com": true,
+			},
+			SecretRefs: map[string]*SecretReference{
+				"cafe-secret": {
+					Type:  v1.SecretTypeTLS,
+					Path:  "/etc/nginx/secrets/default-cafe-secret",
+					Error: nil,
+				},
 			},
 		},
 		Minions: []*IngressEx{
@@ -553,6 +520,7 @@ func createMergeableCafeIngress() *MergeableIngresses {
 				ValidMinionPaths: map[string]bool{
 					"/coffee": true,
 				},
+				SecretRefs: map[string]*SecretReference{},
 			},
 			{
 				Ingress: &teaMinion,
@@ -565,6 +533,7 @@ func createMergeableCafeIngress() *MergeableIngresses {
 				ValidMinionPaths: map[string]bool{
 					"/tea": true,
 				},
+				SecretRefs: map[string]*SecretReference{},
 			}},
 	}
 
@@ -785,15 +754,12 @@ func TestGenerateNginxCfgForSpiffe(t *testing.T) {
 		expected.Servers[0].Locations[i].SSL = true
 	}
 
-	pems := map[string]string{
-		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
-	}
-
 	apResources := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, pems, apResources, false, configParams, false, false, "", &StaticConfigParams{NginxServiceMesh: true})
+	result := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
+		&StaticConfigParams{NginxServiceMesh: true}, false)
 
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
 	}
 }
 
@@ -807,15 +773,12 @@ func TestGenerateNginxCfgForInternalRoute(t *testing.T) {
 	expected.Servers[0].SpiffeCerts = true
 	expected.Ingress.Annotations[internalRouteAnnotation] = "true"
 
-	pems := map[string]string{
-		"cafe.example.com": "/etc/nginx/secrets/default-cafe-secret",
-	}
-
 	apResources := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, pems, apResources, false, configParams, false, false, "", &StaticConfigParams{NginxServiceMesh: true, EnableInternalRoutes: true})
+	result := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
+		&StaticConfigParams{NginxServiceMesh: true, EnableInternalRoutes: true}, false)
 
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateNginxCfg returned \n%+v,  but expected \n%+v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
 	}
 }
 
@@ -880,6 +843,258 @@ func TestIsSSLEnabled(t *testing.T) {
 		actual := isSSLEnabled(tc.IsSSLService, ConfigParams{SpiffeServerCerts: tc.SpiffeServerCerts}, &StaticConfigParams{NginxServiceMesh: tc.NginxServiceMesh})
 		if actual != tc.Expected {
 			t.Errorf("isSSLEnabled returned %v but expected %v for the case %v", actual, tc.Expected, i)
+		}
+	}
+}
+
+func TestAddSSLConfig(t *testing.T) {
+	tests := []struct {
+		host              string
+		tls               []networking.IngressTLS
+		secretRefs        map[string]*SecretReference
+		isWildcardEnabled bool
+		expected          version1.Server
+		msg               string
+	}{
+		{
+			host: "some.example.com",
+			tls: []networking.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			secretRefs: map[string]*SecretReference{
+				"cafe-secret": {
+					Type: v1.SecretTypeTLS,
+					Path: "/etc/nginx/secrets/default-cafe-secret",
+				},
+			},
+			isWildcardEnabled: false,
+			expected:          version1.Server{},
+			msg:               "TLS termination for different host",
+		},
+		{
+			host: "cafe.example.com",
+			tls: []networking.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			secretRefs: map[string]*SecretReference{
+				"cafe-secret": {
+					Type: v1.SecretTypeTLS,
+					Path: "/etc/nginx/secrets/default-cafe-secret",
+				},
+			},
+			isWildcardEnabled: false,
+			expected: version1.Server{
+				SSL:               true,
+				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
+				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
+			},
+			msg: "TLS termination",
+		},
+		{
+			host: "cafe.example.com",
+			tls: []networking.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			secretRefs: map[string]*SecretReference{
+				"cafe-secret": {
+					Error: errors.New("invalid secret"),
+				},
+			},
+			isWildcardEnabled: false,
+			expected: version1.Server{
+				SSL:               true,
+				SSLCertificate:    pemFileNameForMissingTLSSecret,
+				SSLCertificateKey: pemFileNameForMissingTLSSecret,
+				SSLCiphers:        "NULL",
+			},
+			msg: "invalid secret",
+		},
+		{
+			host: "cafe.example.com",
+			tls: []networking.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			secretRefs: map[string]*SecretReference{
+				"cafe-secret": {
+					Type: SecretTypeCA,
+					Path: "/etc/nginx/secrets/default-cafe-secret",
+				},
+			},
+			isWildcardEnabled: false,
+			expected: version1.Server{
+				SSL:               true,
+				SSLCertificate:    pemFileNameForMissingTLSSecret,
+				SSLCertificateKey: pemFileNameForMissingTLSSecret,
+				SSLCiphers:        "NULL",
+			},
+			msg: "secret of wrong type",
+		},
+		{
+			host: "cafe.example.com",
+			tls: []networking.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "",
+				},
+			},
+			isWildcardEnabled: true,
+			expected: version1.Server{
+				SSL:               true,
+				SSLCertificate:    pemFileNameForWildcardTLSSecret,
+				SSLCertificateKey: pemFileNameForWildcardTLSSecret,
+			},
+			msg: "no secret name with wildcard enabled",
+		},
+		{
+			host: "cafe.example.com",
+			tls: []networking.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "",
+				},
+			},
+			isWildcardEnabled: false,
+			expected: version1.Server{
+				SSL:               true,
+				SSLCertificate:    pemFileNameForMissingTLSSecret,
+				SSLCertificateKey: pemFileNameForMissingTLSSecret,
+				SSLCiphers:        "NULL",
+			},
+			msg: "no secret name with wildcard disabled",
+		},
+	}
+
+	for _, test := range tests {
+		var result version1.Server
+
+		addSSLConfig(&result, test.host, test.tls, test.secretRefs, test.isWildcardEnabled)
+
+		if diff := cmp.Diff(test.expected, result); diff != "" {
+			t.Errorf("addSSLConfig() '%s' mismatch (-want +got):\n%s", test.msg, diff)
+		}
+	}
+}
+
+func TestGenerateJWTConfig(t *testing.T) {
+	tests := []struct {
+		secretRefs               map[string]*SecretReference
+		cfgParams                *ConfigParams
+		redirectLocationName     string
+		expectedJWTAuth          *version1.JWTAuth
+		expectedRedirectLocation *version1.JWTRedirectLocation
+		msg                      string
+	}{
+		{
+			secretRefs: map[string]*SecretReference{
+				"cafe-jwk": {
+					Type: SecretTypeJWK,
+					Path: "/etc/nginx/secrets/default-cafe-jwk",
+				},
+			},
+			cfgParams: &ConfigParams{
+				JWTKey:   "cafe-jwk",
+				JWTRealm: "cafe",
+				JWTToken: "$http_token",
+			},
+			redirectLocationName: "@loc",
+			expectedJWTAuth: &version1.JWTAuth{
+				Key:   "/etc/nginx/secrets/default-cafe-jwk",
+				Realm: "cafe",
+				Token: "$http_token",
+			},
+			expectedRedirectLocation: nil,
+			msg:                      "normal case",
+		},
+		{
+			secretRefs: map[string]*SecretReference{
+				"cafe-jwk": {
+					Type: SecretTypeJWK,
+					Path: "/etc/nginx/secrets/default-cafe-jwk",
+				},
+			},
+			cfgParams: &ConfigParams{
+				JWTKey:      "cafe-jwk",
+				JWTRealm:    "cafe",
+				JWTToken:    "$http_token",
+				JWTLoginURL: "http://cafe.example.com/login",
+			},
+			redirectLocationName: "@loc",
+			expectedJWTAuth: &version1.JWTAuth{
+				Key:                  "/etc/nginx/secrets/default-cafe-jwk",
+				Realm:                "cafe",
+				Token:                "$http_token",
+				RedirectLocationName: "@loc",
+			},
+			expectedRedirectLocation: &version1.JWTRedirectLocation{
+				Name:     "@loc",
+				LoginURL: "http://cafe.example.com/login",
+			},
+			msg: "normal case with login url",
+		},
+		{
+			secretRefs: map[string]*SecretReference{
+				"cafe-jwk": {
+					Path:  "/etc/nginx/secrets/default-cafe-jwk",
+					Error: errors.New("invalid secret"),
+				},
+			},
+			cfgParams: &ConfigParams{
+				JWTKey:   "cafe-jwk",
+				JWTRealm: "cafe",
+				JWTToken: "$http_token",
+			},
+			redirectLocationName: "@loc",
+			expectedJWTAuth: &version1.JWTAuth{
+				Key:   "/etc/nginx/secrets/default-cafe-jwk",
+				Realm: "cafe",
+				Token: "$http_token",
+			},
+			expectedRedirectLocation: nil,
+			msg:                      "invalid secret",
+		},
+		{
+			secretRefs: map[string]*SecretReference{
+				"cafe-jwk": {
+					Type: SecretTypeCA,
+					Path: "/etc/nginx/secrets/default-cafe-jwk",
+				},
+			},
+			cfgParams: &ConfigParams{
+				JWTKey:   "cafe-jwk",
+				JWTRealm: "cafe",
+				JWTToken: "$http_token",
+			},
+			redirectLocationName: "@loc",
+			expectedJWTAuth: &version1.JWTAuth{
+				Key:   "/etc/nginx/secrets/default-cafe-jwk",
+				Realm: "cafe",
+				Token: "$http_token",
+			},
+			expectedRedirectLocation: nil,
+			msg:                      "secret of wrong type",
+		},
+	}
+
+	for _, test := range tests {
+		jwtAuth, redirectLocation := generateJWTConfig(test.secretRefs, test.cfgParams, test.redirectLocationName)
+
+		if diff := cmp.Diff(test.expectedJWTAuth, jwtAuth); diff != "" {
+			t.Errorf("generateJWTConfig() '%s' mismatch for jwtAuth (-want +got):\n%s", test.msg, diff)
+		}
+		if diff := cmp.Diff(test.expectedRedirectLocation, redirectLocation); diff != "" {
+			t.Errorf("generateJWTConfig() '%s' mismatch for redirectLocation (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }
