@@ -190,7 +190,6 @@ server {
 
     {{ range $e := $s.ErrorPageLocations }}
     location {{ $e.Name }} {
-        set $service "nil";
         {{ if $e.DefaultType }}
         default_type "{{ $e.DefaultType }}";
         {{ end }}
@@ -204,7 +203,6 @@ server {
 
     {{ range $l := $s.ReturnLocations }}
     location {{ $l.Name }} {
-        set $service "nil";
         default_type "{{ $l.DefaultType }}";
         # status code is ignored here, using 0
         return 0 "{{ $l.Return.Text }}";

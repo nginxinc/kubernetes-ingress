@@ -546,6 +546,9 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxySSLName:             "coffee-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
 					ServiceName:              "coffee-svc",
+					IsVSR:                    true,
+					VSRName:                  "coffee",
+					VSRNamespace:             "default",
 				},
 				{
 					Path:                     "/subtea",
@@ -557,6 +560,9 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxySSLName:             "sub-tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
 					ServiceName:              "sub-tea-svc",
+					IsVSR:                    true,
+					VSRName:                  "subtea",
+					VSRNamespace:             "default",
 				},
 
 				{
@@ -577,6 +583,9 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxySSLName:            "coffee-svc.default.svc",
 					ProxyPassRequestHeaders: true,
 					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
 				},
 				{
 					Path:                     "/coffee-errorpage-subroute-defined",
@@ -596,6 +605,9 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					ProxySSLName:            "coffee-svc.default.svc",
 					ProxyPassRequestHeaders: true,
 					ServiceName:             "coffee-svc",
+					IsVSR:                   true,
+					VSRName:                 "subcoffee",
+					VSRNamespace:            "default",
 				},
 			},
 			ErrorPageLocations: []version2.ErrorPageLocation{

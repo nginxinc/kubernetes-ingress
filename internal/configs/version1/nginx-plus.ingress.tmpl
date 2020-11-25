@@ -140,7 +140,6 @@ server {
 
 	{{- range $location := $server.JWTRedirectLocations}}
 	location {{$location.Name}} {
-		set $service "nil";
 		internal;
 		return 302 {{$location.LoginURL}};
 	}
