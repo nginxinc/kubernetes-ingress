@@ -30,7 +30,10 @@ jwt_vs_single_invalid_pol_src = (
 jwt_vs_multi_1_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-multi-1.yaml"
 jwt_vs_multi_2_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-multi-2.yaml"
 jwt_pol_invalid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-invalid.yaml"
-
+jwt_pol_invalid_sec_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-invalid-secret.yaml"
+jwt_vs_single_invalid_sec_src = (
+    f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-single-invalid-secret.yaml"
+)
 jwt_vs_override_route = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-override-route.yaml"
 jwt_vs_override_spec_route_1 = (
     f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-override-spec-route-1.yaml"
@@ -147,12 +150,20 @@ class TestJWTPolicies:
         """
             Test jwt-policy with a valid and an invalid secret
         """
+        if jwk_secret == jwk_sec_valid_src:
+            pol = jwt_pol_valid_src
+            vs = jwt_vs_single_src
+        elif jwk_secret== jwk_sec_invalid_src:
+            pol = jwt_pol_invalid_sec_src
+            vs = jwt_vs_single_invalid_sec_src
+        else:
+            pytest.fail("Invalid configuration")
         secret, pol_name, headers = self.setup_single_policy(
             kube_apis,
             test_namespace,
             valid_token,
             jwk_secret,
-            jwt_pol_valid_src,
+            pol,
             virtual_server_setup.vs_host,
         )
 
@@ -160,7 +171,7 @@ class TestJWTPolicies:
         delete_and_create_vs_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
-            jwt_vs_single_src,
+            vs,
             virtual_server_setup.namespace,
         )
         wait_before_test()
