@@ -205,22 +205,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``log-format``
      - Sets the custom `log format <https://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_ for HTTP and HTTPS traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by ``\n``). In that case, the Ingress Controller will replace every ``\n`` character with a space character. All ``'`` characters must be escaped.
      - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/master/internal/configs/version1/nginx.tmpl>`_ for the access log.
-     - ```kind: ConfigMap
-          apiVersion: v1
-          metadata:
-            name: nginx-config
-            namespace: nginx-ingress
-          data:
-            log-format: compression '$remote_addr - $remote_user [$time_local] '
-                       '"$request" $status $bytes_sent '
-                       '"$http_referer" "$http_user_agent" "$gzip_ratio"'
-                       'type="$resource_type" name="$resource_name" service="$service";```
-        In addition to built-in NGINX variables, you can also use the variables that the Ingress Controller configures:
-        $resource_type - The type of the k8s object.
-        $resource_name - The name of the k8s resource.
-        $resource_namespace - The namespace the k8s object exists in.
-        $service - The service for the k8s object.
-        **note** these are only available for VirtualServer and Ingress resources
+     - `<https://github.com/nginxinc/kubernetes-ingress/tree/update-log-format/examples/custom-log-format>`
    * - ``log-format-escaping``
      - Sets the characters escaping for the variables of the log format. Supported values: ``json`` (JSON escaping), ``default`` (the default escaping) ``none`` (disables escaping).
      - ``default``
