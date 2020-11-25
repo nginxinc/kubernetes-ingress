@@ -205,7 +205,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``log-format``
      - Sets the custom `log format <https://nginx.org/en/docs/http/ngx_http_log_module.html#log_format>`_ for HTTP and HTTPS traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by ``\n``). In that case, the Ingress Controller will replace every ``\n`` character with a space character. All ``'`` characters must be escaped.
      - See the `template file <https://github.com/nginxinc/kubernetes-ingress/blob/master/internal/configs/version1/nginx.tmpl>`_ for the access log.
-     - `<https://github.com/nginxinc/kubernetes-ingress/tree/update-log-format/examples/custom-log-format>`
+     - `Custom Log Format <https://github.com/nginxinc/kubernetes-ingress/tree/update-log-format/examples/custom-log-format>`_.
    * - ``log-format-escaping``
      - Sets the characters escaping for the variables of the log format. Supported values: ``json`` (JSON escaping), ``default`` (the default escaping) ``none`` (disables escaping).
      - ``default``
