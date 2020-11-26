@@ -359,7 +359,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	var vsrErrorPagesRouteIndex = make(map[string]int)
 	var vsrLocationSnippetsFromVs = make(map[string]string)
 	var vsrPoliciesFromVs = make(map[string][]conf_v1.PolicyReference)
-	IsVSR := false
+	isVSR := false
 	matchesRoutes := 0
 
 	variableNamer := newVariableNamer(vsEx.VirtualServer)
