@@ -451,7 +451,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			proxySSLName := generateProxySSLName(upstream.Service, vsEx.VirtualServer.Namespace)
 
 			loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, r.ErrorPages, false,
-				errorPageIndex, proxySSLName, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), IsVSR, "", "")
+				errorPageIndex, proxySSLName, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "")
 			addPoliciesCfgToLocation(routePoliciesCfg, &loc)
 
 			locations = append(locations, loc)
@@ -463,7 +463,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 
 	// generate config for subroutes of each VirtualServerRoute
 	for _, vsr := range vsEx.VirtualServerRoutes {
-		IsVSR := true
+		isVSR := true
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(vsEx.VirtualServer, vsr)
 		for _, r := range vsr.Spec.Subroutes {
 			errorPageIndex := len(errorPageLocations)
@@ -555,7 +555,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				proxySSLName := generateProxySSLName(upstream.Service, vsr.Namespace)
 
 				loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false,
-					errorPageIndex, proxySSLName, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), IsVSR, vsr.Name, vsr.Namespace)
+					errorPageIndex, proxySSLName, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace)
 				addPoliciesCfgToLocation(routePoliciesCfg, &loc)
 
 				locations = append(locations, loc)
@@ -1266,7 +1266,7 @@ func generateReturnBlock(text string, code int, defaultCode int) *version2.Retur
 
 func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, action *conf_v1.Action,
 	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int, proxySSLName string,
-	originalPath string, locSnippets string, enableSnippets bool, retLocIndex int, IsVSR bool, vsrName string, vsrNamespace string) (version2.Location, *version2.ReturnLocation) {
+	originalPath string, locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string) (version2.Location, *version2.ReturnLocation) {
 
 	locationSnippets := generateSnippets(enableSnippets, locSnippets, cfgParams.LocationSnippets)
 
@@ -1279,7 +1279,7 @@ func generateLocation(path string, upstreamName string, upstream conf_v1.Upstrea
 	}
 
 	return generateLocationForProxying(path, upstreamName, upstream, cfgParams, errorPages, internal,
-		errPageIndex, proxySSLName, action.Proxy, originalPath, locationSnippets, IsVSR, vsrName, vsrNamespace), nil
+		errPageIndex, proxySSLName, action.Proxy, originalPath, locationSnippets, isVSR, vsrName, vsrNamespace), nil
 }
 
 func generateProxySetHeaders(proxy *conf_v1.ActionProxy) []version2.Header {
@@ -1479,7 +1479,7 @@ func generateSplits(
 ) (version2.SplitClient, []version2.Location, []version2.ReturnLocation) {
 
 	var distributions []version2.Distribution
-	IsVSR := false
+	isVSR := false
 	vsrName := ""
 	vsrNamespace := ""
 
@@ -1507,7 +1507,7 @@ func generateSplits(
 		proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
 		newRetLocIndex := retLocIndex + len(returnLocations)
 		loc, returnLoc := generateLocation(path, upstreamName, upstream, s.Action, cfgParams, errorPages, true,
-			errPageIndex, proxySSLName, originalPath, locSnippets, enableSnippets, newRetLocIndex, IsVSR, vsrName, vsrNamespace)
+			errPageIndex, proxySSLName, originalPath, locSnippets, enableSnippets, newRetLocIndex, isVSR, vsrName, vsrNamespace)
 		locations = append(locations, loc)
 		if returnLoc != nil {
 			returnLocations = append(returnLocations, *returnLoc)
@@ -1622,7 +1622,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 	var locations []version2.Location
 	var returnLocations []version2.ReturnLocation
 	var splitClients []version2.SplitClient
-	IsVSR := false
+	isVSR := false
 	vsrName := ""
 	vsrNamespace := ""
 	scLocalIndex = 0
@@ -1655,7 +1655,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 			proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
 			newRetLocIndex := retLocIndex + len(returnLocations)
 			loc, returnLoc := generateLocation(path, upstreamName, upstream, m.Action, cfgParams, errorPages, true,
-				errPageIndex, proxySSLName, route.Path, locSnippets, enableSnippets, newRetLocIndex, IsVSR, vsrName, vsrNamespace)
+				errPageIndex, proxySSLName, route.Path, locSnippets, enableSnippets, newRetLocIndex, isVSR, vsrName, vsrNamespace)
 			locations = append(locations, loc)
 			if returnLoc != nil {
 				returnLocations = append(returnLocations, *returnLoc)
@@ -1690,7 +1690,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 		proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
 		newRetLocIndex := retLocIndex + len(returnLocations)
 		loc, returnLoc := generateLocation(path, upstreamName, upstream, route.Action, cfgParams, errorPages, true,
-			errPageIndex, proxySSLName, route.Path, locSnippets, enableSnippets, newRetLocIndex, IsVSR, vsrName, vsrNamespace)
+			errPageIndex, proxySSLName, route.Path, locSnippets, enableSnippets, newRetLocIndex, isVSR, vsrName, vsrNamespace)
 		locations = append(locations, loc)
 		if returnLoc != nil {
 			returnLocations = append(returnLocations, *returnLoc)
