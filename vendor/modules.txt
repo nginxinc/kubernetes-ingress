@@ -80,10 +80,10 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.1
 github.com/modern-go/reflect2
-# github.com/nginxinc/nginx-plus-go-client v0.7.0
+# github.com/nginxinc/nginx-plus-go-client v0.8.0
 ## explicit
 github.com/nginxinc/nginx-plus-go-client/client
-# github.com/nginxinc/nginx-prometheus-exporter v0.8.1-0.20200825091536-6b1901af5792
+# github.com/nginxinc/nginx-prometheus-exporter v0.8.1-0.20201130150826-7c45b2334b3c
 ## explicit
 github.com/nginxinc/nginx-prometheus-exporter/client
 github.com/nginxinc/nginx-prometheus-exporter/collector
@@ -96,7 +96,8 @@ github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.2.0
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.14.0
+# github.com/prometheus/common v0.15.0
+## explicit
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
@@ -130,7 +131,8 @@ golang.org/x/net/trace
 # golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20201015000850-e3ed0017c211
+# golang.org/x/sys v0.0.0-20201130072748-111129e158e2
+## explicit
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
@@ -209,23 +211,25 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.24.0
+# google.golang.org/protobuf v1.25.0
+## explicit
+google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
 google.golang.org/protobuf/internal/descfmt
 google.golang.org/protobuf/internal/descopts
 google.golang.org/protobuf/internal/detrand
 google.golang.org/protobuf/internal/encoding/defval
+google.golang.org/protobuf/internal/encoding/json
 google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldnum
 google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
-google.golang.org/protobuf/internal/genname
+google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
 google.golang.org/protobuf/internal/mapsort
 google.golang.org/protobuf/internal/pragma

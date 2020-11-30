@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,7 +13,7 @@ import (
 )
 
 const (
-	// APIVersion is a version of NGINX Plus API.
+	// APIVersion is the default version of NGINX Plus API supported by the client.
 	APIVersion = 5
 
 	pathNotFoundCode  = "PathNotFound"
@@ -21,8 +22,10 @@ const (
 	defaultServerPort = "80"
 )
 
-// Default values for servers in Upstreams.
 var (
+	supportedAPIVersions = versions{4, 5}
+
+	// Default values for servers in Upstreams.
 	defaultMaxConns    = 0
 	defaultMaxFails    = 1
 	defaultFailTimeout = "10s"
@@ -32,8 +35,12 @@ var (
 	defaultWeight      = 1
 )
 
+// ErrUnsupportedVer means that client's API version is not supported by NGINX plus API
+var ErrUnsupportedVer = errors.New("API version of the client is not supported by running NGINX Plus")
+
 // NginxClient lets you access NGINX Plus API.
 type NginxClient struct {
+	version     int
 	apiEndpoint string
 	httpClient  *http.Client
 }
@@ -378,29 +385,44 @@ type Processes struct {
 	Respawned int64
 }
 
-// NewNginxClient creates an NginxClient.
+// NewNginxClient creates an NginxClient with the latest supported version.
 func NewNginxClient(httpClient *http.Client, apiEndpoint string) (*NginxClient, error) {
+	return NewNginxClientWithVersion(httpClient, apiEndpoint, APIVersion)
+}
+
+//NewNginxClientWithVersion creates an NginxClient with the given version of NGINX Plus API.
+func NewNginxClientWithVersion(httpClient *http.Client, apiEndpoint string, version int) (*NginxClient, error) {
+	if !versionSupported(version) {
+		return nil, fmt.Errorf("API version %v is not supported by the client", version)
+	}
 	versions, err := getAPIVersions(httpClient, apiEndpoint)
 	if err != nil {
 		return nil, fmt.Errorf("error accessing the API: %v", err)
 	}
-
 	found := false
 	for _, v := range *versions {
-		if v == APIVersion {
+		if v == version {
 			found = true
 			break
 		}
 	}
-
 	if !found {
-		return nil, fmt.Errorf("API version %v of the client is not supported by API versions of NGINX Plus: %v", APIVersion, *versions)
+		return nil, ErrUnsupportedVer
 	}
-
 	return &NginxClient{
 		apiEndpoint: apiEndpoint,
 		httpClient:  httpClient,
+		version:     version,
 	}, nil
+}
+
+func versionSupported(n int) bool {
+	for _, version := range supportedAPIVersions {
+		if n == version {
+			return true
+		}
+	}
+	return false
 }
 
 func getAPIVersions(httpClient *http.Client, endpoint string) (*versions, error) {
@@ -652,7 +674,7 @@ func (client *NginxClient) getIDOfHTTPServer(upstream string, name string) (int,
 }
 
 func (client *NginxClient) get(path string, data interface{}) error {
-	url := fmt.Sprintf("%v/%v/%v", client.apiEndpoint, APIVersion, path)
+	url := fmt.Sprintf("%v/%v/%v", client.apiEndpoint, client.version, path)
 	resp, err := client.httpClient.Get(url)
 	if err != nil {
 		return fmt.Errorf("failed to get %v: %v", path, err)
@@ -677,7 +699,7 @@ func (client *NginxClient) get(path string, data interface{}) error {
 }
 
 func (client *NginxClient) post(path string, input interface{}) error {
-	url := fmt.Sprintf("%v/%v/%v", client.apiEndpoint, APIVersion, path)
+	url := fmt.Sprintf("%v/%v/%v", client.apiEndpoint, client.version, path)
 
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
@@ -699,7 +721,7 @@ func (client *NginxClient) post(path string, input interface{}) error {
 }
 
 func (client *NginxClient) delete(path string, expectedStatusCode int) error {
-	path = fmt.Sprintf("%v/%v/%v/", client.apiEndpoint, APIVersion, path)
+	path = fmt.Sprintf("%v/%v/%v/", client.apiEndpoint, client.version, path)
 
 	req, err := http.NewRequest(http.MethodDelete, path, nil)
 	if err != nil {
@@ -721,7 +743,7 @@ func (client *NginxClient) delete(path string, expectedStatusCode int) error {
 }
 
 func (client *NginxClient) patch(path string, input interface{}, expectedStatusCode int) error {
-	path = fmt.Sprintf("%v/%v/%v/", client.apiEndpoint, APIVersion, path)
+	path = fmt.Sprintf("%v/%v/%v/", client.apiEndpoint, client.version, path)
 
 	jsonInput, err := json.Marshal(input)
 	if err != nil {
@@ -1139,6 +1161,9 @@ func (client *NginxClient) GetStreamZoneSync() (*StreamZoneSync, error) {
 // GetLocationZones returns http/location_zones stats.
 func (client *NginxClient) GetLocationZones() (*LocationZones, error) {
 	var locationZones LocationZones
+	if client.version < 5 {
+		return &locationZones, nil
+	}
 	err := client.get("http/location_zones", &locationZones)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get location zones: %v", err)
@@ -1150,6 +1175,9 @@ func (client *NginxClient) GetLocationZones() (*LocationZones, error) {
 // GetResolvers returns Resolvers stats.
 func (client *NginxClient) GetResolvers() (*Resolvers, error) {
 	var resolvers Resolvers
+	if client.version < 5 {
+		return &resolvers, nil
+	}
 	err := client.get("resolvers", &resolvers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get resolvers: %v", err)
@@ -1366,6 +1394,11 @@ func (client *NginxClient) UpdateStreamServer(upstream string, server StreamUpst
 	}
 
 	return nil
+}
+
+// Version returns client's current N+ API version.
+func (client *NginxClient) Version() int {
+	return client.version
 }
 
 func addPortToServer(server string) string {
