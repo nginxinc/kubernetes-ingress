@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.5
+    controller-gen.kubebuilder.io/version: v0.4.0
   creationTimestamp: null
   name: appolicies.appprotect.f5.com
 spec:
@@ -219,6 +219,68 @@ spec:
                       pattern: ^http
                       type: string
                   type: object
+                bot-defense:
+                  properties:
+                    mitigations:
+                      properties:
+                        anomalies:
+                          items:
+                            properties:
+                              action:
+                                enum:
+                                - alarm
+                                - block
+                                - default
+                                - detect
+                                - ignore
+                                type: string
+                              name:
+                                type: string
+                              scoreThreshold:
+                                pattern: '[0-9]|[1-9][0-9]|1[0-4][0-9]|150|default'
+                                type: string
+                            type: object
+                          type: array
+                        classes:
+                          items:
+                            properties:
+                              action:
+                                enum:
+                                - alarm
+                                - block
+                                - detect
+                                - ignore
+                                type: string
+                              name:
+                                enum:
+                                - malicious-bot
+                                - suspicious-browser
+                                - trusted-bot
+                                - untrusted-bot
+                                type: string
+                            type: object
+                          type: array
+                        signatures:
+                          items:
+                            properties:
+                              action:
+                                enum:
+                                - alarm
+                                - block
+                                - detect
+                                - ignore
+                                type: string
+                              name:
+                                type: string
+                            type: object
+                          type: array
+                      type: object
+                    settings:
+                      properties:
+                        isEnabled:
+                          type: boolean
+                      type: object
+                  type: object
                 caseInsensitive:
                   type: boolean
                 character-sets:
@@ -277,6 +339,12 @@ spec:
                         type: boolean
                       attackSignaturesCheck:
                         type: boolean
+                      decodeValueAsBase64:
+                        enum:
+                        - enabled
+                        - disabled
+                        - required
+                        type: string
                       enforcementType:
                         type: string
                       insertSameSiteAttribute:
@@ -295,8 +363,12 @@ spec:
                           properties:
                             enabled:
                               type: boolean
+                            name:
+                              type: string
                             signatureId:
                               type: integer
+                            tag:
+                              type: string
                           type: object
                         type: array
                       type:
@@ -434,6 +506,12 @@ spec:
                         type: boolean
                       checkSignatures:
                         type: boolean
+                      decodeValueAsBase64:
+                        enum:
+                        - enabled
+                        - disabled
+                        - required
+                        type: string
                       htmlNormalization:
                         type: boolean
                       mandatory:
@@ -458,6 +536,8 @@ spec:
                 json-profiles:
                   items:
                     properties:
+                      attackSignaturesCheck:
+                        type: boolean
                       defenseAttributes:
                         properties:
                           maximumArrayLength:
@@ -489,16 +569,18 @@ spec:
                           type: object
                         type: array
                       name:
-                        enum:
-                        - Default
                         type: string
                       signatureOverrides:
                         items:
                           properties:
                             enabled:
                               type: boolean
+                            name:
+                              type: string
                             signatureId:
                               type: integer
+                            tag:
+                              type: string
                           type: object
                         type: array
                       validationFiles:
@@ -622,6 +704,12 @@ spec:
                         - none
                         - phone
                         type: string
+                      decodeValueAsBase64:
+                        enum:
+                        - enabled
+                        - disabled
+                        - required
+                        type: string
                       disallowFileUploadOfExecutables:
                         type: boolean
                       enableRegularExpression:
@@ -680,8 +768,12 @@ spec:
                           properties:
                             enabled:
                               type: boolean
+                            name:
+                              type: string
                             signatureId:
                               type: integer
+                            tag:
+                              type: string
                           type: object
                         type: array
                       staticValues:
@@ -872,16 +964,18 @@ spec:
                       type: string
                   type: object
                 signature-requirements:
-                  properties:
-                    maxRevisionDatetime:
-                      format: date-time
-                      type: string
-                    minRevisionDatetime:
-                      format: date-time
-                      type: string
-                    tag:
-                      type: string
-                  type: object
+                  items:
+                    properties:
+                      maxRevisionDatetime:
+                        format: date-time
+                        type: string
+                      minRevisionDatetime:
+                        format: date-time
+                        type: string
+                      tag:
+                        type: string
+                    type: object
+                  type: array
                 signature-sets:
                   items:
                     properties:
@@ -890,20 +984,6 @@ spec:
                       block:
                         type: boolean
                       name:
-                        enum:
-                        - Command Execution Signatures
-                        - Cross Site Scripting Signatures
-                        - Directory Indexing Signatures
-                        - Information Leakage Signatures
-                        - OS Command Injection Signatures
-                        - Path Traversal Signatures
-                        - Predictable Resource Location Signatures
-                        - Remote File Include Signatures
-                        - SQL Injection Signatures
-                        - XPath Injection Signatures
-                        - Buffer Overflow Signatures
-                        - Denial of Service Signatures
-                        - Vulnerability Scanner Signatures
                         type: string
                     type: object
                     x-kubernetes-preserve-unknown-fields: true
@@ -946,8 +1026,12 @@ spec:
                     properties:
                       enabled:
                         type: boolean
+                      name:
+                        type: string
                       signatureId:
                         type: integer
+                      tag:
+                        type: string
                     type: object
                   type: array
                 softwareVersion:
@@ -1149,6 +1233,12 @@ spec:
                                   - none
                                   - phone
                                   type: string
+                                decodeValueAsBase64:
+                                  enum:
+                                  - enabled
+                                  - disabled
+                                  - required
+                                  type: string
                                 disallowFileUploadOfExecutables:
                                   type: boolean
                                 enableRegularExpression:
@@ -1207,8 +1297,12 @@ spec:
                                     properties:
                                       enabled:
                                         type: boolean
+                                      name:
+                                        type: string
                                       signatureId:
                                         type: integer
+                                      tag:
+                                        type: string
                                     type: object
                                   type: array
                                 staticValues:
@@ -1256,8 +1350,12 @@ spec:
                           properties:
                             enabled:
                               type: boolean
+                            name:
+                              type: string
                             signatureId:
                               type: integer
+                            tag:
+                              type: string
                           type: object
                         type: array
                       type:

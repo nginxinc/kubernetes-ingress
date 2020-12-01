@@ -221,6 +221,68 @@ spec:
                         pattern: ^http
                         type: string
                     type: object
+                  bot-defense:
+                    properties:
+                      mitigations:
+                        properties:
+                          anomalies:
+                            items:
+                              properties:
+                                action:
+                                  enum:
+                                  - alarm
+                                  - block
+                                  - default
+                                  - detect
+                                  - ignore
+                                  type: string
+                                name:
+                                  type: string
+                                scoreThreshold:
+                                  pattern: '[0-9]|[1-9][0-9]|1[0-4][0-9]|150|default'
+                                  type: string
+                              type: object
+                            type: array
+                          classes:
+                            items:
+                              properties:
+                                action:
+                                  enum:
+                                  - alarm
+                                  - block
+                                  - detect
+                                  - ignore
+                                  type: string
+                                name:
+                                  enum:
+                                  - malicious-bot
+                                  - suspicious-browser
+                                  - trusted-bot
+                                  - untrusted-bot
+                                  type: string
+                              type: object
+                            type: array
+                          signatures:
+                            items:
+                              properties:
+                                action:
+                                  enum:
+                                  - alarm
+                                  - block
+                                  - detect
+                                  - ignore
+                                  type: string
+                                name:
+                                  type: string
+                              type: object
+                            type: array
+                        type: object
+                      settings:
+                        properties:
+                          isEnabled:
+                            type: boolean
+                        type: object
+                    type: object
                   caseInsensitive:
                     type: boolean
                   character-sets:
@@ -279,6 +341,12 @@ spec:
                           type: boolean
                         attackSignaturesCheck:
                           type: boolean
+                        decodeValueAsBase64:
+                          enum:
+                          - enabled
+                          - disabled
+                          - required
+                          type: string
                         enforcementType:
                           type: string
                         insertSameSiteAttribute:
@@ -440,6 +508,12 @@ spec:
                           type: boolean
                         checkSignatures:
                           type: boolean
+                        decodeValueAsBase64:
+                          enum:
+                          - enabled
+                          - disabled
+                          - required
+                          type: string
                         htmlNormalization:
                           type: boolean
                         mandatory:
@@ -464,6 +538,8 @@ spec:
                   json-profiles:
                     items:
                       properties:
+                        attackSignaturesCheck:
+                          type: boolean
                         defenseAttributes:
                           properties:
                             maximumArrayLength:
@@ -495,8 +571,6 @@ spec:
                             type: object
                           type: array
                         name:
-                          enum:
-                          - Default
                           type: string
                         signatureOverrides:
                           items:
@@ -631,6 +705,12 @@ spec:
                           - integer
                           - none
                           - phone
+                          type: string
+                        decodeValueAsBase64:
+                          enum:
+                          - enabled
+                          - disabled
+                          - required
                           type: string
                         disallowFileUploadOfExecutables:
                           type: boolean
@@ -1154,6 +1234,12 @@ spec:
                                     - integer
                                     - none
                                     - phone
+                                    type: string
+                                  decodeValueAsBase64:
+                                    enum:
+                                    - enabled
+                                    - disabled
+                                    - required
                                     type: string
                                   disallowFileUploadOfExecutables:
                                     type: boolean

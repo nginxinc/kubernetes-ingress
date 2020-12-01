@@ -334,8 +334,12 @@ class TestAppProtect:
         assert f'outcome="REJECTED"' in log_contents
 
         print("----------------------- Send valid request ----------------------")
+        headers = {
+            "host": ingress_host,
+            "user-agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0"
+                }
         response = requests.get(
-            appprotect_setup.req_url, headers={"host": ingress_host}, verify=False
+            appprotect_setup.req_url, headers=headers, verify=False
         )
         print(response.text)
         wait_before_test(5)
