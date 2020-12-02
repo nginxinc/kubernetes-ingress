@@ -368,6 +368,7 @@ func main() {
 		managerCollector = collectors.NewLocalManagerMetricsCollector(constLabels)
 		controllerCollector = collectors.NewControllerMetricsCollector(*enableCustomResources, constLabels)
 		processCollector := collectors.NewNginxProcessesMetricsCollector(constLabels)
+		workQueueCollector := collectors.NewWorkQueueMetricsCollector(constLabels)
 
 		err = managerCollector.Register(registry)
 		if err != nil {
@@ -382,6 +383,11 @@ func main() {
 		err = processCollector.Register(registry)
 		if err != nil {
 			glog.Errorf("Error registering NginxProcess Prometheus metrics: %v", err)
+		}
+
+		err = workQueueCollector.Register(registry)
+		if err != nil {
+			glog.Errorf("Error registering WorkQueue Prometheus metrics: %v", err)
 		}
 	}
 

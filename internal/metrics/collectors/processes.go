@@ -10,7 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// NginxProcessesMetricsCollector implements NginxPorcessesCollector interface and prometheus.Collector interface
+// NginxProcessesMetricsCollector implements NginxProcessesCollector interface and prometheus.Collector interface
 type NginxProcessesMetricsCollector struct {
 	// Metrics
 	workerProcessTotal *prometheus.GaugeVec

@@ -29,7 +29,7 @@ type taskQueue struct {
 // The sync function is called for every element inserted into the queue.
 func newTaskQueue(syncFn func(task)) *taskQueue {
 	return &taskQueue{
-		queue:      workqueue.New(),
+		queue:      workqueue.NewNamed("taskQueue"),
 		sync:       syncFn,
 		workerDone: make(chan struct{}),
 	}
@@ -55,7 +55,6 @@ func (tq *taskQueue) Enqueue(obj interface{}) {
 	}
 
 	glog.V(3).Infof("Adding an element with a key: %v", task.Key)
-
 	tq.queue.Add(task)
 }
 
@@ -103,30 +102,19 @@ func (tq *taskQueue) Shutdown() {
 // kind represents the kind of the Kubernetes resources of a task
 type kind int
 
+// resources
 const (
-	// ingress resource
 	ingress = iota
-	// endpoints resource
 	endpoints
-	// configMap resource
 	configMap
-	// secret resource
 	secret
-	// service resource
 	service
-	// virtualserver resource
 	virtualserver
-	// virtualServeRoute resource
 	virtualServerRoute
-	// globalConfiguration resource
 	globalConfiguration
-	// transportserver resource
 	transportserver
-	// policy resource
 	policy
-	// appProtectPolicy resource
 	appProtectPolicy
-	// appProtectlogconf resource
 	appProtectLogConf
 )
 
@@ -166,7 +154,7 @@ func newTask(key string, obj interface{}) (task, error) {
 		} else if objectKind == appProtectLogConfGVK.Kind {
 			k = appProtectLogConf
 		} else {
-			return task{}, fmt.Errorf("Unknow unstructured kind: %v", objectKind)
+			return task{}, fmt.Errorf("Unknown unstructured kind: %v", objectKind)
 		}
 	default:
 		return task{}, fmt.Errorf("Unknown type: %v", t)
