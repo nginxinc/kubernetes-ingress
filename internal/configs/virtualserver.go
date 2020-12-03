@@ -55,7 +55,6 @@ type PodInfo struct {
 type VirtualServerEx struct {
 	VirtualServer       *conf_v1.VirtualServer
 	Endpoints           map[string][]string
-	TLSSecret           *api_v1.Secret
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
 	Policies            map[string]*conf_v1alpha1.Policy
