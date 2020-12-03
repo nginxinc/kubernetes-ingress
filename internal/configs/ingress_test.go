@@ -23,10 +23,13 @@ func TestGenerateNginxCfg(t *testing.T) {
 	expected := createExpectedConfigForCafeIngressEx()
 
 	apRes := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
 	}
 }
 
@@ -58,13 +61,16 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 	}
 
 	apRes := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, true, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, true, false, &StaticConfigParams{}, false)
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
 	}
 	if !reflect.DeepEqual(result.Servers[0].JWTRedirectLocations, expected.Servers[0].JWTRedirectLocations) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.Servers[0].JWTRedirectLocations, expected.Servers[0].JWTRedirectLocations)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg returned warnings: %v", warnings)
 	}
 }
 
@@ -74,12 +80,21 @@ func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 	configParams := NewDefaultConfigParams()
 
 	apRes := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, false)
+	result, resultWarnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, false)
 
 	expectedCiphers := "NULL"
+	expectedWarnings := Warnings{
+		cafeIngressEx.Ingress: {
+			"TLS secret cafe-secret is invalid: secret doesn't exist",
+		},
+	}
+
 	resultCiphers := result.Servers[0].SSLCiphers
 	if !reflect.DeepEqual(resultCiphers, expectedCiphers) {
 		t.Errorf("generateNginxCfg returned SSLCiphers %v,  but expected %v", resultCiphers, expectedCiphers)
+	}
+	if diff := cmp.Diff(expectedWarnings, resultWarnings); diff != "" {
+		t.Errorf("generateNginxCfg returned unexpected result (-want +got):\n%s", diff)
 	}
 }
 
@@ -89,7 +104,7 @@ func TestGenerateNginxCfgWithWildcardTLSSecret(t *testing.T) {
 	configParams := NewDefaultConfigParams()
 
 	apRes := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, true)
+	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, true)
 
 	resultServer := result.Servers[0]
 	if !reflect.DeepEqual(resultServer.SSLCertificate, pemFileNameForWildcardTLSSecret) {
@@ -97,6 +112,9 @@ func TestGenerateNginxCfgWithWildcardTLSSecret(t *testing.T) {
 	}
 	if !reflect.DeepEqual(resultServer.SSLCertificateKey, pemFileNameForWildcardTLSSecret) {
 		t.Errorf("generateNginxCfg returned SSLCertificateKey %v,  but expected %v", resultServer.SSLCertificateKey, pemFileNameForWildcardTLSSecret)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg returned warnings: %v", warnings)
 	}
 }
 
@@ -307,10 +325,13 @@ func TestGenerateNginxCfgForMergeableIngresses(t *testing.T) {
 	configParams := NewDefaultConfigParams()
 
 	masterApRes := make(map[string]string)
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, false, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, false, false, &StaticConfigParams{}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned warnings: %v", warnings)
 	}
 }
 
@@ -329,10 +350,13 @@ func TestGenerateNginxConfigForCrossNamespaceMergeableIngresses(t *testing.T) {
 	configParams := NewDefaultConfigParams()
 
 	emptyApResources := make(map[string]string)
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, emptyApResources, configParams, false, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, emptyApResources, configParams, false, false, &StaticConfigParams{}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned warnings: %v", warnings)
 	}
 }
 
@@ -386,7 +410,7 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	isPlus := true
 
 	masterApRes := make(map[string]string)
-	result := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, isPlus, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, isPlus, false, &StaticConfigParams{}, false)
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -396,6 +420,9 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	}
 	if !reflect.DeepEqual(result.Servers[0].JWTRedirectLocations, expected.Servers[0].JWTRedirectLocations) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].JWTRedirectLocations, expected.Servers[0].JWTRedirectLocations)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfgForMergeableIngresses returned warnings: %v", warnings)
 	}
 }
 
@@ -756,11 +783,14 @@ func TestGenerateNginxCfgForSpiffe(t *testing.T) {
 	}
 
 	apResources := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
+	result, warnings := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
 		&StaticConfigParams{NginxServiceMesh: true}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
 	}
 }
 
@@ -775,11 +805,14 @@ func TestGenerateNginxCfgForInternalRoute(t *testing.T) {
 	expected.Ingress.Annotations[internalRouteAnnotation] = "true"
 
 	apResources := make(map[string]string)
-	result := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
+	result, warnings := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
 		&StaticConfigParams{NginxServiceMesh: true, EnableInternalRoutes: true}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
 	}
 }
 
@@ -854,7 +887,8 @@ func TestAddSSLConfig(t *testing.T) {
 		tls               []networking.IngressTLS
 		secretRefs        map[string]*secrets.SecretReference
 		isWildcardEnabled bool
-		expected          version1.Server
+		expectedServer    version1.Server
+		expectedWarnings  Warnings
 		msg               string
 	}{
 		{
@@ -872,7 +906,8 @@ func TestAddSSLConfig(t *testing.T) {
 				},
 			},
 			isWildcardEnabled: false,
-			expected:          version1.Server{},
+			expectedServer:    version1.Server{},
+			expectedWarnings:  Warnings{},
 			msg:               "TLS termination for different host",
 		},
 		{
@@ -890,12 +925,13 @@ func TestAddSSLConfig(t *testing.T) {
 				},
 			},
 			isWildcardEnabled: false,
-			expected: version1.Server{
+			expectedServer: version1.Server{
 				SSL:               true,
 				SSLCertificate:    "/etc/nginx/secrets/default-cafe-secret",
 				SSLCertificateKey: "/etc/nginx/secrets/default-cafe-secret",
 			},
-			msg: "TLS termination",
+			expectedWarnings: Warnings{},
+			msg:              "TLS termination",
 		},
 		{
 			host: "cafe.example.com",
@@ -911,11 +947,16 @@ func TestAddSSLConfig(t *testing.T) {
 				},
 			},
 			isWildcardEnabled: false,
-			expected: version1.Server{
+			expectedServer: version1.Server{
 				SSL:               true,
 				SSLCertificate:    pemFileNameForMissingTLSSecret,
 				SSLCertificateKey: pemFileNameForMissingTLSSecret,
 				SSLCiphers:        "NULL",
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					"TLS secret cafe-secret is invalid: invalid secret",
+				},
 			},
 			msg: "invalid secret",
 		},
@@ -934,11 +975,16 @@ func TestAddSSLConfig(t *testing.T) {
 				},
 			},
 			isWildcardEnabled: false,
-			expected: version1.Server{
+			expectedServer: version1.Server{
 				SSL:               true,
 				SSLCertificate:    pemFileNameForMissingTLSSecret,
 				SSLCertificateKey: pemFileNameForMissingTLSSecret,
 				SSLCiphers:        "NULL",
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					"TLS secret cafe-secret is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'",
+				},
 			},
 			msg: "secret of wrong type",
 		},
@@ -951,12 +997,13 @@ func TestAddSSLConfig(t *testing.T) {
 				},
 			},
 			isWildcardEnabled: true,
-			expected: version1.Server{
+			expectedServer: version1.Server{
 				SSL:               true,
 				SSLCertificate:    pemFileNameForWildcardTLSSecret,
 				SSLCertificateKey: pemFileNameForWildcardTLSSecret,
 			},
-			msg: "no secret name with wildcard enabled",
+			expectedWarnings: Warnings{},
+			msg:              "no secret name with wildcard enabled",
 		},
 		{
 			host: "cafe.example.com",
@@ -967,23 +1014,32 @@ func TestAddSSLConfig(t *testing.T) {
 				},
 			},
 			isWildcardEnabled: false,
-			expected: version1.Server{
+			expectedServer: version1.Server{
 				SSL:               true,
 				SSLCertificate:    pemFileNameForMissingTLSSecret,
 				SSLCertificateKey: pemFileNameForMissingTLSSecret,
 				SSLCiphers:        "NULL",
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					"TLS termination for host 'cafe.example.com' requires specifying a TLS secret or configuring a global wildcard TLS secret",
+				},
 			},
 			msg: "no secret name with wildcard disabled",
 		},
 	}
 
 	for _, test := range tests {
-		var result version1.Server
+		var server version1.Server
 
-		addSSLConfig(&result, test.host, test.tls, test.secretRefs, test.isWildcardEnabled)
+		// it is ok to use nil as the owner
+		warnings := addSSLConfig(&server, nil, test.host, test.tls, test.secretRefs, test.isWildcardEnabled)
 
-		if diff := cmp.Diff(test.expected, result); diff != "" {
+		if diff := cmp.Diff(test.expectedServer, server); diff != "" {
 			t.Errorf("addSSLConfig() '%s' mismatch (-want +got):\n%s", test.msg, diff)
+		}
+		if !reflect.DeepEqual(test.expectedWarnings, warnings) {
+			t.Errorf("addSSLConfig() returned %v but expected %v for the case of %s", warnings, test.expectedWarnings, test.msg)
 		}
 	}
 }
@@ -995,6 +1051,7 @@ func TestGenerateJWTConfig(t *testing.T) {
 		redirectLocationName     string
 		expectedJWTAuth          *version1.JWTAuth
 		expectedRedirectLocation *version1.JWTRedirectLocation
+		expectedWarnings         Warnings
 		msg                      string
 	}{
 		{
@@ -1016,6 +1073,7 @@ func TestGenerateJWTConfig(t *testing.T) {
 				Token: "$http_token",
 			},
 			expectedRedirectLocation: nil,
+			expectedWarnings:         Warnings{},
 			msg:                      "normal case",
 		},
 		{
@@ -1042,7 +1100,8 @@ func TestGenerateJWTConfig(t *testing.T) {
 				Name:     "@loc",
 				LoginURL: "http://cafe.example.com/login",
 			},
-			msg: "normal case with login url",
+			expectedWarnings: Warnings{},
+			msg:              "normal case with login url",
 		},
 		{
 			secretRefs: map[string]*secrets.SecretReference{
@@ -1063,7 +1122,12 @@ func TestGenerateJWTConfig(t *testing.T) {
 				Token: "$http_token",
 			},
 			expectedRedirectLocation: nil,
-			msg:                      "invalid secret",
+			expectedWarnings: Warnings{
+				nil: {
+					"JWK secret cafe-jwk is invalid: invalid secret",
+				},
+			},
+			msg: "invalid secret",
 		},
 		{
 			secretRefs: map[string]*secrets.SecretReference{
@@ -1084,18 +1148,26 @@ func TestGenerateJWTConfig(t *testing.T) {
 				Token: "$http_token",
 			},
 			expectedRedirectLocation: nil,
-			msg:                      "secret of wrong type",
+			expectedWarnings: Warnings{
+				nil: {
+					"JWK secret cafe-jwk is of a wrong type 'nginx.org/ca', must be 'nginx.org/jwk'",
+				},
+			},
+			msg: "secret of wrong type",
 		},
 	}
 
 	for _, test := range tests {
-		jwtAuth, redirectLocation := generateJWTConfig(test.secretRefs, test.cfgParams, test.redirectLocationName)
+		jwtAuth, redirectLocation, warnings := generateJWTConfig(nil, test.secretRefs, test.cfgParams, test.redirectLocationName)
 
 		if diff := cmp.Diff(test.expectedJWTAuth, jwtAuth); diff != "" {
 			t.Errorf("generateJWTConfig() '%s' mismatch for jwtAuth (-want +got):\n%s", test.msg, diff)
 		}
 		if diff := cmp.Diff(test.expectedRedirectLocation, redirectLocation); diff != "" {
 			t.Errorf("generateJWTConfig() '%s' mismatch for redirectLocation (-want +got):\n%s", test.msg, diff)
+		}
+		if !reflect.DeepEqual(test.expectedWarnings, warnings) {
+			t.Errorf("generateJWTConfig() returned %v but expected %v for the case of %s", warnings, test.expectedWarnings, test.msg)
 		}
 	}
 }

@@ -935,14 +935,14 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 				if impl.IsMaster {
 					mergeableIng := lbc.createMergeableIngresses(impl)
 
-					addOrUpdateErr := lbc.configurator.AddOrUpdateMergeableIngress(mergeableIng)
-					lbc.updateMergeableIngressStatusAndEvents(impl, addOrUpdateErr)
+					warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateMergeableIngress(mergeableIng)
+					lbc.updateMergeableIngressStatusAndEvents(impl, warnings, addOrUpdateErr)
 				} else {
 					// for regular Ingress, validMinionPaths is nil
 					ingEx := lbc.createIngressEx(impl.Ingress, impl.ValidHosts, nil)
 
-					addOrUpdateErr := lbc.configurator.AddOrUpdateIngress(ingEx)
-					lbc.updateRegularIngressStatusAndEvents(impl, addOrUpdateErr)
+					warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateIngress(ingEx)
+					lbc.updateRegularIngressStatusAndEvents(impl, warnings, addOrUpdateErr)
 				}
 			}
 		} else if c.Op == Delete {
@@ -1068,15 +1068,15 @@ func (lbc *LoadBalancerController) updateResourcesStatusAndEvents(resources []Re
 			lbc.updateVirtualServerStatusAndEvents(impl, warnings, operationErr)
 		case *FullIngress:
 			if impl.IsMaster {
-				lbc.updateMergeableIngressStatusAndEvents(impl, operationErr)
+				lbc.updateMergeableIngressStatusAndEvents(impl, warnings, operationErr)
 			} else {
-				lbc.updateRegularIngressStatusAndEvents(impl, operationErr)
+				lbc.updateRegularIngressStatusAndEvents(impl, warnings, operationErr)
 			}
 		}
 	}
 }
 
-func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(fullIng *FullIngress, operationErr error) {
+func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(fullIng *FullIngress, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
 	eventTitle := "AddedOrUpdated"
 	eventWarningMessage := ""
@@ -1085,6 +1085,12 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(fullIng
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
 		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(fullIng.Warnings))
+	}
+
+	if messages, ok := warnings[fullIng.Ingress]; ok {
+		eventType = api_v1.EventTypeWarning
+		eventTitle = "AddedOrUpdatedWithWarning"
+		eventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", eventWarningMessage, formatWarningMessages(messages))
 	}
 
 	if operationErr != nil {
@@ -1106,6 +1112,12 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(fullIng
 			minionEventType = api_v1.EventTypeWarning
 			minionEventTitle = "AddedOrUpdatedWithWarning"
 			minionEventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(minionChangeWarnings))
+		}
+
+		if messages, ok := warnings[fm.Ingress]; ok {
+			minionEventType = api_v1.EventTypeWarning
+			minionEventTitle = "AddedOrUpdatedWithWarning"
+			minionEventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", minionEventWarningMessage, formatWarningMessages(messages))
 		}
 
 		if operationErr != nil {
@@ -1132,7 +1144,7 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(fullIng
 	}
 }
 
-func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(fullIng *FullIngress, operationErr error) {
+func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(fullIng *FullIngress, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
 	eventTitle := "AddedOrUpdated"
 	eventWarningMessage := ""
@@ -1141,6 +1153,12 @@ func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(fullIng *
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
 		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(fullIng.Warnings))
+	}
+
+	if messages, ok := warnings[fullIng.Ingress]; ok {
+		eventType = api_v1.EventTypeWarning
+		eventTitle = "AddedOrUpdatedWithWarning"
+		eventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", eventWarningMessage, formatWarningMessages(messages))
 	}
 
 	if operationErr != nil {
@@ -2690,8 +2708,8 @@ func (lbc *LoadBalancerController) handleAppProtectPolicyUpdate(pol *unstructure
 	// VirtualServers don't support AppProtect policies
 	ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
 
-	updateErr := lbc.configurator.AddOrUpdateAppProtectResource(pol, ingressExes, mergeableIngresses)
-	lbc.updateResourcesStatusAndEvents(resources, configs.Warnings{}, updateErr)
+	warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(pol, ingressExes, mergeableIngresses)
+	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 
 	return updateErr
 }
@@ -2700,8 +2718,8 @@ func (lbc *LoadBalancerController) handleAppProtectPolicyDeletion(key string, re
 	// VirtualServers don't support AppProtect policies
 	ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
 
-	deleteErr := lbc.configurator.DeleteAppProtectPolicy(key, ingressExes, mergeableIngresses)
-	lbc.updateResourcesStatusAndEvents(resources, configs.Warnings{}, deleteErr)
+	warnnigs, deleteErr := lbc.configurator.DeleteAppProtectPolicy(key, ingressExes, mergeableIngresses)
+	lbc.updateResourcesStatusAndEvents(resources, warnnigs, deleteErr)
 
 	return deleteErr
 }
@@ -2760,8 +2778,8 @@ func (lbc *LoadBalancerController) appProtectLogConfUpdate(logConf *unstructured
 	// VirtualServers don't support AppProtectLogConf
 	ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
 
-	updateErr := lbc.configurator.AddOrUpdateAppProtectResource(logConf, ingressExes, mergeableIngresses)
-	lbc.updateResourcesStatusAndEvents(resources, configs.Warnings{}, updateErr)
+	warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(logConf, ingressExes, mergeableIngresses)
+	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 
 	return updateErr
 }
@@ -2770,8 +2788,8 @@ func (lbc *LoadBalancerController) appProtectLogConfDeletion(key string, resourc
 	// VirtualServers don't support AppProtectLogConf
 	ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
 
-	deleteErr := lbc.configurator.DeleteAppProtectLogConf(key, ingressExes, mergeableIngresses)
-	lbc.updateResourcesStatusAndEvents(resources, configs.Warnings{}, deleteErr)
+	warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(key, ingressExes, mergeableIngresses)
+	lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 
 	return deleteErr
 }

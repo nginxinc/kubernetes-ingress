@@ -9,6 +9,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	api_v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -55,7 +56,7 @@ type MergeableIngresses struct {
 }
 
 func generateNginxCfg(ingEx *IngressEx, apResources map[string]string, isMinion bool, baseCfgParams *ConfigParams, isPlus bool,
-	isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool) version1.IngressNginxConfig {
+	isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
 	hasAppProtect := staticParams.MainAppProtectLoadModule
 	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus, hasAppProtect, staticParams.EnableInternalRoutes)
 
@@ -86,6 +87,8 @@ func generateNginxCfg(ingEx *IngressEx, apResources map[string]string, isMinion 
 			}
 		}
 	}
+
+	allWarnings := newWarnings()
 
 	var servers []version1.Server
 
@@ -132,7 +135,8 @@ func generateNginxCfg(ingEx *IngressEx, apResources map[string]string, isMinion 
 			SpiffeCerts:           cfgParams.SpiffeServerCerts,
 		}
 
-		addSSLConfig(&server, rule.Host, ingEx.Ingress.Spec.TLS, ingEx.SecretRefs, isWildcardEnabled)
+		warnings := addSSLConfig(&server, ingEx.Ingress, rule.Host, ingEx.Ingress.Spec.TLS, ingEx.SecretRefs, isWildcardEnabled)
+		allWarnings.Add(warnings)
 
 		if hasAppProtect {
 			server.AppProtectPolicy = apResources[appProtectPolicyKey]
@@ -140,11 +144,12 @@ func generateNginxCfg(ingEx *IngressEx, apResources map[string]string, isMinion 
 		}
 
 		if !isMinion && cfgParams.JWTKey != "" {
-			jwtAuth, redirectLoc := generateJWTConfig(ingEx.SecretRefs, &cfgParams, getNameForRedirectLocation(ingEx.Ingress))
+			jwtAuth, redirectLoc, warnings := generateJWTConfig(ingEx.Ingress, ingEx.SecretRefs, &cfgParams, getNameForRedirectLocation(ingEx.Ingress))
 			server.JWTAuth = jwtAuth
 			if redirectLoc != nil {
 				server.JWTRedirectLocations = append(server.JWTRedirectLocations, *redirectLoc)
 			}
+			allWarnings.Add(warnings)
 		}
 
 		var locations []version1.Location
@@ -189,11 +194,12 @@ func generateNginxCfg(ingEx *IngressEx, apResources map[string]string, isMinion 
 				ssl, grpcServices[path.Backend.ServiceName], proxySSLName, path.PathType, path.Backend.ServiceName)
 
 			if isMinion && cfgParams.JWTKey != "" {
-				jwtAuth, redirectLoc := generateJWTConfig(ingEx.SecretRefs, &cfgParams, getNameForRedirectLocation(ingEx.Ingress))
+				jwtAuth, redirectLoc, warnings := generateJWTConfig(ingEx.Ingress, ingEx.SecretRefs, &cfgParams, getNameForRedirectLocation(ingEx.Ingress))
 				loc.JWTAuth = jwtAuth
 				if redirectLoc != nil {
 					server.JWTRedirectLocations = append(server.JWTRedirectLocations, *redirectLoc)
 				}
+				allWarnings.Add(warnings)
 			}
 
 			locations = append(locations, loc)
@@ -246,16 +252,19 @@ func generateNginxCfg(ingEx *IngressEx, apResources map[string]string, isMinion 
 			Annotations: ingEx.Ingress.Annotations,
 		},
 		SpiffeClientCerts: staticParams.NginxServiceMesh && !cfgParams.SpiffeServerCerts,
-	}
+	}, allWarnings
 }
 
-func generateJWTConfig(secretRefs map[string]*secrets.SecretReference, cfgParams *ConfigParams, redirectLocationName string) (*version1.JWTAuth, *version1.JWTRedirectLocation) {
+func generateJWTConfig(owner runtime.Object, secretRefs map[string]*secrets.SecretReference, cfgParams *ConfigParams,
+	redirectLocationName string) (*version1.JWTAuth, *version1.JWTRedirectLocation, Warnings) {
+	warnings := newWarnings()
+
 	secret := secretRefs[cfgParams.JWTKey]
 
 	if secret.Error != nil {
-		// TO-DO: add a warning
+		warnings.AddWarningf(owner, "JWK secret %s is invalid: %v", cfgParams.JWTKey, secret.Error)
 	} else if secret.Type != secrets.SecretTypeJWK {
-		// TO-DO: add a warning
+		warnings.AddWarningf(owner, "JWK secret %s is of a wrong type '%s', must be '%s'", cfgParams.JWTKey, secret.Type, secrets.SecretTypeJWK)
 	}
 
 	// Key is configured for all cases, including when the secret is (1) invalid or (2) of a wrong type.
@@ -276,10 +285,13 @@ func generateJWTConfig(secretRefs map[string]*secrets.SecretReference, cfgParams
 		}
 	}
 
-	return jwtAuth, redirectLocation
+	return jwtAuth, redirectLocation, warnings
 }
 
-func addSSLConfig(server *version1.Server, host string, ingressTLS []networking.IngressTLS, secretRefs map[string]*secrets.SecretReference, isWildcardEnabled bool) {
+func addSSLConfig(server *version1.Server, owner runtime.Object, host string, ingressTLS []networking.IngressTLS,
+	secretRefs map[string]*secrets.SecretReference, isWildcardEnabled bool) Warnings {
+	warnings := newWarnings()
+
 	var tlsEnabled bool
 	var tlsSecret string
 
@@ -294,7 +306,7 @@ func addSSLConfig(server *version1.Server, host string, ingressTLS []networking.
 	}
 
 	if !tlsEnabled {
-		return
+		return warnings
 	}
 
 	var pemFile string
@@ -303,10 +315,10 @@ func addSSLConfig(server *version1.Server, host string, ingressTLS []networking.
 		secret := secretRefs[tlsSecret]
 		if secret.Error != nil {
 			pemFile = pemFileNameForMissingTLSSecret
-			// TO-DO: add a warning
+			warnings.AddWarningf(owner, "TLS secret %s is invalid: %v", tlsSecret, secret.Error)
 		} else if secret.Type != api_v1.SecretTypeTLS {
 			pemFile = pemFileNameForMissingTLSSecret
-			// TO-DO: add a warning
+			warnings.AddWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tlsSecret, secret.Type, api_v1.SecretTypeTLS)
 		} else {
 			pemFile = secret.Path
 		}
@@ -314,7 +326,7 @@ func addSSLConfig(server *version1.Server, host string, ingressTLS []networking.
 		pemFile = pemFileNameForWildcardTLSSecret
 	} else {
 		pemFile = pemFileNameForMissingTLSSecret
-		// TO-DO: add a warning
+		warnings.AddWarningf(owner, "TLS termination for host '%s' requires specifying a TLS secret or configuring a global wildcard TLS secret", host)
 	}
 
 	server.SSL = true
@@ -323,6 +335,8 @@ func addSSLConfig(server *version1.Server, host string, ingressTLS []networking.
 	if pemFile == pemFileNameForMissingTLSSecret {
 		server.SSLCiphers = "NULL"
 	}
+
+	return warnings
 }
 
 func generateIngressPath(path string, pathType *networking.PathType) string {
@@ -482,7 +496,7 @@ func upstreamMapToSlice(upstreams map[string]version1.Upstream) []version1.Upstr
 
 func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, masterApResources map[string]string,
 	baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams,
-	isWildcardEnabled bool) version1.IngressNginxConfig {
+	isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
 
 	var masterServer version1.Server
 	var locations []version1.Location
@@ -491,6 +505,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	var keepalive string
 
 	// replace master with a deepcopy because we will modify it
+	originalMaster := mergeableIngs.Master.Ingress
 	mergeableIngs.Master.Ingress = mergeableIngs.Master.Ingress.DeepCopy()
 
 	removedAnnotations := filterMasterAnnotations(mergeableIngs.Master.Ingress.Annotations)
@@ -500,7 +515,14 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	}
 	isMinion := false
 
-	masterNginxCfg := generateNginxCfg(mergeableIngs.Master, masterApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
+	masterNginxCfg, warnings := generateNginxCfg(mergeableIngs.Master, masterApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
+
+	// because mergeableIngs.Master.Ingress is a deepcopy of the original master
+	// we need to change the key in the warnings to the original master
+	if _, exists := warnings[mergeableIngs.Master.Ingress]; exists {
+		warnings[originalMaster] = warnings[mergeableIngs.Master.Ingress]
+		delete(warnings, mergeableIngs.Master.Ingress)
+	}
 
 	masterServer = masterNginxCfg.Servers[0]
 	masterServer.Locations = []version1.Location{}
@@ -514,6 +536,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	minions := mergeableIngs.Minions
 	for _, minion := range minions {
 		// replace minion with a deepcopy because we will modify it
+		originalMinion := minion.Ingress
 		minion.Ingress = minion.Ingress.DeepCopy()
 
 		// Remove the default backend so that "/" will not be generated
@@ -531,7 +554,15 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 		isMinion := true
 		// App Protect Resources not allowed in minions - pass empty map
 		dummyApResources := make(map[string]string)
-		nginxCfg := generateNginxCfg(minion, dummyApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
+		nginxCfg, minionWarnings := generateNginxCfg(minion, dummyApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
+		warnings.Add(minionWarnings)
+
+		// because minion.Ingress is a deepcopy of the original minion
+		// we need to change the key in the warnings to the original minion
+		if _, exists := warnings[minion.Ingress]; exists {
+			warnings[originalMinion] = warnings[minion.Ingress]
+			delete(warnings, minion.Ingress)
+		}
 
 		for _, server := range nginxCfg.Servers {
 			for _, loc := range server.Locations {
@@ -556,7 +587,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 		Keepalive:         keepalive,
 		Ingress:           masterNginxCfg.Ingress,
 		SpiffeClientCerts: staticParams.NginxServiceMesh && !baseCfgParams.SpiffeServerCerts,
-	}
+	}, warnings
 }
 
 func isSSLEnabled(isSSLService bool, cfgParams ConfigParams, staticCfgParams *StaticConfigParams) bool {

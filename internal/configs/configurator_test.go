@@ -67,9 +67,12 @@ func TestAddOrUpdateIngress(t *testing.T) {
 
 	ingress := createCafeIngressEx()
 
-	err = cnf.AddOrUpdateIngress(&ingress)
+	warnings, err := cnf.AddOrUpdateIngress(&ingress)
 	if err != nil {
 		t.Errorf("AddOrUpdateIngress returned:  \n%v, but expected: \n%v", err, nil)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("AddOrUpdateIngress returned warnings: %v", warnings)
 	}
 
 	cnfHasIngress := cnf.HasIngress(ingress.Ingress)
@@ -86,9 +89,12 @@ func TestAddOrUpdateMergeableIngress(t *testing.T) {
 
 	mergeableIngess := createMergeableCafeIngress()
 
-	err = cnf.AddOrUpdateMergeableIngress(mergeableIngess)
+	warnings, err := cnf.AddOrUpdateMergeableIngress(mergeableIngess)
 	if err != nil {
 		t.Errorf("AddOrUpdateMergeableIngress returned \n%v, expected \n%v", err, nil)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("AddOrUpdateMergeableIngress returned warnings: %v", warnings)
 	}
 
 	cnfHasMergeableIngress := cnf.HasIngress(mergeableIngess.Master.Ingress)
@@ -105,9 +111,12 @@ func TestAddOrUpdateIngressFailsWithInvalidIngressTemplate(t *testing.T) {
 
 	ingress := createCafeIngressEx()
 
-	err = cnf.AddOrUpdateIngress(&ingress)
+	warnings, err := cnf.AddOrUpdateIngress(&ingress)
 	if err == nil {
-		t.Errorf("AddOrUpdateIngressFailsWithInvalidTemplate returned \n%v,  but expected \n%v", nil, "template execution error")
+		t.Errorf("AddOrUpdateIngress returned \n%v,  but expected \n%v", nil, "template execution error")
+	}
+	if len(warnings) != 0 {
+		t.Errorf("AddOrUpdateIngress returned warnings: %v", warnings)
 	}
 }
 
@@ -119,9 +128,12 @@ func TestAddOrUpdateMergeableIngressFailsWithInvalidIngressTemplate(t *testing.T
 
 	mergeableIngess := createMergeableCafeIngress()
 
-	err = cnf.AddOrUpdateMergeableIngress(mergeableIngess)
+	warnings, err := cnf.AddOrUpdateMergeableIngress(mergeableIngess)
 	if err == nil {
 		t.Errorf("AddOrUpdateMergeableIngress returned \n%v, but expected \n%v", nil, "template execution error")
+	}
+	if len(warnings) != 0 {
+		t.Errorf("AddOrUpdateMergeableIngress returned warnings: %v", warnings)
 	}
 }
 
