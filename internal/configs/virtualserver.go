@@ -196,16 +196,12 @@ type virtualServerConfigurator struct {
 }
 
 func (vsc *virtualServerConfigurator) addWarningf(obj runtime.Object, msgFmt string, args ...interface{}) {
-	vsc.addWarning(obj, fmt.Sprintf(msgFmt, args...))
-}
-
-func (vsc *virtualServerConfigurator) addWarning(obj runtime.Object, msg string) {
-	vsc.warnings[obj] = append(vsc.warnings[obj], msg)
+	vsc.warnings.AddWarningf(obj, msgFmt, args...)
 }
 
 func (vsc *virtualServerConfigurator) addWarnings(obj runtime.Object, msgs []string) {
 	for _, msg := range msgs {
-		vsc.addWarning(obj, msg)
+		vsc.warnings.AddWarning(obj, msg)
 	}
 }
 
@@ -258,7 +254,7 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(
 func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
 
-	sslConfig := generateSSLConfig(vsEx.VirtualServer.Spec.TLS, vsEx.VirtualServer.Namespace, vsEx.SecretRefs, vsc.cfgParams)
+	sslConfig := vsc.generateSSLConfig(vsEx.VirtualServer, vsEx.VirtualServer.Spec.TLS, vsEx.VirtualServer.Namespace, vsEx.SecretRefs, vsc.cfgParams)
 	tlsRedirectConfig := generateTLSRedirectConfig(vsEx.VirtualServer.Spec.TLS)
 
 	policyOpts := policyOptions{
@@ -1780,7 +1776,8 @@ func getNameForSourceForMatchesRouteMapFromCondition(condition conf_v1.Condition
 	return condition.Variable
 }
 
-func generateSSLConfig(tls *conf_v1.TLS, namespace string, secretRefs map[string]*secrets.SecretReference, cfgParams *ConfigParams) *version2.SSL {
+func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tls *conf_v1.TLS, namespace string,
+	secretRefs map[string]*secrets.SecretReference, cfgParams *ConfigParams) *version2.SSL {
 	if tls == nil {
 		return nil
 	}
@@ -1797,11 +1794,11 @@ func generateSSLConfig(tls *conf_v1.TLS, namespace string, secretRefs map[string
 	if secret.Error != nil {
 		name = pemFileNameForMissingTLSSecret
 		ciphers = "NULL"
-		// TO-DO: add a warning
+		vsc.addWarningf(owner, "TLS secret %s is invalid: %v", tls.Secret, secret.Error)
 	} else if secret.Type != api_v1.SecretTypeTLS {
 		name = pemFileNameForMissingTLSSecret
 		ciphers = "NULL"
-		// TO-DO: add a warning
+		vsc.addWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tls.Secret, secret.Type, api_v1.SecretTypeTLS)
 	} else {
 		name = secret.Path
 	}

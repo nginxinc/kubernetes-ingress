@@ -20,7 +20,12 @@ func (w Warnings) Add(warnings Warnings) {
 	}
 }
 
-// Adds a warning for the specified object.
+// Adds a warning for the specified object using the provided format and arguments.
 func (w Warnings) AddWarningf(obj runtime.Object, msgFmt string, args ...interface{}) {
 	w[obj] = append(w[obj], fmt.Sprintf(msgFmt, args...))
+}
+
+// Adds a warning for the specified object.
+func (w Warnings) AddWarning(obj runtime.Object, msg string) {
+	w[obj] = append(w[obj], msg)
 }

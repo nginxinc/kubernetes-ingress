@@ -2157,7 +2157,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Code: 500,
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					"Policy default/allow-policy is missing or invalid",
 				},
@@ -2194,7 +2194,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				Allow: []string{"127.0.0.1"},
 				Deny:  []string{"127.0.0.2"},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					"AccessControl policy (or policies) with deny rules is overridden by policy (or policies) with allow rules",
 				},
@@ -2264,7 +2264,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`RateLimit policy "default/rateLimit-policy2" with limit request option dryRun=true is overridden to dryRun=false by the first policy reference in this context`,
 					`RateLimit policy "default/rateLimit-policy2" with limit request option logLevel=info is overridden to logLevel=error by the first policy reference in this context`,
@@ -2307,7 +2307,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Code: 500,
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`JWT policy "default/jwt-policy" references an invalid Secret: secret is invalid`,
 				},
@@ -2369,7 +2369,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Realm:  "test",
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`Multiple jwt policies in the same context is not valid. JWT policy "default/jwt-policy2" will be ignored`,
 				},
@@ -2410,7 +2410,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Code: 500,
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`IngressMTLS policy "default/ingress-mtls-policy" references an invalid Secret: secret is invalid`,
 				},
@@ -2465,7 +2465,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					VerifyDepth:  1,
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`Multiple ingressMTLS policies are not allowed. IngressMTLS policy "default/ingress-mtls-policy2" will be ignored`,
 				},
@@ -2507,7 +2507,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Code: 500,
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`IngressMTLS policy is not allowed in the route context`,
 				},
@@ -2549,7 +2549,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Code: 500,
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`TLS configuration needed for IngressMTLS policy`,
 				},
@@ -2612,7 +2612,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					SSLName:        "$proxy_host",
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`Multiple egressMTLS policies in the same context is not valid. EgressMTLS policy "default/egress-mtls-policy2" will be ignored`,
 				},
@@ -2654,7 +2654,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Code: 500,
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`EgressMTLS policy "default/egress-mtls-policy" references an invalid Secret: secret is invalid`,
 				},
@@ -2696,7 +2696,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Code: 500,
 				},
 			},
-			expectedWarnings: map[runtime.Object][]string{
+			expectedWarnings: Warnings{
 				nil: {
 					`EgressMTLS policy "default/egress-mtls-policy" references an invalid Secret: secret is invalid`,
 				},
@@ -3326,27 +3326,30 @@ func TestGenerateLocationForRedirect(t *testing.T) {
 
 func TestGenerateSSLConfig(t *testing.T) {
 	tests := []struct {
-		inputTLS        *conf_v1.TLS
-		inputSecretRefs map[string]*secrets.SecretReference
-		inputCfgParams  *ConfigParams
-		expected        *version2.SSL
-		msg             string
+		inputTLS         *conf_v1.TLS
+		inputSecretRefs  map[string]*secrets.SecretReference
+		inputCfgParams   *ConfigParams
+		expectedSSL      *version2.SSL
+		expectedWarnings Warnings
+		msg              string
 	}{
 		{
-			inputTLS:        nil,
-			inputSecretRefs: map[string]*secrets.SecretReference{},
-			inputCfgParams:  &ConfigParams{},
-			expected:        nil,
-			msg:             "no TLS field",
+			inputTLS:         nil,
+			inputSecretRefs:  map[string]*secrets.SecretReference{},
+			inputCfgParams:   &ConfigParams{},
+			expectedSSL:      nil,
+			expectedWarnings: Warnings{},
+			msg:              "no TLS field",
 		},
 		{
 			inputTLS: &conf_v1.TLS{
 				Secret: "",
 			},
-			inputSecretRefs: map[string]*secrets.SecretReference{},
-			inputCfgParams:  &ConfigParams{},
-			expected:        nil,
-			msg:             "TLS field with empty secret",
+			inputSecretRefs:  map[string]*secrets.SecretReference{},
+			inputCfgParams:   &ConfigParams{},
+			expectedSSL:      nil,
+			expectedWarnings: Warnings{},
+			msg:              "TLS field with empty secret",
 		},
 		{
 			inputTLS: &conf_v1.TLS{
@@ -3358,13 +3361,37 @@ func TestGenerateSSLConfig(t *testing.T) {
 					Error: errors.New("secret doesn't exist"),
 				},
 			},
-			expected: &version2.SSL{
+			expectedSSL: &version2.SSL{
 				HTTP2:          false,
 				Certificate:    pemFileNameForMissingTLSSecret,
 				CertificateKey: pemFileNameForMissingTLSSecret,
 				Ciphers:        "NULL",
 			},
+			expectedWarnings: Warnings{
+				nil: []string{"TLS secret secret is invalid: secret doesn't exist"},
+			},
 			msg: "secret doesn't exist in the cluster with HTTPS",
+		},
+		{
+			inputTLS: &conf_v1.TLS{
+				Secret: "secret",
+			},
+			inputCfgParams: &ConfigParams{},
+			inputSecretRefs: map[string]*secrets.SecretReference{
+				"default/secret": {
+					Type: secrets.SecretTypeCA,
+				},
+			},
+			expectedSSL: &version2.SSL{
+				HTTP2:          false,
+				Certificate:    pemFileNameForMissingTLSSecret,
+				CertificateKey: pemFileNameForMissingTLSSecret,
+				Ciphers:        "NULL",
+			},
+			expectedWarnings: Warnings{
+				nil: []string{"TLS secret secret is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'"},
+			},
+			msg: "wrong secret type",
 		},
 		{
 			inputTLS: &conf_v1.TLS{
@@ -3377,22 +3404,29 @@ func TestGenerateSSLConfig(t *testing.T) {
 				},
 			},
 			inputCfgParams: &ConfigParams{},
-			expected: &version2.SSL{
+			expectedSSL: &version2.SSL{
 				HTTP2:          false,
 				Certificate:    "secret.pem",
 				CertificateKey: "secret.pem",
 				Ciphers:        "",
 			},
-			msg: "normal case with HTTPS",
+			expectedWarnings: Warnings{},
+			msg:              "normal case with HTTPS",
 		},
 	}
 
 	namespace := "default"
 
 	for _, test := range tests {
-		result := generateSSLConfig(test.inputTLS, namespace, test.inputSecretRefs, test.inputCfgParams)
-		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateSSLConfig() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
+
+		// it is ok to use nil as the owner
+		result := vsc.generateSSLConfig(nil, test.inputTLS, namespace, test.inputSecretRefs, test.inputCfgParams)
+		if !reflect.DeepEqual(result, test.expectedSSL) {
+			t.Errorf("generateSSLConfig() returned %v but expected %v for the case of %s", result, test.expectedSSL, test.msg)
+		}
+		if !reflect.DeepEqual(vsc.warnings, test.expectedWarnings) {
+			t.Errorf("generateSSLConfig() returned warnings of \n%v but expected \n%v for the case of %s", vsc.warnings, test.expectedWarnings, test.msg)
 		}
 	}
 }
