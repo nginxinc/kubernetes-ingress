@@ -93,6 +93,9 @@ http {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes
         set $default_connection_header "";
         set $resource_type "";
+        set $resource_name "";
+        set $resource_namespace "";
+        set $service "";
 
         listen 80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
 

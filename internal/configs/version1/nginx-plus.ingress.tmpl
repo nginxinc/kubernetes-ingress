@@ -59,7 +59,6 @@ server {
 	server_name {{$server.Name}};
 
 	status_zone {{$server.StatusZone}};
-
 	set $resource_type "ingress";
 	set $resource_name "{{$.Ingress.Name}}";
 	set $resource_namespace "{{$.Ingress.Namespace}}";
