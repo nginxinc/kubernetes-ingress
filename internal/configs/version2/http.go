@@ -71,6 +71,7 @@ type Server struct {
 	EgressMTLS                *EgressMTLS
 	PoliciesErrorReturn       *Return
 	Namespace                 string
+	Name                      string
 }
 
 // SSL defines SSL configuration for a server.

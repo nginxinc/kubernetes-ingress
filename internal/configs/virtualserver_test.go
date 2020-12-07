@@ -489,6 +489,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
 			Namespace:       "default",
+			Name:            "cafe",
 			ProxyProtocol:   true,
 			ServerTokens:    "off",
 			SetRealIPFrom:   []string{"0.0.0.0/0"},
@@ -711,6 +712,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
 			Namespace:       "default",
+			Name:            "cafe",
 			ProxyProtocol:   true,
 			ServerTokens:    "off",
 			SetRealIPFrom:   []string{"0.0.0.0/0"},
@@ -950,6 +952,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 			ServerName: "cafe.example.com",
 			StatusZone: "cafe.example.com",
 			Namespace:  "default",
+			Name:       "cafe",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/tea",
@@ -1262,6 +1265,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 			ServerName: "cafe.example.com",
 			StatusZone: "cafe.example.com",
 			Namespace:  "default",
+			Name:       "cafe",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/tea",
@@ -1574,6 +1578,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 			ServerName: "example.com",
 			StatusZone: "example.com",
 			Namespace:  "default",
+			Name:       "returns",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/splits-with-return",

@@ -6,12 +6,9 @@ This example lets you set the log-format for NGINX using the configmap reosurce
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: nginx-config
+  name: oss-nginx-ingress
 data:
-  log-format: |
-      compression '$remote_addr - $remote_user [$time_local] '
-                       '"$request" $status $bytes_sent '
-                       '"$http_referer" "$http_user_agent" "$gzip_ratio"'
+  log-format:  $remote_addr - $remote_user [$time_local] \"$request\" $status $body_bytes_sent \"$http_referer\"  \"$http_user_agent\" \"$http_x_forwarded_for\" $resource_name $resource_type $resource_namespace $service;
 ```
 
 In addition to the built-in NGINX variables, you can also use the variables that the Ingress Controller configures:
