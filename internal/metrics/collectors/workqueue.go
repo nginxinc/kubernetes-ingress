@@ -7,6 +7,8 @@ import (
 
 const workqueueSubsystem = "workqueue"
 
+var workqueueLatencyBucketsSeconds = []float64{0.1, 0.5, 1, 5, 10, 50}
+
 // WorkQueueMetricsCollector collects the metrics about the work queue, which the Ingress Controller uses to process changes to the resources in the cluster.
 // implements the prometheus.Collector interface
 type WorkQueueMetricsCollector struct {
@@ -34,7 +36,7 @@ func NewWorkQueueMetricsCollector(constLabels map[string]string) *WorkQueueMetri
 				Subsystem:   workqueueSubsystem,
 				Name:        "queue_duration_seconds",
 				Help:        "How long in seconds an item stays in workqueue before being processed",
-				Buckets:     prometheus.ExponentialBuckets(10e-9, 10, 10),
+				Buckets:     workqueueLatencyBucketsSeconds,
 				ConstLabels: constLabels,
 			},
 			[]string{"name"},
@@ -45,7 +47,7 @@ func NewWorkQueueMetricsCollector(constLabels map[string]string) *WorkQueueMetri
 				Subsystem:   workqueueSubsystem,
 				Name:        "work_duration_seconds",
 				Help:        "How long in seconds processing an item from workqueue takes",
-				Buckets:     prometheus.ExponentialBuckets(10e-9, 10, 10),
+				Buckets:     workqueueLatencyBucketsSeconds,
 				ConstLabels: constLabels,
 			},
 			[]string{"name"},
