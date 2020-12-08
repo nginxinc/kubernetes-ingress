@@ -488,8 +488,8 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
-			Namespace:       "default",
-			Name:            "cafe",
+			VSNamespace:     "default",
+			VSName:          "cafe",
 			ProxyProtocol:   true,
 			ServerTokens:    "off",
 			SetRealIPFrom:   []string{"0.0.0.0/0"},
@@ -711,8 +711,8 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
 			StatusZone:      "cafe.example.com",
-			Namespace:       "default",
-			Name:            "cafe",
+			VSNamespace:     "default",
+			VSName:          "cafe",
 			ProxyProtocol:   true,
 			ServerTokens:    "off",
 			SetRealIPFrom:   []string{"0.0.0.0/0"},
@@ -949,10 +949,10 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 		HTTPSnippets:  []string{""},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
-			ServerName: "cafe.example.com",
-			StatusZone: "cafe.example.com",
-			Namespace:  "default",
-			Name:       "cafe",
+			ServerName:  "cafe.example.com",
+			StatusZone:  "cafe.example.com",
+			VSNamespace: "default",
+			VSName:      "cafe",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/tea",
@@ -1262,10 +1262,10 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 		HTTPSnippets:  []string{""},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
-			ServerName: "cafe.example.com",
-			StatusZone: "cafe.example.com",
-			Namespace:  "default",
-			Name:       "cafe",
+			ServerName:  "cafe.example.com",
+			StatusZone:  "cafe.example.com",
+			VSNamespace: "default",
+			VSName:      "cafe",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/tea",
@@ -1575,10 +1575,10 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 		HTTPSnippets:  []string{""},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
-			ServerName: "example.com",
-			StatusZone: "example.com",
-			Namespace:  "default",
-			Name:       "returns",
+			ServerName:  "example.com",
+			StatusZone:  "example.com",
+			VSNamespace: "default",
+			VSName:      "returns",
 			InternalRedirectLocations: []version2.InternalRedirectLocation{
 				{
 					Path:        "/splits-with-return",

@@ -579,8 +579,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
-			Namespace:                 vsEx.VirtualServer.Namespace,
-			Name:                      vsEx.VirtualServer.Name,
+			VSNamespace:               vsEx.VirtualServer.Namespace,
+			VSName:                    vsEx.VirtualServer.Name,
 		},
 		SpiffeCerts: vsc.spiffeCerts,
 	}
