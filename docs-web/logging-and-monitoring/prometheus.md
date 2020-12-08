@@ -37,12 +37,11 @@ The Ingress Controller exports the following metrics:
   * `controller_ingress_resources_total`. Number of handled Ingress resources. This metric includes the label type, that groups the Ingress resources by their type (regular, [minion or master](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration)). **Note**: The metric doesn't count minions without a master.
   * `controller_virtualserver_resources_total`. Number of handled VirtualServer resources.
   * `controller_virtualserverroute_resources_total`. Number of handled VirtualServerRoute resources. **Note**: The metric counts only VirtualServerRoutes that have a reference from a VirtualServer.
-* Kubernetes Cluster metrics
-  * `controller_workqueue_depth` Current depth of workqueue.
-  * `controller_workqueue_queue_duration_second`. How long in seconds an item stays in workqueue before being requested.
-  * `controller_workqueue_work_duration_seconds`. How long in seconds processing an item from workqueue takes.
+  * Workqueue metrics. **Note**: the workqueue is a queue used by the Ingress Controller to process changes to the relevant resources in the cluster like Ingress resources. The Ingress Controller uses only one queue. The metrics for that queue will have the label `name="taskQueue"`
+    * `workqueue_depth`. Current depth of the workqueue.
+    * `workqueue_queue_duration_second`. How long in seconds an item stays in the workqueue before being requested.
+    * `workqueue_work_duration_seconds`. How long in seconds processing an item from the workqueue takes.
 
-
-**Note**: all metrics have the namespace nginx_ingress. For example, nginx_ingress_controller_nginx_reloads_total.
+**Note**: all metrics have the namespace `nginx_ingress`. For example, `nginx_ingress_controller_nginx_reloads_total`.
 
 **Note**: all metrics include the label `class`, which is set to the class of the Ingress Controller. The class is configured via the `-ingress-class` command-line argument.

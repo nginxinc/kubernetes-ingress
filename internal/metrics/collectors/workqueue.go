@@ -7,7 +7,8 @@ import (
 
 const workqueueSubsystem = "workqueue"
 
-// WorkQueueMetricsCollector implements prometheus.Collector interface
+// WorkQueueMetricsCollector collects the metrics about the work queue, which the Ingress Controller uses to process changes to the resources in the cluster.
+// implements the prometheus.Collector interface
 type WorkQueueMetricsCollector struct {
 	depth        *prometheus.GaugeVec
 	latency      *prometheus.HistogramVec
@@ -32,7 +33,7 @@ func NewWorkQueueMetricsCollector(constLabels map[string]string) *WorkQueueMetri
 				Namespace:   metricsNamespace,
 				Subsystem:   workqueueSubsystem,
 				Name:        "queue_duration_seconds",
-				Help:        "How long in seconds an item stays in workqueue before being requested",
+				Help:        "How long in seconds an item stays in workqueue before being processed",
 				Buckets:     prometheus.ExponentialBuckets(10e-9, 10, 10),
 				ConstLabels: constLabels,
 			},
@@ -59,7 +60,7 @@ func (wqc *WorkQueueMetricsCollector) Collect(ch chan<- prometheus.Metric) {
 	wqc.workDuration.Collect(ch)
 }
 
-// Describe implements prometheus.Collector interface Describe method
+// Describe implements the prometheus.Collector interface Describe method
 func (wqc *WorkQueueMetricsCollector) Describe(ch chan<- *prometheus.Desc) {
 	wqc.depth.Describe(ch)
 	wqc.latency.Describe(ch)

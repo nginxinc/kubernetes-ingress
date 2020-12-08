@@ -10,15 +10,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// NginxProcessesMetricsCollector implements NginxProcessesCollector interface and prometheus.Collector interface
+// NginxProcessesMetricsCollector implements prometheus.Collector interface
 type NginxProcessesMetricsCollector struct {
-	// Metrics
 	workerProcessTotal *prometheus.GaugeVec
 }
 
 // NewNginxProcessesMetricsCollector creates a new NginxProcessMetricsCollector
 func NewNginxProcessesMetricsCollector(constLabels map[string]string) *NginxProcessesMetricsCollector {
-	pc := &NginxProcessesMetricsCollector{
+	return &NginxProcessesMetricsCollector{
 		workerProcessTotal: prometheus.NewGaugeVec(
 			prometheus.GaugeOpts{
 				Name:        "nginx_worker_processes_total",
@@ -29,7 +28,6 @@ func NewNginxProcessesMetricsCollector(constLabels map[string]string) *NginxProc
 			[]string{"generation"},
 		),
 	}
-	return pc
 }
 
 // updateWorkerProcessCount sets the number of NGINX worker processes
