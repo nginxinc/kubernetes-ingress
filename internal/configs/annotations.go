@@ -93,29 +93,40 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		if err != nil {
 			glog.Error(err)
 		}
-		cfgParams.HealthCheckEnabled = healthCheckEnabled
+		if isPlus {
+			cfgParams.HealthCheckEnabled = healthCheckEnabled
+		} else {
+			glog.Warning("Annotation 'nginx.com/health-checks' requires NGINX Plus")
+		}
 	}
 
-	if healthCheckMandatory, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "nginx.com/health-checks-mandatory", ingEx.Ingress); exists {
-		if err != nil {
-			glog.Error(err)
+	if cfgParams.HealthCheckEnabled {
+		if healthCheckMandatory, exists, err := GetMapKeyAsBool(ingEx.Ingress.Annotations, "nginx.com/health-checks-mandatory", ingEx.Ingress); exists {
+			if err != nil {
+				glog.Error(err)
+			}
+			cfgParams.HealthCheckMandatory = healthCheckMandatory
 		}
-		cfgParams.HealthCheckMandatory = healthCheckMandatory
 	}
 
-	if healthCheckQueue, exists, err := GetMapKeyAsInt64(ingEx.Ingress.Annotations, "nginx.com/health-checks-mandatory-queue", ingEx.Ingress); exists {
-		if err != nil {
-			glog.Error(err)
+	if cfgParams.HealthCheckMandatory {
+		if healthCheckQueue, exists, err := GetMapKeyAsInt64(ingEx.Ingress.Annotations, "nginx.com/health-checks-mandatory-queue", ingEx.Ingress); exists {
+			if err != nil {
+				glog.Error(err)
+			}
+			cfgParams.HealthCheckMandatoryQueue = healthCheckQueue
 		}
-		cfgParams.HealthCheckMandatoryQueue = healthCheckQueue
 	}
 
 	if slowStart, exists := ingEx.Ingress.Annotations["nginx.com/slow-start"]; exists {
-		parsedSlowStart, err := ParseTime(slowStart)
-		if err != nil {
-			glog.Error(err)
+		if parsedSlowStart, err := ParseTime(slowStart); err != nil {
+			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/slow-start: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), slowStart, err)
 		} else {
-			cfgParams.SlowStart = parsedSlowStart
+			if isPlus {
+				cfgParams.SlowStart = parsedSlowStart
+			} else {
+				glog.Warning("Annotation 'nginx.com/slow-start' requires NGINX Plus")
+			}
 		}
 	}
 
