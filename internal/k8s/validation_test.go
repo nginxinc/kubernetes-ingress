@@ -524,6 +524,78 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid nginx.org/hsts-behind-proxy nginx.org/hsts is not true",
 		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-buffers": "8 8k",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/proxy-buffers annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-buffer-size": "16k",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/proxy-buffer-size annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-max-temp-file-size": "128M",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/proxy-max-temp-file-size annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/upstream-zone-size": "512k",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/upstream-zone-size annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-realm": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.com/jwt-realm: Forbidden: annotation requires NGINX Plus",
+			},
+			msg: "invalid nginx.com/jwt-realm annotation, nginx plus only",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-key": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.com/jwt-key: Forbidden: annotation requires NGINX Plus",
+			},
+			msg: "invalid nginx.com/jwt-key annotation, nginx plus only",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-token": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.com/jwt-token: Forbidden: annotation requires NGINX Plus",
+			},
+			msg: "invalid nginx.com/jwt-token annotation, nginx plus only",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-login-url": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.com/jwt-login-url: Forbidden: annotation requires NGINX Plus",
+			},
+			msg: "invalid nginx.com/jwt-login-url annotation, nginx plus only",
+		},
 	}
 
 	for _, test := range tests {
@@ -1005,6 +1077,70 @@ func TestValidateNginxPlusIngressAnnotations(t *testing.T) {
 				"annotations.nginx.org/hsts-behind-proxy: Forbidden: related annotation nginx.org/hsts: must be true",
 			},
 			msg: "invalid nginx.org/hsts-behind-proxy nginx.org/hsts is not true",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-buffers": "8 8k",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/proxy-buffers annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-buffer-size": "16k",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/proxy-buffer-size annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/proxy-max-temp-file-size": "128M",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/proxy-max-temp-file-size annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/upstream-zone-size": "512k",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/upstream-zone-size annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-realm": "my-jwt-realm",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.com/jwt-realm annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-key": "my-jwk",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.com/jwt-key annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-token": "$cookie_auth_token",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.com/jwt-token annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-login-url": "https://login.example.com",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.com/jwt-login-url annotation",
 		},
 	}
 

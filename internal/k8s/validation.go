@@ -34,6 +34,14 @@ const (
 	hstsMaxAgeAnnotation                 = "nginx.org/hsts-max-age"
 	hstsIncludeSubdomainsAnnotation      = "nginx.org/hsts-include-subdomains"
 	hstsBehindProxyAnnotation            = "nginx.org/hsts-behind-proxy"
+	proxyBuffersAnnotation               = "nginx.org/proxy-buffers"
+	proxyBufferSizeAnnotation            = "nginx.org/proxy-buffer-size"
+	proxyMaxTempFileSizeAnnotation       = "nginx.org/proxy-max-temp-file-size"
+	upstreamZoneSizeAnnotation           = "nginx.org/upstream-zone-size"
+	jwtRealmAnnotation                   = "nginx.com/jwt-realm"
+	jwtKeyAnnotation                     = "nginx.com/jwt-key"
+	jwtTokenAnnotation                   = "nginx.com/jwt-token"
+	jwtLoginURLAnnotation                = "nginx.com/jwt-login-url"
 )
 
 type annotationValidationContext struct {
@@ -116,6 +124,22 @@ var (
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
+		proxyBuffersAnnotation:         {},
+		proxyBufferSizeAnnotation:      {},
+		proxyMaxTempFileSizeAnnotation: {},
+		upstreamZoneSizeAnnotation:     {},
+		jwtRealmAnnotation: {
+			validatePlusOnlyAnnotation,
+		},
+		jwtKeyAnnotation: {
+			validatePlusOnlyAnnotation,
+		},
+		jwtTokenAnnotation: {
+			validatePlusOnlyAnnotation,
+		},
+		jwtLoginURLAnnotation: {
+			validatePlusOnlyAnnotation,
+		},
 	}
 	nginxAnnotationNames = sortedAnnotationNames(nginxAnnotationValidations)
 
@@ -191,6 +215,14 @@ var (
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
+		proxyBuffersAnnotation:         {},
+		proxyBufferSizeAnnotation:      {},
+		proxyMaxTempFileSizeAnnotation: {},
+		upstreamZoneSizeAnnotation:     {},
+		jwtRealmAnnotation:             {},
+		jwtKeyAnnotation:               {},
+		jwtTokenAnnotation:             {},
+		jwtLoginURLAnnotation:          {},
 	}
 	nginxPlusAnnotationNames = sortedAnnotationNames(nginxPlusAnnotationValidations)
 )
