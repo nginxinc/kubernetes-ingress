@@ -1,8 +1,6 @@
 package configs
 
 import (
-	"strings"
-
 	"github.com/golang/glog"
 )
 
@@ -285,13 +283,24 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		}
 	}
 
-	ports, sslPorts := getServicesPorts(ingEx)
-	if len(ports) > 0 {
-		cfgParams.Ports = ports
+	if values, exists := ingEx.Ingress.Annotations["nginx.org/listen-ports"]; exists {
+		ports, err := ParsePortList(values)
+		if err != nil {
+			glog.Errorf("In %v nginx.org/listen-ports contains invalid declaration: %v, ignoring", ingEx.Ingress.Name, err)
+		}
+		if len(ports) > 0 {
+			cfgParams.Ports = ports
+		}
 	}
 
-	if len(sslPorts) > 0 {
-		cfgParams.SSLPorts = sslPorts
+	if values, exists := ingEx.Ingress.Annotations["nginx.org/listen-ports"]; exists {
+		sslPorts, err := ParsePortList(values)
+		if err != nil {
+			glog.Errorf("In %v nginx.org/listen-ports-ssl contains invalid declaration: %v, ignoring", ingEx.Ingress.Name, err)
+		}
+		if len(sslPorts) > 0 {
+			cfgParams.SSLPorts = sslPorts
+		}
 	}
 
 	if keepalive, exists, err := GetMapKeyAsInt(ingEx.Ingress.Annotations, "nginx.org/keepalive", ingEx.Ingress); exists {
@@ -361,99 +370,58 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 }
 
 func getWebsocketServices(ingEx *IngressEx) map[string]bool {
-	wsServices := make(map[string]bool)
-
-	if services, exists := ingEx.Ingress.Annotations["nginx.org/websocket-services"]; exists {
-		for _, svc := range strings.Split(services, ",") {
-			wsServices[svc] = true
+	if value, exists := ingEx.Ingress.Annotations["nginx.org/websocket-services"]; exists {
+		services, err := ParseServiceList(value)
+		if err != nil {
+			glog.Error(err)
 		}
+		return services
 	}
-
-	return wsServices
+	return make(map[string]bool)
 }
 
 func getRewrites(ingEx *IngressEx) map[string]string {
-	rewrites := make(map[string]string)
-
-	if services, exists := ingEx.Ingress.Annotations["nginx.org/rewrites"]; exists {
-		for _, svc := range strings.Split(services, ";") {
-			if serviceName, rewrite, err := parseRewrites(svc); err != nil {
-				glog.Errorf("In %v nginx.org/rewrites contains invalid declaration: %v, ignoring", ingEx.Ingress.Name, err)
-			} else {
-				rewrites[serviceName] = rewrite
-			}
+	if value, exists := ingEx.Ingress.Annotations["nginx.org/rewrites"]; exists {
+		rewrites, err := ParseRewriteList(value)
+		if err != nil {
+			glog.Error(err)
 		}
+		return rewrites
 	}
-
-	return rewrites
+	return make(map[string]string)
 }
 
 func getSSLServices(ingEx *IngressEx) map[string]bool {
-	sslServices := make(map[string]bool)
-
-	if services, exists := ingEx.Ingress.Annotations["nginx.org/ssl-services"]; exists {
-		for _, svc := range strings.Split(services, ",") {
-			sslServices[svc] = true
+	if value, exists := ingEx.Ingress.Annotations["nginx.org/ssl-services"]; exists {
+		services, err := ParseServiceList(value)
+		if err != nil {
+			glog.Error(err)
 		}
+		return services
 	}
-
-	return sslServices
+	return make(map[string]bool)
 }
 
 func getGrpcServices(ingEx *IngressEx) map[string]bool {
-	grpcServices := make(map[string]bool)
-
-	if services, exists := ingEx.Ingress.Annotations["nginx.org/grpc-services"]; exists {
-		for _, svc := range strings.Split(services, ",") {
-			grpcServices[svc] = true
+	if value, exists := ingEx.Ingress.Annotations["nginx.org/grpc-services"]; exists {
+		services, err := ParseServiceList(value)
+		if err != nil {
+			glog.Error(err)
 		}
+		return services
 	}
-
-	return grpcServices
+	return make(map[string]bool)
 }
 
 func getSessionPersistenceServices(ingEx *IngressEx) map[string]string {
-	spServices := make(map[string]string)
-
-	if services, exists := ingEx.Ingress.Annotations["nginx.com/sticky-cookie-services"]; exists {
-		for _, svc := range strings.Split(services, ";") {
-			if serviceName, sticky, err := parseStickyService(svc); err != nil {
-				glog.Errorf("In %v nginx.com/sticky-cookie-services contains invalid declaration: %v, ignoring", ingEx.Ingress.Name, err)
-			} else {
-				spServices[serviceName] = sticky
-			}
+	if value, exists := ingEx.Ingress.Annotations["nginx.com/sticky-cookie-services"]; exists {
+		services, err := ParseStickyServiceList(value)
+		if err != nil {
+			glog.Error(err)
 		}
+		return services
 	}
-
-	return spServices
-}
-
-func getServicesPorts(ingEx *IngressEx) ([]int, []int) {
-	ports := map[string][]int{}
-
-	annotations := []string{
-		"nginx.org/listen-ports",
-		"nginx.org/listen-ports-ssl",
-	}
-
-	for _, annotation := range annotations {
-		if values, exists := ingEx.Ingress.Annotations[annotation]; exists {
-			for _, value := range strings.Split(values, ",") {
-				if port, err := parsePort(value); err != nil {
-					glog.Errorf(
-						"In %v %s contains invalid declaration: %v, ignoring",
-						ingEx.Ingress.Name,
-						annotation,
-						err,
-					)
-				} else {
-					ports[annotation] = append(ports[annotation], port)
-				}
-			}
-		}
-	}
-
-	return ports[annotations[0]], ports[annotations[1]]
+	return make(map[string]string)
 }
 
 func filterMasterAnnotations(annotations map[string]string) []string {

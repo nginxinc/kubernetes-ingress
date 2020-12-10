@@ -51,6 +51,11 @@ const (
 	appProtectEnableAnnotation            = "appprotect.f5.com/app-protect-enable"
 	appProtectSecurityLogEnableAnnotation = "appprotect.f5.com/app-protect-security-log-enable"
 	internalRouteAnnotation               = "nsm.nginx.com/internal-route"
+	websocketServicesAnnotation           = "nginx.org/websocket-services"
+	sslServicesAnnotation                 = "nginx.org/ssl-services"
+	grpcServicesAnnotation                = "nginx.org/grpc-services"
+	rewritesAnnotation                    = "nginx.org/rewrites"
+	stickyCookieServicesAnnotation        = "nginx.com/sticky-cookie-services"
 )
 
 type annotationValidationContext struct {
@@ -195,6 +200,27 @@ var (
 			validateInternalRoutesOnlyAnnotation,
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
+		},
+		websocketServicesAnnotation: {
+			validateRequiredAnnotation,
+			validateServiceListAnnotation,
+		},
+		sslServicesAnnotation: {
+			validateRequiredAnnotation,
+			validateServiceListAnnotation,
+		},
+		grpcServicesAnnotation: {
+			validateRequiredAnnotation,
+			validateServiceListAnnotation,
+		},
+		rewritesAnnotation: {
+			validateRequiredAnnotation,
+			validateRewriteListAnnotation,
+		},
+		stickyCookieServicesAnnotation: {
+			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateStickyServiceListAnnotation,
 		},
 	}
 	annotationNames = sortedAnnotationNames(annotationValidations)
@@ -401,6 +427,30 @@ func validatePortListAnnotation(context *annotationValidationContext) field.Erro
 	allErrs := field.ErrorList{}
 	if _, err := configs.ParsePortList(context.value); err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a comma-separated list of port numbers"))
+	}
+	return allErrs
+}
+
+func validateServiceListAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if _, err := configs.ParseServiceList(context.value); err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a comma-separated list of services"))
+	}
+	return allErrs
+}
+
+func validateStickyServiceListAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if _, err := configs.ParseStickyServiceList(context.value); err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a semicolon-separated list of sticky services"))
+	}
+	return allErrs
+}
+
+func validateRewriteListAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if _, err := configs.ParseRewriteList(context.value); err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a semicolon-separated list of rewrites"))
 	}
 	return allErrs
 }

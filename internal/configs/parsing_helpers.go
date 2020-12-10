@@ -251,6 +251,41 @@ func parsePort(value string) (int, error) {
 	return int(port), nil
 }
 
+// ParseServiceList ensures that the string is a comma-separated list of services
+func ParseServiceList(s string) (map[string]bool, error) {
+	services := make(map[string]bool)
+	for _, part := range strings.Split(s, ",") {
+		services[part] = true
+	}
+	return services, nil
+}
+
+// ParseRewriteList ensures that the string is a semicolon-separated list of services
+func ParseRewriteList(s string) (map[string]string, error) {
+	rewrites := make(map[string]string)
+	for _, part := range strings.Split(s, ";") {
+		serviceName, rewrite, err := parseRewrites(part)
+		if err != nil {
+			return nil, err
+		}
+		rewrites[serviceName] = rewrite
+	}
+	return rewrites, nil
+}
+
+// ParseStickyServiceList ensures that the string is a semicolon-separated list of sticky services
+func ParseStickyServiceList(s string) (map[string]string, error) {
+	services := make(map[string]string)
+	for _, part := range strings.Split(s, ";") {
+		serviceName, service, err := parseStickyService(part)
+		if err != nil {
+			return nil, err
+		}
+		services[serviceName] = service
+	}
+	return services, nil
+}
+
 func parseStickyService(service string) (serviceName string, stickyCookie string, err error) {
 	parts := strings.SplitN(service, " ", 2)
 

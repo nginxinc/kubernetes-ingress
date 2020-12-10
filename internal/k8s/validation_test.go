@@ -1206,6 +1206,147 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid nsm.nginx.com/internal-route annotation",
 		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/websocket-services": "service-1",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/websocket-services annotation, single-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/websocket-services": "service-1,service-2",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/websocket-services annotation, multi-value",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/ssl-services": "service-1",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/ssl-services annotation, single-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/ssl-services": "service-1,service-2",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/ssl-services annotation, multi-value",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/grpc-services": "service-1",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/grpc-services annotation, single-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/grpc-services": "service-1,service-2",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/grpc-services annotation, multi-value",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=rewrite-1",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/rewrites annotation, single-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=rewrite-1;serviceName=service-2 rewrite=rewrite-2",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/rewrites annotation, multi-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "not_a_rewrite",
+			},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: true,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "not_a_rewrite": must be a semicolon-separated list of rewrites`,
+			},
+			msg: "invalid nginx.org/rewrites annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.com/sticky-cookie-services": "true",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.nginx.com/sticky-cookie-services: Forbidden: annotation requires NGINX Plus",
+			},
+			msg: "invalid nginx.com/sticky-cookie-services annotation, nginx plus only",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/sticky-cookie-services": "serviceName=service-1 srv_id expires=1h path=/service-1",
+			},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.com/sticky-cookie-services annotation, single-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/sticky-cookie-services": "serviceName=service-1 srv_id expires=1h path=/service-1;serviceName=service-2 srv_id expires=2h path=/service-2",
+			},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.com/sticky-cookie-services annotation, multi-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/sticky-cookie-services": "not_a_rewrite",
+			},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.com/sticky-cookie-services: Invalid value: "not_a_rewrite": must be a semicolon-separated list of sticky services`,
+			},
+			msg: "invalid nginx.com/sticky-cookie-services annotation",
+		},
 	}
 
 	for _, test := range tests {
