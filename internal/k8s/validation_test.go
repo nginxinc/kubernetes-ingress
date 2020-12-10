@@ -246,7 +246,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/server-tokens": "custom_setting",
 			},
 			expectedErrors: []string{
-				`annotations.nginx.org/server-tokens: Invalid value: "custom_setting": must be a valid boolean`,
+				`annotations.nginx.org/server-tokens: Invalid value: "custom_setting": must be a boolean`,
 			},
 			msg: "invalid nginx.org/server-tokens annotation, must be a boolean",
 		},
@@ -355,7 +355,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/redirect-to-https": "not_a_boolean",
 			},
 			expectedErrors: []string{
-				`annotations.nginx.org/redirect-to-https: Invalid value: "not_a_boolean": must be a valid boolean`,
+				`annotations.nginx.org/redirect-to-https: Invalid value: "not_a_boolean": must be a boolean`,
 			},
 			msg: "invalid nginx.org/redirect-to-https annotation",
 		},
@@ -372,7 +372,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"ingress.kubernetes.io/ssl-redirect": "not_a_boolean",
 			},
 			expectedErrors: []string{
-				`annotations.ingress.kubernetes.io/ssl-redirect: Invalid value: "not_a_boolean": must be a valid boolean`,
+				`annotations.ingress.kubernetes.io/ssl-redirect: Invalid value: "not_a_boolean": must be a boolean`,
 			},
 			msg: "invalid ingress.kubernetes.io/ssl-redirect annotation",
 		},
@@ -389,9 +389,140 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/proxy-buffering": "not_a_boolean",
 			},
 			expectedErrors: []string{
-				`annotations.nginx.org/proxy-buffering: Invalid value: "not_a_boolean": must be a valid boolean`,
+				`annotations.nginx.org/proxy-buffering: Invalid value: "not_a_boolean": must be a boolean`,
 			},
 			msg: "invalid nginx.org/proxy-buffering annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts": "true",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/hsts annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts": "not_a_boolean",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/hsts: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid nginx.org/hsts annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":         "true",
+				"nginx.org/hsts-max-age": "120",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/hsts-max-age annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":         "true",
+				"nginx.org/hsts-max-age": "not_a_number",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/hsts-max-age: Invalid value: "not_a_number": must be an integer`,
+			},
+			msg: "invalid nginx.org/hsts-max-age, must be a number",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts-max-age": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-max-age: Forbidden: related annotation nginx.org/hsts: must be set",
+			},
+			msg: "invalid nginx.org/hsts-max-age, related annotation nginx.org/hsts not set",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":         "false",
+				"nginx.org/hsts-max-age": "120",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-max-age: Forbidden: related annotation nginx.org/hsts: must be true",
+			},
+			msg: "invalid nginx.org/hsts-max-age nginx.org/hsts is not true",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":                    "true",
+				"nginx.org/hsts-include-subdomains": "true",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/hsts-include-subdomains annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":                    "true",
+				"nginx.org/hsts-include-subdomains": "not_a_boolean",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/hsts-include-subdomains: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid nginx.org/hsts-include-subdomains, must be a boolean",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts-include-subdomains": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-include-subdomains: Forbidden: related annotation nginx.org/hsts: must be set",
+			},
+			msg: "invalid nginx.org/hsts-include-subdomains, related annotation nginx.org/hsts not set",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":                    "false",
+				"nginx.org/hsts-include-subdomains": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-include-subdomains: Forbidden: related annotation nginx.org/hsts: must be true",
+			},
+			msg: "invalid nginx.org/hsts-include-subdomains nginx.org/hsts is not true",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":              "true",
+				"nginx.org/hsts-behind-proxy": "true",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/hsts-behind-proxy annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":              "true",
+				"nginx.org/hsts-behind-proxy": "not_a_boolean",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/hsts-behind-proxy: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid nginx.org/hsts-behind-proxy, must be a boolean",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts-behind-proxy": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-behind-proxy: Forbidden: related annotation nginx.org/hsts: must be set",
+			},
+			msg: "invalid nginx.org/hsts-behind-proxy, related annotation nginx.org/hsts not set",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":              "false",
+				"nginx.org/hsts-behind-proxy": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-behind-proxy: Forbidden: related annotation nginx.org/hsts: must be true",
+			},
+			msg: "invalid nginx.org/hsts-behind-proxy nginx.org/hsts is not true",
 		},
 	}
 
@@ -425,7 +556,7 @@ func TestValidateNginxPlusIngressAnnotations(t *testing.T) {
 				"nginx.com/health-checks": "not_a_boolean",
 			},
 			expectedErrors: []string{
-				`annotations.nginx.com/health-checks: Invalid value: "not_a_boolean": must be a valid boolean`,
+				`annotations.nginx.com/health-checks: Invalid value: "not_a_boolean": must be a boolean`,
 				`annotations.nginx.org/lb-method: Invalid value: "invalid_method": Invalid load balancing method: "invalid_method"`,
 			},
 			msg: "invalid multiple annotations messages in alphabetical order",
@@ -493,7 +624,7 @@ func TestValidateNginxPlusIngressAnnotations(t *testing.T) {
 				"nginx.com/health-checks": "not_a_boolean",
 			},
 			expectedErrors: []string{
-				`annotations.nginx.com/health-checks: Invalid value: "not_a_boolean": must be a valid boolean`,
+				`annotations.nginx.com/health-checks: Invalid value: "not_a_boolean": must be a boolean`,
 			},
 			msg: "invalid nginx.com/health-checks annotation",
 		},
@@ -512,7 +643,7 @@ func TestValidateNginxPlusIngressAnnotations(t *testing.T) {
 				"nginx.com/health-checks-mandatory": "not_a_boolean",
 			},
 			expectedErrors: []string{
-				`annotations.nginx.com/health-checks-mandatory: Invalid value: "not_a_boolean": must be a valid boolean`,
+				`annotations.nginx.com/health-checks-mandatory: Invalid value: "not_a_boolean": must be a boolean`,
 			},
 			msg: "invalid nginx.com/health-checks-mandatory, must be a boolean",
 		},
@@ -589,7 +720,7 @@ func TestValidateNginxPlusIngressAnnotations(t *testing.T) {
 				"nginx.com/slow-start": "not_a_time",
 			},
 			expectedErrors: []string{
-				`annotations.nginx.com/slow-start: Invalid value: "not_a_time": must be a valid time`,
+				`annotations.nginx.com/slow-start: Invalid value: "not_a_time": must be a time`,
 			},
 			msg: "invalid nginx.com/slow-start annotation",
 		},
@@ -706,7 +837,7 @@ func TestValidateNginxPlusIngressAnnotations(t *testing.T) {
 				"nginx.org/redirect-to-https": "not_a_boolean",
 			},
 			expectedErrors: []string{
-				`annotations.nginx.org/redirect-to-https: Invalid value: "not_a_boolean": must be a valid boolean`,
+				`annotations.nginx.org/redirect-to-https: Invalid value: "not_a_boolean": must be a boolean`,
 			},
 			msg: "invalid nginx.org/redirect-to-https annotation",
 		},
@@ -723,7 +854,7 @@ func TestValidateNginxPlusIngressAnnotations(t *testing.T) {
 				"ingress.kubernetes.io/ssl-redirect": "not_a_boolean",
 			},
 			expectedErrors: []string{
-				`annotations.ingress.kubernetes.io/ssl-redirect: Invalid value: "not_a_boolean": must be a valid boolean`,
+				`annotations.ingress.kubernetes.io/ssl-redirect: Invalid value: "not_a_boolean": must be a boolean`,
 			},
 			msg: "invalid ingress.kubernetes.io/ssl-redirect annotation",
 		},
@@ -740,9 +871,140 @@ func TestValidateNginxPlusIngressAnnotations(t *testing.T) {
 				"nginx.org/proxy-buffering": "not_a_boolean",
 			},
 			expectedErrors: []string{
-				`annotations.nginx.org/proxy-buffering: Invalid value: "not_a_boolean": must be a valid boolean`,
+				`annotations.nginx.org/proxy-buffering: Invalid value: "not_a_boolean": must be a boolean`,
 			},
 			msg: "invalid nginx.org/proxy-buffering annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts": "true",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/hsts annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts": "not_a_boolean",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/hsts: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid nginx.org/hsts annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":         "true",
+				"nginx.org/hsts-max-age": "120",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/hsts-max-age annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":         "true",
+				"nginx.org/hsts-max-age": "not_a_number",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/hsts-max-age: Invalid value: "not_a_number": must be an integer`,
+			},
+			msg: "invalid nginx.org/hsts-max-age, must be a number",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts-max-age": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-max-age: Forbidden: related annotation nginx.org/hsts: must be set",
+			},
+			msg: "invalid nginx.org/hsts-max-age, related annotation nginx.org/hsts not set",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":         "false",
+				"nginx.org/hsts-max-age": "120",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-max-age: Forbidden: related annotation nginx.org/hsts: must be true",
+			},
+			msg: "invalid nginx.org/hsts-max-age nginx.org/hsts is not true",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":                    "true",
+				"nginx.org/hsts-include-subdomains": "true",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/hsts-include-subdomains annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":                    "true",
+				"nginx.org/hsts-include-subdomains": "not_a_boolean",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/hsts-include-subdomains: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid nginx.org/hsts-include-subdomains, must be a boolean",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts-include-subdomains": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-include-subdomains: Forbidden: related annotation nginx.org/hsts: must be set",
+			},
+			msg: "invalid nginx.org/hsts-include-subdomains, related annotation nginx.org/hsts not set",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":                    "false",
+				"nginx.org/hsts-include-subdomains": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-include-subdomains: Forbidden: related annotation nginx.org/hsts: must be true",
+			},
+			msg: "invalid nginx.org/hsts-include-subdomains nginx.org/hsts is not true",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":              "true",
+				"nginx.org/hsts-behind-proxy": "true",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/hsts-behind-proxy annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":              "true",
+				"nginx.org/hsts-behind-proxy": "not_a_boolean",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/hsts-behind-proxy: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid nginx.org/hsts-behind-proxy, must be a boolean",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts-behind-proxy": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-behind-proxy: Forbidden: related annotation nginx.org/hsts: must be set",
+			},
+			msg: "invalid nginx.org/hsts-behind-proxy, related annotation nginx.org/hsts not set",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":              "false",
+				"nginx.org/hsts-behind-proxy": "true",
+			},
+			expectedErrors: []string{
+				"annotations.nginx.org/hsts-behind-proxy: Forbidden: related annotation nginx.org/hsts: must be true",
+			},
+			msg: "invalid nginx.org/hsts-behind-proxy nginx.org/hsts is not true",
 		},
 	}
 

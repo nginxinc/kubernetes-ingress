@@ -30,6 +30,10 @@ const (
 	redirectToHTTPSAnnotation            = "nginx.org/redirect-to-https"
 	sslRedirectAnnotation                = "ingress.kubernetes.io/ssl-redirect"
 	proxyBufferingAnnotation             = "nginx.org/proxy-buffering"
+	hstsAnnotation                       = "nginx.org/hsts"
+	hstsMaxAgeAnnotation                 = "nginx.org/hsts-max-age"
+	hstsIncludeSubdomainsAnnotation      = "nginx.org/hsts-include-subdomains"
+	hstsBehindProxyAnnotation            = "nginx.org/hsts-behind-proxy"
 )
 
 type annotationValidationContext struct {
@@ -93,6 +97,25 @@ var (
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
+		hstsAnnotation: {
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		hstsMaxAgeAnnotation: {
+			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
+			validateRequiredAnnotation,
+			validateInt64Annotation,
+		},
+		hstsIncludeSubdomainsAnnotation: {
+			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		hstsBehindProxyAnnotation: {
+			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
 	}
 	nginxAnnotationNames = sortedAnnotationNames(nginxAnnotationValidations)
 
@@ -120,7 +143,7 @@ var (
 		healthChecksMandatoryQueueAnnotation: {
 			validateRelatedAnnotation(healthChecksMandatoryAnnotation, validateIsTrue),
 			validateRequiredAnnotation,
-			validateNonNegativeIntAnnotation,
+			validateUint64Annotation,
 		},
 		slowStartAnnotation: {
 			validateRequiredAnnotation,
@@ -146,6 +169,25 @@ var (
 			validateBoolAnnotation,
 		},
 		proxyBufferingAnnotation: {
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		hstsAnnotation: {
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		hstsMaxAgeAnnotation: {
+			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
+			validateRequiredAnnotation,
+			validateInt64Annotation,
+		},
+		hstsIncludeSubdomainsAnnotation: {
+			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		hstsBehindProxyAnnotation: {
+			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
@@ -285,7 +327,7 @@ func validatePlusOnlyAnnotation(context *annotationValidationContext) field.Erro
 func validateBoolAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if _, err := configs.ParseBool(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a valid boolean"))
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a boolean"))
 	}
 	return allErrs
 }
@@ -293,15 +335,23 @@ func validateBoolAnnotation(context *annotationValidationContext) field.ErrorLis
 func validateTimeAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if _, err := configs.ParseTime(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a valid time"))
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a time"))
 	}
 	return allErrs
 }
 
-func validateNonNegativeIntAnnotation(context *annotationValidationContext) field.ErrorList {
+func validateUint64Annotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if _, err := configs.ParseUint64(context.value); err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a non-negative integer"))
+	}
+	return allErrs
+}
+
+func validateInt64Annotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if _, err := configs.ParseInt64(context.value); err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be an integer"))
 	}
 	return allErrs
 }
