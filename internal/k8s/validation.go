@@ -42,6 +42,12 @@ const (
 	jwtKeyAnnotation                     = "nginx.com/jwt-key"
 	jwtTokenAnnotation                   = "nginx.com/jwt-token"
 	jwtLoginURLAnnotation                = "nginx.com/jwt-login-url"
+	listenPortsAnnotation                = "nginx.org/listen-ports"
+	listenPortsSSLAnnotation             = "nginx.org/listen-ports-ssl"
+	keepaliveAnnotation                  = "nginx.org/keepalive"
+	maxFailsAnnotation                   = "nginx.org/max-fails"
+	maxConnsAnnotation                   = "nginx.org/max-conns"
+	failTimeoutAnnotation                = "nginx.org/fail-timeout"
 )
 
 type annotationValidationContext struct {
@@ -140,6 +146,27 @@ var (
 		jwtLoginURLAnnotation: {
 			validatePlusOnlyAnnotation,
 		},
+		listenPortsAnnotation: {
+			validateRequiredAnnotation,
+			validatePortListAnnotation,
+		},
+		listenPortsSSLAnnotation: {
+			validateRequiredAnnotation,
+			validatePortListAnnotation,
+		},
+		keepaliveAnnotation: {
+			validateRequiredAnnotation,
+			validateIntAnnotation,
+		},
+		maxFailsAnnotation: {
+			validateRequiredAnnotation,
+			validateIntAnnotation,
+		},
+		maxConnsAnnotation: {
+			validateRequiredAnnotation,
+			validateIntAnnotation,
+		},
+		failTimeoutAnnotation: {},
 	}
 	nginxAnnotationNames = sortedAnnotationNames(nginxAnnotationValidations)
 
@@ -223,6 +250,27 @@ var (
 		jwtKeyAnnotation:               {},
 		jwtTokenAnnotation:             {},
 		jwtLoginURLAnnotation:          {},
+		listenPortsAnnotation: {
+			validateRequiredAnnotation,
+			validatePortListAnnotation,
+		},
+		listenPortsSSLAnnotation: {
+			validateRequiredAnnotation,
+			validatePortListAnnotation,
+		},
+		keepaliveAnnotation: {
+			validateRequiredAnnotation,
+			validateIntAnnotation,
+		},
+		maxFailsAnnotation: {
+			validateRequiredAnnotation,
+			validateIntAnnotation,
+		},
+		maxConnsAnnotation: {
+			validateRequiredAnnotation,
+			validateIntAnnotation,
+		},
+		failTimeoutAnnotation: {},
 	}
 	nginxPlusAnnotationNames = sortedAnnotationNames(nginxPlusAnnotationValidations)
 )
@@ -384,6 +432,22 @@ func validateInt64Annotation(context *annotationValidationContext) field.ErrorLi
 	allErrs := field.ErrorList{}
 	if _, err := configs.ParseInt64(context.value); err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be an integer"))
+	}
+	return allErrs
+}
+
+func validateIntAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if _, err := configs.ParseInt(context.value); err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be an integer"))
+	}
+	return allErrs
+}
+
+func validatePortListAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if _, err := configs.ParsePortList(context.value); err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a comma-separated list of port numbers"))
 	}
 	return allErrs
 }

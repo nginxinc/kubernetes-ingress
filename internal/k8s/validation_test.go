@@ -596,6 +596,99 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid nginx.com/jwt-login-url annotation, nginx plus only",
 		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/listen-ports": "80,8080,9090",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/listen-ports annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/listen-ports": "not_a_port_list",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/listen-ports: Invalid value: "not_a_port_list": must be a comma-separated list of port numbers`,
+			},
+			msg: "invalid nginx.org/listen-ports annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/listen-ports-ssl": "443,8443",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/listen-ports-ssl annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/listen-ports-ssl": "not_a_port_list",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/listen-ports-ssl: Invalid value: "not_a_port_list": must be a comma-separated list of port numbers`,
+			},
+			msg: "invalid nginx.org/listen-ports-ssl annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/keepalive": "1000",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/keepalive annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/keepalive": "not_a_number",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/keepalive: Invalid value: "not_a_number": must be an integer`,
+			},
+			msg: "invalid nginx.org/keepalive annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/max-fails": "5",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/max-fails annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/max-fails": "not_a_number",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/max-fails: Invalid value: "not_a_number": must be an integer`,
+			},
+			msg: "invalid nginx.org/max-fails annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/max-conns": "10",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/max-conns annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/max-conns": "not_a_number",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/max-conns: Invalid value: "not_a_number": must be an integer`,
+			},
+			msg: "invalid nginx.org/max-conns annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/fail-timeout": "10s",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/fail-timeout annotation",
+		},
 	}
 
 	for _, test := range tests {
@@ -1141,6 +1234,99 @@ func TestValidateNginxPlusIngressAnnotations(t *testing.T) {
 			},
 			expectedErrors: nil,
 			msg:            "valid nginx.com/jwt-login-url annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/listen-ports": "80,8080,9090",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/listen-ports annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/listen-ports": "not_a_port_list",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/listen-ports: Invalid value: "not_a_port_list": must be a comma-separated list of port numbers`,
+			},
+			msg: "invalid nginx.org/listen-ports annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/listen-ports-ssl": "443,8443",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/listen-ports-ssl annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/listen-ports-ssl": "not_a_port_list",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/listen-ports-ssl: Invalid value: "not_a_port_list": must be a comma-separated list of port numbers`,
+			},
+			msg: "invalid nginx.org/listen-ports-ssl annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/keepalive": "1000",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/keepalive annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/keepalive": "not_a_number",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/keepalive: Invalid value: "not_a_number": must be an integer`,
+			},
+			msg: "invalid nginx.org/keepalive annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/max-fails": "5",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/max-fails annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/max-fails": "not_a_number",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/max-fails: Invalid value: "not_a_number": must be an integer`,
+			},
+			msg: "invalid nginx.org/max-fails annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/max-conns": "10",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/max-conns annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/max-conns": "not_a_number",
+			},
+			expectedErrors: []string{
+				`annotations.nginx.org/max-conns: Invalid value: "not_a_number": must be an integer`,
+			},
+			msg: "invalid nginx.org/max-conns annotation",
+		},
+
+		{
+			annotations: map[string]string{
+				"nginx.org/fail-timeout": "10s",
+			},
+			expectedErrors: nil,
+			msg:            "valid nginx.org/fail-timeout annotation",
 		},
 	}
 

@@ -1,8 +1,6 @@
 package configs
 
 import (
-	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/golang/glog"
@@ -492,58 +490,4 @@ func mergeMasterAnnotationsIntoMinion(minionAnnotations map[string]string, maste
 			}
 		}
 	}
-}
-
-func parsePort(value string) (int, error) {
-	port, err := strconv.ParseInt(value, 10, 16)
-	if err != nil {
-		return 0, fmt.Errorf(
-			"Unable to parse port as integer: %s",
-			err,
-		)
-	}
-
-	if port <= 0 {
-		return 0, fmt.Errorf(
-			"Port number should be greater than zero: %q",
-			port,
-		)
-	}
-
-	return int(port), nil
-}
-
-func parseStickyService(service string) (serviceName string, stickyCookie string, err error) {
-	parts := strings.SplitN(service, " ", 2)
-
-	if len(parts) != 2 {
-		return "", "", fmt.Errorf("Invalid sticky-cookie service format: %s", service)
-	}
-
-	svcNameParts := strings.Split(parts[0], "=")
-	if len(svcNameParts) != 2 {
-		return "", "", fmt.Errorf("Invalid sticky-cookie service format: %s", svcNameParts)
-	}
-
-	return svcNameParts[1], parts[1], nil
-}
-
-func parseRewrites(service string) (serviceName string, rewrite string, err error) {
-	parts := strings.SplitN(strings.TrimSpace(service), " ", 2)
-
-	if len(parts) != 2 {
-		return "", "", fmt.Errorf("Invalid rewrite format: %s", service)
-	}
-
-	svcNameParts := strings.Split(parts[0], "=")
-	if len(svcNameParts) != 2 {
-		return "", "", fmt.Errorf("Invalid rewrite format: %s", svcNameParts)
-	}
-
-	rwPathParts := strings.Split(parts[1], "=")
-	if len(rwPathParts) != 2 {
-		return "", "", fmt.Errorf("Invalid rewrite format: %s", rwPathParts)
-	}
-
-	return svcNameParts[1], rwPathParts[1], nil
 }
