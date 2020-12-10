@@ -84,6 +84,14 @@ rules:
   - ingressclasses
   verbs:
   - get
+- apiGroups:
+    - cis.f5.com
+  resources:
+    - nginxcisconnectors
+  verbs:
+    - list
+    - watch
+    - get
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

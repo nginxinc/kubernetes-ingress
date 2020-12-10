@@ -32,6 +32,8 @@ type statusUpdater struct {
 	externalStatusAddress    string
 	externalServiceAddresses []string
 	externalServicePorts     string
+	bigIPAddress             string
+	bigIPPorts               string
 	externalEndpoints        []v1.ExternalEndpoint
 	status                   []api_v1.LoadBalancerIngress
 	keyFunc                  func(obj interface{}) (string, error)
@@ -259,10 +261,18 @@ func getExternalServiceAddress(svc *api_v1.Service) []string {
 func (su *statusUpdater) SaveStatusFromExternalStatus(externalStatusAddress string) {
 	su.externalStatusAddress = externalStatusAddress
 	if externalStatusAddress == "" {
-		// if external-status-address was removed from configMap, fall back on
-		// external service if it exists
+		// if external-status-address was removed from configMap
+
+		// fall back on external service if it exists
 		if len(su.externalServiceAddresses) > 0 {
 			su.saveStatus(su.externalServiceAddresses)
+			su.externalEndpoints = su.generateExternalEndpointsFromStatus(su.status)
+			return
+		}
+
+		// fall back on NginxCisConnector if it exists
+		if su.bigIPAddress != "" {
+			su.saveStatus([]string{su.bigIPAddress})
 			su.externalEndpoints = su.generateExternalEndpointsFromStatus(su.status)
 			return
 		}
@@ -289,6 +299,34 @@ func (su *statusUpdater) SaveStatusFromExternalService(svc *api_v1.Service) {
 		glog.V(3).Info("skipping external service address/ports - external-status-address is set and takes precedence")
 		return
 	}
+	su.saveStatus(ips)
+	su.externalEndpoints = su.generateExternalEndpointsFromStatus(su.status)
+}
+
+func (su *statusUpdater) SaveStatusFromNginxCisConnector(ip string) {
+	su.bigIPAddress = ip
+	su.bigIPPorts = "[80,443]"
+
+	if su.externalStatusAddress != "" {
+		glog.V(3).Info("skipping NginxCisConnector address - external-status-address is set and takes precedence")
+		return
+	}
+
+	ips := []string{su.bigIPAddress}
+	su.saveStatus(ips)
+	su.externalEndpoints = su.generateExternalEndpointsFromStatus(su.status)
+}
+
+func (su *statusUpdater) ClearStatusFromNginxCisConnector() {
+	su.bigIPAddress = ""
+	su.bigIPPorts = ""
+
+	if su.externalStatusAddress != "" {
+		glog.V(3).Info("skipping NginxCisConnector address - external-status-address is set and takes precedence")
+		return
+	}
+
+	ips := []string{}
 	su.saveStatus(ips)
 	su.externalEndpoints = su.generateExternalEndpointsFromStatus(su.status)
 }
@@ -509,7 +547,12 @@ func (su *statusUpdater) updateVirtualServerRouteExternalEndpoints(vsr *conf_v1.
 func (su *statusUpdater) generateExternalEndpointsFromStatus(status []api_v1.LoadBalancerIngress) []conf_v1.ExternalEndpoint {
 	var externalEndpoints []conf_v1.ExternalEndpoint
 	for _, lb := range status {
-		endpoint := conf_v1.ExternalEndpoint{IP: lb.IP, Ports: su.externalServicePorts}
+		ports := su.externalServicePorts
+		if su.bigIPPorts != "" {
+			ports = su.bigIPPorts
+		}
+
+		endpoint := conf_v1.ExternalEndpoint{IP: lb.IP, Ports: ports}
 		externalEndpoints = append(externalEndpoints, endpoint)
 	}
 

@@ -468,6 +468,48 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 	}
 }
 
+func createNginxCisConnectorHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	return cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			con := obj.(*unstructured.Unstructured)
+			glog.V(3).Infof("Adding NginxCisConnector: %v", con.GetName())
+			lbc.AddSyncQueue(con)
+		},
+		DeleteFunc: func(obj interface{}) {
+			con, isUnstructured := obj.(*unstructured.Unstructured)
+
+			if !isUnstructured {
+				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					glog.V(3).Infof("Error received unexpected object: %v", obj)
+					return
+				}
+				con, ok = deletedState.Obj.(*unstructured.Unstructured)
+				if !ok {
+					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Unstructured object: %v", deletedState.Obj)
+					return
+				}
+			}
+
+			glog.V(3).Infof("Removing NginxCisConnector: %v", con.GetName())
+			lbc.AddSyncQueue(con)
+		},
+		UpdateFunc: func(old, cur interface{}) {
+			oldCon := old.(*unstructured.Unstructured)
+			curCon := cur.(*unstructured.Unstructured)
+			updated, err := compareSpecs(oldCon, curCon)
+			if err != nil {
+				glog.V(3).Infof("Error when comparing NginxCisConnectors: %v", err)
+				lbc.AddSyncQueue(curCon)
+			}
+			if updated {
+				glog.V(3).Infof("NginxCisConnector %v changed, syncing", oldCon.GetName())
+				lbc.AddSyncQueue(curCon)
+			}
+		},
+	}
+}
+
 func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {

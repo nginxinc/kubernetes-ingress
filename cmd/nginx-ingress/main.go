@@ -115,8 +115,12 @@ var (
 		`Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. 
 	The external address of the service is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. For Ingress resources only: Requires -report-ingress-status.`)
 
+	nginxCisConnector = flag.String("nginx-cis-connector", "",
+		`Specifies the name of the NginxCisConnector resource, which exposes the Ingress Controller pods via a BIG-IP.
+	The IP of the BIG-IP is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. For Ingress resources only: Requires -report-ingress-status.`)
+
 	reportIngressStatus = flag.Bool("report-ingress-status", false,
-		"Update the address field in the status of Ingresses resources. Requires the -external-service flag, or the 'external-status-address' key in the ConfigMap.")
+		"Update the address field in the status of Ingresses resources. Requires the -external-service or -nginx-cis-connector flag, or the 'external-status-address' key in the ConfigMap.")
 
 	leaderElectionEnabled = flag.Bool("enable-leader-election", true,
 		"Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status (default true). See -report-ingress-status flag.")
@@ -243,6 +247,10 @@ func main() {
 		*enableLatencyMetrics = false
 	}
 
+	if *nginxCisConnector != "" && *externalService != "" {
+		glog.Fatal("nginx-cis-connector and external-service cannot both be set")
+	}
+
 	glog.Infof("Starting NGINX Ingress controller Version=%v GitCommit=%v\n", version, gitCommit)
 
 	var config *rest.Config
@@ -295,7 +303,7 @@ func main() {
 	}
 
 	var dynClient dynamic.Interface
-	if *appProtect {
+	if *appProtect || *nginxCisConnector != "" {
 		dynClient, err = dynamic.NewForConfig(config)
 		if err != nil {
 			glog.Fatalf("Failed to create dynamic client: %v.", err)
@@ -607,6 +615,7 @@ func main() {
 		IngressClass:                 *ingressClass,
 		UseIngressClassOnly:          *useIngressClassOnly,
 		ExternalServiceName:          *externalService,
+		NginxCisConnector:            *nginxCisConnector,
 		ControllerNamespace:          controllerNamespace,
 		ReportIngressStatus:          *reportIngressStatus,
 		IsLeaderElectionEnabled:      *leaderElectionEnabled,

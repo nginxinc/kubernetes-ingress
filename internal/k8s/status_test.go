@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
-func TestStatusUpdate(t *testing.T) {
+func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 	ing := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ing-1",
@@ -108,6 +108,106 @@ func TestStatusUpdate(t *testing.T) {
 	}
 
 	su.ClearStatusFromExternalService()
+	err = su.UpdateIngressStatus(ing)
+	if err != nil {
+		t.Errorf("error updating ing status: %v", err)
+	}
+	ring, _ = fakeClient.NetworkingV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
+	if !checkStatus("", *ring) {
+		t.Errorf("expected: %v actual: %v", "", ring.Status.LoadBalancer.Ingress)
+	}
+}
+
+func TestStatusUpdateWithExternalStatusAndNginxCisConnector(t *testing.T) {
+	ing := networking.Ingress{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "ing-1",
+			Namespace: "namespace",
+		},
+		Status: networking.IngressStatus{
+			LoadBalancer: v1.LoadBalancerStatus{
+				Ingress: []v1.LoadBalancerIngress{
+					{
+						IP: "1.2.3.4",
+					},
+				},
+			},
+		},
+	}
+	fakeClient := fake.NewSimpleClientset(
+		&networking.IngressList{Items: []networking.Ingress{
+			ing,
+		}},
+	)
+	ingLister := storeToIngressLister{}
+	ingLister.Store, _ = cache.NewInformer(
+		cache.NewListWatchFromClient(fakeClient.NetworkingV1beta1().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
+		&networking.Ingress{}, 2, nil)
+
+	err := ingLister.Store.Add(&ing)
+	if err != nil {
+		t.Errorf("Error adding Ingress to the ingress lister: %v", err)
+	}
+
+	su := statusUpdater{
+		client:                fakeClient,
+		namespace:             "namespace",
+		externalStatusAddress: "",
+		ingressLister:         &ingLister,
+		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+	}
+
+	su.SaveStatusFromNginxCisConnector("3.3.3.3")
+	err = su.UpdateIngressStatus(ing)
+	if err != nil {
+		t.Errorf("error updating ing status: %v", err)
+	}
+	ring, _ := fakeClient.NetworkingV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
+	if !checkStatus("3.3.3.3", *ring) {
+		t.Errorf("expected: %v actual: %v", "3.3.3.3", ring.Status.LoadBalancer.Ingress)
+	}
+
+	su.SaveStatusFromExternalStatus("1.1.1.1")
+	err = su.UpdateIngressStatus(ing)
+	if err != nil {
+		t.Errorf("error updating ing status: %v", err)
+	}
+	ring, _ = fakeClient.NetworkingV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
+	if !checkStatus("1.1.1.1", *ring) {
+		t.Errorf("expected: %v actual: %v", "1.1.1.1", ring.Status.LoadBalancer.Ingress)
+	}
+
+	su.ClearStatusFromNginxCisConnector()
+	err = su.UpdateIngressStatus(ing)
+	if err != nil {
+		t.Errorf("error updating ing status: %v", err)
+	}
+	ring, _ = fakeClient.NetworkingV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
+	if !checkStatus("1.1.1.1", *ring) {
+		t.Errorf("expected: %v actual: %v", "1.1.1.1", ring.Status.LoadBalancer.Ingress)
+	}
+
+	su.SaveStatusFromNginxCisConnector("4.4.4.4")
+	err = su.UpdateIngressStatus(ing)
+	if err != nil {
+		t.Errorf("error updating ing status: %v", err)
+	}
+	ring, _ = fakeClient.NetworkingV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
+	if !checkStatus("1.1.1.1", *ring) {
+		t.Errorf("expected: %v actual: %v", "1.1.1.1", ring.Status.LoadBalancer.Ingress)
+	}
+
+	su.SaveStatusFromExternalStatus("")
+	err = su.UpdateIngressStatus(ing)
+	if err != nil {
+		t.Errorf("error updating ing status: %v", err)
+	}
+	ring, _ = fakeClient.NetworkingV1beta1().Ingresses(ing.Namespace).Get(context.TODO(), ing.Name, meta_v1.GetOptions{})
+	if !checkStatus("4.4.4.4", *ring) {
+		t.Errorf("expected: %v actual: %v", "4.4.4.4", ring.Status.LoadBalancer.Ingress)
+	}
+
+	su.ClearStatusFromNginxCisConnector()
 	err = su.UpdateIngressStatus(ing)
 	if err != nil {
 		t.Errorf("error updating ing status: %v", err)
