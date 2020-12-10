@@ -307,13 +307,21 @@ type Configuration struct {
 	appPolicyReferenceChecker  *appProtectResourceReferenceChecker
 	appLogConfReferenceChecker *appProtectResourceReferenceChecker
 
-	isPlus bool
+	isPlus                bool
+	appProtectEnabled     bool
+	internalRoutesEnabled bool
 
 	lock sync.RWMutex
 }
 
 // NewConfiguration creates a new Configuration.
-func NewConfiguration(hasCorrectIngressClass func(interface{}) bool, isPlus bool, virtualServerValidator *validation.VirtualServerValidator) *Configuration {
+func NewConfiguration(
+	hasCorrectIngressClass func(interface{}) bool,
+	isPlus bool,
+	appProtectEnabled bool,
+	internalRoutesEnabled bool,
+	virtualServerValidator *validation.VirtualServerValidator,
+) *Configuration {
 	return &Configuration{
 		hosts:                      make(map[string]Resource),
 		ingresses:                  make(map[string]*networking.Ingress),
@@ -328,6 +336,8 @@ func NewConfiguration(hasCorrectIngressClass func(interface{}) bool, isPlus bool
 		appPolicyReferenceChecker:  newAppProtectResourceReferenceChecker(configs.AppProtectPolicyAnnotation),
 		appLogConfReferenceChecker: newAppProtectResourceReferenceChecker(configs.AppProtectLogConfAnnotation),
 		isPlus:                     isPlus,
+		appProtectEnabled:          appProtectEnabled,
+		internalRoutesEnabled:      internalRoutesEnabled,
 	}
 }
 
@@ -342,7 +352,7 @@ func (c *Configuration) AddOrUpdateIngress(ing *networking.Ingress) ([]ResourceC
 	if !c.hasCorrectIngressClass(ing) {
 		delete(c.ingresses, key)
 	} else {
-		validationError = validateIngress(ing, c.isPlus).ToAggregate()
+		validationError = validateIngress(ing, c.isPlus, c.appProtectEnabled, c.internalRoutesEnabled).ToAggregate()
 		if validationError != nil {
 			delete(c.ingresses, key)
 		} else {

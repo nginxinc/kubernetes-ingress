@@ -289,7 +289,12 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		confClient:               input.ConfClient,
 	}
 
-	lbc.configuration = NewConfiguration(lbc.HasCorrectIngressClass, input.IsNginxPlus, input.VirtualServerValidator)
+	lbc.configuration = NewConfiguration(
+		lbc.HasCorrectIngressClass,
+		input.IsNginxPlus,
+		input.AppProtectEnabled,
+		input.InternalRoutesEnabled,
+		input.VirtualServerValidator)
 
 	lbc.secretStore = secrets.NewLocalSecretStore(lbc.configurator)
 

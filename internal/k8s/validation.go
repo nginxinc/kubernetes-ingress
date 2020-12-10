@@ -12,50 +12,55 @@ import (
 )
 
 const (
-	mergeableIngressTypeAnnotation       = "nginx.org/mergeable-ingress-type"
-	lbMethodAnnotation                   = "nginx.org/lb-method"
-	healthChecksAnnotation               = "nginx.com/health-checks"
-	healthChecksMandatoryAnnotation      = "nginx.com/health-checks-mandatory"
-	healthChecksMandatoryQueueAnnotation = "nginx.com/health-checks-mandatory-queue"
-	slowStartAnnotation                  = "nginx.com/slow-start"
-	serverTokensAnnotation               = "nginx.org/server-tokens"
-	serverSnippetsAnnotation             = "nginx.org/server-snippets"
-	locationSnippetsAnnotation           = "nginx.org/location-snippets"
-	proxyConnectTimeoutAnnotation        = "nginx.org/proxy-connect-timeout"
-	proxyReadTimeoutAnnotation           = "nginx.org/proxy-read-timeout"
-	proxySendTimeoutAnnotation           = "nginx.org/proxy-send-timeout"
-	proxyHideHeadersAnnotation           = "nginx.org/proxy-hide-headers"
-	proxyPassHeadersAnnotation           = "nginx.org/proxy-pass-headers"
-	clientMaxBodySizeAnnotation          = "nginx.org/client-max-body-size"
-	redirectToHTTPSAnnotation            = "nginx.org/redirect-to-https"
-	sslRedirectAnnotation                = "ingress.kubernetes.io/ssl-redirect"
-	proxyBufferingAnnotation             = "nginx.org/proxy-buffering"
-	hstsAnnotation                       = "nginx.org/hsts"
-	hstsMaxAgeAnnotation                 = "nginx.org/hsts-max-age"
-	hstsIncludeSubdomainsAnnotation      = "nginx.org/hsts-include-subdomains"
-	hstsBehindProxyAnnotation            = "nginx.org/hsts-behind-proxy"
-	proxyBuffersAnnotation               = "nginx.org/proxy-buffers"
-	proxyBufferSizeAnnotation            = "nginx.org/proxy-buffer-size"
-	proxyMaxTempFileSizeAnnotation       = "nginx.org/proxy-max-temp-file-size"
-	upstreamZoneSizeAnnotation           = "nginx.org/upstream-zone-size"
-	jwtRealmAnnotation                   = "nginx.com/jwt-realm"
-	jwtKeyAnnotation                     = "nginx.com/jwt-key"
-	jwtTokenAnnotation                   = "nginx.com/jwt-token"
-	jwtLoginURLAnnotation                = "nginx.com/jwt-login-url"
-	listenPortsAnnotation                = "nginx.org/listen-ports"
-	listenPortsSSLAnnotation             = "nginx.org/listen-ports-ssl"
-	keepaliveAnnotation                  = "nginx.org/keepalive"
-	maxFailsAnnotation                   = "nginx.org/max-fails"
-	maxConnsAnnotation                   = "nginx.org/max-conns"
-	failTimeoutAnnotation                = "nginx.org/fail-timeout"
+	mergeableIngressTypeAnnotation        = "nginx.org/mergeable-ingress-type"
+	lbMethodAnnotation                    = "nginx.org/lb-method"
+	healthChecksAnnotation                = "nginx.com/health-checks"
+	healthChecksMandatoryAnnotation       = "nginx.com/health-checks-mandatory"
+	healthChecksMandatoryQueueAnnotation  = "nginx.com/health-checks-mandatory-queue"
+	slowStartAnnotation                   = "nginx.com/slow-start"
+	serverTokensAnnotation                = "nginx.org/server-tokens"
+	serverSnippetsAnnotation              = "nginx.org/server-snippets"
+	locationSnippetsAnnotation            = "nginx.org/location-snippets"
+	proxyConnectTimeoutAnnotation         = "nginx.org/proxy-connect-timeout"
+	proxyReadTimeoutAnnotation            = "nginx.org/proxy-read-timeout"
+	proxySendTimeoutAnnotation            = "nginx.org/proxy-send-timeout"
+	proxyHideHeadersAnnotation            = "nginx.org/proxy-hide-headers"
+	proxyPassHeadersAnnotation            = "nginx.org/proxy-pass-headers"
+	clientMaxBodySizeAnnotation           = "nginx.org/client-max-body-size"
+	redirectToHTTPSAnnotation             = "nginx.org/redirect-to-https"
+	sslRedirectAnnotation                 = "ingress.kubernetes.io/ssl-redirect"
+	proxyBufferingAnnotation              = "nginx.org/proxy-buffering"
+	hstsAnnotation                        = "nginx.org/hsts"
+	hstsMaxAgeAnnotation                  = "nginx.org/hsts-max-age"
+	hstsIncludeSubdomainsAnnotation       = "nginx.org/hsts-include-subdomains"
+	hstsBehindProxyAnnotation             = "nginx.org/hsts-behind-proxy"
+	proxyBuffersAnnotation                = "nginx.org/proxy-buffers"
+	proxyBufferSizeAnnotation             = "nginx.org/proxy-buffer-size"
+	proxyMaxTempFileSizeAnnotation        = "nginx.org/proxy-max-temp-file-size"
+	upstreamZoneSizeAnnotation            = "nginx.org/upstream-zone-size"
+	jwtRealmAnnotation                    = "nginx.com/jwt-realm"
+	jwtKeyAnnotation                      = "nginx.com/jwt-key"
+	jwtTokenAnnotation                    = "nginx.com/jwt-token"
+	jwtLoginURLAnnotation                 = "nginx.com/jwt-login-url"
+	listenPortsAnnotation                 = "nginx.org/listen-ports"
+	listenPortsSSLAnnotation              = "nginx.org/listen-ports-ssl"
+	keepaliveAnnotation                   = "nginx.org/keepalive"
+	maxFailsAnnotation                    = "nginx.org/max-fails"
+	maxConnsAnnotation                    = "nginx.org/max-conns"
+	failTimeoutAnnotation                 = "nginx.org/fail-timeout"
+	appProtectEnableAnnotation            = "appprotect.f5.com/app-protect-enable"
+	appProtectSecurityLogEnableAnnotation = "appprotect.f5.com/app-protect-security-log-enable"
+	internalRouteAnnotation               = "nsm.nginx.com/internal-route"
 )
 
 type annotationValidationContext struct {
-	annotations map[string]string
-	name        string
-	value       string
-	isPlus      bool
-	fieldPath   *field.Path
+	annotations           map[string]string
+	name                  string
+	value                 string
+	isPlus                bool
+	appProtectEnabled     bool
+	internalRoutesEnabled bool
+	fieldPath             *field.Path
 }
 
 type annotationValidationFunc func(context *annotationValidationContext) field.ErrorList
@@ -167,6 +172,21 @@ var (
 			validateIntAnnotation,
 		},
 		failTimeoutAnnotation: {},
+		appProtectEnableAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		appProtectSecurityLogEnableAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		internalRouteAnnotation: {
+			validateInternalRoutesOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
 	}
 	nginxAnnotationNames = sortedAnnotationNames(nginxAnnotationValidations)
 
@@ -271,6 +291,21 @@ var (
 			validateIntAnnotation,
 		},
 		failTimeoutAnnotation: {},
+		appProtectEnableAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		appProtectSecurityLogEnableAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		internalRouteAnnotation: {
+			validateInternalRoutesOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
 	}
 	nginxPlusAnnotationNames = sortedAnnotationNames(nginxPlusAnnotationValidations)
 )
@@ -286,9 +321,20 @@ func sortedAnnotationNames(annotationValidations annotationValidationConfig) []s
 
 // validateIngress validate an Ingress resource with rules that our Ingress Controller enforces.
 // Note that the full validation of Ingress resources is done by Kubernetes.
-func validateIngress(ing *networking.Ingress, isPlus bool) field.ErrorList {
+func validateIngress(
+	ing *networking.Ingress,
+	isPlus bool,
+	appProtectEnabled bool,
+	internalRoutesEnabled bool,
+) field.ErrorList {
 	allErrs := field.ErrorList{}
-	allErrs = append(allErrs, validateIngressAnnotations(ing.Annotations, isPlus, field.NewPath("annotations"))...)
+	allErrs = append(allErrs, validateIngressAnnotations(
+		ing.Annotations,
+		isPlus,
+		appProtectEnabled,
+		internalRoutesEnabled,
+		field.NewPath("annotations"),
+	)...)
 
 	allErrs = append(allErrs, validateIngressSpec(&ing.Spec, field.NewPath("spec"))...)
 
@@ -301,7 +347,13 @@ func validateIngress(ing *networking.Ingress, isPlus bool) field.ErrorList {
 	return allErrs
 }
 
-func validateIngressAnnotations(annotations map[string]string, isPlus bool, fieldPath *field.Path) field.ErrorList {
+func validateIngressAnnotations(
+	annotations map[string]string,
+	isPlus bool,
+	appProtectEnabled bool,
+	internalRoutesEnabled bool,
+	fieldPath *field.Path,
+) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	var annotationNames []string
@@ -314,11 +366,13 @@ func validateIngressAnnotations(annotations map[string]string, isPlus bool, fiel
 	for _, name := range annotationNames {
 		if value, exists := annotations[name]; exists {
 			context := &annotationValidationContext{
-				annotations: annotations,
-				name:        name,
-				value:       value,
-				isPlus:      isPlus,
-				fieldPath:   fieldPath.Child(name),
+				annotations:           annotations,
+				name:                  name,
+				value:                 value,
+				isPlus:                isPlus,
+				appProtectEnabled:     appProtectEnabled,
+				internalRoutesEnabled: internalRoutesEnabled,
+				fieldPath:             fieldPath.Child(name),
 			}
 			allErrs = append(allErrs, validateIngressAnnotation(context)...)
 		}
@@ -400,6 +454,22 @@ func validatePlusOnlyAnnotation(context *annotationValidationContext) field.Erro
 	allErrs := field.ErrorList{}
 	if !context.isPlus {
 		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires NGINX Plus"))
+	}
+	return allErrs
+}
+
+func validateAppProtectOnlyAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if !context.appProtectEnabled {
+		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires AppProtect"))
+	}
+	return allErrs
+}
+
+func validateInternalRoutesOnlyAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if !context.internalRoutesEnabled {
+		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires Internal Routes enabled"))
 	}
 	return allErrs
 }

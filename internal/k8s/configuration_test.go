@@ -16,8 +16,16 @@ func createTestConfiguration() *Configuration {
 		ingressClass:        "nginx",
 		useIngressClassOnly: true,
 	}
-	isPlus := false
-	return NewConfiguration(lbc.HasCorrectIngressClass, isPlus, validation.NewVirtualServerValidator(isPlus))
+	var isPlus bool
+	var appProtectEnabled bool
+	var internalRoutesEnabled bool
+	return NewConfiguration(
+		lbc.HasCorrectIngressClass,
+		isPlus,
+		appProtectEnabled,
+		internalRoutesEnabled,
+		validation.NewVirtualServerValidator(isPlus),
+	)
 }
 
 func TestAddIngressForRegularIngress(t *testing.T) {
