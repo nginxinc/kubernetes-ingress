@@ -439,6 +439,26 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 
 		{
 			annotations: map[string]string{
+				"nginx.org/server-tokens": "true",
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/server-tokens annotation, nginx",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/server-tokens": "custom_setting",
+			},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/server-tokens annotation, nginx plus",
+		},
+		{
+			annotations: map[string]string{
 				"nginx.org/server-tokens": "custom_setting",
 			},
 			isPlus:                false,

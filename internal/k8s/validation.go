@@ -68,33 +68,42 @@ type annotationValidationConfig map[string][]annotationValidationFunc
 type validatorFunc func(val string) error
 
 var (
-	// nginxAnnotationValidations defines the various validations which will be applied in order to each ingress
-	// annotation for nginx. If any specified validation fails, the remaining validations for that annotation will not
-	// be run.
-	nginxAnnotationValidations = annotationValidationConfig{
+	// annotationValidations defines the various validations which will be applied in order to each ingress annotation.
+	// If any specified validation fails, the remaining validations for that annotation will not be run.
+	annotationValidations = annotationValidationConfig{
 		mergeableIngressTypeAnnotation: {
 			validateRequiredAnnotation,
 			validateMergeableIngressTypeAnnotation,
 		},
 		lbMethodAnnotation: {
 			validateRequiredAnnotation,
-			validateNginxLBMethodAnnotation,
+			validateLBMethodAnnotation,
 		},
 		healthChecksAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
 		},
 		healthChecksMandatoryAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateRelatedAnnotation(healthChecksAnnotation, validateIsTrue),
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
 		},
 		healthChecksMandatoryQueueAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateRelatedAnnotation(healthChecksMandatoryAnnotation, validateIsTrue),
+			validateRequiredAnnotation,
+			validateUint64Annotation,
 		},
 		slowStartAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateTimeAnnotation,
 		},
 		serverTokensAnnotation: {
 			validateRequiredAnnotation,
-			validateBoolAnnotation,
+			validateServerTokensAnnotation,
 		},
 		serverSnippetsAnnotation:      {},
 		locationSnippetsAnnotation:    {},
@@ -188,126 +197,7 @@ var (
 			validateBoolAnnotation,
 		},
 	}
-	nginxAnnotationNames = sortedAnnotationNames(nginxAnnotationValidations)
-
-	// nginxPlusAnnotationValidations defines the various validations which will be applied in order to each ingress
-	// annotation for nginx plus. If any specified validation fails, the remaining validations for that annotation will
-	// not be run.
-	nginxPlusAnnotationValidations = annotationValidationConfig{
-		mergeableIngressTypeAnnotation: {
-			validateRequiredAnnotation,
-			validateMergeableIngressTypeAnnotation,
-		},
-		lbMethodAnnotation: {
-			validateRequiredAnnotation,
-			validateNginxPlusLBMethodAnnotation,
-		},
-		healthChecksAnnotation: {
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		healthChecksMandatoryAnnotation: {
-			validateRelatedAnnotation(healthChecksAnnotation, validateIsTrue),
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		healthChecksMandatoryQueueAnnotation: {
-			validateRelatedAnnotation(healthChecksMandatoryAnnotation, validateIsTrue),
-			validateRequiredAnnotation,
-			validateUint64Annotation,
-		},
-		slowStartAnnotation: {
-			validateRequiredAnnotation,
-			validateTimeAnnotation,
-		},
-		serverTokensAnnotation: {
-			validateRequiredAnnotation,
-		},
-		serverSnippetsAnnotation:      {},
-		locationSnippetsAnnotation:    {},
-		proxyConnectTimeoutAnnotation: {},
-		proxyReadTimeoutAnnotation:    {},
-		proxySendTimeoutAnnotation:    {},
-		proxyHideHeadersAnnotation:    {},
-		proxyPassHeadersAnnotation:    {},
-		clientMaxBodySizeAnnotation:   {},
-		redirectToHTTPSAnnotation: {
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		sslRedirectAnnotation: {
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		proxyBufferingAnnotation: {
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		hstsAnnotation: {
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		hstsMaxAgeAnnotation: {
-			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
-			validateRequiredAnnotation,
-			validateInt64Annotation,
-		},
-		hstsIncludeSubdomainsAnnotation: {
-			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		hstsBehindProxyAnnotation: {
-			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		proxyBuffersAnnotation:         {},
-		proxyBufferSizeAnnotation:      {},
-		proxyMaxTempFileSizeAnnotation: {},
-		upstreamZoneSizeAnnotation:     {},
-		jwtRealmAnnotation:             {},
-		jwtKeyAnnotation:               {},
-		jwtTokenAnnotation:             {},
-		jwtLoginURLAnnotation:          {},
-		listenPortsAnnotation: {
-			validateRequiredAnnotation,
-			validatePortListAnnotation,
-		},
-		listenPortsSSLAnnotation: {
-			validateRequiredAnnotation,
-			validatePortListAnnotation,
-		},
-		keepaliveAnnotation: {
-			validateRequiredAnnotation,
-			validateIntAnnotation,
-		},
-		maxFailsAnnotation: {
-			validateRequiredAnnotation,
-			validateIntAnnotation,
-		},
-		maxConnsAnnotation: {
-			validateRequiredAnnotation,
-			validateIntAnnotation,
-		},
-		failTimeoutAnnotation: {},
-		appProtectEnableAnnotation: {
-			validateAppProtectOnlyAnnotation,
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		appProtectSecurityLogEnableAnnotation: {
-			validateAppProtectOnlyAnnotation,
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-		internalRouteAnnotation: {
-			validateInternalRoutesOnlyAnnotation,
-			validateRequiredAnnotation,
-			validateBoolAnnotation,
-		},
-	}
-	nginxPlusAnnotationNames = sortedAnnotationNames(nginxPlusAnnotationValidations)
+	annotationNames = sortedAnnotationNames(annotationValidations)
 )
 
 func sortedAnnotationNames(annotationValidations annotationValidationConfig) []string {
@@ -356,13 +246,6 @@ func validateIngressAnnotations(
 ) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	var annotationNames []string
-	if isPlus {
-		annotationNames = nginxPlusAnnotationNames
-	} else {
-		annotationNames = nginxAnnotationNames
-	}
-
 	for _, name := range annotationNames {
 		if value, exists := annotations[name]; exists {
 			context := &annotationValidationContext{
@@ -383,14 +266,6 @@ func validateIngressAnnotations(
 
 func validateIngressAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-
-	var annotationValidations annotationValidationConfig
-	if context.isPlus {
-		annotationValidations = nginxPlusAnnotationValidations
-	} else {
-		annotationValidations = nginxAnnotationValidations
-	}
-
 	if validationFuncs, exists := annotationValidations[context.name]; exists {
 		for _, validationFunc := range validationFuncs {
 			valErrors := validationFunc(context)
@@ -426,18 +301,26 @@ func validateMergeableIngressTypeAnnotation(context *annotationValidationContext
 	return allErrs
 }
 
-func validateNginxLBMethodAnnotation(context *annotationValidationContext) field.ErrorList {
+func validateLBMethodAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if _, err := configs.ParseLBMethod(context.value); err != nil {
+
+	parseFunc := configs.ParseLBMethod
+	if context.isPlus {
+		parseFunc = configs.ParseLBMethodForPlus
+	}
+
+	if _, err := parseFunc(context.value); err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
 	}
 	return allErrs
 }
 
-func validateNginxPlusLBMethodAnnotation(context *annotationValidationContext) field.ErrorList {
+func validateServerTokensAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if _, err := configs.ParseLBMethodForPlus(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+	if !context.isPlus {
+		if _, err := configs.ParseBool(context.value); err != nil {
+			return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a boolean"))
+		}
 	}
 	return allErrs
 }
