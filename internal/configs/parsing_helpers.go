@@ -227,7 +227,7 @@ func ParseSize(s string) (string, error) {
 
 // ParsePortList ensures that the string is a comma-separated list of port numbers
 func ParsePortList(s string) ([]int, error) {
-	ports := make([]int, 0)
+	var ports []int
 	for _, value := range strings.Split(s, ",") {
 		port, err := parsePort(value)
 		if err != nil {

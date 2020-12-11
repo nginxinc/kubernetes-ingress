@@ -293,7 +293,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		}
 	}
 
-	if values, exists := ingEx.Ingress.Annotations["nginx.org/listen-ports"]; exists {
+	if values, exists := ingEx.Ingress.Annotations["nginx.org/listen-ports-ssl"]; exists {
 		sslPorts, err := ParsePortList(values)
 		if err != nil {
 			glog.Errorf("In %v nginx.org/listen-ports-ssl contains invalid declaration: %v, ignoring", ingEx.Ingress.Name, err)
@@ -377,7 +377,7 @@ func getWebsocketServices(ingEx *IngressEx) map[string]bool {
 		}
 		return services
 	}
-	return make(map[string]bool)
+	return nil
 }
 
 func getRewrites(ingEx *IngressEx) map[string]string {
@@ -388,7 +388,7 @@ func getRewrites(ingEx *IngressEx) map[string]string {
 		}
 		return rewrites
 	}
-	return make(map[string]string)
+	return nil
 }
 
 func getSSLServices(ingEx *IngressEx) map[string]bool {
@@ -399,7 +399,7 @@ func getSSLServices(ingEx *IngressEx) map[string]bool {
 		}
 		return services
 	}
-	return make(map[string]bool)
+	return nil
 }
 
 func getGrpcServices(ingEx *IngressEx) map[string]bool {
@@ -410,7 +410,7 @@ func getGrpcServices(ingEx *IngressEx) map[string]bool {
 		}
 		return services
 	}
-	return make(map[string]bool)
+	return nil
 }
 
 func getSessionPersistenceServices(ingEx *IngressEx) map[string]string {
@@ -421,7 +421,7 @@ func getSessionPersistenceServices(ingEx *IngressEx) map[string]string {
 		}
 		return services
 	}
-	return make(map[string]string)
+	return nil
 }
 
 func filterMasterAnnotations(annotations map[string]string) []string {
