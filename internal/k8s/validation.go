@@ -431,12 +431,8 @@ func validatePortListAnnotation(context *annotationValidationContext) field.Erro
 	return allErrs
 }
 
-func validateServiceListAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
-	if _, err := configs.ParseServiceList(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a comma-separated list of services"))
-	}
-	return allErrs
+func validateServiceListAnnotation(_ *annotationValidationContext) field.ErrorList {
+	return field.ErrorList{}
 }
 
 func validateStickyServiceListAnnotation(context *annotationValidationContext) field.ErrorList {

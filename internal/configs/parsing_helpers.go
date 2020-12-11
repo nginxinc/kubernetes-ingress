@@ -252,12 +252,12 @@ func parsePort(value string) (int, error) {
 }
 
 // ParseServiceList ensures that the string is a comma-separated list of services
-func ParseServiceList(s string) (map[string]bool, error) {
+func ParseServiceList(s string) map[string]bool {
 	services := make(map[string]bool)
 	for _, part := range strings.Split(s, ",") {
 		services[part] = true
 	}
-	return services, nil
+	return services
 }
 
 // ParseRewriteList ensures that the string is a semicolon-separated list of services

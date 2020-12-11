@@ -371,11 +371,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 
 func getWebsocketServices(ingEx *IngressEx) map[string]bool {
 	if value, exists := ingEx.Ingress.Annotations["nginx.org/websocket-services"]; exists {
-		services, err := ParseServiceList(value)
-		if err != nil {
-			glog.Error(err)
-		}
-		return services
+		return ParseServiceList(value)
 	}
 	return nil
 }
@@ -393,22 +389,14 @@ func getRewrites(ingEx *IngressEx) map[string]string {
 
 func getSSLServices(ingEx *IngressEx) map[string]bool {
 	if value, exists := ingEx.Ingress.Annotations["nginx.org/ssl-services"]; exists {
-		services, err := ParseServiceList(value)
-		if err != nil {
-			glog.Error(err)
-		}
-		return services
+		return ParseServiceList(value)
 	}
 	return nil
 }
 
 func getGrpcServices(ingEx *IngressEx) map[string]bool {
 	if value, exists := ingEx.Ingress.Annotations["nginx.org/grpc-services"]; exists {
-		services, err := ParseServiceList(value)
-		if err != nil {
-			glog.Error(err)
-		}
-		return services
+		return ParseServiceList(value)
 	}
 	return nil
 }
