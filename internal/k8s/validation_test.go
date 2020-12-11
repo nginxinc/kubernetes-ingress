@@ -130,6 +130,7 @@ func TestValidateIngress(t *testing.T) {
 func TestValidateNginxIngressAnnotations(t *testing.T) {
 	tests := []struct {
 		annotations           map[string]string
+		specServices          map[string]bool
 		isPlus                bool
 		appProtectEnabled     bool
 		internalRoutesEnabled bool
@@ -138,6 +139,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 	}{
 		{
 			annotations:           map[string]string{},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -150,6 +152,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/lb-method":              "invalid_method",
 				"nginx.org/mergeable-ingress-type": "invalid",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -164,6 +167,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/mergeable-ingress-type": "master",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -174,6 +178,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/mergeable-ingress-type": "minion",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -184,6 +189,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/mergeable-ingress-type": "",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -196,6 +202,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/mergeable-ingress-type": "abc",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -209,6 +216,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/lb-method": "random",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -219,6 +227,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/lb-method": "least_time header",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -231,6 +240,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/lb-method": "invalid_method",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -244,6 +254,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/health-checks": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -256,6 +267,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/health-checks": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -266,6 +278,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/health-checks": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -279,6 +292,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/health-checks-mandatory": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -292,6 +306,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.com/health-checks":           "true",
 				"nginx.com/health-checks-mandatory": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -303,6 +318,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.com/health-checks":           "true",
 				"nginx.com/health-checks-mandatory": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -315,6 +331,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/health-checks-mandatory": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -328,6 +345,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.com/health-checks":           "false",
 				"nginx.com/health-checks-mandatory": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -341,6 +359,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/health-checks-mandatory-queue": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -355,6 +374,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.com/health-checks-mandatory":       "true",
 				"nginx.com/health-checks-mandatory-queue": "5",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -367,6 +387,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.com/health-checks-mandatory":       "true",
 				"nginx.com/health-checks-mandatory-queue": "not_a_number",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -379,6 +400,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/health-checks-mandatory-queue": "5",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -393,6 +415,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.com/health-checks-mandatory":       "false",
 				"nginx.com/health-checks-mandatory-queue": "5",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -406,6 +429,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/slow-start": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -418,6 +442,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/slow-start": "60s",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -428,6 +453,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/slow-start": "not_a_time",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -441,6 +467,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/server-tokens": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -451,6 +478,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/server-tokens": "custom_setting",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -461,6 +489,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/server-tokens": "custom_setting",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -474,6 +503,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/server-snippets": "snippet-1",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -484,6 +514,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/server-snippets": "snippet-1\nsnippet-2\nsnippet-3",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -495,6 +526,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/location-snippets": "snippet-1",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -505,6 +537,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/location-snippets": "snippet-1\nsnippet-2\nsnippet-3",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -516,6 +549,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-connect-timeout": "10s",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -527,6 +561,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-read-timeout": "10s",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -538,6 +573,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-send-timeout": "10s",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -549,6 +585,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-hide-headers": "header-1",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -559,6 +596,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-hide-headers": "header-1,header-2,header-3",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -570,6 +608,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-pass-headers": "header-1",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -580,6 +619,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-pass-headers": "header-1,header-2,header-3",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -591,6 +631,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/client-max-body-size": "16M",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -602,6 +643,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/redirect-to-https": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -612,6 +654,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/redirect-to-https": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -625,6 +668,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"ingress.kubernetes.io/ssl-redirect": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -635,6 +679,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"ingress.kubernetes.io/ssl-redirect": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -648,6 +693,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-buffering": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -658,6 +704,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-buffering": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -671,6 +718,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/hsts": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -681,6 +729,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/hsts": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -695,6 +744,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/hsts":         "true",
 				"nginx.org/hsts-max-age": "120",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -706,6 +756,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/hsts":         "true",
 				"nginx.org/hsts-max-age": "not_a_number",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -718,6 +769,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/hsts-max-age": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -731,6 +783,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/hsts":         "false",
 				"nginx.org/hsts-max-age": "120",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -745,6 +798,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/hsts":                    "true",
 				"nginx.org/hsts-include-subdomains": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -756,6 +810,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/hsts":                    "true",
 				"nginx.org/hsts-include-subdomains": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -768,6 +823,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/hsts-include-subdomains": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -781,6 +837,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/hsts":                    "false",
 				"nginx.org/hsts-include-subdomains": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -795,6 +852,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/hsts":              "true",
 				"nginx.org/hsts-behind-proxy": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -806,6 +864,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/hsts":              "true",
 				"nginx.org/hsts-behind-proxy": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -818,6 +877,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/hsts-behind-proxy": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -831,6 +891,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"nginx.org/hsts":              "false",
 				"nginx.org/hsts-behind-proxy": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -844,6 +905,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-buffers": "8 8k",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -855,6 +917,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-buffer-size": "16k",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -866,6 +929,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/proxy-max-temp-file-size": "128M",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -877,6 +941,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/upstream-zone-size": "512k",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -888,6 +953,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/jwt-realm": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -900,6 +966,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/jwt-realm": "my-jwt-realm",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -911,6 +978,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/jwt-key": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -923,6 +991,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/jwt-key": "my-jwk",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -934,6 +1003,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/jwt-token": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -946,6 +1016,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/jwt-token": "$cookie_auth_token",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -957,6 +1028,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/jwt-login-url": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -969,6 +1041,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/jwt-login-url": "https://login.example.com",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -980,6 +1053,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/listen-ports": "80,8080,9090",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -990,6 +1064,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/listen-ports": "not_a_port_list",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1003,6 +1078,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/listen-ports-ssl": "443,8443",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1013,6 +1089,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/listen-ports-ssl": "not_a_port_list",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1026,6 +1103,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/keepalive": "1000",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1036,6 +1114,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/keepalive": "not_a_number",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1049,6 +1128,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/max-fails": "5",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1059,6 +1139,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/max-fails": "not_a_number",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1072,6 +1153,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/max-conns": "10",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1082,6 +1164,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/max-conns": "not_a_number",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1095,6 +1178,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/fail-timeout": "10s",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1106,6 +1190,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"appprotect.f5.com/app-protect-enable": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1118,6 +1203,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"appprotect.f5.com/app-protect-enable": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     true,
 			internalRoutesEnabled: false,
@@ -1128,6 +1214,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"appprotect.f5.com/app-protect-enable": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     true,
 			internalRoutesEnabled: false,
@@ -1141,6 +1228,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"appprotect.f5.com/app-protect-security-log-enable": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1153,6 +1241,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"appprotect.f5.com/app-protect-security-log-enable": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     true,
 			internalRoutesEnabled: false,
@@ -1163,6 +1252,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"appprotect.f5.com/app-protect-security-log-enable": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     true,
 			internalRoutesEnabled: false,
@@ -1176,6 +1266,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nsm.nginx.com/internal-route": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1188,6 +1279,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nsm.nginx.com/internal-route": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: true,
@@ -1198,6 +1290,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nsm.nginx.com/internal-route": "not_a_boolean",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: true,
@@ -1211,6 +1304,9 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/websocket-services": "service-1",
 			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1221,16 +1317,38 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/websocket-services": "service-1,service-2",
 			},
+			specServices: map[string]bool{
+				"service-1": true,
+				"service-2": true,
+			},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/websocket-services annotation, multi-value",
 		},
+		{
+			annotations: map[string]string{
+				"nginx.org/websocket-services": "service-1,service-2",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/websocket-services: Invalid value: "service-1,service-2": must be a comma-separated list of services. The following services were not found: service-2`,
+			},
+			msg: "invalid nginx.org/websocket-services annotation, service does not exist",
+		},
 
 		{
 			annotations: map[string]string{
 				"nginx.org/ssl-services": "service-1",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
@@ -1242,16 +1360,38 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/ssl-services": "service-1,service-2",
 			},
+			specServices: map[string]bool{
+				"service-1": true,
+				"service-2": true,
+			},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/ssl-services annotation, multi-value",
 		},
+		{
+			annotations: map[string]string{
+				"nginx.org/ssl-services": "service-1,service-2",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/ssl-services: Invalid value: "service-1,service-2": must be a comma-separated list of services. The following services were not found: service-2`,
+			},
+			msg: "invalid nginx.org/ssl-services annotation, service does not exist",
+		},
 
 		{
 			annotations: map[string]string{
 				"nginx.org/grpc-services": "service-1",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
@@ -1263,17 +1403,37 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/grpc-services": "service-1,service-2",
 			},
+			specServices: map[string]bool{
+				"service-1": true,
+				"service-2": true,
+			},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/grpc-services annotation, multi-value",
 		},
+		{
+			annotations: map[string]string{
+				"nginx.org/grpc-services": "service-1,service-2",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/grpc-services: Invalid value: "service-1,service-2": must be a comma-separated list of services. The following services were not found: service-2`,
+			},
+			msg: "invalid nginx.org/grpc-services annotation, service does not exist",
+		},
 
 		{
 			annotations: map[string]string{
 				"nginx.org/rewrites": "serviceName=service-1 rewrite=rewrite-1",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1284,6 +1444,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/rewrites": "serviceName=service-1 rewrite=rewrite-1;serviceName=service-2 rewrite=rewrite-2",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1294,6 +1455,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.org/rewrites": "not_a_rewrite",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: true,
@@ -1307,6 +1469,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/sticky-cookie-services": "true",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1319,6 +1482,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/sticky-cookie-services": "serviceName=service-1 srv_id expires=1h path=/service-1",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1329,6 +1493,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/sticky-cookie-services": "serviceName=service-1 srv_id expires=1h path=/service-1;serviceName=service-2 srv_id expires=2h path=/service-2",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1339,6 +1504,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			annotations: map[string]string{
 				"nginx.com/sticky-cookie-services": "not_a_rewrite",
 			},
+			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
@@ -1353,6 +1519,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		t.Run(test.msg, func(t *testing.T) {
 			allErrs := validateIngressAnnotations(
 				test.annotations,
+				test.specServices,
 				test.isPlus,
 				test.appProtectEnabled,
 				test.internalRoutesEnabled,

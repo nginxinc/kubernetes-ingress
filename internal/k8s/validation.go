@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	networking "k8s.io/api/networking/v1beta1"
@@ -60,6 +61,7 @@ const (
 
 type annotationValidationContext struct {
 	annotations           map[string]string
+	specServices          map[string]bool
 	name                  string
 	value                 string
 	isPlus                bool
@@ -246,6 +248,7 @@ func validateIngress(
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateIngressAnnotations(
 		ing.Annotations,
+		getSpecServices(ing.Spec),
 		isPlus,
 		appProtectEnabled,
 		internalRoutesEnabled,
@@ -265,6 +268,7 @@ func validateIngress(
 
 func validateIngressAnnotations(
 	annotations map[string]string,
+	specServices map[string]bool,
 	isPlus bool,
 	appProtectEnabled bool,
 	internalRoutesEnabled bool,
@@ -276,6 +280,7 @@ func validateIngressAnnotations(
 		if value, exists := annotations[name]; exists {
 			context := &annotationValidationContext{
 				annotations:           annotations,
+				specServices:          specServices,
 				name:                  name,
 				value:                 value,
 				isPlus:                isPlus,
@@ -431,8 +436,23 @@ func validatePortListAnnotation(context *annotationValidationContext) field.Erro
 	return allErrs
 }
 
-func validateServiceListAnnotation(_ *annotationValidationContext) field.ErrorList {
-	return field.ErrorList{}
+func validateServiceListAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	var unknownServices []string
+	annotationServices := configs.ParseServiceList(context.value)
+	for svc := range annotationServices {
+		if _, exists := context.specServices[svc]; !exists {
+			unknownServices = append(unknownServices, svc)
+		}
+	}
+	if len(unknownServices) > 0 {
+		errorMsg := fmt.Sprintf(
+			"must be a comma-separated list of services. The following services were not found: %s",
+			strings.Join(unknownServices, ","),
+		)
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
+	}
+	return allErrs
 }
 
 func validateStickyServiceListAnnotation(context *annotationValidationContext) field.ErrorList {
@@ -520,4 +540,19 @@ func validateMinionSpec(spec *networking.IngressSpec, fieldPath *field.Path) fie
 	}
 
 	return allErrs
+}
+
+func getSpecServices(ingressSpec networking.IngressSpec) map[string]bool {
+	services := make(map[string]bool)
+	if ingressSpec.Backend != nil {
+		services[ingressSpec.Backend.ServiceName] = true
+	}
+	for _, rule := range ingressSpec.Rules {
+		if rule.HTTP != nil {
+			for _, path := range rule.HTTP.Paths {
+				services[path.Backend.ServiceName] = true
+			}
+		}
+	}
+	return services
 }
