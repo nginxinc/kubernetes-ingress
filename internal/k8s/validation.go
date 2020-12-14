@@ -137,17 +137,17 @@ var (
 			validateBoolAnnotation,
 		},
 		hstsMaxAgeAnnotation: {
-			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
+			validateRelatedAnnotation(hstsAnnotation, validateIsBool),
 			validateRequiredAnnotation,
 			validateInt64Annotation,
 		},
 		hstsIncludeSubdomainsAnnotation: {
-			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
+			validateRelatedAnnotation(hstsAnnotation, validateIsBool),
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
 		hstsBehindProxyAnnotation: {
-			validateRelatedAnnotation(hstsAnnotation, validateIsTrue),
+			validateRelatedAnnotation(hstsAnnotation, validateIsBool),
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
@@ -469,6 +469,11 @@ func validateRewriteListAnnotation(context *annotationValidationContext) field.E
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a semicolon-separated list of rewrites"))
 	}
 	return allErrs
+}
+
+func validateIsBool(v string) error {
+	_, err := configs.ParseBool(v)
+	return err
 }
 
 func validateIsTrue(v string) error {

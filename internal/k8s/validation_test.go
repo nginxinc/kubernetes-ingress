@@ -753,6 +753,18 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
+				"nginx.org/hsts":         "false",
+				"nginx.org/hsts-max-age": "120",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/hsts-max-age nginx.org/hsts can be false",
+		},
+		{
+			annotations: map[string]string{
 				"nginx.org/hsts":         "true",
 				"nginx.org/hsts-max-age": "not_a_number",
 			},
@@ -778,20 +790,6 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid nginx.org/hsts-max-age, related annotation nginx.org/hsts not set",
 		},
-		{
-			annotations: map[string]string{
-				"nginx.org/hsts":         "false",
-				"nginx.org/hsts-max-age": "120",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                false,
-			appProtectEnabled:     false,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				"annotations.nginx.org/hsts-max-age: Forbidden: related annotation nginx.org/hsts: must be true",
-			},
-			msg: "invalid nginx.org/hsts-max-age nginx.org/hsts is not true",
-		},
 
 		{
 			annotations: map[string]string{
@@ -804,6 +802,18 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/hsts-include-subdomains annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":                    "false",
+				"nginx.org/hsts-include-subdomains": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/hsts-include-subdomains, nginx.org/hsts can be false",
 		},
 		{
 			annotations: map[string]string{
@@ -832,20 +842,6 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid nginx.org/hsts-include-subdomains, related annotation nginx.org/hsts not set",
 		},
-		{
-			annotations: map[string]string{
-				"nginx.org/hsts":                    "false",
-				"nginx.org/hsts-include-subdomains": "true",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                false,
-			appProtectEnabled:     false,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				"annotations.nginx.org/hsts-include-subdomains: Forbidden: related annotation nginx.org/hsts: must be true",
-			},
-			msg: "invalid nginx.org/hsts-include-subdomains nginx.org/hsts is not true",
-		},
 
 		{
 			annotations: map[string]string{
@@ -858,6 +854,18 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/hsts-behind-proxy annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/hsts":              "false",
+				"nginx.org/hsts-behind-proxy": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/hsts-behind-proxy, nginx.org/hsts can be false",
 		},
 		{
 			annotations: map[string]string{
@@ -885,20 +893,6 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				"annotations.nginx.org/hsts-behind-proxy: Forbidden: related annotation nginx.org/hsts: must be set",
 			},
 			msg: "invalid nginx.org/hsts-behind-proxy, related annotation nginx.org/hsts not set",
-		},
-		{
-			annotations: map[string]string{
-				"nginx.org/hsts":              "false",
-				"nginx.org/hsts-behind-proxy": "true",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                false,
-			appProtectEnabled:     false,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				"annotations.nginx.org/hsts-behind-proxy: Forbidden: related annotation nginx.org/hsts: must be true",
-			},
-			msg: "invalid nginx.org/hsts-behind-proxy nginx.org/hsts is not true",
 		},
 
 		{
