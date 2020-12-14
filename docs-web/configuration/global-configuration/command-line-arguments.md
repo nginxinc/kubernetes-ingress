@@ -125,7 +125,7 @@ Below we describe the available command-line arguments:
 
 .. option:: -nginx-status-allow-cidrs <string>
 
-	Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API.
+	Add IPv4 IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API.
 	Separate multiple IP/CIDR by commas. (default "127.0.0.1")
 
 .. option:: -nginx-status-port [int]

@@ -263,7 +263,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
      - Set the port where the NGINX stub_status or the NGINX Plus API is exposed.
      - 8080
    * - ``controller.nginxStatus.allowCidrs``
-     - Whitelist IPv4 IP/CIDR blocks to allow access to NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas.
+     - Add IPv4 IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas.
      - 127.0.0.1
    * - ``controller.service.create``
      - Creates a service to expose the Ingress controller pods.
