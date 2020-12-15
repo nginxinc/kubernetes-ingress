@@ -116,11 +116,11 @@ var (
 	The external address of the service is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. For Ingress resources only: Requires -report-ingress-status.`)
 
 	nginxCisConnector = flag.String("nginx-cis-connector", "",
-		`Specifies the name of the NginxCisConnector resource, which exposes the Ingress Controller pods via a BIG-IP.
-	The IP of the BIG-IP is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. For Ingress resources only: Requires -report-ingress-status.`)
+		`Specifies the name of the NginxCisConnector resource, which exposes the Ingress Controller pods via a BIG-IP system.
+	The IP of the BIG-IP system is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. For Ingress resources only: Requires -report-ingress-status.`)
 
 	reportIngressStatus = flag.Bool("report-ingress-status", false,
-		"Update the address field in the status of Ingresses resources. Requires the -external-service or -nginx-cis-connector flag, or the 'external-status-address' key in the ConfigMap.")
+		"Updates the address field in the status of Ingress resources. Requires the -external-service or -nginx-cis-connector flag, or the 'external-status-address' key in the ConfigMap.")
 
 	leaderElectionEnabled = flag.Bool("enable-leader-election", true,
 		"Enable Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status (default true). See -report-ingress-status flag.")
