@@ -104,6 +104,16 @@ rules:
   verbs:
   - update
 {{- end }}
+{{- if .Values.controller.reportIngressStatus.nginxCisConnector }}
+- apiGroups:
+  - cis.f5.com
+  resources:
+  - nginxcisconnectors
+  verbs:
+  - list
+  - watch
+  - get
+{{- end }}
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

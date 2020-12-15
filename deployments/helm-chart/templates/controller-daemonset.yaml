@@ -125,7 +125,9 @@ spec:
 {{- end }}
 {{- if .Values.controller.reportIngressStatus.enable }}
           - -report-ingress-status
-{{- if .Values.controller.reportIngressStatus.externalService }}
+{{- if .Values.controller.reportIngressStatus.nginxCisConnector }}
+          - -nginx-cis-connector={{ .Values.controller.reportIngressStatus.nginxCisConnector }}
+{{- else if .Values.controller.reportIngressStatus.externalService }}
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
 {{- else if and (.Values.controller.service.create) (eq .Values.controller.service.type "LoadBalancer") }}
           - -external-service={{ include "nginx-ingress.serviceName" . }}
