@@ -60,7 +60,7 @@ func (su *statusUpdater) UpdateExternalEndpointsForResources(resource []Resource
 
 func (su *statusUpdater) UpdateExternalEndpointsForResource(r Resource) error {
 	switch impl := r.(type) {
-	case *FullIngress:
+	case *IngressConfiguration:
 		var ings []networking.Ingress
 		ings = append(ings, *impl.Ingress)
 
@@ -69,7 +69,7 @@ func (su *statusUpdater) UpdateExternalEndpointsForResource(r Resource) error {
 		}
 
 		return su.BulkUpdateIngressStatus(ings)
-	case *FullVirtualServer:
+	case *VirtualServerConfiguration:
 		failed := false
 
 		err := su.updateVirtualServerExternalEndpoints(impl.VirtualServer)

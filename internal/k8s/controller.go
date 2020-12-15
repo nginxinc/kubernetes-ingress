@@ -588,11 +588,11 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 
 	for _, r := range resources {
 		switch impl := r.(type) {
-		case *FullVirtualServer:
+		case *VirtualServerConfiguration:
 			vs := impl.VirtualServer
 			vsEx := lbc.createVirtualServerEx(vs, impl.VirtualServerRoutes)
 			virtualServersExes = append(virtualServersExes, vsEx)
-		case *FullIngress:
+		case *IngressConfiguration:
 			if impl.IsMaster {
 				mergeableIng := lbc.createMergeableIngresses(impl)
 				mergeableIngresses = append(mergeableIngresses, mergeableIng)
@@ -929,12 +929,12 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 	for _, c := range changes {
 		if c.Op == AddOrUpdate {
 			switch impl := c.Resource.(type) {
-			case *FullVirtualServer:
+			case *VirtualServerConfiguration:
 				vsEx := lbc.createVirtualServerEx(impl.VirtualServer, impl.VirtualServerRoutes)
 
 				warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateVirtualServer(vsEx)
 				lbc.updateVirtualServerStatusAndEvents(impl, warnings, addOrUpdateErr)
-			case *FullIngress:
+			case *IngressConfiguration:
 				if impl.IsMaster {
 					mergeableIng := lbc.createMergeableIngresses(impl)
 
@@ -950,7 +950,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 			}
 		} else if c.Op == Delete {
 			switch impl := c.Resource.(type) {
-			case *FullVirtualServer:
+			case *VirtualServerConfiguration:
 				key := getResourceKey(&impl.VirtualServer.ObjectMeta)
 
 				deleteErr := lbc.configurator.DeleteVirtualServer(key)
@@ -966,7 +966,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 				if vsExists {
 					lbc.UpdateVirtualServerStatusAndEventsOnDelete(impl, c.Error, deleteErr)
 				}
-			case *FullIngress:
+			case *IngressConfiguration:
 				key := getResourceKey(&impl.Ingress.ObjectMeta)
 
 				glog.V(2).Infof("Deleting Ingress: %v\n", key)
@@ -989,7 +989,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 	}
 }
 
-func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(fullVS *FullVirtualServer, changeError string, deleteErr error) {
+func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vsConfig *VirtualServerConfiguration, changeError string, deleteErr error) {
 	eventType := api_v1.EventTypeWarning
 	eventTitle := "Rejected"
 	eventWarningMessage := ""
@@ -999,8 +999,8 @@ func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(fu
 	if changeError != "" {
 		eventWarningMessage = fmt.Sprintf("with error: %s", changeError)
 		state = conf_v1.StateInvalid
-	} else if len(fullVS.Warnings) > 0 {
-		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(fullVS.Warnings))
+	} else if len(vsConfig.Warnings) > 0 {
+		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(vsConfig.Warnings))
 		state = conf_v1.StateWarning
 	}
 
@@ -1015,14 +1015,14 @@ func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(fu
 			state = conf_v1.StateInvalid
 		}
 
-		msg := fmt.Sprintf("VirtualServer %s was rejected %s", getResourceKey(&fullVS.VirtualServer.ObjectMeta), eventWarningMessage)
-		lbc.recorder.Eventf(fullVS.VirtualServer, eventType, eventTitle, msg)
+		msg := fmt.Sprintf("VirtualServer %s was rejected %s", getResourceKey(&vsConfig.VirtualServer.ObjectMeta), eventWarningMessage)
+		lbc.recorder.Eventf(vsConfig.VirtualServer, eventType, eventTitle, msg)
 
 		if lbc.reportVsVsrStatusEnabled() {
-			err := lbc.statusUpdater.UpdateVirtualServerStatus(fullVS.VirtualServer, state, eventTitle, msg)
+			err := lbc.statusUpdater.UpdateVirtualServerStatus(vsConfig.VirtualServer, state, eventTitle, msg)
 
 			if err != nil {
-				glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", fullVS.VirtualServer.Namespace, fullVS.VirtualServer.Name, err)
+				glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vsConfig.VirtualServer.Namespace, vsConfig.VirtualServer.Name, err)
 			}
 		}
 	}
@@ -1031,15 +1031,15 @@ func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(fu
 	// for each VSR, a dedicated problem exists
 }
 
-func (lbc *LoadBalancerController) UpdateIngressStatusAndEventsOnDelete(fullIng *FullIngress, changeError string, deleteErr error) {
+func (lbc *LoadBalancerController) UpdateIngressStatusAndEventsOnDelete(ingConfig *IngressConfiguration, changeError string, deleteErr error) {
 	eventTitle := "Rejected"
 	eventWarningMessage := ""
 
 	// Ingress either became invalid or lost all its hosts
 	if changeError != "" {
 		eventWarningMessage = fmt.Sprintf("with error: %s", changeError)
-	} else if len(fullIng.Warnings) > 0 {
-		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(fullIng.Warnings))
+	} else if len(ingConfig.Warnings) > 0 {
+		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(ingConfig.Warnings))
 	}
 
 	// we don't need to report anything if eventWarningMessage is empty
@@ -1051,9 +1051,9 @@ func (lbc *LoadBalancerController) UpdateIngressStatusAndEventsOnDelete(fullIng 
 			eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, deleteErr)
 		}
 
-		lbc.recorder.Eventf(fullIng.Ingress, api_v1.EventTypeWarning, eventTitle, "%v was rejected: %v", getResourceKey(&fullIng.Ingress.ObjectMeta), eventWarningMessage)
+		lbc.recorder.Eventf(ingConfig.Ingress, api_v1.EventTypeWarning, eventTitle, "%v was rejected: %v", getResourceKey(&ingConfig.Ingress.ObjectMeta), eventWarningMessage)
 		if lbc.reportStatusEnabled() {
-			err := lbc.statusUpdater.ClearIngressStatus(*fullIng.Ingress)
+			err := lbc.statusUpdater.ClearIngressStatus(*ingConfig.Ingress)
 			if err != nil {
 				glog.V(3).Infof("Error clearing Ingress status: %v", err)
 			}
@@ -1067,9 +1067,9 @@ func (lbc *LoadBalancerController) UpdateIngressStatusAndEventsOnDelete(fullIng 
 func (lbc *LoadBalancerController) updateResourcesStatusAndEvents(resources []Resource, warnings configs.Warnings, operationErr error) {
 	for _, r := range resources {
 		switch impl := r.(type) {
-		case *FullVirtualServer:
+		case *VirtualServerConfiguration:
 			lbc.updateVirtualServerStatusAndEvents(impl, warnings, operationErr)
-		case *FullIngress:
+		case *IngressConfiguration:
 			if impl.IsMaster {
 				lbc.updateMergeableIngressStatusAndEvents(impl, warnings, operationErr)
 			} else {
@@ -1079,18 +1079,18 @@ func (lbc *LoadBalancerController) updateResourcesStatusAndEvents(resources []Re
 	}
 }
 
-func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(fullIng *FullIngress, warnings configs.Warnings, operationErr error) {
+func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(ingConfig *IngressConfiguration, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
 	eventTitle := "AddedOrUpdated"
 	eventWarningMessage := ""
 
-	if len(fullIng.Warnings) > 0 {
+	if len(ingConfig.Warnings) > 0 {
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
-		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(fullIng.Warnings))
+		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(ingConfig.Warnings))
 	}
 
-	if messages, ok := warnings[fullIng.Ingress]; ok {
+	if messages, ok := warnings[ingConfig.Ingress]; ok {
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
 		eventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", eventWarningMessage, formatWarningMessages(messages))
@@ -1102,15 +1102,15 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(fullIng
 		eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, operationErr)
 	}
 
-	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&fullIng.Ingress.ObjectMeta), eventWarningMessage)
-	lbc.recorder.Eventf(fullIng.Ingress, eventType, eventTitle, msg)
+	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&ingConfig.Ingress.ObjectMeta), eventWarningMessage)
+	lbc.recorder.Eventf(ingConfig.Ingress, eventType, eventTitle, msg)
 
-	for _, fm := range fullIng.Minions {
+	for _, fm := range ingConfig.Minions {
 		minionEventType := api_v1.EventTypeNormal
 		minionEventTitle := "AddedOrUpdated"
 		minionEventWarningMessage := ""
 
-		minionChangeWarnings := fullIng.ChildWarnings[getResourceKey(&fm.Ingress.ObjectMeta)]
+		minionChangeWarnings := ingConfig.ChildWarnings[getResourceKey(&fm.Ingress.ObjectMeta)]
 		if len(minionChangeWarnings) > 0 {
 			minionEventType = api_v1.EventTypeWarning
 			minionEventTitle = "AddedOrUpdatedWithWarning"
@@ -1134,9 +1134,9 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(fullIng
 	}
 
 	if lbc.reportStatusEnabled() {
-		ings := []networking.Ingress{*fullIng.Ingress}
+		ings := []networking.Ingress{*ingConfig.Ingress}
 
-		for _, fm := range fullIng.Minions {
+		for _, fm := range ingConfig.Minions {
 			ings = append(ings, *fm.Ingress)
 		}
 
@@ -1147,18 +1147,18 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(fullIng
 	}
 }
 
-func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(fullIng *FullIngress, warnings configs.Warnings, operationErr error) {
+func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(ingConfig *IngressConfiguration, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
 	eventTitle := "AddedOrUpdated"
 	eventWarningMessage := ""
 
-	if len(fullIng.Warnings) > 0 {
+	if len(ingConfig.Warnings) > 0 {
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
-		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(fullIng.Warnings))
+		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(ingConfig.Warnings))
 	}
 
-	if messages, ok := warnings[fullIng.Ingress]; ok {
+	if messages, ok := warnings[ingConfig.Ingress]; ok {
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
 		eventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", eventWarningMessage, formatWarningMessages(messages))
@@ -1170,31 +1170,31 @@ func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(fullIng *
 		eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, operationErr)
 	}
 
-	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&fullIng.Ingress.ObjectMeta), eventWarningMessage)
-	lbc.recorder.Eventf(fullIng.Ingress, eventType, eventTitle, msg)
+	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&ingConfig.Ingress.ObjectMeta), eventWarningMessage)
+	lbc.recorder.Eventf(ingConfig.Ingress, eventType, eventTitle, msg)
 
 	if lbc.reportStatusEnabled() {
-		err := lbc.statusUpdater.UpdateIngressStatus(*fullIng.Ingress)
+		err := lbc.statusUpdater.UpdateIngressStatus(*ingConfig.Ingress)
 		if err != nil {
 			glog.V(3).Infof("error updating ing status: %v", err)
 		}
 	}
 }
 
-func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(fullVS *FullVirtualServer, warnings configs.Warnings, operationErr error) {
+func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(vsConfig *VirtualServerConfiguration, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
 	eventTitle := "AddedOrUpdated"
 	eventWarningMessage := ""
 	state := conf_v1.StateValid
 
-	if len(fullVS.Warnings) > 0 {
+	if len(vsConfig.Warnings) > 0 {
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
-		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(fullVS.Warnings))
+		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(vsConfig.Warnings))
 		state = conf_v1.StateWarning
 	}
 
-	if messages, ok := warnings[fullVS.VirtualServer]; ok {
+	if messages, ok := warnings[vsConfig.VirtualServer]; ok {
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
 		eventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", eventWarningMessage, formatWarningMessages(messages))
@@ -1208,17 +1208,17 @@ func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(fullVS *Fu
 		state = conf_v1.StateInvalid
 	}
 
-	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&fullVS.VirtualServer.ObjectMeta), eventWarningMessage)
-	lbc.recorder.Eventf(fullVS.VirtualServer, eventType, eventTitle, msg)
+	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&vsConfig.VirtualServer.ObjectMeta), eventWarningMessage)
+	lbc.recorder.Eventf(vsConfig.VirtualServer, eventType, eventTitle, msg)
 
 	if lbc.reportVsVsrStatusEnabled() {
-		err := lbc.statusUpdater.UpdateVirtualServerStatus(fullVS.VirtualServer, state, eventTitle, msg)
+		err := lbc.statusUpdater.UpdateVirtualServerStatus(vsConfig.VirtualServer, state, eventTitle, msg)
 		if err != nil {
-			glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", fullVS.VirtualServer.Namespace, fullVS.VirtualServer.Name, err)
+			glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vsConfig.VirtualServer.Namespace, vsConfig.VirtualServer.Name, err)
 		}
 	}
 
-	for _, vsr := range fullVS.VirtualServerRoutes {
+	for _, vsr := range vsConfig.VirtualServerRoutes {
 		vsrEventType := api_v1.EventTypeNormal
 		vsrEventTitle := "AddedOrUpdated"
 		vsrEventWarningMessage := ""
@@ -1242,7 +1242,7 @@ func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(fullVS *Fu
 		lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, msg)
 
 		if lbc.reportVsVsrStatusEnabled() {
-			vss := []*conf_v1.VirtualServer{fullVS.VirtualServer}
+			vss := []*conf_v1.VirtualServer{vsConfig.VirtualServer}
 			err := lbc.statusUpdater.UpdateVirtualServerRouteStatusWithReferencedBy(vsr, vsrState, vsrEventTitle, msg, vss)
 			if err != nil {
 				glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
@@ -1727,14 +1727,14 @@ func getIPAddressesFromEndpoints(endpoints []podEndpoint) []string {
 	return endps
 }
 
-func (lbc *LoadBalancerController) createMergeableIngresses(fullIng *FullIngress) *configs.MergeableIngresses {
+func (lbc *LoadBalancerController) createMergeableIngresses(ingConfig *IngressConfiguration) *configs.MergeableIngresses {
 	// for master Ingress, validMinionPaths are nil
-	masterIngressEx := lbc.createIngressEx(fullIng.Ingress, fullIng.ValidHosts, nil)
+	masterIngressEx := lbc.createIngressEx(ingConfig.Ingress, ingConfig.ValidHosts, nil)
 
 	var minions []*configs.IngressEx
 
-	for _, fm := range fullIng.Minions {
-		minions = append(minions, lbc.createIngressEx(fm.Ingress, fullIng.ValidHosts, fm.ValidPaths))
+	for _, m := range ingConfig.Minions {
+		minions = append(minions, lbc.createIngressEx(m.Ingress, ingConfig.ValidHosts, m.ValidPaths))
 	}
 
 	return &configs.MergeableIngresses{

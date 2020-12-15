@@ -81,14 +81,14 @@ func compareConfigurationProblems(problem1 *ConfigurationProblem, problem2 *Conf
 		problem1.Message == problem2.Message
 }
 
-// FullIngress holds an Ingress resource with its minions. It implements the Resource interface.
-type FullIngress struct {
+// IngressConfiguration holds an Ingress resource with its minions. It implements the Resource interface.
+type IngressConfiguration struct {
 	// Ingress holds a regular Ingress or a master Ingress.
 	Ingress *networking.Ingress
 	// IsMaster is true when the Ingress is a master.
 	IsMaster bool
 	// Minions contains minions if the Ingress is a master.
-	Minions []*FullMinion
+	Minions []*MinionConfiguration
 	// ValidHosts marks the hosts of the Ingress as valid (true) or invalid (false).
 	// Regular Ingress resources can have multiple hosts. It is possible that some of the hosts are taken by other
 	// resources. In that case, those hosts will be marked as invalid.
@@ -99,9 +99,9 @@ type FullIngress struct {
 	ChildWarnings map[string][]string
 }
 
-// NewRegularFullIngress creates a FullIngress from a regular Ingress resource.
-func NewRegularFullIngress(ing *networking.Ingress) *FullIngress {
-	return &FullIngress{
+// NewRegularIngressConfiguration creates an IngressConfiguration from an Ingress resource.
+func NewRegularIngressConfiguration(ing *networking.Ingress) *IngressConfiguration {
+	return &IngressConfiguration{
 		Ingress:       ing,
 		IsMaster:      false,
 		ValidHosts:    make(map[string]bool),
@@ -109,9 +109,9 @@ func NewRegularFullIngress(ing *networking.Ingress) *FullIngress {
 	}
 }
 
-// NewMasterFullIngress creates a FullIngress from a master Ingress resource.
-func NewMasterFullIngress(ing *networking.Ingress, minions []*FullMinion, childWarnings map[string][]string) *FullIngress {
-	return &FullIngress{
+// NewMasterIngressConfiguration creates an IngressConfiguration from a master Ingress resource.
+func NewMasterIngressConfiguration(ing *networking.Ingress, minions []*MinionConfiguration, childWarnings map[string][]string) *IngressConfiguration {
+	return &IngressConfiguration{
 		Ingress:       ing,
 		IsMaster:      true,
 		Minions:       minions,
@@ -121,61 +121,61 @@ func NewMasterFullIngress(ing *networking.Ingress, minions []*FullMinion, childW
 }
 
 // GetObjectMeta returns the resource ObjectMeta.
-func (fi *FullIngress) GetObjectMeta() *metav1.ObjectMeta {
-	return &fi.Ingress.ObjectMeta
+func (ic *IngressConfiguration) GetObjectMeta() *metav1.ObjectMeta {
+	return &ic.Ingress.ObjectMeta
 }
 
 // GetKeyWithKind returns the key of the resource with its kind. For example, Ingress/my-namespace/my-name.
-func (fi *FullIngress) GetKeyWithKind() string {
-	key := getResourceKey(&fi.Ingress.ObjectMeta)
+func (ic *IngressConfiguration) GetKeyWithKind() string {
+	key := getResourceKey(&ic.Ingress.ObjectMeta)
 	return fmt.Sprintf("%s/%s", ingressKind, key)
 }
 
 // AcquireHost acquires the host for this resource.
-func (fi *FullIngress) AcquireHost(host string) {
-	fi.ValidHosts[host] = true
+func (ic *IngressConfiguration) AcquireHost(host string) {
+	ic.ValidHosts[host] = true
 }
 
 // ReleaseHost releases the host.
-func (fi *FullIngress) ReleaseHost(host string) {
-	fi.ValidHosts[host] = false
+func (ic *IngressConfiguration) ReleaseHost(host string) {
+	ic.ValidHosts[host] = false
 }
 
 // Wins tells if this resource wins over the specified resource.
-func (fi *FullIngress) Wins(resource Resource) bool {
-	return chooseObjectMetaWinner(fi.GetObjectMeta(), resource.GetObjectMeta())
+func (ic *IngressConfiguration) Wins(resource Resource) bool {
+	return chooseObjectMetaWinner(ic.GetObjectMeta(), resource.GetObjectMeta())
 }
 
 // AddWarning adds a warning.
-func (fi *FullIngress) AddWarning(warning string) {
-	fi.Warnings = append(fi.Warnings, warning)
+func (ic *IngressConfiguration) AddWarning(warning string) {
+	ic.Warnings = append(ic.Warnings, warning)
 }
 
-// IsEqual tests if the FullIngress is equal to the resource.
-func (fi *FullIngress) IsEqual(resource Resource) bool {
-	fullIngress, ok := resource.(*FullIngress)
+// IsEqual tests if the IngressConfiguration is equal to the resource.
+func (ic *IngressConfiguration) IsEqual(resource Resource) bool {
+	ingConfig, ok := resource.(*IngressConfiguration)
 	if !ok {
 		return false
 	}
 
-	if !compareObjectMetasWithAnnotations(&fi.Ingress.ObjectMeta, &fullIngress.Ingress.ObjectMeta) {
+	if !compareObjectMetasWithAnnotations(&ic.Ingress.ObjectMeta, &ingConfig.Ingress.ObjectMeta) {
 		return false
 	}
 
-	if !reflect.DeepEqual(fi.ValidHosts, fullIngress.ValidHosts) {
+	if !reflect.DeepEqual(ic.ValidHosts, ingConfig.ValidHosts) {
 		return false
 	}
 
-	if fi.IsMaster != fullIngress.IsMaster {
+	if ic.IsMaster != ingConfig.IsMaster {
 		return false
 	}
 
-	if len(fi.Minions) != len(fullIngress.Minions) {
+	if len(ic.Minions) != len(ingConfig.Minions) {
 		return false
 	}
 
-	for i := range fi.Minions {
-		if !compareObjectMetasWithAnnotations(&fi.Minions[i].Ingress.ObjectMeta, &fullIngress.Minions[i].Ingress.ObjectMeta) {
+	for i := range ic.Minions {
+		if !compareObjectMetasWithAnnotations(&ic.Minions[i].Ingress.ObjectMeta, &ingConfig.Minions[i].Ingress.ObjectMeta) {
 			return false
 		}
 	}
@@ -183,8 +183,8 @@ func (fi *FullIngress) IsEqual(resource Resource) bool {
 	return true
 }
 
-// FullMinion holds a Minion resource.
-type FullMinion struct {
+// MinionConfiguration holds a Minion resource.
+type MinionConfiguration struct {
 	// Ingress is the Ingress behind a minion.
 	Ingress *networking.Ingress
 	// ValidPaths marks the paths of the Ingress as valid (true) or invalid (false).
@@ -193,24 +193,24 @@ type FullMinion struct {
 	ValidPaths map[string]bool
 }
 
-// NewFullMinion creates a new FullMinion.
-func NewFullMinion(ing *networking.Ingress) *FullMinion {
-	return &FullMinion{
+// NewMinionConfiguration creates a new MinionConfiguration.
+func NewMinionConfiguration(ing *networking.Ingress) *MinionConfiguration {
+	return &MinionConfiguration{
 		Ingress:    ing,
 		ValidPaths: make(map[string]bool),
 	}
 }
 
-// FullVirtualServer holds a VirtualServer along with its VirtualServerRoutes.
-type FullVirtualServer struct {
+// VirtualServerConfiguration holds a VirtualServer along with its VirtualServerRoutes.
+type VirtualServerConfiguration struct {
 	VirtualServer       *conf_v1.VirtualServer
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	Warnings            []string
 }
 
-// NewFullVirtualServer creates a NewFullVirtualServer.
-func NewFullVirtualServer(vs *conf_v1.VirtualServer, vsrs []*conf_v1.VirtualServerRoute, warnings []string) *FullVirtualServer {
-	return &FullVirtualServer{
+// NewVirtualServerConfiguration creates a VirtualServerConfiguration.
+func NewVirtualServerConfiguration(vs *conf_v1.VirtualServer, vsrs []*conf_v1.VirtualServerRoute, warnings []string) *VirtualServerConfiguration {
+	return &VirtualServerConfiguration{
 		VirtualServer:       vs,
 		VirtualServerRoutes: vsrs,
 		Warnings:            warnings,
@@ -218,54 +218,54 @@ func NewFullVirtualServer(vs *conf_v1.VirtualServer, vsrs []*conf_v1.VirtualServ
 }
 
 // GetObjectMeta returns the resource ObjectMeta.
-func (fvs *FullVirtualServer) GetObjectMeta() *metav1.ObjectMeta {
-	return &fvs.VirtualServer.ObjectMeta
+func (vsc *VirtualServerConfiguration) GetObjectMeta() *metav1.ObjectMeta {
+	return &vsc.VirtualServer.ObjectMeta
 }
 
 // GetKeyWithKind returns the key of the resource with its kind. For example, VirtualServer/my-namespace/my-name.
-func (fvs *FullVirtualServer) GetKeyWithKind() string {
-	key := getResourceKey(&fvs.VirtualServer.ObjectMeta)
+func (vsc *VirtualServerConfiguration) GetKeyWithKind() string {
+	key := getResourceKey(&vsc.VirtualServer.ObjectMeta)
 	return fmt.Sprintf("%s/%s", virtualServerKind, key)
 }
 
 // AcquireHost acquires the host for this resource.
-func (fvs *FullVirtualServer) AcquireHost(host string) {
+func (vsc *VirtualServerConfiguration) AcquireHost(host string) {
 	// we do nothing because we don't need to track which host belongs to VirtualServer, in contrast with the Ingress resource.
 }
 
 // ReleaseHost releases the host.
-func (fvs *FullVirtualServer) ReleaseHost(host string) {
+func (vsc *VirtualServerConfiguration) ReleaseHost(host string) {
 	// we do nothing because we don't need to track which host belongs to VirtualServer, in contrast with the Ingress resource.
 }
 
 // Wins tells if this resource wins over the specified resource.
 // It is used to determine which resource should win over a host.
-func (fvs *FullVirtualServer) Wins(resource Resource) bool {
-	return chooseObjectMetaWinner(fvs.GetObjectMeta(), resource.GetObjectMeta())
+func (vsc *VirtualServerConfiguration) Wins(resource Resource) bool {
+	return chooseObjectMetaWinner(vsc.GetObjectMeta(), resource.GetObjectMeta())
 }
 
 // AddWarning adds a warning.
-func (fvs *FullVirtualServer) AddWarning(warning string) {
-	fvs.Warnings = append(fvs.Warnings, warning)
+func (vsc *VirtualServerConfiguration) AddWarning(warning string) {
+	vsc.Warnings = append(vsc.Warnings, warning)
 }
 
-// IsEqual tests if the FullVirtualServer is equal to the resource.
-func (fvs *FullVirtualServer) IsEqual(resource Resource) bool {
-	fullVS, ok := resource.(*FullVirtualServer)
+// IsEqual tests if the VirtualServerConfiguration is equal to the resource.
+func (vsc *VirtualServerConfiguration) IsEqual(resource Resource) bool {
+	vsConfig, ok := resource.(*VirtualServerConfiguration)
 	if !ok {
 		return false
 	}
 
-	if !compareObjectMetas(&fvs.VirtualServer.ObjectMeta, &fullVS.VirtualServer.ObjectMeta) {
+	if !compareObjectMetas(&vsc.VirtualServer.ObjectMeta, &vsConfig.VirtualServer.ObjectMeta) {
 		return false
 	}
 
-	if len(fvs.VirtualServerRoutes) != len(fullVS.VirtualServerRoutes) {
+	if len(vsc.VirtualServerRoutes) != len(vsConfig.VirtualServerRoutes) {
 		return false
 	}
 
-	for i := range fvs.VirtualServerRoutes {
-		if !compareObjectMetas(&fvs.VirtualServerRoutes[i].ObjectMeta, &fullVS.VirtualServerRoutes[i].ObjectMeta) {
+	for i := range vsc.VirtualServerRoutes {
+		if !compareObjectMetas(&vsc.VirtualServerRoutes[i].ObjectMeta, &vsConfig.VirtualServerRoutes[i].ObjectMeta) {
 			return false
 		}
 	}
@@ -534,11 +534,11 @@ func (c *Configuration) GetResourcesWithFilter(filter resourceFilter) []Resource
 
 	for _, r := range c.hosts {
 		switch r.(type) {
-		case *FullIngress:
+		case *IngressConfiguration:
 			if filter.Ingresses {
 				resources[r.GetKeyWithKind()] = r
 			}
-		case *FullVirtualServer:
+		case *VirtualServerConfiguration:
 			if filter.VirtualServers {
 				resources[r.GetKeyWithKind()] = r
 			}
@@ -594,7 +594,7 @@ func (c *Configuration) findResourcesForResourceReference(namespace string, name
 		r := c.hosts[h]
 
 		switch impl := r.(type) {
-		case *FullIngress:
+		case *IngressConfiguration:
 			if checker.IsReferencedByIngress(namespace, name, impl.Ingress) {
 				result = append(result, r)
 				continue
@@ -606,7 +606,7 @@ func (c *Configuration) findResourcesForResourceReference(namespace string, name
 					break
 				}
 			}
-		case *FullVirtualServer:
+		case *VirtualServerConfiguration:
 			if checker.IsReferencedByVirtualServer(namespace, name, impl.VirtualServer) {
 				result = append(result, r)
 				continue
@@ -689,7 +689,7 @@ func (c *Configuration) addProblemsForResourcesWithoutActiveHost(resources map[s
 		r := resources[k]
 
 		switch impl := r.(type) {
-		case *FullIngress:
+		case *IngressConfiguration:
 			atLeastOneValidHost := false
 			for _, v := range impl.ValidHosts {
 				if v {
@@ -706,7 +706,7 @@ func (c *Configuration) addProblemsForResourcesWithoutActiveHost(resources map[s
 				}
 				problems[r.GetKeyWithKind()] = p
 			}
-		case *FullVirtualServer:
+		case *VirtualServerConfiguration:
 			res, exists := c.hosts[impl.VirtualServer.Spec.Host]
 
 			if !exists {
@@ -735,9 +735,9 @@ func (c *Configuration) addProblemsForOrphanMinions(problems map[string]Configur
 		}
 
 		r, exists := c.hosts[ing.Spec.Rules[0].Host]
-		fullIngress, ok := r.(*FullIngress)
+		ingressConf, ok := r.(*IngressConfiguration)
 
-		if !exists || !ok || !fullIngress.IsMaster {
+		if !exists || !ok || !ingressConf.IsMaster {
 			p := ConfigurationProblem{
 				Object:  ing,
 				IsError: false,
@@ -755,7 +755,7 @@ func (c *Configuration) addProblemsForOrphanOrIgnoredVsrs(problems map[string]Co
 		vsr := c.virtualServerRoutes[key]
 
 		r, exists := c.hosts[vsr.Spec.Host]
-		fullVS, ok := r.(*FullVirtualServer)
+		vsConfig, ok := r.(*VirtualServerConfiguration)
 
 		if !exists || !ok {
 			p := ConfigurationProblem{
@@ -770,7 +770,7 @@ func (c *Configuration) addProblemsForOrphanOrIgnoredVsrs(problems map[string]Co
 		}
 
 		found := false
-		for _, v := range fullVS.VirtualServerRoutes {
+		for _, v := range vsConfig.VirtualServerRoutes {
 			if vsr.Namespace == v.Namespace && vsr.Name == v.Name {
 				found = true
 				break
@@ -782,7 +782,7 @@ func (c *Configuration) addProblemsForOrphanOrIgnoredVsrs(problems map[string]Co
 				Object:  vsr,
 				IsError: false,
 				Reason:  "Ignored",
-				Message: fmt.Sprintf("VirtualServer %s ignores VirtualServerRoute", getResourceKey(&fullVS.VirtualServer.ObjectMeta)),
+				Message: fmt.Sprintf("VirtualServer %s ignores VirtualServerRoute", getResourceKey(&vsConfig.VirtualServer.ObjectMeta)),
 			}
 			k := getResourceKeyWithKind(virtualServerRouteKind, &vsr.ObjectMeta)
 			problems[k] = p
@@ -892,13 +892,13 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 			continue
 		}
 
-		var resource *FullIngress
+		var resource *IngressConfiguration
 
 		if isMaster(ing) {
-			minions, childWarnings := c.buildFullMinions(ing.Spec.Rules[0].Host)
-			resource = NewMasterFullIngress(ing, minions, childWarnings)
+			minions, childWarnings := c.buildMinionConfigs(ing.Spec.Rules[0].Host)
+			resource = NewMasterIngressConfiguration(ing, minions, childWarnings)
 		} else {
-			resource = NewRegularFullIngress(ing)
+			resource = NewRegularIngressConfiguration(ing)
 		}
 
 		newResources[resource.GetKeyWithKind()] = resource
@@ -930,7 +930,7 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 		vs := c.virtualServers[key]
 
 		vsrs, warnings := c.buildVirtualServerRoutes(vs)
-		resource := NewFullVirtualServer(vs, vsrs, warnings)
+		resource := NewVirtualServerConfiguration(vs, vsrs, warnings)
 
 		newResources[resource.GetKeyWithKind()] = resource
 
@@ -956,10 +956,10 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 	return newHosts, newResources
 }
 
-func (c *Configuration) buildFullMinions(masterHost string) ([]*FullMinion, map[string][]string) {
-	var fullMinions []*FullMinion
+func (c *Configuration) buildMinionConfigs(masterHost string) ([]*MinionConfiguration, map[string][]string) {
+	var minionConfigs []*MinionConfiguration
 	childWarnings := make(map[string][]string)
-	paths := make(map[string]*FullMinion)
+	paths := make(map[string]*MinionConfiguration)
 
 	for _, minionKey := range getSortedIngressKeys(c.ingresses) {
 		ingress := c.ingresses[minionKey]
@@ -972,35 +972,35 @@ func (c *Configuration) buildFullMinions(masterHost string) ([]*FullMinion, map[
 			continue
 		}
 
-		fullMinion := NewFullMinion(ingress)
+		minionConfig := NewMinionConfiguration(ingress)
 
 		for _, p := range ingress.Spec.Rules[0].HTTP.Paths {
 			holder, exists := paths[p.Path]
 			if !exists {
-				paths[p.Path] = fullMinion
-				fullMinion.ValidPaths[p.Path] = true
+				paths[p.Path] = minionConfig
+				minionConfig.ValidPaths[p.Path] = true
 				continue
 			}
 
 			warning := fmt.Sprintf("path %s is taken by another resource", p.Path)
 
 			if !chooseObjectMetaWinner(&holder.Ingress.ObjectMeta, &ingress.ObjectMeta) {
-				paths[p.Path] = fullMinion
-				fullMinion.ValidPaths[p.Path] = true
+				paths[p.Path] = minionConfig
+				minionConfig.ValidPaths[p.Path] = true
 
 				holder.ValidPaths[p.Path] = false
 				key := getResourceKey(&holder.Ingress.ObjectMeta)
 				childWarnings[key] = append(childWarnings[key], warning)
 			} else {
-				key := getResourceKey(&fullMinion.Ingress.ObjectMeta)
+				key := getResourceKey(&minionConfig.Ingress.ObjectMeta)
 				childWarnings[key] = append(childWarnings[key], warning)
 			}
 		}
 
-		fullMinions = append(fullMinions, fullMinion)
+		minionConfigs = append(minionConfigs, minionConfig)
 	}
 
-	return fullMinions, childWarnings
+	return minionConfigs, childWarnings
 }
 
 func (c *Configuration) buildVirtualServerRoutes(vs *conf_v1.VirtualServer) ([]*conf_v1.VirtualServerRoute, []string) {

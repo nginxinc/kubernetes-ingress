@@ -32,7 +32,7 @@ func TestAddIngressForRegularIngress(t *testing.T) {
 	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: ing,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
@@ -58,7 +58,7 @@ func TestAddIngressForRegularIngress(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: updatedIng,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
@@ -94,7 +94,7 @@ func TestAddIngressForRegularIngress(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: updatedIng,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
@@ -118,7 +118,7 @@ func TestAddIngressForRegularIngress(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: updatedIng,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
@@ -150,7 +150,7 @@ func TestAddIngressForRegularIngress(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: updatedHostIng,
 				ValidHosts: map[string]bool{
 					"bar.example.com": true,
@@ -173,7 +173,7 @@ func TestAddIngressForRegularIngress(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: updatedHostIng,
 				ValidHosts: map[string]bool{
 					"bar.example.com": true,
@@ -260,13 +260,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: minion1,
 						ValidPaths: map[string]bool{
@@ -294,13 +294,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: minion1,
 						ValidPaths: map[string]bool{
@@ -335,13 +335,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: updatedMinion1,
 						ValidPaths: map[string]bool{
@@ -387,13 +387,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: minion2,
 						ValidPaths: map[string]bool{
@@ -427,13 +427,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: updatedMinion1,
 						ValidPaths: map[string]bool{
@@ -470,13 +470,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: updatedMinion1,
 						ValidPaths: map[string]bool{
@@ -513,13 +513,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: updatedMaster,
 				ValidHosts: map[string]bool{
 					"bar.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: updatedMinion2,
 						ValidPaths: map[string]bool{
@@ -551,13 +551,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: updatedMinion1,
 						ValidPaths: map[string]bool{
@@ -590,13 +590,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: updatedMinion1,
 						ValidPaths: map[string]bool{
@@ -629,13 +629,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: minion2,
 						ValidPaths: map[string]bool{
@@ -662,13 +662,13 @@ func TestAddIngressForMergeableIngresses(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: minion2,
 						ValidPaths: map[string]bool{
@@ -719,7 +719,7 @@ func TestMinionPathCollisions(t *testing.T) {
 	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
@@ -745,13 +745,13 @@ func TestMinionPathCollisions(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: minion1,
 						ValidPaths: map[string]bool{
@@ -779,13 +779,13 @@ func TestMinionPathCollisions(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: minion1,
 						ValidPaths: map[string]bool{
@@ -820,13 +820,13 @@ func TestMinionPathCollisions(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: master,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
 				},
 				IsMaster: true,
-				Minions: []*FullMinion{
+				Minions: []*MinionConfiguration{
 					{
 						Ingress: minion2,
 						ValidPaths: map[string]bool{
@@ -876,7 +876,7 @@ func TestAddIngressWithIncorrectClass(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: updatedIng,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
@@ -900,7 +900,7 @@ func TestAddIngressWithIncorrectClass(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress: updatedIng,
 				ValidHosts: map[string]bool{
 					"foo.example.com": true,
@@ -932,7 +932,7 @@ func TestAddVirtualServer(t *testing.T) {
 	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: vs,
 			},
 		},
@@ -955,7 +955,7 @@ func TestAddVirtualServer(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: updatedVS,
 			},
 		},
@@ -978,7 +978,7 @@ func TestAddVirtualServer(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: updatedVS,
 			},
 			Error: "spec.host: Required value",
@@ -998,7 +998,7 @@ func TestAddVirtualServer(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: updatedVS,
 			},
 		},
@@ -1021,7 +1021,7 @@ func TestAddVirtualServer(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: updatedHostVS,
 			},
 		},
@@ -1040,7 +1040,7 @@ func TestAddVirtualServer(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: updatedHostVS,
 			},
 		},
@@ -1107,7 +1107,7 @@ func TestAddInvalidVirtualServerWithIncorrectClass(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: updatedVS,
 			},
 		},
@@ -1127,7 +1127,7 @@ func TestAddInvalidVirtualServerWithIncorrectClass(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: updatedVS,
 			},
 		},
@@ -1199,7 +1199,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr1},
 				Warnings:            []string{"VirtualServerRoute default/virtualserverroute-2 doesn't exist or invalid"},
@@ -1223,7 +1223,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr1, vsr2},
 			},
@@ -1247,7 +1247,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{updatedVSR1, vsr2},
 			},
@@ -1271,7 +1271,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr2},
 				Warnings:            []string{"VirtualServerRoute default/virtualserverroute-1 doesn't exist or invalid"},
@@ -1300,7 +1300,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr1, vsr2},
 			},
@@ -1324,7 +1324,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr2},
 				Warnings:            []string{"VirtualServerRoute default/virtualserverroute-1 is invalid: spec.subroutes[0]: Invalid value: \"/\": must start with '/first'"},
@@ -1352,7 +1352,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr1, vsr2},
 			},
@@ -1376,7 +1376,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr1},
 				Warnings:            []string{"VirtualServerRoute default/virtualserverroute-2 is invalid: spec.host: Invalid value: \"bar.example.com\": must be equal to 'foo.example.com'"},
@@ -1407,7 +1407,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       updatedVS,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{updatedVSR2},
 				Warnings:            []string{"VirtualServerRoute default/virtualserverroute-1 is invalid: spec.host: Invalid value: \"foo.example.com\": must be equal to 'bar.example.com'"},
@@ -1435,7 +1435,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr1},
 				Warnings:            []string{"VirtualServerRoute default/virtualserverroute-2 is invalid: spec.host: Invalid value: \"bar.example.com\": must be equal to 'foo.example.com'"},
@@ -1463,7 +1463,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr1, vsr2},
 			},
@@ -1484,7 +1484,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr2},
 				Warnings:            []string{"VirtualServerRoute default/virtualserverroute-1 doesn't exist or invalid"},
@@ -1506,7 +1506,7 @@ func TestAddVirtualServerWithVirtualServerRoutes(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer:       vs,
 				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr2},
 				Warnings:            []string{"VirtualServerRoute default/virtualserverroute-1 doesn't exist or invalid"},
@@ -1615,7 +1615,7 @@ func TestHostCollisions(t *testing.T) {
 	expectedChanges := []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: vs,
 			},
 		},
@@ -1635,14 +1635,14 @@ func TestHostCollisions(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: vs,
 				Warnings:      []string{"host foo.example.com is taken by another resource"},
 			},
 		},
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress:       regularIng,
 				ValidHosts:    map[string]bool{"foo.example.com": true, "bar.example.com": true},
 				ChildWarnings: map[string][]string{},
@@ -1671,7 +1671,7 @@ func TestHostCollisions(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress:       regularIng,
 				ValidHosts:    map[string]bool{"bar.example.com": true},
 				Warnings:      []string{"host foo.example.com is taken by another resource"},
@@ -1680,7 +1680,7 @@ func TestHostCollisions(t *testing.T) {
 		},
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress:       masterIng,
 				IsMaster:      true,
 				ValidHosts:    map[string]bool{"foo.example.com": true},
@@ -1735,7 +1735,7 @@ func TestHostCollisions(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress:       masterIng,
 				IsMaster:      true,
 				ValidHosts:    map[string]bool{"foo.example.com": true},
@@ -1744,7 +1744,7 @@ func TestHostCollisions(t *testing.T) {
 		},
 		{
 			Op: AddOrUpdate,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress:       regularIng,
 				ValidHosts:    map[string]bool{"foo.example.com": true, "bar.example.com": true},
 				ChildWarnings: map[string][]string{},
@@ -1766,7 +1766,7 @@ func TestHostCollisions(t *testing.T) {
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
-			Resource: &FullIngress{
+			Resource: &IngressConfiguration{
 				Ingress:       regularIng,
 				ValidHosts:    map[string]bool{"foo.example.com": true, "bar.example.com": true},
 				ChildWarnings: map[string][]string{},
@@ -1774,7 +1774,7 @@ func TestHostCollisions(t *testing.T) {
 		},
 		{
 			Op: AddOrUpdate,
-			Resource: &FullVirtualServer{
+			Resource: &VirtualServerConfiguration{
 				VirtualServer: vs,
 			},
 		},
@@ -1938,11 +1938,11 @@ func TestChooseObjectMetaWinner(t *testing.T) {
 }
 
 func TestSquashResourceChanges(t *testing.T) {
-	fullIng := &FullIngress{
+	ingConfig := &IngressConfiguration{
 		Ingress: createTestIngress("test", "foo.example.com"),
 	}
 
-	fullVS := &FullVirtualServer{
+	vsConfig := &VirtualServerConfiguration{
 		VirtualServer: createTestVirtualServer("test", "bar.example.com"),
 	}
 
@@ -1955,17 +1955,17 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 				{
 					Op:       Delete,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 			},
 			expected: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 			},
 			msg: "squash deletes",
@@ -1974,17 +1974,17 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 			},
 			expected: []ResourceChange{
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 			},
 			msg: "squash updates",
@@ -1993,17 +1993,17 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 			},
 			expected: []ResourceChange{
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 			},
 			msg: "squash update and delete",
@@ -2012,21 +2012,21 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullVS,
+					Resource: vsConfig,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 			},
 			expected: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullVS,
+					Resource: vsConfig,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 			},
 			msg: "preserve the order",
@@ -2035,21 +2035,21 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullVS,
+					Resource: vsConfig,
 				},
 			},
 			expected: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullVS,
+					Resource: vsConfig,
 				},
 			},
 			msg: "do not squash different resource with same ns/name",
@@ -2058,25 +2058,25 @@ func TestSquashResourceChanges(t *testing.T) {
 			changes: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 				{
 					Op:       Delete,
-					Resource: fullVS,
+					Resource: vsConfig,
 				},
 			},
 			expected: []ResourceChange{
 				{
 					Op:       Delete,
-					Resource: fullVS,
+					Resource: vsConfig,
 				},
 				{
 					Op:       AddOrUpdate,
-					Resource: fullIng,
+					Resource: ingConfig,
 				},
 			},
 			msg: "squashed delete and update must follow delete",
@@ -2251,14 +2251,14 @@ func TestGetResources(t *testing.T) {
 	}
 }
 
-func TestIsEqualForFullIngresses(t *testing.T) {
+func TestIsEqualForIngressConfigurationes(t *testing.T) {
 	regularIng := createTestIngress("regular-ingress", "foo.example.com")
 
-	fullIngWithInvalidHost := NewRegularFullIngress(regularIng)
-	fullIngWithInvalidHost.ValidHosts["foo.example.com"] = false
+	ingConfigWithInvalidHost := NewRegularIngressConfiguration(regularIng)
+	ingConfigWithInvalidHost.ValidHosts["foo.example.com"] = false
 
-	fullIngWithUpdatedIsMaster := NewRegularFullIngress(regularIng)
-	fullIngWithUpdatedIsMaster.IsMaster = true
+	ingConfigWithUpdatedIsMaster := NewRegularIngressConfiguration(regularIng)
+	ingConfigWithUpdatedIsMaster.IsMaster = true
 
 	regularIngWithUpdatedGen := regularIng.DeepCopy()
 	regularIngWithUpdatedGen.Generation++
@@ -2276,69 +2276,69 @@ func TestIsEqualForFullIngresses(t *testing.T) {
 	minionIngWithUpdatedAnnotations.Annotations["new"] = "value"
 
 	tests := []struct {
-		fullIng1 *FullIngress
-		fullIng2 *FullIngress
-		expected bool
-		msg      string
+		ingConfig1 *IngressConfiguration
+		ingConfig2 *IngressConfiguration
+		expected   bool
+		msg        string
 	}{
 		{
-			fullIng1: NewRegularFullIngress(regularIng),
-			fullIng2: NewRegularFullIngress(regularIng),
-			expected: true,
-			msg:      "equal regular ingresses",
+			ingConfig1: NewRegularIngressConfiguration(regularIng),
+			ingConfig2: NewRegularIngressConfiguration(regularIng),
+			expected:   true,
+			msg:        "equal regular ingresses",
 		},
 		{
-			fullIng1: NewRegularFullIngress(regularIng),
-			fullIng2: fullIngWithInvalidHost,
-			expected: false,
-			msg:      "regular ingresses with different valid hosts",
+			ingConfig1: NewRegularIngressConfiguration(regularIng),
+			ingConfig2: ingConfigWithInvalidHost,
+			expected:   false,
+			msg:        "regular ingresses with different valid hosts",
 		},
 		{
-			fullIng1: NewRegularFullIngress(regularIng),
-			fullIng2: fullIngWithUpdatedIsMaster,
-			expected: false,
-			msg:      "regular ingresses with different IsMaster value",
+			ingConfig1: NewRegularIngressConfiguration(regularIng),
+			ingConfig2: ingConfigWithUpdatedIsMaster,
+			expected:   false,
+			msg:        "regular ingresses with different IsMaster value",
 		},
 		{
-			fullIng1: NewRegularFullIngress(regularIng),
-			fullIng2: NewRegularFullIngress(regularIngWithUpdatedGen),
-			expected: false,
-			msg:      "regular ingresses with different generation",
+			ingConfig1: NewRegularIngressConfiguration(regularIng),
+			ingConfig2: NewRegularIngressConfiguration(regularIngWithUpdatedGen),
+			expected:   false,
+			msg:        "regular ingresses with different generation",
 		},
 		{
-			fullIng1: NewRegularFullIngress(regularIng),
-			fullIng2: NewRegularFullIngress(regularIngWithUpdatedAnnotations),
-			expected: false,
-			msg:      "regular ingresses with different annotations",
+			ingConfig1: NewRegularIngressConfiguration(regularIng),
+			ingConfig2: NewRegularIngressConfiguration(regularIngWithUpdatedAnnotations),
+			expected:   false,
+			msg:        "regular ingresses with different annotations",
 		},
 		{
-			fullIng1: NewMasterFullIngress(masterIng, []*FullMinion{NewFullMinion(minionIng)}, map[string][]string{}),
-			fullIng2: NewMasterFullIngress(masterIng, []*FullMinion{NewFullMinion(minionIng)}, map[string][]string{}),
-			expected: true,
-			msg:      "equal master ingresses",
+			ingConfig1: NewMasterIngressConfiguration(masterIng, []*MinionConfiguration{NewMinionConfiguration(minionIng)}, map[string][]string{}),
+			ingConfig2: NewMasterIngressConfiguration(masterIng, []*MinionConfiguration{NewMinionConfiguration(minionIng)}, map[string][]string{}),
+			expected:   true,
+			msg:        "equal master ingresses",
 		},
 		{
-			fullIng1: NewMasterFullIngress(masterIng, []*FullMinion{NewFullMinion(minionIng)}, map[string][]string{}),
-			fullIng2: NewMasterFullIngress(masterIng, []*FullMinion{}, map[string][]string{}),
-			expected: false,
-			msg:      "masters with different number of minions",
+			ingConfig1: NewMasterIngressConfiguration(masterIng, []*MinionConfiguration{NewMinionConfiguration(minionIng)}, map[string][]string{}),
+			ingConfig2: NewMasterIngressConfiguration(masterIng, []*MinionConfiguration{}, map[string][]string{}),
+			expected:   false,
+			msg:        "masters with different number of minions",
 		},
 		{
-			fullIng1: NewMasterFullIngress(masterIng, []*FullMinion{NewFullMinion(minionIng)}, map[string][]string{}),
-			fullIng2: NewMasterFullIngress(masterIng, []*FullMinion{NewFullMinion(minionIngWithUpdatedGen)}, map[string][]string{}),
-			expected: false,
-			msg:      "masters with minions with different generation",
+			ingConfig1: NewMasterIngressConfiguration(masterIng, []*MinionConfiguration{NewMinionConfiguration(minionIng)}, map[string][]string{}),
+			ingConfig2: NewMasterIngressConfiguration(masterIng, []*MinionConfiguration{NewMinionConfiguration(minionIngWithUpdatedGen)}, map[string][]string{}),
+			expected:   false,
+			msg:        "masters with minions with different generation",
 		},
 		{
-			fullIng1: NewMasterFullIngress(masterIng, []*FullMinion{NewFullMinion(minionIng)}, map[string][]string{}),
-			fullIng2: NewMasterFullIngress(masterIng, []*FullMinion{NewFullMinion(minionIngWithUpdatedAnnotations)}, map[string][]string{}),
-			expected: false,
-			msg:      "masters with minions with different annotations",
+			ingConfig1: NewMasterIngressConfiguration(masterIng, []*MinionConfiguration{NewMinionConfiguration(minionIng)}, map[string][]string{}),
+			ingConfig2: NewMasterIngressConfiguration(masterIng, []*MinionConfiguration{NewMinionConfiguration(minionIngWithUpdatedAnnotations)}, map[string][]string{}),
+			expected:   false,
+			msg:        "masters with minions with different annotations",
 		},
 	}
 
 	for _, test := range tests {
-		result := test.fullIng1.IsEqual(test.fullIng2)
+		result := test.ingConfig1.IsEqual(test.ingConfig2)
 		if result != test.expected {
 			t.Errorf("IsEqual() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
@@ -2364,39 +2364,39 @@ func TestIsEqualForVirtualServers(t *testing.T) {
 	vsrWithUpdatedGen.Generation++
 
 	tests := []struct {
-		fullVS1  *FullVirtualServer
-		fullVS2  *FullVirtualServer
-		expected bool
-		msg      string
+		vsConfig1 *VirtualServerConfiguration
+		vsConfig2 *VirtualServerConfiguration
+		expected  bool
+		msg       string
 	}{
 		{
-			fullVS1:  NewFullVirtualServer(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
-			fullVS2:  NewFullVirtualServer(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
-			expected: true,
-			msg:      "equal virtual servers",
+			vsConfig1: NewVirtualServerConfiguration(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
+			vsConfig2: NewVirtualServerConfiguration(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
+			expected:  true,
+			msg:       "equal virtual servers",
 		},
 		{
-			fullVS1:  NewFullVirtualServer(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
-			fullVS2:  NewFullVirtualServer(vsWithUpdatedGen, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
-			expected: false,
-			msg:      "virtual servers with different generation",
+			vsConfig1: NewVirtualServerConfiguration(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
+			vsConfig2: NewVirtualServerConfiguration(vsWithUpdatedGen, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
+			expected:  false,
+			msg:       "virtual servers with different generation",
 		},
 		{
-			fullVS1:  NewFullVirtualServer(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
-			fullVS2:  NewFullVirtualServer(vs, []*conf_v1.VirtualServerRoute{}, []string{}),
-			expected: false,
-			msg:      "virtual servers with different number of virtual server routes",
+			vsConfig1: NewVirtualServerConfiguration(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
+			vsConfig2: NewVirtualServerConfiguration(vs, []*conf_v1.VirtualServerRoute{}, []string{}),
+			expected:  false,
+			msg:       "virtual servers with different number of virtual server routes",
 		},
 		{
-			fullVS1:  NewFullVirtualServer(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
-			fullVS2:  NewFullVirtualServer(vs, []*conf_v1.VirtualServerRoute{vsrWithUpdatedGen}, []string{}),
-			expected: false,
-			msg:      "virtual servers with virtual server routes with different generation",
+			vsConfig1: NewVirtualServerConfiguration(vs, []*conf_v1.VirtualServerRoute{vsr}, []string{}),
+			vsConfig2: NewVirtualServerConfiguration(vs, []*conf_v1.VirtualServerRoute{vsrWithUpdatedGen}, []string{}),
+			expected:  false,
+			msg:       "virtual servers with virtual server routes with different generation",
 		},
 	}
 
 	for _, test := range tests {
-		result := test.fullVS1.IsEqual(test.fullVS2)
+		result := test.vsConfig1.IsEqual(test.vsConfig2)
 		if result != test.expected {
 			t.Errorf("IsEqual() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
@@ -2404,10 +2404,10 @@ func TestIsEqualForVirtualServers(t *testing.T) {
 }
 
 func TestIsEqualForDifferentResources(t *testing.T) {
-	fullIng := NewRegularFullIngress(createTestIngress("ingress", "foo.example.com"))
-	fullVS := NewFullVirtualServer(createTestVirtualServer("virtualserver", "bar.example.com"), []*conf_v1.VirtualServerRoute{}, []string{})
+	ingConfig := NewRegularIngressConfiguration(createTestIngress("ingress", "foo.example.com"))
+	vsConfig := NewVirtualServerConfiguration(createTestVirtualServer("virtualserver", "bar.example.com"), []*conf_v1.VirtualServerRoute{}, []string{})
 
-	result := fullIng.IsEqual(fullVS)
+	result := ingConfig.IsEqual(vsConfig)
 	if result != false {
 		t.Error("IsEqual() for different resources returned true but expected false")
 	}
