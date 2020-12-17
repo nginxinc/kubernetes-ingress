@@ -982,6 +982,10 @@ func (sa *SockaddrIUCV) sockaddr() (unsafe.Pointer, _Socklen, error) {
 	return unsafe.Pointer(&sa.raw), SizeofSockaddrIUCV, nil
 }
 
+var socketProtocol = func(fd int) (int, error) {
+	return GetsockoptInt(fd, SOL_SOCKET, SO_PROTOCOL)
+}
+
 func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 	switch rsa.Addr.Family {
 	case AF_NETLINK:
@@ -1032,7 +1036,7 @@ func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 		return sa, nil
 
 	case AF_INET:
-		proto, err := GetsockoptInt(fd, SOL_SOCKET, SO_PROTOCOL)
+		proto, err := socketProtocol(fd)
 		if err != nil {
 			return nil, err
 		}
@@ -1058,7 +1062,7 @@ func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 		}
 
 	case AF_INET6:
-		proto, err := GetsockoptInt(fd, SOL_SOCKET, SO_PROTOCOL)
+		proto, err := socketProtocol(fd)
 		if err != nil {
 			return nil, err
 		}
@@ -1093,7 +1097,7 @@ func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 		}
 		return sa, nil
 	case AF_BLUETOOTH:
-		proto, err := GetsockoptInt(fd, SOL_SOCKET, SO_PROTOCOL)
+		proto, err := socketProtocol(fd)
 		if err != nil {
 			return nil, err
 		}
@@ -1180,7 +1184,7 @@ func anyToSockaddr(fd int, rsa *RawSockaddrAny) (Sockaddr, error) {
 		return sa, nil
 
 	case AF_CAN:
-		proto, err := GetsockoptInt(fd, SOL_SOCKET, SO_PROTOCOL)
+		proto, err := socketProtocol(fd)
 		if err != nil {
 			return nil, err
 		}
