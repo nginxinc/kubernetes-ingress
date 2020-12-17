@@ -40,14 +40,14 @@ rl_vsr_override_vs_route_src = (
         (
             {
                 "type": "complete",
-                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],
+                "extra_args": [f"-enable-custom-resources", f"-enable-preview-policies", f"-enable-leader-election=false"],
             },
             {"example": "virtual-server-route"},
         )
     ],
     indirect=True,
 )
-class TestRateLimitingPolciesVsr:
+class TestRateLimitingPoliciesVsr:
     def restore_default_vsr(self, kube_apis, v_s_route_setup) -> None:
         """
         Function to revert vsr deployments to valid state

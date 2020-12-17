@@ -33,14 +33,14 @@ rl_vs_override_spec_route = (
         (
             {
                 "type": "complete",
-                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],
+                "extra_args": [f"-enable-custom-resources", f"-enable-preview-policies", f"-enable-leader-election=false"],
             },
             {"example": "rate-limit", "app_type": "simple",},
         )
     ],
     indirect=True,
 )
-class TestRateLimitingPolcies:
+class TestRateLimitingPolicies:
     def restore_default_vs(self, kube_apis, virtual_server_setup) -> None:
         """
         Restore VirtualServer without policy spec
