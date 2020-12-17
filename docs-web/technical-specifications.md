@@ -11,7 +11,7 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX 
 
-All images include NGINX 1.19.3.
+All images include NGINX 1.19.6.
 The supported architecture is x86-64.
 
 ```eval_rst
@@ -25,17 +25,17 @@ The supported architecture is x86-64.
       - DockerHub image
     * - Debian-based image
       - ``Dockerfile``
-      - ``nginx:1.19.3``, which is based on ``debian:buster-slim``
+      - ``nginx:1.19.6``, which is based on ``debian:buster-slim``
       - 
       - ``nginx/nginx-ingress:1.9.1``
     * - Alpine-based image
       - ``DockerfileForAlpine``
-      - ``nginx:1.19.3-alpine``, which is based on ``alpine:3.10``
+      - ``nginx:1.19.6-alpine``, which is based on ``alpine:3.10``
       - 
       - ``nginx/nginx-ingress:1.9.1-alpine``
     * - Debian-based image with Opentracing
       - ``DockerfileWithOpentracing``
-      - ``nginx:1.19.3``, which is based on ``debian:buster-slim``
+      - ``nginx:1.19.6``, which is based on ``debian:buster-slim``
       - OpenTracing API for C++ 1.5.1, NGINX plugin for OpenTracing, C++ OpenTracing binding for Jaeger 0.4.2 
       - 
     * - Ubi-based image
@@ -48,7 +48,7 @@ The supported architecture is x86-64.
 
 ### Images with NGINX Plus
 
-All images include NGINX Plus R22.
+All images include NGINX Plus R23.
 The supported architecture is x86-64.
 
 NGINX Plus images are not available through DockerHub.
