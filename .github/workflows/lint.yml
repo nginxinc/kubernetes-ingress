@@ -31,8 +31,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - run: >
-          go mod verify && go mod vendor
       - name: Lint Code
         uses: golangci/golangci-lint-action@v2
         with:

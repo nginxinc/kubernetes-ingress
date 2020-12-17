@@ -60,7 +60,6 @@ jobs:
           make update-crds && git diff --name-only --exit-code deployments/common/crds*
       - name: Build Binary
         run: >
-          go mod verify && go mod vendor &&
           make binary
           BUILD_IN_CONTAINER=0
           VERSION=${{ env.VERSION }}
@@ -84,8 +83,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: '${{ env.GOLANG_VERSION }}'
-      - run: |
-          go mod verify && go mod vendor
       - name: Run Tests
         run: go test ./...
 
