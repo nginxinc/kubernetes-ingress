@@ -35,9 +35,11 @@ update-codegen:
 	./hack/update-codegen.sh
 
 update-crds:
+ifneq ($(BUILD_IN_CONTAINER),1)
 	go run sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 schemapatch:manifests=./deployments/common/crds/ paths=./pkg/apis/configuration/... output:dir=./deployments/common/crds
 	go run sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1beta1,preserveUnknownFields=false schemapatch:manifests=./deployments/common/crds-v1beta1/ paths=./pkg/apis/configuration/... output:dir=./deployments/common/crds-v1beta1
 	@cp -Rp deployments/common/crds-v1beta1/ deployments/helm-chart/crds
+endif
 
 certificate-and-key:
 ifeq ($(GENERATE_DEFAULT_CERT_AND_KEY),1)
