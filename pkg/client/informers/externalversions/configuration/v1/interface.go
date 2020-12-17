@@ -8,6 +8,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
+	// Policies returns a PolicyInformer.
+	Policies() PolicyInformer
 	// VirtualServers returns a VirtualServerInformer.
 	VirtualServers() VirtualServerInformer
 	// VirtualServerRoutes returns a VirtualServerRouteInformer.
@@ -23,6 +25,11 @@ type version struct {
 // New returns a new Interface.
 func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakListOptions internalinterfaces.TweakListOptionsFunc) Interface {
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
+}
+
+// Policies returns a PolicyInformer.
+func (v *version) Policies() PolicyInformer {
+	return &policyInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // VirtualServers returns a VirtualServerInformer.

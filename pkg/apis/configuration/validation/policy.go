@@ -7,18 +7,18 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidatePolicy validates a Policy.
-func ValidatePolicy(policy *v1alpha1.Policy, isPlus bool) error {
+func ValidatePolicy(policy *v1.Policy, isPlus bool) error {
 	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus)
 	return allErrs.ToAggregate()
 }
 
-func validatePolicySpec(spec *v1alpha1.PolicySpec, fieldPath *field.Path, isPlus bool) field.ErrorList {
+func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -64,7 +64,7 @@ func validatePolicySpec(spec *v1alpha1.PolicySpec, fieldPath *field.Path, isPlus
 	return allErrs
 }
 
-func validateAccessControl(accessControl *v1alpha1.AccessControl, fieldPath *field.Path) field.ErrorList {
+func validateAccessControl(accessControl *v1.AccessControl, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -90,7 +90,7 @@ func validateAccessControl(accessControl *v1alpha1.AccessControl, fieldPath *fie
 	return allErrs
 }
 
-func validateRateLimit(rateLimit *v1alpha1.RateLimit, fieldPath *field.Path, isPlus bool) field.ErrorList {
+func validateRateLimit(rateLimit *v1.RateLimit, fieldPath *field.Path, isPlus bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateRateLimitZoneSize(rateLimit.ZoneSize, fieldPath.Child("zoneSize"))...)
@@ -119,7 +119,7 @@ func validateRateLimit(rateLimit *v1alpha1.RateLimit, fieldPath *field.Path, isP
 	return allErrs
 }
 
-func validateJWT(jwt *v1alpha1.JWTAuth, fieldPath *field.Path) field.ErrorList {
+func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateJWTRealm(jwt.Realm, fieldPath.Child("realm"))...)
@@ -134,7 +134,7 @@ func validateJWT(jwt *v1alpha1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
-func validateIngressMTLS(ingressMTLS *v1alpha1.IngressMTLS, fieldPath *field.Path) field.ErrorList {
+func validateIngressMTLS(ingressMTLS *v1.IngressMTLS, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if ingressMTLS.ClientCertSecret == "" {
@@ -150,7 +150,7 @@ func validateIngressMTLS(ingressMTLS *v1alpha1.IngressMTLS, fieldPath *field.Pat
 	return allErrs
 }
 
-func validateEgressMTLS(egressMTLS *v1alpha1.EgressMTLS, fieldPath *field.Path) field.ErrorList {
+func validateEgressMTLS(egressMTLS *v1.EgressMTLS, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateSecretName(egressMTLS.TLSSecret, fieldPath.Child("tlsSecret"))...)

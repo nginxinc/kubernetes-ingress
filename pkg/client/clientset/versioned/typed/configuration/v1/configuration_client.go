@@ -10,6 +10,7 @@ import (
 
 type K8sV1Interface interface {
 	RESTClient() rest.Interface
+	PoliciesGetter
 	VirtualServersGetter
 	VirtualServerRoutesGetter
 }
@@ -17,6 +18,10 @@ type K8sV1Interface interface {
 // K8sV1Client is used to interact with features provided by the k8s.nginx.org group.
 type K8sV1Client struct {
 	restClient rest.Interface
+}
+
+func (c *K8sV1Client) Policies(namespace string) PolicyInterface {
+	return newPolicies(c, namespace)
 }
 
 func (c *K8sV1Client) VirtualServers(namespace string) VirtualServerInterface {

@@ -6,8 +6,6 @@ The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/co
 
 This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/master/examples-of-custom-resources/access-control).
 
-> **Feature Status**: The Policy resource is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resource specification in the next releases.
-
 ## Contents
 
 - [Policy Resource](#policy-resource)
@@ -39,7 +37,7 @@ Policies work together with [VirtualServer and VirtualServerRoute resources](/ng
 
 Below is an example of a policy that allows access for clients from the subnet `10.0.0.0/8` and denies access for any other clients:
 ```yaml
-apiVersion: k8s.nginx.org/v1alpha1
+apiVersion: k8s.nginx.org/v1
 kind: Policy 
 metadata:
   name: allow-localhost
@@ -140,6 +138,8 @@ policies:
 
 ### RateLimit
 
+> **Feature Status**: Rate-Limiting is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview status, we might introduce some backward-incompatible changes to the resource specification in the next releases.
+
 The rate limit policy configures NGINX to limit the processing rate of requests.
 
 For example, the following policy will limit all subsequent requests coming from a single IP address once a rate of 10 requests per second is exceeded:
@@ -212,6 +212,8 @@ When you reference more than one rate limit policy, the Ingress Controller will 
 
 ### JWT
 
+> **Feature Status**: JWT is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview status, we might introduce some backward-incompatible changes to the resource specification in the next releases.
+
 > Note: This feature is only available in NGINX Plus.
 
 The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens.
@@ -276,6 +278,8 @@ policies:
 In this example the Ingress Controller will use the configuration from the first policy reference `jwt-policy-one`, and ignores `jwt-policy-two`.
 
 ### IngressMTLS
+
+> **Feature Status**: IngressMTLS is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview status, we might introduce some backward-incompatible changes to the resource specification in the next releases.
 
 The IngressMTLS policy configures client certificate verification.
 
@@ -342,6 +346,8 @@ policies:
 In this example the Ingress Controller will use the configuration from the first policy reference `ingress-mtls-policy-one`, and ignores `ingress-mtls-policy-two`.
 
 ### EgressMTLS
+
+> **Feature Status**: EgressMTLS is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview status, we might introduce some backward-incompatible changes to the resource specification in the next releases.
 
 The EgressMTLS policy configures upstreams authentication and certificate verification.
 
@@ -526,7 +532,7 @@ If you try to create (or update) a resource that violates the structural schema 
 * Example of `kubectl` validation:
     ```
     $ kubectl apply -f access-control-policy-allow.yaml
-    error: error validating "access-control-policy-allow.yaml": error validating data: ValidationError(Policy.spec.accessControl.allow): invalid type for org.nginx.k8s.v1alpha1.Policy.spec.accessControl.allow: got "string", expected "array"; if you choose to ignore these errors, turn validation off with --validate=false
+    error: error validating "access-control-policy-allow.yaml": error validating data: ValidationError(Policy.spec.accessControl.allow): invalid type for org.nginx.k8s.v1.Policy.spec.accessControl.allow: got "string", expected "array"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 * Example of Kubernetes API server validation:
     ```

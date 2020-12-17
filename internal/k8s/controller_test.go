@@ -16,7 +16,6 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
@@ -770,24 +769,24 @@ func TestGetStatusFromEventTitle(t *testing.T) {
 }
 
 func TestGetPolicies(t *testing.T) {
-	validPolicy := &conf_v1alpha1.Policy{
+	validPolicy := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-policy",
 			Namespace: "default",
 		},
-		Spec: conf_v1alpha1.PolicySpec{
-			AccessControl: &conf_v1alpha1.AccessControl{
+		Spec: conf_v1.PolicySpec{
+			AccessControl: &conf_v1.AccessControl{
 				Allow: []string{"127.0.0.1"},
 			},
 		},
 	}
 
-	invalidPolicy := &conf_v1alpha1.Policy{
+	invalidPolicy := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "invalid-policy",
 			Namespace: "default",
 		},
-		Spec: conf_v1alpha1.PolicySpec{},
+		Spec: conf_v1.PolicySpec{},
 	}
 
 	lbc := LoadBalancerController{
@@ -827,7 +826,7 @@ func TestGetPolicies(t *testing.T) {
 		},
 	}
 
-	expectedPolicies := []*conf_v1alpha1.Policy{validPolicy}
+	expectedPolicies := []*conf_v1.Policy{validPolicy}
 	expectedErrors := []error{
 		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `jwt`"),
 		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
@@ -844,7 +843,7 @@ func TestGetPolicies(t *testing.T) {
 }
 
 func TestCreatePolicyMap(t *testing.T) {
-	policies := []*conf_v1alpha1.Policy{
+	policies := []*conf_v1.Policy{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "policy-1",
@@ -871,7 +870,7 @@ func TestCreatePolicyMap(t *testing.T) {
 		},
 	}
 
-	expected := map[string]*conf_v1alpha1.Policy{
+	expected := map[string]*conf_v1.Policy{
 		"default/policy-1": {
 			ObjectMeta: meta_v1.ObjectMeta{
 				Name:      "policy-1",
@@ -986,7 +985,7 @@ func createTestObjMeta(kind, name string, podHashLabel bool) meta_v1.ObjectMeta 
 	return meta
 }
 
-func policyMapToString(policies map[string]*conf_v1alpha1.Policy) string {
+func policyMapToString(policies map[string]*conf_v1.Policy) string {
 	var keys []string
 	for k := range policies {
 		keys = append(keys, k)
@@ -1080,132 +1079,132 @@ func TestRemoveDuplicateResources(t *testing.T) {
 }
 
 func TestFindPoliciesForSecret(t *testing.T) {
-	jwtPol1 := &conf_v1alpha1.Policy{
+	jwtPol1 := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "jwt-policy",
 			Namespace: "default",
 		},
-		Spec: conf_v1alpha1.PolicySpec{
-			JWTAuth: &conf_v1alpha1.JWTAuth{
+		Spec: conf_v1.PolicySpec{
+			JWTAuth: &conf_v1.JWTAuth{
 				Secret: "jwk-secret",
 			},
 		},
 	}
 
-	jwtPol2 := &conf_v1alpha1.Policy{
+	jwtPol2 := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "jwt-policy",
 			Namespace: "ns-1",
 		},
-		Spec: conf_v1alpha1.PolicySpec{
-			JWTAuth: &conf_v1alpha1.JWTAuth{
+		Spec: conf_v1.PolicySpec{
+			JWTAuth: &conf_v1.JWTAuth{
 				Secret: "jwk-secret",
 			},
 		},
 	}
 
-	ingTLSPol := &conf_v1alpha1.Policy{
+	ingTLSPol := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ingress-mtls-policy",
 			Namespace: "default",
 		},
-		Spec: conf_v1alpha1.PolicySpec{
-			IngressMTLS: &conf_v1alpha1.IngressMTLS{
+		Spec: conf_v1.PolicySpec{
+			IngressMTLS: &conf_v1.IngressMTLS{
 				ClientCertSecret: "ingress-mtls-secret",
 			},
 		},
 	}
-	egTLSPol := &conf_v1alpha1.Policy{
+	egTLSPol := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "egress-mtls-policy",
 			Namespace: "default",
 		},
-		Spec: conf_v1alpha1.PolicySpec{
-			EgressMTLS: &conf_v1alpha1.EgressMTLS{
+		Spec: conf_v1.PolicySpec{
+			EgressMTLS: &conf_v1.EgressMTLS{
 				TLSSecret: "egress-mtls-secret",
 			},
 		},
 	}
-	egTLSPol2 := &conf_v1alpha1.Policy{
+	egTLSPol2 := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "egress-trusted-policy",
 			Namespace: "default",
 		},
-		Spec: conf_v1alpha1.PolicySpec{
-			EgressMTLS: &conf_v1alpha1.EgressMTLS{
+		Spec: conf_v1.PolicySpec{
+			EgressMTLS: &conf_v1.EgressMTLS{
 				TrustedCertSecret: "egress-trusted-secret",
 			},
 		},
 	}
 
 	tests := []struct {
-		policies        []*conf_v1alpha1.Policy
+		policies        []*conf_v1.Policy
 		secretNamespace string
 		secretName      string
-		expected        []*conf_v1alpha1.Policy
+		expected        []*conf_v1.Policy
 		msg             string
 	}{
 		{
-			policies:        []*conf_v1alpha1.Policy{jwtPol1},
+			policies:        []*conf_v1.Policy{jwtPol1},
 			secretNamespace: "default",
 			secretName:      "jwk-secret",
-			expected:        []*v1alpha1.Policy{jwtPol1},
+			expected:        []*conf_v1.Policy{jwtPol1},
 			msg:             "Find policy in default ns",
 		},
 		{
-			policies:        []*conf_v1alpha1.Policy{jwtPol2},
+			policies:        []*conf_v1.Policy{jwtPol2},
 			secretNamespace: "default",
 			secretName:      "jwk-secret",
 			expected:        nil,
 			msg:             "Ignore policies in other namespaces",
 		},
 		{
-			policies:        []*conf_v1alpha1.Policy{jwtPol1, jwtPol2},
+			policies:        []*conf_v1.Policy{jwtPol1, jwtPol2},
 			secretNamespace: "default",
 			secretName:      "jwk-secret",
-			expected:        []*v1alpha1.Policy{jwtPol1},
+			expected:        []*conf_v1.Policy{jwtPol1},
 			msg:             "Find policy in default ns, ignore other",
 		},
 		{
-			policies:        []*conf_v1alpha1.Policy{ingTLSPol},
+			policies:        []*conf_v1.Policy{ingTLSPol},
 			secretNamespace: "default",
 			secretName:      "ingress-mtls-secret",
-			expected:        []*v1alpha1.Policy{ingTLSPol},
+			expected:        []*conf_v1.Policy{ingTLSPol},
 			msg:             "Find policy in default ns",
 		},
 		{
-			policies:        []*conf_v1alpha1.Policy{jwtPol1, ingTLSPol},
+			policies:        []*conf_v1.Policy{jwtPol1, ingTLSPol},
 			secretNamespace: "default",
 			secretName:      "ingress-mtls-secret",
-			expected:        []*v1alpha1.Policy{ingTLSPol},
+			expected:        []*conf_v1.Policy{ingTLSPol},
 			msg:             "Find policy in default ns, ignore other types",
 		},
 		{
-			policies:        []*conf_v1alpha1.Policy{egTLSPol},
+			policies:        []*conf_v1.Policy{egTLSPol},
 			secretNamespace: "default",
 			secretName:      "egress-mtls-secret",
-			expected:        []*v1alpha1.Policy{egTLSPol},
+			expected:        []*conf_v1.Policy{egTLSPol},
 			msg:             "Find policy in default ns",
 		},
 		{
-			policies:        []*conf_v1alpha1.Policy{jwtPol1, egTLSPol},
+			policies:        []*conf_v1.Policy{jwtPol1, egTLSPol},
 			secretNamespace: "default",
 			secretName:      "egress-mtls-secret",
-			expected:        []*v1alpha1.Policy{egTLSPol},
+			expected:        []*conf_v1.Policy{egTLSPol},
 			msg:             "Find policy in default ns, ignore other types",
 		},
 		{
-			policies:        []*conf_v1alpha1.Policy{egTLSPol2},
+			policies:        []*conf_v1.Policy{egTLSPol2},
 			secretNamespace: "default",
 			secretName:      "egress-trusted-secret",
-			expected:        []*v1alpha1.Policy{egTLSPol2},
+			expected:        []*conf_v1.Policy{egTLSPol2},
 			msg:             "Find policy in default ns",
 		},
 		{
-			policies:        []*conf_v1alpha1.Policy{egTLSPol, egTLSPol2},
+			policies:        []*conf_v1.Policy{egTLSPol, egTLSPol2},
 			secretNamespace: "default",
 			secretName:      "egress-trusted-secret",
-			expected:        []*v1alpha1.Policy{egTLSPol2},
+			expected:        []*conf_v1.Policy{egTLSPol2},
 			msg:             "Find policy in default ns, ignore other types",
 		},
 	}
@@ -1229,20 +1228,20 @@ func TestAddJWTSecrets(t *testing.T) {
 	invalidErr := errors.New("invalid")
 
 	tests := []struct {
-		policies           []*conf_v1alpha1.Policy
+		policies           []*conf_v1.Policy
 		expectedSecretRefs map[string]*secrets.SecretReference
 		wantErr            bool
 		msg                string
 	}{
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "jwt-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						JWTAuth: &conf_v1alpha1.JWTAuth{
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
 							Secret: "valid-jwk-secret",
 							Realm:  "My API",
 						},
@@ -1259,20 +1258,20 @@ func TestAddJWTSecrets(t *testing.T) {
 			msg:     "test getting valid secret",
 		},
 		{
-			policies:           []*conf_v1alpha1.Policy{},
+			policies:           []*conf_v1.Policy{},
 			expectedSecretRefs: map[string]*secrets.SecretReference{},
 			wantErr:            false,
 			msg:                "test getting valid secret with no policy",
 		},
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "jwt-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						AccessControl: &conf_v1alpha1.AccessControl{
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
 							Allow: []string{"127.0.0.1"},
 						},
 					},
@@ -1283,14 +1282,14 @@ func TestAddJWTSecrets(t *testing.T) {
 			msg:                "test getting invalid secret with wrong policy",
 		},
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "jwt-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						JWTAuth: &conf_v1alpha1.JWTAuth{
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
 							Secret: "invalid-jwk-secret",
 							Realm:  "My API",
 						},
@@ -1351,20 +1350,20 @@ func TestAddIngressMTLSSecret(t *testing.T) {
 	invalidErr := errors.New("invalid")
 
 	tests := []struct {
-		policies           []*conf_v1alpha1.Policy
+		policies           []*conf_v1.Policy
 		expectedSecretRefs map[string]*secrets.SecretReference
 		wantErr            bool
 		msg                string
 	}{
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
 							ClientCertSecret: "valid-ingress-mtls-secret",
 						},
 					},
@@ -1380,20 +1379,20 @@ func TestAddIngressMTLSSecret(t *testing.T) {
 			msg:     "test getting valid secret",
 		},
 		{
-			policies:           []*conf_v1alpha1.Policy{},
+			policies:           []*conf_v1.Policy{},
 			expectedSecretRefs: map[string]*secrets.SecretReference{},
 			wantErr:            false,
 			msg:                "test getting valid secret with no policy",
 		},
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						AccessControl: &conf_v1alpha1.AccessControl{
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
 							Allow: []string{"127.0.0.1"},
 						},
 					},
@@ -1404,14 +1403,14 @@ func TestAddIngressMTLSSecret(t *testing.T) {
 			msg:                "test getting valid secret with wrong policy",
 		},
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
 							ClientCertSecret: "invalid-ingress-mtls-secret",
 						},
 					},
@@ -1471,20 +1470,20 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 	invalidErr := errors.New("invalid")
 
 	tests := []struct {
-		policies           []*conf_v1alpha1.Policy
+		policies           []*conf_v1.Policy
 		expectedSecretRefs map[string]*secrets.SecretReference
 		wantErr            bool
 		msg                string
 	}{
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TLSSecret: "valid-egress-mtls-secret",
 						},
 					},
@@ -1500,14 +1499,14 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			msg:     "test getting valid TLS secret",
 		},
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-egress-trusted-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TrustedCertSecret: "valid-egress-trusted-secret",
 						},
 					},
@@ -1523,14 +1522,14 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			msg:     "test getting valid TrustedCA secret",
 		},
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TLSSecret:         "valid-egress-mtls-secret",
 							TrustedCertSecret: "valid-egress-trusted-secret",
 						},
@@ -1551,20 +1550,20 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			msg:     "test getting valid secrets",
 		},
 		{
-			policies:           []*conf_v1alpha1.Policy{},
+			policies:           []*conf_v1.Policy{},
 			expectedSecretRefs: map[string]*secrets.SecretReference{},
 			wantErr:            false,
 			msg:                "test getting valid secret with no policy",
 		},
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						AccessControl: &conf_v1alpha1.AccessControl{
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
 							Allow: []string{"127.0.0.1"},
 						},
 					},
@@ -1575,14 +1574,14 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			msg:                "test getting valid secret with wrong policy",
 		},
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TLSSecret: "invalid-egress-mtls-secret",
 						},
 					},
@@ -1598,14 +1597,14 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			msg:     "test getting invalid TLS secret",
 		},
 		{
-			policies: []*conf_v1alpha1.Policy{
+			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TrustedCertSecret: "invalid-egress-trusted-secret",
 						},
 					},

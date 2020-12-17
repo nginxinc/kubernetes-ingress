@@ -16,7 +16,7 @@ spec:
     singular: policy
   scope: Namespaced
   versions:
-    - name: v1alpha1
+    - name: v1
       schema:
         openAPIV3Schema:
           description: Policy defines a Policy for VirtualServer and VirtualServerRoute resources.

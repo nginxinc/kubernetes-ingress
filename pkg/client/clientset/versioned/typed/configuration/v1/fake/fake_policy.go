@@ -5,7 +5,7 @@ package fake
 import (
 	"context"
 
-	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	configurationv1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -16,29 +16,29 @@ import (
 
 // FakePolicies implements PolicyInterface
 type FakePolicies struct {
-	Fake *FakeK8sV1alpha1
+	Fake *FakeK8sV1
 	ns   string
 }
 
-var policiesResource = schema.GroupVersionResource{Group: "k8s.nginx.org", Version: "v1alpha1", Resource: "policies"}
+var policiesResource = schema.GroupVersionResource{Group: "k8s.nginx.org", Version: "v1", Resource: "policies"}
 
-var policiesKind = schema.GroupVersionKind{Group: "k8s.nginx.org", Version: "v1alpha1", Kind: "Policy"}
+var policiesKind = schema.GroupVersionKind{Group: "k8s.nginx.org", Version: "v1", Kind: "Policy"}
 
 // Get takes name of the policy, and returns the corresponding policy object, and an error if there is any.
-func (c *FakePolicies) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.Policy, err error) {
+func (c *FakePolicies) Get(ctx context.Context, name string, options v1.GetOptions) (result *configurationv1.Policy, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(policiesResource, c.ns, name), &v1alpha1.Policy{})
+		Invokes(testing.NewGetAction(policiesResource, c.ns, name), &configurationv1.Policy{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Policy), err
+	return obj.(*configurationv1.Policy), err
 }
 
 // List takes label and field selectors, and returns the list of Policies that match those selectors.
-func (c *FakePolicies) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.PolicyList, err error) {
+func (c *FakePolicies) List(ctx context.Context, opts v1.ListOptions) (result *configurationv1.PolicyList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(policiesResource, policiesKind, c.ns, opts), &v1alpha1.PolicyList{})
+		Invokes(testing.NewListAction(policiesResource, policiesKind, c.ns, opts), &configurationv1.PolicyList{})
 
 	if obj == nil {
 		return nil, err
@@ -48,8 +48,8 @@ func (c *FakePolicies) List(ctx context.Context, opts v1.ListOptions) (result *v
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.PolicyList{ListMeta: obj.(*v1alpha1.PolicyList).ListMeta}
-	for _, item := range obj.(*v1alpha1.PolicyList).Items {
+	list := &configurationv1.PolicyList{ListMeta: obj.(*configurationv1.PolicyList).ListMeta}
+	for _, item := range obj.(*configurationv1.PolicyList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -65,31 +65,31 @@ func (c *FakePolicies) Watch(ctx context.Context, opts v1.ListOptions) (watch.In
 }
 
 // Create takes the representation of a policy and creates it.  Returns the server's representation of the policy, and an error, if there is any.
-func (c *FakePolicies) Create(ctx context.Context, policy *v1alpha1.Policy, opts v1.CreateOptions) (result *v1alpha1.Policy, err error) {
+func (c *FakePolicies) Create(ctx context.Context, policy *configurationv1.Policy, opts v1.CreateOptions) (result *configurationv1.Policy, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(policiesResource, c.ns, policy), &v1alpha1.Policy{})
+		Invokes(testing.NewCreateAction(policiesResource, c.ns, policy), &configurationv1.Policy{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Policy), err
+	return obj.(*configurationv1.Policy), err
 }
 
 // Update takes the representation of a policy and updates it. Returns the server's representation of the policy, and an error, if there is any.
-func (c *FakePolicies) Update(ctx context.Context, policy *v1alpha1.Policy, opts v1.UpdateOptions) (result *v1alpha1.Policy, err error) {
+func (c *FakePolicies) Update(ctx context.Context, policy *configurationv1.Policy, opts v1.UpdateOptions) (result *configurationv1.Policy, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(policiesResource, c.ns, policy), &v1alpha1.Policy{})
+		Invokes(testing.NewUpdateAction(policiesResource, c.ns, policy), &configurationv1.Policy{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Policy), err
+	return obj.(*configurationv1.Policy), err
 }
 
 // Delete takes name of the policy and deletes it. Returns an error if one occurs.
 func (c *FakePolicies) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(policiesResource, c.ns, name), &v1alpha1.Policy{})
+		Invokes(testing.NewDeleteAction(policiesResource, c.ns, name), &configurationv1.Policy{})
 
 	return err
 }
@@ -98,17 +98,17 @@ func (c *FakePolicies) Delete(ctx context.Context, name string, opts v1.DeleteOp
 func (c *FakePolicies) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(policiesResource, c.ns, listOpts)
 
-	_, err := c.Fake.Invokes(action, &v1alpha1.PolicyList{})
+	_, err := c.Fake.Invokes(action, &configurationv1.PolicyList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched policy.
-func (c *FakePolicies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.Policy, err error) {
+func (c *FakePolicies) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *configurationv1.Policy, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(policiesResource, c.ns, name, pt, data, subresources...), &v1alpha1.Policy{})
+		Invokes(testing.NewPatchSubresourceAction(policiesResource, c.ns, name, pt, data, subresources...), &configurationv1.Policy{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.Policy), err
+	return obj.(*configurationv1.Policy), err
 }

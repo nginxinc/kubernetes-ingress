@@ -38,6 +38,8 @@ func (f *genericInformer) Lister() cache.GenericLister {
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
 	// Group=k8s.nginx.org, Version=v1
+	case v1.SchemeGroupVersion.WithResource("policies"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1().Policies().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("virtualservers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1().VirtualServers().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("virtualserverroutes"):
@@ -46,8 +48,6 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=k8s.nginx.org, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("globalconfigurations"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1alpha1().GlobalConfigurations().Informer()}, nil
-	case v1alpha1.SchemeGroupVersion.WithResource("policies"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1alpha1().Policies().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("transportservers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1alpha1().TransportServers().Informer()}, nil
 

@@ -437,19 +437,19 @@ func createTransportServerHandlers(lbc *LoadBalancerController) cache.ResourceEv
 func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			pol := obj.(*conf_v1alpha1.Policy)
+			pol := obj.(*conf_v1.Policy)
 			glog.V(3).Infof("Adding Policy: %v", pol.Name)
 			lbc.AddSyncQueue(pol)
 		},
 		DeleteFunc: func(obj interface{}) {
-			pol, isPol := obj.(*conf_v1alpha1.Policy)
+			pol, isPol := obj.(*conf_v1.Policy)
 			if !isPol {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
 				if !ok {
 					glog.V(3).Infof("Error received unexpected object: %v", obj)
 					return
 				}
-				pol, ok = deletedState.Obj.(*conf_v1alpha1.Policy)
+				pol, ok = deletedState.Obj.(*conf_v1.Policy)
 				if !ok {
 					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Policy object: %v", deletedState.Obj)
 					return
@@ -459,7 +459,7 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			lbc.AddSyncQueue(pol)
 		},
 		UpdateFunc: func(old, cur interface{}) {
-			curPol := cur.(*conf_v1alpha1.Policy)
+			curPol := cur.(*conf_v1.Policy)
 			if !reflect.DeepEqual(old, cur) {
 				glog.V(3).Infof("Policy %v changed, syncing", curPol.Name)
 				lbc.AddSyncQueue(curPol)

@@ -57,7 +57,7 @@ type VirtualServerEx struct {
 	Endpoints           map[string][]string
 	VirtualServerRoutes []*conf_v1.VirtualServerRoute
 	ExternalNameSvcs    map[string]bool
-	Policies            map[string]*conf_v1alpha1.Policy
+	Policies            map[string]*conf_v1.Policy
 	PodsByIP            map[string]PodInfo
 	SecretRefs          map[string]*secrets.SecretReference
 }
@@ -629,7 +629,7 @@ func (v *validationResults) addWarningf(msgFmt string, args ...interface{}) {
 	v.warnings = append(v.warnings, fmt.Sprintf(msgFmt, args...))
 }
 
-func (p *policiesCfg) addAccessControlConfig(accessControl *conf_v1alpha1.AccessControl) *validationResults {
+func (p *policiesCfg) addAccessControlConfig(accessControl *conf_v1.AccessControl) *validationResults {
 	res := newValidationResults()
 	p.Allow = append(p.Allow, accessControl.Allow...)
 	p.Deny = append(p.Deny, accessControl.Deny...)
@@ -642,7 +642,7 @@ func (p *policiesCfg) addAccessControlConfig(accessControl *conf_v1alpha1.Access
 }
 
 func (p *policiesCfg) addRateLimitConfig(
-	rateLimit *conf_v1alpha1.RateLimit,
+	rateLimit *conf_v1.RateLimit,
 	polKey string,
 	polNamespace string,
 	polName string,
@@ -671,7 +671,7 @@ func (p *policiesCfg) addRateLimitConfig(
 }
 
 func (p *policiesCfg) addJWTAuthConfig(
-	jwtAuth *conf_v1alpha1.JWTAuth,
+	jwtAuth *conf_v1.JWTAuth,
 	polKey string,
 	polNamespace string,
 	secretRefs map[string]*secrets.SecretReference,
@@ -703,7 +703,7 @@ func (p *policiesCfg) addJWTAuthConfig(
 }
 
 func (p *policiesCfg) addIngressMTLSConfig(
-	ingressMTLS *conf_v1alpha1.IngressMTLS,
+	ingressMTLS *conf_v1.IngressMTLS,
 	polKey string,
 	polNamespace string,
 	context string,
@@ -756,7 +756,7 @@ func (p *policiesCfg) addIngressMTLSConfig(
 }
 
 func (p *policiesCfg) addEgressMTLSConfig(
-	egressMTLS *conf_v1alpha1.EgressMTLS,
+	egressMTLS *conf_v1.EgressMTLS,
 	polKey string,
 	polNamespace string,
 	secretRefs map[string]*secrets.SecretReference,
@@ -826,7 +826,7 @@ func (p *policiesCfg) addEgressMTLSConfig(
 func (vsc *virtualServerConfigurator) generatePolicies(
 	ownerDetails policyOwnerDetails,
 	policyRefs []conf_v1.PolicyReference,
-	policies map[string]*conf_v1alpha1.Policy,
+	policies map[string]*conf_v1.Policy,
 	context string,
 	policyOpts policyOptions,
 ) policiesCfg {
@@ -887,7 +887,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 	return *config
 }
 
-func generateLimitReq(zoneName string, rateLimitPol *conf_v1alpha1.RateLimit) version2.LimitReq {
+func generateLimitReq(zoneName string, rateLimitPol *conf_v1.RateLimit) version2.LimitReq {
 	var limitReq version2.LimitReq
 
 	limitReq.ZoneName = zoneName
@@ -907,7 +907,7 @@ func generateLimitReq(zoneName string, rateLimitPol *conf_v1alpha1.RateLimit) ve
 	return limitReq
 }
 
-func generateLimitReqZone(zoneName string, rateLimitPol *conf_v1alpha1.RateLimit) version2.LimitReqZone {
+func generateLimitReqZone(zoneName string, rateLimitPol *conf_v1.RateLimit) version2.LimitReqZone {
 	return version2.LimitReqZone{
 		ZoneName: zoneName,
 		Key:      rateLimitPol.Key,
@@ -916,7 +916,7 @@ func generateLimitReqZone(zoneName string, rateLimitPol *conf_v1alpha1.RateLimit
 	}
 }
 
-func generateLimitReqOptions(rateLimitPol *conf_v1alpha1.RateLimit) version2.LimitReqOptions {
+func generateLimitReqOptions(rateLimitPol *conf_v1.RateLimit) version2.LimitReqOptions {
 	return version2.LimitReqOptions{
 		DryRun:     generateBool(rateLimitPol.DryRun, false),
 		LogLevel:   generateString(rateLimitPol.LogLevel, "error"),

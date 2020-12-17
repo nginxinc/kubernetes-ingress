@@ -3,14 +3,14 @@ package validation
 import (
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestValidatePolicy(t *testing.T) {
-	policy := &v1alpha1.Policy{
-		Spec: v1alpha1.PolicySpec{
-			AccessControl: &v1alpha1.AccessControl{
+	policy := &v1.Policy{
+		Spec: v1.PolicySpec{
+			AccessControl: &v1.AccessControl{
 				Allow: []string{"127.0.0.1"},
 			},
 		},
@@ -24,8 +24,8 @@ func TestValidatePolicy(t *testing.T) {
 }
 
 func TestValidatePolicyFails(t *testing.T) {
-	policy := &v1alpha1.Policy{
-		Spec: v1alpha1.PolicySpec{},
+	policy := &v1.Policy{
+		Spec: v1.PolicySpec{},
 	}
 	isPlus := false
 
@@ -34,12 +34,12 @@ func TestValidatePolicyFails(t *testing.T) {
 		t.Errorf("ValidatePolicy() returned no error for invalid input")
 	}
 
-	multiPolicy := &v1alpha1.Policy{
-		Spec: v1alpha1.PolicySpec{
-			AccessControl: &v1alpha1.AccessControl{
+	multiPolicy := &v1.Policy{
+		Spec: v1.PolicySpec{
+			AccessControl: &v1.AccessControl{
 				Allow: []string{"127.0.0.1"},
 			},
-			RateLimit: &v1alpha1.RateLimit{
+			RateLimit: &v1.RateLimit{
 				Key:      "${uri}",
 				ZoneSize: "10M",
 				Rate:     "10r/s",
@@ -54,7 +54,7 @@ func TestValidatePolicyFails(t *testing.T) {
 }
 
 func TestValidateAccessControl(t *testing.T) {
-	validInput := []*v1alpha1.AccessControl{
+	validInput := []*v1.AccessControl{
 		{
 			Allow: []string{},
 		},
@@ -79,31 +79,31 @@ func TestValidateAccessControl(t *testing.T) {
 
 func TestValidateAccessControlFails(t *testing.T) {
 	tests := []struct {
-		accessControl *v1alpha1.AccessControl
+		accessControl *v1.AccessControl
 		msg           string
 	}{
 		{
-			accessControl: &v1alpha1.AccessControl{
+			accessControl: &v1.AccessControl{
 				Allow: nil,
 				Deny:  nil,
 			},
 			msg: "neither allow nor deny is defined",
 		},
 		{
-			accessControl: &v1alpha1.AccessControl{
+			accessControl: &v1.AccessControl{
 				Allow: []string{},
 				Deny:  []string{},
 			},
 			msg: "both allow and deny are defined",
 		},
 		{
-			accessControl: &v1alpha1.AccessControl{
+			accessControl: &v1.AccessControl{
 				Allow: []string{"invalid"},
 			},
 			msg: "invalid allow",
 		},
 		{
-			accessControl: &v1alpha1.AccessControl{
+			accessControl: &v1.AccessControl{
 				Deny: []string{"invalid"},
 			},
 			msg: "invalid deny",
@@ -123,11 +123,11 @@ func TestValidateRateLimit(t *testing.T) {
 	noDelay := false
 
 	tests := []struct {
-		rateLimit *v1alpha1.RateLimit
+		rateLimit *v1.RateLimit
 		msg       string
 	}{
 		{
-			rateLimit: &v1alpha1.RateLimit{
+			rateLimit: &v1.RateLimit{
 				Rate:     "10r/s",
 				ZoneSize: "10M",
 				Key:      "${request_uri}",
@@ -135,7 +135,7 @@ func TestValidateRateLimit(t *testing.T) {
 			msg: "only required fields are set",
 		},
 		{
-			rateLimit: &v1alpha1.RateLimit{
+			rateLimit: &v1.RateLimit{
 				Rate:       "30r/m",
 				Key:        "${request_uri}",
 				Delay:      createPointerFromInt(5),
@@ -160,8 +160,8 @@ func TestValidateRateLimit(t *testing.T) {
 	}
 }
 
-func createInvalidRateLimit(f func(r *v1alpha1.RateLimit)) *v1alpha1.RateLimit {
-	validRateLimit := &v1alpha1.RateLimit{
+func createInvalidRateLimit(f func(r *v1.RateLimit)) *v1.RateLimit {
+	validRateLimit := &v1.RateLimit{
 		Rate:     "10r/s",
 		ZoneSize: "10M",
 		Key:      "${request_uri}",
@@ -172,47 +172,47 @@ func createInvalidRateLimit(f func(r *v1alpha1.RateLimit)) *v1alpha1.RateLimit {
 
 func TestValidateRateLimitFails(t *testing.T) {
 	tests := []struct {
-		rateLimit *v1alpha1.RateLimit
+		rateLimit *v1.RateLimit
 		msg       string
 	}{
 		{
-			rateLimit: createInvalidRateLimit(func(r *v1alpha1.RateLimit) {
+			rateLimit: createInvalidRateLimit(func(r *v1.RateLimit) {
 				r.Rate = "0r/s"
 			}),
 			msg: "invalid rateLimit rate",
 		},
 		{
-			rateLimit: createInvalidRateLimit(func(r *v1alpha1.RateLimit) {
+			rateLimit: createInvalidRateLimit(func(r *v1.RateLimit) {
 				r.Key = "${fail}"
 			}),
 			msg: "invalid rateLimit key variable use",
 		},
 		{
-			rateLimit: createInvalidRateLimit(func(r *v1alpha1.RateLimit) {
+			rateLimit: createInvalidRateLimit(func(r *v1.RateLimit) {
 				r.Delay = createPointerFromInt(0)
 			}),
 			msg: "invalid rateLimit delay",
 		},
 		{
-			rateLimit: createInvalidRateLimit(func(r *v1alpha1.RateLimit) {
+			rateLimit: createInvalidRateLimit(func(r *v1.RateLimit) {
 				r.Burst = createPointerFromInt(0)
 			}),
 			msg: "invalid rateLimit burst",
 		},
 		{
-			rateLimit: createInvalidRateLimit(func(r *v1alpha1.RateLimit) {
+			rateLimit: createInvalidRateLimit(func(r *v1.RateLimit) {
 				r.ZoneSize = "31k"
 			}),
 			msg: "invalid rateLimit zoneSize",
 		},
 		{
-			rateLimit: createInvalidRateLimit(func(r *v1alpha1.RateLimit) {
+			rateLimit: createInvalidRateLimit(func(r *v1.RateLimit) {
 				r.RejectCode = createPointerFromInt(600)
 			}),
 			msg: "invalid rateLimit rejectCode",
 		},
 		{
-			rateLimit: createInvalidRateLimit(func(r *v1alpha1.RateLimit) {
+			rateLimit: createInvalidRateLimit(func(r *v1.RateLimit) {
 				r.LogLevel = "invalid"
 			}),
 			msg: "invalid rateLimit logLevel",
@@ -231,18 +231,18 @@ func TestValidateRateLimitFails(t *testing.T) {
 
 func TestValidateJWT(t *testing.T) {
 	tests := []struct {
-		jwt *v1alpha1.JWTAuth
+		jwt *v1.JWTAuth
 		msg string
 	}{
 		{
-			jwt: &v1alpha1.JWTAuth{
+			jwt: &v1.JWTAuth{
 				Realm:  "My Product API",
 				Secret: "my-jwk",
 			},
 			msg: "basic",
 		},
 		{
-			jwt: &v1alpha1.JWTAuth{
+			jwt: &v1.JWTAuth{
 				Realm:  "My Product API",
 				Secret: "my-jwk",
 				Token:  "$cookie_auth_token",
@@ -261,22 +261,22 @@ func TestValidateJWT(t *testing.T) {
 func TestValidateJWTFails(t *testing.T) {
 	tests := []struct {
 		msg string
-		jwt *v1alpha1.JWTAuth
+		jwt *v1.JWTAuth
 	}{
 		{
-			jwt: &v1alpha1.JWTAuth{
+			jwt: &v1.JWTAuth{
 				Realm: "My Product API",
 			},
 			msg: "missing secret",
 		},
 		{
-			jwt: &v1alpha1.JWTAuth{
+			jwt: &v1.JWTAuth{
 				Secret: "my-jwk",
 			},
 			msg: "missing realm",
 		},
 		{
-			jwt: &v1alpha1.JWTAuth{
+			jwt: &v1.JWTAuth{
 				Realm:  "My Product API",
 				Secret: "my-jwk",
 				Token:  "$uri",
@@ -284,28 +284,28 @@ func TestValidateJWTFails(t *testing.T) {
 			msg: "invalid variable use in token",
 		},
 		{
-			jwt: &v1alpha1.JWTAuth{
+			jwt: &v1.JWTAuth{
 				Realm:  "My Product API",
 				Secret: "my-\"jwk",
 			},
 			msg: "invalid secret name",
 		},
 		{
-			jwt: &v1alpha1.JWTAuth{
+			jwt: &v1.JWTAuth{
 				Realm:  "My \"Product API",
 				Secret: "my-jwk",
 			},
 			msg: "invalid realm due to escaped string",
 		},
 		{
-			jwt: &v1alpha1.JWTAuth{
+			jwt: &v1.JWTAuth{
 				Realm:  "My Product ${api}",
 				Secret: "my-jwk",
 			},
 			msg: "invalid variable use in realm with curly braces",
 		},
 		{
-			jwt: &v1alpha1.JWTAuth{
+			jwt: &v1.JWTAuth{
 				Realm:  "My Product $api",
 				Secret: "my-jwk",
 			},
@@ -503,17 +503,17 @@ func TestValidateJWTToken(t *testing.T) {
 
 func TestValidateIngressMTLS(t *testing.T) {
 	tests := []struct {
-		ing *v1alpha1.IngressMTLS
+		ing *v1.IngressMTLS
 		msg string
 	}{
 		{
-			ing: &v1alpha1.IngressMTLS{
+			ing: &v1.IngressMTLS{
 				ClientCertSecret: "mtls-secret",
 			},
 			msg: "default",
 		},
 		{
-			ing: &v1alpha1.IngressMTLS{
+			ing: &v1.IngressMTLS{
 				ClientCertSecret: "mtls-secret",
 				VerifyClient:     "on",
 				VerifyDepth:      createPointerFromInt(1),
@@ -521,7 +521,7 @@ func TestValidateIngressMTLS(t *testing.T) {
 			msg: "all parameters with default value",
 		},
 		{
-			ing: &v1alpha1.IngressMTLS{
+			ing: &v1.IngressMTLS{
 				ClientCertSecret: "ingress-mtls-secret",
 				VerifyClient:     "optional",
 				VerifyDepth:      createPointerFromInt(2),
@@ -539,30 +539,30 @@ func TestValidateIngressMTLS(t *testing.T) {
 
 func TestValidateIngressMTLSInvalid(t *testing.T) {
 	tests := []struct {
-		ing *v1alpha1.IngressMTLS
+		ing *v1.IngressMTLS
 		msg string
 	}{
 		{
-			ing: &v1alpha1.IngressMTLS{
+			ing: &v1.IngressMTLS{
 				VerifyClient: "on",
 			},
 			msg: "no secret",
 		},
 		{
-			ing: &v1alpha1.IngressMTLS{
+			ing: &v1.IngressMTLS{
 				ClientCertSecret: "-foo-",
 			},
 			msg: "invalid secret name",
 		},
 		{
-			ing: &v1alpha1.IngressMTLS{
+			ing: &v1.IngressMTLS{
 				ClientCertSecret: "mtls-secret",
 				VerifyClient:     "foo",
 			},
 			msg: "invalid verify client",
 		},
 		{
-			ing: &v1alpha1.IngressMTLS{
+			ing: &v1.IngressMTLS{
 				ClientCertSecret: "ingress-mtls-secret",
 				VerifyClient:     "on",
 				VerifyDepth:      createPointerFromInt(-1),
@@ -600,17 +600,17 @@ func TestValidateIngressMTLSVerifyClient(t *testing.T) {
 
 func TestValidateEgressMTLS(t *testing.T) {
 	tests := []struct {
-		eg  *v1alpha1.EgressMTLS
+		eg  *v1.EgressMTLS
 		msg string
 	}{
 		{
-			eg: &v1alpha1.EgressMTLS{
+			eg: &v1.EgressMTLS{
 				TLSSecret: "mtls-secret",
 			},
 			msg: "tls secret",
 		},
 		{
-			eg: &v1alpha1.EgressMTLS{
+			eg: &v1.EgressMTLS{
 				TrustedCertSecret: "tls-secret",
 				VerifyServer:      true,
 				VerifyDepth:       createPointerFromInt(2),
@@ -619,13 +619,13 @@ func TestValidateEgressMTLS(t *testing.T) {
 			msg: "verify server set to true",
 		},
 		{
-			eg: &v1alpha1.EgressMTLS{
+			eg: &v1.EgressMTLS{
 				VerifyServer: false,
 			},
 			msg: "verify server set to false",
 		},
 		{
-			eg: &v1alpha1.EgressMTLS{
+			eg: &v1.EgressMTLS{
 				SSLName: "foo.com",
 			},
 			msg: "ssl name",
@@ -641,23 +641,23 @@ func TestValidateEgressMTLS(t *testing.T) {
 
 func TestValidateEgressMTLSInvalid(t *testing.T) {
 	tests := []struct {
-		eg  *v1alpha1.EgressMTLS
+		eg  *v1.EgressMTLS
 		msg string
 	}{
 		{
-			eg: &v1alpha1.EgressMTLS{
+			eg: &v1.EgressMTLS{
 				VerifyServer: true,
 			},
 			msg: "verify server set to true",
 		},
 		{
-			eg: &v1alpha1.EgressMTLS{
+			eg: &v1.EgressMTLS{
 				TrustedCertSecret: "-foo-",
 			},
 			msg: "invalid secret name",
 		},
 		{
-			eg: &v1alpha1.EgressMTLS{
+			eg: &v1.EgressMTLS{
 				TrustedCertSecret: "ingress-mtls-secret",
 				VerifyServer:      true,
 				VerifyDepth:       createPointerFromInt(-1),
@@ -665,7 +665,7 @@ func TestValidateEgressMTLSInvalid(t *testing.T) {
 			msg: "invalid depth",
 		},
 		{
-			eg: &v1alpha1.EgressMTLS{
+			eg: &v1.EgressMTLS{
 				SSLName: "foo.com;",
 			},
 			msg: "invalid name",

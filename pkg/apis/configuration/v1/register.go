@@ -32,6 +32,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&VirtualServerList{},
 		&VirtualServerRoute{},
 		&VirtualServerRouteList{},
+		&Policy{},
+		&PolicyList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil

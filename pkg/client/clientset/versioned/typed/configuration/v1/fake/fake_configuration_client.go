@@ -12,6 +12,10 @@ type FakeK8sV1 struct {
 	*testing.Fake
 }
 
+func (c *FakeK8sV1) Policies(namespace string) v1.PolicyInterface {
+	return &FakePolicies{c, namespace}
+}
+
 func (c *FakeK8sV1) VirtualServers(namespace string) v1.VirtualServerInterface {
 	return &FakeVirtualServers{c, namespace}
 }

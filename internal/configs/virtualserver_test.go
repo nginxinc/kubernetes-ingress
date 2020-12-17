@@ -11,7 +11,6 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -1850,7 +1849,7 @@ func TestGeneratePolicies(t *testing.T) {
 
 	tests := []struct {
 		policyRefs []conf_v1.PolicyReference
-		policies   map[string]*conf_v1alpha1.Policy
+		policies   map[string]*conf_v1.Policy
 		policyOpts policyOptions
 		context    string
 		expected   policiesCfg
@@ -1863,10 +1862,10 @@ func TestGeneratePolicies(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/allow-policy": {
-					Spec: conf_v1alpha1.PolicySpec{
-						AccessControl: &conf_v1alpha1.AccessControl{
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
 							Allow: []string{"127.0.0.1"},
 						},
 					},
@@ -1883,10 +1882,10 @@ func TestGeneratePolicies(t *testing.T) {
 					Name: "allow-policy",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/allow-policy": {
-					Spec: conf_v1alpha1.PolicySpec{
-						AccessControl: &conf_v1alpha1.AccessControl{
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
 							Allow: []string{"127.0.0.1"},
 						},
 					},
@@ -1906,17 +1905,17 @@ func TestGeneratePolicies(t *testing.T) {
 					Name: "allow-policy-2",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/allow-policy-1": {
-					Spec: conf_v1alpha1.PolicySpec{
-						AccessControl: &conf_v1alpha1.AccessControl{
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
 							Allow: []string{"127.0.0.1"},
 						},
 					},
 				},
 				"default/allow-policy-2": {
-					Spec: conf_v1alpha1.PolicySpec{
-						AccessControl: &conf_v1alpha1.AccessControl{
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
 							Allow: []string{"127.0.0.2"},
 						},
 					},
@@ -1934,10 +1933,10 @@ func TestGeneratePolicies(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/rateLimit-policy": {
-					Spec: conf_v1alpha1.PolicySpec{
-						RateLimit: &conf_v1alpha1.RateLimit{
+					Spec: conf_v1.PolicySpec{
+						RateLimit: &conf_v1.RateLimit{
 							Key:      "test",
 							ZoneSize: "10M",
 							Rate:     "10r/s",
@@ -1978,10 +1977,10 @@ func TestGeneratePolicies(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/rateLimit-policy": {
-					Spec: conf_v1alpha1.PolicySpec{
-						RateLimit: &conf_v1alpha1.RateLimit{
+					Spec: conf_v1.PolicySpec{
+						RateLimit: &conf_v1.RateLimit{
 							Key:      "test",
 							ZoneSize: "10M",
 							Rate:     "10r/s",
@@ -1989,8 +1988,8 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 				},
 				"default/rateLimit-policy2": {
-					Spec: conf_v1alpha1.PolicySpec{
-						RateLimit: &conf_v1alpha1.RateLimit{
+					Spec: conf_v1.PolicySpec{
+						RateLimit: &conf_v1.RateLimit{
 							Key:      "test2",
 							ZoneSize: "20M",
 							Rate:     "20r/s",
@@ -2035,14 +2034,14 @@ func TestGeneratePolicies(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/jwt-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "jwt-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						JWTAuth: &conf_v1alpha1.JWTAuth{
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
 							Realm:  "My Test API",
 							Secret: "jwt-secret",
 						},
@@ -2064,14 +2063,14 @@ func TestGeneratePolicies(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/ingress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
 							ClientCertSecret: "ingress-mtls-secret",
 							VerifyClient:     "off",
 						},
@@ -2095,10 +2094,10 @@ func TestGeneratePolicies(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/egress-mtls-policy": {
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TLSSecret:         "egress-mtls-secret",
 							ServerName:        true,
 							SessionReuse:      createPointerFromBool(false),
@@ -2152,7 +2151,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 
 	tests := []struct {
 		policyRefs        []conf_v1.PolicyReference
-		policies          map[string]*conf_v1alpha1.Policy
+		policies          map[string]*conf_v1.Policy
 		policyOpts        policyOptions
 		trustedCAFileName string
 		context           string
@@ -2167,7 +2166,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies:   map[string]*conf_v1alpha1.Policy{},
+			policies:   map[string]*conf_v1.Policy{},
 			policyOpts: policyOptions{},
 			expected: policiesCfg{
 				ErrorReturn: &version2.Return{
@@ -2190,17 +2189,17 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Name: "deny-policy",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/allow-policy": {
-					Spec: conf_v1alpha1.PolicySpec{
-						AccessControl: &conf_v1alpha1.AccessControl{
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
 							Allow: []string{"127.0.0.1"},
 						},
 					},
 				},
 				"default/deny-policy": {
-					Spec: conf_v1alpha1.PolicySpec{
-						AccessControl: &conf_v1alpha1.AccessControl{
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
 							Deny: []string{"127.0.0.2"},
 						},
 					},
@@ -2229,10 +2228,10 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/rateLimit-policy": {
-					Spec: conf_v1alpha1.PolicySpec{
-						RateLimit: &conf_v1alpha1.RateLimit{
+					Spec: conf_v1.PolicySpec{
+						RateLimit: &conf_v1.RateLimit{
 							Key:      "test",
 							ZoneSize: "10M",
 							Rate:     "10r/s",
@@ -2240,8 +2239,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 				},
 				"default/rateLimit-policy2": {
-					Spec: conf_v1alpha1.PolicySpec{
-						RateLimit: &conf_v1alpha1.RateLimit{
+					Spec: conf_v1.PolicySpec{
+						RateLimit: &conf_v1.RateLimit{
 							Key:        "test2",
 							ZoneSize:   "20M",
 							Rate:       "20r/s",
@@ -2297,14 +2296,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/jwt-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "jwt-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						JWTAuth: &conf_v1alpha1.JWTAuth{
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
 							Realm:  "test",
 							Secret: "jwt-secret",
 						},
@@ -2338,14 +2337,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/jwt-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "jwt-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						JWTAuth: &conf_v1alpha1.JWTAuth{
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
 							Realm:  "test",
 							Secret: "jwt-secret",
 						},
@@ -2382,14 +2381,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/jwt-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "jwt-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						JWTAuth: &conf_v1alpha1.JWTAuth{
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
 							Realm:  "test",
 							Secret: "jwt-secret",
 						},
@@ -2400,8 +2399,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 						Name:      "jwt-policy2",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						JWTAuth: &conf_v1alpha1.JWTAuth{
+					Spec: conf_v1.PolicySpec{
+						JWTAuth: &conf_v1.JWTAuth{
 							Realm:  "test",
 							Secret: "jwt-secret2",
 						},
@@ -2440,14 +2439,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/ingress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
 							ClientCertSecret: "ingress-mtls-secret",
 						},
 					},
@@ -2481,14 +2480,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/ingress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
 							ClientCertSecret: "ingress-mtls-secret",
 						},
 					},
@@ -2526,21 +2525,21 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/ingress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
 							ClientCertSecret: "ingress-mtls-secret",
 						},
 					},
 				},
 				"default/ingress-mtls-policy2": {
-					Spec: conf_v1alpha1.PolicySpec{
-						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
 							ClientCertSecret: "ingress-mtls-secret2",
 						},
 					},
@@ -2577,14 +2576,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/ingress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
 							ClientCertSecret: "ingress-mtls-secret",
 						},
 					},
@@ -2619,14 +2618,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/ingress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "ingress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+					Spec: conf_v1.PolicySpec{
+						IngressMTLS: &conf_v1.IngressMTLS{
 							ClientCertSecret: "ingress-mtls-secret",
 						},
 					},
@@ -2665,14 +2664,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/egress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TLSSecret: "egress-mtls-secret",
 						},
 					},
@@ -2682,8 +2681,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 						Name:      "egress-mtls-policy2",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TLSSecret: "egress-mtls-secret2",
 						},
 					},
@@ -2724,14 +2723,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/egress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TrustedCertSecret: "egress-trusted-secret",
 							SSLName:           "foo.com",
 						},
@@ -2766,14 +2765,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/egress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TLSSecret: "egress-mtls-secret",
 							SSLName:   "foo.com",
 						},
@@ -2807,14 +2806,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/egress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TrustedCertSecret: "egress-trusted-secret",
 							SSLName:           "foo.com",
 						},
@@ -2848,14 +2847,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			policies: map[string]*conf_v1alpha1.Policy{
+			policies: map[string]*conf_v1.Policy{
 				"default/egress-mtls-policy": {
 					ObjectMeta: meta_v1.ObjectMeta{
 						Name:      "egress-mtls-policy",
 						Namespace: "default",
 					},
-					Spec: conf_v1alpha1.PolicySpec{
-						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+					Spec: conf_v1.PolicySpec{
+						EgressMTLS: &conf_v1.EgressMTLS{
 							TLSSecret: "egress-mtls-secret",
 							SSLName:   "foo.com",
 						},

@@ -144,12 +144,12 @@ func newTask(key string, obj interface{}) (task, error) {
 		k = virtualserver
 	case *conf_v1.VirtualServerRoute:
 		k = virtualServerRoute
+	case *conf_v1.Policy:
+		k = policy
 	case *conf_v1alpha1.GlobalConfiguration:
 		k = globalConfiguration
 	case *conf_v1alpha1.TransportServer:
 		k = transportserver
-	case *conf_v1alpha1.Policy:
-		k = policy
 	case *unstructured.Unstructured:
 		if objectKind := obj.(*unstructured.Unstructured).GetKind(); objectKind == appProtectPolicyGVK.Kind {
 			k = appProtectPolicy

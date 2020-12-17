@@ -109,9 +109,9 @@ spec:
                   type: integer
                 zoneSize:
                   type: string
-  version: v1alpha1
+  version: v1
   versions:
-    - name: v1alpha1
+    - name: v1
       served: true
       storage: true
 status:
