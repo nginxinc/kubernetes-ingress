@@ -13,8 +13,8 @@ RUN set -x \
 FROM debian:buster-slim AS base
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV NGINX_PLUS_VERSION 22-1~buster
-ENV NGINX_OPENTRACING_MODULE_VERSION 22+0.9.0-1~buster
+ENV NGINX_PLUS_VERSION 23-1~buster
+ENV NGINX_OPENTRACING_MODULE_VERSION 23+0.9.0-1~buster
 
 ARG IC_VERSION
 

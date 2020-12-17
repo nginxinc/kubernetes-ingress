@@ -5,14 +5,14 @@ FROM debian:stretch-slim as base
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV APPPROTECT_MODULE_VERSION 22+3.216.0-1~stretch
-ENV APPPROTECT_PLUGIN_VERSION 3.216.0-1~stretch
-ENV APPPROTECT_ENGINE_VERSION 4.40.0-1~stretch
-ENV APPPROTECT_COMPILER_VERSION 4.40.0-1~stretch
-ENV APPPROTECT_SIG_VERSION 2020.11.16-1~stretch
-ENV APPPROTECT_THREAT_CAMPAIGNS_VERSION 2020.11.18-1~stretch
-ENV NGINX_PLUS_VERSION 22-1~stretch
-ENV NGINX_PLUS_RELEASE R22
+ENV APPPROTECT_MODULE_VERSION 23+3.263.0-1~stretch
+ENV APPPROTECT_PLUGIN_VERSION 3.263.0-1~stretch
+ENV APPPROTECT_ENGINE_VERSION 5.9.4-1~stretch
+ENV APPPROTECT_COMPILER_VERSION 5.9.4-1~stretch
+ENV APPPROTECT_SIG_VERSION 2020.12.13-1~stretch
+ENV APPPROTECT_THREAT_CAMPAIGNS_VERSION 2020.12.01-1~stretch
+ENV NGINX_PLUS_VERSION 23-1~stretch
+ENV NGINX_PLUS_RELEASE R23
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
@@ -74,7 +74,7 @@ RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
 	&& ln -sf /proc/1/fd/1 /var/log/nginx/stream-access.log \
 	&& ln -sf /proc/1/fd/2 /var/log/nginx/error.log
 
-RUN  mkdir -p /var/lib/nginx \
+RUN mkdir -p /var/lib/nginx \
 				/etc/nginx/stream-conf.d \
 				/etc/nginx/secrets \
 				/etc/nginx/waf \
