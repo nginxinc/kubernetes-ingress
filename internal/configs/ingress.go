@@ -261,10 +261,10 @@ func generateJWTConfig(owner runtime.Object, secretRefs map[string]*secrets.Secr
 
 	secret := secretRefs[cfgParams.JWTKey]
 
-	if secret.Error != nil {
-		warnings.AddWarningf(owner, "JWK secret %s is invalid: %v", cfgParams.JWTKey, secret.Error)
-	} else if secret.Type != secrets.SecretTypeJWK {
+	if secret.Type != "" && secret.Type != secrets.SecretTypeJWK {
 		warnings.AddWarningf(owner, "JWK secret %s is of a wrong type '%s', must be '%s'", cfgParams.JWTKey, secret.Type, secrets.SecretTypeJWK)
+	} else if secret.Error != nil {
+		warnings.AddWarningf(owner, "JWK secret %s is invalid: %v", cfgParams.JWTKey, secret.Error)
 	}
 
 	// Key is configured for all cases, including when the secret is (1) invalid or (2) of a wrong type.
@@ -313,12 +313,12 @@ func addSSLConfig(server *version1.Server, owner runtime.Object, host string, in
 
 	if tlsSecret != "" {
 		secret := secretRefs[tlsSecret]
-		if secret.Error != nil {
-			pemFile = pemFileNameForMissingTLSSecret
-			warnings.AddWarningf(owner, "TLS secret %s is invalid: %v", tlsSecret, secret.Error)
-		} else if secret.Type != api_v1.SecretTypeTLS {
+		if secret.Type != "" && secret.Type != api_v1.SecretTypeTLS {
 			pemFile = pemFileNameForMissingTLSSecret
 			warnings.AddWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tlsSecret, secret.Type, api_v1.SecretTypeTLS)
+		} else if secret.Error != nil {
+			pemFile = pemFileNameForMissingTLSSecret
+			warnings.AddWarningf(owner, "TLS secret %s is invalid: %v", tlsSecret, secret.Error)
 		} else {
 			pemFile = secret.Path
 		}
