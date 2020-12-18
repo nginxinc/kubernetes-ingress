@@ -39,6 +39,34 @@ spec:
           servicePort: 80
 ```
 
+## Validation
+
+The Ingress Controller validates the annotations of Ingress resources. If an Ingress is invalid, the Ingress Controller will reject it: the Ingress will continue to exist in the cluster, but the Ingress Controller will ignore it.
+
+You can check if the Ingress Controller successfully applied the configuration for an Ingress. For our example `cafe-ingress-with-annotations` Ingress, we can run:
+```
+$ kubectl describe ing cafe-ingress-with-annotations
+. . .
+Events:
+  Type     Reason          Age   From                      Message
+  ----     ------          ----  ----                      -------
+  Normal   AddedOrUpdated  3s    nginx-ingress-controller  Configuration for default/cafe-ingress-with-annotations was added or updated
+```
+Note how the events section includes a Normal event with the AddedOrUpdated reason that informs us that the configuration was successfully applied.
+
+If you create an invalid Ingress, the Ingress Controller will reject it and emit a Rejected event. For example, if you create an Ingress `cafe-ingress-with-annotations`, with an annotation `nginx.org/redirect-to-https` set to `yes please` instead of `true`, you will get:
+```
+$ kubectl describe ing cafe-ingress-with-annotations
+. . .
+Events:
+  Type     Reason    Age   From                      Message
+  ----     ------    ----  ----                      -------
+  Warning  Rejected  13s   nginx-ingress-controller  annotations.nginx.org/redirect-to-https: Invalid value: "yes please": must be a boolean
+```
+Note how the events section includes a Warning event with the Rejected reason.
+
+**Note**: If you make an existing Ingress invalid, the Ingress Controller will reject it and remove the corresponding configuration from NGINX.
+
 ## Summary of Annotations
 
 The table below summarizes the available annotations. 
