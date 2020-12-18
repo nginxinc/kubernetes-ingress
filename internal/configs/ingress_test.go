@@ -943,6 +943,7 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-secret": {
+					Type:  v1.SecretTypeTLS,
 					Error: errors.New("invalid secret"),
 				},
 			},
@@ -986,7 +987,36 @@ func TestAddSSLConfig(t *testing.T) {
 					"TLS secret cafe-secret is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'",
 				},
 			},
-			msg: "secret of wrong type",
+			msg: "secret of wrong type without error",
+		},
+		{
+			host: "cafe.example.com",
+			tls: []networking.IngressTLS{
+				{
+					Hosts:      []string{"cafe.example.com"},
+					SecretName: "cafe-secret",
+				},
+			},
+			secretRefs: map[string]*secrets.SecretReference{
+				"cafe-secret": {
+					Type:  secrets.SecretTypeCA,
+					Path:  "",
+					Error: errors.New("CA secret must have the data field ca.crt"),
+				},
+			},
+			isWildcardEnabled: false,
+			expectedServer: version1.Server{
+				SSL:               true,
+				SSLCertificate:    pemFileNameForMissingTLSSecret,
+				SSLCertificateKey: pemFileNameForMissingTLSSecret,
+				SSLCiphers:        "NULL",
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					"TLS secret cafe-secret is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'",
+				},
+			},
+			msg: "secret of wrong type with error",
 		},
 		{
 			host: "cafe.example.com",
@@ -1106,6 +1136,7 @@ func TestGenerateJWTConfig(t *testing.T) {
 		{
 			secretRefs: map[string]*secrets.SecretReference{
 				"cafe-jwk": {
+					Type:  secrets.SecretTypeJWK,
 					Path:  "/etc/nginx/secrets/default-cafe-jwk",
 					Error: errors.New("invalid secret"),
 				},
@@ -1153,7 +1184,34 @@ func TestGenerateJWTConfig(t *testing.T) {
 					"JWK secret cafe-jwk is of a wrong type 'nginx.org/ca', must be 'nginx.org/jwk'",
 				},
 			},
-			msg: "secret of wrong type",
+			msg: "secret of wrong type without error",
+		},
+		{
+			secretRefs: map[string]*secrets.SecretReference{
+				"cafe-jwk": {
+					Type:  secrets.SecretTypeCA,
+					Path:  "",
+					Error: errors.New("CA secret must have the data field ca.crt"),
+				},
+			},
+			cfgParams: &ConfigParams{
+				JWTKey:   "cafe-jwk",
+				JWTRealm: "cafe",
+				JWTToken: "$http_token",
+			},
+			redirectLocationName: "@loc",
+			expectedJWTAuth: &version1.JWTAuth{
+				Key:   "",
+				Realm: "cafe",
+				Token: "$http_token",
+			},
+			expectedRedirectLocation: nil,
+			expectedWarnings: Warnings{
+				nil: {
+					"JWK secret cafe-jwk is of a wrong type 'nginx.org/ca', must be 'nginx.org/jwk'",
+				},
+			},
+			msg: "secret of wrong type with error",
 		},
 	}
 
