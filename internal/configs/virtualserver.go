@@ -684,12 +684,12 @@ func (p *policiesCfg) addJWTAuthConfig(
 
 	jwtSecretKey := fmt.Sprintf("%v/%v", polNamespace, jwtAuth.Secret)
 	secret := secretRefs[jwtSecretKey]
-	if secret.Error != nil {
-		res.addWarningf("JWT policy %q references an invalid Secret: %v", polKey, secret.Error)
+	if secret.Type != "" && secret.Type != secrets.SecretTypeJWK {
+		res.addWarningf("JWT policy %q references a Secret of an incorrect type %q", polKey, secret.Type)
 		res.isError = true
 		return res
-	} else if secret.Type != secrets.SecretTypeJWK {
-		res.addWarningf("JWT policy %q references a Secret of an incorrect type %q", polKey, secret.Type)
+	} else if secret.Error != nil {
+		res.addWarningf("JWT policy %q references an invalid Secret: %v", polKey, secret.Error)
 		res.isError = true
 		return res
 	}
@@ -728,12 +728,12 @@ func (p *policiesCfg) addIngressMTLSConfig(
 
 	secretKey := fmt.Sprintf("%v/%v", polNamespace, ingressMTLS.ClientCertSecret)
 	secret := secretRefs[secretKey]
-	if secret.Error != nil {
-		res.addWarningf("IngressMTLS policy %q references an invalid Secret: %v", polKey, secret.Error)
+	if secret.Type != "" && secret.Type != secrets.SecretTypeCA {
+		res.addWarningf("IngressMTLS policy %q references a Secret of an incorrect type %q", polKey, secret.Type)
 		res.isError = true
 		return res
-	} else if secret.Type != secrets.SecretTypeCA {
-		res.addWarningf("IngressMTLS policy %q references a Secret of an incorrect type %q", polKey, secret.Type)
+	} else if secret.Error != nil {
+		res.addWarningf("IngressMTLS policy %q references an invalid Secret: %v", polKey, secret.Error)
 		res.isError = true
 		return res
 	}
@@ -776,12 +776,12 @@ func (p *policiesCfg) addEgressMTLSConfig(
 		egressTLSSecret := fmt.Sprintf("%v/%v", polNamespace, egressMTLS.TLSSecret)
 
 		tlsSecret := secretRefs[egressTLSSecret]
-		if tlsSecret.Error != nil {
-			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, tlsSecret.Error)
+		if tlsSecret.Type != "" && tlsSecret.Type != api_v1.SecretTypeTLS {
+			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, tlsSecret.Type)
 			res.isError = true
 			return res
-		} else if tlsSecret.Type != api_v1.SecretTypeTLS {
-			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, tlsSecret.Type)
+		} else if tlsSecret.Error != nil {
+			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, tlsSecret.Error)
 			res.isError = true
 			return res
 		}
@@ -795,12 +795,12 @@ func (p *policiesCfg) addEgressMTLSConfig(
 		trustedCertSecret := fmt.Sprintf("%v/%v", polNamespace, egressMTLS.TrustedCertSecret)
 
 		trustedSecret := secretRefs[trustedCertSecret]
-		if trustedSecret.Error != nil {
-			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, trustedSecret.Error)
+		if trustedSecret.Type != "" && trustedSecret.Type != secrets.SecretTypeCA {
+			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, trustedSecret.Type)
 			res.isError = true
 			return res
-		} else if trustedSecret.Type != secrets.SecretTypeCA {
-			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, trustedSecret.Type)
+		} else if trustedSecret.Error != nil {
+			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, trustedSecret.Error)
 			res.isError = true
 			return res
 		}

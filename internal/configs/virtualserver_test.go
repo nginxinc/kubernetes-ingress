@@ -2337,6 +2337,46 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					Name:      "jwt-policy",
 					Namespace: "default",
 				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/jwt-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "jwt-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						JWTAuth: &conf_v1alpha1.JWTAuth{
+							Realm:  "test",
+							Secret: "jwt-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/jwt-secret": {
+						Type: secrets.SecretTypeCA,
+					},
+				},
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`JWT policy "default/jwt-policy" references a Secret of an incorrect type "nginx.org/ca"`,
+				},
+			},
+			msg: "jwt references wrong secret type",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "jwt-policy",
+					Namespace: "default",
+				},
 				{
 					Name:      "jwt-policy2",
 					Namespace: "default",
@@ -2433,6 +2473,47 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				},
 			},
 			msg: "ingress mtls reference an invalid secret",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "ingress-mtls-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/ingress-mtls-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "ingress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						IngressMTLS: &conf_v1alpha1.IngressMTLS{
+							ClientCertSecret: "ingress-mtls-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				tls: true,
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/ingress-mtls-secret": {
+						Type: api_v1.SecretTypeTLS,
+					},
+				},
+			},
+			context: "spec",
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`IngressMTLS policy "default/ingress-mtls-policy" references a Secret of an incorrect type "kubernetes.io/tls"`,
+				},
+			},
+			msg: "ingress mtls references wrong secret type",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2677,6 +2758,88 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				},
 			},
 			msg: "egress mtls referencing an invalid CA secret",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "egress-mtls-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/egress-mtls-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "egress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+							TLSSecret: "egress-mtls-secret",
+							SSLName:   "foo.com",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/egress-mtls-secret": {
+						Type: secrets.SecretTypeCA,
+					},
+				},
+			},
+			context: "route",
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`EgressMTLS policy "default/egress-mtls-policy" references a Secret of an incorrect type "nginx.org/ca"`,
+				},
+			},
+			msg: "egress mtls referencing wrong secret type",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "egress-mtls-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1alpha1.Policy{
+				"default/egress-mtls-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "egress-mtls-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1alpha1.PolicySpec{
+						EgressMTLS: &conf_v1alpha1.EgressMTLS{
+							TrustedCertSecret: "egress-trusted-secret",
+							SSLName:           "foo.com",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/egress-trusted-secret": {
+						Type: api_v1.SecretTypeTLS,
+					},
+				},
+			},
+			context: "route",
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`EgressMTLS policy "default/egress-mtls-policy" references a Secret of an incorrect type "kubernetes.io/tls"`,
+				},
+			},
+			msg: "egress trusted secret referencing wrong secret type",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
