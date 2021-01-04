@@ -13,12 +13,12 @@ import (
 )
 
 // ValidatePolicy validates a Policy.
-func ValidatePolicy(policy *v1.Policy, isPlus bool) error {
-	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus)
+func ValidatePolicy(policy *v1.Policy, isPlus bool, enablePreviewPolicies bool) error {
+	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enablePreviewPolicies)
 	return allErrs.ToAggregate()
 }
 
-func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus bool) field.ErrorList {
+func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus bool, enablePreviewPolicies bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -29,11 +29,19 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus bool)
 	}
 
 	if spec.RateLimit != nil {
+		if !enablePreviewPolicies {
+			return append(allErrs, field.Forbidden(fieldPath.Child("rateLimit"),
+				"rateLimit is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+		}
 		allErrs = append(allErrs, validateRateLimit(spec.RateLimit, fieldPath.Child("rateLimit"), isPlus)...)
 		fieldCount++
 	}
 
 	if spec.JWTAuth != nil {
+		if !enablePreviewPolicies {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("jwt"),
+				"jwt is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+		}
 		if !isPlus {
 			return append(allErrs, field.Forbidden(fieldPath.Child("jwt"), "jwt secrets are only supported in NGINX Plus"))
 		}
@@ -43,11 +51,19 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus bool)
 	}
 
 	if spec.IngressMTLS != nil {
+		if !enablePreviewPolicies {
+			return append(allErrs, field.Forbidden(fieldPath.Child("ingressMTLS"),
+				"ingressMTLS is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+		}
 		allErrs = append(allErrs, validateIngressMTLS(spec.IngressMTLS, fieldPath.Child("ingressMTLS"))...)
 		fieldCount++
 	}
 
 	if spec.EgressMTLS != nil {
+		if !enablePreviewPolicies {
+			return append(allErrs, field.Forbidden(fieldPath.Child("egressMTLS"),
+				"egressMTLS is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+		}
 		allErrs = append(allErrs, validateEgressMTLS(spec.EgressMTLS, fieldPath.Child("egressMTLS"))...)
 		fieldCount++
 	}

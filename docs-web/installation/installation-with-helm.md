@@ -238,6 +238,9 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``controller.enableCustomResources``
      - Enable the custom resources.
      - true
+   * - ``controller.enablePreviewPolicies``
+     - Enable preview policies.
+     - false
    * - ``controller.enableTLSPassthrough``
      - Enable TLS Passthrough on port 443. Requires ``controller.enableCustomResources``.
      - false

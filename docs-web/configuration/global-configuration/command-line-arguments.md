@@ -33,6 +33,10 @@ Below we describe the available command-line arguments:
 
 	Enables custom resources. (default true)
 
+.. option:: -enable-preview-policies
+
+	Enables preview policies. (default false)
+
 .. option:: -enable-leader-election
 
 	Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status. (default true)

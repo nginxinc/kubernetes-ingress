@@ -349,12 +349,14 @@ type PolicyList struct {
 }
 
 // AccessControl defines an access policy based on the source IP of a request.
+// policy status: production-ready
 type AccessControl struct {
 	Allow []string `json:"allow"`
 	Deny  []string `json:"deny"`
 }
 
 // RateLimit defines a rate limit policy.
+// policy status: preview
 type RateLimit struct {
 	Rate       string `json:"rate"`
 	Key        string `json:"key"`
@@ -368,6 +370,7 @@ type RateLimit struct {
 }
 
 // JWTAuth holds JWT authentication configuration.
+// policy status: preview
 type JWTAuth struct {
 	Realm  string `json:"realm"`
 	Secret string `json:"secret"`
@@ -375,6 +378,7 @@ type JWTAuth struct {
 }
 
 // IngressMTLS defines an Ingress MTLS policy.
+// policy status: preview
 type IngressMTLS struct {
 	ClientCertSecret string `json:"clientCertSecret"`
 	VerifyClient     string `json:"verifyClient"`
@@ -382,6 +386,7 @@ type IngressMTLS struct {
 }
 
 // EgressMTLS defines an Egress MTLS policy.
+// policy status: preview
 type EgressMTLS struct {
 	TLSSecret         string `json:"tlsSecret"`
 	VerifyServer      bool   `json:"verifyServer"`

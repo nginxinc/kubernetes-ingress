@@ -157,6 +157,9 @@ var (
 	enableCustomResources = flag.Bool("enable-custom-resources", true,
 		"Enable custom resources")
 
+	enablePreviewPolicies = flag.Bool("enable-preview-policies", false,
+		"Enable preview policies")
+
 	enableSnippets = flag.Bool("enable-snippets", false,
 		"Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources.")
 
@@ -227,7 +230,7 @@ func main() {
 	}
 
 	if *enableTLSPassthrough && !*enableCustomResources {
-		glog.Fatalf("enable-tls-passthrough flag requires -enable-custom-resources")
+		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
 	}
 
 	if *appProtect && !*nginxPlus {
@@ -624,6 +627,7 @@ func main() {
 		ConfigMaps:                   *nginxConfigMaps,
 		GlobalConfiguration:          *globalConfiguration,
 		AreCustomResourcesEnabled:    *enableCustomResources,
+		EnablePreviewPolicies:        *enablePreviewPolicies,
 		MetricsCollector:             controllerCollector,
 		GlobalConfigurationValidator: globalConfigurationValidator,
 		TransportServerValidator:     transportServerValidator,

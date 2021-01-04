@@ -171,6 +171,7 @@ type LoadBalancerController struct {
 	controllerNamespace           string
 	wildcardTLSSecret             string
 	areCustomResourcesEnabled     bool
+	enablePreviewPolicies         bool
 	metricsCollector              collectors.ControllerCollector
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
@@ -210,6 +211,7 @@ type NewLoadBalancerControllerInput struct {
 	ConfigMaps                   string
 	GlobalConfiguration          string
 	AreCustomResourcesEnabled    bool
+	EnablePreviewPolicies        bool
 	MetricsCollector             collectors.ControllerCollector
 	GlobalConfigurationValidator *validation.GlobalConfigurationValidator
 	TransportServerValidator     *validation.TransportServerValidator
@@ -240,6 +242,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		controllerNamespace:          input.ControllerNamespace,
 		wildcardTLSSecret:            input.WildcardTLSSecret,
 		areCustomResourcesEnabled:    input.AreCustomResourcesEnabled,
+		enablePreviewPolicies:        input.EnablePreviewPolicies,
 		metricsCollector:             input.MetricsCollector,
 		globalConfigurationValidator: input.GlobalConfigurationValidator,
 		transportServerValidator:     input.TransportServerValidator,
@@ -843,7 +846,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 
 	if polExists {
 		pol := obj.(*conf_v1.Policy)
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus)
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies)
 		if err != nil {
 			lbc.recorder.Eventf(pol, api_v1.EventTypeWarning, "Rejected", "Policy %v is invalid and was rejected: %v", key, err)
 		} else {
@@ -2326,7 +2329,7 @@ func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1.Policy {
 	for _, obj := range lbc.policyLister.List() {
 		pol := obj.(*conf_v1.Policy)
 
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus)
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies)
 		if err != nil {
 			glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
 			continue
@@ -2363,7 +2366,7 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 
 		policy := policyObj.(*conf_v1.Policy)
 
-		err = validation.ValidatePolicy(policy, lbc.isNginxPlus)
+		err = validation.ValidatePolicy(policy, lbc.isNginxPlus, lbc.enablePreviewPolicies)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Policy %s is invalid: %v", policyKey, err))
 			continue

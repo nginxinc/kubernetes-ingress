@@ -8,48 +8,146 @@ import (
 )
 
 func TestValidatePolicy(t *testing.T) {
-	policy := &v1.Policy{
-		Spec: v1.PolicySpec{
-			AccessControl: &v1.AccessControl{
-				Allow: []string{"127.0.0.1"},
+	tests := []struct {
+		policy                *v1.Policy
+		isPlus                bool
+		enablePreviewPolicies bool
+		msg                   string
+	}{
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					AccessControl: &v1.AccessControl{
+						Allow: []string{"127.0.0.1"},
+					},
+				},
 			},
+			isPlus:                false,
+			enablePreviewPolicies: false,
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:  "My Product API",
+						Secret: "my-jwk",
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: true,
+			msg:                   "use jwt(plus only) policy",
 		},
 	}
-	isPlus := false
-
-	err := ValidatePolicy(policy, isPlus)
-	if err != nil {
-		t.Errorf("ValidatePolicy() returned error %v for valid input", err)
+	for _, test := range tests {
+		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies)
+		if err != nil {
+			t.Errorf("ValidatePolicy() returned error %v for valid input", err)
+		}
 	}
 }
-
 func TestValidatePolicyFails(t *testing.T) {
-	policy := &v1.Policy{
-		Spec: v1.PolicySpec{},
-	}
-	isPlus := false
-
-	err := ValidatePolicy(policy, isPlus)
-	if err == nil {
-		t.Errorf("ValidatePolicy() returned no error for invalid input")
-	}
-
-	multiPolicy := &v1.Policy{
-		Spec: v1.PolicySpec{
-			AccessControl: &v1.AccessControl{
-				Allow: []string{"127.0.0.1"},
+	tests := []struct {
+		policy                *v1.Policy
+		isPlus                bool
+		enablePreviewPolicies bool
+		msg                   string
+	}{
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{},
 			},
-			RateLimit: &v1.RateLimit{
-				Key:      "${uri}",
-				ZoneSize: "10M",
-				Rate:     "10r/s",
+			isPlus:                false,
+			enablePreviewPolicies: false,
+			msg:                   "empty policy spec",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					AccessControl: &v1.AccessControl{
+						Allow: []string{"127.0.0.1"},
+					},
+					RateLimit: &v1.RateLimit{
+						Key:      "${uri}",
+						ZoneSize: "10M",
+						Rate:     "10r/s",
+					},
+				},
 			},
+			isPlus:                true,
+			enablePreviewPolicies: true,
+			msg:                   "multiple policies in spec",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:  "My Product API",
+						Secret: "my-jwk",
+					},
+				},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: true,
+			msg:                   "jwt(plus only) policy on OSS",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					RateLimit: &v1.RateLimit{
+						Rate:     "10r/s",
+						ZoneSize: "10M",
+						Key:      "${request_uri}",
+					},
+				},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: false,
+			msg:                   "rateLimit policy with preview policies disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:  "My Product API",
+						Secret: "my-jwk",
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: false,
+			msg:                   "jwt policy with preview policies disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					IngressMTLS: &v1.IngressMTLS{
+						ClientCertSecret: "mtls-secret",
+					},
+				},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: false,
+			msg:                   "ingressMTLS policy with preview policies disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					EgressMTLS: &v1.EgressMTLS{
+						TLSSecret: "mtls-secret",
+					},
+				},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: false,
+			msg:                   "egressMTLS policy with preview policies disabled",
 		},
 	}
-
-	err = ValidatePolicy(multiPolicy, isPlus)
-	if err == nil {
-		t.Errorf("ValidatePolicy() returned no error for invalid input")
+	for _, test := range tests {
+		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies)
+		if err == nil {
+			t.Errorf("ValidatePolicy() returned no error for invalid input")
+		}
 	}
 }
 

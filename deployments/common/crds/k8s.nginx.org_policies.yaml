@@ -35,7 +35,7 @@ spec:
               type: object
               properties:
                 accessControl:
-                  description: AccessControl defines an access policy based on the source IP of a request.
+                  description: 'AccessControl defines an access policy based on the source IP of a request. policy status: production-ready'
                   type: object
                   properties:
                     allow:
@@ -47,7 +47,7 @@ spec:
                       items:
                         type: string
                 egressMTLS:
-                  description: EgressMTLS defines an Egress MTLS policy.
+                  description: 'EgressMTLS defines an Egress MTLS policy. policy status: preview'
                   type: object
                   properties:
                     ciphers:
@@ -69,7 +69,7 @@ spec:
                     verifyServer:
                       type: boolean
                 ingressMTLS:
-                  description: IngressMTLS defines an Ingress MTLS policy.
+                  description: 'IngressMTLS defines an Ingress MTLS policy. policy status: preview'
                   type: object
                   properties:
                     clientCertSecret:
@@ -79,7 +79,7 @@ spec:
                     verifyDepth:
                       type: integer
                 jwt:
-                  description: JWTAuth holds JWT authentication configuration.
+                  description: 'JWTAuth holds JWT authentication configuration. policy status: preview'
                   type: object
                   properties:
                     realm:
@@ -89,7 +89,7 @@ spec:
                     token:
                       type: string
                 rateLimit:
-                  description: RateLimit defines a rate limit policy.
+                  description: 'RateLimit defines a rate limit policy. policy status: preview'
                   type: object
                   properties:
                     burst:

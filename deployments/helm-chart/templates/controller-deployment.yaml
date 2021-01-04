@@ -144,6 +144,7 @@ spec:
 {{- if .Values.controller.enableCustomResources }}
           - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}
           - -enable-snippets={{ .Values.controller.enableSnippets }}
+          - -enable-preview-policies={{ .Values.controller.enablePreviewPolicies }}
 {{- if .Values.controller.globalConfiguration.create }}
           - -global-configuration=$(POD_NAMESPACE)/{{ include "nginx-ingress.name" . }}
 {{- end }}
