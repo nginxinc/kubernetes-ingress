@@ -1,17 +1,17 @@
 # syntax=docker/dockerfile:1.0-experimental
 ARG GOLANG_CONTAINER=golang:latest
 
-FROM debian:stretch-slim as base
+FROM debian:buster-slim as base
 
 LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
 
-ENV APPPROTECT_MODULE_VERSION 23+3.263.0-1~stretch
-ENV APPPROTECT_PLUGIN_VERSION 3.263.0-1~stretch
-ENV APPPROTECT_ENGINE_VERSION 5.9.4-1~stretch
-ENV APPPROTECT_COMPILER_VERSION 5.9.4-1~stretch
-ENV APPPROTECT_SIG_VERSION 2020.12.13-1~stretch
-ENV APPPROTECT_THREAT_CAMPAIGNS_VERSION 2020.12.01-1~stretch
-ENV NGINX_PLUS_VERSION 23-1~stretch
+ENV APPPROTECT_MODULE_VERSION 23+3.281.0-1~buster
+ENV APPPROTECT_PLUGIN_VERSION 3.281.0-1~buster
+ENV APPPROTECT_ENGINE_VERSION 5.18.0-1~buster
+ENV APPPROTECT_COMPILER_VERSION 5.18.0-1~buster
+ENV APPPROTECT_SIG_VERSION 2020.12.30-1~buster
+ENV APPPROTECT_THREAT_CAMPAIGNS_VERSION 2021.01.03-1~buster
+ENV NGINX_PLUS_VERSION 23-1~buster
 ENV NGINX_PLUS_RELEASE R23
 ARG IC_VERSION
 
@@ -42,8 +42,8 @@ RUN --mount=type=secret,id=nginx-repo.crt \
 	&& echo "Acquire::https::plus-pkgs.nginx.com::SslCert     \"/etc/ssl/nginx/nginx-repo.crt\";" >> /etc/apt/apt.conf.d/90nginx \
 	&& echo "Acquire::https::plus-pkgs.nginx.com::SslKey      \"/etc/ssl/nginx/nginx-repo.key\";" >> /etc/apt/apt.conf.d/90nginx \
 	&& echo "Acquire::https::plus-pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-app-$APPPROTECT_VERSION-apt\";" >> /etc/apt/apt.conf.d/90nginx \
-	&& echo "deb https://plus-pkgs.nginx.com/${NGINX_PLUS_RELEASE}/debian stretch nginx-plus\n" > /etc/apt/sources.list.d/nginx-plus.list \
-	&& echo "deb https://app-protect-sigs.nginx.com/debian/ stretch nginx-plus\n" | tee /etc/apt/sources.list.d/app-protect-sigs.list \
+	&& echo "deb https://plus-pkgs.nginx.com/${NGINX_PLUS_RELEASE}/debian buster nginx-plus\n" > /etc/apt/sources.list.d/nginx-plus.list \
+	&& echo "deb https://app-protect-sigs.nginx.com/debian/ buster nginx-plus\n" | tee /etc/apt/sources.list.d/app-protect-sigs.list \
 	&& wget https://nginx.org/keys/app-protect-sigs.key && apt-key add app-protect-sigs.key \
 	&& echo "Acquire::https::app-protect-sigs.nginx.com::Verify-Peer \"true\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
 	&& echo "Acquire::https::app-protect-sigs.nginx.com::Verify-Host \"true\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
