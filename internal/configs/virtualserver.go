@@ -1802,14 +1802,14 @@ func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tl
 	var name string
 	var ciphers string
 
-	if secret.Error != nil {
-		name = pemFileNameForMissingTLSSecret
-		ciphers = "NULL"
-		vsc.addWarningf(owner, "TLS secret %s is invalid: %v", tls.Secret, secret.Error)
-	} else if secret.Type != api_v1.SecretTypeTLS {
+	if secret.Type != "" && secret.Type != api_v1.SecretTypeTLS {
 		name = pemFileNameForMissingTLSSecret
 		ciphers = "NULL"
 		vsc.addWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tls.Secret, secret.Type, api_v1.SecretTypeTLS)
+	} else if secret.Error != nil {
+		name = pemFileNameForMissingTLSSecret
+		ciphers = "NULL"
+		vsc.addWarningf(owner, "TLS secret %s is invalid: %v", tls.Secret, secret.Error)
 	} else {
 		name = secret.Path
 	}
