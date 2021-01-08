@@ -159,6 +159,9 @@ spec:
                             type: string
                           name:
                             enum:
+                              - VIOL_PARAMETER_VALUE_BASE64
+                              - VIOL_MANDATORY_HEADER
+                              - VIOL_HEADER_REPEATED
                               - VIOL_ASM_COOKIE_MODIFIED
                               - VIOL_BLACKLISTED_IP
                               - VIOL_COOKIE_EXPIRED
@@ -962,12 +965,6 @@ spec:
                 signature-requirements:
                   items:
                     properties:
-                      maxRevisionDatetime:
-                        format: date-time
-                        type: string
-                      minRevisionDatetime:
-                        format: date-time
-                        type: string
                       tag:
                         type: string
                     type: object

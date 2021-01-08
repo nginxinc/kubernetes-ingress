@@ -33,9 +33,6 @@ spec:
               properties:
                 properties:
                   type: string
-                revisionDatetime:
-                  format: date-time
-                  type: string
                 signatures:
                   items:
                     properties:

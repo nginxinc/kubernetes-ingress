@@ -98,7 +98,7 @@ type AppProtectLogConfEx struct {
 type AppProtectUserSigEx struct {
 	Obj      *unstructured.Unstructured
 	Tag      string
-	RevTime  time.Time
+	RevTime  *time.Time
 	IsValid  bool
 	ErrorMsg string
 }
@@ -211,16 +211,20 @@ func createAppProtectUserSigEx(userSigObj *unstructured.Unstructured) (*AppProte
 	if found {
 		sTag = tag
 	}
-	revTimeString, _, _ := unstructured.NestedString(userSigObj.Object, "spec", "revisionDatetime")
-
-	revTime, err := time.Parse(timeLayout, revTimeString)
-	if err != nil {
-		errMsg := invalidTimestampErrorMsg
-		return &AppProtectUserSigEx{Obj: userSigObj, IsValid: false, ErrorMsg: errMsg}, fmt.Errorf(errMsg)
+	revTimeString, revTimeFound, _ := unstructured.NestedString(userSigObj.Object, "spec", "revisionDatetime")
+	if revTimeFound {
+		revTime, err := time.Parse(timeLayout, revTimeString)
+		if err != nil {
+			errMsg := invalidTimestampErrorMsg
+			return &AppProtectUserSigEx{Obj: userSigObj, IsValid: false, ErrorMsg: errMsg}, fmt.Errorf(errMsg)
+		}
+		return &AppProtectUserSigEx{Obj: userSigObj,
+			Tag:     sTag,
+			RevTime: &revTime,
+			IsValid: true}, nil
 	}
 	return &AppProtectUserSigEx{Obj: userSigObj,
 		Tag:     sTag,
-		RevTime: revTime,
 		IsValid: true}, nil
 }
 
@@ -228,7 +232,7 @@ func isReqSatisfiedByUserSig(sigReq SignatureReq, sig *AppProtectUserSigEx) bool
 	if sig.Tag == "" || sig.Tag != sigReq.Tag {
 		return false
 	}
-	if sigReq.RevTimes == nil {
+	if sigReq.RevTimes == nil || sig.RevTime == nil {
 		return sig.Tag == sigReq.Tag
 	}
 	if sigReq.RevTimes.MinRevTime != nil && sigReq.RevTimes.MaxRevTime != nil {

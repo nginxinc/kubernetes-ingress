@@ -23,10 +23,6 @@ var appProtectUserSigRequiredSlices = [][]string{
 	{"spec", "signatures"},
 }
 
-var appProtectUserSigRequiredStrings = [][]string{
-	{"spec", "revisionDatetime"},
-}
-
 func validateRequiredFields(policy *unstructured.Unstructured, fieldsList [][]string) error {
 	for _, fields := range fieldsList {
 		field, found, err := unstructured.NestedMap(policy.Object, fields...)
@@ -138,10 +134,6 @@ func ParseResourceReferenceAnnotation(ns, antn string) string {
 func validateAppProtectUserSig(userSig *unstructured.Unstructured) error {
 	sigName := userSig.GetName()
 	err := validateRequiredSlices(userSig, appProtectUserSigRequiredSlices)
-	if err != nil {
-		return fmt.Errorf("Error validating App Protect User Signature %v: %v", sigName, err)
-	}
-	err = validateRequiredStrings(userSig, appProtectUserSigRequiredStrings)
 	if err != nil {
 		return fmt.Errorf("Error validating App Protect User Signature %v: %v", sigName, err)
 	}

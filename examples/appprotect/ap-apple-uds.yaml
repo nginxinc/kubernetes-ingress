@@ -3,7 +3,6 @@ kind: APUserSig
 metadata:
   name: apple
 spec:
-  revisionDatetime: '2020-01-22T18:32:02Z'
   signatures:
   - accuracy: medium
     attackType:

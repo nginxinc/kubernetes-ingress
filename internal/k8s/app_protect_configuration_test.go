@@ -261,7 +261,7 @@ func TestCreateAppProtectUserSigEx(t *testing.T) {
 				},
 			},
 			expectedUserSigEx: &AppProtectUserSigEx{
-				RevTime:  *parseTime("2020-01-23T18:32:02Z"),
+				RevTime:  parseTime("2020-01-23T18:32:02Z"),
 				IsValid:  true,
 				ErrorMsg: "",
 				Tag:      "test",
@@ -273,17 +273,20 @@ func TestCreateAppProtectUserSigEx(t *testing.T) {
 			userSig: &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"spec": map[string]interface{}{
+						"signatures": []interface{}{
+							map[string]interface{}{},
+						},
 						"tag": "test",
 					},
 				},
 			},
 			expectedUserSigEx: &AppProtectUserSigEx{
-				IsValid:  false,
-				ErrorMsg: failedValidationErrorMsg,
-				Tag:      "",
+				IsValid:  true,
+				ErrorMsg: "",
+				Tag:      "test",
 			},
-			wantErr: true,
-			msg:     "Invalid UserSig",
+			wantErr: false,
+			msg:     "Valid UserSig, no revDateTime",
 		},
 		{
 			userSig: &unstructured.Unstructured{
@@ -321,7 +324,8 @@ func TestCreateAppProtectUserSigEx(t *testing.T) {
 }
 
 func TestIsReqSatisfiedByUserSig(t *testing.T) {
-	userSigEx := &AppProtectUserSigEx{Tag: "test", RevTime: *parseTime("2020-06-16T18:32:01Z")}
+	userSigEx := &AppProtectUserSigEx{Tag: "test", RevTime: parseTime("2020-06-16T18:32:01Z")}
+	userSigExNoRevTime := &AppProtectUserSigEx{Tag: "test"}
 	tests := []struct {
 		sigReq   SignatureReq
 		sigEx    *AppProtectUserSigEx
@@ -424,6 +428,17 @@ func TestIsReqSatisfiedByUserSig(t *testing.T) {
 			msg:      "Valid, matching tag, no revTimes",
 			expected: true,
 		},
+		{
+			sigReq: SignatureReq{
+				Tag: "test",
+				RevTimes: &RevTimes{
+					MinRevTime: parseTime("2019-01-23T18:32:02Z"),
+				},
+			},
+			sigEx:    userSigExNoRevTime,
+			msg:      "Valid, no RevDateTime",
+			expected: true,
+		},
 	}
 
 	for _, test := range tests {
@@ -492,7 +507,7 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 		},
 	}
 	apc := NewAppProtectConfiguration()
-	apc.UserSigs["testing/TestUsersig"] = &AppProtectUserSigEx{Tag: "test", RevTime: *parseTime("2019-01-01T18:32:02Z"), IsValid: true}
+	apc.UserSigs["testing/TestUsersig"] = &AppProtectUserSigEx{Tag: "test", RevTime: parseTime("2019-01-01T18:32:02Z"), IsValid: true}
 	tests := []struct {
 		policy           *unstructured.Unstructured
 		expectedChanges  []AppProtectChange

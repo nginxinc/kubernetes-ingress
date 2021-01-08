@@ -6,8 +6,6 @@ spec:
   policy:
     signature-requirements:
     - tag: Fruits
-      minRevisionDatetime: 2020-01-21T18:32:02Z
-      maxRevisionDatetime: 2020-01-23T18:32:02Z
     signature-sets: 
     - name: apple_sigs
       block: true

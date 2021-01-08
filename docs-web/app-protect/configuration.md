@@ -16,6 +16,8 @@ You can enable and configure NGINX App Protect on a per-Ingress-resource basis. 
 
 You can define App Protect policies for your Ingress resources by creating an `APPolicy` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
+ > **Note**: The fields `policy.signature-requirements[].minRevisionDatetime` and `policy.signature-requirements[].maxRevisionDatetime` are not currently supported. 
+
 To add any [App Protect policy](/nginx-app-protect/policy/#policy) to an Ingress resource:
 
 1. Create an `APPolicy` Custom resource manifest. 
@@ -126,21 +128,22 @@ spec:
 ```
 ## App Protect User Defined Signatures
 
-You can define App Protect [User Defined Signatures](https://docs.nginx.com/nginx-app-protect/configuration/#user-defined-signature-definitions) for your Ingress resources by creating an `APUserSig` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
+You can define App Protect [User Defined Signatures](https://docs.nginx.com/nginx-app-protect/configuration/#user-defined-signature-definitions) for your Ingress resources by creating an `APUserSig` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/). 
+
+ > **Note**: The field `revisionDatetime` is not currently supported. 
 
 To add the [User Defined Signatures](https://docs.nginx.com/nginx-app-protect/configuration/#user-defined-signature-definitions) to an Ingress resource:
 
 1. Create an `APUserSig` Custom resource manifest. 
 2. Add the desired User defined signature to the `spec` field in the `APUserSig` resource. 
 
-   > **Note**: The fields from the JSON must be presented in the YAML *exactly* the same, in name and level. The Ingress Controller will transform the YAML into a valid JSON App Protect User Defined signature. There is no need to reference the user defined signature resource in the ingress resource.
+   > **Note**: The fields from the JSON must be presented in the YAML *exactly* the same, in name and level. The Ingress Controller will transform the YAML into a valid JSON App Protect User Defined signature. There is no need to reference the user defined signature resource in the ingress resource. 
 
 For example, say you want to create the following user defined signature:
 
 ```json
 {  "softwareVersion": "15.1.0",
     "tag": "Fruits",
-    "revisionDatetime": "2020-01-22T18:32:02Z",
     "signatures": [
       {
       "name": "Apple_medium_acc",
@@ -169,7 +172,6 @@ kind: APUserSig
 metadata:
   name: apple
 spec:
-  revisionDatetime: '2020-01-22T18:32:02Z'
   signatures:
   - accuracy: medium
     attackType:
