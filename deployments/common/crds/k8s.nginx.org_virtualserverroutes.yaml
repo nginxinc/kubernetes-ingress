@@ -65,6 +65,8 @@ spec:
                         description: Action defines an action.
                         type: object
                         properties:
+                          grpc:
+                            type: boolean
                           pass:
                             type: string
                           proxy:
@@ -187,6 +189,8 @@ spec:
                               description: Action defines an action.
                               type: object
                               properties:
+                                grpc:
+                                  type: boolean
                                 pass:
                                   type: string
                                 proxy:
@@ -285,6 +289,8 @@ spec:
                                     description: Action defines an action.
                                     type: object
                                     properties:
+                                      grpc:
+                                        type: boolean
                                       pass:
                                         type: string
                                       proxy:
@@ -383,6 +389,8 @@ spec:
                               description: Action defines an action.
                               type: object
                               properties:
+                                grpc:
+                                  type: boolean
                                 pass:
                                   type: string
                                 proxy:
