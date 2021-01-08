@@ -240,6 +240,14 @@ var virtualServerCfg = VirtualServerConfig{
 				ProxyNextUpstreamTimeout: "5s",
 			},
 			{
+				Path:                "@loc2",
+				ProxyConnectTimeout: "30s",
+				ProxyReadTimeout:    "31s",
+				ProxySendTimeout:    "32s",
+				ClientMaxBodySize:   "1m",
+				GRPCPass:            "grpc://coffee-v3",
+			},
+			{
 				Path:                     "@match_loc_0",
 				ProxyConnectTimeout:      "30s",
 				ProxyReadTimeout:         "31s",
