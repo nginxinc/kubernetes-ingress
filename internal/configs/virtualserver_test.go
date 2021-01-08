@@ -3198,25 +3198,25 @@ func TestGenerateProxyPassProtocol(t *testing.T) {
 
 func TestGenerateGRPCPass(t *testing.T) {
 	tests := []struct {
-		grpcEnabled bool
+		grpcEnabled  bool
 		tlsEnabled   bool
 		upstreamName string
 		expected     string
 	}{
 		{
-			grpcEnabled: false,
+			grpcEnabled:  false,
 			tlsEnabled:   false,
 			upstreamName: "test-upstream",
 			expected:     "",
 		},
 		{
-			grpcEnabled: true,
+			grpcEnabled:  true,
 			tlsEnabled:   false,
 			upstreamName: "test-upstream",
 			expected:     "grpc://test-upstream",
 		},
 		{
-			grpcEnabled: true,
+			grpcEnabled:  true,
 			tlsEnabled:   true,
 			upstreamName: "test-upstream",
 			expected:     "grpcs://test-upstream",
@@ -3226,7 +3226,7 @@ func TestGenerateGRPCPass(t *testing.T) {
 	for _, test := range tests {
 		result := generateGRPCPass(test.grpcEnabled, test.tlsEnabled, test.upstreamName)
 		if result != test.expected {
-			t.Errorf("generateGRPCPass(%v, %v, %v) returned %v but expected %v", test.grpcEnabled,test.tlsEnabled, test.upstreamName, result, test.expected)
+			t.Errorf("generateGRPCPass(%v, %v, %v) returned %v but expected %v", test.grpcEnabled, test.tlsEnabled, test.upstreamName, result, test.expected)
 		}
 	}
 }
