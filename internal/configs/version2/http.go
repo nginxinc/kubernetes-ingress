@@ -37,6 +37,7 @@ type Upstream struct {
 	Queue            *Queue
 	SessionCookie    *SessionCookie
 	UpstreamLabels   UpstreamLabels
+	GRPC             bool
 }
 
 // UpstreamServer defines an upstream server.
@@ -144,7 +145,6 @@ type Location struct {
 	IsVSR                    bool
 	VSRName                  string
 	VSRNamespace             string
-	GRPCPass                 string
 }
 
 // ReturnLocation defines a location for returning a fixed response.

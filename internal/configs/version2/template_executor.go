@@ -12,6 +12,11 @@ const tlsPassthroughHostsTemplateString = `# mapping between TLS Passthrough hos
 {{ end }}
 `
 
+var funcMap = template.FuncMap{
+	// The name "title" is what the function will be called in the template text.
+	"isGRPCUpstream": isGRPCUpstream,
+}
+
 // TemplateExecutor executes NGINX configuration templates.
 type TemplateExecutor struct {
 	virtualServerTemplate       *template.Template
@@ -19,11 +24,20 @@ type TemplateExecutor struct {
 	tlsPassthroughHostsTemplate *template.Template
 }
 
+func isGRPCUpstream(upstreams []Upstream, upstreamName string) bool {
+	for _, upstream := range upstreams {
+		if upstream.Name == upstreamName {
+			return upstream.GRPC
+		}
+	}
+	return false
+}
+
 // NewTemplateExecutor creates a TemplateExecutor.
 func NewTemplateExecutor(virtualServerTemplatePath string, transportServerTemplatePath string) (*TemplateExecutor, error) {
 	// template names  must be the base name of the template file https://golang.org/pkg/text/template/#Template.ParseFiles
 
-	vsTemplate, err := template.New(path.Base(virtualServerTemplatePath)).ParseFiles(virtualServerTemplatePath)
+	vsTemplate, err := template.New(path.Base(virtualServerTemplatePath)).Funcs(funcMap).ParseFiles(virtualServerTemplatePath)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +61,7 @@ func NewTemplateExecutor(virtualServerTemplatePath string, transportServerTempla
 
 // UpdateVirtualServerTemplate updates the VirtualServer template.
 func (te *TemplateExecutor) UpdateVirtualServerTemplate(templateString *string) error {
-	newTemplate, err := template.New("virtualServerTemplate").Parse(*templateString)
+	newTemplate, err := template.New("virtualServerTemplate").Funcs(funcMap).Parse(*templateString)
 	if err != nil {
 		return err
 	}
