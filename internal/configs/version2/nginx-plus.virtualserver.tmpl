@@ -297,7 +297,7 @@ server {
 
         {{ if $l.ProxyPass }}
         {{ $proxyOrGRPC := "proxy" }}
-            {{ if $l.GRPCProxy }}
+            {{ if $l.GRPCPass }}
         {{ $proxyOrGRPC = "grpc" }}
             {{ end }}
 
@@ -362,7 +362,7 @@ server {
         proxy_next_upstream_tries {{ $l.ProxyNextUpstreamTries }};
         proxy_pass_request_headers {{ if $l.ProxyPassRequestHeaders }}on{{ else }}off{{ end }};
 
-            {{if $l.GRPCProxy}}
+            {{if $l.GRPCPass}}
         error_page 400 @grpcerror400;
         error_page 401 @grpcerror401;
         error_page 403 @grpcerror403;
