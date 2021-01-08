@@ -3199,24 +3199,35 @@ func TestGenerateProxyPassProtocol(t *testing.T) {
 func TestGenerateGRPCPass(t *testing.T) {
 	tests := []struct {
 		grpcEnabled  bool
+		http2Enabled bool
 		tlsEnabled   bool
 		upstreamName string
 		expected     string
 	}{
 		{
 			grpcEnabled:  false,
+			http2Enabled: true,
 			tlsEnabled:   false,
 			upstreamName: "test-upstream",
 			expected:     "",
 		},
 		{
 			grpcEnabled:  true,
+			http2Enabled: false,
+			tlsEnabled:   false,
+			upstreamName: "test-upstream",
+			expected:     "",
+		},
+		{
+			grpcEnabled:  true,
+			http2Enabled: true,
 			tlsEnabled:   false,
 			upstreamName: "test-upstream",
 			expected:     "grpc://test-upstream",
 		},
 		{
 			grpcEnabled:  true,
+			http2Enabled: true,
 			tlsEnabled:   true,
 			upstreamName: "test-upstream",
 			expected:     "grpcs://test-upstream",
@@ -3224,7 +3235,7 @@ func TestGenerateGRPCPass(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := generateGRPCPass(test.grpcEnabled, test.tlsEnabled, test.upstreamName)
+		result := generateGRPCPass(test.grpcEnabled, test.http2Enabled, test.tlsEnabled, test.upstreamName)
 		if result != test.expected {
 			t.Errorf("generateGRPCPass(%v, %v, %v) returned %v but expected %v", test.grpcEnabled, test.tlsEnabled, test.upstreamName, result, test.expected)
 		}
@@ -3399,6 +3410,7 @@ func TestGenerateLocationForGrpcProxying(t *testing.T) {
 		ProxyBuffers:         "8 4k",
 		ProxyBufferSize:      "4k",
 		LocationSnippets:     []string{"# location snippet"},
+		HTTP2:                true,
 	}
 	path := "/"
 	upstreamName := "test-upstream"
