@@ -65,8 +65,6 @@ spec:
                         description: Action defines an action.
                         type: object
                         properties:
-                          grpc:
-                            type: boolean
                           pass:
                             type: string
                           proxy:
@@ -189,8 +187,6 @@ spec:
                               description: Action defines an action.
                               type: object
                               properties:
-                                grpc:
-                                  type: boolean
                                 pass:
                                   type: string
                                 proxy:
@@ -289,8 +285,6 @@ spec:
                                     description: Action defines an action.
                                     type: object
                                     properties:
-                                      grpc:
-                                        type: boolean
                                       pass:
                                         type: string
                                       proxy:
@@ -389,8 +383,6 @@ spec:
                               description: Action defines an action.
                               type: object
                               properties:
-                                grpc:
-                                  type: boolean
                                 pass:
                                   type: string
                                 proxy:
@@ -489,6 +481,8 @@ spec:
                         type: string
                       fail-timeout:
                         type: string
+                      grpc:
+                        type: boolean
                       healthCheck:
                         description: HealthCheck defines the parameters for active Upstream HealthChecks.
                         type: object

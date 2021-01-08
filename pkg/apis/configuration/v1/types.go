@@ -77,6 +77,7 @@ type Upstream struct {
 	SlowStart                string            `json:"slow-start"`
 	Queue                    *UpstreamQueue    `json:"queue"`
 	SessionCookie            *SessionCookie    `json:"sessionCookie"`
+	GRPC                     bool              `json:"grpc"`
 }
 
 // UpstreamBuffers defines Buffer Configuration for an Upstream.
@@ -138,7 +139,6 @@ type Route struct {
 
 // Action defines an action.
 type Action struct {
-	Grpc     bool            `json:"grpc"`
 	Pass     string          `json:"pass"`
 	Redirect *ActionRedirect `json:"redirect"`
 	Return   *ActionReturn   `json:"return"`
