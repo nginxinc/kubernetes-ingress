@@ -1393,6 +1393,7 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 		IsVSR:                    isVSR,
 		VSRName:                  vsrName,
 		VSRNamespace:             vsrNamespace,
+		GRPC:                     upstream.GRPC,
 	}
 }
 
