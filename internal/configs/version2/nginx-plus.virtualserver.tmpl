@@ -295,7 +295,37 @@ server {
         proxy_pass {{ $l.InternalProxyPass }};
         {{ end }}
 
-        {{ if $l.ProxyPass }}
+        {{if $l.GrpcPass}}
+        grpc_connect_timeout {{$l.ProxyConnectTimeout}};
+        grpc_read_timeout {{$l.ProxyReadTimeout}};
+        grpc_send_timeout {{$l.ProxySendTimeout}};
+        grpc_set_header Host $host;
+        grpc_set_header X-Real-IP $remote_addr;
+        grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        grpc_set_header X-Forwarded-Host $host;
+        grpc_set_header X-Forwarded-Port $server_port;
+        grpc_set_header X-Forwarded-Proto {{ with $s.TLSRedirect }}{{ .BasedOn }}{{ else }}$scheme{{ end }};
+
+            {{ if $l.ProxyBufferSize}}
+        grpc_buffer_size {{$l.ProxyBufferSize}};
+            {{ end}}
+        grpc_pass {{ $l.GrpcPass }}{{ $l.ProxyPassRewrite }};
+
+        error_page 400 @grpcerror400;
+        error_page 401 @grpcerror401;
+        error_page 403 @grpcerror403;
+        error_page 404 @grpcerror404;
+        error_page 405 @grpcerror405;
+        error_page 408 @grpcerror408;
+        error_page 414 @grpcerror414;
+        error_page 426 @grpcerror426;
+        error_page 500 @grpcerror500;
+        error_page 501 @grpcerror501;
+        error_page 502 @grpcerror502;
+        error_page 503 @grpcerror503;
+        error_page 504 @grpcerror504;
+
+        {{ else if $l.ProxyPass }}
         set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
 
             {{ range $r := $l.Rewrites }}
@@ -358,5 +388,23 @@ server {
         proxy_pass_request_headers {{ if $l.ProxyPassRequestHeaders }}on{{ else }}off{{ end }};
         {{ end }}
     }
+    {{ end }}
+
+    {{ with $ssl := $s.SSL }}
+    {{ if $ssl.HTTP2 }}
+    location @grpcerror400 { default_type application/grpc; return 400 "\n"; }
+    location @grpcerror401 { default_type application/grpc; return 401 "\n"; }
+    location @grpcerror403 { default_type application/grpc; return 403 "\n"; }
+    location @grpcerror404 { default_type application/grpc; return 404 "\n"; }
+    location @grpcerror405 { default_type application/grpc; return 405 "\n"; }
+    location @grpcerror408 { default_type application/grpc; return 408 "\n"; }
+    location @grpcerror414 { default_type application/grpc; return 414 "\n"; }
+    location @grpcerror426 { default_type application/grpc; return 426 "\n"; }
+    location @grpcerror500 { default_type application/grpc; return 500 "\n"; }
+    location @grpcerror501 { default_type application/grpc; return 501 "\n"; }
+    location @grpcerror502 { default_type application/grpc; return 502 "\n"; }
+    location @grpcerror503 { default_type application/grpc; return 503 "\n"; }
+    location @grpcerror504 { default_type application/grpc; return 504 "\n"; }
+    {{ end }}
     {{ end }}
 }
