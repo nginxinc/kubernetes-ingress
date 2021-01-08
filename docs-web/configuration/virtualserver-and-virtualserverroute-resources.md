@@ -780,6 +780,10 @@ In the example below, client requests are passed to an upstream `coffee`:
      - Passes requests to an upstream. The upstream with that name must be defined in the resource.
      - ``string``
      - No*
+   * - ``grpc``
+     - Enables gRPC for the upstream. The default is ``False`` (the HTTP protocol is used). It is necessary to enable HTTP/2 in the `ConfigMap </nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners)>`_ and configure TLS termination in the VirtualServer. Otherwise, the HTTP protocol will be used.
+     - ``boolean``
+     - No*
    * - ``redirect``
      - Redirects requests to a provided URL.
      - `action.redirect <#action-redirect>`_
