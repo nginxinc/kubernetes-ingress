@@ -1216,6 +1216,23 @@ func generateProxyPassProtocol(enableTLS bool) string {
 	return "http"
 }
 
+func generateGRPCPass(grpcEnabled bool, tlsEnabled bool, upstreamName string) string {
+	grpcPass := fmt.Sprintf("%v://%v", generateGRPCPassProtocol(tlsEnabled), upstreamName)
+
+	if !grpcEnabled {
+		return ""
+	}
+
+	return grpcPass
+}
+
+func generateGRPCPassProtocol(enableTLS bool) string {
+	if enableTLS {
+		return "grpcs"
+	}
+	return "grpc"
+}
+
 func generateString(s string, defaultS string) string {
 	if s == "" {
 		return defaultS
@@ -1393,7 +1410,7 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 		IsVSR:                    isVSR,
 		VSRName:                  vsrName,
 		VSRNamespace:             vsrNamespace,
-		GRPC:                     upstream.GRPC,
+		GRPCPass:                 generateGRPCPass(upstream.GRPC, upstream.TLS.Enable, upstreamName),
 	}
 }
 

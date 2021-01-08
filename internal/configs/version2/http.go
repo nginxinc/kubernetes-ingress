@@ -144,7 +144,7 @@ type Location struct {
 	IsVSR                    bool
 	VSRName                  string
 	VSRNamespace             string
-	GRPC                     bool
+	GRPCPass                 string
 }
 
 // ReturnLocation defines a location for returning a fixed response.
