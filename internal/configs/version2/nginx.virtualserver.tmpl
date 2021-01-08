@@ -254,7 +254,7 @@ server {
         proxy_pass {{ $l.InternalProxyPass }};
         {{ end }}
 
-        {{ if $l.ProxyPass }}
+        {{ if or $l.ProxyPass $l.GRPCPass}}
         {{ $proxyOrGRPC := "proxy" }}
             {{ if $l.GRPCPass }}
         {{ $proxyOrGRPC = "grpc" }}
@@ -306,7 +306,11 @@ server {
             {{ range $h := $l.AddHeaders }}
         add_header {{ $h.Name }} "{{ $h.Value }}" {{ if $h.Always }}always{{ end }};
             {{ end }}
-        {{ $proxyOrGRPC }}_pass {{ $l.ProxyPass }}{{ $l.ProxyPassRewrite }};
+            {{if $l.GRPCPass}}
+        grpc_pass {{ $l.GRPCPass }};
+            {{ else }}
+        proxy_pass {{ $l.ProxyPass }}{{ $l.ProxyPassRewrite }};
+            {{ end }}
         proxy_next_upstream {{ $l.ProxyNextUpstream }};
         proxy_next_upstream_timeout {{ $l.ProxyNextUpstreamTimeout }};
         proxy_next_upstream_tries {{ $l.ProxyNextUpstreamTries }};

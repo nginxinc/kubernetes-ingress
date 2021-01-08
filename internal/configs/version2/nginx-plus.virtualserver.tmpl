@@ -295,7 +295,7 @@ server {
         proxy_pass {{ $l.InternalProxyPass }};
         {{ end }}
 
-        {{ if $l.ProxyPass }}
+        {{ if or $l.ProxyPass $l.GRPCPass}}
         {{ $proxyOrGRPC := "proxy" }}
             {{ if $l.GRPCPass }}
         {{ $proxyOrGRPC = "grpc" }}
@@ -356,7 +356,11 @@ server {
         proxy_ssl_verify_depth 25;
         proxy_ssl_name {{ $l.ProxySSLName }};
             {{ end }}
-        {{ $proxyOrGRPC }}_pass {{ $l.ProxyPass }}{{ $l.ProxyPassRewrite }};
+            {{if $l.GRPCPass}}
+        grpc_pass {{ $l.GRPCPass }};
+            {{ else }}
+        proxy_pass {{ $l.ProxyPass }}{{ $l.ProxyPassRewrite }};
+            {{ end }}
         proxy_next_upstream {{ $l.ProxyNextUpstream }};
         proxy_next_upstream_timeout {{ $l.ProxyNextUpstreamTimeout }};
         proxy_next_upstream_tries {{ $l.ProxyNextUpstreamTries }};

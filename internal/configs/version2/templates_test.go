@@ -245,6 +245,7 @@ var virtualServerCfg = VirtualServerConfig{
 				ProxyReadTimeout:    "31s",
 				ProxySendTimeout:    "32s",
 				ClientMaxBodySize:   "1m",
+				ProxyPass:           "http://coffee-v2",
 				GRPCPass:            "grpc://coffee-v3",
 			},
 			{
