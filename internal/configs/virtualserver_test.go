@@ -634,7 +634,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		&StaticConfigParams{TLSPassthrough: true},
 	)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -741,7 +741,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true}
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -1022,7 +1022,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	isResolverConfigured := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -1335,7 +1335,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	isResolverConfigured := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -1808,7 +1808,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 	isResolverConfigured := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -1861,6 +1861,10 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 				},
 			},
+		},
+		apResources: map[string]string{
+			"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
+			"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 		},
 	}
 
@@ -2170,6 +2174,39 @@ func TestGeneratePolicies(t *testing.T) {
 				OIDC: true,
 			},
 			msg: "oidc reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "waf-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/waf-policy": {
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "default/dataguard-alarm",
+							SecurityLog: &conf_v1.SecurityLog{
+								Enable:    true,
+								ApLogConf: "default/logconf",
+								LogDest:   "syslog:server=127.0.0.1:514",
+							},
+						},
+					},
+				},
+			},
+			context: "route",
+			expected: policiesCfg{
+				WAF: &version2.WAF{
+					Enable:              "on",
+					ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+					ApSecurityLogEnable: true,
+					ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf syslog:server=127.0.0.1:514",
+				},
+			},
+			msg: "WAF reference",
 		},
 	}
 
@@ -3229,6 +3266,64 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				"default/oidc-policy",
 			},
 			msg: "multi oidc",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "waf-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "waf-policy2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/waf-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "default/dataguard-alarm",
+						},
+					},
+				},
+				"default/waf-policy2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-policy2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "default/dataguard-alarm",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				apResources: map[string]string{
+					"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
+					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				},
+			},
+			context: "route",
+			expected: policiesCfg{
+				WAF: &version2.WAF{
+					Enable:   "on",
+					ApPolicy: "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Multiple WAF policies in the same context is not valid. WAF policy default/waf-policy2 will be ignored`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "multi waf",
 		},
 	}
 
@@ -6856,6 +6951,167 @@ func TestGetUpstreamResourceLabels(t *testing.T) {
 		result := getUpstreamResourceLabels(test.owner)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("getUpstreamResourceLabels(%+v) returned %+v but expected %+v", test.owner, result, test.expected)
+		}
+	}
+}
+
+func TestAddWafConfig(t *testing.T) {
+	tests := []struct {
+		wafInput     *conf_v1.WAF
+		polKey       string
+		polNamespace string
+		apResources  map[string]string
+		wafConfig    *version2.WAF
+		expected     *validationResults
+		msg          string
+	}{
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable: true,
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "default",
+			apResources:  map[string]string{},
+			wafConfig: &version2.WAF{
+				Enable: "on",
+			},
+			expected: &validationResults{isError: false},
+			msg:      "valid waf config, default App Protect config",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApPolicy: "dataguard-alarm",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:    true,
+					ApLogConf: "logconf",
+					LogDest:   "syslog:server=127.0.0.1:514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "default",
+			apResources: map[string]string{
+				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			expected: &validationResults{isError: false},
+			msg:      "valid waf config",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApPolicy: "default/dataguard-alarm",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:    true,
+					ApLogConf: "default/logconf",
+					LogDest:   "syslog:server=127.0.0.1:514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "",
+			apResources: map[string]string{
+				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			expected: &validationResults{
+				isError: true,
+				warnings: []string{
+					`WAF policy default/waf-policy references an invalid or non-existing log config default/logconf`,
+				},
+			},
+			msg: "invalid waf config, apLogConf references non-existing log conf",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApPolicy: "default/dataguard-alarm",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:  true,
+					LogDest: "syslog:server=127.0.0.1:514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "",
+			apResources: map[string]string{
+				"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
+			expected: &validationResults{
+				isError: true,
+				warnings: []string{
+					`WAF policy default/waf-policy references an invalid or non-existing App Protect policy default/dataguard-alarm`,
+				},
+			},
+			msg: "invalid waf config, apLogConf references non-existing ap conf",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApPolicy: "ns1/dataguard-alarm",
+				SecurityLog: &conf_v1.SecurityLog{
+					Enable:    true,
+					ApLogConf: "ns2/logconf",
+					LogDest:   "syslog:server=127.0.0.1:514",
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "",
+			apResources: map[string]string{
+				"ns1/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				"ns2/logconf":         "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			},
+			expected: &validationResults{},
+			msg:      "valid waf config, cross ns reference",
+		},
+		{
+
+			wafInput: &conf_v1.WAF{
+				Enable:   false,
+				ApPolicy: "dataguard-alarm",
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "default",
+			apResources: map[string]string{
+				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				"default/logconf":         "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			},
+			wafConfig: &version2.WAF{
+				Enable:   "off",
+				ApPolicy: "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+			},
+			expected: &validationResults{},
+			msg:      "valid waf config, disable waf",
+		},
+	}
+
+	for _, test := range tests {
+		polCfg := newPoliciesConfig()
+		result := polCfg.addWAFConfig(test.wafInput, test.polKey, test.polNamespace, test.apResources)
+		if diff := cmp.Diff(test.expected.warnings, result.warnings); diff != "" {
+			t.Errorf("policiesCfg.addWAFConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }

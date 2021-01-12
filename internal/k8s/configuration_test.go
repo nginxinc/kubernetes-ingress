@@ -177,7 +177,6 @@ func TestAddIngressForRegularIngress(t *testing.T) {
 	}
 
 	// Delete Ingress
-
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
@@ -824,7 +823,6 @@ func TestMinionPathCollisions(t *testing.T) {
 	}
 
 	// Delete minion-1
-
 	expectedChanges = []ResourceChange{
 		{
 			Op: AddOrUpdate,
@@ -1044,7 +1042,6 @@ func TestAddVirtualServer(t *testing.T) {
 	}
 
 	// Delete VirtualServer
-
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
@@ -1739,7 +1736,6 @@ func TestHostCollisions(t *testing.T) {
 	}
 
 	// Delete master Ingress
-
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,
@@ -1770,7 +1766,6 @@ func TestHostCollisions(t *testing.T) {
 	}
 
 	// Delete regular Ingress
-
 	expectedChanges = []ResourceChange{
 		{
 			Op: Delete,

@@ -192,7 +192,6 @@ func (rc *appProtectResourceReferenceChecker) IsReferencedByIngress(namespace st
 			return true
 		}
 	}
-
 	return false
 }
 

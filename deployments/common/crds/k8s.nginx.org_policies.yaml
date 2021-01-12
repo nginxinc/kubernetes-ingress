@@ -136,6 +136,24 @@ spec:
                       type: integer
                     zoneSize:
                       type: string
+                waf:
+                  description: 'WAF defines an WAF policy. policy status: preview'
+                  type: object
+                  properties:
+                    apPolicy:
+                      type: string
+                    enable:
+                      type: boolean
+                    securityLog:
+                      description: SecurityLog defines the security log of a WAF policy.
+                      type: object
+                      properties:
+                        apLogConf:
+                          type: string
+                        enable:
+                          type: boolean
+                        logDest:
+                          type: string
             status:
               description: PolicyStatus is the status of the policy resource
               type: object

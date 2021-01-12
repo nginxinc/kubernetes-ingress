@@ -70,6 +70,7 @@ type Server struct {
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
 	OIDC                      *OIDC
+	WAF                       *WAF
 	PoliciesErrorReturn       *Return
 	VSNamespace               string
 	VSName                    string
@@ -114,6 +115,14 @@ type OIDC struct {
 	RedirectURI   string
 }
 
+// WAF defines WAF configuration.
+type WAF struct {
+	Enable              string
+	ApPolicy            string
+	ApSecurityLogEnable bool
+	ApLogConf           string
+}
+
 // Location defines a location.
 type Location struct {
 	Path                     string
@@ -151,6 +160,7 @@ type Location struct {
 	JWTAuth                  *JWTAuth
 	EgressMTLS               *EgressMTLS
 	OIDC                     bool
+	WAF                      *WAF
 	PoliciesErrorReturn      *Return
 	ServiceName              string
 	IsVSR                    bool

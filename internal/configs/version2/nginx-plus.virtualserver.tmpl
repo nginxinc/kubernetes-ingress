@@ -179,6 +179,18 @@ server {
     proxy_ssl_name {{ .SSLName }};
     {{ end }}
 
+    {{ with $s.WAF }}
+    app_protect_enable {{ .Enable }};
+        {{ if .ApPolicy }}
+    app_protect_policy_file {{ .ApPolicy }};
+        {{ end }}
+
+        {{ if .ApSecurityLogEnable }}
+    app_protect_security_log_enable on;
+    app_protect_security_log {{ .ApLogConf }};
+        {{ end }}
+    {{ end }}
+
     {{ range $snippet := $s.Snippets }}
     {{- $snippet }}
     {{ end }}
@@ -303,6 +315,18 @@ server {
         error_page 401 = @do_oidc_flow;
         auth_jwt_key_request /_jwks_uri;
         proxy_set_header username $jwt_claim_sub;
+        {{ end }}
+
+        {{ with $l.WAF }}
+        app_protect_enable {{ .Enable }};
+            {{ if .ApPolicy }}
+        app_protect_policy_file {{ .ApPolicy }};
+            {{ end }}
+
+            {{ if .ApSecurityLogEnable }}
+        app_protect_security_log_enable on;
+        app_protect_security_log {{ .ApLogConf }};
+            {{ end }}
         {{ end }}
 
         {{ range $e := $l.ErrorPages }}

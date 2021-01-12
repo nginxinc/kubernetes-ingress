@@ -426,10 +426,12 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 }
 
 func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
+	apResources := cnf.updateApResourcesForVs(virtualServerEx)
+
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 
 	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
-	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx)
+	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, apResources)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
 		return warnings, fmt.Errorf("Error generating VirtualServer config: %v: %v", name, err)
@@ -1248,15 +1250,14 @@ func createSpiffeCert(certs []*x509.Certificate) []byte {
 func (cnf *Configurator) updateApResources(ingEx *IngressEx) map[string]string {
 	apRes := make(map[string]string)
 	if ingEx.AppProtectPolicy != nil {
-		policyFileName := appProtectPolicyFileNameFromIngEx(ingEx)
+		policyFileName := appProtectPolicyFileNameFromUnstruct(ingEx.AppProtectPolicy)
 		policyContent := generateApResourceFileContent(ingEx.AppProtectPolicy)
 		cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
 		apRes[appProtectPolicyKey] = policyFileName
-
 	}
 
 	if ingEx.AppProtectLogConf != nil {
-		logConfFileName := appProtectLogConfFileNameFromIngEx(ingEx)
+		logConfFileName := appProtectLogConfFileNameFromUnstruct(ingEx.AppProtectLogConf)
 		logConfContent := generateApResourceFileContent(ingEx.AppProtectLogConf)
 		cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
 		apRes[appProtectLogConfKey] = logConfFileName + " " + ingEx.AppProtectLogDst
@@ -1265,12 +1266,36 @@ func (cnf *Configurator) updateApResources(ingEx *IngressEx) map[string]string {
 	return apRes
 }
 
-func appProtectPolicyFileNameFromIngEx(ingEx *IngressEx) string {
-	return fmt.Sprintf("%s%s_%s", appProtectPolicyFolder, ingEx.AppProtectPolicy.GetNamespace(), ingEx.AppProtectPolicy.GetName())
+func (cnf *Configurator) updateApResourcesForVs(vsEx *VirtualServerEx) map[string]string {
+	apRes := make(map[string]string)
+
+	if vsEx.ApPolRefs != nil {
+		for apPolKey, apPol := range vsEx.ApPolRefs {
+			policyFileName := appProtectPolicyFileNameFromUnstruct(apPol)
+			policyContent := generateApResourceFileContent(apPol)
+			cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
+			apRes[apPolKey] = policyFileName
+		}
+	}
+
+	if vsEx.LogConfRefs != nil {
+		for logConfKey, logConf := range vsEx.LogConfRefs {
+			logConfFileName := appProtectLogConfFileNameFromUnstruct(logConf)
+			logConfContent := generateApResourceFileContent(logConf)
+			cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
+			apRes[logConfKey] = logConfFileName
+		}
+	}
+
+	return apRes
 }
 
-func appProtectLogConfFileNameFromIngEx(ingEx *IngressEx) string {
-	return fmt.Sprintf("%s%s_%s", appProtectLogConfFolder, ingEx.AppProtectLogConf.GetNamespace(), ingEx.AppProtectLogConf.GetName())
+func appProtectPolicyFileNameFromUnstruct(unst *unstructured.Unstructured) string {
+	return fmt.Sprintf("%s%s_%s", appProtectPolicyFolder, unst.GetNamespace(), unst.GetName())
+}
+
+func appProtectLogConfFileNameFromUnstruct(unst *unstructured.Unstructured) string {
+	return fmt.Sprintf("%s%s_%s", appProtectLogConfFolder, unst.GetNamespace(), unst.GetName())
 }
 
 func appProtectUserSigFileNameFromUnstruct(unst *unstructured.Unstructured) string {
@@ -1285,7 +1310,7 @@ func generateApResourceFileContent(apResource *unstructured.Unstructured) []byte
 }
 
 // AddOrUpdateAppProtectResource updates Ingresses that use App Protect Resources
-func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Unstructured, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses) (Warnings, error) {
+func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Unstructured, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
 
 	for _, ingEx := range ingExes {
@@ -1303,6 +1328,15 @@ func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Un
 		}
 		allWarnings.Add(warnings)
 	}
+
+	for _, vs := range vsExes {
+		warnings, err := cnf.addOrUpdateVirtualServer(vs)
+		if err != nil {
+			return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vs.VirtualServer.Namespace, vs.VirtualServer.Name, err)
+		}
+		allWarnings.Add(warnings)
+	}
+
 	if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
 		return allWarnings, fmt.Errorf("Error when reloading NGINX when updating %v: %v", resource.GetKind(), err)
 	}
@@ -1311,7 +1345,7 @@ func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Un
 }
 
 // DeleteAppProtectPolicy updates Ingresses that use AP Policy after that policy is deleted
-func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses) (Warnings, error) {
+func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
 	if len(ingExes) > 0 || len(mergeableIngresses) > 0 {
 		fName := strings.Replace(polNamespaceName, "/", "_", 1)
 		polFileName := appProtectPolicyFolder + fName
@@ -1336,6 +1370,14 @@ func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes
 		allWarnings.Add(warnings)
 	}
 
+	for _, v := range vsExes {
+		warnings, err := cnf.addOrUpdateVirtualServer(v)
+		if err != nil {
+			return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", v.VirtualServer.Namespace, v.VirtualServer.Name, err)
+		}
+		allWarnings.Add(warnings)
+	}
+
 	if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
 		return allWarnings, fmt.Errorf("Error when reloading NGINX when removing App Protect Policy: %v", err)
 	}
@@ -1344,7 +1386,7 @@ func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes
 }
 
 // DeleteAppProtectLogConf updates Ingresses that use AP Log Configuration after that policy is deleted
-func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses) (Warnings, error) {
+func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
 	if len(ingExes) > 0 || len(mergeableIngresses) > 0 {
 		fName := strings.Replace(logConfNamespaceName, "/", "_", 1)
 		logConfFileName := appProtectLogConfFolder + fName
@@ -1364,6 +1406,14 @@ func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, in
 		warnings, err := cnf.addOrUpdateMergeableIngress(m)
 		if err != nil {
 			return allWarnings, fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
+		}
+		allWarnings.Add(warnings)
+	}
+
+	for _, v := range vsExes {
+		warnings, err := cnf.addOrUpdateVirtualServer(v)
+		if err != nil {
+			return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", v.VirtualServer.Namespace, v.VirtualServer.Name, err)
 		}
 		allWarnings.Add(warnings)
 	}

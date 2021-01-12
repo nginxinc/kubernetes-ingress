@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -151,13 +152,13 @@ func newTask(key string, obj interface{}) (task, error) {
 	case *conf_v1alpha1.TransportServer:
 		k = transportserver
 	case *unstructured.Unstructured:
-		if objectKind := obj.(*unstructured.Unstructured).GetKind(); objectKind == appProtectPolicyGVK.Kind {
+		if objectKind := obj.(*unstructured.Unstructured).GetKind(); objectKind == appprotect.PolicyGVK.Kind {
 			k = appProtectPolicy
-		} else if objectKind == appProtectLogConfGVK.Kind {
+		} else if objectKind == appprotect.LogConfGVK.Kind {
 			k = appProtectLogConf
 		} else if objectKind == ingressLinkGVK.Kind {
 			k = ingressLink
-		} else if objectKind == appProtectUserSigGVK.Kind {
+		} else if objectKind == appprotect.UserSigGVK.Kind {
 			k = appProtectUserSig
 		} else {
 			return task{}, fmt.Errorf("Unknown unstructured kind: %v", objectKind)

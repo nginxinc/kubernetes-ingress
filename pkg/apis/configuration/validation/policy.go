@@ -8,18 +8,19 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidatePolicy validates a Policy.
-func ValidatePolicy(policy *v1.Policy, isPlus bool, enablePreviewPolicies bool) error {
-	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enablePreviewPolicies)
+func ValidatePolicy(policy *v1.Policy, isPlus, enablePreviewPolicies, enableAppProtect bool) error {
+	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enablePreviewPolicies, enableAppProtect)
 	return allErrs.ToAggregate()
 }
 
-func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus bool, enablePreviewPolicies bool) field.ErrorList {
+func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enablePreviewPolicies, enableAppProtect bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -82,12 +83,28 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus bool,
 		fieldCount++
 	}
 
+	if spec.WAF != nil {
+		if !enablePreviewPolicies {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"),
+				"waf is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+		}
+		if !isPlus {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"), "WAF is only supported in NGINX Plus"))
+		}
+		if !enableAppProtect {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"),
+				"App Protect must be enabled via cli argument -enable-appprotect to use WAF policy"))
+		}
+
+		allErrs = append(allErrs, validateWAF(spec.WAF, fieldPath.Child("waf"))...)
+		fieldCount++
+	}
+
 	if fieldCount != 1 {
 		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`"
 		if isPlus {
-			msg = fmt.Sprint(msg, ", `jwt`, `oidc`")
+			msg = fmt.Sprint(msg, ", `jwt`, `oidc`, `waf`")
 		}
-
 		allErrs = append(allErrs, field.Invalid(fieldPath, "", msg))
 	}
 
@@ -235,6 +252,38 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 	return allErrs
 }
 
+func validateWAF(waf *v1.WAF, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if waf.ApPolicy != "" {
+		for _, msg := range validation.IsQualifiedName(waf.ApPolicy) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apPolicy"), waf.ApPolicy, msg))
+		}
+	}
+
+	if waf.SecurityLog != nil {
+		allErrs = append(allErrs, validateLogConf(waf.SecurityLog.ApLogConf, waf.SecurityLog.LogDest, fieldPath.Child("securityLog"))...)
+	}
+
+	return allErrs
+}
+
+func validateLogConf(logConf, logDest string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if logConf != "" {
+		for _, msg := range validation.IsQualifiedName(logConf) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apLogConf"), logConf, msg))
+		}
+	}
+
+	err := appprotect.ValidateAppProtectLogDestination(logDest)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("logDest"), logDest, err.Error()))
+	}
+	return allErrs
+}
+
 func validateClientID(client string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -272,6 +321,7 @@ func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
 			msg := fmt.Sprintf("invalid Scope. Accepted scopes are: %v", mapToPrettyString(validScopes))
 			allErrs = append(allErrs, field.Invalid(fieldPath, v, msg))
 		}
+
 	}
 
 	return allErrs

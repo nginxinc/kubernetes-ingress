@@ -145,6 +145,11 @@ var virtualServerCfg = VirtualServerConfig{
 			VerifyClient: "on",
 			VerifyDepth:  2,
 		},
+		WAF: &WAF{
+			ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+			ApSecurityLogEnable: true,
+			ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+		},
 		Snippets: []string{"# server snippet"},
 		InternalRedirectLocations: []InternalRedirectLocation{
 			{

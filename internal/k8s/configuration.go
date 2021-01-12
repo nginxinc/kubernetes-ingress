@@ -16,9 +16,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const ingressKind = "Ingress"
-const virtualServerKind = "VirtualServer"
-const virtualServerRouteKind = "VirtualServerRoute"
+const (
+	ingressKind            = "Ingress"
+	virtualServerKind      = "VirtualServer"
+	virtualServerRouteKind = "VirtualServerRoute"
+)
 
 // Operation defines an operation to perform for a resource.
 type Operation int
@@ -29,6 +31,14 @@ const (
 	// AddOrUpdate the config of the resource
 	AddOrUpdate
 )
+
+// Change represents a change in an App Protect resource
+type Change struct {
+	// Op is an operation that needs be performed on the resource.
+	Op Operation
+	// Resource is the target resource.
+	Resource interface{}
+}
 
 // Resource represents a configuration resource.
 // A Resource can be a top level configuration object:
@@ -584,13 +594,13 @@ func (c *Configuration) FindResourcesForPolicy(policyNamespace string, policyNam
 	return c.findResourcesForResourceReference(policyNamespace, policyName, c.policyReferenceChecker)
 }
 
-// FindResourcesForAppProtectPolicy finds resources that reference the specified AppProtect policy.
-func (c *Configuration) FindResourcesForAppProtectPolicy(policyNamespace string, policyName string) []Resource {
+// FindResourcesForAppProtectPolicyAnnotation finds resources that reference the specified AppProtect policy via annotation.
+func (c *Configuration) FindResourcesForAppProtectPolicyAnnotation(policyNamespace string, policyName string) []Resource {
 	return c.findResourcesForResourceReference(policyNamespace, policyName, c.appPolicyReferenceChecker)
 }
 
-// FindResourcesForAppProtectLogConf finds resources that reference the specified AppProtect LogConf.
-func (c *Configuration) FindResourcesForAppProtectLogConf(logConfNamespace string, logConfName string) []Resource {
+// FindResourcesForAppProtectLogConfAnnotation finds resources that reference the specified AppProtect LogConf.
+func (c *Configuration) FindResourcesForAppProtectLogConfAnnotation(logConfNamespace string, logConfName string) []Resource {
 	return c.findResourcesForResourceReference(logConfNamespace, logConfName, c.appLogConfReferenceChecker)
 }
 

@@ -24,6 +24,8 @@ This document is the reference documentation for the Policy resource. An example
       - [EgressMTLS Merging Behavior](#egressmtls-merging-behavior)
     - [OIDC](#oidc)
       - [OIDC Merging Behavior](#oidc-merging-behavior)
+    - [WAF](#waf)
+      - [WAF Merging Behavior](#waf-merging-behavior)
   - [Using Policy](#using-policy)
     - [Applying Policies](#applying-policies)
     - [Invalid Policies](#invalid-policies)
@@ -76,6 +78,10 @@ spec:
    * - ``egressMTLS``
      - The EgressMTLS policy configures upstreams authentication and certificate verification.
      - `egressMTLS <#egressmtls>`_
+     - No*
+   * - ``waf``
+     - The WAF policy configures WAF and log configuration policies for `NGINX AppProtect </nginx-ingress-controller/app-protect/installation/>`_
+     - `WAF <#waf>`_
      - No*
 ```
 
@@ -520,6 +526,67 @@ webapp-policy   27m
 ```
 
 For `kubectl get` and similar commands, you can also use the short name `pol` instead of `policy`.
+
+### WAF
+
+> **Feature Status**: WAF is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview status, we might introduce some backward-incompatible changes to the resource specification in the next releases. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+
+> Note: This feature is only available in NGINX Plus with AppProtect.
+
+The WAF policy configures NGINX Plus to secure client requests using App Protect policies.
+
+For example, the following policy will enable the referenced APPolicy and APLogConf with the configured log destination:
+```yaml
+waf:
+  enable: true
+  apPolicy: "default/dataguard-alarm"
+  securityLog:
+    enable: true
+    apLogConf: "default/logconf"
+    logDest: "syslog:server=127.0.0.1:514"
+```
+
+> Note: The feature is implemented using the NGINX Plus [NGINX App Protect Module](https://docs.nginx.com/nginx-app-protect/configuration/).
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``enable``
+     - Enables NGINX App Protect.
+     - ``bool``
+     - Yes
+   * - ``apPolicy``
+     - The `App Protect policy </nginx-ingress-controller/app-protect/configuration/#app-protect-policies/>`_ of the WAF. Accepts an optional namespace.
+     - ``string``
+     - No
+   * - ``securityLog.enable``
+     -  Enables security log.
+     - ``bool``
+     - No
+   * - ``securityLog.apLogConf``
+     -  The `App Protect log conf </nginx-ingress-controller/app-protect/configuration/#app-protect-logs>`_ resource. Accepts an optional namespace.
+     - ``string``
+     - No
+   * - ``securityLog.logDest``
+     -  The log destination for the security log. Accepted variables are ``syslog:server=<ip-address | localhost>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``.
+     - ``string``
+     - No
+```
+
+#### WAF Merging Behavior
+
+A VirtualServer/VirtualServerRoute can reference multiple WAF policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+```yaml
+policies:
+- name: waf-policy-one
+- name: waf-policy-two
+```
+In this example the Ingress Controller will use the configuration from the first policy reference `waf-policy-one`, and ignores `waf-policy-two`.
 
 ### Applying Policies
 

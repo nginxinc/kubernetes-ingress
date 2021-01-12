@@ -12,6 +12,7 @@ func TestValidatePolicy(t *testing.T) {
 		policy                *v1.Policy
 		isPlus                bool
 		enablePreviewPolicies bool
+		enableAppProtect      bool
 		msg                   string
 	}{
 		{
@@ -24,6 +25,7 @@ func TestValidatePolicy(t *testing.T) {
 			},
 			isPlus:                false,
 			enablePreviewPolicies: false,
+			enableAppProtect:      false,
 		},
 		{
 			policy: &v1.Policy{
@@ -36,6 +38,7 @@ func TestValidatePolicy(t *testing.T) {
 			},
 			isPlus:                true,
 			enablePreviewPolicies: true,
+			enableAppProtect:      false,
 			msg:                   "use jwt(plus only) policy",
 		},
 		{
@@ -55,11 +58,24 @@ func TestValidatePolicy(t *testing.T) {
 			enablePreviewPolicies: true,
 			msg:                   "use OIDC (plus only)",
 		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					WAF: &v1.WAF{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: true,
+			enableAppProtect:      true,
+			msg:                   "use WAF(plus only) policy",
+		},
 	}
 	for _, test := range tests {
-		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies)
+		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect)
 		if err != nil {
-			t.Errorf("ValidatePolicy() returned error %v for valid input", err)
+			t.Errorf("ValidatePolicy() returned error %v for valid input for the case of %v", err, test.msg)
 		}
 	}
 }
@@ -69,6 +85,7 @@ func TestValidatePolicyFails(t *testing.T) {
 		policy                *v1.Policy
 		isPlus                bool
 		enablePreviewPolicies bool
+		enableAppProtect      bool
 		msg                   string
 	}{
 		{
@@ -77,6 +94,7 @@ func TestValidatePolicyFails(t *testing.T) {
 			},
 			isPlus:                false,
 			enablePreviewPolicies: false,
+			enableAppProtect:      false,
 			msg:                   "empty policy spec",
 		},
 		{
@@ -94,6 +112,7 @@ func TestValidatePolicyFails(t *testing.T) {
 			},
 			isPlus:                true,
 			enablePreviewPolicies: true,
+			enableAppProtect:      false,
 			msg:                   "multiple policies in spec",
 		},
 		{
@@ -107,7 +126,21 @@ func TestValidatePolicyFails(t *testing.T) {
 			},
 			isPlus:                false,
 			enablePreviewPolicies: true,
+			enableAppProtect:      false,
 			msg:                   "jwt(plus only) policy on OSS",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					WAF: &v1.WAF{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: true,
+			enableAppProtect:      false,
+			msg:                   "WAF(plus only) policy on OSS",
 		},
 		{
 			policy: &v1.Policy{
@@ -121,6 +154,7 @@ func TestValidatePolicyFails(t *testing.T) {
 			},
 			isPlus:                false,
 			enablePreviewPolicies: false,
+			enableAppProtect:      false,
 			msg:                   "rateLimit policy with preview policies disabled",
 		},
 		{
@@ -134,6 +168,7 @@ func TestValidatePolicyFails(t *testing.T) {
 			},
 			isPlus:                true,
 			enablePreviewPolicies: false,
+			enableAppProtect:      false,
 			msg:                   "jwt policy with preview policies disabled",
 		},
 		{
@@ -146,6 +181,7 @@ func TestValidatePolicyFails(t *testing.T) {
 			},
 			isPlus:                false,
 			enablePreviewPolicies: false,
+			enableAppProtect:      false,
 			msg:                   "ingressMTLS policy with preview policies disabled",
 		},
 		{
@@ -158,6 +194,7 @@ func TestValidatePolicyFails(t *testing.T) {
 			},
 			isPlus:                false,
 			enablePreviewPolicies: false,
+			enableAppProtect:      false,
 			msg:                   "egressMTLS policy with preview policies disabled",
 		},
 		{
@@ -194,9 +231,35 @@ func TestValidatePolicyFails(t *testing.T) {
 			enablePreviewPolicies: true,
 			msg:                   "OIDC policy in OSS",
 		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					WAF: &v1.WAF{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: false,
+			enableAppProtect:      true,
+			msg:                   "WAF policy with preview policies disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					WAF: &v1.WAF{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: true,
+			enableAppProtect:      false,
+			msg:                   "WAF policy with AP disabled",
+		},
 	}
 	for _, test := range tests {
-		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies)
+		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect)
 		if err == nil {
 			t.Errorf("ValidatePolicy() returned no error for invalid input")
 		}
@@ -1026,7 +1089,7 @@ func TestValidateOIDCScope(t *testing.T) {
 	}
 }
 
-func TestValidatURL(t *testing.T) {
+func TestValidateURL(t *testing.T) {
 	validInput := []string{"http://google.com/auth", "https://foo.bar/baz", "http://127.0.0.1/bar", "http://openid.connect.com:8080/foo"}
 
 	for _, test := range validInput {
@@ -1042,6 +1105,86 @@ func TestValidatURL(t *testing.T) {
 		allErrs := validateURL(test, field.NewPath("authEndpoint"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateURL(%q) didn't return error for invalid input", test)
+		}
+	}
+}
+
+func TestValidateWAF(t *testing.T) {
+	tests := []struct {
+		waf *v1.WAF
+		msg string
+	}{
+		{
+			waf: &v1.WAF{
+				Enable: true,
+			},
+			msg: "waf enabled",
+		},
+		{
+			waf: &v1.WAF{
+				Enable:   true,
+				ApPolicy: "ns1/waf-pol",
+			},
+			msg: "cross ns reference",
+		},
+		{
+			waf: &v1.WAF{
+				Enable: true,
+				SecurityLog: &v1.SecurityLog{
+					Enable:  true,
+					LogDest: "syslog:server=8.7.7.7:517",
+				},
+			},
+			msg: "custom logdest",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateWAF(test.waf, field.NewPath("waf"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateWAF() returned errors %v for valid input for the case of %v", allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateWAFInvalid(t *testing.T) {
+	tests := []struct {
+		waf *v1.WAF
+		msg string
+	}{
+		{
+			waf: &v1.WAF{
+				Enable:   true,
+				ApPolicy: "ns1/ap-pol/ns2",
+			},
+			msg: "invalid apPolicy format",
+		},
+		{
+			waf: &v1.WAF{
+				Enable: true,
+				SecurityLog: &v1.SecurityLog{
+					Enable:  true,
+					LogDest: "stdout",
+				},
+			},
+			msg: "invalid logdest",
+		},
+		{
+			waf: &v1.WAF{
+				Enable: true,
+				SecurityLog: &v1.SecurityLog{
+					Enable:    true,
+					ApLogConf: "ns1/log-conf/ns2",
+				},
+			},
+			msg: "invalid logConf format",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateWAF(test.waf, field.NewPath("waf"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateWAF() returned no errors for invalid input for the case of %v", test.msg)
 		}
 	}
 }

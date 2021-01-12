@@ -1,4 +1,4 @@
-package k8s
+package appprotect
 
 import (
 	"fmt"
@@ -88,9 +88,9 @@ func ValidateAppProtectLogConf(logConf *unstructured.Unstructured) error {
 var logDstEx = regexp.MustCompile(`(?:syslog:server=((?:\d{1,3}\.){3}\d{1,3}|localhost):\d{1,5})|stderr|(?:\/[\S]+)+`)
 var logDstFileEx = regexp.MustCompile(`(?:\/[\S]+)+`)
 
-// ValidateAppProtectLogDestinationAnnotation validates annotation for log destination configuration
-func ValidateAppProtectLogDestinationAnnotation(dstAntn string) error {
-	errormsg := "Error parsing App Protect Log config: Destination Annotation must follow format: syslog:server=<ip-address | localhost>:<port> or stderr or absolute path to file"
+// ValidateAppProtectLogDestination validates destination for log configuration
+func ValidateAppProtectLogDestination(dstAntn string) error {
+	errormsg := "Error parsing App Protect Log config: Destination must follow format: syslog:server=<ip-address | localhost>:<port> or stderr or absolute path to file"
 	if !logDstEx.MatchString(dstAntn) {
 		return fmt.Errorf("%s Log Destination did not follow format", errormsg)
 	}
@@ -104,7 +104,7 @@ func ValidateAppProtectLogDestinationAnnotation(dstAntn string) error {
 
 	dstchunks := strings.Split(dstAntn, ":")
 
-	// This error can be ingored since the regex check ensures this string will be parsable
+	// This error can be ignored since the regex check ensures this string will be parsable
 	port, _ := strconv.Atoi(dstchunks[2])
 
 	if port > 65535 || port < 1 {
@@ -141,6 +141,7 @@ func validateAppProtectUserSig(userSig *unstructured.Unstructured) error {
 	return nil
 }
 
-func getNsName(obj *unstructured.Unstructured) string {
+// GetNsName gets the key of a resource in the format: "resNamespace/resName"
+func GetNsName(obj *unstructured.Unstructured) string {
 	return obj.GetNamespace() + "/" + obj.GetName()
 }

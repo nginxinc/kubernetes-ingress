@@ -54,8 +54,8 @@ $ kubectl create -f cafe.yaml
 
 ## 4. Test the Application
 
-1. To access the application, curl the coffee and the tea services. We'll use ```curl```'s --insecure option to turn off certificate verification of our self-signed
-certificate and the --resolve option to set the Host header of a request with ```cafe.example.com```
+1. To access the application, curl the coffee and the tea services. We'll use `curl`'s --insecure option to turn off certificate verification of our self-signed
+certificate and the --resolve option to set the Host header of a request with `cafe.example.com`
     
     To get coffee:
     ```
@@ -71,18 +71,18 @@ certificate and the --resolve option to set the Host header of a request with ``
     Server name: tea-7cd44fcb4d-xfw2x
     ...
     ```
-    Now, let's try to send a request with a suspicious url:
+    Now, let's try to send a request with a suspicious URL:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP "https://cafe.example.com:$IC_HTTPS_PORT/tea/<script>" --insecure
     <html><head><title>Request Rejected</title></head><body>
     ...
-    ```  
+    ```
     Lastly, let's try to send some suspicious data that matches the user defined signature.
     ```
     $ curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP -X POST -d "apple" "https://cafe.example.com:$IC_HTTPS_PORT/tea/" --insecure
     <html><head><title>Request Rejected</title></head><body>
     ...
-    ```    
+    ```
     As you can see, the suspicious requests were blocked by App Protect
     
 1. To check the security logs in the syslog pod:

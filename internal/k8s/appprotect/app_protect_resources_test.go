@@ -1,4 +1,4 @@
-package k8s
+package appprotect
 
 import (
 	"strings"
@@ -17,13 +17,13 @@ func TestValidateAppProtectLogDestinationAnnotation(t *testing.T) {
 	}
 
 	for _, tCase := range posDstAntns {
-		err := ValidateAppProtectLogDestinationAnnotation(tCase)
+		err := ValidateAppProtectLogDestination(tCase)
 		if err != nil {
 			t.Errorf("got %v expected nil", err)
 		}
 	}
 	for _, nTCase := range negDstAntns {
-		err := ValidateAppProtectLogDestinationAnnotation(nTCase[0])
+		err := ValidateAppProtectLogDestination(nTCase[0])
 		if err == nil {
 			t.Errorf("got no error expected error containing %s", nTCase[1])
 		} else {

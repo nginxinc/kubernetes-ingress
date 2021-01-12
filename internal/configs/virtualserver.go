@@ -10,6 +10,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -60,6 +61,8 @@ type VirtualServerEx struct {
 	Policies            map[string]*conf_v1.Policy
 	PodsByIP            map[string]PodInfo
 	SecretRefs          map[string]*secrets.SecretReference
+	ApPolRefs           map[string]*unstructured.Unstructured
+	LogConfRefs         map[string]*unstructured.Unstructured
 }
 
 func (vsx *VirtualServerEx) String() string {
@@ -258,15 +261,16 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(
 }
 
 // GenerateVirtualServerConfig generates a full configuration for a VirtualServer
-func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx) (version2.VirtualServerConfig, Warnings) {
+func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx, apResources map[string]string) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
 
 	sslConfig := vsc.generateSSLConfig(vsEx.VirtualServer, vsEx.VirtualServer.Spec.TLS, vsEx.VirtualServer.Namespace, vsEx.SecretRefs, vsc.cfgParams)
 	tlsRedirectConfig := generateTLSRedirectConfig(vsEx.VirtualServer.Spec.TLS)
 
 	policyOpts := policyOptions{
-		tls:        sslConfig != nil,
-		secretRefs: vsEx.SecretRefs,
+		tls:         sslConfig != nil,
+		secretRefs:  vsEx.SecretRefs,
+		apResources: apResources,
 	}
 
 	ownerDetails := policyOwnerDetails{
@@ -592,6 +596,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			OIDC:                      vsc.oidcPolCfg.oidc,
+			WAF:                       policiesCfg.WAF,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
 			VSNamespace:               vsEx.VirtualServer.Namespace,
 			VSName:                    vsEx.VirtualServer.Name,
@@ -612,6 +617,7 @@ type policiesCfg struct {
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
 	OIDC            bool
+	WAF             *version2.WAF
 	ErrorReturn     *version2.Return
 }
 
@@ -627,8 +633,9 @@ type policyOwnerDetails struct {
 }
 
 type policyOptions struct {
-	tls        bool
-	secretRefs map[string]*secrets.SecretReference
+	tls         bool
+	secretRefs  map[string]*secrets.SecretReference
+	apResources map[string]string
 }
 
 type validationResults struct {
@@ -926,6 +933,59 @@ func (p *policiesCfg) addOIDCConfig(
 	return res
 }
 
+func (p *policiesCfg) addWAFConfig(
+	waf *conf_v1.WAF,
+	polKey string,
+	polNamespace string,
+	apResources map[string]string,
+) *validationResults {
+	res := newValidationResults()
+	if p.WAF != nil {
+		res.addWarningf("Multiple WAF policies in the same context is not valid. WAF policy %s will be ignored", polKey)
+		return res
+	}
+
+	if waf.Enable {
+		p.WAF = &version2.WAF{Enable: "on"}
+	} else {
+		p.WAF = &version2.WAF{Enable: "off"}
+	}
+
+	if waf.ApPolicy != "" {
+		apPolKey := waf.ApPolicy
+		if !strings.Contains(apPolKey, "/") {
+			apPolKey = fmt.Sprintf("%v/%v", polNamespace, apPolKey)
+		}
+
+		if apPolPath, exists := apResources[apPolKey]; exists {
+			p.WAF.ApPolicy = apPolPath
+		} else {
+			res.addWarningf("WAF policy %s references an invalid or non-existing App Protect policy %s", polKey, apPolKey)
+			res.isError = true
+			return res
+		}
+	}
+
+	if waf.SecurityLog != nil {
+		p.WAF.ApSecurityLogEnable = true
+
+		logConfKey := waf.SecurityLog.ApLogConf
+		if !strings.Contains(logConfKey, "/") {
+			logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
+		}
+
+		if logConfPath, ok := apResources[logConfKey]; ok {
+			logDest := generateString(waf.SecurityLog.LogDest, "syslog:server=localhost:514")
+			p.WAF.ApLogConf = fmt.Sprintf("%s %s", logConfPath, logDest)
+		} else {
+			res.addWarningf("WAF policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
+			res.isError = true
+		}
+	}
+
+	return res
+}
+
 func (vsc *virtualServerConfigurator) generatePolicies(
 	ownerDetails policyOwnerDetails,
 	policyRefs []conf_v1.PolicyReference,
@@ -972,6 +1032,8 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 				res = config.addEgressMTLSConfig(pol.Spec.EgressMTLS, key, polNamespace, policyOpts.secretRefs)
 			case pol.Spec.OIDC != nil:
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
+			case pol.Spec.WAF != nil:
+				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
 			default:
 				res = newValidationResults()
 			}
@@ -1051,6 +1113,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.JWTAuth = cfg.JWTAuth
 	location.EgressMTLS = cfg.EgressMTLS
 	location.OIDC = cfg.OIDC
+	location.WAF = cfg.WAF
 	location.PoliciesErrorReturn = cfg.ErrorReturn
 }
 

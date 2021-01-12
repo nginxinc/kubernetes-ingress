@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
+
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/spiffe/go-spiffe/workload"
@@ -62,40 +64,10 @@ const (
 )
 
 var (
-	appProtectPolicyGVR = schema.GroupVersionResource{
-		Group:    "appprotect.f5.com",
-		Version:  "v1beta1",
-		Resource: "appolicies",
-	}
-	appProtectPolicyGVK = schema.GroupVersionKind{
-		Group:   "appprotect.f5.com",
-		Version: "v1beta1",
-		Kind:    "APPolicy",
-	}
-	appProtectLogConfGVR = schema.GroupVersionResource{
-		Group:    "appprotect.f5.com",
-		Version:  "v1beta1",
-		Resource: "aplogconfs",
-	}
-	appProtectLogConfGVK = schema.GroupVersionKind{
-		Group:   "appprotect.f5.com",
-		Version: "v1beta1",
-		Kind:    "APLogConf",
-	}
 	ingressLinkGVR = schema.GroupVersionResource{
 		Group:    "cis.f5.com",
 		Version:  "v1",
 		Resource: "ingresslinks",
-	}
-	appProtectUserSigGVR = schema.GroupVersionResource{
-		Group:    "appprotect.f5.com",
-		Version:  "v1beta1",
-		Resource: "apusersigs",
-	}
-	appProtectUserSigGVK = schema.GroupVersionKind{
-		Group:   "appprotect.f5.com",
-		Version: "v1beta1",
-		Kind:    "APUserSig",
 	}
 	ingressLinkGVK = schema.GroupVersionKind{
 		Group:   "cis.f5.com",
@@ -183,7 +155,7 @@ type LoadBalancerController struct {
 	isLatencyMetricsEnabled       bool
 	configuration                 *Configuration
 	secretStore                   secrets.SecretStore
-	appProtectConfiguration       *AppProtectConfiguration
+	appProtectConfiguration       appprotect.Configuration
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -336,7 +308,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		input.InternalRoutesEnabled,
 		input.VirtualServerValidator)
 
-	lbc.appProtectConfiguration = NewAppProtectConfiguration()
+	lbc.appProtectConfiguration = appprotect.NewConfiguration()
 
 	lbc.secretStore = secrets.NewLocalSecretStore(lbc.configurator)
 
@@ -360,21 +332,21 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 
 // addappProtectPolicyHandler creates dynamic informers for custom appprotect policy resource
 func (lbc *LoadBalancerController) addAppProtectPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
-	lbc.appProtectPolicyInformer = lbc.dynInformerFactory.ForResource(appProtectPolicyGVR).Informer()
+	lbc.appProtectPolicyInformer = lbc.dynInformerFactory.ForResource(appprotect.PolicyGVR).Informer()
 	lbc.appProtectPolicyLister = lbc.appProtectPolicyInformer.GetStore()
 	lbc.appProtectPolicyInformer.AddEventHandler(handlers)
 }
 
 // addappProtectLogConfHandler creates dynamic informer for custom appprotect logging config resource
 func (lbc *LoadBalancerController) addAppProtectLogConfHandler(handlers cache.ResourceEventHandlerFuncs) {
-	lbc.appProtectLogConfInformer = lbc.dynInformerFactory.ForResource(appProtectLogConfGVR).Informer()
+	lbc.appProtectLogConfInformer = lbc.dynInformerFactory.ForResource(appprotect.LogConfGVR).Informer()
 	lbc.appProtectLogConfLister = lbc.appProtectLogConfInformer.GetStore()
 	lbc.appProtectLogConfInformer.AddEventHandler(handlers)
 }
 
 // addappProtectUserSigHandler creates dynamic informer for custom appprotect user defined signature resource
 func (lbc *LoadBalancerController) addAppProtectUserSigHandler(handlers cache.ResourceEventHandlerFuncs) {
-	lbc.appProtectUserSigInformer = lbc.dynInformerFactory.ForResource(appProtectUserSigGVR).Informer()
+	lbc.appProtectUserSigInformer = lbc.dynInformerFactory.ForResource(appprotect.UserSigGVR).Informer()
 	lbc.appProtectUserSigLister = lbc.appProtectUserSigInformer.GetStore()
 	lbc.appProtectUserSigInformer.AddEventHandler(handlers)
 }
@@ -847,7 +819,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 
 	if polExists {
 		pol := obj.(*conf_v1.Policy)
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies)
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies, lbc.appProtectEnabled)
 		if err != nil {
 			msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
 			lbc.recorder.Eventf(pol, api_v1.EventTypeWarning, "Rejected", msg)
@@ -1133,54 +1105,74 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 	}
 }
 
-func (lbc *LoadBalancerController) processAppProtectChanges(changes []AppProtectChange) {
+func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect.Change) {
 	glog.V(3).Infof("Processing %v App Protect changes", len(changes))
 
 	for _, c := range changes {
-		if c.Op == AddOrUpdate {
+		if c.Op == appprotect.AddOrUpdate {
 			switch impl := c.Resource.(type) {
-			case *AppProtectPolicyEx:
+			case *appprotect.PolicyEx:
 				namespace := impl.Obj.GetNamespace()
 				name := impl.Obj.GetName()
-				resources := lbc.configuration.FindResourcesForAppProtectPolicy(namespace, name)
+				resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(namespace, name)
 
-				ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
+				wafPols := getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), namespace+"/"+name)
+				for _, pol := range wafPols {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
+				}
 
-				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, ingressExes, mergeableIngresses)
+				ingressExes, mergeableIngresses, vsExes := lbc.createExtendedResources(resources)
+
+				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, ingressExes, mergeableIngresses, vsExes)
 				lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 				lbc.recorder.Eventf(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectPolicy %v was added or updated", namespace+"/"+name)
-			case *AppProtectLogConfEx:
+			case *appprotect.LogConfEx:
 				namespace := impl.Obj.GetNamespace()
 				name := impl.Obj.GetName()
-				resources := lbc.configuration.FindResourcesForAppProtectLogConf(namespace, name)
+				resources := lbc.configuration.FindResourcesForAppProtectLogConfAnnotation(namespace, name)
 
-				ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
+				wafPols := getWAFPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name)
+				for _, pol := range wafPols {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
+				}
 
-				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, ingressExes, mergeableIngresses)
+				ingressExes, mergeableIngresses, vsExes := lbc.createExtendedResources(resources)
+
+				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, ingressExes, mergeableIngresses, vsExes)
 				lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
-				lbc.recorder.Eventf(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectLogConfig  %v was added or updated", namespace+"/"+name)
+				lbc.recorder.Eventf(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectLogConfig %v was added or updated", namespace+"/"+name)
 			}
-		} else if c.Op == Delete {
+		} else if c.Op == appprotect.Delete {
 			switch impl := c.Resource.(type) {
-			case *AppProtectPolicyEx:
+			case *appprotect.PolicyEx:
 				namespace := impl.Obj.GetNamespace()
 				name := impl.Obj.GetName()
-				resources := lbc.configuration.FindResourcesForAppProtectPolicy(namespace, name)
+				resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(namespace, name)
 
-				ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
+				wafPols := getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), namespace+"/"+name)
+				for _, pol := range wafPols {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
+				}
 
-				warnings, deleteErr := lbc.configurator.DeleteAppProtectPolicy(namespace+"/"+name, ingressExes, mergeableIngresses)
+				ingressExes, mergeableIngresses, vsExes := lbc.createExtendedResources(resources)
+
+				warnings, deleteErr := lbc.configurator.DeleteAppProtectPolicy(namespace+"/"+name, ingressExes, mergeableIngresses, vsExes)
 
 				lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 
-			case *AppProtectLogConfEx:
+			case *appprotect.LogConfEx:
 				namespace := impl.Obj.GetNamespace()
 				name := impl.Obj.GetName()
-				resources := lbc.configuration.FindResourcesForAppProtectLogConf(namespace, name)
+				resources := lbc.configuration.FindResourcesForAppProtectLogConfAnnotation(namespace, name)
 
-				ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
+				wafPols := getWAFPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name)
+				for _, pol := range wafPols {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
+				}
 
-				warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(namespace+"/"+name, ingressExes, mergeableIngresses)
+				ingressExes, mergeableIngresses, vsExes := lbc.createExtendedResources(resources)
+
+				warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(namespace+"/"+name, ingressExes, mergeableIngresses, vsExes)
 
 				lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 			}
@@ -1188,22 +1180,22 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []AppProtect
 	}
 }
 
-func (lbc *LoadBalancerController) processAppProtectUserSigChange(change AppProtectUserSigChange) {
+func (lbc *LoadBalancerController) processAppProtectUserSigChange(change appprotect.UserSigChange) {
 	var delPols []string
 	var allIngExes []*configs.IngressEx
 	var allMergeableIngresses []*configs.MergeableIngresses
 	var allResources []Resource
 
 	for _, poladd := range change.PolicyAddsOrUpdates {
-		resources := lbc.configuration.FindResourcesForAppProtectPolicy(poladd.GetNamespace(), poladd.GetName())
+		resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(poladd.GetNamespace(), poladd.GetName())
 		ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
 		allIngExes = append(allIngExes, ingressExes...)
 		allMergeableIngresses = append(allMergeableIngresses, mergeableIngresses...)
 		allResources = append(allResources, resources...)
 	}
 	for _, poldel := range change.PolicyDeletions {
-		polNsName := getNsName(poldel)
-		resources := lbc.configuration.FindResourcesForAppProtectPolicy(poldel.GetNamespace(), poldel.GetName())
+		polNsName := appprotect.GetNsName(poldel)
+		resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(poldel.GetNamespace(), poldel.GetName())
 		ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
 		allIngExes = append(allIngExes, ingressExes...)
 		allMergeableIngresses = append(allMergeableIngresses, mergeableIngresses...)
@@ -1220,8 +1212,8 @@ func (lbc *LoadBalancerController) processAppProtectUserSigChange(change AppProt
 	lbc.updateResourcesStatusAndEvents(allResources, warnings, err)
 }
 
-func (lbc *LoadBalancerController) processAppProtectProblems(problems []AppProtectProblem) {
-	glog.V(3).Infof("Processing %v App Protet problems", len(problems))
+func (lbc *LoadBalancerController) processAppProtectProblems(problems []appprotect.Problem) {
+	glog.V(3).Infof("Processing %v App Protect problems", len(problems))
 
 	for _, p := range problems {
 		eventType := api_v1.EventTypeWarning
@@ -1883,7 +1875,7 @@ func (lbc *LoadBalancerController) updatePoliciesStatus() error {
 	for _, obj := range lbc.policyLister.List() {
 		pol := obj.(*conf_v1.Policy)
 
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies)
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies, lbc.appProtectEnabled)
 		if err != nil {
 			msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
 			err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
@@ -2170,7 +2162,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 }
 
 func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.Ingress) (logConf *unstructured.Unstructured, logDst string, err error) {
-	logConfNsN := ParseResourceReferenceAnnotation(ing.Namespace, ing.Annotations[configs.AppProtectLogConfAnnotation])
+	logConfNsN := appprotect.ParseResourceReferenceAnnotation(ing.Namespace, ing.Annotations[configs.AppProtectLogConfAnnotation])
 
 	if _, exists := ing.Annotations[configs.AppProtectLogConfDstAnnotation]; !exists {
 		return nil, "", fmt.Errorf("Error: %v requires %v in %v", configs.AppProtectLogConfAnnotation, configs.AppProtectLogConfDstAnnotation, ing.Name)
@@ -2178,13 +2170,13 @@ func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.In
 
 	logDst = ing.Annotations[configs.AppProtectLogConfDstAnnotation]
 
-	err = ValidateAppProtectLogDestinationAnnotation(logDst)
+	err = appprotect.ValidateAppProtectLogDestination(logDst)
 
 	if err != nil {
 		return nil, "", fmt.Errorf("Error Validating App Protect Destination Config for Ingress %v: %v", ing.Name, err)
 	}
 
-	logConf, err = lbc.appProtectConfiguration.GetAppResource(appProtectLogConfGVK.Kind, logConfNsN)
+	logConf, err = lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfNsN)
 	if err != nil {
 		return nil, "", fmt.Errorf("Error retrieving App Protect Log Config for Ingress %v: %v", ing.Name, err)
 	}
@@ -2193,9 +2185,9 @@ func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.In
 }
 
 func (lbc *LoadBalancerController) getAppProtectPolicy(ing *networking.Ingress) (apPolicy *unstructured.Unstructured, err error) {
-	polNsN := ParseResourceReferenceAnnotation(ing.Namespace, ing.Annotations[configs.AppProtectPolicyAnnotation])
+	polNsN := appprotect.ParseResourceReferenceAnnotation(ing.Namespace, ing.Annotations[configs.AppProtectPolicyAnnotation])
 
-	apPolicy, err = lbc.appProtectConfiguration.GetAppResource(appProtectPolicyGVK.Kind, polNsN)
+	apPolicy, err = lbc.appProtectConfiguration.GetAppResource(appprotect.PolicyGVK.Kind, polNsN)
 	if err != nil {
 		return nil, fmt.Errorf("Error retrieving App Protect Policy for Ingress %v: %v ", ing.Name, err)
 	}
@@ -2207,6 +2199,8 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	virtualServerEx := configs.VirtualServerEx{
 		VirtualServer: virtualServer,
 		SecretRefs:    make(map[string]*secrets.SecretReference),
+		ApPolRefs:     make(map[string]*unstructured.Unstructured),
+		LogConfRefs:   make(map[string]*unstructured.Unstructured),
 	}
 
 	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
@@ -2229,20 +2223,22 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 	if err != nil {
 		glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
-
 	err = lbc.addIngressMTLSSecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
 		glog.Warningf("Error getting IngressMTLS secret for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
-
 	err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
 		glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
-
 	err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, policies)
 	if err != nil {
 		glog.Warningf("Error getting OIDC secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+	}
+
+	err = lbc.addWAFPolicyRefs(virtualServerEx.ApPolRefs, virtualServerEx.LogConfRefs, policies)
+	if err != nil {
+		glog.Warningf("Error getting App Protect resource for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
 
 	endpoints := make(map[string][]string)
@@ -2290,13 +2286,18 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		}
 		policies = append(policies, vsRoutePolicies...)
 
+		err = lbc.addJWTSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
+		if err != nil {
+			glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+		}
 		err = lbc.addEgressMTLSSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
 		if err != nil {
 			glog.Warningf("Error getting EgressMTLS secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 		}
-		err = lbc.addJWTSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
+
+		err = lbc.addWAFPolicyRefs(virtualServerEx.ApPolRefs, virtualServerEx.LogConfRefs, vsRoutePolicies)
 		if err != nil {
-			glog.Warningf("Error getting JWT secrets for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+			glog.Warningf("Error getting WAF policies for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 		}
 		err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
 		if err != nil {
@@ -2325,6 +2326,11 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 			err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, vsrSubroutePolicies)
 			if err != nil {
 				glog.Warningf("Error getting OIDC secrets for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+			}
+
+			err = lbc.addWAFPolicyRefs(virtualServerEx.ApPolRefs, virtualServerEx.LogConfRefs, vsrSubroutePolicies)
+			if err != nil {
+				glog.Warningf("Error getting WAF policies for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
 		}
 
@@ -2387,7 +2393,7 @@ func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1.Policy {
 	for _, obj := range lbc.policyLister.List() {
 		pol := obj.(*conf_v1.Policy)
 
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies)
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies, lbc.appProtectEnabled)
 		if err != nil {
 			glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
 			continue
@@ -2424,7 +2430,7 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 
 		policy := policyObj.(*conf_v1.Policy)
 
-		err = validation.ValidatePolicy(policy, lbc.isNginxPlus, lbc.enablePreviewPolicies)
+		err = validation.ValidatePolicy(policy, lbc.isNginxPlus, lbc.enablePreviewPolicies, lbc.appProtectEnabled)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Policy %s is invalid: %v", policyKey, err))
 			continue
@@ -2517,7 +2523,46 @@ func (lbc *LoadBalancerController) addOIDCSecretRefs(secretRefs map[string]*secr
 			return secretRef.Error
 		}
 	}
+	return nil
+}
 
+// addWAFPolicyRefs ensures the app protect resources that are referenced in policies exist.
+func (lbc *LoadBalancerController) addWAFPolicyRefs(
+	apPolRef, logConfRef map[string]*unstructured.Unstructured,
+	policies []*conf_v1.Policy,
+) error {
+	for _, pol := range policies {
+		if pol.Spec.WAF == nil {
+			continue
+		}
+
+		if pol.Spec.WAF.ApPolicy != "" {
+			apPolKey := pol.Spec.WAF.ApPolicy
+			if !strings.Contains(pol.Spec.WAF.ApPolicy, "/") {
+				apPolKey = fmt.Sprintf("%v/%v", pol.Namespace, apPolKey)
+			}
+
+			apPolicy, err := lbc.appProtectConfiguration.GetAppResource(appprotect.PolicyGVK.Kind, apPolKey)
+			if err != nil {
+				return fmt.Errorf("WAF policy %q is invalid: %v", apPolKey, err)
+			}
+			apPolRef[apPolKey] = apPolicy
+		}
+
+		if pol.Spec.WAF.SecurityLog != nil && pol.Spec.WAF.SecurityLog.ApLogConf != "" {
+			logConfKey := pol.Spec.WAF.SecurityLog.ApLogConf
+			if !strings.Contains(pol.Spec.WAF.SecurityLog.ApLogConf, "/") {
+				logConfKey = fmt.Sprintf("%v/%v", pol.Namespace, logConfKey)
+			}
+
+			logConf, err := lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfKey)
+			if err != nil {
+				return fmt.Errorf("WAF policy %q is invalid: %v", logConfKey, err)
+			}
+			logConfRef[logConfKey] = logConf
+		}
+
+	}
 	return nil
 }
 
@@ -2543,6 +2588,38 @@ func findPoliciesForSecret(policies []*conf_v1.Policy, secretNamespace string, s
 	}
 
 	return res
+}
+
+func getWAFPoliciesForAppProtectPolicy(pols []*conf_v1.Policy, key string) []*conf_v1.Policy {
+	var policies []*conf_v1.Policy
+
+	for _, pol := range pols {
+		if pol.Spec.WAF != nil && isMatchingResourceRef(pol.Namespace, pol.Spec.WAF.ApPolicy, key) {
+			policies = append(policies, pol)
+		}
+	}
+
+	return policies
+}
+
+func getWAFPoliciesForAppProtectLogConf(pols []*conf_v1.Policy, key string) []*conf_v1.Policy {
+	var policies []*conf_v1.Policy
+
+	for _, pol := range pols {
+		if pol.Spec.WAF != nil && pol.Spec.WAF.SecurityLog != nil && isMatchingResourceRef(pol.Namespace, pol.Spec.WAF.SecurityLog.ApLogConf, key) {
+			policies = append(policies, pol)
+		}
+	}
+
+	return policies
+}
+
+func isMatchingResourceRef(ownerNs, resRef, key string) bool {
+	hasNamespace := strings.Contains(resRef, "/")
+	if !hasNamespace {
+		resRef = fmt.Sprintf("%v/%v", ownerNs, resRef)
+	}
+	return resRef == key
 }
 
 func (lbc *LoadBalancerController) createTransportServer(transportServer *conf_v1alpha1.TransportServer) *configs.TransportServerEx {
@@ -2933,8 +3010,6 @@ func (lbc *LoadBalancerController) isHealthCheckEnabled(ing *networking.Ingress)
 	return false
 }
 
-// getMinionsForHost returns a list of all minion ingress resources for a given master
-
 func formatWarningMessages(w []string) string {
 	return strings.Join(w, "; ")
 }
@@ -2958,8 +3033,8 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 		return
 	}
 
-	var changes []AppProtectChange
-	var problems []AppProtectProblem
+	var changes []appprotect.Change
+	var problems []appprotect.Problem
 
 	if !polExists {
 		glog.V(2).Infof("Deleting AppProtectPolicy: %v\n", key)
@@ -2984,8 +3059,8 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 		return
 	}
 
-	var changes []AppProtectChange
-	var problems []AppProtectProblem
+	var changes []appprotect.Change
+	var problems []appprotect.Problem
 
 	if !confExists {
 		glog.V(2).Infof("Deleting AppProtectLogConf: %v\n", key)
@@ -3010,8 +3085,8 @@ func (lbc *LoadBalancerController) syncAppProtectUserSig(task task) {
 		return
 	}
 
-	var change AppProtectUserSigChange
-	var problems []AppProtectProblem
+	var change appprotect.UserSigChange
+	var problems []appprotect.Problem
 
 	if !sigExists {
 		glog.V(2).Infof("Deleting AppProtectUserSig: %v\n", key)
