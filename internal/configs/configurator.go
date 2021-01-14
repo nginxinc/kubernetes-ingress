@@ -643,9 +643,8 @@ func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
 }
 
 func (cnf *Configurator) addOrUpdateOIDCSecret(secret *api_v1.Secret) string {
-	name := objectMetaToFileName(&secret.ObjectMeta)
-	data := secret.Data[ClientSecretKey]
-	return cnf.nginxManager.CreateSecret(name, data, nginx.OIDCSecretFileMode)
+	// OIDC ClientSecret is not required on the filesystem, it is written directly to the config file.
+	return ""
 }
 
 // AddOrUpdateResources adds or updates configuration for resources.
