@@ -16,27 +16,22 @@ import (
 	"github.com/nginxinc/nginx-plus-go-client/client"
 )
 
-// ReloadForEndpointsUpdate means that is caused by an endpoints update.
-const ReloadForEndpointsUpdate = true
-
-// ReloadForOtherUpdate means that a reload is caused by an update for a resource(s) other than endpoints.
-const ReloadForOtherUpdate = false
-
-// TLSSecretFileMode defines the default filemode for files with TLS Secrets.
-const TLSSecretFileMode = 0600
-
-// JWKSecretFileMode defines the default filemode for files with JWK Secrets.
-const JWKSecretFileMode = 0644
-
-
-const configFileMode = 0644
-const jsonFileForOpenTracingTracer = "/var/lib/nginx/tracer-config.json"
+const (
+	ReloadForEndpointsUpdate     = true  // ReloadForEndpointsUpdate means that is caused by an endpoints update.
+	ReloadForOtherUpdate         = false // ReloadForOtherUpdate means that a reload is caused by an update for a resource(s) other than endpoints.
+	TLSSecretFileMode            = 0600  // TLSSecretFileMode defines the default filemode for files with TLS Secrets.
+	JWKSecretFileMode            = 0644  // JWKSecretFileMode defines the default filemode for files with JWK Secrets.
+	configFileMode               = 0644
+	jsonFileForOpenTracingTracer = "/var/lib/nginx/tracer-config.json"
+)
 
 // appPluginParams is the configuration of App-Protect plugin
 const appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 307200000 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
 
-const appProtectPluginStartCmd = "/usr/share/ts/bin/bd-socket-plugin"
-const appProtectAgentStartCmd = "/opt/app_protect/bin/bd_agent"
+const (
+	appProtectPluginStartCmd = "/usr/share/ts/bin/bd-socket-plugin"
+	appProtectAgentStartCmd  = "/opt/app_protect/bin/bd_agent"
+)
 
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
 type ServerConfig struct {
@@ -496,7 +491,6 @@ func (lm *LocalManager) AppProtectPluginStart(appDone chan error) {
 	go func() {
 		appDone <- cmd.Wait()
 	}()
-
 }
 
 // AppProtectPluginQuit gracefully ends AppProtect Agent.
