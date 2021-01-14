@@ -642,11 +642,6 @@ func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
 	return cnf.nginxManager.CreateSecret(name, data, nginx.JWKSecretFileMode)
 }
 
-func (cnf *Configurator) addOrUpdateOIDCSecret(secret *api_v1.Secret) string {
-	// OIDC ClientSecret is not required on the filesystem, it is written directly to the config file.
-	return ""
-}
-
 // AddOrUpdateResources adds or updates configuration for resources.
 func (cnf *Configurator) AddOrUpdateResources(ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
@@ -1440,7 +1435,8 @@ func (cnf *Configurator) AddOrUpdateSecret(secret *api_v1.Secret) string {
 	case secrets.SecretTypeJWK:
 		return cnf.addOrUpdateJWKSecret(secret)
 	case secrets.SecretTypeOIDC:
-		return cnf.addOrUpdateOIDCSecret(secret)
+		// OIDC ClientSecret is not required on the filesystem, it is written directly to the config file.
+		return ""
 	default:
 		return cnf.addOrUpdateTLSSecret(secret)
 	}
