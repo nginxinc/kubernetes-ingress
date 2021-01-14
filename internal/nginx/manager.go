@@ -28,8 +28,6 @@ const TLSSecretFileMode = 0600
 // JWKSecretFileMode defines the default filemode for files with JWK Secrets.
 const JWKSecretFileMode = 0644
 
-// OIDCSecretFileMode defines the default filemode for files with OIDC Secrets.
-const OIDCSecretFileMode = 0644
 
 const configFileMode = 0644
 const jsonFileForOpenTracingTracer = "/var/lib/nginx/tracer-config.json"
