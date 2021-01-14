@@ -128,7 +128,7 @@ spec:
 
 You can define App Protect [User Defined Signatures](https://docs.nginx.com/nginx-app-protect/configuration/#user-defined-signature-definitions) for your Ingress resources by creating an `APUserSig` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-> **Note**: `APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. See [NGINX Fails to Start or Reload](/nginx-ingress-controller/app-protect/troubleshooting/#nginx-fails-to-start-or-reload).
+> **Note**: `APUserSig` resources increase the reload time of NGINX Plus compared with `APPolicy` and `APLogConf` resources. Refer to [NGINX Fails to Start or Reload](/nginx-ingress-controller/app-protect/troubleshooting/#nginx-fails-to-start-or-reload) for more information.
 
 To add the [User Defined Signatures](https://docs.nginx.com/nginx-app-protect/configuration/#user-defined-signature-definitions) to an Ingress resource:
 
