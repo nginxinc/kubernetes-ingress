@@ -105,11 +105,11 @@ rules:
   verbs:
   - update
 {{- end }}
-{{- if .Values.controller.reportIngressStatus.nginxCisConnector }}
+{{- if .Values.controller.reportIngressStatus.ingressLink }}
 - apiGroups:
   - cis.f5.com
   resources:
-  - nginxcisconnectors
+  - ingresslinks
   verbs:
   - list
   - watch

@@ -21,10 +21,10 @@ This step depends on how you install the Ingress Controller: using [Manifests](/
     apiVersion: v1
     kind: Service
     metadata:
-      name: nginx-ingress-connector 
+      name: nginx-ingress-ingresslink 
       namespace: nginx-ingress
       labels:
-        app: nginx-ingress-cis
+        app: ingresslink
     spec:
       ports:
       - port: 80
@@ -38,7 +38,7 @@ This step depends on how you install the Ingress Controller: using [Manifests](/
       selector:
         app: nginx-ingress
     ```
-    Note the label `app: nginx-ingress-cis`. We will use it in the Step 2. 
+    Note the label `app: ingresslink`. We will use it in the Step 2. 
 1. In the [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource), enable the PROXY protocol, which the BIG-IP system will use to pass the client IP and port information to NGINX. For the  `set-real-ip-from` key, use the subnet of the IP, which the BIG-IP system uses to send traffic to NGINX:
     ```yaml
     proxy-protocol: "True"
@@ -48,11 +48,11 @@ This step depends on how you install the Ingress Controller: using [Manifests](/
 1. Deploy the Ingress Controller with additional [command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments):
     ```yaml
     args:
-    - -nginx-cis-connector=nginx-ingress
+    - -ingresslink=nginx-ingress
     - -report-ingress-status 
     . . .
     ```
-    where `nginx-cis-connector` references the name of the NginxCisConnector resource from Step 2, and `report-ingress-status` enables [reporting Ingress statuses](/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status#ingress-resources).
+    where `ingresslink` references the name of the IngressLink resource from Step 2, and `report-ingress-status` enables [reporting Ingress statuses](/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status#ingress-resources).
 
 #### Helm Installation
 
@@ -65,21 +65,21 @@ controller:
       real-ip-header: "proxy_protocol"
       set-real-ip-from: "0.0.0.0/0"
   reportIngressStatus:
-    nginxCisConnector: nginx-ingress
+    ingressLink: nginx-ingress
   service:
     type: ClusterIP
     externalTrafficPolicy: Cluster
     extraLabels:
-      app: nginx-ingress-cis
+      app: ingresslink 
 ```
-We will use the values for the parameters `nginxCisConnector` and `extraLabels` in Step 2. For the  `set-real-ip-from` key, use the subnet of the IP, which the BIG-IP system uses to send traffic to NGINX.  
+We will use the values for the parameters `ingressLink` and `extraLabels` in Step 2. For the  `set-real-ip-from` key, use the subnet of the IP, which the BIG-IP system uses to send traffic to NGINX.  
 
-### 2. Create an NginxCisConnector Resource
+### 2. Create an IngressLink Resource
 
-To configure the BIG-IP device to load balance among the Ingress Controller pods, create an NginxCisConnector resource. For example, the following resource will expose the Ingress Controller pods via `192.168.10.5`:
+To configure the BIG-IP device to load balance among the Ingress Controller pods, create an IngressLink resource. For example, the following resource will expose the Ingress Controller pods via `192.168.10.5`:
 ```yaml
 apiVersion: "cis.f5.com/v1"
-kind: NginxCisConnector
+kind: IngressLink
 metadata:
   name: nginx-ingress
   namespace: nginx-ingress
@@ -89,7 +89,7 @@ spec:
   - /Common/Proxy_Protocol_iRule
   selector:
     matchLabels:
-      app: nginx-ingress-cis
+      app: ingresslink 
 ```
 
 The name of the resource and the labels in the selector must match the values you configured in Step 1. The resource must belong to the same namespace as the Ingress Controller pod.

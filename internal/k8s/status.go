@@ -270,7 +270,7 @@ func (su *statusUpdater) SaveStatusFromExternalStatus(externalStatusAddress stri
 			return
 		}
 
-		// fall back on NginxCisConnector if it exists
+		// fall back on IngressLink if it exists
 		if su.bigIPAddress != "" {
 			su.saveStatus([]string{su.bigIPAddress})
 			su.externalEndpoints = su.generateExternalEndpointsFromStatus(su.status)
@@ -303,12 +303,12 @@ func (su *statusUpdater) SaveStatusFromExternalService(svc *api_v1.Service) {
 	su.externalEndpoints = su.generateExternalEndpointsFromStatus(su.status)
 }
 
-func (su *statusUpdater) SaveStatusFromNginxCisConnector(ip string) {
+func (su *statusUpdater) SaveStatusFromIngressLink(ip string) {
 	su.bigIPAddress = ip
 	su.bigIPPorts = "[80,443]"
 
 	if su.externalStatusAddress != "" {
-		glog.V(3).Info("skipping NginxCisConnector address - external-status-address is set and takes precedence")
+		glog.V(3).Info("skipping IngressLink address - external-status-address is set and takes precedence")
 		return
 	}
 
@@ -317,12 +317,12 @@ func (su *statusUpdater) SaveStatusFromNginxCisConnector(ip string) {
 	su.externalEndpoints = su.generateExternalEndpointsFromStatus(su.status)
 }
 
-func (su *statusUpdater) ClearStatusFromNginxCisConnector() {
+func (su *statusUpdater) ClearStatusFromIngressLink() {
 	su.bigIPAddress = ""
 	su.bigIPPorts = ""
 
 	if su.externalStatusAddress != "" {
-		glog.V(3).Info("skipping NginxCisConnector address - external-status-address is set and takes precedence")
+		glog.V(3).Info("skipping IngressLink address - external-status-address is set and takes precedence")
 		return
 	}
 

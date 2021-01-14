@@ -55,9 +55,9 @@ Below we describe the available command-line arguments:
 
 	For Ingress resources only: Requires :option:`-report-ingress-status`.
 
-.. option:: -nginx-cis-connector <string>
+.. option:: -ingresslink <string>
 
-	Specifies the name of the NginxCisConnector resource, which exposes the Ingress Controller pods via a BIG-IP system. The IP of the BIG-IP system is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources.
+	Specifies the name of the IngressLink resource, which exposes the Ingress Controller pods via a BIG-IP system. The IP of the BIG-IP system is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources.
 
 	For Ingress resources only: Requires :option:`-report-ingress-status`.
 
@@ -152,7 +152,7 @@ Below we describe the available command-line arguments:
 .. option:: -report-ingress-status
 
 	Updates the address field in the status of Ingress resources.
-	Requires the :option:`-external-service` or :option:`-nginx-cis-connector` flag, or the ``external-status-address`` key in the ConfigMap.
+	Requires the :option:`-external-service` or :option:`-ingresslink` flag, or the ``external-status-address`` key in the ConfigMap.
 
 .. option:: -transportserver-template-path <string>
 

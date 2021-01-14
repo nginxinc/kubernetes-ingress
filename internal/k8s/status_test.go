@@ -118,7 +118,7 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 	}
 }
 
-func TestStatusUpdateWithExternalStatusAndNginxCisConnector(t *testing.T) {
+func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 	ing := networking.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ing-1",
@@ -157,7 +157,7 @@ func TestStatusUpdateWithExternalStatusAndNginxCisConnector(t *testing.T) {
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 
-	su.SaveStatusFromNginxCisConnector("3.3.3.3")
+	su.SaveStatusFromIngressLink("3.3.3.3")
 	err = su.UpdateIngressStatus(ing)
 	if err != nil {
 		t.Errorf("error updating ing status: %v", err)
@@ -177,7 +177,7 @@ func TestStatusUpdateWithExternalStatusAndNginxCisConnector(t *testing.T) {
 		t.Errorf("expected: %v actual: %v", "1.1.1.1", ring.Status.LoadBalancer.Ingress)
 	}
 
-	su.ClearStatusFromNginxCisConnector()
+	su.ClearStatusFromIngressLink()
 	err = su.UpdateIngressStatus(ing)
 	if err != nil {
 		t.Errorf("error updating ing status: %v", err)
@@ -187,7 +187,7 @@ func TestStatusUpdateWithExternalStatusAndNginxCisConnector(t *testing.T) {
 		t.Errorf("expected: %v actual: %v", "1.1.1.1", ring.Status.LoadBalancer.Ingress)
 	}
 
-	su.SaveStatusFromNginxCisConnector("4.4.4.4")
+	su.SaveStatusFromIngressLink("4.4.4.4")
 	err = su.UpdateIngressStatus(ing)
 	if err != nil {
 		t.Errorf("error updating ing status: %v", err)
@@ -207,7 +207,7 @@ func TestStatusUpdateWithExternalStatusAndNginxCisConnector(t *testing.T) {
 		t.Errorf("expected: %v actual: %v", "4.4.4.4", ring.Status.LoadBalancer.Ingress)
 	}
 
-	su.ClearStatusFromNginxCisConnector()
+	su.ClearStatusFromIngressLink()
 	err = su.UpdateIngressStatus(ing)
 	if err != nil {
 		t.Errorf("error updating ing status: %v", err)

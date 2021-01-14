@@ -87,7 +87,7 @@ rules:
 - apiGroups:
     - cis.f5.com
   resources:
-    - nginxcisconnectors
+    - ingresslinks
   verbs:
     - list
     - watch

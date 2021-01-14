@@ -468,15 +468,15 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 	}
 }
 
-func createNginxCisConnectorHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			con := obj.(*unstructured.Unstructured)
-			glog.V(3).Infof("Adding NginxCisConnector: %v", con.GetName())
-			lbc.AddSyncQueue(con)
+			link := obj.(*unstructured.Unstructured)
+			glog.V(3).Infof("Adding IngressLink: %v", link.GetName())
+			lbc.AddSyncQueue(link)
 		},
 		DeleteFunc: func(obj interface{}) {
-			con, isUnstructured := obj.(*unstructured.Unstructured)
+			link, isUnstructured := obj.(*unstructured.Unstructured)
 
 			if !isUnstructured {
 				deletedState, ok := obj.(cache.DeletedFinalStateUnknown)
@@ -484,27 +484,27 @@ func createNginxCisConnectorHandlers(lbc *LoadBalancerController) cache.Resource
 					glog.V(3).Infof("Error received unexpected object: %v", obj)
 					return
 				}
-				con, ok = deletedState.Obj.(*unstructured.Unstructured)
+				link, ok = deletedState.Obj.(*unstructured.Unstructured)
 				if !ok {
 					glog.V(3).Infof("Error DeletedFinalStateUnknown contained non-Unstructured object: %v", deletedState.Obj)
 					return
 				}
 			}
 
-			glog.V(3).Infof("Removing NginxCisConnector: %v", con.GetName())
-			lbc.AddSyncQueue(con)
+			glog.V(3).Infof("Removing IngressLink: %v", link.GetName())
+			lbc.AddSyncQueue(link)
 		},
 		UpdateFunc: func(old, cur interface{}) {
-			oldCon := old.(*unstructured.Unstructured)
-			curCon := cur.(*unstructured.Unstructured)
-			updated, err := compareSpecs(oldCon, curCon)
+			oldLink := old.(*unstructured.Unstructured)
+			curLink := cur.(*unstructured.Unstructured)
+			updated, err := compareSpecs(oldLink, curLink)
 			if err != nil {
-				glog.V(3).Infof("Error when comparing NginxCisConnectors: %v", err)
-				lbc.AddSyncQueue(curCon)
+				glog.V(3).Infof("Error when comparing IngressLinks: %v", err)
+				lbc.AddSyncQueue(curLink)
 			}
 			if updated {
-				glog.V(3).Infof("NginxCisConnector %v changed, syncing", oldCon.GetName())
-				lbc.AddSyncQueue(curCon)
+				glog.V(3).Infof("IngressLink %v changed, syncing", oldLink.GetName())
+				lbc.AddSyncQueue(curLink)
 			}
 		},
 	}

@@ -82,10 +82,10 @@ var (
 		Version: "v1beta1",
 		Kind:    "APLogConf",
 	}
-	nginxCisConnectorGVR = schema.GroupVersionResource{
+	ingressLinkGVR = schema.GroupVersionResource{
 		Group:    "cis.f5.com",
 		Version:  "v1",
-		Resource: "nginxcisconnectors",
+		Resource: "ingresslinks",
 	}
 	appProtectUserSigGVR = schema.GroupVersionResource{
 		Group:    "appprotect.f5.com",
@@ -97,10 +97,10 @@ var (
 		Version: "v1beta1",
 		Kind:    "APUserSig",
 	}
-	nginxCisConnectorGVK = schema.GroupVersionKind{
+	ingressLinkGVK = schema.GroupVersionKind{
 		Group:   "cis.f5.com",
 		Version: "v1",
-		Kind:    "NginxCisConnector",
+		Kind:    "IngressLink",
 	}
 )
 
@@ -132,7 +132,7 @@ type LoadBalancerController struct {
 	globalConfigurationController cache.Controller
 	transportServerController     cache.Controller
 	policyController              cache.Controller
-	nginxCisConnectorInformer     cache.SharedIndexInformer
+	ingressLinkInformer           cache.SharedIndexInformer
 	ingressLister                 storeToIngressLister
 	svcLister                     cache.Store
 	endpointLister                storeToEndpointLister
@@ -147,14 +147,14 @@ type LoadBalancerController struct {
 	appProtectUserSigLister       cache.Store
 	transportServerLister         cache.Store
 	policyLister                  cache.Store
-	nginxCisConnectorLister       cache.Store
+	ingressLinkLister             cache.Store
 	syncQueue                     *taskQueue
 	ctx                           context.Context
 	cancel                        context.CancelFunc
 	configurator                  *configs.Configurator
 	watchNginxConfigMaps          bool
 	watchGlobalConfiguration      bool
-	watchNginxCisConnector        bool
+	watchIngressLink              bool
 	isNginxPlus                   bool
 	appProtectEnabled             bool
 	recorder                      record.EventRecorder
@@ -202,7 +202,7 @@ type NewLoadBalancerControllerInput struct {
 	IngressClass                 string
 	UseIngressClassOnly          bool
 	ExternalServiceName          string
-	NginxCisConnector            string
+	IngressLink                  string
 	ControllerNamespace          string
 	ReportIngressStatus          bool
 	IsLeaderElectionEnabled      bool
@@ -308,9 +308,9 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		}
 	}
 
-	if input.NginxCisConnector != "" {
-		lbc.watchNginxCisConnector = true
-		lbc.addNginxCisConnectorHandler(createNginxCisConnectorHandlers(lbc), input.NginxCisConnector)
+	if input.IngressLink != "" {
+		lbc.watchIngressLink = true
+		lbc.addIngressLinkHandler(createIngressLinkHandlers(lbc), input.IngressLink)
 	}
 
 	if input.IsLeaderElectionEnabled {
@@ -527,18 +527,18 @@ func (lbc *LoadBalancerController) addTransportServerHandler(handlers cache.Reso
 	)
 }
 
-func (lbc *LoadBalancerController) addNginxCisConnectorHandler(handlers cache.ResourceEventHandlerFuncs, name string) {
+func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.ResourceEventHandlerFuncs, name string) {
 	optionsModifier := func(options *meta_v1.ListOptions) {
 		options.FieldSelector = fields.Set{"metadata.name": name}.String()
 	}
 
-	informer := dynamicinformer.NewFilteredDynamicInformer(lbc.dynClient, nginxCisConnectorGVR, lbc.controllerNamespace, lbc.resync,
+	informer := dynamicinformer.NewFilteredDynamicInformer(lbc.dynClient, ingressLinkGVR, lbc.controllerNamespace, lbc.resync,
 		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, optionsModifier)
 
 	informer.Informer().AddEventHandlerWithResyncPeriod(handlers, lbc.resync)
 
-	lbc.nginxCisConnectorInformer = informer.Informer()
-	lbc.nginxCisConnectorLister = informer.Informer().GetStore()
+	lbc.ingressLinkInformer = informer.Informer()
+	lbc.ingressLinkLister = informer.Informer().GetStore()
 }
 
 // Run starts the loadbalancer controller
@@ -576,8 +576,8 @@ func (lbc *LoadBalancerController) Run() {
 	if lbc.watchGlobalConfiguration {
 		go lbc.globalConfigurationController.Run(lbc.ctx.Done())
 	}
-	if lbc.watchNginxCisConnector {
-		go lbc.nginxCisConnectorInformer.Run(lbc.ctx.Done())
+	if lbc.watchIngressLink {
+		go lbc.ingressLinkInformer.Run(lbc.ctx.Done())
 	}
 
 	go lbc.syncQueue.Run(time.Second, lbc.ctx.Done())
@@ -768,8 +768,8 @@ func (lbc *LoadBalancerController) sync(task task) {
 		lbc.syncAppProtectLogConf(task)
 	case appProtectUserSig:
 		lbc.syncAppProtectUserSig(task)
-	case nginxCisConnector:
-		lbc.syncNginxCisConnector(task)
+	case ingressLink:
+		lbc.syncIngressLink(task)
 	}
 
 	if !lbc.isNginxReady && lbc.syncQueue.Len() == 0 {
@@ -778,36 +778,36 @@ func (lbc *LoadBalancerController) sync(task task) {
 	}
 }
 
-func (lbc *LoadBalancerController) syncNginxCisConnector(task task) {
+func (lbc *LoadBalancerController) syncIngressLink(task task) {
 	key := task.Key
-	glog.V(2).Infof("Adding, Updating or Deleting NginxCisConnector: %v", key)
+	glog.V(2).Infof("Adding, Updating or Deleting IngressLink: %v", key)
 
-	obj, exists, err := lbc.nginxCisConnectorLister.GetByKey(key)
+	obj, exists, err := lbc.ingressLinkLister.GetByKey(key)
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
 	}
 
 	if !exists {
-		// connector got removed
-		lbc.statusUpdater.ClearStatusFromNginxCisConnector()
+		// IngressLink got removed
+		lbc.statusUpdater.ClearStatusFromIngressLink()
 	} else {
-		// connector is added or updated
-		con := obj.(*unstructured.Unstructured)
+		// IngressLink is added or updated
+		link := obj.(*unstructured.Unstructured)
 
 		// spec.virtualServerAddress contains the IP of the BIG-IP device
-		ip, found, err := unstructured.NestedString(con.Object, "spec", "virtualServerAddress")
+		ip, found, err := unstructured.NestedString(link.Object, "spec", "virtualServerAddress")
 		if err != nil {
-			glog.Errorf("Failed to get virtualServerAddress from NginxCisConnector %s: %v", key, err)
-			lbc.statusUpdater.ClearStatusFromNginxCisConnector()
+			glog.Errorf("Failed to get virtualServerAddress from IngressLink %s: %v", key, err)
+			lbc.statusUpdater.ClearStatusFromIngressLink()
 		} else if !found {
-			glog.Errorf("virtualServerAddress is not found in NginxCisConnector %s", key)
-			lbc.statusUpdater.ClearStatusFromNginxCisConnector()
+			glog.Errorf("virtualServerAddress is not found in IngressLink %s", key)
+			lbc.statusUpdater.ClearStatusFromIngressLink()
 		} else if ip == "" {
-			glog.Warningf("NginxCisConnector %s has the empty virtualServerAddress field", key)
-			lbc.statusUpdater.ClearStatusFromNginxCisConnector()
+			glog.Warningf("IngressLink %s has the empty virtualServerAddress field", key)
+			lbc.statusUpdater.ClearStatusFromIngressLink()
 		} else {
-			lbc.statusUpdater.SaveStatusFromNginxCisConnector(ip)
+			lbc.statusUpdater.SaveStatusFromIngressLink(ip)
 		}
 	}
 
@@ -818,7 +818,7 @@ func (lbc *LoadBalancerController) syncNginxCisConnector(task task) {
 
 		err := lbc.statusUpdater.UpdateExternalEndpointsForResources(ingresses)
 		if err != nil {
-			glog.Errorf("Error updating ingress status in syncNginxCisConnector: %v", err)
+			glog.Errorf("Error updating ingress status in syncIngressLink: %v", err)
 		}
 	}
 
@@ -829,7 +829,7 @@ func (lbc *LoadBalancerController) syncNginxCisConnector(task task) {
 
 		err := lbc.statusUpdater.UpdateExternalEndpointsForResources(virtualServers)
 		if err != nil {
-			glog.V(3).Infof("Error updating VirtualServer/VirtualServerRoute status in syncNginxCisConnector: %v", err)
+			glog.V(3).Infof("Error updating VirtualServer/VirtualServerRoute status in syncIngressLink: %v", err)
 		}
 	}
 }

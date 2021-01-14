@@ -117,7 +117,7 @@ const (
 	appProtectPolicy
 	appProtectLogConf
 	appProtectUserSig
-	nginxCisConnector
+	ingressLink
 )
 
 // task is an element of a taskQueue
@@ -155,8 +155,8 @@ func newTask(key string, obj interface{}) (task, error) {
 			k = appProtectPolicy
 		} else if objectKind == appProtectLogConfGVK.Kind {
 			k = appProtectLogConf
-		} else if objectKind == nginxCisConnectorGVK.Kind {
-			k = nginxCisConnector
+		} else if objectKind == ingressLinkGVK.Kind {
+			k = ingressLink
 		} else if objectKind == appProtectUserSigGVK.Kind {
 			k = appProtectUserSig
 		} else {
