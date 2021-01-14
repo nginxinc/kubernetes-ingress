@@ -933,7 +933,7 @@ func TestValidateOIDCInvalid(t *testing.T) {
 				ClientSecret:  "secret",
 				Scope:         "openid",
 			},
-			msg: "ip address",
+			msg: "invalid chars in clientID",
 		},
 	}
 
