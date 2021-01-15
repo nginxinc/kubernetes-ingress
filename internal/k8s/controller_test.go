@@ -1134,6 +1134,17 @@ func TestFindPoliciesForSecret(t *testing.T) {
 			},
 		},
 	}
+	oidcPol := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "oidc-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			OIDC: &conf_v1.OIDC{
+				ClientSecret: "oidc-secret",
+			},
+		},
+	}
 
 	tests := []struct {
 		policies        []*conf_v1.Policy
@@ -1203,6 +1214,20 @@ func TestFindPoliciesForSecret(t *testing.T) {
 			secretNamespace: "default",
 			secretName:      "egress-trusted-secret",
 			expected:        []*conf_v1.Policy{egTLSPol2},
+			msg:             "Find policy in default ns, ignore other types",
+		},
+		{
+			policies:        []*conf_v1.Policy{oidcPol},
+			secretNamespace: "default",
+			secretName:      "oidc-secret",
+			expected:        []*conf_v1.Policy{oidcPol},
+			msg:             "Find policy in default ns",
+		},
+		{
+			policies:        []*conf_v1.Policy{ingTLSPol, oidcPol},
+			secretNamespace: "default",
+			secretName:      "oidc-secret",
+			expected:        []*conf_v1.Policy{oidcPol},
 			msg:             "Find policy in default ns, ignore other types",
 		},
 	}

@@ -2227,7 +2227,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					"Policy default/allow-policy is missing or invalid",
 				},
 			},
-			msg: "missing policy",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "missing policy",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2264,7 +2265,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					"AccessControl policy (or policies) with deny rules is overridden by policy (or policies) with allow rules",
 				},
 			},
-			msg: "conflicting policies",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "conflicting policies",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2336,7 +2338,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`RateLimit policy "default/rateLimit-policy2" with limit request option rejectCode=505 is overridden to rejectCode=503 by the first policy reference in this context`,
 				},
 			},
-			msg: "rate limit policy limit request option override",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "rate limit policy limit request option override",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2379,7 +2382,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`JWT policy "default/jwt-policy" references an invalid Secret: secret is invalid`,
 				},
 			},
-			msg: "jwt reference missing secret",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "jwt reference missing secret",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2421,7 +2425,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`JWT policy "default/jwt-policy" references a Secret of an incorrect type "nginx.org/ca"`,
 				},
 			},
-			msg: "jwt references wrong secret type",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "jwt references wrong secret type",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2487,7 +2492,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`Multiple jwt policies in the same context is not valid. JWT policy "default/jwt-policy2" will be ignored`,
 				},
 			},
-			msg: "multi jwt reference",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "multi jwt reference",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2528,7 +2534,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`IngressMTLS policy "default/ingress-mtls-policy" references an invalid Secret: secret is invalid`,
 				},
 			},
-			msg: "ingress mtls reference an invalid secret",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "ingress mtls reference an invalid secret",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2571,7 +2578,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`IngressMTLS policy "default/ingress-mtls-policy" references a Secret of an incorrect type "kubernetes.io/tls"`,
 				},
 			},
-			msg: "ingress mtls references wrong secret type",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "ingress mtls references wrong secret type",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2628,7 +2636,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`Multiple ingressMTLS policies are not allowed. IngressMTLS policy "default/ingress-mtls-policy2" will be ignored`,
 				},
 			},
-			msg: "multi ingress mtls",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "multi ingress mtls",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2672,7 +2681,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`IngressMTLS policy is not allowed in the route context`,
 				},
 			},
-			msg: "ingress mtls in the wrong context",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "ingress mtls in the wrong context",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2716,7 +2726,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`TLS configuration needed for IngressMTLS policy`,
 				},
 			},
-			msg: "ingress mtls missing TLS config",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "ingress mtls missing TLS config",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2781,7 +2792,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`Multiple egressMTLS policies in the same context is not valid. EgressMTLS policy "default/egress-mtls-policy2" will be ignored`,
 				},
 			},
-			msg: "multi egress mtls",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "multi egress mtls",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2825,7 +2837,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`EgressMTLS policy "default/egress-mtls-policy" references an invalid Secret: secret is invalid`,
 				},
 			},
-			msg: "egress mtls referencing an invalid CA secret",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "egress mtls referencing an invalid CA secret",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2868,7 +2881,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`EgressMTLS policy "default/egress-mtls-policy" references a Secret of an incorrect type "nginx.org/ca"`,
 				},
 			},
-			msg: "egress mtls referencing wrong secret type",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "egress mtls referencing wrong secret type",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2911,7 +2925,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`EgressMTLS policy "default/egress-mtls-policy" references a Secret of an incorrect type "kubernetes.io/tls"`,
 				},
 			},
-			msg: "egress trusted secret referencing wrong secret type",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "egress trusted secret referencing wrong secret type",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2955,7 +2970,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`EgressMTLS policy "default/egress-mtls-policy" references an invalid Secret: secret is invalid`,
 				},
 			},
-			msg: "egress mtls referencing missing tls secret",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "egress mtls referencing missing tls secret",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -2998,7 +3014,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`OIDC policy "default/oidc-policy" references an invalid Secret: secret is invalid`,
 				},
 			},
-			msg: "oidc referencing missing oidc secret",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "oidc referencing missing oidc secret",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -3043,7 +3060,8 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`OIDC policy "default/oidc-policy" references a Secret of an incorrect type "kubernetes.io/tls"`,
 				},
 			},
-			msg: "oidc secret referencing wrong secret type",
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "oidc secret referencing wrong secret type",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -3140,13 +3158,11 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				test.msg,
 			)
 		}
-		if vsc.oidcPolCfg.oidc != nil {
-			if diff := cmp.Diff(test.expectedOidc.oidc, vsc.oidcPolCfg.oidc); diff != "" {
-				t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
-			}
-			if diff := cmp.Diff(test.expectedOidc.key, vsc.oidcPolCfg.key); diff != "" {
-				t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
-			}
+		if diff := cmp.Diff(test.expectedOidc.oidc, vsc.oidcPolCfg.oidc); diff != "" {
+			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		}
+		if diff := cmp.Diff(test.expectedOidc.key, vsc.oidcPolCfg.key); diff != "" {
+			t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }
