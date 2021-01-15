@@ -1,32 +1,36 @@
 # OIDC
 
-In this example, we deploy keycloak and a web application configure load balancing for it via a VirtualServer, and apply an OpenID Connect policy.
+In this example, we deploy a web application, configure load balancing for it via a VirtualServer, and protect the application using an OpenID Connect policy and [Keycloack](https://www.keycloak.org/).
 
 ## Prerequisites
 
-1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller.
-1. Save the public IP address of the Ingress Controller into `/etc/hosts`:
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller. This example requires that the HTTPS port of the Ingress Controller is `443`.
+1. Save the public IP address of the Ingress Controller into `/etc/hosts` of your machine:
     ```
     ...
 
     XXX.YYY.ZZZ.III webapp.example.com
     XXX.YYY.ZZZ.III keycloak.example.com
     ```
-1. Save the HTTPS port of the Ingress Controller into a shell variable:
-    ```
-    $ IC_HTTPS_PORT=<port number>
-    ```
+    Here `webapp.example.com` is the domain for the web application and `keycloak.example.com` is the domain for Keycloack.
 
-## Step 1 - Deploy a Web Application
+## Step 1 - Deploy a TLS Secret
+
+Create a secret with the TLS certificate and key that will be used for TLS termination of the web application and Keycloak:
+```
+$ kubectl apply -f tls-secret.yaml
+```
+
+## Step 2 - Deploy a Web Application
 
 Create the application deployment and service:
 ```
 $ kubectl apply -f webapp.yaml
 ```
 
-## Step 2 - Deploy Keycloak
+## Step 3 - Deploy Keycloak
 
-1. Create keycloak deployment and service:
+1. Create the Keycloak deployment and service:
     ```
     $ kubectl apply -f keycloak.yaml
     ```
@@ -35,68 +39,73 @@ $ kubectl apply -f webapp.yaml
     $ kubectl apply -f virtual-server-idp.yaml
     ```
 
-To set up Keycloak, you can either follow the steps in the "Configuring Keycloak" section of the documentation [here](https://docs.nginx.com/nginx/deployment-guides/single-sign-on/keycloak/#configuring-keycloak) or execute the commands [here](./keycloak_setup.md).
+## Step 4 - Configure Keycloak
+
+To set up Keycloak:
+1. Follow the steps in the "Configuring Keycloak" section of the documentation [here](https://docs.nginx.com/nginx/deployment-guides/single-sign-on/keycloak/#configuring-keycloak):
+    1. To connect to Keycloak, use `https://keycloak.example.com`.
+    1. Make sure to save the client secret for NGINX-Plus client to the `SECRET` shell variable:
+        ```
+        SECRET=value
+        ```
+1. Alternatively, execute the commands [here](./keycloak_setup.md).
 
 
-## Step 3 - Deploy the Client Secret
+## Step 5 - Deploy the Client Secret
 
-1. Edit `client-secret.yaml` with your secret.
+1. Encode the secret, obtained in the previous step:
+    ```
+    $ echo -n $SECRET | base64
+    ```
 
-1. Create a secret with the name `oidc-secret` that will be used for OIDC validation:
-```
-$ kubectl apply -f client-secret.yaml
-```
+1. Edit `client-secret.yaml`, replacing `<insert-secret-here> ` with the encoded secret.
 
-## Step 4 - Deploy the OIDC Policy
+1. Create a secret with the name `oidc-secret` that will be used by the OIDC policy:
+    ```
+    $ kubectl apply -f client-secret.yaml
+    ```
 
-1. Update the URL `authEndpoint` in `oidc.yaml` with the appropriate address and port. If you set up `/etc/hosts/` with `keycloak.example.com` and `IC_HTTPS_PORT` is 443, you don't need to change anything.
+## Step 6 - Deploy the OIDC Policy
 
-1. Create a policy with the name `oidc-policy` that references the secret from the previous step:
+Create a policy with the name `oidc-policy` that references the secret from the previous step:
 ```
 $ kubectl apply -f oidc.yaml
 ```
 
-## Step 5 - Deploy the Service for the Ingress Controller and update ConfigMap
-1. Deploy the service for Ingress Controller.
+## Step 7 - Configure NGINX Plus Zone Synchronization and Resolver
+
+In this step we configure:
+* [Zone Synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). For the OIDC feature to work when you have two or more replicas of the Ingress Controller, it is necessary to enable zone synchronization among the replicas.
+* The resolver, so that an NGINX Plus can discover the other Ingress Controller replicas and resolve the Keycloak endpoint.
+
+Steps:
+1. Deploy a headless service for the Ingress Controller.
     ```
-    $ kubectl apply -f service/nodeport.yaml
+    $ kubectl apply -f nginx-ingress-headless.yaml
     ```
-1. Update the ConfigMap with the config required for OIDC.
-    ```yaml
-    kind: ConfigMap
-    apiVersion: v1
-    metadata:
-    name: nginx-config
-    namespace: nginx-ingress
-    data:
-        stream-snippets: |
-            resolver 10.96.0.10 valid=5s;
-            server {
-                listen 12345;
-                zone_sync;
-                zone_sync_server nginx-ingress.nginx-ingress.svc.cluster.local:12345 resolve;
-            }
-        resolver: 10.96.0.10
-        resolver-valid: 5s
+1. Get the cluster IP of the KubeDNS service:
     ```
-1. Apply the ConfigMap.
+    kubectl -n kube-system get svc kube-dns
+    NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)         AGE
+    kube-dns   ClusterIP   10.4.0.10    <none>        53/UDP,53/TCP   9d
+    ```
+1. Edit the ConfigMap `nginx-config.yaml`, replacing the `<kube-dns-ip` with the IP obtained in the previous step.
+1. Apply the ConfigMap:
    ```
-   $ kubectl apply -f common/nginx-config.yaml
+   $ kubectl apply -f nginx-config.yaml
    ```
 
-## Step 6 - Configure Load Balancing and TLS Termination
-1. Create the secret with the TLS certificate and key:
-    ```
-    $ kubectl create -f tls-secret.yaml
-    ```
+## Step 8 - Configure Load Balancing
 
-2. Create a VirtualServer resource for the web application:
-    ```
-    $ kubectl apply -f virtual-server.yaml
-    ```
+Create a VirtualServer resource for the web application:
+```
+$ kubectl apply -f virtual-server.yaml
+```
 
-Note that the VirtualServer references the policy `oidc-policy` created in Step 4.
+Note that the VirtualServer references the policy `oidc-policy` created in Step 6.
 
-## Step 7 - Test the Configuration
+## Step 9 - Test the Configuration
 
-Open a web browser and navigate to the URL of the Ingress Controller: `https://webapp.example.com`. You can now log in with the username and password for the user you created in Keycloak, `nginx-user` and `test`.
+1. Open a web browser and navigate to the URL of the web application: `https://webapp.example.com`. You will be redirected to Keycloak.
+1. Log in with the username and password for the user you created in Keycloak, `nginx-user` and `test`.
+1. Once logged in, you will be redirected to the web application and get a response from it.

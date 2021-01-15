@@ -6,6 +6,8 @@ spec:
   host: keycloak.example.com
   tls:
     secret: tls-secret
+    redirect:
+      enable: true
   upstreams:
     - name: keycloak
       service: keycloak

@@ -1,0 +1,15 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  stream-snippets: |
+    resolver <kube-dns-ip> valid=5s;
+    server {
+        listen 12345;
+        zone_sync;
+        zone_sync_server nginx-ingress-headless.nginx-ingress.svc.cluster.local:12345 resolve;
+    }
+  resolver-addresses: <kube-dns-ip>
+  resolver-valid: 5s

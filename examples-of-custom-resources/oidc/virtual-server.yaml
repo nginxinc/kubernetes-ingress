@@ -6,6 +6,8 @@ spec:
   host: webapp.example.com
   tls:
     secret: tls-secret
+    redirect:
+      enable: true
   upstreams:
     - name: webapp
       service: webapp-svc
