@@ -23,9 +23,9 @@ $ kubectl apply -f webapp.yaml
 ## Step 2 - Deploy Keycloak
 
 1. Create keycloak deployment and service:
-```
-$ kubectl apply -f keycloak.yaml
-```
+    ```
+    $ kubectl apply -f keycloak.yaml
+    ```
 1. Create a VirtualServer resource for Keycloak:
     ```
     $ kubectl apply -f virtual-server-idp.yaml
@@ -95,4 +95,4 @@ Note that the VirtualServer references the policy `oidc-policy` created in Step 
 
 ## Step 5 - Test the Configuration
 
-Open a web browser and navigate to the URL of the Ingress Controller
+Open a web browser and navigate to the URL of the Ingress Controller: `https://webapp.example.com`. You can now log in with the username and password for the user you created in Keycloak, `nginx-user` and `test`.
