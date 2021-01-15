@@ -12,6 +12,10 @@ In this example, we deploy keycloak and a web application configure load balanci
     XXX.YYY.ZZZ.III webapp.example.com
     XXX.YYY.ZZZ.III keycloak.example.com
     ```
+1. Save the HTTPS port of the Ingress Controller into a shell variable:
+    ```
+    $ IC_HTTPS_PORT=<port number>
+    ```
 
 ## Step 1 - Deploy a Web Application
 
@@ -45,7 +49,7 @@ $ kubectl apply -f client-secret.yaml
 
 ## Step 4 - Deploy the OIDC Policy
 
-1. Modify the URL `authEndpoint` in `oidc.yaml` with the public IP address or DNS of keycloak.
+1. Update the URL `authEndpoint` in `oidc.yaml` with the appropriate address and port. If you set up `/etc/hosts/` with `keycloak.example.com` and `IC_HTTPS_PORT` is 443, you don't need to change anything.
 
 1. Create a policy with the name `oidc-policy` that references the secret from the previous step:
 ```
@@ -93,6 +97,6 @@ $ kubectl apply -f oidc.yaml
 
 Note that the VirtualServer references the policy `oidc-policy` created in Step 4.
 
-## Step 5 - Test the Configuration
+## Step 7 - Test the Configuration
 
 Open a web browser and navigate to the URL of the Ingress Controller: `https://webapp.example.com`. You can now log in with the username and password for the user you created in Keycloak, `nginx-user` and `test`.

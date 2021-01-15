@@ -6,7 +6,7 @@ If you changed username and password for keycloak in `keycloak.yaml`, modify the
 
 1. Save the address of Keycloak into a shell variable:
     ```console
-    $ KEYCLOAK_ADDRESS=keycloak.example.com
+    $ KEYCLOAK_ADDRESS=keycloak.example.com:$IC_HTTPS_PORT
     ```
 1. Retrieve the access token and store into a shell variable:
     ```console
