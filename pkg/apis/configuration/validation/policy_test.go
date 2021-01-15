@@ -900,8 +900,49 @@ func TestValidateOIDCInvalid(t *testing.T) {
 			oidc: &v1.OIDC{
 				RedirectURI: "/foo",
 			},
-			msg: "missing required field",
+			msg: "missing required field auth",
 		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint: "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/authorize",
+				JWKSURI:      "https://login.microsoftonline.com/dd-fff-eee-1234-9be/discovery/v2.0/keys",
+				ClientID:     "ff",
+				ClientSecret: "ff",
+				Scope:        "openid+profile",
+			},
+			msg: "missing required field token",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/authorize",
+				TokenEndpoint: "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/token",
+				ClientID:      "ff",
+				ClientSecret:  "ff",
+				Scope:         "openid+profile",
+			},
+			msg: "missing required field jwk",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/authorize",
+				TokenEndpoint: "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/token",
+				JWKSURI:       "https://login.microsoftonline.com/dd-fff-eee-1234-9be/discovery/v2.0/keys",
+				ClientSecret:  "ff",
+				Scope:         "openid+profile",
+			},
+			msg: "missing required field clientid",
+		},
+		{
+			oidc: &v1.OIDC{
+				AuthEndpoint:  "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/authorize",
+				TokenEndpoint: "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/token",
+				JWKSURI:       "https://login.microsoftonline.com/dd-fff-eee-1234-9be/discovery/v2.0/keys",
+				ClientID:      "ff",
+				Scope:         "openid+profile",
+			},
+			msg: "missing required field client secret",
+		},
+
 		{
 			oidc: &v1.OIDC{
 				AuthEndpoint:  "https://login.microsoftonline.com/dd-fff-eee-1234-9be/oauth2/v2.0/authorize",

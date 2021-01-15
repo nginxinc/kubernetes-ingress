@@ -5,13 +5,12 @@ In this example, we deploy keycloak and a web application configure load balanci
 ## Prerequisites
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller.
-1. Save the public IP address of the Ingress Controller into a shell variable:
+1. Save the public IP address of the Ingress Controller into `/etc/hosts`:
     ```
-    $ IC_IP=XXX.YYY.ZZZ.III
-    ```
-1. Save the HTTP port of the Ingress Controller into a shell variable:
-    ```
-    $ IC_HTTPS_PORT=<port number>
+    ...
+
+    XXX.YYY.ZZZ.III webapp.example.com
+    XXX.YYY.ZZZ.III keycloak.example.com
     ```
 
 ## Step 1 - Deploy a Web Application
@@ -23,10 +22,14 @@ $ kubectl apply -f webapp.yaml
 
 ## Step 2 - Deploy Keycloak
 
-Create keycloak deployment and service:
+1. Create keycloak deployment and service:
 ```
 $ kubectl apply -f keycloak.yaml
 ```
+1. Create a VirtualServer resource for Keycloak:
+    ```
+    $ kubectl apply -f virtual-server-idp.yaml
+    ```
 
 To set up Keycloak, you can either follow the steps in the "Configuring Keycloak" section of the documentation [here](https://docs.nginx.com/nginx/deployment-guides/single-sign-on/keycloak/#configuring-keycloak) or execute the commands [here](./keycloak_setup.md).
 
@@ -50,20 +53,27 @@ $ kubectl apply -f oidc.yaml
 ```
 
 ## Step 5 - Deploy the Service for the Ingress Controller and update ConfigMap
-1. Deploy the service.
+1. Deploy the service for Ingress Controller.
     ```
     $ kubectl apply -f service/nodeport.yaml
     ```
 1. Update the ConfigMap with the config required for OIDC.
-    ```
+    ```yaml
+    kind: ConfigMap
+    apiVersion: v1
+    metadata:
+    name: nginx-config
+    namespace: nginx-ingress
     data:
         stream-snippets: |
             resolver 10.96.0.10 valid=5s;
             server {
                 listen 12345;
                 zone_sync;
-                zone_sync_server nginx-ic-svc.nginx-ingress.svc.cluster.local:12345 resolve;
+                zone_sync_server nginx-ingress.nginx-ingress.svc.cluster.local:12345 resolve;
             }
+        resolver: 10.96.0.10
+        resolver-valid: 5s
     ```
 1. Apply the ConfigMap.
    ```

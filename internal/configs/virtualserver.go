@@ -394,7 +394,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			vsName:         vsEx.VirtualServer.Name,
 		}
 		routePoliciesCfg := vsc.generatePolicies(ownerDetails, r.Policies, vsEx.Policies, routeContext, policyOpts)
-		if policiesCfg.OIDC != nil {
+		if policiesCfg.OIDC {
 			routePoliciesCfg.OIDC = policiesCfg.OIDC
 		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
@@ -497,7 +497,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 				context = subRouteContext
 			}
 			routePoliciesCfg := vsc.generatePolicies(ownerDetails, policyRefs, vsEx.Policies, context, policyOpts)
-			if policiesCfg.OIDC != nil {
+			if policiesCfg.OIDC {
 				routePoliciesCfg.OIDC = policiesCfg.OIDC
 			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
@@ -611,7 +611,7 @@ type policiesCfg struct {
 	JWTAuth         *version2.JWTAuth
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
-	OIDC            *bool
+	OIDC            bool
 	ErrorReturn     *version2.Return
 }
 
@@ -862,7 +862,7 @@ func (p *policiesCfg) addOIDCConfig(
 	oidcPolCfg *oidcPolicyCfg,
 ) *validationResults {
 	res := newValidationResults()
-	if p.OIDC != nil {
+	if p.OIDC {
 		res.addWarningf(
 			"Multiple oidc policies in the same context is not valid. OIDC policy %q will be ignored",
 			polKey,
@@ -914,6 +914,10 @@ func (p *policiesCfg) addOIDCConfig(
 		if redirectURI == "" {
 			redirectURI = "/_codexch"
 		}
+		scope := oidc.Scope
+		if scope == "" {
+			scope = "openid"
+		}
 
 		oidcPolCfg.oidc = &version2.OIDC{
 			AuthEndpoint:  oidc.AuthEndpoint,
@@ -921,13 +925,12 @@ func (p *policiesCfg) addOIDCConfig(
 			JwksURI:       oidc.JWKSURI,
 			ClientID:      oidc.ClientID,
 			ClientSecret:  string(clientSecret),
-			Scope:         oidc.Scope,
+			Scope:         scope,
 			RedirectURI:   redirectURI,
 		}
 	}
 
-	trueVal := true
-	p.OIDC = &trueVal
+	p.OIDC = true
 
 	return res
 }

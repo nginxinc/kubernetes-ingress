@@ -150,7 +150,7 @@ type Location struct {
 	LimitReqs                []LimitReq
 	JWTAuth                  *JWTAuth
 	EgressMTLS               *EgressMTLS
-	OIDC                     *bool
+	OIDC                     bool
 	PoliciesErrorReturn      *Return
 	ServiceName              string
 	IsVSR                    bool

@@ -98,7 +98,7 @@ func ValidateOIDCSecret(secret *api_v1.Secret) error {
 	}
 
 	if msg, ok := isValidClientSecretValue(string(clientSecret)); !ok {
-		return fmt.Errorf("OIDC client secret %v is invalid: %s", clientSecret, msg)
+		return fmt.Errorf("OIDC client secret is invalid: %s", msg)
 	}
 	return nil
 }

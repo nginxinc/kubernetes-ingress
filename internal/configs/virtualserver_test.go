@@ -1860,7 +1860,6 @@ func TestGeneratePolicies(t *testing.T) {
 						"client-secret": []byte("super_secret_123"),
 					},
 				},
-				Path: "/etc/nginx/secrets/default-oidc-secret",
 			},
 		},
 	}
@@ -2168,7 +2167,7 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			expected: policiesCfg{
-				OIDC: createPointerFromBool(true),
+				OIDC: true,
 			},
 			msg: "oidc reference",
 		},
@@ -2206,6 +2205,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 		context           string
 		expected          policiesCfg
 		expectedWarnings  Warnings
+		expectedOidc      *version2.OIDC
 		msg               string
 	}{
 		{
@@ -2957,6 +2957,169 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			msg: "egress mtls referencing missing tls secret",
 		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "oidc-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/oidc-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						OIDC: &conf_v1.OIDC{
+							ClientSecret: "oidc-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/oidc-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeOIDC,
+						},
+						Error: errors.New("secret is invalid"),
+					},
+				},
+			},
+			context: "route",
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`OIDC policy "default/oidc-policy" references an invalid Secret: secret is invalid`,
+				},
+			},
+			msg: "oidc referencing missing oidc secret",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "oidc-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/oidc-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						OIDC: &conf_v1.OIDC{
+							ClientSecret:  "oidc-secret",
+							AuthEndpoint:  "http://foo.com/bar",
+							TokenEndpoint: "http://foo.com/bar",
+							JWKSURI:       "http://foo.com/bar",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/oidc-secret": {
+						Secret: &api_v1.Secret{
+							Type: api_v1.SecretTypeTLS,
+						},
+					},
+				},
+			},
+			context: "spec",
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`OIDC policy "default/oidc-policy" references a Secret of an incorrect type "kubernetes.io/tls"`,
+				},
+			},
+			msg: "oidc secret referencing wrong secret type",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "oidc-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "oidc-policy2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/oidc-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						OIDC: &conf_v1.OIDC{
+							ClientSecret:  "oidc-secret",
+							AuthEndpoint:  "https://foo.com/auth",
+							TokenEndpoint: "https://foo.com/token",
+							JWKSURI:       "https://foo.com/certs",
+							ClientID:      "foo",
+						},
+					},
+				},
+				"default/oidc-policy2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						OIDC: &conf_v1.OIDC{
+							ClientSecret:  "oidc-secret2",
+							AuthEndpoint:  "https://bar.com/auth",
+							TokenEndpoint: "https://bar.com/token",
+							JWKSURI:       "https://bar.com/certs",
+							ClientID:      "bar",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/oidc-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeOIDC,
+							Data: map[string][]byte{
+								"client-secret": []byte("super_secret_123"),
+							},
+						},
+					},
+				},
+			},
+			context: "route",
+			expected: policiesCfg{
+				OIDC: true,
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Multiple oidc policies in the same context is not valid. OIDC policy "default/oidc-policy2" will be ignored`,
+				},
+			},
+			expectedOidc: &version2.OIDC{
+				AuthEndpoint:  "https://foo.com/auth",
+				TokenEndpoint: "https://foo.com/token",
+				JwksURI:       "https://foo.com/certs",
+				ClientID:      "foo",
+				ClientSecret:  "super_secret_123",
+				RedirectURI:   "/_codexch",
+				Scope:         "openid",
+			},
+			msg: "multi oidc",
+		},
 	}
 
 	for _, test := range tests {
@@ -2973,6 +3136,11 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				test.expectedWarnings,
 				test.msg,
 			)
+		}
+		if vsc.oidcPolCfg.oidc != nil {
+			if diff := cmp.Diff(test.expectedOidc, vsc.oidcPolCfg.oidc); diff != "" {
+				t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			}
 		}
 	}
 }

@@ -1684,3 +1684,126 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 		}
 	}
 }
+
+func TestAddOidcSecret(t *testing.T) {
+	invalidErr := errors.New("invalid")
+	validSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-oidc-secret",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{
+			"client-secret": nil,
+		},
+		Type: secrets.SecretTypeOIDC,
+	}
+	invalidSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "invalid-oidc-secret",
+			Namespace: "default",
+		},
+		Type: secrets.SecretTypeOIDC,
+	}
+
+	tests := []struct {
+		policies           []*conf_v1.Policy
+		expectedSecretRefs map[string]*secrets.SecretReference
+		wantErr            bool
+		msg                string
+	}{
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						OIDC: &conf_v1.OIDC{
+							ClientSecret: "valid-oidc-secret",
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{
+				"default/valid-oidc-secret": {
+					Secret: validSecret,
+				},
+			},
+			wantErr: false,
+			msg:     "test getting valid secret",
+		},
+		{
+			policies:           []*conf_v1.Policy{},
+			expectedSecretRefs: map[string]*secrets.SecretReference{},
+			wantErr:            false,
+			msg:                "test getting valid secret with no policy",
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
+							Allow: []string{"127.0.0.1"},
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{},
+			wantErr:            false,
+			msg:                "test getting valid secret with wrong policy",
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						OIDC: &conf_v1.OIDC{
+							ClientSecret: "invalid-oidc-secret",
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{
+				"default/invalid-oidc-secret": {
+					Secret: invalidSecret,
+					Error:  invalidErr,
+				},
+			},
+			wantErr: true,
+			msg:     "test getting invalid secret",
+		},
+	}
+
+	lbc := LoadBalancerController{
+		secretStore: secrets.NewFakeSecretsStore(map[string]*secrets.SecretReference{
+			"default/valid-oidc-secret": {
+				Secret: validSecret,
+			},
+			"default/invalid-oidc-secret": {
+				Secret: invalidSecret,
+				Error:  invalidErr,
+			},
+		}),
+	}
+
+	for _, test := range tests {
+		result := make(map[string]*secrets.SecretReference)
+
+		err := lbc.addOIDCSecretRefs(result, test.policies)
+		if (err != nil) != test.wantErr {
+			t.Errorf("addOIDCSecretRefs() returned %v, for the case of %v", err, test.msg)
+		}
+
+		if diff := cmp.Diff(test.expectedSecretRefs, result, cmp.Comparer(errorComparer)); diff != "" {
+			t.Errorf("addOIDCSecretRefs() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		}
+	}
+}
