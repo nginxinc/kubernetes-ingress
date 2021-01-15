@@ -2205,7 +2205,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 		context           string
 		expected          policiesCfg
 		expectedWarnings  Warnings
-		expectedOidc      *version2.OIDC
+		expectedOidc      *oidcPolicyCfg
 		msg               string
 	}{
 		{
@@ -3109,14 +3109,17 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					`Multiple oidc policies in the same context is not valid. OIDC policy "default/oidc-policy2" will be ignored`,
 				},
 			},
-			expectedOidc: &version2.OIDC{
-				AuthEndpoint:  "https://foo.com/auth",
-				TokenEndpoint: "https://foo.com/token",
-				JwksURI:       "https://foo.com/certs",
-				ClientID:      "foo",
-				ClientSecret:  "super_secret_123",
-				RedirectURI:   "/_codexch",
-				Scope:         "openid",
+			expectedOidc: &oidcPolicyCfg{
+				&version2.OIDC{
+					AuthEndpoint:  "https://foo.com/auth",
+					TokenEndpoint: "https://foo.com/token",
+					JwksURI:       "https://foo.com/certs",
+					ClientID:      "foo",
+					ClientSecret:  "super_secret_123",
+					RedirectURI:   "/_codexch",
+					Scope:         "openid",
+				},
+				"default/oidc-policy",
 			},
 			msg: "multi oidc",
 		},
@@ -3138,7 +3141,10 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			)
 		}
 		if vsc.oidcPolCfg.oidc != nil {
-			if diff := cmp.Diff(test.expectedOidc, vsc.oidcPolCfg.oidc); diff != "" {
+			if diff := cmp.Diff(test.expectedOidc.oidc, vsc.oidcPolCfg.oidc); diff != "" {
+				t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			}
+			if diff := cmp.Diff(test.expectedOidc.key, vsc.oidcPolCfg.key); diff != "" {
 				t.Errorf("generatePolicies() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 			}
 		}

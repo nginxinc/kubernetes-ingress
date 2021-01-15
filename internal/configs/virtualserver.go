@@ -928,6 +928,7 @@ func (p *policiesCfg) addOIDCConfig(
 			Scope:         scope,
 			RedirectURI:   redirectURI,
 		}
+		oidcPolCfg.key = polKey
 	}
 
 	p.OIDC = true
