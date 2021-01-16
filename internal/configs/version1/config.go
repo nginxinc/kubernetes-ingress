@@ -145,6 +145,7 @@ type Location struct {
 type MainConfig struct {
 	AccessLogOff                       bool
 	DefaultServerAccessLogOff          bool
+	DefaultServerReturn                string
 	ErrorLogLevel                      string
 	HealthStatus                       bool
 	HealthStatusURI                    string

@@ -114,6 +114,10 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - Enables or disables the `real_ip_recursive <https://nginx.org/en/docs/http/ngx_http_realip_module.html#real_ip_recursive>`_ directive.
      - ``False``
      - 
+   * - ``default-server-return``
+     - Configures the `return <https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return>`_  directive in the default server, which handles a client request if none of the hosts of Ingress or VirtualServer resources match. The default value configures NGINX to return a 404 error page. You can configure a fixed response or a redirect. For example,  ``default-server-return: 302 https://nginx.org`` will redirect a client to https://nginx.org.
+     - ``404``
+     -
    * - ``server-tokens``
      - Enables or disables the `server_tokens <https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens>`_ directive. Additionally, with the NGINX Plus, you can specify a custom string value, including the empty string value, which disables the emission of the “Server” field.
      - ``True``

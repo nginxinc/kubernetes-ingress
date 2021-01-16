@@ -246,6 +246,10 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool) *Con
 		}
 	}
 
+	if defaultServerReturn, exists := cfgm.Data["default-server-return"]; exists {
+		cfgParams.DefaultServerReturn = defaultServerReturn
+	}
+
 	if proxyBuffering, exists, err := GetMapKeyAsBool(cfgm.Data, "proxy-buffering", cfgm); exists {
 		if err != nil {
 			glog.Error(err)
@@ -497,6 +501,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 	nginxCfg := &version1.MainConfig{
 		AccessLogOff:                       config.MainAccessLogOff,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,
+		DefaultServerReturn:                config.DefaultServerReturn,
 		ErrorLogLevel:                      config.MainErrorLogLevel,
 		HealthStatus:                       staticCfgParams.HealthStatus,
 		HealthStatusURI:                    staticCfgParams.HealthStatusURI,

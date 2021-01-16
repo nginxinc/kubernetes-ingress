@@ -7,6 +7,7 @@ import conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configurat
 type ConfigParams struct {
 	ClientMaxBodySize                      string
 	DefaultServerAccessLogOff              bool
+	DefaultServerReturn                    string
 	FailTimeout                            string
 	HealthCheckEnabled                     bool
 	HealthCheckMandatory                   bool
@@ -131,6 +132,7 @@ type Listener struct {
 // NewDefaultConfigParams creates a ConfigParams with default values.
 func NewDefaultConfigParams() *ConfigParams {
 	return &ConfigParams{
+		DefaultServerReturn:           "404",
 		ServerTokens:                  "on",
 		ProxyConnectTimeout:           "60s",
 		ProxyReadTimeout:              "60s",

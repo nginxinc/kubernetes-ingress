@@ -148,7 +148,7 @@ http {
         {{end}}
 
         location / {
-           return 404;
+            return {{.DefaultServerReturn}};
         }
     }
 
