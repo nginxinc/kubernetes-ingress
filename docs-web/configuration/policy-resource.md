@@ -31,14 +31,14 @@ This document is the reference documentation for the Policy resource. An example
 
 ## Prerequisites
 
-Policies work together with [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/), which you need to create separately. 
+Policies work together with [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/), which you need to create separately.
 
 ## Policy Specification
 
 Below is an example of a policy that allows access for clients from the subnet `10.0.0.0/8` and denies access for any other clients:
 ```yaml
 apiVersion: k8s.nginx.org/v1
-kind: Policy 
+kind: Policy
 metadata:
   name: allow-localhost
 spec:
@@ -83,7 +83,7 @@ spec:
 
 The access control policy configures NGINX to deny or allow requests from clients with the specified IP addresses/subnets.
 
-For example, the following policy allows access for clients from the subnet `10.0.0.0/8` and denies access for any other clients: 
+For example, the following policy allows access for clients from the subnet `10.0.0.0/8` and denies access for any other clients:
 ```yaml
 accessControl:
   allow:
@@ -126,9 +126,9 @@ policies:
 - name: allow-policy-one
 - name: allow-policy-two
 ```
-When you reference more than one access control policy, the Ingress Controller will merge the contents into a single allow list or a single deny list.  
+When you reference more than one access control policy, the Ingress Controller will merge the contents into a single allow list or a single deny list.
 
-Referencing both allow and deny policies, as shown in the example below, is not supported. If both allow and deny lists are referenced, the Ingress Controller uses just the allow list policies. 
+Referencing both allow and deny policies, as shown in the example below, is not supported. If both allow and deny lists are referenced, the Ingress Controller uses just the allow list policies.
 ```yaml
 policies:
 - name: deny-policy
@@ -233,15 +233,15 @@ action:
     upstream: webapp
     requestHeaders:
       set:
-      - name: user 
+      - name: user
         value: ${jwt_claim_user}
       - name: alg
-        value: ${jwt_header_alg} 
+        value: ${jwt_header_alg}
 ```
-We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of two headers that NGINX will pass to the upstream servers. 
+We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of two headers that NGINX will pass to the upstream servers.
 
-The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For other claims, use `${jwt_claim_name}`, where `name` is the name of the claim. Note that nested claims and claims that include a period (`.`) are not supported. Similarly, use `${jwt_header_name}` where `name` is the name of a header. In our example, we use the `alg` header. 
- 
+The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For other claims, use `${jwt_claim_name}`, where `name` is the name of the claim. Note that nested claims and claims that include a period (`.`) are not supported. Similarly, use `${jwt_header_name}` where `name` is the name of a header. In our example, we use the `alg` header.
+
 
 > Note: The feature is implemented using the NGINX Plus [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
 
@@ -307,7 +307,7 @@ action:
       - name: client-cert-subj-dn
         value: ${ssl_client_s_dn} # subject DN
       - name: client-cert
-        value: ${ssl_client_escaped_cert} # client certificate in the PEM format (urlencoded) 
+        value: ${ssl_client_escaped_cert} # client certificate in the PEM format (urlencoded)
 ```
 We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of the two headers that NGINX will pass to the upstream servers. See the [list of embedded variables](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#variables) that are supported by the `ngx_http_ssl_module`, which you can use to pass the client certificate details.
 
@@ -419,6 +419,86 @@ policies:
 ```
 In this example the Ingress Controller will use the configuration from the first policy reference `egress-mtls-policy-one`, and ignores `egress-mtls-policy-two`.
 
+### OIDC
+
+> **Feature Status**: OIDC is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview status, we might introduce some backward-incompatible changes to the resource specification in the next releases. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+
+#### Prerequisites
+
+For the OIDC feature to work it is necessary to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/), otherwise NGINX Plus will fail to reload. For an example of the necessary configuration see the documentation [here](https://github.com/nginxinc/kubernetes-ingress/blob/master/examples-of-custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+
+> ***Note***: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
+
+#### Limitations
+
+The OIDC policy defines a few internal locations that can't be customized: `/_jwks_uri`, `/_token`, `/_refresh`, `/_id_token_validation`, `/logout`, `/_logout`, `@do_oidc_flow` and `@oidc_error`. In addition, as explained below `/_codexch` is the default value for redirect URI, but can be customized. Specifying one of these locations as route in the VirtualServer will result in a collision and NGINX Plus will fail to reload.
+
+
+The OIDC policy configures NGINX Plus as relying party for OpenID Connect authentication.
+
+For example, the following policy will use `nginx-plus` and `oidc-secret` to authenticate with the OpenID Connect provider `https://idp.example.com`:
+```yaml
+spec:
+  oidc:
+    clientID: nginx-plus
+    clientSecret: oidc-secret
+    authEndpoint: https://idp.example.com/openid-connect/auth
+    tokenEndpoint: https://idp.example.com/openid-connect/token
+    jwksURI: https://idp.example.com/openid-connect/certs
+```
+
+> Note: The feature is implemented using the [reference implementation](https://github.com/nginxinc/nginx-openid-connect/) of NGINX Plus as relying party for OpenID Connect authentication.
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``clientID``
+     - The client ID provided by your OpenID Connect provider.
+     - ``string``
+     - Yes
+   * - ``clientSecret``
+     - The name of the Kubernetes secret that stores the client secret provided by your OpenID Connect provider. It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/oidc``, and the secret under the key ``client-secret``, otherwise the secret will be rejected as invalid.
+     - ``string``
+     - Yes
+   * - ``authEndpoint``
+     - URL for the authorization endpoint provided by your OpenID Connect provider.
+     - ``string``
+     - Yes
+   * - ``tokenEndpoint``
+     - URL for the token endpoint provided by your OpenID Connect provider.
+     - ``string``
+     - Yes
+   * - ``jwksURI``
+     - URL for the JSON Web Key Set (JWK) document provided by your OpenID Connect provider.
+     - ``string``
+     - Yes
+   * - ``scope``
+     - List of OpenID Connect scopes. Possible values are ``openid``, ``profile``, ``email``, ``address` and ``phone``. The scope ``openid`` always needs to be present and others can be added concatenating them with a ``+`` sign, for example ``openid+profile+email``. The default is ``openid``.
+     - ``string``
+     - No
+   * - ``redirectURI``
+     - Allows overriding the default redirect URI. The default is ``/_codexch``.
+     - ``string``
+     - No
+```
+
+> ***Note***: Only one OIDC policy can be referenced in a VirtualServer/VirtualServerRoute, however the same policy can be applied to different Routes/VirtualServerRoutes.
+
+#### OIDC Merging Behavior
+
+A VirtualServer/VirtualServerRoute can reference only a single OIDC policy. Every subsequent reference will be ignored. For example, here we reference two policies:
+```yaml
+policies:
+- name: oidc-policy-one
+- name: oidc-policy-two
+```
+In this example the Ingress Controller will use the configuration from the first policy reference `oidc-policy-one`, and ignores `oidc-policy-two`.
+
 ## Using Policy
 
 You can use the usual `kubectl` commands to work with Policy resources, just as with built-in Kubernetes resources.
@@ -455,7 +535,7 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
       policies: # spec policies
       - policy1
       upstreams:
-      - name: coffee 
+      - name: coffee
         service: coffee-svc
         port: 80
       routes:
@@ -463,7 +543,7 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
         policies: # route policies
         - policy2
         route: tea/tea
-      - path: /coffee 
+      - path: /coffee
         policies: # route policies
         - policy3
         action:
@@ -482,22 +562,22 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
     apiVersion: k8s.nginx.org/v1
     kind: VirtualServerRoute
     metadata:
-      name: tea 
+      name: tea
       namespace: tea
     spec:
       host: cafe.example.com
       upstreams:
-      - name: tea 
+      - name: tea
         service: tea-svc
         port: 80
       subroutes: # subroute policies
-      - path: /tea 
+      - path: /tea
         policies:
         - policy4
         action:
           pass: tea
     ```
-    
+
     For VirtualServerRoute, you can apply a policy to a subroute (subroute policies).
 
     Subroute policies of the same type override spec policies. In the example above, if the type of the policies `policy-1` (in the VirtualServer) and `policy-4` is `accessControl`, then for requests to `cafe.example.com/tea`, NGINX will apply `policy-4`. As with the VirtualServer, the overriding is enforced by NGINX.
@@ -509,7 +589,7 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
 NGINX will treat a policy as invalid if one of the following conditions is met:
 * The policy doesn't pass the [comprehensive validation](#comprehensive-validation).
 * The policy isn't present in the cluster.
-* The policy doesn't meet its type-specific requirements. For example, an `ingressMTLS` policy requires TLS termination enabled in the VirtualServer. 
+* The policy doesn't meet its type-specific requirements. For example, an `ingressMTLS` policy requires TLS termination enabled in the VirtualServer.
 
 
 For an invalid policy, NGINX returns the 500 status code for client requests with the following rules:
