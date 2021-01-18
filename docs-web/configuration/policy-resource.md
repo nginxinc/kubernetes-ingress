@@ -427,7 +427,7 @@ In this example the Ingress Controller will use the configuration from the first
 
 For the OIDC feature to work it is necessary to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/), otherwise NGINX Plus will fail to reload. For an example of the necessary configuration see the documentation [here](https://github.com/nginxinc/kubernetes-ingress/blob/master/examples-of-custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
-> ***Note***: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
+> **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 
 #### Limitations
 

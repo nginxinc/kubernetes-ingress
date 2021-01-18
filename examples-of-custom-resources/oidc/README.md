@@ -1,6 +1,6 @@
 # OIDC
 
-In this example, we deploy a web application, configure load balancing for it via a VirtualServer, and protect the application using an OpenID Connect policy and [Keycloack](https://www.keycloak.org/).
+In this example, we deploy a web application, configure load balancing for it via a VirtualServer, and protect the application using an OpenID Connect policy and [Keycloak](https://www.keycloak.org/).
 
 ## Prerequisites
 
@@ -12,7 +12,7 @@ In this example, we deploy a web application, configure load balancing for it vi
     XXX.YYY.ZZZ.III webapp.example.com
     XXX.YYY.ZZZ.III keycloak.example.com
     ```
-    Here `webapp.example.com` is the domain for the web application and `keycloak.example.com` is the domain for Keycloack.
+    Here `webapp.example.com` is the domain for the web application and `keycloak.example.com` is the domain for Keycloak.
 
 ## Step 1 - Deploy a TLS Secret
 
@@ -85,7 +85,7 @@ Steps:
     ```
 1. Get the cluster IP of the KubeDNS service:
     ```
-    kubectl -n kube-system get svc kube-dns
+    $ kubectl -n kube-system get svc kube-dns
     NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)         AGE
     kube-dns   ClusterIP   10.4.0.10    <none>        53/UDP,53/TCP   9d
     ```
