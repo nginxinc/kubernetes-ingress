@@ -4,7 +4,7 @@ This guide will help you configure KeyCloak using Keycloak's API:
 * Create a `client` with the name `nginx-plus`.
 * Add a user `nginx-user` with the password `test`.
 
-**Notes**: 
+**Notes**:
 * if you changed the username and password for Keycloak in `keycloak.yaml`, modify the commands accordingly.
 * The instructions use [`jq`](https://stedolan.github.io/jq/).
 
