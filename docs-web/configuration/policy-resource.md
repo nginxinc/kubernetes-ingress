@@ -22,6 +22,8 @@ This document is the reference documentation for the Policy resource. An example
       - [IngressMTLS Merging Behavior](#ingressmtls-merging-behavior)
     - [EgressMTLS](#egressmtls)
       - [EgressMTLS Merging Behavior](#egressmtls-merging-behavior)
+    - [OIDC](#oidc)
+      - [OIDC Merging Behavior](#oidc-merging-behavior)
   - [Using Policy](#using-policy)
     - [Applying Policies](#applying-policies)
     - [Invalid Policies](#invalid-policies)
