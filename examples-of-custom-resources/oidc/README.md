@@ -89,7 +89,7 @@ Steps:
     NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)         AGE
     kube-dns   ClusterIP   10.4.0.10    <none>        53/UDP,53/TCP   9d
     ```
-1. Edit the ConfigMap `nginx-config.yaml`, replacing the `<kube-dns-ip` with the IP obtained in the previous step.
+1. Edit the ConfigMap `nginx-config.yaml`, replacing the `<kube-dns-ip>` with the IP obtained in the previous step.
 1. Apply the ConfigMap:
    ```
    $ kubectl apply -f nginx-config.yaml
