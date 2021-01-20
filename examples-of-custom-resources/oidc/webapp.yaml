@@ -17,6 +17,13 @@ spec:
         image: nginxdemos/nginx-hello:plain-text
         ports:
         - containerPort: 8080
+        volumeMounts:
+          - name: config-volume
+            mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: config-volume
+          configMap:
+            name: oidc-config
 ---
 apiVersion: v1
 kind: Service
@@ -30,3 +37,19 @@ spec:
     name: http
   selector:
     app: webapp
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oidc-config
+data:
+  app.conf: |-
+    server {
+    listen 8080;
+
+    location / {
+        default_type text/plain;
+        expires -1;
+        return 200 'Server address: $server_addr:$server_port\nServer name: $hostname\nDate: $time_local\nURI: $request_uri\nRequest ID: $request_id\nUser ID: $http_username\n';
+      }
+    }

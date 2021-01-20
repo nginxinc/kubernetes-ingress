@@ -109,5 +109,5 @@ Note that the VirtualServer references the policy `oidc-policy` created in Step 
 1. Open a web browser and navigate to the URL of the web application: `https://webapp.example.com`. You will be redirected to Keycloak.
 1. Log in with the username and password for the user you created in Keycloak, `nginx-user` and `test`.
 ![keycloak](./keycloak.png)
-1. Once logged in, you will be redirected to the web application and get a response from it.
+1. Once logged in, you will be redirected to the web application and get a response from it. Notice the field `User ID` in the response, this will match the ID for your user in Keycloak.
 ![webapp](./webapp.png)
