@@ -289,6 +289,19 @@ func TestValidateOIDCSecretFails(t *testing.T) {
 			},
 			msg: "Invalid characters in OIDC client secret",
 		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "oidc-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeOIDC,
+				Data: map[string][]byte{
+					"client-secret": []byte("hello\t\n"),
+				},
+			},
+			msg: "Invalid newline in OIDC client secret",
+		},
 	}
 
 	for _, test := range tests {
@@ -394,7 +407,8 @@ func TestValidateSecretFails(t *testing.T) {
 				Type: SecretTypeCA,
 			},
 			msg: "Missing ca.crt for CA secret",
-		}, {
+		},
+		{
 			secret: &v1.Secret{
 				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "jwk-secret",

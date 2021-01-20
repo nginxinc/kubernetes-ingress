@@ -127,11 +127,11 @@ func ValidateSecret(secret *api_v1.Secret) error {
 	return fmt.Errorf("Secret is of the unsupported type %v", secret.Type)
 }
 
-var clientSecretValueFmtRegexp = regexp.MustCompile(`^([^"$\\]|\\[^$])*$`)
+var clientSecretValueFmtRegexp = regexp.MustCompile(`^([^"$\\\s]|\\[^$])*$`)
 
 func isValidClientSecretValue(s string) (string, bool) {
 	if ok := clientSecretValueFmtRegexp.MatchString(s); !ok {
-		return `It must contain valid ASCII characters, must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`, false
+		return `It must contain valid ASCII characters, must have all '"' escaped and must not contain any '$' or whitespaces ('\n', '\t' etc.) or end with an unescaped '\'`, false
 	}
 	return "", true
 }
