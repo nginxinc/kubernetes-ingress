@@ -438,7 +438,9 @@ spec:
     jwksURI: https://idp.example.com/openid-connect/certs
 ```
 
-> Note: The feature is implemented using the [reference implementation](https://github.com/nginxinc/nginx-openid-connect/) of NGINX Plus as relying party for OpenID Connect authentication.
+NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP header `username`.
+
+> Note: The feature is implemented using the [reference implementation](https://github.com/nginxinc/nginx-openid-connect/) of NGINX Plus as a relying party for OpenID Connect authentication.
 
 #### Prerequisites
 
