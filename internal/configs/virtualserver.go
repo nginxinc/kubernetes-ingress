@@ -673,13 +673,13 @@ func (p *policiesCfg) addRateLimitConfig(
 	} else {
 		curOptions := generateLimitReqOptions(rateLimit)
 		if curOptions.DryRun != p.LimitReqOptions.DryRun {
-			res.addWarningf("RateLimit policy %q with limit request option dryRun=%v is overridden to dryRun=%v by the first policy reference in this context", polKey, curOptions.DryRun, p.LimitReqOptions.DryRun)
+			res.addWarningf("RateLimit policy %s with limit request option dryRun='%v' is overridden to dryRun='%v' by the first policy reference in this context", polKey, curOptions.DryRun, p.LimitReqOptions.DryRun)
 		}
 		if curOptions.LogLevel != p.LimitReqOptions.LogLevel {
-			res.addWarningf("RateLimit policy %q with limit request option logLevel=%v is overridden to logLevel=%v by the first policy reference in this context", polKey, curOptions.LogLevel, p.LimitReqOptions.LogLevel)
+			res.addWarningf("RateLimit policy %s with limit request option logLevel='%v' is overridden to logLevel='%v' by the first policy reference in this context", polKey, curOptions.LogLevel, p.LimitReqOptions.LogLevel)
 		}
 		if curOptions.RejectCode != p.LimitReqOptions.RejectCode {
-			res.addWarningf("RateLimit policy %q with limit request option rejectCode=%v is overridden to rejectCode=%v by the first policy reference in this context", polKey, curOptions.RejectCode, p.LimitReqOptions.RejectCode)
+			res.addWarningf("RateLimit policy %s with limit request option rejectCode='%v' is overridden to rejectCode='%v' by the first policy reference in this context", polKey, curOptions.RejectCode, p.LimitReqOptions.RejectCode)
 		}
 	}
 	return res
@@ -693,7 +693,7 @@ func (p *policiesCfg) addJWTAuthConfig(
 ) *validationResults {
 	res := newValidationResults()
 	if p.JWTAuth != nil {
-		res.addWarningf("Multiple jwt policies in the same context is not valid. JWT policy %q will be ignored", polKey)
+		res.addWarningf("Multiple jwt policies in the same context is not valid. JWT policy %s will be ignored", polKey)
 		return res
 	}
 
@@ -704,11 +704,11 @@ func (p *policiesCfg) addJWTAuthConfig(
 		secretType = secretRef.Secret.Type
 	}
 	if secretType != "" && secretType != secrets.SecretTypeJWK {
-		res.addWarningf("JWT policy %q references a Secret of an incorrect type %q", polKey, secretType)
+		res.addWarningf("JWT policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, jwtSecretKey, secretType, secrets.SecretTypeJWK)
 		res.isError = true
 		return res
 	} else if secretRef.Error != nil {
-		res.addWarningf("JWT policy %q references an invalid Secret: %v", polKey, secretRef.Error)
+		res.addWarningf("JWT policy %s references an invalid secret %s: %v", polKey, jwtSecretKey, secretRef.Error)
 		res.isError = true
 		return res
 	}
@@ -731,17 +731,17 @@ func (p *policiesCfg) addIngressMTLSConfig(
 ) *validationResults {
 	res := newValidationResults()
 	if !tls {
-		res.addWarningf("TLS configuration needed for IngressMTLS policy")
+		res.addWarningf("TLS must be enabled in VirtualServer for IngressMTLS policy %s", polKey)
 		res.isError = true
 		return res
 	}
 	if context != specContext {
-		res.addWarningf("IngressMTLS policy is not allowed in the %v context", context)
+		res.addWarningf("IngressMTLS policy %s is not allowed in the %v context", polKey, context)
 		res.isError = true
 		return res
 	}
 	if p.IngressMTLS != nil {
-		res.addWarningf("Multiple ingressMTLS policies are not allowed. IngressMTLS policy %q will be ignored", polKey)
+		res.addWarningf("Multiple ingressMTLS policies are not allowed. IngressMTLS policy %s will be ignored", polKey)
 		return res
 	}
 
@@ -752,11 +752,11 @@ func (p *policiesCfg) addIngressMTLSConfig(
 		secretType = secretRef.Secret.Type
 	}
 	if secretType != "" && secretType != secrets.SecretTypeCA {
-		res.addWarningf("IngressMTLS policy %q references a Secret of an incorrect type %q", polKey, secretType)
+		res.addWarningf("IngressMTLS policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, secrets.SecretTypeCA)
 		res.isError = true
 		return res
 	} else if secretRef.Error != nil {
-		res.addWarningf("IngressMTLS policy %q references an invalid Secret: %v", polKey, secretRef.Error)
+		res.addWarningf("IngressMTLS policy %q references an invalid secret %s: %v", polKey, secretKey, secretRef.Error)
 		res.isError = true
 		return res
 	}
@@ -787,7 +787,7 @@ func (p *policiesCfg) addEgressMTLSConfig(
 	res := newValidationResults()
 	if p.EgressMTLS != nil {
 		res.addWarningf(
-			"Multiple egressMTLS policies in the same context is not valid. EgressMTLS policy %q will be ignored",
+			"Multiple egressMTLS policies in the same context is not valid. EgressMTLS policy %s will be ignored",
 			polKey,
 		)
 		return res
@@ -804,11 +804,11 @@ func (p *policiesCfg) addEgressMTLSConfig(
 			secretType = secretRef.Secret.Type
 		}
 		if secretType != "" && secretType != api_v1.SecretTypeTLS {
-			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, secretType)
+			res.addWarningf("EgressMTLS policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, egressTLSSecret, secretType, api_v1.SecretTypeTLS)
 			res.isError = true
 			return res
 		} else if secretRef.Error != nil {
-			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, secretRef.Error)
+			res.addWarningf("EgressMTLS policy %s references an invalid secret %s: %v", polKey, egressTLSSecret, secretRef.Error)
 			res.isError = true
 			return res
 		}
@@ -827,11 +827,11 @@ func (p *policiesCfg) addEgressMTLSConfig(
 			secretType = secretRef.Secret.Type
 		}
 		if secretType != "" && secretType != secrets.SecretTypeCA {
-			res.addWarningf("EgressMTLS policy %q references a Secret of an incorrect type %q", polKey, secretType)
+			res.addWarningf("EgressMTLS policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, trustedCertSecret, secretType, secrets.SecretTypeCA)
 			res.isError = true
 			return res
 		} else if secretRef.Error != nil {
-			res.addWarningf("EgressMTLS policy %q references an invalid Secret: %v", polKey, secretRef.Error)
+			res.addWarningf("EgressMTLS policy %s references an invalid secret %s: %v", polKey, trustedCertSecret, secretRef.Error)
 			res.isError = true
 			return res
 		}
@@ -864,7 +864,7 @@ func (p *policiesCfg) addOIDCConfig(
 	res := newValidationResults()
 	if p.OIDC {
 		res.addWarningf(
-			"Multiple oidc policies in the same context is not valid. OIDC policy %q will be ignored",
+			"Multiple oidc policies in the same context is not valid. OIDC policy %s will be ignored",
 			polKey,
 		)
 		return res
@@ -873,7 +873,7 @@ func (p *policiesCfg) addOIDCConfig(
 	if oidcPolCfg.oidc != nil {
 		if oidcPolCfg.key != polKey {
 			res.addWarningf(
-				"Only one OIDC policy is allowed in a VirtualServer and its VirtualServerRoutes. Can't use %q. Use %q",
+				"Only one oidc policy is allowed in a VirtualServer and its VirtualServerRoutes. Can't use %s. Use %s",
 				polKey,
 				oidcPolCfg.key,
 			)
@@ -889,11 +889,11 @@ func (p *policiesCfg) addOIDCConfig(
 			secretType = secretRef.Secret.Type
 		}
 		if secretType != "" && secretType != secrets.SecretTypeOIDC {
-			res.addWarningf("OIDC policy %q references a Secret of an incorrect type %q", polKey, secretType)
+			res.addWarningf("OIDC policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, secretKey, secretType, secrets.SecretTypeOIDC)
 			res.isError = true
 			return res
 		} else if secretRef.Error != nil {
-			res.addWarningf("OIDC policy %q references an invalid Secret: %v", polKey, secretRef.Error)
+			res.addWarningf("OIDC policy %s references an invalid secret %s: %v", polKey, secretKey, secretRef.Error)
 			res.isError = true
 			return res
 		}

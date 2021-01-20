@@ -2333,9 +2333,9 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`RateLimit policy "default/rateLimit-policy2" with limit request option dryRun=true is overridden to dryRun=false by the first policy reference in this context`,
-					`RateLimit policy "default/rateLimit-policy2" with limit request option logLevel=info is overridden to logLevel=error by the first policy reference in this context`,
-					`RateLimit policy "default/rateLimit-policy2" with limit request option rejectCode=505 is overridden to rejectCode=503 by the first policy reference in this context`,
+					`RateLimit policy default/rateLimit-policy2 with limit request option dryRun='true' is overridden to dryRun='false' by the first policy reference in this context`,
+					`RateLimit policy default/rateLimit-policy2 with limit request option logLevel='info' is overridden to logLevel='error' by the first policy reference in this context`,
+					`RateLimit policy default/rateLimit-policy2 with limit request option rejectCode='505' is overridden to rejectCode='503' by the first policy reference in this context`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2379,7 +2379,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`JWT policy "default/jwt-policy" references an invalid Secret: secret is invalid`,
+					`JWT policy default/jwt-policy references an invalid secret default/jwt-secret: secret is invalid`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2422,7 +2422,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`JWT policy "default/jwt-policy" references a Secret of an incorrect type "nginx.org/ca"`,
+					`JWT policy default/jwt-policy references a secret default/jwt-secret of a wrong type 'nginx.org/ca', must be 'nginx.org/jwk'`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2489,7 +2489,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`Multiple jwt policies in the same context is not valid. JWT policy "default/jwt-policy2" will be ignored`,
+					`Multiple jwt policies in the same context is not valid. JWT policy default/jwt-policy2 will be ignored`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2531,7 +2531,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`IngressMTLS policy "default/ingress-mtls-policy" references an invalid Secret: secret is invalid`,
+					`IngressMTLS policy "default/ingress-mtls-policy" references an invalid secret default/ingress-mtls-secret: secret is invalid`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2575,7 +2575,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`IngressMTLS policy "default/ingress-mtls-policy" references a Secret of an incorrect type "kubernetes.io/tls"`,
+					`IngressMTLS policy default/ingress-mtls-policy references a secret default/ingress-mtls-secret of a wrong type 'kubernetes.io/tls', must be 'nginx.org/ca'`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2633,7 +2633,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`Multiple ingressMTLS policies are not allowed. IngressMTLS policy "default/ingress-mtls-policy2" will be ignored`,
+					`Multiple ingressMTLS policies are not allowed. IngressMTLS policy default/ingress-mtls-policy2 will be ignored`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2678,7 +2678,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`IngressMTLS policy is not allowed in the route context`,
+					`IngressMTLS policy default/ingress-mtls-policy is not allowed in the route context`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2723,7 +2723,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`TLS configuration needed for IngressMTLS policy`,
+					`TLS must be enabled in VirtualServer for IngressMTLS policy default/ingress-mtls-policy`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2789,7 +2789,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`Multiple egressMTLS policies in the same context is not valid. EgressMTLS policy "default/egress-mtls-policy2" will be ignored`,
+					`Multiple egressMTLS policies in the same context is not valid. EgressMTLS policy default/egress-mtls-policy2 will be ignored`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2834,7 +2834,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`EgressMTLS policy "default/egress-mtls-policy" references an invalid Secret: secret is invalid`,
+					`EgressMTLS policy default/egress-mtls-policy references an invalid secret default/egress-trusted-secret: secret is invalid`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2878,7 +2878,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`EgressMTLS policy "default/egress-mtls-policy" references a Secret of an incorrect type "nginx.org/ca"`,
+					`EgressMTLS policy default/egress-mtls-policy references a secret default/egress-mtls-secret of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2922,7 +2922,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`EgressMTLS policy "default/egress-mtls-policy" references a Secret of an incorrect type "kubernetes.io/tls"`,
+					`EgressMTLS policy default/egress-mtls-policy references a secret default/egress-trusted-secret of a wrong type 'kubernetes.io/tls', must be 'nginx.org/ca'`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -2967,7 +2967,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`EgressMTLS policy "default/egress-mtls-policy" references an invalid Secret: secret is invalid`,
+					`EgressMTLS policy default/egress-mtls-policy references an invalid secret default/egress-mtls-secret: secret is invalid`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -3011,7 +3011,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`OIDC policy "default/oidc-policy" references an invalid Secret: secret is invalid`,
+					`OIDC policy default/oidc-policy references an invalid secret default/oidc-secret: secret is invalid`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -3057,7 +3057,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`OIDC policy "default/oidc-policy" references a Secret of an incorrect type "kubernetes.io/tls"`,
+					`OIDC policy default/oidc-policy references a secret default/oidc-secret of a wrong type 'kubernetes.io/tls', must be 'nginx.org/oidc'`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{},
@@ -3124,7 +3124,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedWarnings: Warnings{
 				nil: {
-					`Multiple oidc policies in the same context is not valid. OIDC policy "default/oidc-policy2" will be ignored`,
+					`Multiple oidc policies in the same context is not valid. OIDC policy default/oidc-policy2 will be ignored`,
 				},
 			},
 			expectedOidc: &oidcPolicyCfg{
