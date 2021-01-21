@@ -164,6 +164,21 @@ func validateTransportServerUpstreamParameters(upstreamParameters *v1alpha1.Upst
 
 	allErrs = append(allErrs, validateUDPUpstreamParameter(upstreamParameters.UDPRequests, fieldPath.Child("udpRequests"), protocol)...)
 	allErrs = append(allErrs, validateUDPUpstreamParameter(upstreamParameters.UDPResponses, fieldPath.Child("udpResponses"), protocol)...)
+	allErrs = append(allErrs, validateTime(upstreamParameters.ConnectTimeout, fieldPath.Child("connectTimeout"))...)
+	allErrs = append(allErrs, validateTime(upstreamParameters.NextUpstreamTimeout, fieldPath.Child("nextUpstreamTimeout"))...)
+	allErrs = append(allErrs, validatePositiveIntOrZero(upstreamParameters.NextUpstreamTries, fieldPath.Child("nextUpstreamTries"))...)
+
+	return allErrs
+}
+
+func validateTransportServerSessionParameters(sessionParameters *v1alpha1.SessionParameters, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if sessionParameters == nil {
+		return allErrs
+	}
+
+	allErrs = append(allErrs, validateTime(sessionParameters.Timeout, fieldPath.Child("timeout"))...)
 
 	return allErrs
 }

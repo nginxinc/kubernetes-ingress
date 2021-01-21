@@ -27,4 +27,12 @@ server {
     {{ end }}
 
     proxy_pass {{ $s.ProxyPass }};
+
+    proxy_timeout {{ $s.ProxyTimeout }}
+    proxy_connect_timeout {{ $s.ProxyConnectTimeout }};
+    {{ if $s.ProxyNextUpstream }}
+    proxy_next_upstream on;
+    proxy_next_upstream_timeout {{ $s.ProxyNextUpstreamTimeout }};
+    proxy_next_upstream_tries {{ $s.ProxyNextUpstreamTries }};
+    {{ end }}
 }

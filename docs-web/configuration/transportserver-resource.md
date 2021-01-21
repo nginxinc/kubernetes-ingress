@@ -156,6 +156,7 @@ The upstream defines a destination for the TransportServer. For example:
 name: secure-app 
 service: secure-app
 port: 8443
+connect-timeout: "30s"
 ```
 
 ```eval_rst
@@ -182,11 +183,15 @@ port: 8443
 
 ### UpstreamParameters
 
-The upstream parameters define various parameters for the upstreams. For now, only UDP-related parameters are supported:
+The upstream parameters define various parameters for the upstreams:
 ```yaml
 upstreamParameters:
   udpRequests: 1
   udpResponses: 1
+  connectTimeout: "60s"
+  nextUpstream: True
+  NextUpstreamTimeout: "50s"
+  NextUpstreamTries: 1
 ```
 
 ```eval_rst
@@ -205,6 +210,42 @@ upstreamParameters:
      - The number of datagrams expected from the proxied server in response to a client datagram. See the `proxy_responses <https://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_responses>`_ directive. By default, the number of datagrams is not limited.
      - ``int``
      - No 
+   * - ``connectTimeout``
+     - The timeout for establishing a connection with a proxied server. See the `proxy_connect_timeout <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_connect_timeout>`_ directive. The default is ``60s``.
+     - ``string``
+     - No
+   * - ``nextUpstream``
+     - If a connection to the proxied server cannot be established, determines whether a client connection will be passed to the next server. See the `proxy_next_upstream <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream>`_ directive. The default is ``on``.
+     - bool
+     - No
+   * - ``nextUpstreamTries``
+     - The number of tries for passing a connection to the next server. See the `proxy_next_upstream_tries <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream_tries>`_ directive. The default is ``0``
+     - ``int``
+     - No
+   * - ``nextUpstreamTimeout``
+     - The time allowed to pass a connection to the next server. See the `proxy_next_upstream_timeout <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream_timeout>`_ directive. The default us ``0``
+     - ``string``
+     - No
+```
+
+### SessionParameters
+
+The session parameters define various parameters for TCP connections and UDP sessions.
+```yaml
+sessionTimeout:
+  timeout: "50s"
+```
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``timeout``
+     - The timeout between two succesive read or write operations on client or proxied server connections. See `proxy_timeout <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_timeout>`_ directive. The default is ``10m``.
 ```
 
 ### Action

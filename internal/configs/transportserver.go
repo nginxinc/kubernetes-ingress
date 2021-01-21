@@ -35,10 +35,34 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 	upstreams := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus)
 
 	var proxyRequests, proxyResponses *int
+	var connectTimeout, nextUpstreamTimeout string
+	var nextUpstream bool
+	var nextUpstreamTries int
 	if transportServerEx.TransportServer.Spec.UpstreamParameters != nil {
 		proxyRequests = transportServerEx.TransportServer.Spec.UpstreamParameters.UDPRequests
 		proxyResponses = transportServerEx.TransportServer.Spec.UpstreamParameters.UDPResponses
+
+		nextUpstream = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstream
+		if nextUpstream {
+			nextUpstreamTries = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTries
+			nextUpstreamTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout
+		}
+
+		if transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout != "" {
+			connectTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout
+		} else {
+			connectTimeout = "60s" // default value for directive
+		}
+
 	}
+
+	var proxyTimeout string
+	if transportServerEx.TransportServer.Spec.SessionParameters != nil {
+		proxyTimeout = transportServerEx.TransportServer.Spec.SessionParameters.Timeout
+	} else {
+		proxyTimeout = "10m" // default value for directive
+	}
+
 	statusZone := ""
 	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName {
 		statusZone = transportServerEx.TransportServer.Spec.Host
@@ -48,16 +72,21 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 
 	return version2.TransportServerConfig{
 		Server: version2.StreamServer{
-			TLSPassthrough: transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName,
-			UnixSocket:     generateUnixSocket(transportServerEx),
-			Port:           listenerPort,
-			UDP:            transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP",
-			StatusZone:     statusZone,
-			ProxyRequests:  proxyRequests,
-			ProxyResponses: proxyResponses,
-			ProxyPass:      upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
-			Name:           transportServerEx.TransportServer.Name,
-			Namespace:      transportServerEx.TransportServer.Namespace,
+			TLSPassthrough:           transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName,
+			UnixSocket:               generateUnixSocket(transportServerEx),
+			Port:                     listenerPort,
+			UDP:                      transportServerEx.TransportServer.Spec.Listener.Protocol == "UDP",
+			StatusZone:               statusZone,
+			ProxyRequests:            proxyRequests,
+			ProxyResponses:           proxyResponses,
+			ProxyPass:                upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
+			Name:                     transportServerEx.TransportServer.Name,
+			Namespace:                transportServerEx.TransportServer.Namespace,
+			ProxyConnectTimeout:      connectTimeout,
+			ProxyTimeout:             proxyTimeout,
+			ProxyNextUpstream:        nextUpstream,
+			ProxyNextUpstreamTimeout: nextUpstreamTimeout,
+			ProxyNextUpstreamTries:   nextUpstreamTries,
 		},
 		Upstreams: upstreams,
 	}

@@ -20,16 +20,21 @@ type StreamUpstreamServer struct {
 
 // StreamServer defines a server in the stream module.
 type StreamServer struct {
-	TLSPassthrough bool
-	UnixSocket     string
-	Port           int
-	UDP            bool
-	StatusZone     string
-	ProxyRequests  *int
-	ProxyResponses *int
-	ProxyPass      string
-	Name           string
-	Namespace      string
+	TLSPassthrough           bool
+	UnixSocket               string
+	Port                     int
+	UDP                      bool
+	StatusZone               string
+	ProxyRequests            *int
+	ProxyResponses           *int
+	ProxyPass                string
+	Name                     string
+	Namespace                string
+	ProxyTimeout             string
+	ProxyConnectTimeout      string
+	ProxyNextUpstream        bool
+	ProxyNextUpstreamTimeout string
+	ProxyNextUpstreamTries   int
 }
 
 // TLSPassthroughHostsConfig defines a mapping between TLS Passthrough hosts and the corresponding unix sockets.

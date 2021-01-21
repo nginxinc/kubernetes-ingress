@@ -63,6 +63,8 @@ spec:
                 description: Upstream defines an upstream.
                 type: object
                 properties:
+                  connect-timeout:
+                    type: string
                   name:
                     type: string
                   port:

@@ -410,6 +410,29 @@ func TestValidateUpstreamParameters(t *testing.T) {
 	}
 }
 
+func TestValidateSessionParameters(t *testing.T) {
+	tests := []struct {
+		parameters *v1alpha1.SessionParameters
+		msg        string
+	}{
+		{
+			parameters: nil,
+			msg:        "nil parameters",
+		},
+		{
+			parameters: &v1alpha1.SessionParameters{},
+			msg:        "Non-nil parameters",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateTransportServerSessionParameters(test.parameters, field.NewPath("sesstionParameters"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateTransportServerSessionParameters() returned errors %v for valid input for the case of %s", allErrs, test.msg)
+		}
+	}
+}
+
 func TestValidateUDPUpstreamParameter(t *testing.T) {
 	validInput := []struct {
 		parameter *int
