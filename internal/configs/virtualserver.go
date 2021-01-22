@@ -882,12 +882,7 @@ func (p *policiesCfg) addOIDCConfig(
 		}
 	} else {
 		secretKey := fmt.Sprintf("%v/%v", polNamespace, oidc.ClientSecret)
-		secretRef, exists := secretRefs[secretKey]
-		if !exists {
-			res.addWarningf("OIDC policy %q references a non-existent Secret %v", polKey, secretKey)
-			res.isError = true
-			return res
-		}
+		secretRef := secretRefs[secretKey]
 
 		var secretType api_v1.SecretType
 		if secretRef.Secret != nil {
@@ -903,12 +898,7 @@ func (p *policiesCfg) addOIDCConfig(
 			return res
 		}
 
-		clientSecret, exists := secretRef.Secret.Data[ClientSecretKey]
-		if !exists {
-			res.addWarningf("OIDC policy %q references a Secret without the data field %v", polKey, ClientSecretKey)
-			res.isError = true
-			return res
-		}
+		clientSecret := secretRef.Secret.Data[ClientSecretKey]
 
 		redirectURI := oidc.RedirectURI
 		if redirectURI == "" {
