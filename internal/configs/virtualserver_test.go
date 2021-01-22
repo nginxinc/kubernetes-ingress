@@ -2203,6 +2203,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 		policyOpts        policyOptions
 		trustedCAFileName string
 		context           string
+		oidcPolCfg        *oidcPolicyCfg
 		expected          policiesCfg
 		expectedWarnings  Warnings
 		expectedOidc      *oidcPolicyCfg
@@ -3066,6 +3067,94 @@ func TestGeneratePoliciesFails(t *testing.T) {
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
+					Name:      "oidc-policy-2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/oidc-policy-1": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy-1",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						OIDC: &conf_v1.OIDC{
+							ClientID:      "foo",
+							ClientSecret:  "oidc-secret",
+							AuthEndpoint:  "https://foo.com/auth",
+							TokenEndpoint: "https://foo.com/token",
+							JWKSURI:       "https://foo.com/certs",
+						},
+					},
+				},
+				"default/oidc-policy-2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "oidc-policy-2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						OIDC: &conf_v1.OIDC{
+							ClientID:      "foo",
+							ClientSecret:  "oidc-secret",
+							AuthEndpoint:  "https://bar.com/auth",
+							TokenEndpoint: "https://bar.com/token",
+							JWKSURI:       "https://bar.com/certs",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/oidc-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeOIDC,
+							Data: map[string][]byte{
+								"client-secret": []byte("super_secret_123"),
+							},
+						},
+					},
+				},
+			},
+			context: "route",
+			oidcPolCfg: &oidcPolicyCfg{
+				oidc: &version2.OIDC{
+					AuthEndpoint:  "https://foo.com/auth",
+					TokenEndpoint: "https://foo.com/token",
+					JwksURI:       "https://foo.com/certs",
+					ClientID:      "foo",
+					ClientSecret:  "super_secret_123",
+					RedirectURI:   "/_codexch",
+					Scope:         "openid",
+				},
+				key: "default/oidc-policy-1",
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Only one oidc policy is allowed in a VirtualServer and its VirtualServerRoutes. Can't use default/oidc-policy-2. Use default/oidc-policy-1`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{
+				oidc: &version2.OIDC{
+					AuthEndpoint:  "https://foo.com/auth",
+					TokenEndpoint: "https://foo.com/token",
+					JwksURI:       "https://foo.com/certs",
+					ClientID:      "foo",
+					ClientSecret:  "super_secret_123",
+					RedirectURI:   "/_codexch",
+					Scope:         "openid",
+				},
+				key: "default/oidc-policy-1",
+			},
+			msg: "multiple oidc policies",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
 					Name:      "oidc-policy",
 					Namespace: "default",
 				},
@@ -3097,7 +3186,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							ClientSecret:  "oidc-secret2",
+							ClientSecret:  "oidc-secret",
 							AuthEndpoint:  "https://bar.com/auth",
 							TokenEndpoint: "https://bar.com/token",
 							JWKSURI:       "https://bar.com/certs",
@@ -3145,6 +3234,10 @@ func TestGeneratePoliciesFails(t *testing.T) {
 
 	for _, test := range tests {
 		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
+
+		if test.oidcPolCfg != nil {
+			vsc.oidcPolCfg = test.oidcPolCfg
+		}
 
 		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, test.policyOpts)
 		if diff := cmp.Diff(test.expected, result); diff != "" {
