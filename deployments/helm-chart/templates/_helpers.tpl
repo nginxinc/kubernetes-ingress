@@ -53,14 +53,14 @@ Expand service name.
 Expand default TLS name.
 */}}
 {{- define "nginx-ingress.defaultTLSName" -}}
-{{- printf "%s-%s" (include "nginx-ingress.name" .) "default-server-secret" -}}
+{{- printf "%s-%s" (include "nginx-ingress.name" .) "default-server-tls" -}}
 {{- end -}}
 
 {{/*
 Expand wildcard TLS name.
 */}}
 {{- define "nginx-ingress.wildcardTLSName" -}}
-{{- printf "%s-%s" (include "nginx-ingress.name" .) "wildcard-tls-secret" -}}
+{{- printf "%s-%s" (include "nginx-ingress.name" .) "wildcard-tls" -}}
 {{- end -}}
 
 {{/*
