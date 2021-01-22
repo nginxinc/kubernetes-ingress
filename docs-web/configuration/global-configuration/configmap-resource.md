@@ -115,7 +115,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
      - ``False``
      - 
    * - ``default-server-return``
-     - Configures the `return <https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return>`_  directive in the default server, which handles a client request if none of the hosts of Ingress or VirtualServer resources match. The default value configures NGINX to return a 404 error page. You can configure a fixed response or a redirect. For example,  ``default-server-return: 302 https://nginx.org`` will redirect a client to https://nginx.org.
+     - Configures the `return <https://nginx.org/en/docs/http/ngx_http_rewrite_module.html#return>`_  directive in the default server, which handles a client request if none of the hosts of Ingress or VirtualServer resources match. The default value configures NGINX to return a 404 error page. You can configure a fixed response or a redirect. For example, ``default-server-return: 302 https://nginx.org`` will redirect a client to ``https://nginx.org``.
      - ``404``
      -
    * - ``server-tokens``
