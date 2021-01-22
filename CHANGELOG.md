@@ -83,13 +83,6 @@ For *Helm installation*, there two cases:
 NOTES:
 * Helm 2 clients are no longer supported due to reaching End of Life: https://helm.sh/blog/helm-2-becomes-unsupported/
 
-RESOURCES:
-
-* Documentation -- https://docs.nginx.com/nginx-ingress-controller/
-* Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v1.10.0/examples and https://github.com/nginxinc/kubernetes-ingress/tree/v1.10.0/examples-of-custom-resources
-* Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/v1.10.0/deployments/helm-chart
-* Operator -- a compatible Operator version for this release will be published shortly.
-
 ### 1.9.1
 
 CHANGES:
