@@ -331,7 +331,7 @@ type Policy struct {
 	Status PolicyStatus `json:"status"`
 }
 
-//PolicyStatus is the status of the policy resource
+// PolicyStatus is the status of the policy resource
 type PolicyStatus struct {
 	State   string `json:"state"`
 	Reason  string `json:"reason"`

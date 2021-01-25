@@ -823,7 +823,7 @@ func (lbc *LoadBalancerController) syncIngressLink(task task) {
 		}
 	}
 
-	if lbc.areCustomResourcesEnabled && lbc.reportVsVsrStatusEnabled() {
+	if lbc.areCustomResourcesEnabled && lbc.reportCustomResourceStatusEnabled() {
 		virtualServers := lbc.configuration.GetResourcesWithFilter(resourceFilter{VirtualServers: true})
 
 		glog.V(3).Infof("Updating status for %v VirtualServers", len(virtualServers))
@@ -852,17 +852,21 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 			msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
 			lbc.recorder.Eventf(pol, api_v1.EventTypeWarning, "Rejected", msg)
 
-			err = lbc.statusUpdater.UpdatePolicyStatus(pol, "Invalid", "Rejected", msg)
-			if err != nil {
-				glog.V(3).Infof("Failed to update policy %s status: %v", key, err)
+			if lbc.reportCustomResourceStatusEnabled() {
+				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
+				if err != nil {
+					glog.V(3).Infof("Failed to update policy %s status: %v", key, err)
+				}
 			}
 		} else {
 			msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
 			lbc.recorder.Eventf(pol, api_v1.EventTypeNormal, "AddedOrUpdated", msg)
 
-			err = lbc.statusUpdater.UpdatePolicyStatus(pol, "Valid", "AddedOrUpdated", msg)
-			if err != nil {
-				glog.V(3).Infof("Failed to update policy %s status: %v", key, err)
+			if lbc.reportCustomResourceStatusEnabled() {
+				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
+				if err != nil {
+					glog.V(3).Infof("Failed to update policy %s status: %v", key, err)
+				}
 			}
 		}
 	}
@@ -1035,7 +1039,7 @@ func (lbc *LoadBalancerController) processProblems(problems []ConfigurationProbl
 		eventType := api_v1.EventTypeWarning
 		lbc.recorder.Event(p.Object, eventType, p.Reason, p.Message)
 
-		if lbc.reportVsVsrStatusEnabled() {
+		if lbc.reportCustomResourceStatusEnabled() {
 			state := conf_v1.StateWarning
 			if p.IsError {
 				state = conf_v1.StateInvalid
@@ -1254,7 +1258,7 @@ func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vs
 		msg := fmt.Sprintf("VirtualServer %s was rejected %s", getResourceKey(&vsConfig.VirtualServer.ObjectMeta), eventWarningMessage)
 		lbc.recorder.Eventf(vsConfig.VirtualServer, eventType, eventTitle, msg)
 
-		if lbc.reportVsVsrStatusEnabled() {
+		if lbc.reportCustomResourceStatusEnabled() {
 			err := lbc.statusUpdater.UpdateVirtualServerStatus(vsConfig.VirtualServer, state, eventTitle, msg)
 			if err != nil {
 				glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vsConfig.VirtualServer.Namespace, vsConfig.VirtualServer.Name, err)
@@ -1446,7 +1450,7 @@ func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(vsConfig *
 	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&vsConfig.VirtualServer.ObjectMeta), eventWarningMessage)
 	lbc.recorder.Eventf(vsConfig.VirtualServer, eventType, eventTitle, msg)
 
-	if lbc.reportVsVsrStatusEnabled() {
+	if lbc.reportCustomResourceStatusEnabled() {
 		err := lbc.statusUpdater.UpdateVirtualServerStatus(vsConfig.VirtualServer, state, eventTitle, msg)
 		if err != nil {
 			glog.Errorf("Error when updating the status for VirtualServer %v/%v: %v", vsConfig.VirtualServer.Namespace, vsConfig.VirtualServer.Name, err)
@@ -1476,7 +1480,7 @@ func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(vsConfig *
 		msg := fmt.Sprintf("Configuration for %v/%v was added or updated %s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
 		lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, msg)
 
-		if lbc.reportVsVsrStatusEnabled() {
+		if lbc.reportCustomResourceStatusEnabled() {
 			vss := []*conf_v1.VirtualServer{vsConfig.VirtualServer}
 			err := lbc.statusUpdater.UpdateVirtualServerRouteStatusWithReferencedBy(vsr, vsrState, vsrEventTitle, msg, vss)
 			if err != nil {
@@ -1584,7 +1588,7 @@ func (lbc *LoadBalancerController) syncService(task task) {
 			}
 		}
 
-		if lbc.areCustomResourcesEnabled && lbc.reportVsVsrStatusEnabled() {
+		if lbc.areCustomResourcesEnabled && lbc.reportCustomResourceStatusEnabled() {
 			virtualServers := lbc.configuration.GetResourcesWithFilter(resourceFilter{VirtualServers: true})
 
 			glog.V(3).Infof("Updating status for %v VirtualServers", len(virtualServers))
@@ -1641,8 +1645,8 @@ func (lbc *LoadBalancerController) reportStatusEnabled() bool {
 	return false
 }
 
-// reportVsVsrStatusEnabled determines if we should attempt to report status for VirtualServers and VirtualServerRoutes.
-func (lbc *LoadBalancerController) reportVsVsrStatusEnabled() bool {
+// reportCustomResourceStatusEnabled determines if we should attempt to report status for Custom Resources.
+func (lbc *LoadBalancerController) reportCustomResourceStatusEnabled() bool {
 	if lbc.isLeaderElectionEnabled {
 		return lbc.leaderElector != nil && lbc.leaderElector.IsLeader()
 	}
@@ -1869,6 +1873,34 @@ func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() e
 
 	if len(allErrs) > 0 {
 		return fmt.Errorf("not all VirtualServerRoutes statuses were updated: %v", allErrs)
+	}
+
+	return nil
+}
+
+func (lbc *LoadBalancerController) updatePolicyStatus() error {
+	var allErrs []error
+	for _, obj := range lbc.policyLister.List() {
+		pol := obj.(*conf_v1.Policy)
+
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies)
+		if err != nil {
+			msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
+			err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
+			if err != nil {
+				allErrs = append(allErrs, err)
+			}
+		}
+
+		msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
+		err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
+		if err != nil {
+			allErrs = append(allErrs, err)
+		}
+	}
+
+	if len(allErrs) != 0 {
+		return fmt.Errorf("not all Policies statuses were updated: %v", allErrs)
 	}
 
 	return nil
@@ -2358,10 +2390,6 @@ func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1.Policy {
 		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies)
 		if err != nil {
 			msg := fmt.Sprintf("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
-			err = lbc.statusUpdater.UpdatePolicyStatus(pol, "Invalid", "Rejected", msg)
-			if err != nil {
-				glog.V(3).Infof("Failed to update policy %s status: %v", pol.Name, err)
-			}
 			glog.V(3).Infof(msg)
 			continue
 		}
@@ -2396,23 +2424,11 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 		}
 
 		policy := policyObj.(*conf_v1.Policy)
-		msg := ""
+
 		err = validation.ValidatePolicy(policy, lbc.isNginxPlus, lbc.enablePreviewPolicies)
 		if err != nil {
-			msg = fmt.Sprintf("Policy %v/%s is invalid: %v", policy.Namespace, policy.Name, err)
-			err = lbc.statusUpdater.UpdatePolicyStatus(policy, "Invalid", "Rejected", msg)
-			if err != nil {
-				glog.V(3).Infof("Failed to update policy %s status: %v", policy.Name, err)
-			}
-
-			errors = append(errors, fmt.Errorf(msg))
+			errors = append(errors, fmt.Errorf("Policy %s is invalid: %v", policyKey, err))
 			continue
-		}
-
-		msg = fmt.Sprintf("Policy %v/%v was added or updated", policy.Namespace, policy.Name)
-		err = lbc.statusUpdater.UpdatePolicyStatus(policy, "Valid", "AcceptedOrUpdated", msg)
-		if err != nil {
-			glog.V(3).Infof("Failed to update policy %s status: %v", policy.Name, err)
 		}
 
 		result = append(result, policy)

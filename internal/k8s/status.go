@@ -561,19 +561,7 @@ func (su *statusUpdater) generateExternalEndpointsFromStatus(status []api_v1.Loa
 }
 
 func hasPolicyStatusChanged(pol *v1.Policy, state string, reason string, message string) bool {
-	if pol.Status.State != state {
-		return true
-	}
-
-	if pol.Status.Reason != reason {
-		return true
-	}
-
-	if pol.Status.Message != message {
-		return true
-	}
-
-	return false
+	return pol.Status.State != state || pol.Status.Reason != reason || pol.Status.Message != message
 }
 
 // UpdatePolicyStatus updates the status of a Policy.
