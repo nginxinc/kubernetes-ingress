@@ -98,7 +98,7 @@ The name of the resource and the labels in the selector must match the values yo
 
 Now the Ingress Controller pods are behind the IP configured in Step 2.
 
-If you deploy the [cafe example](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/complete-example), you will be able to send requests to the Ingress Controller pods using the following command:
+If you deploy the [cafe example](https://github.com/nginxinc/kubernetes-ingress/tree/v1.10.0/examples/complete-example), you will be able to send requests to the Ingress Controller pods using the following command:
 ```
 $ curl --resolve cafe.example.com:192.168.10.5:443 https://cafe.example.com:443/coffee --insecure
 Server address: 10.12.0.18:80
