@@ -83,6 +83,7 @@ When deploying the Ingress controller, make sure to use your own TLS certificate
 Helm does not upgrade the CRDs during a release upgrade. Before you upgrade a release, run the following command to upgrade the CRDs:
 
 ```console
+$ kubectl delete crd policies.k8s.nginx.org
 $ kubectl apply -f crds/
 ```
 > **Note**: The following warning is expected and can be ignored: `Warning: kubectl apply should be used on resource created by either kubectl create --save-config or kubectl apply`.
