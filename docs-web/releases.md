@@ -1,6 +1,6 @@
 # Releases
 
-### NGINX Ingress Controller 1.10.0
+## NGINX Ingress Controller 1.10.0
 
 26 January 2021
 
