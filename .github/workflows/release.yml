@@ -642,24 +642,24 @@ jobs:
         include:
           - os: ubuntu-18.04
             file: build/DockerfileForPlus
-            image: nginx-ingress-plus
-            tags: nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}
+            image: nginx-plus-ingress
+            tags: nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}
           - os: ubuntu-18.04
             file: build/DockerfileWithOpentracingForPlus
-            image: nginx-ingress-plus
-            tags: nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-opentracing
+            image: nginx-plus-ingress
+            tags: nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing
           - os: ubuntu-18.04
             file: build/openshift/DockerfileForPlus
-            image: nginx-ingress-plus
-            tags: nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-ubi
+            image: nginx-plus-ingress
+            tags: nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi
           - os: ubuntu-18.04
             file: build/appprotect/DockerfileWithAppProtectForPlus
-            image: nginx-ingress-plus-ap
-            tags: nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }}
+            image: nginx-plus-ingress-ap
+            tags: nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}
           - os: ubuntu-18.04
             file: build/appprotect/DockerfileWithAppProtectForPlusForOpenShift
-            image: nginx-ingress-plus-ap
-            tags: nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }}-ubi
+            image: nginx-plus-ingress-ap
+            tags: nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -698,7 +698,7 @@ jobs:
           secrets: |
             nginx-repo.crt=${{ secrets.NGINX_CRT }}
             nginx-repo.key=${{ secrets.NGINX_KEY }}
-        if: matrix.image == 'nginx-ingress-plus'
+        if: matrix.image == 'nginx-plus-ingress'
       - name: Push Plus AP to GCR
         uses: docker/build-push-action@v2
         with:
@@ -713,7 +713,7 @@ jobs:
             nginx-repo.crt=${{ secrets.NGINX_AP_CRT }}
             nginx-repo.key=${{ secrets.NGINX_AP_KEY }}
             rhel_license=${{ secrets.RHEL_LICENSE }}
-        if: matrix.image == 'nginx-ingress-plus-ap'
+        if: matrix.image == 'nginx-plus-ingress-ap'
   
   release-plus-docker:
     name: Release Plus Images
@@ -732,25 +732,24 @@ jobs:
           UPLOADER_CERT: ${{ secrets.KIC_UPLOADER_CRT }}
           UPLOADER_KEY: ${{ secrets.KIC_UPLOADER_KEY }}
         run: |
-          docker pull ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}
-          docker pull ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-opentracing
-          docker pull ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-ubi
-          docker pull ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }}
-          docker pull ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }}-ubi
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi
           echo "$UPLOADER_CERT" > kic-uploader.crt
           echo "$UPLOADER_KEY" > kic-uploader.key
-          ic_file="nginx-ic-${{ needs.binary.outputs.version }}.tar.gz"
-          docker tag ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }} nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}
-          docker tag ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-opentracing nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-opentracing
-          docker tag ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-ubi nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-ubi
-          docker tag ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }} nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }}
-          docker tag ${{ secrets.GCR_REGISTRY }}/nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }}-ubi nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }}-ubi
-          docker save nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }} \
-                      nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-opentracing \
-                      nginx-ic/nginx-ingress-plus:${{ needs.binary.outputs.version }}-ubi \
-                      nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }} \
-                      nginx-ic/nginx-ingress-plus-ap:${{ needs.binary.outputs.version }}-ubi | gzip > ${ic_file}
-          curl -F "file=@${ic_file}" --cert kic-uploader.crt --key kic-uploader.key  https://up-ap.nginx.com/
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }} nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }} nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi
+          docker save nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }} \
+                      nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing \
+                      nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi | gzip > nginx-ic.tar.gz
+          docker save nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }} \
+                      nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi | gzip > nginx-ic-nap.tar.gz
+          curl -F "file=@nginx-ic.tar.gz" -F "file=@nginx-ic-nap.tar.gz" --cert kic-uploader.crt --key kic-uploader.key  https://up-ap.nginx.com/
 
   package-helm:
     name: Package Helm Chart
