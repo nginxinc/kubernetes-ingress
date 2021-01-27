@@ -3,14 +3,14 @@ name: Sync
 on:
   push:
     branches:
-      - enable-repo-sync
+      - master
   schedule:
     - cron: '0 */12 * * *'
 
 env:
   IC_SOURCE_REPO_URL: https://github.com/nginxinc/kubernetes-ingress.git
   IC_SOURCE_BRANCH: master
-  IC_DEST_BRANCH: enable-repo-sync
+  IC_DEST_BRANCH: master
 
 jobs:
   repo-sync:
