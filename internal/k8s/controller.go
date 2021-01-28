@@ -1878,7 +1878,7 @@ func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() e
 	return nil
 }
 
-func (lbc *LoadBalancerController) updatePolicyStatus() error {
+func (lbc *LoadBalancerController) updatePoliciesStatus() error {
 	var allErrs []error
 	for _, obj := range lbc.policyLister.List() {
 		pol := obj.(*conf_v1.Policy)
@@ -1890,12 +1890,12 @@ func (lbc *LoadBalancerController) updatePolicyStatus() error {
 			if err != nil {
 				allErrs = append(allErrs, err)
 			}
-		}
-
-		msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
-		err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
-		if err != nil {
-			allErrs = append(allErrs, err)
+		} else {
+			msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
+			err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
+			if err != nil {
+				allErrs = append(allErrs, err)
+			}
 		}
 	}
 
