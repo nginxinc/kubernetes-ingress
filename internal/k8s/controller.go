@@ -2389,8 +2389,7 @@ func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1.Policy {
 
 		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies)
 		if err != nil {
-			msg := fmt.Sprintf("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
-			glog.V(3).Infof(msg)
+			glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
 			continue
 		}
 
