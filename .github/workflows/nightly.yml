@@ -190,6 +190,13 @@ jobs:
             tag: ${{ github.sha }}
             marker: ''
             type: oss
+            k8s: 1.20.0
+          - os: ubuntu-18.04
+            file: build/Dockerfile
+            image: nginx-ingress
+            tag: ${{ github.sha }}
+            marker: ''
+            type: oss
             k8s: 1.19.1
           - os: ubuntu-18.04
             file: build/Dockerfile
@@ -213,12 +220,12 @@ jobs:
             type: oss
             k8s: 1.16.15
           - os: ubuntu-18.04
-            file: build/Dockerfile
-            image: nginx-ingress
+            file: build/DockerfileForPlus
+            image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: ''
-            type: oss
-            k8s: 1.15.12
+            type: plus
+            k8s: 1.20.0
           - os: ubuntu-18.04
             file: build/DockerfileForPlus
             image: nginx-plus-ingress
@@ -248,12 +255,12 @@ jobs:
             type: plus
             k8s: 1.16.15
           - os: ubuntu-18.04
-            file: build/DockerfileForPlus
+            file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}
-            marker: ''
-            type: plus
-            k8s: 1.15.12
+            tag: ${{ github.sha }}-ap
+            marker: '-m appprotect'
+            type: plus-ap
+            k8s: 1.20.0
           - os: ubuntu-18.04
             file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
@@ -282,13 +289,6 @@ jobs:
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.16.15
-          - os: ubuntu-18.04
-            file: build/appprotect/DockerfileWithAppProtectForPlus
-            image: nginx-plus-ingress
-            tag: ${{ github.sha }}-ap
-            marker: '-m appprotect'
-            type: plus-ap
-            k8s: 1.15.12
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
