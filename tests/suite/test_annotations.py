@@ -102,12 +102,12 @@ def annotations_setup(request,
     upstream_names = []
     if request.param == 'mergeable':
         event_text = f"Configuration for {test_namespace}/{ingress_name} was added or updated"
-        error_text = f"{event_text} ; but was not applied: Error reloading NGINX"
+        error_text = f"{test_namespace}/{ingress_name} was rejected: with error"
         for minion in minions_info:
             upstream_names.append(f"{test_namespace}-{minion['name']}-{ingress_host}-{minion['svc_name']}-80")
     else:
         event_text = f"Configuration for {test_namespace}/{ingress_name} was added or updated"
-        error_text = f"{event_text} ; but was not applied: Error reloading NGINX"
+        error_text = f"{test_namespace}/{ingress_name} was rejected: with error"
         upstream_names.append(f"{test_namespace}-{ingress_name}-{ingress_host}-backend1-svc-80")
         upstream_names.append(f"{test_namespace}-{ingress_name}-{ingress_host}-backend2-svc-80")
 
@@ -324,16 +324,12 @@ class TestAnnotations:
             assert "zone " not in result_conf
             assert " 256k;" not in result_conf
 
-    @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
+    @pytest.mark.parametrize('annotations', [
         ({"nginx.org/proxy-send-timeout": "invalid", "nginx.org/max-conns": "-10",
-          "nginx.org/upstream-zone-size": "-10I'm S±!@£$%^&*()invalid"},
-         ["proxy_send_timeout invalid;", "max_conns=-10",
-          " -10I'm S±!@£$%^&*()invalid;"],
-         ["proxy_send_timeout 60s;", "max_conns=0",
-          " 256k;"])
+          "nginx.org/upstream-zone-size": "-10I'm S±!@£$%^&*()invalid"})
     ])
     def test_validation(self, kube_apis, annotations_setup, ingress_controller_prerequisites,
-                        annotations, expected_strings, unexpected_strings):
+                        annotations):
         initial_events = get_events(kube_apis.v1, annotations_setup.namespace)
         print("Case 6: IC doesn't validate, only nginx validates")
         initial_count = get_event_count(annotations_setup.ingress_error_event_text, initial_events)
@@ -344,19 +340,16 @@ class TestAnnotations:
             if ing['metadata']['name'] == annotations_setup.ingress_name:
                 replace_ingress(kube_apis.extensions_v1_beta1,
                                 annotations_setup.ingress_name, annotations_setup.namespace, ing)
-        wait_before_test(1)
+        wait_before_test()
         result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
                                                       annotations_setup.namespace,
                                                       annotations_setup.ingress_name,
                                                       annotations_setup.ingress_pod_name,
                                                       ingress_controller_prerequisites.namespace)
         new_events = get_events(kube_apis.v1, annotations_setup.namespace)
-
+        assert "server {" not in result_conf
+        assert "No such file or directory" in result_conf
         assert_event_count_increased(annotations_setup.ingress_error_event_text, initial_count, new_events)
-        for _ in expected_strings:
-            assert _ in result_conf
-        for _ in unexpected_strings:
-            assert _ not in result_conf
 
 
 @pytest.mark.ingresses
