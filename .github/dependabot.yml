@@ -7,6 +7,7 @@ updates:
     reviewers:
       - "nginxinc/kic"
       - "ciarams87"
+      - "sundaram1995"
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -19,3 +20,10 @@ updates:
       interval: daily
     reviewers:
       - "nginxinc/kic"
+  - package-ecosystem: "pip"
+    directory: "/tests"
+    schedule:
+      interval: daily
+    reviewers:
+      - "nginxinc/kic"
+      - "vepatel"
