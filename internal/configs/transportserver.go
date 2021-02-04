@@ -45,7 +45,12 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 		nextUpstream = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstream
 		if nextUpstream {
 			nextUpstreamTries = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTries
-			nextUpstreamTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout
+
+			if transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout != "" {
+				nextUpstreamTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout
+			} else {
+				nextUpstreamTimeout = "0"
+			}
 		}
 
 		if transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout != "" {
