@@ -18,9 +18,9 @@ require (
 	golang.org/x/net v0.0.0-20201216054612-986b41b23924 // indirect
 	golang.org/x/sys v0.0.0-20201218084310-7d0127a74742 // indirect
 	golang.org/x/tools v0.0.0-20201218024724-ae774e9781d2 // indirect
-	k8s.io/api v0.20.0
+	k8s.io/api v0.20.2
 	k8s.io/apimachinery v0.20.2
-	k8s.io/client-go v0.20.0
+	k8s.io/client-go v0.20.2
 	k8s.io/code-generator v0.20.0
 	k8s.io/gengo v0.0.0-20201214224949-b6c5ce23f027 // indirect
 	sigs.k8s.io/controller-tools v0.4.1
