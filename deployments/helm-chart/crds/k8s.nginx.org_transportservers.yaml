@@ -49,11 +49,11 @@ spec:
                   type: string
                 protocol:
                   type: string
-            parameters:
+            sessionParameters:
               description: SessionParameters defines session parameters for an upstream
               type: object
               properties:
-                proxy-timeout:
+                timeout:
                   type: string
             upstreamParameters:
               description: UpstreamParameters defines parameters for an upstream.
