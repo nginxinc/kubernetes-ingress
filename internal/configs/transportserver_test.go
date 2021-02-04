@@ -293,7 +293,7 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 			Namespace:                "default",
 			ProxyConnectTimeout:      "30s",
 			ProxyNextUpstream:        true,
-			ProxyNextUpstreamTimeout: "",
+			ProxyNextUpstreamTimeout: "0",
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
 		},
