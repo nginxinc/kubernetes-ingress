@@ -20,8 +20,22 @@ updates:
       interval: daily
     reviewers:
       - "nginxinc/kic"
+  - package-ecosystem: "docker"
+    directory: "/tests/docker"
+    schedule:
+      interval: daily
+    reviewers:
+      - "nginxinc/kic"
+      - "vepatel"
   - package-ecosystem: "pip"
     directory: "/tests"
+    schedule:
+      interval: daily
+    reviewers:
+      - "nginxinc/kic"
+      - "vepatel"
+  - package-ecosystem: "pip"
+    directory: "/perf-tests"
     schedule:
       interval: daily
     reviewers:
