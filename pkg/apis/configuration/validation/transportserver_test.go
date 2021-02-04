@@ -432,7 +432,7 @@ func TestValidateSessionParameters(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateTransportServerSessionParameters(test.parameters, field.NewPath("sesstionParameters"))
+		allErrs := validateTransportServerSessionParameters(test.parameters, field.NewPath("sessionParameters"))
 		if len(allErrs) > 0 {
 			t.Errorf("validateTransportServerSessionParameters() returned errors %v for valid input for the case of %s", allErrs, test.msg)
 		}

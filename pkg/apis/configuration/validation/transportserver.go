@@ -173,7 +173,7 @@ func validateTransportServerUpstreamParameters(upstreamParameters *v1alpha1.Upst
 	return allErrs
 }
 
-func validateTransportServerSessionParameters(sessionParameters *v1alpha1.SessionParameters, fieldPath *field.Path) field.ErrorList {
+func validateSessionParameters(sessionParameters *v1alpha1.SessionParameters, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if sessionParameters == nil {

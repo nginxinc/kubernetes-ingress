@@ -65,7 +65,7 @@ type TransportServerSpec struct {
 	Host               string                  `json:"host"`
 	Upstreams          []Upstream              `json:"upstreams"`
 	UpstreamParameters *UpstreamParameters     `json:"upstreamParameters"`
-	SessionParameters  *SessionParameters      `json:"parameters"`
+	SessionParameters  *SessionParameters      `json:"sessionParameters"`
 	Action             *Action                 `json:"action"`
 }
 
@@ -95,7 +95,7 @@ type UpstreamParameters struct {
 
 // SessionParameters defines session parameters for an upstream
 type SessionParameters struct {
-	Timeout string `json:"proxy-timeout"`
+	Timeout string `json:"timeout"`
 }
 
 // Action defines an action.

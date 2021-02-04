@@ -191,8 +191,8 @@ upstreamParameters:
   udpResponses: 1
   connectTimeout: "60s"
   nextUpstream: True
-  NextUpstreamTimeout: "50s"
-  NextUpstreamTries: 1
+  nextUpstreamTimeout: "50s"
+  nextUpstreamTries: 1
 ```
 
 ```eval_rst
@@ -233,7 +233,7 @@ upstreamParameters:
 
 The session parameters define various parameters for TCP connections and UDP sessions.
 ```yaml
-sessionTimeout:
+sessionParameters:
   timeout: "50s"
 ```
 
