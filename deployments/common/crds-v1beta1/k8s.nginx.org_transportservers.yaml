@@ -49,10 +49,24 @@ spec:
                   type: string
                 protocol:
                   type: string
+            parameters:
+              description: SessionParameters defines session parameters for an upstream
+              type: object
+              properties:
+                proxy-timeout:
+                  type: string
             upstreamParameters:
               description: UpstreamParameters defines parameters for an upstream.
               type: object
               properties:
+                connectTimeout:
+                  type: string
+                nextUpstream:
+                  type: boolean
+                nextUpstreamTimeout:
+                  type: string
+                nextUpstreamTries:
+                  type: integer
                 udpRequests:
                   type: integer
                 udpResponses:
@@ -63,8 +77,6 @@ spec:
                 description: Upstream defines an upstream.
                 type: object
                 properties:
-                  connect-timeout:
-                    type: string
                   name:
                     type: string
                   port:

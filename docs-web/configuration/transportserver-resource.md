@@ -15,6 +15,7 @@ This document is the reference documentation for the TransportServer resource. T
     - [Listener](#listener)
     - [Upstream](#upstream)
     - [UpstreamParameters](#upstreamparameters)
+    - [SessionParameters](#sessionparameters)
     - [Action](#action)
   - [Using TransportServer](#using-transportserver)
     - [Validation](#validation)

@@ -423,6 +423,12 @@ func TestValidateSessionParameters(t *testing.T) {
 			parameters: &v1alpha1.SessionParameters{},
 			msg:        "Non-nil parameters",
 		},
+		{
+			parameters: &v1alpha1.SessionParameters{
+				Timeout: "60s",
+			},
+			msg: "",
+		},
 	}
 
 	for _, test := range tests {
