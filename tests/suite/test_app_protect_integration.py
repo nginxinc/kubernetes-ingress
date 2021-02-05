@@ -139,7 +139,7 @@ def assert_valid_responses(response) -> None:
 
 
 @pytest.mark.skip_for_nginx_oss
-@pytest.mark.test
+@pytest.mark.appprotect
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [{"extra_args": [f"-enable-custom-resources", f"-enable-app-protect"]}],
@@ -366,7 +366,7 @@ class TestAppProtect:
         self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
         """
-        Test request with UDS fil is rejected while AppProtect with User Defined Signatures is enabled in Ingress
+        Test request with UDS rule string is rejected while AppProtect with User Defined Signatures is enabled in Ingress
         """
 
         ap_uds_crd_name = get_name_from_yaml(uds_crd)
