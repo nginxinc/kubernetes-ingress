@@ -68,7 +68,7 @@ jobs:
         env:
           GOFLAGS: '-mod=vendor -gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ${{ github.workspace }}/nginx-ingress
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -154,7 +154,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ${{ github.workspace }}/nginx-ingress
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -163,7 +163,7 @@ jobs:
         with:
           driver-opts: network=host
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -275,7 +275,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ${{ github.workspace }}/nginx-ingress
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -284,7 +284,7 @@ jobs:
         with:
           driver-opts: network=host
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -410,7 +410,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ${{ github.workspace }}/nginx-ingress
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -419,7 +419,7 @@ jobs:
         with:
           driver-opts: network=host
       - name: Docker build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -503,7 +503,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: ${{ github.workspace }}/nginx-ingress
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -512,7 +512,7 @@ jobs:
         with:
           driver-opts: network=host
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
