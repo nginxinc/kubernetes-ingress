@@ -1,5 +1,6 @@
 """Describe methods to utilize the kubernetes-client."""
 import pytest
+import time
 import yaml
 import logging
 
@@ -242,6 +243,69 @@ def create_ap_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, 
     return dep["metadata"]["name"]
 
 
+def create_ap_usersig_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
+    """
+    Create a UserSig for AppProtect based on yaml file.
+    :param custom_objects: CustomObjectsApi
+    :param yaml_manifest: an absolute path to file
+    :param namespace:
+    :return: str
+    """
+    print("Create AP UserSig:")
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    custom_objects.create_namespaced_custom_object(
+        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", dep
+    )
+    print(f"AP UserSig created with name '{dep['metadata']['name']}'")
+    return dep["metadata"]["name"]
+
+
+def delete_and_create_ap_policy_from_yaml(
+    custom_objects: CustomObjectsApi, name, yaml_manifest, namespace
+) -> None:
+    """
+    Patch a AP Policy based on yaml manifest
+    :param custom_objects: CustomObjectsApi
+    :param name:
+    :param yaml_manifest: an absolute path to file
+    :param namespace:
+    :return:
+    """
+    print(f"Update an AP Policy: {name}")
+    
+    try:
+        delete_ap_policy(custom_objects, name, namespace)
+        create_ap_policy_from_yaml(custom_objects, yaml_manifest, namespace)
+    except ApiException:
+        logging.exception(f"Failed with exception while patching AP Policy: {name}")
+        raise
+
+
+def delete_ap_usersig(custom_objects: CustomObjectsApi, name, namespace) -> None:
+    """
+    Delete a AppProtect usersig.
+    :param custom_objects: CustomObjectsApi
+    :param namespace: namespace
+    :param name:
+    :return:
+    """
+    print(f"Delete AP UserSig: {name}")
+    delete_options = client.V1DeleteOptions()
+    custom_objects.delete_namespaced_custom_object(
+        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", name, delete_options
+    )
+    ensure_item_removal(
+        custom_objects.get_namespaced_custom_object,
+        "appprotect.f5.com",
+        "v1beta1",
+        namespace,
+        "apusersigs",
+        name,
+    )
+    print(f"AP UserSig was removed with name: {name}")
+
+
 def delete_ap_logconf(custom_objects: CustomObjectsApi, name, namespace) -> None:
     """
     Delete a AppProtect logconf.
@@ -287,6 +351,7 @@ def delete_ap_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
         "appolicies",
         name,
     )
+    time.sleep(3)
     print(f"AP policy was removed with name: {name}")
 
 
@@ -353,13 +418,9 @@ def delete_and_create_vs_from_yaml(
     :param namespace:
     :return:
     """
-    try: 
-        delete_virtual_server(
-            custom_objects, name, namespace
-        )
-        create_virtual_server_from_yaml(
-            custom_objects, yaml_manifest, namespace
-        )
+    try:
+        delete_virtual_server(custom_objects, name, namespace)
+        create_virtual_server_from_yaml(custom_objects, yaml_manifest, namespace)
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServer: {name}")
         raise

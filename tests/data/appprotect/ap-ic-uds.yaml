@@ -1,0 +1,18 @@
+apiVersion: appprotect.f5.com/v1beta1
+kind: APUserSig
+metadata:
+  name: kic
+spec:
+  signatures:
+  - accuracy: medium
+    attackType:
+      name: Brute Force Attack
+    description: Medium accuracy user defined signature with tag (Ingress)
+    name: kic_medium_acc
+    risk: medium
+    rule: content:"kic"; nocase;
+    signatureType: request
+    systems:
+    - name: Microsoft Windows
+    - name: Unix/Linux
+  tag: Ingress
