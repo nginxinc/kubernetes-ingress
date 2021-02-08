@@ -50,7 +50,7 @@ spec:
                 protocol:
                   type: string
             sessionParameters:
-              description: SessionParameters defines session parameters for an upstream
+              description: SessionParameters defines session parameters.
               type: object
               properties:
                 timeout:
