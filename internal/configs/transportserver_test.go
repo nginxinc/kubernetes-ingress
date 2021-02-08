@@ -210,7 +210,7 @@ func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
 			ProxyNextUpstream:        false,
 			ProxyNextUpstreamTimeout: "",
 			ProxyNextUpstreamTries:   0,
-			ProxyTimeout:             "10m",
+			ProxyTimeout:             "",
 		},
 	}
 
@@ -295,7 +295,7 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 			ProxyNextUpstream:        true,
 			ProxyNextUpstreamTimeout: "0",
 			ProxyNextUpstreamTries:   0,
-			ProxyTimeout:             "10m",
+			ProxyTimeout:             "",
 		},
 	}
 

@@ -326,12 +326,17 @@ var transportServerCfg = TransportServerConfig{
 		},
 	},
 	Server: StreamServer{
-		Port:           1234,
-		UDP:            true,
-		StatusZone:     "udp-app",
-		ProxyRequests:  createPointerFromInt(1),
-		ProxyResponses: createPointerFromInt(2),
-		ProxyPass:      "udp-upstream",
+		Port:                     1234,
+		UDP:                      true,
+		StatusZone:               "udp-app",
+		ProxyRequests:            createPointerFromInt(1),
+		ProxyResponses:           createPointerFromInt(2),
+		ProxyPass:                "udp-upstream",
+		ProxyTimeout:             "10s",
+		ProxyConnectTimeout:      "10s",
+		ProxyNextUpstream:        true,
+		ProxyNextUpstreamTimeout: "10s",
+		ProxyNextUpstreamTries:   5,
 	},
 }
 

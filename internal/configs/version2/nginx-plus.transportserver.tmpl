@@ -30,8 +30,12 @@ server {
 
     proxy_pass {{ $s.ProxyPass }};
 
+    {{ if $s.ProxyTimeout}}
     proxy_timeout {{ $s.ProxyTimeout }};
+    {{ end }}
+    {{ if $s.ProxyConnectTimeout }}
     proxy_connect_timeout {{ $s.ProxyConnectTimeout }};
+    {{ end }}
     {{ if $s.ProxyNextUpstream }}
     proxy_next_upstream on;
     proxy_next_upstream_timeout {{ $s.ProxyNextUpstreamTimeout }};

@@ -157,7 +157,6 @@ The upstream defines a destination for the TransportServer. For example:
 name: secure-app 
 service: secure-app
 port: 8443
-connect-timeout: "30s"
 ```
 
 ```eval_rst
@@ -189,9 +188,9 @@ The upstream parameters define various parameters for the upstreams:
 upstreamParameters:
   udpRequests: 1
   udpResponses: 1
-  connectTimeout: "60s"
-  nextUpstream: True
-  nextUpstreamTimeout: "50s"
+  connectTimeout: 60s
+  nextUpstream: true
+  nextUpstreamTimeout: 50s
   nextUpstreamTries: 1
 ```
 
@@ -234,7 +233,7 @@ upstreamParameters:
 The session parameters define various parameters for TCP connections and UDP sessions.
 ```yaml
 sessionParameters:
-  timeout: "50s"
+  timeout: 50s
 ```
 
 ```eval_rst
@@ -247,6 +246,8 @@ sessionParameters:
      - Required
    * - ``timeout``
      - The timeout between two succesive read or write operations on client or proxied server connections. See `proxy_timeout <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_timeout>`_ directive. The default is ``10m``.
+     - ``string``
+     - No
 ```
 
 ### Action

@@ -439,6 +439,27 @@ func TestValidateSessionParameters(t *testing.T) {
 	}
 }
 
+func TestValidateSessionParametersFails(t *testing.T) {
+	tests := []struct {
+		parameters *v1alpha1.SessionParameters
+		msg        string
+	}{
+		{
+			parameters: &v1alpha1.SessionParameters{
+				Timeout: "-1s",
+			},
+			msg: "[sessionParameters.timeout: Invalid value: \"-1s\": Invalid time string]",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateSessionParameters(test.parameters, field.NewPath("sessionParameters"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateSessionParameters() returned no errors for invalid input: %v", test.msg)
+		}
+	}
+}
+
 func TestValidateUDPUpstreamParameter(t *testing.T) {
 	validInput := []struct {
 		parameter *int

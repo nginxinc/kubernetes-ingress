@@ -45,27 +45,15 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 		nextUpstream = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstream
 		if nextUpstream {
 			nextUpstreamTries = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTries
-
-			if transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout != "" {
-				nextUpstreamTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout
-			} else {
-				nextUpstreamTimeout = "0"
-			}
+			nextUpstreamTimeout = generateString(transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout, "0")
 		}
 
-		if transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout != "" {
-			connectTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout
-		} else {
-			connectTimeout = "60s" // default value for directive
-		}
-
+		connectTimeout = generateString(transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout, "0")
 	}
 
 	var proxyTimeout string
 	if transportServerEx.TransportServer.Spec.SessionParameters != nil {
-		proxyTimeout = transportServerEx.TransportServer.Spec.SessionParameters.Timeout
-	} else {
-		proxyTimeout = "10m" // default value for directive
+		proxyTimeout = generateString(transportServerEx.TransportServer.Spec.SessionParameters.Timeout, "10m")
 	}
 
 	statusZone := ""
