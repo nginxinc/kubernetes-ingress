@@ -93,7 +93,7 @@ type UpstreamParameters struct {
 	NextUpstreamTries   int    `json:"nextUpstreamTries"`
 }
 
-// SessionParameters defines session parameters for an upstream
+// SessionParameters defines session parameters.
 type SessionParameters struct {
 	Timeout string `json:"timeout"`
 }

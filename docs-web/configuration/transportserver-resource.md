@@ -215,15 +215,15 @@ upstreamParameters:
      - ``string``
      - No
    * - ``nextUpstream``
-     - If a connection to the proxied server cannot be established, determines whether a client connection will be passed to the next server. See the `proxy_next_upstream <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream>`_ directive. The default is ``on``.
+     - If a connection to the proxied server cannot be established, determines whether a client connection will be passed to the next server. See the `proxy_next_upstream <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream>`_ directive. The default is ``true``.
      - bool
      - No
    * - ``nextUpstreamTries``
-     - The number of tries for passing a connection to the next server. See the `proxy_next_upstream_tries <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream_tries>`_ directive. The default is ``0``
+     - The number of tries for passing a connection to the next server. See the `proxy_next_upstream_tries <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream_tries>`_ directive. The default is ``0``.
      - ``int``
      - No
    * - ``nextUpstreamTimeout``
-     - The time allowed to pass a connection to the next server. See the `proxy_next_upstream_timeout <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream_timeout>`_ directive. The default us ``0``
+     - The time allowed to pass a connection to the next server. See the `proxy_next_upstream_timeout <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_next_upstream_timeout>`_ directive. The default us ``0``.
      - ``string``
      - No
 ```
