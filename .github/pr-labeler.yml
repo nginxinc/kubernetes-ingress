@@ -1,4 +1,6 @@
 feature: ['feature/*', 'feat/*']
-fix: fix/*
-chore: ['chore/*', 'deps/*']
+enhancement: ['enhancement/*','enh/*']
+bug: fix/*
+chore: 'chore/*'
+dependencies: deps/*
 documentation: docs/*

@@ -7,22 +7,17 @@ categories:
       - "enhancement"
   - title: '💣 Breaking Change'
     labels:
-      - "breaking"
       - "change"
   - title: '🐛 Bug Fixes'
     labels:
-      - "fix"
       - "bug"
-      - "bugfix"
   - title: '📝 Documentation'
     labels:
       - "documentation"
-      - "docs"
   - title: '🔨 Maintenance'
     labels:
       - "chore"
       - "dependencies"
-      - "ci"
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 template: |
   *Help make the NGINX Ingress Controller better by participating in our [survey](https://forms.office.com/Pages/ResponsePage.aspx?id=L_093Ttq0UCb4L-DJ9gcUM6Dh1A0cORCorfgZAMdkwJUREhJUFAyM1ZHRzZLSzQyMUlCNFhXVkZENy4u)!*
