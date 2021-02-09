@@ -45,15 +45,15 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 		nextUpstream = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstream
 		if nextUpstream {
 			nextUpstreamTries = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTries
-			nextUpstreamTimeout = generateString(transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout, "0")
+			nextUpstreamTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.NextUpstreamTimeout
 		}
 
-		connectTimeout = generateString(transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout, "0")
+		connectTimeout = transportServerEx.TransportServer.Spec.UpstreamParameters.ConnectTimeout
 	}
 
 	var proxyTimeout string
 	if transportServerEx.TransportServer.Spec.SessionParameters != nil {
-		proxyTimeout = generateString(transportServerEx.TransportServer.Spec.SessionParameters.Timeout, "10m")
+		proxyTimeout = transportServerEx.TransportServer.Spec.SessionParameters.Timeout
 	}
 
 	statusZone := ""
@@ -75,10 +75,10 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			ProxyPass:                upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
 			Name:                     transportServerEx.TransportServer.Name,
 			Namespace:                transportServerEx.TransportServer.Namespace,
-			ProxyConnectTimeout:      connectTimeout,
-			ProxyTimeout:             proxyTimeout,
+			ProxyConnectTimeout:      generateString(connectTimeout, "60s"),
+			ProxyTimeout:             generateString(proxyTimeout, "10m"),
 			ProxyNextUpstream:        nextUpstream,
-			ProxyNextUpstreamTimeout: nextUpstreamTimeout,
+			ProxyNextUpstreamTimeout: generateString(nextUpstreamTimeout, "0"),
 			ProxyNextUpstreamTries:   nextUpstreamTries,
 		},
 		Upstreams: upstreams,
