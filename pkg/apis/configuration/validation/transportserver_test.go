@@ -448,7 +448,7 @@ func TestValidateSessionParametersFails(t *testing.T) {
 			parameters: &v1alpha1.SessionParameters{
 				Timeout: "-1s",
 			},
-			msg: "[sessionParameters.timeout: Invalid value: \"-1s\": Invalid time string]",
+			msg: "invalid timeout",
 		},
 	}
 
