@@ -427,7 +427,7 @@ func TestValidateSessionParameters(t *testing.T) {
 			parameters: &v1alpha1.SessionParameters{
 				Timeout: "60s",
 			},
-			msg: "",
+			msg: "valid parameters",
 		},
 	}
 
