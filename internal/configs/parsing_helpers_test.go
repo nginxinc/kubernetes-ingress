@@ -364,8 +364,8 @@ func TestParseLBMethodForPlus(t *testing.T) {
 }
 
 func TestParseTime(t *testing.T) {
-	var testsWithValidInput = []string{"10ms", "1", "1m10s", "11 11", "5m 30s", "1s", "100m", "5w", "15m", "11M", "3h", "100y", "600"}
-	var invalidInput = []string{"ss", "rM", "m0m", "s1s", "-5s", "", "1L"}
+	var testsWithValidInput = []string{"1h30m 5 100ms", "10ms", "1", "1m10s", "5m 30s", "1s", "100m", "5w", "15m", "11M", "3h", "100y", "600"}
+	var invalidInput = []string{"5s 5s", "ss", "rM", "m0m", "s1s", "-5s", "", "1L", "11 11"}
 	for _, test := range testsWithValidInput {
 		result, err := ParseTime(test)
 		if err != nil {

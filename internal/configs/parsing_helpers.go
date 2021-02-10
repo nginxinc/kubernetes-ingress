@@ -183,13 +183,13 @@ func ParseUint64(s string) (uint64, error) {
 }
 
 // timeRegexp http://nginx.org/en/docs/syntax.html
-var timeRegexp = regexp.MustCompile(`^([0-9]+(ms|s|m|h|d|w|M|y)? *)+$`)
+var timeRegexp = regexp.MustCompile(`^(\d+y)?\s*(\d+M)?\s*(\d+w)?\s*(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s?)?\s*(\d+ms)?$`)
 
 // ParseTime ensures that the string value in the annotation is a valid time.
 func ParseTime(s string) (string, error) {
 	s = strings.TrimSpace(s)
 
-	if timeRegexp.MatchString(s) {
+	if s != "" && timeRegexp.MatchString(s) {
 		return s, nil
 	}
 	return "", errors.New("Invalid time string")
