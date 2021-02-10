@@ -3,7 +3,7 @@ requests==2.25.1
 kubernetes==8.0.1
 pytest==4.4.1
 ipaddress==1.0.23 # >= 1.0.17
-cffi==1.12.3
+cffi==1.14.4
 certifi==2020.12.5
 urllib3==1.25.3
 pytest-html==2.1.1
