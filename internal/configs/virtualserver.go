@@ -177,9 +177,9 @@ func newHealthCheckWithDefaults(
 		Passes:              1,
 		Port:                int(upstream.Port),
 		ProxyPass:           fmt.Sprintf("%v://%v", generateProxyPassProtocol(upstream.TLS.Enable), upstreamName),
-		ProxyConnectTimeout: generateString(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
-		ProxyReadTimeout:    generateString(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),
-		ProxySendTimeout:    generateString(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
+		ProxyConnectTimeout: generateTime(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
+		ProxyReadTimeout:    generateTime(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),
+		ProxySendTimeout:    generateTime(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
 		Headers:             make(map[string]string),
 	}
 }
@@ -1109,7 +1109,7 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 		LBMethod:         lbMethod,
 		Keepalive:        generateIntFromPointer(upstream.Keepalive, vsc.cfgParams.Keepalive),
 		MaxFails:         generateIntFromPointer(upstream.MaxFails, vsc.cfgParams.MaxFails),
-		FailTimeout:      generateString(upstream.FailTimeout, vsc.cfgParams.FailTimeout),
+		FailTimeout:      generateTime(upstream.FailTimeout, vsc.cfgParams.FailTimeout),
 		MaxConns:         generateIntFromPointer(upstream.MaxConns, vsc.cfgParams.MaxConns),
 		UpstreamZoneSize: vsc.cfgParams.UpstreamZoneSize,
 	}
@@ -1329,6 +1329,16 @@ func generateString(s string, defaultS string) string {
 	return s
 }
 
+func generateTime(strs ...string) string {
+	for _, s := range strs {
+		t, err := ParseTime(s)
+		if err == nil {
+			return t
+		}
+	}
+	return ""
+}
+
 func generateSnippets(enableSnippets bool, s string, defaultS []string) []string {
 	if !enableSnippets || s == "" {
 		return defaultS
@@ -1470,9 +1480,9 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 		Path:                     generatePath(path),
 		Internal:                 internal,
 		Snippets:                 locationSnippets,
-		ProxyConnectTimeout:      generateString(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
-		ProxyReadTimeout:         generateString(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),
-		ProxySendTimeout:         generateString(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
+		ProxyConnectTimeout:      generateTime(upstream.ProxyConnectTimeout, cfgParams.ProxyConnectTimeout),
+		ProxyReadTimeout:         generateTime(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),
+		ProxySendTimeout:         generateTime(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
 		ClientMaxBodySize:        generateString(upstream.ClientMaxBodySize, cfgParams.ClientMaxBodySize),
 		ProxyMaxTempFileSize:     cfgParams.ProxyMaxTempFileSize,
 		ProxyBuffering:           generateBool(upstream.ProxyBuffering, cfgParams.ProxyBuffering),
@@ -1480,7 +1490,7 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 		ProxyBufferSize:          generateString(upstream.ProxyBufferSize, cfgParams.ProxyBufferSize),
 		ProxyPass:                generateProxyPass(upstream.TLS.Enable, upstreamName, internal, proxy),
 		ProxyNextUpstream:        generateString(upstream.ProxyNextUpstream, "error timeout"),
-		ProxyNextUpstreamTimeout: generateString(upstream.ProxyNextUpstreamTimeout, "0s"),
+		ProxyNextUpstreamTimeout: generateTime(upstream.ProxyNextUpstreamTimeout, "0s"),
 		ProxyNextUpstreamTries:   upstream.ProxyNextUpstreamTries,
 		ProxyInterceptErrors:     generateProxyInterceptErrors(errorPages),
 		ProxyPassRequestHeaders:  generateProxyPassRequestHeaders(proxy),
@@ -2034,7 +2044,7 @@ func generateQueueForPlus(upstreamQueue *conf_v1.UpstreamQueue, defaultTimeout s
 
 	return &version2.Queue{
 		Size:    upstreamQueue.Size,
-		Timeout: generateString(upstreamQueue.Timeout, defaultTimeout),
+		Timeout: generateTime(upstreamQueue.Timeout, defaultTimeout),
 	}
 }
 

@@ -158,15 +158,27 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 	}
 
 	if proxyConnectTimeout, exists := ingEx.Ingress.Annotations["nginx.org/proxy-connect-timeout"]; exists {
-		cfgParams.ProxyConnectTimeout = proxyConnectTimeout
+		if parsedProxyConnectTimeout, err := ParseTime(proxyConnectTimeout); err != nil {
+			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/proxy-connect-timeout: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), proxyConnectTimeout, err)
+		} else {
+			cfgParams.ProxyConnectTimeout = parsedProxyConnectTimeout
+		}
 	}
 
 	if proxyReadTimeout, exists := ingEx.Ingress.Annotations["nginx.org/proxy-read-timeout"]; exists {
-		cfgParams.ProxyReadTimeout = proxyReadTimeout
+		if parsedProxyReadTimeout, err := ParseTime(proxyReadTimeout); err != nil {
+			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/proxy-read-timeout: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), proxyReadTimeout, err)
+		} else {
+			cfgParams.ProxyReadTimeout = parsedProxyReadTimeout
+		}
 	}
 
 	if proxySendTimeout, exists := ingEx.Ingress.Annotations["nginx.org/proxy-send-timeout"]; exists {
-		cfgParams.ProxySendTimeout = proxySendTimeout
+		if parsedProxySendTimeout, err := ParseTime(proxySendTimeout); err != nil {
+			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/proxy-send-timeout: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), proxySendTimeout, err)
+		} else {
+			cfgParams.ProxySendTimeout = parsedProxySendTimeout
+		}
 	}
 
 	if proxyHideHeaders, exists, err := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-hide-headers", ingEx.Ingress, ","); exists {
@@ -328,7 +340,11 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 	}
 
 	if failTimeout, exists := ingEx.Ingress.Annotations["nginx.org/fail-timeout"]; exists {
-		cfgParams.FailTimeout = failTimeout
+		if parsedFailTimeout, err := ParseTime(failTimeout); err != nil {
+			glog.Errorf("Ingress %s/%s: Invalid value nginx.org/fail-timeout: got %q: %v", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName(), failTimeout, err)
+		} else {
+			cfgParams.FailTimeout = parsedFailTimeout
+		}
 	}
 
 	if hasAppProtect {

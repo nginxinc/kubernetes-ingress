@@ -183,16 +183,26 @@ func ParseUint64(s string) (uint64, error) {
 }
 
 // timeRegexp http://nginx.org/en/docs/syntax.html
-var timeRegexp = regexp.MustCompile(`^([0-9]+([ms|s|m|h|d|w|M|y]?){0,1} *)+$`)
+var timeRegexp = regexp.MustCompile(`^(\d+y)??\s*(\d+M)??\s*(\d+w)??\s*(\d+d)??\s*(\d+h)??\s*(\d+m)??\s*(\d+s?)??\s*(\d+ms)??$`)
 
 // ParseTime ensures that the string value in the annotation is a valid time.
 func ParseTime(s string) (string, error) {
-	s = strings.TrimSpace(s)
-
-	if timeRegexp.MatchString(s) {
-		return s, nil
+	if s == "" || !timeRegexp.MatchString(s) {
+		return "", errors.New("Invalid time string")
 	}
-	return "", errors.New("Invalid time string")
+	units := timeRegexp.FindStringSubmatch(s)
+	years := units[1]
+	months := units[2]
+	weeks := units[3]
+	days := units[4]
+	hours := units[5]
+	mins := units[6]
+	secs := units[7]
+	if secs != "" && !strings.HasSuffix(secs, "s") {
+		secs = secs + "s"
+	}
+	millis := units[8]
+	return fmt.Sprintf("%s%s%s%s%s%s%s%s", years, months, weeks, days, hours, mins, secs, millis), nil
 }
 
 // OffsetFmt http://nginx.org/en/docs/syntax.html
