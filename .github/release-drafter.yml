@@ -30,7 +30,7 @@ template: |
 
   For NGINX, use the v$NEXT_MINOR_VERSION image from our DockerHub: `nginx/nginx-ingress:$NEXT_MINOR_VERSION`, `nginx/nginx-ingress:$NEXT_MINOR_VERSION-alpine` or `nginx/nginx-ingress:$NEXT_MINOR_VERSION-ubi`
   For NGINX Plus, please build your own image using the v$NEXT_MINOR_VERSION source code.
-  For Helm, use version 0.7.1 of the chart.
+  For Helm, use version HELM_VERSION_REPLACE_ME! of the chart.
 
   ## Resources
 
