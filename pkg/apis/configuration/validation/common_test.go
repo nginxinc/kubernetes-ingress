@@ -289,7 +289,7 @@ func TestValidateSize(t *testing.T) {
 }
 
 func TestValidateTime(t *testing.T) {
-	time := "1h2s"
+	time := "1h 2s"
 	allErrs := validateTime(time, field.NewPath("time-field"))
 
 	if len(allErrs) != 0 {
