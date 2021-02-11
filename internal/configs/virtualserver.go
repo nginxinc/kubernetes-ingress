@@ -1140,7 +1140,7 @@ func (vsc *virtualServerConfigurator) generateSlowStartForPlus(
 		return ""
 	}
 
-	return upstream.SlowStart
+	return generateTime(upstream.SlowStart)
 }
 
 func generateHealthCheck(
