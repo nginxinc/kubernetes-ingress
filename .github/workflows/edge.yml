@@ -544,7 +544,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Lint
         run: |
-          sed -i "s|edge|${{ env.HELM_CHART_VERSION }}|g" deployments/helm-chart/Chart.yaml
           helm lint ${{ env.HELM_CHART_DIR }} || true
       - name: Package
         run: |
