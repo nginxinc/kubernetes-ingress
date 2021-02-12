@@ -25,7 +25,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
     ```
 
 1. Build the image:
-    * For NGINX:
+    * For **NGINX**:
       ```
       $ make PREFIX=myregistry.example.com/nginx-ingress
       ```
@@ -33,7 +33,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 
       As a result, the image **myregistry.example.com/nginx-ingress:edge** is built and pushed to the registry. Note that the tag `edge` comes from the `VERSION` variable, defined in the Makefile.
 
-    * For NGINX Plus, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
+    * For **NGINX Plus**, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
       ```
       $ ls nginx-repo.*
       nginx-repo.crt  nginx-repo.key
