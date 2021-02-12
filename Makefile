@@ -12,7 +12,6 @@ DOCKERFILE = Dockerfile # note, this can be overwritten e.g. can be DOCKERFILE=D
 BUILD_IN_CONTAINER = 1
 PUSH_TO_GCR =
 GENERATE_DEFAULT_CERT_AND_KEY =
-DOCKER_BUILD_OPTIONS =
 
 GIT_COMMIT = $(shell git rev-parse --short HEAD)
 
@@ -52,12 +51,12 @@ ifneq ($(BUILD_IN_CONTAINER),1)
 endif
 
 prepare-license-secrets:
-ifneq (,$(findstring PlusForOpenShift,$(DOCKERFILE)))
+ifneq (,$$(findstring PlusForOpenShift,$$(DOCKERFILE)))
 	mkdir -p tempdir && base64 nginx-repo.crt > tempdir/nginx-repo.crt && base64 nginx-repo.key > tempdir/nginx-repo.key && base64 rhel_license > tempdir/rhel_license
-DOCKER_BUILD_OPTIONS += --secret id=nginx-repo.crt,src=tempdir/nginx-repo.crt --secret id=nginx-repo.key,src=tempdir/nginx-repo.key --secret id=rhel_license,src=tempdir/rhel_license
-else ifneq (,$(findstring Plus,$(DOCKERFILE)))
+override DOCKER_BUILD_OPTIONS += --secret id=nginx-repo.crt,src=tempdir/nginx-repo.crt --secret id=nginx-repo.key,src=tempdir/nginx-repo.key --secret id=rhel_license,src=tempdir/rhel_license
+else ifneq (,$$(findstring Plus,$$(DOCKERFILE)))
 	mkdir -p tempdir && base64 nginx-repo.crt > tempdir/nginx-repo.crt && base64 nginx-repo.key > tempdir/nginx-repo.key
-DOCKER_BUILD_OPTIONS += --secret id=nginx-repo.crt,src=tempdir/nginx-repo.crt --secret id=nginx-repo.key,src=tempdir/nginx-repo.key
+override DOCKER_BUILD_OPTIONS += --secret id=nginx-repo.crt,src=tempdir/nginx-repo.crt --secret id=nginx-repo.key,src=tempdir/nginx-repo.key
 endif
 
 container: test verify-codegen update-crds binary certificate-and-key prepare-license-secrets
