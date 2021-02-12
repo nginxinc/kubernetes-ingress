@@ -68,7 +68,7 @@ class TestVirtualServerUpstreamOptions:
           "client_max_body_size 1048K;",
           "proxy_buffering on;", "proxy_buffer_size 2k;", "proxy_buffers 4 2k;"]),
         ({"lb-method": "ip_hash", "connect-timeout": "75", "read-timeout": "15", "send-timeout": "1h"},
-         ["ip_hash;", "proxy_connect_timeout 75;", "proxy_read_timeout 15;", "proxy_send_timeout 1h;"]),
+         ["ip_hash;", "proxy_connect_timeout 75s;", "proxy_read_timeout 15s;", "proxy_send_timeout 1h;"]),
         ({"connect-timeout": "1m", "read-timeout": "1m", "send-timeout": "1s"},
          ["proxy_connect_timeout 1m;", "proxy_read_timeout 1m;", "proxy_send_timeout 1s;"]),
         ({"next-upstream": "error timeout non_idempotent", "next-upstream-timeout": "5s", "next-upstream-tries": 10},
