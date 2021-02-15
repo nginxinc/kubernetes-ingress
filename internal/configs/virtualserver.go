@@ -953,7 +953,8 @@ func (p *policiesCfg) addWAFConfig(
 
 	if waf.ApPolicy != "" {
 		apPolKey := waf.ApPolicy
-		if !strings.Contains(apPolKey, "/") {
+		hasNamepace := strings.Contains(apPolKey, "/")
+		if !hasNamepace {
 			apPolKey = fmt.Sprintf("%v/%v", polNamespace, apPolKey)
 		}
 
@@ -970,7 +971,8 @@ func (p *policiesCfg) addWAFConfig(
 		p.WAF.ApSecurityLogEnable = true
 
 		logConfKey := waf.SecurityLog.ApLogConf
-		if !strings.Contains(logConfKey, "/") {
+		hasNamepace := strings.Contains(logConfKey, "/")
+		if !hasNamepace {
 			logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
 		}
 

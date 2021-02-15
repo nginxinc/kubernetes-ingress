@@ -2106,7 +2106,7 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 			pols: policies,
 			key:  "ns2/logConf",
 			want: []*conf_v1.Policy{logConfNs2},
-			msg:  "WAF pols that ref apPol which is in another ns",
+			msg:  "WAF pols that ref logConf which is in another ns",
 		},
 		{
 			pols: policies,
