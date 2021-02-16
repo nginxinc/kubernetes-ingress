@@ -107,7 +107,7 @@ class TestPrometheusExporter:
                     'nginx_ingress_controller_nginx_reload_errors_total{class="nginx"} 0',
                     'nginx_ingress_controller_ingress_resources_total{class="nginx",type="master"} 0',
                     'nginx_ingress_controller_ingress_resources_total{class="nginx",type="minion"} 0',
-                    'nginx_ingress_controller_ingress_resources_total{class="nginx",type="regular"} 0',
+                    'nginx_ingress_controller_ingress_resources_total{class="nginx",type="regular"} 1',
                     "nginx_ingress_controller_nginx_last_reload_milliseconds",
                     'nginx_ingress_controller_nginx_last_reload_status{class="nginx"} 1',
                     'nginx_ingress_controller_nginx_reload_errors_total{class="nginx"} 0',
