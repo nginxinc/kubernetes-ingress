@@ -387,6 +387,79 @@ func TestValidateListenerProtocol(t *testing.T) {
 	}
 }
 
+func TestValidateTSUpstreamHealthChecks(t *testing.T) {
+	tests := []struct {
+		healthCheck *v1alpha1.HealthCheck
+		msg         string
+	}{
+		{
+			healthCheck: nil,
+			msg:         "nil health check",
+		},
+		{
+			healthCheck: &v1alpha1.HealthCheck{},
+			msg:         "non nil health check",
+		},
+		{
+			healthCheck: &v1alpha1.HealthCheck{
+				Enabled:  true,
+				Timeout:  "30s",
+				Jitter:   "5s",
+				Port:     88,
+				Interval: "10",
+				Passes:   3,
+				Fails:    4,
+			},
+			msg: "valid Health check",
+		},
+	}
+	for _, test := range tests {
+		allErrs := validateTSUpstreamHealthChecks(test.healthCheck, field.NewPath("healthCheck"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateUpstreamHealthChecks() returned errors %v  for valid input for the case of %s", allErrs, test.msg)
+		}
+	}
+}
+
+func TestValidateTSUpstreamHealthChecksFails(t *testing.T) {
+	tests := []struct {
+		healthCheck *v1alpha1.HealthCheck
+		msg         string
+	}{
+		{
+			healthCheck: &v1alpha1.HealthCheck{
+				Enabled:  true,
+				Timeout:  "-30s",
+				Jitter:   "5s",
+				Port:     88,
+				Interval: "10",
+				Passes:   3,
+				Fails:    4,
+			},
+			msg: "invalid timeout",
+		},
+		{
+			healthCheck: &v1alpha1.HealthCheck{
+				Enabled:  true,
+				Timeout:  "30s",
+				Jitter:   "5s",
+				Port:     4000000000000000,
+				Interval: "10",
+				Passes:   3,
+				Fails:    4,
+			},
+			msg: "invalid port number",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateTSUpstreamHealthChecks(test.healthCheck, field.NewPath("healthCheck"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateUpstreamHealthChecks() returned no error for invalid input %v", test.msg)
+		}
+	}
+}
+
 func TestValidateUpstreamParameters(t *testing.T) {
 	tests := []struct {
 		parameters *v1alpha1.UpstreamParameters

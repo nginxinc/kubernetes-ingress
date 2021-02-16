@@ -134,6 +134,13 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 			ProxyNextUpstreamTries:   0,
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyTimeout:             "50s",
+			HealthCheck:              false,
+			HCTimeout:                "5s",
+			HCJitter:                 "0",
+			HCPort:                   0,
+			HCInterval:               "5s",
+			HCPasses:                 1,
+			HCFails:                  1,
 		},
 	}
 
@@ -217,6 +224,13 @@ func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
+			HealthCheck:              false,
+			HCTimeout:                "5s",
+			HCJitter:                 "0",
+			HCPort:                   0,
+			HCInterval:               "5s",
+			HCPasses:                 1,
+			HCFails:                  1,
 		},
 	}
 
@@ -247,6 +261,15 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 						Name:    "udp-app",
 						Service: "udp-app-svc",
 						Port:    5001,
+						HealthCheck: &conf_v1alpha1.HealthCheck{
+							Enabled:  true,
+							Timeout:  "10s",
+							Jitter:   "4",
+							Port:     90,
+							Interval: "8s",
+							Passes:   3,
+							Fails:    6,
+						},
 					},
 				},
 				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
@@ -304,6 +327,13 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
+			HealthCheck:              true,
+			HCTimeout:                "10s",
+			HCJitter:                 "4",
+			HCPort:                   90,
+			HCInterval:               "8s",
+			HCPasses:                 3,
+			HCFails:                  6,
 		},
 	}
 

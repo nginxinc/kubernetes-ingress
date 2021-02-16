@@ -30,6 +30,12 @@ server {
 
     proxy_pass {{ $s.ProxyPass }};
 
+    {{ if $s.HealthCheck }}
+    health_check interval={{ $s.HCInterval }} port={{ $s.HCPort }} 
+        passes={{ $s.HCPasses }} jitter={{ $s.HCJitter }} fails={{ $s.HCFails }} {{ if $s.UDP }}udp{{ end }};
+    health_check_timeout {{ $s.HCTimeout }};
+    {{ end }}
+
     proxy_timeout {{ $s.ProxyTimeout }};
     proxy_connect_timeout {{ $s.ProxyConnectTimeout }};
 

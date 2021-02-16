@@ -154,9 +154,33 @@ func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *
 		for _, msg := range validation.IsValidPortNum(u.Port) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))
 		}
+
+		allErrs = append(allErrs, validateTSUpstreamHealthChecks(u.HealthCheck, idxPath.Child("healthChecks"))...)
 	}
 
 	return allErrs, upstreamNames
+}
+
+func validateTSUpstreamHealthChecks(hc *v1alpha1.HealthCheck, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if hc == nil {
+		return allErrs
+	}
+
+	allErrs = append(allErrs, validateTime(hc.Timeout, fieldPath.Child("timeout"))...)
+	allErrs = append(allErrs, validateTime(hc.Interval, fieldPath.Child("interval"))...)
+	allErrs = append(allErrs, validateTime(hc.Jitter, fieldPath.Child("jitter"))...)
+	allErrs = append(allErrs, validatePositiveIntOrZero(hc.Fails, fieldPath.Child("fails"))...)
+	allErrs = append(allErrs, validatePositiveIntOrZero(hc.Passes, fieldPath.Child("passes"))...)
+
+	if hc.Port > 0 {
+		for _, msg := range validation.IsValidPortNum(hc.Port) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("port"), hc.Port, msg))
+		}
+	}
+
+	return allErrs
 }
 
 func validateTransportServerUpstreamParameters(upstreamParameters *v1alpha1.UpstreamParameters, fieldPath *field.Path, protocol string) field.ErrorList {
