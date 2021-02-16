@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestValidatePort(t *testing.T) {
@@ -129,27 +130,27 @@ func TestParseReloadTimeout(t *testing.T) {
 	tests := []struct {
 		timeout           int
 		appProtectEnabled bool
-		expected          int
+		expected          time.Duration
 	}{
 		{
 			timeout:           0,
 			appProtectEnabled: true,
-			expected:          20000,
+			expected:          20000 * time.Millisecond,
 		},
 		{
 			timeout:           0,
 			appProtectEnabled: false,
-			expected:          4000,
+			expected:          4000 * time.Millisecond,
 		},
 		{
 			timeout:           1000,
 			appProtectEnabled: true,
-			expected:          1000,
+			expected:          1000 * time.Millisecond,
 		},
 		{
 			timeout:           1000,
 			appProtectEnabled: false,
-			expected:          1000,
+			expected:          1000 * time.Millisecond,
 		},
 	}
 

@@ -835,12 +835,12 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 	os.Exit(0)
 }
 
-func parseReloadTimeout(appProtectEnabled bool, timeout int) int {
-	const defaultTimeout = 4000
-	const defaultTimeoutAppProtect = 20000
+func parseReloadTimeout(appProtectEnabled bool, timeout int) time.Duration {
+	const defaultTimeout = 4000 * time.Millisecond
+	const defaultTimeoutAppProtect = 20000 * time.Millisecond
 
 	if timeout != 0 {
-		return timeout
+		return time.Duration(timeout) * time.Millisecond
 	}
 
 	if appProtectEnabled {

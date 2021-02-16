@@ -17,11 +17,11 @@ import (
 // verifyClient is a client for verifying the config version.
 type verifyClient struct {
 	client  *http.Client
-	timeout int
+	timeout time.Duration
 }
 
 // newVerifyClient returns a new client pointed at the config version socket.
-func newVerifyClient(timeout int) *verifyClient {
+func newVerifyClient(timeout time.Duration) *verifyClient {
 	return &verifyClient{
 		client: &http.Client{
 			Transport: &http.Transport{
@@ -61,22 +61,24 @@ func (c *verifyClient) GetConfigVersion() (int, error) {
 // WaitForCorrectVersion calls the config version endpoint until it gets the expectedVersion,
 // which ensures that a new worker process has been started for that config version.
 func (c *verifyClient) WaitForCorrectVersion(expectedVersion int) error {
-	sleep := 25 * time.Millisecond
-	maxRetries := c.timeout / 25
-	for i := 1; i <= maxRetries; i++ {
-		time.Sleep(sleep)
+	interval := 25 * time.Millisecond
+	startTime := time.Now()
+	endTime := startTime.Add(c.timeout)
 
+	glog.V(3).Infof("Starting poll for updated nginx config")
+	for time.Now().Before(endTime) {
 		version, err := c.GetConfigVersion()
 		if err != nil {
 			glog.V(3).Infof("Unable to fetch version: %v", err)
 			continue
 		}
 		if version == expectedVersion {
-			glog.V(3).Infof("success, version %v ensured. iterations: %v. took: %v", expectedVersion, i, time.Duration(i)*sleep)
+			glog.V(3).Infof("success, version %v ensured. took: %v", expectedVersion, time.Since(startTime))
 			return nil
 		}
+		time.Sleep(interval)
 	}
-	return fmt.Errorf("could not get expected version: %v after %v ms", expectedVersion, c.timeout)
+	return fmt.Errorf("could not get expected version: %v after %v", expectedVersion, c.timeout)
 }
 
 const configVersionTemplateString = `server {

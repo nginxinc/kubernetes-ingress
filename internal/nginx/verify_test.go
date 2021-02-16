@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 type Transport struct {
@@ -30,7 +31,7 @@ func getTestHTTPClient() *http.Client {
 func TestVerifyClient(t *testing.T) {
 	c := verifyClient{
 		client:  getTestHTTPClient(),
-		timeout: 25,
+		timeout: 25 * time.Millisecond,
 	}
 
 	configVersion, err := c.GetConfigVersion()

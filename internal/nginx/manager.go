@@ -103,7 +103,7 @@ type LocalManager struct {
 }
 
 // NewLocalManager creates a LocalManager.
-func NewLocalManager(confPath string, binaryFilename string, mc collectors.ManagerCollector, timeout int) *LocalManager {
+func NewLocalManager(confPath string, binaryFilename string, mc collectors.ManagerCollector, timeout time.Duration) *LocalManager {
 	verifyConfigGenerator, err := newVerifyConfigGenerator()
 	if err != nil {
 		glog.Fatalf("error instantiating a verifyConfigGenerator: %v", err)
