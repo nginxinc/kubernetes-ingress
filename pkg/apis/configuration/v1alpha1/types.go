@@ -77,9 +77,11 @@ type TransportServerListener struct {
 
 // Upstream defines an upstream.
 type Upstream struct {
-	Name    string `json:"name"`
-	Service string `json:"service"`
-	Port    int    `json:"port"`
+	Name        string `json:"name"`
+	Service     string `json:"service"`
+	Port        int    `json:"port"`
+	FailTimeout string `json:"failTimeout"`
+	MaxFails    *int   `json:"maxFails"`
 }
 
 // UpstreamParameters defines parameters for an upstream.

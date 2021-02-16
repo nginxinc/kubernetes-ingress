@@ -103,7 +103,10 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 		endpointsKey := GenerateEndpointsKey(transportServerEx.TransportServer.Namespace, u.Service, nil, uint16(u.Port))
 		endpoints := transportServerEx.Endpoints[endpointsKey]
 
-		ups := generateStreamUpstream(name, endpoints, isPlus)
+		maxFails := generateIntFromPointer(u.MaxFails, 1)
+		failTimeout := generateString(u.FailTimeout, "10s")
+
+		ups := generateStreamUpstream(name, maxFails, failTimeout, endpoints, isPlus)
 
 		ups.UpstreamLabels.Service = u.Service
 		ups.UpstreamLabels.ResourceType = "transportserver"
@@ -116,12 +119,14 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 	return upstreams
 }
 
-func generateStreamUpstream(upstreamName string, endpoints []string, isPlus bool) version2.StreamUpstream {
+func generateStreamUpstream(upstreamName string, maxFails int, failTimeout string, endpoints []string, isPlus bool) version2.StreamUpstream {
 	var upsServers []version2.StreamUpstreamServer
 
 	for _, e := range endpoints {
 		s := version2.StreamUpstreamServer{
-			Address: e,
+			Address:     e,
+			MaxFails:    maxFails,
+			FailTimeout: failTimeout,
 		}
 
 		upsServers = append(upsServers, s)
@@ -129,7 +134,9 @@ func generateStreamUpstream(upstreamName string, endpoints []string, isPlus bool
 
 	if !isPlus && len(endpoints) == 0 {
 		upsServers = append(upsServers, version2.StreamUpstreamServer{
-			Address: nginxNonExistingUnixSocket,
+			Address:     nginxNonExistingUnixSocket,
+			MaxFails:    maxFails,
+			FailTimeout: failTimeout,
 		})
 	}
 

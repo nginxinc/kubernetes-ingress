@@ -75,9 +75,11 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 				},
 				Upstreams: []conf_v1alpha1.Upstream{
 					{
-						Name:    "tcp-app",
-						Service: "tcp-app-svc",
-						Port:    5001,
+						Name:        "tcp-app",
+						Service:     "tcp-app-svc",
+						Port:        5001,
+						MaxFails:    intPointer(3),
+						FailTimeout: "40s",
 					},
 				},
 				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
@@ -107,7 +109,9 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 				Name: "ts_default_tcp-server_tcp-app",
 				Servers: []version2.StreamUpstreamServer{
 					{
-						Address: "10.0.0.20:5001",
+						Address:     "10.0.0.20:5001",
+						MaxFails:    3,
+						FailTimeout: "40s",
 					},
 				},
 				UpstreamLabels: version2.UpstreamLabels{
@@ -186,7 +190,9 @@ func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
 				Name: "ts_default_tcp-server_tcp-app",
 				Servers: []version2.StreamUpstreamServer{
 					{
-						Address: "10.0.0.20:5001",
+						Address:     "10.0.0.20:5001",
+						MaxFails:    1,
+						FailTimeout: "10s",
 					},
 				},
 				UpstreamLabels: version2.UpstreamLabels{
@@ -271,7 +277,9 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 				Name: "ts_default_udp-server_udp-app",
 				Servers: []version2.StreamUpstreamServer{
 					{
-						Address: "10.0.0.20:5001",
+						Address:     "10.0.0.20:5001",
+						MaxFails:    1,
+						FailTimeout: "10s",
 					},
 				},
 				UpstreamLabels: version2.UpstreamLabels{
@@ -335,4 +343,8 @@ func TestGenerateUnixSocket(t *testing.T) {
 	if result != expected {
 		t.Errorf("generateUnixSocket() returned %q but expected %q", result, expected)
 	}
+}
+
+func intPointer(value int) *int {
+	return &value
 }

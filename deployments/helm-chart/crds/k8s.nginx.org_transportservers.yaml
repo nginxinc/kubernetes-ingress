@@ -77,6 +77,10 @@ spec:
                 description: Upstream defines an upstream.
                 type: object
                 properties:
+                  failTimeout:
+                    type: string
+                  maxFails:
+                    type: integer
                   name:
                     type: string
                   port:

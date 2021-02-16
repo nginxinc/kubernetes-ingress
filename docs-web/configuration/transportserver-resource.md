@@ -157,6 +157,8 @@ The upstream defines a destination for the TransportServer. For example:
 name: secure-app 
 service: secure-app
 port: 8443
+maxFails: 3
+failTimeout: 30s
 ```
 
 ```eval_rst
@@ -179,6 +181,15 @@ port: 8443
      - The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and close client connections/ignore datagrams. The port must fall into the range ``1..65535``.
      - ``int``
      - Yes
+   * - ``maxFails``
+     - Sets the number of unsuccessful attempts to communicate with the server that should happen in the duration set by the failTimeout parameter to consider the server unavailable. The default ``1``.
+     - ``int``
+     - No
+   * - ``failTimeout``
+     - Sets the time during which the specified number of unsuccessful attempts to communicate with the server should happen to consider the server unavailable and the period of time the server will be considered unavailable. The default is ``10s``.
+     - ``string``
+     - No
+
 ```
 
 ### UpstreamParameters

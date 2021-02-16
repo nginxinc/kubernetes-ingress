@@ -5,7 +5,7 @@ upstream {{ $u.Name }} {
     random two least_conn;
 
     {{ range $s := $u.Servers }}
-    server {{ $s.Address }};
+    server {{ $s.Address }} max_fails={{ $s.MaxFails }} fail_timeout={{ $s.FailTimeout }};
     {{ end }}
 }
 {{ end }}
