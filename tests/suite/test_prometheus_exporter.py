@@ -107,12 +107,16 @@ class TestPrometheusExporter:
                     'nginx_ingress_controller_nginx_reload_errors_total{class="nginx"} 0',
                     'nginx_ingress_controller_ingress_resources_total{class="nginx",type="master"} 0',
                     'nginx_ingress_controller_ingress_resources_total{class="nginx",type="minion"} 0',
-                    'nginx_ingress_controller_ingress_resources_total{class="nginx",type="regular"} 0',
+                    'nginx_ingress_controller_ingress_resources_total{class="nginx",type="regular"} 1',
                     "nginx_ingress_controller_nginx_last_reload_milliseconds",
                     'nginx_ingress_controller_nginx_last_reload_status{class="nginx"} 1',
                     'nginx_ingress_controller_nginx_reload_errors_total{class="nginx"} 0',
                     'nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="endpoints"}',
                     'nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="other"}',
+                    'nginx_ingress_controller_workqueue_depth{class="nginx",name="taskQueue"}',
+                    'nginx_ingress_controller_workqueue_queue_duration_seconds_bucket{class="nginx",name="taskQueue",le=',
+                    'nginx_ingress_controller_workqueue_queue_duration_seconds_sum{class="nginx",name="taskQueue"}',
+                    'nginx_ingress_controller_workqueue_queue_duration_seconds_count{class="nginx",name="taskQueue"}',
                 ],
             )
         ],
@@ -124,7 +128,10 @@ class TestPrometheusExporter:
         ingress_controller,
         enable_exporter_port,
         expected_metrics,
+        ingress_setup,
     ):
+        resp = requests.get(ingress_setup.req_url, headers={"host": ingress_setup.ingress_host}, verify=False)
+        assert resp.status_code == 200
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         ensure_connection(req_url, 200)
         resp = requests.get(req_url)
@@ -139,10 +146,6 @@ class TestPrometheusExporter:
             pytest.param(
                 {"extra_args": ["-enable-prometheus-metrics", "-enable-latency-metrics"]},
                 [
-                    'nginx_ingress_controller_workqueue_depth{class="nginx",name="taskQueue"}',
-                    'nginx_ingress_controller_workqueue_queue_duration_seconds_bucket{class="nginx",name="taskQueue",le=',
-                    'nginx_ingress_controller_workqueue_queue_duration_seconds_sum{class="nginx",name="taskQueue"}',
-                    'nginx_ingress_controller_workqueue_queue_duration_seconds_count{class="nginx",name="taskQueue"}',
                     'nginx_ingress_controller_upstream_server_response_latency_ms_bucket{class="nginx",code="200",pod_name=',
                     'nginx_ingress_controller_upstream_server_response_latency_ms_sum{class="nginx",code="200",pod_name=',
                     'nginx_ingress_controller_upstream_server_response_latency_ms_count{class="nginx",code="200",pod_name=',
@@ -152,7 +155,7 @@ class TestPrometheusExporter:
         ],
         indirect=["ingress_controller"],
     )
-    def test_request_metrics(
+    def test_latency_metrics(
         self,
         ingress_controller_endpoint,
         ingress_controller,
