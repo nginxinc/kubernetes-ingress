@@ -182,11 +182,11 @@ failTimeout: 30s
      - ``int``
      - Yes
    * - ``maxFails``
-     - Sets the number of unsuccessful attempts to communicate with the server that should happen in the duration set by the failTimeout parameter to consider the server unavailable. The default ``1``.
+     - Sets the `number <https://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#max_fails>`_ of unsuccessful attempts to communicate with the server that should happen in the duration set by the failTimeout parameter to consider the server unavailable. The default ``1``.
      - ``int``
      - No
    * - ``failTimeout``
-     - Sets the time during which the specified number of unsuccessful attempts to communicate with the server should happen to consider the server unavailable and the period of time the server will be considered unavailable. The default is ``10s``.
+     - Sets the `time <https://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#fail_timeout>`_ during which the specified number of unsuccessful attempts to communicate with the server should happen to consider the server unavailable and the period of time the server will be considered unavailable. The default is ``10s``.
      - ``string``
      - No
 

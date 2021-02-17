@@ -154,17 +154,17 @@ controller:
 
   globalConfiguration:
     ## Creates the GlobalConfiguration custom resource. Requires controller.enableCustomResources.
-    create: true
+    create: false
 
     ## The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller.
-    spec: 
-       listeners:
-       - name: dns-udp
-         port: 5353
-         protocol: UDP
-       - name: dns-tcp
-         port: 5353
-         protocol: TCP
+    spec: {}
+      # listeners:
+      # - name: dns-udp
+      #   port: 5353
+      #   protocol: UDP
+      # - name: dns-tcp
+      #   port: 5353
+      #   protocol: TCP
 
   ## Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources.
   enableSnippets: false
