@@ -3,7 +3,7 @@
 ## Supported Kubernetes Versions
 
 The NGINX Ingress Controller has been verified to run on the following Kubernetes versions:
-* Kubernetes 1.15-1.19
+* Kubernetes 1.15-1.20
 
 ## Supported Docker Images
 
