@@ -3,41 +3,40 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     reviewers:
       - "nginxinc/kic"
       - "ciarams87"
-      - "sundaram1995"
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     reviewers:
       - "nginxinc/kic"
   - package-ecosystem: "docker"
     directory: "/build"
     schedule:
-      interval: daily
+      interval: weekly
     reviewers:
       - "nginxinc/kic"
   - package-ecosystem: "docker"
     directory: "/tests/docker"
     schedule:
-      interval: daily
+      interval: weekly
     reviewers:
       - "nginxinc/kic"
       - "vepatel"
   - package-ecosystem: "pip"
     directory: "/tests"
     schedule:
-      interval: daily
+      interval: weekly
     reviewers:
       - "nginxinc/kic"
       - "vepatel"
   - package-ecosystem: "pip"
     directory: "/perf-tests"
     schedule:
-      interval: daily
+      interval: weekly
     reviewers:
       - "nginxinc/kic"
       - "vepatel"
