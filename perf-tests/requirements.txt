@@ -1,7 +1,7 @@
 PyYAML==5.4.1
 requests==2.25.1
 kubernetes==8.0.1
-pytest==4.4.1
+pytest==6.2.2
 ipaddress==1.0.23 # >= 1.0.17
 cffi==1.14.5
 certifi==2020.12.5
