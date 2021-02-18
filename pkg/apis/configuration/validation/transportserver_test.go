@@ -175,7 +175,7 @@ func TestValidateTransportServerUpstreamsFails(t *testing.T) {
 	for _, test := range tests {
 		allErrs, resultUpstreamNames := validateTransportServerUpstreams(test.upstreams, field.NewPath("upstreams"))
 		if len(allErrs) == 0 {
-			t.Errorf("validateTransportServerUpstreams() returned errors no errors for the case of %s", test.msg)
+			t.Errorf("validateTransportServerUpstreams() returned no errors for the case of %s", test.msg)
 		}
 		if !resultUpstreamNames.Equal(test.expectedUpstreamNames) {
 			t.Errorf("validateTransportServerUpstreams() returned %v expected %v for the case of %s", resultUpstreamNames, test.expectedUpstreamNames, test.msg)
@@ -449,6 +449,54 @@ func TestValidateTSUpstreamHealthChecksFails(t *testing.T) {
 				Fails:    4,
 			},
 			msg: "invalid port number",
+		},
+		{
+			healthCheck: &v1alpha1.HealthCheck{
+				Enabled:  true,
+				Timeout:  "30s",
+				Jitter:   "5s",
+				Port:     40,
+				Interval: "10",
+				Passes:   -3,
+				Fails:    4,
+			},
+			msg: "invalid passes value",
+		},
+		{
+			healthCheck: &v1alpha1.HealthCheck{
+				Enabled:  true,
+				Timeout:  "30s",
+				Jitter:   "5s",
+				Port:     40,
+				Interval: "10",
+				Passes:   3,
+				Fails:    -4,
+			},
+			msg: "invalid fails value",
+		},
+		{
+			healthCheck: &v1alpha1.HealthCheck{
+				Enabled:  true,
+				Timeout:  "30s",
+				Jitter:   "5s",
+				Port:     40,
+				Interval: "ten",
+				Passes:   3,
+				Fails:    4,
+			},
+			msg: "invalid interval value",
+		},
+		{
+			healthCheck: &v1alpha1.HealthCheck{
+				Enabled:  true,
+				Timeout:  "30s",
+				Jitter:   "5sec",
+				Port:     40,
+				Interval: "10",
+				Passes:   3,
+				Fails:    4,
+			},
+			msg: "invalid jitter value",
 		},
 	}
 

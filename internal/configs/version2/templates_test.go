@@ -342,6 +342,15 @@ var transportServerCfg = TransportServerConfig{
 		ProxyNextUpstream:        true,
 		ProxyNextUpstreamTimeout: "10s",
 		ProxyNextUpstreamTries:   5,
+		HealthCheck: &StreamHealthCheck{
+			Enabled:  false,
+			Timeout:  "5s",
+			Jitter:   "0",
+			Port:     0,
+			Interval: "5s",
+			Passes:   1,
+			Fails:    1,
+		},
 	},
 }
 

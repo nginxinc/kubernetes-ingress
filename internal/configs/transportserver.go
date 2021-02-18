@@ -32,7 +32,7 @@ func (tsEx *TransportServerEx) String() string {
 func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool) version2.TransportServerConfig {
 	upstreamNamer := newUpstreamNamerForTransportServer(transportServerEx.TransportServer)
 
-	upstreams, healthCheck := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus)
+	upstreams, healthCheck := generateStreamUpstreamsAndHealthCheck(transportServerEx, upstreamNamer, isPlus)
 
 	var proxyRequests, proxyResponses *int
 	var connectTimeout, nextUpstreamTimeout string
@@ -80,13 +80,7 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			ProxyNextUpstream:        nextUpstream,
 			ProxyNextUpstreamTimeout: generateTime(nextUpstreamTimeout, "0"),
 			ProxyNextUpstreamTries:   nextUpstreamTries,
-			HealthCheck:              healthCheck.Enabled,
-			HCInterval:               healthCheck.Interval,
-			HCPort:                   healthCheck.Port,
-			HCPasses:                 healthCheck.Passes,
-			HCJitter:                 healthCheck.Jitter,
-			HCFails:                  healthCheck.Fails,
-			HCTimeout:                healthCheck.Timeout,
+			HealthCheck:              healthCheck,
 		},
 		Upstreams: upstreams,
 	}
@@ -100,19 +94,17 @@ func generateUnixSocket(transportServerEx *TransportServerEx) string {
 	return ""
 }
 
-func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool) ([]version2.StreamUpstream, *conf_v1alpha1.HealthCheck) {
+func generateStreamUpstreamsAndHealthCheck(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool) ([]version2.StreamUpstream, *version2.StreamHealthCheck) {
 	var upstreams []version2.StreamUpstream
-	var hc *conf_v1alpha1.HealthCheck
+	var hc *version2.StreamHealthCheck
 
-	hc = generateTransportServerHealthCheckWithDefaults()
 	for _, u := range transportServerEx.TransportServer.Spec.Upstreams {
 
 		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
 		endpointsKey := GenerateEndpointsKey(transportServerEx.TransportServer.Namespace, u.Service, nil, uint16(u.Port))
 		endpoints := transportServerEx.Endpoints[endpointsKey]
-		if u.HealthCheck != nil {
-			hc = u.HealthCheck
-		}
+
+		hc = generateTransportServerHealthCheck(u.HealthCheck)
 
 		ups := generateStreamUpstream(&u, upstreamNamer, endpoints, isPlus)
 
@@ -127,8 +119,44 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 	return upstreams, hc
 }
 
-func generateTransportServerHealthCheckWithDefaults() *conf_v1alpha1.HealthCheck {
-	return &conf_v1alpha1.HealthCheck{
+func generateTransportServerHealthCheck(healthCheck *conf_v1alpha1.HealthCheck) *version2.StreamHealthCheck {
+	if healthCheck == nil || !healthCheck.Enabled {
+		return generateTransportServerHealthCheckWithDefaults()
+	}
+
+	hc := generateTransportServerHealthCheckWithDefaults()
+
+	hc.Enabled = healthCheck.Enabled
+
+	if healthCheck.Interval != "" {
+		hc.Interval = healthCheck.Interval
+	}
+
+	if healthCheck.Jitter != "" {
+		hc.Jitter = healthCheck.Jitter
+	}
+
+	if healthCheck.Fails > 0 {
+		hc.Fails = healthCheck.Fails
+	}
+
+	if healthCheck.Passes > 0 {
+		hc.Passes = healthCheck.Passes
+	}
+
+	if healthCheck.Port > 0 {
+		hc.Port = healthCheck.Port
+	}
+
+	if healthCheck.Timeout != "" {
+		hc.Timeout = healthCheck.Timeout
+	}
+
+	return hc
+}
+
+func generateTransportServerHealthCheckWithDefaults() *version2.StreamHealthCheck {
+	return &version2.StreamHealthCheck{
 		Enabled:  false,
 		Timeout:  "5s",
 		Jitter:   "0",
