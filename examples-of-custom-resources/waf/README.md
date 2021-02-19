@@ -5,13 +5,13 @@ In this example we deploy the NGINX Plus Ingress controller with [NGINX App Prot
 ## Prerequisites
 
 1. Follow the installation [instructions](../../docs/installation.md) to deploy the Ingress controller with NGINX App Protect.
-1. Save the public IP address of the Ingress controller into a shell variable:
+1. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III
     ```
-1. Save the HTTPS port of the Ingress controller into a shell variable:
+1. Save the HTTP port of the Ingress Controller into a shell variable:
     ```
-    $ IC_HTTPS_PORT=<port number>
+    $ IC_HTTP_PORT=<port number>
     ```
 
 ## Step 1. Deploy a Web Application
@@ -27,50 +27,59 @@ $ kubectl apply -f webapp.yaml
     ```
     $ kubectl apply -f syslog.yaml
     ```
-1. Create the App Protect policy, log configuration and user defined signature:
+1. Create the User Defined Signature, App Protect policy and log configuration:
     ```
+    $ kubectl apply -f ap-apple-uds.yaml
     $ kubectl apply -f ap-dataguard-alarm-policy.yaml
     $ kubectl apply -f ap-logconf.yaml
-    $ kubectl apply -f ap-apple-uds.yaml
     ```
 
-## Step 3 - Configure Load Balancing
+## Step 3 - Deploy the WAF Policy
 
-Update the `logDest` field from `virtualserver.yaml` with the ClusterIP of the syslog service. For example, if the IP is `10.101.21.110`:
-```yaml
-waf:
-    ...
-    logDest: "syslog:server=10.101.21.110:514"
-```
+1. Update the `logDest` field from `waf.yaml` with the ClusterIP of the syslog service. For example, if the IP is `10.101.21.110`:
+    ```yaml
+    waf:
+        ...
+        logDest: "syslog:server=10.101.21.110:514"
+    ```
 
-Create the VirtualServer Resource:
-```
-$ kubectl apply -f virtualserver.yaml
-```
+1. Create the WAF policy
+    ```
+    $ kubectl apply -f waf.yaml
+    ```
+
 Note the App Protect configuration settings in the Policy resource. They enable WAF protection by configuring App Protect with the policy and log configuration created in the previous step.
 
-## Step 4 - Test the Application
+## Step 4 - Configure Load Balancing
 
-1. To access the application, curl the coffee and the tea services. We'll use `curl`'s `--insecure` option to turn off certificate verification of our self-signed
-certificate and the --resolve option to set the Host header of a request with `webapp.example.com`
-
-    Send a request to the application:
+1. Create the VirtualServer Resource:
     ```
-    $ curl --resolve webapp.example.com:$IC_HTTPS_PORT:$IC_IP https://webapp.example.com:$IC_HTTPS_PORT/ --insecure
+    $ kubectl apply -f virtual-server.yaml
+    ```
+
+Note that the VirtualServer references the policy `waf-policy` created in Step 3.
+
+## Step 5 - Test the Application
+
+To access the application, curl the coffee and the tea services. We'll use the --resolve option to set the Host header of a request with `webapp.example.com`
+
+1. Send a request to the application:
+    ```
+    $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP http://webapp.example.com:$IC_HTTP_PORT/
     Server address: 10.12.0.18:80
     Server name: webapp-7586895968-r26zn
     ...
     ```
 
-    Now, let's try to send a request with a suspicious URL:
+1. Now, let's try to send a request with a suspicious URL:
     ```
-    $ curl --resolve webapp.example.com:$IC_HTTPS_PORT:$IC_IP "https://webapp.example.com:$IC_HTTPS_PORT/<script>" --insecure
+    $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP "http://webapp.example.com:$IC_HTTP_PORT/<script>"
     <html><head><title>Request Rejected</title></head><body>
     ...
     ```
-    Lastly, let's try to send some suspicious data that matches the user defined signature.
+1. Lastly, let's try to send some suspicious data that matches the user defined signature.
     ```
-    $ curl --resolve webapp.example.com:$IC_HTTPS_PORT:$IC_IP -X POST -d "apple" "https://webapp.example.com:$IC_HTTPS_PORT/" --insecure
+    $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP -X POST -d "apple" http://webapp.example.com:$IC_HTTP_PORT/
     <html><head><title>Request Rejected</title></head><body>
     ...
     ```

@@ -14,5 +14,3 @@ spec:
   - path: /
     action:
       pass: webapp
-    policies:
-    - name: waf-policy
