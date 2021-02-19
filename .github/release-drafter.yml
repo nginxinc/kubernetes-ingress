@@ -58,13 +58,13 @@ template: |
 
   ## Upgrade
 
-  For NGINX, use the v$NEXT_MINOR_VERSION image from our DockerHub: `nginx/nginx-ingress:$NEXT_MINOR_VERSION`, `nginx/nginx-ingress:$NEXT_MINOR_VERSION-alpine` or `nginx/nginx-ingress:$NEXT_MINOR_VERSION-ubi`
-  For NGINX Plus, please build your own image using the v$NEXT_MINOR_VERSION source code.
-  For Helm, use version HELM_VERSION_REPLACE_ME! of the chart.
+  - For NGINX, use the v$NEXT_MINOR_VERSION image from our DockerHub: `nginx/nginx-ingress:$NEXT_MINOR_VERSION`, `nginx/nginx-ingress:$NEXT_MINOR_VERSION-alpine` or `nginx/nginx-ingress:$NEXT_MINOR_VERSION-ubi`
+  - For NGINX Plus, please build your own image using the v$NEXT_MINOR_VERSION source code.
+  - For Helm, use version HELM_VERSION_REPLACE_ME! of the chart.
 
   ## Resources
 
-  Documentation -- https://docs.nginx.com/nginx-ingress-controller/
-  Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v$NEXT_MINOR_VERSION/examples and https://github.com/nginxinc/kubernetes-ingress/tree/v$NEXT_MINOR_VERSION/examples-of-custom-resources
-  Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/v$NEXT_MINOR_VERSION/deployments/helm-chart
-  Operator -- https://github.com/nginxinc/nginx-ingress-operator/
+  - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
+  - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v$NEXT_MINOR_VERSION/examples and https://github.com/nginxinc/kubernetes-ingress/tree/v$NEXT_MINOR_VERSION/examples-of-custom-resources
+  - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/v$NEXT_MINOR_VERSION/deployments/helm-chart
+  - Operator -- https://github.com/nginxinc/nginx-ingress-operator/
