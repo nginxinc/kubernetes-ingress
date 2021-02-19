@@ -77,11 +77,23 @@ type TransportServerListener struct {
 
 // Upstream defines an upstream.
 type Upstream struct {
-	Name        string `json:"name"`
-	Service     string `json:"service"`
-	Port        int    `json:"port"`
-	FailTimeout string `json:"failTimeout"`
-	MaxFails    *int   `json:"maxFails"`
+	Name        string       `json:"name"`
+	Service     string       `json:"service"`
+	Port        int          `json:"port"`
+	FailTimeout string       `json:"failTimeout"`
+	MaxFails    *int         `json:"maxFails"`
+	HealthCheck *HealthCheck `json:"healthCheck"`
+}
+
+// HealthCheck defines the parameters for active Upstream HealthChecks.
+type HealthCheck struct {
+	Enabled  bool   `json:"enable"`
+	Timeout  string `json:"timeout"`
+	Jitter   string `json:"jitter"`
+	Port     int    `json:"port"`
+	Interval string `json:"intervals"`
+	Passes   int    `json:"passes"`
+	Fails    int    `json:"fails"`
 }
 
 // UpstreamParameters defines parameters for an upstream.

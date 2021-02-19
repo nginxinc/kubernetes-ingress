@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -346,6 +347,61 @@ func TestGenerateUnixSocket(t *testing.T) {
 	result = generateUnixSocket(transportServerEx)
 	if result != expected {
 		t.Errorf("generateUnixSocket() returned %q but expected %q", result, expected)
+	}
+}
+
+func TestGenerateTransportServerHealthChecks(t *testing.T) {
+	tests := []struct {
+		healthCheck *conf_v1alpha1.HealthCheck
+		expected    *version2.StreamHealthCheck
+		msg         string
+	}{
+		{
+			healthCheck: &conf_v1alpha1.HealthCheck{
+				Enabled:  false,
+				Timeout:  "30s",
+				Jitter:   "30s",
+				Port:     80,
+				Interval: "20s",
+				Passes:   4,
+				Fails:    5,
+			},
+			expected: nil,
+			msg:      "health checks disabled",
+		},
+		{
+			healthCheck: &conf_v1alpha1.HealthCheck{},
+			expected:    nil,
+			msg:         "nil health checks",
+		},
+		{
+			healthCheck: &conf_v1alpha1.HealthCheck{
+				Enabled:  true,
+				Timeout:  "30s",
+				Jitter:   "30s",
+				Port:     80,
+				Interval: "20s",
+				Passes:   4,
+				Fails:    5,
+			},
+			expected: &version2.StreamHealthCheck{
+				Enabled:  true,
+				Timeout:  "30s",
+				Jitter:   "30s",
+				Port:     80,
+				Interval: "20s",
+				Passes:   4,
+				Fails:    5,
+			},
+			msg: "valid health checks",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateTransportServerHealthCheck(test.healthCheck)
+		if diff := cmp.Diff(result, test.expected); diff != "" {
+			t.Errorf("generateTransportServerHealthCheck() returned %v but expected %v", result, test.expected)
+		}
 	}
 }
 

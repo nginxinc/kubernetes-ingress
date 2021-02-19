@@ -79,6 +79,24 @@ spec:
                 properties:
                   failTimeout:
                     type: string
+                  healthCheck:
+                    description: HealthCheck defines the parameters for active Upstream HealthChecks.
+                    type: object
+                    properties:
+                      enable:
+                        type: boolean
+                      fails:
+                        type: integer
+                      intervals:
+                        type: string
+                      jitter:
+                        type: string
+                      passes:
+                        type: integer
+                      port:
+                        type: integer
+                      timeout:
+                        type: string
                   maxFails:
                     type: integer
                   name:
