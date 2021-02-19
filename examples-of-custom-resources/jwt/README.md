@@ -35,7 +35,7 @@ Create a policy with the name `jwt-policy` that references the secret from the p
 $ kubectl apply -f jwt.yaml
 ```
 
-## Step 3 - Configure Load Balancing
+## Step 4 - Configure Load Balancing
 
 Create a VirtualServer resource for the web application:
 ```
@@ -44,7 +44,7 @@ $ kubectl apply -f virtual-server.yaml
 
 Note that the VirtualServer references the policy `jwt-policy` created in Step 3.
 
-## Step 4 - Test the Configuration
+## Step 5 - Test the Configuration
 
 If you attempt to access the application without providing a valid JWT, NGINX will reject your requests for that VirtualServer:
 ```
