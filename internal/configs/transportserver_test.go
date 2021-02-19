@@ -134,15 +134,7 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 			ProxyNextUpstreamTries:   0,
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyTimeout:             "50s",
-			HealthCheck: &version2.StreamHealthCheck{
-				Enabled:  false,
-				Timeout:  "5s",
-				Jitter:   "0",
-				Port:     0,
-				Interval: "5s",
-				Passes:   1,
-				Fails:    1,
-			},
+			HealthCheck:              nil,
 		},
 	}
 
@@ -226,15 +218,7 @@ func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
-			HealthCheck: &version2.StreamHealthCheck{
-				Enabled:  false,
-				Timeout:  "5s",
-				Jitter:   "0",
-				Port:     0,
-				Interval: "5s",
-				Passes:   1,
-				Fails:    1,
-			},
+			HealthCheck:              nil,
 		},
 	}
 
@@ -323,15 +307,7 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
-			HealthCheck: &version2.StreamHealthCheck{
-				Enabled:  false,
-				Timeout:  "5s",
-				Jitter:   "0",
-				Port:     0,
-				Interval: "5s",
-				Passes:   1,
-				Fails:    1,
-			},
+			HealthCheck:              nil,
 		},
 	}
 

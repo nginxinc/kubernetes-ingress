@@ -14,7 +14,7 @@ This document is the reference documentation for the TransportServer resource. T
   - [TransportServer Specification](#transportserver-specification)
     - [Listener](#listener)
     - [Upstream](#upstream)
-      - [Health Checks](#upstream-healthchecks)
+      - [Upstream.Healthcheck](#upstream-healthcheck)
     - [UpstreamParameters](#upstreamparameters)
     - [SessionParameters](#sessionparameters)
     - [Action](#action)

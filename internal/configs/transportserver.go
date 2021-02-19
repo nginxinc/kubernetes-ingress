@@ -121,7 +121,7 @@ func generateStreamUpstreamsAndHealthCheck(transportServerEx *TransportServerEx,
 
 func generateTransportServerHealthCheck(healthCheck *conf_v1alpha1.HealthCheck) *version2.StreamHealthCheck {
 	if healthCheck == nil || !healthCheck.Enabled {
-		return generateTransportServerHealthCheckWithDefaults()
+		return nil
 	}
 
 	hc := generateTransportServerHealthCheckWithDefaults()

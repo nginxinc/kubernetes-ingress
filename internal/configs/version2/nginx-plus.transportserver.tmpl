@@ -30,7 +30,7 @@ server {
 
     proxy_pass {{ $s.ProxyPass }};
 
-    {{ if $s.HealthCheck.Enabled }}
+    {{ if $s.HealthCheck }}
     health_check interval={{ $s.HealthCheck.Interval }} port={{ $s.HealthCheck.Port }} 
         passes={{ $s.HealthCheck.Passes }} jitter={{ $s.HealthCheck.Jitter }} fails={{ $s.HealthCheck.Fails }} {{ if $s.UDP }}udp{{ end }};
     health_check_timeout {{ $s.HealthCheck.Timeout }};

@@ -40,6 +40,7 @@ type StreamServer struct {
 	HealthCheck              *StreamHealthCheck
 }
 
+// StreamHealthCheck defines a health check for a StreamUpstream in a StreamServer.
 type StreamHealthCheck struct {
 	Enabled  bool
 	Interval string
