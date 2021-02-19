@@ -18,7 +18,37 @@ categories:
     labels:
       - "chore"
       - "dependencies"
-change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+exclude-labels:
+  - 'skip-changelog'
+autolabeler:
+  - label: 'documentation'
+    files:
+      - '*.md'
+    branch:
+      - '/docs{0,1}\/.+/'
+  - label: 'chore'
+    branch:
+      - '/chore\/.+/'
+  - label: 'bug'
+    branch:
+      - '/fix\/.+/'
+    title:
+      - '/fix/i'
+  - label: 'feature'
+    branch:
+      - '/feat\/.+/'
+      - '/feature\/.+/'
+  - label: 'enhancement'
+    branch:
+      - '/enh\/.+/'
+      - '/enhancement\/.+/'
+  - label: 'dependencies'
+    files:
+      - 'go.mod'
+      - 'go.sum'
+      - 'vendor*'
+    branch:
+      - '/deps\/.+/'
 template: |
   *Help make the NGINX Ingress Controller better by participating in our [survey](https://forms.office.com/Pages/ResponsePage.aspx?id=L_093Ttq0UCb4L-DJ9gcUM6Dh1A0cORCorfgZAMdkwJUREhJUFAyM1ZHRzZLSzQyMUlCNFhXVkZENy4u)!*
 

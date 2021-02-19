@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - master
+  pull_request:
+    types: [opened, reopened, synchronize]
 
 jobs:
   update_release_draft:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-      - uses: release-drafter/release-drafter@master
+      - uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
