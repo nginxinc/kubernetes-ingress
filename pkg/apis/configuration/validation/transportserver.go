@@ -40,7 +40,7 @@ func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.
 
 	allErrs = append(allErrs, validateTransportServerUpstreamParameters(spec.UpstreamParameters, fieldPath.Child("upstreamParameters"), spec.Listener.Protocol)...)
 
-	allErrs = append(validateSessionParameters(spec.SessionParameters, fieldPath.Child("sessionParameters")))
+	allErrs = append(allErrs, validateSessionParameters(spec.SessionParameters, fieldPath.Child("sessionParameters"))...)
 
 	if spec.Action == nil {
 		allErrs = append(allErrs, field.Required(fieldPath.Child("action"), "must specify action"))
