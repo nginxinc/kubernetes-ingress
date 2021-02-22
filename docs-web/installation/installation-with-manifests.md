@@ -57,8 +57,6 @@ In this section, we create resources common for most of the Ingress Controller i
 
 ### Create Custom Resources
 
-**Note**: There are two different sets of custom resource definitions: one for Kubernetes <= v1.15 and one for Kubernetes >= v1.16. For Kubernetes <= v1.15 substitute `crds` with `crds-v1beta1` in the following commands.
-
 1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources), [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and [Policy](/nginx-ingress-controller/configuration/policy-resource) resources:
     ```
     $ kubectl apply -f common/crds/k8s.nginx.org_virtualservers.yaml
@@ -217,8 +215,6 @@ $ kubectl get pods --namespace=nginx-ingress
 1. Delete the Custom Resource Definitions:
 
     **Note**: This step will also remove all associated Custom Resources.
-
-    **Note**: There are two different sets of custom resource definitions: one for Kubernetes <= v1.15 and one for Kubernetes >= v1.16. For Kubernetes <= v1.15 substitute `crds` with `crds-v1beta1` in the following command.
 
     ```
     $ kubectl delete -f common/crds/
