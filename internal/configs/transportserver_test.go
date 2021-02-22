@@ -351,54 +351,108 @@ func TestGenerateUnixSocket(t *testing.T) {
 }
 
 func TestGenerateTransportServerHealthChecks(t *testing.T) {
+	upstreamName := "dns-tcp"
 	tests := []struct {
-		healthCheck *conf_v1alpha1.HealthCheck
-		expected    *version2.StreamHealthCheck
-		msg         string
+		upstreams []conf_v1alpha1.Upstream
+		expected  *version2.StreamHealthCheck
+		msg       string
 	}{
 		{
-			healthCheck: &conf_v1alpha1.HealthCheck{
-				Enabled:  false,
-				Timeout:  "30s",
-				Jitter:   "30s",
-				Port:     80,
-				Interval: "20s",
-				Passes:   4,
-				Fails:    5,
+			upstreams: []conf_v1alpha1.Upstream{
+				{
+					Name: "dns-tcp",
+					HealthCheck: &conf_v1alpha1.HealthCheck{
+						Enabled:  false,
+						Timeout:  "30s",
+						Jitter:   "30s",
+						Port:     80,
+						Interval: "20s",
+						Passes:   4,
+						Fails:    5,
+					},
+				},
 			},
 			expected: nil,
 			msg:      "health checks disabled",
 		},
 		{
-			healthCheck: &conf_v1alpha1.HealthCheck{},
-			expected:    nil,
-			msg:         "nil health checks",
+			upstreams: []conf_v1alpha1.Upstream{
+				{
+					Name:        "dns-tcp",
+					HealthCheck: &conf_v1alpha1.HealthCheck{},
+				},
+			},
+			expected: nil,
+			msg:      "empty health check",
 		},
 		{
-			healthCheck: &conf_v1alpha1.HealthCheck{
-				Enabled:  true,
-				Timeout:  "30s",
-				Jitter:   "30s",
-				Port:     80,
-				Interval: "20s",
-				Passes:   4,
-				Fails:    5,
+			upstreams: []conf_v1alpha1.Upstream{
+				{
+					Name: "dns-tcp",
+					HealthCheck: &conf_v1alpha1.HealthCheck{
+						Enabled:  true,
+						Timeout:  "40s",
+						Jitter:   "30s",
+						Port:     88,
+						Interval: "20s",
+						Passes:   4,
+						Fails:    5,
+					},
+				},
 			},
 			expected: &version2.StreamHealthCheck{
 				Enabled:  true,
-				Timeout:  "30s",
+				Timeout:  "40s",
 				Jitter:   "30s",
-				Port:     80,
+				Port:     88,
 				Interval: "20s",
 				Passes:   4,
 				Fails:    5,
 			},
 			msg: "valid health checks",
 		},
+		{
+			upstreams: []conf_v1alpha1.Upstream{
+				{
+					Name: "dns-tcp",
+					HealthCheck: &conf_v1alpha1.HealthCheck{
+						Enabled:  true,
+						Timeout:  "40s",
+						Jitter:   "30s",
+						Port:     88,
+						Interval: "20s",
+						Passes:   4,
+						Fails:    5,
+					},
+				},
+				{
+					Name: "dns-tcp-2",
+					HealthCheck: &conf_v1alpha1.HealthCheck{
+						Enabled:  false,
+						Timeout:  "50s",
+						Jitter:   "60s",
+						Port:     89,
+						Interval: "10s",
+						Passes:   9,
+						Fails:    7,
+					},
+				},
+			},
+			expected: &version2.StreamHealthCheck{
+				Enabled:  true,
+				Timeout:  "40s",
+				Jitter:   "30s",
+				Port:     88,
+				Interval: "20s",
+				Passes:   4,
+				Fails:    5,
+			},
+			msg: "valid 2 health checks",
+		},
 	}
 
 	for _, test := range tests {
-		result := generateTransportServerHealthCheck(test.healthCheck)
+		result := generateTransportServerHealthCheck(upstreamName, test.upstreams)
 		if diff := cmp.Diff(result, test.expected); diff != "" {
 			t.Errorf("generateTransportServerHealthCheck() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
