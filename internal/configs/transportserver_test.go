@@ -400,7 +400,7 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 	for _, test := range tests {
 		result := generateTransportServerHealthCheck(test.healthCheck)
 		if diff := cmp.Diff(result, test.expected); diff != "" {
-			t.Errorf("generateTransportServerHealthCheck() returned %v but expected %v", result, test.expected)
+			t.Errorf("generateTransportServerHealthCheck() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }

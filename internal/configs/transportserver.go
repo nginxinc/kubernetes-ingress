@@ -127,14 +127,9 @@ func generateTransportServerHealthCheck(healthCheck *conf_v1alpha1.HealthCheck) 
 	hc := generateTransportServerHealthCheckWithDefaults()
 
 	hc.Enabled = healthCheck.Enabled
-
-	if healthCheck.Interval != "" {
-		hc.Interval = healthCheck.Interval
-	}
-
-	if healthCheck.Jitter != "" {
-		hc.Jitter = healthCheck.Jitter
-	}
+	hc.Interval = generateTime(healthCheck.Interval)
+	hc.Jitter = generateTime(healthCheck.Jitter)
+	hc.Timeout = generateTime(healthCheck.Timeout)
 
 	if healthCheck.Fails > 0 {
 		hc.Fails = healthCheck.Fails

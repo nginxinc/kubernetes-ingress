@@ -416,7 +416,7 @@ func TestValidateTSUpstreamHealthChecks(t *testing.T) {
 	for _, test := range tests {
 		allErrs := validateTSUpstreamHealthChecks(test.healthCheck, field.NewPath("healthCheck"))
 		if len(allErrs) > 0 {
-			t.Errorf("validateUpstreamHealthChecks() returned errors %v  for valid input for the case of %s", allErrs, test.msg)
+			t.Errorf("validateTSUpstreamHealthChecks() returned errors %v  for valid input for the case of %s", allErrs, test.msg)
 		}
 	}
 }
@@ -503,7 +503,7 @@ func TestValidateTSUpstreamHealthChecksFails(t *testing.T) {
 	for _, test := range tests {
 		allErrs := validateTSUpstreamHealthChecks(test.healthCheck, field.NewPath("healthCheck"))
 		if len(allErrs) == 0 {
-			t.Errorf("validateUpstreamHealthChecks() returned no error for invalid input %v", test.msg)
+			t.Errorf("validateTSUpstreamHealthChecks() returned no error for invalid input %v", test.msg)
 		}
 	}
 }

@@ -190,6 +190,10 @@ failTimeout: 30s
      - Sets the `time <https://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#fail_timeout>`_ during which the specified number of unsuccessful attempts to communicate with the server should happen to consider the server unavailable and the period of time the server will be considered unavailable. The default is ``10s``.
      - ``string``
      - No
+   * - ``healthCheck``
+     - The health check configuration for the Upstream. See the `health_check <https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#health_check>`_ directive. Note: this feature is supported only in NGINX Plus.
+     - `healthcheck <#upstream-healthcheck>`_
+     - No
 
 ```
 
