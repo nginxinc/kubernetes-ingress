@@ -125,7 +125,7 @@ func generateTransportServerHealthCheck(upstreamHealthCheckName string, upstream
 			if u.HealthCheck == nil || !u.HealthCheck.Enabled {
 				return nil
 			}
-			hc = generateTransportServerHealthCheckWithDefaults()
+			hc = generateTransportServerHealthCheckWithDefaults(u)
 
 			hc.Enabled = u.HealthCheck.Enabled
 			hc.Interval = generateTime(u.HealthCheck.Interval)
@@ -149,12 +149,12 @@ func generateTransportServerHealthCheck(upstreamHealthCheckName string, upstream
 
 }
 
-func generateTransportServerHealthCheckWithDefaults() *version2.StreamHealthCheck {
+func generateTransportServerHealthCheckWithDefaults(up conf_v1alpha1.Upstream) *version2.StreamHealthCheck {
 	return &version2.StreamHealthCheck{
 		Enabled:  false,
 		Timeout:  "5s",
 		Jitter:   "0",
-		Port:     0,
+		Port:     up.Port,
 		Interval: "5s",
 		Passes:   1,
 		Fails:    1,
