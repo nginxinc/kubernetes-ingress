@@ -403,6 +403,7 @@ next-upstream-tries: 10
 client-max-body-size: 2m
 tls:
   enable: true
+grpc: true
 ```
 
 **Note**: The WebSocket protocol is supported without any additional configuration.
@@ -507,6 +508,10 @@ tls:
      - Sets the size of the buffer used for reading the first part of a response received from the upstream server. See the `proxy_buffer_size <https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size>`_ directive. The default is set in the ``proxy-buffer-size`` ConfigMap key.
      - ``string``
      - No
+   * - ``grpc``
+     - Enables gRPC for the upstream. The default is ``False`` (the HTTP protocol is used). It is necessary to enable HTTP/2 in the `ConfigMap </nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners)>`_ and configure TLS termination in the VirtualServer. Otherwise, the HTTP protocol will be used.
+     - ``boolean``
+     - No*
 ```
 
 ### Upstream.Buffers

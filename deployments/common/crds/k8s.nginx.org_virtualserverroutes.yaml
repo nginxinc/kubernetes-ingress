@@ -481,6 +481,8 @@ spec:
                         type: string
                       fail-timeout:
                         type: string
+                      grpc:
+                        type: boolean
                       healthCheck:
                         description: HealthCheck defines the parameters for active Upstream HealthChecks.
                         type: object
