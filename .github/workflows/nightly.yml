@@ -254,35 +254,35 @@ jobs:
             marker: ''
             type: plus
             k8s: 1.16.15
-          - os: ubuntu-18.04
+          - os: macos-10.15
             file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.20.0
-          - os: ubuntu-18.04
+          - os: macos-10.15
             file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.19.1
-          - os: ubuntu-18.04
+          - os: macos-10.15
             file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.18.8
-          - os: ubuntu-18.04
+          - os: macos-10.15
             file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.17.11
-          - os: ubuntu-18.04
+          - os: macos-10.15
             file: build/appprotect/DockerfileWithAppProtectForPlus
             image: nginx-plus-ingress
             tag: ${{ github.sha }}-ap
