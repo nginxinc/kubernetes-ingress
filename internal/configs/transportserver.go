@@ -146,7 +146,6 @@ func generateTransportServerHealthCheck(upstreamHealthCheckName string, upstream
 		}
 	}
 	return hc
-
 }
 
 func generateTransportServerHealthCheckWithDefaults(up conf_v1alpha1.Upstream) *version2.StreamHealthCheck {

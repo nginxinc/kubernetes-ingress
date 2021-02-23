@@ -453,7 +453,7 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 
 	for _, test := range tests {
 		result := generateTransportServerHealthCheck(upstreamName, test.upstreams)
-		if diff := cmp.Diff(result, test.expected); diff != "" {
+		if diff := cmp.Diff(test.expected, result); diff != "" {
 			t.Errorf("generateTransportServerHealthCheck() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
