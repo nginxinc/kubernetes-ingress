@@ -30,7 +30,7 @@ func (tsEx *TransportServerEx) String() string {
 }
 
 // generateTransportServerConfig generates a full configuration for a TransportServer.
-func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool) version2.TransportServerConfig {
+func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool) *version2.TransportServerConfig {
 	upstreamNamer := newUpstreamNamerForTransportServer(transportServerEx.TransportServer)
 
 	upstreams := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus)
@@ -59,14 +59,14 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 		proxyTimeout = transportServerEx.TransportServer.Spec.SessionParameters.Timeout
 	}
 
-	statusZone := ""
+	serverSnippets := generateSnippets(true, transportServerEx.TransportServer.Spec.ServerSnippets, []string{})
+
+	statusZone := transportServerEx.TransportServer.Spec.Listener.Name
 	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName {
 		statusZone = transportServerEx.TransportServer.Spec.Host
-	} else {
-		statusZone = transportServerEx.TransportServer.Spec.Listener.Name
 	}
 
-	return version2.TransportServerConfig{
+	tsConfig := &version2.TransportServerConfig{
 		Server: version2.StreamServer{
 			TLSPassthrough:           transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName,
 			UnixSocket:               generateUnixSocket(transportServerEx),
@@ -84,9 +84,12 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			ProxyNextUpstreamTimeout: generateTimeWithDefault(nextUpstreamTimeout, "0s"),
 			ProxyNextUpstreamTries:   nextUpstreamTries,
 			HealthCheck:              healthCheck,
+			Snippets:                 serverSnippets,
 		},
 		Upstreams: upstreams,
 	}
+
+	return tsConfig
 }
 
 func generateUnixSocket(transportServerEx *TransportServerEx) string {

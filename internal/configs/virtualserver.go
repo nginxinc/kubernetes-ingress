@@ -557,7 +557,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 		}
 	}
 
-	httpSnippets := generateSnippets(vsc.enableSnippets, vsEx.VirtualServer.Spec.HTTPSnippets, []string{""})
+	httpSnippets := generateSnippets(vsc.enableSnippets, vsEx.VirtualServer.Spec.HTTPSnippets, []string{})
 	serverSnippets := generateSnippets(
 		vsc.enableSnippets,
 		vsEx.VirtualServer.Spec.ServerSnippets,
@@ -1410,11 +1410,11 @@ func generateTimeWithDefault(value string, defaultValue string) string {
 	return generateTime(value)
 }
 
-func generateSnippets(enableSnippets bool, s string, defaultS []string) []string {
-	if !enableSnippets || s == "" {
-		return defaultS
+func generateSnippets(enableSnippets bool, snippet string, defaultSnippets []string) []string {
+	if !enableSnippets || snippet == "" {
+		return defaultSnippets
 	}
-	return strings.Split(s, "\n")
+	return strings.Split(snippet, "\n")
 }
 
 func generateBuffers(s *conf_v1.UpstreamBuffers, defaultS string) string {

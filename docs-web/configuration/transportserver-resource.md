@@ -19,6 +19,7 @@ This document is the reference documentation for the TransportServer resource. T
     - [SessionParameters](#sessionparameters)
     - [Action](#action)
   - [Using TransportServer](#using-transportserver)
+    - [Usings Snippets](#using-snippets)
     - [Validation](#validation)
       - [Structural Validation](#structural-validation)
       - [Comprehensive Validation](#comprehensive-validation)
@@ -369,6 +370,41 @@ secure-app   46sm
 ```
 
 In the kubectl get and similar commands, you can also use the short name `ts` instead of `transportserver`.
+
+### Using Snippets
+
+Snippets allow you to insert raw NGINX config into different contexts of NGINX configuration. In the example below, we use snippets to configure [access control](http://nginx.org/en/docs/stream/ngx_stream_access_module.html) in a TransportServer:
+
+```yaml
+apiVersion: k8s.nginx.org/v1alpha1
+kind: TransportServer
+metadata:
+  name: cafe
+spec:
+  host: cafe.example.com
+  serverSnippets: |
+    deny  192.168.1.1;
+    allow 192.168.1.0/24;
+  upstreams:
+  - name: tea
+    service: tea-svc
+    port: 80
+```
+
+Snippets are intended to be used by advanced NGINX users who need more control over the generated NGINX configuration.
+
+However, because of the disadvantages described below, snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument.
+
+Disadvantages of using snippets:
+* *Complexity*. To use snippets, you will need to:
+  * Understand NGINX configuration primitives and implement a correct NGINX configuration.
+  * Understand how the IC generates NGINX configuration so that a snippet doesn't interfere with the other features in the configuration.
+* *Decreased robustness*. An incorrect snippet makes the NGINX config invalid which will lead to a failed reload. This will prevent any new configuration updates, including updates for the other TransportServer resource until the snippet is fixed.
+* *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller.
+
+
+> Note that during a period when the NGINX config includes an invalid snippet, NGINX will continue to operate with the latest valid configuration.
+
 
 ### Validation
 

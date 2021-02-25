@@ -22,6 +22,7 @@ func createTestConfiguration() *Configuration {
 	appProtectEnabled := false
 	internalRoutesEnabled := false
 	isTLSPassthroughEnabled := true
+	snippetsEnabled := true
 	return NewConfiguration(
 		lbc.HasCorrectIngressClass,
 		isPlus,
@@ -32,7 +33,7 @@ func createTestConfiguration() *Configuration {
 			80:  true,
 			443: true,
 		}),
-		validation.NewTransportServerValidator(isTLSPassthroughEnabled),
+		validation.NewTransportServerValidator(isTLSPassthroughEnabled, snippetsEnabled),
 		isTLSPassthroughEnabled,
 	)
 }

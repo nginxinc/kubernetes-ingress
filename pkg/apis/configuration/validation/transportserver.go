@@ -11,13 +11,15 @@ import (
 
 // TransportServerValidator validates a TransportServer resource.
 type TransportServerValidator struct {
-	tlsPassthrough bool
+	tlsPassthrough  bool
+	snippetsEnabled bool
 }
 
 // NewTransportServerValidator creates a new TransportServerValidator.
-func NewTransportServerValidator(tlsPassthrough bool) *TransportServerValidator {
+func NewTransportServerValidator(tlsPassthrough bool, snippetsEnabled bool) *TransportServerValidator {
 	return &TransportServerValidator{
-		tlsPassthrough: tlsPassthrough,
+		tlsPassthrough:  tlsPassthrough,
+		snippetsEnabled: snippetsEnabled,
 	}
 }
 
@@ -46,6 +48,17 @@ func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.
 		allErrs = append(allErrs, field.Required(fieldPath.Child("action"), "must specify action"))
 	} else {
 		allErrs = append(allErrs, validateTransportServerAction(spec.Action, fieldPath.Child("action"), upstreamNames)...)
+	}
+
+	allErrs = append(allErrs, validateSnippets(spec.ServerSnippets, fieldPath.Child("serverSnippets"), tsv.snippetsEnabled)...)
+
+	return allErrs
+}
+
+func validateSnippets(serverSnippet string, fieldPath *field.Path, snippetsEnabled bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if !snippetsEnabled && serverSnippet != "" {
+		return append(allErrs, field.Forbidden(fieldPath, "snippet specified but snippets feature is not enabled"))
 	}
 
 	return allErrs

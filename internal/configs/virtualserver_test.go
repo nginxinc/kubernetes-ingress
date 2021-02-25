@@ -482,7 +482,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 				Keepalive: 16,
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
@@ -705,7 +705,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 				Keepalive: 16,
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:      "cafe.example.com",
@@ -946,7 +946,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 				},
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:  "cafe.example.com",
@@ -1259,7 +1259,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 				},
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:  "cafe.example.com",
@@ -1572,7 +1572,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 				},
 			},
 		},
-		HTTPSnippets:  []string{""},
+		HTTPSnippets:  []string{},
 		LimitReqZones: []version2.LimitReqZone{},
 		Server: version2.Server{
 			ServerName:  "example.com",
@@ -3682,7 +3682,7 @@ func TestGenerateSnippets(t *testing.T) {
 		{
 			true,
 			"test",
-			[]string{""},
+			[]string{},
 			[]string{"test"},
 		},
 		{
@@ -3694,7 +3694,7 @@ func TestGenerateSnippets(t *testing.T) {
 		{
 			true,
 			"test\none\ntwo",
-			[]string{""},
+			[]string{},
 			[]string{"test", "one", "two"},
 		},
 		{

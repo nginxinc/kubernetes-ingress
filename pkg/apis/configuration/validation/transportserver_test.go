@@ -206,6 +206,43 @@ func TestValidateTransportServerHost(t *testing.T) {
 	}
 }
 
+func TestValidateTransportServerSnippet(t *testing.T) {
+	tests := []struct {
+		snippet           string
+		isSnippetsEnabled bool
+		expectError       bool
+	}{
+		{
+			snippet:           "",
+			isSnippetsEnabled: false,
+			expectError:       false,
+		},
+		{
+			snippet:           "deny 192.168.1.1;",
+			isSnippetsEnabled: false,
+			expectError:       true,
+		},
+		{
+			snippet:           "deny 192.168.1.1;",
+			isSnippetsEnabled: true,
+			expectError:       false,
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateSnippets(test.snippet, field.NewPath("serverSnippet"), test.isSnippetsEnabled)
+		if test.expectError {
+			if len(allErrs) < 1 {
+				t.Errorf("validateSnippets(%q, %v) failed to return an error for invalid input", test.snippet, test.isSnippetsEnabled)
+			}
+		} else {
+			if len(allErrs) > 0 {
+				t.Errorf("validateSnippets(%q, %v) returned errors %v for valid input", test.snippet, test.isSnippetsEnabled, allErrs)
+			}
+		}
+	}
+}
+
 func TestValidateTransportServerHostFails(t *testing.T) {
 	tests := []struct {
 		host                     string

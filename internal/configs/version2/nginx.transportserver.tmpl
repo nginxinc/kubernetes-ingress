@@ -26,6 +26,10 @@ server {
     proxy_responses {{ $s.ProxyResponses }};
     {{ end }}
 
+    {{ range $snippet := $s.Snippets }}
+    {{- $snippet }}
+    {{ end }}
+
     proxy_pass {{ $s.ProxyPass }};
 
     proxy_timeout {{ $s.ProxyTimeout }};

@@ -1,7 +1,6 @@
 package configs
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -62,6 +61,82 @@ func TestTransportServerExString(t *testing.T) {
 	}
 }
 
+func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
+	transportServerEx := TransportServerEx{
+		TransportServer: &conf_v1alpha1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "tcp-server",
+				Namespace: "default",
+			},
+			Spec: conf_v1alpha1.TransportServerSpec{
+				Listener: conf_v1alpha1.TransportServerListener{
+					Name:     "tcp-listener",
+					Protocol: "TCP",
+				},
+				Upstreams: []conf_v1alpha1.Upstream{
+					{
+						Name:    "tcp-app",
+						Service: "tcp-app-svc",
+						Port:    5001,
+					},
+				},
+				Action: &conf_v1alpha1.Action{
+					Pass: "tcp-app",
+				},
+				ServerSnippets: "deny  192.168.1.1;\nallow 192.168.1.0/24;",
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tcp-app-svc:5001": {
+				"10.0.0.20:5001",
+			},
+		},
+	}
+
+	listenerPort := 2020
+
+	expected := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address:     "10.0.0.20:5001",
+						MaxFails:    1,
+						FailTimeout: "10s",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+			},
+		},
+		Server: version2.StreamServer{
+			Port:                     listenerPort,
+			UDP:                      false,
+			StatusZone:               "tcp-listener",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "60s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTries:   0,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyTimeout:             "10m",
+			HealthCheck:              nil,
+			Snippets:                 []string{"deny  192.168.1.1;", "allow 192.168.1.0/24;"},
+		},
+	}
+
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+}
+
 func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
@@ -104,7 +179,7 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 
 	listenerPort := 2020
 
-	expected := version2.TransportServerConfig{
+	expected := &version2.TransportServerConfig{
 		Upstreams: []version2.StreamUpstream{
 			{
 				Name: "ts_default_tcp-server_tcp-app",
@@ -136,14 +211,15 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyTimeout:             "50s",
 			HealthCheck:              nil,
+			Snippets:                 []string{},
 		},
 	}
 
-	isPlus := true
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, isPlus)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateTransportServerConfig() returned \n%+v but expected \n%+v", result, expected)
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
 	}
+
 }
 
 func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
@@ -186,7 +262,7 @@ func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
 
 	listenerPort := 2020
 
-	expected := version2.TransportServerConfig{
+	expected := &version2.TransportServerConfig{
 		Upstreams: []version2.StreamUpstream{
 			{
 				Name: "ts_default_tcp-server_tcp-app",
@@ -220,13 +296,13 @@ func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
 			HealthCheck:              nil,
+			Snippets:                 []string{},
 		},
 	}
 
-	isPlus := true
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, isPlus)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateTransportServerConfig() returned \n%+v but expected \n%+v", result, expected)
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -275,7 +351,7 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 
 	listenerPort := 2020
 
-	expected := version2.TransportServerConfig{
+	expected := &version2.TransportServerConfig{
 		Upstreams: []version2.StreamUpstream{
 			{
 				Name: "ts_default_udp-server_udp-app",
@@ -309,13 +385,13 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
 			HealthCheck:              nil,
+			Snippets:                 []string{},
 		},
 	}
 
-	isPlus := true
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, isPlus)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateTransportServerConfig() returned \n%+v but expected \n%+v", result, expected)
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 }
 

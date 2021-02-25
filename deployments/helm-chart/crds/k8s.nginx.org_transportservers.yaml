@@ -63,6 +63,8 @@ spec:
                       type: string
                     protocol:
                       type: string
+                serverSnippets:
+                  type: string
                 sessionParameters:
                   description: SessionParameters defines session parameters.
                   type: object
