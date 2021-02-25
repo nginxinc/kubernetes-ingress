@@ -59,7 +59,11 @@ invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
         (
             {
                 "type": "complete",
-                "extra_args": [f"-enable-custom-resources", f"-enable-preview-policies", f"-enable-leader-election=false"],
+                "extra_args": [
+                    f"-enable-custom-resources",
+                    f"-enable-preview-policies",
+                    f"-enable-leader-election=false",
+                ],
             },
             {"example": "virtual-server-route"},
         )
@@ -74,6 +78,7 @@ class TestJWTPoliciesVsr:
         print(f"Create jwt policy")
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy, namespace)
 
+        wait_before_test()
         with open(token, "r") as file:
             data = file.readline()
         headers = {"host": vs_host, "token": data}
@@ -91,6 +96,7 @@ class TestJWTPoliciesVsr:
         print(f"Create jwt policy #2")
         pol_name_2 = create_policy_from_yaml(kube_apis.custom_objects, policy_2, namespace)
 
+        wait_before_test()
         with open(token, "r") as file:
             data = file.readline()
         headers = {"host": vs_host, "token": data}
@@ -271,6 +277,9 @@ class TestJWTPoliciesVsr:
 
         resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
         print(resp.status_code)
+        policy_info = read_crd(
+            kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
+        )
         crd_info = read_crd(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
@@ -291,10 +300,20 @@ class TestJWTPoliciesVsr:
             assert resp.status_code == 200
             assert f"Request ID:" in resp.text
             assert crd_info["status"]["state"] == "Valid"
+            assert (
+                policy_info["status"]
+                and policy_info["status"]["reason"] == "AddedOrUpdated"
+                and policy_info["status"]["state"] == "Valid"
+            )
         elif policy == jwt_pol_invalid_src:
             assert resp.status_code == 500
             assert f"Internal Server Error" in resp.text
             assert crd_info["status"]["state"] == "Warning"
+            assert (
+                policy_info["status"]
+                and policy_info["status"]["reason"] == "Rejected"
+                and policy_info["status"]["state"] == "Invalid"
+            )
         else:
             pytest.fail(f"Not a valid case or parameter")
 
@@ -510,10 +529,7 @@ class TestJWTPoliciesVsr:
             v_s_route_setup.route_m.namespace,
         )
         patch_virtual_server_from_yaml(
-            kube_apis.custom_objects,
-            v_s_route_setup.vs_name,
-            vs_src,
-            v_s_route_setup.namespace,
+            kube_apis.custom_objects, v_s_route_setup.vs_name, vs_src, v_s_route_setup.namespace,
         )
         wait_before_test()
 
@@ -535,4 +551,3 @@ class TestJWTPoliciesVsr:
         )
         assert resp.status_code == 401
         assert f"Authorization Required" in resp.text
-

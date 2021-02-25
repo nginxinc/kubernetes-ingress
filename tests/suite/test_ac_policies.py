@@ -30,7 +30,10 @@ invalid_vs_src_route = (
 override_vs_src_route = (
     f"{TEST_DATA}/access-control/route-subroute/virtual-server-override-route.yaml"
 )
-override_vs_spec_route_src = f"{TEST_DATA}/access-control/route-subroute/virtual-server-override-spec-route.yaml"
+override_vs_spec_route_src = (
+    f"{TEST_DATA}/access-control/route-subroute/virtual-server-override-spec-route.yaml"
+)
+
 
 @pytest.fixture(scope="class")
 def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
@@ -56,6 +59,7 @@ def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
             ingress_controller_prerequisites.namespace,
             std_cm_src,
         )
+
     request.addfinalizer(fin)
 
 
@@ -118,6 +122,7 @@ class TestAccessControlPoliciesVs:
         )
         wait_before_test()
 
+        policy_info = read_crd(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         print(f"\nUse IP listed in deny block: 10.0.0.1")
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
@@ -133,6 +138,12 @@ class TestAccessControlPoliciesVs:
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
+
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
+        )
 
         assert (
             resp1.status_code == 403
@@ -172,6 +183,7 @@ class TestAccessControlPoliciesVs:
         )
         wait_before_test()
 
+        policy_info = read_crd(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         print(f"\nUse IP listed in allow block: 10.0.0.1")
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
@@ -187,6 +199,12 @@ class TestAccessControlPoliciesVs:
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
+
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
+        )
 
         assert (
             resp1.status_code == 200
@@ -288,10 +306,18 @@ class TestAccessControlPoliciesVs:
             "virtualservers",
             virtual_server_setup.vs_name,
         )
+        policy_info = read_crd(
+            kube_apis.custom_objects, test_namespace, "policies", invalid_pol_name
+        )
         delete_policy(kube_apis.custom_objects, invalid_pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
 
         assert resp.status_code == 500 and "500 Internal Server Error" in resp.text
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "Rejected"
+            and policy_info["status"]["state"] == "Invalid"
+        )
         assert (
             vs_info["status"]["state"] == "Warning"
             and vs_info["status"]["reason"] == "AddedOrUpdatedWithWarning"
@@ -358,12 +384,7 @@ class TestAccessControlPoliciesVs:
         )
 
     def test_route_override_spec(
-        self,
-        kube_apis,
-        crd_ingress_controller,
-        virtual_server_setup,
-        test_namespace,
-        config_setup,
+        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, config_setup,
     ):
         """
         Test allow policy specified under routes overrides block in spec
@@ -376,9 +397,13 @@ class TestAccessControlPoliciesVs:
         assert resp.status_code == 200
 
         print(f"Create deny policy")
-        deny_pol_name = create_policy_from_yaml(kube_apis.custom_objects, deny_pol_src, test_namespace)
+        deny_pol_name = create_policy_from_yaml(
+            kube_apis.custom_objects, deny_pol_src, test_namespace
+        )
         print(f"Create allow policy")
-        allow_pol_name = create_policy_from_yaml(kube_apis.custom_objects, allow_pol_src, test_namespace)
+        allow_pol_name = create_policy_from_yaml(
+            kube_apis.custom_objects, allow_pol_src, test_namespace
+        )
 
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects,

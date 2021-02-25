@@ -33,14 +33,18 @@ rl_vsr_override_vs_route_src = (
 )
 
 
-@pytest.mark.policies
+@pytest.mark.test
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
         (
             {
                 "type": "complete",
-                "extra_args": [f"-enable-custom-resources", f"-enable-preview-policies", f"-enable-leader-election=false"],
+                "extra_args": [
+                    f"-enable-custom-resources",
+                    f"-enable-preview-policies",
+                    f"-enable-leader-election=false",
+                ],
             },
             {"example": "virtual-server-route"},
         )
@@ -88,7 +92,11 @@ class TestRateLimitingPoliciesVsr:
             src,
             v_s_route_setup.route_m.namespace,
         )
+
         wait_before_test()
+        policy_info = read_crd(
+            kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
+        )
         occur = []
         t_end = time.perf_counter() + 1
         resp = requests.get(
@@ -105,6 +113,11 @@ class TestRateLimitingPoliciesVsr:
             occur.append(resp.status_code)
         delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
         self.restore_default_vsr(kube_apis, v_s_route_setup)
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
+        )
         assert occur.count(200) <= 1
 
     @pytest.mark.parametrize("src", [rl_vsr_sec_src])
@@ -133,7 +146,11 @@ class TestRateLimitingPoliciesVsr:
             src,
             v_s_route_setup.route_m.namespace,
         )
+
         wait_before_test()
+        policy_info = read_crd(
+            kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
+        )
         occur = []
         t_end = time.perf_counter() + 1
         resp = requests.get(
@@ -150,6 +167,11 @@ class TestRateLimitingPoliciesVsr:
             occur.append(resp.status_code)
         delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
         self.restore_default_vsr(kube_apis, v_s_route_setup)
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
+        )
         assert rate_sec >= occur.count(200) >= (rate_sec - 2)
 
     @pytest.mark.parametrize("src", [rl_vsr_override_src])
@@ -258,7 +280,7 @@ class TestRateLimitingPoliciesVsr:
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         print(f"Create rl policy")
-        pol_name = create_policy_from_yaml(
+        invalid_pol_name = create_policy_from_yaml(
             kube_apis.custom_objects, rl_pol_invalid_src, v_s_route_setup.route_m.namespace
         )
         print(f"Patch vsr with policy: {src}")
@@ -268,14 +290,26 @@ class TestRateLimitingPoliciesVsr:
             src,
             v_s_route_setup.route_m.namespace,
         )
+
         wait_before_test()
+        policy_info = read_crd(
+            kube_apis.custom_objects,
+            v_s_route_setup.route_m.namespace,
+            "policies",
+            invalid_pol_name,
+        )
         resp = requests.get(
             f"{req_url}{v_s_route_setup.route_m.paths[0]}",
             headers={"host": v_s_route_setup.vs_host},
         )
         print(resp.status_code)
-        delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
+        delete_policy(kube_apis.custom_objects, invalid_pol_name, v_s_route_setup.route_m.namespace)
         self.restore_default_vsr(kube_apis, v_s_route_setup)
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "Rejected"
+            and policy_info["status"]["state"] == "Invalid"
+        )
         assert resp.status_code == 500
 
     @pytest.mark.parametrize("src", [rl_vsr_override_vs_spec_src, rl_vsr_override_vs_route_src])

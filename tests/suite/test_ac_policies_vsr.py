@@ -35,6 +35,7 @@ vs_route_vsr_override_src = (
     f"{TEST_DATA}/access-control/route-subroute/virtual-server-vsr-route-override.yaml"
 )
 
+
 @pytest.fixture(scope="class")
 def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
     """
@@ -61,6 +62,7 @@ def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
         )
 
     request.addfinalizer(fin)
+
 
 @pytest.mark.policies
 @pytest.mark.parametrize(
@@ -121,6 +123,9 @@ class TestAccessControlPoliciesVsr:
             v_s_route_setup.route_m.namespace,
         )
         wait_before_test()
+        policy_info = read_crd(
+            kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
+        )
 
         print(f"\nUse IP listed in deny block: 10.0.0.1")
         resp1 = requests.get(
@@ -137,6 +142,11 @@ class TestAccessControlPoliciesVsr:
 
         delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
         self.restore_default_vsr(kube_apis, v_s_route_setup)
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
+        )
         assert (
             resp1.status_code == 403
             and "403 Forbidden" in resp1.text
@@ -175,6 +185,9 @@ class TestAccessControlPoliciesVsr:
             v_s_route_setup.route_m.namespace,
         )
         wait_before_test()
+        policy_info = read_crd(
+            kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
+        )
 
         print(f"\nUse IP listed in deny block: 10.0.0.1")
         resp1 = requests.get(
@@ -191,6 +204,11 @@ class TestAccessControlPoliciesVsr:
 
         delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
         self.restore_default_vsr(kube_apis, v_s_route_setup)
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
+        )
         assert (
             resp2.status_code == 403
             and "403 Forbidden" in resp2.text
@@ -288,6 +306,9 @@ class TestAccessControlPoliciesVsr:
             v_s_route_setup.route_m.namespace,
         )
         wait_before_test()
+        policy_info = read_crd(
+            kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
+        )
 
         print(f"\nUse IP listed in deny block: 10.0.0.1")
         resp = requests.get(
@@ -303,6 +324,11 @@ class TestAccessControlPoliciesVsr:
         )
         delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
         self.restore_default_vsr(kube_apis, v_s_route_setup)
+        assert (
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "Rejected"
+            and policy_info["status"]["state"] == "Invalid"
+        )
         assert resp.status_code == 500 and "500 Internal Server Error" in resp.text
         assert (
             vsr_info["status"]["state"] == "Warning"
@@ -342,10 +368,7 @@ class TestAccessControlPoliciesVsr:
         )
         # patch vs with blocking policy
         patch_virtual_server_from_yaml(
-            kube_apis.custom_objects,
-            v_s_route_setup.vs_name,
-            src,
-            v_s_route_setup.namespace
+            kube_apis.custom_objects, v_s_route_setup.vs_name, src, v_s_route_setup.namespace
         )
         wait_before_test()
 
@@ -360,10 +383,7 @@ class TestAccessControlPoliciesVsr:
         delete_policy(kube_apis.custom_objects, allow_pol_name, v_s_route_setup.route_m.namespace)
         self.restore_default_vsr(kube_apis, v_s_route_setup)
         patch_virtual_server_from_yaml(
-            kube_apis.custom_objects,
-            v_s_route_setup.vs_name,
-            std_vs_src,
-            v_s_route_setup.namespace
+            kube_apis.custom_objects, v_s_route_setup.vs_name, std_vs_src, v_s_route_setup.namespace
         )
         wait_before_test()
         assert resp.status_code == 200 and "Server address:" in resp.text

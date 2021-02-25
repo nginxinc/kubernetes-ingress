@@ -469,7 +469,7 @@ class TestOptionsSpecificForPlus:
         assert_event(vsr_s_event_text, vsr_s_events)
         assert_event(vsr_m_event_text, vsr_m_events)
         assert "slow_start" not in config
-    @pytest.mark.vsp
+
     def test_validation_flow(self, kube_apis, ingress_controller_prerequisites,
                              crd_ingress_controller, v_s_route_setup):
         invalid_fields_s = [

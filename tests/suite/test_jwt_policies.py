@@ -44,6 +44,7 @@ jwt_vs_override_spec_route_2 = (
 valid_token = f"{TEST_DATA}/jwt-policy/token.jwt"
 invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
 
+
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.policies
 @pytest.mark.parametrize(
@@ -52,7 +53,11 @@ invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
         (
             {
                 "type": "complete",
-                "extra_args": [f"-enable-custom-resources", f"-enable-preview-policies", f"-enable-leader-election=false"],
+                "extra_args": [
+                    f"-enable-custom-resources",
+                    f"-enable-preview-policies",
+                    f"-enable-leader-election=false",
+                ],
             },
             {"example": "virtual-server", "app_type": "simple",},
         )
@@ -66,6 +71,7 @@ class TestJWTPolicies:
 
         print(f"Create jwt policy")
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy, test_namespace)
+        wait_before_test()
 
         with open(token, "r") as file:
             data = file.readline()
@@ -84,6 +90,7 @@ class TestJWTPolicies:
         print(f"Create jwt policy #2")
         pol_name_2 = create_policy_from_yaml(kube_apis.custom_objects, policy_2, test_namespace)
 
+        wait_before_test()
         with open(token, "r") as file:
             data = file.readline()
         headers = {"host": vs_host, "token": data}
@@ -153,18 +160,13 @@ class TestJWTPolicies:
         if jwk_secret == jwk_sec_valid_src:
             pol = jwt_pol_valid_src
             vs = jwt_vs_single_src
-        elif jwk_secret== jwk_sec_invalid_src:
+        elif jwk_secret == jwk_sec_invalid_src:
             pol = jwt_pol_invalid_sec_src
             vs = jwt_vs_single_invalid_sec_src
         else:
             pytest.fail("Invalid configuration")
         secret, pol_name, headers = self.setup_single_policy(
-            kube_apis,
-            test_namespace,
-            valid_token,
-            jwk_secret,
-            pol,
-            virtual_server_setup.vs_host,
+            kube_apis, test_namespace, valid_token, jwk_secret, pol, virtual_server_setup.vs_host,
         )
 
         print(f"Patch vs with policy: {jwt_vs_single_src}")
@@ -224,11 +226,21 @@ class TestJWTPolicies:
         )
 
         print(f"Patch vs with policy: {policy}")
-
+        policy_info = read_crd(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         if policy == jwt_pol_valid_src:
             vs_src = jwt_vs_single_src
+            assert (
+                policy_info["status"]
+                and policy_info["status"]["reason"] == "AddedOrUpdated"
+                and policy_info["status"]["state"] == "Valid"
+            )
         elif policy == jwt_pol_invalid_src:
             vs_src = jwt_vs_single_invalid_pol_src
+            assert (
+                policy_info["status"]
+                and policy_info["status"]["reason"] == "Rejected"
+                and policy_info["status"]["state"] == "Invalid"
+            )
         else:
             pytest.fail("Invalid configuration")
 
