@@ -26,7 +26,7 @@ rl_vs_override_spec_route = (
 )
 
 
-@pytest.mark.test
+@pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [

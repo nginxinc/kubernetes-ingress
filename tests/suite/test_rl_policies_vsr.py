@@ -33,7 +33,7 @@ rl_vsr_override_vs_route_src = (
 )
 
 
-@pytest.mark.test
+@pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
