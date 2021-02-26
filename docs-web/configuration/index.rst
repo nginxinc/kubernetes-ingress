@@ -7,7 +7,7 @@ Configuration
    global-configuration/index
    ingress-resources/index
    virtualserver-and-virtualserverroute-resources
-   handling-host-collisions
+   handling-host-and-listener-collisions
    policy-resource
    transportserver-resource
    configuration-examples
