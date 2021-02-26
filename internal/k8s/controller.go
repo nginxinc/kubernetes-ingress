@@ -585,69 +585,68 @@ func (lbc *LoadBalancerController) syncEndpoints(task task) {
 	endp := obj.(*api_v1.Endpoints)
 	resources := lbc.configuration.FindResourcesForEndpoints(endp.Namespace, endp.Name)
 
-	ingressExes, mergeableIngresses, virtualServersExes := lbc.createExtendedResources(resources)
+	resourceExes := lbc.createExtendedResources(resources)
 
-	if len(ingressExes) > 0 {
-		glog.V(3).Infof("Updating Endpoints for %v", ingressExes)
-		err = lbc.configurator.UpdateEndpoints(ingressExes)
+	if len(resourceExes.IngressExes) > 0 {
+		glog.V(3).Infof("Updating Endpoints for %v", resourceExes.IngressExes)
+		err = lbc.configurator.UpdateEndpoints(resourceExes.IngressExes)
 		if err != nil {
-			glog.Errorf("Error updating endpoints for %v: %v", ingressExes, err)
+			glog.Errorf("Error updating endpoints for %v: %v", resourceExes.IngressExes, err)
 		}
 	}
 
-	if len(mergeableIngresses) > 0 {
-		glog.V(3).Infof("Updating Endpoints for %v", mergeableIngresses)
-		err = lbc.configurator.UpdateEndpointsMergeableIngress(mergeableIngresses)
+	if len(resourceExes.MergeableIngresses) > 0 {
+		glog.V(3).Infof("Updating Endpoints for %v", resourceExes.MergeableIngresses)
+		err = lbc.configurator.UpdateEndpointsMergeableIngress(resourceExes.MergeableIngresses)
 		if err != nil {
-			glog.Errorf("Error updating endpoints for %v: %v", mergeableIngresses, err)
+			glog.Errorf("Error updating endpoints for %v: %v", resourceExes.MergeableIngresses, err)
 		}
 	}
 
 	if lbc.areCustomResourcesEnabled {
-		if len(virtualServersExes) > 0 {
-			glog.V(3).Infof("Updating endpoints for %v", virtualServersExes)
-			err := lbc.configurator.UpdateEndpointsForVirtualServers(virtualServersExes)
+		if len(resourceExes.VirtualServerExes) > 0 {
+			glog.V(3).Infof("Updating endpoints for %v", resourceExes.VirtualServerExes)
+			err := lbc.configurator.UpdateEndpointsForVirtualServers(resourceExes.VirtualServerExes)
 			if err != nil {
-				glog.Errorf("Error updating endpoints for %v: %v", virtualServersExes, err)
+				glog.Errorf("Error updating endpoints for %v: %v", resourceExes.VirtualServerExes, err)
 			}
 		}
 
-		transportServers := lbc.getTransportServersForEndpoints(obj.(*api_v1.Endpoints))
-		transportServerExes := lbc.transportServersToTransportServerExes(transportServers)
-
-		if len(transportServerExes) > 0 {
-			glog.V(3).Infof("Updating endpoints for %v", transportServerExes)
-			err := lbc.configurator.UpdateEndpointsForTransportServers(transportServerExes)
+		if len(resourceExes.TransportServerExes) > 0 {
+			glog.V(3).Infof("Updating endpoints for %v", resourceExes.TransportServerExes)
+			err := lbc.configurator.UpdateEndpointsForTransportServers(resourceExes.TransportServerExes)
 			if err != nil {
-				glog.Errorf("Error updating endpoints for %v: %v", transportServerExes, err)
+				glog.Errorf("Error updating endpoints for %v: %v", resourceExes.TransportServerExes, err)
 			}
 		}
 	}
 }
 
-func (lbc *LoadBalancerController) createExtendedResources(resources []Resource) ([]*configs.IngressEx, []*configs.MergeableIngresses, []*configs.VirtualServerEx) {
-	var ingressExes []*configs.IngressEx
-	var mergeableIngresses []*configs.MergeableIngresses
-	var virtualServersExes []*configs.VirtualServerEx
+func (lbc *LoadBalancerController) createExtendedResources(resources []Resource) configs.ExtendedResources {
+	var result configs.ExtendedResources
 
 	for _, r := range resources {
 		switch impl := r.(type) {
 		case *VirtualServerConfiguration:
 			vs := impl.VirtualServer
 			vsEx := lbc.createVirtualServerEx(vs, impl.VirtualServerRoutes)
-			virtualServersExes = append(virtualServersExes, vsEx)
+			result.VirtualServerExes = append(result.VirtualServerExes, vsEx)
 		case *IngressConfiguration:
 			if impl.IsMaster {
 				mergeableIng := lbc.createMergeableIngresses(impl)
-				mergeableIngresses = append(mergeableIngresses, mergeableIng)
+				result.MergeableIngresses = append(result.MergeableIngresses, mergeableIng)
 			} else {
 				ingEx := lbc.createIngressEx(impl.Ingress, impl.ValidHosts, nil)
-				ingressExes = append(ingressExes, ingEx)
+				result.IngressExes = append(result.IngressExes, ingEx)
 			}
+		case *TransportServerConfiguration:
+			tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
+			result.TransportServerExes = append(result.TransportServerExes, tsEx)
+
 		}
 	}
 
-	return ingressExes, mergeableIngresses, virtualServersExes
+	return result
 }
 
 func (lbc *LoadBalancerController) syncConfigMap(task task) {
@@ -672,9 +671,9 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 
 	glog.V(3).Infof("Updating %v resources", len(resources))
 
-	ingressExes, mergeableIngresses, virtualServerExes := lbc.createExtendedResources(resources)
+	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, ingressExes, mergeableIngresses, virtualServerExes)
+	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal
@@ -696,17 +695,6 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 	}
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
-}
-
-func (lbc *LoadBalancerController) transportServersToTransportServerExes(transportServers []*conf_v1alpha1.TransportServer) []*configs.TransportServerEx {
-	var transportServerExes []*configs.TransportServerEx
-
-	for _, ts := range transportServers {
-		tsEx := lbc.createTransportServer(ts)
-		transportServerExes = append(transportServerExes, tsEx)
-	}
-
-	return transportServerExes
 }
 
 func (lbc *LoadBalancerController) sync(task task) {
@@ -851,14 +839,14 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 	namespace, name, _ := ParseNamespaceName(key)
 
 	resources := lbc.configuration.FindResourcesForPolicy(namespace, name)
-	// Ingresses don't have policies
-	_, _, virtualServerExes := lbc.createExtendedResources(resources)
+	resourceExes := lbc.createExtendedResources(resources)
 
-	if len(virtualServerExes) == 0 {
+	// Only VirtualServers support policies
+	if len(resourceExes.VirtualServerExes) == 0 {
 		return
 	}
 
-	warnings, updateErr := lbc.configurator.AddOrUpdateVirtualServers(virtualServerExes)
+	warnings, updateErr := lbc.configurator.AddOrUpdateVirtualServers(resourceExes.VirtualServerExes)
 	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 
 	// Note: updating the status of a policy based on a reload is not needed.
@@ -872,54 +860,22 @@ func (lbc *LoadBalancerController) syncTransportServer(task task) {
 		return
 	}
 
+	var changes []ResourceChange
+	var problems []ConfigurationProblem
+
 	if !tsExists {
 		glog.V(2).Infof("Deleting TransportServer: %v\n", key)
 
-		err := lbc.configurator.DeleteTransportServer(key)
-		if err != nil {
-			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
-		}
-		return
+		changes, problems = lbc.configuration.DeleteTransportServer(key)
+	} else {
+		glog.V(2).Infof("Adding or Updating TransportServer: %v\n", key)
+
+		ts := obj.(*conf_v1alpha1.TransportServer)
+		changes, problems = lbc.configuration.AddOrUpdateTransportServer(ts)
 	}
 
-	glog.V(2).Infof("Adding or Updating TransportServer: %v\n", key)
-
-	ts := obj.(*conf_v1alpha1.TransportServer)
-
-	validationErr := lbc.transportServerValidator.ValidateTransportServer(ts)
-	if validationErr != nil {
-		err := lbc.configurator.DeleteTransportServer(key)
-		if err != nil {
-			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
-		}
-		lbc.recorder.Eventf(ts, api_v1.EventTypeWarning, "Rejected", "TransportServer %v is invalid and was rejected: %v", key, validationErr)
-		return
-	}
-
-	if !lbc.configurator.CheckIfListenerExists(&ts.Spec.Listener) {
-		err := lbc.configurator.DeleteTransportServer(key)
-		if err != nil {
-			glog.Errorf("Error when deleting configuration for %v: %v", key, err)
-		}
-		lbc.recorder.Eventf(ts, api_v1.EventTypeWarning, "Rejected", "TransportServer %v references a non-existing listener and was rejected", key)
-		return
-	}
-
-	tsEx := lbc.createTransportServer(ts)
-
-	addErr := lbc.configurator.AddOrUpdateTransportServer(tsEx)
-
-	eventTitle := "AddedOrUpdated"
-	eventType := api_v1.EventTypeNormal
-	eventWarningMessage := ""
-
-	if addErr != nil {
-		eventTitle = "AddedOrUpdatedWithError"
-		eventType = api_v1.EventTypeWarning
-		eventWarningMessage = fmt.Sprintf("but was not applied: %v", addErr)
-	}
-
-	lbc.recorder.Eventf(ts, eventType, eventTitle, "Configuration for %v was added or updated %v", key, eventWarningMessage)
+	lbc.processChanges(changes)
+	lbc.processProblems(problems)
 }
 
 func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
@@ -930,56 +886,45 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 		return
 	}
 
+	var changes []ResourceChange
+	var problems []ConfigurationProblem
+	var validationErr error
+
 	if !gcExists {
-		glog.Warningf("GlobalConfiguration %v was removed. Retaining the GlobalConfiguration,", key)
-		return
+		glog.V(2).Infof("Deleting GlobalConfiguration: %v\n", key)
+
+		changes, problems = lbc.configuration.DeleteGlobalConfiguration()
+	} else {
+		glog.V(2).Infof("Adding or Updating GlobalConfiguration: %v\n", key)
+
+		gc := obj.(*conf_v1alpha1.GlobalConfiguration)
+		changes, problems, validationErr = lbc.configuration.AddOrUpdateGlobalConfiguration(gc)
 	}
 
-	glog.V(2).Infof("GlobalConfiguration was updated: %v\n", key)
+	updateErr := lbc.processChangesFromGlobalConfiguration(changes)
 
-	gc := obj.(*conf_v1alpha1.GlobalConfiguration)
+	if gcExists {
+		eventTitle := "Updated"
+		eventType := api_v1.EventTypeNormal
+		eventMessage := fmt.Sprintf("GlobalConfiguration %s was added or updated", key)
 
-	validationErr := lbc.globalConfigurationValidator.ValidateGlobalConfiguration(gc)
-	if validationErr != nil {
-		lbc.recorder.Eventf(gc, api_v1.EventTypeWarning, "Rejected", "GlobalConfiguration %v is invalid and was rejected: %v", key, validationErr)
-		return
-	}
-
-	// GlobalConfiguration configures listeners
-	// As a result, a change in a GC might affect all TransportServers
-
-	transportServerExes := lbc.transportServersToTransportServerExes(lbc.getTransportServers())
-
-	updatedTransportServerExes, deletedTransportServerExes, updateErr := lbc.configurator.UpdateGlobalConfiguration(gc, transportServerExes)
-
-	for _, tsEx := range deletedTransportServerExes {
-		eventTitle := "Rejected"
-		eventType := api_v1.EventTypeWarning
-		eventWarningMessage := ""
-
-		if updateErr != nil {
-			eventTitle = "RejectedWithError"
-			eventWarningMessage = fmt.Sprintf("but was not applied: %v", updateErr)
+		if validationErr != nil {
+			eventTitle = "Rejected"
+			eventType = api_v1.EventTypeWarning
+			eventMessage = fmt.Sprintf("GlobalConfiguration %s is invalid and was rejected: %v", key, validationErr)
 		}
 
-		lbc.recorder.Eventf(tsEx.TransportServer, eventType, eventTitle, "TransportServer %v/%v references a non-existing listener %v", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, eventWarningMessage)
+		if updateErr != nil {
+			eventTitle += "WithError"
+			eventType = api_v1.EventTypeWarning
+			eventMessage = fmt.Sprintf("%s; with reload error: %v", eventMessage, updateErr)
+		}
+
+		gc := obj.(*conf_v1alpha1.GlobalConfiguration)
+		lbc.recorder.Eventf(gc, eventType, eventTitle, eventMessage)
 	}
 
-	eventTitle := "Updated"
-	eventType := api_v1.EventTypeNormal
-	eventWarningMessage := ""
-
-	if updateErr != nil {
-		eventTitle = "UpdatedWithError"
-		eventType = api_v1.EventTypeWarning
-		eventWarningMessage = fmt.Sprintf("but was not applied: %v", updateErr)
-	}
-
-	lbc.recorder.Eventf(gc, eventType, eventTitle, "GlobalConfiguration %v was updated %v", key, eventWarningMessage)
-
-	for _, tsEx := range updatedTransportServerExes {
-		lbc.recorder.Eventf(tsEx.TransportServer, eventType, eventTitle, "TransportServer %v/%v was updated %v", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, eventWarningMessage)
-	}
+	lbc.processProblems(problems)
 }
 
 func (lbc *LoadBalancerController) syncVirtualServer(task task) {
@@ -1038,6 +983,8 @@ func (lbc *LoadBalancerController) processProblems(problems []ConfigurationProbl
 				if err != nil {
 					glog.Errorf("Error when updating the status for VirtualServerRoute %v/%v: %v", obj.Namespace, obj.Name, err)
 				}
+			case *conf_v1alpha1.TransportServer:
+				// do nothing until the TransportServer supports status
 			}
 		}
 	}
@@ -1067,6 +1014,11 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 					warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateIngress(ingEx)
 					lbc.updateRegularIngressStatusAndEvents(impl, warnings, addOrUpdateErr)
 				}
+			case *TransportServerConfiguration:
+				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
+
+				addOrUpdateErr := lbc.configurator.AddOrUpdateTransportServer(tsEx)
+				lbc.updateTransportServerEvents(impl, addOrUpdateErr)
 			}
 		} else if c.Op == Delete {
 			switch impl := c.Resource.(type) {
@@ -1104,9 +1056,55 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 				if ingExists {
 					lbc.UpdateIngressStatusAndEventsOnDelete(impl, c.Error, deleteErr)
 				}
+			case *TransportServerConfiguration:
+				key := getResourceKey(&impl.TransportServer.ObjectMeta)
+
+				deleteErr := lbc.configurator.DeleteTransportServer(key)
+
+				if deleteErr != nil {
+					glog.Errorf("Error when deleting configuration for TransportServer %v: %v", key, deleteErr)
+				}
+
+				_, tsExists, err := lbc.transportServerLister.GetByKey(key)
+				if err != nil {
+					glog.Errorf("Error when getting TransportServer for %v: %v", key, err)
+				}
+				if tsExists {
+					lbc.updateTransportServerEventsOnDelete(impl, c.Error, deleteErr)
+				}
 			}
 		}
 	}
+}
+
+// processChangesFromGlobalConfiguraton processes changes that come from updates to the GlobalConfiguration resource.
+// Such changes need to be processed at once to prevent any inconsistencies in the generated NGINX config.
+func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes []ResourceChange) error {
+	var updatedTSExes []*configs.TransportServerEx
+	var deletedKeys []string
+
+	var updatedResources []Resource
+
+	for _, c := range changes {
+		tsConfig := c.Resource.(*TransportServerConfiguration)
+
+		if c.Op == AddOrUpdate {
+			tsEx := lbc.createTransportServerEx(tsConfig.TransportServer, tsConfig.ListenerPort)
+
+			updatedTSExes = append(updatedTSExes, tsEx)
+			updatedResources = append(updatedResources, tsConfig)
+		} else if c.Op == Delete {
+			key := getResourceKey(&tsConfig.TransportServer.ObjectMeta)
+
+			deletedKeys = append(deletedKeys, key)
+		}
+	}
+
+	updateErr := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedKeys)
+
+	lbc.updateResourcesStatusAndEvents(updatedResources, configs.Warnings{}, updateErr)
+
+	return updateErr
 }
 
 func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect.Change) {
@@ -1125,9 +1123,9 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
 				}
 
-				ingressExes, mergeableIngresses, vsExes := lbc.createExtendedResources(resources)
+				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, ingressExes, mergeableIngresses, vsExes)
+				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 				lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 				lbc.recorder.Eventf(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectPolicy %v was added or updated", namespace+"/"+name)
 			case *appprotect.LogConfEx:
@@ -1140,9 +1138,9 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
 				}
 
-				ingressExes, mergeableIngresses, vsExes := lbc.createExtendedResources(resources)
+				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, ingressExes, mergeableIngresses, vsExes)
+				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 				lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 				lbc.recorder.Eventf(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectLogConfig %v was added or updated", namespace+"/"+name)
 			}
@@ -1158,9 +1156,9 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
 				}
 
-				ingressExes, mergeableIngresses, vsExes := lbc.createExtendedResources(resources)
+				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, deleteErr := lbc.configurator.DeleteAppProtectPolicy(namespace+"/"+name, ingressExes, mergeableIngresses, vsExes)
+				warnings, deleteErr := lbc.configurator.DeleteAppProtectPolicy(namespace+"/"+name, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 
 				lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 
@@ -1174,9 +1172,9 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
 				}
 
-				ingressExes, mergeableIngresses, vsExes := lbc.createExtendedResources(resources)
+				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(namespace+"/"+name, ingressExes, mergeableIngresses, vsExes)
+				warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(namespace+"/"+name, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 
 				lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 			}
@@ -1192,19 +1190,19 @@ func (lbc *LoadBalancerController) processAppProtectUserSigChange(change appprot
 
 	for _, poladd := range change.PolicyAddsOrUpdates {
 		resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(poladd.GetNamespace(), poladd.GetName())
-		ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
-		allIngExes = append(allIngExes, ingressExes...)
-		allMergeableIngresses = append(allMergeableIngresses, mergeableIngresses...)
+		resourceExes := lbc.createExtendedResources(resources)
+		allIngExes = append(allIngExes, resourceExes.IngressExes...)
+		allMergeableIngresses = append(allMergeableIngresses, resourceExes.MergeableIngresses...)
 		allResources = append(allResources, resources...)
 	}
 	for _, poldel := range change.PolicyDeletions {
 		polNsName := appprotect.GetNsName(poldel)
 		resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(poldel.GetNamespace(), poldel.GetName())
-		ingressExes, mergeableIngresses, _ := lbc.createExtendedResources(resources)
-		allIngExes = append(allIngExes, ingressExes...)
-		allMergeableIngresses = append(allMergeableIngresses, mergeableIngresses...)
+		resourceExes := lbc.createExtendedResources(resources)
+		allIngExes = append(allIngExes, resourceExes.IngressExes...)
+		allMergeableIngresses = append(allMergeableIngresses, resourceExes.MergeableIngresses...)
 		allResources = append(allResources, resources...)
-		if len(ingressExes) > 0 || len(mergeableIngresses) > 0 {
+		if len(resourceExes.IngressExes) > 0 || len(resourceExes.MergeableIngresses) > 0 {
 			delPols = append(delPols, polNsName)
 		}
 	}
@@ -1222,6 +1220,35 @@ func (lbc *LoadBalancerController) processAppProtectProblems(problems []appprote
 	for _, p := range problems {
 		eventType := api_v1.EventTypeWarning
 		lbc.recorder.Event(p.Object, eventType, p.Reason, p.Message)
+	}
+}
+
+func (lbc *LoadBalancerController) updateTransportServerEventsOnDelete(tsConfig *TransportServerConfiguration, changeError string, deleteErr error) {
+	eventType := api_v1.EventTypeWarning
+	eventTitle := "Rejected"
+	eventWarningMessage := ""
+
+	// TransportServer either became invalid or lost its host or listener
+	if changeError != "" {
+		eventWarningMessage = fmt.Sprintf("with error: %s", changeError)
+	} else if len(tsConfig.Warnings) > 0 {
+		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(tsConfig.Warnings))
+	}
+
+	// we don't need to report anything if eventWarningMessage is empty
+	// in that case, the resource was deleted because its class became incorrect
+	// (some other Ingress Controller will handle it)
+	// This check will become necessary when TransportServer supports IngressClass
+
+	if eventWarningMessage != "" {
+		if deleteErr != nil {
+			eventType = api_v1.EventTypeWarning
+			eventTitle = "RejectedWithError"
+			eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, deleteErr)
+		}
+
+		msg := fmt.Sprintf("TransportServer %s was rejected %s", getResourceKey(&tsConfig.TransportServer.ObjectMeta), eventWarningMessage)
+		lbc.recorder.Eventf(tsConfig.TransportServer, eventType, eventTitle, msg)
 	}
 }
 
@@ -1310,6 +1337,8 @@ func (lbc *LoadBalancerController) updateResourcesStatusAndEvents(resources []Re
 			} else {
 				lbc.updateRegularIngressStatusAndEvents(impl, warnings, operationErr)
 			}
+		case *TransportServerConfiguration:
+			lbc.updateTransportServerEvents(impl, operationErr)
 		}
 	}
 }
@@ -1414,6 +1443,27 @@ func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(ingConfig
 			glog.V(3).Infof("error updating ing status: %v", err)
 		}
 	}
+}
+
+func (lbc *LoadBalancerController) updateTransportServerEvents(tsConfig *TransportServerConfiguration, operationErr error) {
+	eventTitle := "AddedOrUpdated"
+	eventType := api_v1.EventTypeNormal
+	eventWarningMessage := ""
+
+	if len(tsConfig.Warnings) > 0 {
+		eventType = api_v1.EventTypeWarning
+		eventTitle = "AddedOrUpdatedWithWarning"
+		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(tsConfig.Warnings))
+	}
+
+	if operationErr != nil {
+		eventType = api_v1.EventTypeWarning
+		eventTitle = "AddedOrUpdatedWithError"
+		eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, operationErr)
+	}
+
+	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&tsConfig.TransportServer.ObjectMeta), eventWarningMessage)
+	lbc.recorder.Eventf(tsConfig.TransportServer, eventType, eventTitle, msg)
 }
 
 func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(vsConfig *VirtualServerConfiguration, warnings configs.Warnings, operationErr error) {
@@ -1611,12 +1661,10 @@ func (lbc *LoadBalancerController) syncService(task task) {
 
 	glog.V(3).Infof("Updating %v resources", len(resources))
 
-	ingressExes, mergeableIngresses, virtualServerExes := lbc.createExtendedResources(resources)
+	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, updateErr := lbc.configurator.AddOrUpdateResources(ingressExes, mergeableIngresses, virtualServerExes)
+	warnings, updateErr := lbc.configurator.AddOrUpdateResources(resourceExes)
 	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
-
-	// TransportServers are processed separately: each affected TS gets enqueued in service handlers
 }
 
 // IsExternalServiceForStatus matches the service specified by the external-service cli arg
@@ -1726,9 +1774,9 @@ func (lbc *LoadBalancerController) isSpecialSecret(secretName string) bool {
 }
 
 func (lbc *LoadBalancerController) handleRegularSecretDeletion(resources []Resource) {
-	ingressExes, mergeableIngresses, virtualServerExes := lbc.createExtendedResources(resources)
+	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateResources(ingressExes, mergeableIngresses, virtualServerExes)
+	warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateResources(resourceExes)
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, addOrUpdateErr)
 }
@@ -1739,8 +1787,8 @@ func (lbc *LoadBalancerController) handleSecretUpdate(secret *api_v1.Secret, res
 	var warnings configs.Warnings
 	var addOrUpdateErr error
 
-	ingressExes, mergeableIngresses, virtualServerExes := lbc.createExtendedResources(resources)
-	warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(ingressExes, mergeableIngresses, virtualServerExes)
+	resourceExes := lbc.createExtendedResources(resources)
+	warnings, addOrUpdateErr = lbc.configurator.AddOrUpdateResources(resourceExes)
 
 	if addOrUpdateErr != nil {
 		glog.Errorf("Error when updating Secret %v: %v", secretNsName, addOrUpdateErr)
@@ -1900,86 +1948,6 @@ func (lbc *LoadBalancerController) updatePoliciesStatus() error {
 	}
 
 	return nil
-}
-
-// EnqueueTransportServerForService enqueues TransportServers for the given service.
-func (lbc *LoadBalancerController) EnqueueTransportServerForService(service *api_v1.Service) {
-	transportServers := lbc.getTransportServersForService(service)
-	for _, ts := range transportServers {
-		lbc.syncQueue.Enqueue(ts)
-	}
-}
-
-func (lbc *LoadBalancerController) getTransportServersForEndpoints(endpoints *api_v1.Endpoints) []*conf_v1alpha1.TransportServer {
-	svcKey := fmt.Sprintf("%s/%s", endpoints.Namespace, endpoints.Name)
-
-	svc, exists, err := lbc.svcLister.GetByKey(svcKey)
-	if err != nil {
-		glog.V(3).Infof("Error getting service %v from the cache: %v", svcKey, err)
-		return nil
-	}
-	if !exists {
-		glog.V(3).Infof("Service %v doesn't exist", svcKey)
-		return nil
-	}
-
-	return lbc.getTransportServersForService(svc.(*api_v1.Service))
-}
-
-func (lbc *LoadBalancerController) getTransportServersForService(service *api_v1.Service) []*conf_v1alpha1.TransportServer {
-	filtered := lbc.filterOutTransportServersWithNonExistingListener(lbc.getTransportServers())
-	return findTransportServersForService(filtered, service)
-}
-
-func findTransportServersForService(transportServers []*conf_v1alpha1.TransportServer, service *api_v1.Service) []*conf_v1alpha1.TransportServer {
-	var result []*conf_v1alpha1.TransportServer
-
-	for _, ts := range transportServers {
-		if ts.Namespace != service.Namespace {
-			continue
-		}
-
-		for _, u := range ts.Spec.Upstreams {
-			if u.Service == service.Name {
-				result = append(result, ts)
-				break
-			}
-		}
-	}
-
-	return result
-}
-
-func (lbc *LoadBalancerController) filterOutTransportServersWithNonExistingListener(transportServers []*conf_v1alpha1.TransportServer) []*conf_v1alpha1.TransportServer {
-	var result []*conf_v1alpha1.TransportServer
-
-	for _, ts := range transportServers {
-		if lbc.configurator.CheckIfListenerExists(&ts.Spec.Listener) {
-			result = append(result, ts)
-		} else {
-			glog.V(3).Infof("Ignoring TransportServer %s/%s references a non-existing listener", ts.Namespace, ts.Name)
-		}
-	}
-
-	return result
-}
-
-func (lbc *LoadBalancerController) getTransportServers() []*conf_v1alpha1.TransportServer {
-	var transportServers []*conf_v1alpha1.TransportServer
-
-	for _, obj := range lbc.transportServerLister.List() {
-		ts := obj.(*conf_v1alpha1.TransportServer)
-
-		err := lbc.transportServerValidator.ValidateTransportServer(ts)
-		if err != nil {
-			glog.V(3).Infof("Skipping invalid TransportServer %s/%s: %v", ts.Namespace, ts.Name, err)
-			continue
-		}
-
-		transportServers = append(transportServers, ts)
-	}
-
-	return transportServers
 }
 
 func getIPAddressesFromEndpoints(endpoints []podEndpoint) []string {
@@ -2626,7 +2594,7 @@ func isMatchingResourceRef(ownerNs, resRef, key string) bool {
 	return resRef == key
 }
 
-func (lbc *LoadBalancerController) createTransportServer(transportServer *conf_v1alpha1.TransportServer) *configs.TransportServerEx {
+func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1alpha1.TransportServer, listenerPort int) *configs.TransportServerEx {
 	endpoints := make(map[string][]string)
 	podsByIP := make(map[string]string)
 
@@ -2654,6 +2622,7 @@ func (lbc *LoadBalancerController) createTransportServer(transportServer *conf_v
 	}
 
 	return &configs.TransportServerEx{
+		ListenerPort:    listenerPort,
 		TransportServer: transportServer,
 		Endpoints:       endpoints,
 		PodsByIP:        podsByIP,

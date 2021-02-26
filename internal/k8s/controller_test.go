@@ -17,7 +17,6 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1beta1"
@@ -566,63 +565,6 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
 	if svcPort != nil {
 		t.Errorf("Mismatched strings should not return port: %+v", svcPort)
-	}
-}
-
-func TestFindTransportServersForService(t *testing.T) {
-	ts1 := conf_v1alpha1.TransportServer{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "ts-1",
-			Namespace: "ns-1",
-		},
-		Spec: conf_v1alpha1.TransportServerSpec{
-			Upstreams: []conf_v1alpha1.Upstream{
-				{
-					Service: "test-service",
-				},
-			},
-		},
-	}
-	ts2 := conf_v1alpha1.TransportServer{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "ts-2",
-			Namespace: "ns-1",
-		},
-		Spec: conf_v1alpha1.TransportServerSpec{
-			Upstreams: []conf_v1alpha1.Upstream{
-				{
-					Service: "some-service",
-				},
-			},
-		},
-	}
-	ts3 := conf_v1alpha1.TransportServer{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "ts-3",
-			Namespace: "ns-2",
-		},
-		Spec: conf_v1alpha1.TransportServerSpec{
-			Upstreams: []conf_v1alpha1.Upstream{
-				{
-					Service: "test-service",
-				},
-			},
-		},
-	}
-	transportServers := []*conf_v1alpha1.TransportServer{&ts1, &ts2, &ts3}
-
-	service := v1.Service{
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "test-service",
-			Namespace: "ns-1",
-		},
-	}
-
-	expected := []*conf_v1alpha1.TransportServer{&ts1}
-
-	result := findTransportServersForService(transportServers, &service)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("findTransportServersForService returned %v but expected %v", result, expected)
 	}
 }
 

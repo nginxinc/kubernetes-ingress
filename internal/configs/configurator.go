@@ -8,7 +8,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"os"
-	"sort"
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
@@ -64,6 +63,14 @@ const (
 	spiffeCertsFileMode  = os.FileMode(0644)
 	spiffeKeyFileMode    = os.FileMode(0600)
 )
+
+// ExtendedResources holds all extended configuration resources, for which Configurator configures NGINX.
+type ExtendedResources struct {
+	IngressExes         []*IngressEx
+	MergeableIngresses  []*MergeableIngresses
+	VirtualServerExes   []*VirtualServerEx
+	TransportServerExes []*TransportServerEx
+}
 
 type tlsPassthroughPair struct {
 	Host       string
@@ -550,8 +557,7 @@ func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *Transport
 func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *TransportServerEx) error {
 	name := getFileNameForTransportServer(transportServerEx.TransportServer)
 
-	listener := cnf.globalCfgParams.Listeners[transportServerEx.TransportServer.Spec.Listener.Name]
-	tsCfg := generateTransportServerConfig(transportServerEx, listener.Port, cnf.isPlus)
+	tsCfg := generateTransportServerConfig(transportServerEx, transportServerEx.ListenerPort, cnf.isPlus)
 
 	content, err := cnf.templateExecutorV2.ExecuteTransportServerTemplate(&tsCfg)
 	if err != nil {
@@ -590,11 +596,7 @@ func (cnf *Configurator) GetVirtualServerRoutesForVirtualServer(key string) []*c
 }
 
 func (cnf *Configurator) updateTLSPassthroughHostsConfig() error {
-	cfg, duplicatedHosts := generateTLSPassthroughHostsConfig(cnf.tlsPassthroughPairs)
-
-	for _, host := range duplicatedHosts {
-		glog.Warningf("host %s is used by more than one TransportServers", host)
-	}
+	cfg := generateTLSPassthroughHostsConfig(cnf.tlsPassthroughPairs)
 
 	content, err := cnf.templateExecutorV2.ExecuteTLSPassthroughHostsTemplate(cfg)
 	if err != nil {
@@ -606,30 +608,14 @@ func (cnf *Configurator) updateTLSPassthroughHostsConfig() error {
 	return nil
 }
 
-func generateTLSPassthroughHostsConfig(tlsPassthroughPairs map[string]tlsPassthroughPair) (*version2.TLSPassthroughHostsConfig, []string) {
-	var keys []string
-
-	for key := range tlsPassthroughPairs {
-		keys = append(keys, key)
-	}
-
-	// we sort the keys of tlsPassthroughPairs so that we get the same result for the same input
-	sort.Strings(keys)
-
+func generateTLSPassthroughHostsConfig(tlsPassthroughPairs map[string]tlsPassthroughPair) *version2.TLSPassthroughHostsConfig {
 	cfg := version2.TLSPassthroughHostsConfig{}
-	var duplicatedHosts []string
 
-	for _, key := range keys {
-		pair := tlsPassthroughPairs[key]
-
-		if _, exists := cfg[pair.Host]; exists {
-			duplicatedHosts = append(duplicatedHosts, pair.Host)
-		}
-
+	for _, pair := range tlsPassthroughPairs {
 		cfg[pair.Host] = pair.UnixSocket
 	}
 
-	return &cfg, duplicatedHosts
+	return &cfg
 }
 
 func (cnf *Configurator) addOrUpdateCASecret(secret *api_v1.Secret) string {
@@ -645,10 +631,10 @@ func (cnf *Configurator) addOrUpdateJWKSecret(secret *api_v1.Secret) string {
 }
 
 // AddOrUpdateResources adds or updates configuration for resources.
-func (cnf *Configurator) AddOrUpdateResources(ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, virtualServerExes []*VirtualServerEx) (Warnings, error) {
+func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources) (Warnings, error) {
 	allWarnings := newWarnings()
 
-	for _, ingEx := range ingExes {
+	for _, ingEx := range resources.IngressExes {
 		warnings, err := cnf.addOrUpdateIngress(ingEx)
 		if err != nil {
 			return allWarnings, fmt.Errorf("Error adding or updating ingress %v/%v: %v", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
@@ -656,7 +642,7 @@ func (cnf *Configurator) AddOrUpdateResources(ingExes []*IngressEx, mergeableIng
 		allWarnings.Add(warnings)
 	}
 
-	for _, m := range mergeableIngresses {
+	for _, m := range resources.MergeableIngresses {
 		warnings, err := cnf.addOrUpdateMergeableIngress(m)
 		if err != nil {
 			return allWarnings, fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %v", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
@@ -664,12 +650,19 @@ func (cnf *Configurator) AddOrUpdateResources(ingExes []*IngressEx, mergeableIng
 		allWarnings.Add(warnings)
 	}
 
-	for _, vsEx := range virtualServerExes {
+	for _, vsEx := range resources.VirtualServerExes {
 		warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
 			return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %v", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
 		}
 		allWarnings.Add(warnings)
+	}
+
+	for _, tsEx := range resources.TransportServerExes {
+		err := cnf.addOrUpdateTransportServer(tsEx)
+		if err != nil {
+			return allWarnings, fmt.Errorf("Error adding or updating TransportServer %v/%v: %v", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
+		}
 	}
 
 	if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
@@ -1080,36 +1073,26 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, ingExes []*Ingres
 	return allWarnings, nil
 }
 
-// UpdateGlobalConfiguration updates NGINX config based on the changes to the GlobalConfiguration resource.
-// Currently, changes to the GlobalConfiguration only affect TransportServer resources.
-// As a result of the changes, the configuration for TransportServers is updated and some TransportServers
-// might be removed from NGINX.
-func (cnf *Configurator) UpdateGlobalConfiguration(globalConfiguration *conf_v1alpha1.GlobalConfiguration,
-	transportServerExes []*TransportServerEx) (updatedTransportServerExes []*TransportServerEx, deletedTransportServerExes []*TransportServerEx, err error) {
-	cnf.globalCfgParams = ParseGlobalConfiguration(globalConfiguration, cnf.staticCfgParams.TLSPassthrough)
+func (cnf *Configurator) UpdateTransportServers(updatedTSExes []*TransportServerEx, deletedKeys []string) error {
+	for _, tsEx := range updatedTSExes {
+		err := cnf.addOrUpdateTransportServer(tsEx)
+		if err != nil {
+			return fmt.Errorf("Error adding or updating TransportServer %v/%v: %v", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
+		}
+	}
 
-	for _, tsEx := range transportServerExes {
-		if cnf.CheckIfListenerExists(&tsEx.TransportServer.Spec.Listener) {
-			updatedTransportServerExes = append(updatedTransportServerExes, tsEx)
-
-			err := cnf.addOrUpdateTransportServer(tsEx)
-			if err != nil {
-				return updatedTransportServerExes, deletedTransportServerExes, fmt.Errorf("Error when updating global configuration: %v", err)
-			}
-
-		} else {
-			deletedTransportServerExes = append(deletedTransportServerExes, tsEx)
-			if err != nil {
-				return updatedTransportServerExes, deletedTransportServerExes, fmt.Errorf("Error when updating global configuration: %v", err)
-			}
+	for _, key := range deletedKeys {
+		err := cnf.deleteTransportServer(key)
+		if err != nil {
+			return fmt.Errorf("Error when removing TransportServer %v: %v", key, err)
 		}
 	}
 
 	if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
-		return updatedTransportServerExes, deletedTransportServerExes, fmt.Errorf("Error when updating global configuration: %v", err)
+		return fmt.Errorf("Error when updating TransportServers: %v", err)
 	}
 
-	return updatedTransportServerExes, deletedTransportServerExes, nil
+	return nil
 }
 
 func keyToFileName(key string) string {

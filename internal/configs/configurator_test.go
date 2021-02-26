@@ -327,121 +327,26 @@ func TestGenerateNamespaceNameKey(t *testing.T) {
 	}
 }
 
-func TestUpdateGlobalConfiguration(t *testing.T) {
-	globalConfiguration := &conf_v1alpha1.GlobalConfiguration{
-		Spec: conf_v1alpha1.GlobalConfigurationSpec{
-			Listeners: []conf_v1alpha1.Listener{
-				{
-					Name:     "tcp-listener",
-					Port:     53,
-					Protocol: "TCP",
-				},
-			},
-		},
-	}
-
-	tsExTCP := &TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      "tcp-server",
-				Namespace: "default",
-			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
-					Name:     "tcp-listener",
-					Protocol: "TCP",
-				},
-				Upstreams: []conf_v1alpha1.Upstream{
-					{
-						Name:    "tcp-app",
-						Service: "tcp-app-svc",
-						Port:    5001,
-					},
-				},
-				Action: &conf_v1alpha1.Action{
-					Pass: "tcp-app",
-				},
-			},
-		},
-	}
-
-	tsExUDP := &TransportServerEx{
-		TransportServer: &conf_v1alpha1.TransportServer{
-			ObjectMeta: meta_v1.ObjectMeta{
-				Name:      "udp-server",
-				Namespace: "default",
-			},
-			Spec: conf_v1alpha1.TransportServerSpec{
-				Listener: conf_v1alpha1.TransportServerListener{
-					Name:     "udp-listener",
-					Protocol: "UDP",
-				},
-				Upstreams: []conf_v1alpha1.Upstream{
-					{
-						Name:    "udp-app",
-						Service: "udp-app-svc",
-						Port:    5001,
-					},
-				},
-				Action: &conf_v1alpha1.Action{
-					Pass: "udp-app",
-				},
-			},
-		},
-	}
-
-	cnf, err := createTestConfigurator()
-	if err != nil {
-		t.Fatalf("Failed to create a test configurator: %v", err)
-	}
-
-	transportServerExes := []*TransportServerEx{tsExTCP, tsExUDP}
-
-	expectedUpdatedTransportServerExes := []*TransportServerEx{tsExTCP}
-	expectedDeletedTransportServerExes := []*TransportServerEx{tsExUDP}
-
-	updatedTransportServerExes, deletedTransportServerExes, err := cnf.UpdateGlobalConfiguration(globalConfiguration, transportServerExes)
-
-	if !reflect.DeepEqual(updatedTransportServerExes, expectedUpdatedTransportServerExes) {
-		t.Errorf("UpdateGlobalConfiguration() returned %v but expected %v", updatedTransportServerExes, expectedUpdatedTransportServerExes)
-	}
-	if !reflect.DeepEqual(deletedTransportServerExes, expectedDeletedTransportServerExes) {
-		t.Errorf("UpdateGlobalConfiguration() returned %v but expected %v", deletedTransportServerExes, expectedDeletedTransportServerExes)
-	}
-	if err != nil {
-		t.Errorf("UpdateGlobalConfiguration() returned an unexpected error %v", err)
-	}
-}
-
 func TestGenerateTLSPassthroughHostsConfig(t *testing.T) {
 	tlsPassthroughPairs := map[string]tlsPassthroughPair{
 		"default/ts-1": {
-			Host:       "app.example.com",
+			Host:       "one.example.com",
 			UnixSocket: "socket1.sock",
 		},
 		"default/ts-2": {
-			Host:       "app.example.com",
+			Host:       "two.example.com",
 			UnixSocket: "socket2.sock",
-		},
-		"default/ts-3": {
-			Host:       "some.example.com",
-			UnixSocket: "socket3.sock",
 		},
 	}
 
 	expectedCfg := &version2.TLSPassthroughHostsConfig{
-		"app.example.com":  "socket2.sock",
-		"some.example.com": "socket3.sock",
+		"one.example.com": "socket1.sock",
+		"two.example.com": "socket2.sock",
 	}
-	expectedDuplicatedHosts := []string{"app.example.com"}
 
-	resultCfg, resultDuplicatedHosts := generateTLSPassthroughHostsConfig(tlsPassthroughPairs)
+	resultCfg := generateTLSPassthroughHostsConfig(tlsPassthroughPairs)
 	if !reflect.DeepEqual(resultCfg, expectedCfg) {
 		t.Errorf("generateTLSPassthroughHostsConfig() returned %v but expected %v", resultCfg, expectedCfg)
-	}
-
-	if !reflect.DeepEqual(resultDuplicatedHosts, expectedDuplicatedHosts) {
-		t.Errorf("generateTLSPassthroughHostsConfig() returned %v but expected %v", resultDuplicatedHosts, expectedDuplicatedHosts)
 	}
 }
 

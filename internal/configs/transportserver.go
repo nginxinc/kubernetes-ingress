@@ -11,6 +11,7 @@ const nginxNonExistingUnixSocket = "unix:/var/lib/nginx/non-existing-unix-socket
 
 // TransportServerEx holds a TransportServer along with the resources referenced by it.
 type TransportServerEx struct {
+	ListenerPort    int
 	TransportServer *conf_v1alpha1.TransportServer
 	Endpoints       map[string][]string
 	PodsByIP        map[string]string

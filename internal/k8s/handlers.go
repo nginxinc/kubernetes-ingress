@@ -188,8 +188,6 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 // or a change of the externalName field of an ExternalName service.
 //
 // In both cases we enqueue the service to be processed by syncService
-// Also, because TransportServers aren't processed by syncService,
-// we enqueue them, so they get processed by syncTransportServer.
 func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -197,10 +195,6 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 
 			glog.V(3).Infof("Adding service: %v", svc.Name)
 			lbc.AddSyncQueue(svc)
-
-			if lbc.areCustomResourcesEnabled {
-				lbc.EnqueueTransportServerForService(svc)
-			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			svc, isSvc := obj.(*v1.Service)
@@ -219,10 +213,6 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 
 			glog.V(3).Infof("Removing service: %v", svc.Name)
 			lbc.AddSyncQueue(svc)
-
-			if lbc.areCustomResourcesEnabled {
-				lbc.EnqueueTransportServerForService(svc)
-			}
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			if !reflect.DeepEqual(old, cur) {
@@ -235,10 +225,6 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 				if hasServiceChanges(oldSvc, curSvc) {
 					glog.V(3).Infof("Service %v changed, syncing", curSvc.Name)
 					lbc.AddSyncQueue(curSvc)
-
-					if lbc.areCustomResourcesEnabled {
-						lbc.EnqueueTransportServerForService(curSvc)
-					}
 				}
 			}
 		},
