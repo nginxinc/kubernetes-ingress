@@ -3,6 +3,7 @@ package k8s
 import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	networking "k8s.io/api/networking/v1beta1"
 )
 
@@ -11,6 +12,7 @@ type resourceReferenceChecker interface {
 	IsReferencedByMinion(namespace string, name string, ing *networking.Ingress) bool
 	IsReferencedByVirtualServer(namespace string, name string, vs *v1.VirtualServer) bool
 	IsReferencedByVirtualServerRoute(namespace string, name string, vsr *v1.VirtualServerRoute) bool
+	IsReferencedByTransportServer(namespace string, name string, ts *conf_v1alpha1.TransportServer) bool
 }
 
 type secretReferenceChecker struct {
@@ -72,6 +74,10 @@ func (rc *secretReferenceChecker) IsReferencedByVirtualServer(secretNamespace st
 }
 
 func (rc *secretReferenceChecker) IsReferencedByVirtualServerRoute(secretNamespace string, secretName string, vsr *v1.VirtualServerRoute) bool {
+	return false
+}
+
+func (rc *secretReferenceChecker) IsReferencedByTransportServer(secretNamespace string, secretName string, ts *conf_v1alpha1.TransportServer) bool {
 	return false
 }
 
@@ -137,6 +143,20 @@ func (rc *serviceReferenceChecker) IsReferencedByVirtualServerRoute(svcNamespace
 	return false
 }
 
+func (rc *serviceReferenceChecker) IsReferencedByTransportServer(svcNamespace string, svcName string, ts *conf_v1alpha1.TransportServer) bool {
+	if ts.Namespace != svcNamespace {
+		return false
+	}
+
+	for _, u := range ts.Spec.Upstreams {
+		if u.Service == svcName {
+			return true
+		}
+	}
+
+	return false
+}
+
 type policyReferenceChecker struct {
 }
 
@@ -176,6 +196,10 @@ func (rc *policyReferenceChecker) IsReferencedByVirtualServerRoute(policyNamespa
 	return false
 }
 
+func (rc *policyReferenceChecker) IsReferencedByTransportServer(policyNamespace string, policyName string, ts *conf_v1alpha1.TransportServer) bool {
+	return false
+}
+
 // appProtectResourceReferenceChecker is a reference checker for AppProtect related resources.
 // Only Regular/Master Ingress can reference those resources.
 type appProtectResourceReferenceChecker struct {
@@ -204,6 +228,10 @@ func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServer(namesp
 }
 
 func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServerRoute(namespace string, name string, vsr *v1.VirtualServerRoute) bool {
+	return false
+}
+
+func (rc *appProtectResourceReferenceChecker) IsReferencedByTransportServer(namespace string, name string, ts *conf_v1alpha1.TransportServer) bool {
 	return false
 }
 

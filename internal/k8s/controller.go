@@ -192,6 +192,7 @@ type NewLoadBalancerControllerInput struct {
 	InternalRoutesEnabled        bool
 	IsPrometheusEnabled          bool
 	IsLatencyMetricsEnabled      bool
+	IsTLSPassthroughEnabled      bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -306,7 +307,10 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		input.IsNginxPlus,
 		input.AppProtectEnabled,
 		input.InternalRoutesEnabled,
-		input.VirtualServerValidator)
+		input.VirtualServerValidator,
+		input.GlobalConfigurationValidator,
+		input.TransportServerValidator,
+		input.IsTLSPassthroughEnabled)
 
 	lbc.appProtectConfiguration = appprotect.NewConfiguration()
 

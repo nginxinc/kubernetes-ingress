@@ -637,6 +637,7 @@ func main() {
 		InternalRoutesEnabled:        *enableInternalRoutes,
 		IsPrometheusEnabled:          *enablePrometheusMetrics,
 		IsLatencyMetricsEnabled:      *enableLatencyMetrics,
+		IsTLSPassthroughEnabled:      *enableTLSPassthrough,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

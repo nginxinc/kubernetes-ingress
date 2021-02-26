@@ -5,6 +5,7 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	networking "k8s.io/api/networking/v1beta1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -301,10 +302,20 @@ func TestSecretIsReferencedByVirtualServerRoute(t *testing.T) {
 	isPlus := false // doesn't matter for VirtualServerRoute
 	rc := newSecretReferenceChecker(isPlus)
 
-	// always returns false
 	result := rc.IsReferencedByVirtualServerRoute("", "", nil)
 	if result != false {
 		t.Error("IsReferencedByVirtualServer() returned true but expected false")
+	}
+}
+
+func TestSecretIsReferencedByTransportServer(t *testing.T) {
+	isPlus := false // doesn't matter for TransportServer
+	rc := newSecretReferenceChecker(isPlus)
+
+	// always returns false
+	result := rc.IsReferencedByTransportServer("", "", nil)
+	if result != false {
+		t.Error("IsReferencedByTransportServer() returned true but expected false")
 	}
 }
 
@@ -550,19 +561,96 @@ func TestServiceIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T) 
 	}
 }
 
-func TestPolicyIsReferencedByIngresses(t *testing.T) {
+func TestIsServiceReferencedByTransportServer(t *testing.T) {
+	tests := []struct {
+		ts               *conf_v1alpha1.TransportServer
+		serviceNamespace string
+		serviceName      string
+		expected         bool
+		msg              string
+	}{
+		{
+			ts: &conf_v1alpha1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1alpha1.TransportServerSpec{
+					Upstreams: []conf_v1alpha1.Upstream{
+						{
+							Service: "test-service",
+						},
+					},
+				},
+			},
+			serviceNamespace: "default",
+			serviceName:      "test-service",
+			expected:         true,
+			msg:              "service is referenced in an upstream",
+		},
+		{
+			ts: &conf_v1alpha1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1alpha1.TransportServerSpec{
+					Upstreams: []conf_v1alpha1.Upstream{
+						{
+							Service: "test-service",
+						},
+					},
+				},
+			},
+			serviceNamespace: "some-namespace",
+			serviceName:      "test-service",
+			expected:         false,
+			msg:              "wrong namespace for service in an upstream",
+		},
+		{
+			ts: &conf_v1alpha1.TransportServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1alpha1.TransportServerSpec{
+					Upstreams: []conf_v1alpha1.Upstream{
+						{
+							Service: "test-service",
+						},
+					},
+				},
+			},
+			serviceNamespace: "default",
+			serviceName:      "some-service",
+			expected:         false,
+			msg:              "wrong name for service in an upstream",
+		},
+	}
+
+	for _, test := range tests {
+		rc := newServiceReferenceChecker()
+
+		result := rc.IsReferencedByTransportServer(test.serviceNamespace, test.serviceName, test.ts)
+		if result != test.expected {
+			t.Errorf("IsReferencedByTransportServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestPolicyIsReferencedByIngressesAndTransportServers(t *testing.T) {
 	rc := newPolicyReferenceChecker()
 
-	// always returns false
 	result := rc.IsReferencedByIngress("", "", nil)
 	if result != false {
 		t.Error("IsReferencedByIngress() returned true but expected false")
 	}
 
-	// always returns false
 	result = rc.IsReferencedByMinion("", "", nil)
 	if result != false {
 		t.Error("IsReferencedByMinion() returned true but expected false")
+	}
+
+	result = rc.IsReferencedByTransportServer("", "", nil)
+	if result != false {
+		t.Error("IsReferencedByTransportServer() returned true but expected false")
 	}
 }
 
@@ -861,7 +949,6 @@ func TestAppProtectResourceIsReferencedByIngresses(t *testing.T) {
 			t.Errorf("IsReferencedByIngress() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
 
-		// always false for minion
 		result = rc.IsReferencedByMinion(test.resourceNamespace, test.resourceName, test.ing)
 		if result != false {
 			t.Errorf("IsReferencedByMinion() returned true but expected false for the case of %s", test.msg)
@@ -872,16 +959,19 @@ func TestAppProtectResourceIsReferencedByIngresses(t *testing.T) {
 func TestAppProtectResourceIsReferenced(t *testing.T) {
 	rc := newAppProtectResourceReferenceChecker("test")
 
-	// always returns false
 	result := rc.IsReferencedByVirtualServer("", "", nil)
 	if result != false {
 		t.Error("IsReferencedByVirtualServer() returned true but expected false")
 	}
 
-	// always returns false
 	result = rc.IsReferencedByVirtualServerRoute("", "", nil)
 	if result != false {
 		t.Error("IsReferencedByVirtualServer() returned true but expected false")
+	}
+
+	result = rc.IsReferencedByTransportServer("", "", nil)
+	if result != false {
+		t.Error("IsReferencedByTransportServer() returned true but expected false")
 	}
 }
 
