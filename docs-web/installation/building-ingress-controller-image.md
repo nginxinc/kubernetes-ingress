@@ -11,17 +11,17 @@ Before you can build the image, make sure that the following software is install
 * [OpenSSL](https://www.openssl.org/), optionally, if you would like to generate a self-signed certificate and a key for the default server.
 * For NGINX Plus, you must have the NGINX Plus license -- the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`).
 
-Although the Ingress controller is written in golang, golang is not required, as the Ingress controller binary will be built in a Docker container.
+Although the Ingress Controller is written in golang, golang is not required, you have the option to build the Ingress Controller in a Docker container.
 
 ## Building the Image and Pushing It to the Private Registry
 
-We build the image using the make utility and the provided `Makefile`. Let’s create the controller binary, build an image and push the image to the private registry.
+We build the image using the make utility and the provided `Makefile`. Let’s create the Ingress Controller binary, build an image and push the image to the private registry.
 
-1. Make sure to run the `docker login` command first to log in to the registry. 
+1. Make sure to run the `docker login` command first to log in to the registry.
 
    If you’re using Google Container Registry, make sure you’re logged into the gcloud tool by running the `gcloud auth login` and `gcloud auth configure-docker` commands.
 
-1. Clone the Ingress controller repo:
+1. Clone the Ingress Controller repo:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     ```
@@ -65,7 +65,7 @@ Next you will find the details about available Makefile targets and variables.
 You can see a list of all the targets by running `make` without any target or `make help`
 
 Below you can find some of the most useful targets in the **Makefile**:
-* **build**: creates the controller binary using local golang environment (ignored when `TARGET` is `container`).
+* **build**: creates the Ingress Controller binary using the local golang environment (ignored when `TARGET` is `container`).
 * **debian-image**: for building a debian-based image with NGINX.
 * **alpine-image**: for building an alpine-based image with NGINX.
 * **debian-image-plus**: for building an debian-based image with NGINX Plus.
@@ -90,7 +90,7 @@ A few other useful targets:
 
 The **Makefile** contains the following main variables for you to customize (either by changing the Makefile or by overriding the variables in the make command):
 * **PREFIX** -- the name of the image. The default is `nginx/nginx-ingress`.
-* **VERSION** -- the current version of the controller.
+* **VERSION** -- the current version of the Ingress Controller.
 * **TAG** -- the tag added to the image. It's set to the value of the `VERSION` variable by default.
 * **DOCKER_BUILD_OPTIONS** -- the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `docker build` command. For example, `--pull`.
-* **TARGET** -- By default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`.
+* **TARGET** -- By default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the Ingress Controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`.
