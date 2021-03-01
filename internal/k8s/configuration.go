@@ -34,14 +34,6 @@ const (
 	AddOrUpdate
 )
 
-// Change represents a change in an App Protect resource
-type Change struct {
-	// Op is an operation that needs be performed on the resource.
-	Op Operation
-	// Resource is the target resource.
-	Resource interface{}
-}
-
 // Resource represents a configuration resource.
 // A Resource can be a top level configuration object:
 // - Regular or Master Ingress
