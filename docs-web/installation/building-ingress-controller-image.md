@@ -17,7 +17,9 @@ Although the Ingress controller is written in golang, golang is not required, as
 
 We build the image using the make utility and the provided `Makefile`. Let’s create the controller binary, build an image and push the image to the private registry.
 
-1. Make sure to run the `docker login` command first to login to the registry. If you’re using Google Container Registry, you don’t need to use the docker command to login -- make sure you’re logged into the gcloud tool (using the `gcloud auth login` and `gcloud auth configure-docker` commands).
+1. Make sure to run the `docker login` command first to log in to the registry. 
+
+   If you’re using Google Container Registry, make sure you’re logged into the gcloud tool by running the `gcloud auth login` and `gcloud auth configure-docker` commands.
 
 1. Clone the Ingress controller repo:
     ```
@@ -72,7 +74,7 @@ Below you can find some of the most useful targets in the **Makefile**:
 * **openshift-image**: for building an ubi-based image with NGINX for [Openshift](https://www.openshift.com/) clusters.
 * **openshift-image-plus**: for building an ubi-based image with NGINX Plus for [Openshift](https://www.openshift.com/) clusters.
 * **debian-image-nap-plus**: for building a debian-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module.
-Note: You need to place a file named `rhel_license` containing Your Organization and Activation key in the project root. Example:
+Note: You need to store your RHEL organization and activation keys in a file named `rhel_license` in the project root. Example:
   ```bash
   RHEL_ORGANIZATION=1111111
   RHEL_ACTIVATION_KEY=your-key
@@ -82,7 +84,7 @@ A few other useful targets:
 * **push**: pushes the image to the Docker registry specified in `PREFIX` and `TAG` variables.
 * **all**: executes test `test`, `lint`, `verify-codegen`, `update-crds` and `debian-image`. If one of the targets fails, the execution process stops, reporting an error.
 * **test**: runs unit tests.
-* **certificate-and-key**: The Ingress controller requires a certificate and a key for the default HTTP/HTTPS server. You can reference them in a TLS Secret in a command-line argument to the Ingress controller. As an alternative, you can add a file in the PEM format with your certificate and key to the image as `/etc/nginx/secrets/default`. Optionally, you can generate a self-signed certificate and a key using this target. Note that you must add the `ADD` instruction in the Dockerfile to copy the cert and the key to the image.
+* **certificate-and-key**: The Ingress Controller requires a certificate and a key for the default HTTP/HTTPS server. You can reference them in a TLS Secret in a command-line argument to the Ingress Controller. As an alternative, you can add a file in the PEM format with your certificate and key to the image as `/etc/nginx/secrets/default`. Optionally, you can generate a self-signed certificate and a key using this target. Note that you must add the `ADD` instruction in the Dockerfile to copy the cert and the key to the image.
 
 ### Makefile Variables
 
@@ -91,4 +93,4 @@ The **Makefile** contains the following main variables for you to customize (eit
 * **VERSION** -- the current version of the controller.
 * **TAG** -- the tag added to the image. It's set to the value of the `VERSION` variable by default.
 * **DOCKER_BUILD_OPTIONS** -- the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `docker build` command. For example, `--pull`.
-* **TARGET** -- By default, the Ingress Controller locally is compiled locally using a `local` golang environment. If you want to compile the controller using your local golang environment make sure that the Ingress controller repo is in your `$GOPATH`. To compile the Ingress Controller using Docker the [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`.
+* **TARGET** -- By default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`.
