@@ -1327,9 +1327,9 @@ func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Un
 	return allWarnings, nil
 }
 
-// DeleteAppProtectPolicy updates Ingresses that use AP Policy after that policy is deleted
+// DeleteAppProtectPolicy updates Ingresses and VirtualServers that use AP Policy after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
-	if len(ingExes) > 0 || len(mergeableIngresses) > 0 {
+	if len(ingExes)+len(mergeableIngresses)+len(vsExes) > 0 {
 		fName := strings.Replace(polNamespaceName, "/", "_", 1)
 		polFileName := appProtectPolicyFolder + fName
 		cnf.nginxManager.DeleteAppProtectResourceFile(polFileName)
@@ -1368,9 +1368,9 @@ func (cnf *Configurator) DeleteAppProtectPolicy(polNamespaceName string, ingExes
 	return allWarnings, nil
 }
 
-// DeleteAppProtectLogConf updates Ingresses that use AP Log Configuration after that policy is deleted
+// DeleteAppProtectLogConf updates Ingresses and VirtualServers that use AP Log Configuration after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
-	if len(ingExes) > 0 || len(mergeableIngresses) > 0 {
+	if len(ingExes)+len(mergeableIngresses)+len(vsExes) > 0 {
 		fName := strings.Replace(logConfNamespaceName, "/", "_", 1)
 		logConfFileName := appProtectLogConfFolder + fName
 		cnf.nginxManager.DeleteAppProtectResourceFile(logConfFileName)
@@ -1408,7 +1408,7 @@ func (cnf *Configurator) DeleteAppProtectLogConf(logConfNamespaceName string, in
 	return allWarnings, nil
 }
 
-// RefreshAppProtectUserSigs writes all valid uds files to fs and reloads NGINX
+// RefreshAppProtectUserSigs writes all valid UDS files to fs and reloads NGINX
 func (cnf *Configurator) RefreshAppProtectUserSigs(
 	userSigs []*unstructured.Unstructured, delPols []string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx,
 ) (Warnings, error) {
