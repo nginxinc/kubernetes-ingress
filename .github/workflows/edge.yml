@@ -508,17 +508,14 @@ jobs:
       matrix:
         include:
           - os: ubuntu-20.04
-            file: build/Dockerfile
             image: nginx-ingress
             tag: edge
             type: debian
           - os: ubuntu-20.04
-            file: build/Dockerfile
             image: nginx-ingress
             tag: edge-alpine
             type: alpine
           - os: ubuntu-20.04
-            file: build/Dockerfile
             image: nginx-ingress
             tag: edge-ubi
             type: openshift
@@ -549,12 +546,12 @@ jobs:
       - name: Push to Dockerhub
         uses: docker/build-push-action@v2
         with:
-          file: ${{ matrix.file }}
+          file: build/Dockerfile
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: local
-          tags: nginx/nginx-ingress:${{ matrix.tag }}
+          tags: nginx/${{ matrix.image }}:${{ matrix.tag }}
           push: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
