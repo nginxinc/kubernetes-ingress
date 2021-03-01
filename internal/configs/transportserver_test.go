@@ -449,6 +449,27 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 			},
 			msg: "valid 2 health checks",
 		},
+		{
+			upstreams: []conf_v1alpha1.Upstream{
+				{
+					Name: "dns-tcp",
+					Port: 90,
+					HealthCheck: &conf_v1alpha1.HealthCheck{
+						Enabled: true,
+					},
+				},
+			},
+			expected: &version2.StreamHealthCheck{
+				Enabled:  true,
+				Timeout:  "5s",
+				Jitter:   "0s",
+				Port:     90,
+				Interval: "5s",
+				Passes:   1,
+				Fails:    1,
+			},
+			msg: "return default values for health check",
+		},
 	}
 
 	for _, test := range tests {

@@ -87,7 +87,7 @@ spec:
                         type: boolean
                       fails:
                         type: integer
-                      intervals:
+                      interval:
                         type: string
                       jitter:
                         type: string

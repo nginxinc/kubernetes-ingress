@@ -91,7 +91,7 @@ type HealthCheck struct {
 	Timeout  string `json:"timeout"`
 	Jitter   string `json:"jitter"`
 	Port     int    `json:"port"`
-	Interval string `json:"intervals"`
+	Interval string `json:"interval"`
 	Passes   int    `json:"passes"`
 	Fails    int    `json:"fails"`
 }
