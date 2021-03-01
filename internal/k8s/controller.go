@@ -1077,7 +1077,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 	}
 }
 
-// processChangesFromGlobalConfiguraton processes changes that come from updates to the GlobalConfiguration resource.
+// processChangesFromGlobalConfiguration processes changes that come from updates to the GlobalConfiguration resource.
 // Such changes need to be processed at once to prevent any inconsistencies in the generated NGINX config.
 func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes []ResourceChange) error {
 	var updatedTSExes []*configs.TransportServerEx
@@ -1118,9 +1118,8 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 				name := impl.Obj.GetName()
 				resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(namespace, name)
 
-				wafPols := getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), namespace+"/"+name)
-				for _, pol := range wafPols {
-					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
+				for _, wafPol := range getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), namespace+"/"+name) {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(wafPol.Namespace, wafPol.Name)...)
 				}
 
 				resourceExes := lbc.createExtendedResources(resources)
@@ -1133,9 +1132,8 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 				name := impl.Obj.GetName()
 				resources := lbc.configuration.FindResourcesForAppProtectLogConfAnnotation(namespace, name)
 
-				wafPols := getWAFPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name)
-				for _, pol := range wafPols {
-					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
+				for _, wafPol := range getWAFPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name) {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(wafPol.Namespace, wafPol.Name)...)
 				}
 
 				resourceExes := lbc.createExtendedResources(resources)
@@ -1151,9 +1149,8 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 				name := impl.Obj.GetName()
 				resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(namespace, name)
 
-				wafPols := getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), namespace+"/"+name)
-				for _, pol := range wafPols {
-					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
+				for _, wafPol := range getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), namespace+"/"+name) {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(wafPol.Namespace, wafPol.Name)...)
 				}
 
 				resourceExes := lbc.createExtendedResources(resources)
@@ -1167,9 +1164,8 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 				name := impl.Obj.GetName()
 				resources := lbc.configuration.FindResourcesForAppProtectLogConfAnnotation(namespace, name)
 
-				wafPols := getWAFPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name)
-				for _, pol := range wafPols {
-					resources = append(resources, lbc.configuration.FindResourcesForPolicy(pol.Namespace, pol.Name)...)
+				for _, wafPol := range getWAFPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name) {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(wafPol.Namespace, wafPol.Name)...)
 				}
 
 				resourceExes := lbc.createExtendedResources(resources)
@@ -1186,28 +1182,41 @@ func (lbc *LoadBalancerController) processAppProtectUserSigChange(change appprot
 	var delPols []string
 	var allIngExes []*configs.IngressEx
 	var allMergeableIngresses []*configs.MergeableIngresses
+	var allVsExes []*configs.VirtualServerEx
 	var allResources []Resource
 
 	for _, poladd := range change.PolicyAddsOrUpdates {
 		resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(poladd.GetNamespace(), poladd.GetName())
+
+		for _, wafPol := range getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), appprotect.GetNsName(poladd)) {
+			resources = append(resources, lbc.configuration.FindResourcesForPolicy(wafPol.Namespace, wafPol.Name)...)
+		}
+
 		resourceExes := lbc.createExtendedResources(resources)
 		allIngExes = append(allIngExes, resourceExes.IngressExes...)
 		allMergeableIngresses = append(allMergeableIngresses, resourceExes.MergeableIngresses...)
+		allVsExes = append(allVsExes, resourceExes.VirtualServerExes...)
 		allResources = append(allResources, resources...)
 	}
 	for _, poldel := range change.PolicyDeletions {
-		polNsName := appprotect.GetNsName(poldel)
 		resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(poldel.GetNamespace(), poldel.GetName())
+
+		polNsName := appprotect.GetNsName(poldel)
+		for _, wafPol := range getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), polNsName) {
+			resources = append(resources, lbc.configuration.FindResourcesForPolicy(wafPol.Namespace, wafPol.Name)...)
+		}
+
 		resourceExes := lbc.createExtendedResources(resources)
 		allIngExes = append(allIngExes, resourceExes.IngressExes...)
 		allMergeableIngresses = append(allMergeableIngresses, resourceExes.MergeableIngresses...)
+		allVsExes = append(allVsExes, resourceExes.VirtualServerExes...)
 		allResources = append(allResources, resources...)
-		if len(resourceExes.IngressExes) > 0 || len(resourceExes.MergeableIngresses) > 0 {
+		if len(resourceExes.IngressExes)+len(resourceExes.MergeableIngresses)+len(resourceExes.VirtualServerExes) > 0 {
 			delPols = append(delPols, polNsName)
 		}
 	}
 
-	warnings, err := lbc.configurator.RefreshAppProtectUserSigs(change.UserSigs, delPols, allIngExes, allMergeableIngresses)
+	warnings, err := lbc.configurator.RefreshAppProtectUserSigs(change.UserSigs, delPols, allIngExes, allMergeableIngresses, allVsExes)
 	if err != nil {
 		glog.Errorf("Error when refreshing App Protect Policy User defined signatures: %v", err)
 	}
