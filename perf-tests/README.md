@@ -8,7 +8,7 @@ Below you will find the instructions on how to run the tests against a Minikube 
 
 ### Prerequisites:
 
-* Minikube. 
+* Minikube.
 * Python3 (in a virtualenv)
 
 #### Step 1 - Create a Minikube Cluster
@@ -18,7 +18,7 @@ $ minikube start
 ```
 
 #### Step 2 - Run the Performance Tests
- 
+
 **Note**: if you have the Ingress Controller deployed in the cluster, please uninstall it first, making sure to remove its namespace and RBAC resources.
 
 Run the tests:
@@ -30,7 +30,7 @@ Run the tests:
     $ pytest -v -s -m ap_perf --count=<INT> --node-ip=$(minikube ip) --users=<INT> --hatch-rate=<INT> --time=<INT>
     ```
 
-The tests will use the Ingress Controller for NGINX with the image built from `DockerfileWithAppProtectForPlus`. See the section below to learn how to configure the tests including the image and the type of NGINX -- NGINX or NGINX Plus.
+The tests will use the Ingress Controller for NGINX with the image built from `debian-image-nap-plus`. See the section below to learn how to configure the tests including the image and the type of NGINX -- NGINX or NGINX Plus.
 Refer the [Configuring the Tests](#configuring-the-tests) section for valid arguments.
 
 ## Configuring the Tests

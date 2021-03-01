@@ -511,14 +511,17 @@ jobs:
             file: build/Dockerfile
             image: nginx-ingress
             tag: edge
+            type: debian
           - os: ubuntu-20.04
-            file: build/DockerfileForAlpine
+            file: build/Dockerfile
             image: nginx-ingress
             tag: edge-alpine
+            type: alpine
           - os: ubuntu-20.04
-            file: build/openshift/Dockerfile
+            file: build/Dockerfile
             image: nginx-ingress
             tag: edge-ubi
+            type: openshift
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -553,6 +556,8 @@ jobs:
           target: local
           tags: nginx/nginx-ingress:${{ matrix.tag }}
           push: true
+          build-args: |
+            BUILD_OS=${{ matrix.type }}
 
   package-helm:
     name: Package Helm Chart
