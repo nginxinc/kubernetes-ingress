@@ -61,6 +61,7 @@ type TransportServer struct {
 
 // TransportServerSpec is the spec of the TransportServer resource.
 type TransportServerSpec struct {
+	IngressClass       string                  `json:"ingressClassName"`
 	Listener           TransportServerListener `json:"listener"`
 	Host               string                  `json:"host"`
 	Upstreams          []Upstream              `json:"upstreams"`

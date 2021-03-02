@@ -118,6 +118,10 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
      - The action to perform for a client connection/datagram.
      - `action <#action>`_
      - Yes
+   * - ``ingressClassName``
+     - Specifies which Ingress Controller must handle the TransportServer resource.
+     - ``string``
+     - No
 ```
 
 \* -- Required for TLS Passthrough load balancing.

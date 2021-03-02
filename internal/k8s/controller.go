@@ -1238,7 +1238,6 @@ func (lbc *LoadBalancerController) updateTransportServerEventsOnDelete(tsConfig 
 	// we don't need to report anything if eventWarningMessage is empty
 	// in that case, the resource was deleted because its class became incorrect
 	// (some other Ingress Controller will handle it)
-	// This check will become necessary when TransportServer supports IngressClass
 
 	if eventWarningMessage != "" {
 		if deleteErr != nil {
@@ -2950,6 +2949,8 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 	case *conf_v1.VirtualServer:
 		class = obj.Spec.IngressClass
 	case *conf_v1.VirtualServerRoute:
+		class = obj.Spec.IngressClass
+	case *conf_v1alpha1.TransportServer:
 		class = obj.Spec.IngressClass
 	case *networking.Ingress:
 		isIngress = true

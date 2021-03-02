@@ -41,6 +41,8 @@ spec:
                   type: string
             host:
               type: string
+            ingressClassName:
+              type: string
             listener:
               description: TransportServerListener defines a listener for a TransportServer.
               type: object

@@ -17,6 +17,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
+	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1beta1"
@@ -229,108 +230,94 @@ func TestHasCorrectIngressClass(t *testing.T) {
 	}
 }
 
-func TestHasCorrectIngressClassVS(t *testing.T) {
-	ingressClass := "ing-ctrl"
-	lbcIngOnlyTrue := &LoadBalancerController{
-		ingressClass:        ingressClass,
-		useIngressClassOnly: true,
-		metricsCollector:    collectors.NewControllerFakeCollector(),
+func deepCopyWithIngressClass(obj interface{}, class string) interface{} {
+	switch obj := obj.(type) {
+	case *conf_v1.VirtualServer:
+		objCopy := obj.DeepCopy()
+		objCopy.Spec.IngressClass = class
+		return objCopy
+	case *conf_v1.VirtualServerRoute:
+		objCopy := obj.DeepCopy()
+		objCopy.Spec.IngressClass = class
+		return objCopy
+	case *conf_v1alpha1.TransportServer:
+		objCopy := obj.DeepCopy()
+		objCopy.Spec.IngressClass = class
+		return objCopy
+	default:
+		panic(fmt.Sprintf("unknown type %T", obj))
 	}
+}
 
-	testsWithIngressClassOnlyVS := []struct {
-		lbc      *LoadBalancerController
-		ing      *conf_v1.VirtualServer
-		expected bool
-	}{
-		{
-			lbcIngOnlyTrue,
-			&conf_v1.VirtualServer{
-				Spec: conf_v1.VirtualServerSpec{
-					IngressClass: "",
-				},
-			},
-			true,
-		},
-		{
-			lbcIngOnlyTrue,
-			&conf_v1.VirtualServer{
-				Spec: conf_v1.VirtualServerSpec{
-					IngressClass: "gce",
-				},
-			},
-			false,
-		},
-		{
-			lbcIngOnlyTrue,
-			&conf_v1.VirtualServer{
-				Spec: conf_v1.VirtualServerSpec{
-					IngressClass: ingressClass,
-				},
-			},
-			true,
-		},
-		{
-			lbcIngOnlyTrue,
-			&conf_v1.VirtualServer{},
-			true,
-		},
-	}
-
-	lbcIngOnlyFalse := &LoadBalancerController{
-		ingressClass:        ingressClass,
+func TestIngressClassForCustomResources(t *testing.T) {
+	ctrl := &LoadBalancerController{
+		ingressClass:        "nginx",
 		useIngressClassOnly: false,
-		metricsCollector:    collectors.NewControllerFakeCollector(),
 	}
-	testsWithoutIngressClassOnlyVS := []struct {
-		lbc      *LoadBalancerController
-		ing      *conf_v1.VirtualServer
-		expected bool
+
+	ctrlWithUseICOnly := &LoadBalancerController{
+		ingressClass:        "nginx",
+		useIngressClassOnly: true,
+	}
+
+	tests := []struct {
+		lbc             *LoadBalancerController
+		objIngressClass string
+		expected        bool
+		msg             string
 	}{
 		{
-			lbcIngOnlyFalse,
-			&conf_v1.VirtualServer{
-				Spec: conf_v1.VirtualServerSpec{
-					IngressClass: "",
-				},
-			},
-			true,
+			lbc:             ctrl,
+			objIngressClass: "nginx",
+			expected:        true,
+			msg:             "Ingress Controller handles a resource that matches its IngressClass",
 		},
 		{
-			lbcIngOnlyFalse,
-			&conf_v1.VirtualServer{
-				Spec: conf_v1.VirtualServerSpec{
-					IngressClass: "gce",
-				},
-			},
-			false,
+			lbc:             ctrlWithUseICOnly,
+			objIngressClass: "nginx",
+			expected:        true,
+			msg:             "Ingress Controller with useIngressClassOnly handles a resource that matches its IngressClass",
 		},
 		{
-			lbcIngOnlyFalse,
-			&conf_v1.VirtualServer{
-				Spec: conf_v1.VirtualServerSpec{
-					IngressClass: ingressClass,
-				},
-			},
-			true,
+			lbc:             ctrl,
+			objIngressClass: "",
+			expected:        true,
+			msg:             "Ingress Controller handles a resource with an empty IngressClass",
 		},
 		{
-			lbcIngOnlyFalse,
-			&conf_v1.VirtualServer{},
-			true,
+			lbc:             ctrlWithUseICOnly,
+			objIngressClass: "",
+			expected:        true,
+			msg:             "Ingress Controller with useIngressClassOnly handles a resource with an empty IngressClass",
+		},
+		{
+			lbc:             ctrl,
+			objIngressClass: "gce",
+			expected:        false,
+			msg:             "Ingress Controller doesn't handle a resource that doesn't match its IngressClass",
+		},
+		{
+			lbc:             ctrlWithUseICOnly,
+			objIngressClass: "gce",
+			expected:        false,
+			msg:             "Ingress Controller with useIngressClassOnly doesn't handle a resource that doesn't match its IngressClass",
 		},
 	}
 
-	for _, test := range testsWithIngressClassOnlyVS {
-		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
-			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ingressClassKey=%v, ing.IngressClass=%v; got %v, expected %v",
-				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.Spec.IngressClass, result, test.expected)
-		}
+	resources := []interface{}{
+		&conf_v1.VirtualServer{},
+		&conf_v1.VirtualServerRoute{},
+		&conf_v1alpha1.TransportServer{},
 	}
 
-	for _, test := range testsWithoutIngressClassOnlyVS {
-		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
-			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ingressClassKey=%v, ing.IngressClass=%v; got %v, expected %v",
-				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, test.ing.Spec.IngressClass, result, test.expected)
+	for _, r := range resources {
+		for _, test := range tests {
+			obj := deepCopyWithIngressClass(r, test.objIngressClass)
+
+			result := test.lbc.HasCorrectIngressClass(obj)
+			if result != test.expected {
+				t.Errorf("HasCorrectIngressClass() returned %v but expected %v for the case of %q for %T", result, test.expected, test.msg, obj)
+			}
 		}
 	}
 }

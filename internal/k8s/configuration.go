@@ -609,12 +609,17 @@ func (c *Configuration) AddOrUpdateTransportServer(ts *conf_v1alpha1.TransportSe
 	defer c.lock.Unlock()
 
 	key := getResourceKey(&ts.ObjectMeta)
+	var validationErr error
 
-	validationErr := c.transportServerValidator.ValidateTransportServer(ts)
-	if validationErr != nil {
+	if !c.hasCorrectIngressClass(ts) {
 		delete(c.transportServers, key)
 	} else {
-		c.transportServers[key] = ts
+		validationErr = c.transportServerValidator.ValidateTransportServer(ts)
+		if validationErr != nil {
+			delete(c.transportServers, key)
+		} else {
+			c.transportServers[key] = ts
+		}
 	}
 
 	changes, problems := c.rebuildListeners()

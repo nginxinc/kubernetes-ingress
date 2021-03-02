@@ -2171,6 +2171,70 @@ func TestAddInvalidTransportServer(t *testing.T) {
 	}
 }
 
+func TestAddTransportServerWithIncorrectClass(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	// Add TransportServer with incorrect class
+
+	ts := createTestTLSPassthroughTransportServer("transportserver", "foo.example.com")
+	ts.Spec.IngressClass = "someproxy"
+
+	var expectedProblems []ConfigurationProblem
+	var expectedChanges []ResourceChange
+
+	changes, problems := configuration.AddOrUpdateTransportServer(ts)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Make the class correct
+
+	updatedTS := ts.DeepCopy()
+	updatedTS.Generation++
+	updatedTS.Spec.IngressClass = "nginx"
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &TransportServerConfiguration{
+				TransportServer: updatedTS,
+			},
+		},
+	}
+	expectedProblems = nil
+
+	changes, problems = configuration.AddOrUpdateTransportServer(updatedTS)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	// Make the class incorrect
+
+	expectedChanges = []ResourceChange{
+		{
+			Op: Delete,
+			Resource: &TransportServerConfiguration{
+				TransportServer: updatedTS,
+			},
+		},
+	}
+	expectedProblems = nil
+
+	changes, problems = configuration.AddOrUpdateTransportServer(ts)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
+	}
+}
+
 func TestAddTransportServerWithNonExistingListener(t *testing.T) {
 	configuration := createTestConfiguration()
 
