@@ -17,6 +17,8 @@ Although the Ingress Controller is written in golang, golang is not required, yo
 
 We build the image using the make utility and the provided `Makefile`. Let’s create the Ingress Controller binary, build an image and push the image to the private registry.
 
+**Note**: If you don't have a local golang environment, be sure to append `TARGET=container` to the `make` commands.
+
 1. Make sure to run the `docker login` command first to log in to the registry.
 
    If you’re using Google Container Registry, make sure you’re logged into the gcloud tool by running the `gcloud auth login` and `gcloud auth configure-docker` commands.
@@ -56,7 +58,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
     ```
     $ make push PREFIX=myregistry.example.com/nginx-ingress
     ```
-    Note: If you're using a different tag, append `TAG=yourtag` to the command above.
+    Note: If you're using a different tag, append `TAG=your-tag` to the command above.
 
 Next you will find the details about available Makefile targets and variables.
 
