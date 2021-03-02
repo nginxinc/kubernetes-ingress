@@ -17,7 +17,7 @@ Although the Ingress Controller is written in golang, golang is not required, yo
 
 We build the image using the make utility and the provided `Makefile`. Let’s create the Ingress Controller binary, build an image and push the image to the private registry.
 
-**Note**: If you don't have a local golang environment, be sure to append `TARGET=container` to the `make` commands.
+**Note**: If you have a local golang environment, you can remove `TARGET=container` from the `make` commands to speed up the build.
 
 1. Make sure to run the `docker login` command first to log in to the registry.
 
@@ -31,11 +31,11 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 1. Build the image:
     * For **NGINX**:
       ```
-      $ make debian-image PREFIX=myregistry.example.com/nginx-ingress
+      $ make debian-image PREFIX=myregistry.example.com/nginx-ingress TARGET=container
       ```
       or if you wish to use alpine
       ```
-      $ make alpine-image PREFIX=myregistry.example.com/nginx-ingress
+      $ make alpine-image PREFIX=myregistry.example.com/nginx-ingress TARGET=container
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
@@ -48,7 +48,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       Then run:
       ```
-      $ make debian-image-plus PREFIX=myregistry.example.com/nginx-plus-ingress
+      $ make debian-image-plus PREFIX=myregistry.example.com/nginx-plus-ingress TARGET=container
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
