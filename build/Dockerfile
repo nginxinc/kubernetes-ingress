@@ -297,7 +297,7 @@ RUN CGO_ENABLED=0 GOFLAGS='-mod=vendor' \
 	go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o /nginx-ingress
 
 
-############################################# Create image with nginx-ingress built in #############################################
+############################################# Create image with nginx-ingress built in container #############################################
 FROM files AS container
 COPY --chown=nginx:0 --from=builder /nginx-ingress /
 

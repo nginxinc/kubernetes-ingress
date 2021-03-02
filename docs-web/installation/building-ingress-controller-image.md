@@ -68,7 +68,7 @@ Below you can find some of the most useful targets in the **Makefile**:
 * **build**: creates the Ingress Controller binary using the local golang environment (ignored when `TARGET` is `container`).
 * **debian-image**: for building a debian-based image with NGINX.
 * **alpine-image**: for building an alpine-based image with NGINX.
-* **debian-image-plus**: for building an debian-based image with NGINX Plus.
+* **debian-image-plus**: for building a debian-based image with NGINX Plus.
 * **debian-image-nap-plus**: for building a debian-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module.
 * **debian-image-opentracing**: for building a debian-based image with NGINX, [opentracing](https://github.com/opentracing-contrib/nginx-opentracing) module and the [Jaeger](https://www.jaegertracing.io/) tracer.
 * **debian-image-opentracing-plus**: for building a debian-based image with NGINX Plus, [opentracing](https://github.com/opentracing-contrib/nginx-opentracing) module and the [Jaeger](https://www.jaegertracing.io/) tracer.
