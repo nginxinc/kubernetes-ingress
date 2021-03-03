@@ -28,7 +28,7 @@ spec:
         - name: "`=1^&*"
           value: "$one"
       statusMatch: "invalid"
-    slow-start: " "
+    slow-start: "invalid"
     queue:
       size: 0
       timeout: "hour"
