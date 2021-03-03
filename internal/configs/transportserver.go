@@ -78,10 +78,10 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			ProxyPass:                upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
 			Name:                     transportServerEx.TransportServer.Name,
 			Namespace:                transportServerEx.TransportServer.Namespace,
-			ProxyConnectTimeout:      generateTime(connectTimeout, "60s"),
-			ProxyTimeout:             generateTime(proxyTimeout, "10m"),
+			ProxyConnectTimeout:      generateTimeWithDefault(connectTimeout, "60s"),
+			ProxyTimeout:             generateTimeWithDefault(proxyTimeout, "10m"),
 			ProxyNextUpstream:        nextUpstream,
-			ProxyNextUpstreamTimeout: generateTime(nextUpstreamTimeout, "0"),
+			ProxyNextUpstreamTimeout: generateTimeWithDefault(nextUpstreamTimeout, "0s"),
 			ProxyNextUpstreamTries:   nextUpstreamTries,
 			HealthCheck:              healthCheck,
 		},
@@ -129,9 +129,9 @@ func generateTransportServerHealthCheck(upstreamHealthCheckName string, upstream
 			hc = generateTransportServerHealthCheckWithDefaults(u)
 
 			hc.Enabled = u.HealthCheck.Enabled
-			hc.Interval = generateTime(u.HealthCheck.Interval, hc.Interval)
-			hc.Jitter = generateTime(u.HealthCheck.Jitter, hc.Jitter)
-			hc.Timeout = generateTime(u.HealthCheck.Timeout, hc.Timeout)
+			hc.Interval = generateTimeWithDefault(u.HealthCheck.Interval, hc.Interval)
+			hc.Jitter = generateTimeWithDefault(u.HealthCheck.Jitter, hc.Jitter)
+			hc.Timeout = generateTimeWithDefault(u.HealthCheck.Timeout, hc.Timeout)
 
 			if u.HealthCheck.Fails > 0 {
 				hc.Fails = u.HealthCheck.Fails
@@ -166,7 +166,7 @@ func generateStreamUpstream(upstream *conf_v1alpha1.Upstream, upstreamNamer *ups
 
 	name := upstreamNamer.GetNameForUpstream(upstream.Name)
 	maxFails := generateIntFromPointer(upstream.MaxFails, 1)
-	failTimeout := generateTime(upstream.FailTimeout, "10s")
+	failTimeout := generateTimeWithDefault(upstream.FailTimeout, "10s")
 
 	for _, e := range endpoints {
 		s := version2.StreamUpstreamServer{

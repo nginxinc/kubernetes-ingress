@@ -7142,3 +7142,62 @@ func TestAddWafConfig(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateTime(t *testing.T) {
+	tests := []struct {
+		value, expected string
+	}{
+		{
+			value:    "0s",
+			expected: "0s",
+		},
+		{
+			value:    "0",
+			expected: "0s",
+		},
+		{
+			value:    "1h",
+			expected: "1h",
+		},
+		{
+			value:    "1h 30m",
+			expected: "1h30m",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateTime(test.value)
+		if result != test.expected {
+			t.Errorf("generateTime(%q) returned %q but expected %q", test.value, result, test.expected)
+		}
+	}
+}
+
+func TestGenerateTimeWithDefault(t *testing.T) {
+	tests := []struct {
+		value, defaultValue, expected string
+	}{
+		{
+			value:        "1h 30m",
+			defaultValue: "",
+			expected:     "1h30m",
+		},
+		{
+			value:        "",
+			defaultValue: "60s",
+			expected:     "60s",
+		},
+		{
+			value:        "",
+			defaultValue: "test",
+			expected:     "test",
+		},
+	}
+
+	for _, test := range tests {
+		result := generateTimeWithDefault(test.value, test.defaultValue)
+		if result != test.expected {
+			t.Errorf("generateTimeWithDefault(%q, %q) returned %q but expected %q", test.value, test.defaultValue, result, test.expected)
+		}
+	}
+}
