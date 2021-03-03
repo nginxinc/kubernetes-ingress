@@ -15,7 +15,7 @@ export DOCKER_BUILDKIT = 1
 
 .PHONY: help
 help: ## Display this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "; printf "Usage:\n\n    make \033[36m<target>\033[0m [VARIABLE=value...]\n\nTargets:\n\n"}; {printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: all
 all: test lint verify-codegen update-crds debian-image
@@ -98,7 +98,7 @@ push: ## Docker push to $PREFIX and $TAG
 	docker push $(PREFIX):$(TAG)
 
 .PHONY: clean
-clean:  ## Remove nginx-ingress binary and temp folder
+clean:  ## Remove nginx-ingress binary
 	rm -f nginx-ingress
 
 .PHONY: deps
