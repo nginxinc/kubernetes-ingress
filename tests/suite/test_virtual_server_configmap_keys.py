@@ -34,30 +34,28 @@ def assert_update_event_count_increased(virtual_server_setup, new_list, previous
 
 
 def assert_keys_without_validation(config, expected_values):
-
+    assert f"proxy_connect_timeout {expected_values['proxy-connect-timeout']};" in config
+    assert f"proxy_read_timeout {expected_values['proxy-read-timeout']};" in config
+    assert f"client_max_body_size {expected_values['client-max-body-size']};" in config
+    assert f"proxy_buffers {expected_values['proxy-buffers']};" in config
+    assert f"proxy_buffer_size {expected_values['proxy-buffer-size']};" in config
+    assert f"proxy_max_temp_file_size {expected_values['proxy-max-temp-file-size']};" in config
     assert f"set_real_ip_from {expected_values['set-real-ip-from']};" in config
     assert f"real_ip_header {expected_values['real-ip-header']};" in config
     assert f"{expected_values['location-snippets']}" in config
     assert f"{expected_values['server-snippets']}" in config
+    assert f"fail_timeout={expected_values['fail-timeout']}" in config
+    assert f"proxy_send_timeout {expected_values['proxy-send-timeout']};" in config
     assert f" {expected_values['upstream-zone-size']};" in config
 
 
 def assert_keys_with_validation(config, expected_values):
     # based on f"{TEST_DATA}/virtual-server-configmap-keys/configmap-validation-keys.yaml"
-    assert f"proxy_connect_timeout {expected_values['proxy-connect-timeout']};" in config
-    assert f"proxy_read_timeout {expected_values['proxy-read-timeout']};" in config
-    assert f"proxy_send_timeout {expected_values['proxy-send-timeout']};" in config
-    assert f"client_max_body_size {expected_values['client-max-body-size']};" in config
-    assert f"proxy_buffers {expected_values['proxy-buffers']};" in config
-    assert f"proxy_buffer_size {expected_values['proxy-buffer-size']};" in config
-    assert f"proxy_max_temp_file_size {expected_values['proxy-max-temp-file-size']};" in config
     assert "proxy_buffering off;" in config
     assert "real_ip_recursive on;" in config
     assert f"max_fails={expected_values['max-fails']}" in config
     assert f"keepalive {expected_values['keepalive']};" in config
     assert "listen 80 proxy_protocol;" in config
-    assert f"fail_timeout={expected_values['fail-timeout']}" in config
-
 
 
 def assert_keys_with_validation_in_main_config(config, expected_values):
@@ -216,14 +214,14 @@ class TestVirtualServerConfigMapNoTls:
                                     ingress_controller_prerequisites.namespace,
                                     data_file_invalid)
         expected_values = get_configmap_fields_from_yaml(data_file_invalid)
-        wait_before_test()
+        wait_before_test(1)
         step_4_config = get_vs_nginx_template_conf(kube_apis.v1,
                                                    virtual_server_setup.namespace,
                                                    virtual_server_setup.vs_name,
                                                    ic_pod_name,
                                                    ingress_controller_prerequisites.namespace)
         step_4_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        # assert_update_event_count_increased(virtual_server_setup, step_4_events, step_3_events)
+        assert_update_event_count_increased(virtual_server_setup, step_4_events, step_3_events)
         assert_defaults_of_keys_with_validation(step_4_config, expected_values)
 
     def test_keys_in_main_config(self, cli_arguments, kube_apis, ingress_controller_prerequisites,
@@ -242,7 +240,7 @@ class TestVirtualServerConfigMapNoTls:
                                     ingress_controller_prerequisites.namespace,
                                     data_file)
         expected_values = get_configmap_fields_from_yaml(data_file)
-        wait_before_test()
+        wait_before_test(1)
         step_5_config = get_file_contents(kube_apis.v1,
                                           config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
         step_5_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
@@ -255,11 +253,11 @@ class TestVirtualServerConfigMapNoTls:
                                     ingress_controller_prerequisites.namespace,
                                     data_file_invalid)
         unexpected_values = get_configmap_fields_from_yaml(data_file_invalid)
-        wait_before_test()
+        wait_before_test(1)
         step_6_config = get_file_contents(kube_apis.v1,
                                           config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
         step_6_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        # assert_update_event_count_increased(virtual_server_setup, step_6_events, step_5_events)
+        assert_update_event_count_increased(virtual_server_setup, step_6_events, step_5_events)
         assert_defaults_of_keys_with_validation_in_main_config(step_6_config, unexpected_values)
 
         print("Step 7: main config: special case for hash variables")

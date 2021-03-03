@@ -67,7 +67,7 @@ class TestVSRouteUpstreamOptions:
           "client_max_body_size 1048K;",
           "proxy_buffering on;", "proxy_buffer_size 2k;", "proxy_buffers 4 2k;"]),
         ({"lb-method": "ip_hash", "connect-timeout": "75", "read-timeout": "15", "send-timeout": "1h"},
-         ["ip_hash;", "proxy_connect_timeout 75s;", "proxy_read_timeout 15s;", "proxy_send_timeout 1h;"]),
+         ["ip_hash;", "proxy_connect_timeout 75;", "proxy_read_timeout 15;", "proxy_send_timeout 1h;"]),
         ({"connect-timeout": "1m", "read-timeout": "1m", "send-timeout": "1s"},
          ["proxy_connect_timeout 1m;", "proxy_read_timeout 1m;", "proxy_send_timeout 1s;"]),
         ({"next-upstream": "error timeout non_idempotent", "next-upstream-timeout": "5s", "next-upstream-tries": 10},
@@ -528,8 +528,8 @@ class TestOptionsSpecificForPlus:
         vsr_s_events = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
         vsr_m_events = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
 
-        # assert_event_starts_with_text_and_contains_errors(vsr_s_event_text, vsr_s_events, invalid_fields_s)
-        # assert_event_starts_with_text_and_contains_errors(vsr_m_event_text, vsr_m_events, invalid_fields_m)
+        assert_event_starts_with_text_and_contains_errors(vsr_s_event_text, vsr_s_events, invalid_fields_s)
+        assert_event_starts_with_text_and_contains_errors(vsr_m_event_text, vsr_m_events, invalid_fields_m)
         assert "upstream" not in config
 
     def test_openapi_validation_flow(self, kube_apis, ingress_controller_prerequisites,

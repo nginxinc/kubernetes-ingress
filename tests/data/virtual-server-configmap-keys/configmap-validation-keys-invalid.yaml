@@ -4,12 +4,6 @@ metadata:
   name: nginx-config
   namespace: nginx-ingress
 data:
-  proxy-connect-timeout: "invalid"
-  proxy-read-timeout: "invalid"
-  client-max-body-size: "invalid"
-  proxy-buffers: "invalid"
-  proxy-buffer-size: "invalid"
-  proxy-max-temp-file-size: "invalid"
   proxy-buffering: "invalid"
   real-ip-recursive: "invalid"
 #  server-tokens: "there is no invalid value in nginx plus case"
@@ -19,4 +13,3 @@ data:
   proxy-protocol: "invalid proxy"
   variables-hash-bucket-size: "0"
   variables-hash-max-size: "-1024"
-  fail-timeout: "invalid"
