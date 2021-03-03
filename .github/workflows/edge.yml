@@ -555,6 +555,7 @@ jobs:
           push: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
+            IC_VERSION=${{ env.VERSION }}-${{ steps.commit.outputs.sha }}
 
   package-helm:
     name: Package Helm Chart
