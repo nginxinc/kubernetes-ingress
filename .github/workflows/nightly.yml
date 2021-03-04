@@ -20,7 +20,7 @@ jobs:
 
   binary:
     name: Build Binary
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -47,7 +47,7 @@ jobs:
 
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -511,7 +511,7 @@ jobs:
 
   notify:
     name: Notify
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: [helm-tests, smoke-tests]
     if: always() && github.ref == 'refs/heads/master'
     steps:
