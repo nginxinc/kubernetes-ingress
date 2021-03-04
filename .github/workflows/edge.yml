@@ -522,6 +522,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Output Variables
+        id: commit
+        run: |
+          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
       - name: Fetch Cached Artifacts
         uses: actions/cache@v2.1.4
         with:
