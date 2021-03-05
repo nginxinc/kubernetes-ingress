@@ -1,0 +1,31 @@
+name: Sync labels
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  labels_sync:
+    strategy:
+      # don't break another job if one is failed
+      fail-fast: false
+      matrix:
+        repo:
+          - nginxinc/kubernetes-ingress
+          - nginxinc/nginx-ingress-operator
+          - nginxinc/nginx-prometheus-exporter
+          - nginxinc/nginx-plus-go-client
+          - nginxinc/nginx-asg-sync
+          - nginxinc/nginx-ns1-gslb
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Sync
+        uses: micnncim/action-label-syncer@v1.2.0
+        with:
+          repository: ${{ matrix.repo }}
+          token: ${{ secrets.NGINX_PAT }}
+          prune: false

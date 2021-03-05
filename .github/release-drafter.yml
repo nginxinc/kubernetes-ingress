@@ -3,7 +3,6 @@ tag-template: 'v$NEXT_MINOR_VERSION'
 categories:
   - title: '🚀 Features'
     labels:
-      - "feature"
       - "enhancement"
   - title: '💣 Breaking Change'
     labels:
@@ -34,14 +33,12 @@ autolabeler:
       - '/fix\/.+/'
     title:
       - '/fix/i'
-  - label: 'feature'
-    branch:
-      - '/feat\/.+/'
-      - '/feature\/.+/'
   - label: 'enhancement'
     branch:
       - '/enh\/.+/'
       - '/enhancement\/.+/'
+      - '/feat\/.+/'
+      - '/feature\/.+/'
   - label: 'dependencies'
     files:
       - 'go.mod'
