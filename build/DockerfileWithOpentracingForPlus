@@ -21,11 +21,9 @@ ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
 # and install NGINX Plus
-RUN --mount=type=secret,id=nginx-repo.crt \
-	--mount=type=secret,id=nginx-repo.key \
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	set -x \
-	&& mkdir -p /etc/ssl/nginx && base64 --decode /run/secrets/nginx-repo.crt > /etc/ssl/nginx/nginx-repo.crt  \
-	&& base64 --decode /run/secrets/nginx-repo.key > /etc/ssl/nginx/nginx-repo.key \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y apt-transport-https ca-certificates gnupg1 libcap2-bin \
 	&& \
@@ -55,7 +53,6 @@ RUN --mount=type=secret,id=nginx-repo.crt \
 	          'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& apt-get remove --purge --auto-remove -y gnupg1 \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& rm -rf /etc/ssl/nginx \
 	&& rm /etc/apt/apt.conf.d/90nginx /etc/apt/sources.list.d/nginx-plus.list
 
 

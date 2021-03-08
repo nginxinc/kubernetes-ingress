@@ -15,11 +15,9 @@ ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
 # and install NGINX Plus
-RUN --mount=type=secret,id=nginx-repo.crt \
-	--mount=type=secret,id=nginx-repo.key \
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	set -x \
-	&& mkdir -p /etc/ssl/nginx && base64 --decode /run/secrets/nginx-repo.crt > /etc/ssl/nginx/nginx-repo.crt  \
-	&& base64 --decode /run/secrets/nginx-repo.key > /etc/ssl/nginx/nginx-repo.key \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
 	&& yum install -y wget \
@@ -47,7 +45,6 @@ RUN --mount=type=secret,id=nginx-repo.crt \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
 	          'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& yum remove -y wget \
-	&& rm -rf /etc/ssl/nginx \
 	&& rm /etc/yum.repos.d/nginx-plus-8.repo \
 	&& rm nginx_signing.key
 
