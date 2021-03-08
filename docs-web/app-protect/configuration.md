@@ -18,6 +18,8 @@ You can define App Protect policies for your Ingress resources by creating an `A
 
  > **Note**: The fields `policy.signature-requirements[].minRevisionDatetime` and `policy.signature-requirements[].maxRevisionDatetime` are not currently supported. 
 
+ > **Note**: [The Advanced gRPC Protection for Unary Traffic](/nginx-app-protect/configuration/#advanced-grpc-protection-for-unary-traffic) is not currently supported.
+
 To add any [App Protect policy](/nginx-app-protect/policy/#policy) to an Ingress resource:
 
 1. Create an `APPolicy` Custom resource manifest. 
