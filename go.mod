@@ -7,7 +7,7 @@ require (
 	github.com/go-logr/logr v0.3.0 // indirect
 	github.com/go-openapi/spec v0.20.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/google/go-cmp v0.5.4
+	github.com/google/go-cmp v0.5.5
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/nginxinc/nginx-plus-go-client v0.8.0
