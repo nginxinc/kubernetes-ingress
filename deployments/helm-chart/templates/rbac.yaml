@@ -103,6 +103,7 @@ rules:
   - virtualservers/status
   - virtualserverroutes/status
   - policies/status
+  - transportservers/status
   verbs:
   - update
 {{- end }}
