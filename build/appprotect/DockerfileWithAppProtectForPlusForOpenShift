@@ -61,7 +61,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	          'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& yum remove -y wget \
 	&& rm /etc/yum.repos.d/nginx-plus-7.repo \
-	&& rm nginx_signing.key /tmp/rhel_license
+	&& rm nginx_signing.key
 
 
 # forward nginx access and error logs to stdout and stderr of the ingress
