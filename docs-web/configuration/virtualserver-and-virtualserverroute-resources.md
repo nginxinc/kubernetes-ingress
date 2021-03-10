@@ -949,6 +949,12 @@ name: My-Header
 value: My-Value
 ```
 
+It is possible to override the default value of the `Host` header, which the Ingress Controller sets to [`$host`](https://nginx.org/en/docs/http/ngx_http_core_module.html#var_host):
+```yaml
+name: Host 
+value: example.com
+```
+
 ```eval_rst
 .. list-table::
    :header-rows: 1

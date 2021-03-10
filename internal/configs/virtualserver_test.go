@@ -506,6 +506,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc",
 				},
 				{
@@ -517,6 +518,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc",
 				},
 				// Order changes here because we generate first all the VS Routes and then all the VSR Subroutes (separated for loops)
@@ -537,6 +539,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					},
 					ProxySSLName:            "coffee-svc.default.svc",
 					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:             "coffee-svc",
 				},
 				{
@@ -548,6 +551,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "coffee-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -562,6 +566,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "sub-tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "sub-tea-svc",
 					IsVSR:                    true,
 					VSRName:                  "subtea",
@@ -585,6 +590,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					},
 					ProxySSLName:            "coffee-svc.default.svc",
 					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:             "coffee-svc",
 					IsVSR:                   true,
 					VSRName:                 "subcoffee",
@@ -607,6 +613,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 					},
 					ProxySSLName:            "coffee-svc.default.svc",
 					ProxyPassRequestHeaders: true,
+					ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:             "coffee-svc",
 					IsVSR:                   true,
 					VSRName:                 "subcoffee",
@@ -635,8 +642,8 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 
 	if len(warnings) != 0 {
@@ -729,6 +736,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 					HasKeepalive:             true,
 					ProxySSLName:             "tea-svc.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc",
 				},
 			},
@@ -742,8 +750,8 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 
 	if len(warnings) != 0 {
@@ -973,6 +981,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v1.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc-v1",
 				},
 				{
@@ -984,6 +993,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v2.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc-v2",
 				},
 				{
@@ -995,6 +1005,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v1.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc-v1",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -1009,6 +1020,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v2.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc-v2",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -1023,8 +1035,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 
 	if len(warnings) != 0 {
@@ -1286,6 +1298,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v2.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc-v2",
 				},
 				{
@@ -1297,6 +1310,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "tea-svc-v1.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "tea-svc-v1",
 				},
 				{
@@ -1308,6 +1322,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v2.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc-v2",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -1322,6 +1337,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 					Internal:                 true,
 					ProxySSLName:             "coffee-svc-v1.default.svc",
 					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 					ServiceName:              "coffee-svc-v1",
 					IsVSR:                    true,
 					VSRName:                  "coffee",
@@ -1336,8 +1352,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
 
 	if len(warnings) != 0 {
@@ -3767,6 +3783,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 		ProxyNextUpstreamTimeout: "0s",
 		ProxyNextUpstreamTries:   0,
 		ProxyPassRequestHeaders:  true,
+		ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 		ServiceName:              "",
 		IsVSR:                    false,
 		VSRName:                  "",
@@ -3774,8 +3791,8 @@ func TestGenerateLocationForProxying(t *testing.T) {
 	}
 
 	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{}, &cfgParams, nil, false, 0, "", nil, "", vsLocSnippets, false, "", "")
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("generateLocationForProxying() returned \n%+v but expected \n%+v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateLocationForProxying() mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -4503,6 +4520,7 @@ func TestGenerateSplits(t *testing.T) {
 			},
 			ProxySSLName:            "coffee-v1.default.svc",
 			ProxyPassRequestHeaders: true,
+			ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 			Snippets:                []string{locSnippet},
 			ServiceName:             "coffee-v1",
 			IsVSR:                   true,
@@ -4531,6 +4549,7 @@ func TestGenerateSplits(t *testing.T) {
 			},
 			ProxySSLName:            "coffee-v2.default.svc",
 			ProxyPassRequestHeaders: true,
+			ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 			Snippets:                []string{locSnippet},
 			ServiceName:             "coffee-v2",
 			IsVSR:                   true,
@@ -4645,6 +4664,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				Internal:                 true,
 				ProxySSLName:             "coffee-v1.default.svc",
 				ProxyPassRequestHeaders:  true,
+				ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:              "coffee-v1",
 				IsVSR:                    true,
 				VSRName:                  "coffee",
@@ -4659,6 +4679,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 				Internal:                 true,
 				ProxySSLName:             "coffee-v2.default.svc",
 				ProxyPassRequestHeaders:  true,
+				ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:              "coffee-v2",
 				IsVSR:                    true,
 				VSRName:                  "coffee",
@@ -4952,6 +4973,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   false,
 				VSRName:                 "",
@@ -4979,6 +5001,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   false,
 				VSRName:                 "",
@@ -5006,6 +5029,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v2",
 				IsVSR:                   false,
 				VSRName:                 "",
@@ -5033,6 +5057,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 				},
 				ProxySSLName:            "tea.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "tea",
 				IsVSR:                   false,
 				VSRName:                 "",
@@ -5268,6 +5293,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5295,6 +5321,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v2",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5322,6 +5349,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v2",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5349,6 +5377,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5376,6 +5405,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v1.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v1",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -5403,6 +5433,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 				ProxyInterceptErrors:    true,
 				ProxySSLName:            "coffee-v2.default.svc",
 				ProxyPassRequestHeaders: true,
+				ProxySetHeaders:         []version2.Header{{Name: "Host", Value: "$host"}},
 				ServiceName:             "coffee-v2",
 				IsVSR:                   true,
 				VSRName:                 "coffee",
@@ -6686,14 +6717,17 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 	tests := []struct {
 		proxy    *conf_v1.ActionProxy
 		expected []version2.Header
+		msg      string
 	}{
 		{
 			proxy:    nil,
-			expected: nil,
+			expected: []version2.Header{{Name: "Host", Value: "$host"}},
+			msg:      "no action proxy",
 		},
 		{
 			proxy:    &conf_v1.ActionProxy{},
-			expected: nil,
+			expected: []version2.Header{{Name: "Host", Value: "$host"}},
+			msg:      "empty action proxy",
 		},
 		{
 			proxy: &conf_v1.ActionProxy{
@@ -6702,10 +6736,6 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 						{
 							Name:  "Header-Name",
 							Value: "HeaderValue",
-						},
-						{
-							Name:  "Host",
-							Value: "nginx.org",
 						},
 					},
 				},
@@ -6717,16 +6747,102 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 				},
 				{
 					Name:  "Host",
-					Value: "nginx.org",
+					Value: "$host",
 				},
 			},
+			msg: "set headers without host",
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Set: []conf_v1.Header{
+						{
+							Name:  "Header-Name",
+							Value: "HeaderValue",
+						},
+						{
+							Name:  "Host",
+							Value: "example.com",
+						},
+					},
+				},
+			},
+			expected: []version2.Header{
+				{
+					Name:  "Header-Name",
+					Value: "HeaderValue",
+				},
+				{
+					Name:  "Host",
+					Value: "example.com",
+				},
+			},
+			msg: "set headers with host capitalized",
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Set: []conf_v1.Header{
+						{
+							Name:  "Header-Name",
+							Value: "HeaderValue",
+						},
+						{
+							Name:  "hoST",
+							Value: "example.com",
+						},
+					},
+				},
+			},
+			expected: []version2.Header{
+				{
+					Name:  "Header-Name",
+					Value: "HeaderValue",
+				},
+				{
+					Name:  "Host",
+					Value: "example.com",
+				},
+			},
+			msg: "set headers with host in mixed case",
+		},
+		{
+			proxy: &conf_v1.ActionProxy{
+				RequestHeaders: &conf_v1.ProxyRequestHeaders{
+					Set: []conf_v1.Header{
+						{
+							Name:  "Header-Name",
+							Value: "HeaderValue",
+						},
+						{
+							Name:  "Host",
+							Value: "one.example.com",
+						},
+						{
+							Name:  "Host",
+							Value: "two.example.com",
+						},
+					},
+				},
+			},
+			expected: []version2.Header{
+				{
+					Name:  "Header-Name",
+					Value: "HeaderValue",
+				},
+				{
+					Name:  "Host",
+					Value: "two.example.com",
+				},
+			},
+			msg: "set headers with multiple hosts",
 		},
 	}
 
 	for _, test := range tests {
 		result := generateProxySetHeaders(test.proxy)
-		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("generateProxySetHeaders(%v) returned %v but expected %v", test.proxy, result, test.expected)
+		if diff := cmp.Diff(test.expected, result); diff != "" {
+			t.Errorf("generateProxySetHeaders() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }
