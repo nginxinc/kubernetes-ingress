@@ -6800,7 +6800,7 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 					Value: "HeaderValue",
 				},
 				{
-					Name:  "Host",
+					Name:  "hoST",
 					Value: "example.com",
 				},
 			},
@@ -6829,6 +6829,10 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 				{
 					Name:  "Header-Name",
 					Value: "HeaderValue",
+				},
+				{
+					Name:  "Host",
+					Value: "one.example.com",
 				},
 				{
 					Name:  "Host",
