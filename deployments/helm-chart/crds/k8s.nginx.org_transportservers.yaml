@@ -17,7 +17,7 @@ spec:
   scope: Namespaced
   versions:
     - additionalPrinterColumns:
-        - description: Current state of the VirtualServer. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller.
+        - description: Current state of the TransportServer. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller.
           jsonPath: .status.state
           name: State
           type: string

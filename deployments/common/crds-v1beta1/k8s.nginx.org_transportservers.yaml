@@ -8,7 +8,7 @@ metadata:
 spec:
   additionalPrinterColumns:
     - JSONPath: .status.state
-      description: Current state of the VirtualServer. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller.
+      description: Current state of the TransportServer. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller.
       name: State
       type: string
     - JSONPath: .status.reason

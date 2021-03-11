@@ -51,7 +51,7 @@ type GlobalConfigurationList struct {
 // +kubebuilder:validation:Optional
 // +kubebuilder:resource:shortName=ts
 // +kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="Current state of the VirtualServer. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller."
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="Current state of the TransportServer. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller."
 // +kubebuilder:printcolumn:name="Reason",type=string,JSONPath=`.status.reason`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
