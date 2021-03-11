@@ -1072,7 +1072,7 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 					glog.Errorf("Error when getting TransportServer for %v: %v", key, err)
 				}
 				if tsExists {
-					lbc.updateTransportServerEventsOnDelete(impl, c.Error, deleteErr)
+					lbc.updateTransportServerStatusAndEventsOnDelete(impl, c.Error, deleteErr)
 				}
 			}
 		}
@@ -1234,15 +1234,18 @@ func (lbc *LoadBalancerController) processAppProtectProblems(problems []appprote
 	}
 }
 
-func (lbc *LoadBalancerController) updateTransportServerEventsOnDelete(tsConfig *TransportServerConfiguration, changeError string, deleteErr error) {
+func (lbc *LoadBalancerController) updateTransportServerStatusAndEventsOnDelete(tsConfig *TransportServerConfiguration, changeError string, deleteErr error) {
 	eventType := api_v1.EventTypeWarning
 	eventTitle := "Rejected"
 	eventWarningMessage := ""
+	var state string
 
 	// TransportServer either became invalid or lost its host or listener
 	if changeError != "" {
+		state = conf_v1.StateInvalid
 		eventWarningMessage = fmt.Sprintf("with error: %s", changeError)
 	} else if len(tsConfig.Warnings) > 0 {
+		state = conf_v1.StateWarning
 		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(tsConfig.Warnings))
 	}
 
@@ -1255,10 +1258,18 @@ func (lbc *LoadBalancerController) updateTransportServerEventsOnDelete(tsConfig 
 			eventType = api_v1.EventTypeWarning
 			eventTitle = "RejectedWithError"
 			eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, deleteErr)
+			state = conf_v1.StateInvalid
 		}
 
 		msg := fmt.Sprintf("TransportServer %s was rejected %s", getResourceKey(&tsConfig.TransportServer.ObjectMeta), eventWarningMessage)
 		lbc.recorder.Eventf(tsConfig.TransportServer, eventType, eventTitle, msg)
+
+		if lbc.reportCustomResourceStatusEnabled() {
+			err := lbc.statusUpdater.UpdateTransportServerStatus(tsConfig.TransportServer, state, eventTitle, msg)
+			if err != nil {
+				glog.Errorf("Error when updating the status for TransportServer %v/%v: %v", tsConfig.TransportServer.Namespace, tsConfig.TransportServer.Name, err)
+			}
+		}
 	}
 }
 
