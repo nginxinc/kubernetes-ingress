@@ -18,7 +18,7 @@ defaults:
 env:
   FOSSA_VER: 1.1.0
   FOSSA_URL: https://github.com/fossas/fossa-cli/releases/download
-  GOLANG_VERSION: 1.15
+  GOLANG_VERSION: 1.16
 
 jobs:
 

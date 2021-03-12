@@ -10,7 +10,7 @@ defaults:
 
 env:
   DOCKER_BUILDKIT: 1
-  GOLANG_VERSION: 1.15
+  GOLANG_VERSION: 1.16
   K8S_TIMEOUT: 90s
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge
