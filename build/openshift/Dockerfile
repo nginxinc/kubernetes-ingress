@@ -3,13 +3,13 @@ ARG GOLANG_CONTAINER=golang:latest
 FROM registry.access.redhat.com/ubi8/ubi:8.3 AS base
 
 LABEL name="NGINX Ingress Controller" \
-      description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-      summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-      io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift" \
-      maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>" \
-      vendor="NGINX Inc <kubernetes@nginx.com>"
+	description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift" \
+	maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>" \
+	vendor="NGINX Inc <kubernetes@nginx.com>"
 
-ENV NGINX_VERSION=1.19.7
+ENV NGINX_VERSION=1.19.8
 
 RUN set -x \
 	&& groupadd --system --gid 101 nginx \
@@ -22,13 +22,13 @@ RUN set -x \
 	&& echo "module_hotfixes=true" >> /etc/yum.repos.d/nginx.repo \
 	&& yum install -y nginx-${NGINX_VERSION} \
 	&& mkdir -p /var/lib/nginx \
-		/etc/nginx/secrets \
-		/etc/nginx/stream-conf.d \
+	/etc/nginx/secrets \
+	/etc/nginx/stream-conf.d \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
-	          'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
+	'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& chown -R nginx:0 /etc/nginx \
-			    /var/cache/nginx \
-			    /var/lib/nginx \
+	/var/cache/nginx \
+	/var/lib/nginx \
 	&& rm /etc/yum.repos.d/nginx.repo \
 	&& rm /etc/nginx/conf.d/*
 

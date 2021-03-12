@@ -1,6 +1,6 @@
 ARG GOLANG_CONTAINER=golang:latest
 
-FROM nginx:1.19.7 AS base
+FROM nginx:1.19.8 AS base
 
 # forward nginx access and error logs to stdout and stderr of the ingress
 # controller process
@@ -9,15 +9,15 @@ RUN ln -sf /proc/1/fd/1 /var/log/nginx/access.log \
 	&& ln -sf /proc/1/fd/2 /var/log/nginx/error.log
 
 RUN mkdir -p /var/lib/nginx \
-		/etc/nginx/secrets \
-		/etc/nginx/stream-conf.d \
+	/etc/nginx/secrets \
+	/etc/nginx/stream-conf.d \
 	&& apt-get update \
 	&& apt-get install -y libcap2-bin \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx \
-	          'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
+	'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& chown -R nginx:0 /etc/nginx \
-			    /var/cache/nginx \
-			    /var/lib/nginx \
+	/var/cache/nginx \
+	/var/lib/nginx \
 	&& apt-get remove --purge -y libcap2-bin \
 	&& rm /etc/nginx/conf.d/* \
 	&& rm -rf /var/lib/apt/lists/*
