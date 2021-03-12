@@ -25,6 +25,9 @@
 - color: 16e2e2
   description: Pull requests that update Go code
   name: go
+- color: c5def5
+  description: Gathering information
+  name: in_review
 - color: db754c
   description: An issue that proposes a feature request
   name: proposal
