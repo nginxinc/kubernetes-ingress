@@ -152,11 +152,6 @@ func findPort(pod *v1.Pod, svcPort *v1.ServicePort) (int32, error) {
 	return 0, fmt.Errorf("no suitable port for manifest: %s", pod.UID)
 }
 
-// storeToSecretLister makes a Store that lists Secrets
-type storeToSecretLister struct {
-	cache.Store
-}
-
 // isMinion determines is an ingress is a minion or not
 func isMinion(ing *networking.Ingress) bool {
 	return ing.Annotations["nginx.org/mergeable-ingress-type"] == "minion"
