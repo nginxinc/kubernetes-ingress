@@ -122,7 +122,7 @@ FROM base AS local
 COPY nginx-ingress /
 
 
-FROM golang:1.15-alpine AS builder
+FROM golang:1.16.2-alpine AS builder
 ARG VERSION
 ARG GIT_COMMIT
 WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/cmd/nginx-ingress
