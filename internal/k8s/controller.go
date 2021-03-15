@@ -603,7 +603,6 @@ func (lbc *LoadBalancerController) createExtendedResources(resources []Resource)
 		case *TransportServerConfiguration:
 			tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
 			result.TransportServerExes = append(result.TransportServerExes, tsEx)
-
 		}
 	}
 

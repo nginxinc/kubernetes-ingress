@@ -71,6 +71,8 @@ spec:
                   properties:
                     timeout:
                       type: string
+                streamSnippets:
+                  type: string
                 upstreamParameters:
                   description: UpstreamParameters defines parameters for an upstream.
                   type: object

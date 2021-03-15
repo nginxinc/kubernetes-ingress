@@ -10,6 +10,10 @@ upstream {{ $u.Name }} {
 }
 {{ end }}
 
+{{ range $snippet := .StreamSnippets }}
+{{- $snippet }}
+{{ end }}
+
 {{ $s := .Server }}
 server {
     {{ if $s.TLSPassthrough }}
@@ -28,7 +32,7 @@ server {
     proxy_responses {{ $s.ProxyResponses }};
     {{ end }}
 
-    {{ range $snippet := $s.Snippets }}
+    {{ range $snippet := $s.ServerSnippets }}
     {{- $snippet }}
     {{ end }}
 

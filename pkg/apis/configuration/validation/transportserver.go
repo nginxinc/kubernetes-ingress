@@ -52,6 +52,8 @@ func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.
 
 	allErrs = append(allErrs, validateSnippets(spec.ServerSnippets, fieldPath.Child("serverSnippets"), tsv.snippetsEnabled)...)
 
+	allErrs = append(allErrs, validateSnippets(spec.StreamSnippets, fieldPath.Child("streamSnippets"), tsv.snippetsEnabled)...)
+
 	return allErrs
 }
 

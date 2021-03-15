@@ -84,6 +84,7 @@ func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 					Pass: "tcp-app",
 				},
 				ServerSnippets: "deny  192.168.1.1;\nallow 192.168.1.0/24;",
+				StreamSnippets: "limit_conn_zone $binary_remote_addr zone=addr:10m;",
 			},
 		},
 		Endpoints: map[string][]string{
@@ -127,8 +128,9 @@ func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyTimeout:             "10m",
 			HealthCheck:              nil,
-			Snippets:                 []string{"deny  192.168.1.1;", "allow 192.168.1.0/24;"},
+			ServerSnippets:           []string{"deny  192.168.1.1;", "allow 192.168.1.0/24;"},
 		},
+		StreamSnippets: []string{"limit_conn_zone $binary_remote_addr zone=addr:10m;"},
 	}
 
 	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
@@ -211,8 +213,9 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyTimeout:             "50s",
 			HealthCheck:              nil,
-			Snippets:                 []string{},
+			ServerSnippets:           []string{},
 		},
+		StreamSnippets: []string{},
 	}
 
 	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
@@ -296,8 +299,9 @@ func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
 			HealthCheck:              nil,
-			Snippets:                 []string{},
+			ServerSnippets:           []string{},
 		},
+		StreamSnippets: []string{},
 	}
 
 	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
@@ -385,8 +389,9 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
 			HealthCheck:              nil,
-			Snippets:                 []string{},
+			ServerSnippets:           []string{},
 		},
+		StreamSnippets: []string{},
 	}
 
 	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)

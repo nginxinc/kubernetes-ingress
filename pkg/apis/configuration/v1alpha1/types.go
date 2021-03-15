@@ -69,6 +69,7 @@ type TransportServerSpec struct {
 	IngressClass       string                  `json:"ingressClassName"`
 	Listener           TransportServerListener `json:"listener"`
 	ServerSnippets     string                  `json:"serverSnippets"`
+	StreamSnippets     string                  `json:"streamSnippets"`
 	Host               string                  `json:"host"`
 	Upstreams          []Upstream              `json:"upstreams"`
 	UpstreamParameters *UpstreamParameters     `json:"upstreamParameters"`

@@ -61,6 +61,8 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 
 	serverSnippets := generateSnippets(true, transportServerEx.TransportServer.Spec.ServerSnippets, []string{})
 
+	streamSnippets := generateSnippets(true, transportServerEx.TransportServer.Spec.StreamSnippets, []string{})
+
 	statusZone := transportServerEx.TransportServer.Spec.Listener.Name
 	if transportServerEx.TransportServer.Spec.Listener.Name == conf_v1alpha1.TLSPassthroughListenerName {
 		statusZone = transportServerEx.TransportServer.Spec.Host
@@ -84,9 +86,10 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			ProxyNextUpstreamTimeout: generateTimeWithDefault(nextUpstreamTimeout, "0s"),
 			ProxyNextUpstreamTries:   nextUpstreamTries,
 			HealthCheck:              healthCheck,
-			Snippets:                 serverSnippets,
+			ServerSnippets:           serverSnippets,
 		},
-		Upstreams: upstreams,
+		Upstreams:      upstreams,
+		StreamSnippets: streamSnippets,
 	}
 
 	return tsConfig
