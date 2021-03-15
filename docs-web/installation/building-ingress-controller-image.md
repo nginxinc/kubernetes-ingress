@@ -23,7 +23,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     $ cd kubernetes-ingress/
-    $ git checkout v1.10.0
+    $ git checkout v1.10.1
     ```
 
 1. Build the image:
@@ -33,7 +33,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-ingress:1.10.0** is built and pushed to the registry. Note that the tag `1.10.0` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-ingress:1.10.1** is built and pushed to the registry. Note that the tag `1.10.1` comes from the `VERSION` variable, defined in the Makefile.
 
     * For NGINX Plus, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
       ```
@@ -46,7 +46,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-plus-ingress:1.10.0** is built and pushed to the registry. Note that the tag `1.10.0` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-plus-ingress:1.10.1** is built and pushed to the registry. Note that the tag `1.10.1` comes from the `VERSION` variable, defined in the Makefile.
 
 Next you will find the details about available Makefile targets and variables.
 
@@ -76,8 +76,8 @@ The **Makefile** contains the following main variables for you to customize (eit
   1. `openshift/Dockerfile`, for building an ubi-based image with NGINX for [Openshift](https://www.openshift.com/) clusters.
   1. `openshift/DockerfileForPlus`, for building an ubi-based image with NGINX Plus for [Openshift](https://www.openshift.com/) clusters.
   1. `appprotect/DockerfileWithAppProtectForPlusForOpenShift`, for building an ubi-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module for [Openshift](https://www.openshift.com/) clusters.
-      Note: You need to place a file named `rhel_license` containing Your Organization and Activation key in the project root. Example: 
-      ```bash 
+      Note: You need to place a file named `rhel_license` containing Your Organization and Activation key in the project root. Example:
+      ```bash
       RHEL_ORGANIZATION=1111111
       RHEL_ACTIVATION_KEY=your-key
       ```

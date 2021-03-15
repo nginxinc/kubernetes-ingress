@@ -4,6 +4,8 @@
 NGINX Ingress Controller
 ========================
 
+Request your `free 30-day trial <https://www.nginx.com/free-trial-request-nginx-ingress-controller/>`_ today.
+
 .. toctree::
    :maxdepth: 2
 

@@ -1,5 +1,22 @@
 # Releases
 
+### NGINX Ingress Controller 1.10.1
+
+16 March 2021
+
+CHANGES:
+* Update NGINX version to 1.19.8.
+* Add Kubernetes 1.20 support.
+* [1373](https://github.com/nginxinc/kubernetes-ingress/pull/1373), [1439](https://github.com/nginxinc/kubernetes-ingress/pull/1439), [1440](https://github.com/nginxinc/kubernetes-ingress/pull/1440): Fix various issues in the Makefile. In 1.10.0, a bug was introduced that prevented building Ingress Controller images on versions of make < 4.1.
+
+HELM CHART:
+* The version of the Helm chart is now 0.8.1.
+
+UPGRADE:
+* For NGINX, use the 1.10.1 image from our DockerHub: `nginx/nginx-ingress:1.10.1`, `nginx/nginx-ingress:1.10.1-alpine` or `nginx/nginx-ingress:1.10.1-ubi`
+* For NGINX Plus, please build your own image using the 1.10.1 source code.
+* For Helm, use version 0.8.1 of the chart.
+
 ### NGINX Ingress Controller 1.10.0
 
 26 January 2021
@@ -206,16 +223,16 @@ UPGRADE:
 OVERVIEW:
 
 Release 1.8.0 includes:
-* Support for NGINX App Protect Web Application Firewall. 
+* Support for NGINX App Protect Web Application Firewall.
 * Support for configuration snippets and custom template for VirtualServer and VirtualServerRoute resources.
 * Support for request/response header manipulation and request URI rewriting for VirtualServer/VirtualServerRoute.
-* Introducing a new configuration resource - Policy - with the first policy for IP-based access control. 
+* Introducing a new configuration resource - Policy - with the first policy for IP-based access control.
 
 You will find the complete changelog for release 1.8.0, including bug fixes, improvements, and changes below.
 
 FEATURES FOR VIRTUALSERVER AND VIRTUALSERVERROUTE RESOURCES:
 * [1036](https://github.com/nginxinc/kubernetes-ingress/pull/1036): Add VirtualServer custom template support.
-* [1028](https://github.com/nginxinc/kubernetes-ingress/pull/1028): Add access control policy. 
+* [1028](https://github.com/nginxinc/kubernetes-ingress/pull/1028): Add access control policy.
 * [1019](https://github.com/nginxinc/kubernetes-ingress/pull/1019): Add VirtualServer/VirtualServerRoute snippets support.
 * [1006](https://github.com/nginxinc/kubernetes-ingress/pull/1006): Add request/response modifiers to VS and VSR.
 * [994](https://github.com/nginxinc/kubernetes-ingress/pull/994): Support Class Field in VS/VSR.
@@ -235,13 +252,13 @@ BUGFIXES:
 
 HELM CHART:
 * The version of the helm chart is now 0.6.0.
-* Add new parameters to the Chart: `controller.appprotect.enable`, `controller.globalConfiguration.create`, `controller.globalConfiguration.spec`, `controller.readyStatus.enable`, `controller.readyStatus.port`, `controller.config.annotations`, `controller.reportIngressStatus.annotations`. Added in  [1035](https://github.com/nginxinc/kubernetes-ingress/pull/1035), [1034](https://github.com/nginxinc/kubernetes-ingress/pull/1034), [1029](https://github.com/nginxinc/kubernetes-ingress/pull/1029), [1003](https://github.com/nginxinc/kubernetes-ingress/pull/1003) thanks to [RubyLangdon](https://github.com/RubyLangdon). 
+* Add new parameters to the Chart: `controller.appprotect.enable`, `controller.globalConfiguration.create`, `controller.globalConfiguration.spec`, `controller.readyStatus.enable`, `controller.readyStatus.port`, `controller.config.annotations`, `controller.reportIngressStatus.annotations`. Added in  [1035](https://github.com/nginxinc/kubernetes-ingress/pull/1035), [1034](https://github.com/nginxinc/kubernetes-ingress/pull/1034), [1029](https://github.com/nginxinc/kubernetes-ingress/pull/1029), [1003](https://github.com/nginxinc/kubernetes-ingress/pull/1003) thanks to [RubyLangdon](https://github.com/RubyLangdon).
 * [1047](https://github.com/nginxinc/kubernetes-ingress/pull/1047) and [1009](https://github.com/nginxinc/kubernetes-ingress/pull/1009): Change how Helm manages the custom resource defintions (CRDs) to support installing multiple Ingress Controller releases. **Note**: If you're using the custom resources (`controller.enableCustomResources` is set to `true`), this is a breaking change. See the HELM UPGRADE section below for the upgrade instructions.
 
 CHANGES:
 * Update NGINX version to 1.19.1.
 * Update NGINX Plus to R22.
-* [1029](https://github.com/nginxinc/kubernetes-ingress/pull/1029): Add readiness endpoint. The Ingress Controller now exposes a readiness endpoint on port `8081` and the path `/nginx-ready`. The endpoint returns a `200` response after the Ingress Controller finishes the initial configuration of NGINX at the start. The pod template was updated to use that endpoint in a readiness probe. 
+* [1029](https://github.com/nginxinc/kubernetes-ingress/pull/1029): Add readiness endpoint. The Ingress Controller now exposes a readiness endpoint on port `8081` and the path `/nginx-ready`. The endpoint returns a `200` response after the Ingress Controller finishes the initial configuration of NGINX at the start. The pod template was updated to use that endpoint in a readiness probe.
 * [980](https://github.com/nginxinc/kubernetes-ingress/pull/980): Enable leader election by default.
 
 UPGRADE:
@@ -394,7 +411,7 @@ UPGRADE:
 
 OVERVIEW:
 
-Release 1.6.0 includes: 
+Release 1.6.0 includes:
 * Improvements to VirtualServer and VirtualServerRoute resources, adding support for richer load balancing behavior, more sophisticated request routing, redirects, direct responses, and blue-green and circuit breaker patterns. The VirtualServer and VirtualServerRoute resources are enabled by default and are ready for production use.
 * Support for OpenTracing, helping you to monitor and debug complex transactions.
 * An improved security posture, with support to run the Ingress Controller as a non-root user.
@@ -431,7 +448,7 @@ FEATURES FOR VIRTUALSERVER AND VIRTUALSERVERROUTE RESOURCES:
 * [596](https://github.com/nginxinc/kubernetes-ingress/pull/596): Add lb-method support in vs and vsr.
 
 FEATURES:
-* [750](https://github.com/nginxinc/kubernetes-ingress/pull/750): Add support for health status uri customisation. 
+* [750](https://github.com/nginxinc/kubernetes-ingress/pull/750): Add support for health status uri customisation.
 * [691](https://github.com/nginxinc/kubernetes-ingress/pull/691): Helper Functions for custom annotations.
 * [631](https://github.com/nginxinc/kubernetes-ingress/pull/631): Add max_conns support for NGINX plus.
 * [629](https://github.com/nginxinc/kubernetes-ingress/pull/629): Added upstream zone directive annotation. Thanks to [Victor Regalado](https://github.com/vrrs).
