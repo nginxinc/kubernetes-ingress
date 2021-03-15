@@ -369,12 +369,6 @@ class TestAppProtect:
         Test request with UDS rule string is rejected while AppProtect with User Defined Signatures is enabled in Ingress
         """
 
-        ap_uds_crd_name = get_name_from_yaml(uds_crd)
-        create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1, ap_uds_crd_name, uds_crd,
-        )
-        wait_before_test()
-
         usersig_name = create_ap_usersig_from_yaml(
             kube_apis.custom_objects, uds_crd_resource, test_namespace
         )
@@ -413,10 +407,6 @@ class TestAppProtect:
             ap_policy,
             f"{TEST_DATA}/appprotect/{ap_policy}.yaml",
             test_namespace,
-        )
-        delete_ap_usersig(kube_apis.custom_objects, usersig_name, test_namespace)
-        delete_crd(
-            kube_apis.api_extensions_v1_beta1, ap_uds_crd_name,
         )
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_invalid_responses(response)

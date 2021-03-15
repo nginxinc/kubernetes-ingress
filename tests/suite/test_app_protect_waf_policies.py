@@ -52,7 +52,6 @@ waf_subroute_vsr_src = f"{TEST_DATA}/ap-waf/virtual-server-route-waf-subroute.ya
 waf_pol_default_src = f"{TEST_DATA}/ap-waf/policies/waf-default.yaml"
 waf_pol_dataguard_src = f"{TEST_DATA}/ap-waf/policies/waf-dataguard.yaml"
 ap_policy_uds = "dataguard-alarm-uds"
-uds_crd = f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_apusersigs.yaml"
 uds_crd_resource = f"{TEST_DATA}/ap-waf/ap-ic-uds.yaml"
 valid_resp_addr = "Server address:"
 valid_resp_name = "Server name:"
@@ -76,13 +75,6 @@ def appprotect_setup(request, kube_apis, test_namespace) -> None:
     global log_name
     log_name = create_ap_logconf_from_yaml(kube_apis.custom_objects, src_log_yaml, test_namespace)
 
-    print("------------------------- Create UserSig CRD -----------------------------")
-    ap_uds_crd_name = get_name_from_yaml(uds_crd)
-    create_crd_from_yaml(
-        kube_apis.api_extensions_v1_beta1, ap_uds_crd_name, uds_crd,
-    )
-    wait_before_test()
-
     print("------------------------- Create UserSig CRD resource-----------------------------")
     usersig_name = create_ap_usersig_from_yaml(
         kube_apis.custom_objects, uds_crd_resource, test_namespace
@@ -97,9 +89,6 @@ def appprotect_setup(request, kube_apis, test_namespace) -> None:
         print("Clean up:")
         delete_ap_policy(kube_apis.custom_objects, ap_pol_name, test_namespace)
         delete_ap_usersig(kube_apis.custom_objects, usersig_name, test_namespace)
-        delete_crd(
-            kube_apis.api_extensions_v1_beta1, ap_uds_crd_name,
-        )
         delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
 
     request.addfinalizer(fin)
