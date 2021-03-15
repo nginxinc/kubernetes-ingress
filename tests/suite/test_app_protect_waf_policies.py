@@ -425,15 +425,12 @@ class TestAppProtectWAFPolicyVSR:
         Function to revert vsr deployments to standard state
         """
         patch_src_m = f"{TEST_DATA}/virtual-server-route/route-multiple.yaml"
-        # patch_v_s_route_from_yaml(
-        #     kube_apis.custom_objects,
-        #     v_s_route_setup.route_m.name,
-        #     patch_src_m,
-        #     v_s_route_setup.route_m.namespace,
-        # )
-        delete_v_s_route(kube_apis.custom_objects, v_s_route_setup.route_m.name, v_s_route_setup.route_m.namespace)
-        wait_before_test()
-        create_v_s_route_from_yaml(kube_apis.custom_objects, patch_src_m, v_s_route_setup.route_m.namespace)
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            v_s_route_setup.route_m.name,
+            patch_src_m,
+            v_s_route_setup.route_m.namespace,
+        )
         wait_before_test()
 
     @pytest.mark.parametrize(
