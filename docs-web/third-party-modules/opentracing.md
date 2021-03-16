@@ -2,7 +2,7 @@
 
 The Ingress Controller supports [OpenTracing](https://opentracing.io/) with the third-party module [opentracing-contrib/nginx-opentracing](https://github.com/opentracing-contrib/nginx-opentracing).
 
-This document explains how to use OpenTracing with the Ingress Controller. 
+This document explains how to use OpenTracing with the Ingress Controller.
 
 ## Prerequisites
 1. **Use the Ingress Controller image with OpenTracing.** The default Ingress Controller images don’t include the OpenTracing module. To use OpenTracing, you need to build the image with that module. Follow the build instructions to build the image using `openshift-image` for NGINX or `openshift-image-plus` for NGINX Plus.

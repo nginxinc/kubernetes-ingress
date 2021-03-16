@@ -1,4 +1,4 @@
-VERSION = edge
+VERSION = 1.11.0
 TAG = $(VERSION)
 PREFIX = nginx/nginx-ingress
 GOFLAGS ?= -mod=vendor
