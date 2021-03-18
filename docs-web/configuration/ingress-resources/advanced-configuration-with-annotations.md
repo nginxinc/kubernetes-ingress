@@ -67,18 +67,9 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 **Note**: If you make an existing Ingress invalid, the Ingress Controller will reject it and remove the corresponding configuration from NGINX.
 
-The following Ingress annotations currently have limited or no validation: 
+The following Ingress annotations currently have limited or no validation:
 
-- `nginx.org/proxy-connect-timeout`, 
-- `nginx.org/proxy-read-timeout`, 
-- `nginx.org/proxy-send-timeout`, 
-- `nginx.org/client-max-body-size`, 
-- `nginx.org/proxy-buffers`, 
-- `nginx.org/proxy-buffer-size`, 
-- `nginx.org/proxy-max-temp-file-size`, 
-- `nginx.org/upstream-zone-size`, 
-- `nginx.org/fail-timeout`, 
-- `nginx.org/server-tokens`, 
+- `nginx.org/server-tokens`,
 - `nginx.org/proxy-hide-headers`, 
 - `nginx.org/proxy-pass-headers`, 
 - `nginx.org/rewrites`, 
@@ -86,11 +77,7 @@ The following Ingress annotations currently have limited or no validation:
 - `nginx.com/jwt-realm`, 
 - `nginx.com/jwt-token`, 
 - `nginx.com/jwt-login-url`, 
-- `nginx.org/ssl-services`, 
-- `nginx.org/grpc-services`, 
-- `nginx.org/websocket-services`, 
 - `nginx.com/sticky-cookie-services`, 
-- `nginx.com/slow-start`, 
 - `appprotect.f5.com/app-protect-policy`, 
 - `appprotect.f5.com/app-protect-security-log`.
 
