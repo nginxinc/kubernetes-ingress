@@ -123,6 +123,10 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
      - Specifies which Ingress Controller must handle the TransportServer resource.
      - ``string``
      - No
+   * - ``serverSnippets``
+     - Sets a custom snippet in the ``server`` context.
+     - ``string``
+     - No
 ```
 
 \* -- Required for TLS Passthrough load balancing.
@@ -403,7 +407,9 @@ Disadvantages of using snippets:
 * *Security implications*. Snippets give access to NGINX configuration primitives and those primitives are not validated by the Ingress Controller.
 
 
-> Note that during a period when the NGINX config includes an invalid snippet, NGINX will continue to operate with the latest valid configuration.
+> Note: during a period when the NGINX config includes an invalid snippet, NGINX will continue to operate with the latest valid configuration.
+
+> Note: to configure snippets in the `stream` context, use `stream-snippets` ConfigMap key.
 
 
 ### Validation
