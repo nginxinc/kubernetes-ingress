@@ -352,6 +352,9 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``controller.readyStatus.port``
      - The HTTP port for the readiness endpoint.
      - 8081
+   * - ``controller.enableLatencyMetrics``
+     - Enable collection of latency metrics for upstreams. Requires ``prometheus.create``.
+     - false
    * - ``rbac.create``
      - Configures RBAC.
      - true
