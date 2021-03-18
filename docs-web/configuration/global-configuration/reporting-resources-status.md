@@ -183,7 +183,7 @@ The following fields are reported in TransportServer status:
      - Description
      - Type
    * - ``State``
-     - Current state of the resource. Can be ``Valid`` or ``Invalid``. For more information, refer to the ``message`` field.
+     - Current state of the resource. Can be ``Valid``, ``Warning`` or ``Invalid``. For more information, refer to the ``message`` field.
      - ``string``
    * - ``Reason``
      - The reason of the last update.
