@@ -329,6 +329,12 @@ var transportServerCfg = TransportServerConfig{
 			},
 		},
 	},
+	Match: &Match{
+		Name:                "match_udp-upstream",
+		Send:                `GET / HTTP/1.0\r\nHost: localhost\r\n\r\n`,
+		ExpectRegexModifier: "~*",
+		Expect:              "200 OK",
+	},
 	Server: StreamServer{
 		Port:                     1234,
 		UDP:                      true,
@@ -345,10 +351,11 @@ var transportServerCfg = TransportServerConfig{
 			Enabled:  false,
 			Timeout:  "5s",
 			Jitter:   "0",
-			Port:     0,
+			Port:     8080,
 			Interval: "5s",
 			Passes:   1,
 			Fails:    1,
+			Match:    "match_udp-upstream",
 		},
 	},
 }

@@ -526,10 +526,13 @@ func TestGenerateUnixSocket(t *testing.T) {
 
 func TestGenerateTransportServerHealthChecks(t *testing.T) {
 	upstreamName := "dns-tcp"
+	generatedUpsteamName := "ts_namespace_name_dns-tcp"
+
 	tests := []struct {
-		upstreams []conf_v1alpha1.Upstream
-		expected  *version2.StreamHealthCheck
-		msg       string
+		upstreams     []conf_v1alpha1.Upstream
+		expectedHC    *version2.StreamHealthCheck
+		expectedMatch *version2.Match
+		msg           string
 	}{
 		{
 			upstreams: []conf_v1alpha1.Upstream{
@@ -546,8 +549,9 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 					},
 				},
 			},
-			expected: nil,
-			msg:      "health checks disabled",
+			expectedHC:    nil,
+			expectedMatch: nil,
+			msg:           "health checks disabled",
 		},
 		{
 			upstreams: []conf_v1alpha1.Upstream{
@@ -556,8 +560,9 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 					HealthCheck: &conf_v1alpha1.HealthCheck{},
 				},
 			},
-			expected: nil,
-			msg:      "empty health check",
+			expectedHC:    nil,
+			expectedMatch: nil,
+			msg:           "empty health check",
 		},
 		{
 			upstreams: []conf_v1alpha1.Upstream{
@@ -574,7 +579,7 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 					},
 				},
 			},
-			expected: &version2.StreamHealthCheck{
+			expectedHC: &version2.StreamHealthCheck{
 				Enabled:  true,
 				Timeout:  "40s",
 				Jitter:   "30s",
@@ -583,7 +588,8 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 				Passes:   4,
 				Fails:    5,
 			},
-			msg: "valid health checks",
+			expectedMatch: nil,
+			msg:           "valid health checks",
 		},
 		{
 			upstreams: []conf_v1alpha1.Upstream{
@@ -612,7 +618,7 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 					},
 				},
 			},
-			expected: &version2.StreamHealthCheck{
+			expectedHC: &version2.StreamHealthCheck{
 				Enabled:  true,
 				Timeout:  "40s",
 				Jitter:   "30s",
@@ -621,7 +627,8 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 				Passes:   4,
 				Fails:    5,
 			},
-			msg: "valid 2 health checks",
+			expectedMatch: nil,
+			msg:           "valid 2 health checks",
 		},
 		{
 			upstreams: []conf_v1alpha1.Upstream{
@@ -633,7 +640,7 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 					},
 				},
 			},
-			expected: &version2.StreamHealthCheck{
+			expectedHC: &version2.StreamHealthCheck{
 				Enabled:  true,
 				Timeout:  "5s",
 				Jitter:   "0s",
@@ -642,14 +649,119 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 				Passes:   1,
 				Fails:    1,
 			},
-			msg: "return default values for health check",
+			expectedMatch: nil,
+			msg:           "return default values for health check",
+		},
+		{
+			upstreams: []conf_v1alpha1.Upstream{
+				{
+					Name: "dns-tcp",
+					Port: 90,
+					HealthCheck: &conf_v1alpha1.HealthCheck{
+						Enabled: true,
+						Match: &conf_v1alpha1.Match{
+							Send:   `GET / HTTP/1.0\r\nHost: localhost\r\n\r\n`,
+							Expect: "~*200 OK",
+						},
+					},
+				},
+			},
+			expectedHC: &version2.StreamHealthCheck{
+				Enabled:  true,
+				Timeout:  "5s",
+				Jitter:   "0s",
+				Port:     90,
+				Interval: "5s",
+				Passes:   1,
+				Fails:    1,
+				Match:    "match_ts_namespace_name_dns-tcp",
+			},
+			expectedMatch: &version2.Match{
+				Name:                "match_ts_namespace_name_dns-tcp",
+				Send:                `GET / HTTP/1.0\r\nHost: localhost\r\n\r\n`,
+				ExpectRegexModifier: "~*",
+				Expect:              "200 OK",
+			},
+			msg: "health check with match",
 		},
 	}
 
 	for _, test := range tests {
-		result := generateTransportServerHealthCheck(upstreamName, test.upstreams)
-		if diff := cmp.Diff(test.expected, result); diff != "" {
+		hc, match := generateTransportServerHealthCheck(upstreamName, generatedUpsteamName, test.upstreams)
+		if diff := cmp.Diff(test.expectedHC, hc); diff != "" {
 			t.Errorf("generateTransportServerHealthCheck() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		}
+		if diff := cmp.Diff(test.expectedMatch, match); diff != "" {
+			t.Errorf("generateTransportServerHealthCheck() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		}
+	}
+}
+
+func TestGenerateHealthCheckMatch(t *testing.T) {
+	tests := []struct {
+		match    *conf_v1alpha1.Match
+		expected *version2.Match
+		msg      string
+	}{
+		{
+			match: &conf_v1alpha1.Match{
+				Send:   "",
+				Expect: "",
+			},
+			expected: &version2.Match{
+				Name:                "match",
+				Send:                "",
+				ExpectRegexModifier: "",
+				Expect:              "",
+			},
+			msg: "match with empty fields",
+		},
+		{
+			match: &conf_v1alpha1.Match{
+				Send:   "xxx",
+				Expect: "yyy",
+			},
+			expected: &version2.Match{
+				Name:                "match",
+				Send:                "xxx",
+				ExpectRegexModifier: "",
+				Expect:              "yyy",
+			},
+			msg: "match with all fields and no regexp",
+		},
+		{
+			match: &conf_v1alpha1.Match{
+				Send:   "xxx",
+				Expect: "~yyy",
+			},
+			expected: &version2.Match{
+				Name:                "match",
+				Send:                "xxx",
+				ExpectRegexModifier: "~",
+				Expect:              "yyy",
+			},
+			msg: "match with all fields and case sensitive regexp",
+		},
+		{
+			match: &conf_v1alpha1.Match{
+				Send:   "xxx",
+				Expect: "~*yyy",
+			},
+			expected: &version2.Match{
+				Name:                "match",
+				Send:                "xxx",
+				ExpectRegexModifier: "~*",
+				Expect:              "yyy",
+			},
+			msg: "match with all fields and case insensitive regexp",
+		},
+	}
+	name := "match"
+
+	for _, test := range tests {
+		result := generateHealthCheckMatch(test.match, name)
+		if diff := cmp.Diff(test.expected, result); diff != "" {
+			t.Errorf("generateHealthCheckMatch() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }

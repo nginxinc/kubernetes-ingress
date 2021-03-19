@@ -109,6 +109,14 @@ spec:
                             type: string
                           jitter:
                             type: string
+                          match:
+                            description: Match defines the parameters of a custom health check.
+                            type: object
+                            properties:
+                              expect:
+                                type: string
+                              send:
+                                type: string
                           passes:
                             type: integer
                           port:

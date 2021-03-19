@@ -2,6 +2,7 @@ package configs
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
@@ -35,8 +36,10 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 
 	upstreams := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus)
 
-	healthCheck := generateTransportServerHealthCheck(transportServerEx.TransportServer.Spec.Action.Pass,
+	healthCheck, match := generateTransportServerHealthCheck(transportServerEx.TransportServer.Spec.Action.Pass,
+		upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
 		transportServerEx.TransportServer.Spec.Upstreams)
+
 	var proxyRequests, proxyResponses *int
 	var connectTimeout, nextUpstreamTimeout string
 	var nextUpstream bool
@@ -88,6 +91,7 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			HealthCheck:              healthCheck,
 			ServerSnippets:           serverSnippets,
 		},
+		Match:          match,
 		Upstreams:      upstreams,
 		StreamSnippets: streamSnippets,
 	}
@@ -125,12 +129,14 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 	return upstreams
 }
 
-func generateTransportServerHealthCheck(upstreamHealthCheckName string, upstreams []conf_v1alpha1.Upstream) *version2.StreamHealthCheck {
+func generateTransportServerHealthCheck(upstreamName string, generatedUpstreamName string, upstreams []conf_v1alpha1.Upstream) (*version2.StreamHealthCheck, *version2.Match) {
 	var hc *version2.StreamHealthCheck
+	var match *version2.Match
+
 	for _, u := range upstreams {
-		if u.Name == upstreamHealthCheckName {
+		if u.Name == upstreamName {
 			if u.HealthCheck == nil || !u.HealthCheck.Enabled {
-				return nil
+				return nil, nil
 			}
 			hc = generateTransportServerHealthCheckWithDefaults(u)
 
@@ -150,9 +156,18 @@ func generateTransportServerHealthCheck(upstreamHealthCheckName string, upstream
 			if u.HealthCheck.Port > 0 {
 				hc.Port = u.HealthCheck.Port
 			}
+
+			if u.HealthCheck.Match != nil {
+				name := "match_" + generatedUpstreamName
+				match = generateHealthCheckMatch(u.HealthCheck.Match, name)
+				hc.Match = name
+			}
+
+			break
 		}
 	}
-	return hc
+
+	return hc, match
 }
 
 func generateTransportServerHealthCheckWithDefaults(up conf_v1alpha1.Upstream) *version2.StreamHealthCheck {
@@ -164,6 +179,29 @@ func generateTransportServerHealthCheckWithDefaults(up conf_v1alpha1.Upstream) *
 		Interval: "5s",
 		Passes:   1,
 		Fails:    1,
+		Match:    "",
+	}
+}
+
+func generateHealthCheckMatch(match *conf_v1alpha1.Match, name string) *version2.Match {
+	var modifier string
+	var expect string
+
+	if strings.HasPrefix(match.Expect, "~*") {
+		modifier = "~*"
+		expect = strings.TrimPrefix(match.Expect, "~*")
+	} else if strings.HasPrefix(match.Expect, "~") {
+		modifier = "~"
+		expect = strings.TrimPrefix(match.Expect, "~")
+	} else {
+		expect = match.Expect
+	}
+
+	return &version2.Match{
+		Name:                name,
+		Send:                match.Send,
+		ExpectRegexModifier: modifier,
+		Expect:              expect,
 	}
 }
 

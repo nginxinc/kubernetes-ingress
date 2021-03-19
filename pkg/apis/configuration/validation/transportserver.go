@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"encoding/hex"
 	"fmt"
 	"regexp"
 	"strings"
@@ -275,7 +276,90 @@ func validateTSUpstreamHealthChecks(hc *v1alpha1.HealthCheck, fieldPath *field.P
 		}
 	}
 
+	allErrs = append(allErrs, validateHealthCheckMatch(hc.Match, fieldPath.Child("match"))...)
+
 	return allErrs
+}
+
+func validateHealthCheckMatch(match *v1alpha1.Match, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if match == nil {
+		return allErrs
+	}
+	allErrs = append(allErrs, validateMatchExpect(match.Expect, fieldPath.Child("expect"))...)
+	allErrs = append(allErrs, validateMatchSend(match.Expect, fieldPath.Child("send"))...)
+	return allErrs
+}
+
+func validateMatchExpect(expect string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if expect == "" {
+		return allErrs
+	}
+
+	if !escapedStringsFmtRegexp.MatchString(expect) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt)
+		return append(allErrs, field.Invalid(fieldPath, expect, msg))
+	}
+
+	if strings.HasPrefix(expect, "~") {
+		var expr string
+		if strings.HasPrefix(expect, "~*") {
+			expr = strings.TrimPrefix(expect, "~*")
+		} else {
+			expr = strings.TrimPrefix(expect, "~")
+		}
+
+		// compile also validates hex literals
+		if _, err := regexp.Compile(expr); err != nil {
+			return append(allErrs, field.Invalid(fieldPath, expr, fmt.Sprintf("must be a valid regular expression: %v", err)))
+		}
+	} else {
+		if err := validateHexString(expect); err != nil {
+			return append(allErrs, field.Invalid(fieldPath, expect, err.Error()))
+		}
+	}
+
+	return allErrs
+}
+
+func validateMatchSend(send string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if send == "" {
+		return allErrs
+	}
+	if !escapedStringsFmtRegexp.MatchString(send) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt)
+		return append(allErrs, field.Invalid(fieldPath, send, msg))
+	}
+
+	err := validateHexString(send)
+	if err != nil {
+		return append(allErrs, field.Invalid(fieldPath, send, err.Error()))
+	}
+
+	return allErrs
+}
+
+var hexLiteralRegexp = regexp.MustCompile(`\\x(.{0,2})`)
+
+func validateHexString(s string) error {
+	literals := hexLiteralRegexp.FindAllStringSubmatch(s, -1)
+	for _, match := range literals {
+		lit := match[0]
+		digits := match[1]
+
+		if len(digits) != 2 {
+			return fmt.Errorf("hex literal '%s' must contain two hex digits", lit)
+		}
+
+		_, err := hex.DecodeString(digits)
+		if err != nil {
+			return fmt.Errorf("hex literal '%s' must contain two hex digits: %v", lit, err)
+		}
+	}
+
+	return nil
 }
 
 func validateTransportServerUpstreamParameters(upstreamParameters *v1alpha1.UpstreamParameters, fieldPath *field.Path, protocol string) field.ErrorList {

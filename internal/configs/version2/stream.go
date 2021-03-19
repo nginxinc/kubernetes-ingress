@@ -5,6 +5,7 @@ type TransportServerConfig struct {
 	Server         StreamServer
 	Upstreams      []StreamUpstream
 	StreamSnippets []string
+	Match          *Match
 }
 
 // StreamUpstream defines a stream upstream.
@@ -53,6 +54,15 @@ type StreamHealthCheck struct {
 	Jitter   string
 	Fails    int
 	Timeout  string
+	Match    string
+}
+
+// Match defines a match block for a health check
+type Match struct {
+	Name                string
+	Send                string
+	ExpectRegexModifier string
+	Expect              string
 }
 
 // TLSPassthroughHostsConfig defines a mapping between TLS Passthrough hosts and the corresponding unix sockets.

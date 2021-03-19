@@ -828,3 +828,96 @@ func TestValidateTransportServerActionFails(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateMatchSend(t *testing.T) {
+	validInput := []string{
+		"",
+		"abc",
+		"hello${world}",
+		`hello\x00`,
+	}
+	invalidInput := []string{
+		`hello"world`,
+		`\x1x`,
+	}
+
+	for _, send := range validInput {
+		allErrs := validateMatchSend(send, field.NewPath("send"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateMatchSend(%q) returned errors %v for valid input", send, allErrs)
+		}
+	}
+	for _, send := range invalidInput {
+		allErrs := validateMatchSend(send, field.NewPath("send"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateMatchSend(%q) returned no errors for invalid input", send)
+		}
+	}
+}
+
+func TestValidateHexString(t *testing.T) {
+	validInput := []string{
+		"",
+		"abc",
+		`\x00`,
+		`\xaa`,
+		`\xaA`,
+		`\xff`,
+		`\xaaFFabc\x12`,
+	}
+	invalidInput := []string{
+		`\x`,
+		`\x1`,
+		`\xax`,
+		`\x\b`,
+		`\xaaFFabc\xx12`, // \xx1 is invalid
+	}
+
+	for _, s := range validInput {
+		err := validateHexString(s)
+		if err != nil {
+			t.Errorf("validateHexString(%q) returned error %v for valid input", s, err)
+		}
+	}
+	for _, s := range invalidInput {
+		err := validateHexString(s)
+		if err == nil {
+			t.Errorf("validateHexString(%q) returned no error for invalid input", s)
+		}
+	}
+}
+
+func TestValidateMatchExpect(t *testing.T) {
+	validInput := []string{
+		``,
+		`abc`,
+		`abc\x00`,
+		`~* 200 OK`,
+		`~ 2\d\d`,
+		`~`,
+		`~*`,
+	}
+	invalidInput := []string{
+		`hello"world`,
+		`~hello"world`,
+		`~*hello"world`,
+		`\x1x`,
+		`~\x1x`,
+		`~*\x1x`,
+		`~[{`,
+		`~{1}`,
+	}
+
+	for _, input := range validInput {
+		allErrs := validateMatchExpect(input, field.NewPath("expect"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateMatchExpect(%q) returned errors %v for valid input", input, allErrs)
+		}
+	}
+	for _, input := range invalidInput {
+		allErrs := validateMatchExpect(input, field.NewPath("expect"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateMatchExpect(%q) returned no errors for invalid input", input)
+		}
+	}
+}

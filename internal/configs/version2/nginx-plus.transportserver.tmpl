@@ -16,6 +16,18 @@ upstream {{ $u.Name }} {
 {{- $snippet }}
 {{ end }}
 
+{{ with $m := .Match }}
+match {{ $m.Name }} {
+    {{ if $m.Send }}
+    send "{{ $m.Send }}";
+    {{ end }}
+
+    {{ if $m.Expect }}
+    expect {{ $m.ExpectRegexModifier }} "{{ $m.Expect }}";
+    {{ end }}
+}
+{{ end }}
+
 {{ $s := .Server }}
 server {
     {{ if $s.TLSPassthrough }}
@@ -42,7 +54,7 @@ server {
 
     {{ if $s.HealthCheck }}
     health_check interval={{ $s.HealthCheck.Interval }} port={{ $s.HealthCheck.Port }} 
-        passes={{ $s.HealthCheck.Passes }} jitter={{ $s.HealthCheck.Jitter }} fails={{ $s.HealthCheck.Fails }} {{ if $s.UDP }}udp{{ end }};
+        passes={{ $s.HealthCheck.Passes }} jitter={{ $s.HealthCheck.Jitter }} fails={{ $s.HealthCheck.Fails }}{{ if $s.UDP }} udp{{ end }}{{ if $s.HealthCheck.Match }} match={{ $s.HealthCheck.Match }}{{ end }};
     health_check_timeout {{ $s.HealthCheck.Timeout }};
     {{ end }}
 

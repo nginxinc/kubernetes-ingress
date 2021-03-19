@@ -104,6 +104,13 @@ type HealthCheck struct {
 	Interval string `json:"interval"`
 	Passes   int    `json:"passes"`
 	Fails    int    `json:"fails"`
+	Match    *Match `json:"match"`
+}
+
+// Match defines the parameters of a custom health check.
+type Match struct {
+	Send   string `json:"send"`
+	Expect string `json:"expect"`
 }
 
 // UpstreamParameters defines parameters for an upstream.

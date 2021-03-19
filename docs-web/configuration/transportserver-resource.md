@@ -15,6 +15,7 @@ This document is the reference documentation for the TransportServer resource. T
     - [Listener](#listener)
     - [Upstream](#upstream)
       - [Upstream.Healthcheck](#upstream-healthcheck)
+      - [Upstream.Healthcheck.Match](#upstream-healthcheck-match)
     - [UpstreamParameters](#upstreamparameters)
     - [SessionParameters](#sessionparameters)
     - [Action](#action)
@@ -275,6 +276,41 @@ Note: This feature is supported only in NGINX Plus.
    * - ``port``
      - The port used for health check requests. By default, the port of the upstream is used. Note: in contrast with the port of the upstream, this port is not a service port, but a port of a pod.
      - ``integer``
+     - No
+   * - ``match``
+     - Controls the data to send and the response to expect for the healthcheck.
+     - `match <#upstream-healthcheck-match>`_
+     - No
+```
+
+### Upstream.Healthcheck.Match
+ 
+The match controls the data to send and the response to expect for the healthcheck:
+```yaml
+match:
+  send: 'GET / HTTP/1.0\r\nHost: localhost\r\n\r\n'
+  expect: "~200 OK"
+```
+
+Both `send` and `expect` fields can contain hexadecimal literals with the prefix `\x` followed by two hex digits, for example, `\x80`.
+
+See the [match](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#match) directive for details.
+
+```eval_rst
+.. list-table::
+   :header-rows: 1
+
+   * - Field
+     - Description
+     - Type
+     - Required
+   * - ``send``
+     - A string to send to an upstream server.
+     - ``string``
+     - No
+   * - ``expect``
+     - A literal string or a regular expression that the data obtained from the server should match. The regular expression is specified with the preceding ``~*`` modifier (for case-insensitive matching), or the ``~`` modifier (for case-sensitive matching). The Ingress Controller validates a regular expression using the RE2 syntax.
+     - ``string``
      - No
 ```
 
