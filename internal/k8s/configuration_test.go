@@ -33,7 +33,7 @@ func createTestConfiguration() *Configuration {
 			80:  true,
 			443: true,
 		}),
-		validation.NewTransportServerValidator(isTLSPassthroughEnabled, snippetsEnabled),
+		validation.NewTransportServerValidator(isTLSPassthroughEnabled, snippetsEnabled, isPlus),
 		isTLSPassthroughEnabled,
 	)
 }

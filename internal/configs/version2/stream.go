@@ -9,9 +9,10 @@ type TransportServerConfig struct {
 
 // StreamUpstream defines a stream upstream.
 type StreamUpstream struct {
-	Name           string
-	Servers        []StreamUpstreamServer
-	UpstreamLabels UpstreamLabels
+	Name                string
+	Servers             []StreamUpstreamServer
+	UpstreamLabels      UpstreamLabels
+	LoadBalancingMethod string
 }
 
 // StreamUpstreamServer defines a stream upstream server.
