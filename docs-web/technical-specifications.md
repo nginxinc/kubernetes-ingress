@@ -1,9 +1,12 @@
 # NGINX Ingress Controller Technical Specifications
 
+## Supported NGINX Ingress Controller Versions
+
+We advise users to run the most recent release of the NGINX Ingress Controller, and we issue software updates to the most recent release. We provide technical support for F5 customers who are using the most recent version of the NGINX Ingress Controller, and any version released within two years of the current release.
+
 ## Supported Kubernetes Versions
 
-The NGINX Ingress Controller has been verified to run on the following Kubernetes versions:
-* Kubernetes 1.16-1.20
+We explicitly test the NGINX Ingress Controller on a range of Kubernetes platforms at each release, and the [release notes](/nginx-ingress-controller/releases) list which platforms were tested. We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the [Kubernetes conformance tests](https://www.cncf.io/certification/software-conformance/).
 
 ## Supported Docker Images
 
