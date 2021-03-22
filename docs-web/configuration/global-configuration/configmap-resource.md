@@ -405,15 +405,15 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
    * - ``opentracing``
      - Enables `OpenTracing <https://opentracing.io>`_ globally (for all Ingress, VirtualServer and VirtualServerRoute resources). Note: requires the Ingress Controller image with OpenTracing module and a tracer. See the `docs </nginx-ingress-controller/third-party-modules/opentracing>`_ for more information.
      - ``False``
-     - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/master/examples/opentracing/README.md>`_.
+     - 
    * - ``opentracing-tracer``
      - Sets the path to the vendor tracer binary plugin.
      - N/A
-     - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/master/examples/opentracing/README.md>`_.
+     - 
    * - ``opentracing-tracer-config``
      - Sets the tracer configuration in JSON format.
      - N/A
-     - `Support for OpenTracing <https://github.com/nginxinc/kubernetes-ingress/blob/master/examples/opentracing/README.md>`_.
+     - 
    * - ``app-protect-cookie-seed``
      - Sets the ``app_protect_cookie_seed`` `global directive </nginx-app-protect/configuration/#global-directives>`_.
      - Random automatically generated string
