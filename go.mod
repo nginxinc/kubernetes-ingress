@@ -12,11 +12,10 @@ require (
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/nginxinc/nginx-plus-go-client v0.8.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.8.1-0.20201130150826-7c45b2334b3c
-	github.com/prometheus/client_golang v1.9.0
+	github.com/prometheus/client_golang v1.10.0
 	github.com/spiffe/go-spiffe v1.1.0
 	golang.org/x/mod v0.4.0 // indirect
 	golang.org/x/net v0.0.0-20201216054612-986b41b23924 // indirect
-	golang.org/x/sys v0.0.0-20201218084310-7d0127a74742 // indirect
 	golang.org/x/tools v0.0.0-20201218024724-ae774e9781d2 // indirect
 	k8s.io/api v0.20.4
 	k8s.io/apimachinery v0.20.4
