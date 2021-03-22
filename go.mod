@@ -7,6 +7,7 @@ require (
 	github.com/go-logr/logr v0.3.0 // indirect
 	github.com/go-openapi/spec v0.20.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+	github.com/golangci/golangci-lint v1.38.0
 	github.com/google/go-cmp v0.5.5
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
@@ -14,9 +15,7 @@ require (
 	github.com/nginxinc/nginx-prometheus-exporter v0.8.1-0.20201130150826-7c45b2334b3c
 	github.com/prometheus/client_golang v1.10.0
 	github.com/spiffe/go-spiffe v1.1.0
-	golang.org/x/mod v0.4.0 // indirect
 	golang.org/x/net v0.0.0-20201216054612-986b41b23924 // indirect
-	golang.org/x/tools v0.0.0-20201218024724-ae774e9781d2 // indirect
 	k8s.io/api v0.20.5
 	k8s.io/apimachinery v0.20.5
 	k8s.io/client-go v0.20.5

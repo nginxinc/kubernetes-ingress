@@ -23,7 +23,7 @@ all: test lint verify-codegen update-crds debian-image
 
 .PHONY: lint
 lint: ## Run linter
-	golangci-lint run
+	go run github.com/golangci/golangci-lint/cmd/golangci-lint run
 
 .PHONY: test
 test: ## Run tests
