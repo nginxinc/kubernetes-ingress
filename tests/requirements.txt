@@ -7,7 +7,7 @@ ipaddress==1.0.23 # >= 1.0.17
 cffi==1.14.5
 pyOpenSSL==20.0.1
 certifi==2020.12.5
-urllib3==1.26.3
+urllib3==1.26.4
 pytest-html==3.1.1
 pytest-profiling==1.7.0
 more-itertools==8.7.0
