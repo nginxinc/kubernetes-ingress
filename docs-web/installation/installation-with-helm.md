@@ -37,9 +37,9 @@ $ helm repo update
 
 ### Installing the CRDs
 
-By default, the Ingress Controller requires a number of custom resource definitions (CRDs) installed in the cluster. The Helm client will install those CRDs.
+By default, the Ingress Controller requires a number of custom resource definitions (CRDs) installed in the cluster. The Helm client will install those CRDs. If the CRDs are not installed, the Ingress Controller pods will not become `Ready`.
 
-If you do not use the custom resources that require those CRDs (which corresponds to `controller.enableCustomResources` set to `false` and `controller.appprotect.enable` set to `false`). The installation of the CRDs can be skipped by specifying `--skip-crds` for the helm install command.
+If you do not use the custom resources that require those CRDs (which corresponds to `controller.enableCustomResources` set to `false` and `controller.appprotect.enable` set to `false`), the installation of the CRDs can be skipped by specifying `--skip-crds` for the helm install command.
 
 ### Installing via Helm Repository
 

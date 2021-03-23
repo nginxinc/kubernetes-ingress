@@ -57,6 +57,8 @@ In this section, we create resources common for most of the Ingress Controller i
 
 ### Create Custom Resources
 
+> **Note**: By default, it is required to create custom resource definitions for VirtualServer, VirtualServerRoute, TransportServer and Policy. Otherwise, the Ingress Controller pods will not become `Ready`. If you'd like to disable that requirement, configure [`-enable-custom-resources`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument to `false` and skip this section.
+
 1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources), [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and [Policy](/nginx-ingress-controller/configuration/policy-resource) resources:
     ```
     $ kubectl apply -f common/crds/k8s.nginx.org_virtualservers.yaml
