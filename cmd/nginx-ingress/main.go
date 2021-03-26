@@ -162,7 +162,7 @@ var (
 		"Enable preview policies")
 
 	enableSnippets = flag.Bool("enable-snippets", false,
-		"Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources.")
+		"Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources.")
 
 	globalConfiguration = flag.String("global-configuration", "",
 		`A GlobalConfiguration resource for global configuration of the Ingress Controller. Requires -enable-custom-resources. If the flag is set,
