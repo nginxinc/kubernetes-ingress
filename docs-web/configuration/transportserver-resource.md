@@ -222,8 +222,9 @@ healthCheck:
   fails: 5
   passes: 5
   port: 8080
-
 ```
+
+Note: This feature is supported only in NGINX Plus.
 
 ```eval_rst
 .. list-table::
