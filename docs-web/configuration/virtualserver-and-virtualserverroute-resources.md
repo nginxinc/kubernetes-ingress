@@ -614,6 +614,8 @@ healthCheck:
   statusMatch: "! 500"
 ```
 
+Note: This feature is supported only in NGINX Plus.
+
 ```eval_rst
 .. list-table::
    :header-rows: 1
@@ -696,6 +698,8 @@ sessionCookie:
   secure: true
 ```
 See the [`sticky`](https://nginx.org/en/docs/http/ngx_http_upstream_module.html?#sticky) directive for additional information. The session cookie corresponds to the `sticky cookie` method.
+
+Note: This feature is supported only in NGINX Plus.
 
 ```eval_rst
 .. list-table::
