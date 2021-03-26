@@ -8,7 +8,7 @@ Below we describe the available command-line arguments:
 ```eval_rst
 .. option:: -enable-snippets
 
-	Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources. (default false)
+	Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources. (default false)
 
 .. option:: -default-server-tls-secret <string>
 

@@ -174,7 +174,7 @@ Parameter | Description | Default
 `controller.enableTLSPassthrough` | Enable TLS Passthrough on port 443. Requires `controller.enableCustomResources`. | false
 `controller.globalConfiguration.create` | Creates the GlobalConfiguration custom resource. Requires `controller.enableCustomResources`. | false
 `controller.globalConfiguration.spec` | The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller. | {}
-`controller.enableSnippets` | Enable custom NGINX configuration snippets in VirtualServer and VirtualServerRoute resources. | false
+`controller.enableSnippets` | Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources. | false
 `controller.healthStatus` | Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller. | false
 `controller.healthStatusURI` | Sets the URI of health status location in the default server. Requires `controller.healthStatus`. | "/nginx-health"
 `controller.nginxStatus.enable` | Enable the NGINX stub_status, or the NGINX Plus API. | true
