@@ -1,0 +1,17 @@
+nginxinc/nginx-ingress-operator:
+  - source: deployments/common/crds/appprotect.f5.com_aplogconfs.yaml
+    dest: build/kic_crds/appprotect.f5.com_aplogconfs.yaml
+  - source: deployments/common/crds/appprotect.f5.com_appolicies.yaml
+    dest: build/kic_crds/appprotect.f5.com_appolicies.yaml
+  - source: deployments/common/crds/appprotect.f5.com_apusersigs.yaml
+    dest: build/kic_crds/appprotect.f5.com_apusersigs.yaml
+  - source: deployments/common/crds/k8s.nginx.org_globalconfigurations.yaml
+    dest: build/kic_crds/k8s.nginx.org_globalconfigurations.yaml
+  - source: deployments/common/crds/k8s.nginx.org_policies.yaml
+    dest: build/kic_crds/k8s.nginx.org_policies.yaml
+  - source: deployments/common/crds/k8s.nginx.org_transportservers.yaml
+    dest: build/kic_crds/k8s.nginx.org_transportservers.yaml
+  - source: deployments/common/crds/k8s.nginx.org_virtualserverroutes.yaml
+    dest: build/kic_crds/k8s.nginx.org_virtualserverroutes.yaml
+  - source: deployments/common/crds/k8s.nginx.org_virtualservers.yaml
+    dest: build/kic_crds/k8s.nginx.org_virtualservers.yaml

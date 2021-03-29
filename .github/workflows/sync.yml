@@ -4,17 +4,15 @@ on:
   push:
     branches:
       - master
-  schedule:
-    - cron: '0 */12 * * *'
-
-env:
-  IC_SOURCE_REPO_URL: https://github.com/nginxinc/kubernetes-ingress.git
-  IC_SOURCE_BRANCH: master
-  IC_DEST_BRANCH: master
 
 jobs:
   repo-sync:
     runs-on: ubuntu-20.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    env:
+      IC_SOURCE_REPO_URL: https://github.com/nginxinc/kubernetes-ingress.git
+      IC_SOURCE_BRANCH: master
+      IC_DEST_BRANCH: master
     steps:
       - name: repo-sync
         uses: wei/git-sync@v3
@@ -24,3 +22,16 @@ jobs:
           destination_repo: ${{ secrets.SYNC_DEST_REPO_URL }}
           destination_branch: ${{ env.IC_DEST_BRANCH }}
           ssh_private_key: ${{ secrets.SYNC_SSH_PRIVATE_KEY }}
+
+  crds-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Run CRD File Sync
+        uses: BetaHuhn/repo-file-sync-action@v1
+        with:
+          GH_PAT: ${{ secrets.NGINX_PAT }}
+          ASSIGNEES: "nginxinc/kic"
+          PR_LABELS: chore
+          COMMIT_EACH_FILE: false
