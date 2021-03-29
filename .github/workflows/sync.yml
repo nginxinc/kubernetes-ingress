@@ -6,23 +6,21 @@ on:
       - master
 
 jobs:
+  # This job sync this repo to our internal repo
   repo-sync:
     runs-on: ubuntu-20.04
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    env:
-      IC_SOURCE_REPO_URL: https://github.com/nginxinc/kubernetes-ingress.git
-      IC_SOURCE_BRANCH: master
-      IC_DEST_BRANCH: master
     steps:
-      - name: repo-sync
+      - name: Repo Sync
         uses: wei/git-sync@v3
         with:
-          source_repo: ${{ env.IC_SOURCE_REPO_URL }}
-          source_branch: ${{ env.IC_SOURCE_BRANCH }}
+          source_repo: "nginxinc/kubernetes-ingress"
+          source_branch: "master"
           destination_repo: ${{ secrets.SYNC_DEST_REPO_URL }}
-          destination_branch: ${{ env.IC_DEST_BRANCH }}
+          destination_branch: "master"
           ssh_private_key: ${{ secrets.SYNC_SSH_PRIVATE_KEY }}
 
+  # This job open a PR to sync the generated CRD files across to nginx-ingress-operator 
+  # (see .github/sync.yml for config details)
   crds-sync:
     runs-on: ubuntu-latest
     steps:
@@ -35,3 +33,27 @@ jobs:
           ASSIGNEES: "nginxinc/kic"
           PR_LABELS: chore
           COMMIT_EACH_FILE: false
+
+  # This job sync the labels across the various repos
+  labels-sync:
+    strategy:
+      # don't break another job if one is failed
+      fail-fast: false
+      matrix:
+        repo:
+          - nginxinc/kubernetes-ingress
+          - nginxinc/nginx-ingress-operator
+          - nginxinc/nginx-prometheus-exporter
+          - nginxinc/nginx-plus-go-client
+          - nginxinc/nginx-asg-sync
+          - nginxinc/nginx-ns1-gslb
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Sync Labels
+        uses: micnncim/action-label-syncer@v1.2.0
+        with:
+          repository: ${{ matrix.repo }}
+          token: ${{ secrets.NGINX_PAT }}
+          prune: true
