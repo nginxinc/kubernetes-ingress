@@ -12,5 +12,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: release-drafter/release-drafter@v5
+        with:
+          commitish: release-1.11
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
