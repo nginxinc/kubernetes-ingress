@@ -1,5 +1,67 @@
 # Releases
 
+## NGINX Ingress Controller 1.11.0
+
+31 March 2021
+
+OVERVIEW:
+
+Release 1.11.0 includes:
+* Native NGINX Ingress Controller App Protect (WAF) policy
+* TransportServer improvements in terms of reliability, added features and operational aspects
+* Integration of NGINX Ingress Controller with Istio service mesh
+
+You will find the complete changelog for release 1.11.0, including bug fixes, improvements, and changes below.
+
+FEATURES:
+* [1317](https://github.com/nginxinc/kubernetes-ingress/pull/1317) Add status field to Policy resource.
+* [1449](https://github.com/nginxinc/kubernetes-ingress/pull/1449) Add support for ClusterIP in upstreams in VirtualServers/VirtualServerRoutes.
+* [1413](https://github.com/nginxinc/kubernetes-ingress/pull/1413) Add serverSnippets to TransportServer.
+* [1425](https://github.com/nginxinc/kubernetes-ingress/pull/1425) Add status field to TransportServer resource.
+* [1384](https://github.com/nginxinc/kubernetes-ingress/pull/1384) Add active health checks to TransportServer.
+* [1382](https://github.com/nginxinc/kubernetes-ingress/pull/1382) Add passive health checks to TransportServer.
+* [1346](https://github.com/nginxinc/kubernetes-ingress/pull/1346) Add configurable timeouts to TransportServer.
+* [1297](https://github.com/nginxinc/kubernetes-ingress/pull/1297) Support custom return in the default server. Thanks to [030](https://github.com/030).
+
+FEATURES FOR NGINX APP PROTECT:
+* [1378](https://github.com/nginxinc/kubernetes-ingress/pull/1378) Add WAF Policy.
+
+IMPROVEMENTS:
+* [1420](https://github.com/nginxinc/kubernetes-ingress/pull/1420) Support IngressClassName in TransportServer.
+* [1415](https://github.com/nginxinc/kubernetes-ingress/pull/1415) Handle host and listener collisions for TransportServer resource.
+* [1322](https://github.com/nginxinc/kubernetes-ingress/pull/1322) Improve VirtualServer/VirtualServerRoute warnings for Policies.
+* [1288](https://github.com/nginxinc/kubernetes-ingress/pull/1288) Add stricter validation for some ingress annotations.
+* [1241](https://github.com/nginxinc/kubernetes-ingress/pull/1241) Refactor Dockerfile and Makefile.
+* Documentation improvements: [1320](https://github.com/nginxinc/kubernetes-ingress/pull/1320), [1326](https://github.com/nginxinc/kubernetes-ingress/pull/1326), and [1377](https://github.com/nginxinc/kubernetes-ingress/pull/1377).
+
+FIXES:
+* [1457](https://github.com/nginxinc/kubernetes-ingress/pull/1457) Wait for caches to sync when the Ingress Controller starts.
+* [1444](https://github.com/nginxinc/kubernetes-ingress/pull/1444) Fix setting host header in action proxy in VirtualServer/VirtualServerRoute.
+* [1396](https://github.com/nginxinc/kubernetes-ingress/pull/1396) Fix reload timeout calculation for verifying NGINX reloads.
+
+HELM CHART:
+* The version of the helm chart is now 0.9.0.
+
+CHANGES:
+* [1455](https://github.com/nginxinc/kubernetes-ingress/pull/1455) Update NGINX version to 1.19.8.
+* [1428](https://github.com/nginxinc/kubernetes-ingress/pull/1428) Update Nginx App Protect version to 3.0. **Note**:  [The Advanced gRPC Protection for Unary Traffic](/nginx-app-protect/configuration/#advanced-grpc-protection-for-unary-traffic) is not currently supported.
+
+KNOWN ISSUES:
+* [1448](https://github.com/nginxinc/kubernetes-ingress/issues/1448) When an Ingress Controller pod starts, it can report warnings about missing secrets for Ingress and other resources that reference secrets. Those warnings are intermittent - once the Ingress Controller fully processes the resources of the cluster, it will clear the warnings. Only after that, the Ingress Controller will become ready to accept client traffic - its readiness probe will succeed.
+
+UPGRADE:
+* For NGINX, use the 1.11.0 image from our DockerHub: `nginx/nginx-ingress:1.11.0`, `nginx/nginx-ingress:1.11.0-alpine` or `nginx-ingress:1.11.0-ubi`
+* For NGINX Plus, please build your own image using the 1.11.0 source code.
+* For Helm, use version 0.9.0 of the chart.
+* [1241](https://github.com/nginxinc/kubernetes-ingress/pull/1241) improved the Makefile. As a result, the commands for building the Ingress Controller image were changed. See the updated commands [here](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image/#building-the-image-and-pushing-it-to-the-private-registry).
+* [1241](https://github.com/nginxinc/kubernetes-ingress/pull/1241) also consolidated all Dockerfiles into a singe Dockerfile. If you customized any of the Dockerfiles, make sure to port the changes to the new Dockerfile.
+* [1288](https://github.com/nginxinc/kubernetes-ingress/pull/1288) further improved validation of Ingress annotations. See this [document](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#validation) to learn more about which annotations are validated. Note that the Ingress Controller will reject resources with invalid annotations, which means clients will see `404` responses from NGINX.  Before upgrading, ensure the Ingress resources don't have annotations with invalid values. Otherwise, after the upgrade, the Ingress Controller will reject such resources.
+* [1457](https://github.com/nginxinc/kubernetes-ingress/pull/1457) fixed the bug when an Ingress Controller pod could become ready before it generated the configuration for all relevant resources in the cluster. The fix also requires that the Ingress Controller can successfully list the relevant resources from the Kubernetes API. For example, if the `-enable-custom-resources` cli argument is `true` (which is the default), the VirtualServer, VirtualServerRoute, TransportServer, and Policy CRDs must be created in the cluster, so that the Ingress Controller can list them. This is similar to other custom resources -- see the list [here](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/#create-custom-resources). Thus, before upgrading, make sure that the CRDs are created in the cluster. Otherwise, the Ingress Controller pods will not become ready.
+
+SUPPORTED PLATFORMS:
+
+We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests.  This release was fully tested on the following Kubernetes versions: 1.16-1.20.
+
 ### NGINX Ingress Controller 1.10.1
 
 16 March 2021
