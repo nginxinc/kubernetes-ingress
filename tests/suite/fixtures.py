@@ -24,6 +24,10 @@ from suite.custom_resources_utils import (
     delete_v_s_route,
     create_crd_from_yaml,
     delete_crd,
+    patch_ts_from_yaml,
+    create_gc_from_yaml,
+    delete_ts,
+    delete_gc,
 )
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.resources_utils import (
@@ -57,6 +61,8 @@ from suite.resources_utils import (
     create_configmap_from_yaml,
     create_secret_from_yaml,
     configure_rbac_with_ap,
+    create_items_from_yaml,
+    delete_items_from_yaml,
 )
 from suite.yaml_utils import (
     get_first_vs_host_from_yaml,
@@ -725,6 +731,61 @@ def virtual_server_setup(
     return VirtualServerSetup(
         ingress_controller_endpoint, test_namespace, vs_host, vs_name, vs_paths
     )
+
+
+class TransportServerSetup:
+    """
+    Encapsulate Transport Server Example details.
+
+    Attributes:
+        name (str):
+        namespace (str):
+    """
+
+    def __init__(self, name, namespace):
+        self.name = name
+        self.namespace = namespace
+
+
+@pytest.fixture(scope="class")
+def transport_server_setup(
+        request, kube_apis, test_namespace
+) -> TransportServerSetup:
+    """
+    Prepare Transport Server Example.
+
+    :param request: internal pytest fixture to parametrize this method
+    :param kube_apis: client apis
+    :param test_namespace:
+    :return: TransportServerSetup
+    """
+    print(
+        "------------------------- Deploy Transport Server Example -----------------------------------"
+    )
+
+    # deploy global config
+    global_config_file = f"{TEST_DATA}/{request.param['example']}/standard/global-configuration.yaml"
+    gc_resource = create_gc_from_yaml(kube_apis.custom_objects, global_config_file, "nginx-ingress")
+
+    # deploy dns
+    dns_file = f"{TEST_DATA}/{request.param['example']}/standard/dns.yaml"
+    create_items_from_yaml(kube_apis, dns_file, test_namespace)
+
+    # deploy transport server
+    transport_server_file = f"{TEST_DATA}/{request.param['example']}/standard/transport-server.yaml"
+    ts_resource = patch_ts_from_yaml(kube_apis.custom_objects, transport_server_file, test_namespace)
+
+    wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
+
+    def fin():
+        print("Clean up TransportServer Example:")
+        delete_ts(kube_apis.custom_objects, ts_resource, test_namespace)
+        delete_items_from_yaml(kube_apis, dns_file, test_namespace)
+        delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
+
+    request.addfinalizer(fin)
+
+    return TransportServerSetup(ts_resource['metadata']['name'], test_namespace)
 
 
 @pytest.fixture(scope="class")

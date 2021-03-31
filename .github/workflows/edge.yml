@@ -246,6 +246,11 @@ jobs:
           - os: ubuntu-20.04
             image: nginx-ingress
             tag: ${{ github.sha }}
+            marker: 'ts'
+            type: oss
+          - os: ubuntu-20.04
+            image: nginx-ingress
+            tag: ${{ github.sha }}
             marker: 'policies'
             type: oss
           - os: ubuntu-20.04
@@ -262,6 +267,11 @@ jobs:
             image: nginx-plus-ingress
             tag: ${{ github.sha }}
             marker: 'vs'
+            type: plus
+          - os: ubuntu-20.04
+            image: nginx-plus-ingress
+            tag: ${{ github.sha }}
+            marker: 'ts'
             type: plus
           - os: ubuntu-20.04
             image: nginx-plus-ingress

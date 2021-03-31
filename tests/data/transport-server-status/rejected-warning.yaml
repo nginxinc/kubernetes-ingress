@@ -1,0 +1,15 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: TransportServer
+metadata:
+  name: transport-server
+spec:
+  listener:
+    # we specify a missing listener to generate a 'Warning' state
+    name: invalid-listener
+    protocol: TCP
+    upstreams:
+      - name: dns-app
+        service: coredns
+        port: 5353
+    action:
+      pass: dns-app

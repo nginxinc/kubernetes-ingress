@@ -1,0 +1,15 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: TransportServer
+metadata:
+  name: transport-server
+spec:
+  listener:
+    name: dns-tcp
+    # we specify an invalid protocol to generate an 'Invalid' state
+    protocol: invalid-protocol
+    upstreams:
+      - name: dns-app
+        service: coredns
+        port: 5353
+    action:
+      pass: dns-app
