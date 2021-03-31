@@ -1,5 +1,0 @@
-apiVersion: k8s.nginx.org/v1alpha1
-kind: GlobalConfiguration
-metadata:
-  name: nginx-configuration
-  namespace: nginx-ingress

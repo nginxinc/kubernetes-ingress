@@ -263,9 +263,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 		if input.GlobalConfiguration != "" {
 			lbc.watchGlobalConfiguration = true
-
 			ns, name, _ := ParseNamespaceName(input.GlobalConfiguration)
-
 			lbc.addGlobalConfigurationHandler(createGlobalConfigurationHandlers(lbc), ns, name)
 		}
 	}

@@ -165,9 +165,7 @@ var (
 		"Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources.")
 
 	globalConfiguration = flag.String("global-configuration", "",
-		`A GlobalConfiguration resource for global configuration of the Ingress Controller. Requires -enable-custom-resources. If the flag is set,
-		but the Ingress controller is not able to fetch the corresponding resource from Kubernetes API, the Ingress Controller
-		will fail to start. Format: <namespace>/<name>`)
+		`The namespace/name of the GlobalConfiguration resource for global configuration of the Ingress Controller. Requires -enable-custom-resources. Format: <namespace>/<name>`)
 
 	enableTLSPassthrough = flag.Bool("enable-tls-passthrough", false,
 		"Enable TLS Passthrough on port 443. Requires -enable-custom-resources")
@@ -458,13 +456,8 @@ func main() {
 
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
-	globalCfgParams := configs.NewDefaultGlobalConfigParams()
-	if *enableTLSPassthrough {
-		globalCfgParams = configs.NewGlobalConfigParamsWithTLSPassthrough()
-	}
-
 	if *globalConfiguration != "" {
-		ns, name, err := k8s.ParseNamespaceName(*globalConfiguration)
+		_, _, err := k8s.ParseNamespaceName(*globalConfiguration)
 		if err != nil {
 			glog.Fatalf("Error parsing the global-configuration argument: %v", err)
 		}
@@ -472,18 +465,6 @@ func main() {
 		if !*enableCustomResources {
 			glog.Fatal("global-configuration flag requires -enable-custom-resources")
 		}
-
-		gc, err := confClient.K8sV1alpha1().GlobalConfigurations(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
-		if err != nil {
-			glog.Fatalf("Error when getting %s: %v", *globalConfiguration, err)
-		}
-
-		err = globalConfigurationValidator.ValidateGlobalConfiguration(gc)
-		if err != nil {
-			glog.Fatalf("GlobalConfiguration %s is invalid: %v", *globalConfiguration, err)
-		}
-
-		globalCfgParams = configs.ParseGlobalConfiguration(gc, *enableTLSPassthrough)
 	}
 
 	cfgParams := configs.NewDefaultConfigParams()
@@ -609,7 +590,7 @@ func main() {
 	}
 
 	isWildcardEnabled := *wildcardTLSSecret != ""
-	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, globalCfgParams, templateExecutor,
+	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, templateExecutor,
 		templateExecutorV2, *nginxPlus, isWildcardEnabled, plusCollector, *enablePrometheusMetrics, latencyCollector, *enableLatencyMetrics)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 

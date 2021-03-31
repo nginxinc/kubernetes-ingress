@@ -40,7 +40,7 @@ func createTestConfigurator() (*Configurator, error) {
 
 	manager := nginx.NewFakeManager("/etc/nginx")
 
-	return NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), NewDefaultGlobalConfigParams(), templateExecutor, templateExecutorV2, false, false, nil, false, nil, false), nil
+	return NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), templateExecutor, templateExecutorV2, false, false, nil, false, nil, false), nil
 }
 
 func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
@@ -56,7 +56,7 @@ func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
 
 	manager := nginx.NewFakeManager("/etc/nginx")
 
-	return NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), NewDefaultGlobalConfigParams(), templateExecutor, &version2.TemplateExecutor{}, false, false, nil, false, nil, false), nil
+	return NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), templateExecutor, &version2.TemplateExecutor{}, false, false, nil, false, nil, false), nil
 }
 
 func TestAddOrUpdateIngress(t *testing.T) {

@@ -72,11 +72,6 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
     ```
     $ kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
     ```
-1. Create a GlobalConfiguration resource:
-    ```
-    $ kubectl apply -f common/global-configuration.yaml
-    ```
-    **Note**: Make sure to reference this resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument.
 
 > **Feature Status**: The TransportServer, GlobalConfiguration and Policy resources are available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resources specification in the next releases.
 

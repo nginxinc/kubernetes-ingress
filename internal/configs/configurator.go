@@ -96,7 +96,6 @@ type Configurator struct {
 	nginxManager            nginx.Manager
 	staticCfgParams         *StaticConfigParams
 	cfgParams               *ConfigParams
-	globalCfgParams         *GlobalConfigParams
 	templateExecutor        *version1.TemplateExecutor
 	templateExecutorV2      *version2.TemplateExecutor
 	ingresses               map[string]*IngressEx
@@ -113,7 +112,7 @@ type Configurator struct {
 }
 
 // NewConfigurator creates a new Configurator.
-func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams, globalCfgParams *GlobalConfigParams,
+func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams,
 	templateExecutor *version1.TemplateExecutor, templateExecutorV2 *version2.TemplateExecutor, isPlus bool, isWildcardEnabled bool,
 	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool, latencyCollector latCollector.LatencyCollector, isLatencyMetricsEnabled bool) *Configurator {
 	metricLabelsIndex := &metricLabelsIndex{
@@ -132,7 +131,6 @@ func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigPa
 		nginxManager:            nginxManager,
 		staticCfgParams:         staticCfgParams,
 		cfgParams:               config,
-		globalCfgParams:         globalCfgParams,
 		ingresses:               make(map[string]*IngressEx),
 		virtualServers:          make(map[string]*VirtualServerEx),
 		templateExecutor:        templateExecutor,

@@ -63,7 +63,7 @@ Below we describe the available command-line arguments:
 
 .. option:: -global-configuration <string>
 
-	A GlobalConfiguration resource for global configuration of the Ingress Controller. If the flag is set, but the Ingress Controller is not able to fetch the corresponding resource from Kubernetes API, the Ingress Controller will fail to start.
+	A GlobalConfiguration resource for global configuration of the Ingress Controller.
 	
 	Format: ``<namespace>/<name>``
 

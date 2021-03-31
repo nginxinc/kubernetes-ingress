@@ -88,8 +88,6 @@ protocol: TCP
 
 ## Using GlobalConfiguration 
 
-As mentioned in the [Prerequisites](#prerequisites) section, the GlobalConfiguration must be deployed during the installation of the Ingress Controller. 
-
 You can use the usual `kubectl` commands to work with a GlobalConfiguration resource.
 
 For example, the following command creates a GlobalConfiguration resource defined in `global-configuration.yaml` with the name `nginx-configuration`:
