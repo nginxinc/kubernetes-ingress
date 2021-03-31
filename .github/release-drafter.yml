@@ -1,5 +1,5 @@
-name-template: 'v$NEXT_MINOR_VERSION'
-tag-template: 'v$NEXT_MINOR_VERSION'
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
 categories:
   - title: '🚀 Features'
     labels:
@@ -16,7 +16,23 @@ categories:
   - title: '🔨 Maintenance'
     labels:
       - "chore"
+  - title: '⬆️ Dependencies'
+    labels:
       - "dependencies"
+version-resolver:
+  major:
+    labels:
+      - 'change'
+  minor:
+    labels:
+      - 'enhancement'
+  patch:
+    labels:
+      - 'bug'
+      - 'chore'
+      - 'dependencies'
+      - 'documentation'
+  default: patch
 exclude-labels:
   - 'skip-changelog'
 autolabeler:
@@ -39,6 +55,8 @@ autolabeler:
       - '/enhancement\/.+/'
       - '/feat\/.+/'
       - '/feature\/.+/'
+    title:
+      - '/feat/i'
   - label: 'dependencies'
     files:
       - 'go.mod'
@@ -46,23 +64,22 @@ autolabeler:
       - 'vendor*'
     branch:
       - '/deps\/.+/'
-filter-by-commitish: true
 template: |
   *Help make the NGINX Ingress Controller better by participating in our [survey](https://forms.office.com/Pages/ResponsePage.aspx?id=L_093Ttq0UCb4L-DJ9gcUM6Dh1A0cORCorfgZAMdkwJUREhJUFAyM1ZHRzZLSzQyMUlCNFhXVkZENy4u)!*
 
-  ## New in NGINX Ingress Controller v$NEXT_MINOR_VERSION
+  ## New in NGINX Ingress Controller v$RESOLVED_VERSION
 
   $CHANGES
 
   ## Upgrade
 
-  - For NGINX, use the v$NEXT_MINOR_VERSION image from our DockerHub: `nginx/nginx-ingress:$NEXT_MINOR_VERSION`, `nginx/nginx-ingress:$NEXT_MINOR_VERSION-alpine` or `nginx/nginx-ingress:$NEXT_MINOR_VERSION-ubi`
-  - For NGINX Plus, please build your own image using the v$NEXT_MINOR_VERSION source code.
+  - For NGINX, use the v$RESOLVED_VERSION image from our DockerHub: `nginx/nginx-ingress:$RESOLVED_VERSION`, `nginx/nginx-ingress:$RESOLVED_VERSION-alpine` or `nginx/nginx-ingress:$RESOLVED_VERSION-ubi`
+  - For NGINX Plus, please build your own image using the v$RESOLVED_VERSION source code.
   - For Helm, use version HELM_VERSION_REPLACE_ME! of the chart.
 
   ## Resources
 
   - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
-  - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v$NEXT_MINOR_VERSION/examples and https://github.com/nginxinc/kubernetes-ingress/tree/v$NEXT_MINOR_VERSION/examples-of-custom-resources
-  - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/v$NEXT_MINOR_VERSION/deployments/helm-chart
+  - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v$RESOLVED_VERSION/examples and https://github.com/nginxinc/kubernetes-ingress/tree/v$RESOLVED_VERSION/examples-of-custom-resources
+  - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/v$RESOLVED_VERSION/deployments/helm-chart
   - Operator -- https://github.com/nginxinc/nginx-ingress-operator/
