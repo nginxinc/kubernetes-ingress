@@ -313,6 +313,7 @@ func addSSLConfig(server *version1.Server, owner runtime.Object, host string, in
 	}
 
 	var pemFile string
+	var rejectHandshake bool
 
 	if tlsSecret != "" {
 		secretRef := secretRefs[tlsSecret]
@@ -321,10 +322,10 @@ func addSSLConfig(server *version1.Server, owner runtime.Object, host string, in
 			secretType = secretRef.Secret.Type
 		}
 		if secretType != "" && secretType != api_v1.SecretTypeTLS {
-			pemFile = pemFileNameForMissingTLSSecret
+			rejectHandshake = true
 			warnings.AddWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tlsSecret, secretType, api_v1.SecretTypeTLS)
 		} else if secretRef.Error != nil {
-			pemFile = pemFileNameForMissingTLSSecret
+			rejectHandshake = true
 			warnings.AddWarningf(owner, "TLS secret %s is invalid: %v", tlsSecret, secretRef.Error)
 		} else {
 			pemFile = secretRef.Path
@@ -332,16 +333,14 @@ func addSSLConfig(server *version1.Server, owner runtime.Object, host string, in
 	} else if isWildcardEnabled {
 		pemFile = pemFileNameForWildcardTLSSecret
 	} else {
-		pemFile = pemFileNameForMissingTLSSecret
+		rejectHandshake = true
 		warnings.AddWarningf(owner, "TLS termination for host '%s' requires specifying a TLS secret or configuring a global wildcard TLS secret", host)
 	}
 
 	server.SSL = true
 	server.SSLCertificate = pemFile
 	server.SSLCertificateKey = pemFile
-	if pemFile == pemFileNameForMissingTLSSecret {
-		server.SSLCiphers = "NULL"
-	}
+	server.SSLRejectHandshake = rejectHandshake
 
 	return warnings
 }

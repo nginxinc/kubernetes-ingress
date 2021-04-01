@@ -89,11 +89,11 @@ server {
     listen 443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
         {{ end }}
 
+        {{ if $ssl.RejectHandshake }}
+    ssl_reject_handshake on;
+        {{ else }}
     ssl_certificate {{ $ssl.Certificate }};
     ssl_certificate_key {{ $ssl.CertificateKey }};
-
-        {{ if $ssl.Ciphers }}
-    ssl_ciphers {{ $ssl.Ciphers }};
         {{ end }}
     {{ end }}
 

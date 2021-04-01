@@ -84,16 +84,16 @@ func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 	apRes := make(map[string]string)
 	result, resultWarnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, false)
 
-	expectedCiphers := "NULL"
+	expectedSSLRejectHandshake := true
 	expectedWarnings := Warnings{
 		cafeIngressEx.Ingress: {
 			"TLS secret cafe-secret is invalid: secret doesn't exist",
 		},
 	}
 
-	resultCiphers := result.Servers[0].SSLCiphers
-	if !reflect.DeepEqual(resultCiphers, expectedCiphers) {
-		t.Errorf("generateNginxCfg returned SSLCiphers %v,  but expected %v", resultCiphers, expectedCiphers)
+	resultSSLRejectHandshake := result.Servers[0].SSLRejectHandshake
+	if !reflect.DeepEqual(resultSSLRejectHandshake, expectedSSLRejectHandshake) {
+		t.Errorf("generateNginxCfg returned SSLRejectHandshake %v,  but expected %v", resultSSLRejectHandshake, expectedSSLRejectHandshake)
 	}
 	if diff := cmp.Diff(expectedWarnings, resultWarnings); diff != "" {
 		t.Errorf("generateNginxCfg returned unexpected result (-want +got):\n%s", diff)
@@ -965,10 +965,8 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			isWildcardEnabled: false,
 			expectedServer: version1.Server{
-				SSL:               true,
-				SSLCertificate:    pemFileNameForMissingTLSSecret,
-				SSLCertificateKey: pemFileNameForMissingTLSSecret,
-				SSLCiphers:        "NULL",
+				SSL:                true,
+				SSLRejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
 				nil: {
@@ -995,10 +993,8 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			isWildcardEnabled: false,
 			expectedServer: version1.Server{
-				SSL:               true,
-				SSLCertificate:    pemFileNameForMissingTLSSecret,
-				SSLCertificateKey: pemFileNameForMissingTLSSecret,
-				SSLCiphers:        "NULL",
+				SSL:                true,
+				SSLRejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
 				nil: {
@@ -1026,10 +1022,8 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			isWildcardEnabled: false,
 			expectedServer: version1.Server{
-				SSL:               true,
-				SSLCertificate:    pemFileNameForMissingTLSSecret,
-				SSLCertificateKey: pemFileNameForMissingTLSSecret,
-				SSLCiphers:        "NULL",
+				SSL:                true,
+				SSLRejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
 				nil: {
@@ -1065,10 +1059,8 @@ func TestAddSSLConfig(t *testing.T) {
 			},
 			isWildcardEnabled: false,
 			expectedServer: version1.Server{
-				SSL:               true,
-				SSLCertificate:    pemFileNameForMissingTLSSecret,
-				SSLCertificateKey: pemFileNameForMissingTLSSecret,
-				SSLCiphers:        "NULL",
+				SSL:                true,
+				SSLRejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
 				nil: {

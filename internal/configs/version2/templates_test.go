@@ -113,7 +113,6 @@ var virtualServerCfg = VirtualServerConfig{
 			HTTP2:          true,
 			Certificate:    "cafe-secret.pem",
 			CertificateKey: "cafe-secret.pem",
-			Ciphers:        "NULL",
 		},
 		TLSRedirect: &TLSRedirect{
 			BasedOn: "$scheme",

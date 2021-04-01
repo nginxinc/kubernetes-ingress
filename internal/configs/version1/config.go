@@ -69,7 +69,7 @@ type Server struct {
 	SSL                   bool
 	SSLCertificate        string
 	SSLCertificateKey     string
-	SSLCiphers            string
+	SSLRejectHandshake    bool
 	TLSPassthrough        bool
 	GRPCOnly              bool
 	StatusZone            string

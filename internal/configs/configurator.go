@@ -32,7 +32,6 @@ import (
 )
 
 const (
-	pemFileNameForMissingTLSSecret  = "/etc/nginx/secrets/default"
 	pemFileNameForWildcardTLSSecret = "/etc/nginx/secrets/wildcard"
 	appProtectPolicyFolder          = "/etc/nginx/waf/nac-policies/"
 	appProtectLogConfFolder         = "/etc/nginx/waf/nac-logconfs/"

@@ -1996,24 +1996,22 @@ func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tl
 		secretType = secretRef.Secret.Type
 	}
 	var name string
-	var ciphers string
+	var rejectHandshake bool
 	if secretType != "" && secretType != api_v1.SecretTypeTLS {
-		name = pemFileNameForMissingTLSSecret
-		ciphers = "NULL"
+		rejectHandshake = true
 		vsc.addWarningf(owner, "TLS secret %s is of a wrong type '%s', must be '%s'", tls.Secret, secretType, api_v1.SecretTypeTLS)
 	} else if secretRef.Error != nil {
-		name = pemFileNameForMissingTLSSecret
-		ciphers = "NULL"
+		rejectHandshake = true
 		vsc.addWarningf(owner, "TLS secret %s is invalid: %v", tls.Secret, secretRef.Error)
 	} else {
 		name = secretRef.Path
 	}
 
 	ssl := version2.SSL{
-		HTTP2:          cfgParams.HTTP2,
-		Certificate:    name,
-		CertificateKey: name,
-		Ciphers:        ciphers,
+		HTTP2:           cfgParams.HTTP2,
+		Certificate:     name,
+		CertificateKey:  name,
+		RejectHandshake: rejectHandshake,
 	}
 
 	return &ssl

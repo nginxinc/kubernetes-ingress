@@ -78,10 +78,10 @@ type Server struct {
 
 // SSL defines SSL configuration for a server.
 type SSL struct {
-	HTTP2          bool
-	Certificate    string
-	CertificateKey string
-	Ciphers        string
+	HTTP2           bool
+	Certificate     string
+	CertificateKey  string
+	RejectHandshake bool
 }
 
 // IngressMTLS defines TLS configuration for a server. This is a subset of TLS specifically for clients auth.

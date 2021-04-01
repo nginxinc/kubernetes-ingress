@@ -4010,10 +4010,8 @@ func TestGenerateSSLConfig(t *testing.T) {
 				},
 			},
 			expectedSSL: &version2.SSL{
-				HTTP2:          false,
-				Certificate:    pemFileNameForMissingTLSSecret,
-				CertificateKey: pemFileNameForMissingTLSSecret,
-				Ciphers:        "NULL",
+				HTTP2:           false,
+				RejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
 				nil: []string{"TLS secret secret is invalid: secret doesn't exist"},
@@ -4033,10 +4031,8 @@ func TestGenerateSSLConfig(t *testing.T) {
 				},
 			},
 			expectedSSL: &version2.SSL{
-				HTTP2:          false,
-				Certificate:    pemFileNameForMissingTLSSecret,
-				CertificateKey: pemFileNameForMissingTLSSecret,
-				Ciphers:        "NULL",
+				HTTP2:           false,
+				RejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
 				nil: []string{"TLS secret secret is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'"},
@@ -4057,10 +4053,10 @@ func TestGenerateSSLConfig(t *testing.T) {
 			},
 			inputCfgParams: &ConfigParams{},
 			expectedSSL: &version2.SSL{
-				HTTP2:          false,
-				Certificate:    "secret.pem",
-				CertificateKey: "secret.pem",
-				Ciphers:        "",
+				HTTP2:           false,
+				Certificate:     "secret.pem",
+				CertificateKey:  "secret.pem",
+				RejectHandshake: false,
 			},
 			expectedWarnings: Warnings{},
 			msg:              "normal case with HTTPS",
