@@ -292,9 +292,10 @@ FROM golang:1.16-alpine AS builder
 ARG VERSION
 ARG GIT_COMMIT
 WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/cmd/nginx-ingress
+COPY go.mod go.sum /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/
+RUN go mod download
 COPY . /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/
-RUN CGO_ENABLED=0 GOFLAGS='-mod=vendor' \
-	go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o /nginx-ingress
+RUN CGO_ENABLED=0 GO111MODULE=on go build -ldflags "-s -w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o /nginx-ingress
 
 
 ############################################# Create image with nginx-ingress built in container #############################################

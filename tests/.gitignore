@@ -14,7 +14,7 @@ __pycache__/
 
 # Pytest HTML report
 *.html
-*.css 
+*.css
 
 # Profiling report files
 *.prof

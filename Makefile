@@ -1,7 +1,6 @@
 VERSION = edge
 TAG = $(VERSION)
 PREFIX = nginx/nginx-ingress
-GOFLAGS ?= -mod=vendor
 TARGET ?= local
 
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION)-$(GIT_COMMIT) --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg VERSION=$(VERSION)
@@ -27,7 +26,7 @@ lint: ## Run linter
 
 .PHONY: test
 test: ## Run tests
-	GO111MODULE=on GOFLAGS='$(GOFLAGS)' go test ./...
+	GO111MODULE=on go test ./...
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify code generation
@@ -52,7 +51,7 @@ build: ## Build Ingress Controller binary
 	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
 ifeq (${TARGET},local)
 	@go version || (code=$$?; printf "\033[0;31mError\033[0m: unable to build locally, try using the parameter TARGET=container\n"; exit $$code)
-	CGO_ENABLED=0 GO111MODULE=on GOFLAGS='$(GOFLAGS)' GOOS=linux go build -installsuffix cgo -ldflags "-w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
+	CGO_ENABLED=0 GO111MODULE=on GOFLAGS='$(GOFLAGS)' GOOS=linux go build -ldflags "-s -w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 endif
 
 .PHONY: debian-image
@@ -103,8 +102,8 @@ clean:  ## Remove nginx-ingress binary
 	-rm nginx-ingress
 
 .PHONY: deps
-deps: ## Add missing and remove unused modules, verify deps and make a vendored copy
-	@go mod tidy && go mod verify && go mod vendor
+deps: ## Add missing and remove unused modules, verify deps and dowload them to local cache
+	@go mod tidy && go mod verify && go mod download
 
 .PHONY: clean-cache
 clean-cache: ## Clean go cache

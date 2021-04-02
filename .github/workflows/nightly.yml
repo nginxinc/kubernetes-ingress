@@ -31,6 +31,9 @@ jobs:
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds*
+      - name: Check if Codegen changed
+        run: |
+          make update-codegen && git diff --name-only --exit-code pkg/**/zz_generated.deepcopy.go
       - name: Build Binary
         run: >
           make build
@@ -38,7 +41,7 @@ jobs:
           IC_VERSION=${{ env.VERSION }}-${{ steps.commit.outputs.sha }}
           GIT_COMMIT=${{ steps.commit.outputs.sha }}
         env:
-          GOFLAGS: '-mod=vendor -gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
+          GOFLAGS: '-gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
       - name: Store Artifacts in Cache
         uses: actions/cache@v2.1.4
         with:
