@@ -65,6 +65,7 @@ type Manager interface {
 	CreateDHParam(content string) (string, error)
 	CreateOpenTracingTracerConfig(content string) error
 	Start(done chan error)
+	Version() string
 	Reload(isEndpointsUpdate bool) error
 	Quit()
 	UpdateConfigVersionFile(openTracing bool)
@@ -319,6 +320,15 @@ func (lm *LocalManager) Quit() {
 	if err := shellOut(lm.quitCmd); err != nil {
 		glog.Fatalf("Failed to quit nginx: %v", err)
 	}
+}
+
+// Version returns NGINX version
+func (lm *LocalManager) Version() string {
+	out, err := exec.Command(lm.binaryFilename, "-v").CombinedOutput()
+	if err != nil {
+		glog.Fatalf("Failed to get nginx version: %v", err)
+	}
+	return string(out)
 }
 
 // UpdateConfigVersionFile writes the config version file.

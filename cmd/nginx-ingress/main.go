@@ -76,7 +76,7 @@ var (
 	the Ingress Controller will fail to start.
 	The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
 
-	For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class - 
+	For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class -
 	i.e have the annotation "kubernetes.io/ingress.class" (for Ingress resources)
 	or field "ingressClassName" (for VirtualServer/VirtualServerRoute/TransportServer resources) equal to the class.
 	Additionally, the Ingress Controller processes resources that do not have the class set,
@@ -255,7 +255,7 @@ func main() {
 		glog.Fatal("ingresslink and external-service cannot both be set")
 	}
 
-	glog.Infof("Starting NGINX Ingress controller Version=%v GitCommit=%v\n", version, gitCommit)
+	glog.Infof("Starting NGINX Ingress controller Version=%v GitCommit=%v PlusFlag=%v\n", version, gitCommit, *nginxPlus)
 
 	var config *rest.Config
 	if *proxyURL != "" {
@@ -356,16 +356,6 @@ func main() {
 		nginxBinaryPath = "/usr/sbin/nginx-debug"
 	}
 
-	templateExecutor, err := version1.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath)
-	if err != nil {
-		glog.Fatalf("Error creating TemplateExecutor: %v", err)
-	}
-
-	templateExecutorV2, err := version2.NewTemplateExecutor(nginxVirtualServerTemplatePath, nginxTransportServerTemplatePath)
-	if err != nil {
-		glog.Fatalf("Error creating TemplateExecutorV2: %v", err)
-	}
-
 	var registry *prometheus.Registry
 	var managerCollector collectors.ManagerCollector
 	var controllerCollector collectors.ControllerCollector
@@ -409,6 +399,25 @@ func main() {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
 		nginxManager = nginx.NewLocalManager("/etc/nginx/", nginxBinaryPath, managerCollector, parseReloadTimeout(*appProtect, *nginxReloadTimeout))
+	}
+	nginxVersion := nginxManager.Version()
+	isPlus := strings.Contains(nginxVersion, "plus")
+	glog.Infof("Using %s", nginxVersion)
+
+	if *nginxPlus && !isPlus {
+		glog.Fatal("NGINX Plus flag enabled (-nginx-plus) without NGINX Plus binary")
+	} else if !*nginxPlus && isPlus {
+		glog.Fatal("NGINX Plus binary found without NGINX Plus flag (-nginx-plus)")
+	}
+
+	templateExecutor, err := version1.NewTemplateExecutor(nginxConfTemplatePath, nginxIngressTemplatePath)
+	if err != nil {
+		glog.Fatalf("Error creating TemplateExecutor: %v", err)
+	}
+
+	templateExecutorV2, err := version2.NewTemplateExecutor(nginxVirtualServerTemplatePath, nginxTransportServerTemplatePath)
+	if err != nil {
+		glog.Fatalf("Error creating TemplateExecutorV2: %v", err)
 	}
 
 	var aPPluginDone chan error

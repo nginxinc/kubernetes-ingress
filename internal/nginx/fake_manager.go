@@ -37,18 +37,18 @@ func (*FakeManager) CreateConfig(name string, content []byte) {
 	glog.V(3).Info(string(content))
 }
 
-//CreateAppProtectResourceFile provides a fake implementation of CreateAppProtectResourceFile
+// CreateAppProtectResourceFile provides a fake implementation of CreateAppProtectResourceFile
 func (*FakeManager) CreateAppProtectResourceFile(name string, content []byte) {
 	glog.V(3).Infof("Writing Ap Resource File %v", name)
 	glog.V(3).Info(string(content))
 }
 
-//DeleteAppProtectResourceFile provides a fake implementation of DeleteAppProtectResourceFile
+// DeleteAppProtectResourceFile provides a fake implementation of DeleteAppProtectResourceFile
 func (*FakeManager) DeleteAppProtectResourceFile(name string) {
 	glog.V(3).Infof("Deleting Ap Resource File %v", name)
 }
 
-//ClearAppProtectFolder provides a fake implementation of ClearAppProtectFolder
+// ClearAppProtectFolder provides a fake implementation of ClearAppProtectFolder
 func (*FakeManager) ClearAppProtectFolder(name string) {
 	glog.V(3).Infof("Deleting Ap Resource folder %v", name)
 }
@@ -94,6 +94,12 @@ func (fm *FakeManager) GetFilenameForSecret(name string) string {
 func (fm *FakeManager) CreateDHParam(content string) (string, error) {
 	glog.V(3).Infof("Writing dhparam file")
 	return fm.dhparamFilename, nil
+}
+
+// Version provides a fake implementation of Version.
+func (*FakeManager) Version() string {
+	glog.V(3).Info("Printing nginx version")
+	return "fake version"
 }
 
 // Start provides a fake implementation of Start.
