@@ -43,7 +43,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
     name: dns-tcp
   spec:
     listener:
-      name: dns-tcp 
+      name: dns-tcp
       protocol: TCP
     upstreams:
     - name: dns-app
@@ -60,7 +60,7 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
     name: dns-udp
   spec:
     listener:
-      name: dns-udp 
+      name: dns-udp
       protocol: UDP
     upstreams:
     - name: dns-app
@@ -133,13 +133,13 @@ The TransportServer resource defines load balancing configuration for TCP, UDP, 
 
 ### Listener
 
-The listener field references a listener that NGINX will use to accept incoming traffic for the TransportServer. For TCP and UDP, the listener must be defined in the [GlobalConfiguration resource](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource). When referencing a listener, both the name and the protocol must match. For TLS Passthrough, use the built-in listener with the name `tls-passthrough` and the protocol `TLS_PASSTHROUGH`. 
+The listener field references a listener that NGINX will use to accept incoming traffic for the TransportServer. For TCP and UDP, the listener must be defined in the [GlobalConfiguration resource](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource). When referencing a listener, both the name and the protocol must match. For TLS Passthrough, use the built-in listener with the name `tls-passthrough` and the protocol `TLS_PASSTHROUGH`.
 
 An example:
 ```yaml
 listener:
-  name: dns-udp 
-  protocol: UDP 
+  name: dns-udp
+  protocol: UDP
 ```
 
 ```eval_rst
@@ -157,14 +157,14 @@ listener:
    * - ``protocol``
      - The protocol of the listener.
      - ``string``
-     - Yes 
+     - Yes
 ```
 
 ### Upstream
 
 The upstream defines a destination for the TransportServer. For example:
 ```yaml
-name: secure-app 
+name: secure-app
 service: secure-app
 port: 8443
 maxFails: 3
@@ -211,7 +211,7 @@ failTimeout: 30s
 The Healthcheck defines an [active health check](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html?#health_check). In the example below we enable a health check for an upstream and configure all the available parameters:
 
 ```yaml
-name: secure-app 
+name: secure-app
 service: secure-app
 port: 8443
 healthCheck:
@@ -292,7 +292,7 @@ upstreamParameters:
    * - ``udpResponses``
      - The number of datagrams expected from the proxied server in response to a client datagram. See the `proxy_responses <https://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_responses>`_ directive. By default, the number of datagrams is not limited.
      - ``int``
-     - No 
+     - No
    * - ``connectTimeout``
      - The timeout for establishing a connection with a proxied server. See the `proxy_connect_timeout <http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_connect_timeout>`_ directive. The default is ``60s``.
      - ``string``
@@ -354,10 +354,10 @@ action:
    * - ``pass``
      - Passes connections/datagrams to an upstream. The upstream with that name must be defined in the resource.
      - ``string``
-     - Yes 
+     - Yes
 ```
 
-## Using TransportServer 
+## Using TransportServer
 
 You can use the usual `kubectl` commands to work with TransportServer resources, similar to Ingress resources.
 
@@ -473,4 +473,4 @@ The [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/con
 ## Limitations
 
 The TransportServer resource is a preview feature. Currently, it comes with the following limitation:
-* When using TLS Passthrough, it is not possible to configure [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/proxy-protocol) for port 443 both for regular HTTPS and TLS Passthrough traffic.
+* When using TLS Passthrough, it is not possible to configure [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v1.11.0/examples/proxy-protocol) for port 443 both for regular HTTPS and TLS Passthrough traffic.
