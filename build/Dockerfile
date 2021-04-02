@@ -290,6 +290,7 @@ COPY --chown=nginx:0 internal/configs/version1/nginx$PLUS.ingress.tmpl \
 
 EXPOSE 80 443
 
+STOPSIGNAL SIGTERM
 ENTRYPOINT ["/nginx-ingress"]
 USER nginx
 
