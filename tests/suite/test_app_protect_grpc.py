@@ -21,6 +21,7 @@ from suite.resources_utils import (
     create_ingress_with_ap_annotations,
     wait_before_test,
     get_file_contents,
+    get_service_endpoint,
 )
 from suite.ssl_utils import get_certificate
 from suite.yaml_utils import get_first_ingress_host_from_yaml
@@ -80,14 +81,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
     print("------------------------- Deploy Syslog -----------------------------")
     src_syslog_yaml = f"{TEST_DATA}/appprotect/syslog.yaml"
     create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-    wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
-    wait_before_test(10)
-    syslog_ep = (
-            kube_apis.v1.read_namespaced_endpoints("syslog-svc", test_namespace)
-            .subsets[0]
-            .addresses[0]
-            .ip
-        )
+    syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
     print(syslog_ep)
     print("------------------------- Deploy ingress -----------------------------")
     src_ing_yaml = f"{TEST_DATA}/appprotect/grpc/ingress.yaml"

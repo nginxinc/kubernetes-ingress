@@ -415,12 +415,12 @@ The table below summarizes the available annotations.
      - `Example for App Protect <https://github.com/nginxinc/kubernetes-ingress/tree/v1.11.3/examples/appprotect>`_.
    * - ``appprotect.f5.com/app-protect-security-log``
      - N/A
-     - The App Protect log configuration for the Ingress Resource. Format is ``namespace/name``. If no namespace is specified, the same namespace as the Ingress Resource is used. If not specified the  default is used which is:  filter: ``illegal``, format: ``default``
+     - The App Protect log configuration for the Ingress Resource. Format is ``namespace/name``. If no namespace is specified, the same namespace as the Ingress Resource is used. If not specified the  default is used which is:  filter: ``illegal``, format: ``default``. Multiple configurations can be specified in a comma seperated list. Both log configurations and destinations list (see below) must be of equal length. Configs and destinations are paired by the list indices.
      - N/A
      - `Example for App Protect <https://github.com/nginxinc/kubernetes-ingress/tree/v1.11.3/examples/appprotect>`_.
    * - ``appprotect.f5.com/app-protect-security-log-destination``
      - N/A
-     - The destination of the security log. For more information check the `DESTINATION argument </nginx-app-protect/troubleshooting/#app-protect-security-log>`_.
+     - The destination of the security log. For more information check the `DESTINATION argument </nginx-app-protect/troubleshooting/#app-protect-security-log>`_. Multiple destinations can be specified in a coma seperated list.  Both log configurations and destinations list (see above) must be of equal length. Configs and destinations are paired by the list indices.
      - ``syslog:server=localhost:514``
      - `Example for App Protect <https://github.com/nginxinc/kubernetes-ingress/tree/v1.11.3/examples/appprotect>`_.
 ```

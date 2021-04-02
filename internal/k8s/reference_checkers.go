@@ -5,6 +5,8 @@ import (
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	networking "k8s.io/api/networking/v1beta1"
+
+	"strings"
 )
 
 type resourceReferenceChecker interface {
@@ -217,10 +219,14 @@ func newAppProtectResourceReferenceChecker(annotation string) *appProtectResourc
 	return &appProtectResourceReferenceChecker{annotation}
 }
 
+// In App Protect logConfs can be a coma separated list.
 func (rc *appProtectResourceReferenceChecker) IsReferencedByIngress(namespace string, name string, ing *networking.Ingress) bool {
-	if pol, exists := ing.Annotations[rc.annotation]; exists {
-		if pol == namespace+"/"+name || (namespace == ing.Namespace && pol == name) {
-			return true
+	if resName, exists := ing.Annotations[rc.annotation]; exists {
+		resNames := strings.Split(resName, ",")
+		for _, res := range resNames {
+			if res == namespace+"/"+name || (namespace == ing.Namespace && res == name) {
+				return true
+			}
 		}
 	}
 	return false

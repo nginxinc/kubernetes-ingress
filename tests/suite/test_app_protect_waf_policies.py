@@ -11,18 +11,10 @@ from suite.custom_resources_utils import (
 )
 from suite.resources_utils import (
     wait_before_test,
-    create_example_app,
-    wait_until_all_pods_are_ready,
     create_items_from_yaml,
-    delete_items_from_yaml,
-    delete_common_app,
-    ensure_connection_to_public_endpoint,
-    ensure_response_from_backend,
     wait_before_test,
-    get_events,
-    get_ingress_nginx_template_conf,
-    get_first_pod_name,
     get_file_contents,
+    get_service_endpoint,
 )
 from suite.custom_resources_utils import (
     read_ap_custom_resource,
@@ -329,13 +321,7 @@ class TestAppProtectWAFPolicyVS:
         src_syslog_yaml = f"{TEST_DATA}/ap-waf/syslog.yaml"
         log_loc = f"/var/log/messages"
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-        wait_before_test(40)
-        syslog_ep = (
-            kube_apis.v1.read_namespaced_endpoints("syslog-svc", test_namespace)
-            .subsets[0]
-            .addresses[0]
-            .ip
-        )
+        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
         print(f"Create waf policy")
         create_ap_waf_policy_from_yaml(

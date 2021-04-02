@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syslog2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: syslog2 
+  template:
+    metadata:
+      labels:
+        app: syslog2 
+    spec:
+      containers:
+      - name: syslog2 
+        image: balabit/syslog-ng:3.28.1
+        ports:
+        - containerPort: 514
+        - containerPort: 601 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: syslog2-svc
+spec:
+  ports:
+  - port: 514
+    targetPort: 514
+    protocol: UDP
+  selector:
+    app: syslog2

@@ -1192,3 +1192,30 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
                 return
             time.sleep(1)
         pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")
+
+def get_service_endpoint(kube_apis, service_name, namespace):
+    """
+    Wait for endpoint resource to spin up.
+
+    :param kube_apis: Kubernates API object
+    :param service_name: Service resource name
+    :param namespace: test namespace
+    :return: endpoint ip
+    """
+    found = False
+    retry = 0
+    ep = ""
+    while(not found and retry<40):
+        time.sleep(1)
+        try:
+            ep = (
+                kube_apis.v1.read_namespaced_endpoints(service_name, namespace)
+                    .subsets[0]
+                    .addresses[0]
+                    .ip
+            )
+            found = True
+            print(f"Endpoint IP for {service_name} is {ep}")
+        except TypeError as err:
+            retry += 1
+    return ep

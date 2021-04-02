@@ -1,6 +1,7 @@
 package appprotect
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -432,5 +433,46 @@ func TestGenNsName(t *testing.T) {
 	result := GetNsName(obj)
 	if result != expected {
 		t.Errorf("GetNsName() returned %q but expected %q", result, expected)
+	}
+}
+
+func TestParseResourceReferenceAnnotationList(t *testing.T) {
+	namespace := "test_ns"
+	tests := []struct {
+		annotation string
+		expected   []string
+		msg        string
+	}{
+		{
+			annotation: "test",
+			expected:   []string{namespace + "/test"},
+			msg:        "single resource no namespace",
+		},
+		{
+			annotation: "different_ns/test",
+			expected:   []string{"different_ns/test"},
+			msg:        "single resource with namespace",
+		},
+		{
+			annotation: "test,test1",
+			expected:   []string{namespace + "/test", namespace + "/test1"},
+			msg:        "multiple resource no namespace",
+		},
+		{
+			annotation: "different_ns/test,different_ns/test1",
+			expected:   []string{"different_ns/test", "different_ns/test1"},
+			msg:        "multiple resource with namespaces",
+		},
+		{
+			annotation: "different_ns/test,test1",
+			expected:   []string{"different_ns/test", namespace + "/test1"},
+			msg:        "multiple resource with mixed namespaces",
+		},
+	}
+	for _, test := range tests {
+		result := ParseResourceReferenceAnnotationList(namespace, test.annotation)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("Error in test case %s: got: %v, expected: %v", test.msg, result, test.expected)
+		}
 	}
 }

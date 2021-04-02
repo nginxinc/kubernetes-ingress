@@ -118,6 +118,15 @@ func ParseResourceReferenceAnnotation(ns, antn string) string {
 	return antn
 }
 
+// ParseResourceReferenceAnnotationList returns a slice of ns/names strings
+func ParseResourceReferenceAnnotationList(ns, annotations string) []string {
+	var out []string
+	for _, antn := range strings.Split(annotations, ",") {
+		out = append(out, ParseResourceReferenceAnnotation(ns, antn))
+	}
+	return out
+}
+
 func validateAppProtectUserSig(userSig *unstructured.Unstructured) error {
 	sigName := userSig.GetName()
 	err := validateRequiredSlices(userSig, appProtectUserSigRequiredSlices)

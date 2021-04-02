@@ -1091,7 +1091,7 @@ func TestUpdateApResources(t *testing.T) {
 
 	tests := []struct {
 		ingEx    *IngressEx
-		expected map[string]string
+		expected AppProtectResources
 		msg      string
 	}{
 		{
@@ -1100,7 +1100,7 @@ func TestUpdateApResources(t *testing.T) {
 					ObjectMeta: meta_v1.ObjectMeta{},
 				},
 			},
-			expected: map[string]string{},
+			expected: AppProtectResources{},
 			msg:      "no app protect resources",
 		},
 		{
@@ -1110,8 +1110,8 @@ func TestUpdateApResources(t *testing.T) {
 				},
 				AppProtectPolicy: appProtectPolicy,
 			},
-			expected: map[string]string{
-				"policy": "/etc/nginx/waf/nac-policies/test-ns_test-name",
+			expected: AppProtectResources{
+				AppProtectPolicy: "/etc/nginx/waf/nac-policies/test-ns_test-name",
 			},
 			msg: "app protect policy",
 		},
@@ -1120,11 +1120,15 @@ func TestUpdateApResources(t *testing.T) {
 				Ingress: &networking.Ingress{
 					ObjectMeta: meta_v1.ObjectMeta{},
 				},
-				AppProtectLogConf: appProtectLogConf,
-				AppProtectLogDst:  appProtectLogDst,
+				AppProtectLogs: []AppProtectLog{
+					{
+						LogConf: appProtectLogConf,
+						Dest:    appProtectLogDst,
+					},
+				},
 			},
-			expected: map[string]string{
-				"logconf": "/etc/nginx/waf/nac-logconfs/test-ns_test-name test-dst",
+			expected: AppProtectResources{
+				AppProtectLogconfs: []string{"/etc/nginx/waf/nac-logconfs/test-ns_test-name test-dst"},
 			},
 			msg: "app protect log conf",
 		},
@@ -1133,13 +1137,17 @@ func TestUpdateApResources(t *testing.T) {
 				Ingress: &networking.Ingress{
 					ObjectMeta: meta_v1.ObjectMeta{},
 				},
-				AppProtectPolicy:  appProtectPolicy,
-				AppProtectLogConf: appProtectLogConf,
-				AppProtectLogDst:  appProtectLogDst,
+				AppProtectPolicy: appProtectPolicy,
+				AppProtectLogs: []AppProtectLog{
+					{
+						LogConf: appProtectLogConf,
+						Dest:    appProtectLogDst,
+					},
+				},
 			},
-			expected: map[string]string{
-				"policy":  "/etc/nginx/waf/nac-policies/test-ns_test-name",
-				"logconf": "/etc/nginx/waf/nac-logconfs/test-ns_test-name test-dst",
+			expected: AppProtectResources{
+				AppProtectPolicy:   "/etc/nginx/waf/nac-policies/test-ns_test-name",
+				AppProtectLogconfs: []string{"/etc/nginx/waf/nac-logconfs/test-ns_test-name test-dst"},
 			},
 			msg: "app protect policy and log conf",
 		},

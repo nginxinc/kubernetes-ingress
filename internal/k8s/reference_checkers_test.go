@@ -939,6 +939,48 @@ func TestAppProtectResourceIsReferencedByIngresses(t *testing.T) {
 			expected:          false,
 			msg:               "wrong namespace with implicit namespace",
 		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						"test-annotation": "some-namespace/test-resource,some-namespace/different-resource",
+					},
+				},
+			},
+			resourceNamespace: "some-namespace",
+			resourceName:      "test-resource",
+			expected:          true,
+			msg:               "resource is referenced with namespace within multiple resources",
+		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						"test-annotation": "test-resource,some-namespace/different-resource",
+					},
+				},
+			},
+			resourceNamespace: "default",
+			resourceName:      "test-resource",
+			expected:          true,
+			msg:               "resource is referenced with implicit namespace within multiple resources",
+		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						"test-annotation": "test-resource,some-namespace/different-resource",
+					},
+				},
+			},
+			resourceNamespace: "some-namespace",
+			resourceName:      "test-resource",
+			expected:          false,
+			msg:               "wrong namespace within multiple resources",
+		},
 	}
 
 	for _, test := range tests {

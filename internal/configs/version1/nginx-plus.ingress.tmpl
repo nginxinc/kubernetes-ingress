@@ -70,7 +70,8 @@ server {
 	{{- end}}
 	{{- if $server.AppProtectLogEnable}}
 	app_protect_security_log_enable {{$server.AppProtectLogEnable}};
-	{{if $server.AppProtectLogConf}}app_protect_security_log {{$server.AppProtectLogConf}};{{end}}
+	{{range $AppProtectLogConf := $server.AppProtectLogConfs}}app_protect_security_log {{$AppProtectLogConf}};
+	{{end}}
 	{{- end}}
 	
 	{{if not $server.GRPCOnly}}
