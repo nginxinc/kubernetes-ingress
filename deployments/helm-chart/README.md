@@ -32,7 +32,7 @@ This step is required if you're installing the chart using its sources. Addition
 This step is required if you're installing the chart via the helm repository.
 
 ```console
-$ helm repo add nginx-edge https://helm.nginx.com/edge
+$ helm repo add nginx-stable https://helm.nginx.com/stable
 $ helm repo update
 ```
 
@@ -50,12 +50,12 @@ To install the chart with the release name my-release (my-release is the name th
 
 For NGINX:
 ```console
-$ helm install my-release nginx-stable/nginx-ingress --devel
+$ helm install my-release nginx-stable/nginx-ingress
 ```
 
 For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
 ```console
-$ helm install my-release nginx-stable/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true --devel
+$ helm install my-release nginx-stable/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
 ```
 
 ### Installing Using Chart Sources
