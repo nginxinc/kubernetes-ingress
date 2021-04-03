@@ -1,9 +1,8 @@
 # syntax=docker/dockerfile:1.0-experimental
-ARG NGINX_VERSION=1.19.9
 ARG BUILD_OS=debian
 
 ############################################# Base image for Debian #############################################
-FROM nginx:$NGINX_VERSION AS debian
+FROM nginx:1.19.9 AS debian
 ARG IC_VERSION
 
 LABEL version=debian-nginx-$NGINX_VERSION-$IC_VERSION
@@ -15,7 +14,7 @@ RUN apt-get update \
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:$NGINX_VERSION-alpine AS alpine
+FROM nginx:1.19.9-alpine AS alpine
 ARG IC_VERSION
 
 LABEL version=alpine-nginx-$NGINX_VERSION-$IC_VERSION
@@ -138,8 +137,9 @@ COPY --chown=nginx:0 LICENSE /licenses
 
 ############################################# Base image for Openshift OSS #############################################
 FROM openshift-base AS openshift
-ARG NGINX_VERSION
 ARG IC_VERSION
+
+ENV NGINX_VERSION 1.19.9
 
 LABEL image-version=ubi-nginx-$NGINX_VERSION-$IC_VERSION
 
@@ -151,6 +151,7 @@ RUN echo "[nginx]" >> /etc/yum.repos.d/nginx.repo \
 	&& echo "module_hotfixes=true" >> /etc/yum.repos.d/nginx.repo \
 	&& yum install -y nginx-${NGINX_VERSION} \
 	&& rm /etc/yum.repos.d/nginx.repo
+
 
 ############################################# Base image for Openshift with NGINX Plus #############################################
 FROM openshift-base AS openshift-plus
@@ -178,7 +179,6 @@ COPY --chown=nginx:0 internal/configs/oidc/* /etc/nginx/oidc/
 
 ############################################# Build image for Opentracing Builder #############################################
 FROM debian as opentracing-builder
-ARG NGINX_VERSION
 ARG NGINX_OPENTRACING=0.10.0
 ARG OPENTRACING_VERSION=1.6.0
 
@@ -188,7 +188,6 @@ RUN apt-get update && apt-get install -y -q --fix-missing --no-install-recommend
 	build-essential \
 	cmake \
 	git \
-	libcurl4-openssl-dev \
 	libcurl4-openssl-dev \
 	libgeoip-dev \
 	liblmdb-dev \
@@ -233,11 +232,10 @@ RUN set -x \
 
 ############################################# Build image for Opentracing #############################################
 FROM debian as opentracing
-ARG NGINX_VERSION
 ARG OPENTRACING_VERSION=1.6.0
 ARG IC_VERSION
 
-LABEL version=debian-nginx-opentracing-$NGINX_PLUS_VERSION-$IC_VERSION
+LABEL version=debian-nginx-opentracing-$NGINX_VERSION-$IC_VERSION
 
 COPY --from=opentracing-builder /nginx-${NGINX_VERSION}/objs/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ngx_http_opentracing_module.so
 COPY --from=opentracing-builder /usr/local/lib/libopentracing.so.${OPENTRACING_VERSION} /usr/local/lib/libopentracing.so.1
