@@ -16,7 +16,7 @@ defaults:
     shell: bash
 
 env:
-  FOSSA_VER: 1.1.0
+  FOSSA_VER: 1.1.6
   FOSSA_URL: https://github.com/fossas/fossa-cli/releases/download
   GOLANG_VERSION: 1.16
 
