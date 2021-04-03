@@ -10,7 +10,6 @@ defaults:
 
 env:
   DOCKER_BUILDKIT: 1
-  GOLANG_VERSION: 1.16
   K8S_TIMEOUT: 90s
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge
@@ -28,6 +27,8 @@ jobs:
         id: commit
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+      - name: Determine Go version from go.mod
+        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds*
@@ -54,7 +55,7 @@ jobs:
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
-          go-version: '${{ env.GOLANG_VERSION }}'
+          go-version: ${{ env.GO_VERSION }}
       - name: Run Tests
         run: go test ./...
 

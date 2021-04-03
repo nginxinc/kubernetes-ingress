@@ -18,7 +18,6 @@ defaults:
 env:
   FOSSA_VER: 1.1.0
   FOSSA_URL: https://github.com/fossas/fossa-cli/releases/download
-  GOLANG_VERSION: 1.16
 
 jobs:
 
@@ -28,10 +27,12 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Determine Go version from go.mod
+        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
-          go-version: '${{ env.GOLANG_VERSION }}'
+          go-version: '${{ env.GO_VERSION }}'
       - name: Configure Fossa CLI
         run: |
           wget ${{ env.FOSSA_URL }}/v${{ env.FOSSA_VER }}/fossa-cli_${{ env.FOSSA_VER }}_linux_amd64.tar.gz
