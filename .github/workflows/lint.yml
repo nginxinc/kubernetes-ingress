@@ -31,6 +31,6 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Lint Code
-        uses: golangci/golangci-lint-action@v2.5.1
+        uses: golangci/golangci-lint-action@v2.5.2
         with:
           args: --timeout ${{ env.GOLANGCI_TIMEOUT }}
