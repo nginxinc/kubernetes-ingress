@@ -2,7 +2,7 @@ PyYAML==5.4.1
 requests==2.25.1
 forcediphttpsadapter==1.0.1
 kubernetes==8.0.1
-pytest==6.2.2
+pytest==6.2.3
 ipaddress==1.0.23 # >= 1.0.17
 cffi==1.14.5
 pyOpenSSL==20.0.1
