@@ -15,7 +15,8 @@ Below we describe the available command-line arguments:
 	Secret with a TLS certificate and key for TLS termination of the default server.
 
 	- If not set, certificate and key in the file "/etc/nginx/secrets/default" are used.
-	- If a secret is set, but the Ingress controller is not able to fetch it from Kubernetes API, or if a secret is not set and the file "/etc/nginx/secrets/  default" does not exist, the Ingress controller will fail to start.
+	- If "/etc/nginx/secrets/default" doesn't exist, the Ingress Controller will configure NGINX to reject TLS connections to the default server.
+	- If a secret is set, but the Ingress controller is not able to fetch it from Kubernetes API, or it is not set and the Ingress Controller fails to read the file "/etc/nginx/secrets/default", the Ingress controller will fail to start.
 
 	Format: ``<namespace>/<name>``
 

@@ -91,9 +91,10 @@ var (
 
 	defaultServerSecret = flag.String("default-server-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of the default server. Format: <namespace>/<name>.
-	If not set, certificate and key in the file "/etc/nginx/secrets/default" are used. If a secret is set,
-	but the Ingress controller is not able to fetch it from Kubernetes API or a secret is not set and
-	the file "/etc/nginx/secrets/default" does not exist, the Ingress controller will fail to start`)
+	If not set, than the certificate and key in the file "/etc/nginx/secrets/default" are used. 
+	If "/etc/nginx/secrets/default" doesn't exist, the Ingress Controller will configure NGINX to reject TLS connections to the default server.
+	If a secret is set, but the Ingress controller is not able to fetch it from Kubernetes API or it is not set and the Ingress Controller 
+	fails to read the file "/etc/nginx/secrets/default", the Ingress controller will fail to start.`)
 
 	versionFlag = flag.Bool("version", false, "Print the version and git-commit hash and exit")
 
@@ -429,6 +430,8 @@ func main() {
 		nginxManager.AppProtectPluginStart(aPPluginDone)
 	}
 
+	var sslRejectHandshake bool
+
 	if *defaultServerSecret != "" {
 		secret, err := getAndValidateSecret(kubeClient, *defaultServerSecret)
 		if err != nil {
@@ -438,9 +441,14 @@ func main() {
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
 		nginxManager.CreateSecret(configs.DefaultServerSecretName, bytes, nginx.TLSSecretFileMode)
 	} else {
-		_, err = os.Stat("/etc/nginx/secrets/default")
-		if os.IsNotExist(err) {
-			glog.Fatalf("A TLS cert and key for the default server is not found")
+		_, err := os.Stat(configs.DefaultServerSecretPath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				// file doesn't exist - it is OK! we will reject TLS connections in the default server
+				sslRejectHandshake = true
+			} else {
+				glog.Fatalf("Error checking the default server TLS cert and key in %s: %v", configs.DefaultServerSecretPath, err)
+			}
 		}
 	}
 
@@ -513,6 +521,7 @@ func main() {
 		MainAppProtectLoadModule:       *appProtect,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
 		EnablePreviewPolicies:          *enablePreviewPolicies,
+		SSLRejectHandshake:             sslRejectHandshake,
 	}
 
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)

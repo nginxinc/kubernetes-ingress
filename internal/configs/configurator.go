@@ -40,6 +40,9 @@ const (
 	appProtectUserSigIndex          = "/etc/nginx/waf/nac-usersigs/index.conf"
 )
 
+// DefaultServerSecretPath is the full path to the Secret with a TLS cert and a key for the default server.
+const DefaultServerSecretPath = "/etc/nginx/secrets/default"
+
 // DefaultServerSecretName is the filename of the Secret with a TLS cert and a key for the default server.
 const DefaultServerSecretName = "default"
 

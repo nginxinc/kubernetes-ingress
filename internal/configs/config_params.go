@@ -116,6 +116,7 @@ type StaticConfigParams struct {
 	PodName                        string
 	EnableLatencyMetrics           bool
 	EnablePreviewPolicies          bool
+	SSLRejectHandshake             bool
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.

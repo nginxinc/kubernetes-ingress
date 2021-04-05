@@ -174,6 +174,7 @@ type MainConfig struct {
 	ServerNamesHashBucketSize          string
 	ServerNamesHashMaxSize             string
 	ServerTokens                       string
+	SSLRejectHandshake                 bool
 	SSLCiphers                         string
 	SSLDHParam                         string
 	SSLPreferServerCiphers             bool
