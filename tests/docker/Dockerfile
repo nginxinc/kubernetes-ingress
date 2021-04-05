@@ -1,4 +1,4 @@
-FROM python:3.9.2-slim
+FROM python:3.9.3-slim
 
 RUN mkdir /workspace
 
