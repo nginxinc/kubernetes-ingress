@@ -8,7 +8,7 @@ from suite.resources_utils import (
     replace_secret,
 )
 from suite.custom_resources_utils import (
-    read_crd,
+    read_custom_resource,
     delete_virtual_server,
     create_virtual_server_from_yaml,
     delete_and_create_vs_from_yaml,
@@ -181,7 +181,7 @@ class TestJWTPolicies:
         resp = requests.get(virtual_server_setup.backend_1_url, headers=headers)
         print(resp.status_code)
 
-        crd_info = read_crd(
+        crd_info = read_custom_resource(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -226,7 +226,7 @@ class TestJWTPolicies:
         )
 
         print(f"Patch vs with policy: {policy}")
-        policy_info = read_crd(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         if policy == jwt_pol_valid_src:
             vs_src = jwt_vs_single_src
             assert (
@@ -253,7 +253,7 @@ class TestJWTPolicies:
         wait_before_test()
         resp = requests.get(virtual_server_setup.backend_1_url, headers=headers)
         print(resp.status_code)
-        crd_info = read_crd(
+        crd_info = read_custom_resource(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",

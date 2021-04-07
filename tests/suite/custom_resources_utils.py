@@ -65,7 +65,7 @@ def delete_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, name) -> None:
     print(f"CRD was removed with name '{name}'")
 
 
-def read_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
+def read_custom_resource(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
     """
     Get CRD information (kubectl describe output)
 

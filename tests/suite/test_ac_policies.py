@@ -2,7 +2,7 @@ import pytest, requests
 from kubernetes.client.rest import ApiException
 from suite.resources_utils import wait_before_test, replace_configmap_from_yaml
 from suite.custom_resources_utils import (
-    read_crd,
+    read_custom_resource,
     delete_virtual_server,
     create_virtual_server_from_yaml,
     patch_virtual_server_from_yaml,
@@ -122,7 +122,7 @@ class TestAccessControlPoliciesVs:
         )
         wait_before_test()
 
-        policy_info = read_crd(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         print(f"\nUse IP listed in deny block: 10.0.0.1")
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
@@ -183,7 +183,7 @@ class TestAccessControlPoliciesVs:
         )
         wait_before_test()
 
-        policy_info = read_crd(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         print(f"\nUse IP listed in allow block: 10.0.0.1")
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
@@ -300,13 +300,13 @@ class TestAccessControlPoliciesVs:
         )
         print(f"Response: {resp.status_code}\n{resp.text}")
 
-        vs_info = read_crd(
+        vs_info = read_custom_resource(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
             virtual_server_setup.vs_name,
         )
-        policy_info = read_crd(
+        policy_info = read_custom_resource(
             kube_apis.custom_objects, test_namespace, "policies", invalid_pol_name
         )
         delete_policy(kube_apis.custom_objects, invalid_pol_name, test_namespace)
@@ -353,7 +353,7 @@ class TestAccessControlPoliciesVs:
         )
 
         wait_before_test()
-        vs_info = read_crd(
+        vs_info = read_custom_resource(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -369,7 +369,7 @@ class TestAccessControlPoliciesVs:
         )
         print(f"Response: {resp.status_code}\n{resp.text}")
 
-        vs_info = read_crd(
+        vs_info = read_custom_resource(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",

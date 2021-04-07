@@ -2,7 +2,7 @@ import pytest, requests, time
 from kubernetes.client.rest import ApiException
 from suite.resources_utils import wait_before_test, replace_configmap_from_yaml
 from suite.custom_resources_utils import (
-    read_crd,
+    read_custom_resource,
     delete_virtual_server,
     create_virtual_server_from_yaml,
     patch_virtual_server_from_yaml,
@@ -76,7 +76,7 @@ class TestRateLimitingPolicies:
         )
 
         wait_before_test()
-        policy_info = read_crd(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         occur = []
         t_end = time.perf_counter() + 1
         resp = requests.get(
@@ -117,7 +117,7 @@ class TestRateLimitingPolicies:
         )
 
         wait_before_test()
-        policy_info = read_crd(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         occur = []
         t_end = time.perf_counter() + 1
         resp = requests.get(
@@ -158,7 +158,7 @@ class TestRateLimitingPolicies:
         )
 
         wait_before_test()
-        policy_info = read_crd(
+        policy_info = read_custom_resource(
             kube_apis.custom_objects, test_namespace, "policies", invalid_pol_name
         )
         resp = requests.get(

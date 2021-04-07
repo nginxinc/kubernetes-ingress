@@ -2,7 +2,7 @@ import pytest
 from kubernetes.client.rest import ApiException
 from suite.resources_utils import wait_before_test
 from suite.custom_resources_utils import (
-    read_crd,
+    read_custom_resource,
     patch_virtual_server_from_yaml,
 )
 from settings import TEST_DATA
@@ -39,7 +39,7 @@ class TestVirtualServerStatus:
         """
         Test VirtualServer status with a valid fields in yaml
         """
-        response = read_crd(
+        response = read_custom_resource(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -65,7 +65,7 @@ class TestVirtualServerStatus:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        response = read_crd(
+        response = read_custom_resource(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",
@@ -94,7 +94,7 @@ class TestVirtualServerStatus:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        response = read_crd(
+        response = read_custom_resource(
             kube_apis.custom_objects,
             virtual_server_setup.namespace,
             "virtualservers",

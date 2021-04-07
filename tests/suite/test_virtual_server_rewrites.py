@@ -3,7 +3,7 @@ import requests
 from kubernetes.client.rest import ApiException
 from suite.resources_utils import wait_before_test
 from suite.custom_resources_utils import (
-    read_crd,
+    read_custom_resource,
     patch_virtual_server_from_yaml,
 )
 from settings import TEST_DATA

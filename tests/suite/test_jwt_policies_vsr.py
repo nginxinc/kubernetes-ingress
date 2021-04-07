@@ -8,7 +8,7 @@ from suite.resources_utils import (
     replace_secret,
 )
 from suite.custom_resources_utils import (
-    read_crd,
+    read_custom_resource,
     delete_virtual_server,
     patch_virtual_server_from_yaml,
     patch_v_s_route_from_yaml,
@@ -208,7 +208,7 @@ class TestJWTPoliciesVsr:
         resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
         print(resp.status_code)
 
-        crd_info = read_crd(
+        crd_info = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
@@ -277,10 +277,10 @@ class TestJWTPoliciesVsr:
 
         resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
         print(resp.status_code)
-        policy_info = read_crd(
+        policy_info = read_custom_resource(
             kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
         )
-        crd_info = read_crd(
+        crd_info = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
@@ -353,7 +353,7 @@ class TestJWTPoliciesVsr:
         delete_secret(kube_apis.v1, secret, v_s_route_setup.route_m.namespace)
         resp2 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
         print(resp2.status_code)
-        crd_info = read_crd(
+        crd_info = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
@@ -413,7 +413,7 @@ class TestJWTPoliciesVsr:
 
         resp2 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
         print(resp2.status_code)
-        crd_info = read_crd(
+        crd_info = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
@@ -472,7 +472,7 @@ class TestJWTPoliciesVsr:
         resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
         print(resp.status_code)
 
-        crd_info = read_crd(
+        crd_info = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",

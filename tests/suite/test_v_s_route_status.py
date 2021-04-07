@@ -2,7 +2,7 @@ import pytest
 from kubernetes.client.rest import ApiException
 from suite.resources_utils import wait_before_test
 from suite.custom_resources_utils import (
-    read_crd,
+    read_custom_resource,
     patch_virtual_server_from_yaml,
     patch_v_s_route_from_yaml,
     delete_virtual_server,
@@ -60,13 +60,13 @@ class TestVirtualServerRouteStatus:
         """
         Test VirtualServerRoute status with a valid fields in yaml
         """
-        response_m = read_crd(
+        response_m = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_crd(
+        response_s = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",
@@ -109,13 +109,13 @@ class TestVirtualServerRouteStatus:
         )
         wait_before_test()
 
-        response_m = read_crd(
+        response_m = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_crd(
+        response_s = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",
@@ -161,13 +161,13 @@ class TestVirtualServerRouteStatus:
         )
         wait_before_test()
 
-        response_m = read_crd(
+        response_m = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_crd(
+        response_s = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",
@@ -202,13 +202,13 @@ class TestVirtualServerRouteStatus:
         )
         wait_before_test()
 
-        response_m = read_crd(
+        response_m = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_crd(
+        response_s = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",
@@ -239,13 +239,13 @@ class TestVirtualServerRouteStatus:
             kube_apis.custom_objects, v_s_route_setup.vs_name, v_s_route_setup.namespace,
         )
 
-        response_m = read_crd(
+        response_m = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.namespace,
             "virtualserverroutes",
             v_s_route_setup.route_m.name,
         )
-        response_s = read_crd(
+        response_s = read_custom_resource(
             kube_apis.custom_objects,
             v_s_route_setup.route_s.namespace,
             "virtualserverroutes",
