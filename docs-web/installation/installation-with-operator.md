@@ -25,7 +25,7 @@ spec:
   type: deployment
   image:
     repository: nginx/nginx-ingress
-    tag: 1.10.1
+    tag: 1.11.1
     pullPolicy: Always
   serviceType: NodePort
   nginxPlus: False
