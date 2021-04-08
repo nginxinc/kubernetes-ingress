@@ -1,0 +1,13 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  name: ingress
+spec:
+  tls:
+  - hosts:
+    - cafe.example.com
+    secretName: tls-secret
+  rules:
+  - host: cafe.example.com
