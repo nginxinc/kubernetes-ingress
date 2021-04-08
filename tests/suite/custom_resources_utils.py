@@ -59,8 +59,7 @@ def delete_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, name) -> None:
     :return:
     """
     print(f"Delete a CRD: {name}")
-    delete_options = client.V1DeleteOptions()
-    api_extensions_v1_beta1.delete_custom_resource_definition(name, delete_options)
+    api_extensions_v1_beta1.delete_custom_resource_definition(name)
     ensure_item_removal(api_extensions_v1_beta1.read_custom_resource_definition, name)
     print(f"CRD was removed with name '{name}'")
 
@@ -204,6 +203,7 @@ def create_ap_waf_policy_from_yaml(
         logging.exception(f"Exception occurred while creating Policy: {dep['metadata']['name']}")
         raise
 
+
 def delete_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
     """
     Delete a Policy.
@@ -214,10 +214,9 @@ def delete_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
     :return:
     """
     print(f"Delete a Policy: {name}")
-    delete_options = client.V1DeleteOptions()
 
     custom_objects.delete_namespaced_custom_object(
-        "k8s.nginx.org", "v1", namespace, "policies", name, delete_options
+        "k8s.nginx.org", "v1", namespace, "policies", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
@@ -474,9 +473,8 @@ def delete_ap_usersig(custom_objects: CustomObjectsApi, name, namespace) -> None
     :return:
     """
     print(f"Delete AP UserSig: {name}")
-    delete_options = client.V1DeleteOptions()
     custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", name, delete_options
+        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
@@ -498,9 +496,8 @@ def delete_ap_logconf(custom_objects: CustomObjectsApi, name, namespace) -> None
     :return:
     """
     print(f"Delete AP logconf: {name}")
-    delete_options = client.V1DeleteOptions()
     custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "aplogconfs", name, delete_options
+        "appprotect.f5.com", "v1beta1", namespace, "aplogconfs", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
@@ -522,9 +519,8 @@ def delete_ap_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
     :return:
     """
     print(f"Delete a AP policy: {name}")
-    delete_options = client.V1DeleteOptions()
     custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "appolicies", name, delete_options
+        "appprotect.f5.com", "v1beta1", namespace, "appolicies", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
@@ -548,10 +544,9 @@ def delete_virtual_server(custom_objects: CustomObjectsApi, name, namespace) -> 
     :return:
     """
     print(f"Delete a VirtualServer: {name}")
-    delete_options = client.V1DeleteOptions()
 
     custom_objects.delete_namespaced_custom_object(
-        "k8s.nginx.org", "v1", namespace, "virtualservers", name, delete_options
+        "k8s.nginx.org", "v1", namespace, "virtualservers", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
@@ -743,9 +738,8 @@ def delete_v_s_route(custom_objects: CustomObjectsApi, name, namespace) -> None:
     :return:
     """
     print(f"Delete a VirtualServerRoute: {name}")
-    delete_options = client.V1DeleteOptions()
     custom_objects.delete_namespaced_custom_object(
-        "k8s.nginx.org", "v1", namespace, "virtualserverroutes", name, delete_options
+        "k8s.nginx.org", "v1", namespace, "virtualserverroutes", name,
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,

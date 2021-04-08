@@ -10,7 +10,7 @@ from suite.resources_utils import patch_rbac, replace_service, read_service, \
 from suite.yaml_utils import get_paths_from_vs_yaml, get_first_vs_host_from_yaml, get_name_from_yaml
 
 
-@pytest.mark.vs
+@pytest.mark.sean
 @pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
