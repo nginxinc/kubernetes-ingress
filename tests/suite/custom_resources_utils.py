@@ -373,10 +373,9 @@ def delete_resource(custom_objects: CustomObjectsApi, resource, namespace, plura
     group, version = resource["apiVersion"].split("/")
 
     print(f"Delete a: {kind}, name: {name}")
-    delete_options = client.V1DeleteOptions()
 
     custom_objects.delete_namespaced_custom_object(
-        group, version, namespace, plural, name, delete_options
+        group, version, namespace, plural, name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
