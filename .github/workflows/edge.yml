@@ -100,60 +100,89 @@ jobs:
       matrix:
         include:
           - os: ubuntu-20.04
-            image: nginx-ingress
+            file: build/Dockerfile
+            image: debian
             tag: ${{ github.sha }}
             marker: 'ingresses'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-ingress
+            file: build/Dockerfile
+            image: alpine
             tag: ${{ github.sha }}
             marker: 'vsr'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-ingress
+            file: build/Dockerfile
+            image: opentracing
             tag: ${{ github.sha }}
             marker: 'vs'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-ingress
+            file: build/Dockerfile
+            image: openshift
             tag: ${{ github.sha }}
             marker: 'ts'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-ingress
+            file: build/Dockerfile
+            image: debian
             tag: ${{ github.sha }}
             marker: 'policies'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            file: build/Dockerfile
+            image: openshift-plus
             tag: ${{ github.sha }}
             marker: 'ingresses'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            file: build/Dockerfile
+            image: debian-plus
             tag: ${{ github.sha }}
             marker: 'vsr'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            file: build/Dockerfile
+            image: debian-plus
             tag: ${{ github.sha }}
             marker: 'vs'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            file: build/Dockerfile
+            image: opentracing-plus
             tag: ${{ github.sha }}
             marker: 'ts'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            file: build/Dockerfile
+            image: debian-plus
             tag: ${{ github.sha }}
             marker: 'policies'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            file: build/Dockerfile
+            image: debian-plus-ap
             tag: ${{ github.sha }}-ap
             marker: 'appprotect'
             type: plus-ap
+            ic-type: nginx-plus-ingress
+          - os: ubuntu-20.04
+            file: build/DockerfileWithAppProtectForPlusForOpenShift
+            image: nginx-plus-ingress-ap-openshift
+            tag: ${{ github.sha }}-ap
+            marker: 'appprotect'
+            type: plus-ap
+            ic-type: nginx-plus-ingress
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -176,7 +205,7 @@ jobs:
       - name: Build ${{ matrix.image }} Container
         uses: docker/build-push-action@v2
         with:
-          file: build/Dockerfile
+          file: ${{ matrix.file }}
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -184,12 +213,12 @@ jobs:
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           load: true
           build-args: |
-            BUILD_OS=debian
+            BUILD_OS=${{ matrix.image }}
         if: matrix.type == 'oss'
       - name: Build Plus Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
         with:
-          file: build/Dockerfile
+          file: ${{ matrix.file }}
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -200,24 +229,23 @@ jobs:
             "nginx-repo.crt=${{ secrets.KIC_NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.KIC_NGINX_KEY }}"
           build-args: |
-            BUILD_OS=debian-plus
+            BUILD_OS=${{ matrix.image }}
             PLUS=-plus
         if: matrix.type == 'plus'
       - name: Build AP Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
         with:
-          file: build/Dockerfile
+          file: ${{ matrix.file }}
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
           target: local
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           load: true
           secrets: |
             "nginx-repo.crt=${{ secrets.KIC_NGINX_AP_CRT }}"
             "nginx-repo.key=${{ secrets.KIC_NGINX_AP_KEY }}"
+            "rhel_license=${{ secrets.KIC_RHEL_LICENSE }}"
           build-args: |
-            BUILD_OS=debian-plus-ap
+            BUILD_OS=${{ matrix.image }}
             PLUS=-plus
         if: matrix.type == 'plus-ap'
       - name: Build Test-Runner Container
@@ -259,7 +287,7 @@ jobs:
           --context=kind-${{ github.run_id }} \
           --image=${{ matrix.image }}:${{ matrix.tag }} \
           --image-pull-policy=Never \
-          --ic-type=${{ matrix.image }} \
+          --ic-type=${{ matrix.ic-type }} \
           --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
           --html=tests-${{ steps.k8s.outputs.cluster }}.html \
           --self-contained-html \
