@@ -178,6 +178,24 @@ jobs:
           key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-buildx-
+      - name: Determine which image to build
+        run: |
+          DOW=$(date +%u)
+          if [ ${TYPE} == "oss" ]; then
+            [[ $DOW -lt 5 ]] && build_os="debian"
+            [[ $DOW -eq 5 ]] && build_os="openshift"
+            [[ $DOW -eq 6 ]] && build_os="alpine"
+            [[ $DOW -eq 7 ]] && build_os="opentracing"
+          elif [ ${TYPE} == "plus" ]; then
+            [[ $DOW -lt 6 ]] && build_os="debian-plus"
+            [[ $DOW -eq 6 ]] && build_os="opentracing-plus"
+            [[ $DOW -eq 7 ]] && build_os="openshift-plus"
+          elif [ ${TYPE} == "plus-ap" ]; then
+            [[ $DOW -lt 5 || $DOW -eq 7 ]] && read -r build_os build_dockerfile <<< "debian-plus build/Dockerfile"
+            [[ $DOW -eq 6 ]] && read -r build_os build_dockerfile <<< "opentracing-plus build/DockerfileWithAppProtectForPlusForOpenShift"
+          fi
+          echo "BUILD_OS=${build_os}" >> $GITHUB_ENV
+          echo "BUILD_DOCKERFILE=${build_dockerfile}" >> $GITHUB_ENV
       - name: Build ${{ matrix.image }} Container
         uses: docker/build-push-action@v2
         with:
@@ -189,7 +207,7 @@ jobs:
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           load: true
           build-args: |
-            BUILD_OS=debian
+            BUILD_OS=${BUILD_OS}
         if: matrix.type == 'oss'
       - name: Build Plus Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
@@ -205,13 +223,13 @@ jobs:
             "nginx-repo.crt=${{ secrets.KIC_NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.KIC_NGINX_KEY }}"
           build-args: |
-            BUILD_OS=debian-plus
+            BUILD_OS=${BUILD_OS}
             PLUS=-plus
         if: matrix.type == 'plus'
       - name: Build AP Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
         with:
-          file: build/Dockerfile
+          file: ${BUILD_DOCKERFILE}
           context: '.'
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -222,7 +240,7 @@ jobs:
             "nginx-repo.crt=${{ secrets.KIC_NGINX_AP_CRT }}"
             "nginx-repo.key=${{ secrets.KIC_NGINX_AP_KEY }}"
           build-args: |
-            BUILD_OS=debian-plus-ap
+            BUILD_OS=${BUILD_OS}
             PLUS=-plus
         if: matrix.type == 'plus-ap'
       - name: Build Test-Runner Container
