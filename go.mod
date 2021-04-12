@@ -14,8 +14,8 @@ require (
 	github.com/nginxinc/nginx-prometheus-exporter v0.9.0
 	github.com/prometheus/client_golang v1.10.0
 	github.com/spiffe/go-spiffe v1.1.0
-	k8s.io/api v0.20.5
-	k8s.io/apimachinery v0.20.5
+	k8s.io/api v0.21.0
+	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.20.5
 	k8s.io/code-generator v0.20.5
 	k8s.io/gengo v0.0.0-20210203185629-de9496dff47b // indirect
