@@ -8,12 +8,13 @@ from settings import TEST_DATA
 from _ssl import SSLError
 
 
-def assert_ssl_error(endpoint, host):
+def assert_unrecognized_name_error(endpoint, host):
     try:
         get_server_certificate_subject(endpoint.public_ip, host, endpoint.port_ssl)
         pytest.fail("We expected an SSLError here, but didn't get it or got another error. Exiting...")
-    except SSLError:
-        print("The expected error was caught. Continue.")
+    except SSLError as e:
+        assert "SSL" in e.library
+        assert "TLSV1_UNRECOGNIZED_NAME" in e.reason
 
 
 def assert_us_subject(endpoint, host):
@@ -76,7 +77,7 @@ def tls_setup(request, kube_apis, ingress_controller_prerequisites, ingress_cont
 class TestIngressTLS:
     def test_tls_termination(self, kube_apis, ingress_controller_endpoint, test_namespace, tls_setup):
         print("Step 1: no secret")
-        assert_ssl_error(ingress_controller_endpoint, tls_setup.ingress_host)
+        assert_unrecognized_name_error(ingress_controller_endpoint, tls_setup.ingress_host)
 
         print("Step 2: deploy secret and check")
         create_secret_from_yaml(kube_apis.v1, test_namespace, tls_setup.secret_path)
@@ -86,7 +87,7 @@ class TestIngressTLS:
         print("Step 3: remove secret and check")
         delete_secret(kube_apis.v1, tls_setup.secret_name, test_namespace)
         wait_before_test(1)
-        assert_ssl_error(ingress_controller_endpoint, tls_setup.ingress_host)
+        assert_unrecognized_name_error(ingress_controller_endpoint, tls_setup.ingress_host)
 
         print("Step 4: restore secret and check")
         create_secret_from_yaml(kube_apis.v1, test_namespace, tls_setup.secret_path)
@@ -97,7 +98,7 @@ class TestIngressTLS:
         delete_secret(kube_apis.v1, tls_setup.secret_name, test_namespace)
         create_secret_from_yaml(kube_apis.v1, test_namespace, tls_setup.invalid_secret_path)
         wait_before_test(1)
-        assert_ssl_error(ingress_controller_endpoint, tls_setup.ingress_host)
+        assert_unrecognized_name_error(ingress_controller_endpoint, tls_setup.ingress_host)
 
         print("Step 6: restore secret and check")
         delete_secret(kube_apis.v1, tls_setup.secret_name, test_namespace)

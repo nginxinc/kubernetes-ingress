@@ -29,14 +29,15 @@ def clean_up(request, kube_apis, test_namespace) -> None:
     request.addfinalizer(fin)
 
 
-def assert_ssl_error(virtual_server_setup):
+def assert_unrecognized_name_error(virtual_server_setup):
     try:
         get_server_certificate_subject(virtual_server_setup.public_endpoint.public_ip,
                                        virtual_server_setup.vs_host,
                                        virtual_server_setup.public_endpoint.port_ssl)
         pytest.fail("We expected an SSLError here, but didn't get it or got another error. Exiting...")
-    except SSLError:
-        print("The expected error was caught. Continue.")
+    except SSLError as e:
+        assert "SSL" in e.library
+        assert "TLSV1_UNRECOGNIZED_NAME" in e.reason
 
 
 def assert_us_subject(virtual_server_setup):
@@ -68,7 +69,7 @@ def assert_gb_subject(virtual_server_setup):
 class TestVirtualServerTLS:
     def test_tls_termination(self, kube_apis, crd_ingress_controller, virtual_server_setup, clean_up):
         print("\nStep 1: no secret")
-        assert_ssl_error(virtual_server_setup)
+        assert_unrecognized_name_error(virtual_server_setup)
 
         print("\nStep 2: deploy secret and check")
         secret_name = create_secret_from_yaml(kube_apis.v1, virtual_server_setup.namespace,
@@ -79,7 +80,7 @@ class TestVirtualServerTLS:
         print("\nStep 3: remove secret and check")
         delete_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace)
         wait_before_test(1)
-        assert_ssl_error(virtual_server_setup)
+        assert_unrecognized_name_error(virtual_server_setup)
 
         print("\nStep 4: restore secret and check")
         create_secret_from_yaml(kube_apis.v1, virtual_server_setup.namespace,
@@ -92,7 +93,7 @@ class TestVirtualServerTLS:
         create_secret_from_yaml(kube_apis.v1, virtual_server_setup.namespace,
                        f"{TEST_DATA}/virtual-server-tls/invalid-tls-secret.yaml")
         wait_before_test(1)
-        assert_ssl_error(virtual_server_setup)
+        assert_unrecognized_name_error(virtual_server_setup)
 
         print("\nStep 6: restore secret and check")
         delete_secret(kube_apis.v1, secret_name, virtual_server_setup.namespace)
