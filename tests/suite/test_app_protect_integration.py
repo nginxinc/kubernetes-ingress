@@ -37,7 +37,7 @@ from suite.yaml_utils import get_first_ingress_host_from_yaml, get_name_from_yam
 src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
 ap_policy = "dataguard-alarm"
 ap_policy_uds = "dataguard-alarm-uds"
-uds_crd = f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_apusersigs.yaml"
+uds_crd = f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_apusersigs.yaml"
 uds_crd_resource = f"{TEST_DATA}/appprotect/ap-ic-uds.yaml"
 valid_resp_addr = "Server address:"
 valid_resp_name = "Server name:"

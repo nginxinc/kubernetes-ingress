@@ -5,22 +5,22 @@ import yaml
 import logging
 
 from pprint import pprint
-from kubernetes.client import CustomObjectsApi, ApiextensionsV1beta1Api, CoreV1Api
+from kubernetes.client import CustomObjectsApi, ApiextensionsV1Api, CoreV1Api
 from kubernetes import client
 from kubernetes.client.rest import ApiException
 
 from suite.resources_utils import ensure_item_removal, get_file_contents
 
 
-def create_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, body) -> None:
+def create_crd(api_extensions_v1: ApiextensionsV1Api, body) -> None:
     """
     Create a CRD based on a dict
 
-    :param api_extensions_v1_beta1: ApiextensionsV1beta1Api
+    :param api_extensions_v1: ApiextensionsV1Api
     :param body: a dict
     """
     try:
-        api_extensions_v1_beta1.create_custom_resource_definition(body)
+        api_extensions_v1.create_custom_resource_definition(body)
     except ApiException as api_ex:
         raise api_ex
     except Exception as ex:
@@ -32,12 +32,12 @@ def create_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, body) -> None:
 
 
 def create_crd_from_yaml(
-    api_extensions_v1_beta1: ApiextensionsV1beta1Api, name, yaml_manifest
+    api_extensions_v1: ApiextensionsV1Api, name, yaml_manifest
 ) -> None:
     """
     Create a specific CRD based on yaml file.
 
-    :param api_extensions_v1_beta1: ApiextensionsV1beta1Api
+    :param api_extensions_v1: ApiextensionsV1Api
     :param name: CRD name
     :param yaml_manifest: an absolute path to file
     """
@@ -46,21 +46,21 @@ def create_crd_from_yaml(
         docs = yaml.safe_load_all(f)
         for dep in docs:
             if dep["metadata"]["name"] == name:
-                create_crd(api_extensions_v1_beta1, dep)
+                create_crd(api_extensions_v1, dep)
                 print("CRD was created")
 
 
-def delete_crd(api_extensions_v1_beta1: ApiextensionsV1beta1Api, name) -> None:
+def delete_crd(api_extensions_v1: ApiextensionsV1Api, name) -> None:
     """
     Delete a CRD.
 
-    :param api_extensions_v1_beta1: ApiextensionsV1beta1Api
+    :param api_extensions_v1: ApiextensionsV1Api
     :param name:
     :return:
     """
     print(f"Delete a CRD: {name}")
-    api_extensions_v1_beta1.delete_custom_resource_definition(name)
-    ensure_item_removal(api_extensions_v1_beta1.read_custom_resource_definition, name)
+    api_extensions_v1.delete_custom_resource_definition(name)
+    ensure_item_removal(api_extensions_v1.read_custom_resource_definition, name)
     print(f"CRD was removed with name '{name}'")
 
 
@@ -129,7 +129,7 @@ def read_ap_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> ob
     print(f"Getting info for {name} in namespace {namespace}")
     try:
         response = custom_objects.get_namespaced_custom_object(
-            "appprotect.f5.com", "v1beta1", namespace, plural, name
+            "appprotect.f5.com", "v1", namespace, plural, name
         )
         return response
 
@@ -400,7 +400,7 @@ def create_ap_logconf_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest,
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     custom_objects.create_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "aplogconfs", dep
+        "appprotect.f5.com", "v1", namespace, "aplogconfs", dep
     )
     print(f"AP logconf created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
@@ -418,7 +418,7 @@ def create_ap_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, 
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     custom_objects.create_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "appolicies", dep
+        "appprotect.f5.com", "v1", namespace, "appolicies", dep
     )
     print(f"AP Policy created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
@@ -436,7 +436,7 @@ def create_ap_usersig_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest,
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     custom_objects.create_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", dep
+        "appprotect.f5.com", "v1", namespace, "apusersigs", dep
     )
     print(f"AP UserSig created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
@@ -473,12 +473,12 @@ def delete_ap_usersig(custom_objects: CustomObjectsApi, name, namespace) -> None
     """
     print(f"Delete AP UserSig: {name}")
     custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", name
+        "appprotect.f5.com", "v1", namespace, "apusersigs", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotect.f5.com",
-        "v1beta1",
+        "v1",
         namespace,
         "apusersigs",
         name,
@@ -496,12 +496,12 @@ def delete_ap_logconf(custom_objects: CustomObjectsApi, name, namespace) -> None
     """
     print(f"Delete AP logconf: {name}")
     custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "aplogconfs", name
+        "appprotect.f5.com", "v1", namespace, "aplogconfs", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotect.f5.com",
-        "v1beta1",
+        "v1",
         namespace,
         "aplogconfs",
         name,
@@ -519,12 +519,12 @@ def delete_ap_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
     """
     print(f"Delete a AP policy: {name}")
     custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "appolicies", name
+        "appprotect.f5.com", "v1", namespace, "appolicies", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotect.f5.com",
-        "v1beta1",
+        "v1",
         namespace,
         "appolicies",
         name,
