@@ -424,8 +424,12 @@ def delete_secret(v1: CoreV1Api, name, namespace) -> None:
     :param namespace: namespace name
     :return:
     """
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a secret: {name}")
-    v1.delete_namespaced_secret(name, namespace)
+    v1.delete_namespaced_secret(name, namespace, **delete_options)
     ensure_item_removal(v1.read_namespaced_secret, name, namespace)
     print(f"Secret was removed with name '{name}'")
 
@@ -667,8 +671,12 @@ def delete_configmap(v1: CoreV1Api, name, namespace) -> None:
     :param namespace: namespace name
     :return:
     """
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a ConfigMap: {name}")
-    v1.delete_namespaced_config_map(name, namespace)
+    v1.delete_namespaced_config_map(name, namespace, **delete_options)
     ensure_item_removal(v1.read_namespaced_config_map, name, namespace)
     print(f"ConfigMap was removed with name '{name}'")
 
@@ -681,8 +689,12 @@ def delete_namespace(v1: CoreV1Api, namespace) -> None:
     :param namespace: namespace name
     :return:
     """
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a namespace: {namespace}")
-    v1.delete_namespace(namespace)
+    v1.delete_namespace(namespace, **delete_options)
     ensure_item_removal(v1.read_namespace, namespace)
     print(f"Namespace was removed with name '{namespace}'")
 
@@ -788,8 +800,12 @@ def delete_deployment(apps_v1_api: AppsV1Api, name, namespace) -> None:
     :param namespace:
     :return:
     """
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a deployment: {name}")
-    apps_v1_api.delete_namespaced_deployment(name, namespace)
+    apps_v1_api.delete_namespaced_deployment(name, namespace, **delete_options)
     ensure_item_removal(apps_v1_api.read_namespaced_deployment_status, name, namespace)
     print(f"Deployment was removed with name '{name}'")
 
@@ -803,8 +819,12 @@ def delete_daemon_set(apps_v1_api: AppsV1Api, name, namespace) -> None:
     :param namespace:
     :return:
     """
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a daemon-set: {name}")
-    apps_v1_api.delete_namespaced_daemon_set(name, namespace)
+    apps_v1_api.delete_namespaced_daemon_set(name, namespace, **delete_options)
     ensure_item_removal(apps_v1_api.read_namespaced_daemon_set_status, name, namespace)
     print(f"Daemon-set was removed with name '{name}'")
 
@@ -1110,5 +1130,5 @@ def ensure_response_from_backend(req_url, host, additional_headers=None) -> None
         if resp.status_code != 502 and resp.status_code != 504:
             print(f"After {_ * 2} seconds got non 502|504 response. Continue with tests...")
             return
-        time.sleep(2)
+        time.sleep(1)
     pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")
