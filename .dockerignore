@@ -1,3 +1,5 @@
 docs*
 examples*
 grafana
+tests/.pytest_cache
+tests/__pycache__
