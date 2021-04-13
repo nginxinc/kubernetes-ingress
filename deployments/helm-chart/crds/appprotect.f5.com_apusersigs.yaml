@@ -15,7 +15,7 @@ spec:
   preserveUnknownFields: false
   scope: Namespaced
   versions:
-    - name: v1beta1
+    - name: v1
       schema:
         openAPIV3Schema:
           description: APUserSig is the Schema for the apusersigs API
