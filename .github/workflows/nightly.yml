@@ -191,8 +191,8 @@ jobs:
             [[ $DOW -eq 6 ]] && build_os="opentracing-plus"
             [[ $DOW -eq 7 ]] && build_os="openshift-plus"
           elif [ ${TYPE} == "plus-ap" ]; then
-            [[ $DOW -lt 5 || $DOW -eq 7 ]] && read -r build_os build_dockerfile <<< "debian-plus build/Dockerfile"
-            [[ $DOW -eq 6 ]] && read -r build_os build_dockerfile <<< "opentracing-plus build/DockerfileWithAppProtectForPlusForOpenShift"
+            [[ $DOW -lt 5 || $DOW -eq 7 ]] && read -r build_os build_dockerfile <<< "debian-plus-ap build/Dockerfile"
+            [[ $DOW -eq 6 ]] && build_dockerfile="build/DockerfileWithAppProtectForPlusForOpenShift"
           fi
           echo "BUILD_OS=${build_os}" >> $GITHUB_ENV
           echo "BUILD_DOCKERFILE=${build_dockerfile}" >> $GITHUB_ENV
