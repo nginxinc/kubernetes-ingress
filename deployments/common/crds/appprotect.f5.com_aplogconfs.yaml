@@ -15,7 +15,7 @@ spec:
   preserveUnknownFields: false
   scope: Namespaced
   versions:
-    - name: v1
+    - name: v1beta1
       schema:
         openAPIV3Schema:
           description: APLogConf is the Schema for the APLogConfs API
