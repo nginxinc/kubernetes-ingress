@@ -129,7 +129,7 @@ def read_ap_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> ob
     print(f"Getting info for {name} in namespace {namespace}")
     try:
         response = custom_objects.get_namespaced_custom_object(
-            "appprotect.f5.com", "v1", namespace, plural, name
+            "appprotect.f5.com", "v1beta1", namespace, plural, name
         )
         return response
 
@@ -400,7 +400,7 @@ def create_ap_logconf_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest,
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     custom_objects.create_namespaced_custom_object(
-        "appprotect.f5.com", "v1", namespace, "aplogconfs", dep
+        "appprotect.f5.com", "v1beta1", namespace, "aplogconfs", dep
     )
     print(f"AP logconf created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
@@ -418,7 +418,7 @@ def create_ap_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, 
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     custom_objects.create_namespaced_custom_object(
-        "appprotect.f5.com", "v1", namespace, "appolicies", dep
+        "appprotect.f5.com", "v1beta1", namespace, "appolicies", dep
     )
     print(f"AP Policy created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
@@ -436,7 +436,7 @@ def create_ap_usersig_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest,
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     custom_objects.create_namespaced_custom_object(
-        "appprotect.f5.com", "v1", namespace, "apusersigs", dep
+        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", dep
     )
     print(f"AP UserSig created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
@@ -473,12 +473,12 @@ def delete_ap_usersig(custom_objects: CustomObjectsApi, name, namespace) -> None
     """
     print(f"Delete AP UserSig: {name}")
     custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1", namespace, "apusersigs", name
+        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotect.f5.com",
-        "v1",
+        "v1beta1",
         namespace,
         "apusersigs",
         name,
@@ -496,12 +496,12 @@ def delete_ap_logconf(custom_objects: CustomObjectsApi, name, namespace) -> None
     """
     print(f"Delete AP logconf: {name}")
     custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1", namespace, "aplogconfs", name
+        "appprotect.f5.com", "v1beta1", namespace, "aplogconfs", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotect.f5.com",
-        "v1",
+        "v1beta1",
         namespace,
         "aplogconfs",
         name,
@@ -519,12 +519,12 @@ def delete_ap_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
     """
     print(f"Delete a AP policy: {name}")
     custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1", namespace, "appolicies", name
+        "appprotect.f5.com", "v1beta1", namespace, "appolicies", name
     )
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotect.f5.com",
-        "v1",
+        "v1beta1",
         namespace,
         "appolicies",
         name,

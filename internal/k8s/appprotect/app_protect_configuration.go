@@ -23,39 +23,39 @@ var (
 	// PolicyGVR is the group version resource of the appprotect policy
 	PolicyGVR = schema.GroupVersionResource{
 		Group:    "appprotect.f5.com",
-		Version:  "v1",
+		Version:  "v1beta1",
 		Resource: "appolicies",
 	}
 	// PolicyGVK is the group version kind of the appprotect policy
 	PolicyGVK = schema.GroupVersionKind{
 		Group:   "appprotect.f5.com",
-		Version: "v1",
+		Version: "v1beta1",
 		Kind:    "APPolicy",
 	}
 
 	// LogConfGVR is the group version resource of the appprotect policy
 	LogConfGVR = schema.GroupVersionResource{
 		Group:    "appprotect.f5.com",
-		Version:  "v1",
+		Version:  "v1beta1",
 		Resource: "aplogconfs",
 	}
 	// LogConfGVK is the group version kind of the appprotect policy
 	LogConfGVK = schema.GroupVersionKind{
 		Group:   "appprotect.f5.com",
-		Version: "v1",
+		Version: "v1beta1",
 		Kind:    "APLogConf",
 	}
 
 	// UserSigGVR is the group version resource of the appprotect policy
 	UserSigGVR = schema.GroupVersionResource{
 		Group:    "appprotect.f5.com",
-		Version:  "v1",
+		Version:  "v1beta1",
 		Resource: "apusersigs",
 	}
 	// UserSigGVK is the group version kind of the appprotect policy
 	UserSigGVK = schema.GroupVersionKind{
 		Group:   "appprotect.f5.com",
-		Version: "v1",
+		Version: "v1beta1",
 		Kind:    "APUserSig",
 	}
 )
