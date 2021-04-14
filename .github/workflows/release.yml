@@ -1,8 +1,18 @@
-name: Nightly
+name: Release
 
 on:
-  schedule:
-    - cron:  '0 4 * * *'
+  push:
+    branches:
+      - release-1.11
+    paths-ignore:
+      - 'docs/**'
+      - 'docs-web/**'
+      - 'examples/**'
+      - 'examples-of-custom-resources/**'
+      - '**.md'
+  create:
+    tags:
+      - 'v[0-9].[0-9].[0-9]+*'
 
 defaults:
   run:
@@ -10,41 +20,53 @@ defaults:
 
 env:
   DOCKER_BUILDKIT: 1
-  K8S_TIMEOUT: 90s
+  DOCKER_IMAGE: nginx/nginx-ingress
+  GOLANG_VERSION: 1.15
+  K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
-  HELM_CHART_VERSION: 0.0.0-edge
-  VERSION: nightly
+  GIT_NAME: NGINX Kubernetes Team
+  GIT_MAIL: kubernetes@nginx.com
 
 jobs:
 
   binary:
     name: Build Binary
     runs-on: ubuntu-20.04
+    outputs:
+      version: ${{ steps.commit.outputs.version }}
+      tags: ${{ steps.commit.outputs.tags }}
+      created: ${{ steps.commit.outputs.created }}
+      sha: ${{ steps.commit.outputs.sha }}
+      repo: ${{ steps.commit.outputs.repo }}
+      helmChartVersion: ${{ steps.commit.outputs.helmChartVersion }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Output Variables
         id: commit
         run: |
-          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
-      - name: Determine Go version from go.mod
-        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
-      - name: Check if CRDs changed
-        run: |
-          make update-crds && git diff --name-only --exit-code deployments/common/crds*
-      - name: Check if Codegen changed
-        run: |
-          make update-codegen && git diff --name-only --exit-code pkg/**/zz_generated.deepcopy.go
+          SHA=${GITHUB_SHA::7}
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION="$(echo ${GITHUB_REF/refs\/tags\//} | tr -d v)"
+          else
+            VERSION="${SHA}"
+          fi
+          echo "::set-output name=version::${VERSION}"
+          echo "::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          echo "::set-output name=sha::${SHA}"
+          echo "::set-output name=repo::${GITHUB_REPOSITORY#*/}"
+          echo "::set-output name=branch::${GITHUB_REF##*/}"
+          echo "::set-output name=helmChartVersion::$(helm show chart ${{ env.HELM_CHART_DIR }} | grep 'version:' | cut -d ' ' -f 2)"
       - name: Build Binary
         run: >
           make build
-          VERSION=${{ env.VERSION }}
-          IC_VERSION=${{ env.VERSION }}-${{ steps.commit.outputs.sha }}
+          VERSION=${{ steps.commit.outputs.version }}
+          IC_VERSION=${{ steps.commit.outputs.version }}
           GIT_COMMIT=${{ steps.commit.outputs.sha }}
         env:
-          GOFLAGS: '-gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
+          GOFLAGS: '-mod=vendor -gcflags=-trimpath=${{ github.workspace }} -asmflags=-trimpath=${{ github.workspace }}'
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/nginx-ingress
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -58,7 +80,7 @@ jobs:
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version: '${{ env.GOLANG_VERSION }}'
       - name: Run Tests
         run: go test ./...
 
@@ -127,7 +149,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/nginx-ingress
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -136,7 +158,7 @@ jobs:
         with:
           driver-opts: network=host
       - name: Cache Docker layers
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -150,7 +172,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: ${{ matrix.target }}
-          tags: ${{ matrix.image }}:${{ github.sha }}
+          tags: ${{ env.DOCKER_IMAGE }}:${{ needs.binary.outputs.version }}
           build-args: |
             BUILD_OS=${{ matrix.image }}
         if: matrix.type == 'oss'
@@ -162,7 +184,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: ${{ matrix.target }}
-          tags: ${{ matrix.image }}:${{ github.sha }}
+          tags: ${{ env.DOCKER_IMAGE }}:${{ needs.binary.outputs.version }}
           secrets: |
             "nginx-repo.crt=${{ secrets.KIC_NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.KIC_NGINX_KEY }}"
@@ -178,7 +200,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: ${{ matrix.target }}
-          tags: ${{ matrix.image }}:${{ github.sha }}
+          tags: ${{ env.DOCKER_IMAGE }}:${{ needs.binary.outputs.version }}
           secrets: |
             "nginx-repo.crt=${{ secrets.KIC_NGINX_AP_CRT }}"
             "nginx-repo.key=${{ secrets.KIC_NGINX_AP_KEY }}"
@@ -192,104 +214,107 @@ jobs:
     name: Smoke Tests
     runs-on: ${{ matrix.os }}
     needs: [build, binary, unit-tests]
+    if:
+      github.event.pull_request.head.repo.full_name == 'nginxinc/kubernetes-ingress' ||
+      github.event_name == 'push'
     strategy:
       matrix:
         include:
           - os: ubuntu-20.04
             image: nginx-ingress
-            tag: ${{ github.sha }}
-            marker: ''
-            type: oss
-            k8s: 1.20.0
-          - os: ubuntu-20.04
-            image: nginx-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             marker: ''
             type: oss
             k8s: 1.19.1
           - os: ubuntu-20.04
             image: nginx-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             marker: ''
             type: oss
             k8s: 1.18.8
           - os: ubuntu-20.04
             image: nginx-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             marker: ''
             type: oss
             k8s: 1.17.11
           - os: ubuntu-20.04
             image: nginx-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             marker: ''
             type: oss
             k8s: 1.16.15
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
-            tag: ${{ github.sha }}
+            image: nginx-ingress
+            tag: ${{ needs.binary.outputs.version }}
             marker: ''
-            type: plus
-            k8s: 1.20.0
+            type: oss
+            k8s: 1.15.12
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             marker: ''
             type: plus
             k8s: 1.19.1
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             marker: ''
             type: plus
             k8s: 1.18.8
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             marker: ''
             type: plus
             k8s: 1.17.11
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             marker: ''
             type: plus
             k8s: 1.16.15
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}-ap
-            marker: '-m appprotect'
-            type: plus-ap
-            k8s: 1.20.0
+            tag: ${{ needs.binary.outputs.version }}
+            marker: ''
+            type: plus
+            k8s: 1.15.12
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}-ap
+            tag: ${{ needs.binary.outputs.version }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.19.1
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}-ap
+            tag: ${{ needs.binary.outputs.version }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.18.8
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}-ap
+            tag: ${{ needs.binary.outputs.version }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.17.11
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}-ap
+            tag: ${{ needs.binary.outputs.version }}-ap
             marker: '-m appprotect'
             type: plus-ap
             k8s: 1.16.15
+          - os: ubuntu-20.04
+            image: nginx-plus-ingress
+            tag: ${{ needs.binary.outputs.version }}-ap
+            marker: '-m appprotect'
+            type: plus-ap
+            k8s: 1.15.12
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/nginx-ingress
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -298,7 +323,7 @@ jobs:
         with:
           driver-opts: network=host
       - name: Cache Docker layers
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -409,6 +434,9 @@ jobs:
     name: Helm Tests
     runs-on: ${{ matrix.os }}
     needs: [build, binary, unit-tests]
+    if: 
+      github.event_name == 'push' && contains(github.ref, 'release') || 
+      github.event_name == 'schedule'
     env:
       NGINX_HTTP_PORT: 8080
       NGINX_HTTPS_PORT: 8443
@@ -418,17 +446,17 @@ jobs:
         include:
           - os: ubuntu-20.04
             image: nginx-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             type: oss
           - os: ubuntu-20.04
             image: nginx-plus-ingress
-            tag: ${{ github.sha }}
+            tag: ${{ needs.binary.outputs.version }}
             type: plus
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v2.1.4
         with:
           path: ${{ github.workspace }}/nginx-ingress
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -437,7 +465,7 @@ jobs:
         with:
           driver-opts: network=host
       - name: Docker build cache
-        uses: actions/cache@v2.1.5
+        uses: actions/cache@v2.1.4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -455,6 +483,7 @@ jobs:
           load: true
           build-args: |
             BUILD_OS=debian
+        if: matrix.type == 'oss'
       - name: Build Plus Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
         with:
@@ -513,20 +542,253 @@ jobs:
             printf '.'; counter=$(($counter+1)); sleep 5;
           done
 
+  release-docker:
+    name: Release Images
+    runs-on: ${{ matrix.os }}
+    needs: [build, binary, unit-tests]
+    if: github.event_name == 'create' && contains(github.ref, 'refs/tags/')
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            image: nginx-ingress
+            type: debian
+            tags: |
+              nginx/nginx-ingress:${{ needs.binary.outputs.version }}
+              nginx/nginx-ingress:latest
+          - os: ubuntu-20.04
+            image: nginx-ingress
+            type: alpine
+            tags: |
+              nginx/nginx-ingress:${{ needs.binary.outputs.version }}-alpine
+              nginx/nginx-ingress:alpine
+          - os: ubuntu-20.04
+            image: nginx-ingress
+            type: openshift
+            tags: |
+              nginx/nginx-ingress:${{ needs.binary.outputs.version }}-ubi
+              nginx/nginx-ingress:ubi
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          driver-opts: network=host
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: DockerHub Login
+        uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Push to Dockerhub
+        uses: docker/build-push-action@v2
+        with:
+          file: build/Dockerfile
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          target: local
+          tags: ${{ matrix.tags }}
+          push: true
+          build-args: |
+            BUILD_OS=${{ matrix.type }}
+
+  publish-plus-docker:
+    name: Publish Plus Images
+    runs-on: ${{ matrix.os }}
+    needs: [build, binary, unit-tests]
+    if: github.event_name == 'create' && contains(github.ref, 'refs/tags/')
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            file: build/Dockerfile
+            image: debian-plus
+            type: plus
+            tags: nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}
+          - os: ubuntu-20.04
+            file: build/Dockerfile
+            image: opentracing-plus
+            type: plus
+            tags: nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing
+          - os: ubuntu-20.04
+            file: build/Dockerfile
+            image: openshift-plus
+            type: plus
+            tags: nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi
+          - os: ubuntu-20.04
+            file: build/Dockerfile
+            image: debian-plus-ap
+            type: plus-ap
+            tags: nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}
+          - os: ubuntu-20.04
+            file: build/DockerfileWithAppProtectForPlusForOpenShift
+            image: nginx-plus-ingress-ap-openshift
+            type: plus-ap-openshift
+            tags: nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          driver-opts: network=host
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: GCR Login
+        uses: docker/login-action@v1
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCR_JSON_KEY }}
+      - name: Push to GCR
+        uses: docker/build-push-action@v2
+        with:
+          file: ${{ matrix.file }}
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          target: local
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/${{ matrix.tags }}
+          push: true
+          secrets: |
+            "nginx-repo.crt=${{ secrets.KIC_NGINX_CRT }}"
+            "nginx-repo.key=${{ secrets.KIC_NGINX_KEY }}"
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            PLUS=-plus
+        if: matrix.type == 'plus'
+      - name: Push Plus AP to GCR
+        uses: docker/build-push-action@v2
+        with:
+          file: ${{ matrix.file }}
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          target: local
+          tags: gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/${{ matrix.tags }}
+          push: true
+          secrets: |
+            "nginx-repo.crt=${{ secrets.KIC_NGINX_AP_CRT }}"
+            "nginx-repo.key=${{ secrets.KIC_NGINX_AP_KEY }}"
+            "rhel_license=${{ secrets.KIC_RHEL_LICENSE }}"
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            PLUS=-plus
+        if: matrix.type == 'plus-ap' || matrix.type == 'plus-ap-openshift' 
+  
+  release-plus-docker:
+    name: Release Plus Images
+    runs-on: ubuntu-20.04
+    needs: [build, binary, unit-tests, publish-plus-docker]
+    if: github.event_name == 'create' && contains(github.ref, 'refs/tags/')
+    steps:
+      - name: GCR Login
+        uses: docker/login-action@v1 
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCR_JSON_KEY }}
+      - name: Pull from GCR and save
+        env:
+          UPLOADER_CERT: ${{ secrets.KIC_UPLOADER_CRT }}
+          UPLOADER_KEY: ${{ secrets.KIC_UPLOADER_KEY }}
+        run: |
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}
+          docker pull gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi
+          echo "$UPLOADER_CERT" > kic-uploader.crt
+          echo "$UPLOADER_KEY" > kic-uploader.key
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }} nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }} nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}
+          docker tag gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi
+          docker save nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }} \
+                      nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-opentracing \
+                      nginx-ic/nginx-plus-ingress:${{ needs.binary.outputs.version }}-ubi | gzip > nginx-ic.tar.gz
+          docker save nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }} \
+                      nginx-ic-nap/nginx-plus-ingress-ap:${{ needs.binary.outputs.version }}-ubi | gzip > nginx-ic-nap.tar.gz
+          curl -F "file=@nginx-ic.tar.gz" -F "file=@nginx-ic-nap.tar.gz" --cert kic-uploader.crt --key kic-uploader.key  https://up-ap.nginx.com/
+
+  package-helm:
+    name: Package Helm Chart
+    runs-on: ubuntu-20.04
+    needs: [build, binary, unit-tests, release-docker]
+    if: github.event_name == 'create' && contains(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Lint
+        run: helm lint ${{ env.HELM_CHART_DIR }}
+      - name: Package
+        run: helm package --version ${{ needs.binary.outputs.helmChartVersion }} ${{ env.HELM_CHART_DIR }}
+      - name: Upload Chart
+        uses: actions/upload-artifact@v2
+        with:
+          name: helm-chart
+          path: ${{ github.workspace }}/nginx-ingress-${{ needs.binary.outputs.helmChartVersion }}.tgz
+
+  release-helm:
+    name: Release Helm Chart
+    runs-on: ubuntu-20.04
+    needs: [build, binary, unit-tests, release-docker, package-helm]
+    if: github.event_name == 'create' && contains(github.ref, 'refs/tags/')
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          repository: nginxinc/helm-charts
+          fetch-depth: 1
+          token: ${{ secrets.NGINX_PAT }}
+      - name: Remove previous Chart
+        run: rm -f ${{ github.workspace }}/stable/nginx-ingress-${{ needs.binary.outputs.helmChartVersion }}.tgz
+      - name: Retrieve latest Helm Chart
+        uses: actions/download-artifact@v2
+        with:
+          name: helm-chart
+          path: ${{ github.workspace }}/stable
+      - name: Push Helm Chart
+        run: |
+          helm repo index stable --url https://helm.nginx.com/stable
+          git add -A
+          git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' \
+          commit -m "NGINX Ingress Controller - Release ${{ needs.binary.outputs.version }}"
+          git push -u origin master
+
   notify:
     name: Notify
     runs-on: ubuntu-20.04
-    needs: [helm-tests, smoke-tests]
-    if: always() && github.ref == 'refs/heads/master'
+    needs: release-helm
+    if: always() && contains(github.ref, 'release')
     steps:
       - name: Workflow Status
         id: check
         uses: martialonline/workflow-status@v2
-      - name: Output Variables
-        id: commit
-        run: |
-          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
-          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
       - name: Send Notification
         uses: 8398a7/action-slack@v3
         if:
@@ -540,11 +802,11 @@ jobs:
               icon_emoji: ':octocat:',
               mention: 'channel',
               attachments: [{
-                title: '[${{ steps.commit.outputs.repo }}] ${{ github.workflow }} pipeline has failed',
+                title: '[${{ needs.binary.outputs.repo }}] ${{ github.workflow }} pipeline has failed',
                 color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
                 fields: [{
                   title: 'Commit Hash',
-                  value: '${{ steps.commit.outputs.sha }}',
+                  value: '${{ needs.binary.outputs.sha }}',
                   short: true
                 },
                 {

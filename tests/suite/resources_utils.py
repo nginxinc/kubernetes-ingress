@@ -111,10 +111,9 @@ def cleanup_rbac(rbac_v1: RbacAuthorizationV1Api, rbac: RBACAuthorization) -> No
     :param rbac: RBACAuthorization
     :return:
     """
-    delete_options = client.V1DeleteOptions()
     print("Delete binding and cluster role")
-    rbac_v1.delete_cluster_role_binding(rbac.binding, delete_options)
-    rbac_v1.delete_cluster_role(rbac.role, delete_options)
+    rbac_v1.delete_cluster_role_binding(rbac.binding)
+    rbac_v1.delete_cluster_role(rbac.role)
 
 
 def create_deployment_from_yaml(apps_v1_api: AppsV1Api, namespace, yaml_manifest) -> str:
@@ -425,11 +424,12 @@ def delete_secret(v1: CoreV1Api, name, namespace) -> None:
     :param namespace: namespace name
     :return:
     """
-    delete_options = client.V1DeleteOptions()
-    delete_options.grace_period_seconds = 0
-    delete_options.propagation_policy = 'Foreground'
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a secret: {name}")
-    v1.delete_namespaced_secret(name, namespace, delete_options)
+    v1.delete_namespaced_secret(name, namespace, **delete_options)
     ensure_item_removal(v1.read_namespaced_secret, name, namespace)
     print(f"Secret was removed with name '{name}'")
 
@@ -500,8 +500,7 @@ def delete_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace) -
     :return:
     """
     print(f"Delete an ingress: {name}")
-    delete_options = client.V1DeleteOptions()
-    extensions_v1_beta1.delete_namespaced_ingress(name, namespace, delete_options)
+    extensions_v1_beta1.delete_namespaced_ingress(name, namespace)
     ensure_item_removal(extensions_v1_beta1.read_namespaced_ingress, name, namespace)
     print(f"Ingress was removed with name '{name}'")
 
@@ -672,11 +671,12 @@ def delete_configmap(v1: CoreV1Api, name, namespace) -> None:
     :param namespace: namespace name
     :return:
     """
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a ConfigMap: {name}")
-    delete_options = client.V1DeleteOptions()
-    delete_options.grace_period_seconds = 0
-    delete_options.propagation_policy = 'Foreground'
-    v1.delete_namespaced_config_map(name, namespace, delete_options)
+    v1.delete_namespaced_config_map(name, namespace, **delete_options)
     ensure_item_removal(v1.read_namespaced_config_map, name, namespace)
     print(f"ConfigMap was removed with name '{name}'")
 
@@ -689,11 +689,12 @@ def delete_namespace(v1: CoreV1Api, namespace) -> None:
     :param namespace: namespace name
     :return:
     """
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a namespace: {namespace}")
-    delete_options = client.V1DeleteOptions()
-    delete_options.grace_period_seconds = 0
-    delete_options.propagation_policy = 'Background'
-    v1.delete_namespace(namespace, delete_options)
+    v1.delete_namespace(namespace, **delete_options)
     ensure_item_removal(v1.read_namespace, namespace)
     print(f"Namespace was removed with name '{namespace}'")
 
@@ -785,10 +786,7 @@ def delete_service(v1: CoreV1Api, name, namespace) -> None:
     :return:
     """
     print(f"Delete a service: {name}")
-    delete_options = client.V1DeleteOptions()
-    delete_options.grace_period_seconds = 0
-    delete_options.propagation_policy = 'Foreground'
-    v1.delete_namespaced_service(name, namespace, delete_options)
+    v1.delete_namespaced_service(name, namespace)
     ensure_item_removal(v1.read_namespaced_service_status, name, namespace)
     print(f"Service was removed with name '{name}'")
 
@@ -802,11 +800,12 @@ def delete_deployment(apps_v1_api: AppsV1Api, name, namespace) -> None:
     :param namespace:
     :return:
     """
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a deployment: {name}")
-    delete_options = client.V1DeleteOptions()
-    delete_options.grace_period_seconds = 0
-    delete_options.propagation_policy = 'Foreground'
-    apps_v1_api.delete_namespaced_deployment(name, namespace, delete_options)
+    apps_v1_api.delete_namespaced_deployment(name, namespace, **delete_options)
     ensure_item_removal(apps_v1_api.read_namespaced_deployment_status, name, namespace)
     print(f"Deployment was removed with name '{name}'")
 
@@ -820,11 +819,12 @@ def delete_daemon_set(apps_v1_api: AppsV1Api, name, namespace) -> None:
     :param namespace:
     :return:
     """
+    delete_options = {
+        "grace_period_seconds": 0,
+        "propagation_policy": "Foreground",
+    }
     print(f"Delete a daemon-set: {name}")
-    delete_options = client.V1DeleteOptions()
-    delete_options.grace_period_seconds = 0
-    delete_options.propagation_policy = 'Foreground'
-    apps_v1_api.delete_namespaced_daemon_set(name, namespace, delete_options)
+    apps_v1_api.delete_namespaced_daemon_set(name, namespace, **delete_options)
     ensure_item_removal(apps_v1_api.read_namespaced_daemon_set_status, name, namespace)
     print(f"Daemon-set was removed with name '{name}'")
 
@@ -1047,9 +1047,9 @@ def ensure_connection(request_url, expected_code=404) -> None:
     :param expected_code: response code
     :return:
     """
-    for _ in range(4):
+    for _ in range(10):
         try:
-            resp = requests.get(request_url, verify=False)
+            resp = requests.get(request_url, verify=False, timeout=5)
             if resp.status_code == expected_code:
                 return
         except Exception as ex:
@@ -1130,5 +1130,5 @@ def ensure_response_from_backend(req_url, host, additional_headers=None) -> None
         if resp.status_code != 502 and resp.status_code != 504:
             print(f"After {_ * 2} seconds got non 502|504 response. Continue with tests...")
             return
-        time.sleep(2)
+        time.sleep(1)
     pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")

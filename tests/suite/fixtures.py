@@ -12,7 +12,7 @@ from kubernetes.client import (
     ExtensionsV1beta1Api,
     RbacAuthorizationV1Api,
     CustomObjectsApi,
-    ApiextensionsV1beta1Api,
+    ApiextensionsV1Api,
     AppsV1Api,
 )
 from kubernetes.client.rest import ApiException
@@ -89,7 +89,7 @@ class KubeApis:
         v1: CoreV1Api
         extensions_v1_beta1: ExtensionsV1beta1Api
         rbac_v1: RbacAuthorizationV1Api
-        api_extensions_v1_beta1: ApiextensionsV1beta1Api
+        api_extensions_v1: ApiextensionsV1Api
         custom_objects: CustomObjectsApi
     """
 
@@ -99,14 +99,14 @@ class KubeApis:
         extensions_v1_beta1: ExtensionsV1beta1Api,
         apps_v1_api: AppsV1Api,
         rbac_v1: RbacAuthorizationV1Api,
-        api_extensions_v1_beta1: ApiextensionsV1beta1Api,
+        api_extensions_v1: ApiextensionsV1Api,
         custom_objects: CustomObjectsApi,
     ):
         self.v1 = v1
         self.extensions_v1_beta1 = extensions_v1_beta1
         self.apps_v1_api = apps_v1_api
         self.rbac_v1 = rbac_v1
-        self.api_extensions_v1_beta1 = api_extensions_v1_beta1
+        self.api_extensions_v1 = api_extensions_v1
         self.custom_objects = custom_objects
 
 
@@ -362,10 +362,10 @@ def kube_apis(cli_arguments) -> KubeApis:
     extensions_v1_beta1 = client.ExtensionsV1beta1Api()
     apps_v1_api = client.AppsV1Api()
     rbac_v1 = client.RbacAuthorizationV1Api()
-    api_extensions_v1_beta1 = client.ApiextensionsV1beta1Api()
+    api_extensions_v1 = client.ApiextensionsV1Api()
     custom_objects = client.CustomObjectsApi()
     return KubeApis(
-        v1, extensions_v1_beta1, apps_v1_api, rbac_v1, api_extensions_v1_beta1, custom_objects
+        v1, extensions_v1_beta1, apps_v1_api, rbac_v1, api_extensions_v1, custom_objects
     )
 
 
@@ -437,11 +437,11 @@ def crd_ingress_controller(
     """
     namespace = ingress_controller_prerequisites.namespace
     name = "nginx-ingress"
-    vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_virtualservers.yaml")
-    vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_virtualserverroutes.yaml")
-    pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_policies.yaml")
-    ts_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_transportservers.yaml")
-    gc_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_globalconfigurations.yaml")
+    vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml")
+    vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml")
+    pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml")
+    ts_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml")
+    gc_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_globalconfigurations.yaml")
 
     try:
         print("------------------------- Update ClusterRole -----------------------------------")
@@ -449,29 +449,29 @@ def crd_ingress_controller(
             patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
         print("------------------------- Register CRDs -----------------------------------")
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             vs_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_virtualservers.yaml",
+            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             vsr_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_virtualserverroutes.yaml",
+            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             pol_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_policies.yaml",
+            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             ts_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_transportservers.yaml",
+            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             gc_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_globalconfigurations.yaml",
+            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_globalconfigurations.yaml",
         )
         print("------------------------- Create IC -----------------------------------")
         name = create_ingress_controller(
@@ -489,11 +489,11 @@ def crd_ingress_controller(
     except ApiException as ex:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
         print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
-        delete_crd(kube_apis.api_extensions_v1_beta1, vs_crd_name)
-        delete_crd(kube_apis.api_extensions_v1_beta1, vsr_crd_name)
-        delete_crd(kube_apis.api_extensions_v1_beta1, pol_crd_name)
-        delete_crd(kube_apis.api_extensions_v1_beta1, ts_crd_name)
-        delete_crd(kube_apis.api_extensions_v1_beta1, gc_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")
@@ -502,11 +502,11 @@ def crd_ingress_controller(
         )
 
     def fin():
-        delete_crd(kube_apis.api_extensions_v1_beta1, vs_crd_name)
-        delete_crd(kube_apis.api_extensions_v1_beta1, vsr_crd_name)
-        delete_crd(kube_apis.api_extensions_v1_beta1, pol_crd_name)
-        delete_crd(kube_apis.api_extensions_v1_beta1, ts_crd_name)
-        delete_crd(kube_apis.api_extensions_v1_beta1, gc_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")
@@ -541,47 +541,47 @@ def crd_ingress_controller_with_ap(
         rbac = configure_rbac_with_ap(kube_apis.rbac_v1)
 
         print("------------------------- Register AP CRD -----------------------------------")
-        ap_pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_appolicies.yaml")
-        ap_log_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_aplogconfs.yaml")
-        ap_uds_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_apusersigs.yaml")
-        vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_virtualservers.yaml")
-        vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_virtualserverroutes.yaml")
-        pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_policies.yaml")
-        ts_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_transportservers.yaml")
+        ap_pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_appolicies.yaml")
+        ap_log_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_aplogconfs.yaml")
+        ap_uds_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_apusersigs.yaml")
+        vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml")
+        vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml")
+        pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml")
+        ts_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml")
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             ap_pol_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_appolicies.yaml",
+            f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_appolicies.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             ap_log_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_aplogconfs.yaml",
+            f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_aplogconfs.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             ap_uds_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/appprotect.f5.com_apusersigs.yaml",
+            f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_apusersigs.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             vs_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_virtualservers.yaml",
+            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             vsr_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_virtualserverroutes.yaml",
+            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             pol_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_policies.yaml",
+            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml",
         )
         create_crd_from_yaml(
-            kube_apis.api_extensions_v1_beta1,
+            kube_apis.api_extensions_v1,
             ts_crd_name,
-            f"{DEPLOYMENTS}/common/crds-v1beta1/k8s.nginx.org_transportservers.yaml",
+            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml",
         )
 
         print("------------------------- Create IC -----------------------------------")
@@ -600,25 +600,25 @@ def crd_ingress_controller_with_ap(
     except Exception as ex:
         print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, ap_pol_crd_name,
+            kube_apis.api_extensions_v1, ap_pol_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, ap_log_crd_name,
+            kube_apis.api_extensions_v1, ap_log_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, ap_uds_crd_name,
+            kube_apis.api_extensions_v1, ap_uds_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, vs_crd_name,
+            kube_apis.api_extensions_v1, vs_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, vsr_crd_name,
+            kube_apis.api_extensions_v1, vsr_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, pol_crd_name,
+            kube_apis.api_extensions_v1, pol_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, ts_crd_name,
+            kube_apis.api_extensions_v1, ts_crd_name,
         )
         print("Remove ap-rbac")
         cleanup_rbac(kube_apis.rbac_v1, rbac)
@@ -630,25 +630,25 @@ def crd_ingress_controller_with_ap(
     def fin():
         print("--------------Cleanup----------------")
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, ap_pol_crd_name,
+            kube_apis.api_extensions_v1, ap_pol_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, ap_log_crd_name,
+            kube_apis.api_extensions_v1, ap_log_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, ap_uds_crd_name,
+            kube_apis.api_extensions_v1, ap_uds_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, vs_crd_name,
+            kube_apis.api_extensions_v1, vs_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, vsr_crd_name,
+            kube_apis.api_extensions_v1, vsr_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, pol_crd_name,
+            kube_apis.api_extensions_v1, pol_crd_name,
         )
         delete_crd(
-            kube_apis.api_extensions_v1_beta1, ts_crd_name,
+            kube_apis.api_extensions_v1, ts_crd_name,
         )
         print("Remove ap-rbac")
         cleanup_rbac(kube_apis.rbac_v1, rbac)
