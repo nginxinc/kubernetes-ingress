@@ -174,7 +174,7 @@ class TestAppProtect:
         for _ in conf_annotations:
             assert _ in result_conf
 
-    @pytest.mark.sean
+    @pytest.mark.smoke
     def test_ap_enable_true_policy_correct(
         self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
