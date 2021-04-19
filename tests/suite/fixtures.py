@@ -45,6 +45,7 @@ from suite.resources_utils import (
     delete_service,
     replace_configmap_from_yaml,
     delete_testing_namespaces,
+    get_first_pod_name,
 )
 from suite.resources_utils import (
     create_ingress_controller,
@@ -120,12 +121,13 @@ class PublicEndpoint:
         port_ssl (int):
     """
 
-    def __init__(self, public_ip, port=80, port_ssl=443, api_port=8080, metrics_port=9113):
+    def __init__(self, public_ip, port=80, port_ssl=443, api_port=8080, metrics_port=9113, tcp_server_port=3333):
         self.public_ip = public_ip
         self.port = port
         self.port_ssl = port_ssl
         self.api_port = api_port
         self.metrics_port = metrics_port
+        self.tcp_server_port = tcp_server_port
 
 
 class IngressControllerPrerequisites:
@@ -252,10 +254,10 @@ def ingress_controller_endpoint(
             namespace,
             f"{TEST_DATA}/common/service/nodeport-with-additional-ports.yaml",
         )
-        port, port_ssl, api_port, metrics_port = get_service_node_ports(
+        port, port_ssl, api_port, metrics_port, tcp_server_port = get_service_node_ports(
             kube_apis.v1, service_name, namespace
         )
-        return PublicEndpoint(public_ip, port, port_ssl, api_port, metrics_port)
+        return PublicEndpoint(public_ip, port, port_ssl, api_port, metrics_port, tcp_server_port)
     else:
         create_service_from_yaml(
             kube_apis.v1,
@@ -754,16 +756,24 @@ class TransportServerSetup:
         namespace (str):
     """
 
-    def __init__(self, name, namespace):
+    def __init__(self, name, namespace, ingress_pod_name, ic_namespace, public_endpoint: PublicEndpoint, resource):
         self.name = name
         self.namespace = namespace
+        self.ingress_pod_name = ingress_pod_name
+        self.ic_namespace = ic_namespace
+        self.public_endpoint = public_endpoint
+        self.resource = resource
 
 
 @pytest.fixture(scope="class")
-def transport_server_setup(request, kube_apis, test_namespace) -> TransportServerSetup:
+def transport_server_setup(
+        request, kube_apis, ingress_controller_prerequisites, test_namespace, ingress_controller_endpoint
+) -> TransportServerSetup:
     """
     Prepare Transport Server Example.
 
+    :param ingress_controller_endpoint:
+    :param ingress_controller_prerequisites:
     :param request: internal pytest fixture to parametrize this method
     :param kube_apis: client apis
     :param test_namespace:
@@ -779,9 +789,9 @@ def transport_server_setup(request, kube_apis, test_namespace) -> TransportServe
     )
     gc_resource = create_gc_from_yaml(kube_apis.custom_objects, global_config_file, "nginx-ingress")
 
-    # deploy dns
-    dns_file = f"{TEST_DATA}/{request.param['example']}/standard/dns.yaml"
-    create_items_from_yaml(kube_apis, dns_file, test_namespace)
+    # deploy service_file
+    service_file = f"{TEST_DATA}/{request.param['example']}/standard/service_deployment.yaml"
+    create_items_from_yaml(kube_apis, service_file, test_namespace)
 
     # deploy transport server
     transport_server_file = f"{TEST_DATA}/{request.param['example']}/standard/transport-server.yaml"
@@ -794,12 +804,22 @@ def transport_server_setup(request, kube_apis, test_namespace) -> TransportServe
     def fin():
         print("Clean up TransportServer Example:")
         delete_ts(kube_apis.custom_objects, ts_resource, test_namespace)
-        delete_items_from_yaml(kube_apis, dns_file, test_namespace)
+        delete_items_from_yaml(kube_apis, service_file, test_namespace)
         delete_gc(kube_apis.custom_objects, gc_resource, "nginx-ingress")
 
     request.addfinalizer(fin)
 
-    return TransportServerSetup(ts_resource["metadata"]["name"], test_namespace)
+    ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+    ic_namespace = ingress_controller_prerequisites.namespace
+
+    return TransportServerSetup(
+        ts_resource['metadata']['name'],
+        test_namespace,
+        ic_pod_name,
+        ic_namespace,
+        ingress_controller_endpoint,
+        ts_resource,
+    )
 
 
 @pytest.fixture(scope="class")

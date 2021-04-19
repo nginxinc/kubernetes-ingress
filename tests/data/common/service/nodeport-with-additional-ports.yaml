@@ -22,5 +22,9 @@ spec:
     targetPort: 9113
     protocol: TCP
     name: exporter
+  - port: 3333
+    targetPort: 3333
+    protocol: TCP
+    name: tcp-server
   selector:
     app: nginx-ingress

@@ -1,0 +1,14 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: TransportServer
+metadata:
+  name: transport-server
+spec:
+  listener:
+    name: tcp-server
+    protocol: TCP
+  upstreams:
+    - name: tcp-app
+      service: missing-service
+      port: 3333
+  action:
+    pass: tcp-app

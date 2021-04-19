@@ -131,6 +131,36 @@ def create_deployment_from_yaml(apps_v1_api: AppsV1Api, namespace, yaml_manifest
     return create_deployment(apps_v1_api, namespace, dep)
 
 
+def patch_deployment_from_yaml(apps_v1_api: AppsV1Api, namespace, yaml_manifest) -> str:
+    """
+    Create a deployment based on yaml file.
+
+    :param apps_v1_api: AppsV1Api
+    :param namespace: namespace name
+    :param yaml_manifest: absolute path to file
+    :return: str
+    """
+    print(f"Load {yaml_manifest}")
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    return patch_deployment(apps_v1_api, namespace, dep)
+
+
+def patch_deployment(apps_v1_api: AppsV1Api, namespace, body) -> str:
+    """
+    Create a deployment based on a dict.
+
+    :param apps_v1_api: AppsV1Api
+    :param namespace: namespace name
+    :param body: dict
+    :return: str
+    """
+    print("Patch a deployment:")
+    apps_v1_api.patch_namespaced_deployment(body['metadata']['name'], namespace, body)
+    print(f"Deployment patched with name '{body['metadata']['name']}'")
+    return body['metadata']['name']
+
+
 def create_deployment(apps_v1_api: AppsV1Api, namespace, body) -> str:
     """
     Create a deployment based on a dict.
@@ -165,7 +195,7 @@ def create_deployment_with_name(apps_v1_api: AppsV1Api, namespace, name) -> str:
         return create_deployment(apps_v1_api, namespace, dep)
 
 
-def scale_deployment(apps_v1_api: AppsV1Api, name, namespace, value) -> None:
+def scale_deployment(apps_v1_api: AppsV1Api, name, namespace, value) -> int:
     """
     Scale a deployment.
 
@@ -173,13 +203,15 @@ def scale_deployment(apps_v1_api: AppsV1Api, name, namespace, value) -> None:
     :param namespace: namespace name
     :param name: deployment name
     :param value: int
-    :return:
+    :return: original: int the original amount of replicas
     """
     print(f"Scale a deployment '{name}'")
     body = apps_v1_api.read_namespaced_deployment_scale(name, namespace)
+    original = body.spec.replicas
     body.spec.replicas = value
     apps_v1_api.patch_namespaced_deployment_scale(name, namespace, body)
     print(f"Scale a deployment '{name}': complete")
+    return original
 
 
 def create_daemon_set(apps_v1_api: AppsV1Api, namespace, body) -> str:
@@ -310,7 +342,7 @@ def create_service_with_name(v1: CoreV1Api, namespace, name) -> str:
         return create_service(v1, namespace, dep)
 
 
-def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int, int):
+def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int, int, int):
     """
     Get service allocated node_ports.
 
@@ -320,11 +352,11 @@ def get_service_node_ports(v1: CoreV1Api, name, namespace) -> (int, int, int, in
     :return: (plain_port, ssl_port, api_port, exporter_port)
     """
     resp = v1.read_namespaced_service(name, namespace)
-    assert len(resp.spec.ports) == 4, "An unexpected amount of ports in a service. Check the configuration"
+    assert len(resp.spec.ports) == 5, "An unexpected amount of ports in a service. Check the configuration"
     print(f"Service with an API port: {resp.spec.ports[2].node_port}")
     print(f"Service with an Exporter port: {resp.spec.ports[3].node_port}")
     return resp.spec.ports[0].node_port, resp.spec.ports[1].node_port,\
-        resp.spec.ports[2].node_port, resp.spec.ports[3].node_port
+        resp.spec.ports[2].node_port, resp.spec.ports[3].node_port, resp.spec.ports[4].node_port
 
 
 def wait_for_public_ip(v1: CoreV1Api, namespace: str) -> str:
@@ -747,6 +779,21 @@ def get_ingress_nginx_template_conf(v1: CoreV1Api, ingress_namespace, ingress_na
     :return: str
     """
     file_path = f"/etc/nginx/conf.d/{ingress_namespace}-{ingress_name}.conf"
+    return get_file_contents(v1, file_path, pod_name, pod_namespace)
+
+
+def get_ts_nginx_template_conf(v1: CoreV1Api, resource_namespace, resource_name, pod_name, pod_namespace) -> str:
+    """
+    Get contents of /etc/nginx/stream-conf.d/ts_{namespace}-{resource_name}.conf in the pod.
+
+    :param v1: CoreV1Api
+    :param resource_namespace:
+    :param resource_name:
+    :param pod_name:
+    :param pod_namespace:
+    :return: str
+    """
+    file_path = f"/etc/nginx/stream-conf.d/ts_{resource_namespace}_{resource_name}.conf"
     return get_file_contents(v1, file_path, pod_name, pod_namespace)
 
 

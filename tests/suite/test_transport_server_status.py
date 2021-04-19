@@ -17,7 +17,6 @@ from settings import TEST_DATA
                 "type": "complete",
                 "extra_args":
                     [
-                        "-enable-custom-resources",
                         "-global-configuration=nginx-ingress/nginx-configuration",
                         "-enable-leader-election=false"
                     ]
