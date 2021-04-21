@@ -24,7 +24,7 @@ from suite.custom_resources_utils import (
     delete_v_s_route,
     create_crd_from_yaml,
     delete_crd,
-    patch_ts_from_yaml,
+    create_ts_from_yaml,
     create_gc_from_yaml,
     delete_ts,
     delete_gc,
@@ -785,7 +785,7 @@ def transport_server_setup(request, kube_apis, test_namespace) -> TransportServe
 
     # deploy transport server
     transport_server_file = f"{TEST_DATA}/{request.param['example']}/standard/transport-server.yaml"
-    ts_resource = patch_ts_from_yaml(
+    ts_resource = create_ts_from_yaml(
         kube_apis.custom_objects, transport_server_file, test_namespace
     )
 

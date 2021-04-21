@@ -278,7 +278,7 @@ def create_virtual_server_from_yaml(
         raise
 
 
-def patch_ts_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> dict:
+def create_ts_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> dict:
     """
     Create a TransportServer Resource based on yaml file.
 
