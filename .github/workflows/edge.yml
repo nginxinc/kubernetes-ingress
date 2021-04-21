@@ -100,60 +100,71 @@ jobs:
       matrix:
         include:
           - os: ubuntu-20.04
-            image: nginx-ingress
+            image: debian
             tag: ${{ github.sha }}
             marker: 'ingresses'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-ingress
+            image: alpine
             tag: ${{ github.sha }}
             marker: 'vsr'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-ingress
+            image: opentracing
             tag: ${{ github.sha }}
             marker: 'vs'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-ingress
+            image: openshift
             tag: ${{ github.sha }}
             marker: 'ts'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-ingress
+            image: debian
             tag: ${{ github.sha }}
             marker: 'policies'
             type: oss
+            ic-type: nginx-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            image: openshift-plus
             tag: ${{ github.sha }}
             marker: 'ingresses'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            image: debian-plus
             tag: ${{ github.sha }}
             marker: 'vsr'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            image: debian-plus
             tag: ${{ github.sha }}
             marker: 'vs'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            image: opentracing-plus
             tag: ${{ github.sha }}
             marker: 'ts'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            image: debian-plus
             tag: ${{ github.sha }}
             marker: 'policies'
             type: plus
+            ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
-            image: nginx-plus-ingress
+            image: debian-plus-ap
             tag: ${{ github.sha }}-ap
             marker: 'appprotect'
             type: plus-ap
+            ic-type: nginx-plus-ingress
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -184,7 +195,7 @@ jobs:
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           load: true
           build-args: |
-            BUILD_OS=debian
+            BUILD_OS=${{ matrix.image }}
         if: matrix.type == 'oss'
       - name: Build Plus Docker Image ${{ matrix.image }}
         uses: docker/build-push-action@v2
@@ -200,7 +211,7 @@ jobs:
             "nginx-repo.crt=${{ secrets.KIC_NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.KIC_NGINX_KEY }}"
           build-args: |
-            BUILD_OS=debian-plus
+            BUILD_OS=${{ matrix.image }}
             PLUS=-plus
         if: matrix.type == 'plus'
       - name: Build AP Docker Image ${{ matrix.image }}
@@ -208,16 +219,15 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
           target: local
           tags: ${{ matrix.image }}:${{ matrix.tag }}
           load: true
           secrets: |
             "nginx-repo.crt=${{ secrets.KIC_NGINX_AP_CRT }}"
             "nginx-repo.key=${{ secrets.KIC_NGINX_AP_KEY }}"
+            "rhel_license=${{ secrets.KIC_RHEL_LICENSE }}"
           build-args: |
-            BUILD_OS=debian-plus-ap
+            BUILD_OS=${{ matrix.image }}
             PLUS=-plus
         if: matrix.type == 'plus-ap'
       - name: Build Test-Runner Container
@@ -244,7 +254,7 @@ jobs:
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ env.K8S_VERSION }} --config kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ env.K8S_TIMEOUT }}
           kind load docker-image ${{ matrix.image }}:${{ matrix.tag }} --name ${{ github.run_id }}
           echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
-          echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.type }}-${{ matrix.marker }}')
+          echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.image }}-${{ matrix.marker }}')
       - name: Setup Kubeconfig
         run: |
           sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
@@ -259,7 +269,7 @@ jobs:
           --context=kind-${{ github.run_id }} \
           --image=${{ matrix.image }}:${{ matrix.tag }} \
           --image-pull-policy=Never \
-          --ic-type=${{ matrix.image }} \
+          --ic-type=${{ matrix.ic-type }} \
           --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
           --html=tests-${{ steps.k8s.outputs.cluster }}.html \
           --self-contained-html \
@@ -272,6 +282,48 @@ jobs:
           name: test-results-${{ steps.k8s.outputs.cluster }}
           path: ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html
         if: always()
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-20.04
+    needs: [binary, unit-tests]
+    if:
+      github.event.pull_request.head.repo.full_name == 'nginxinc/kubernetes-ingress' ||
+      github.event_name == 'push'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2.1.4
+        with:
+          path: ${{ github.workspace }}/nginx-ingress
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          driver-opts: network=host
+      - name: Cache Docker layers
+        uses: actions/cache@v2.1.4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Build AP Docker Image ${{ matrix.image }}
+        uses: docker/build-push-action@v2
+        with:
+          file: build/DockerfileWithAppProtectForPlusForOpenShift
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          target: local
+          tags: nginx-plus-ingress-ap-openshift:${{ github.sha }}
+          secrets: |
+            "nginx-repo.crt=${{ secrets.KIC_NGINX_AP_CRT }}"
+            "nginx-repo.key=${{ secrets.KIC_NGINX_AP_KEY }}"
+            "rhel_license=${{ secrets.KIC_RHEL_LICENSE }}"
+          build-args: |
+            PLUS=-plus
 
   helm-tests:
     name: Helm Tests

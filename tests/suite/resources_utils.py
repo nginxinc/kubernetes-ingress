@@ -1047,9 +1047,9 @@ def ensure_connection(request_url, expected_code=404) -> None:
     :param expected_code: response code
     :return:
     """
-    for _ in range(4):
+    for _ in range(10):
         try:
-            resp = requests.get(request_url, verify=False)
+            resp = requests.get(request_url, verify=False, timeout=5)
             if resp.status_code == expected_code:
                 return
         except Exception as ex:

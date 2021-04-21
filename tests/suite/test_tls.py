@@ -1,7 +1,7 @@
 import pytest
 
 from suite.resources_utils import create_ingress_from_yaml, delete_items_from_yaml, wait_before_test, \
-    create_secret_from_yaml, delete_secret, replace_secret, is_secret_present
+    create_secret_from_yaml, delete_secret, replace_secret, is_secret_present, ensure_connection_to_public_endpoint
 from suite.yaml_utils import get_first_ingress_host_from_yaml, get_name_from_yaml
 from suite.ssl_utils import get_server_certificate_subject
 from settings import TEST_DATA
@@ -57,6 +57,9 @@ def tls_setup(request, kube_apis, ingress_controller_prerequisites, ingress_cont
 
     ingress_host = get_first_ingress_host_from_yaml(ingress_path)
     secret_name = get_name_from_yaml(f"{test_data_path}/tls-secret.yaml")
+
+    ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip, ingress_controller_endpoint.port,
+                                         ingress_controller_endpoint.port_ssl)
 
     def fin():
         print("Clean up TLS setup")
