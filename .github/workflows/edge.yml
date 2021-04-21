@@ -160,6 +160,12 @@ jobs:
             type: plus
             ic-type: nginx-plus-ingress
           - os: ubuntu-20.04
+            image: debian-plus
+            tag: ${{ github.sha }}
+            marker: 'ts'
+            type: plus
+            ic-type: nginx-plus-ingress
+          - os: ubuntu-20.04
             image: debian-plus-ap
             tag: ${{ github.sha }}-ap
             marker: 'appprotect'
