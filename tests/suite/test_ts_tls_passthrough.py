@@ -10,10 +10,13 @@ from suite.resources_utils import (
     get_first_pod_name,
 )
 from suite.custom_resources_utils import (
+    read_custom_resource,
     read_ts,
     patch_ts,
     delete_ts,
     create_ts_from_yaml,
+    create_virtual_server_from_yaml,
+    delete_virtual_server,
 )
 from suite.yaml_utils import get_first_host_from_yaml
 from suite.ssl_utils import get_server_certificate_subject, create_sni_session
@@ -21,11 +24,14 @@ from settings import TEST_DATA
 
 class TransportServerTlsSetup:
     """
-    Encapsulate Transport Server Example details.
+    Encapsulate Transport Server details.
 
     Attributes:
+        public_endpoint (object):
+        ts_resource (dict):
         name (str):
         namespace (str):
+        ts_host (str):
     """
 
     def __init__(self, public_endpoint: PublicEndpoint, ts_resource, name, namespace, ts_host):
@@ -45,8 +51,9 @@ def transport_server_tls_passthrough_setup(
 
     :param request: internal pytest fixture to parametrize this method
     :param kube_apis: client apis
-    :param test_namespace:
-    :return: TransportServerSetup
+    :param test_namespace: namespace for test resources
+    :param ingress_controller_endpoint: ip and port information
+    :return TransportServerTlsSetup:
     """
     print(
         "------------------------- Deploy Transport Server with tls passthrough -----------------------------------"
@@ -79,7 +86,7 @@ def transport_server_tls_passthrough_setup(
     )
 
 
-@pytest.mark.ts_tls
+@pytest.mark.ts
 @pytest.mark.parametrize(
     "crd_ingress_controller, transport_server_tls_passthrough_setup",
     [
@@ -136,8 +143,7 @@ class TestTransportServerTlsPassthrough:
         assert resp.status_code == 200
         assert f"hello from pod {get_first_pod_name(kube_apis.v1, test_namespace)}" in resp.text
 
-    @pytest.mark.test
-    def test_tls_passthrough_host_collision(
+    def test_tls_passthrough_host_collision_ts(
         self,
         kube_apis,
         crd_ingress_controller,
@@ -145,7 +151,7 @@ class TestTransportServerTlsPassthrough:
         test_namespace,
     ):
         """
-            Test host collision handling in transport server.
+            Test host collision handling in TransportServer with another TransportServer.
         """
         print("Step 1: Create second TS with same host")
         ts_src_same_host = (
@@ -190,4 +196,30 @@ class TestTransportServerTlsPassthrough:
         assert (
             response["status"]["reason"] == "AddedOrUpdated"
             and response["status"]["state"] == "Valid"
+        )
+
+    def test_tls_passthrough_host_collision_vs(
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        transport_server_tls_passthrough_setup,
+        test_namespace,
+    ):
+        """
+            Test host collision handling in TransportServer with VirtualServer.
+        """
+        print("Step 1: Create VirtualServer with same host")
+        vs_src_same_host = (
+            f"{TEST_DATA}/transport-server-tls-passthrough/virtual-server-same-host.yaml"
+        )
+        vs_same_host_name = create_virtual_server_from_yaml(
+            kube_apis.custom_objects, vs_src_same_host, test_namespace
+        )
+        wait_before_test(1)
+        response = read_custom_resource(kube_apis.custom_objects, test_namespace, "virtualservers", vs_same_host_name)
+        delete_virtual_server(kube_apis.custom_objects, vs_same_host_name, test_namespace)
+
+        assert (
+            response["status"]["reason"] == "Rejected"
+            and response["status"]["message"] == "Host is taken by another resource"
         )
