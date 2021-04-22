@@ -97,7 +97,7 @@ var (
 	If a secret is set, but the Ingress controller is not able to fetch it from Kubernetes API or it is not set and the Ingress Controller
 	fails to read the file "/etc/nginx/secrets/default", the Ingress controller will fail to start.`)
 
-	versionFlag = flag.Bool("version", false, "Print the version and git-commit hash and exit")
+	versionFlag = flag.Bool("version", false, "Print the version, git-commit hash and build date and exit")
 
 	mainTemplatePath = flag.String("main-template-path", "",
 		`Path to the main NGINX configuration template. (default for NGINX "nginx.tmpl"; default for NGINX Plus "nginx-plus.tmpl")`)
@@ -195,8 +195,9 @@ func main() {
 		glog.Fatalf("Error setting logtostderr to true: %v", err)
 	}
 
+	versionInfo := fmt.Sprintf("Version=%v GitCommit=%v Date=%v", version, commit, date)
 	if *versionFlag {
-		fmt.Printf("Version=%v GitCommit=%v Date=%v\n", version, commit, date)
+		fmt.Println(versionInfo)
 		os.Exit(0)
 	}
 
@@ -255,7 +256,7 @@ func main() {
 		glog.Fatal("ingresslink and external-service cannot both be set")
 	}
 
-	glog.Infof("Starting NGINX Ingress controller Version=%v GitCommit=%v Date=%v PlusFlag=%v\n", version, commit, date, *nginxPlus)
+	glog.Infof("Starting NGINX Ingress controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 
 	var config *rest.Config
 	if *proxyURL != "" {
