@@ -10,9 +10,8 @@ from suite.resources_utils import (
     get_first_pod_name,
 )
 from suite.custom_resources_utils import (
-    read_custom_resource,
+    read_vs,
     read_ts,
-    patch_ts,
     delete_ts,
     create_ts_from_yaml,
     create_virtual_server_from_yaml,
@@ -107,7 +106,7 @@ def transport_server_tls_passthrough_setup(
 class TestTransportServerTlsPassthrough:
     def restore_ts(self, kube_apis, transport_server_tls_passthrough_setup) -> None:
         """
-        Function to revert a TransportServer resource to a valid state.
+        Function to create std TS resource
         """
         ts_std_src = f"{TEST_DATA}/transport-server-tls-passthrough/standard/transport-server.yaml"
         ts_std_res = create_ts_from_yaml(
@@ -142,7 +141,7 @@ class TestTransportServerTlsPassthrough:
         )
         assert resp.status_code == 200
         assert f"hello from pod {get_first_pod_name(kube_apis.v1, test_namespace)}" in resp.text
-
+    
     def test_tls_passthrough_host_collision_ts(
         self,
         kube_apis,
@@ -216,7 +215,7 @@ class TestTransportServerTlsPassthrough:
             kube_apis.custom_objects, vs_src_same_host, test_namespace
         )
         wait_before_test(1)
-        response = read_custom_resource(kube_apis.custom_objects, test_namespace, "virtualservers", vs_same_host_name)
+        response = read_vs(kube_apis.custom_objects, test_namespace, vs_same_host_name)
         delete_virtual_server(kube_apis.custom_objects, vs_same_host_name, test_namespace)
 
         assert (

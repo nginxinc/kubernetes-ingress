@@ -116,8 +116,25 @@ def read_ts(custom_objects: CustomObjectsApi, namespace, name) -> object:
     """
     return read_custom_resource_v1alpha1(custom_objects, namespace, "transportservers", name)
 
+def read_vs(custom_objects: CustomObjectsApi, namespace, name) -> object:
+    """
+    Read VirtualServer resource.
+    """
+    return read_custom_resource(custom_objects, namespace, "virtualservers", name)
 
-def read_ap_crd(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
+def read_vsr(custom_objects: CustomObjectsApi, namespace, name) -> object:
+    """
+    Read VirtualServerRoute resource.
+    """
+    return read_custom_resource(custom_objects, namespace, "virtualserverroutes", name)
+
+def read_policy(custom_objects: CustomObjectsApi, namespace, name) -> object:
+    """
+    Read Policy resource.
+    """
+    return read_custom_resource(custom_objects, namespace, "policies", name)
+
+def read_ap_custom_resource(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
     """
     Get AppProtect CRD information (kubectl describe output)
     :param custom_objects: CustomObjectsApi
@@ -227,28 +244,6 @@ def delete_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
         name,
     )
     print(f"Policy was removed with name '{name}'")
-
-
-def read_policy(custom_objects: CustomObjectsApi, namespace, name) -> object:
-    """
-    Get policy information (kubectl describe output)
-
-    :param custom_objects: CustomObjectsApi
-    :param namespace: The policy's namespace	
-    :param name: policy's name
-    :return: object
-    """
-    print(f"Getting info for policy {name} in namespace {namespace}")
-    try:
-        response = custom_objects.get_namespaced_custom_object(
-            "k8s.nginx.org", "v1", namespace, "policies", name
-        )
-        pprint(response)
-        return response
-
-    except ApiException:
-        logging.exception(f"Exception occurred while reading Policy")
-        raise
 
 
 def create_virtual_server_from_yaml(

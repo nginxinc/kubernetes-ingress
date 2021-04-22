@@ -25,7 +25,7 @@ from suite.resources_utils import (
     get_file_contents,
 )
 from suite.custom_resources_utils import (
-    read_ap_crd,
+    read_ap_custom_resource,
     create_crd_from_yaml,
     delete_crd,
     create_ap_usersig_from_yaml,
@@ -212,7 +212,7 @@ class TestAppProtectWAFPolicyVS:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        ap_crd_info = read_ap_crd(
+        ap_crd_info = read_ap_custom_resource(
             kube_apis.custom_objects, test_namespace, "appolicies", ap_policy_uds
         )
         assert_ap_crd_info(ap_crd_info, ap_policy_uds)
@@ -285,7 +285,7 @@ class TestAppProtectWAFPolicyVS:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        ap_crd_info = read_ap_crd(
+        ap_crd_info = read_ap_custom_resource(
             kube_apis.custom_objects, test_namespace, "appolicies", ap_policy_uds
         )
         assert_ap_crd_info(ap_crd_info, ap_policy_uds)
@@ -358,7 +358,7 @@ class TestAppProtectWAFPolicyVS:
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        ap_crd_info = read_ap_crd(
+        ap_crd_info = read_ap_custom_resource(
             kube_apis.custom_objects, test_namespace, "appolicies", ap_policy_uds
         )
         assert_ap_crd_info(ap_crd_info, ap_policy_uds)
@@ -464,7 +464,7 @@ class TestAppProtectWAFPolicyVSR:
             v_s_route_setup.route_m.namespace,
         )
         wait_before_test()
-        ap_crd_info = read_ap_crd(
+        ap_crd_info = read_ap_custom_resource(
             kube_apis.custom_objects, test_namespace, "appolicies", ap_policy_uds
         )
         assert_ap_crd_info(ap_crd_info, ap_policy_uds)
