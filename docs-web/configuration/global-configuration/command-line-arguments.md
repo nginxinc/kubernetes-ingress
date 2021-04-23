@@ -2,7 +2,7 @@
 
 The Ingress Controller supports several command-line arguments. Setting the arguments depends on how you install the Ingress Controller:
 * If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the Ingress Controller, to set the command-line arguments, modify those manifests accordingly. See the [Installation with Manifests](/nginx-ingress-controller/installation/installation-with-manifests) doc.
-* If you're using *Helm* to install the Ingress Controller, modify the parameters of the Helm chart that correspond to the command-line arguments. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc. 
+* If you're using *Helm* to install the Ingress Controller, modify the parameters of the Helm chart that correspond to the command-line arguments. See the [Installation with Helm](/nginx-ingress-controller/installation/installation-with-helm) doc.
 
 Below we describe the available command-line arguments:
 ```eval_rst
@@ -48,7 +48,7 @@ Below we describe the available command-line arguments:
 
 	Enable TLS Passthrough on port 443.
 
-	Requires :option:`-enable-custom-resources`.	
+	Requires :option:`-enable-custom-resources`.
 
 .. option:: -external-service <string>
 
@@ -65,7 +65,7 @@ Below we describe the available command-line arguments:
 .. option:: -global-configuration <string>
 
 	A GlobalConfiguration resource for global configuration of the Ingress Controller.
-	
+
 	Format: ``<namespace>/<name>``
 
 	Requires :option:`-enable-custom-resources`.
@@ -174,7 +174,7 @@ Below we describe the available command-line arguments:
 
 .. option:: -version
 
-	Print the version and git-commit hash and exit
+	Print the version, git-commit hash and build date and exit
 
 .. option:: -virtualserver-template-path <string>
 
