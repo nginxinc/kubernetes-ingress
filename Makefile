@@ -101,6 +101,7 @@ push: ## Docker push to $PREFIX and $TAG
 .PHONY: clean
 clean:  ## Remove nginx-ingress binary
 	-rm nginx-ingress
+	-rm -r dist
 
 .PHONY: deps
 deps: ## Add missing and remove unused modules, verify deps and dowload them to local cache

@@ -2,6 +2,7 @@ env:
   - GO111MODULE=on
 before:
   hooks:
+    - make clean
     - go mod tidy
     - go mod verify
 builds:
