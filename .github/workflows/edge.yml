@@ -457,14 +457,17 @@ jobs:
             image: nginx-ingress
             tag: edge
             type: debian
+            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
           - os: ubuntu-20.04
             image: nginx-ingress
             tag: edge-alpine
             type: alpine
+            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
           - os: ubuntu-20.04
             image: nginx-ingress
             tag: edge-ubi
             type: openshift
+            platforms: linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -503,7 +506,7 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
           target: goreleaser
           tags: nginx/${{ matrix.image }}:${{ matrix.tag }}
-          platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+          platforms: ${{ matrix.platforms }}
           push: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
