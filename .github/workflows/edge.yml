@@ -467,7 +467,7 @@ jobs:
             image: nginx-ingress
             tag: edge-ubi
             type: openshift
-            platforms: linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+            platforms: linux/arm64,linux/amd64
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2

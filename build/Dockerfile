@@ -146,7 +146,7 @@ LABEL image-version=ubi-nginx-$NGINX_VERSION-$IC_VERSION
 
 RUN echo "[nginx]" >> /etc/yum.repos.d/nginx.repo \
 	&& echo "name=nginx repo" >> /etc/yum.repos.d/nginx.repo \
-	&& echo "baseurl=https://nginx.org/packages/mainline/rhel/8/\$basearch/" >> /etc/yum.repos.d/nginx.repo \
+	&& echo "baseurl=https://nginx.org/packages/mainline/centos/8/\$basearch/" >> /etc/yum.repos.d/nginx.repo \
 	&& echo "gpgcheck=0" >> /etc/yum.repos.d/nginx.repo \
 	&& echo "enabled=1" >> /etc/yum.repos.d/nginx.repo \
 	&& echo "module_hotfixes=true" >> /etc/yum.repos.d/nginx.repo \
