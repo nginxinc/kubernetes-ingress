@@ -20,7 +20,7 @@ def assert_unrecognized_name_error(endpoint):
         get_server_certificate_subject(endpoint.public_ip, host, endpoint.port_ssl)
         pytest.fail("We expected an SSLError here, but didn't get it or got another error. Exiting...")
     except SSLError as e:
-        assert "SSL" in e.library
+        assert "SSLError" in str(e)
         assert "TLSV1_UNRECOGNIZED_NAME" in e.reason
 
 

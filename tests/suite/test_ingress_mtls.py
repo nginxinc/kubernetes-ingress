@@ -1,37 +1,60 @@
-import pytest, requests, time
-from ssl import SSLError
-from kubernetes.client.rest import ApiException
+import pytest
+import requests
 from suite.resources_utils import (
     wait_before_test,
-    replace_configmap_from_yaml,
     create_secret_from_yaml,
     delete_secret,
-    replace_secret,
 )
-from suite.ssl_utils import get_server_certificate_subject, create_sni_session
+from suite.ssl_utils import create_sni_session
 from suite.custom_resources_utils import (
-    read_custom_resource,
-    delete_virtual_server,
-    create_virtual_server_from_yaml,
+    read_vs,
+    read_vsr,
     patch_virtual_server_from_yaml,
-    delete_and_create_vs_from_yaml,
     create_policy_from_yaml,
     delete_policy,
-    read_policy,
+    patch_v_s_route_from_yaml,
 )
-from settings import TEST_DATA, DEPLOYMENTS
+from settings import TEST_DATA
 
-std_vs_src = f"{TEST_DATA}/ingress-mtls/standard/virtual-server.yaml"
+std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
+std_vsr_src = f"{TEST_DATA}/virtual-server-route/route-multiple.yaml"
+std_vs_vsr_src = f"{TEST_DATA}/virtual-server-route/standard/virtual-server.yaml"
+
 mtls_sec_valid_src = f"{TEST_DATA}/ingress-mtls/secret/ingress-mtls-secret.yaml"
 tls_sec_valid_src = f"{TEST_DATA}/ingress-mtls/secret/tls-secret.yaml"
+
 mtls_pol_valid_src = f"{TEST_DATA}/ingress-mtls/policies/ingress-mtls.yaml"
 mtls_pol_invalid_src = f"{TEST_DATA}/ingress-mtls/policies/ingress-mtls-invalid.yaml"
-mtls_vs_src = f"{TEST_DATA}/ingress-mtls/spec/virtual-server-mtls.yaml"
-mtls_vs_invalid_pol_src = f"{TEST_DATA}/ingress-mtls/spec/virtual-server-mtls-invalid-pol.yaml"
+
+mtls_vs_spec_src = f"{TEST_DATA}/ingress-mtls/spec/virtual-server-mtls.yaml"
+mtls_vs_route_src = f"{TEST_DATA}/ingress-mtls/route-subroute/virtual-server-mtls.yaml"
+mtls_vsr_subroute_src = f"{TEST_DATA}/ingress-mtls/route-subroute/virtual-server-route-mtls.yaml"
+mtls_vs_vsr_src = f"{TEST_DATA}/ingress-mtls/route-subroute/virtual-server-vsr.yaml"
+
 crt = f"{TEST_DATA}/ingress-mtls/client-auth/valid/client-cert.pem"
 key = f"{TEST_DATA}/ingress-mtls/client-auth/valid/client-key.pem"
 invalid_crt = f"{TEST_DATA}/ingress-mtls/client-auth/invalid/client-cert.pem"
 invalid_key = f"{TEST_DATA}/ingress-mtls/client-auth/invalid/client-cert.pem"
+
+
+def setup_policy(kube_apis, test_namespace, mtls_secret, tls_secret, policy):
+    print(f"Create ingress-mtls secret")
+    mtls_secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, mtls_secret)
+
+    print(f"Create ingress-mtls policy")
+    pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy, test_namespace)
+
+    print(f"Create tls secret")
+    tls_secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, tls_secret)
+    return mtls_secret_name, tls_secret_name, pol_name
+
+
+def teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret):
+
+    print("Delete policy and related secrets")
+    delete_secret(kube_apis.v1, tls_secret, test_namespace)
+    delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
+    delete_secret(kube_apis.v1, mtls_secret, test_namespace)
 
 
 @pytest.mark.policies
@@ -42,39 +65,28 @@ invalid_key = f"{TEST_DATA}/ingress-mtls/client-auth/invalid/client-cert.pem"
             {
                 "type": "complete",
                 "extra_args": [
-                    f"-enable-custom-resources",
                     f"-enable-leader-election=false",
                     f"-enable-preview-policies",
                 ],
             },
             {
-                "example": "ingress-mtls",
+                "example": "virtual-server",
                 "app_type": "simple",
             },
         )
     ],
     indirect=True,
 )
-class TestIngressMtlsPolicies:
-    def setup_policy(self, kube_apis, test_namespace, mtls_secret, tls_secret, policy):
-        print(f"Create ingress-mtls secret")
-        mtls_secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, mtls_secret)
-
-        print(f"Create ingress-mtls policy")
-        pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy, test_namespace)
-
-        print(f"Create tls secret")
-        tls_secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, tls_secret)
-        return mtls_secret_name, tls_secret_name, pol_name
-    
-    def teardown_policy(self, kube_apis, test_namespace, tls_secret, pol_name, mtls_secret):
-
-        print("Delete policy and related secrets")
-        delete_secret(kube_apis.v1, tls_secret, test_namespace)
-        delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
-        delete_secret(kube_apis.v1, mtls_secret, test_namespace)
-
-    @pytest.mark.parametrize("policy_src", [mtls_pol_valid_src, mtls_pol_invalid_src])
+class TestIngressMtlsPolicyVS:
+    @pytest.mark.parametrize(
+        "policy_src, vs_src",
+        [
+            (mtls_pol_valid_src, mtls_vs_spec_src),
+            (mtls_pol_valid_src, mtls_vs_route_src),
+            (mtls_pol_invalid_src, mtls_vs_spec_src),
+        ],
+    )
+    @pytest.mark.smoke
     def test_ingress_mtls_policy(
         self,
         kube_apis,
@@ -82,12 +94,13 @@ class TestIngressMtlsPolicies:
         virtual_server_setup,
         test_namespace,
         policy_src,
+        vs_src,
     ):
         """
-        Test ingress-mtls with valid and invalid policy
+        Test ingress-mtls with valid and invalid policy in spec context
         """
         session = create_sni_session()
-        mtls_secret, tls_secret, pol_name = self.setup_policy(
+        mtls_secret, tls_secret, pol_name = setup_policy(
             kube_apis,
             test_namespace,
             mtls_sec_valid_src,
@@ -96,10 +109,10 @@ class TestIngressMtlsPolicies:
         )
 
         print(f"Patch vs with policy: {policy_src}")
-        delete_and_create_vs_from_yaml(
+        patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
-            mtls_vs_src,
+            vs_src,
             virtual_server_setup.namespace,
         )
         wait_before_test()
@@ -110,25 +123,40 @@ class TestIngressMtlsPolicies:
             allow_redirects=False,
             verify=False,
         )
+        vs_res = read_vs(kube_apis.custom_objects, test_namespace, virtual_server_setup.vs_name)
+        teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
 
-        self.teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
-
-        delete_and_create_vs_from_yaml(
+        patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             std_vs_src,
             virtual_server_setup.namespace,
         )
-        if policy_src == mtls_pol_valid_src:
-            assert resp.status_code == 200
-            assert "Server address:" in resp.text and "Server name:" in resp.text
+        if policy_src == mtls_pol_valid_src and vs_src == mtls_vs_spec_src:
+            assert (
+                resp.status_code == 200
+                and "Server address:" in resp.text
+                and "Server name:" in resp.text
+                and vs_res["status"]["state"] == "Valid"
+            )
+        elif policy_src == mtls_pol_valid_src and vs_src == mtls_vs_route_src:
+            assert (
+                resp.status_code == 500
+                and "Internal Server Error" in resp.text
+                and f"{pol_name} is not allowed in the route context" in vs_res["status"]["message"]
+                and vs_res["status"]["state"] == "Warning"
+            )
         elif policy_src == mtls_pol_invalid_src:
-            assert resp.status_code == 500
+            assert (
+                resp.status_code == 500
+                and "Internal Server Error" in resp.text
+                and f"{pol_name} is missing or invalid" in vs_res["status"]["message"]
+                and vs_res["status"]["state"] == "Warning"
+            )
         else:
             pytest.fail(f"Invalid parameter")
 
-    @pytest.mark.test
-    @pytest.mark.parametrize("certificate", [(crt, key), "",(invalid_crt, invalid_key)])
+    @pytest.mark.parametrize("certificate", [(crt, key), "", (invalid_crt, invalid_key)])
     def test_ingress_mtls_policy_cert(
         self,
         kube_apis,
@@ -141,7 +169,7 @@ class TestIngressMtlsPolicies:
         Test ingress-mtls with valid and invalid policy
         """
         session = create_sni_session()
-        mtls_secret, tls_secret, pol_name = self.setup_policy(
+        mtls_secret, tls_secret, pol_name = setup_policy(
             kube_apis,
             test_namespace,
             mtls_sec_valid_src,
@@ -150,14 +178,15 @@ class TestIngressMtlsPolicies:
         )
 
         print(f"Patch vs with policy: {mtls_pol_valid_src}")
-        delete_and_create_vs_from_yaml(
+        patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
-            mtls_vs_src,
+            mtls_vs_spec_src,
             virtual_server_setup.namespace,
         )
         wait_before_test()
-        try :
+        ssl_exception = ""
+        try:
             resp = session.get(
                 virtual_server_setup.backend_1_url_ssl,
                 cert=certificate,
@@ -165,24 +194,107 @@ class TestIngressMtlsPolicies:
                 allow_redirects=False,
                 verify=False,
             )
-        except SSLError as e:
-            exception = e
-            print("SSL Error occured")
-        print(resp.text)
+        except requests.exceptions.SSLError as e:
+            print(f"SSL certificate exception: {e}")
+            ssl_exception = str(e)
 
-        self.teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
+        teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
 
-        delete_and_create_vs_from_yaml(
+        patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
             virtual_server_setup.vs_name,
             std_vs_src,
             virtual_server_setup.namespace,
         )
         if certificate == (crt, key):
-            assert resp.status_code == 200
-            assert "Server address:" in resp.text and "Server name:" in resp.text
+            assert (
+                resp.status_code == 200
+                and "Server address:" in resp.text
+                and "Server name:" in resp.text
+            )
+        elif certificate == "":
+            assert (
+                resp.status_code == 400 and "400 No required SSL certificate was sent" in resp.text
+            )
         elif certificate == (invalid_crt, invalid_key):
-            assert "SSL" in exception.library
+            assert "HTTPSConnectionPool" and "Caused by SSLError" in ssl_exception
         else:
-            assert resp.status_code == 400
-            assert "400 No required SSL certificate was sent" in resp.text
+            pytest.fail(f"Invalid parameter")
+
+
+@pytest.mark.policies
+@pytest.mark.parametrize(
+    "crd_ingress_controller, v_s_route_setup",
+    [
+        (
+            {
+                "type": "complete",
+                "extra_args": [
+                    f"-enable-leader-election=false",
+                    f"-enable-preview-policies",
+                ],
+            },
+            {"example": "virtual-server-route"},
+        )
+    ],
+    indirect=True,
+)
+class TestIngressMtlsPolicyVSR:
+    def test_ingress_mtls_policy_vsr(
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        v_s_route_app_setup,
+        v_s_route_setup,
+        test_namespace,
+    ):
+        """
+        Test ingress-mtls in vsr subroute context
+        """
+        mtls_secret, tls_secret, pol_name = setup_policy(
+            kube_apis,
+            v_s_route_setup.route_m.namespace,
+            mtls_sec_valid_src,
+            tls_sec_valid_src,
+            mtls_pol_valid_src,
+        )
+        print(
+            f"Patch vsr with policy: {mtls_vsr_subroute_src} and vs with tls secret: {tls_secret}"
+        )
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            v_s_route_setup.vs_name,
+            mtls_vs_vsr_src,
+            v_s_route_setup.namespace,
+        )
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            v_s_route_setup.route_m.name,
+            mtls_vsr_subroute_src,
+            v_s_route_setup.route_m.namespace,
+        )
+        wait_before_test()
+        vsr_res = read_vsr(
+            kube_apis.custom_objects,
+            v_s_route_setup.route_m.namespace,
+            v_s_route_setup.route_m.name,
+        )
+        teardown_policy(
+            kube_apis, v_s_route_setup.route_m.namespace, tls_secret, pol_name, mtls_secret
+        )
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            v_s_route_setup.route_m.name,
+            std_vsr_src,
+            v_s_route_setup.route_m.namespace,
+        )
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            v_s_route_setup.vs_name,
+            std_vs_vsr_src,
+            v_s_route_setup.namespace,
+        )
+        assert (
+            vsr_res["status"]["state"] == "Warning"
+            and f"{pol_name} is not allowed in the subroute context" in vsr_res["status"]["message"]
+        )

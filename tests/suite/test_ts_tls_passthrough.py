@@ -93,7 +93,6 @@ def transport_server_tls_passthrough_setup(
             {
                 "type": "complete",
                 "extra_args": [
-                    "-enable-custom-resources",
                     "-enable-leader-election=false",
                     "-enable-tls-passthrough=true",
                 ],

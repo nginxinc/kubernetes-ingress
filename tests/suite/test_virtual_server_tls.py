@@ -36,7 +36,7 @@ def assert_unrecognized_name_error(virtual_server_setup):
                                        virtual_server_setup.public_endpoint.port_ssl)
         pytest.fail("We expected an SSLError here, but didn't get it or got another error. Exiting...")
     except SSLError as e:
-        assert "SSL" in e.library
+        assert "SSLError" in str(e)
         assert "TLSV1_UNRECOGNIZED_NAME" in e.reason
 
 
