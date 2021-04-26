@@ -97,7 +97,7 @@ class TestIngressMtlsPolicyVS:
         vs_src,
     ):
         """
-        Test ingress-mtls with valid and invalid policy in spec context
+        Test ingress-mtls with valid and invalid policy in vs spec and route contexts.
         """
         session = create_sni_session()
         mtls_secret, tls_secret, pol_name = setup_policy(
@@ -249,7 +249,7 @@ class TestIngressMtlsPolicyVSR:
         test_namespace,
     ):
         """
-        Test ingress-mtls in vsr subroute context
+        Test ingress-mtls in vsr subroute context.
         """
         mtls_secret, tls_secret, pol_name = setup_policy(
             kube_apis,
