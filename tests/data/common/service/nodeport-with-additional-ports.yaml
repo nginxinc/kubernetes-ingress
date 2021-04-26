@@ -26,5 +26,9 @@ spec:
     targetPort: 3333
     protocol: TCP
     name: tcp-server
+  - port: 3334
+    targetPort: 3334
+    protocol: UDP
+    name: udp-server
   selector:
     app: nginx-ingress

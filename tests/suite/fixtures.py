@@ -121,13 +121,14 @@ class PublicEndpoint:
         port_ssl (int):
     """
 
-    def __init__(self, public_ip, port=80, port_ssl=443, api_port=8080, metrics_port=9113, tcp_server_port=3333):
+    def __init__(self, public_ip, port=80, port_ssl=443, api_port=8080, metrics_port=9113, tcp_server_port=3333, udp_server_port=3334):
         self.public_ip = public_ip
         self.port = port
         self.port_ssl = port_ssl
         self.api_port = api_port
         self.metrics_port = metrics_port
         self.tcp_server_port = tcp_server_port
+        self.udp_server_port = udp_server_port
 
 
 class IngressControllerPrerequisites:
@@ -254,10 +255,10 @@ def ingress_controller_endpoint(
             namespace,
             f"{TEST_DATA}/common/service/nodeport-with-additional-ports.yaml",
         )
-        port, port_ssl, api_port, metrics_port, tcp_server_port = get_service_node_ports(
+        port, port_ssl, api_port, metrics_port, tcp_server_port, udp_server_port = get_service_node_ports(
             kube_apis.v1, service_name, namespace
         )
-        return PublicEndpoint(public_ip, port, port_ssl, api_port, metrics_port, tcp_server_port)
+        return PublicEndpoint(public_ip, port, port_ssl, api_port, metrics_port, tcp_server_port, udp_server_port)
     else:
         create_service_from_yaml(
             kube_apis.v1,

@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: udp-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: udp-service
+  template:
+    metadata:
+      labels:
+        app: udp-service
+    spec:
+      containers:
+        - name: udp-service
+          image: seanoneillf5/udp-server:1.1
+          ports:
+            - containerPort: 3334
+              name: udp-server
+              protocol: UDP
+          env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: udp-service
+spec:
+  selector:
+    app: udp-service
+  ports:
+  - name: udp-server
+    targetPort: 3334
+    port: 3334
+    protocol: UDP

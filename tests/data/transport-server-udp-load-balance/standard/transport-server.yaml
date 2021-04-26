@@ -1,0 +1,14 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: TransportServer
+metadata:
+  name: transport-server
+spec:
+  listener:
+    name: udp-server
+    protocol: UDP
+  upstreams:
+    - name: udp-app
+      service: udp-service
+      port: 3334
+  action:
+    pass: udp-app
