@@ -576,8 +576,7 @@ jobs:
       - name: Send Notification
         uses: 8398a7/action-slack@v3
         if:
-          steps.check.outputs.status == 'failure' ||
-          steps.check.outputs.status == 'cancelled'
+          steps.check.outputs.status == 'failure'
         with:
           status: custom
           custom_payload: |
