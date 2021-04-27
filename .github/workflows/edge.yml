@@ -481,6 +481,10 @@ jobs:
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: arm,arm64,ppc64le,s390x
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
         with:
