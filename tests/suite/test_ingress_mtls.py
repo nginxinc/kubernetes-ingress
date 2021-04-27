@@ -1,3 +1,4 @@
+import mock
 import pytest
 import requests
 from suite.resources_utils import (
@@ -79,11 +80,32 @@ def teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret
 )
 class TestIngressMtlsPolicyVS:
     @pytest.mark.parametrize(
-        "policy_src, vs_src",
+        "policy_src, vs_src, expected_code, expected_text, vs_message, vs_state",
         [
-            (mtls_pol_valid_src, mtls_vs_spec_src),
-            (mtls_pol_valid_src, mtls_vs_route_src),
-            (mtls_pol_invalid_src, mtls_vs_spec_src),
+            (
+                mtls_pol_valid_src,
+                mtls_vs_spec_src,
+                200,
+                "Server address:",
+                "was added or updated",
+                "Valid",
+            ),
+            (
+                mtls_pol_valid_src,
+                mtls_vs_route_src,
+                500,
+                "Internal Server Error",
+                "is not allowed in the route context",
+                "Warning",
+            ),
+            (
+                mtls_pol_invalid_src,
+                mtls_vs_spec_src,
+                500,
+                "Internal Server Error",
+                "is missing or invalid",
+                "Warning",
+            ),
         ],
     )
     @pytest.mark.smoke
@@ -95,6 +117,10 @@ class TestIngressMtlsPolicyVS:
         test_namespace,
         policy_src,
         vs_src,
+        expected_code,
+        expected_text,
+        vs_message,
+        vs_state,
     ):
         """
         Test ingress-mtls with valid and invalid policy in vs spec and route contexts.
@@ -132,31 +158,21 @@ class TestIngressMtlsPolicyVS:
             std_vs_src,
             virtual_server_setup.namespace,
         )
-        if policy_src == mtls_pol_valid_src and vs_src == mtls_vs_spec_src:
-            assert (
-                resp.status_code == 200
-                and "Server address:" in resp.text
-                and "Server name:" in resp.text
-                and vs_res["status"]["state"] == "Valid"
-            )
-        elif policy_src == mtls_pol_valid_src and vs_src == mtls_vs_route_src:
-            assert (
-                resp.status_code == 500
-                and "Internal Server Error" in resp.text
-                and f"{pol_name} is not allowed in the route context" in vs_res["status"]["message"]
-                and vs_res["status"]["state"] == "Warning"
-            )
-        elif policy_src == mtls_pol_invalid_src:
-            assert (
-                resp.status_code == 500
-                and "Internal Server Error" in resp.text
-                and f"{pol_name} is missing or invalid" in vs_res["status"]["message"]
-                and vs_res["status"]["state"] == "Warning"
-            )
-        else:
-            pytest.fail(f"Invalid parameter")
+        assert (
+            resp.status_code == expected_code
+            and expected_text in resp.text
+            and vs_message in vs_res["status"]["message"]
+            and vs_res["status"]["state"] == vs_state
+        )
 
-    @pytest.mark.parametrize("certificate", [(crt, key), "", (invalid_crt, invalid_key)])
+    @pytest.mark.parametrize(
+        "certificate, expected_code, expected_text, exception",
+        [
+            ((crt, key), 200, "Server address:", ""),
+            ("", 400, "No required SSL certificate was sent", ""),
+            ((invalid_crt, invalid_key), "None", "None", "Caused by SSLError"),
+        ],
+    )
     def test_ingress_mtls_policy_cert(
         self,
         kube_apis,
@@ -164,6 +180,9 @@ class TestIngressMtlsPolicyVS:
         virtual_server_setup,
         test_namespace,
         certificate,
+        expected_code,
+        expected_text,
+        exception,
     ):
         """
         Test ingress-mtls with valid and invalid policy
@@ -186,6 +205,7 @@ class TestIngressMtlsPolicyVS:
         )
         wait_before_test()
         ssl_exception = ""
+        resp = ""
         try:
             resp = session.get(
                 virtual_server_setup.backend_1_url_ssl,
@@ -197,6 +217,9 @@ class TestIngressMtlsPolicyVS:
         except requests.exceptions.SSLError as e:
             print(f"SSL certificate exception: {e}")
             ssl_exception = str(e)
+            resp = mock.Mock()
+            resp.status_code = "None"
+            resp.text = "None"
 
         teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret)
 
@@ -206,21 +229,11 @@ class TestIngressMtlsPolicyVS:
             std_vs_src,
             virtual_server_setup.namespace,
         )
-        if certificate == (crt, key):
-            assert (
-                resp.status_code == 200
-                and "Server address:" in resp.text
-                and "Server name:" in resp.text
-            )
-        elif certificate == "":
-            assert (
-                resp.status_code == 400 and "400 No required SSL certificate was sent" in resp.text
-            )
-        elif certificate == (invalid_crt, invalid_key):
-            assert "HTTPSConnectionPool" and "Caused by SSLError" in ssl_exception
-        else:
-            pytest.fail(f"Invalid parameter")
-
+        assert (
+            resp.status_code == expected_code
+            and expected_text in resp.text
+            and exception in ssl_exception
+        )
 
 @pytest.mark.policies
 @pytest.mark.parametrize(
