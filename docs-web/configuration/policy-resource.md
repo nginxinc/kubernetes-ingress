@@ -611,11 +611,13 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
       routes:
       - path: /tea
         policies: # route policies
-        - policy2
+        - name: policy2
+          namesapce: cafe
         route: tea/tea
       - path: /coffee
         policies: # route policies
-        - policy3
+        - name: policy3
+          namespace: cafe
         action:
           pass: coffee
       ```
@@ -643,7 +645,8 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
       subroutes: # subroute policies
       - path: /tea
         policies:
-        - policy4
+        - name: policy4
+          namespace: tea
         action:
           pass: tea
     ```
