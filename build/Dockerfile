@@ -13,8 +13,21 @@ RUN apt-get update \
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
 FROM docker.io/library/nginx:1.19.10-alpine AS alpine
 
-RUN apk add --no-cache libcap \
-	&& rm -rf /var/cache/apk/*
+RUN apk add --no-cache libcap
+
+
+############################################# Base image for Alpine with NGINX Plus #############################################
+FROM alpine:3.13 as alpine-plus
+ARG NGINX_PLUS_VERSION
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
+	set -x \
+	&& wget -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
+	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v`egrep -o '^[0-9]+\.[0-9]+' /etc/alpine-release`/main" >> /etc/apk/repositories \
+	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION:1} nginx-plus-module-njs~${NGINX_PLUS_VERSION:1}
+
+COPY --chown=nginx:0 internal/configs/oidc/* /etc/nginx/oidc/
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################

@@ -57,6 +57,9 @@ NGINX Plus images are not available through DockerHub.
     * - Name
       - Base image
       - Third-party modules
+    * - Alpine-based image
+      - ``alpine:3.13``
+      -
     * - Debian-based image
       - ``debian:buster-slim``
       -
