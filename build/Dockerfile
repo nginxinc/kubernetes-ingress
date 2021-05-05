@@ -104,7 +104,7 @@ COPY --chown=nginx:0 build/log-default.json /etc/nginx
 
 
 ############################################# Base image for UBI #############################################
-FROM registry.access.redhat.com/ubi8/ubi:8.3 AS ubi-base
+FROM registry.access.redhat.com/ubi8-minimal AS ubi-base
 
 LABEL name="NGINX Ingress Controller" \
 	description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
@@ -112,6 +112,7 @@ LABEL name="NGINX Ingress Controller" \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 RUN set -x \
+	&& microdnf --nodocs --enablerepo=ubi-8-baseos install -y shadow-utils \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
@@ -131,14 +132,14 @@ RUN rpm --import https://nginx.org/keys/nginx_signing.key \
 	&& echo "gpgcheck=1" >> /etc/yum.repos.d/nginx.repo \
 	&& echo "enabled=1" >> /etc/yum.repos.d/nginx.repo \
 	&& echo "module_hotfixes=true" >> /etc/yum.repos.d/nginx.repo \
-	&& yum install -y nginx-${NGINX_VERSION} \
+	&& microdnf --setopt=install_weak_deps=0 --nodocs install -y nginx-${NGINX_VERSION} \
 	&& rm /etc/yum.repos.d/nginx.repo
 
 
 ############################################# Base image for UBI with NGINX Plus #############################################
 FROM ubi-base AS ubi-plus
 
-ENV NGINX_PLUS_VERSION 23-1.el8.ngx
+ENV NGINX_PLUS_VERSION r23
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -150,7 +151,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& echo "sslclientkey=/etc/ssl/nginx/nginx-repo.key" >> /etc/yum.repos.d/nginx-plus-8.repo \
 	&& echo "gpgcheck=1" >> /etc/yum.repos.d/nginx-plus-8.repo \
 	&& echo "enabled=1" >> /etc/yum.repos.d/nginx-plus-8.repo \
-	&& yum install -y ca-certificates nginx-plus-${NGINX_PLUS_VERSION} \
+	&& microdnf --setopt=install_weak_deps=0 --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION} \
 	&& rm /etc/yum.repos.d/nginx-plus-8.repo
 
 COPY --chown=nginx:0 internal/configs/oidc/* /etc/nginx/oidc/
