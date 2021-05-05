@@ -26,18 +26,15 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	set -x \
 	&& apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg wget \
-	&& wget https://nginx.org/keys/nginx_signing.key \
+	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg wget apt-transport-https libcap2-bin \
+	&& wget https://cs.nginx.com/static/keys/nginx_signing.key \
 	&& gpg --no-default-keyring --keyring nginx_keyring.gpg --import nginx_signing.key \
 	&& gpg --no-default-keyring --keyring nginx_keyring.gpg --export > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
-	&& echo "Acquire::https::plus-pkgs.nginx.com::Verify-Peer \"true\";" >> /etc/apt/apt.conf.d/90nginx \
-	&& echo "Acquire::https::plus-pkgs.nginx.com::Verify-Host \"true\";" >> /etc/apt/apt.conf.d/90nginx \
-	&& echo "Acquire::https::plus-pkgs.nginx.com::SslCert     \"/etc/ssl/nginx/nginx-repo.crt\";" >> /etc/apt/apt.conf.d/90nginx \
-	&& echo "Acquire::https::plus-pkgs.nginx.com::SslKey      \"/etc/ssl/nginx/nginx-repo.key\";" >> /etc/apt/apt.conf.d/90nginx \
-	&& echo "Acquire::https::plus-pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90nginx \
-	&& printf "deb https://plus-pkgs.nginx.com/debian buster nginx-plus\n" > /etc/apt/sources.list.d/nginx-plus.list \
+	&& wget -P /etc/apt/apt.conf.d https://cs.nginx.com/static/files/90pkgs-nginx \
+	&& echo "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
+	&& printf "deb https://pkgs.nginx.com/plus/debian buster nginx-plus\n" > /etc/apt/sources.list.d/nginx-plus.list \
 	&& apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
-	apt-transport-https libcap2-bin nginx-plus=${NGINX_PLUS_VERSION} nginx-plus-module-njs=${NGINX_NJS_VERSION} \
+	nginx-plus=${NGINX_PLUS_VERSION} nginx-plus-module-njs=${NGINX_NJS_VERSION} \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg wget \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -59,18 +56,16 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	set -x \
 	&& apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y gnupg wget \
-	&& wget https://nginx.org/keys/app-protect-sigs.key \
-	&& gpg --no-default-keyring --keyring app_protect_keyring.gpg --import app-protect-sigs.key \
+	&& apt-get install --no-install-recommends --no-install-suggests -y gnupg wget apt-transport-https \
+	&& wget https://cs.nginx.com/static/keys/app-protect-security-updates.key \
+	&& gpg --no-default-keyring --keyring app_protect_keyring.gpg --import app-protect-security-updates.key \
 	&& gpg --no-default-keyring --keyring app_protect_keyring.gpg --export > /etc/apt/trusted.gpg.d/nginx_app_signing.gpg \
-	&& sed -i '$ d' /etc/apt/apt.conf.d/90nginx \
-	&& echo "Acquire::https::plus-pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-app-$APPPROTECT_VERSION-apt\";" >> /etc/apt/apt.conf.d/90nginx \
-	&& echo "deb https://app-protect-sigs.nginx.com/debian/ buster nginx-plus\n" | tee /etc/apt/sources.list.d/app-protect-sigs.list \
-	&& echo "Acquire::https::app-protect-sigs.nginx.com::Verify-Peer \"true\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
-	&& echo "Acquire::https::app-protect-sigs.nginx.com::Verify-Host \"true\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
-	&& echo "Acquire::https::app-protect-sigs.nginx.com::SslCert     \"/etc/ssl/nginx/nginx-repo.crt\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
-	&& echo "Acquire::https::app-protect-sigs.nginx.com::SslKey      \"/etc/ssl/nginx/nginx-repo.key\";" >> /etc/apt/apt.conf.d/90app-protect-sigs \
-	&& apt-get update && apt-get install -y apt-transport-https nginx-plus-module-appprotect=$APPPROTECT_MODULE_VERSION \
+	&& sed -i '$ d' /etc/apt/apt.conf.d/90pkgs-nginx \
+	&& echo "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-nap-$APPPROTECT_MODULE_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
+	&& printf "deb https://pkgs.nginx.com/app-protect/debian buster nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-app-protect.list \
+	&& printf "deb https://pkgs.nginx.com/app-protect-security-updates/debian buster nginx-plus\n" | tee -a /etc/apt/sources.list.d/nginx-app-protect.list \
+	&& apt-get update && apt-get install --no-install-recommends --no-install-suggests -y \
+	nginx-plus-module-appprotect=$APPPROTECT_MODULE_VERSION \
 	app-protect-plugin=$APPPROTECT_PLUGIN_VERSION \
 	app-protect-engine=$APPPROTECT_ENGINE_VERSION \
 	app-protect-compiler=$APPPROTECT_COMPILER_VERSION \
@@ -79,7 +74,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get install -y app-protect-threat-campaigns${APPPROTECT_THREAT_CAMPAIGNS_VERSION:+=$APPPROTECT_THREAT_CAMPAIGNS_VERSION} \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg wget \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& rm /etc/apt/apt.conf.d/90app-protect-sigs /etc/apt/sources.list.d/app-protect-sigs.list
+	&& rm /etc/apt/sources.list.d/nginx-app-protect.list
 
 RUN mkdir -p /etc/nginx/waf /etc/nginx/waf/nac-policies /etc/nginx/waf/nac-logconfs /etc/nginx/waf/nac-usersigs /var/log/app_protect /opt/app_protect \
 	&& chown -R nginx:0 /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ /var/log/nginx/ \
@@ -247,7 +242,7 @@ RUN mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& setcap -v 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& chown -R nginx:0 /etc/nginx /etc/nginx/secrets /var/cache/nginx /var/lib/nginx \
-	&& rm -f /etc/nginx/conf.d/* /etc/apt/apt.conf.d/90nginx /etc/apt/sources.list.d/nginx-plus.list
+	&& rm -f /etc/nginx/conf.d/* /etc/apt/apt.conf.d/90pkgs-nginx /etc/apt/sources.list.d/nginx-plus.list
 
 COPY --chown=nginx:0 internal/configs/version1/nginx$PLUS.ingress.tmpl \
 	internal/configs/version1/nginx$PLUS.tmpl \
