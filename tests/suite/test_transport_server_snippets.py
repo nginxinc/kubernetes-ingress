@@ -3,13 +3,9 @@ import pytest
 from suite.resources_utils import (
     wait_before_test,
     get_ts_nginx_template_conf,
-    scale_deployment
 )
 from suite.custom_resources_utils import (
     patch_ts,
-    read_ts,
-    delete_ts,
-    create_ts_from_yaml,
 )
 from settings import TEST_DATA
 
