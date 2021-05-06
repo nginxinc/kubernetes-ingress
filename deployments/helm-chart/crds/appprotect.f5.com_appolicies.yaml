@@ -166,6 +166,7 @@ spec:
                                   - VIOL_GRPC_METHOD
                                   - VIOL_PARAMETER_ARRAY_VALUE
                                   - VIOL_PARAMETER_VALUE_REGEXP
+                                  - VIOL_CSRF
                                   - VIOL_PARAMETER_VALUE_BASE64
                                   - VIOL_MANDATORY_HEADER
                                   - VIOL_HEADER_REPEATED
@@ -381,6 +382,40 @@ spec:
                             enum:
                               - explicit
                               - wildcard
+                            type: string
+                          wildcardOrder:
+                            type: integer
+                        type: object
+                      type: array
+                    csrf-protection:
+                      properties:
+                        enabled:
+                          type: boolean
+                        expirationTimeInSeconds:
+                          pattern: disabled|\d+
+                          type: string
+                        sslOnly:
+                          type: boolean
+                      type: object
+                    csrf-urls:
+                      items:
+                        properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
+                          enforcementAction:
+                            enum:
+                              - verify-origin
+                              - none
+                            type: string
+                          method:
+                            enum:
+                              - GET
+                              - POST
+                              - any
+                            type: string
+                          url:
                             type: string
                           wildcardOrder:
                             type: integer
@@ -616,6 +651,19 @@ spec:
                             type: boolean
                           wildcardOrder:
                             type: integer
+                        type: object
+                      type: array
+                    host-names:
+                      items:
+                        properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
+                          includeSubdomains:
+                            type: boolean
+                          name:
+                            type: string
                         type: object
                       type: array
                     idl-files:
@@ -1180,13 +1228,57 @@ spec:
                       items:
                         properties:
                           $action:
+                            enum:
+                              - delete
+                            type: string
+                          allowRenderingInFrames:
+                            enum:
+                              - never
+                              - only-same
+                            type: string
+                          allowRenderingInFramesOnlyFrom:
                             type: string
                           attackSignaturesCheck:
+                            type: boolean
+                          clickjackingProtection:
                             type: boolean
                           description:
                             type: string
                           disallowFileUploadOfExecutables:
                             type: boolean
+                          html5CrossOriginRequestsEnforcement:
+                            properties:
+                              allowOriginsEnforcementMode:
+                                enum:
+                                  - replace-with
+                                  - unmodified
+                                type: string
+                              checkAllowedMethods:
+                                type: boolean
+                              crossDomainAllowedOrigin:
+                                items:
+                                  properties:
+                                    includeSubDomains:
+                                      type: boolean
+                                    originName:
+                                      type: string
+                                    originPort:
+                                      pattern: any|\d+
+                                      type: string
+                                    originProtocol:
+                                      enum:
+                                        - http
+                                        - http/https
+                                        - https
+                                      type: string
+                                  type: object
+                                type: array
+                              enforcementMode:
+                                enum:
+                                  - disabled
+                                  - enforce
+                                type: string
+                            type: object
                           isAllowed:
                             type: boolean
                           mandatoryBody:
@@ -1297,6 +1389,8 @@ spec:
                           methodsOverrideOnUrlCheck:
                             type: boolean
                           name:
+                            type: string
+                          operationId:
                             type: string
                           positionalParameters:
                             items:
