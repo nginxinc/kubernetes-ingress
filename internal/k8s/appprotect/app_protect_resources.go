@@ -49,19 +49,6 @@ func validateRequiredSlices(policy *unstructured.Unstructured, fieldsList [][]st
 	return nil
 }
 
-func validateRequiredStrings(policy *unstructured.Unstructured, fieldsList [][]string) error {
-	for _, fields := range fieldsList {
-		field, found, err := unstructured.NestedString(policy.Object, fields...)
-		if err != nil {
-			return fmt.Errorf("Error checking for required field %v: %v", field, err)
-		}
-		if !found {
-			return fmt.Errorf("Required field %v not found", field)
-		}
-	}
-	return nil
-}
-
 // ValidateAppProtectPolicy validates Policy resource
 func ValidateAppProtectPolicy(policy *unstructured.Unstructured) error {
 	polName := policy.GetName()
