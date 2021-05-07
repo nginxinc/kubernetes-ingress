@@ -201,7 +201,7 @@ func (s appProtectUserSigSlice) Swap(i, j int) {
 }
 
 func createAppProtectPolicyEx(policyObj *unstructured.Unstructured) (*PolicyEx, error) {
-	err := ValidateAppProtectPolicy(policyObj)
+	err := validateAppProtectPolicy(policyObj)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error validating policy %s: %v", policyObj.GetName(), err)
 		return &PolicyEx{Obj: policyObj, IsValid: false, ErrorMsg: failedValidationErrorMsg}, fmt.Errorf(errMsg)
@@ -255,7 +255,7 @@ func buildRevTimes(requirement map[string]interface{}) (RevTimes, error) {
 }
 
 func createAppProtectLogConfEx(logConfObj *unstructured.Unstructured) (*LogConfEx, error) {
-	err := ValidateAppProtectLogConf(logConfObj)
+	err := validateAppProtectLogConf(logConfObj)
 	if err != nil {
 		return &LogConfEx{
 			Obj:      logConfObj,
