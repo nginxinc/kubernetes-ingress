@@ -523,6 +523,7 @@ func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceE
 	return handlers
 }
 
+// compareSpecs returns true if the resources are different.
 func compareSpecs(oldresource, resource *unstructured.Unstructured) (bool, error) {
 	oldSpec, found, err := unstructured.NestedMap(oldresource.Object, "spec")
 	if !found {
