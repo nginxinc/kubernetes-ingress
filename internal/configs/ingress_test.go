@@ -11,6 +11,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
@@ -20,10 +21,11 @@ func TestGenerateNginxCfg(t *testing.T) {
 	cafeIngressEx := createCafeIngressEx()
 	configParams := NewDefaultConfigParams()
 
-	expected := createExpectedConfigForCafeIngressEx()
+	isPlus := false
+	expected := createExpectedConfigForCafeIngressEx(isPlus)
 
 	apRes := make(map[string]string)
-	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, isPlus, false, &StaticConfigParams{}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
@@ -48,7 +50,9 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 
 	configParams := NewDefaultConfigParams()
 
-	expected := createExpectedConfigForCafeIngressEx()
+	isPlus := true
+
+	expected := createExpectedConfigForCafeIngressEx(isPlus)
 	expected.Servers[0].JWTAuth = &version1.JWTAuth{
 		Key:                  "/etc/nginx/secrets/default-cafe-jwk",
 		Realm:                "Cafe App",
@@ -63,7 +67,7 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 	}
 
 	apRes := make(map[string]string)
-	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, true, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, isPlus, false, &StaticConfigParams{}, false)
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -173,7 +177,7 @@ func TestGenerateIngressPath(t *testing.T) {
 	}
 }
 
-func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
+func createExpectedConfigForCafeIngressEx(isPlus bool) version1.IngressNginxConfig {
 	coffeeUpstream := version1.Upstream{
 		Name:             "default-cafe-ingress-cafe.example.com-coffee-svc-80",
 		LBMethod:         "random two least_conn",
@@ -188,6 +192,15 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 			},
 		},
 	}
+	if isPlus {
+		coffeeUpstream.UpstreamLabels = version1.UpstreamLabels{
+			Service:           "coffee-svc",
+			ResourceType:      "ingress",
+			ResourceName:      "cafe-ingress",
+			ResourceNamespace: "default",
+		}
+	}
+
 	teaUpstream := version1.Upstream{
 		Name:             "default-cafe-ingress-cafe.example.com-tea-svc-80",
 		LBMethod:         "random two least_conn",
@@ -202,6 +215,15 @@ func createExpectedConfigForCafeIngressEx() version1.IngressNginxConfig {
 			},
 		},
 	}
+	if isPlus {
+		teaUpstream.UpstreamLabels = version1.UpstreamLabels{
+			Service:           "tea-svc",
+			ResourceType:      "ingress",
+			ResourceName:      "cafe-ingress",
+			ResourceNamespace: "default",
+		}
+	}
+
 	expected := version1.IngressNginxConfig{
 		Upstreams: []version1.Upstream{
 			coffeeUpstream,
@@ -324,12 +346,14 @@ func createCafeIngressEx() IngressEx {
 
 func TestGenerateNginxCfgForMergeableIngresses(t *testing.T) {
 	mergeableIngresses := createMergeableCafeIngress()
-	expected := createExpectedConfigForMergeableCafeIngress()
+
+	isPlus := false
+	expected := createExpectedConfigForMergeableCafeIngress(isPlus)
 
 	configParams := NewDefaultConfigParams()
 
 	masterApRes := make(map[string]string)
-	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, false, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, isPlus, false, &StaticConfigParams{}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
@@ -388,7 +412,9 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 		Path: "/etc/nginx/secrets/default-coffee-jwk",
 	}
 
-	expected := createExpectedConfigForMergeableCafeIngress()
+	isPlus := true
+
+	expected := createExpectedConfigForMergeableCafeIngress(isPlus)
 	expected.Servers[0].JWTAuth = &version1.JWTAuth{
 		Key:                  "/etc/nginx/secrets/default-cafe-jwk",
 		Realm:                "Cafe",
@@ -415,7 +441,6 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	minionJwtKeyFileNames := make(map[string]string)
 	minionJwtKeyFileNames[objectMetaToFileName(&mergeableIngresses.Minions[0].Ingress.ObjectMeta)] = "/etc/nginx/secrets/default-coffee-jwk"
 	configParams := NewDefaultConfigParams()
-	isPlus := true
 
 	masterApRes := make(map[string]string)
 	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, isPlus, false, &StaticConfigParams{}, false)
@@ -578,7 +603,7 @@ func createMergeableCafeIngress() *MergeableIngresses {
 	return mergeableIngresses
 }
 
-func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
+func createExpectedConfigForMergeableCafeIngress(isPlus bool) version1.IngressNginxConfig {
 	coffeeUpstream := version1.Upstream{
 		Name:             "default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc-80",
 		LBMethod:         "random two least_conn",
@@ -593,6 +618,15 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 			},
 		},
 	}
+	if isPlus {
+		coffeeUpstream.UpstreamLabels = version1.UpstreamLabels{
+			Service:           "coffee-svc",
+			ResourceType:      "ingress",
+			ResourceName:      "cafe-ingress-coffee-minion",
+			ResourceNamespace: "default",
+		}
+	}
+
 	teaUpstream := version1.Upstream{
 		Name:             "default-cafe-ingress-tea-minion-cafe.example.com-tea-svc-80",
 		LBMethod:         "random two least_conn",
@@ -607,6 +641,15 @@ func createExpectedConfigForMergeableCafeIngress() version1.IngressNginxConfig {
 			},
 		},
 	}
+	if isPlus {
+		teaUpstream.UpstreamLabels = version1.UpstreamLabels{
+			Service:           "tea-svc",
+			ResourceType:      "ingress",
+			ResourceName:      "cafe-ingress-tea-minion",
+			ResourceNamespace: "default",
+		}
+	}
+
 	expected := version1.IngressNginxConfig{
 		Upstreams: []version1.Upstream{
 			coffeeUpstream,
@@ -786,14 +829,16 @@ func TestGenerateNginxCfgForSpiffe(t *testing.T) {
 	cafeIngressEx := createCafeIngressEx()
 	configParams := NewDefaultConfigParams()
 
-	expected := createExpectedConfigForCafeIngressEx()
+	isPlus := false
+
+	expected := createExpectedConfigForCafeIngressEx(isPlus)
 	expected.SpiffeClientCerts = true
 	for i := range expected.Servers[0].Locations {
 		expected.Servers[0].Locations[i].SSL = true
 	}
 
 	apResources := make(map[string]string)
-	result, warnings := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
+	result, warnings := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, isPlus, false,
 		&StaticConfigParams{NginxServiceMesh: true}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -810,12 +855,14 @@ func TestGenerateNginxCfgForInternalRoute(t *testing.T) {
 	cafeIngressEx.Ingress.Annotations[internalRouteAnnotation] = "true"
 	configParams := NewDefaultConfigParams()
 
-	expected := createExpectedConfigForCafeIngressEx()
+	isPlus := false
+
+	expected := createExpectedConfigForCafeIngressEx(isPlus)
 	expected.Servers[0].SpiffeCerts = true
 	expected.Ingress.Annotations[internalRouteAnnotation] = "true"
 
 	apResources := make(map[string]string)
-	result, warnings := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
+	result, warnings := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, isPlus, false,
 		&StaticConfigParams{NginxServiceMesh: true, EnableInternalRoutes: true}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -1249,5 +1296,101 @@ func TestGenerateJWTConfig(t *testing.T) {
 		if !reflect.DeepEqual(test.expectedWarnings, warnings) {
 			t.Errorf("generateJWTConfig() returned %v but expected %v for the case of %s", warnings, test.expectedWarnings, test.msg)
 		}
+	}
+}
+
+func TestGenerateNginxCfgForAppProtect(t *testing.T) {
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["appprotect.f5.com/app-protect-enable"] = "True"
+	cafeIngressEx.Ingress.Annotations["appprotect.f5.com/app-protect-security-log-enable"] = "True"
+	cafeIngressEx.AppProtectPolicy = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "dataguard-alarm",
+			},
+		},
+	}
+	cafeIngressEx.AppProtectLogConf = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "logconf",
+			},
+		},
+	}
+
+	configParams := NewDefaultConfigParams()
+	apRes := map[string]string{
+		appProtectPolicyKey:  "/etc/nginx/waf/nac-policies/default_dataguard-alarm",
+		appProtectLogConfKey: "/etc/nginx/waf/nac-logconfs/default_logconf syslog:server=127.0.0.1:514",
+	}
+	staticCfgParams := &StaticConfigParams{
+		MainAppProtectLoadModule: true,
+	}
+
+	isPlus := true
+
+	expected := createExpectedConfigForCafeIngressEx(isPlus)
+	expected.Servers[0].AppProtectEnable = "on"
+	expected.Servers[0].AppProtectPolicy = "/etc/nginx/waf/nac-policies/default_dataguard-alarm"
+	expected.Servers[0].AppProtectLogConf = "/etc/nginx/waf/nac-logconfs/default_logconf syslog:server=127.0.0.1:514"
+	expected.Servers[0].AppProtectLogEnable = "on"
+	expected.Ingress.Annotations = cafeIngressEx.Ingress.Annotations
+
+	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, isPlus, false, staticCfgParams, false)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgForMergeableIngressesForAppProtect(t *testing.T) {
+	mergeableIngresses := createMergeableCafeIngress()
+	mergeableIngresses.Master.Ingress.Annotations["appprotect.f5.com/app-protect-enable"] = "True"
+	mergeableIngresses.Master.Ingress.Annotations["appprotect.f5.com/app-protect-security-log-enable"] = "True"
+	mergeableIngresses.Master.AppProtectPolicy = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "dataguard-alarm",
+			},
+		},
+	}
+	mergeableIngresses.Master.AppProtectLogConf = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "logconf",
+			},
+		},
+	}
+
+	configParams := NewDefaultConfigParams()
+	apRes := map[string]string{
+		appProtectPolicyKey:  "/etc/nginx/waf/nac-policies/default_dataguard-alarm",
+		appProtectLogConfKey: "/etc/nginx/waf/nac-logconfs/default_logconf syslog:server=127.0.0.1:514",
+	}
+	staticCfgParams := &StaticConfigParams{
+		MainAppProtectLoadModule: true,
+	}
+
+	isPlus := true
+
+	expected := createExpectedConfigForMergeableCafeIngress(isPlus)
+	expected.Servers[0].AppProtectEnable = "on"
+	expected.Servers[0].AppProtectPolicy = "/etc/nginx/waf/nac-policies/default_dataguard-alarm"
+	expected.Servers[0].AppProtectLogConf = "/etc/nginx/waf/nac-logconfs/default_logconf syslog:server=127.0.0.1:514"
+	expected.Servers[0].AppProtectLogEnable = "on"
+	expected.Ingress.Annotations = mergeableIngresses.Master.Ingress.Annotations
+
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, apRes, configParams, isPlus, false, staticCfgParams, false)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned warnings: %v", warnings)
 	}
 }
