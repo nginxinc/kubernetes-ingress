@@ -101,6 +101,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
+      - name: Output Variables
+        id: commit
+        run: |
+          echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
       - name: Fetch Cached Artifacts
         uses: actions/cache@v2.1.5
         with:
@@ -129,6 +133,7 @@ jobs:
           load: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
+            NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
