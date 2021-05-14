@@ -122,12 +122,9 @@ FROM ubi-base AS ubi
 ARG NGINX_VERSION
 
 RUN rpm --import https://nginx.org/keys/nginx_signing.key \
-	&& echo "[nginx]" >> /etc/yum.repos.d/nginx.repo \
-	&& echo "name=nginx repo" >> /etc/yum.repos.d/nginx.repo \
-	&& echo "baseurl=https://nginx.org/packages/mainline/centos/8/\$basearch/" >> /etc/yum.repos.d/nginx.repo \
-	&& echo "gpgcheck=1" >> /etc/yum.repos.d/nginx.repo \
-	&& echo "enabled=1" >> /etc/yum.repos.d/nginx.repo \
-	&& echo "module_hotfixes=true" >> /etc/yum.repos.d/nginx.repo \
+	&& printf "%s\n" "[nginx]" "name=nginx repo" \
+	"baseurl=https://nginx.org/packages/mainline/centos/8/\$basearch/" \
+	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
 	&& microdnf --setopt=install_weak_deps=0 --nodocs install -y nginx-${NGINX_VERSION} \
 	&& rm /etc/yum.repos.d/nginx.repo
 
@@ -139,14 +136,8 @@ ENV NGINX_PLUS_VERSION r23
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-	rpm --import https://nginx.org/keys/nginx_signing.key \
-	&& echo "[nginx-plus]" >> /etc/yum.repos.d/nginx-plus-8.repo \
-	&& echo "name=nginx-plus repo" >> /etc/yum.repos.d/nginx-plus-8.repo \
-	&& echo "baseurl=https://plus-pkgs.nginx.com/centos/8/\$basearch/" >> /etc/yum.repos.d/nginx-plus-8.repo \
-	&& echo "sslclientcert=/etc/ssl/nginx/nginx-repo.crt" >> /etc/yum.repos.d/nginx-plus-8.repo \
-	&& echo "sslclientkey=/etc/ssl/nginx/nginx-repo.key" >> /etc/yum.repos.d/nginx-plus-8.repo \
-	&& echo "gpgcheck=1" >> /etc/yum.repos.d/nginx-plus-8.repo \
-	&& echo "enabled=1" >> /etc/yum.repos.d/nginx-plus-8.repo \
+	rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
+	&& curl -sS https://cs.nginx.com/static/files/nginx-plus-8.repo | tr 0 1 > /etc/yum.repos.d/nginx-plus-8.repo \
 	&& microdnf --setopt=install_weak_deps=0 --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION} \
 	&& rm /etc/yum.repos.d/nginx-plus-8.repo
 
