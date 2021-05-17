@@ -156,7 +156,7 @@ func TestHasServicePortChanges(t *testing.T) {
 	}
 }
 
-func TestCompareSpecs(t *testing.T) {
+func TestAreResourcesDifferent(t *testing.T) {
 	tests := []struct {
 		oldR, newR          *unstructured.Unstructured
 		expected, expectErr bool
@@ -261,15 +261,15 @@ func TestCompareSpecs(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result, err := compareSpecs(test.oldR, test.newR)
+		result, err := areResourcesDifferent(test.oldR, test.newR)
 		if result != test.expected {
-			t.Errorf("compareSpecs() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+			t.Errorf("areResourcesDifferent() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
 		if test.expectErr && err == nil {
-			t.Errorf("compareSpecs() returned no error for the case of %s", test.msg)
+			t.Errorf("areResourcesDifferent() returned no error for the case of %s", test.msg)
 		}
 		if !test.expectErr && err != nil {
-			t.Errorf("compareSpecs() returned unexpected error %v for the case of %s", err, test.msg)
+			t.Errorf("areResourcesDifferent() returned unexpected error %v for the case of %s", err, test.msg)
 		}
 	}
 }

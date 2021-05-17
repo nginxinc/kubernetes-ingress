@@ -483,12 +483,12 @@ func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventH
 		UpdateFunc: func(old, cur interface{}) {
 			oldLink := old.(*unstructured.Unstructured)
 			curLink := cur.(*unstructured.Unstructured)
-			updated, err := compareSpecs(oldLink, curLink)
+			different, err := areResourcesDifferent(oldLink, curLink)
 			if err != nil {
 				glog.V(3).Infof("Error when comparing IngressLinks: %v", err)
 				lbc.AddSyncQueue(curLink)
 			}
-			if updated {
+			if different {
 				glog.V(3).Infof("IngressLink %v changed, syncing", oldLink.GetName())
 				lbc.AddSyncQueue(curLink)
 			}
@@ -506,12 +506,12 @@ func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceE
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldPol := oldObj.(*unstructured.Unstructured)
 			newPol := obj.(*unstructured.Unstructured)
-			updated, err := compareSpecs(oldPol, newPol)
+			different, err := areResourcesDifferent(oldPol, newPol)
 			if err != nil {
 				glog.V(3).Infof("Error when comparing policy %v", err)
 				lbc.AddSyncQueue(newPol)
 			}
-			if updated {
+			if different {
 				glog.V(3).Infof("ApPolicy %v changed, syncing", oldPol.GetName())
 				lbc.AddSyncQueue(newPol)
 			}
@@ -523,8 +523,8 @@ func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceE
 	return handlers
 }
 
-// compareSpecs returns true if the resources are different.
-func compareSpecs(oldresource, resource *unstructured.Unstructured) (bool, error) {
+// areResourcesDifferent returns true if the resources are different based on their spec.
+func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bool, error) {
 	oldSpec, found, err := unstructured.NestedMap(oldresource.Object, "spec")
 	if !found {
 		glog.V(3).Infof("Warning, oldspec has unexpected format")
@@ -556,12 +556,12 @@ func createAppProtectLogConfHandlers(lbc *LoadBalancerController) cache.Resource
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldConf := oldObj.(*unstructured.Unstructured)
 			newConf := obj.(*unstructured.Unstructured)
-			updated, err := compareSpecs(oldConf, newConf)
+			different, err := areResourcesDifferent(oldConf, newConf)
 			if err != nil {
 				glog.V(3).Infof("Error when comparing LogConfs %v", err)
 				lbc.AddSyncQueue(newConf)
 			}
-			if updated {
+			if different {
 				glog.V(3).Infof("ApLogConf %v changed, syncing", oldConf.GetName())
 				lbc.AddSyncQueue(newConf)
 			}
@@ -583,12 +583,12 @@ func createAppProtectUserSigHandlers(lbc *LoadBalancerController) cache.Resource
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldSig := oldObj.(*unstructured.Unstructured)
 			newSig := obj.(*unstructured.Unstructured)
-			updated, err := compareSpecs(oldSig, newSig)
+			different, err := areResourcesDifferent(oldSig, newSig)
 			if err != nil {
 				glog.V(3).Infof("Error when comparing UserSigs %v", err)
 				lbc.AddSyncQueue(newSig)
 			}
-			if updated {
+			if different {
 				glog.V(3).Infof("ApUserSig %v changed, syncing", oldSig.GetName())
 				lbc.AddSyncQueue(newSig)
 			}
