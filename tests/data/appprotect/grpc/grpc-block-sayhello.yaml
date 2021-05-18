@@ -1,0 +1,32 @@
+apiVersion: appprotect.f5.com/v1beta1
+kind: APPolicy
+metadata:
+  name: grpc-block-sayhello
+spec:
+  policy:
+    blocking-settings:
+      violations:
+      - name: VIOL_GRPC_METHOD
+        block: True
+        alarm: True 
+    applicationLanguage: utf-8
+    bot-defense:
+      settings:
+        isEnabled: false
+    grpc-profiles:
+    - associateUrls: true
+      defenseAttributes:
+        allowUnknownFields: false
+        maximumDataLength: "10000"
+      description: My first profile
+      idlFiles:
+      - idlFile:
+          fileName: autheid.proto
+      name: gProf1
+    idl-files:
+    - isBase64: true
+      fileName: autheid.proto
+      contents: Ly8gVGhlIGdyZWV0aW5nIHNlcnZpY2UgZGVmaW5pdGlvbi4KCnN5bnRheCA9ICJwcm90bzMiOwoKcGFja2FnZSBoZWxsb3dvcmxkOwoKc2VydmljZSBHcmVldGVyIHsKICAvLyBTZW5kcyBhIGdyZWV0aW5nCiAgcnBjIFNheUdvb2RieWUgKEhlbGxvUmVxdWVzdCkgcmV0dXJucyAoSGVsbG9SZXBseSkge30KfQoKLy8gVGhlIHJlcXVlc3QgbWVzc2FnZSBjb250YWluaW5nIHRoZSB1c2VyJ3MgbmFtZS4KbWVzc2FnZSBIZWxsb1JlcXVlc3QgewogIHN0cmluZyBuYW1lID0gMTsKfQoKLy8gVGhlIHJlc3BvbnNlIG1lc3NhZ2UgY29udGFpbmluZyB0aGUgZ3JlZXRpbmdzCm1lc3NhZ2UgSGVsbG9SZXBseSB7CiAgc3RyaW5nIG1lc3NhZ2UgPSAxOwp9Cg== 
+    name: valid_string_encoding_policy
+    template:
+      name: POLICY_TEMPLATE_NGINX_BASE

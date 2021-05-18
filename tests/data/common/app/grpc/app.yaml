@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grpc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: greeter
+  template:
+    metadata:
+      labels:
+        app: greeter
+    spec:
+      containers:
+      - name: greeter
+        image: nginxkic/test-grpc-server:0.1
+        ports:
+        - containerPort: 50051
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grpc-svc
+spec:
+  ports:
+  - port: 50051
+    targetPort: 50051
+    protocol: TCP
+    name: grpc
+  selector:
+    app: greeter
