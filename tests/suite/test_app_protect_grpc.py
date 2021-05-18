@@ -114,7 +114,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect
-@pytest.mark.test
+@pytest.mark.smoke
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [{"extra_args": [f"-enable-custom-resources", f"-enable-app-protect"]}],
