@@ -1,5 +1,18 @@
 # Releases
 
+## NGINX Ingress Controller 1.11.2
+
+CHANGES:
+* Update NGINX Plus version to R23 P1.
+
+HELM CHART:
+* The version of the Helm chart is now 0.9.2.
+
+UPGRADE:
+* For NGINX, use the 1.11.2 image from our DockerHub: `nginx/nginx-ingress:1.11.2`, `nginx/nginx-ingress:1.11.2-alpine` or `nginx/nginx-ingress:1.11.2-ubi`
+* For NGINX Plus, please build your own image using the 1.11.2 source code.
+* For Helm, use version 0.9.2 of the chart.
+
 ## NGINX Ingress Controller 1.11.1
 
 7 April 2021
