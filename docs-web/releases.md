@@ -2,6 +2,8 @@
 
 ## NGINX Ingress Controller 1.11.2
 
+19 May 2021
+
 CHANGES:
 * Update NGINX Plus version to R23 P1.
 
