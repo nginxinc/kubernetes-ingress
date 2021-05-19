@@ -28,7 +28,7 @@ RUN apk add --no-cache libcap \
 ############################################# Base image for Debian with NGINX Plus #############################################
 FROM debian:buster-slim AS debian-plus
 ARG IC_VERSION
-ENV NGINX_PLUS_VERSION 23-1~buster
+ENV NGINX_PLUS_VERSION 23-2~buster
 ENV NGINX_NJS_VERSION 23+0.5.0-1~buster
 
 LABEL version=debian-nginx-plus-$NGINX_PLUS_VERSION-$IC_VERSION
@@ -157,7 +157,7 @@ RUN echo "[nginx]" >> /etc/yum.repos.d/nginx.repo \
 FROM openshift-base AS openshift-plus
 ARG IC_VERSION
 
-ENV NGINX_PLUS_VERSION 23-1.el8.ngx
+ENV NGINX_PLUS_VERSION 23-2.el8.ngx
 
 LABEL image-version=ubi-nginx-$NGINX_PLUS_VERSION-$IC_VERSION
 
