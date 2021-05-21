@@ -3,8 +3,8 @@ module github.com/nginxinc/kubernetes-ingress
 go 1.16
 
 require (
-	github.com/aws/aws-sdk-go-v2/config v1.2.0
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.3.0
+	github.com/aws/aws-sdk-go-v2/config v1.3.0
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.3.1
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/go-openapi/spec v0.20.3 // indirect

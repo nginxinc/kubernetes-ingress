@@ -36,15 +36,11 @@ func init() {
 
 	mpm := marketplacemetering.New(marketplacemetering.Options{Region: cfg.Region, Credentials: cfg.Credentials})
 
-	var notEnt *types.CustomerNotEntitledException
-	var invalidRegion *types.InvalidRegionException
-
 	out, err := mpm.RegisterUsage(context.TODO(), &marketplacemetering.RegisterUsageInput{ProductCode: &productCode, PublicKeyVersion: &pubKeyVersion, Nonce: &nonce})
 	if err != nil {
+		var notEnt *types.CustomerNotEntitledException
 		if errors.As(err, &notEnt) {
-			log.Fatalf("User not entitled: %v", err)
-		} else if errors.As(err, &invalidRegion) {
-			log.Fatalf("Invalid region: %v", err)
+			log.Fatalf("User not entitled, code: %v, message: %v, fault: %v", notEnt.ErrorCode(), notEnt.ErrorMessage(), notEnt.ErrorFault().String())
 		}
 		log.Fatal(err)
 
