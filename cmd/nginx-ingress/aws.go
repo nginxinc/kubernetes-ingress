@@ -4,10 +4,11 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"log"
-	"math/rand"
+	"math/big"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/marketplacemetering"
@@ -15,8 +16,6 @@ import (
 
 	"github.com/dgrijalva/jwt-go/v4"
 )
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
 
 var (
 	productCode   string
@@ -26,12 +25,14 @@ var (
 )
 
 func init() {
-	rand.Seed(jwt.Now().UnixNano())
-	nonce = RandStringBytesRmndr(32)
+	nonce, err := generateRandomString(255)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		log.Fatalf("Error loading AWS configuration: %v", err)
+		log.Fatalf("error loading AWS configuration: %v", err)
 	}
 
 	mpm := marketplacemetering.New(marketplacemetering.Options{Region: cfg.Region, Credentials: cfg.Credentials})
@@ -40,7 +41,7 @@ func init() {
 	if err != nil {
 		var notEnt *types.CustomerNotEntitledException
 		if errors.As(err, &notEnt) {
-			log.Fatalf("User not entitled, code: %v, message: %v, fault: %v", notEnt.ErrorCode(), notEnt.ErrorMessage(), notEnt.ErrorFault().String())
+			log.Fatalf("user not entitled, code: %v, message: %v, fault: %v", notEnt.ErrorCode(), notEnt.ErrorMessage(), notEnt.ErrorFault().String())
 		}
 		log.Fatal(err)
 
@@ -48,26 +49,26 @@ func init() {
 
 	pk, err := base64.StdEncoding.DecodeString(pubKeyString)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error decoding Public Key string: %v", err)
 	}
 	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pk)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error parsing Public Key: %v", err)
 	}
 
 	token, err := jwt.ParseWithClaims(*out.Signature, &Claims{}, jwt.KnownKeyfunc(jwt.SigningMethodPS256, pubKey))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error parsing the JWT token: %v", err)
 	}
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		if claims.ProductCode == productCode && claims.PublicKeyVersion == pubKeyVersion && claims.Nonce == nonce {
 			log.Println("AWS verification successful")
 		} else {
-			log.Fatal("The claims in the JWT token don't match the request")
+			log.Fatal("the claims in the JWT token don't match the request")
 		}
 	} else {
-		log.Fatal("Something is wrong with the JWT token")
+		log.Fatal("something is wrong with the JWT token")
 	}
 }
 
@@ -80,25 +81,31 @@ type Claims struct {
 
 func (c Claims) Valid(h *jwt.ValidationHelper) error {
 	if c.Nonce == "" {
-		return &jwt.InvalidClaimsError{Message: "The JWT token doesn't include the Nonce"}
+		return &jwt.InvalidClaimsError{Message: "the JWT token doesn't include the Nonce"}
 	}
 	if c.ProductCode == "" {
-		return &jwt.InvalidClaimsError{Message: "The JWT token doesn't include the ProductCode"}
+		return &jwt.InvalidClaimsError{Message: "the JWT token doesn't include the ProductCode"}
 	}
 	if c.PublicKeyVersion == 0 {
-		return &jwt.InvalidClaimsError{Message: "The JWT token doesn't include the PublicKeyVersion"}
+		return &jwt.InvalidClaimsError{Message: "the JWT token doesn't include the PublicKeyVersion"}
 	}
 	if h.Before(c.IssuedAt.Time) {
-		return &jwt.InvalidClaimsError{Message: "The JWT token has a wrong creation time"}
+		return &jwt.InvalidClaimsError{Message: "the JWT token has a wrong creation time"}
 	}
 
 	return nil
 }
 
-func RandStringBytesRmndr(n int) string {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
+func generateRandomString(n int) (string, error) {
+	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-"
+	ret := make([]byte, n)
+	for i := 0; i < n; i++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			return "", err
+		}
+		ret[i] = letters[num.Int64()]
 	}
-	return string(b)
+
+	return string(ret), nil
 }
