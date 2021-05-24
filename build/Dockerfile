@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.0-experimental
-ARG NGINX_VERSION=1.19.9
+ARG NGINX_VERSION=1.21.0
 ARG BUILD_OS=debian
 
 ############################################# Base image for Debian #############################################
