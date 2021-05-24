@@ -114,8 +114,8 @@ jobs:
           build-args: |
             BUILD_OS=${{ matrix.image }}
             NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
-  
-  nightly-smoke-tests:
+
+  smoke-tests:
     name: Nightly Smoke Tests
     runs-on: ubuntu-20.04
     needs: [build, binary, unit-tests]
