@@ -3,6 +3,8 @@ import re
 import socket
 import time
 
+from urllib3.exceptions import NewConnectionError
+
 from suite.resources_utils import (
     wait_before_test,
     get_ts_nginx_template_conf,
@@ -335,7 +337,6 @@ class TestTransportServerTcpLoadBalance:
         for c in clients:
             c.close()
 
-    @pytest.mark.demo
     def test_tcp_request_load_balanced_method(
             self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
@@ -407,3 +408,121 @@ class TestTransportServerTcpLoadBalance:
             client.close()
 
         assert len(endpoints) is 3
+
+    @pytest.mark.skip_for_nginx_oss
+    def test_tcp_passing_healthcheck_with_match(
+            self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+    ):
+        """
+        Configure a passing health check and check that all backend pods return responses.
+        """
+
+        # Step 1 - configure a passing health check
+
+        patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/passing-hc-transport-server.yaml"
+        patch_ts(
+            kube_apis.custom_objects,
+            transport_server_setup.name,
+            patch_src,
+            transport_server_setup.namespace,
+        )
+        # 4s includes 3s timeout for a health check to fail in case of a connection timeout to a backend pod
+        wait_before_test(4)
+
+        result_conf = get_ts_nginx_template_conf(
+            kube_apis.v1,
+            transport_server_setup.namespace,
+            transport_server_setup.name,
+            transport_server_setup.ingress_pod_name,
+            ingress_controller_prerequisites.namespace
+        )
+
+        match = f"match_ts_{transport_server_setup.namespace}_transport-server_tcp-app"
+
+        assert "health_check interval=5s port=3333" in result_conf
+        assert f"passes=1 jitter=0s fails=1 match={match}" in result_conf
+        assert "health_check_timeout 3s;"
+        assert 'send "health"' in result_conf
+        assert 'expect  "healthy"' in result_conf
+
+        # Step 2 - confirm load balancing works
+
+        port = transport_server_setup.public_endpoint.tcp_server_port
+        host = transport_server_setup.public_endpoint.public_ip
+
+        endpoints = {}
+        for i in range(20):
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect((host, port))
+            client.sendall(b'connect')
+            response = client.recv(4096)
+            endpoint = response.decode()
+            print(f' req number {i}; response: {endpoint}')
+            if endpoint not in endpoints:
+                endpoints[endpoint] = 1
+            else:
+                endpoints[endpoint] = endpoints[endpoint] + 1
+            client.close()
+
+        assert len(endpoints) is 3
+
+        # Step 3 - restore
+
+        self.restore_ts(kube_apis, transport_server_setup)
+
+    @pytest.mark.skip_for_nginx_oss
+    def test_tcp_failing_healthcheck_with_match(
+            self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+    ):
+        """
+        Configure a failing health check and check that NGINX Plus resets connections.
+        """
+
+        # Step 1 - configure a failing health check
+
+        patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/failing-hc-transport-server.yaml"
+        patch_ts(
+            kube_apis.custom_objects,
+            transport_server_setup.name,
+            patch_src,
+            transport_server_setup.namespace,
+        )
+        # 4s includes 3s timeout for a health check to fail in case of a connection timeout to a backend pod
+        wait_before_test(4)
+
+        result_conf = get_ts_nginx_template_conf(
+            kube_apis.v1,
+            transport_server_setup.namespace,
+            transport_server_setup.name,
+            transport_server_setup.ingress_pod_name,
+            ingress_controller_prerequisites.namespace
+        )
+
+        match = f"match_ts_{transport_server_setup.namespace}_transport-server_tcp-app"
+
+        assert "health_check interval=5s port=3333" in result_conf
+        assert f"passes=1 jitter=0s fails=1 match={match}" in result_conf
+        assert "health_check_timeout 3s"
+        assert 'send "health"' in result_conf
+        assert 'expect  "unmatched"' in result_conf
+
+        # Step 2 - confirm load balancing doesn't work
+
+        port = transport_server_setup.public_endpoint.tcp_server_port
+        host = transport_server_setup.public_endpoint.public_ip
+
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((host, port))
+        client.sendall(b'connect')
+
+        try:
+            client.recv(4096) # must return ConnectionResetError
+            client.close()
+            pytest.fail("We expected an error here, but didn't get it. Exiting...")
+        except ConnectionResetError as ex:
+            # expected error
+            print(f"There was an expected exception {str(ex)}")
+
+        # Step 3 - restore
+
+        self.restore_ts(kube_apis, transport_server_setup)

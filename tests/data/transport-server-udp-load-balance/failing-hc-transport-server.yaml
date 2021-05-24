@@ -1,0 +1,26 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: TransportServer
+metadata:
+  name: transport-server
+spec:
+  listener:
+    name: udp-server
+    protocol: UDP
+  upstreams:
+    - name: udp-app
+      service: udp-service
+      port: 3334
+      healthCheck:
+        enable: true
+        interval: 5s
+        timeout: 3s
+        jitter: 0s
+        fails: 1
+        passes: 1
+        match:
+          send: "health"
+          expect: "unmatched"
+  upstreamParameters:
+    udpResponses: 1
+  action:
+    pass: udp-app

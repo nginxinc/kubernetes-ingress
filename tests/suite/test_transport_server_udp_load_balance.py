@@ -199,7 +199,8 @@ class TestTransportServerUdpLoadBalance:
             patch_src,
             transport_server_setup.namespace,
         )
-
+        # 4s includes 3s timeout for a health check to fail in case a backend pod doesn't respond or responds with
+        # an unexpected response
         wait_before_test()
 
         port = transport_server_setup.public_endpoint.udp_server_port
@@ -218,5 +219,126 @@ class TestTransportServerUdpLoadBalance:
             except socket.timeout:
                 print("successfully timed out")
             client.close()
+
+        self.restore_ts(kube_apis, transport_server_setup)
+
+    @pytest.mark.skip_for_nginx_oss
+    def test_udp_passing_healthcheck_with_match(
+            self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+    ):
+        """
+        Configure a passing health check and check that all backend pods return responses.
+        """
+
+        # Step 1 - configure a passing health check
+
+        patch_src = f"{TEST_DATA}/transport-server-udp-load-balance/passing-hc-transport-server.yaml"
+        patch_ts(
+            kube_apis.custom_objects,
+            transport_server_setup.name,
+            patch_src,
+            transport_server_setup.namespace,
+        )
+        # 4s includes 3s timeout for a health check to fail in case a backend pod doesn't respond or responds with
+        # an unexpected response
+        wait_before_test(4)
+
+        result_conf = get_ts_nginx_template_conf(
+            kube_apis.v1,
+            transport_server_setup.namespace,
+            transport_server_setup.name,
+            transport_server_setup.ingress_pod_name,
+            ingress_controller_prerequisites.namespace
+        )
+
+        match = f"match_ts_{transport_server_setup.namespace}_transport-server_udp-app"
+
+        assert "health_check interval=5s port=3334" in result_conf
+        assert f"passes=1 jitter=0s fails=1 udp match={match}" in result_conf
+        assert "health_check_timeout 3s;"
+        assert 'send "health"' in result_conf
+        assert 'expect  "healthy"' in result_conf
+
+        # Step 2 - confirm load balancing works
+
+        port = transport_server_setup.public_endpoint.udp_server_port
+        host = transport_server_setup.public_endpoint.public_ip
+
+        print(f"sending udp requests to: {host}:{port}")
+
+        endpoints = {}
+        for i in range(20):
+            client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+            client.sendto("ping".encode('utf-8'), (host, port))
+            data, address = client.recvfrom(4096)
+            endpoint = data.decode()
+            print(f' req number {i}; response: {endpoint}')
+            if endpoint not in endpoints:
+                endpoints[endpoint] = 1
+            else:
+                endpoints[endpoint] = endpoints[endpoint] + 1
+            client.close()
+
+        assert len(endpoints) is 3
+
+        # Step 3 - restore
+
+        self.restore_ts(kube_apis, transport_server_setup)
+
+    @pytest.mark.skip_for_nginx_oss
+    def test_udp_failing_healthcheck_with_match(
+            self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+    ):
+        """
+        Configure a failing health check and check that NGINX Plus doesn't respond.
+        """
+
+        # Step 1 - configure a failing health check
+
+        patch_src = f"{TEST_DATA}/transport-server-udp-load-balance/failing-hc-transport-server.yaml"
+        patch_ts(
+            kube_apis.custom_objects,
+            transport_server_setup.name,
+            patch_src,
+            transport_server_setup.namespace,
+        )
+        wait_before_test(4)
+
+        result_conf = get_ts_nginx_template_conf(
+            kube_apis.v1,
+            transport_server_setup.namespace,
+            transport_server_setup.name,
+            transport_server_setup.ingress_pod_name,
+            ingress_controller_prerequisites.namespace
+        )
+
+        match = f"match_ts_{transport_server_setup.namespace}_transport-server_udp-app"
+
+        assert "health_check interval=5s port=3334" in result_conf
+        assert f"passes=1 jitter=0s fails=1 udp match={match}" in result_conf
+        assert "health_check_timeout 3s;"
+        assert 'send "health"' in result_conf
+        assert 'expect  "unmatched"' in result_conf
+
+        # Step 2 - confirm load balancing doesn't work
+
+        port = transport_server_setup.public_endpoint.udp_server_port
+        host = transport_server_setup.public_endpoint.public_ip
+
+        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        client.settimeout(2)
+        client.sendto("ping".encode('utf-8'), (host, port))
+        try:
+            # client.recvfrom(4096)
+            data, address = client.recvfrom(4096)
+            endpoint = data.decode()
+            print(f' req number  response: {endpoint}')
+            # it should timeout
+            pytest.fail("expected a timeout")
+        except socket.timeout:
+            print("successfully timed out")
+        client.close()
+
+        # Step 3 - restore
 
         self.restore_ts(kube_apis, transport_server_setup)

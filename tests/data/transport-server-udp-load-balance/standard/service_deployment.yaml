@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: udp-service
-          image: seanoneillf5/udp-server:1.1
+          image: udp-server:1.2
           ports:
             - containerPort: 3334
               name: udp-server

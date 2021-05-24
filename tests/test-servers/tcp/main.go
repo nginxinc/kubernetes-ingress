@@ -17,7 +17,6 @@ func main() {
 	}
 	defer l.Close()
 	log.Printf("listening to tcp connections at: :%v\n", *port)
-	log.Printf("responding with: %v\n", *port)
 
 	for {
 		conn, err := l.Accept()
@@ -40,15 +39,20 @@ func handleRequest(conn net.Conn) {
 		return
 	}
 	instruction := string(buf[:n])
-	log.Printf("instruction:%v\n", instruction)
+	log.Printf("instruction:%q\n", instruction)
 	if instruction != "hold" {
 		defer conn.Close()
 		defer log.Println("closed connection")
 	}
 
-	address := conn.LocalAddr().String()
-	log.Printf("write data to connection: %v\n", address)
-	_, err = conn.Write([]byte(address))
+	response := conn.LocalAddr().String()
+	if instruction == "health" {
+		response = "healthy"
+	}
+
+	log.Printf("write data to connection: %v\n", response)
+
+	_, err = conn.Write([]byte(response))
 	if err != nil {
 		log.Printf("error writing to connection: %v", err)
 		return

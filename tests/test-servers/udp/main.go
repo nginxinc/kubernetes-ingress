@@ -21,7 +21,7 @@ func main() {
 		log.Panicln(err)
 	}
 	defer listener.Close()
-	log.Printf("listening to udp connections at: :%v\n", *port)
+	log.Printf("listening to udp connections at: :%v", *port)
 	buffer := make([]byte, 1024)
 	for {
 		n, addr, err := listener.ReadFrom(buffer)
@@ -29,13 +29,20 @@ func main() {
 			log.Panicln(err)
 		}
 
-		fmt.Printf("packet-received: bytes=%d from=%s\n", n, addr.String())
-		address := fmt.Sprintf("%v:%v", ip, *port)
-		log.Printf("write data to connection: %v\n", address)
-		n, err = listener.WriteTo([]byte(address), addr)
+		request := string(buffer[:n])
+
+		log.Printf("packet-received: request=%q bytes=%d from=%s", request, n, addr.String())
+
+		response := fmt.Sprintf("%v:%v", ip, *port)
+		if request == "health" {
+			response = "healthy"
+		}
+
+		log.Printf("write data to connection: %q", response)
+		n, err = listener.WriteTo([]byte(response), addr)
 		if err != nil {
 			log.Panicln(err)
 		}
-		fmt.Printf("packet-written: bytes=%d to=%s\n", n, addr.String())
+		log.Printf("packet-written: bytes=%d to=%s", n, addr.String())
 	}
 }
