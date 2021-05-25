@@ -40,8 +40,9 @@ class BackendSetup:
         ingress_host (str):
     """
 
-    def __init__(self, req_url, ingress_host):
+    def __init__(self, req_url, req_url_2, ingress_host):
         self.req_url = req_url
+        self.req_url_2 = req_url_2
         self.ingress_host = ingress_host
 
 
@@ -60,6 +61,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
     print("------------------------- Deploy backend application -------------------------")
     create_example_app(kube_apis, "simple", test_namespace)
     req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
+    req_url_2 = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend2"
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(
         ingress_controller_endpoint.public_ip,
@@ -82,7 +84,9 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
     print("------------------------- Deploy ingress -----------------------------")
     ingress_host = {}
     src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
-    create_ingress_with_ap_annotations(kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", "127.0.0.1:514")
+    create_ingress_with_ap_annotations(
+        kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", "127.0.0.1:514"
+    )
     ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
     wait_before_test()
 
@@ -98,7 +102,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
 
     request.addfinalizer(fin)
 
-    return BackendSetup(req_url, ingress_host)
+    return BackendSetup(req_url, req_url_2, ingress_host)
 
 
 @pytest.mark.skip_for_nginx_oss
@@ -107,7 +111,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [{"extra_args": [f"-enable-custom-resources", f"-enable-app-protect"]}],
-    indirect=["crd_ingress_controller_with_ap"],
+    indirect=True,
 )
 class TestAppProtect:
     @pytest.mark.parametrize("backend_setup", [{"policy": "dataguard-alarm"}], indirect=True)
@@ -120,7 +124,6 @@ class TestAppProtect:
         print("------------- Run test for AP policy: dataguard-alarm --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        wait_before_test(40)
         ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
 
         print("----------------------- Send valid request ----------------------")
@@ -144,15 +147,16 @@ class TestAppProtect:
         assert resp_invalid.status_code == 200
 
     @pytest.mark.parametrize("backend_setup", [{"policy": "file-block"}], indirect=True)
-    def test_responses_file_block(self, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace):
+    def test_responses_file_block(
+        self, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace
+    ):
         """
         Test file-block AppProtect policy: Block executing types e.g. .bat and .exe
-        """   
+        """
         print("------------- Run test for AP policy: file-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        wait_before_test(40)
-        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
+        ensure_response_from_backend(backend_setup.req_url_2, backend_setup.ingress_host)
 
         print("----------------------- Send valid request ----------------------")
         resp_valid = requests.get(
@@ -184,7 +188,6 @@ class TestAppProtect:
         print("------------- Run test for AP policy: malformed-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        wait_before_test(40)
         ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
 
         print("----------------------- Send valid request with no body ----------------------")
@@ -196,9 +199,7 @@ class TestAppProtect:
         assert resp_valid.status_code == 200
 
         print("----------------------- Send valid request with body ----------------------")
-        headers = {
-             "Content-Type": "application/json",
-             "host": backend_setup.ingress_host}
+        headers = {"Content-Type": "application/json", "host": backend_setup.ingress_host}
         resp_valid = requests.post(backend_setup.req_url, headers=headers, data="{}", verify=False)
         print(resp_valid.text)
         assert valid_resp_addr in resp_valid.text
@@ -206,8 +207,42 @@ class TestAppProtect:
         assert resp_valid.status_code == 200
 
         print("---------------------- Send invalid request ---------------------")
-        resp_invalid = requests.post(backend_setup.req_url, headers=headers, data="{{}}", verify=False,)
+        resp_invalid = requests.post(
+            backend_setup.req_url,
+            headers=headers,
+            data="{{}}",
+            verify=False,
+        )
         print(resp_invalid.text)
+        assert invalid_resp_title in resp_invalid.text
+        assert invalid_resp_body in resp_invalid.text
+        assert resp_invalid.status_code == 200
+
+    @pytest.mark.parametrize("backend_setup", [{"policy": "csrf"}], indirect=True)
+    def test_responses_csrf(
+        self, kube_apis, ingress_controller_endpoint, crd_ingress_controller_with_ap, backend_setup, test_namespace
+    ):
+        """
+        Test CSRF (Cross Site Request Forgery) AppProtect policy: Block requests with invalid/null/non-https origin-header
+        """
+        print("------------- Run test for AP policy: CSRF --------------")
+        print(f"Request URL without CSRF protection: {backend_setup.req_url}")
+        print(f"Request URL with CSRF protection: {backend_setup.req_url_2}")
+
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
+
+        print("----------------------- Send request with http origin header ----------------------")
+
+        headers = {"host": backend_setup.ingress_host, "Origin": "http://appprotect.example.com"}
+        resp_valid = requests.post(backend_setup.req_url, headers=headers, verify=False, cookies={"flavor": "darkchoco"})
+        resp_invalid = requests.post(backend_setup.req_url_2, headers=headers, verify=False, cookies={"flavor": "whitechoco"})
+
+        print(resp_valid.text)
+        print(resp_invalid.text)
+
+        assert valid_resp_addr in resp_valid.text
+        assert valid_resp_name in resp_valid.text
+        assert resp_valid.status_code == 200
         assert invalid_resp_title in resp_invalid.text
         assert invalid_resp_body in resp_invalid.text
         assert resp_invalid.status_code == 200

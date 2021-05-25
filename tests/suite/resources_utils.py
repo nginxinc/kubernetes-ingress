@@ -1174,10 +1174,10 @@ def ensure_response_from_backend(req_url, host, additional_headers=None) -> None
     headers = {"host": host}
     if additional_headers:
         headers.update(additional_headers)
-    for _ in range(30):
+    for _ in range(60):
         resp = requests.get(req_url, headers=headers, verify=False)
-        if resp.status_code != 502 and resp.status_code != 504:
-            print(f"After {_ * 2} seconds got non 502|504 response. Continue with tests...")
+        if resp.status_code != 502 and resp.status_code != 504 and resp.status_code != 404:
+            print(f"After {_} retries at 1 second interval, got non 502|504 response. Continue with tests...")
             return
         time.sleep(1)
-    pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")
+    pytest.fail(f"Keep getting 502|504|404 from {req_url} after 60 seconds. Exiting...")
