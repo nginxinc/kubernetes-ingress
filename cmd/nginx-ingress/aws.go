@@ -56,12 +56,12 @@ func init() {
 		log.Fatalf("error parsing Public Key: %v", err)
 	}
 
-	token, err := jwt.ParseWithClaims(*out.Signature, &Claims{}, jwt.KnownKeyfunc(jwt.SigningMethodPS256, pubKey))
+	token, err := jwt.ParseWithClaims(*out.Signature, &claims{}, jwt.KnownKeyfunc(jwt.SigningMethodPS256, pubKey))
 	if err != nil {
 		log.Fatalf("error parsing the JWT token: %v", err)
 	}
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+	if claims, ok := token.Claims.(*claims); ok && token.Valid {
 		if claims.ProductCode == productCode && claims.PublicKeyVersion == pubKeyVersion && claims.Nonce == nonce {
 			log.Println("AWS verification successful")
 		} else {
@@ -72,14 +72,14 @@ func init() {
 	}
 }
 
-type Claims struct {
+type claims struct {
 	ProductCode      string    `json:"productCode,omitempty"`
 	PublicKeyVersion int32     `json:"publicKeyVersion,omitempty"`
 	IssuedAt         *jwt.Time `json:"iat,omitempty"`
 	Nonce            string    `json:"nonce,omitempty"`
 }
 
-func (c Claims) Valid(h *jwt.ValidationHelper) error {
+func (c claims) Valid(h *jwt.ValidationHelper) error {
 	if c.Nonce == "" {
 		return &jwt.InvalidClaimsError{Message: "the JWT token doesn't include the Nonce"}
 	}
