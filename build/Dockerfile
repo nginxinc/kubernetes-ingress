@@ -2,7 +2,7 @@
 ARG BUILD_OS=debian
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.19.10 AS debian
+FROM nginx:1.21.0 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
