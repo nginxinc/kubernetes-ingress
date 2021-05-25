@@ -124,7 +124,7 @@ class TestAppProtect:
         print("------------- Run test for AP policy: dataguard-alarm --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send valid request ----------------------")
         resp_valid = requests.get(
@@ -156,7 +156,7 @@ class TestAppProtect:
         print("------------- Run test for AP policy: file-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        ensure_response_from_backend(backend_setup.req_url_2, backend_setup.ingress_host)
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send valid request ----------------------")
         resp_valid = requests.get(
@@ -188,7 +188,7 @@ class TestAppProtect:
         print("------------- Run test for AP policy: malformed-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send valid request with no body ----------------------")
         headers = {"host": backend_setup.ingress_host}
@@ -229,7 +229,7 @@ class TestAppProtect:
         print(f"Request URL without CSRF protection: {backend_setup.req_url}")
         print(f"Request URL with CSRF protection: {backend_setup.req_url_2}")
 
-        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host)
+        ensure_response_from_backend(backend_setup.req_url_2, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send request with http origin header ----------------------")
 

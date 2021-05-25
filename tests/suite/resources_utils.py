@@ -1162,9 +1162,9 @@ def get_events(v1: CoreV1Api, namespace) -> []:
     return res.items
 
 
-def ensure_response_from_backend(req_url, host, additional_headers=None) -> None:
+def ensure_response_from_backend(req_url, host, additional_headers=None, check404=False) -> None:
     """
-    Wait for 502|504 to disappear.
+    Wait for 502|504|404 to disappear.
 
     :param req_url: url to request
     :param host:
@@ -1174,10 +1174,21 @@ def ensure_response_from_backend(req_url, host, additional_headers=None) -> None
     headers = {"host": host}
     if additional_headers:
         headers.update(additional_headers)
-    for _ in range(60):
-        resp = requests.get(req_url, headers=headers, verify=False)
-        if resp.status_code != 502 and resp.status_code != 504 and resp.status_code != 404:
-            print(f"After {_} retries at 1 second interval, got non 502|504 response. Continue with tests...")
-            return
-        time.sleep(1)
-    pytest.fail(f"Keep getting 502|504|404 from {req_url} after 60 seconds. Exiting...")
+    
+    if check404:
+        for _ in range(60):
+            resp = requests.get(req_url, headers=headers, verify=False)
+            if resp.status_code != 502 and resp.status_code != 504 and resp.status_code != 404:
+                print(f"After {_} retries at 1 second interval, got {resp.status_code} response. Continue with tests...")
+                return
+            time.sleep(1)
+        pytest.fail(f"Keep getting {resp.status_code} from {req_url} after 60 seconds. Exiting...")
+
+    else:
+        for _ in range(30):
+            resp = requests.get(req_url, headers=headers, verify=False)
+            if resp.status_code != 502 and resp.status_code != 504:
+                print(f"After {_} retries at 1 second interval, got non 502|504 response. Continue with tests...")
+                return
+            time.sleep(1)
+        pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")
