@@ -89,8 +89,8 @@ func (c Claims) Valid(h *jwt.ValidationHelper) error {
 	if c.PublicKeyVersion == 0 {
 		return &jwt.InvalidClaimsError{Message: "the JWT token doesn't include the PublicKeyVersion"}
 	}
-	if h.Before(c.IssuedAt.Time) {
-		return &jwt.InvalidClaimsError{Message: "the JWT token has a wrong creation time"}
+	if err := h.ValidateNotBefore(c.IssuedAt); err != nil {
+		return err
 	}
 
 	return nil
