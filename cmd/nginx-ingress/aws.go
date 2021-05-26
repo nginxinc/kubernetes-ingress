@@ -66,9 +66,7 @@ func init() {
 	}
 
 	if claims, ok := token.Claims.(*claims); ok && token.Valid {
-		if claims.ProductCode == productCode && claims.PublicKeyVersion == pubKeyVersion && claims.Nonce == nonce {
-			log.Println("AWS verification successful")
-		} else {
+		if claims.ProductCode != productCode || claims.PublicKeyVersion != pubKeyVersion || claims.Nonce != nonce {
 			log.Fatal("the claims in the JWT token don't match the request")
 		}
 	} else {
