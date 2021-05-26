@@ -23,6 +23,8 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
     In order to do so, place the `*.crt` file in the build folder and uncomment the lines that follow this comment:
     `#Uncomment the lines below if you want to install a custom CA certificate`
 
+    **Note**: In the event of a patch version of NGINX Plus being [released](/nginx/releases/), make sure to rebuild your image to get the latest version. The Dockerfile will use the latest available version of the [Attack Signatures](/nginx-app-protect/configuration/#attack-signatures) and [Threat Campaigns](/nginx-app-protect/configuration/#threat-campaigns) packages at the time of build. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--no-cache"` to the `make` command.
+
 - [Push the image to your local Docker registry](/nginx-ingress-controller/installation/building-ingress-controller-image/#building-the-image-and-pushing-it-to-the-private-registry).
 
 ## Install the Ingress Controller
