@@ -55,6 +55,8 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 
       As a result, the image **myregistry.example.com/nginx-plus-ingress:1.11.3** is built. Note that the tag `1.11.3` comes from the `VERSION` variable, defined in the Makefile.
 
+      **Note**: In the event of a patch version of NGINX Plus being [released](/nginx/releases/), make sure to rebuild your image to get the latest version. If your system is caching the Docker layers, add `DOCKER_BUILD_OPTIONS="--no-cache"` to the `make` command.
+
 1. Push the image:
     ```
     $ make push PREFIX=myregistry.example.com/nginx-ingress
