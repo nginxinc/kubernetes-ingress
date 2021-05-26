@@ -35,9 +35,15 @@ If you make changes to the TCP server:
   local version ```-> imagePullPolicy: Never```
    * Test the changes
  * Include the change as part of the commit that requires the tcp-server change
-   * Build the docker image with an increased version number ```docker build --build-arg type=tcp -t tcp-server:2.1 .```
-   * Push the docker image to the public repo ```docker push seanoneillf5/tcp-server:2.1```
+   * Build the docker image with an increased version number ```docker build --build-arg type=tcp -t nginxkic/tcp-server:X.Y .```
+   * Push the docker image to the public repo ```docker push nginxkic/tcp-server:X.Y```
    * Update the tag [service yaml](../data/transport-server-tcp-load-balance/standard/service_deployment.yaml) to match 
 the new tag
    * Commit the tag change as part of the commit that requires the tcp-server change
+
+For the UDP server:
+```
+docker build --build-arg type=udp -t nginxkic/udp-server:X.Y .
+docker push nginxkic/udp-server:X.Y
+```
 
