@@ -7,7 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
-	"log"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -26,17 +26,21 @@ var (
 )
 
 func init() {
+	startupCheckFn = checkAWSEntitlement
+}
+
+func checkAWSEntitlement() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	nonce, err := generateRandomString(255)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		log.Fatalf("error loading AWS configuration: %v", err)
+		return fmt.Errorf("error loading AWS configuration: %v", err)
 	}
 
 	mpm := marketplacemetering.New(marketplacemetering.Options{Region: cfg.Region, Credentials: cfg.Credentials})
@@ -45,33 +49,34 @@ func init() {
 	if err != nil {
 		var notEnt *types.CustomerNotEntitledException
 		if errors.As(err, &notEnt) {
-			log.Fatalf("user not entitled, code: %v, message: %v, fault: %v", notEnt.ErrorCode(), notEnt.ErrorMessage(), notEnt.ErrorFault().String())
+			return fmt.Errorf("user not entitled, code: %v, message: %v, fault: %v", notEnt.ErrorCode(), notEnt.ErrorMessage(), notEnt.ErrorFault().String())
 		}
-		log.Fatal(err)
-
+		return err
 	}
 
 	pk, err := base64.StdEncoding.DecodeString(pubKeyString)
 	if err != nil {
-		log.Fatalf("error decoding Public Key string: %v", err)
+		return fmt.Errorf("error decoding Public Key string: %v", err)
 	}
 	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pk)
 	if err != nil {
-		log.Fatalf("error parsing Public Key: %v", err)
+		return fmt.Errorf("error parsing Public Key: %v", err)
 	}
 
 	token, err := jwt.ParseWithClaims(*out.Signature, &claims{}, jwt.KnownKeyfunc(jwt.SigningMethodPS256, pubKey))
 	if err != nil {
-		log.Fatalf("error parsing the JWT token: %v", err)
+		return fmt.Errorf("error parsing the JWT token: %v", err)
 	}
 
 	if claims, ok := token.Claims.(*claims); ok && token.Valid {
 		if claims.ProductCode != productCode || claims.PublicKeyVersion != pubKeyVersion || claims.Nonce != nonce {
-			log.Fatal("the claims in the JWT token don't match the request")
+			return fmt.Errorf("the claims in the JWT token don't match the request")
 		}
 	} else {
-		log.Fatal("something is wrong with the JWT token")
+		return fmt.Errorf("something is wrong with the JWT token")
 	}
+
+	return nil
 }
 
 type claims struct {
