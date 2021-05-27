@@ -181,7 +181,7 @@ jobs:
           -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
           -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ github.sha }} \
           --context=kind-${{ github.run_id }} \
-          --image=debian:${{ github.sha }} \
+          --image=nginx-ingress:${{ github.sha }} \
           --image-pull-policy=Never \
           --ic-type=nginx-ingress \
           --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
