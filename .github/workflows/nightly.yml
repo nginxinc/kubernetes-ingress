@@ -3,9 +3,6 @@ name: Nightly
 on:
   schedule:
     - cron:  '0 4 * * *'
-  push:
-    branches: 
-      - chore/fix-nightly-image
 
 defaults:
   run:
