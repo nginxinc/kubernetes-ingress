@@ -23,10 +23,9 @@ ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
-	set -x \
-	&& wget -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
-	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v`egrep -o '^[0-9]+\.[0-9]+' /etc/alpine-release`/main" >> /etc/apk/repositories \
-	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION:1} nginx-plus-module-njs~${NGINX_PLUS_VERSION:1}
+	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
+	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r}
 
 COPY --chown=nginx:0 internal/configs/oidc/* /etc/nginx/oidc/
 
@@ -38,13 +37,12 @@ ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-	set -x \
-	&& apt-get update \
+	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg wget apt-transport-https libcap2-bin \
-	&& wget https://cs.nginx.com/static/keys/nginx_signing.key \
+	&& wget -nv https://cs.nginx.com/static/keys/nginx_signing.key \
 	&& gpg --no-default-keyring --keyring nginx_keyring.gpg --import nginx_signing.key \
 	&& gpg --no-default-keyring --keyring nginx_keyring.gpg --export > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
-	&& wget -P /etc/apt/apt.conf.d https://cs.nginx.com/static/files/90pkgs-nginx \
+	&& wget -nv -P /etc/apt/apt.conf.d https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& echo "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
 	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/debian buster nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
 	&& apt-get update \
@@ -61,16 +59,16 @@ FROM debian-plus as debian-plus-nap
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-	set -x \
-	&& apt-get update \
+	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y gnupg wget apt-transport-https \
-	&& wget https://cs.nginx.com/static/keys/app-protect-security-updates.key \
+	&& wget -nv https://cs.nginx.com/static/keys/app-protect-security-updates.key \
 	&& gpg --no-default-keyring --keyring app_protect_keyring.gpg --import app-protect-security-updates.key \
 	&& gpg --no-default-keyring --keyring app_protect_keyring.gpg --export > /etc/apt/trusted.gpg.d/nginx_app_signing.gpg \
-	&& sed -i '$ d' /etc/apt/apt.conf.d/90pkgs-nginx \
-	&& echo "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-nap-$APPPROTECT_MODULE_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
+	&& sed -i "$ d" /etc/apt/apt.conf.d/90pkgs-nginx \
+	&& echo "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-nap-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
 	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect/debian buster nginx-plus" \
 	"deb https://pkgs.nginx.com/app-protect-security-updates/debian buster nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect.list \
 	&& apt-get update \
@@ -84,13 +82,11 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	app-protect-engine=${engine_version} \
 	app-protect-compiler=${engine_version} \
 	app-protect=${module_version} \
-	&& apt-get install -y app-protect-attack-signatures \
-	&& apt-get install -y app-protect-threat-campaigns \
+	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect-attack-signatures app-protect-threat-campaigns \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg wget \
 	&& rm -rf /var/lib/apt/lists/* \
-	&& rm /etc/apt/sources.list.d/nginx-app-protect.list
-
-RUN mkdir -p /etc/nginx/waf /etc/nginx/waf/nac-policies /etc/nginx/waf/nac-logconfs /etc/nginx/waf/nac-usersigs /var/log/app_protect /opt/app_protect \
+	&& rm /etc/apt/sources.list.d/nginx-app-protect.list \
+	&& mkdir -p /etc/nginx/waf/nac-policies /etc/nginx/waf/nac-logconfs /etc/nginx/waf/nac-usersigs /var/log/app_protect /opt/app_protect \
 	&& chown -R nginx:0 /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ /var/log/nginx/ \
 	&& touch /etc/nginx/waf/nac-usersigs/index.conf
 
@@ -120,13 +116,11 @@ LABEL name="NGINX Ingress Controller" \
 	summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
-RUN set -x \
-	&& microdnf --nodocs --enablerepo=ubi-8-baseos install -y shadow-utils \
+RUN microdnf --nodocs --enablerepo=ubi-8-baseos install -y shadow-utils \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
-RUN mkdir licenses
-COPY --chown=nginx:0 LICENSE /licenses
+COPY --chown=nginx:0 LICENSE /licenses/
 
 
 ############################################# Base image for UBI OSS #############################################
@@ -146,6 +140,7 @@ RUN rpm --import https://nginx.org/keys/nginx_signing.key \
 FROM ubi-base AS ubi-plus
 ARG NGINX_PLUS_VERSION
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
@@ -181,18 +176,17 @@ RUN apt-get update && apt-get install -y -q --fix-missing --no-install-recommend
 	zlib1g-dev
 
 # Get nginx to build against
-RUN curl -sS -O -L http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz && \
-	tar zxvf nginx-${NGINX_VERSION}.tar.gz && rm -f nginx-${NGINX_VERSION}.tar.gz
+RUN curl -sS -O -L http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz \
+	&& tar zxvf nginx-${NGINX_VERSION}.tar.gz && rm -f nginx-${NGINX_VERSION}.tar.gz \
+	&& git clone --branch v${NGINX_OPENTRACING} https://github.com/opentracing-contrib/nginx-opentracing.git \
+	&& git clone --branch v${OPENTRACING_VERSION} https://github.com/opentracing/opentracing-cpp.git
 
-RUN git clone --branch v${NGINX_OPENTRACING} https://github.com/opentracing-contrib/nginx-opentracing.git
-RUN git clone --branch v${OPENTRACING_VERSION} https://github.com/opentracing/opentracing-cpp.git
-
-RUN mkdir -p opentracing-cpp/.build && cd opentracing-cpp/.build && \
-	cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_STATIC_LIBS=OFF -DBUILD_MOCKTRACER=OFF -DENABLE_LINTING=OFF .. && \
+WORKDIR /opentracing-cpp/.build
+RUN	cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_STATIC_LIBS=OFF -DBUILD_MOCKTRACER=OFF -DENABLE_LINTING=OFF .. && \
 	make && make install
 
-RUN cd nginx-${NGINX_VERSION} && \
-	./configure \
+WORKDIR /nginx-${NGINX_VERSION}
+RUN ./configure \
 	--with-compat --with-debug \
 	--add-dynamic-module=/nginx-opentracing/opentracing && \
 	make modules
@@ -203,10 +197,9 @@ FROM debian AS tracer-downloader
 
 ARG JAEGER_VERSION=v0.4.2
 
-RUN set -x \
-	&& apt-get update \
+RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates apt-transport-https wget \
-	&& wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
+	&& wget -nv https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
 
 
 ############################################# Build image for Opentracing #############################################

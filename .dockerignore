@@ -3,3 +3,8 @@ examples*
 grafana
 tests/.pytest_cache
 tests/__pycache__
+hack
+.git*
+*.md
+*.crt
+*.key
