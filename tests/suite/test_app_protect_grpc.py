@@ -1,6 +1,5 @@
 import subprocess
 import pytest
-from python_hosts import Hosts, HostsEntry
 from settings import TEST_DATA, DEPLOYMENTS
 from suite.custom_resources_utils import (
     create_ap_logconf_from_yaml,
@@ -22,7 +21,6 @@ from suite.resources_utils import (
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 
-my_hosts = Hosts()
 log_loc = f"/var/log/messages"
 valid_resp_txt = "Hello"
 invalid_resp_text = "The request was rejected. Please consult with your administrator."
@@ -91,10 +89,6 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
     src_ing_yaml = f"{TEST_DATA}/appprotect/grpc/ingress.yaml"
     create_ingress_with_ap_annotations(kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", f"{syslog_ep}:514")
     ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
-    node_ip = request.config.getoption("--node-ip", None)
-    new_entry = HostsEntry(entry_type='ipv4', address=node_ip, names=[ingress_host])
-    print(new_entry)
-    my_hosts.add([new_entry])
     wait_before_test(40)
 
     def fin():
