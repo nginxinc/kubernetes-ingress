@@ -154,12 +154,12 @@ func validateHashLBMethod(method string) (string, error) {
 	keyWords := strings.Split(method, " ")
 
 	if keyWords[0] == "hash" {
-		if len(keyWords) == 2 || len(keyWords) == 3 && keyWords[2] == "consistent" {
+		if len(keyWords) == 2 || (len(keyWords) == 3 && keyWords[2] == "consistent") {
 			return method, nil
 		}
 	}
 
-	return "", fmt.Errorf("Invalid load balancing method: %q", method)
+	return "", fmt.Errorf("invalid load balancing method: %q", method)
 }
 
 // ParseBool ensures that the string value is a valid bool

@@ -115,6 +115,8 @@ spec:
                             type: integer
                           timeout:
                             type: string
+                      loadBalancingMethod:
+                        type: string
                       maxConns:
                         type: integer
                       maxFails:

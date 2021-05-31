@@ -2,8 +2,10 @@ package validation
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
-	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -13,13 +15,15 @@ import (
 type TransportServerValidator struct {
 	tlsPassthrough  bool
 	snippetsEnabled bool
+	isPlus          bool
 }
 
 // NewTransportServerValidator creates a new TransportServerValidator.
-func NewTransportServerValidator(tlsPassthrough bool, snippetsEnabled bool) *TransportServerValidator {
+func NewTransportServerValidator(tlsPassthrough bool, snippetsEnabled bool, isPlus bool) *TransportServerValidator {
 	return &TransportServerValidator{
 		tlsPassthrough:  tlsPassthrough,
 		snippetsEnabled: snippetsEnabled,
+		isPlus:          isPlus,
 	}
 }
 
@@ -37,7 +41,7 @@ func (tsv *TransportServerValidator) validateTransportServerSpec(spec *v1alpha1.
 	isTLSPassthroughListener := isPotentialTLSPassthroughListener(&spec.Listener)
 	allErrs = append(allErrs, validateTransportServerHost(spec.Host, fieldPath.Child("host"), isTLSPassthroughListener)...)
 
-	upstreamErrs, upstreamNames := validateTransportServerUpstreams(spec.Upstreams, fieldPath.Child("upstreams"))
+	upstreamErrs, upstreamNames := validateTransportServerUpstreams(spec.Upstreams, fieldPath.Child("upstreams"), tsv.isPlus)
 	allErrs = append(allErrs, upstreamErrs...)
 
 	allErrs = append(allErrs, validateTransportServerUpstreamParameters(spec.UpstreamParameters, fieldPath.Child("upstreamParameters"), spec.Listener.Protocol)...)
@@ -146,7 +150,7 @@ func validateListenerProtocol(protocol string, fieldPath *field.Path) field.Erro
 	return allErrs
 }
 
-func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path) (allErrs field.ErrorList, upstreamNames sets.String) {
+func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *field.Path, isPlus bool) (allErrs field.ErrorList, upstreamNames sets.String) {
 	allErrs = field.ErrorList{}
 	upstreamNames = sets.String{}
 
@@ -172,9 +176,84 @@ func validateTransportServerUpstreams(upstreams []v1alpha1.Upstream, fieldPath *
 		}
 
 		allErrs = append(allErrs, validateTSUpstreamHealthChecks(u.HealthCheck, idxPath.Child("healthChecks"))...)
+
+		allErrs = append(allErrs, validateLoadBalancingMethod(u.LoadBalancingMethod, idxPath.Child("loadBalancingMethod"), isPlus)...)
 	}
 
 	return allErrs, upstreamNames
+}
+
+func validateLoadBalancingMethod(method string, fieldPath *field.Path, isPlus bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if method == "" {
+		return allErrs
+	}
+
+	method = strings.TrimSpace(method)
+
+	if strings.HasPrefix(method, "hash") {
+		return validateHashLoadBalancingMethod(method, fieldPath, isPlus)
+	}
+
+	validMethodValues := nginxStreamLoadBalanceValidInput
+	if isPlus {
+		validMethodValues = nginxPlusStreamLoadBalanceValidInput
+	}
+
+	if _, exists := validMethodValues[method]; !exists {
+		return append(allErrs, field.Invalid(fieldPath, method, fmt.Sprintf("load balancing method is not valid: %v", method)))
+	}
+
+	return allErrs
+}
+
+var nginxStreamLoadBalanceValidInput = map[string]bool{
+	"round_robin":           true,
+	"least_conn":            true,
+	"random":                true,
+	"random two":            true,
+	"random two least_conn": true,
+}
+
+var nginxPlusStreamLoadBalanceValidInput = map[string]bool{
+	"round_robin":                   true,
+	"least_conn":                    true,
+	"random":                        true,
+	"random two":                    true,
+	"random two least_conn":         true,
+	"random least_conn":             true,
+	"least_time connect":            true,
+	"least_time first_byte":         true,
+	"least_time last_byte":          true,
+	"least_time last_byte inflight": true,
+}
+
+var loadBalancingVariables = map[string]bool{
+	"remote_addr": true,
+}
+
+var hashMethodRegexp = regexp.MustCompile(`^hash (\S+)(?: consistent)?$`)
+
+func validateHashLoadBalancingMethod(method string, fieldPath *field.Path, isPlus bool) field.ErrorList {
+	allErrs := field.ErrorList{}
+	matches := hashMethodRegexp.FindStringSubmatch(method)
+	if len(matches) != 2 {
+		msg := fmt.Sprintf("invalid value for load balancing method: %v", method)
+		return append(allErrs, field.Invalid(fieldPath, method, msg))
+	}
+
+	hashKey := matches[1]
+	if strings.Contains(hashKey, "$") {
+		varErrs := validateStringWithVariables(hashKey, fieldPath, []string{}, loadBalancingVariables, isPlus)
+		allErrs = append(allErrs, varErrs...)
+	}
+
+	if !escapedStringsFmtRegexp.MatchString(method) {
+		msg := fmt.Sprintf("invalid value for hash: %v", validation.RegexError(escapedStringsErrMsg, escapedStringsFmt))
+		return append(allErrs, field.Invalid(fieldPath, method, msg))
+	}
+
+	return allErrs
 }
 
 func validateTSUpstreamHealthChecks(hc *v1alpha1.HealthCheck, fieldPath *field.Path) field.ErrorList {

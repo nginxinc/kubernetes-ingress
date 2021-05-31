@@ -1,0 +1,24 @@
+apiVersion: appprotect.f5.com/v1beta1
+kind: APPolicy
+metadata:
+  name: csrf
+spec:
+  policy:
+    applicationLanguage: utf-8
+    name: specific_csrf_url_viol_csrf_block
+    template:
+      name: POLICY_TEMPLATE_NGINX_BASE
+    blocking-settings:
+      violations:
+      - name: VIOL_CSRF
+        alarm: true
+        block: true
+    csrf-protection:
+      enabled: true
+    csrf-urls:
+    - "$action": delete
+      method: POST
+      url: "*"
+    - enforcementAction: verify-origin
+      method: POST
+      url: "/backend2"

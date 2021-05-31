@@ -19,7 +19,7 @@ jobs:
           destination_branch: "master"
           ssh_private_key: ${{ secrets.SYNC_SSH_PRIVATE_KEY }}
 
-  # This job open a PR to sync the generated CRD files across to nginx-ingress-operator 
+  # This job open a PR to sync the generated CRD files across to nginx-ingress-operator
   # (see .github/sync.yml for config details)
   crds-sync:
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Sync Labels
-        uses: micnncim/action-label-syncer@v1.2.0
+        uses: micnncim/action-label-syncer@v1
         with:
           repository: ${{ matrix.repo }}
           token: ${{ secrets.NGINX_PAT }}

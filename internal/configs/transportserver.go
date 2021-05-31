@@ -195,7 +195,21 @@ func generateStreamUpstream(upstream *conf_v1alpha1.Upstream, upstreamNamer *ups
 	}
 
 	return version2.StreamUpstream{
-		Name:    name,
-		Servers: upsServers,
+		Name:                name,
+		Servers:             upsServers,
+		LoadBalancingMethod: generateLoadBalancingMethod(upstream.LoadBalancingMethod),
 	}
+}
+
+func generateLoadBalancingMethod(method string) string {
+	if method == "" {
+		// By default, if unspecified, Nginx uses the 'round_robin' load balancing method.
+		// We override this default which suits the Ingress Controller better.
+		return "random two least_conn"
+	}
+	if method == "round_robin" {
+		// By default, Nginx uses round robin. We select this method by not specifying any method.
+		return ""
+	}
+	return method
 }

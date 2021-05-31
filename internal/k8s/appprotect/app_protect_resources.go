@@ -23,9 +23,9 @@ var appProtectUserSigRequiredSlices = [][]string{
 	{"spec", "signatures"},
 }
 
-func validateRequiredFields(policy *unstructured.Unstructured, fieldsList [][]string) error {
+func validateRequiredFields(obj *unstructured.Unstructured, fieldsList [][]string) error {
 	for _, fields := range fieldsList {
-		field, found, err := unstructured.NestedMap(policy.Object, fields...)
+		field, found, err := unstructured.NestedMap(obj.Object, fields...)
 		if err != nil {
 			return fmt.Errorf("Error checking for required field %v: %v", field, err)
 		}
@@ -36,9 +36,9 @@ func validateRequiredFields(policy *unstructured.Unstructured, fieldsList [][]st
 	return nil
 }
 
-func validateRequiredSlices(policy *unstructured.Unstructured, fieldsList [][]string) error {
+func validateRequiredSlices(obj *unstructured.Unstructured, fieldsList [][]string) error {
 	for _, fields := range fieldsList {
-		field, found, err := unstructured.NestedSlice(policy.Object, fields...)
+		field, found, err := unstructured.NestedSlice(obj.Object, fields...)
 		if err != nil {
 			return fmt.Errorf("Error checking for required field %v: %v", field, err)
 		}
@@ -49,21 +49,8 @@ func validateRequiredSlices(policy *unstructured.Unstructured, fieldsList [][]st
 	return nil
 }
 
-func validateRequiredStrings(policy *unstructured.Unstructured, fieldsList [][]string) error {
-	for _, fields := range fieldsList {
-		field, found, err := unstructured.NestedString(policy.Object, fields...)
-		if err != nil {
-			return fmt.Errorf("Error checking for required field %v: %v", field, err)
-		}
-		if !found {
-			return fmt.Errorf("Required field %v not found", field)
-		}
-	}
-	return nil
-}
-
-// ValidateAppProtectPolicy validates Policy resource
-func ValidateAppProtectPolicy(policy *unstructured.Unstructured) error {
+// validateAppProtectPolicy validates Policy resource
+func validateAppProtectPolicy(policy *unstructured.Unstructured) error {
 	polName := policy.GetName()
 
 	err := validateRequiredFields(policy, appProtectPolicyRequiredFields)
@@ -74,8 +61,8 @@ func ValidateAppProtectPolicy(policy *unstructured.Unstructured) error {
 	return nil
 }
 
-// ValidateAppProtectLogConf validates LogConfiguration resource
-func ValidateAppProtectLogConf(logConf *unstructured.Unstructured) error {
+// validateAppProtectLogConf validates LogConfiguration resource
+func validateAppProtectLogConf(logConf *unstructured.Unstructured) error {
 	lcName := logConf.GetName()
 	err := validateRequiredFields(logConf, appProtectLogConfRequiredFields)
 	if err != nil {

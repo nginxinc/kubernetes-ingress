@@ -11,10 +11,11 @@ KUBE_CONFIG_FOLDER = $${HOME}/.kube
 KIND_KUBE_CONFIG_FOLDER = $${HOME}/.kube/kind
 SHOW_IC_LOGS = no
 PYTEST_ARGS =
+DOCKERFILEPATH = docker/Dockerfile
 
 .PHONY: build
 build:
-	docker build -t $(PREFIX):$(TAG) -f docker/Dockerfile ..
+	docker build -t $(PREFIX):$(TAG) -f $(DOCKERFILEPATH) ..
 
 .PHONY: run-tests
 run-tests:

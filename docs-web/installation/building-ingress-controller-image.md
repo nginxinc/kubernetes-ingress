@@ -26,7 +26,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 1. Clone the Ingress Controller repo:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
-    $ git checkout v1.11.1
+    $ git checkout v1.11.3
     ```
 
 1. Build the image:
@@ -40,7 +40,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-ingress:1.11.1** is built. Note that the tag `1.11.1` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-ingress:1.11.3** is built. Note that the tag `1.11.3` comes from the `VERSION` variable, defined in the Makefile.
 
     * For **NGINX Plus**, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
       ```
@@ -53,7 +53,9 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-plus-ingress:1.11.1** is built. Note that the tag `1.11.1` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-plus-ingress:1.11.3** is built. Note that the tag `1.11.3` comes from the `VERSION` variable, defined in the Makefile.
+
+      **Note**: In the event of a patch version of NGINX Plus being [released](/nginx/releases/), make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--no-cache"` to the `make` command.
 
 1. Push the image:
     ```
@@ -69,8 +71,9 @@ You can see a list of all the targets by running `make` without any target or `m
 
 Below you can find some of the most useful targets in the **Makefile**:
 * **build**: creates the Ingress Controller binary using the local golang environment (ignored when `TARGET` is `container`).
-* **debian-image**: for building a debian-based image with NGINX.
 * **alpine-image**: for building an alpine-based image with NGINX.
+* **alpine-image-plus**: for building an alpine-based image with NGINX Plus.
+* **debian-image**: for building a debian-based image with NGINX.
 * **debian-image-plus**: for building a debian-based image with NGINX Plus.
 * **debian-image-nap-plus**: for building a debian-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module.
 * **debian-image-opentracing**: for building a debian-based image with NGINX, [opentracing](https://github.com/opentracing-contrib/nginx-opentracing) module and the [Jaeger](https://www.jaegertracing.io/) tracer.

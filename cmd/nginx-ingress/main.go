@@ -185,6 +185,8 @@ var (
 
 	enableLatencyMetrics = flag.Bool("enable-latency-metrics", false,
 		"Enable collection of latency metrics for upstreams. Requires -enable-prometheus-metrics")
+
+	startupCheckFn func() error
 )
 
 func main() {
@@ -199,6 +201,13 @@ func main() {
 	if *versionFlag {
 		fmt.Println(versionInfo)
 		os.Exit(0)
+	}
+
+	if startupCheckFn != nil {
+		err := startupCheckFn()
+		if err != nil {
+			glog.Fatalf("Failed startup check: %v", err)
+		}
 	}
 
 	healthStatusURIValidationError := validateLocation(*healthStatusURI)
@@ -605,7 +614,7 @@ func main() {
 		templateExecutorV2, *nginxPlus, isWildcardEnabled, plusCollector, *enablePrometheusMetrics, latencyCollector, *enableLatencyMetrics)
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
-	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets)
+	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
 	virtualServerValidator := cr_validation.NewVirtualServerValidator(*nginxPlus)
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{

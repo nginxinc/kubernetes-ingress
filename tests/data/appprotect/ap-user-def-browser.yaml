@@ -1,0 +1,33 @@
+apiVersion: appprotect.f5.com/v1beta1
+kind: APPolicy
+metadata:
+  name: ap-user-def-browser
+spec:
+  policy:
+    applicationLanguage: utf-8
+    name: user_defrined_browser
+    template:
+      name: POLICY_TEMPLATE_NGINX_BASE
+    browser-definitions:
+    - name: CustomBrowser1
+      matchString: custombrowser1/0.1
+    - name: CustomBrowser2
+      matchRegex: custombrowser2/0.1
+    bot-defense:
+      mitigations:
+        classes:
+        - name: browser
+          action: block
+        - name: unknown
+          action: alarm
+        browsers:
+        - name: safari
+          action: alarm
+        - name: chrome
+          action: block
+        - name: firefox
+          action: alarm
+        - name: CustomBrowser1
+          action: block
+        - name: CustomBrowser2
+          action: alarm

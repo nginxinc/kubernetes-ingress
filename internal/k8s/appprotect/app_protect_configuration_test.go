@@ -749,11 +749,21 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 			},
 		},
 	}
+	testUserSig1Invalid := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace":         "testing",
+				"name":              "test1",
+				"uid":               "1",
+				"creationTimestamp": "2020-01-23T18:32:02Z",
+			},
+		},
+	}
 	testUserSig3 := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
 				"namespace":         "testing",
-				"name":              "test2",
+				"name":              "test3",
 				"uid":               "5",
 				"creationTimestamp": "2020-01-23T18:32:02Z",
 			},
@@ -766,6 +776,7 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 			},
 		},
 	}
+
 	appProtectConfiguration := newConfigurationImpl()
 	appProtectConfiguration.UserSigs["testing/test1"] = &UserSigEx{
 		Obj:      testUserSig1,
@@ -835,6 +846,22 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 			msg: "Duplicate tags",
 		},
 		{
+			usersig: testUserSig1Invalid,
+			expectedUserSigChange: UserSigChange{
+				UserSigs: []*unstructured.Unstructured{
+					testUserSigDupTag,
+				},
+			},
+			expectedProblems: []Problem{
+				{
+					Object:  testUserSig1Invalid,
+					Message: "Validation Failed",
+					Reason:  "Rejected",
+				},
+			},
+			msg: "UserSig becomes valid after previous tag holder became invalid",
+		},
+		{
 			usersig: testUserSig3,
 			expectedUserSigChange: UserSigChange{
 				PolicyAddsOrUpdates: []*unstructured.Unstructured{
@@ -843,11 +870,11 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 					},
 				},
 				UserSigs: []*unstructured.Unstructured{
-					testUserSig1,
+					testUserSigDupTag,
 					testUserSig3,
 				},
 			},
-			msg: "Policy gets set to valid",
+			msg: "Policy becomes valid after a UserSig with the right tag was added",
 		},
 	}
 

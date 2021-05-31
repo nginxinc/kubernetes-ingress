@@ -2,7 +2,7 @@
 
 The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.1/examples-of-custom-resources) folder in our GitHub repo.
+This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/blob/v1.11.3/examples-of-custom-resources) folder in our GitHub repo.
 
 > **Feature Status**: The TransportServer resource is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resource specification in the next releases.
 
@@ -174,6 +174,7 @@ port: 8443
 maxFails: 3
 maxConns: 100
 failTimeout: 30s
+loadBalancingMethod: least_conn
 ```
 
 ```eval_rst
@@ -211,6 +212,10 @@ failTimeout: 30s
    * - ``healthCheck``
      - The health check configuration for the Upstream. See the `health_check <https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#health_check>`_ directive. Note: this feature is supported only in NGINX Plus.
      - `healthcheck <#upstream-healthcheck>`_
+     - No
+   * - ``loadBalancingMethod``
+     - The method used to load balance the upstream servers. By default, connections are distributed between the servers using a weighted round-robin balancing method. See the `upstream <http://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#upstream>`_ section for available methods and their details.
+     - ``string``
      - No
 
 ```
@@ -499,4 +504,4 @@ The [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/con
 ## Limitations
 
 The TransportServer resource is a preview feature. Currently, it comes with the following limitation:
-* When using TLS Passthrough, it is not possible to configure [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v1.11.1/examples/proxy-protocol) for port 443 both for regular HTTPS and TLS Passthrough traffic.
+* When using TLS Passthrough, it is not possible to configure [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v1.11.3/examples/proxy-protocol) for port 443 both for regular HTTPS and TLS Passthrough traffic.

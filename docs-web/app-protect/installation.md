@@ -23,6 +23,8 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
     In order to do so, place the `*.crt` file in the build folder and uncomment the lines that follow this comment:
     `#Uncomment the lines below if you want to install a custom CA certificate`
 
+    **Note**: In the event of a patch version of NGINX Plus being [released](/nginx/releases/), make sure to rebuild your image to get the latest version. The Dockerfile will use the latest available version of the [Attack Signatures](/nginx-app-protect/configuration/#attack-signatures) and [Threat Campaigns](/nginx-app-protect/configuration/#threat-campaigns) packages at the time of build. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--no-cache"` to the `make` command.
+
 - [Push the image to your local Docker registry](/nginx-ingress-controller/installation/building-ingress-controller-image/#building-the-image-and-pushing-it-to-the-private-registry).
 
 ## Install the Ingress Controller
@@ -37,4 +39,4 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
 3. Enable the App Protect module by adding the `enable-app-protect` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect) to your Deployment or DaemonSet file.
 4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#deploy-the-ingress-controller).
 
-For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the [NGINX Ingress Controller with App Protect examples on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v1.11.1/examples/appprotect).
+For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the [NGINX Ingress Controller with App Protect examples on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v1.11.3/examples/appprotect).

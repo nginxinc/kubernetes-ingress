@@ -248,6 +248,31 @@ spec:
                                     type: string
                                 type: object
                               type: array
+                            browsers:
+                              items:
+                                properties:
+                                  $action:
+                                    enum:
+                                      - delete
+                                    type: string
+                                  action:
+                                    enum:
+                                      - alarm
+                                      - block
+                                      - detect
+                                    type: string
+                                  maxVersion:
+                                    maximum: 2147483647
+                                    minimum: 0
+                                    type: integer
+                                  minVersion:
+                                    maximum: 2147483647
+                                    minimum: 0
+                                    type: integer
+                                  name:
+                                    type: string
+                                type: object
+                              type: array
                             classes:
                               items:
                                 properties:
@@ -260,9 +285,11 @@ spec:
                                     type: string
                                   name:
                                     enum:
+                                      - browser
                                       - malicious-bot
                                       - suspicious-browser
                                       - trusted-bot
+                                      - unknown
                                       - untrusted-bot
                                     type: string
                                 type: object
@@ -288,6 +315,23 @@ spec:
                               type: boolean
                           type: object
                       type: object
+                    browser-definitions:
+                      items:
+                        properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
+                          isUserDefined:
+                            type: boolean
+                          matchRegex:
+                            type: string
+                          matchString:
+                            type: string
+                          name:
+                            type: string
+                        type: object
+                      type: array
                     caseInsensitive:
                       type: boolean
                     character-sets:
