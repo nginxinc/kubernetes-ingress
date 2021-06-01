@@ -1,4 +1,6 @@
 import subprocess
+import socket
+import grpc
 import pytest
 from settings import TEST_DATA, DEPLOYMENTS
 from suite.custom_resources_utils import (
@@ -7,6 +9,9 @@ from suite.custom_resources_utils import (
     delete_ap_policy,
     delete_ap_logconf,
 )
+from suite.helloworld_pb2 import HelloRequest
+from suite.helloworld_pb2_grpc import GreeterStub
+
 from suite.resources_utils import (
     wait_before_test,
     create_example_app,
@@ -111,7 +116,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect
-@pytest.mark.smoke
+@pytest.mark.test
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [{"extra_args": [f"-enable-custom-resources", f"-enable-app-protect"]}],
@@ -126,40 +131,26 @@ class TestAppProtect:
         Test grpc-block-hello AppProtect policy: Blocks /sayhello gRPC method only
         Client sends request to /sayhello
         """
-        syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
-        block_response = subprocess.run(["binaries/./grpc_client", "-address", f"{backend_setup.ingress_host}:{backend_setup.ssl_port}"], capture_output=True)
-        stdout = (block_response.stderr).decode("ascii")
-        print(stdout)
-        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
-        print(log_contents)
-        assert (
-            valid_resp_txt not in stdout and
-            invalid_resp_text in stdout and
-            'ASM:attack_type="Directory Indexing"' in log_contents and
-            'violations="Illegal gRPC method"' in log_contents and
-            'severity="Error"' in log_contents and
-            'outcome="REJECTED"' in log_contents
-        )
+        # print(socket.gethostbyname('appprotect.example.com'))
+        # syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
 
-    @pytest.mark.parametrize("backend_setup", [{"policy": "grpc-block-saygoodbye"}], indirect=True)
-    def test_responses_grpc_allow(
-        self, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace
-    ):
-        """
-        Test grpc-block-saygoodbye AppProtect policy: Blocks /saygoodbye gRPC method only
-        Client sends request to /sayhello
-        """
-        syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
-        allow_response = subprocess.run(["binaries/./grpc_client", "-address", f"{backend_setup.ingress_host}:{backend_setup.ssl_port}"], capture_output=True)
-        stdout = (allow_response.stderr).decode("ascii")
-        print(stdout)
-        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
-        print(log_contents)
-        assert (
-            valid_resp_txt in stdout and
-            invalid_resp_text not in stdout and
-            'ASM:attack_type="N/A"' in log_contents and
-            'violations="N/A"' in log_contents and
-            'severity="Informational"' in log_contents and
-            'outcome="PASSED"' in log_contents
-        )
+        # with grpc.insecure_channel(f'{backend_setup.ingress_host}:{backend_setup.ssl_port}',  options=(('grpc.enable_http_proxy', 0),)) as channel:
+        #     stub = GreeterStub(channel)
+        #     response = stub.SayHello(HelloRequest(name='you'))
+        # print("Greeter client received: " + response.message)
+        # assert True
+        ### use client binary
+        # block_response = subprocess.run(["binaries/./grpc_client", "-address", f"192.168.64.31:{backend_setup.ssl_port}"], capture_output=True)
+        # stdout = (block_response.stderr).decode("ascii")
+        # print(stdout)
+        # print(block_response)
+        # log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+        # print(log_contents)
+        # assert (
+        #     valid_resp_txt not in stdout and
+        #     invalid_resp_text in stdout and
+        #     'ASM:attack_type="Directory Indexing"' in log_contents and
+        #     'violations="Illegal gRPC method"' in log_contents and
+        #     'severity="Error"' in log_contents and
+        #     'outcome="REJECTED"' in log_contents
+        # )
