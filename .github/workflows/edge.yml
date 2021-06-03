@@ -115,22 +115,20 @@ jobs:
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
-        with:
-          driver-opts: network=host
-      - name: Cache Docker layers
+      - name: Cache Docker layers for ${{ matrix.image }}
         uses: actions/cache@v2
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          path: /tmp/.buildx-${{ matrix.image }}-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.image }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-buildx-${{ matrix.image }}-
       - name: Build ${{ matrix.image }} Container
         uses: docker/build-push-action@v2
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-from: type=local,src=/tmp/.buildx-${{ matrix.image }}-cache
+          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.image }}-cache
           target: goreleaser
           tags: ${{ matrix.image }}:${{ github.sha }}
           load: true
@@ -188,22 +186,20 @@ jobs:
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
-        with:
-          driver-opts: network=host
-      - name: Cache Docker layers
+      - name: Cache Docker layers for ${{ matrix.image }}
         uses: actions/cache@v2
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          path: /tmp/.buildx-${{ matrix.image }}-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.image }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-buildx-${{ matrix.image }}-
       - name: Build ${{ matrix.image }} Container
         uses: docker/build-push-action@v2
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-from: type=local,src=/tmp/.buildx-${{ matrix.image }}-cache
+          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.image }}-cache
           target: goreleaser
           tags: ${{ matrix.image }}:${{ github.sha }}
           load: true
@@ -358,15 +354,13 @@ jobs:
           platforms: arm,arm64,ppc64le,s390x
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
-        with:
-          driver-opts: network=host
-      - name: Cache Docker layers
+      - name: Cache Docker layers for ${{ matrix.image }}
         uses: actions/cache@v2
         with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          path: /tmp/.buildx-${{ matrix.image }}-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.image }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-buildx-${{ matrix.image }}-
       - name: DockerHub Login
         uses: docker/login-action@v1
         with:
@@ -377,8 +371,8 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-from: type=local,src=/tmp/.buildx-${{ matrix.image }}-cache
+          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.image }}-cache
           target: goreleaser
           tags: nginx/nginx-ingress:${{ matrix.tag }}
           platforms: ${{ matrix.platforms }}
