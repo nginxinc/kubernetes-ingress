@@ -5,7 +5,9 @@ import socket
 from suite.resources_utils import (
     wait_before_test,
     get_ts_nginx_template_conf,
-    scale_deployment
+    scale_deployment,
+    get_events,
+    wait_for_event_increment,
 )
 from suite.custom_resources_utils import (
     patch_ts,
@@ -13,6 +15,7 @@ from suite.custom_resources_utils import (
     delete_ts,
     create_ts_from_yaml,
 )
+from suite.custom_assertions import wait_and_assert_count
 from settings import TEST_DATA
 
 @pytest.mark.ts
@@ -53,8 +56,12 @@ class TestTransportServerUdpLoadBalance:
         """
         The load balancing of UDP should result in 4 servers to match the 4 replicas of a service.
         """
+        event_count = len(get_events(kube_apis.v1, transport_server_setup.namespace))
         original = scale_deployment(kube_apis.apps_v1_api, "udp-service", transport_server_setup.namespace, 4)
-        wait_before_test()
+        if (wait_for_event_increment(kube_apis, transport_server_setup.namespace, event_count, 6)):
+            print("Updated, continue...")
+        else:
+            pytest.fail("Failed to find event, exiting...")
 
         result_conf = get_ts_nginx_template_conf(
             kube_apis.v1,
@@ -69,10 +76,14 @@ class TestTransportServerUdpLoadBalance:
         pattern = 'server .*;'
         num_servers = len(re.findall(pattern, result_conf))
 
-        assert num_servers is 4
-
+        event_count = len(get_events(kube_apis.v1, transport_server_setup.namespace))
         scale_deployment(kube_apis.apps_v1_api, "udp-service", transport_server_setup.namespace, original)
-        wait_before_test()
+        if (wait_for_event_increment(kube_apis, transport_server_setup.namespace, event_count, 3)):
+            print("Updated, continue...")
+        else:
+            pytest.fail("Failed to find event, exiting...")
+        
+        assert num_servers is 4
 
     def test_udp_request_load_balanced(
             self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
@@ -99,7 +110,7 @@ class TestTransportServerUdpLoadBalance:
                 endpoints[endpoint] = endpoints[endpoint] + 1
             client.close()
 
-        assert len(endpoints) is 3
+        wait_and_assert_count(len(endpoints), 3)
 
         result_conf = get_ts_nginx_template_conf(
             kube_apis.v1,
@@ -279,7 +290,7 @@ class TestTransportServerUdpLoadBalance:
                 endpoints[endpoint] = endpoints[endpoint] + 1
             client.close()
 
-        assert len(endpoints) is 3
+        wait_and_assert_count(len(endpoints), 3)
 
         # Step 3 - restore
 
