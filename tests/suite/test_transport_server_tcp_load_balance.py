@@ -79,10 +79,26 @@ class TestTransportServerTcpLoadBalance:
             wait_before_test(1)
             print(f"Retry #{retry}")
 
-        scale_deployment(kube_apis.apps_v1_api, "tcp-service", transport_server_setup.namespace, original)
-        wait_before_test()
-        
         assert num_servers is 4
+
+        scale_deployment(kube_apis.apps_v1_api, "tcp-service", transport_server_setup.namespace, original)
+        retry = 0
+        while(num_servers is not original and retry <= 50):
+            result_conf = get_ts_nginx_template_conf(
+                kube_apis.v1,
+                transport_server_setup.namespace,
+                transport_server_setup.name,
+                transport_server_setup.ingress_pod_name,
+                ingress_controller_prerequisites.namespace
+            )
+            
+            pattern = 'server .*;'
+            num_servers = len(re.findall(pattern, result_conf))
+            retry += 1
+            wait_before_test(1)
+            print(f"Retry #{retry}")
+        
+        assert num_servers is original
 
     def test_tcp_request_load_balanced(
             self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
@@ -111,9 +127,9 @@ class TestTransportServerTcpLoadBalance:
                 else:
                     endpoints[endpoint] = endpoints[endpoint] + 1
                 client.close()
-                retry += 1
-                wait_before_test(1)
-                print(f"Retry #{retry}")
+            retry += 1
+            wait_before_test(1)
+            print(f"Retry #{retry}")
 
         assert len(endpoints) is 3
 
@@ -412,9 +428,9 @@ class TestTransportServerTcpLoadBalance:
                 else:
                     endpoints[endpoint] = endpoints[endpoint] + 1
                 client.close()
-                retry += 1
-                wait_before_test(1)
-                print(f"Retry #{retry}")
+            retry += 1
+            wait_before_test(1)
+            print(f"Retry #{retry}")
 
         assert len(endpoints) is 1    
 
@@ -438,9 +454,9 @@ class TestTransportServerTcpLoadBalance:
                 else:
                     endpoints[endpoint] = endpoints[endpoint] + 1
                 client.close()
-                retry += 1
-                wait_before_test(1)
-                print(f"Retry #{retry}")
+            retry += 1
+            wait_before_test(1)
+            print(f"Retry #{retry}")
 
         assert len(endpoints) is 3
 
@@ -500,9 +516,9 @@ class TestTransportServerTcpLoadBalance:
                 else:
                     endpoints[endpoint] = endpoints[endpoint] + 1
                 client.close()
-                retry += 1
-                wait_before_test(1)
-                print(f"Retry #{retry}")
+            retry += 1
+            wait_before_test(1)
+            print(f"Retry #{retry}")
         assert len(endpoints) is 3
 
         # Step 3 - restore
