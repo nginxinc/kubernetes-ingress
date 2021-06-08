@@ -222,6 +222,8 @@ Parameter | Description | Default
 `rbac.create` | Configures RBAC. | true
 `prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
+`prometheus.scheme` | Configures the HTTP scheme to use for connections to the Prometheus endpoint. | http
+`prometheus.secret` | The namespace / name of a Kubernetes TLS Secret. If specified, this secret is used to secure the Prometheus endpoint with TLS connections. | ""
 
 
 ## Notes

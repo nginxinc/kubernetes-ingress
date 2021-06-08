@@ -201,6 +201,16 @@ Below we describe the available command-line arguments:
 
 	Format: ``[1024 - 65535]`` (default 9113)
 
+.. option:: -prometheus-tls-secret <string>
+
+	A Secret with a TLS certificate and key for TLS termination of the Prometheus metrics endpoint.
+
+	- If the argument is not set, the prometheus endpoint will not use a TLS connection.
+
+	- If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.
+
+	Format: ``<namespace>/<name>``
+
 .. option:: -spire-agent-address <string>
 
 	Specifies the address of a running Spire agent. **For use with NGINX Service Mesh only**.

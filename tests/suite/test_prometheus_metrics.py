@@ -36,6 +36,19 @@ class IngressSetup:
 
 
 @pytest.fixture(scope="class")
+def prometheus_secret_setup(request, kube_apis, test_namespace):
+    print("------------------------- Deploy Prometheus Secret -----------------------------------")
+    prometheus_secret_name = create_secret_from_yaml(
+        kube_apis.v1, "nginx-ingress", f"{TEST_DATA}/prometheus/secret.yaml"
+    )
+
+    def fin():
+        delete_secret(kube_apis.v1, prometheus_secret_name, "nginx-ingress")
+
+    request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="class")
 def enable_exporter_port(
     cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller
 ) -> None:
@@ -173,3 +186,47 @@ class TestPrometheusExporter:
         for item in expected_metrics:
             assert item in resp_content
 
+    @pytest.mark.parametrize(
+        "ingress_controller, expected_metrics",
+        [
+            pytest.param(
+                {"extra_args": ["-enable-prometheus-metrics", "-enable-latency-metrics", "-prometheus-tls-secret=nginx-ingress/prometheus-test-secret"]},
+                [
+                    'nginx_ingress_controller_ingress_resources_total{class="nginx",type="master"} 0',
+                    'nginx_ingress_controller_ingress_resources_total{class="nginx",type="minion"} 0',
+                ],
+            )
+        ],
+        indirect=["ingress_controller"],
+    )
+    def test_https_metrics(
+            self,
+            prometheus_secret_setup,
+            ingress_controller_endpoint,
+            ingress_controller,
+            enable_exporter_port,
+            expected_metrics,
+            ingress_setup,
+    ):
+        resp = {}
+
+        # assert http fails
+        req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        try:
+            resp = requests.get(req_url, verify=False)
+            assert False, "Expected HTTP request to fail for a HTTPS endpoint but it succeeded"
+        except:
+            print("request fails as expected")
+
+        assert resp.status_code == 400, f"Expected 400 code for http request to /metrics but got {resp.status_code}"
+
+        # assert https succeeds
+        req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        ensure_response_from_backend(req_url, ingress_setup.ingress_host)
+        resp = requests.get(req_url, verify=False)
+
+        assert resp.status_code == 200, f"Expected 200 code for /metrics but got {resp.status_code}"
+
+        resp_content = resp.content.decode("utf-8")
+        for item in expected_metrics:
+            assert item in resp_content

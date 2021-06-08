@@ -365,6 +365,12 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
    * - ``prometheus.port``
      - Configures the port to scrape the metrics.
      - 9113
+   * - ``prometheus.scheme``
+     - Configures the HTTP scheme that requests must use to connect to the Prometheus endpoint.
+     - http
+   * - ``prometheus.secret``
+     - Specifies the namespace/name of a Kubernetes TLS secret which can be used to establish a secure HTTPS connection with the Prometheus endpoint.
+     - ""
 ```
 
 ## Notes
