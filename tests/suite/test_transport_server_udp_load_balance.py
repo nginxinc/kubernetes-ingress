@@ -56,34 +56,27 @@ class TestTransportServerUdpLoadBalance:
         """
         The load balancing of UDP should result in 4 servers to match the 4 replicas of a service.
         """
-        event_count = len(get_events(kube_apis.v1, transport_server_setup.namespace))
         original = scale_deployment(kube_apis.apps_v1_api, "udp-service", transport_server_setup.namespace, 4)
-        if (wait_for_event_increment(kube_apis, transport_server_setup.namespace, event_count, 6)):
-            print("Updated, continue...")
-        else:
-            pytest.fail("Failed to find event, exiting...")
+        num_servers = 0
+        retry = 0
 
-        result_conf = get_ts_nginx_template_conf(
-            kube_apis.v1,
-            transport_server_setup.namespace,
-            transport_server_setup.name,
-            transport_server_setup.ingress_pod_name,
-            ingress_controller_prerequisites.namespace
-        )
-
-        print(result_conf)
-
-        pattern = 'server .*;'
-        num_servers = len(re.findall(pattern, result_conf))
-
-        event_count = len(get_events(kube_apis.v1, transport_server_setup.namespace))
-        scale_deployment(kube_apis.apps_v1_api, "udp-service", transport_server_setup.namespace, original)
-        if (wait_for_event_increment(kube_apis, transport_server_setup.namespace, event_count, 3)):
-            print("Updated, continue...")
-        else:
-            pytest.fail("Failed to find event, exiting...")
+        while(num_servers is not 4 and retry <= 30):
+            result_conf = get_ts_nginx_template_conf(
+                kube_apis.v1,
+                transport_server_setup.namespace,
+                transport_server_setup.name,
+                transport_server_setup.ingress_pod_name,
+                ingress_controller_prerequisites.namespace
+            )
+            
+            pattern = 'server .*;'
+            num_servers = len(re.findall(pattern, result_conf))
+            retry += 1
         
         assert num_servers is 4
+
+        scale_deployment(kube_apis.apps_v1_api, "udp-service", transport_server_setup.namespace, original)
+        wait_before_test()
 
     def test_udp_request_load_balanced(
             self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
@@ -98,19 +91,24 @@ class TestTransportServerUdpLoadBalance:
         print(f"sending udp requests to: {host}:{port}")
 
         endpoints = {}
-        for i in range(20):
-            client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-            client.sendto("ping".encode('utf-8'), (host, port))
-            data, address = client.recvfrom(4096)
-            endpoint = data.decode()
-            print(f' req number {i}; response: {endpoint}')
-            if endpoint not in endpoints:
-                endpoints[endpoint] = 1
-            else:
-                endpoints[endpoint] = endpoints[endpoint] + 1
-            client.close()
+        retry = 0
+        while(len(endpoints) is not 3 and retry <= 30):
+            for i in range(20):
+                client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+                client.sendto("ping".encode('utf-8'), (host, port))
+                data, address = client.recvfrom(4096)
+                endpoint = data.decode()
+                print(f' req number {i}; response: {endpoint}')
+                if endpoint not in endpoints:
+                    endpoints[endpoint] = 1
+                else:
+                    endpoints[endpoint] = endpoints[endpoint] + 1
+                client.close()
+                retry += 1
+                wait_before_test(1)
+                print(f"Retry #{retry}")
 
-        wait_and_assert_count(len(endpoints), 3)
+        assert len(endpoints) is 3
 
         result_conf = get_ts_nginx_template_conf(
             kube_apis.v1,
@@ -277,20 +275,24 @@ class TestTransportServerUdpLoadBalance:
 
         print(f"sending udp requests to: {host}:{port}")
 
+        retry = 0
         endpoints = {}
-        for i in range(20):
-            client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
-            client.sendto("ping".encode('utf-8'), (host, port))
-            data, address = client.recvfrom(4096)
-            endpoint = data.decode()
-            print(f' req number {i}; response: {endpoint}')
-            if endpoint not in endpoints:
-                endpoints[endpoint] = 1
-            else:
-                endpoints[endpoint] = endpoints[endpoint] + 1
-            client.close()
+        while(len(endpoints) is not 3 and retry <=30):
+            for i in range(20):
+                client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+                client.sendto("ping".encode('utf-8'), (host, port))
+                data, address = client.recvfrom(4096)
+                endpoint = data.decode()
+                print(f' req number {i}; response: {endpoint}')
+                if endpoint not in endpoints:
+                    endpoints[endpoint] = 1
+                else:
+                    endpoints[endpoint] = endpoints[endpoint] + 1
+                client.close()
+                retry += 1
+                wait_before_test(1)
 
-        wait_and_assert_count(len(endpoints), 3)
+        assert len(endpoints) is 3
 
         # Step 3 - restore
 
