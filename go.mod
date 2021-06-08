@@ -14,7 +14,7 @@ require (
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/nginxinc/nginx-plus-go-client v0.8.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.9.0
-	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/client_golang v1.11.0
 	github.com/spiffe/go-spiffe v1.1.0
 	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.1
