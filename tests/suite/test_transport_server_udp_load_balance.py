@@ -15,7 +15,6 @@ from suite.custom_resources_utils import (
     delete_ts,
     create_ts_from_yaml,
 )
-from suite.custom_assertions import wait_and_assert_count
 from settings import TEST_DATA
 
 @pytest.mark.ts
