@@ -456,9 +456,20 @@ class TestAppProtect:
             appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
         )
         print(response.text)
-        wait_before_test(10)
-        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
-        log2_contents = get_file_contents(kube_apis.v1, log_loc, syslog2_pod, test_namespace)
+        log_contents = ""
+        log2_contents = ""
+        retry = 0
+        while (
+            "ASM:attack_type" not in log_contents
+            and "ASM:attack_type" not in log2_contents
+            and retry <= 30
+        ):
+            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+            log2_contents = get_file_contents(kube_apis.v1, log_loc, syslog2_pod, test_namespace)
+            retry += 1
+            wait_before_test(1)
+            print(f"Security log not updated, retrying... #{retry}")
+
         assert_invalid_responses(response)
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
@@ -481,4 +492,3 @@ class TestAppProtect:
             and f'request_status="blocked"' in log2_contents
             and f'outcome="REJECTED"' in log2_contents
         )
-
