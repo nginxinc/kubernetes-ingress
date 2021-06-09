@@ -355,58 +355,6 @@ class TestAppProtect:
         assert f'request_status="passed"' in log_contents
         assert f'outcome="PASSED"' in log_contents
 
-    @pytest.mark.smoke
-    def test_ap_enable_true_policy_correct_uds(
-        self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
-    ):
-        """
-        Test request with UDS rule string is rejected while AppProtect with User Defined Signatures is enabled in Ingress
-        """
-
-        usersig_name = create_ap_usersig_from_yaml(
-            kube_apis.custom_objects, uds_crd_resource, test_namespace
-        )
-        # Apply dataguard-alarm AP policy with UDS
-        delete_and_create_ap_policy_from_yaml(
-            kube_apis.custom_objects,
-            ap_policy,
-            f"{TEST_DATA}/appprotect/{ap_policy_uds}.yaml",
-            test_namespace,
-        )
-        wait_before_test()
-
-        create_ingress_with_ap_annotations(
-            kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", "127.0.0.1:514"
-        )
-        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
-
-        print(
-            "--------- Run test while AppProtect module is enabled with correct policy and UDS ---------"
-        )
-
-        ap_crd_info = read_ap_custom_resource(
-            kube_apis.custom_objects, test_namespace, "appolicies", ap_policy
-        )
-        assert_ap_crd_info(ap_crd_info, ap_policy)
-        wait_before_test(120)
-
-        ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
-        print("----------------------- Send request ----------------------")
-        response = requests.get(
-            appprotect_setup.req_url, headers={"host": ingress_host}, verify=False, data="kic"
-        )
-        print(response.text)
-
-        # Restore default dataguard-alarm policy
-        delete_and_create_ap_policy_from_yaml(
-            kube_apis.custom_objects,
-            ap_policy,
-            f"{TEST_DATA}/appprotect/{ap_policy}.yaml",
-            test_namespace,
-        )
-        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
-        assert_invalid_responses(response)
-
     def test_ap_multi_sec_logs(
         self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
@@ -492,3 +440,55 @@ class TestAppProtect:
             and f'request_status="blocked"' in log2_contents
             and f'outcome="REJECTED"' in log2_contents
         )
+
+    def test_ap_enable_true_policy_correct_uds(
+        self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
+    ):
+        """
+        Test request with UDS rule string is rejected while AppProtect with User Defined Signatures is enabled in Ingress
+        """
+
+        usersig_name = create_ap_usersig_from_yaml(
+            kube_apis.custom_objects, uds_crd_resource, test_namespace
+        )
+        # Apply dataguard-alarm AP policy with UDS
+        delete_and_create_ap_policy_from_yaml(
+            kube_apis.custom_objects,
+            ap_policy,
+            f"{TEST_DATA}/appprotect/{ap_policy_uds}.yaml",
+            test_namespace,
+        )
+        wait_before_test()
+
+        create_ingress_with_ap_annotations(
+            kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", "127.0.0.1:514"
+        )
+        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
+
+        print(
+            "--------- Run test while AppProtect module is enabled with correct policy and UDS ---------"
+        )
+
+        ap_crd_info = read_ap_custom_resource(
+            kube_apis.custom_objects, test_namespace, "appolicies", ap_policy
+        )
+        assert_ap_crd_info(ap_crd_info, ap_policy)
+        wait_before_test(120)
+
+        ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
+        print("----------------------- Send request ----------------------")
+        response = requests.get(
+            appprotect_setup.req_url, headers={"host": ingress_host}, verify=False, data="kic"
+        )
+        print(response.text)
+
+        # Restore default dataguard-alarm policy
+        delete_and_create_ap_policy_from_yaml(
+            kube_apis.custom_objects,
+            ap_policy,
+            f"{TEST_DATA}/appprotect/{ap_policy}.yaml",
+            test_namespace,
+        )
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+
+        assert_invalid_responses(response)
