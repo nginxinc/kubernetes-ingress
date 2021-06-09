@@ -343,7 +343,7 @@ class TestAppProtect:
         }
         response = requests.get(appprotect_setup.req_url, headers=headers, verify=False)
         print(response.text)
-        wait_before_test(5)
+        wait_before_test(10)
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
@@ -456,7 +456,7 @@ class TestAppProtect:
             appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
         )
         print(response.text)
-        wait_before_test(5)
+        wait_before_test(10)
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
         log2_contents = get_file_contents(kube_apis.v1, log_loc, syslog2_pod, test_namespace)
         assert_invalid_responses(response)
