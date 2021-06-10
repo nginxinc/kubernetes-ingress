@@ -14,7 +14,8 @@ ENV APPPROTECT_ENGINE_VERSION 6.53.1-1.el7.ngx
 ENV APPPROTECT_COMPILER_VERSION 6.53.1-1.el7.ngx
 ENV APPPROTECT_SIG_VERSION 2021.02.26-1.el7.ngx
 ENV APPPROTECT_THREAT_CAMPAIGNS_VERSION 2021.03.02-1.el7.ngx
-ENV NGINX_PLUS_VERSION 23-1.el7.ngx
+ENV NGINX_PLUS_VERSION 23-2.el7.ngx
+ENV NGINX_NJS_VERSION 23+0.5.2-1.el7.ngx
 ARG IC_VERSION
 
 # Download certificate and key from the customer portal (https://cs.nginx.com)
@@ -48,6 +49,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
 	&& yum clean all \
 	&& yum install -y nginx-plus-$NGINX_PLUS_VERSION \
+	    nginx-plus-module-njs-$NGINX_NJS_VERSION \
 	    nginx-plus-module-appprotect-$APPPROTECT_MODULE_VERSION \
 	    app-protect-plugin-$APPPROTECT_PLUGIN_VERSION \
 	    app-protect-engine-$APPPROTECT_ENGINE_VERSION \
