@@ -26,6 +26,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 1. Clone the Ingress Controller repo:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    $ cd kubernetes-ingress
     $ git checkout v1.11.3
     ```
 
