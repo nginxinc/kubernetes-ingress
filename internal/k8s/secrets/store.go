@@ -117,7 +117,7 @@ func NewFakeSecretsStore(secrets map[string]*SecretReference) *FakeSecretStore {
 	}
 }
 
-// NewFakeSecretsStore creates a new empty FakeSecretStore.
+// NewEmptyFakeSecretsStore creates a new empty FakeSecretStore.
 func NewEmptyFakeSecretsStore() *FakeSecretStore {
 	return &FakeSecretStore{
 		secrets: make(map[string]*SecretReference),
