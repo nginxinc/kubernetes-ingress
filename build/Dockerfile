@@ -35,20 +35,19 @@ FROM debian:buster-slim AS debian-plus
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg wget apt-transport-https libcap2-bin \
-	&& wget -nv https://cs.nginx.com/static/keys/nginx_signing.key \
-	&& gpg --no-default-keyring --keyring nginx_keyring.gpg --import nginx_signing.key \
-	&& gpg --no-default-keyring --keyring nginx_keyring.gpg --export > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
-	&& wget -nv -P /etc/apt/apt.conf.d https://cs.nginx.com/static/files/90pkgs-nginx \
-	&& echo "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
+	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
+	&& curl -sSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
+	&& curl -sSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
+	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
 	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/debian buster nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y \
 	nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION} \
-	&& apt-get purge --auto-remove -y apt-transport-https gnupg wget \
+	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
 	&& rm -rf /var/lib/apt/lists/*
 
 
@@ -57,31 +56,20 @@ FROM debian-plus as debian-plus-nap
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y gnupg wget apt-transport-https \
-	&& wget -nv https://cs.nginx.com/static/keys/app-protect-security-updates.key \
-	&& gpg --no-default-keyring --keyring app_protect_keyring.gpg --import app-protect-security-updates.key \
-	&& gpg --no-default-keyring --keyring app_protect_keyring.gpg --export > /etc/apt/trusted.gpg.d/nginx_app_signing.gpg \
-	&& sed -i "$ d" /etc/apt/apt.conf.d/90pkgs-nginx \
-	&& echo "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-nap-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
+	&& apt-get install --no-install-recommends --no-install-suggests -y gnupg curl apt-transport-https \
+	&& curl -sSL https://cs.nginx.com/static/keys/app-protect-security-updates.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_app_signing.gpg \
+	&& sed -i "s/$IC_VERSION/$IC_VERSION-nap/g" /etc/apt/apt.conf.d/90pkgs-nginx \
 	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect/debian buster nginx-plus" \
 	"deb https://pkgs.nginx.com/app-protect-security-updates/debian buster nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect.list \
 	&& apt-get update \
-	# searching apt-cache for the latest version of NAP packages compatible with the $NGINX_PLUS_VERSION
+	# searching apt-cache for the latest version of NAP package compatible with the $NGINX_PLUS_VERSION
 	&& module_version=$(apt-cache showpkg nginx-plus-module-appprotect | awk -v ver="nginx-plus-$NGINX_PLUS_VERSION" '{ if ($6 == ver) {print $1; exit}}') \
-	engine_version=$(apt-cache showpkg app-protect | awk -v ver="$module_version" '{ if ($1 == ver && $3 == "nginx-plus-module-appprotect") {print substr($NF, 1, length($NF)-1); exit}}') \
-	plugin=$(apt-cache showpkg nginx-plus-module-appprotect | awk -v ver="nginx-plus-$NGINX_PLUS_VERSION" '{ if ($6 == ver) {print substr($NF, 1, length($NF)-1); exit}}') \
-	&& apt-get install --no-install-recommends --no-install-suggests -y \
-	nginx-plus-module-appprotect=${module_version} \
-	app-protect-plugin=${plugin} \
-	app-protect-engine=${engine_version} \
-	app-protect-compiler=${engine_version} \
-	app-protect=${module_version} \
+	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus-module-appprotect=${module_version} app-protect=${module_version} \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect-attack-signatures app-protect-threat-campaigns \
-	&& apt-get purge --auto-remove -y apt-transport-https gnupg wget \
+	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect.list
 
