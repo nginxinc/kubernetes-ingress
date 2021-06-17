@@ -9,7 +9,7 @@ require (
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/go-openapi/spec v0.20.3 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golangci/golangci-lint v1.40.1
+	github.com/golangci/golangci-lint v1.41.0
 	github.com/google/go-cmp v0.5.6
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/nginxinc/nginx-plus-go-client v0.8.0
