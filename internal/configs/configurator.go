@@ -739,7 +739,7 @@ func (cnf *Configurator) DeleteVirtualServer(key string) error {
 
 	delete(cnf.virtualServers, name)
 	if (cnf.isPlus && cnf.isPrometheusEnabled) || cnf.isLatencyMetricsEnabled {
-		cnf.deleteVirtualServerMetricsLabels(fmt.Sprintf(key))
+		cnf.deleteVirtualServerMetricsLabels(key)
 	}
 
 	if err := cnf.nginxManager.Reload(nginx.ReloadForOtherUpdate); err != nil {
