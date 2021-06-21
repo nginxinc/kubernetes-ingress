@@ -355,7 +355,7 @@ func validateHexString(s string) error {
 
 		_, err := hex.DecodeString(digits)
 		if err != nil {
-			return fmt.Errorf("hex literal '%s' must contain two hex digits: %v", lit, err)
+			return fmt.Errorf("hex literal '%s' must contain two hex digits: %w", lit, err)
 		}
 	}
 

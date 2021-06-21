@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"errors"
 	"net"
 
 	"github.com/golang/glog"
@@ -61,7 +62,8 @@ func (l LatencyMetricsListener) Stop() {
 }
 
 func isErrorRecoverable(err error) bool {
-	if nerr, ok := err.(*net.OpError); ok && nerr.Temporary() {
+	var nerr *net.OpError
+	if errors.As(err, &nerr) && nerr.Temporary() {
 		return true
 	} else {
 		return false

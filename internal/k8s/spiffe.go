@@ -21,7 +21,7 @@ func NewSpiffeController(sync func(*workload.X509SVIDs), spireAgentAddr string) 
 	watcher := &spiffeWatcher{sync: sync}
 	client, err := workload.NewX509SVIDClient(watcher, workload.WithAddr("unix://"+spireAgentAddr))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Spiffe Workload API Client: %v", err)
+		return nil, fmt.Errorf("failed to create Spiffe Workload API Client: %w", err)
 	}
 	sc := &spiffeController{
 		watcher: watcher,
@@ -37,7 +37,7 @@ func (sc *spiffeController) Start(stopCh <-chan struct{}, onStart func()) error 
 	glog.V(3).Info("Starting SPIFFE Workload API Client")
 	err := sc.client.Start()
 	if err != nil {
-		return fmt.Errorf("failed to start Spiffe Workload API Client: %v", err)
+		return fmt.Errorf("failed to start Spiffe Workload API Client: %w", err)
 	}
 	timeout := time.After(30 * time.Second)
 	duration := 100 * time.Millisecond

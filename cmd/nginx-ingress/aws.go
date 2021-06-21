@@ -40,7 +40,7 @@ func checkAWSEntitlement() error {
 
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("error loading AWS configuration: %v", err)
+		return fmt.Errorf("error loading AWS configuration: %w", err)
 	}
 
 	mpm := marketplacemetering.New(marketplacemetering.Options{Region: cfg.Region, Credentials: cfg.Credentials})
@@ -56,16 +56,16 @@ func checkAWSEntitlement() error {
 
 	pk, err := base64.StdEncoding.DecodeString(pubKeyString)
 	if err != nil {
-		return fmt.Errorf("error decoding Public Key string: %v", err)
+		return fmt.Errorf("error decoding Public Key string: %w", err)
 	}
 	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pk)
 	if err != nil {
-		return fmt.Errorf("error parsing Public Key: %v", err)
+		return fmt.Errorf("error parsing Public Key: %w", err)
 	}
 
 	token, err := jwt.ParseWithClaims(*out.Signature, &claims{}, jwt.KnownKeyfunc(jwt.SigningMethodPS256, pubKey))
 	if err != nil {
-		return fmt.Errorf("error parsing the JWT token: %v", err)
+		return fmt.Errorf("error parsing the JWT token: %w", err)
 	}
 
 	if claims, ok := token.Claims.(*claims); ok && token.Valid {

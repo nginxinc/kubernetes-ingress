@@ -226,7 +226,7 @@ func (lm *LocalManager) CreateDHParam(content string) (string, error) {
 
 	err := createFileAndWrite(lm.dhparamFilename, []byte(content))
 	if err != nil {
-		return lm.dhparamFilename, fmt.Errorf("Failed to write dhparam file from %v: %v", lm.dhparamFilename, err)
+		return lm.dhparamFilename, fmt.Errorf("Failed to write dhparam file from %v: %w", lm.dhparamFilename, err)
 	}
 
 	return lm.dhparamFilename, nil
@@ -296,12 +296,12 @@ func (lm *LocalManager) Reload(isEndpointsUpdate bool) error {
 	binaryFilename := getBinaryFileName(lm.debug)
 	if err := shellOut(fmt.Sprintf("%v -s %v", binaryFilename, "reload")); err != nil {
 		lm.metricsCollector.IncNginxReloadErrors()
-		return fmt.Errorf("nginx reload failed: %v", err)
+		return fmt.Errorf("nginx reload failed: %w", err)
 	}
 	err := lm.verifyClient.WaitForCorrectVersion(lm.configVersion)
 	if err != nil {
 		lm.metricsCollector.IncNginxReloadErrors()
-		return fmt.Errorf("could not get newest config version: %v", err)
+		return fmt.Errorf("could not get newest config version: %w", err)
 	}
 
 	lm.metricsCollector.IncNginxReloadCount(isEndpointsUpdate)
@@ -355,7 +355,7 @@ func (lm *LocalManager) SetPlusClients(plusClient *client.NginxClient, plusConfi
 func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error {
 	err := verifyConfigVersion(lm.plusConfigVersionCheckClient, lm.configVersion)
 	if err != nil {
-		return fmt.Errorf("error verifying config version: %v", err)
+		return fmt.Errorf("error verifying config version: %w", err)
 	}
 
 	glog.V(3).Infof("API has the correct config version: %v.", lm.configVersion)
@@ -374,7 +374,7 @@ func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, c
 	added, removed, updated, err := lm.plusClient.UpdateHTTPServers(upstream, upsServers)
 	if err != nil {
 		glog.V(3).Infof("Couldn't update servers of %v upstream: %v", upstream, err)
-		return fmt.Errorf("error updating servers of %v upstream: %v", upstream, err)
+		return fmt.Errorf("error updating servers of %v upstream: %w", upstream, err)
 	}
 
 	glog.V(3).Infof("Updated servers of %v; Added: %v, Removed: %v, Updated: %v", upstream, added, removed, updated)
@@ -386,7 +386,7 @@ func (lm *LocalManager) UpdateServersInPlus(upstream string, servers []string, c
 func (lm *LocalManager) UpdateStreamServersInPlus(upstream string, servers []string) error {
 	err := verifyConfigVersion(lm.plusConfigVersionCheckClient, lm.configVersion)
 	if err != nil {
-		return fmt.Errorf("error verifying config version: %v", err)
+		return fmt.Errorf("error verifying config version: %w", err)
 	}
 
 	glog.V(3).Infof("API has the correct config version: %v.", lm.configVersion)
@@ -401,7 +401,7 @@ func (lm *LocalManager) UpdateStreamServersInPlus(upstream string, servers []str
 	added, removed, updated, err := lm.plusClient.UpdateStreamServers(upstream, upsServers)
 	if err != nil {
 		glog.V(3).Infof("Couldn't update stream servers of %v upstream: %v", upstream, err)
-		return fmt.Errorf("error updating stream servers of %v upstream: %v", upstream, err)
+		return fmt.Errorf("error updating stream servers of %v upstream: %w", upstream, err)
 	}
 
 	glog.V(3).Infof("Updated stream servers of %v; Added: %v, Removed: %v, Updated: %v", upstream, added, removed, updated)
@@ -414,7 +414,7 @@ func (lm *LocalManager) CreateOpenTracingTracerConfig(content string) error {
 	glog.V(3).Infof("Writing OpenTracing tracer config file to %v", jsonFileForOpenTracingTracer)
 	err := createFileAndWrite(jsonFileForOpenTracingTracer, []byte(content))
 	if err != nil {
-		return fmt.Errorf("Failed to write config file: %v", err)
+		return fmt.Errorf("Failed to write config file: %w", err)
 	}
 
 	return nil
@@ -426,14 +426,14 @@ func (lm *LocalManager) CreateOpenTracingTracerConfig(content string) error {
 func verifyConfigVersion(httpClient *http.Client, configVersion int) error {
 	req, err := http.NewRequest("GET", "http://nginx-plus-api/configVersionCheck", nil)
 	if err != nil {
-		return fmt.Errorf("error creating request: %v", err)
+		return fmt.Errorf("error creating request: %w", err)
 	}
 
 	req.Header.Set("x-expected-config-version", fmt.Sprintf("%v", configVersion))
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("error doing request: %v", err)
+		return fmt.Errorf("error doing request: %w", err)
 	}
 	defer resp.Body.Close()
 

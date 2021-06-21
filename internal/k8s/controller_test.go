@@ -767,8 +767,8 @@ func TestGetPolicies(t *testing.T) {
 	if !reflect.DeepEqual(result, expectedPolicies) {
 		t.Errorf("lbc.getPolicies() returned \n%v but \nexpected %v", result, expectedPolicies)
 	}
-	if !reflect.DeepEqual(errors, expectedErrors) {
-		t.Errorf("lbc.getPolicies() returned \n%v but expected \n%v", errors, expectedErrors)
+	if diff := cmp.Diff(expectedErrors, errors, cmp.Comparer(errorComparer)); diff != "" {
+		t.Errorf("lbc.getPolicies() mismatch (-want +got):\n%s", diff)
 	}
 }
 
@@ -1173,7 +1173,7 @@ func TestFindPoliciesForSecret(t *testing.T) {
 
 func errorComparer(e1, e2 error) bool {
 	if e1 == nil || e2 == nil {
-		return e1 == e2
+		return errors.Is(e1, e2)
 	}
 
 	return e1.Error() == e2.Error()

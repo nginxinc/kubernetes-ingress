@@ -188,7 +188,7 @@ func GetK8sVersion(client kubernetes.Interface) (v *version.Version, err error) 
 
 	runningVersion, err := version.ParseGeneric(serverVersion.String())
 	if err != nil {
-		return nil, fmt.Errorf("unexpected error parsing running Kubernetes version: %v", err)
+		return nil, fmt.Errorf("unexpected error parsing running Kubernetes version: %w", err)
 	}
 	glog.V(3).Infof("Kubernetes version: %v", runningVersion)
 

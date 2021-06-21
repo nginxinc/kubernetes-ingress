@@ -796,15 +796,15 @@ func validateCIDRorIP(cidr string) error {
 func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string) (secret *api_v1.Secret, err error) {
 	ns, name, err := k8s.ParseNamespaceName(secretNsName)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse the %v argument: %v", secretNsName, err)
+		return nil, fmt.Errorf("could not parse the %v argument: %w", secretNsName, err)
 	}
 	secret, err = kubeClient.CoreV1().Secrets(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("could not get %v: %v", secretNsName, err)
+		return nil, fmt.Errorf("could not get %v: %w", secretNsName, err)
 	}
 	err = secrets.ValidateTLSSecret(secret)
 	if err != nil {
-		return nil, fmt.Errorf("%v is invalid: %v", secretNsName, err)
+		return nil, fmt.Errorf("%v is invalid: %w", secretNsName, err)
 	}
 	return secret, nil
 }

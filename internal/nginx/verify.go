@@ -39,7 +39,7 @@ func newVerifyClient(timeout time.Duration) *verifyClient {
 func (c *verifyClient) GetConfigVersion() (int, error) {
 	resp, err := c.client.Get("http://config-version/configVersion")
 	if err != nil {
-		return 0, fmt.Errorf("error getting client: %v", err)
+		return 0, fmt.Errorf("error getting client: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -49,11 +49,11 @@ func (c *verifyClient) GetConfigVersion() (int, error) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return 0, fmt.Errorf("failed to read the response body: %v", err)
+		return 0, fmt.Errorf("failed to read the response body: %w", err)
 	}
 	v, err := strconv.Atoi(string(body))
 	if err != nil {
-		return 0, fmt.Errorf("error converting string to int: %v", err)
+		return 0, fmt.Errorf("error converting string to int: %w", err)
 	}
 	return v, nil
 }
@@ -84,7 +84,7 @@ func (c *verifyClient) WaitForCorrectVersion(expectedVersion int) error {
 const configVersionTemplateString = `server {
     listen unix:/var/lib/nginx/nginx-config-version.sock;
 	access_log off;
-	
+
 	{{if .OpenTracingLoadModule}}
 	opentracing off;
 	{{end}}

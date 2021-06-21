@@ -82,7 +82,7 @@ func writeTempFile(data []byte, name string) (*os.File, error) {
 
 	err = f.Chmod(nginx.TLSSecretFileMode)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't change the mode of the temp file %v: %v", f.Name(), err)
+		return nil, fmt.Errorf("couldn't change the mode of the temp file %v: %w", f.Name(), err)
 	}
 
 	_, err = f.Write(data)

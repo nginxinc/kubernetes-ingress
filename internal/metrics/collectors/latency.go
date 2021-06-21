@@ -253,7 +253,7 @@ func parseMessage(msg string) (latencyMetric, error) {
 	var sm syslogMsg
 	info := msgParts[1]
 	if err := json.Unmarshal([]byte(info), &sm); err != nil {
-		return latencyMetric{}, fmt.Errorf("could not unmarshal %s: %v", msg, err)
+		return latencyMetric{}, fmt.Errorf("could not unmarshal %s: %w", msg, err)
 	}
 	if sm.UpstreamAddr == sm.ProxyHost {
 		// no upstream connected so don't publish a metric
@@ -262,7 +262,7 @@ func parseMessage(msg string) (latencyMetric, error) {
 	server := parseMultipartResponse(sm.UpstreamAddr)
 	latency, err := strconv.ParseFloat(parseMultipartResponse(sm.UpstreamResponseTime), 64)
 	if err != nil {
-		return latencyMetric{}, fmt.Errorf("could not parse float from upstream response time %s: %v", sm.UpstreamResponseTime, err)
+		return latencyMetric{}, fmt.Errorf("could not parse float from upstream response time %s: %w", sm.UpstreamResponseTime, err)
 	}
 	code := parseMultipartResponse(sm.UpstreamStatus)
 	lm := latencyMetric{

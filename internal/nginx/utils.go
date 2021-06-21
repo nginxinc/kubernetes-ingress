@@ -23,12 +23,12 @@ func shellOut(cmd string) (err error) {
 
 	err = command.Start()
 	if err != nil {
-		return fmt.Errorf("Failed to execute %v, err: %v", cmd, err)
+		return fmt.Errorf("Failed to execute %v, err: %w", cmd, err)
 	}
 
 	err = command.Wait()
 	if err != nil {
-		return fmt.Errorf("Command %v stdout: %q\nstderr: %q\nfinished with error: %v", cmd,
+		return fmt.Errorf("Command %v stdout: %q\nstderr: %q\nfinished with error: %w", cmd,
 			stdout.String(), stderr.String(), err)
 	}
 	return nil
@@ -37,14 +37,14 @@ func shellOut(cmd string) (err error) {
 func createFileAndWrite(name string, b []byte) error {
 	w, err := os.Create(name)
 	if err != nil {
-		return fmt.Errorf("Failed to open %v: %v", name, err)
+		return fmt.Errorf("Failed to open %v: %w", name, err)
 	}
 
 	defer w.Close()
 
 	_, err = w.Write(b)
 	if err != nil {
-		return fmt.Errorf("Failed to write to %v: %v", name, err)
+		return fmt.Errorf("Failed to write to %v: %w", name, err)
 	}
 
 	return nil
