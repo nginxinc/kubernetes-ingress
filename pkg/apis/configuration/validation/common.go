@@ -62,8 +62,6 @@ func parseSpecialVariable(nVar string, fieldPath *field.Path) (name string, valu
 }
 
 func validateSpecialVariable(nVar string, fieldPath *field.Path, isPlus bool) field.ErrorList {
-	allErrs := field.ErrorList{}
-
 	name, value, allErrs := parseSpecialVariable(nVar, fieldPath)
 	if len(allErrs) > 0 {
 		return allErrs
