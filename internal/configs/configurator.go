@@ -32,14 +32,14 @@ import (
 )
 
 const (
-	pemFileNameForWildcardTLSSecret = "/etc/nginx/secrets/wildcard"
+	pemFileNameForWildcardTLSSecret = "/etc/nginx/secrets/wildcard" // #nosec G101
 	appProtectPolicyFolder          = "/etc/nginx/waf/nac-policies/"
 	appProtectLogConfFolder         = "/etc/nginx/waf/nac-logconfs/"
 	appProtectUserSigFolder         = "/etc/nginx/waf/nac-usersigs/"
 	appProtectUserSigIndex          = "/etc/nginx/waf/nac-usersigs/index.conf"
 )
 
-// DefaultServerSecretPath is the full path to the Secret with a TLS cert and a key for the default server.
+// DefaultServerSecretPath is the full path to the Secret with a TLS cert and a key for the default server. #nosec G101
 const DefaultServerSecretPath = "/etc/nginx/secrets/default"
 
 // DefaultServerSecretName is the filename of the Secret with a TLS cert and a key for the default server.

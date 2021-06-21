@@ -6,6 +6,7 @@ import (
 	"text/template"
 )
 
+// #nosec G101
 const tlsPassthroughHostsTemplateString = `# mapping between TLS Passthrough hosts and unix sockets
 {{ range $h, $u := . }}
 {{ $h }} {{ $u }};

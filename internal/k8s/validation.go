@@ -19,14 +19,14 @@ const (
 	healthChecksMandatoryAnnotation       = "nginx.com/health-checks-mandatory"
 	healthChecksMandatoryQueueAnnotation  = "nginx.com/health-checks-mandatory-queue"
 	slowStartAnnotation                   = "nginx.com/slow-start"
-	serverTokensAnnotation                = "nginx.org/server-tokens"
+	serverTokensAnnotation                = "nginx.org/server-tokens" // #nosec G101
 	serverSnippetsAnnotation              = "nginx.org/server-snippets"
 	locationSnippetsAnnotation            = "nginx.org/location-snippets"
 	proxyConnectTimeoutAnnotation         = "nginx.org/proxy-connect-timeout"
 	proxyReadTimeoutAnnotation            = "nginx.org/proxy-read-timeout"
 	proxySendTimeoutAnnotation            = "nginx.org/proxy-send-timeout"
 	proxyHideHeadersAnnotation            = "nginx.org/proxy-hide-headers"
-	proxyPassHeadersAnnotation            = "nginx.org/proxy-pass-headers"
+	proxyPassHeadersAnnotation            = "nginx.org/proxy-pass-headers" // #nosec G101
 	clientMaxBodySizeAnnotation           = "nginx.org/client-max-body-size"
 	redirectToHTTPSAnnotation             = "nginx.org/redirect-to-https"
 	sslRedirectAnnotation                 = "ingress.kubernetes.io/ssl-redirect"
@@ -41,7 +41,7 @@ const (
 	upstreamZoneSizeAnnotation            = "nginx.org/upstream-zone-size"
 	jwtRealmAnnotation                    = "nginx.com/jwt-realm"
 	jwtKeyAnnotation                      = "nginx.com/jwt-key"
-	jwtTokenAnnotation                    = "nginx.com/jwt-token"
+	jwtTokenAnnotation                    = "nginx.com/jwt-token" // #nosec G101
 	jwtLoginURLAnnotation                 = "nginx.com/jwt-login-url"
 	listenPortsAnnotation                 = "nginx.org/listen-ports"
 	listenPortsSSLAnnotation              = "nginx.org/listen-ports-ssl"
@@ -70,9 +70,11 @@ type annotationValidationContext struct {
 	fieldPath             *field.Path
 }
 
-type annotationValidationFunc func(context *annotationValidationContext) field.ErrorList
-type annotationValidationConfig map[string][]annotationValidationFunc
-type validatorFunc func(val string) error
+type (
+	annotationValidationFunc   func(context *annotationValidationContext) field.ErrorList
+	annotationValidationConfig map[string][]annotationValidationFunc
+	validatorFunc              func(val string) error
+)
 
 var (
 	// annotationValidations defines the various validations which will be applied in order to each ingress annotation.

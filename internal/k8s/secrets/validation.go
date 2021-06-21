@@ -19,13 +19,13 @@ const CAKey = "ca.crt"
 // ClientSecretKey is the key of the data field of a Secret where the OIDC client secret must be stored.
 const ClientSecretKey = "client-secret"
 
-// SecretTypeCA contains a certificate authority for TLS certificate verification.
+// SecretTypeCA contains a certificate authority for TLS certificate verification. #nosec G101
 const SecretTypeCA api_v1.SecretType = "nginx.org/ca"
 
-// SecretTypeJWK contains a JWK (JSON Web Key) for validating JWTs (JSON Web Tokens).
+// SecretTypeJWK contains a JWK (JSON Web Key) for validating JWTs (JSON Web Tokens). #nosec G101
 const SecretTypeJWK api_v1.SecretType = "nginx.org/jwk"
 
-// SecretTypeOIDC contains an OIDC client secret for use in oauth flows.
+// SecretTypeOIDC contains an OIDC client secret for use in oauth flows. #nosec G101
 const SecretTypeOIDC api_v1.SecretType = "nginx.org/oidc"
 
 // ValidateTLSSecret validates the secret. If it is valid, the function returns nil.
