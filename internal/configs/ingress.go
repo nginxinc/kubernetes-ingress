@@ -17,8 +17,6 @@ import (
 )
 
 const emptyHost = ""
-const appProtectPolicyKey = "policy"
-const appProtectLogConfKey = "logconf"
 
 // AppProtectResources holds namespace names of App Protect resources relavant to an Ingress
 type AppProtectResources struct {

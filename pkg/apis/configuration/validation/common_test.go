@@ -10,12 +10,8 @@ func createPointerFromInt(n int) *int {
 	return &n
 }
 
-func createPointerFromBool(b bool) *bool {
-	return &b
-}
-
 func TestValidateVariable(t *testing.T) {
-	var validVars = map[string]bool{
+	validVars := map[string]bool{
 		"scheme":                 true,
 		"http_x_forwarded_proto": true,
 		"request_uri":            true,
@@ -37,7 +33,7 @@ func TestValidateVariable(t *testing.T) {
 }
 
 func TestValidateVariableFails(t *testing.T) {
-	var validVars = map[string]bool{
+	validVars := map[string]bool{
 		"host": true,
 	}
 	invalidVars := []string{
@@ -271,7 +267,7 @@ func TestValidateStringWithVariablesFail(t *testing.T) {
 }
 
 func TestValidateSize(t *testing.T) {
-	var validInput = []string{"", "4k", "8K", "16m", "32M"}
+	validInput := []string{"", "4k", "8K", "16m", "32M"}
 	for _, test := range validInput {
 		allErrs := validateSize(test, field.NewPath("size-field"))
 		if len(allErrs) != 0 {
@@ -279,7 +275,7 @@ func TestValidateSize(t *testing.T) {
 		}
 	}
 
-	var invalidInput = []string{"55mm", "2mG", "6kb", "-5k", "1L", "5G"}
+	invalidInput := []string{"55mm", "2mG", "6kb", "-5k", "1L", "5G"}
 	for _, test := range invalidInput {
 		allErrs := validateSize(test, field.NewPath("size-field"))
 		if len(allErrs) == 0 {
@@ -307,7 +303,7 @@ func TestValidateTimeFails(t *testing.T) {
 }
 
 func TestValidateOffset(t *testing.T) {
-	var validInput = []string{"", "1", "10k", "11m", "1K", "100M", "5G"}
+	validInput := []string{"", "1", "10k", "11m", "1K", "100M", "5G"}
 	for _, test := range validInput {
 		allErrs := validateOffset(test, field.NewPath("offset-field"))
 		if len(allErrs) != 0 {
@@ -315,7 +311,7 @@ func TestValidateOffset(t *testing.T) {
 		}
 	}
 
-	var invalidInput = []string{"55mm", "2mG", "6kb", "-5k", "1L", "5Gb"}
+	invalidInput := []string{"55mm", "2mG", "6kb", "-5k", "1L", "5Gb"}
 	for _, test := range invalidInput {
 		allErrs := validateOffset(test, field.NewPath("offset-field"))
 		if len(allErrs) == 0 {
