@@ -54,3 +54,6 @@ site/
 venv/
 
 dist/
+
+# trivy container scanning cache
+.trivycache/
