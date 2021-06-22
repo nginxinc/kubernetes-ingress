@@ -116,7 +116,7 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 		endpointsKey := GenerateEndpointsKey(transportServerEx.TransportServer.Namespace, u.Service, nil, uint16(u.Port))
 		endpoints := transportServerEx.Endpoints[endpointsKey]
 
-		ups := generateStreamUpstream(&u, upstreamNamer, endpoints, isPlus)
+		ups := generateStreamUpstream(u, upstreamNamer, endpoints, isPlus)
 
 		ups.UpstreamLabels.Service = u.Service
 		ups.UpstreamLabels.ResourceType = "transportserver"
@@ -205,7 +205,7 @@ func generateHealthCheckMatch(match *conf_v1alpha1.Match, name string) *version2
 	}
 }
 
-func generateStreamUpstream(upstream *conf_v1alpha1.Upstream, upstreamNamer *upstreamNamer, endpoints []string, isPlus bool) version2.StreamUpstream {
+func generateStreamUpstream(upstream conf_v1alpha1.Upstream, upstreamNamer *upstreamNamer, endpoints []string, isPlus bool) version2.StreamUpstream {
 	var upsServers []version2.StreamUpstreamServer
 
 	name := upstreamNamer.GetNameForUpstream(upstream.Name)

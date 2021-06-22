@@ -2185,7 +2185,6 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 }
 
 func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.Ingress) ([]configs.AppProtectLog, error) {
-
 	var apLogs []configs.AppProtectLog
 	if _, exists := ing.Annotations[configs.AppProtectLogConfDstAnnotation]; !exists {
 		return apLogs, fmt.Errorf("Error: %v requires %v in %v", configs.AppProtectLogConfAnnotation, configs.AppProtectLogConfDstAnnotation, ing.Name)
@@ -2199,7 +2198,6 @@ func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.In
 
 	for _, logDst := range logDsts {
 		err := appprotect.ValidateAppProtectLogDestination(logDst)
-
 		if err != nil {
 			return apLogs, fmt.Errorf("Error Validating App Protect Destination Config for Ingress %v: %v", ing.Name, err)
 		}
@@ -2745,7 +2743,7 @@ func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, 
 
 	for _, port := range svc.Spec.Ports {
 		if port.Port == int32(upstream.Port) {
-			targetPort, err = lbc.getTargetPort(&port, svc)
+			targetPort, err = lbc.getTargetPort(port, svc)
 			if err != nil {
 				return nil, fmt.Errorf("Error determining target port for port %v in service %v: %v", upstream.Port, svc.Name, err)
 			}
@@ -2904,7 +2902,7 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, i
 
 	for _, port := range svc.Spec.Ports {
 		if (ingSvcPort.Type == intstr.Int && port.Port == int32(ingSvcPort.IntValue())) || (ingSvcPort.Type == intstr.String && port.Name == ingSvcPort.String()) {
-			targetPort, err = lbc.getTargetPort(&port, svc)
+			targetPort, err = lbc.getTargetPort(port, svc)
 			if err != nil {
 				return nil, fmt.Errorf("Error determining target port for port %v in Ingress: %v", ingSvcPort, err)
 			}
@@ -2979,7 +2977,7 @@ func (lbc *LoadBalancerController) getServicePortForIngressPort(ingSvcPort intst
 	return nil
 }
 
-func (lbc *LoadBalancerController) getTargetPort(svcPort *api_v1.ServicePort, svc *api_v1.Service) (int32, error) {
+func (lbc *LoadBalancerController) getTargetPort(svcPort api_v1.ServicePort, svc *api_v1.Service) (int32, error) {
 	if (svcPort.TargetPort == intstr.IntOrString{}) {
 		return svcPort.Port, nil
 	}
