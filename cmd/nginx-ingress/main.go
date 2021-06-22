@@ -364,11 +364,6 @@ func main() {
 		nginxTransportServerTemplatePath = *transportServerTemplatePath
 	}
 
-	nginxBinaryPath := "/usr/sbin/nginx"
-	if *nginxDebug {
-		nginxBinaryPath = "/usr/sbin/nginx-debug"
-	}
-
 	var registry *prometheus.Registry
 	var managerCollector collectors.ManagerCollector
 	var controllerCollector collectors.ControllerCollector
@@ -411,7 +406,7 @@ func main() {
 	if useFakeNginxManager {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
-		nginxManager = nginx.NewLocalManager("/etc/nginx/", nginxBinaryPath, managerCollector, parseReloadTimeout(*appProtect, *nginxReloadTimeout))
+		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, parseReloadTimeout(*appProtect, *nginxReloadTimeout))
 	}
 	nginxVersion := nginxManager.Version()
 	isPlus := strings.Contains(nginxVersion, "plus")

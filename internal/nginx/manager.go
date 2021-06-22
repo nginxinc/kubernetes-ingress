@@ -19,18 +19,24 @@ import (
 const (
 	ReloadForEndpointsUpdate     = true  // ReloadForEndpointsUpdate means that is caused by an endpoints update.
 	ReloadForOtherUpdate         = false // ReloadForOtherUpdate means that a reload is caused by an update for a resource(s) other than endpoints.
-	TLSSecretFileMode            = 0600  // TLSSecretFileMode defines the default filemode for files with TLS Secrets.
-	JWKSecretFileMode            = 0644  // JWKSecretFileMode defines the default filemode for files with JWK Secrets.
-	configFileMode               = 0644
+	TLSSecretFileMode            = 0o600 // TLSSecretFileMode defines the default filemode for files with TLS Secrets.
+	JWKSecretFileMode            = 0o644 // JWKSecretFileMode defines the default filemode for files with JWK Secrets.
+	configFileMode               = 0o644
 	jsonFileForOpenTracingTracer = "/var/lib/nginx/tracer-config.json"
-)
+	nginxBinaryPath              = "/usr/sbin/nginx"
+	nginxBinaryPathDebug         = "/usr/sbin/nginx-debug"
 
-// appPluginParams is the configuration of App-Protect plugin
-const appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 307200000 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
-
-const (
 	appProtectPluginStartCmd = "/usr/share/ts/bin/bd-socket-plugin"
 	appProtectAgentStartCmd  = "/opt/app_protect/bin/bd_agent"
+
+	// appPluginParams is the configuration of App-Protect plugin
+	appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 307200000 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
+
+	// appProtectDebugLogConfigFileContent holds the content of the file to be written when nginx debug is enabled. It will enable NGINX App Protect debug logs
+	appProtectDebugLogConfigFileContent = "MODULE = IO_PLUGIN;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\nMODULE = ECARD_POLICY;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\n"
+
+	// appProtectLogConfigFileName is the location of the NGINX App Protect logging configuration file
+	appProtectLogConfigFileName = "/etc/app_protect/bd/logger.cfg"
 )
 
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
@@ -40,12 +46,6 @@ type ServerConfig struct {
 	FailTimeout string
 	SlowStart   string
 }
-
-// appProtectDebugLogConfigFileContent holds the content of the file to be written when nginx debug is enabled. It will enable NGINX App Protect debug logs
-const appProtectDebugLogConfigFileContent = "MODULE = IO_PLUGIN;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\nMODULE = ECARD_POLICY;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\n"
-
-// appProtectLogConfigFileName is the location of the NGINX App Protect logging configuration file
-const appProtectLogConfigFileName = "/etc/app_protect/bd/logger.cfg"
 
 // The Manager interface updates NGINX configuration, starts, reloads and quits NGINX,
 // updates NGINX Plus upstream servers.
@@ -87,14 +87,12 @@ type LocalManager struct {
 	secretsPath                  string
 	mainConfFilename             string
 	configVersionFilename        string
-	binaryFilename               string
+	debug                        bool
 	dhparamFilename              string
 	tlsPassthroughHostsFilename  string
 	verifyConfigGenerator        *verifyConfigGenerator
 	verifyClient                 *verifyClient
 	configVersion                int
-	reloadCmd                    string
-	quitCmd                      string
 	plusClient                   *client.NginxClient
 	plusConfigVersionCheckClient *http.Client
 	metricsCollector             collectors.ManagerCollector
@@ -104,7 +102,7 @@ type LocalManager struct {
 }
 
 // NewLocalManager creates a LocalManager.
-func NewLocalManager(confPath string, binaryFilename string, mc collectors.ManagerCollector, timeout time.Duration) *LocalManager {
+func NewLocalManager(confPath string, debug bool, mc collectors.ManagerCollector, timeout time.Duration) *LocalManager {
 	verifyConfigGenerator, err := newVerifyConfigGenerator()
 	if err != nil {
 		glog.Fatalf("error instantiating a verifyConfigGenerator: %v", err)
@@ -118,12 +116,10 @@ func NewLocalManager(confPath string, binaryFilename string, mc collectors.Manag
 		mainConfFilename:            path.Join(confPath, "nginx.conf"),
 		configVersionFilename:       path.Join(confPath, "config-version.conf"),
 		tlsPassthroughHostsFilename: path.Join(confPath, "tls-passthrough-hosts.conf"),
-		binaryFilename:              binaryFilename,
+		debug:                       debug,
 		verifyConfigGenerator:       verifyConfigGenerator,
 		configVersion:               0,
 		verifyClient:                newVerifyClient(timeout),
-		reloadCmd:                   fmt.Sprintf("%v -s %v", binaryFilename, "reload"),
-		quitCmd:                     fmt.Sprintf("%v -s %v", binaryFilename, "quit"),
 		metricsCollector:            mc,
 	}
 
@@ -270,7 +266,8 @@ func (lm *LocalManager) ClearAppProtectFolder(name string) {
 func (lm *LocalManager) Start(done chan error) {
 	glog.V(3).Info("Starting nginx")
 
-	cmd := exec.Command(lm.binaryFilename)
+	binaryFilename := getBinaryFileName(lm.debug)
+	cmd := exec.Command(binaryFilename)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
@@ -296,7 +293,8 @@ func (lm *LocalManager) Reload(isEndpointsUpdate bool) error {
 
 	t1 := time.Now()
 
-	if err := shellOut(lm.reloadCmd); err != nil {
+	binaryFilename := getBinaryFileName(lm.debug)
+	if err := shellOut(fmt.Sprintf("%v -s %v", binaryFilename, "reload")); err != nil {
 		lm.metricsCollector.IncNginxReloadErrors()
 		return fmt.Errorf("nginx reload failed: %v", err)
 	}
@@ -317,14 +315,16 @@ func (lm *LocalManager) Reload(isEndpointsUpdate bool) error {
 func (lm *LocalManager) Quit() {
 	glog.V(3).Info("Quitting nginx")
 
-	if err := shellOut(lm.quitCmd); err != nil {
+	binaryFilename := getBinaryFileName(lm.debug)
+	if err := shellOut(fmt.Sprintf("%v -s %v", binaryFilename, "quit")); err != nil {
 		glog.Fatalf("Failed to quit nginx: %v", err)
 	}
 }
 
 // Version returns NGINX version
 func (lm *LocalManager) Version() string {
-	out, err := exec.Command(lm.binaryFilename, "-v").CombinedOutput()
+	binaryFilename := getBinaryFileName(lm.debug)
+	out, err := exec.Command(binaryFilename, "-v").CombinedOutput()
 	if err != nil {
 		glog.Fatalf("Failed to get nginx version: %v", err)
 	}
@@ -510,4 +510,11 @@ func (lm *LocalManager) AppProtectPluginQuit() {
 	if err := shellOut(killcmd); err != nil {
 		glog.Fatalf("Failed to quit AppProtect Plugin: %v", err)
 	}
+}
+
+func getBinaryFileName(debug bool) string {
+	if debug {
+		return nginxBinaryPathDebug
+	}
+	return nginxBinaryPath
 }
