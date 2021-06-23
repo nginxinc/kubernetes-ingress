@@ -517,17 +517,19 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 		{
 			policy: basicTestPolicy,
 			expectedChanges: []Change{
-				{Resource: &PolicyEx{
-					Obj:     basicTestPolicy,
-					IsValid: true,
-					SignatureReqs: []SignatureReq{
-						{Tag: "test",
-							RevTimes: &RevTimes{
-								MaxRevTime: parseTime("2019-04-01T18:32:02Z"),
+				{
+					Resource: &PolicyEx{
+						Obj:     basicTestPolicy,
+						IsValid: true,
+						SignatureReqs: []SignatureReq{
+							{
+								Tag: "test",
+								RevTimes: &RevTimes{
+									MaxRevTime: parseTime("2019-04-01T18:32:02Z"),
+								},
 							},
 						},
 					},
-				},
 					Op: AddOrUpdate,
 				},
 			},
@@ -537,11 +539,12 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 		{
 			policy: basicTestPolicyNoReqs,
 			expectedChanges: []Change{
-				{Resource: &PolicyEx{
-					Obj:           basicTestPolicyNoReqs,
-					IsValid:       true,
-					SignatureReqs: []SignatureReq{},
-				},
+				{
+					Resource: &PolicyEx{
+						Obj:           basicTestPolicyNoReqs,
+						IsValid:       true,
+						SignatureReqs: []SignatureReq{},
+					},
 					Op: AddOrUpdate,
 				},
 			},
@@ -551,11 +554,12 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 		{
 			policy: invalidTestPolicy,
 			expectedChanges: []Change{
-				{Resource: &PolicyEx{
-					Obj:      invalidTestPolicy,
-					IsValid:  false,
-					ErrorMsg: "Validation Failed",
-				},
+				{
+					Resource: &PolicyEx{
+						Obj:      invalidTestPolicy,
+						IsValid:  false,
+						ErrorMsg: "Validation Failed",
+					},
 					Op: Delete,
 				},
 			},
@@ -571,18 +575,20 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 		{
 			policy: testPolicyUnsatisfied,
 			expectedChanges: []Change{
-				{Resource: &PolicyEx{
-					Obj:      testPolicyUnsatisfied,
-					IsValid:  false,
-					ErrorMsg: "Policy has unsatisfied signature requirements",
-					SignatureReqs: []SignatureReq{
-						{Tag: "test",
-							RevTimes: &RevTimes{
-								MinRevTime: parseTime("2021-04-01T18:32:02Z"),
+				{
+					Resource: &PolicyEx{
+						Obj:      testPolicyUnsatisfied,
+						IsValid:  false,
+						ErrorMsg: "Policy has unsatisfied signature requirements",
+						SignatureReqs: []SignatureReq{
+							{
+								Tag: "test",
+								RevTimes: &RevTimes{
+									MinRevTime: parseTime("2021-04-01T18:32:02Z"),
+								},
 							},
 						},
 					},
-				},
 					Op: Delete,
 				},
 			},
@@ -641,10 +647,11 @@ func TestAddOrUpdateLogConf(t *testing.T) {
 		{
 			logconf: validLogConf,
 			expectedChanges: []Change{
-				{Resource: &LogConfEx{
-					Obj:     validLogConf,
-					IsValid: true,
-				},
+				{
+					Resource: &LogConfEx{
+						Obj:     validLogConf,
+						IsValid: true,
+					},
 					Op: AddOrUpdate,
 				},
 			},
@@ -654,11 +661,12 @@ func TestAddOrUpdateLogConf(t *testing.T) {
 		{
 			logconf: invalidLogConf,
 			expectedChanges: []Change{
-				{Resource: &LogConfEx{
-					Obj:      invalidLogConf,
-					IsValid:  false,
-					ErrorMsg: "Validation Failed",
-				},
+				{
+					Resource: &LogConfEx{
+						Obj:      invalidLogConf,
+						IsValid:  false,
+						ErrorMsg: "Validation Failed",
+					},
 					Op: Delete,
 				},
 			},

@@ -23,11 +23,10 @@ func TestValidatePort(t *testing.T) {
 			t.Errorf("Error for valid port:  %v err: %v\n", goodPort, err)
 		}
 	}
-
 }
 
 func TestParseNginxStatusAllowCIDRs(t *testing.T) {
-	var badCIDRs = []struct {
+	badCIDRs := []struct {
 		input         string
 		expectedError error
 	}{
@@ -53,7 +52,7 @@ func TestParseNginxStatusAllowCIDRs(t *testing.T) {
 		}
 	}
 
-	var goodCIDRs = []struct {
+	goodCIDRs := []struct {
 		input    string
 		expected []string
 	}{

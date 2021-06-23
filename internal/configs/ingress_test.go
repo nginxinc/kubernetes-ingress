@@ -597,7 +597,8 @@ func createMergeableCafeIngress() *MergeableIngresses {
 					"/tea": true,
 				},
 				SecretRefs: map[string]*secrets.SecretReference{},
-			}},
+			},
+		},
 	}
 
 	return mergeableIngresses
@@ -880,7 +881,7 @@ func TestIsSSLEnabled(t *testing.T) {
 		NginxServiceMesh,
 		Expected bool
 	}
-	var testCases = []testCase{
+	testCases := []testCase{
 		{
 			IsSSLService:      false,
 			SpiffeServerCerts: false,

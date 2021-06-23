@@ -4,10 +4,12 @@ import (
 	"testing"
 )
 
-const nginxPlusVirtualServerTmpl = "nginx-plus.virtualserver.tmpl"
-const nginxVirtualServerTmpl = "nginx.virtualserver.tmpl"
-const nginxPlusTransportServerTmpl = "nginx-plus.transportserver.tmpl"
-const nginxTransportServerTmpl = "nginx.transportserver.tmpl"
+const (
+	nginxPlusVirtualServerTmpl   = "nginx-plus.virtualserver.tmpl"
+	nginxVirtualServerTmpl       = "nginx.virtualserver.tmpl"
+	nginxPlusTransportServerTmpl = "nginx-plus.transportserver.tmpl"
+	nginxTransportServerTmpl     = "nginx.transportserver.tmpl"
+)
 
 var virtualServerCfg = VirtualServerConfig{
 	LimitReqZones: []LimitReqZone{

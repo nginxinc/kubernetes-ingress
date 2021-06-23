@@ -321,7 +321,6 @@ func validateOIDCScope(scope string, fieldPath *field.Path) field.ErrorList {
 			msg := fmt.Sprintf("invalid Scope. Accepted scopes are: %v", mapToPrettyString(validScopes))
 			allErrs = append(allErrs, field.Invalid(fieldPath, v, msg))
 		}
-
 	}
 
 	return allErrs

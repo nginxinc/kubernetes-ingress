@@ -6,10 +6,12 @@ import (
 	"text/template"
 )
 
-const nginxIngressTmpl = "nginx.ingress.tmpl"
-const nginxMainTmpl = "nginx.tmpl"
-const nginxPlusIngressTmpl = "nginx-plus.ingress.tmpl"
-const nginxPlusMainTmpl = "nginx-plus.tmpl"
+const (
+	nginxIngressTmpl     = "nginx.ingress.tmpl"
+	nginxMainTmpl        = "nginx.tmpl"
+	nginxPlusIngressTmpl = "nginx-plus.ingress.tmpl"
+	nginxPlusMainTmpl    = "nginx-plus.tmpl"
+)
 
 var testUps = Upstream{
 	Name:             "test",
@@ -26,14 +28,16 @@ var testUps = Upstream{
 	},
 }
 
-var headers = map[string]string{"Test-Header": "test-header-value"}
-var healthCheck = HealthCheck{
-	UpstreamName: "test",
-	Fails:        1,
-	Interval:     1,
-	Passes:       1,
-	Headers:      headers,
-}
+var (
+	headers     = map[string]string{"Test-Header": "test-header-value"}
+	healthCheck = HealthCheck{
+		UpstreamName: "test",
+		Fails:        1,
+		Interval:     1,
+		Passes:       1,
+		Headers:      headers,
+	}
+)
 
 var ingCfg = IngressNginxConfig{
 

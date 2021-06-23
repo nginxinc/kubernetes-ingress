@@ -35,7 +35,8 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 		&conf_v1alpha1.TransportServerList{
 			Items: []conf_v1alpha1.TransportServer{
 				*ts,
-			}})
+			},
+		})
 
 	tsLister := cache.NewStore(cache.DeletionHandlingMetaNamespaceKeyFunc)
 
@@ -83,7 +84,8 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 		&conf_v1alpha1.TransportServerList{
 			Items: []conf_v1alpha1.TransportServer{
 				*ts,
-			}})
+			},
+		})
 
 	tsLister, _ := cache.NewInformer(
 		cache.NewListWatchFromClient(
@@ -139,7 +141,8 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 
 	fakeClient := fake_v1alpha1.NewSimpleClientset(
 		&conf_v1alpha1.TransportServerList{
-			Items: []conf_v1alpha1.TransportServer{}})
+			Items: []conf_v1alpha1.TransportServer{},
+		})
 
 	tsLister, _ := cache.NewInformer(
 		cache.NewListWatchFromClient(
@@ -467,7 +470,6 @@ func TestHasVsStatusChanged(t *testing.T) {
 }
 
 func TestHasVsrStatusChanged(t *testing.T) {
-
 	referencedBy := "namespace/name"
 	state := "Valid"
 	reason := "AddedOrUpdated"
@@ -632,7 +634,6 @@ func TestIsRequiredPort(t *testing.T) {
 }
 
 func TestHasPolicyStatusChanged(t *testing.T) {
-
 	state := "Valid"
 	reason := "AddedOrUpdated"
 	msg := "Configuration was added or updated"

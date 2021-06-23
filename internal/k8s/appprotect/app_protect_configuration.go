@@ -288,15 +288,18 @@ func createAppProtectUserSigEx(userSigObj *unstructured.Unstructured) (*UserSigE
 			errMsg := invalidTimestampErrorMsg
 			return &UserSigEx{Obj: userSigObj, IsValid: false, ErrorMsg: errMsg}, fmt.Errorf(errMsg)
 		}
-		return &UserSigEx{Obj: userSigObj,
+		return &UserSigEx{
+			Obj:     userSigObj,
 			Tag:     sTag,
 			RevTime: &revTime,
-			IsValid: true}, nil
+			IsValid: true,
+		}, nil
 	}
 	return &UserSigEx{
 		Obj:     userSigObj,
 		Tag:     sTag,
-		IsValid: true}, nil
+		IsValid: true,
+	}, nil
 }
 
 func isReqSatisfiedByUserSig(sigReq SignatureReq, sig *UserSigEx) bool {

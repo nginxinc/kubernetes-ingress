@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-type Transport struct {
-}
+type Transport struct{}
 
 func (c Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return &http.Response{

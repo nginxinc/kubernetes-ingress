@@ -14,6 +14,7 @@ func newTestLatencyMetricsCollector() *LatencyMetricsCollector {
 		upstreamServerPeerLabelNames: []string{"pod_name"},
 	}
 }
+
 func TestParseMessageWithValidInputs(t *testing.T) {
 	tests := []struct {
 		msg         string

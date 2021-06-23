@@ -62,8 +62,8 @@ const (
 	spiffeCertFileName   = "spiffe_cert.pem"
 	spiffeKeyFileName    = "spiffe_key.pem"
 	spiffeBundleFileName = "spiffe_rootca.pem"
-	spiffeCertsFileMode  = os.FileMode(0644)
-	spiffeKeyFileMode    = os.FileMode(0600)
+	spiffeCertsFileMode  = os.FileMode(0o644)
+	spiffeKeyFileMode    = os.FileMode(0o600)
 )
 
 // ExtendedResources holds all extended configuration resources, for which Configurator configures NGINX.

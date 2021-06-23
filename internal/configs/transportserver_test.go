@@ -224,7 +224,6 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
 	}
-
 }
 
 func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
@@ -313,7 +312,6 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
 	}
-
 }
 
 func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {

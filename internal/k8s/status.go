@@ -200,8 +200,10 @@ func (su *statusUpdater) saveStatus(ips []string) {
 	su.status = statusIngs
 }
 
-var intPorts = [2]int32{80, 443}
-var stringPorts = [2]string{"http", "https"}
+var (
+	intPorts    = [2]int32{80, 443}
+	stringPorts = [2]string{"http", "https"}
+)
 
 func isRequiredPort(port intstr.IntOrString) bool {
 	if port.Type == intstr.Int {

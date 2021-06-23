@@ -16,7 +16,7 @@ type WorkQueueMetricsCollector struct {
 // NewWorkQueueMetricsCollector creates a new WorkQueueMetricsCollector
 func NewWorkQueueMetricsCollector(constLabels map[string]string) *WorkQueueMetricsCollector {
 	const workqueueSubsystem = "workqueue"
-	var latencyBucketSeconds = []float64{0.1, 0.5, 1, 5, 10, 50}
+	latencyBucketSeconds := []float64{0.1, 0.5, 1, 5, 10, 50}
 
 	return &WorkQueueMetricsCollector{
 		depth: prometheus.NewGaugeVec(
@@ -82,7 +82,6 @@ func (wqc *WorkQueueMetricsCollector) NewDepthMetric(name string) workqueue.Gaug
 // NewLatencyMetric implements the workqueue.MetricsProvider interface NewLatencyMetric method
 func (wqc *WorkQueueMetricsCollector) NewLatencyMetric(name string) workqueue.HistogramMetric {
 	return wqc.latency.WithLabelValues(name)
-
 }
 
 // NewWorkDurationMetric implements the workqueue.MetricsProvider interface NewWorkDurationMetric method

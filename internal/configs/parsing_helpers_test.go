@@ -19,6 +19,7 @@ var configMap = v1.ConfigMap{
 		APIVersion: "v1",
 	},
 }
+
 var ingress = v1beta1.Ingress{
 	ObjectMeta: meta_v1.ObjectMeta{
 		Name:      "test",
@@ -230,7 +231,6 @@ func TestGetMapKeyAsStringSlice(t *testing.T) {
 	if !reflect.DeepEqual(expected, slice) {
 		t.Errorf("Unexpected return value:\nGot: %#v\nExpected: %#v", slice, expected)
 	}
-
 }
 
 func TestGetMapKeyAsStringSliceMultilineSnippets(t *testing.T) {
@@ -267,7 +267,7 @@ func TestGetMapKeyAsStringSliceNotFound(t *testing.T) {
 }
 
 func TestParseLBMethod(t *testing.T) {
-	var testsWithValidInput = []struct {
+	testsWithValidInput := []struct {
 		input    string
 		expected string
 	}{
@@ -281,7 +281,7 @@ func TestParseLBMethod(t *testing.T) {
 		{"hash $request_id consistent", "hash $request_id consistent"},
 	}
 
-	var invalidInput = []string{
+	invalidInput := []string{
 		"",
 		"blabla",
 		"least_time header",
@@ -313,7 +313,7 @@ func TestParseLBMethod(t *testing.T) {
 }
 
 func TestParseLBMethodForPlus(t *testing.T) {
-	var testsWithValidInput = []struct {
+	testsWithValidInput := []struct {
 		input    string
 		expected string
 	}{
@@ -332,7 +332,7 @@ func TestParseLBMethodForPlus(t *testing.T) {
 		{"least_time last_byte inflight", "least_time last_byte inflight"},
 	}
 
-	var invalidInput = []string{
+	invalidInput := []string{
 		"",
 		"blabla",
 		"hash123",
@@ -364,7 +364,7 @@ func TestParseLBMethodForPlus(t *testing.T) {
 }
 
 func TestParseTime(t *testing.T) {
-	var testsWithValidInput = []struct {
+	testsWithValidInput := []struct {
 		input    string
 		expected string
 	}{
@@ -381,7 +381,7 @@ func TestParseTime(t *testing.T) {
 		{"100y", "100y"},
 		{"600", "600s"},
 	}
-	var invalidInput = []string{"5s 5s", "ss", "rM", "m0m", "s1s", "-5s", "", "1L", "11 11", " ", "   "}
+	invalidInput := []string{"5s 5s", "ss", "rM", "m0m", "s1s", "-5s", "", "1L", "11 11", " ", "   "}
 
 	for _, test := range testsWithValidInput {
 		result, err := ParseTime(test.input)
@@ -403,8 +403,8 @@ func TestParseTime(t *testing.T) {
 }
 
 func TestParseOffset(t *testing.T) {
-	var testsWithValidInput = []string{"1", "2k", "2K", "3m", "3M", "4g", "4G"}
-	var invalidInput = []string{"-1", "", "blah"}
+	testsWithValidInput := []string{"1", "2k", "2K", "3m", "3M", "4g", "4G"}
+	invalidInput := []string{"-1", "", "blah"}
 	for _, test := range testsWithValidInput {
 		result, err := ParseOffset(test)
 		if err != nil {
@@ -423,8 +423,8 @@ func TestParseOffset(t *testing.T) {
 }
 
 func TestParseSize(t *testing.T) {
-	var testsWithValidInput = []string{"1", "2k", "2K", "3m", "3M"}
-	var invalidInput = []string{"-1", "", "blah", "4g", "4G"}
+	testsWithValidInput := []string{"1", "2k", "2K", "3m", "3M"}
+	invalidInput := []string{"-1", "", "blah", "4g", "4G"}
 	for _, test := range testsWithValidInput {
 		result, err := ParseSize(test)
 		if err != nil {
@@ -443,8 +443,8 @@ func TestParseSize(t *testing.T) {
 }
 
 func TestParseProxyBuffersSpec(t *testing.T) {
-	var testsWithValidInput = []string{"1 1k", "10 24k", "2 2K", "6 3m", "128 3M"}
-	var invalidInput = []string{"-1", "-6 2k", "", "blah", "16k", "10M", "2 4g", "3 4G"}
+	testsWithValidInput := []string{"1 1k", "10 24k", "2 2K", "6 3m", "128 3M"}
+	invalidInput := []string{"-1", "-6 2k", "", "blah", "16k", "10M", "2 4g", "3 4G"}
 	for _, test := range testsWithValidInput {
 		result, err := ParseProxyBuffersSpec(test)
 		if err != nil {
@@ -497,7 +497,7 @@ func TestVerifyThresholds(t *testing.T) {
 }
 
 func TestParseBool(t *testing.T) {
-	var testsWithValidInput = []struct {
+	testsWithValidInput := []struct {
 		input    string
 		expected bool
 	}{
@@ -507,7 +507,7 @@ func TestParseBool(t *testing.T) {
 		{"false", false},
 	}
 
-	var invalidInput = []string{
+	invalidInput := []string{
 		"",
 		"blablah",
 		"-100",
@@ -534,7 +534,7 @@ func TestParseBool(t *testing.T) {
 }
 
 func TestParseInt(t *testing.T) {
-	var testsWithValidInput = []struct {
+	testsWithValidInput := []struct {
 		input    string
 		expected int
 	}{
@@ -544,7 +544,7 @@ func TestParseInt(t *testing.T) {
 		{"123456789", 123456789},
 	}
 
-	var invalidInput = []string{
+	invalidInput := []string{
 		"",
 		"blablah",
 		"10000000000000000000000000000000000000000000000000000000000000000",
@@ -571,7 +571,7 @@ func TestParseInt(t *testing.T) {
 }
 
 func TestParseInt64(t *testing.T) {
-	var testsWithValidInput = []struct {
+	testsWithValidInput := []struct {
 		input    string
 		expected int64
 	}{
@@ -581,7 +581,7 @@ func TestParseInt64(t *testing.T) {
 		{"123456789", 123456789},
 	}
 
-	var invalidInput = []string{
+	invalidInput := []string{
 		"",
 		"blablah",
 		"10000000000000000000000000000000000000000000000000000000000000000",
@@ -608,7 +608,7 @@ func TestParseInt64(t *testing.T) {
 }
 
 func TestParseUint64(t *testing.T) {
-	var testsWithValidInput = []struct {
+	testsWithValidInput := []struct {
 		input    string
 		expected uint64
 	}{
@@ -618,7 +618,7 @@ func TestParseUint64(t *testing.T) {
 		{"123456789", 123456789},
 	}
 
-	var invalidInput = []string{
+	invalidInput := []string{
 		"",
 		"blablah",
 		"10000000000000000000000000000000000000000000000000000000000000000",
