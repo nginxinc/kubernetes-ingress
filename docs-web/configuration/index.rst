@@ -9,5 +9,6 @@ Configuration
    virtualserver-and-virtualserverroute-resources
    handling-host-and-listener-collisions
    policy-resource
+   security
    transportserver-resource
    configuration-examples
