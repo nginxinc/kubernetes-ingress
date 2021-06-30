@@ -308,7 +308,7 @@ def ingress_controller_prerequisites(
     create_secret_from_yaml(
         kube_apis.v1, namespace, f"{DEPLOYMENTS}/common/default-server-secret.yaml"
     )
-
+    
     def fin():
         print("Clean up prerequisites")
         delete_namespace(kube_apis.v1, namespace)
@@ -489,6 +489,7 @@ def crd_ingress_controller(
         delete_ingress_controller(
             kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
         )
+        pytest.fail("IC setup failed")
 
     def fin():
         delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
@@ -634,7 +635,7 @@ def crd_ingress_controller_with_ap(
         delete_ingress_controller(
             kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
         )
-
+        pytest.fail("IC setup failed")
     def fin():
         print("--------------Cleanup----------------")
         delete_crd(

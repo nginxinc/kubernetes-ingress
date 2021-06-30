@@ -320,21 +320,20 @@ class TestAppProtect:
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
 
         print("----------------------- Send invalid request ----------------------")
-        response = requests.get(
+        response_block = requests.get(
             appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
         )
-        print(response.text)
-        wait_before_test(5)
-        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
-
-        assert_invalid_responses(response)
-        assert (
-            f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"'
-            in log_contents
-        )
-        assert f'severity="Critical"' in log_contents
-        assert f'request_status="blocked"' in log_contents
-        assert f'outcome="REJECTED"' in log_contents
+        print(response_block.text)
+        log_contents = ""
+        retry = 0
+        while (
+            "ASM:attack_type" not in log_contents
+            and retry <= 30
+        ):
+            log_contents_block = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+            retry += 1
+            wait_before_test(1)
+            print(f"Security log not updated, retrying... #{retry}")
 
         print("----------------------- Send valid request ----------------------")
         headers = {
@@ -348,6 +347,15 @@ class TestAppProtect:
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        
+        assert_invalid_responses(response_block)
+        assert (
+            f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"'
+            in log_contents_block
+        )
+        assert f'severity="Critical"' in log_contents_block
+        assert f'request_status="blocked"' in log_contents_block
+        assert f'outcome="REJECTED"' in log_contents_block
 
         assert_valid_responses(response)
         assert f'ASM:attack_type="N/A"' in log_contents
@@ -418,12 +426,11 @@ class TestAppProtect:
             wait_before_test(1)
             print(f"Security log not updated, retrying... #{retry}")
 
-        assert_invalid_responses(response)
-
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog2_yaml, test_namespace)
 
+        assert_invalid_responses(response)
         # check logs in dest. #1 i.e. syslog server #1
         assert (
             f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"'
@@ -472,9 +479,8 @@ class TestAppProtect:
         ap_crd_info = read_ap_custom_resource(
             kube_apis.custom_objects, test_namespace, "appolicies", ap_policy
         )
-        assert_ap_crd_info(ap_crd_info, ap_policy)
+        
         wait_before_test(120)
-
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
         print("----------------------- Send request ----------------------")
         response = requests.get(
@@ -491,4 +497,5 @@ class TestAppProtect:
         )
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
+        assert_ap_crd_info(ap_crd_info, ap_policy)
         assert_invalid_responses(response)

@@ -228,6 +228,11 @@ def create_daemon_set(apps_v1_api: AppsV1Api, namespace, body) -> str:
     print(f"Daemon-Set created with name '{body['metadata']['name']}'")
     return body['metadata']['name']
 
+class PodNotReadyException(Exception):
+    def __init__(self, message="After several seconds the pods aren't ContainerReady. Exiting!"):
+        self.message = message
+        super().__init__(self.message)
+    
 
 def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     """
@@ -240,11 +245,11 @@ def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     print("Start waiting for all pods in a namespace to be ContainersReady")
     counter = 0
     while not are_all_pods_in_ready_state(v1, namespace) and counter < 20:
-        print("There are pods that are not ContainersReady. Wait for 4 sec...")
+        print("There are pods that are not ContainerReady. Wait for 4 sec...")
         time.sleep(4)
         counter = counter + 1
     if counter >= 20:
-        pytest.fail("After several seconds the pods aren't ContainersReady. Exiting...")
+        raise PodNotReadyException()
     print("All pods are ContainersReady")
 
 
@@ -1100,7 +1105,7 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
                 delete_configmap(kube_apis.v1, doc['metadata']['name'], namespace)
 
 
-def ensure_connection(request_url, expected_code=404) -> None:
+def ensure_connection(request_url, expected_code=404, headers={}) -> None:
     """
     Wait for connection.
 
@@ -1110,7 +1115,7 @@ def ensure_connection(request_url, expected_code=404) -> None:
     """
     for _ in range(10):
         try:
-            resp = requests.get(request_url, verify=False, timeout=5)
+            resp = requests.get(request_url, headers=headers, verify=False, timeout=5)
             if resp.status_code == expected_code:
                 return
         except Exception as ex:
@@ -1130,7 +1135,6 @@ def ensure_connection_to_public_endpoint(ip_address, port, port_ssl) -> None:
     """
     ensure_connection(f"http://{ip_address}:{port}/")
     ensure_connection(f"https://{ip_address}:{port_ssl}/")
-
 
 def read_service(v1: CoreV1Api, name, namespace) -> V1Service:
     """
@@ -1229,4 +1233,8 @@ def get_service_endpoint(kube_apis, service_name, namespace):
             print(f"Endpoint IP for {service_name} is {ep}")
         except TypeError as err:
             retry += 1
+        except ApiException as ex:
+            if ex.status == 500:
+                print("Reason: Internal server error and Request timed out")
+            pytest.fail(f"Kubernates API exception occured: {ex}")
     return ep

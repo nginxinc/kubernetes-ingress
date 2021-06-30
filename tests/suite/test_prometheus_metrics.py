@@ -142,7 +142,8 @@ class TestPrometheusExporter:
         enable_exporter_port,
         expected_metrics,
         ingress_setup,
-    ):
+    ):  
+        ensure_connection(ingress_setup.req_url, 200, {"host": ingress_setup.ingress_host})
         resp = requests.get(ingress_setup.req_url, headers={"host": ingress_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
@@ -176,6 +177,7 @@ class TestPrometheusExporter:
         expected_metrics,
         ingress_setup,
     ):
+        ensure_connection(ingress_setup.req_url, 200, {"host": ingress_setup.ingress_host})
         resp = requests.get(ingress_setup.req_url, headers={"host": ingress_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
@@ -208,17 +210,14 @@ class TestPrometheusExporter:
             expected_metrics,
             ingress_setup,
     ):
-        resp = {}
-
         # assert http fails
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
-        try:
-            resp = requests.get(req_url, verify=False)
-            assert False, "Expected HTTP request to fail for a HTTPS endpoint but it succeeded"
-        except:
-            print("request fails as expected")
-
-        assert resp.status_code == 400, f"Expected 400 code for http request to /metrics but got {resp.status_code}"
+        ensure_connection(req_url, 400)
+        resp = requests.get(req_url, verify=False)
+        assert (
+            "Client sent an HTTP request to an HTTPS server" in resp.text and
+            resp.status_code == 400, f"Expected 400 code for http request to /metrics and got {resp.status_code}"
+        )
 
         # assert https succeeds
         req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
