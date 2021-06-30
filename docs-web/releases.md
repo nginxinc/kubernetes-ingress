@@ -22,7 +22,7 @@ FEATURES:
 * [1466](https://github.com/nginxinc/kubernetes-ingress/pull/1466) Support snippets in TransportServer.
 
 FEATURES FOR NGINX APP PROTECT:
-* [1578](https://github.com/nginxinc/kubernetes-ingress/pull/1578) Add support for CRSF protection in APPolicy.
+* [1578](https://github.com/nginxinc/kubernetes-ingress/pull/1578) Add support for CSRF protection in APPolicy.
 * [1513](https://github.com/nginxinc/kubernetes-ingress/pull/1513) Support multiple log security configs in Ingresses.
 * [1481](https://github.com/nginxinc/kubernetes-ingress/pull/1481) Add support for user defined browsers in APPolicy.
 * [1411](https://github.com/nginxinc/kubernetes-ingress/pull/1411) Add unary gRPC support in APPolicy.
