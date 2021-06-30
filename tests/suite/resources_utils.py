@@ -1236,5 +1236,5 @@ def get_service_endpoint(kube_apis, service_name, namespace):
         except ApiException as ex:
             if ex.status == 500:
                 print("Reason: Internal server error and Request timed out")
-            pytest.fail(f"Kubernates API exception occured: {ex}")
+                raise ApiException
     return ep

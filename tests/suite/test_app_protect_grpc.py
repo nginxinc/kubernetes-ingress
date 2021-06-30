@@ -55,39 +55,53 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
     :param test_namespace:
     :return: BackendSetup
     """
-    print("------------------------- Replace ConfigMap with HTTP2 -------------------------")
-    replace_configmap_from_yaml(kube_apis.v1,
-                            ingress_controller_prerequisites.config_map['metadata']['name'],
-                            ingress_controller_prerequisites.namespace,
-                            f"{TEST_DATA}/appprotect/grpc/nginx-config.yaml")
+    try:
+        print("------------------------- Replace ConfigMap with HTTP2 -------------------------")
+        replace_configmap_from_yaml(kube_apis.v1,
+                                ingress_controller_prerequisites.config_map['metadata']['name'],
+                                ingress_controller_prerequisites.namespace,
+                                f"{TEST_DATA}/appprotect/grpc/nginx-config.yaml")
 
-    policy = request.param["policy"]
-    print("------------------------- Deploy backend application -------------------------")
-    create_example_app(kube_apis, "grpc", test_namespace)
-    wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
+        policy = request.param["policy"]
+        print("------------------------- Deploy backend application -------------------------")
+        create_example_app(kube_apis, "grpc", test_namespace)
+        wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
-    print("------------------------- Deploy Secret -----------------------------")
-    src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
-    create_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
+        print("------------------------- Deploy Secret -----------------------------")
+        src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
+        create_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
 
-    print("------------------------- Deploy logconf -----------------------------")
-    src_log_yaml = f"{TEST_DATA}/appprotect/logconf.yaml"
-    log_name = create_ap_logconf_from_yaml(kube_apis.custom_objects, src_log_yaml, test_namespace)
+        print("------------------------- Deploy logconf -----------------------------")
+        src_log_yaml = f"{TEST_DATA}/appprotect/logconf.yaml"
+        log_name = create_ap_logconf_from_yaml(kube_apis.custom_objects, src_log_yaml, test_namespace)
 
-    print(f"------------------------- Deploy appolicy: {policy} ---------------------------")
-    src_pol_yaml = f"{TEST_DATA}/appprotect/grpc/{policy}.yaml"
-    pol_name = create_ap_policy_from_yaml(kube_apis.custom_objects, src_pol_yaml, test_namespace)
+        print(f"------------------------- Deploy appolicy: {policy} ---------------------------")
+        src_pol_yaml = f"{TEST_DATA}/appprotect/grpc/{policy}.yaml"
+        pol_name = create_ap_policy_from_yaml(kube_apis.custom_objects, src_pol_yaml, test_namespace)
 
-    print("------------------------- Deploy Syslog -----------------------------")
-    src_syslog_yaml = f"{TEST_DATA}/appprotect/syslog.yaml"
-    create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-    syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
-    print(syslog_ep)
-    print("------------------------- Deploy ingress -----------------------------")
-    src_ing_yaml = f"{TEST_DATA}/appprotect/grpc/ingress.yaml"
-    create_ingress_with_ap_annotations(kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", f"{syslog_ep}:514")
-    ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
-    wait_before_test(40)
+        print("------------------------- Deploy Syslog -----------------------------")
+        src_syslog_yaml = f"{TEST_DATA}/appprotect/syslog.yaml"
+        create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
+        print(syslog_ep)
+        print("------------------------- Deploy ingress -----------------------------")
+        src_ing_yaml = f"{TEST_DATA}/appprotect/grpc/ingress.yaml"
+        create_ingress_with_ap_annotations(kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", f"{syslog_ep}:514")
+        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
+        wait_before_test(40)
+    except Exception as ex:
+        print("Failed to complete setup, cleaning up..")
+        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+        delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
+        delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
+        delete_common_app(kube_apis, "grpc", test_namespace)
+        delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
+        replace_configmap_from_yaml(kube_apis.v1,
+                        ingress_controller_prerequisites.config_map['metadata']['name'],
+                        ingress_controller_prerequisites.namespace,
+                        f"{DEPLOYMENTS}/common/nginx-config.yaml")
+        pytest.fail(f"AP GRPC setup failed")
 
     def fin():
         print("Clean up:")
