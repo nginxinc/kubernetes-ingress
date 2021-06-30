@@ -1,7 +1,7 @@
 PREFIX = nginx/nginx-ingress
-GIT_COMMIT = $(shell git rev-parse HEAD)
+GIT_COMMIT = $(shell git rev-parse HEAD || echo unknown)
 GIT_COMMIT_SHORT = $(shell echo ${GIT_COMMIT} | cut -c1-7)
-GIT_TAG = $(shell git describe --tags --abbrev=0)
+GIT_TAG = $(shell git describe --tags --abbrev=0 || echo untagged)
 DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION = $(GIT_TAG)-SNAPSHOT-$(GIT_COMMIT_SHORT)
 TAG = $(VERSION:v%=%)
