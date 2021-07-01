@@ -445,7 +445,8 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curPol := cur.(*conf_v1.Policy)
-			if !reflect.DeepEqual(old, cur) {
+			oldPol := old.(*conf_v1.Policy)
+			if !reflect.DeepEqual(oldPol.Spec, curPol.Spec) {
 				glog.V(3).Infof("Policy %v changed, syncing", curPol.Name)
 				lbc.AddSyncQueue(curPol)
 			}
