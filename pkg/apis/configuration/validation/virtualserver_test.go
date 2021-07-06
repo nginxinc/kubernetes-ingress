@@ -1720,6 +1720,8 @@ func TestIsArgumentName(t *testing.T) {
 func TestValidateVariableName(t *testing.T) {
 	validNames := []string{
 		"$request_method",
+		"$args",
+		"$jwt_foo",
 	}
 
 	for _, name := range validNames {
@@ -1732,6 +1734,7 @@ func TestValidateVariableName(t *testing.T) {
 	invalidNames := []string{
 		"request_method",
 		"$request_id",
+		"$jwt",
 	}
 
 	for _, name := range invalidNames {
@@ -3594,7 +3597,6 @@ func TestValidateErrorPageReturn(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
 		allErrs := vsv.validateErrorPageReturn(&epr, field.NewPath("return"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateErrorPageReturn(%v) returned errors for valid input: %v", epr, allErrs)
@@ -3684,7 +3686,6 @@ func TestValidateErrorPageRedirect(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
 		allErrs := vsv.validateErrorPageRedirect(&epr, field.NewPath("redirect"))
 		if len(allErrs) != 0 {
 			t.Errorf("validateErrorPageRedirect(%v) returned errors for valid input: %v", epr, allErrs)
@@ -3729,7 +3730,6 @@ func TestValidateErrorPageRedirectFails(t *testing.T) {
 	vsv := &VirtualServerValidator{isPlus: false}
 
 	for _, epr := range tests {
-		// FIXME #nosec G601
 		allErrs := vsv.validateErrorPageRedirect(&epr, field.NewPath("redirect"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateErrorPageRedirect(%v) returned no errors for invalid input", epr)
