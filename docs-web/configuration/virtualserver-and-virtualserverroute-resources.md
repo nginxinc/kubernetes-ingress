@@ -1187,7 +1187,7 @@ The condition defines a condition in a match.
 
 \* -- a condition must include exactly one of the following: `header`, `cookie`, `argument` or `variable`.
 
-Supported NGINX variables: `$args`, `$http2`, `$https`, `$remote_addr`, `$remote_port`, `$query_string`, `$request`, `$request_body`, `$request_uri`, `$request_method`, `$scheme`. Find the documentation for each variable [here](https://nginx.org/en/docs/varindex.html).
+Supported NGINX variables: `$args`, `$http2`, `$https`, `$remote_addr`, `$remote_port`, `$query_string`, `$request`, `$request_body`, `$request_uri`, `$request_method`, `$scheme` and jwt variables (i.e. `$jwt_claim_profile`). Find the documentation for each variable [here](https://nginx.org/en/docs/varindex.html).
 
 The value supports two kinds of matching:
 * *Case-insensitive string comparison*. For example:
