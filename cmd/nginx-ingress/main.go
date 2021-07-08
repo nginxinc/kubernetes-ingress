@@ -204,6 +204,7 @@ func main() {
 		fmt.Println(versionInfo)
 		os.Exit(0)
 	}
+	glog.Infof("Starting NGINX Ingress controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 
 	if startupCheckFn != nil {
 		err := startupCheckFn()
@@ -266,8 +267,6 @@ func main() {
 	if *ingressLink != "" && *externalService != "" {
 		glog.Fatal("ingresslink and external-service cannot both be set")
 	}
-
-	glog.Infof("Starting NGINX Ingress controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 
 	var config *rest.Config
 	if *proxyURL != "" {
