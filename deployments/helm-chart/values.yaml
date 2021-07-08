@@ -10,9 +10,7 @@ controller:
   nginxplus: false
 
   # Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
-  # Default is 4000 (default is 20000 instead if enable-app-protect is true)
-  # If set to 0, default values will be used.
-  nginxReloadTimeout: 0
+  nginxReloadTimeout: 60000
 
   ## Support for App Protect
   appprotect:

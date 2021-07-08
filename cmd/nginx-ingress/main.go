@@ -142,9 +142,8 @@ var (
 	nginxDebug = flag.Bool("nginx-debug", false,
 		"Enable debugging for NGINX. Uses the nginx-debug binary. Requires 'error-log-level: debug' in the ConfigMap.")
 
-	nginxReloadTimeout = flag.Int("nginx-reload-timeout", 0,
-		`The timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
-		The default is 4000 (or 20000 if -enable-app-protect is true). If set to 0, the default value will be used`)
+	nginxReloadTimeout = flag.Int("nginx-reload-timeout", 60000,
+		`The timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start. (default 60000)`)
 
 	wildcardTLSSecret = flag.String("wildcard-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
@@ -406,7 +405,8 @@ func main() {
 	if useFakeNginxManager {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
-		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, parseReloadTimeout(*appProtect, *nginxReloadTimeout))
+		timeout := time.Duration(*nginxReloadTimeout) * time.Millisecond
+		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, timeout)
 	}
 	nginxVersion := nginxManager.Version()
 	isPlus := strings.Contains(nginxVersion, "plus")
@@ -851,21 +851,6 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 	}
 	glog.Info("Exiting successfully")
 	os.Exit(0)
-}
-
-func parseReloadTimeout(appProtectEnabled bool, timeout int) time.Duration {
-	const defaultTimeout = 4000 * time.Millisecond
-	const defaultTimeoutAppProtect = 20000 * time.Millisecond
-
-	if timeout != 0 {
-		return time.Duration(timeout) * time.Millisecond
-	}
-
-	if appProtectEnabled {
-		return defaultTimeoutAppProtect
-	}
-
-	return defaultTimeout
 }
 
 func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {

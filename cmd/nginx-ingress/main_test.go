@@ -4,7 +4,6 @@ import (
 	"errors"
 	"reflect"
 	"testing"
-	"time"
 )
 
 func TestValidatePort(t *testing.T) {
@@ -121,42 +120,6 @@ func TestValidateLocation(t *testing.T) {
 		err := validateLocation(goodLocation)
 		if err != nil {
 			t.Errorf("validateLocation(%v) returned an error when it should have returned no error: %v", goodLocation, err)
-		}
-	}
-}
-
-func TestParseReloadTimeout(t *testing.T) {
-	tests := []struct {
-		timeout           int
-		appProtectEnabled bool
-		expected          time.Duration
-	}{
-		{
-			timeout:           0,
-			appProtectEnabled: true,
-			expected:          20000 * time.Millisecond,
-		},
-		{
-			timeout:           0,
-			appProtectEnabled: false,
-			expected:          4000 * time.Millisecond,
-		},
-		{
-			timeout:           1000,
-			appProtectEnabled: true,
-			expected:          1000 * time.Millisecond,
-		},
-		{
-			timeout:           1000,
-			appProtectEnabled: false,
-			expected:          1000 * time.Millisecond,
-		},
-	}
-
-	for _, test := range tests {
-		result := parseReloadTimeout(test.appProtectEnabled, test.timeout)
-		if result != test.expected {
-			t.Errorf("parseReloadTimeout(%v, %v) returned %v but expected %v", test.appProtectEnabled, test.timeout, result, test.expected)
 		}
 	}
 }
