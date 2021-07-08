@@ -1294,26 +1294,26 @@ var validVariableNames = map[string]bool{
 
 func validateVariableName(name string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	//original name of variable
+	// original name of variable
 	orgName := name
 
-	//Make sure it starts with $
+	// Make sure it starts with $
 	if !strings.HasPrefix(name, "$") {
 		return append(allErrs, field.Invalid(fieldPath, name, "must start with `$`"))
 	}
 
-	//split name
+	// split name
 	parts := strings.Split(name, "_")
 
-	//name to first part of the split to check for wildcards
+	// name to first part of the split to check for wildcards
 	if len(parts) > 1 {
 		name = parts[0]
 	}
 
-	//Check if it is a wildcard valid
+	// Check if it is a wildcard valid
 	if _, exists := validVariableNames[name+"_*"]; exists && len(parts) > 1 {
-		//NoOp: if wildcard is valid do nothing.
-	} else if _, exists := validVariableNames[orgName]; !exists { //orginal name validation if not wildcard variable
+		// NoOp: if wildcard is valid do nothing.
+	} else if _, exists := validVariableNames[orgName]; !exists { // orginal name validation if not wildcard variable
 		return append(allErrs, field.Invalid(fieldPath, name, "is not allowed or is not an NGINX variable"))
 	}
 
