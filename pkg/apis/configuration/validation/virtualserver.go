@@ -1313,7 +1313,7 @@ func validateVariableName(name string, fieldPath *field.Path) field.ErrorList {
 	// Check if it is a wildcard valid
 	if _, exists := validVariableNames[name+"_*"]; exists && len(parts) > 1 {
 		// NoOp: if wildcard is valid do nothing.
-	} else if _, exists := validVariableNames[orgName]; !exists { // orginal name validation if not wildcard variable
+	} else if _, exists := validVariableNames[orgName]; !exists { // original name validation if not wildcard variable
 		return append(allErrs, field.Invalid(fieldPath, name, "is not allowed or is not an NGINX variable"))
 	}
 
