@@ -262,6 +262,8 @@ ARG BUILD_OS
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
 
 RUN mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
@@ -292,6 +294,8 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.version="${IC_VERSION}-${BUILD_OS}-${NGINX_PLUS_VERSION}${NGINX_VERSION}"
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 LABEL org.opencontainers.image.created="${DATE}"
+LABEL org.nginx.kic.image.build.platform="${BUILDPLATFORM}"
+LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################
@@ -310,11 +314,17 @@ RUN CGO_ENABLED=0 GO111MODULE=on GOOS=linux GOARCH=$TARGETARCH go build -trimpat
 
 ############################################# Create image with nginx-ingress built in container #############################################
 FROM common AS container
+
+LABEL org.nginx.kic.image.build.version="container"
+
 COPY --chown=nginx:0 --from=builder /nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built locally #############################################
 FROM common AS local
+
+LABEL org.nginx.kic.image.build.version="local"
+
 COPY --chown=nginx:0 nginx-ingress /
 
 
@@ -323,4 +333,15 @@ FROM common AS goreleaser
 ARG TARGETARCH
 ARG TARGETVARIANT
 
+LABEL org.nginx.kic.image.build.version="goreleaser"
+
 COPY --chown=nginx:0 dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+
+
+############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
+FROM common AS aws
+ARG TARGETARCH
+
+LABEL org.nginx.kic.image.build.version="aws"
+
+COPY --chown=nginx:0 dist/aws_linux_$TARGETARCH/nginx-ingress /

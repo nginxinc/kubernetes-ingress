@@ -1,13 +1,7 @@
 env:
-  - GO111MODULE=on
-before:
-  hooks:
-    - make clean
-    - go mod tidy
-    - go mod verify
+  - CGO_ENABLED=0
 builds:
-  - env:
-      - CGO_ENABLED=0
+  - id: kubernetes-ingress
     goos:
       - linux
     goarch:
@@ -26,6 +20,23 @@ builds:
       - all=-trimpath={{.Env.GOPATH}}
     main: ./cmd/nginx-ingress/main.go
     binary: nginx-ingress
+  - id: aws
+    goos:
+      - linux
+    goarch:
+      - amd64
+    flags:
+      - -trimpath
+    gcflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    asmflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.productCode={{.Env.PRODUCT_CODE}} -X main.pubKeyString={{.Env.PUB_KEY}}
+    main: ./cmd/nginx-ingress/
+    binary: nginx-ingress
+    tags:
+      - aws
 archives:
 - format: binary
 changelog:
