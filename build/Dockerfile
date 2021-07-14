@@ -299,7 +299,7 @@ LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.16-alpine AS builder
+FROM golang:1.16.6-alpine AS builder
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
