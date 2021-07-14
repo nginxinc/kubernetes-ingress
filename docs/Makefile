@@ -1,22 +1,40 @@
+LOCAL_ROOT = $(git rev-parse --show-toplevel)
 SHELL = /bin/bash
-DOCS_THEME_REPO = https://gitlab.com/f5/nginx/controller/poc/f5-hugo
 THEME_MODULE = gitlab.com/f5/nginx/controller/poc/f5-hugo
+# export THEME_PATH="</local/path/to/theme>"
+THEME_PATH = $(LOCAL_THEME_PATH)
 THEME_BRANCH = development
 
+.PHONY: all all-local clean hugo-mod build-production build-staging hugo-server-drafts hugo-server
+
+all: hugo-mod build-production
+
+all-local: clean hugo-mod build-production
+
 clean:
-	rm -rf public
+	rm -rf ${LOCAL_ROOT}/public
 
-hugo build:
-	hugo --gc -b $(DEPLOY_URL)
+hugo-mod:
+	hugo mod clean
+	rm -rf _vendor
+	hugo mod get
+	hugo mod vendor
 
-hugo-build-prod: 
+build-production:
 	hugo --gc -e production
 	
-hugo-build-staging:
+build-staging:
 	hugo --gc -e staging
 
-hugo-build-dev: 
-	hugo --gc -e development
+hugo-server-drafts:
+	hugo server -e production -b 127.0.0.1/nginx-ingress-controller/ -D --disableFastRender
 
-hugo-build-deploy-preview:
-	hugo --gc -b $(DEPLOY_PRIME_URL)
+hugo-server:
+	hugo server -e production -b 127.0.0.1/nginx-ingress-controller/ --disableFastRender
+
+netlify:
+	netlify build --context=branch-deploy
+	netlify deploy -d public
+
+replace-theme:
+	go mod edit -replace "$(THEME_MODULE)"="$(THEME_PATH)"

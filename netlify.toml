@@ -1,22 +1,23 @@
 [build]
   base = "docs/"
   publish = "public"
-  command = "make hugo build"
-
-[build.environment]
+  command = "hugo --gc -b '$(DEPLOY_PRIME_URL)/nginx-ingress-controller'"
   HUGO_VERSION = "0.80.0"
 
 [context.development]
-  command = "make hugo-build-dev"
+  command = "hugo --gc -e development"
 
 [context.staging]
-  command = "make hugo-build-staging"
+  command = "hugo --gc -e staging"
 
 [context.production]
-  command = "make hugo-build-prod"
+  command = "hugo --gc -e production"
 
 [context.deploy-preview]
-  command = "make hugo-build-deploy-preview"
+  command = "hugo --gc -b '$(DEPLOY_PRIME_URL)/nginx-ingress-controller'"
+
+[context.branch-deploy]
+  command = "hugo --gc -b '$(DEPLOY_PRIME_URL)/nginx-ingress-controller'"
 
 [[headers]]
   for = "/*"
