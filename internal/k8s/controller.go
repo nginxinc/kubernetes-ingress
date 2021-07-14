@@ -792,6 +792,11 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 		return
 	}
 
+	if !lbc.HasCorrectIngressClass(obj) {
+		glog.V(3).Infof("Ignoring a Policy with non-matching ingressClassName")
+		return
+	}
+
 	glog.V(2).Infof("Adding, Updating or Deleting Policy: %v\n", key)
 
 	if polExists {
@@ -3037,6 +3042,8 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 	case *conf_v1.VirtualServerRoute:
 		class = obj.Spec.IngressClass
 	case *conf_v1alpha1.TransportServer:
+		class = obj.Spec.IngressClass
+	case *conf_v1.Policy:
 		class = obj.Spec.IngressClass
 	case *networking.Ingress:
 		isIngress = true
