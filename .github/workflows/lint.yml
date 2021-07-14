@@ -6,7 +6,6 @@ on:
       - master
     paths-ignore:
       - 'docs/**'
-      - 'docs-web/**'
       - 'examples/**'
       - 'examples-of-custom-resources/**'
       - '**.md'
