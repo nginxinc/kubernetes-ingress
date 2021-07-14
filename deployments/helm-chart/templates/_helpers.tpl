@@ -69,3 +69,14 @@ Expand app name.
 {{- define "nginx-ingress.appName" -}}
 {{- default (include "nginx-ingress.name" .) .Values.controller.name -}}
 {{- end -}}
+
+{{/*
+Return the appropriate apiGroup for PodSecurityPolicy.
+*/}}
+{{- define "podSecurityPolicy.apiGroup" -}}
+{{- if semverCompare ">=1.14-0" .Capabilities.KubeVersion.GitVersion -}}
+{{- print "policy" -}}
+{{- else -}}
+{{- print "extensions" -}}
+{{- end -}}
+{{- end -}}

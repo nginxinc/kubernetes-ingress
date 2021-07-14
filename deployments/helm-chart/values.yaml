@@ -302,6 +302,10 @@ rbac:
   ## Configures RBAC.
   create: true
 
+  podSecurityPolicy:
+    enabled: false
+    existingPsp: ''
+
 prometheus:
   ## Expose NGINX or NGINX Plus metrics in the Prometheus format.
   create: true

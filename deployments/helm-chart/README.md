@@ -220,6 +220,8 @@ Parameter | Description | Default
 `controller.readyStatus.port` | The HTTP port for the readiness endpoint. | 8081
 `controller.enableLatencyMetrics` |  Enable collection of latency metrics for upstreams. Requires `prometheus.create`. | false
 `rbac.create` | Configures RBAC. | true
+`rbac.podSecurityPolicy.enabled` | Enables using a pod security policy in the cluster role. Requires `rbac.create` | false
+`rbac.podSecurityPolicy.existingPsp` | Chooses an existing pod security policy to use. Requires `rbac.create` and `rbac.podSecurityPolicy.enabled`  | ""
 `prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
 `prometheus.scheme` | Configures the HTTP scheme to use for connections to the Prometheus endpoint. | http
