@@ -47,7 +47,7 @@ canonifyURLs = true
 
 [params]
   buildtype = "webdocs"
-  useSectionPageLists = "true"
+  useSectionPageLists = "false"
   RSSLink = "/index.xml"
   author = "NGINX Inc." # add your company name
   github = "nginxinc" # add your github profile name
