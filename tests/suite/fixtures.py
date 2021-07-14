@@ -706,6 +706,10 @@ class VirtualServerSetup:
         self.backend_2_url_ssl = (
             f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[1]}"
         )
+        self.metrics_url = (
+            f"http://{public_endpoint.public_ip}:{public_endpoint.metrics_port}/metrics"
+        )
+
 
 
 @pytest.fixture(scope="class")

@@ -49,32 +49,6 @@ def prometheus_secret_setup(request, kube_apis, test_namespace):
 
 
 @pytest.fixture(scope="class")
-def enable_exporter_port(
-    cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller
-) -> None:
-    """
-    Set containerPort for Prometheus Exporter.
-
-    :param cli_arguments: context
-    :param kube_apis: client apis
-    :param ingress_controller_prerequisites
-    :param ingress_controller: IC name
-    :return:
-    """
-    namespace = ingress_controller_prerequisites.namespace
-    port = V1ContainerPort(9113, None, None, "prometheus", "TCP")
-    print("------------------------- Enable 9113 port in IC -----------------------------------")
-    body = kube_apis.apps_v1_api.read_namespaced_deployment(ingress_controller, namespace)
-    body.spec.template.spec.containers[0].ports.append(port)
-
-    if cli_arguments["deployment-type"] == "deployment":
-        kube_apis.apps_v1_api.patch_namespaced_deployment(ingress_controller, namespace, body)
-    else:
-        kube_apis.apps_v1_api.patch_namespaced_daemon_set(ingress_controller, namespace, body)
-    wait_until_all_pods_are_ready(kube_apis.v1, namespace)
-
-
-@pytest.fixture(scope="class")
 def ingress_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> IngressSetup:
     print("------------------------- Deploy Ingress Example -----------------------------------")
     secret_name = create_secret_from_yaml(
@@ -139,7 +113,6 @@ class TestPrometheusExporter:
         self,
         ingress_controller_endpoint,
         ingress_controller,
-        enable_exporter_port,
         expected_metrics,
         ingress_setup,
     ):  
@@ -173,7 +146,6 @@ class TestPrometheusExporter:
         self,
         ingress_controller_endpoint,
         ingress_controller,
-        enable_exporter_port,
         expected_metrics,
         ingress_setup,
     ):
@@ -206,7 +178,6 @@ class TestPrometheusExporter:
             prometheus_secret_setup,
             ingress_controller_endpoint,
             ingress_controller,
-            enable_exporter_port,
             expected_metrics,
             ingress_setup,
     ):
