@@ -22,7 +22,7 @@ policy_ingress_class_src = f"{TEST_DATA}/policy-ingress-class/policy-ingress-cla
 policy_other_ingress_class_src = f"{TEST_DATA}/policy-ingress-class/policy-other-ingress-class.yaml"
 
 
-@pytest.mark.sean
+@pytest.mark.policies
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
@@ -30,7 +30,6 @@ policy_other_ingress_class_src = f"{TEST_DATA}/policy-ingress-class/policy-other
             {
                 "type": "complete",
                 "extra_args": [
-                    "-ingress-class=nginx",
                     f"-enable-custom-resources",
                     f"-enable-preview-policies",
                     f"-enable-leader-election=false",
@@ -59,10 +58,19 @@ class TestRateLimitingPolicies:
         self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, src,
     ):
         """
-        Test if rate-limiting policy is working with 1 rps
+        Test if policy with no ingress class is applied to vs
         """
         print(f"Create rl policy")
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy_src, test_namespace)
+
+        wait_before_test()
+        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        assert (
+                policy_info["status"]
+                and policy_info["status"]["reason"] == "AddedOrUpdated"
+                and policy_info["status"]["state"] == "Valid"
+        )
+
         print(f"Patch vs with policy: {src}")
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
@@ -70,39 +78,36 @@ class TestRateLimitingPolicies:
             src,
             virtual_server_setup.namespace,
         )
-
         wait_before_test()
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
-        occur = []
-        t_end = time.perf_counter() + 1
-        resp = requests.get(
-            virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
+
+        vs_info = read_custom_resource(kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name)
+        assert (
+                vs_info["status"]
+                and vs_info["status"]["reason"] == "AddedOrUpdated"
+                and vs_info["status"]["state"] == "Valid"
         )
-        print(resp.status_code)
-        assert resp.status_code == 200
-        while time.perf_counter() < t_end:
-            resp = requests.get(
-                virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
-            )
-            occur.append(resp.status_code)
+
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
-        assert (
-            policy_info["status"]
-            and policy_info["status"]["reason"] == "AddedOrUpdated"
-            and policy_info["status"]["state"] == "Valid"
-        )
-        assert occur.count(200) <= 1
 
     @pytest.mark.parametrize("src", [vs_policy_src])
     def test_policy_matching_ingress_class(
             self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, src,
     ):
         """
-        Test if rate-limiting policy is working with 1 rps
+        Test if policy with matching ingress class is applied to vs
         """
         print(f"Create rl policy")
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy_ingress_class_src, test_namespace)
+
+        wait_before_test()
+        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        assert (
+                policy_info["status"]
+                and policy_info["status"]["reason"] == "AddedOrUpdated"
+                and policy_info["status"]["state"] == "Valid"
+        )
+
         print(f"Patch vs with policy: {src}")
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
@@ -110,39 +115,36 @@ class TestRateLimitingPolicies:
             src,
             virtual_server_setup.namespace,
         )
-
         wait_before_test()
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
-        occur = []
-        t_end = time.perf_counter() + 1
-        resp = requests.get(
-            virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
+
+        vs_info = read_custom_resource(kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name)
+        assert (
+                vs_info["status"]
+                and vs_info["status"]["reason"] == "AddedOrUpdated"
+                and vs_info["status"]["state"] == "Valid"
         )
-        print(resp.status_code)
-        assert resp.status_code == 200
-        while time.perf_counter() < t_end:
-            resp = requests.get(
-                virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
-            )
-            occur.append(resp.status_code)
+
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
-        assert (
-                policy_info["status"]
-                and policy_info["status"]["reason"] == "AddedOrUpdated"
-                and policy_info["status"]["state"] == "Valid"
-        )
-        assert occur.count(200) <= 1
 
     @pytest.mark.parametrize("src", [vs_policy_src])
     def test_policy_non_matching_ingress_class(
             self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, src,
     ):
         """
-        Test if rate-limiting policy is working with 1 rps
+        Test if non matching policy gets caught by vc validation
         """
         print(f"Create rl policy")
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, policy_other_ingress_class_src, test_namespace)
+
+        wait_before_test()
+        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        assert (
+                policy_info["status"]
+                and policy_info["status"]["reason"] == "AddedOrUpdated"
+                and policy_info["status"]["state"] == "Valid"
+        )
+
         print(f"Patch vs with policy: {src}")
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
@@ -150,13 +152,16 @@ class TestRateLimitingPolicies:
             src,
             virtual_server_setup.namespace,
         )
-
         wait_before_test()
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+
+        vs_info = read_custom_resource(kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name)
+        assert (
+                vs_info["status"]
+                and "rate-limit-primary is missing or invalid" in vs_info["status"]["message"]
+                and vs_info["status"]["reason"] == "AddedOrUpdatedWithWarning"
+                and vs_info["status"]["state"] == "Warning"
+        )
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
-        assert (
-                "status" not in policy_info
-        )
 

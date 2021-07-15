@@ -792,11 +792,6 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 		return
 	}
 
-	if !lbc.HasCorrectIngressClass(obj) {
-		glog.V(3).Infof("Ignoring a Policy with non-matching ingressClassName")
-		return
-	}
-
 	glog.V(2).Infof("Adding, Updating or Deleting Policy: %v\n", key)
 
 	if polExists {
@@ -2491,6 +2486,11 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 		}
 
 		policy := policyObj.(*conf_v1.Policy)
+
+		if !lbc.HasCorrectIngressClass(policy) {
+			errors = append(errors, fmt.Errorf("referenced policy %s has incorrect ingress class: %s (controller ingress class: %s)", policyKey, policy.Spec.IngressClass, lbc.ingressClass))
+			continue
+		}
 
 		err = validation.ValidatePolicy(policy, lbc.isNginxPlus, lbc.enablePreviewPolicies, lbc.appProtectEnabled)
 		if err != nil {
