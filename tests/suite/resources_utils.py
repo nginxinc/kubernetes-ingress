@@ -2,6 +2,7 @@
 import re
 import time
 import yaml
+import json
 import pytest
 import requests
 
@@ -1251,11 +1252,18 @@ def get_last_reload_time(req_url, ingress_class) -> str:
     for line in resp_content.splitlines():
         if 'last_reload_milliseconds{class="%s"}' %ingress_class in line:
             reload_metric = re.findall("\d+", line)[0]
-    
-    return reload_metric
+            return reload_metric
 
 def get_test_file_name(path) -> str:
     """
     :param path: full path to the test file
     """
     return (str(path).rsplit('/', 1)[-1])[:-3]
+
+def write_to_json(fname, data) -> None:
+    """
+    :param fname: filename.json
+    :param data: dictionary
+    """
+    with open(fname, "w+") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)

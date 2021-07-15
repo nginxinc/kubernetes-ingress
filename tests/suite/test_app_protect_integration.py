@@ -28,6 +28,7 @@ from suite.resources_utils import (
     get_service_endpoint,
     get_last_reload_time,
     get_test_file_name,
+    write_to_json,
 )
 from suite.custom_resources_utils import (
     read_ap_custom_resource,
@@ -104,9 +105,10 @@ def appprotect_setup(
         delete_common_app(kube_apis, "simple", test_namespace)
         src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
         delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
-        file = f"reload-{get_test_file_name(request.node.fspath)}.json"
-        with open(file, "w+") as f:
-            json.dump(reload_times, f, ensure_ascii=False, indent=4)
+        write_to_json(
+            f"reload-{get_test_file_name(request.node.fspath)}.json",
+            reload_times
+        )
 
     request.addfinalizer(fin)
 
@@ -444,9 +446,8 @@ class TestAppProtect:
             print(f"Security log not updated, retrying... #{retry}")
 
         reload_ms = get_last_reload_time(appprotect_setup.metrics_url, "nginx")
-        reload_info = f"last reload duration: {reload_ms} ms"
-        print(reload_info)
-        reload_times[f"{request.node.name}"] = reload_info
+        print(f"last reload duration: {reload_ms} ms")
+        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
@@ -511,9 +512,8 @@ class TestAppProtect:
         print(response.text)
 
         reload_ms = get_last_reload_time(appprotect_setup.metrics_url, "nginx")
-        reload_info = f"last reload duration: {reload_ms} ms"
-        print(reload_info)
-        reload_times[f"{request.node.name}"] = reload_info
+        print(f"last reload duration: {reload_ms} ms")
+        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
 
         # Restore default dataguard-alarm policy
         delete_and_create_ap_policy_from_yaml(

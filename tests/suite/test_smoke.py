@@ -15,6 +15,7 @@ from suite.resources_utils import (
     ensure_response_from_backend,
     get_test_file_name,
     get_last_reload_time,
+    write_to_json,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 from settings import TEST_DATA
@@ -66,9 +67,10 @@ def smoke_setup(
             kube_apis, f"{TEST_DATA}/smoke/{request.param}/smoke-ingress.yaml", test_namespace
         )
         delete_secret(kube_apis.v1, secret_name, test_namespace)
-        file = f"reload-{get_test_file_name(request.node.fspath)}.json"
-        with open(file, "w+") as f:
-            json.dump(reload_times, f, ensure_ascii=False, indent=4)
+        write_to_json(
+            f"reload-{get_test_file_name(request.node.fspath)}.json",
+            reload_times
+        )
 
     request.addfinalizer(fin)
 
@@ -98,8 +100,7 @@ class TestSmoke:
         ensure_response_from_backend(req_url, smoke_setup.ingress_host)
         resp = requests.get(req_url, headers={"host": smoke_setup.ingress_host}, verify=False)
         reload_ms = get_last_reload_time(metrics_url, "nginx")
-        reload_info = f"last reload duration: {reload_ms} ms"
-        print(reload_info)
-        reload_times[f"{request.node.name}"] = reload_info
+        print(f"last reload duration: {reload_ms} ms")
+        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
         assert resp.status_code == 200
         assert f"Server name: {path}" in resp.text

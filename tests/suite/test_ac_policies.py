@@ -5,6 +5,7 @@ from suite.resources_utils import (
     replace_configmap_from_yaml,
     get_last_reload_time,
     get_test_file_name,
+    write_to_json,
 )
 from suite.custom_resources_utils import (
     read_custom_resource,
@@ -65,9 +66,10 @@ def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
             ingress_controller_prerequisites.namespace,
             std_cm_src,
         )
-        file = f"reload-{get_test_file_name(request.node.fspath)}.json"
-        with open(file, "w+") as f:
-            json.dump(reload_times, f, ensure_ascii=False, indent=4)
+        write_to_json(
+            f"reload-{get_test_file_name(request.node.fspath)}.json",
+            reload_times
+        )
 
     request.addfinalizer(fin)
 
@@ -156,9 +158,8 @@ class TestAccessControlPoliciesVs:
         print(f"Response: {resp2.status_code}\n{resp2.text}")
 
         reload_ms = get_last_reload_time(virtual_server_setup.metrics_url, "nginx")
-        reload_info = f"last reload duration: {reload_ms} ms"
-        print(reload_info)
-        reload_times[f"{request.node.name}"] = reload_info
+        print(f"last reload duration: {reload_ms} ms")
+        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
