@@ -1,0 +1,13 @@
+{{ $ref := .Get 0 | relURL }}
+
+{{ if .Get 1 }}
+    {{ $text := .Get 1 | markdownify }} 
+    <a href="{{$ref}}">{{$text}}</a>
+{{ else if .Get 0 }} 
+    {{ $text := .Get 0 | markdownify }} 
+    <a href="{{$ref}}">{{$text}}</a>
+{{ else }}
+
+    {{ errorf "missing value for param 'name': %s" .Position }}
+
+{{ end }}

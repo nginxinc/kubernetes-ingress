@@ -1,0 +1,22 @@
+
+<nav aria-label="breadcrumb" class="breadcrumb navbar lt-gray-border-bottom">
+    <div class="nav flex-column flex-md-row">
+        <ol class="breadcrumb">
+            <li><a href="/" alt="NGINX Docs Home"><i class="fa fa-home"></i></a></li>
+
+            {{ define "breadcrumb" }}
+            
+            {{ with .Parent }}
+                {{ template "breadcrumb" . }}
+                <li>{{ if .IsHome }}<i class="fas fa-chevron-right"></i><a href="{{ .RelPermalink }}">{{ .Site.Title}}</a>{{ else }}<a href="{{ .RelPermalink }}">{{ .Title }}{{ end }}</a><i class="fas fa-chevron-right"></i></li>
+                {{ end }}
+            {{ end }}
+            
+            {{ if not .IsHome }}
+            
+                {{ template "breadcrumb" . }}
+                {{.Title}}
+        </ol>
+    </div>
+</nav>
+{{ end }}

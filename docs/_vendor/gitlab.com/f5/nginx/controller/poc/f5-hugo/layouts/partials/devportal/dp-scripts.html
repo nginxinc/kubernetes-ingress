@@ -1,0 +1,11 @@
+{{/*  load devportal js resources */}}
+
+{{ $js1 := resources.Get "js/devportal/runtime.js" | fingerprint "sha512" }}
+{{ $js2 := resources.Get "js/devportal/emerald.js" | fingerprint "sha512" }}
+{{ $js3 := resources.Get "js/devportal/vendors.js" | fingerprint "sha512" }}
+{{ $js4 := resources.Get "js/devportal/entry-site.js" | fingerprint "sha512" }}
+
+<script src="{{$js1.RelPermalink}}" type="text/javascript" integrity="{{ $js1.Data.Integrity }}"></script>
+<script src="{{$js2.RelPermalink}}" type="text/javascript" integrity="{{ $js2.Data.Integrity }}"></script>
+<script src="{{$js3.RelPermalink}}" type="text/javascript" integrity="{{ $js3.Data.Integrity }}"></script>
+<script src="{{$js4.RelPermalink}}" type="text/javascript" integrity="{{ $js4.Data.Integrity }}"></script>

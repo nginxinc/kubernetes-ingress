@@ -1,0 +1,104 @@
+{{ define "main" }}
+
+<div class="row flex-xl-nowrap">
+  <main class="col-md-10 content" role="main">
+    <div class="container"><h1>{{ .Title}}</h1></div>
+    
+    <div id="search" class="CoveoSearchInterface" data-enable-history="true">
+      <div class="CoveoFolding"></div>
+      <div class="CoveoAnalytics" data-search-hub="HUB_ES_Nginx_Docs_And_Org"></div>
+      <div class="coveo-search-section" style="display: none;">
+        <div class="CoveoSearchbox" data-enable-omnibox="true"></div>
+      </div>
+      <div class="coveo-main-section">
+        <div class="coveo-facet-column">
+          <div class="CoveoFacet" data-title="Show by product" data-field="@f5_product" data-tab="All"
+            data-number-of-values="15"></div>
+          <button id="reset_btn"><img src="{{ .Site.BaseURL }}images/svg/refresh.svg">Reset</button>
+        </div>
+        <div class="coveo-results-column">
+          <div class="CoveoShareQuery"></div>
+          <div class="CoveoPreferencesPanel">
+            <div class="CoveoResultsPreferences"></div>
+            <div class="CoveoResultsFiltersPreferences"></div>
+          </div>
+          <div class="CoveoTriggers"></div>
+          <div class="CoveoBreadcrumb"></div>
+          <div class="CoveoDidYouMean"></div>
+          <div class="coveo-results-header">
+            <div class="coveo-summary-section">
+              <span class="CoveoQuerySummary">
+                <div class="coveo-show-if-no-results"></div>
+              </span>
+              <span class="CoveoQueryDuration"></span>
+            </div>
+            <div class="coveo-result-layout-section">
+              <span class="CoveoResultLayout"></span>
+            </div>
+            <div class="coveo-sort-section">
+              <span>Sort By: </span>
+              <span class="CoveoSort" data-sort-criteria="relevancy" data-caption="Relevance"></span>
+              <span class="CoveoSort"
+                data-sort-criteria="@f5_updated_published_date descending,@f5_updated_published_date ascending"
+                data-caption="Date"></span>
+            </div>
+          </div>
+          <div class="CoveoHiddenQuery"></div>
+          <div class="CoveoErrorReport" data-pop-up="false"></div>
+          <div class="CoveoResultList" data-layout="list" data-wait-animation="fade"
+            data-auto-select-fields-to-include="true">
+            <script id="Default" class="result-template" type="text/html" data-layout="list">
+                  <div class="coveo-result-frame">
+                    <div class="coveo-result-cell" style="vertical-align:top;text-align:center;width:32px;">
+                      <img src="{{.Site.BaseURL}}/images/article-icon.svg" alt="Article" height="32" width="32" title="Article" />
+                    </div>
+                    <div class="coveo-result-cell" style="vertical-align: top;padding-left: 16px;">
+                      <div class="coveo-result-row" style="margin:0;">
+                        <div class="coveo-result-cell" style="vertical-align:top;font-size:16px;" role="heading" aria-level="2">
+                          <a class="CoveoResultLink" target="_blank"></a>
+                        </div>
+                        <div class="coveo-result-cell" style="width:120px;text-align:right;font-size:12px">
+                          <span class="CoveoQuickview" data-enable-loading-animation="false">
+                          Quick View
+                          </span>
+                          <div class="coveo-result-row">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="coveo-result-row" style="margin: 0;">
+                        <div class="coveo-result-cell" id="uri_link">
+                          <span class="CoveoFieldValue" data-field="@Uri"></span>
+                        </div>
+                      </div>
+                      <div class="coveo-result-row" style="margin-top:10px;">
+                        <div class="coveo-result-cell">
+                          <span class="CoveoExcerpt"></span>
+                        </div>
+                      </div>
+                      <div class="coveo-result-row modified_date" style="margin-top:10px;">
+                        <div class="coveo-result-cell">
+                          <span class="CoveoFieldValue" data-field="@f5_updated_published_date" data-text-caption=' Modification Date:' data-helper="date" data-helper-options-predefined-format="MMM DD, yyyy">
+                          </span>
+                        </div>
+                      </div>
+                      <div class="coveo-result-row" style="margin-top:10px;">
+                        <div class="coveo-result-cell">
+                        </div>
+                      </div>
+                      <div class="coveo-result-row">
+                        <div class="coveo-result-cell">
+                          <div class="CoveoMissingTerms"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </script>
+          </div>
+          <div class="pagination-bar">
+            <div class="CoveoPager"></div>
+            <div class="CoveoResultsPerPage"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+{{ end }}

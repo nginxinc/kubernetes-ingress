@@ -1,0 +1,25 @@
+{{ define "header" }}
+<div class="navbar navbar-expand navbar-dark flex-column flex-md-row bd-navbar navbar-fixed-top">
+  <div class="container flex-md-row flex-column">
+    <a class="navbar-brand mr-0 mr-md-2" href="/" aria-label="NGINX Docs">
+      <img class="navbar-img" src="{{.Site.BaseURL}}images/icons/NGINX-Docs-horiz-white-type.svg" alt="NGINX Docs">
+    </a>
+    <div class="navbar navbar-nav">
+      {{ if ne .Site.Params.buildtype "package"}}
+      <!-- Standalone search box. -->
+      <div id="searchbox">
+        <div class="CoveoAnalytics" data-search-hub="my_main_search_page_search_hub"></div>
+        <div class="CoveoSearchbox" data-placeholder='Search NGINX Docs...'></div>
+      </div>
+      {{ end }}
+    </div>
+
+    <ul class="navbar navbar-nav">
+        <li class="nav-item active">
+          <button class="button navbar-button"><a href="https://www.nginx.com/products/" alt="Explore all products on nginx.com" target="_blank">Explore All Products</a></button>
+        </li>     
+    </ul>
+  </div>
+</div>
+
+{{ end }}

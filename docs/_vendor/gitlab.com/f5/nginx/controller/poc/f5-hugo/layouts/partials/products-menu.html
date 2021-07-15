@@ -1,0 +1,14 @@
+{{ $currentPage := . }}
+
+{{ if in .Site.Params.buildtype "package" }}
+<div class="dropdown-menu bg-dark" aria-labelledby="navbarDropdownMenuLink">
+  {{ range .Site.Menus.section }}
+  <a class="dropdown-item" title="{{ .Name }}" href="{{ .URL }}">{{ .Name }}</a>
+  {{ end }}
+{{ else }}
+<div class="dropdown-menu bg-dark" aria-labelledby="navbarDropdownMenuLink">
+    {{ range .Site.Menus.products }}
+    <a class="dropdown-item" title="{{ .Name }}" href="{{ .URL }}">{{ .Name }}</a>
+    {{ end }}
+{{ end }}
+</div>

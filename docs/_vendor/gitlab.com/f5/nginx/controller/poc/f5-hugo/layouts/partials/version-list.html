@@ -1,0 +1,6 @@
+{{if .Params.versions }}
+  <hr>  
+  <div id="versions-list">
+    <p>This documentation applies to the following versions of {{ .Site.Title}}: {{ delimit .Params.versions ", " ", and " }}.</p>
+    </div>
+{{ end }}

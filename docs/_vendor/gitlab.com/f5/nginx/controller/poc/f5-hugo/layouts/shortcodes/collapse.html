@@ -1,0 +1,8 @@
+<div data-component="collapse" id="my-collapse-{{ .Get "id" }}" class="my-collapse-custom">
+  <p class="my-collapse-custom-header">
+    <a href="#box-{{ .Get "id" }}" class="collapse-toggle" style="text-decoration: none;" title="Select to open or close this section.">{{ partial "svg/text-expand.svg" . }}</a>
+  </p>
+  <div class="collapse-box {{ .Get "visibility" }}" id="box-{{ .Get "id" }}">
+    {{ .Inner | markdownify }}
+  </div>
+</div>

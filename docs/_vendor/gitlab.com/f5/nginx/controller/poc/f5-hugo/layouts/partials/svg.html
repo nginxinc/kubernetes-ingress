@@ -1,0 +1,4 @@
+{{/* Takes a svg-symbol id and an optional class and outputs an svg-icon via `use` */}}
+<svg{{ with .class }} class="{{ . }}"{{ end }}{{ with .width }} width="{{ . }}"{{ end }}{{ with .height }} height="{{ . }}"{{ end }}>
+  <use xlink:href="{{ "svg/sprite.symbol.svg#" | relURL }}{{ .id }}" />
+</svg>

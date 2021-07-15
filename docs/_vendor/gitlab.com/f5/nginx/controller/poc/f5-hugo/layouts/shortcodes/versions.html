@@ -1,0 +1,39 @@
+{{ $start := string (.Get 0)  }}
+{{ $end := string (.Get 1)  }}
+{{ $temp := slice }}
+{{ $result := ""}}
+{{ $istart := 0}}
+{{ $iend := 100}}
+{{ $ver := $.Site.Params.ctrlvers }}
+
+{{if eq $start "first"}}
+{{$start = first 1 $ver}}
+{{end}}
+
+{{if eq $end "latest"}}
+{{$end = last 1 $ver}}
+{{end}}
+
+{{ $.Scratch.Set "counter" 0 }}
+{{ range $ver }}
+    {{ $index := $.Scratch.Get "counter"}}
+    {{ $current := index $ver $index}}
+    {{if eq $current $start }}
+        {{$istart = $index}}
+    {{end}}
+    {{if eq $current $end}}
+        {{$iend = $index}}
+    {{end}}
+
+    {{ $.Scratch.Set "counter" (add ($.Scratch.Get "counter") 1) }}
+{{ end }}
+
+{{ $temp = after $istart $ver }}
+{{ $iend = add (sub $iend $istart) 1 }}
+{{ $temp = first $iend $temp }}
+{{ $result = delimit $temp ", " " and " }}
+
+<hr>
+<div id="versions-list">
+    <p>This documentation applies to the following versions of NGINX Controller Documentation: {{$result}}.</p>
+</div>

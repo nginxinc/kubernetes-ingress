@@ -1,0 +1,30 @@
+{
+  "name": "controller-docs",
+  "version": "1.0.0",
+  "description": "Documentation for NGINX Controller",
+  "main": "index.js",
+  "dependencies": {
+    "jquery": "^3.5.1",
+    "redoc": "^2.0.0-rc.36"
+  },
+  "devDependencies": {
+    "@fortawesome/fontawesome-free": "^5.14.0",
+    "autoprefixer": "^9.8.6",
+    "mobx": "^5.15.4",
+    "postcss-cli": "^7.1.1",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "styled-components": "^4.4.1",
+    "swagger-cli": "^3.0.1",
+    "swagger-parser": "9.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitswarm.f5net.com:indigo/product/controller-docs.git"
+  },
+  "author": "F5, Inc.",
+  "license": "SEE LICENSE IN LICENSE"
+}

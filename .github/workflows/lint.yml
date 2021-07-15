@@ -34,3 +34,4 @@ jobs:
         uses: golangci/golangci-lint-action@v2
         with:
           args: --timeout ${{ env.GOLANGCI_TIMEOUT }}
+          only-new-issues: true
