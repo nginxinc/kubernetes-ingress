@@ -922,7 +922,7 @@ def wait_for_event_increment(kube_apis, namespace, event_count, offset) -> bool:
 
 
 def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments,
-                              namespace, args=None, prom_port=True) -> str:
+                              namespace, args=None) -> str:
     """
     Create an Ingress Controller according to the params.
 
@@ -946,18 +946,6 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
     else:
         name = create_daemon_set(apps_v1_api, namespace, dep)
     wait_until_all_pods_are_ready(v1, namespace)
-    
-    if prom_port:
-        port = V1ContainerPort(9113, None, None, "prometheus", "TCP")
-        print("------------------------- Enable 9113 port in IC -----------------------------------")
-        body = apps_v1_api.read_namespaced_deployment(name, namespace)
-        body.spec.template.spec.containers[0].ports.append(port)
-
-        if cli_arguments["deployment-type"] == "deployment":
-            apps_v1_api.patch_namespaced_deployment(name, namespace, body)
-        else:
-            apps_v1_api.patch_namespaced_daemon_set(name, namespace, body)
-        wait_until_all_pods_are_ready(v1, namespace)
 
     print(f"Ingress Controller was created with name '{name}'")
     return name
