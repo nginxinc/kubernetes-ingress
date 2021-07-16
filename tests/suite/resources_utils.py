@@ -1,18 +1,19 @@
 """Describe methods to utilize the kubernetes-client."""
 import re
+import os
 import time
 import yaml
 import json
 import pytest
 import requests
 
-from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1Api, V1Service, AppsV1Api, V1ContainerPort
+from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1Api, V1Service, AppsV1Api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes import client
 from more_itertools import first
 
-from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS
+from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS, PROJECT_ROOT
 
 
 class RBACAuthorization:
@@ -1265,5 +1266,9 @@ def write_to_json(fname, data) -> None:
     :param fname: filename.json
     :param data: dictionary
     """
-    with open(fname, "w+") as f:
+    file_path = f"{PROJECT_ROOT}/json_files/"
+    if os.path.isdir(file_path) == False:
+        os.mkdir(file_path)
+
+    with open(f"json_files/{fname}", "w+") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)

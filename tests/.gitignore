@@ -20,4 +20,4 @@ __pycache__/
 *.prof
 
 # json artifacts
-*.json
+json_files/*
