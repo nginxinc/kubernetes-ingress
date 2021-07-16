@@ -173,3 +173,15 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
 
 ### Modules
 
+{{% table %}} 
+|ConfigMap Key | Description | Default | Example | 
+| ---| ---| ---| --- | 
+|``opentracing`` | Enables [OpenTracing](https://opentracing.io) globally (for all Ingress, VirtualServer and VirtualServerRoute resources). Note: requires the Ingress Controller image with OpenTracing module and a tracer. See the [docs](/nginx-ingress-controller/third-party-modules/opentracing) for more information. | ``False`` |  | 
+|``opentracing-tracer`` | Sets the path to the vendor tracer binary plugin. | N/A |  | 
+|``opentracing-tracer-config`` | Sets the tracer configuration in JSON format. | N/A |  | 
+|``app-protect-compressed-requests-action`` | Sets the ``app_protect_compressed_requests_action`` [global directive](/nginx-app-protect/configuration/#global-directives). | ``drop`` |  | 
+|``app-protect-cookie-seed`` | Sets the ``app_protect_cookie_seed`` [global directive](/nginx-app-protect/configuration/#global-directives). | Random automatically generated string |  | 
+|``app-protect-failure-mode-action`` | Sets the ``app_protect_failure_mode_action`` [global directive](/nginx-app-protect/configuration/#global-directives). | ``pass`` |  | 
+|``app-protect-cpu-thresholds`` | Sets the ``app_protect_cpu_thresholds`` [global directive](/nginx-app-protect/configuration/#global-directives). | ``high=100 low=100`` |  | 
+|``app-protect-physical-memory-util-thresholds`` | Sets the ``app_protect_physical_memory_util_thresholds`` [global directive](/nginx-app-protect/configuration/#global-directives). | ``high=100 low=100`` |  | 
+{{% /table %}} 
