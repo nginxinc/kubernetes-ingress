@@ -27,10 +27,10 @@ build-staging:
 	hugo --gc -e staging
 
 hugo-server-drafts:
-	hugo server -e production -b 127.0.0.1/nginx/ -D --disableFastRender
+	hugo server -e production -b 127.0.0.1/nginx-ingress-controller/ -D --disableFastRender
 
 hugo-server:
-	hugo server -e production -b 127.0.0.1/nginx/ --disableFastRender
+	hugo server -e production -b 127.0.0.1/nginx-ingress-controller/ --disableFastRender
 
 netlify:
 	netlify build --context=branch-deploy
