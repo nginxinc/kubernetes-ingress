@@ -19,8 +19,8 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/grpc v1.29.1 // indirect
-	k8s.io/api v0.21.2
-	k8s.io/apimachinery v0.21.2
+	k8s.io/api v0.21.3
+	k8s.io/apimachinery v0.21.3
 	k8s.io/client-go v0.21.2
 	k8s.io/code-generator v0.21.2
 	k8s.io/gengo v0.0.0-20210203185629-de9496dff47b // indirect
