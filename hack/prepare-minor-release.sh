@@ -24,7 +24,7 @@ FILES_TO_UPDATE_IC_VERSION=(
 
 FILE_TO_UPDATE_HELM_CHART_VERSION=( deployments/helm-chart/Chart.yaml )
 
-DOCS_TO_UPDATE_FOLDER=docs-web
+DOCS_TO_UPDATE_FOLDER=docs/content
 
 if [ $# != 2 ];
 then
@@ -47,7 +47,7 @@ sed -i "" "1r hack/changelog-template.txt" CHANGELOG.md
 sed -i "" -e "s/%%TITLE%%/### $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" CHANGELOG.md
 
 # update docs CHANGELOG
-sed -i "" "1r hack/changelog-template.txt" $DOCS_TO_UPDATE_FOLDER/releases.md 
+sed -i "" "1r hack/changelog-template.txt" $DOCS_TO_UPDATE_FOLDER/releases.md
 sed -i "" -e "s/%%TITLE%%/## NGINX Ingress Controller $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g" -e "s/%%HELM_CHART_VERSION%%/$helm_chart_version/g" $DOCS_TO_UPDATE_FOLDER/releases.md
 
 # update docs
@@ -55,10 +55,10 @@ find $DOCS_TO_UPDATE_FOLDER -type f -name "*.md" -exec sed -i "" "s/v$prev_ic_ve
 find $DOCS_TO_UPDATE_FOLDER -type f -name "*.rst" -exec sed -i "" "s/v$prev_ic_version/v$ic_version/g" {} +
 
 # update IC version in the technical-specification doc
-sed -i "" "s/$prev_ic_version/$ic_version/g" $DOCS_TO_UPDATE_FOLDER/technical-specifications.md 
+sed -i "" "s/$prev_ic_version/$ic_version/g" $DOCS_TO_UPDATE_FOLDER/technical-specifications.md
 
 # update IC version in the building ingress controller doc
 sed -i "" "s/$prev_ic_version/$ic_version/g" $DOCS_TO_UPDATE_FOLDER/installation/building-ingress-controller-image.md
 
-# update IC version in the helm doc  
+# update IC version in the helm doc
 sed -i "" "s/$prev_ic_version/$ic_version/g" $DOCS_TO_UPDATE_FOLDER/installation/installation-with-helm.md

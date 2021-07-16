@@ -1,7 +1,9 @@
 """Describe methods to utilize the kubernetes-client."""
-
+import re
+import os
 import time
 import yaml
+import json
 import pytest
 import requests
 
@@ -11,7 +13,7 @@ from kubernetes.stream import stream
 from kubernetes import client
 from more_itertools import first
 
-from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS
+from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS, PROJECT_ROOT
 
 
 class RBACAuthorization:
@@ -946,6 +948,7 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
     else:
         name = create_daemon_set(apps_v1_api, namespace, dep)
     wait_until_all_pods_are_ready(v1, namespace)
+
     print(f"Ingress Controller was created with name '{name}'")
     return name
 
@@ -1209,7 +1212,7 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
             time.sleep(1)
         pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")
 
-def get_service_endpoint(kube_apis, service_name, namespace):
+def get_service_endpoint(kube_apis, service_name, namespace) -> str:
     """
     Wait for endpoint resource to spin up.
     :param kube_apis: Kubernates API object
@@ -1238,3 +1241,34 @@ def get_service_endpoint(kube_apis, service_name, namespace):
                 print("Reason: Internal server error and Request timed out")
                 raise ApiException
     return ep
+
+def get_last_reload_time(req_url, ingress_class) -> str:
+    
+    reload_metric = ""
+    print(req_url)
+    ensure_connection(req_url, 200)
+    resp = requests.get(req_url)
+    assert resp.status_code == 200, f"Expected 200 code for /metrics and got {resp.status_code}"
+    resp_content = resp.content.decode("utf-8")
+    for line in resp_content.splitlines():
+        if 'last_reload_milliseconds{class="%s"}' %ingress_class in line:
+            reload_metric = re.findall("\d+", line)[0]
+            return reload_metric
+
+def get_test_file_name(path) -> str:
+    """
+    :param path: full path to the test file
+    """
+    return (str(path).rsplit('/', 1)[-1])[:-3]
+
+def write_to_json(fname, data) -> None:
+    """
+    :param fname: filename.json
+    :param data: dictionary
+    """
+    file_path = f"{PROJECT_ROOT}/json_files/"
+    if os.path.isdir(file_path) == False:
+        os.mkdir(file_path)
+
+    with open(f"json_files/{fname}", "w+") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)

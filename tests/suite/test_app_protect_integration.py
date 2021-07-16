@@ -1,6 +1,7 @@
 import requests
 import pytest
 import yaml
+import json
 
 from settings import TEST_DATA, DEPLOYMENTS
 from suite.custom_resources_utils import (
@@ -25,6 +26,9 @@ from suite.resources_utils import (
     get_first_pod_name,
     get_file_contents,
     get_service_endpoint,
+    get_last_reload_time,
+    get_test_file_name,
+    write_to_json,
 )
 from suite.custom_resources_utils import (
     read_ap_custom_resource,
@@ -42,6 +46,7 @@ valid_resp_addr = "Server address:"
 valid_resp_name = "Server name:"
 invalid_resp_title = "Request Rejected"
 invalid_resp_body = "The requested URL was rejected. Please consult with your administrator."
+reload_times = {}
 
 
 class AppProtectSetup:
@@ -49,10 +54,12 @@ class AppProtectSetup:
     Encapsulate the example details.
     Attributes:
         req_url (str):
+        metrics_url (str):
     """
 
-    def __init__(self, req_url):
+    def __init__(self, req_url, metrics_url):
         self.req_url = req_url
+        self.metrics_url = metrics_url
 
 
 @pytest.fixture(scope="class")
@@ -71,6 +78,7 @@ def appprotect_setup(
     print("------------------------- Deploy simple backend application -------------------------")
     create_example_app(kube_apis, "simple", test_namespace)
     req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
+    metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(
         ingress_controller_endpoint.public_ip,
@@ -97,10 +105,14 @@ def appprotect_setup(
         delete_common_app(kube_apis, "simple", test_namespace)
         src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
         delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
+        write_to_json(
+            f"reload-{get_test_file_name(request.node.fspath)}.json",
+            reload_times
+        )
 
     request.addfinalizer(fin)
 
-    return AppProtectSetup(req_url)
+    return AppProtectSetup(req_url, metrics_url)
 
 
 def assert_ap_crd_info(ap_crd_info, policy_name) -> None:
@@ -141,7 +153,15 @@ def assert_valid_responses(response) -> None:
 @pytest.mark.appprotect
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
-    [{"extra_args": [f"-enable-custom-resources", f"-enable-app-protect"]}],
+    [
+        {
+            "extra_args": [
+                f"-enable-custom-resources",
+                f"-enable-app-protect",
+                f"-enable-prometheus-metrics",
+            ]
+        }
+    ],
     indirect=["crd_ingress_controller_with_ap"],
 )
 class TestAppProtect:
@@ -326,11 +346,10 @@ class TestAppProtect:
         print(response_block.text)
         log_contents = ""
         retry = 0
-        while (
-            "ASM:attack_type" not in log_contents
-            and retry <= 30
-        ):
-            log_contents_block = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+        while "ASM:attack_type" not in log_contents and retry <= 30:
+            log_contents_block = get_file_contents(
+                kube_apis.v1, log_loc, syslog_pod, test_namespace
+            )
             retry += 1
             wait_before_test(1)
             print(f"Security log not updated, retrying... #{retry}")
@@ -347,7 +366,7 @@ class TestAppProtect:
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-        
+
         assert_invalid_responses(response_block)
         assert (
             f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"'
@@ -364,7 +383,7 @@ class TestAppProtect:
         assert f'outcome="PASSED"' in log_contents
 
     def test_ap_multi_sec_logs(
-        self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
+        self, request, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
         """
         Test corresponding log entries with multiple log destinations (in this case, two syslog servers)
@@ -426,6 +445,10 @@ class TestAppProtect:
             wait_before_test(1)
             print(f"Security log not updated, retrying... #{retry}")
 
+        reload_ms = get_last_reload_time(appprotect_setup.metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms")
+        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
+
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog2_yaml, test_namespace)
@@ -449,7 +472,7 @@ class TestAppProtect:
         )
 
     def test_ap_enable_true_policy_correct_uds(
-        self, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
+        self, request, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
         """
         Test request with UDS rule string is rejected while AppProtect with User Defined Signatures is enabled in Ingress
@@ -479,7 +502,7 @@ class TestAppProtect:
         ap_crd_info = read_ap_custom_resource(
             kube_apis.custom_objects, test_namespace, "appolicies", ap_policy
         )
-        
+
         wait_before_test(120)
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
         print("----------------------- Send request ----------------------")
@@ -487,6 +510,10 @@ class TestAppProtect:
             appprotect_setup.req_url, headers={"host": ingress_host}, verify=False, data="kic"
         )
         print(response.text)
+
+        reload_ms = get_last_reload_time(appprotect_setup.metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms")
+        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
 
         # Restore default dataguard-alarm policy
         delete_and_create_ap_policy_from_yaml(

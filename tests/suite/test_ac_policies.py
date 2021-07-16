@@ -1,6 +1,12 @@
-import pytest, requests
+import pytest, requests, json
 from kubernetes.client.rest import ApiException
-from suite.resources_utils import wait_before_test, replace_configmap_from_yaml
+from suite.resources_utils import (
+    wait_before_test,
+    replace_configmap_from_yaml,
+    get_last_reload_time,
+    get_test_file_name,
+    write_to_json,
+)
 from suite.custom_resources_utils import (
     read_custom_resource,
     delete_virtual_server,
@@ -33,6 +39,7 @@ override_vs_src_route = (
 override_vs_spec_route_src = (
     f"{TEST_DATA}/access-control/route-subroute/virtual-server-override-spec-route.yaml"
 )
+reload_times = {}
 
 
 @pytest.fixture(scope="class")
@@ -59,6 +66,10 @@ def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
             ingress_controller_prerequisites.namespace,
             std_cm_src,
         )
+        write_to_json(
+            f"reload-{get_test_file_name(request.node.fspath)}.json",
+            reload_times
+        )
 
     request.addfinalizer(fin)
 
@@ -70,9 +81,16 @@ def config_setup(request, kube_apis, ingress_controller_prerequisites) -> None:
         (
             {
                 "type": "complete",
-                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],
+                "extra_args": [
+                    f"-enable-custom-resources",
+                    f"-enable-leader-election=false",
+                    f"-enable-prometheus-metrics",
+                ],
             },
-            {"example": "access-control", "app_type": "simple",},
+            {
+                "example": "access-control",
+                "app_type": "simple",
+            },
         )
     ],
     indirect=True,
@@ -94,6 +112,7 @@ class TestAccessControlPoliciesVs:
     @pytest.mark.smoke
     def test_deny_policy(
         self,
+        request,
         kube_apis,
         crd_ingress_controller,
         virtual_server_setup,
@@ -122,7 +141,9 @@ class TestAccessControlPoliciesVs:
         )
         wait_before_test()
 
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource(
+            kube_apis.custom_objects, test_namespace, "policies", pol_name
+        )
         print(f"\nUse IP listed in deny block: 10.0.0.1")
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
@@ -135,6 +156,10 @@ class TestAccessControlPoliciesVs:
             headers={"host": virtual_server_setup.vs_host, "X-Real-IP": "10.0.0.2"},
         )
         print(f"Response: {resp2.status_code}\n{resp2.text}")
+
+        reload_ms = get_last_reload_time(virtual_server_setup.metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms")
+        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
@@ -183,7 +208,9 @@ class TestAccessControlPoliciesVs:
         )
         wait_before_test()
 
-        policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
+        policy_info = read_custom_resource(
+            kube_apis.custom_objects, test_namespace, "policies", pol_name
+        )
         print(f"\nUse IP listed in allow block: 10.0.0.1")
         resp1 = requests.get(
             virtual_server_setup.backend_1_url,
@@ -384,7 +411,12 @@ class TestAccessControlPoliciesVs:
         )
 
     def test_route_override_spec(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, config_setup,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        config_setup,
     ):
         """
         Test allow policy specified under routes overrides block in spec

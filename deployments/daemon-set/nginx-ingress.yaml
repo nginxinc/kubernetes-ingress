@@ -30,8 +30,8 @@ spec:
           hostPort: 443
         - name: readiness-port
           containerPort: 8081
-       #- name: prometheus
-         #containerPort: 9113
+        - name: prometheus
+          containerPort: 9113
         readinessProbe:
          httpGet:
            path: /nginx-ready

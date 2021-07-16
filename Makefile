@@ -55,6 +55,11 @@ ifeq (${TARGET},local)
 	CGO_ENABLED=0 GO111MODULE=on GOOS=linux go build -trimpath -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${GIT_COMMIT} -X main.date=$(DATE)" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 endif
 
+.PHONY: build-goreleaser
+build-goreleaser: ## Build Ingress Controller binary using GoReleaser
+	@goreleaser -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with GoReleaser. Follow the docs to install it https://goreleaser.com/install\n"; exit $$code)
+	GOPATH=$(shell go env GOPATH) goreleaser build --rm-dist --debug --snapshot --id kubernetes-ingress
+
 .PHONY: debian-image
 debian-image: build ## Create Docker image for Ingress Controller (debian)
 	$(DOCKER_CMD) --build-arg BUILD_OS=debian

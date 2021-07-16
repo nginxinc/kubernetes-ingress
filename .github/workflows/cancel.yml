@@ -1,11 +1,10 @@
 name: Cancel
-on: 
+on:
   push:
     branches:
       - master
     paths-ignore:
       - 'docs/**'
-      - 'docs-web/**'
       - 'examples/**'
       - 'examples-of-custom-resources/**'
       - '**.md'
@@ -14,7 +13,6 @@ on:
       - master
     paths-ignore:
       - 'docs/**'
-      - 'docs-web/**'
       - 'examples/**'
       - 'examples-of-custom-resources/**'
       - '**.md'

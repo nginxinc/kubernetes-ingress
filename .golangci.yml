@@ -1,6 +1,35 @@
 linters-settings:
   misspell:
     locale: US
+  revive:
+    ignore-generated-header: true
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: empty-block
+      - name: error-naming
+      - name: error-return
+      - name: error-strings
+      - name: errorf
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: indent-error-flow
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: redefines-builtin-id
+      - name: superfluous-else
+      - name: time-naming
+      - name: unexported-return
+      - name: unreachable-code
+      - name: unused-parameter
+      - name: var-declaration
+      - name: var-naming
+  gocyclo:
+    min-complexity: 15
 
 linters:
     enable:
@@ -8,6 +37,7 @@ linters:
     - deadcode
     - errcheck
     - errorlint
+    - gocyclo
     - gofmt
     - gofumpt
     - goimports
@@ -18,8 +48,10 @@ linters:
     - makezero
     - misspell
     - nilerr
+    - noctx
     - predeclared
     - promlinter
+    - revive
     - staticcheck
     - structcheck
     - typecheck
@@ -32,5 +64,6 @@ linters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
+  new: true
 run:
   timeout: 5m

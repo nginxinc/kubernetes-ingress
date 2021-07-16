@@ -1,5 +1,5 @@
 import requests
-import pytest, time
+import pytest, json
 
 from settings import TEST_DATA, DEPLOYMENTS
 from suite.custom_resources_utils import (
@@ -19,7 +19,9 @@ from suite.resources_utils import (
     create_ingress_with_ap_annotations,
     ensure_response_from_backend,
     wait_before_test,
-    get_events,
+    get_last_reload_time,
+    get_test_file_name,
+    write_to_json,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 
@@ -29,6 +31,7 @@ valid_resp_addr = "Server address:"
 valid_resp_name = "Server name:"
 invalid_resp_title = "Request Rejected"
 invalid_resp_body = "The requested URL was rejected. Please consult with your administrator."
+reload_times = {}
 
 
 class BackendSetup:
@@ -40,9 +43,10 @@ class BackendSetup:
         ingress_host (str):
     """
 
-    def __init__(self, req_url, req_url_2, ingress_host):
+    def __init__(self, req_url, req_url_2, metrics_url, ingress_host):
         self.req_url = req_url
         self.req_url_2 = req_url_2
+        self.metrics_url = metrics_url
         self.ingress_host = ingress_host
 
 
@@ -62,6 +66,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
     create_example_app(kube_apis, "simple", test_namespace)
     req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
     req_url_2 = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend2"
+    metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(
         ingress_controller_endpoint.public_ip,
@@ -99,10 +104,14 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
         delete_common_app(kube_apis, "simple", test_namespace)
         src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
         delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
+        write_to_json(
+            f"reload-{get_test_file_name(request.node.fspath)}.json",
+            reload_times
+        )
 
     request.addfinalizer(fin)
 
-    return BackendSetup(req_url, req_url_2, ingress_host)
+    return BackendSetup(req_url, req_url_2, metrics_url, ingress_host)
 
 
 @pytest.mark.skip_for_nginx_oss
@@ -110,13 +119,21 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
 @pytest.mark.smoke
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
-    [{"extra_args": [f"-enable-custom-resources", f"-enable-app-protect"]}],
+    [
+        {
+            "extra_args": [
+                f"-enable-custom-resources",
+                f"-enable-app-protect",
+                f"-enable-prometheus-metrics",
+            ]
+        }
+    ],
     indirect=True,
 )
 class TestAppProtect:
     @pytest.mark.parametrize("backend_setup", [{"policy": "dataguard-alarm"}], indirect=True)
     def test_responses_dataguard_alarm(
-        self, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace
+        self, request, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace
     ):
         """
         Test dataguard-alarm AppProtect policy: Block malicious script in url
@@ -132,7 +149,12 @@ class TestAppProtect:
         resp_valid = requests.get(
             backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False
         )
+
         print(resp_valid.text)
+        reload_ms = get_last_reload_time(backend_setup.metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms")
+        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
+
         assert valid_resp_addr in resp_valid.text
         assert valid_resp_name in resp_valid.text
         assert resp_valid.status_code == 200
@@ -150,7 +172,7 @@ class TestAppProtect:
 
     @pytest.mark.parametrize("backend_setup", [{"policy": "file-block"}], indirect=True)
     def test_responses_file_block(
-        self, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace
+        self, request, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace
     ):
         """
         Test file-block AppProtect policy: Block executing types e.g. .bat and .exe
@@ -167,6 +189,11 @@ class TestAppProtect:
             backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False
         )
         print(resp_valid.text)
+
+        reload_ms = get_last_reload_time(backend_setup.metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms")
+        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
+
         assert valid_resp_addr in resp_valid.text
         assert valid_resp_name in resp_valid.text
         assert resp_valid.status_code == 200
@@ -280,7 +307,9 @@ class TestAppProtect:
             backend_setup.req_url, backend_setup.ingress_host, check404=True
         )
 
-        print("----------------------- Send request with User-Agent: browser ----------------------")
+        print(
+            "----------------------- Send request with User-Agent: browser ----------------------"
+        )
 
         headers_firefox = {
             "host": backend_setup.ingress_host,
@@ -326,11 +355,5 @@ class TestAppProtect:
             and valid_resp_name in resp_safari.text
             and valid_resp_name in resp_custom2.text
         )
-        assert (
-            invalid_resp_title in resp_chrome.text and
-            invalid_resp_title in resp_custom1.text
-        )
-        assert (
-            invalid_resp_body in resp_chrome.text and
-            invalid_resp_body in resp_custom1.text
-        )
+        assert invalid_resp_title in resp_chrome.text and invalid_resp_title in resp_custom1.text
+        assert invalid_resp_body in resp_chrome.text and invalid_resp_body in resp_custom1.text
