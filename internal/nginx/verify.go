@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/golang/glog"
 )
 
@@ -61,24 +62,32 @@ func (c *verifyClient) GetConfigVersion() (int, error) {
 // WaitForCorrectVersion calls the config version endpoint until it gets the expectedVersion,
 // which ensures that a new worker process has been started for that config version.
 func (c *verifyClient) WaitForCorrectVersion(expectedVersion int) error {
-	interval := 25 * time.Millisecond
-	startTime := time.Now()
-	endTime := startTime.Add(c.timeout)
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = 25 * time.Millisecond
+	b.MaxInterval = 500 * time.Millisecond
+	b.MaxElapsedTime = c.timeout
 
-	glog.V(3).Infof("Starting poll for updated nginx config")
-	for time.Now().Before(endTime) {
+	getConfig := func() error {
 		version, err := c.GetConfigVersion()
 		if err != nil {
-			glog.V(3).Infof("Unable to fetch version: %v", err)
-			continue
+			return err
 		}
-		if version == expectedVersion {
-			glog.V(3).Infof("success, version %v ensured. took: %v", expectedVersion, time.Since(startTime))
-			return nil
+		if version != expectedVersion {
+			return fmt.Errorf("expected version: %v, got: %v", expectedVersion, version)
 		}
-		time.Sleep(interval)
+		return nil
 	}
-	return fmt.Errorf("could not get expected version: %v after %v", expectedVersion, c.timeout)
+
+	glog.V(3).Infof("Starting poll for updated nginx config")
+
+	err := backoff.Retry(getConfig, b)
+	if err != nil {
+		return fmt.Errorf("could not get expected version: %v, error: %w", expectedVersion, err)
+	}
+
+	glog.V(3).Infof("success, version %v ensured. took: %v", expectedVersion, b.GetElapsedTime())
+
+	return nil
 }
 
 const configVersionTemplateString = `server {
