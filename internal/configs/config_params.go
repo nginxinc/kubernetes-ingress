@@ -111,6 +111,7 @@ type StaticConfigParams struct {
 	StubStatusOverUnixSocketForOSS bool
 	TLSPassthrough                 bool
 	EnableSnippets                 bool
+	EnableIngressSnippets          bool
 	NginxServiceMesh               bool
 	EnableInternalRoutes           bool
 	MainAppProtectLoadModule       bool

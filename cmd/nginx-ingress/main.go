@@ -168,6 +168,8 @@ var (
 	enableSnippets = flag.Bool("enable-snippets", false,
 		"Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources.")
 
+	enableIngressSnippets = flag.Bool("enable-ingress-snippets", true, "Enable custom NGINX configuration snippets for the Ingress resource")
+
 	globalConfiguration = flag.String("global-configuration", "",
 		`The namespace/name of the GlobalConfiguration resource for global configuration of the Ingress Controller. Requires -enable-custom-resources. Format: <namespace>/<name>`)
 
@@ -533,6 +535,7 @@ func main() {
 		StubStatusOverUnixSocketForOSS: *enablePrometheusMetrics,
 		TLSPassthrough:                 *enableTLSPassthrough,
 		EnableSnippets:                 *enableSnippets,
+		EnableIngressSnippets:          *enableIngressSnippets,
 		NginxServiceMesh:               *spireAgentAddress != "",
 		MainAppProtectLoadModule:       *appProtect,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
