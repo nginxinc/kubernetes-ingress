@@ -15,7 +15,8 @@ This document describes how to install the NGINX Ingress Controller in your Kube
   - Helm 3.0+.
   - Git.
   - If you’d like to use NGINX Plus:
-    - Build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
+    - Pull an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
+    - Alternatively, you can build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
     - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
 
 ## Getting the Chart Sources
