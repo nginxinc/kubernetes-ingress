@@ -44,6 +44,7 @@ type statusUpdater struct {
 	transportServerLister    cache.Store
 	policyLister             cache.Store
 	confClient               k8s_nginx.Interface
+	hasCorrectIngressClass   func(interface{}) bool
 }
 
 func (su *statusUpdater) UpdateExternalEndpointsForResources(resource []Resource) error {
@@ -635,6 +636,11 @@ func (su *statusUpdater) UpdatePolicyStatus(pol *v1.Policy, state string, reason
 	}
 	if !exists {
 		glog.V(3).Infof("Policy doesn't exist in Store")
+		return nil
+	}
+
+	if !su.hasCorrectIngressClass(polLatest) {
+		glog.V(3).Infof("ignoring policy with incorrect ingress class")
 		return nil
 	}
 
