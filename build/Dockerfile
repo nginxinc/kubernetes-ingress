@@ -20,7 +20,7 @@ RUN apk add --no-cache libcap
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.13 as alpine-plus
+FROM alpine:3.14.0 as alpine-plus
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
