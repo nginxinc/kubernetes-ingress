@@ -15,6 +15,10 @@ import (
 	"k8s.io/client-go/util/workqueue"
 )
 
+type Queue interface {
+	Enqueue(obj interface{})
+}
+
 // taskQueue manages a work queue through an independent worker that
 // invokes the given sync function for every work item inserted.
 type taskQueue struct {

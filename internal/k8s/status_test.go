@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/api"
+
 	"github.com/google/go-cmp/cmp"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
@@ -45,9 +47,11 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 		t.Errorf("Error adding TransportServer to the transportserver lister: %v", err)
 	}
 	su := statusUpdater{
-		transportServerLister: tsLister,
-		confClient:            fakeClient,
-		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		api: &api.Apis{
+			TransportServers: api.NewTransportServers(tsLister),
+		},
+		confClient: fakeClient,
+		keyFunc:    cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 
 	err = su.UpdateTransportServerStatus(ts, "after status", "after reason", "after message")
@@ -104,9 +108,11 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 		t.Errorf("Error adding TransportServer to the transportserver lister: %v", err)
 	}
 	su := statusUpdater{
-		transportServerLister: tsLister,
-		confClient:            fakeClient,
-		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		api: &api.Apis{
+			TransportServers: api.NewTransportServers(tsLister),
+		},
+		confClient: fakeClient,
+		keyFunc:    cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 
 	err = su.UpdateTransportServerStatus(ts, "same status", "same reason", "same message")
@@ -157,9 +163,11 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 	)
 
 	su := statusUpdater{
-		transportServerLister: tsLister,
-		confClient:            fakeClient,
-		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		api: &api.Apis{
+			TransportServers: api.NewTransportServers(tsLister),
+		},
+		confClient: fakeClient,
+		keyFunc:    cache.DeletionHandlingMetaNamespaceKeyFunc,
 		externalEndpoints: []conf_v1.ExternalEndpoint{
 			{
 				IP:    "123.123.123.123",
@@ -200,12 +208,11 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 			ing,
 		}},
 	)
-	ingLister := storeToIngressLister{}
-	ingLister.Store, _ = cache.NewInformer(
+	store, _ := cache.NewInformer(
 		cache.NewListWatchFromClient(fakeClient.NetworkingV1beta1().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
 		&networking.Ingress{}, 2, nil)
 
-	err := ingLister.Store.Add(&ing)
+	err := store.Add(&ing)
 	if err != nil {
 		t.Errorf("Error adding Ingress to the ingress lister: %v", err)
 	}
@@ -215,8 +222,10 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 		namespace:             "namespace",
 		externalServiceName:   "service-name",
 		externalStatusAddress: "123.123.123.123",
-		ingressLister:         &ingLister,
-		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		api: &api.Apis{
+			Ingresses: api.NewIngresses(store),
+		},
+		keyFunc: cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 	err = su.ClearIngressStatus(ing)
 	if err != nil {
@@ -303,12 +312,11 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 			ing,
 		}},
 	)
-	ingLister := storeToIngressLister{}
-	ingLister.Store, _ = cache.NewInformer(
+	store, _ := cache.NewInformer(
 		cache.NewListWatchFromClient(fakeClient.NetworkingV1beta1().RESTClient(), "ingresses", "nginx-ingress", fields.Everything()),
 		&networking.Ingress{}, 2, nil)
 
-	err := ingLister.Store.Add(&ing)
+	err := store.Add(&ing)
 	if err != nil {
 		t.Errorf("Error adding Ingress to the ingress lister: %v", err)
 	}
@@ -317,8 +325,10 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 		client:                fakeClient,
 		namespace:             "namespace",
 		externalStatusAddress: "",
-		ingressLister:         &ingLister,
-		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
+		api: &api.Apis{
+			Ingresses: api.NewIngresses(store),
+		},
+		keyFunc: cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 
 	su.SaveStatusFromIngressLink("3.3.3.3")

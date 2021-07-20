@@ -8,14 +8,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/api"
+
 	"github.com/google/go-cmp/cmp"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
-	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
@@ -23,9 +21,6 @@ import (
 	networking "k8s.io/api/networking/v1beta1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/kubernetes/fake"
-
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -322,239 +317,6 @@ func TestIngressClassForCustomResources(t *testing.T) {
 	}
 }
 
-func TestComparePorts(t *testing.T) {
-	scenarios := []struct {
-		sp       v1.ServicePort
-		cp       v1.ContainerPort
-		expected bool
-	}{
-		{
-			// match TargetPort.strval and Protocol
-			v1.ServicePort{
-				TargetPort: intstr.FromString("name"),
-				Protocol:   v1.ProtocolTCP,
-			},
-			v1.ContainerPort{
-				Name:          "name",
-				Protocol:      v1.ProtocolTCP,
-				ContainerPort: 80,
-			},
-			true,
-		},
-		{
-			// don't match Name and Protocol
-			v1.ServicePort{
-				Name:     "name",
-				Protocol: v1.ProtocolTCP,
-			},
-			v1.ContainerPort{
-				Name:          "name",
-				Protocol:      v1.ProtocolTCP,
-				ContainerPort: 80,
-			},
-			false,
-		},
-		{
-			// TargetPort intval mismatch, don't match by TargetPort.Name
-			v1.ServicePort{
-				Name:       "name",
-				TargetPort: intstr.FromInt(80),
-			},
-			v1.ContainerPort{
-				Name:          "name",
-				ContainerPort: 81,
-			},
-			false,
-		},
-		{
-			// match by TargetPort intval
-			v1.ServicePort{
-				TargetPort: intstr.IntOrString{
-					IntVal: 80,
-				},
-			},
-			v1.ContainerPort{
-				ContainerPort: 80,
-			},
-			true,
-		},
-		{
-			// Fall back on ServicePort.Port if TargetPort is empty
-			v1.ServicePort{
-				Name: "name",
-				Port: 80,
-			},
-			v1.ContainerPort{
-				Name:          "name",
-				ContainerPort: 80,
-			},
-			true,
-		},
-		{
-			// TargetPort intval mismatch
-			v1.ServicePort{
-				TargetPort: intstr.FromInt(80),
-			},
-			v1.ContainerPort{
-				ContainerPort: 81,
-			},
-			false,
-		},
-		{
-			// don't match empty ports
-			v1.ServicePort{},
-			v1.ContainerPort{},
-			false,
-		},
-	}
-
-	for _, scen := range scenarios {
-		if scen.expected != compareContainerPortAndServicePort(scen.cp, scen.sp) {
-			t.Errorf("Expected: %v, ContainerPort: %v, ServicePort: %v", scen.expected, scen.cp, scen.sp)
-		}
-	}
-}
-
-func TestFindProbeForPods(t *testing.T) {
-	pods := []*v1.Pod{
-		{
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
-					{
-						ReadinessProbe: &v1.Probe{
-							Handler: v1.Handler{
-								HTTPGet: &v1.HTTPGetAction{
-									Path: "/",
-									Host: "asdf.com",
-									Port: intstr.IntOrString{
-										IntVal: 80,
-									},
-								},
-							},
-							PeriodSeconds: 42,
-						},
-						Ports: []v1.ContainerPort{
-							{
-								Name:          "name",
-								ContainerPort: 80,
-								Protocol:      v1.ProtocolTCP,
-								HostIP:        "1.2.3.4",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-	svcPort := v1.ServicePort{
-		TargetPort: intstr.FromInt(80),
-	}
-	probe := findProbeForPods(pods, &svcPort)
-	if probe == nil || probe.PeriodSeconds != 42 {
-		t.Errorf("ServicePort.TargetPort as int match failed: %+v", probe)
-	}
-
-	svcPort = v1.ServicePort{
-		TargetPort: intstr.FromString("name"),
-		Protocol:   v1.ProtocolTCP,
-	}
-	probe = findProbeForPods(pods, &svcPort)
-	if probe == nil || probe.PeriodSeconds != 42 {
-		t.Errorf("ServicePort.TargetPort as string failed: %+v", probe)
-	}
-
-	svcPort = v1.ServicePort{
-		TargetPort: intstr.FromInt(80),
-		Protocol:   v1.ProtocolTCP,
-	}
-	probe = findProbeForPods(pods, &svcPort)
-	if probe == nil || probe.PeriodSeconds != 42 {
-		t.Errorf("ServicePort.TargetPort as int failed: %+v", probe)
-	}
-
-	svcPort = v1.ServicePort{
-		Port: 80,
-	}
-	probe = findProbeForPods(pods, &svcPort)
-	if probe == nil || probe.PeriodSeconds != 42 {
-		t.Errorf("ServicePort.Port should match if TargetPort is not set: %+v", probe)
-	}
-
-	svcPort = v1.ServicePort{
-		TargetPort: intstr.FromString("wrong_name"),
-	}
-	probe = findProbeForPods(pods, &svcPort)
-	if probe != nil {
-		t.Errorf("ServicePort.TargetPort should not have matched string: %+v", probe)
-	}
-
-	svcPort = v1.ServicePort{
-		TargetPort: intstr.FromInt(22),
-	}
-	probe = findProbeForPods(pods, &svcPort)
-	if probe != nil {
-		t.Errorf("ServicePort.TargetPort should not have matched int: %+v", probe)
-	}
-
-	svcPort = v1.ServicePort{
-		Port: 22,
-	}
-	probe = findProbeForPods(pods, &svcPort)
-	if probe != nil {
-		t.Errorf("ServicePort.Port mismatch: %+v", probe)
-	}
-}
-
-func TestGetServicePortForIngressPort(t *testing.T) {
-	fakeClient := fake.NewSimpleClientset()
-	cnf := configs.NewConfigurator(&nginx.LocalManager{}, &configs.StaticConfigParams{}, &configs.ConfigParams{}, &version1.TemplateExecutor{}, &version2.TemplateExecutor{}, false, false, nil, false, nil, false)
-	lbc := LoadBalancerController{
-		client:           fakeClient,
-		ingressClass:     "nginx",
-		configurator:     cnf,
-		metricsCollector: collectors.NewControllerFakeCollector(),
-	}
-	svc := v1.Service{
-		TypeMeta: meta_v1.TypeMeta{},
-		ObjectMeta: meta_v1.ObjectMeta{
-			Name:      "coffee-svc",
-			Namespace: "default",
-		},
-		Spec: v1.ServiceSpec{
-			Ports: []v1.ServicePort{
-				{
-					Name:       "foo",
-					Port:       80,
-					TargetPort: intstr.FromInt(22),
-				},
-			},
-		},
-		Status: v1.ServiceStatus{},
-	}
-	ingSvcPort := intstr.FromString("foo")
-	svcPort := lbc.getServicePortForIngressPort(ingSvcPort, &svc)
-	if svcPort == nil || svcPort.Port != 80 {
-		t.Errorf("TargetPort string match failed: %+v", svcPort)
-	}
-
-	ingSvcPort = intstr.FromInt(80)
-	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
-	if svcPort == nil || svcPort.Port != 80 {
-		t.Errorf("TargetPort int match failed: %+v", svcPort)
-	}
-
-	ingSvcPort = intstr.FromInt(22)
-	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
-	if svcPort != nil {
-		t.Errorf("Mismatched ints should not return port: %+v", svcPort)
-	}
-	ingSvcPort = intstr.FromString("bar")
-	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
-	if svcPort != nil {
-		t.Errorf("Mismatched strings should not return port: %+v", svcPort)
-	}
-}
-
 func TestFormatWarningsMessages(t *testing.T) {
 	warnings := []string{"Test warning", "Test warning 2"}
 
@@ -563,79 +325,6 @@ func TestFormatWarningsMessages(t *testing.T) {
 
 	if result != expected {
 		t.Errorf("formatWarningMessages(%v) returned %v but expected %v", warnings, result, expected)
-	}
-}
-
-func TestGetEndpointsBySubselectedPods(t *testing.T) {
-	boolPointer := func(b bool) *bool { return &b }
-	tests := []struct {
-		desc        string
-		targetPort  int32
-		svcEps      v1.Endpoints
-		expectedEps []podEndpoint
-	}{
-		{
-			desc:       "find one endpoint",
-			targetPort: 80,
-			expectedEps: []podEndpoint{
-				{
-					Address: "1.2.3.4:80",
-					MeshPodOwner: configs.MeshPodOwner{
-						OwnerType: "deployment",
-						OwnerName: "deploy-1",
-					},
-				},
-			},
-		},
-		{
-			desc:        "targetPort mismatch",
-			targetPort:  21,
-			expectedEps: nil,
-		},
-	}
-
-	pods := []*v1.Pod{
-		{
-			ObjectMeta: meta_v1.ObjectMeta{
-				OwnerReferences: []meta_v1.OwnerReference{
-					{
-						Kind:       "Deployment",
-						Name:       "deploy-1",
-						Controller: boolPointer(true),
-					},
-				},
-			},
-			Status: v1.PodStatus{
-				PodIP: "1.2.3.4",
-			},
-		},
-	}
-
-	svcEps := v1.Endpoints{
-		Subsets: []v1.EndpointSubset{
-			{
-				Addresses: []v1.EndpointAddress{
-					{
-						IP:       "1.2.3.4",
-						Hostname: "asdf.com",
-					},
-				},
-				Ports: []v1.EndpointPort{
-					{
-						Port: 80,
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			gotEndps := getEndpointsBySubselectedPods(test.targetPort, pods, svcEps)
-			if !reflect.DeepEqual(gotEndps, test.expectedEps) {
-				t.Errorf("getEndpointsBySubselectedPods() = %v, want %v", gotEndps, test.expectedEps)
-			}
-		})
 	}
 }
 
@@ -721,19 +410,21 @@ func TestGetPolicies(t *testing.T) {
 
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
-		policyLister: &cache.FakeCustomStore{
-			GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
-				switch key {
-				case "default/valid-policy":
-					return validPolicy, true, nil
-				case "default/invalid-policy":
-					return invalidPolicy, true, nil
-				case "nginx-ingress/valid-policy":
-					return nil, false, nil
-				default:
-					return nil, false, errors.New("GetByKey error")
-				}
-			},
+		api: &api.Apis{
+			Policies: api.NewPolicies(&cache.FakeCustomStore{
+				GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
+					switch key {
+					case "default/valid-policy":
+						return validPolicy, true, nil
+					case "default/invalid-policy":
+						return invalidPolicy, true, nil
+					case "nginx-ingress/valid-policy":
+						return nil, false, nil
+					default:
+						return nil, false, errors.New("GetByKey error")
+					}
+				},
+			}),
 		},
 	}
 
@@ -825,94 +516,6 @@ func TestCreatePolicyMap(t *testing.T) {
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("createPolicyMap() returned \n%s but expected \n%s", policyMapToString(result), policyMapToString(expected))
 	}
-}
-
-func TestGetPodOwnerTypeAndName(t *testing.T) {
-	tests := []struct {
-		desc    string
-		expType string
-		expName string
-		pod     *v1.Pod
-	}{
-		{
-			desc:    "deployment",
-			expType: "deployment",
-			expName: "deploy-name",
-			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("Deployment", "deploy-name", true)},
-		},
-		{
-			desc:    "stateful set",
-			expType: "statefulset",
-			expName: "statefulset-name",
-			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("StatefulSet", "statefulset-name", true)},
-		},
-		{
-			desc:    "daemon set",
-			expType: "daemonset",
-			expName: "daemonset-name",
-			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("DaemonSet", "daemonset-name", true)},
-		},
-		{
-			desc:    "replica set with no pod hash",
-			expType: "deployment",
-			expName: "replicaset-name",
-			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("ReplicaSet", "replicaset-name", false)},
-		},
-		{
-			desc:    "replica set with pod hash",
-			expType: "deployment",
-			expName: "replicaset-name",
-			pod: &v1.Pod{
-				ObjectMeta: createTestObjMeta("ReplicaSet", "replicaset-name-67c6f7c5fd", true),
-			},
-		},
-		{
-			desc:    "nil controller should use default values",
-			expType: "deployment",
-			expName: "deploy-name",
-			pod: &v1.Pod{
-				ObjectMeta: meta_v1.ObjectMeta{
-					OwnerReferences: []meta_v1.OwnerReference{
-						{
-							Name:       "deploy-name",
-							Controller: nil,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			actualType, actualName := getPodOwnerTypeAndName(test.pod)
-			if actualType != test.expType {
-				t.Errorf("getPodOwnerTypeAndName() returned %s for owner type but expected %s", actualType, test.expType)
-			}
-			if actualName != test.expName {
-				t.Errorf("getPodOwnerTypeAndName() returned %s for owner name but expected %s", actualName, test.expName)
-			}
-		})
-	}
-}
-
-func createTestObjMeta(kind, name string, podHashLabel bool) meta_v1.ObjectMeta {
-	controller := true
-	meta := meta_v1.ObjectMeta{
-		OwnerReferences: []meta_v1.OwnerReference{
-			{
-				Kind:       kind,
-				Name:       name,
-				Controller: &controller,
-			},
-		},
-	}
-	if podHashLabel {
-		meta.Labels = map[string]string{
-			"pod-template-hash": "67c6f7c5fd",
-		}
-	}
-	return meta
 }
 
 func policyMapToString(policies map[string]*conf_v1.Policy) string {
@@ -2056,25 +1659,27 @@ func TestPreSyncSecrets(t *testing.T) {
 	lbc := LoadBalancerController{
 		isNginxPlus: true,
 		secretStore: secrets.NewEmptyFakeSecretsStore(),
-		secretLister: &cache.FakeCustomStore{
-			ListFunc: func() []interface{} {
-				return []interface{}{
-					&api_v1.Secret{
-						ObjectMeta: meta_v1.ObjectMeta{
-							Name:      "supported-secret",
-							Namespace: "default",
+		api: &api.Apis{
+			Secrets: api.NewSecrets(&cache.FakeCustomStore{
+				ListFunc: func() []interface{} {
+					return []interface{}{
+						&api_v1.Secret{
+							ObjectMeta: meta_v1.ObjectMeta{
+								Name:      "supported-secret",
+								Namespace: "default",
+							},
+							Type: api_v1.SecretTypeTLS,
 						},
-						Type: api_v1.SecretTypeTLS,
-					},
-					&api_v1.Secret{
-						ObjectMeta: meta_v1.ObjectMeta{
-							Name:      "unsupported-secret",
-							Namespace: "default",
+						&api_v1.Secret{
+							ObjectMeta: meta_v1.ObjectMeta{
+								Name:      "unsupported-secret",
+								Namespace: "default",
+							},
+							Type: api_v1.SecretTypeOpaque,
 						},
-						Type: api_v1.SecretTypeOpaque,
-					},
-				}
-			},
+					}
+				},
+			}),
 		},
 	}
 

@@ -6,25 +6,235 @@ import (
 	"sort"
 
 	"github.com/golang/glog"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/api"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
-	v1 "k8s.io/api/core/v1"
-	networking "k8s.io/api/networking/v1beta1"
-	"k8s.io/client-go/tools/cache"
-
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
-
+	api_v1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
+	networking "k8s.io/api/networking/v1beta1"
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/dynamic/dynamicinformer"
+	"k8s.io/client-go/tools/cache"
 )
 
+func addHandlers(lbc *LoadBalancerController, input *NewLoadBalancerControllerInput) {
+	addSecretHandler(lbc)
+	addIngressHandler(lbc)
+	addServiceHandler(lbc)
+	addEndpointHandler(lbc)
+	addPodHandler(lbc)
+
+	if lbc.appProtectEnabled {
+		addAppProtectPolicyHandler(lbc)
+		addAppProtectLogConfHandler(lbc)
+		addAppProtectUserSigHandler(lbc)
+	}
+
+	if lbc.areCustomResourcesEnabled {
+		addVirtualServerHandler(lbc)
+		addVirtualServerRouteHandler(lbc)
+		addTransportServerHandler(lbc)
+		addPolicyHandler(lbc)
+
+		if input.GlobalConfiguration != "" {
+			namespace, name, _ := ParseNamespaceName(input.GlobalConfiguration)
+			addGlobalConfigurationHandler(lbc, namespace, name)
+		}
+	}
+
+	if input.ConfigMaps != "" {
+		namespace, name, err := ParseNamespaceName(input.ConfigMaps)
+		if err != nil {
+			glog.Warning(err)
+		} else {
+			addConfigMapHandler(lbc, namespace, name)
+		}
+	}
+
+	if input.IngressLink != "" {
+		addIngressLinkHandler(lbc, input.IngressLink)
+	}
+
+	if input.IsLeaderElectionEnabled {
+		addLeaderHandler(lbc)
+	}
+}
+
+func addLeaderHandler(lbc *LoadBalancerController) {
+	handler := createLeaderHandler(lbc)
+	var err error
+	lbc.leaderElector, err = newLeaderElector(lbc.client, handler, lbc.controllerNamespace, lbc.leaderElectionLockName)
+	if err != nil {
+		glog.V(3).Infof("Error starting LeaderElection: %v", err)
+	}
+}
+
+// addappProtectPolicyHandler creates dynamic informers for custom appprotect policy resource
+func addAppProtectPolicyHandler(lbc *LoadBalancerController) {
+	handlers := createAppProtectPolicyHandlers(lbc.syncQueue)
+	informer := lbc.dynInformerFactory.ForResource(appprotect.PolicyGVR).Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.AppProtectPolicies = api.NewAppProtectPolicies(informer.GetStore())
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+// addappProtectLogConfHandler creates dynamic informer for custom appprotect logging config resource
+func addAppProtectLogConfHandler(lbc *LoadBalancerController) {
+	handlers := createAppProtectLogConfHandlers(lbc.syncQueue)
+	informer := lbc.dynInformerFactory.ForResource(appprotect.LogConfGVR).Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.AppProtectLogConfs = api.NewAppProtectLogConfs(informer.GetStore())
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+// addappProtectUserSigHandler creates dynamic informer for custom appprotect user defined signature resource
+func addAppProtectUserSigHandler(lbc *LoadBalancerController) {
+	handlers := createAppProtectUserSigHandlers(lbc.syncQueue)
+	informer := lbc.dynInformerFactory.ForResource(appprotect.UserSigGVR).Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.AppProtectUserSigLister = api.NewAppProtectUserSigs(informer.GetStore())
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addSecretHandler(lbc *LoadBalancerController) {
+	handler := createSecretHandlers(lbc.syncQueue)
+	informer := lbc.sharedInformerFactory.Core().V1().Secrets().Informer()
+	informer.AddEventHandler(handler)
+	lbc.api.Secrets = api.NewSecrets(informer.GetStore())
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addServiceHandler(lbc *LoadBalancerController) {
+	handlers := createServiceHandlers(lbc.syncQueue, lbc.statusUpdater)
+	informer := lbc.sharedInformerFactory.Core().V1().Services().Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.Services = api.NewServices(informer.GetStore())
+
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addIngressHandler(lbc *LoadBalancerController) {
+	handlers := createIngressHandlers(lbc.syncQueue)
+	informer := lbc.sharedInformerFactory.Networking().V1beta1().Ingresses().Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.Ingresses = api.NewIngresses(informer.GetStore())
+
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addEndpointHandler(lbc *LoadBalancerController) {
+	handlers := createEndpointHandlers(lbc.syncQueue)
+	informer := lbc.sharedInformerFactory.Core().V1().Endpoints().Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.Endpoints = api.NewEndpoints(informer.GetStore())
+
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addConfigMapHandler(lbc *LoadBalancerController, namespace string, name string) {
+	handlers := createConfigMapHandlers(lbc.syncQueue, name)
+	store, controller := cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.client.CoreV1().RESTClient(),
+			"configmaps",
+			namespace,
+			fields.Everything()),
+		&api_v1.ConfigMap{},
+		lbc.resync,
+		handlers,
+	)
+	lbc.configMapController = controller
+	lbc.api.ConfigMaps = api.NewConfigMaps(store)
+	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.configMapController.HasSynced)
+}
+
+func addPodHandler(lbc *LoadBalancerController) {
+	informer := lbc.sharedInformerFactory.Core().V1().Pods().Informer()
+	lbc.api.Pods = api.NewPods(informer.GetIndexer())
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addVirtualServerHandler(lbc *LoadBalancerController) {
+	handlers := createVirtualServerHandlers(lbc.syncQueue)
+	informer := lbc.confSharedInformerFactory.K8s().V1().VirtualServers().Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.VirtualServers = api.NewVirtualServers(informer.GetStore())
+
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addVirtualServerRouteHandler(lbc *LoadBalancerController) {
+	handlers := createVirtualServerRouteHandlers(lbc.syncQueue)
+	informer := lbc.confSharedInformerFactory.K8s().V1().VirtualServerRoutes().Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.VirtualServerRoutes = api.NewVirtualServerRoutes(informer.GetStore())
+
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addPolicyHandler(lbc *LoadBalancerController) {
+	handlers := createPolicyHandlers(lbc.syncQueue)
+	informer := lbc.confSharedInformerFactory.K8s().V1().Policies().Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.Policies = api.NewPolicies(informer.GetStore())
+
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addGlobalConfigurationHandler(lbc *LoadBalancerController, namespace string, name string) {
+	handlers := createGlobalConfigurationHandlers(lbc.syncQueue)
+	store, controller := cache.NewInformer(
+		cache.NewListWatchFromClient(
+			lbc.confClient.K8sV1alpha1().RESTClient(),
+			"globalconfigurations",
+			namespace,
+			fields.Set{"metadata.name": name}.AsSelector()),
+		&conf_v1alpha1.GlobalConfiguration{},
+		lbc.resync,
+		handlers,
+	)
+	lbc.globalConfigurationController = controller
+	lbc.api.GlobalConfigurations = api.NewGlobalConfigurations(store)
+	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.globalConfigurationController.HasSynced)
+}
+
+func addTransportServerHandler(lbc *LoadBalancerController) {
+	handlers := createTransportServerHandlers(lbc.syncQueue)
+	informer := lbc.confSharedInformerFactory.K8s().V1alpha1().TransportServers().Informer()
+	informer.AddEventHandler(handlers)
+	lbc.api.TransportServers = api.NewTransportServers(informer.GetStore())
+	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+}
+
+func addIngressLinkHandler(lbc *LoadBalancerController, name string) {
+	handlers := createIngressLinkHandlers(lbc.syncQueue)
+	optionsModifier := func(options *meta_v1.ListOptions) {
+		options.FieldSelector = fields.Set{"metadata.name": name}.String()
+	}
+
+	informer := dynamicinformer.NewFilteredDynamicInformer(lbc.dynClient, ingressLinkGVR, lbc.controllerNamespace, lbc.resync,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, optionsModifier)
+
+	informer.Informer().AddEventHandlerWithResyncPeriod(handlers, lbc.resync)
+
+	lbc.ingressLinkInformer = informer.Informer()
+	lbc.api.IngressLinks = api.NewIngressLinks(informer.Informer().GetStore())
+
+	lbc.cacheSyncs = append(lbc.cacheSyncs, lbc.ingressLinkInformer.HasSynced)
+}
+
 // createConfigMapHandlers builds the handler funcs for config maps
-func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.ResourceEventHandlerFuncs {
+func createConfigMapHandlers(q Queue, name string) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			configMap := obj.(*v1.ConfigMap)
 			if configMap.Name == name {
 				glog.V(3).Infof("Adding ConfigMap: %v", configMap.Name)
-				lbc.AddSyncQueue(obj)
+				q.Enqueue(obj)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
@@ -43,7 +253,7 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 			}
 			if configMap.Name == name {
 				glog.V(3).Infof("Removing ConfigMap: %v", configMap.Name)
-				lbc.AddSyncQueue(obj)
+				q.Enqueue(obj)
 			}
 		},
 		UpdateFunc: func(old, cur interface{}) {
@@ -51,7 +261,7 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 				configMap := cur.(*v1.ConfigMap)
 				if configMap.Name == name {
 					glog.V(3).Infof("ConfigMap %v changed, syncing", cur.(*v1.ConfigMap).Name)
-					lbc.AddSyncQueue(cur)
+					q.Enqueue(cur)
 				}
 			}
 		},
@@ -59,12 +269,12 @@ func createConfigMapHandlers(lbc *LoadBalancerController, name string) cache.Res
 }
 
 // createEndpointHandlers builds the handler funcs for endpoints
-func createEndpointHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createEndpointHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			endpoint := obj.(*v1.Endpoints)
 			glog.V(3).Infof("Adding endpoints: %v", endpoint.Name)
-			lbc.AddSyncQueue(obj)
+			q.Enqueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
 			endpoint, isEndpoint := obj.(*v1.Endpoints)
@@ -81,24 +291,24 @@ func createEndpointHandlers(lbc *LoadBalancerController) cache.ResourceEventHand
 				}
 			}
 			glog.V(3).Infof("Removing endpoints: %v", endpoint.Name)
-			lbc.AddSyncQueue(obj)
+			q.Enqueue(obj)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			if !reflect.DeepEqual(old, cur) {
 				glog.V(3).Infof("Endpoints %v changed, syncing", cur.(*v1.Endpoints).Name)
-				lbc.AddSyncQueue(cur)
+				q.Enqueue(cur)
 			}
 		},
 	}
 }
 
 // createIngressHandlers builds the handler funcs for ingresses
-func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createIngressHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ingress := obj.(*networking.Ingress)
 			glog.V(3).Infof("Adding Ingress: %v", ingress.Name)
-			lbc.AddSyncQueue(obj)
+			q.Enqueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
 			ingress, isIng := obj.(*networking.Ingress)
@@ -115,21 +325,21 @@ func createIngressHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 				}
 			}
 			glog.V(3).Infof("Removing Ingress: %v", ingress.Name)
-			lbc.AddSyncQueue(obj)
+			q.Enqueue(obj)
 		},
 		UpdateFunc: func(old, current interface{}) {
 			c := current.(*networking.Ingress)
 			o := old.(*networking.Ingress)
 			if hasChanges(o, c) {
 				glog.V(3).Infof("Ingress %v changed, syncing", c.Name)
-				lbc.AddSyncQueue(c)
+				q.Enqueue(c)
 			}
 		},
 	}
 }
 
 // createSecretHandlers builds the handler funcs for secrets
-func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createSecretHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			secret := obj.(*v1.Secret)
@@ -138,7 +348,7 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 				return
 			}
 			glog.V(3).Infof("Adding Secret: %v", secret.Name)
-			lbc.AddSyncQueue(obj)
+			q.Enqueue(obj)
 		},
 		DeleteFunc: func(obj interface{}) {
 			secret, isSecr := obj.(*v1.Secret)
@@ -160,7 +370,7 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 			}
 
 			glog.V(3).Infof("Removing Secret: %v", secret.Name)
-			lbc.AddSyncQueue(obj)
+			q.Enqueue(obj)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			// A secret cannot change its type. That's why we only need to check the type of the current secret.
@@ -172,7 +382,7 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 
 			if !reflect.DeepEqual(old, cur) {
 				glog.V(3).Infof("Secret %v changed, syncing", cur.(*v1.Secret).Name)
-				lbc.AddSyncQueue(cur)
+				q.Enqueue(cur)
 			}
 		},
 	}
@@ -187,13 +397,13 @@ func createSecretHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 // or a change of the externalName field of an ExternalName service.
 //
 // In both cases we enqueue the service to be processed by syncService
-func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createServiceHandlers(q Queue, su *statusUpdater) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			svc := obj.(*v1.Service)
 
 			glog.V(3).Infof("Adding service: %v", svc.Name)
-			lbc.AddSyncQueue(svc)
+			q.Enqueue(svc)
 		},
 		DeleteFunc: func(obj interface{}) {
 			svc, isSvc := obj.(*v1.Service)
@@ -211,19 +421,19 @@ func createServiceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandl
 			}
 
 			glog.V(3).Infof("Removing service: %v", svc.Name)
-			lbc.AddSyncQueue(svc)
+			q.Enqueue(svc)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			if !reflect.DeepEqual(old, cur) {
 				curSvc := cur.(*v1.Service)
-				if lbc.IsExternalServiceForStatus(curSvc) {
-					lbc.AddSyncQueue(curSvc)
+				if su.IsExternalServiceForStatus(curSvc) {
+					q.Enqueue(curSvc)
 					return
 				}
 				oldSvc := old.(*v1.Service)
 				if hasServiceChanges(oldSvc, curSvc) {
 					glog.V(3).Infof("Service %v changed, syncing", curSvc.Name)
-					lbc.AddSyncQueue(curSvc)
+					q.Enqueue(curSvc)
 				}
 			}
 		},
@@ -281,12 +491,12 @@ func hasServicePortChanges(oldServicePorts []v1.ServicePort, curServicePorts []v
 	return false
 }
 
-func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createVirtualServerHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vs := obj.(*conf_v1.VirtualServer)
 			glog.V(3).Infof("Adding VirtualServer: %v", vs.Name)
-			lbc.AddSyncQueue(vs)
+			q.Enqueue(vs)
 		},
 		DeleteFunc: func(obj interface{}) {
 			vs, isVs := obj.(*conf_v1.VirtualServer)
@@ -303,25 +513,25 @@ func createVirtualServerHandlers(lbc *LoadBalancerController) cache.ResourceEven
 				}
 			}
 			glog.V(3).Infof("Removing VirtualServer: %v", vs.Name)
-			lbc.AddSyncQueue(vs)
+			q.Enqueue(vs)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVs := cur.(*conf_v1.VirtualServer)
 			oldVs := old.(*conf_v1.VirtualServer)
 			if !reflect.DeepEqual(oldVs.Spec, curVs.Spec) {
 				glog.V(3).Infof("VirtualServer %v changed, syncing", curVs.Name)
-				lbc.AddSyncQueue(curVs)
+				q.Enqueue(curVs)
 			}
 		},
 	}
 }
 
-func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createVirtualServerRouteHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			vsr := obj.(*conf_v1.VirtualServerRoute)
 			glog.V(3).Infof("Adding VirtualServerRoute: %v", vsr.Name)
-			lbc.AddSyncQueue(vsr)
+			q.Enqueue(vsr)
 		},
 		DeleteFunc: func(obj interface{}) {
 			vsr, isVsr := obj.(*conf_v1.VirtualServerRoute)
@@ -338,25 +548,25 @@ func createVirtualServerRouteHandlers(lbc *LoadBalancerController) cache.Resourc
 				}
 			}
 			glog.V(3).Infof("Removing VirtualServerRoute: %v", vsr.Name)
-			lbc.AddSyncQueue(vsr)
+			q.Enqueue(vsr)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curVsr := cur.(*conf_v1.VirtualServerRoute)
 			oldVsr := old.(*conf_v1.VirtualServerRoute)
 			if !reflect.DeepEqual(oldVsr.Spec, curVsr.Spec) {
 				glog.V(3).Infof("VirtualServerRoute %v changed, syncing", curVsr.Name)
-				lbc.AddSyncQueue(curVsr)
+				q.Enqueue(curVsr)
 			}
 		},
 	}
 }
 
-func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createGlobalConfigurationHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			gc := obj.(*conf_v1alpha1.GlobalConfiguration)
 			glog.V(3).Infof("Adding GlobalConfiguration: %v", gc.Name)
-			lbc.AddSyncQueue(gc)
+			q.Enqueue(gc)
 		},
 		DeleteFunc: func(obj interface{}) {
 			gc, isGc := obj.(*conf_v1alpha1.GlobalConfiguration)
@@ -373,24 +583,24 @@ func createGlobalConfigurationHandlers(lbc *LoadBalancerController) cache.Resour
 				}
 			}
 			glog.V(3).Infof("Removing GlobalConfiguration: %v", gc.Name)
-			lbc.AddSyncQueue(gc)
+			q.Enqueue(gc)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curGc := cur.(*conf_v1alpha1.GlobalConfiguration)
 			if !reflect.DeepEqual(old, cur) {
 				glog.V(3).Infof("GlobalConfiguration %v changed, syncing", curGc.Name)
-				lbc.AddSyncQueue(curGc)
+				q.Enqueue(curGc)
 			}
 		},
 	}
 }
 
-func createTransportServerHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createTransportServerHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			ts := obj.(*conf_v1alpha1.TransportServer)
 			glog.V(3).Infof("Adding TransportServer: %v", ts.Name)
-			lbc.AddSyncQueue(ts)
+			q.Enqueue(ts)
 		},
 		DeleteFunc: func(obj interface{}) {
 			ts, isTs := obj.(*conf_v1alpha1.TransportServer)
@@ -407,24 +617,24 @@ func createTransportServerHandlers(lbc *LoadBalancerController) cache.ResourceEv
 				}
 			}
 			glog.V(3).Infof("Removing TransportServer: %v", ts.Name)
-			lbc.AddSyncQueue(ts)
+			q.Enqueue(ts)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curTs := cur.(*conf_v1alpha1.TransportServer)
 			if !reflect.DeepEqual(old, cur) {
 				glog.V(3).Infof("TransportServer %v changed, syncing", curTs.Name)
-				lbc.AddSyncQueue(curTs)
+				q.Enqueue(curTs)
 			}
 		},
 	}
 }
 
-func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createPolicyHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pol := obj.(*conf_v1.Policy)
 			glog.V(3).Infof("Adding Policy: %v", pol.Name)
-			lbc.AddSyncQueue(pol)
+			q.Enqueue(pol)
 		},
 		DeleteFunc: func(obj interface{}) {
 			pol, isPol := obj.(*conf_v1.Policy)
@@ -441,25 +651,25 @@ func createPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandle
 				}
 			}
 			glog.V(3).Infof("Removing Policy: %v", pol.Name)
-			lbc.AddSyncQueue(pol)
+			q.Enqueue(pol)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			curPol := cur.(*conf_v1.Policy)
 			oldPol := old.(*conf_v1.Policy)
 			if !reflect.DeepEqual(oldPol.Spec, curPol.Spec) {
 				glog.V(3).Infof("Policy %v changed, syncing", curPol.Name)
-				lbc.AddSyncQueue(curPol)
+				q.Enqueue(curPol)
 			}
 		},
 	}
 }
 
-func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createIngressLinkHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			link := obj.(*unstructured.Unstructured)
 			glog.V(3).Infof("Adding IngressLink: %v", link.GetName())
-			lbc.AddSyncQueue(link)
+			q.Enqueue(link)
 		},
 		DeleteFunc: func(obj interface{}) {
 			link, isUnstructured := obj.(*unstructured.Unstructured)
@@ -478,7 +688,7 @@ func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventH
 			}
 
 			glog.V(3).Infof("Removing IngressLink: %v", link.GetName())
-			lbc.AddSyncQueue(link)
+			q.Enqueue(link)
 		},
 		UpdateFunc: func(old, cur interface{}) {
 			oldLink := old.(*unstructured.Unstructured)
@@ -486,22 +696,22 @@ func createIngressLinkHandlers(lbc *LoadBalancerController) cache.ResourceEventH
 			different, err := areResourcesDifferent(oldLink, curLink)
 			if err != nil {
 				glog.V(3).Infof("Error when comparing IngressLinks: %v", err)
-				lbc.AddSyncQueue(curLink)
+				q.Enqueue(curLink)
 			}
 			if different {
 				glog.V(3).Infof("IngressLink %v changed, syncing", oldLink.GetName())
-				lbc.AddSyncQueue(curLink)
+				q.Enqueue(curLink)
 			}
 		},
 	}
 }
 
-func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createAppProtectPolicyHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			pol := obj.(*unstructured.Unstructured)
 			glog.V(3).Infof("Adding AppProtectPolicy: %v", pol.GetName())
-			lbc.AddSyncQueue(pol)
+			q.Enqueue(pol)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldPol := oldObj.(*unstructured.Unstructured)
@@ -509,15 +719,15 @@ func createAppProtectPolicyHandlers(lbc *LoadBalancerController) cache.ResourceE
 			different, err := areResourcesDifferent(oldPol, newPol)
 			if err != nil {
 				glog.V(3).Infof("Error when comparing policy %v", err)
-				lbc.AddSyncQueue(newPol)
+				q.Enqueue(newPol)
 			}
 			if different {
 				glog.V(3).Infof("ApPolicy %v changed, syncing", oldPol.GetName())
-				lbc.AddSyncQueue(newPol)
+				q.Enqueue(newPol)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
+			q.Enqueue(obj)
 		},
 	}
 	return handlers
@@ -546,12 +756,12 @@ func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bo
 	return !eq, nil
 }
 
-func createAppProtectLogConfHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createAppProtectLogConfHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			conf := obj.(*unstructured.Unstructured)
 			glog.V(3).Infof("Adding AppProtectLogConf: %v", conf.GetName())
-			lbc.AddSyncQueue(conf)
+			q.Enqueue(conf)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldConf := oldObj.(*unstructured.Unstructured)
@@ -559,26 +769,26 @@ func createAppProtectLogConfHandlers(lbc *LoadBalancerController) cache.Resource
 			different, err := areResourcesDifferent(oldConf, newConf)
 			if err != nil {
 				glog.V(3).Infof("Error when comparing LogConfs %v", err)
-				lbc.AddSyncQueue(newConf)
+				q.Enqueue(newConf)
 			}
 			if different {
 				glog.V(3).Infof("ApLogConf %v changed, syncing", oldConf.GetName())
-				lbc.AddSyncQueue(newConf)
+				q.Enqueue(newConf)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
+			q.Enqueue(obj)
 		},
 	}
 	return handlers
 }
 
-func createAppProtectUserSigHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+func createAppProtectUserSigHandlers(q Queue) cache.ResourceEventHandlerFuncs {
 	handlers := cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			sig := obj.(*unstructured.Unstructured)
 			glog.V(3).Infof("Adding AppProtectUserSig: %v", sig.GetName())
-			lbc.AddSyncQueue(sig)
+			q.Enqueue(sig)
 		},
 		UpdateFunc: func(oldObj, obj interface{}) {
 			oldSig := oldObj.(*unstructured.Unstructured)
@@ -586,15 +796,15 @@ func createAppProtectUserSigHandlers(lbc *LoadBalancerController) cache.Resource
 			different, err := areResourcesDifferent(oldSig, newSig)
 			if err != nil {
 				glog.V(3).Infof("Error when comparing UserSigs %v", err)
-				lbc.AddSyncQueue(newSig)
+				q.Enqueue(newSig)
 			}
 			if different {
 				glog.V(3).Infof("ApUserSig %v changed, syncing", oldSig.GetName())
-				lbc.AddSyncQueue(newSig)
+				q.Enqueue(newSig)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			lbc.AddSyncQueue(obj)
+			q.Enqueue(obj)
 		},
 	}
 	return handlers
