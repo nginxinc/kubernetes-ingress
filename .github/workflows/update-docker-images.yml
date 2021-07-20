@@ -1,0 +1,62 @@
+name: Update Docker Images
+
+on:
+  schedule:
+    - cron:  '0 1 * * *'
+  push:
+    branches:
+      - chore/keep-docker-images-updated
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  variables:
+    name: Get versions of base images
+    runs-on: ubuntu-20.04
+    outputs:
+      kic-tag: ${{ steps.kic.outputs.tag }}
+      versions: ${{ steps.versions.outputs.matrix }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set KIC version
+        id: kic
+        run: |
+          tag=$(git tag --sort=-version:refname | head -n1)
+          echo "::set-output name=tag::${tag//v}"
+      - name: Checkout Repository at ${{ steps.kic.outputs.tag }}
+        run: |
+          git checkout v${{ steps.kic.outputs.tag }}
+      - name: Set NGINX versions
+        id: versions
+        run: |
+          nginx=library/$(grep -m1 "FROM nginx:" < build/Dockerfile | awk -F" " '{print $2}')
+          nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
+          nginx_ubi=$(grep "FROM redhat" < build/Dockerfile | awk -F" " '{print $2}')
+          echo "::set-output name=matrix::[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]"
+
+  check:
+    name: Check if updates are needed
+    runs-on: ubuntu-20.04
+    needs: variables
+    strategy:
+      matrix:
+        base_image: ${{ fromJson(needs.variables.outputs.versions) }}
+    steps:
+      - name: Get distro
+        id: dist
+        run: |
+          if [ ${{ matrix.base_image.distro }} == "debian" ]; then dist=""; else dist="-${{ matrix.base_image.distro }}"; fi
+          echo "::set-output name=distro::${dist}"
+      - name: Check if update available for ${{ matrix.base_image.version }}
+        id: check
+        uses: lucacome/docker-image-update-checker@v1
+        with:
+          base-image: ${{ matrix.base_image.version}}
+          image: nginx/nginx-ingress:${{ needs.variables.outputs.kic-tag }}${{ steps.dist.outputs.distro }}
+      - run: echo ${{ steps.check.outputs.needs-updating }}
