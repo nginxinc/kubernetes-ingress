@@ -8,7 +8,7 @@ ARG FILES=
 FROM nginx:1.21.1 AS debian
 
 RUN apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin libsystemd0 libudev1 \
 	&& rm -rf /var/lib/apt/lists/*
 
 
@@ -40,8 +40,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temporary fix for CVE-2021-3520, CVE-2021-33560, CVE-2021-20231, CVE-2021-20305, CVE-2021-20305
-	&& apt-get install -y liblz4-1 libgcrypt20 libgnutls30 libhogweed4 libnettle6 \
+	# temporary fix for CVE-2021-3520, CVE-2021-33560, CVE-2021-20231, CVE-2021-20305, CVE-2021-20305 CVE-2021-33910
+	&& apt-get install -y liblz4-1 libgcrypt20 libgnutls30 libhogweed4 libnettle6 libsystemd0 libudev1 \
 	&& curl -sSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -sSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
@@ -83,6 +83,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 ############################################# Base image for UBI 8 #############################################
 FROM redhat/ubi8-minimal AS ubi-base-8
 
+# temporary fix for CVE-2021-33910
+RUN microdnf --nodocs install -y systemd-pam
 
 ############################################# Base image for UBI 7 #############################################
 FROM registry.access.redhat.com/ubi7/ubi AS ubi-base-7
@@ -99,7 +101,7 @@ LABEL name="NGINX Ingress Controller" \
 	summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
-RUN microdnf --nodocs install -y shadow-utils ca-certificates \
+RUN microdnf --nodocs install -y shadow-utils ca-certificates systemd systemd-libs \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
