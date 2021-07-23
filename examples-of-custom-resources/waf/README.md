@@ -4,7 +4,7 @@ In this example we deploy the NGINX Plus Ingress controller with [NGINX App Prot
 
 ## Prerequisites
 
-1. Follow the installation [instructions](../../docs/installation.md) to deploy the Ingress controller with NGINX App Protect.
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress controller with NGINX App Protect.
 1. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III

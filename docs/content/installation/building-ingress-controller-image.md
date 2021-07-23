@@ -1,12 +1,12 @@
 ---
 title: Building the Ingress Controller Image
 description: 
-weight: 1600
+weight: 2100
 doctypes: [""]
 toc: true
 ---
 
-This document explains how to build an Ingress Controller image. Note that for NGINX, we provide the image though [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/). For NGINX Plus, you need to build the image.
+This document explains how to build an Ingress Controller image using the source code. You can also use pre-built images: please see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the NGINX Ingress Controller based on NGINX Plus from the F5 Docker registry; for NGINX Ingress Controller based on NGINX OSS, we provide the images through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
 
 ## Prerequisites
 
