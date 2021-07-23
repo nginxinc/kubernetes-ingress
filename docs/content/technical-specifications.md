@@ -38,17 +38,17 @@ The supported architecture is x86-64.
 All images include NGINX Plus R24.
 The supported architecture is x86-64.
 
-NGINX Plus images are not available through DockerHub.
+NGINX Plus images are available through the F5 Container registry `docker-registry.nginx.com` - see [Pulling the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
 
 {{% table %}} 
-|Name | Base image | Third-party modules | 
-| ---| ---| --- | 
-|Alpine-based image | ``alpine:3.13`` |  | 
-|Debian-based image | ``debian:buster-slim`` |  | 
-|Debian-based image with Opentracing | ``debian:buster-slim`` | NGINX Plus OpenTracing module, C++ OpenTracing binding for Jaeger 0.4.2 | 
-|Ubi-based image | ``registry.access.redhat.com/ubi8/ubi:8.3`` |  | 
-|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module | 
-|Ubi-based image with App Protect | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect module | 
+|Name | Base image | Third-party modules | F5 Container Registry Image |
+| ---| ---| --- | --- | 
+|Alpine-based image | ``alpine:3.13`` |  | `nginx-ic/nginx-plus-ingress:1.12.0-alpine` |
+|Debian-based image | ``debian:buster-slim`` |  | `nginx-ic/nginx-plus-ingress:1.12.0` |
+|Debian-based image with Opentracing | ``debian:buster-slim`` | NGINX Plus OpenTracing module, C++ OpenTracing binding for Jaeger 0.4.2 | `nginx-ic/nginx-plus-ingress:1.12.0-ot` |
+|Ubi-based image | ``redhat/ubi8-minimal`` |  | `nginx-ic/nginx-plus-ingress:1.12.0-ubi` |
+|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module | `nginx-ic-nap/nginx-plus-ingress:1.12.0` |
+|Ubi-based image with App Protect | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect module | `nginx-ic-nap/nginx-plus-ingress:1.12.0-ubi` |
 {{% /table %}} 
 
 ### Custom Images
