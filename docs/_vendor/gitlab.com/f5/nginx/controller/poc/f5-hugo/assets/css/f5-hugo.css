@@ -562,7 +562,7 @@ code {
     color: #1d9cd3;
     font-weight: 500;
     display: inline;
-    margin-left: .25rem;
+    /* margin-left: .25rem; */
     margin-right: .25rem;
     white-space: nowrap;
   }
@@ -686,6 +686,10 @@ main a:hover {
     color: var(--nginx-green);
 }
 
+.sidebar-title {
+    font-size: 22px;
+}
+
 .nginx-toc {
     display: block;
     background: transparent;
@@ -703,7 +707,7 @@ main a:hover {
 }
 
 .l1, .l1 > a {
-    font-size: 20px;
+    font-size: 16px;
 }
 
 .l2, .l2 > a {
