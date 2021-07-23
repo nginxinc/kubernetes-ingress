@@ -149,6 +149,7 @@ type LoadBalancerController struct {
 	configuration                 *Configuration
 	secretStore                   secrets.SecretStore
 	appProtectConfiguration       appprotect.Configuration
+	configMap                     *api_v1.ConfigMap
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -621,13 +622,26 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 		lbc.syncQueue.Requeue(task, err)
 		return
 	}
+	if configExists {
+		lbc.configMap = obj.(*api_v1.ConfigMap)
+		lbc.statusUpdater.SaveStatusFromExternalStatus(lbc.configMap.Data["external-status-address"])
+	} else {
+		lbc.configMap = nil
+	}
+
+	if !lbc.isNginxReady {
+		glog.V(3).Infof("Skipping ConfigMap update because the pod is not ready yet")
+		return
+	}
+
+	lbc.updateAllConfigs()
+}
+
+func (lbc *LoadBalancerController) updateAllConfigs() {
 	cfgParams := configs.NewDefaultConfigParams()
 
-	if configExists {
-		cfgm := obj.(*api_v1.ConfigMap)
-		cfgParams = configs.ParseConfigMap(cfgm, lbc.isNginxPlus, lbc.appProtectEnabled)
-
-		lbc.statusUpdater.SaveStatusFromExternalStatus(cfgm.Data["external-status-address"])
+	if lbc.configMap != nil {
+		cfgParams = configs.ParseConfigMap(lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled)
 	}
 
 	resources := lbc.configuration.GetResources()
@@ -636,7 +650,7 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 
 	resourceExes := lbc.createExtendedResources(resources)
 
-	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
+	warnings, updateErr := lbc.configurator.UpdateConfig(cfgParams, resourceExes)
 
 	eventTitle := "Updated"
 	eventType := api_v1.EventTypeNormal
@@ -652,9 +666,15 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 		eventWarningMessage = "with warnings. Please check the logs"
 	}
 
-	if configExists {
-		cfgm := obj.(*api_v1.ConfigMap)
-		lbc.recorder.Eventf(cfgm, eventType, eventTitle, "Configuration from %v was updated %s", key, eventWarningMessage)
+	if lbc.configMap != nil {
+		key := getResourceKey(&lbc.configMap.ObjectMeta)
+		lbc.recorder.Eventf(lbc.configMap, eventType, eventTitle, "Configuration from %v was updated %s", key, eventWarningMessage)
+	}
+
+	gc := lbc.configuration.GetGlobalConfiguration()
+	if gc != nil {
+		key := getResourceKey(&lbc.configMap.ObjectMeta)
+		lbc.recorder.Eventf(gc, eventType, eventTitle, fmt.Sprintf("GlobalConfiguration %s was updated %s", key, eventWarningMessage))
 	}
 
 	lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
@@ -724,6 +744,9 @@ func (lbc *LoadBalancerController) sync(task task) {
 	}
 
 	if !lbc.isNginxReady && lbc.syncQueue.Len() == 0 {
+		lbc.configurator.EnableReloads()
+		lbc.updateAllConfigs()
+
 		lbc.isNginxReady = true
 		glog.V(3).Infof("NGINX is ready")
 	}

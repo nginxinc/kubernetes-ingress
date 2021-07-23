@@ -2295,6 +2295,8 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	}
 	gc := createTestGlobalConfiguration(listeners)
 
+	var nilGC *conf_v1alpha1.GlobalConfiguration
+
 	var expectedChanges []ResourceChange
 	var expectedProblems []ConfigurationProblem
 
@@ -2332,6 +2334,10 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
 		t.Errorf("AddOrUpdateTransportServer() returned unexpected result (-want +got):\n%s", diff)
 	}
+	storedGC := configuration.GetGlobalConfiguration()
+	if diff := cmp.Diff(gc, storedGC); diff != "" {
+		t.Errorf("GetGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
+	}
 
 	// Update GlobalConfiguration
 
@@ -2358,6 +2364,10 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	}
 	if err != nil {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
+	}
+	storedGC = configuration.GetGlobalConfiguration()
+	if diff := cmp.Diff(updatedGC1, storedGC); diff != "" {
+		t.Errorf("GetGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
 
 	// Add second TransportServer
@@ -2467,6 +2477,10 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	if err.Error() != expectedErrMsg {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned error %v but expected %v", err, expectedErrMsg)
 	}
+	storedGC = configuration.GetGlobalConfiguration()
+	if diff := cmp.Diff(nilGC, storedGC); diff != "" {
+		t.Errorf("GetGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
+	}
 
 	// Restore
 
@@ -2497,6 +2511,10 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	}
 	if err != nil {
 		t.Errorf("AddOrUpdateGlobalConfiguration() returned unexpected error: %v", err)
+	}
+	storedGC = configuration.GetGlobalConfiguration()
+	if diff := cmp.Diff(updatedGC2, storedGC); diff != "" {
+		t.Errorf("GetGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
 
 	// Delete GlobalConfiguration
@@ -2538,6 +2556,10 @@ func TestAddGlobalConfiguration(t *testing.T) {
 	}
 	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
 		t.Errorf("DeleteGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
+	}
+	storedGC = configuration.GetGlobalConfiguration()
+	if diff := cmp.Diff(nilGC, storedGC); diff != "" {
+		t.Errorf("GetGlobalConfiguration() returned unexpected result (-want +got):\n%s", diff)
 	}
 }
 
@@ -3170,13 +3192,33 @@ func TestFindResourcesForResourceReference(t *testing.T) {
 func TestGetResources(t *testing.T) {
 	ing := createTestIngress("ingress", "foo.example.com", "bar.example.com")
 	vs := createTestVirtualServer("virtualserver", "qwe.example.com")
+	passTS := createTestTLSPassthroughTransportServer("transportserver", "abc.example.com")
+	ts := createTestTransportServer("transportserver-tcp", "tcp-7777", "TCP")
+
+	listeners := []conf_v1alpha1.Listener{
+		{
+			Name:     "tcp-7777",
+			Port:     7777,
+			Protocol: "TCP",
+		},
+	}
+	gc := createTestGlobalConfiguration(listeners)
 
 	configuration := createTestConfiguration()
+
+	_, _, err := configuration.AddOrUpdateGlobalConfiguration(gc)
+	if err != nil {
+		t.Fatalf("AddOrUpdateGlobalConfiguration() returned unexpected error %v", err)
+	}
 	configuration.AddOrUpdateIngress(ing)
 	configuration.AddOrUpdateVirtualServer(vs)
+	configuration.AddOrUpdateTransportServer(passTS)
+	configuration.AddOrUpdateTransportServer(ts)
 
 	expected := []Resource{
 		configuration.hosts["foo.example.com"],
+		configuration.hosts["abc.example.com"],
+		configuration.listeners["tcp-7777"],
 		configuration.hosts["qwe.example.com"],
 	}
 
@@ -3199,6 +3241,16 @@ func TestGetResources(t *testing.T) {
 	}
 
 	result = configuration.GetResourcesWithFilter(resourceFilter{VirtualServers: true})
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("GetResources() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	expected = []Resource{
+		configuration.hosts["abc.example.com"],
+		configuration.listeners["tcp-7777"],
+	}
+
+	result = configuration.GetResourcesWithFilter(resourceFilter{TransportServers: true})
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GetResources() returned unexpected result (-want +got):\n%s", diff)
 	}
