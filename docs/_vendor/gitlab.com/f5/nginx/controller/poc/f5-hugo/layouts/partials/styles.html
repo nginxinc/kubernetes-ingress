@@ -22,7 +22,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
 {{ end }}
 
-{{ if ne .Site.Params.buildtype "package"}}
+{{ if ( not ( in .Site.Params.buildtype "package" ) ) }}
 <!-- load Coveo CSS -->
 <link rel="stylesheet" href="https://static.cloud.coveo.com/searchui/v2.8959/css/CoveoFullSearch.min.css" />
 {{ end }}
@@ -36,7 +36,7 @@
 {{ $bootstrapDocs := $css3 | minify | fingerprint "sha512"}}
 <link href="{{ $bootstrapDocs.RelPermalink }}" rel="stylesheet" type="text/css">
 
-{{ if ne .Site.Params.buildtype "package"}}
+{{ if ( not ( in .Site.Params.buildtype "package" ) ) }}
 {{ $cssCoveo := $css5 | minify | fingerprint "sha512"}}
 <link href="{{ $cssCoveo.RelPermalink }}" rel="stylesheet" type="text/css">
 {{ end }}

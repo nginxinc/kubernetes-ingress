@@ -17,6 +17,7 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spiffe/go-spiffe v1.1.0
 	github.com/stretchr/testify v1.7.0 // indirect
+	gitlab.com/f5/nginx/controller/poc/f5-hugo v0.11.5 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/grpc v1.29.1 // indirect
 	k8s.io/api v0.21.3
