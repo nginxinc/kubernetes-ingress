@@ -79,7 +79,7 @@ var (
 
 	For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class -
 	i.e have the annotation "kubernetes.io/ingress.class" (for Ingress resources)
-	or field "ingressClassName" (for VirtualServer/VirtualServerRoute/TransportServer resources) equal to the class.
+	or field "ingressClassName" equal to the class.
 	Additionally, the Ingress Controller processes resources that do not have the class set,
 	which can be disabled by setting the "-use-ingress-class-only" flag
 

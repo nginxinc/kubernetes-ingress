@@ -23,7 +23,7 @@ The smooth coexistence of multiple Ingress Controllers in one cluster is provide
 * Every Ingress Controller must only handle Ingress resources for its particular class. 
 * For Kubernetes < 1.18, Ingress resources should be annotated with the `kubernetes.io/ingress.class` annotation set to the value, which corresponds to the class of the Ingress Controller the user wants to use. 
 * When using versions of Kubernetes >= 1.18, Ingress resources should have the `ingressClassName` field set to the value, which corresponds to the class of the Ingress Controller the user wants to use. 
-* VirtualServer, VirtualServerRoute and TransportServer resources should have the `ingressClassName` field set to the value, which corresponds to the class of the Ingress Controller the user wants to use.
+* VirtualServer, VirtualServerRoute, Policy and TransportServer resources should have the `ingressClassName` field set to the value, which corresponds to the class of the Ingress Controller the user wants to use.
 
 ### Configuring Ingress Class
 
@@ -32,7 +32,7 @@ The default Ingress class of NGINX Ingress Controller is `nginx`, which means th
 **Notes**: 
 * For Kubernetes < 1.18, if the class is not set in an Ingress configuration resource, the Ingress Controller will handle the resource. This is controlled via the `-use-ingress-class-only` argument. 
 * For Kubernetes >= 1.18, if the class is not set in an Ingress resource, Kubernetes will set it to the class of the default Ingress Controller. To make the Ingress Controller the default one, the `ingressclass.kubernetes.io/is-default-class` must be set on the IngressClass resource. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](/nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources) section.
-* For VirtualServer, VirtualServerRoute and TransportServer resources the Ingress Controller will always handle resources with an empty class.
+* For VirtualServer, VirtualServerRoute, Policy and TransportServer resources the Ingress Controller will always handle resources with an empty class.
 
 ## Running NGINX Ingress Controller and Another Ingress Controller
 
