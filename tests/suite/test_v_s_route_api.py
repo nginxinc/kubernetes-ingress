@@ -28,12 +28,12 @@ class TestVSRNginxPlusApi:
         upstream_servers_s_url = f"{req_url}/api/{NGINX_API_VERSION}/http/upstreams/{vsr_s_upstream}/servers"
         upstream_servers_m_url = f"{req_url}/api/{NGINX_API_VERSION}/http/upstreams/{vsr_m_upstream}/servers"
         print("Scale BE deployment")
-        scale_deployment(kube_apis.apps_v1_api, "backend2", v_s_route_setup.route_s.namespace, 0)
-        scale_deployment(kube_apis.apps_v1_api, "backend1", v_s_route_setup.route_m.namespace, 0)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend2", v_s_route_setup.route_s.namespace, 0)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", v_s_route_setup.route_m.namespace, 0)
         wait_for_empty_array(upstream_servers_s_url)
         wait_for_empty_array(upstream_servers_m_url)
-        scale_deployment(kube_apis.apps_v1_api, "backend2", v_s_route_setup.route_s.namespace, 1)
-        scale_deployment(kube_apis.apps_v1_api, "backend1", v_s_route_setup.route_m.namespace, 1)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend2", v_s_route_setup.route_s.namespace, 1)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "backend1", v_s_route_setup.route_m.namespace, 1)
         wait_for_non_empty_array(upstream_servers_s_url)
         wait_for_non_empty_array(upstream_servers_m_url)
 

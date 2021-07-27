@@ -390,6 +390,9 @@ def cli_arguments(request) -> {}:
     assert result["ic-type"] in ALLOWED_IC_TYPES, f"IC type {result['ic-type']} is not allowed"
     print(f"Tests will run against the IC of type: {result['ic-type']}")
 
+    result["replicas"] = request.config.getoption("--replicas")
+    print(f"Number of pods spun up will be : {result['replicas']}")
+
     result["service"] = request.config.getoption("--service")
     assert result["service"] in ALLOWED_SERVICE_TYPES, f"Service {result['service']} is not allowed"
     print(f"Tests will use Service of this type: {result['service']}")

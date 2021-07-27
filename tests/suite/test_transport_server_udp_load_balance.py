@@ -55,7 +55,7 @@ class TestTransportServerUdpLoadBalance:
         """
         The load balancing of UDP should result in 4 servers to match the 4 replicas of a service.
         """
-        original = scale_deployment(kube_apis.apps_v1_api, "udp-service", transport_server_setup.namespace, 4)
+        original = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "udp-service", transport_server_setup.namespace, 4)
         num_servers = 0
         retry = 0
 
@@ -76,7 +76,7 @@ class TestTransportServerUdpLoadBalance:
         
         assert num_servers is 4
 
-        scale_deployment(kube_apis.apps_v1_api, "udp-service", transport_server_setup.namespace, original)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "udp-service", transport_server_setup.namespace, original)
         retry = 0
         while(num_servers is not original and retry <= 50):
             result_conf = get_ts_nginx_template_conf(

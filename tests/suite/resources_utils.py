@@ -197,7 +197,7 @@ def create_deployment_with_name(apps_v1_api: AppsV1Api, namespace, name) -> str:
         return create_deployment(apps_v1_api, namespace, dep)
 
 
-def scale_deployment(apps_v1_api: AppsV1Api, name, namespace, value) -> int:
+def scale_deployment(v1:CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, value) -> int:
     """
     Scale a deployment.
 
@@ -207,11 +207,28 @@ def scale_deployment(apps_v1_api: AppsV1Api, name, namespace, value) -> int:
     :param value: int
     :return: original: int the original amount of replicas
     """
-    print(f"Scale a deployment '{name}'")
     body = apps_v1_api.read_namespaced_deployment_scale(name, namespace)
     original = body.spec.replicas
+    print(f"Original number of replicas is {original}")
+    print(f"Scaling deployment '{name}' to {value} replica(s)")
     body.spec.replicas = value
     apps_v1_api.patch_namespaced_deployment_scale(name, namespace, body)
+    if value is not 0:
+        now = time.time()
+        wait_until_all_pods_are_ready(v1, namespace)
+        later = time.time()
+        print(f"All pods came up in {int(later-now)} seconds")
+
+    elif value is 0:
+            replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
+            while(replica_num is not None):
+                replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
+                time.sleep(1)
+                print("Number of replicas is not 0, retrying...")
+        
+    else:
+        pytest.fail("wrong argument")
+
     print(f"Scale a deployment '{name}': complete")
     return original
 
@@ -246,11 +263,11 @@ def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     """
     print("Start waiting for all pods in a namespace to be ContainersReady")
     counter = 0
-    while not are_all_pods_in_ready_state(v1, namespace) and counter < 20:
+    while not are_all_pods_in_ready_state(v1, namespace) and counter < 50:
         print("There are pods that are not ContainerReady. Wait for 4 sec...")
         time.sleep(4)
         counter = counter + 1
-    if counter >= 20:
+    if counter >= 50:
         raise PodNotReadyException()
     print("All pods are ContainersReady")
 
@@ -300,7 +317,6 @@ def get_pods_amount(v1: CoreV1Api, namespace) -> int:
     """
     pods = v1.list_namespaced_pod(namespace)
     return 0 if not pods.items else len(pods.items)
-
 
 def create_service_from_yaml(v1: CoreV1Api, namespace, yaml_manifest) -> str:
     """
@@ -921,8 +937,6 @@ def wait_for_event_increment(kube_apis, namespace, event_count, offset) -> bool:
         return False
     
 
-
-
 def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments,
                               namespace, args=None) -> str:
     """
@@ -939,6 +953,7 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
     yaml_manifest = f"{DEPLOYMENTS}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
+    dep['spec']['replicas'] = int(cli_arguments["replicas"])
     dep['spec']['template']['spec']['containers'][0]['image'] = cli_arguments["image"]
     dep['spec']['template']['spec']['containers'][0]['imagePullPolicy'] = cli_arguments["image-pull-policy"]
     if args is not None:
@@ -947,8 +962,10 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
         name = create_deployment(apps_v1_api, namespace, dep)
     else:
         name = create_daemon_set(apps_v1_api, namespace, dep)
+    before = time.time()
     wait_until_all_pods_are_ready(v1, namespace)
-
+    after = time.time()
+    print(f"All pods came up in {int(after-before)} seconds")
     print(f"Ingress Controller was created with name '{name}'")
     return name
 
