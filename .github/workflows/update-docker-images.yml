@@ -1,0 +1,343 @@
+name: Update Docker Images
+
+on:
+  schedule:
+    - cron:  '0 1 * * *'
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  DOCKER_BUILDKIT: 1
+  K8S_VERSION: 1.21.1
+  K8S_TIMEOUT: 75s
+
+jobs:
+
+  variables:
+    name: Get versions of base images
+    runs-on: ubuntu-20.04
+    outputs:
+      kic-tag: ${{ steps.kic.outputs.tag }}
+      versions: ${{ steps.versions.outputs.matrix }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set KIC version
+        id: kic
+        run: |
+          tag=$(git tag --sort=-version:refname | head -n1)
+          echo "::set-output name=tag::${tag//v}"
+      - name: Checkout Repository at ${{ steps.kic.outputs.tag }}
+        run: |
+          git checkout v${{ steps.kic.outputs.tag }}
+      - name: Set NGINX versions
+        id: versions
+        run: |
+          nginx=library/$(grep -m1 "FROM nginx:" < build/Dockerfile | awk -F" " '{print $2}')
+          nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
+          nginx_ubi=$(grep "FROM redhat" < build/Dockerfile | awk -F" " '{print $2}')
+          echo "::set-output name=matrix::[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]"
+
+  check:
+    name: Check if updates are needed
+    runs-on: ubuntu-20.04
+    needs: variables
+    outputs:
+      needs-updating-debian: ${{ steps.needs.outputs.debian }}
+      needs-updating-alpine: ${{ steps.needs.outputs.alpine }}
+      needs-updating-ubi: ${{ steps.needs.outputs.ubi }}
+    strategy:
+      matrix:
+        base_image: ${{ fromJson(needs.variables.outputs.versions) }}
+    steps:
+      - name: Build KIC tag
+        id: dist
+        run: |
+          if [ ${{ matrix.base_image.distro }} == "debian" ]; then dist=""; else dist="-${{ matrix.base_image.distro }}"; fi
+          echo "::set-output name=tag::${{ needs.variables.outputs.kic-tag }}${dist}"
+      - name: Check if update available for ${{ matrix.base_image.version }}
+        id: update
+        uses: lucacome/docker-image-update-checker@v1
+        with:
+          base-image: ${{ matrix.base_image.version}}
+          image: nginx/nginx-ingress:${{ steps.dist.outputs.tag }}
+      - id: needs
+        run: echo "::set-output name=${{ matrix.base_image.distro }}::${{ steps.update.outputs.needs-updating }}"
+
+
+  binary:
+    if: ${{ needs.check.outputs.needs-updating-debian == 'true' || needs.check.outputs.needs-updating-alpine == 'true' || needs.check.outputs.needs-updating-ubi == 'true' }}
+    name: Build binaries
+    runs-on: ubuntu-20.04
+    needs: [check, variables]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: v${{ needs.variables.outputs.kic-tag }}
+      - name: Determine Go version from go.mod
+        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
+      - name: Setup Golang Environment
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Determine GOPATH
+        run: echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+      - name: Build binaries
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: build --rm-dist --id kubernetes-ingress --single-target
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: ${{ env.GOPATH }}
+      - name: Store Artifacts in Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+
+  release-docker:
+    name: Release Images
+    runs-on: ubuntu-20.04
+    needs: [binary, check, variables]
+    strategy:
+      matrix:
+        include:
+          - tag: ${{ needs.variables.outputs.kic-tag }}
+            type: debian
+            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+            needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
+          - tag: ${{ needs.variables.outputs.kic-tag }}-alpine
+            type: alpine
+            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+            needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
+          - tag: ${{ needs.variables.outputs.kic-tag }}-ubi
+            type: ubi
+            platforms: linux/arm64,linux/amd64
+            needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          ref: v${{ needs.variables.outputs.kic-tag }}
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Output Variables
+        id: commit
+        run: |
+          echo "::set-output name=date::$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
+          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: arm,arm64,ppc64le,s390x
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v1
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Cache Docker layers for ${{ matrix.type }}
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-${{ matrix.type }}-cache
+          key: ${{ runner.os }}-buildx-${{ matrix.type }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ matrix.type }}-
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Build ${{ matrix.type }} Container for tests
+        uses: docker/build-push-action@v2
+        with:
+          file: build/Dockerfile
+          context: '.'
+          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.type }}-cache
+          target: goreleaser
+          tags: ${{ matrix.type }}:${{ github.sha }}
+          load: true
+          build-args: |
+            BUILD_OS=${{ matrix.type }}
+            NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Build Test-Runner Container
+        uses: docker/build-push-action@v2
+        with:
+          file: tests/docker/Dockerfile
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-test-cache
+          cache-to: type=local,dest=/tmp/.buildx-test-cache
+          tags: test-runner:${{ github.sha }}
+          load: true
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Deploy Kubernetes
+        id: k8s
+        run: |
+          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ env.K8S_VERSION }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ env.K8S_TIMEOUT }}
+          kind load docker-image ${{ matrix.type }}:${{ github.sha }} --name ${{ github.run_id }}
+          echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
+          echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.type }}-vs')
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Setup Kubeconfig
+        run: |
+          sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Run Smoke Tests
+        run: |
+          touch tests-${{ steps.k8s.outputs.cluster }}.html
+          docker run --rm \
+          --name test-runner-${{ github.run_id }} \
+          --network=kind \
+          -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
+          -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ github.sha }} \
+          --context=kind-${{ github.run_id }} \
+          --image=${{ matrix.type }}:${{ github.sha }} \
+          --image-pull-policy=Never \
+          --ic-type=nginx-ingress \
+          --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
+          --html=tests-${{ steps.k8s.outputs.cluster }}.html \
+          --self-contained-html \
+          --show-ic-logs=yes --profile \
+          -m vs
+        working-directory: ./tests
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results-${{ steps.k8s.outputs.cluster }}
+          path: ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html
+        if: always()
+      - name: DockerHub Login
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Push to Dockerhub
+        id: push
+        uses: docker/build-push-action@v2
+        with:
+          file: build/Dockerfile
+          context: '.'
+          cache-from: type=local,src=/tmp/.buildx-${{ matrix.image }}-cache
+          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.type }}-cache
+          target: goreleaser
+          tags: nginx/nginx-ingress:${{ matrix.tag }}
+          platforms: ${{ matrix.platforms }}
+          push: true
+          build-args: |
+            BUILD_OS=${{ matrix.type }}
+            IC_VERSION=v${{ needs.variables.outputs.kic-tag }}-${{ steps.commit.outputs.sha }}
+            NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
+            DATE=${{ steps.commit.outputs.date }}
+            GIT_COMMIT=${{ github.sha }}
+        if: ${{ matrix.needs-updating == 'true' }}
+      - name: Output Variables
+        id: slack
+        run: |
+          echo "::set-output name=sha::$(echo $(git rev-parse HEAD) | cut -c1-7)"
+          echo "::set-output name=message::$(git log -1 --pretty=%B)"
+          echo "::set-output name=date::$(date +%s)"
+      - name: Send Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              username: "Docker",
+              icon_emoji: ":docker:",
+              mention: "here",
+              attachments: [{
+                title: `New Docker image was pushed to DockerHub for ${process.env.AS_REPO}`,
+                color: "good",
+                fields: [{
+                  title: "Docker Image",
+                  value: "<https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=${{ needs.variables.outputs.kic-tag }}|nginx/nginx-ingress:${{ matrix.tag }}>",
+                  short: true
+                },
+                {
+                  title: "Image digest",
+                  value: "${{ steps.push.outputs.digest }}",
+                  short: true
+                },
+                {
+                  title: "Commit Message",
+                  value: "${{ steps.slack.outputs.message }}"",
+                  short: true
+                },
+                {
+                  title: "Commit Hash",
+                  value: "${{ steps.slack.outputs.sha }}",
+                  short: true
+                }],
+                footer: "Update DockerHub Image",
+                footer_icon: "https://raw.githubusercontent.com/docker-library/docs/c350af05d3fac7b5c3f6327ac82fe4d990d8729c/docker/logo.png",
+                ts: ${{ steps.slack.outputs.date }}
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+        if: ${{ matrix.needs-updating == 'true' }}
+
+  notify:
+    name: Notify
+    runs-on: ubuntu-20.04
+    needs: release-docker
+    if: always()
+    steps:
+      - name: Workflow Status
+        id: check
+        uses: martialonline/workflow-status@v2
+      - name: Output Variables
+        id: commit
+        run: |
+          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
+      - name: Send Notification
+        uses: 8398a7/action-slack@v3
+        if:
+          steps.check.outputs.status == 'failure'
+        with:
+          status: custom
+          custom_payload: |
+            {
+              username: 'Github',
+              icon_emoji: ':octocat:',
+              mention: 'channel',
+              attachments: [{
+                title: '${{ steps.commit.outputs.repo }} ${{ github.workflow }} pipeline has failed',
+                color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
+                fields: [{
+                  title: 'Commit Hash',
+                  value: '${{ steps.commit.outputs.sha }}',
+                  short: true
+                },
+                {
+                  title: 'Author',
+                  value: '${{ github.actor }}',
+                  short: true
+                },
+                {
+                  title: 'Commit Message',
+                  value: `${{ github.event.head_commit.message }}`,
+                  short: false
+                },
+                {
+                  title: 'Pipeline URL',
+                  value: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+                  short: false
+                }]
+              }]
+            }
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

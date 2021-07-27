@@ -343,6 +343,7 @@ type PolicyStatus struct {
 // The spec includes multiple fields, where each field represents a different policy.
 // Only one policy (field) is allowed.
 type PolicySpec struct {
+	IngressClass  string         `json:"ingressClassName"`
 	AccessControl *AccessControl `json:"accessControl"`
 	RateLimit     *RateLimit     `json:"rateLimit"`
 	JWTAuth       *JWTAuth       `json:"jwt"`

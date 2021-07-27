@@ -711,6 +711,19 @@ func TestGetPolicies(t *testing.T) {
 		},
 	}
 
+	validPolicyIngressClass := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-policy-ingress-class",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			IngressClass: "test-class",
+			AccessControl: &conf_v1.AccessControl{
+				Allow: []string{"127.0.0.1"},
+			},
+		},
+	}
+
 	invalidPolicy := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "invalid-policy",
@@ -726,6 +739,8 @@ func TestGetPolicies(t *testing.T) {
 				switch key {
 				case "default/valid-policy":
 					return validPolicy, true, nil
+				case "default/valid-policy-ingress-class":
+					return validPolicyIngressClass, true, nil
 				case "default/invalid-policy":
 					return invalidPolicy, true, nil
 				case "nginx-ingress/valid-policy":
@@ -754,6 +769,10 @@ func TestGetPolicies(t *testing.T) {
 			Name:      "some-policy", // will make lister return error
 			Namespace: "nginx-ingress",
 		},
+		{
+			Name:      "valid-policy-ingress-class",
+			Namespace: "default",
+		},
 	}
 
 	expectedPolicies := []*conf_v1.Policy{validPolicy}
@@ -761,6 +780,7 @@ func TestGetPolicies(t *testing.T) {
 		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `jwt`, `oidc`, `waf`"),
 		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
 		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
+		errors.New("referenced policy default/valid-policy-ingress-class has incorrect ingress class: test-class (controller ingress class: )"),
 	}
 
 	result, errors := lbc.getPolicies(policyRefs, "default")
