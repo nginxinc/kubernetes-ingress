@@ -1260,7 +1260,7 @@ def get_service_endpoint(kube_apis, service_name, namespace) -> str:
     return ep
 
 def get_last_reload_time(req_url, ingress_class) -> str:
-    
+
     reload_metric = ""
     print(req_url)
     ensure_connection(req_url, 200)
@@ -1271,6 +1271,35 @@ def get_last_reload_time(req_url, ingress_class) -> str:
         if 'last_reload_milliseconds{class="%s"}' %ingress_class in line:
             reload_metric = re.findall("\d+", line)[0]
             return reload_metric
+
+
+def get_reload_count(req_url) -> int:
+    print(req_url)
+    ensure_connection(req_url, 200)
+    resp = requests.get(req_url)
+
+    assert resp.status_code == 200, f"Expected 200 code for /metrics and got {resp.status_code}"
+    resp_content = resp.content.decode("utf-8")
+
+    count = 0
+    found = 0
+
+    for line in resp_content.splitlines():
+        # we search for endpoints and other reloads
+        # ex:
+        # nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="endpoints"} 0
+        # nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="other"} 1
+        if 'nginx_ingress_controller_nginx_reloads_total{class=' in line:
+            c = re.findall("\d+", line)[0]
+            count += int(c)
+            found += 1
+
+        if found == 2:
+            break
+
+    assert found == 2
+
+    return count
 
 def get_test_file_name(path) -> str:
     """
