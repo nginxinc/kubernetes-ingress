@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+message X509SVIDRequest {  }
+
+// The X509SVIDResponse message carries a set of X.509 SVIDs and their
+// associated information. It also carries a set of global CRLs, and a
+// TTL to inform the workload when it should check back next.
+message X509SVIDResponse {
+    // A list of X509SVID messages, each of which includes a single
+    // SPIFFE Verifiable Identity Document, along with its private key
+    // and bundle.
+    repeated X509SVID svids = 1;
+
+    // ASN.1 DER encoded
+    repeated bytes crl = 2;
+
+    // CA certificate bundles belonging to foreign Trust Domains that the
+    // workload should trust, keyed by the SPIFFE ID of the foreign
+    // domain. Bundles are ASN.1 DER encoded.
+    map<string, bytes> federated_bundles = 3;
+}
+
+// The X509SVID message carries a single SVID and all associated
+// information, including CA bundles.
+message X509SVID {
+    // The SPIFFE ID of the SVID in this entry
+    string spiffe_id = 1;
+
+    // ASN.1 DER encoded certificate chain. MAY include intermediates,
+    // the leaf certificate (or SVID itself) MUST come first.
+    bytes x509_svid = 2;
+
+    // ASN.1 DER encoded PKCS#8 private key. MUST be unencrypted.
+    bytes x509_svid_key = 3;
+
+    // CA certificates belonging to the Trust Domain
+    // ASN.1 DER encoded
+    bytes bundle = 4;
+}
+
+message JWTSVID {
+    string spiffe_id = 1;
+
+    // Encoded using JWS Compact Serialization
+    string svid = 2;
+}
+
+message JWTSVIDRequest {
+    repeated string audience = 1;
+
+    // SPIFFE ID of the JWT being requested
+    // If not set, all IDs will be returned
+    string spiffe_id = 2;
+}
+
+message JWTSVIDResponse {
+    repeated JWTSVID svids = 1;
+}
+
+message JWTBundlesRequest { }
+
+message JWTBundlesResponse {
+    // JWK sets, keyed by trust domain URI
+    map<string, bytes> bundles = 1;
+}
+
+message ValidateJWTSVIDRequest {
+    string audience = 1;
+
+    // Encoded using JWS Compact Serialization
+    string svid = 2;
+}
+
+message ValidateJWTSVIDResponse {
+    string spiffe_id = 1;
+    google.protobuf.Struct claims = 2;
+}
+
+service SpiffeWorkloadAPI {
+    // JWT-SVID Profile
+    rpc FetchJWTSVID(JWTSVIDRequest) returns (JWTSVIDResponse);
+    rpc FetchJWTBundles(JWTBundlesRequest) returns (stream JWTBundlesResponse);
+    rpc ValidateJWTSVID(ValidateJWTSVIDRequest) returns (ValidateJWTSVIDResponse);
+
+    // X.509-SVID Profile
+    // Fetch all SPIFFE identities the workload is entitled to, as
+    // well as related information like trust bundles and CRLs. As
+    // this information changes, subsequent messages will be sent.
+    rpc FetchX509SVID(X509SVIDRequest) returns (stream X509SVIDResponse);
+}
