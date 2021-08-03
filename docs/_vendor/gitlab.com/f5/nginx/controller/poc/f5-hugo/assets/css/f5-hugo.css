@@ -711,12 +711,12 @@ main a:hover {
 }
 
 .l2, .l2 > a {
-    font-size: 18px;
+    font-size: 16px;
     padding-left: 14px;
 }
 
 .l3, .l3 > a {
-    font-size: 15px;
+    font-size: 16px;
     color: #666666;
     padding-left: 16px;
 }
