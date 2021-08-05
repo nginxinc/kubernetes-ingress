@@ -634,11 +634,13 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
+	isWildcardEnabled := false
 	vsc := newVirtualServerConfigurator(
 		&baseCfgParams,
 		isPlus,
 		isResolverConfigured,
 		&StaticConfigParams{TLSPassthrough: true},
+		isWildcardEnabled,
 	)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
@@ -747,7 +749,8 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	isPlus := false
 	isResolverConfigured := false
 	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true}
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams)
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -1032,7 +1035,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -1349,7 +1353,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -1822,7 +1827,8 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 
 	isPlus := false
 	isResolverConfigured := false
-	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
+	isWildcardEnabled := false
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
 
 	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
 	if !reflect.DeepEqual(result, expected) {
@@ -2226,7 +2232,7 @@ func TestGeneratePolicies(t *testing.T) {
 		},
 	}
 
-	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
+	vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false)
 
 	for _, test := range tests {
 		result := vsc.generatePolicies(ownerDetails, test.policyRefs, test.policies, test.context, policyOpts)
@@ -3344,7 +3350,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, false)
 
 		if test.oidcPolCfg != nil {
 			vsc.oidcPolCfg = test.oidcPolCfg
@@ -3477,7 +3483,7 @@ func TestGenerateUpstream(t *testing.T) {
 		UpstreamZoneSize: "256k",
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{})
+	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false)
 	result := vsc.generateUpstream(nil, name, upstream, false, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -3555,7 +3561,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{})
+		vsc := newVirtualServerConfigurator(test.cfgParams, false, false, &StaticConfigParams{}, false)
 		result := vsc.generateUpstream(nil, name, test.upstream, false, endpoints)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)
@@ -3586,7 +3592,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 		Resolve: true,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{})
+	vsc := newVirtualServerConfigurator(&cfgParams, true, true, &StaticConfigParams{}, false)
 	result := vsc.generateUpstream(nil, name, upstream, true, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -3631,7 +3637,7 @@ func TestGenerateUpstreamWithNTLM(t *testing.T) {
 		NTLM:             true,
 	}
 
-	vsc := newVirtualServerConfigurator(&cfgParams, true, false, &StaticConfigParams{})
+	vsc := newVirtualServerConfigurator(&cfgParams, true, false, &StaticConfigParams{}, false)
 	result := vsc.generateUpstream(nil, name, upstream, false, endpoints)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
@@ -4022,6 +4028,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 		inputTLS         *conf_v1.TLS
 		inputSecretRefs  map[string]*secrets.SecretReference
 		inputCfgParams   *ConfigParams
+		wildcard         bool
 		expectedSSL      *version2.SSL
 		expectedWarnings Warnings
 		msg              string
@@ -4030,6 +4037,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 			inputTLS:         nil,
 			inputSecretRefs:  map[string]*secrets.SecretReference{},
 			inputCfgParams:   &ConfigParams{},
+			wildcard:         false,
 			expectedSSL:      nil,
 			expectedWarnings: Warnings{},
 			msg:              "no TLS field",
@@ -4040,15 +4048,33 @@ func TestGenerateSSLConfig(t *testing.T) {
 			},
 			inputSecretRefs:  map[string]*secrets.SecretReference{},
 			inputCfgParams:   &ConfigParams{},
+			wildcard:         false,
 			expectedSSL:      nil,
 			expectedWarnings: Warnings{},
-			msg:              "TLS field with empty secret",
+			msg:              "TLS field with empty secret and wildcard cert disabled",
+		},
+		{
+			inputTLS: &conf_v1.TLS{
+				Secret: "",
+			},
+			inputSecretRefs: map[string]*secrets.SecretReference{},
+			inputCfgParams:  &ConfigParams{},
+			wildcard:        true,
+			expectedSSL: &version2.SSL{
+				HTTP2:           false,
+				Certificate:     pemFileNameForWildcardTLSSecret,
+				CertificateKey:  pemFileNameForWildcardTLSSecret,
+				RejectHandshake: false,
+			},
+			expectedWarnings: Warnings{},
+			msg:              "TLS field with empty secret and wildcard cert enabled",
 		},
 		{
 			inputTLS: &conf_v1.TLS{
 				Secret: "secret",
 			},
 			inputCfgParams: &ConfigParams{},
+			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/secret": {
 					Error: errors.New("secret doesn't exist"),
@@ -4068,6 +4094,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				Secret: "secret",
 			},
 			inputCfgParams: &ConfigParams{},
+			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
 				"default/secret": {
 					Secret: &api_v1.Secret{
@@ -4097,6 +4124,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				},
 			},
 			inputCfgParams: &ConfigParams{},
+			wildcard:       false,
 			expectedSSL: &version2.SSL{
 				HTTP2:           false,
 				Certificate:     "secret.pem",
@@ -4111,7 +4139,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 	namespace := "default"
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{})
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, false, false, &StaticConfigParams{}, test.wildcard)
 
 		// it is ok to use nil as the owner
 		result := vsc.generateSSLConfig(nil, test.inputTLS, namespace, test.inputSecretRefs, test.inputCfgParams)
@@ -6121,11 +6149,13 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		isWildcardEnabled := false
 		vsc := newVirtualServerConfigurator(
 			&ConfigParams{},
 			test.isPlus,
 			test.isResolverConfigured,
 			&StaticConfigParams{},
+			isWildcardEnabled,
 		)
 		result := vsc.generateEndpointsForUpstream(test.vsEx.VirtualServer, namespace, test.upstream, test.vsEx)
 		if !reflect.DeepEqual(result, test.expected) {
@@ -6165,7 +6195,7 @@ func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
 	}
 
 	for _, lbMethod := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{})
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, upstream, lbMethod)
 
 		if !reflect.DeepEqual(result, expected) {
@@ -6199,7 +6229,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{})
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, true, false, &StaticConfigParams{}, false)
 		result := vsc.generateSlowStartForPlus(&conf_v1.VirtualServer{}, test.upstream, test.lbMethod)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateSlowStartForPlus returned %v, but expected %v", result, test.expected)
@@ -6298,7 +6328,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{})
+		vsc := newVirtualServerConfigurator(&ConfigParams{}, test.isPlus, false, &StaticConfigParams{}, false)
 		result := vsc.generateUpstream(nil, test.name, test.upstream, false, []string{})
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("generateUpstream() returned %v but expected %v for the case of %v", result, test.expected, test.msg)

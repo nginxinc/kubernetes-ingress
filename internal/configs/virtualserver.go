@@ -191,6 +191,7 @@ func newHealthCheckWithDefaults(
 type virtualServerConfigurator struct {
 	cfgParams            *ConfigParams
 	isPlus               bool
+	isWildcardEnabled    bool
 	isResolverConfigured bool
 	isTLSPassthrough     bool
 	enableSnippets       bool
@@ -224,10 +225,12 @@ func newVirtualServerConfigurator(
 	isPlus bool,
 	isResolverConfigured bool,
 	staticParams *StaticConfigParams,
+	isWildcardEnabled bool,
 ) *virtualServerConfigurator {
 	return &virtualServerConfigurator{
 		cfgParams:            cfgParams,
 		isPlus:               isPlus,
+		isWildcardEnabled:    isWildcardEnabled,
 		isResolverConfigured: isResolverConfigured,
 		isTLSPassthrough:     staticParams.TLSPassthrough,
 		enableSnippets:       staticParams.EnableSnippets,
@@ -1988,6 +1991,15 @@ func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tl
 	}
 
 	if tls.Secret == "" {
+		if vsc.isWildcardEnabled {
+			ssl := version2.SSL{
+				HTTP2:           cfgParams.HTTP2,
+				Certificate:     pemFileNameForWildcardTLSSecret,
+				CertificateKey:  pemFileNameForWildcardTLSSecret,
+				RejectHandshake: false,
+			}
+			return &ssl
+		}
 		return nil
 	}
 
@@ -2057,7 +2069,7 @@ func createUpstreamsForPlus(
 
 	isPlus := true
 	upstreamNamer := newUpstreamNamerForVirtualServer(virtualServerEx.VirtualServer)
-	vsc := newVirtualServerConfigurator(baseCfgParams, isPlus, false, staticParams)
+	vsc := newVirtualServerConfigurator(baseCfgParams, isPlus, false, staticParams, false)
 
 	for _, u := range virtualServerEx.VirtualServer.Spec.Upstreams {
 		isExternalNameSvc := virtualServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(virtualServerEx.VirtualServer.Namespace, u.Service)]
