@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-  Coveo.SearchEndpoint.configureCloudV2Endpoint("", 'xxe1e9046f-585c-4518-a14a-6b986a5efffd');
+  Coveo.SearchEndpoint.configureCloudV2Endpoint("", 'xx79df1e1f-11e4-4da5-8ea8-2ed7e24cca6a');
   const root = document.getElementById("search");
   const searchBoxRoot = document.getElementById("searchbox");
   Coveo.initSearchbox(searchBoxRoot, "/search.html");
@@ -16,6 +16,13 @@ document.addEventListener('DOMContentLoaded', function () {
     setTimeout(function () {
       document.querySelector('.CoveoOmnibox input').value = Coveo.state(root, 'q');
     }, 1000);
+  });
+  Coveo.$('#search').on("newResultsDisplayed", function (e, args) {
+    for (var i = 0; i < e.target.lastChild.children.length; i++) {
+      var currentResult = e.target.lastChild.children[i];
+      //Remove the title for tooltip box  
+      Coveo.$('.CoveoResultLink').removeAttr('title');         
+    }
   });
   Coveo.init(root);
 })

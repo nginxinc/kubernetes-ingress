@@ -20,7 +20,7 @@
 
   {{ partial "load_jquery.html" . }}
 
-  {{ if ne .Site.IsServer "true" }} {{ else if ne .Site.Params.buildtype "package" }} 
+  {{ if or ( not .Site.IsServer ) ( not ( in .Site.Params.buildtype "package" ) ) }}
     <!-- GDPR Section Start -->
     {{ partial "gdpr2.html" . }}
     <!-- GDPR Section End -->
@@ -31,7 +31,7 @@
 </head>
 
 <body>
-  {{ if ne .Site.IsServer "true" }} {{ else if ne .Site.Params.buildtype "package" }}  
+  {{ if or ( not .Site.IsServer ) ( not ( in .Site.Params.buildtype "package" ) ) }} 
     {{ partial "gtm.html" . }}
   {{ end }}
 

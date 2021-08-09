@@ -76,6 +76,8 @@ spec:
                       type: integer
                     verifyServer:
                       type: boolean
+                ingressClassName:
+                  type: string
                 ingressMTLS:
                   description: 'IngressMTLS defines an Ingress MTLS policy. policy status: preview'
                   type: object

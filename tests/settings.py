@@ -6,6 +6,7 @@ BASEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEPLOYMENTS = f"{BASEDIR}/deployments"
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 TEST_DATA = f"{PROJECT_ROOT}/data"
+NUM_REPLICAS = 1
 DEFAULT_IMAGE = "nginx/nginx-ingress:edge"
 DEFAULT_PULL_POLICY = "IfNotPresent"
 DEFAULT_IC_TYPE = "nginx-ingress"

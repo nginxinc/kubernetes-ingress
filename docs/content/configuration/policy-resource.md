@@ -64,12 +64,13 @@ spec:
 {{% table %}} 
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
-|``accessControl`` | The access control policy based on the client IP address. | [accessControl](#accesscontrol) | No | 
+|``accessControl`` | The access control policy based on the client IP address. | [accessControl](#accesscontrol) | No |
+|``ingressClassName`` | Specifies which Ingress Controller must handle the Policy resource. | ``string`` | No |
 |``rateLimit`` | The rate limit policy controls the rate of processing requests per a defined key. | [rateLimit](#ratelimit) | No | 
 |``jwt`` | The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens. | [jwt](#jwt) | No | 
 |``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | [ingressMTLS](#ingressmtls) | No | 
 |``egressMTLS`` | The EgressMTLS policy configures upstreams authentication and certificate verification. | [egressMTLS](#egressmtls) | No | 
-|``waf`` | The WAF policy configures WAF and log configuration policies for [NGINX AppProtect](/nginx-ingress-controller/app-protect/installation/) | [WAF](#waf) | No | 
+|``waf`` | The WAF policy configures WAF and log configuration policies for [NGINX AppProtect](/nginx-ingress-controller/app-protect/installation/) | [WAF](#waf) | No |
 {{% /table %}} 
 
 \* A policy must include exactly one policy.

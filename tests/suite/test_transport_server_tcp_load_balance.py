@@ -52,14 +52,14 @@ class TestTransportServerTcpLoadBalance:
             transport_server_setup.namespace,
         )
         wait_before_test()
-    
+
     def test_number_of_replicas(
         self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
         """
         The load balancing of TCP should result in 4 servers to match the 4 replicas of a service.
         """
-        original = scale_deployment(kube_apis.apps_v1_api, "tcp-service", transport_server_setup.namespace, 4)
+        original = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "tcp-service", transport_server_setup.namespace, 4)
         
         num_servers = 0
         retry = 0
@@ -81,7 +81,7 @@ class TestTransportServerTcpLoadBalance:
 
         assert num_servers is 4
 
-        scale_deployment(kube_apis.apps_v1_api, "tcp-service", transport_server_setup.namespace, original)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "tcp-service", transport_server_setup.namespace, original)
         retry = 0
         while(num_servers is not original and retry <= 50):
             result_conf = get_ts_nginx_template_conf(

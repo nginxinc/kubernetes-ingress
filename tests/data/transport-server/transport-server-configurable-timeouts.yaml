@@ -1,0 +1,23 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: TransportServer
+metadata:
+  name: transport-server
+spec:
+  listener:
+    name: dns-tcp
+    protocol: TCP
+  upstreams:
+    - name: dns-app
+      service: coredns
+      port: 5353
+      maxFails: 3
+      failTimeout: 30s
+  upstreamParameters:
+    connectTimeout: 5s
+    nextUpstream: true
+    nextUpstreamTimeout: 4s
+    nextUpstreamTries: 3
+  sessionParameters:
+    timeout: 2s
+  action:
+    pass: dns-app
