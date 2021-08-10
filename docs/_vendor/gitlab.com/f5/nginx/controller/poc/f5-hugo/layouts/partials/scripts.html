@@ -1,15 +1,10 @@
 {{ $kubejs := resources.Get "/js/kube.js" }}
-{{ $nginxjs := resources.Get "/js/docs-nginx-com/main.js" }}
 
 {{ if .Site.IsServer }}
   <script src="{{ $kubejs.RelPermalink }}"></script>
-  <script src="{{ $nginxjs.RelPermalink }}"></script>
 {{ else }}
   {{ $kubejs := $kubejs | minify | fingerprint "sha512" }}
   <script src="{{ $kubejs.RelPermalink }}" type="text/javascript" integrity="{{ $kubejs.Data.Integrity }}"></script>
-
-  {{ $nginxjs := $nginxjs | minify | fingerprint "sha512" }}
-  <script src="{{ $nginxjs.RelPermalink }}" type="text/javascript" integrity="{{ $nginxjs.Data.Integrity }}"></script>
 {{ end }}
 
 {{ if in .Site.Params.buildtype "package" }}
