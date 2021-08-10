@@ -10,13 +10,12 @@ toc: true
 
 This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using the NGINX Ingress Operator.
 
-**Note: an NGINX Ingress Operator version compatible with the 1.12 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.**
-
 ## Prerequisites
 
 1. Make sure you have access to the Ingress Controller image:
     * For NGINX Ingress Controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
-    * For NGINX Plus Ingress Controller, build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
+    * For NGINX Plus Ingress controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
+    * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
 1. Install the NGINX Ingress Operator following the [instructions](https://github.com/nginxinc/nginx-ingress-operator/blob/master/docs/installation.md).
 
 ## 1. Create the NginxIngressController manifest

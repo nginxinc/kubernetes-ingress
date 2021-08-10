@@ -7,7 +7,7 @@
 
 This repo provides an implementation of an Ingress controller for NGINX and NGINX Plus.
 
-**Note**: this project is different from the NGINX Ingress controller in [kubernetes/ingress-nginx](https://github.com/kubernetes/ingress-nginx) repo. See [this doc](docs/nginx-ingress-controllers.md) to find out about the key differences.
+**Note**: this project is different from the NGINX Ingress controller in [kubernetes/ingress-nginx](https://github.com/kubernetes/ingress-nginx) repo. See [this doc](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-ingress-controllers) to find out about the key differences.
 
 ## What is the Ingress?
 
@@ -37,7 +37,7 @@ As an alternative to the Ingress, NGINX Ingress controller supports the VirtualS
 
 TCP, UDP and TLS Passthrough load balancing is also supported. See the [TransportServer resource doc](https://docs.nginx.com/nginx-ingress-controller/configuration/transportserver-resource/).
 
-Read [this doc](docs/nginx-plus.md) to learn more about NGINX Ingress controller with NGINX Plus.
+Read [this doc](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-plus) to learn more about NGINX Ingress controller with NGINX Plus.
 
 ## Getting Started
 

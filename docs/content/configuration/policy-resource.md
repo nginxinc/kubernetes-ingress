@@ -64,12 +64,13 @@ spec:
 {{% table %}} 
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
-|``accessControl`` | The access control policy based on the client IP address. | `accessControl <#accesscontrol>`_ | No | 
-|``rateLimit`` | The rate limit policy controls the rate of processing requests per a defined key. | `rateLimit <#ratelimit>`_ | No | 
-|``jwt`` | The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens. | `jwt <#jwt>`_ | No | 
-|``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | `ingressMTLS <#ingressmtls>`_ | No | 
-|``egressMTLS`` | The EgressMTLS policy configures upstreams authentication and certificate verification. | `egressMTLS <#egressmtls>`_ | No | 
-|``waf`` | The WAF policy configures WAF and log configuration policies for `NGINX AppProtect </nginx-ingress-controller/app-protect/installation/>`_ | `WAF <#waf>`_ | No | 
+|``accessControl`` | The access control policy based on the client IP address. | [accessControl](#accesscontrol) | No |
+|``ingressClassName`` | Specifies which Ingress Controller must handle the Policy resource. | ``string`` | No |
+|``rateLimit`` | The rate limit policy controls the rate of processing requests per a defined key. | [rateLimit](#ratelimit) | No | 
+|``jwt`` | The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens. | [jwt](#jwt) | No | 
+|``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | [ingressMTLS](#ingressmtls) | No | 
+|``egressMTLS`` | The EgressMTLS policy configures upstreams authentication and certificate verification. | [egressMTLS](#egressmtls) | No | 
+|``waf`` | The WAF policy configures WAF and log configuration policies for [NGINX AppProtect](/nginx-ingress-controller/app-protect/installation/) | [WAF](#waf) | No |
 {{% /table %}} 
 
 \* A policy must include exactly one policy.
@@ -408,9 +409,9 @@ waf:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``enable`` | Enables NGINX App Protect. | ``bool`` | Yes | 
-|``apPolicy`` | The `App Protect policy </nginx-ingress-controller/app-protect/configuration/#app-protect-policies/>`_ of the WAF. Accepts an optional namespace. | ``string`` | No | 
+|``apPolicy`` | The [App Protect policy](/nginx-ingress-controller/app-protect/configuration/#app-protect-policies/) of the WAF. Accepts an optional namespace. | ``string`` | No | 
 |``securityLog.enable`` | Enables security log. | ``bool`` | No | 
-|``securityLog.apLogConf`` | The `App Protect log conf </nginx-ingress-controller/app-protect/configuration/#app-protect-logs>`_ resource. Accepts an optional namespace. | ``string`` | No | 
+|``securityLog.apLogConf`` | The [App Protect log conf](/nginx-ingress-controller/app-protect/configuration/#app-protect-logs) resource. Accepts an optional namespace. | ``string`` | No | 
 |``securityLog.logDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No | 
 {{% /table %}} 
 

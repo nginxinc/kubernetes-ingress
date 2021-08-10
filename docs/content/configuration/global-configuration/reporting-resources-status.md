@@ -67,7 +67,7 @@ The following fields are reported in both VirtualServer and VirtualServerRoute s
 |``State`` | Current state of the resource. Can be ``Valid``, ``Warning`` an ``Invalid``. For more information, refer to the ``message`` field. | ``string`` | 
 |``Reason`` | The reason of the last update. | ``string`` | 
 |``Message`` | Additional information about the state. | ``string`` | 
-|``ExternalEndpoints`` | A list of external endpoints for which the hosts of the resource are publicly accessible. | `[]externalEndpoint <#externalendpoint>`_ | 
+|``ExternalEndpoints`` | A list of external endpoints for which the hosts of the resource are publicly accessible. | [[]externalEndpoint](#externalendpoint) | 
 {{% /table %}} 
 
 The following field is reported in the VirtualServerRoute status only:

@@ -23,7 +23,7 @@ We will have a public forum soon where you can come and ask questions and have a
 
 ## Getting Started
 
-Follow our [Installation Guide](https://github.com/nginxinc/kubernetes-ingress/blob/master/docs/installation.md) to get the NGINX Ingress Controller up and running.
+Follow our [Installation Guide](https://github.com/nginxinc/kubernetes-ingress/blob/master/docs/content/installation) to get the NGINX Ingress Controller up and running.
 
 Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/master/docs) and [configuration](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples) examples
 

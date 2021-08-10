@@ -6,7 +6,7 @@ In this example we deploy the NGINX Plus Ingress controller with [NGINX App Prot
 
 ## 1. Deploy the Ingress Controller
 
-1. Follow the installation [instructions](../../docs/installation.md) to deploy the Ingress controller with NGINX App Protect.
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress controller with NGINX App Protect.
 
 2. Save the public IP address of the Ingress controller into a shell variable:
     ```
@@ -56,7 +56,7 @@ $ kubectl create -f cafe.yaml
 
 1. To access the application, curl the coffee and the tea services. We'll use `curl`'s --insecure option to turn off certificate verification of our self-signed
 certificate and the --resolve option to set the Host header of a request with `cafe.example.com`
-    
+
     To get coffee:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure
@@ -84,7 +84,7 @@ certificate and the --resolve option to set the Host header of a request with `c
     ...
     ```
     As you can see, the suspicious requests were blocked by App Protect
-    
+
 1. To check the security logs in the syslog pod:
     ```
     $ kubectl exec -it <SYSLOG_POD> -- cat /var/log/messages
