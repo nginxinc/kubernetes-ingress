@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.6.0
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.4.1
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.4.2
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/emicklei/go-restful v2.15.0+incompatible // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
