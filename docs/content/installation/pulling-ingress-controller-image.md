@@ -6,13 +6,15 @@ doctypes: [""]
 toc: true
 ---
 
-This document explains how to pull an NGINX Plus Ingress Controller image from the F5 Docker registry. Please see [here](/nginx-ingress-controller/installation/building-ingress-controller-image) for information on how to build an Ingress Controller image using the source code and your NGINX Plus license certificate and key. Note that for NGINX Ingress Controller based on NGINX OSS, we provide the image through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
+This document explains how to pull an NGINX Plus Ingress Controller image from the F5 Docker registry using your NGINX Ingress Controller subscription certificate and key.  Note that an NGINX Plus subscription certificate and key will not work with the Docker registry.
+Please see [here](/nginx-ingress-controller/installation/building-ingress-controller-image) for information on how to build an Ingress Controller image using the source code from this repository and your NGINX Plus subscription certificate and key. 
+Note that for NGINX Ingress Controller based on NGINX OSS, we provide the image through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
 
 ## Prerequisites
 
 Before you can pull the image, make sure that the following software is installed on your machine:
 * [Docker](https://www.docker.com/products/docker) v18.09+
-* For NGINX Plus, you must have the NGINX Plus Ingress Controller license -- the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`).
+* For NGINX Ingress Controller, you must have the NGINX Ingress Controller subscription -- download the NGINX Plus Ingress Controller (per instance) certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) from [MyF5] (https://myf5.com).
 
 ## Pulling the Image using Docker and Pushing It to the Private Registry
 
