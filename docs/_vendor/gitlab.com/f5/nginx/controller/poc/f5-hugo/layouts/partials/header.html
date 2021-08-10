@@ -5,7 +5,7 @@
       <img class="navbar-img" src="{{.Site.BaseURL}}images/icons/NGINX-Docs-horiz-white-type.svg" alt="NGINX Docs">
     </a>
     <div class="navbar navbar-nav">
-      {{ if ne .Site.Params.buildtype "package"}}
+      {{ if ( not ( in .Site.Params.buildtype "package" ) ) }}
       <!-- Standalone search box. -->
       <div id="searchbox">
         <!--div class="CoveoAnalytics" data-search-hub="HUB_ES_Nginx_Docs_And_Org"></div-->

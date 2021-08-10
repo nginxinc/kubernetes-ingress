@@ -16,6 +16,10 @@ from suite.resources_utils import (
     get_test_file_name,
     get_last_reload_time,
     write_to_json,
+    scale_deployment,
+    get_pods_amount,
+    wait_before_test,
+    get_reload_count
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 from settings import TEST_DATA
@@ -77,20 +81,20 @@ def smoke_setup(
     return SmokeSetup(ingress_controller_endpoint, ingress_host)
 
 
-@pytest.mark.ingresses
 @pytest.mark.smoke
-@pytest.mark.parametrize(
-    "ingress_controller",
-    [
-        pytest.param({"extra_args": ["-enable-prometheus-metrics"]}, id="one-additional-cli-args"),
-        pytest.param(
-            {"extra_args": ["-nginx-debug", "-health-status=true", "-enable-prometheus-metrics"]},
-            id="some-additional-cli-args",
-        ),
-    ],
-    indirect=True,
-)
+@pytest.mark.ingresses
 class TestSmoke:
+    @pytest.mark.parametrize(
+        "ingress_controller",
+        [
+            pytest.param({"extra_args": ["-enable-prometheus-metrics"]}, id="one-additional-cli-args"),
+            pytest.param(
+                {"extra_args": ["-nginx-debug", "-health-status=true", "-enable-prometheus-metrics"]},
+                id="some-additional-cli-args",
+            ),
+        ],
+        indirect=True,
+    )
     @pytest.mark.parametrize("path", paths)
     def test_response_code_200_and_server_name(
         self, request, ingress_controller, smoke_setup, path
@@ -104,3 +108,28 @@ class TestSmoke:
         reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
         assert resp.status_code == 200
         assert f"Server name: {path}" in resp.text
+
+    @pytest.mark.parametrize(
+        "ingress_controller",
+        [
+            pytest.param({"extra_args": ["-enable-prometheus-metrics"]}, id="one-additional-cli-args"),
+        ],
+        indirect=True,
+    )
+    def test_reload_count_after_start(
+            self, kube_apis, smoke_setup, ingress_controller_prerequisites
+    ):
+        ns = ingress_controller_prerequisites.namespace
+
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 0)
+        while get_pods_amount(kube_apis.v1, ns) is not 0:
+            print(f"Number of replicas not 0, retrying...")
+            wait_before_test()
+
+        num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)
+        assert num is None
+
+        metrics_url = f"http://{smoke_setup.public_endpoint.public_ip}:{smoke_setup.public_endpoint.metrics_port}/metrics"
+        count = get_reload_count(metrics_url)
+
+        assert count == 1
