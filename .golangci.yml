@@ -65,5 +65,6 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   new: true
+  exclude-use-default: false
 run:
   timeout: 5m
