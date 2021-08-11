@@ -120,7 +120,7 @@ jobs:
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
           - tag: ${{ needs.variables.outputs.kic-tag }}-ubi
             type: ubi
-            platforms: linux/arm64,linux/amd64
+            platforms: linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
     steps:
       - name: Checkout Repository
@@ -272,7 +272,7 @@ jobs:
                 },
                 {
                   title: "Commit Message",
-                  value: "${{ steps.slack.outputs.message }}"",
+                  value: "${{ steps.slack.outputs.message }}",
                   short: true
                 },
                 {
