@@ -19,7 +19,7 @@ import (
 
 	"github.com/golang/glog"
 	api_v1 "k8s.io/api/core/v1"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
@@ -962,13 +962,13 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 		SlowStart:   ingCfg.SlowStart,
 	}
 
-	if ingEx.Ingress.Spec.Backend != nil {
-		endps, exists := ingEx.Endpoints[ingEx.Ingress.Spec.Backend.ServiceName+ingEx.Ingress.Spec.Backend.ServicePort.String()]
+	if ingEx.Ingress.Spec.DefaultBackend != nil {
+		endps, exists := ingEx.Endpoints[ingEx.Ingress.Spec.DefaultBackend.Service.Name+GetBackendPortAsString(ingEx.Ingress.Spec.DefaultBackend.Service.Port)]
 		if exists {
-			if _, isExternalName := ingEx.ExternalNameSvcs[ingEx.Ingress.Spec.Backend.ServiceName]; isExternalName {
-				glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", ingEx.Ingress.Spec.Backend.ServiceName)
+			if _, isExternalName := ingEx.ExternalNameSvcs[ingEx.Ingress.Spec.DefaultBackend.Service.Name]; isExternalName {
+				glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", ingEx.Ingress.Spec.DefaultBackend.Service.Name)
 			} else {
-				name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
+				name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.DefaultBackend)
 				err := cnf.updateServersInPlus(name, endps, cfg)
 				if err != nil {
 					return fmt.Errorf("Couldn't update the endpoints for %v: %w", name, err)
@@ -983,10 +983,10 @@ func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
 		}
 
 		for _, path := range rule.HTTP.Paths {
-			endps, exists := ingEx.Endpoints[path.Backend.ServiceName+path.Backend.ServicePort.String()]
+			endps, exists := ingEx.Endpoints[path.Backend.Service.Name+GetBackendPortAsString(path.Backend.Service.Port)]
 			if exists {
-				if _, isExternalName := ingEx.ExternalNameSvcs[path.Backend.ServiceName]; isExternalName {
-					glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", path.Backend.ServiceName)
+				if _, isExternalName := ingEx.ExternalNameSvcs[path.Backend.Service.Name]; isExternalName {
+					glog.V(3).Infof("Service %s is Type ExternalName, skipping NGINX Plus endpoints update via API", path.Backend.Service.Name)
 					continue
 				}
 

@@ -20,7 +20,7 @@ import (
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -531,25 +531,33 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 		},
 		Status: v1.ServiceStatus{},
 	}
-	ingSvcPort := intstr.FromString("foo")
-	svcPort := lbc.getServicePortForIngressPort(ingSvcPort, &svc)
+	backendPort := networking.ServiceBackendPort{
+		Name: "foo",
+	}
+	svcPort := lbc.getServicePortForIngressPort(backendPort, &svc)
 	if svcPort == nil || svcPort.Port != 80 {
 		t.Errorf("TargetPort string match failed: %+v", svcPort)
 	}
 
-	ingSvcPort = intstr.FromInt(80)
-	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
+	backendPort = networking.ServiceBackendPort{
+		Number: 80,
+	}
+	svcPort = lbc.getServicePortForIngressPort(backendPort, &svc)
 	if svcPort == nil || svcPort.Port != 80 {
 		t.Errorf("TargetPort int match failed: %+v", svcPort)
 	}
 
-	ingSvcPort = intstr.FromInt(22)
-	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
+	backendPort = networking.ServiceBackendPort{
+		Number: 22,
+	}
+	svcPort = lbc.getServicePortForIngressPort(backendPort, &svc)
 	if svcPort != nil {
 		t.Errorf("Mismatched ints should not return port: %+v", svcPort)
 	}
-	ingSvcPort = intstr.FromString("bar")
-	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
+	backendPort = networking.ServiceBackendPort{
+		Name: "bar",
+	}
+	svcPort = lbc.getServicePortForIngressPort(backendPort, &svc)
 	if svcPort != nil {
 		t.Errorf("Mismatched strings should not return port: %+v", svcPort)
 	}

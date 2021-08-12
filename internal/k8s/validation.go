@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
@@ -543,6 +543,10 @@ func validateIsTrue(v string) error {
 func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	if spec.DefaultBackend != nil {
+		allErrs = append(allErrs, validateBackend(spec.DefaultBackend, fieldPath.Child("defaultBackend"))...)
+	}
+
 	allHosts := sets.String{}
 
 	if len(spec.Rules) == 0 {
@@ -550,15 +554,35 @@ func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) fi
 	}
 
 	for i, r := range spec.Rules {
-		idxPath := fieldPath.Child("rules").Index(i)
+		idxRule := fieldPath.Child("rules").Index(i)
 
 		if r.Host == "" {
-			allErrs = append(allErrs, field.Required(idxPath.Child("host"), ""))
+			allErrs = append(allErrs, field.Required(idxRule.Child("host"), ""))
 		} else if allHosts.Has(r.Host) {
-			allErrs = append(allErrs, field.Duplicate(idxPath.Child("host"), r.Host))
+			allErrs = append(allErrs, field.Duplicate(idxRule.Child("host"), r.Host))
 		} else {
 			allHosts.Insert(r.Host)
 		}
+
+		if r.HTTP == nil {
+			continue
+		}
+
+		for _, path := range r.HTTP.Paths {
+			idxPath := idxRule.Child("http").Child("path").Index(i)
+
+			allErrs = append(allErrs, validateBackend(&path.Backend, idxPath.Child("backend"))...)
+		}
+	}
+
+	return allErrs
+}
+
+func validateBackend(backend *networking.IngressBackend, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if backend.Resource != nil {
+		return append(allErrs, field.Forbidden(fieldPath.Child("resource"), "resource backends are not supported"))
 	}
 
 	return allErrs
@@ -602,13 +626,15 @@ func validateMinionSpec(spec *networking.IngressSpec, fieldPath *field.Path) fie
 
 func getSpecServices(ingressSpec networking.IngressSpec) map[string]bool {
 	services := make(map[string]bool)
-	if ingressSpec.Backend != nil {
-		services[ingressSpec.Backend.ServiceName] = true
+	if ingressSpec.DefaultBackend != nil && ingressSpec.DefaultBackend.Service != nil {
+		services[ingressSpec.DefaultBackend.Service.Name] = true
 	}
 	for _, rule := range ingressSpec.Rules {
 		if rule.HTTP != nil {
 			for _, path := range rule.HTTP.Paths {
-				services[path.Backend.ServiceName] = true
+				if path.Backend.Service != nil {
+					services[path.Backend.Service.Name] = true
+				}
 			}
 		}
 	}
