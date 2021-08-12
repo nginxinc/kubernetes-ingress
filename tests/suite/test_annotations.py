@@ -51,7 +51,7 @@ def get_minions_info_from_yaml(file) -> []:
         for dep in docs:
             if 'minion' in dep['metadata']['name']:
                 res.append({"name": dep['metadata']['name'],
-                            "svc_name": dep['spec']['rules'][0]['http']['paths'][0]['backend']['serviceName']})
+                            "svc_name": dep['spec']['rules'][0]['http']['paths'][0]['backend']['service']['name']})
     return res
 
 
