@@ -7,14 +7,14 @@ Let's create a set of custom annotations to support [rate-limiting](https://ngin
 * `custom.nginx.org/rate-limiting-rate` - configures the rate of rate-limiting, with the default of `1r/s`.
 * `custom.nginx.org/rate-limiting-burst` - configures the maximum bursts size of requests with the default of `3`.
 
-## Prerequisites 
+## Prerequisites
 
 * Read the [custom annotations doc](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/custom-annotations/) before going through this example first.
 * Read about [custom templates](../custom-templates).
 
 ## Step 1 - Customize the Template
 
-Customize the template for Ingress resources to include the logic to handle and apply the annotations. 
+Customize the template for Ingress resources to include the logic to handle and apply the annotations.
 
 1. Create a ConfigMap file with the customized template (`nginx-config.yaml`):
     ```yaml
@@ -26,7 +26,7 @@ Customize the template for Ingress resources to include the logic to handle and 
     data:
       ingress-template: |
         . . .
-        # handling custom.nginx.org/rate-limiting` and custom.nginx.org/rate-limiting-rate 
+        # handling custom.nginx.org/rate-limiting` and custom.nginx.org/rate-limiting-rate
 
         {{if index $.Ingress.Annotations "custom.nginx.org/rate-limiting"}}
         {{$rate := index $.Ingress.Annotations "custom.nginx.org/rate-limiting-rate"}}
@@ -37,7 +37,7 @@ Customize the template for Ingress resources to include the logic to handle and 
 
         {{range $server := .Servers}}
         server {
-        
+
           . . .
 
           {{range $location := $server.Locations}}
@@ -51,7 +51,7 @@ Customize the template for Ingress resources to include the logic to handle and 
             {{$burst := index $.Ingress.Annotations "custom.nginx.org/rate-limiting-burst"}}
             limit_req zone={{$.Ingress.Namespace}}-{{$.Ingress.Name}} burst={{if $burst}}{{$burst}}{{else}}3{{end}} nodelay;
             {{end}}
-        
+
             . . .
     ```
 
@@ -81,7 +81,7 @@ Customize the template for Ingress resources to include the logic to handle and 
 
 1. Create a file with the following Ingress resource (`cafe-ingress.yaml`) and use the custom annotations to enable rate-limiting:
     ```yaml
-    apiVersion: networking.k8s.io/v1beta1
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
       name: cafe-ingress
@@ -96,13 +96,19 @@ Customize the template for Ingress resources to include the logic to handle and 
         http:
           paths:
           - path: /tea
+            pathType: Prefix
             backend:
-              serviceName: tea-svc
-              servicePort: 80
+              service:
+                name: tea-svc
+                port:
+                  number: 80
           - path: /coffee
+            pathType: Prefix
             backend:
-              serviceName: coffee-svc
-              servicePort: 80
+              service:
+                name: coffee-svc
+                port:
+                  number: 80
     ```
 
 1. Apply the Ingress resource:

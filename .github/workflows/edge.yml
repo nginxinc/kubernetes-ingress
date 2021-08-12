@@ -28,7 +28,7 @@ defaults:
 
 env:
   DOCKER_BUILDKIT: 1
-  K8S_VERSION: 1.21.1
+  K8S_VERSION: 1.22.0
   K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge

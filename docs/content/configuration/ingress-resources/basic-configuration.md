@@ -1,7 +1,7 @@
 ---
 title: Basic Configuration
 
-description: 
+description:
 weight: 1600
 doctypes: [""]
 toc: true
@@ -10,7 +10,7 @@ toc: true
 
 The example below shows a basic Ingress resource definition. It load balances requests for two services -- coffee and tea -- comprising a hypothetical *cafe* app hosted at `cafe.example.com`:
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: cafe-ingress
@@ -24,13 +24,19 @@ spec:
     http:
       paths:
       - path: /tea
+        pathType: Prefix
         backend:
-          serviceName: tea-svc
-          servicePort: 80
+          service:
+            name: tea-svc
+            port:
+              number: 80
       - path: /coffee
+        pathType: Prefix
         backend:
-          serviceName: coffee-svc
-          servicePort: 80
+          service:
+            name: coffee-svc
+            port:
+              number: 80
 ```
 
 Here is a breakdown of what this Ingress resource definition means:
@@ -63,17 +69,21 @@ Starting from Kubernetes 1.18, you can use the following new features:
     - path: /tea/green
       pathType: Exact
       backend:
-        serviceName: tea-svc
-        servicePort: 80
+          service:
+            name: tea-svc
+            port:
+              number: 80
     - path: /coffee
       pathType: ImplementationSpecific # default
       backend:
-        serviceName: coffee-svc
-        servicePort: 80
+          service:
+            name: coffee-svc
+            port:
+              number: 80
   ```
 * The `ingressClassName` field is now supported:
   ```yaml
-    apiVersion: networking.k8s.io/v1beta1
+    apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
       name: cafe-ingress

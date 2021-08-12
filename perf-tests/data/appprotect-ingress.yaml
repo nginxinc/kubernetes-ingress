@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: appprotect-ingress
@@ -19,9 +19,13 @@ spec:
       paths:
       - path: /backend1/v1
         backend:
-          serviceName: backend1-svc
-          servicePort: 80
+          service:
+            name: backend1-svc
+            port:
+              number: 80
       - path: /backend2/v2
         backend:
-          serviceName: backend2-svc
-          servicePort: 80
+          service:
+            name: backend2-svc
+            port:
+              number: 80
