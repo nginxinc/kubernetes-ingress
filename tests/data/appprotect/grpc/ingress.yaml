@@ -20,6 +20,7 @@ spec:
     http:
       paths:
       - path: /helloworld.Greeter
+        pathType: Prefix
         backend:
           service:
             name: grpc-svc
