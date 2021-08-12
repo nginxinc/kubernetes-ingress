@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 

@@ -14,9 +14,9 @@ import (
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	api_v1 "k8s.io/api/core/v1"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	typednetworking "k8s.io/client-go/kubernetes/typed/networking/v1beta1"
+	typednetworking "k8s.io/client-go/kubernetes/typed/networking/v1"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
@@ -132,7 +132,7 @@ func (su *statusUpdater) updateIngressWithStatus(ing networking.Ingress, status 
 	}
 
 	ingCopy.Status.LoadBalancer.Ingress = status
-	clientIngress := su.client.NetworkingV1beta1().Ingresses(ingCopy.Namespace)
+	clientIngress := su.client.NetworkingV1().Ingresses(ingCopy.Namespace)
 	_, err = clientIngress.UpdateStatus(context.TODO(), ingCopy, metav1.UpdateOptions{})
 	if err != nil {
 		glog.V(3).Infof("error setting ingress status: %v", err)
