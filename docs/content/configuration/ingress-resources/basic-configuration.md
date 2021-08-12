@@ -74,7 +74,7 @@ Starting from Kubernetes 1.18, you can use the following new features:
             port:
               number: 80
     - path: /coffee
-      pathType: ImplementationSpecific # default
+      pathType: ImplementationSpecific
       backend:
           service:
             name: coffee-svc
