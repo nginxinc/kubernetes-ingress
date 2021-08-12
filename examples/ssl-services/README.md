@@ -34,6 +34,7 @@ spec:
             port:
               number: 80
       - path: /ssl
+        pathType: Prefix
         backend:
           service:
             name: ssl-svc
