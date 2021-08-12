@@ -1,6 +1,6 @@
 ---
 title: Handling Host and Listener Collisions
-description:
+description: 
 weight: 1700
 doctypes: [""]
 toc: true
@@ -26,7 +26,7 @@ A host collision occurs when multiple Ingress, VirtualServer, and TransportServe
 Consider the following two resources:
 * `cafe-ingress` Ingress:
     ```yaml
-    apiVersion: networking.k8s.io/v1
+    apiVersion: networking.k8s.io/v1beta1
     kind: Ingress
     metadata:
       name: cafe-ingress

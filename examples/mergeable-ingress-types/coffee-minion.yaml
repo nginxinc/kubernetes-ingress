@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: cafe-ingress-coffee-minion
@@ -12,7 +12,5 @@ spec:
       paths:
       - path: /coffee
         backend:
-          service:
-            name: coffee-svc
-            port:
-              number: 80
+          serviceName: coffee-svc
+          servicePort: 80

@@ -1,6 +1,6 @@
 ---
 title: Advanced Configuration with Snippets
-description:
+description: 
 weight: 1800
 doctypes: [""]
 toc: true
@@ -15,7 +15,7 @@ Snippets are also available through the [ConfigMap](/nginx-ingress-controller/co
 
 The example below shows how to use snippets to customize the NGINX configuration template using annotations.
 ```yaml
-apiVersion: networking.k8s.io/v1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: cafe-ingress-with-snippets
@@ -32,19 +32,13 @@ spec:
     http:
       paths:
       - path: /tea
-        pathType: Prefix
         backend:
-          service:
-            name: tea-svc
-            port:
-              number: 80
+          serviceName: tea-svc
+          servicePort: 80
       - path: /coffee
-        pathType: Prefix
         backend:
-          service:
-            name: coffee-svc
-            port:
-              number: 80
+          serviceName: coffee-svc
+          servicePort: 80
 ```
 
 Generated NGINX configuration:
@@ -69,7 +63,7 @@ server {
 
     location /tea {
         proxy_http_version 1.1;
-
+        
         add_header my-test-header test-value;
         ...
         proxy_pass http://default-cafe-ingress-with-snippets-cafe.example.com-tea-svc-80;

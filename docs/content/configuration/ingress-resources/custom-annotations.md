@@ -1,7 +1,7 @@
 ---
 title: Custom Annotations
 
-description:
+description: 
 weight: 1900
 doctypes: [""]
 aliases:
@@ -16,15 +16,15 @@ Custom annotations enable you to quickly extend the Ingress resource to support 
 
 NGINX Ingress Controller supports a number of annotations for the Ingress resource that fine tune NGINX configuration (for example, connection timeouts) or enable additional features (for example, JWT validation). The complete list of annotations is available [here](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations).
 
-The annotations are provided only for the most common features and use cases, meaning that not every NGINX feature or a customization option is available through the annotations. Additionally, even if an annotation is available, it might not give you the satisfactory level of control of a particular NGINX feature.
+The annotations are provided only for the most common features and use cases, meaning that not every NGINX feature or a customization option is available through the annotations. Additionally, even if an annotation is available, it might not give you the satisfactory level of control of a particular NGINX feature. 
 
 Custom annotations allow you to add an annotation for an NGINX feature that is not available as a regular annotation. In contrast with regular annotations, to add a custom annotation, you don't need to modify the Ingress Controller source code -- just modify the template. Additionally, with a custom annotation, you get full control of how the feature is implemented in NGINX configuration.
 
 ## Usage
 
-The Ingress Controller generates NGINX configuration for Ingress resources by executing a configuration template. See [NGINX template](https://github.com/nginxinc/kubernetes-ingress/blob/v1.12.0/internal/configs/version1/nginx.ingress.tmpl) or [NGINX Plus template](https://github.com/nginxinc/kubernetes-ingress/blob/v1.12.0/internal/configs/version1/nginx-plus.ingress.tmpl).
+The Ingress Controller generates NGINX configuration for Ingress resources by executing a configuration template. See [NGINX template](https://github.com/nginxinc/kubernetes-ingress/blob/v1.12.0/internal/configs/version1/nginx.ingress.tmpl) or [NGINX Plus template](https://github.com/nginxinc/kubernetes-ingress/blob/v1.12.0/internal/configs/version1/nginx-plus.ingress.tmpl). 
 
-To support custom annotations, the template has access to the information about the Ingress resource - its *name*, *namespace* and *annotations*. It is possible to check if a particular annotation present in the Ingress resource and conditionally insert NGINX configuration directives at multiple NGINX contexts - `http`, `server`, `location` or `upstream`. Additionally, you can get the value that is set to the annotation.
+To support custom annotations, the template has access to the information about the Ingress resource - its *name*, *namespace* and *annotations*. It is possible to check if a particular annotation present in the Ingress resource and conditionally insert NGINX configuration directives at multiple NGINX contexts - `http`, `server`, `location` or `upstream`. Additionally, you can get the value that is set to the annotation. 
 
 Consider the following excerpt from the template, which was extended to support two custom annotations:
 
@@ -43,7 +43,7 @@ Consider the following excerpt from the template, which was extended to support 
 
 Consider the following Ingress resource and note how we set two annotations:
 ```yaml
-apiVersion: networking.k8s.io/v1
+apiVersion: networking.k8s.io/v1beta1
 kind: Ingress
 metadata:
   name: example-ingress
@@ -69,7 +69,7 @@ Assuming that the Ingress Controller is using that customized template, it will 
 # Print the value assigned to the annotation: 512
 ```
 
-**Notes**:
+**Notes**: 
 * You can customize the template to insert you custom annotations via [custom templates](/nginx-ingress-controller/configuration/global-configuration/custom-templates).
 * The Ingress Controller uses go templates to generate NGINX config. You can read more information about go templates [here](https://golang.org/pkg/text/template/).
 
@@ -92,7 +92,7 @@ If you'd like to use custom annotations with Mergeable Ingress resources, please
         . . .
     } {{end}}
     ```
-    **Note**: `$location.MinionIngress` is a pointer. When a regular Ingress resource is processed in the template, the value of the pointer is `nil`. Thus, it is important that you check that `$location.MinionIngress` is not `nil` as in the example above using the `with` action.
+    **Note**: `$location.MinionIngress` is a pointer. When a regular Ingress resource is processed in the template, the value of the pointer is `nil`. Thus, it is important that you check that `$location.MinionIngress` is not `nil` as in the example above using the `with` action.  
 
 * Minions do not inherent custom annotations of the master.
 
@@ -100,12 +100,12 @@ If you'd like to use custom annotations with Mergeable Ingress resources, please
 
 Helper functions can be used in the Ingress template to parse the values of custom annotations.
 
-{{% table %}}
-|Function | Input Arguments | Return Arguments | Description |
-| ---| ---| ---| --- |
-|``split`` | ``s, sep string`` | ``[]string`` | Splits the string ``s`` into a slice of strings separated by the ``sep``. |
-|``trim`` | ``s string`` | ``string`` | Trims the trailing and leading whitespace from the string ``s``. |
-{{% /table %}}
+{{% table %}} 
+|Function | Input Arguments | Return Arguments | Description | 
+| ---| ---| ---| --- | 
+|``split`` | ``s, sep string`` | ``[]string`` | Splits the string ``s`` into a slice of strings separated by the ``sep``. | 
+|``trim`` | ``s string`` | ``string`` | Trims the trailing and leading whitespace from the string ``s``. | 
+{{% /table %}} 
 
 Consider the following custom annotation `custom.nginx.org/allowed-ips`, which expects a comma-separated list of IP addresses:
 ```
