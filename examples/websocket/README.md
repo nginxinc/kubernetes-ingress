@@ -33,6 +33,7 @@ spec:
             port:
               number: 80
       - path: /ws
+        pathType: Prefix
         backend:
           service:
             name: ws-svc

@@ -11,6 +11,7 @@ spec:
     http:
       paths:
       - path: /coffee
+        pathType: Prefix
         backend:
           service:
             name: coffee-svc
