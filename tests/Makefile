@@ -29,8 +29,7 @@ run-tests-in-kind:
 
 .PHONY: create-kind-cluster
 create-kind-cluster:
-	$(eval K8S_VERSION=$(shell grep "K8S_VERSION:" ../.github/workflows/edge.yml | awk -F" " '{print $$2}'))
-	kind create cluster --image kindest/node:v$(K8S_VERSION)
+	kind create cluster
 	kind export kubeconfig --kubeconfig $(KIND_KUBE_CONFIG_FOLDER)/config
 
 .PHONY: delete-kind-cluster
