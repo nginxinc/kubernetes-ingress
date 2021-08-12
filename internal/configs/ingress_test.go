@@ -7,14 +7,12 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	v1 "k8s.io/api/core/v1"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/intstr"
-
-	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 )
 
 func TestGenerateNginxCfg(t *testing.T) {
@@ -304,15 +302,23 @@ func createCafeIngressEx() IngressEx {
 								{
 									Path: "/coffee",
 									Backend: networking.IngressBackend{
-										ServiceName: "coffee-svc",
-										ServicePort: intstr.FromString("80"),
+										Service: &networking.IngressServiceBackend{
+											Name: "coffee-svc",
+											Port: networking.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 								{
 									Path: "/tea",
 									Backend: networking.IngressBackend{
-										ServiceName: "tea-svc",
-										ServicePort: intstr.FromString("80"),
+										Service: &networking.IngressServiceBackend{
+											Name: "tea-svc",
+											Port: networking.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 							},
@@ -508,8 +514,12 @@ func createMergeableCafeIngress() *MergeableIngresses {
 								{
 									Path: "/coffee",
 									Backend: networking.IngressBackend{
-										ServiceName: "coffee-svc",
-										ServicePort: intstr.FromString("80"),
+										Service: &networking.IngressServiceBackend{
+											Name: "coffee-svc",
+											Port: networking.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 							},
@@ -539,8 +549,12 @@ func createMergeableCafeIngress() *MergeableIngresses {
 								{
 									Path: "/tea",
 									Backend: networking.IngressBackend{
-										ServiceName: "tea-svc",
-										ServicePort: intstr.FromString("80"),
+										Service: &networking.IngressServiceBackend{
+											Name: "tea-svc",
+											Port: networking.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 							},
@@ -1401,5 +1415,32 @@ func TestGenerateNginxCfgForMergeableIngressesForAppProtect(t *testing.T) {
 	}
 	if len(warnings) != 0 {
 		t.Errorf("generateNginxCfgForMergeableIngresses() returned warnings: %v", warnings)
+	}
+}
+
+func TestGetBackendPortAsString(t *testing.T) {
+	tests := []struct {
+		port     networking.ServiceBackendPort
+		expected string
+	}{
+		{
+			port: networking.ServiceBackendPort{
+				Name: "test",
+			},
+			expected: "test",
+		},
+		{
+			port: networking.ServiceBackendPort{
+				Number: 80,
+			},
+			expected: "80",
+		},
+	}
+
+	for _, test := range tests {
+		result := GetBackendPortAsString(test.port)
+		if result != test.expected {
+			t.Errorf("GetBackendPortAsString(%+v) returned %q but expected %q", test.port, result, test.expected)
+		}
 	}
 }

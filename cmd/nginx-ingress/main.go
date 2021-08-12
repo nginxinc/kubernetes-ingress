@@ -307,7 +307,7 @@ func main() {
 		*useIngressClassOnly = true
 		glog.Warningln("The '-use-ingress-class-only' flag will be deprecated and has no effect on versions of kubernetes >= 1.18.0. Processing ONLY resources that have the 'ingressClassName' field in Ingress equal to the class.")
 
-		ingressClassRes, err := kubeClient.NetworkingV1beta1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
+		ingressClassRes, err := kubeClient.NetworkingV1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
 		if err != nil {
 			glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
 		}

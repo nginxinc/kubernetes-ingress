@@ -6,7 +6,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -333,8 +333,10 @@ func TestServiceIsReferencedByIngressAndMinion(t *testing.T) {
 					Namespace: "default",
 				},
 				Spec: networking.IngressSpec{
-					Backend: &networking.IngressBackend{
-						ServiceName: "test-service",
+					DefaultBackend: &networking.IngressBackend{
+						Service: &networking.IngressServiceBackend{
+							Name: "test-service",
+						},
 					},
 				},
 			},
@@ -356,7 +358,9 @@ func TestServiceIsReferencedByIngressAndMinion(t *testing.T) {
 									Paths: []networking.HTTPIngressPath{
 										{
 											Backend: networking.IngressBackend{
-												ServiceName: "test-service",
+												Service: &networking.IngressServiceBackend{
+													Name: "test-service",
+												},
 											},
 										},
 									},
@@ -384,7 +388,9 @@ func TestServiceIsReferencedByIngressAndMinion(t *testing.T) {
 									Paths: []networking.HTTPIngressPath{
 										{
 											Backend: networking.IngressBackend{
-												ServiceName: "test-service",
+												Service: &networking.IngressServiceBackend{
+													Name: "test-service",
+												},
 											},
 										},
 									},
@@ -412,7 +418,9 @@ func TestServiceIsReferencedByIngressAndMinion(t *testing.T) {
 									Paths: []networking.HTTPIngressPath{
 										{
 											Backend: networking.IngressBackend{
-												ServiceName: "test-service",
+												Service: &networking.IngressServiceBackend{
+													Name: "test-service",
+												},
 											},
 										},
 									},
