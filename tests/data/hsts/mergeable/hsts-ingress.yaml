@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: hsts-ingress-master
@@ -10,7 +10,7 @@ spec:
   rules:
   - host: hsts.example.com
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: hsts-ingress-backend1-minion
@@ -23,11 +23,14 @@ spec:
     http:
       paths:
       - path: /backend1
+        pathType: Prefix
         backend:
-          serviceName: backend1-svc
-          servicePort: 80
+          service:
+            name: backend1-svc
+            port:
+              number: 80
 ---
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: hsts-ingress-backend2-minion
@@ -40,6 +43,9 @@ spec:
     http:
       paths:
       - path: /backend2
+        pathType: Prefix
         backend:
-          serviceName: backend2-svc
-          servicePort: 80
+          service:
+            name: backend2-svc
+            port:
+              number: 80

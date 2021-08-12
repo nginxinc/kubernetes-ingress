@@ -13,7 +13,7 @@ nginx.org/rewrites: "serviceName=service1 rewrite=rewrite1[;serviceName=service2
 
 In the following example we load balance two applications that require URI rewriting:
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: cafe-ingress
@@ -25,13 +25,19 @@ spec:
     http:
       paths:
       - path: /tea/
+        pathType: Prefix
         backend:
-          serviceName: tea-svc
-          servicePort: 80
+          service:
+            name: tea-svc
+            port:
+              number: 80
       - path: /coffee/
+        pathType: Prefix
         backend:
-          serviceName: coffee-svc
-          servicePort: 80
+          service:
+            name: coffee-svc
+            port:
+              number: 80
 ```
 
 Below are the examples of how the URI of requests to the *tea-svc* are rewritten (Note that the `/tea` requests are redirected to `/tea/`).
