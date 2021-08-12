@@ -7,7 +7,7 @@ import json
 import pytest
 import requests
 
-from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1Api, V1Service, AppsV1Api
+from kubernetes.client import CoreV1Api, NetworkingV1Api, RbacAuthorizationV1Api, V1Service, AppsV1Api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes import client
@@ -225,7 +225,7 @@ def scale_deployment(v1:CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, valu
                 replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
                 time.sleep(1)
                 print("Number of replicas is not 0, retrying...")
-        
+
     else:
         pytest.fail("wrong argument")
 
@@ -251,7 +251,7 @@ class PodNotReadyException(Exception):
     def __init__(self, message="After several seconds the pods aren't ContainerReady. Exiting!"):
         self.message = message
         super().__init__(self.message)
-    
+
 
 def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     """
@@ -517,11 +517,11 @@ def ensure_item_removal(get_item, *args, **kwargs) -> None:
             print("Item was removed")
 
 
-def create_ingress_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, yaml_manifest) -> str:
+def create_ingress_from_yaml(networking_v1: NetworkingV1Api, namespace, yaml_manifest) -> str:
     """
     Create an ingress based on yaml file.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param networking_v1: NetworkingV1Api
     :param namespace: namespace name
     :param yaml_manifest: an absolute path to file
     :return: str
@@ -529,36 +529,36 @@ def create_ingress_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, namespac
     print(f"Load {yaml_manifest}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        return create_ingress(extensions_v1_beta1, namespace, dep)
+        return create_ingress(networking_v1, namespace, dep)
 
 
-def create_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, body) -> str:
+def create_ingress(networking_v1: NetworkingV1Api, namespace, body) -> str:
     """
     Create an ingress based on a dict.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param networking_v1: NetworkingV1Api
     :param namespace: namespace name
     :param body: a dict
     :return: str
     """
     print("Create an ingress:")
-    extensions_v1_beta1.create_namespaced_ingress(namespace, body)
+    networking_v1.create_namespaced_ingress(namespace, body)
     print(f"Ingress created with name '{body['metadata']['name']}'")
     return body['metadata']['name']
 
 
-def delete_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace) -> None:
+def delete_ingress(networking_v1: NetworkingV1Api, name, namespace) -> None:
     """
     Delete an ingress.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param networking_v1: NetworkingV1Api
     :param namespace: namespace
     :param name:
     :return:
     """
     print(f"Delete an ingress: {name}")
-    extensions_v1_beta1.delete_namespaced_ingress(name, namespace)
-    ensure_item_removal(extensions_v1_beta1.read_namespaced_ingress, name, namespace)
+    networking_v1.delete_namespaced_ingress(name, namespace)
+    ensure_item_removal(networking_v1.read_namespaced_ingress, name, namespace)
     print(f"Ingress was removed with name '{name}'")
 
 
@@ -580,18 +580,18 @@ def generate_ingresses_with_annotation(yaml_manifest, annotations) -> []:
     return res
 
 
-def replace_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace, body) -> str:
+def replace_ingress(networking_v1: NetworkingV1Api, name, namespace, body) -> str:
     """
     Replace an Ingress based on a dict.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param networking_v1: NetworkingV1Api
     :param name:
     :param namespace: namespace
     :param body: dict
     :return: str
     """
     print(f"Replace a Ingress: {name}")
-    resp = extensions_v1_beta1.replace_namespaced_ingress(name, namespace, body)
+    resp = networking_v1.replace_namespaced_ingress(name, namespace, body)
     print(f"Ingress replaced with name '{name}'")
     return resp.metadata.name
 
@@ -935,7 +935,7 @@ def wait_for_event_increment(kube_apis, namespace, event_count, offset) -> bool:
     else:
         print(f"Event was not registered after {retry} retries, exiting...")
         return False
-    
+
 
 def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments,
                               namespace, args=None) -> str:
@@ -974,7 +974,7 @@ def delete_ingress_controller(apps_v1_api: AppsV1Api, name, dep_type, namespace)
     """
     Delete IC according to its type.
 
-    :param apps_v1_api: ExtensionsV1beta1Api
+    :param apps_v1_api: NetworkingV1Api
     :param name: name
     :param dep_type: IC deployment type 'deployment' or 'daemon-set'
     :param namespace: namespace name
@@ -1025,7 +1025,7 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
             elif doc["kind"] == "ConfigMap":
                 create_configmap(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "Ingress":
-                create_ingress(kube_apis.extensions_v1_beta1, namespace, doc)
+                create_ingress(kube_apis.networking_v1, namespace, doc)
             elif doc["kind"] == "Service":
                 create_service(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "Deployment":
@@ -1062,7 +1062,7 @@ def create_ingress_with_ap_annotations(
         ] = ap_log_st
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log"] = logconf
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log-destination"] = f"syslog:server={syslog_ep}"
-        create_ingress(kube_apis.extensions_v1_beta1, namespace, doc)
+        create_ingress(kube_apis.networking_v1, namespace, doc)
 
 
 def replace_ingress_with_ap_annotations(
@@ -1093,7 +1093,7 @@ def replace_ingress_with_ap_annotations(
         ] = ap_log_st
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log"] = logconf
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log-destination"] = f"syslog:server={syslog_ep}"
-        replace_ingress(kube_apis.extensions_v1_beta1, name, namespace, doc)
+        replace_ingress(kube_apis.networking_v1, name, namespace, doc)
 
 
 def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
@@ -1114,7 +1114,7 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
             elif doc["kind"] == "Secret":
                 delete_secret(kube_apis.v1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Ingress":
-                delete_ingress(kube_apis.extensions_v1_beta1, doc['metadata']['name'], namespace)
+                delete_ingress(kube_apis.networking_v1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Service":
                 delete_service(kube_apis.v1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Deployment":
@@ -1210,7 +1210,7 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
     headers = {"host": host}
     if additional_headers:
         headers.update(additional_headers)
-    
+
     if check404:
         for _ in range(60):
             resp = requests.get(req_url, headers=headers, verify=False)

@@ -9,7 +9,7 @@ import subprocess
 from kubernetes import config, client
 from kubernetes.client import (
     CoreV1Api,
-    ExtensionsV1beta1Api,
+    NetworkingV1Api,
     RbacAuthorizationV1Api,
     CustomObjectsApi,
     ApiextensionsV1Api,
@@ -88,7 +88,7 @@ class KubeApis:
 
     Attributes:
         v1: CoreV1Api
-        extensions_v1_beta1: ExtensionsV1beta1Api
+        networking_v1: NetworkingV1Api
         rbac_v1: RbacAuthorizationV1Api
         api_extensions_v1: ApiextensionsV1Api
         custom_objects: CustomObjectsApi
@@ -97,14 +97,14 @@ class KubeApis:
     def __init__(
         self,
         v1: CoreV1Api,
-        extensions_v1_beta1: ExtensionsV1beta1Api,
+        networking_v1: NetworkingV1Api,
         apps_v1_api: AppsV1Api,
         rbac_v1: RbacAuthorizationV1Api,
         api_extensions_v1: ApiextensionsV1Api,
         custom_objects: CustomObjectsApi,
     ):
         self.v1 = v1
-        self.extensions_v1_beta1 = extensions_v1_beta1
+        self.networking_v1 = networking_v1
         self.apps_v1_api = apps_v1_api
         self.rbac_v1 = rbac_v1
         self.api_extensions_v1 = api_extensions_v1
@@ -308,7 +308,7 @@ def ingress_controller_prerequisites(
     create_secret_from_yaml(
         kube_apis.v1, namespace, f"{DEPLOYMENTS}/common/default-server-secret.yaml"
     )
-    
+
     def fin():
         print("Clean up prerequisites")
         delete_namespace(kube_apis.v1, namespace)
@@ -342,13 +342,13 @@ def kube_apis(cli_arguments) -> KubeApis:
     kubeconfig = cli_arguments["kubeconfig"]
     config.load_kube_config(config_file=kubeconfig, context=context_name, persist_config=False)
     v1 = client.CoreV1Api()
-    extensions_v1_beta1 = client.ExtensionsV1beta1Api()
+    networking_v1 = client.NetworkingV1Api()
     apps_v1_api = client.AppsV1Api()
     rbac_v1 = client.RbacAuthorizationV1Api()
     api_extensions_v1 = client.ApiextensionsV1Api()
     custom_objects = client.CustomObjectsApi()
     return KubeApis(
-        v1, extensions_v1_beta1, apps_v1_api, rbac_v1, api_extensions_v1, custom_objects
+        v1, networking_v1, apps_v1_api, rbac_v1, api_extensions_v1, custom_objects
     )
 
 

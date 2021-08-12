@@ -44,7 +44,7 @@ def external_name_setup(request,
     external_svc_name = create_service_with_name(kube_apis.v1, external_ns, "external-backend-svc")
     create_deployment_with_name(kube_apis.apps_v1_api, external_ns, "external-backend")
     print("------------------------- Deploy External-Name-Example -----------------------------------")
-    ingress_name = create_ingress_from_yaml(kube_apis.extensions_v1_beta1, test_namespace,
+    ingress_name = create_ingress_from_yaml(kube_apis.networking_v1, test_namespace,
                                             f"{TEST_DATA}/externalname-services/externalname-ingress.yaml")
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/externalname-services/externalname-ingress.yaml")
     external_host = f"{external_svc_name}.{external_ns}.svc.cluster.local"
@@ -65,7 +65,7 @@ def external_name_setup(request,
         replace_configmap(kube_apis.v1, config_map_name,
                           ingress_controller_prerequisites.namespace,
                           ingress_controller_prerequisites.config_map)
-        delete_ingress(kube_apis.extensions_v1_beta1, ingress_name, test_namespace)
+        delete_ingress(kube_apis.networking_v1, ingress_name, test_namespace)
         delete_service(kube_apis.v1, svc_name, test_namespace)
 
     request.addfinalizer(fin)
