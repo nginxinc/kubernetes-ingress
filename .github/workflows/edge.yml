@@ -37,40 +37,60 @@ env:
 
 jobs:
 
-  binary:
-    name: Build Binary
+  checks:
+    name: Checks and variables
     runs-on: ubuntu-20.04
+    outputs:
+      sha_short: ${{ steps.vars.outputs.sha }}
+      go_version: ${{ steps.vars.outputs.go_version }}
+      go_path: ${{ steps.vars.outputs.go_path }}
+      nginx_version: ${{ steps.vars.outputs.nginx_version }}
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout Repository
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - name: Output Variables
-        id: commit
+        id: vars
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
-      - name: Determine Go version from go.mod
-        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
+          echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
+          echo "::set-output name=go_path::$(go env GOPATH)"
+          echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Determine GOPATH
-        run: echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+          go-version: ${{ steps.vars.outputs.go_version }}
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
       - name: Check if Codegen changed
         run: |
           make update-codegen && git diff --name-only --exit-code pkg/**/zz_generated.deepcopy.go
-      - name: Build binaries
+
+  binary:
+    name: Build binary
+    runs-on: ubuntu-20.04
+    needs: checks
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Golang Environment
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ needs.checks.outputs.go_version }}
+      - name: Build binary
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: build --snapshot --rm-dist --id kubernetes-ingress
+          args: build --snapshot --rm-dist --id kubernetes-ingress --single-target
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: ${{ env.GOPATH }}
+          GOPATH: ${{ needs.check.outputs.go_path }}
       - name: Store Artifacts in Cache
         uses: actions/cache@v2
         with:
@@ -80,22 +100,21 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-20.04
+    needs: checks
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Determine Go version from go.mod
-        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version: ${{ needs.checks.outputs.go_version }}
       - name: Run Tests
         run: go test ./...
 
-  container-scan:
-    name: Container Scanning
+  build-image-scan:
+    name: Build and scan Docker images
     runs-on: ubuntu-20.04
-    needs: binary
+    needs: [binary, checks]
     strategy:
       matrix:
         image: [debian, alpine, opentracing, ubi]
@@ -106,10 +125,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Output Variables
-        id: commit
-        run: |
-          echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
       - name: Fetch Cached Artifacts
         uses: actions/cache@v2
         with:
@@ -117,26 +132,19 @@ jobs:
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Cache Docker layers for ${{ matrix.image }}
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-${{ matrix.image }}-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.image }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.image }}-
       - name: Build ${{ matrix.image }} Container
         uses: docker/build-push-action@v2
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-${{ matrix.image }}-cache
-          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.image }}-cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           target: goreleaser
           tags: ${{ matrix.image }}:${{ github.sha }}
           load: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
-            NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
+            NGINX_VERSION=${{ needs.checks.outputs.nginx_version }}
             UBI_VERSION=${{ matrix.ubi_version }}
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
@@ -160,7 +168,7 @@ jobs:
   smoke-tests:
     name: Smoke Tests
     runs-on: ubuntu-20.04
-    needs: [binary, unit-tests]
+    needs: [checks, binary, build-image-scan, unit-tests]
     strategy:
       matrix:
         include:
@@ -177,10 +185,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
-      - name: Output Variables
-        id: commit
-        run: |
-          echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
       - name: Fetch Cached Artifacts
         uses: actions/cache@v2
         with:
@@ -188,33 +192,26 @@ jobs:
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Cache Docker layers for ${{ matrix.image }}
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-${{ matrix.image }}-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.image }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.image }}-
       - name: Build ${{ matrix.image }} Container
         uses: docker/build-push-action@v2
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-${{ matrix.image }}-cache
-          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.image }}-cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           target: goreleaser
           tags: ${{ matrix.image }}:${{ github.sha }}
           load: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
-            NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
+            NGINX_VERSION=${{ needs.checks.outputs.nginx_version }}
       - name: Build Test-Runner Container
         uses: docker/build-push-action@v2
         with:
           file: tests/docker/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: test-runner:${{ github.sha }}
           load: true
       - name: Deploy Kubernetes
@@ -255,7 +252,7 @@ jobs:
   helm-tests:
     name: Helm Tests
     runs-on: ubuntu-20.04
-    needs: [binary, unit-tests]
+    needs: [binary, build-image-scan, unit-tests]
     env:
       NGINX_HTTP_PORT: 8080
       NGINX_HTTPS_PORT: 8443
@@ -271,22 +268,13 @@ jobs:
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
-        with:
-          driver-opts: network=host
-      - name: Docker build cache
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
       - name: Build Docker Image nginx-ingress
         uses: docker/build-push-action@v2
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           target: goreleaser
           tags: nginx-ingress:${{ github.sha }}
           load: true
@@ -319,10 +307,38 @@ jobs:
         run: |
           . tests/ci-files/helm-http-test.sh ${{ env.HELM_TEST_RETRIES }} ${{ env.NGINX_HTTPS_PORT }} ${{ env.HELM_HTTP_POSTFIX }}
 
+  binaries-release:
+    name: Build Binaries for release
+    runs-on: ubuntu-20.04
+    needs: [checks, smoke-tests, helm-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Setup Golang Environment
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ needs.checks.outputs.go_version }}
+      - name: Build binaries
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: build --snapshot --rm-dist --id kubernetes-ingress
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOPATH: ${{ needs.check.outputs.go_path }}
+      - name: Store Artifacts in Cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+
   release-docker:
     name: Release Images
     runs-on: ubuntu-20.04
-    needs: [smoke-tests, helm-tests]
+    needs: [checks, binaries-release]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     strategy:
       matrix:
@@ -344,10 +360,8 @@ jobs:
       - name: Output Variables
         id: commit
         run: |
-          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
           echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
           echo "::set-output name=date::$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
       - name: Fetch Cached Artifacts
         uses: actions/cache@v2
         with:
@@ -359,13 +373,6 @@ jobs:
           platforms: arm,arm64,ppc64le,s390x
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
-      - name: Cache Docker layers for ${{ matrix.image }}
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-${{ matrix.image }}-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.image }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.image }}-
       - name: DockerHub Login
         uses: docker/login-action@v1
         with:
@@ -376,23 +383,23 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-${{ matrix.image }}-cache
-          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.image }}-cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           target: goreleaser
           tags: nginx/nginx-ingress:${{ matrix.tag }}
           platforms: ${{ matrix.platforms }}
           push: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
-            IC_VERSION=${{ steps.commit.outputs.tag }}-SNAPSHOT-${{ steps.commit.outputs.sha }}
-            NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
+            IC_VERSION=${{ steps.commit.outputs.tag }}-SNAPSHOT-${{ needs.checks.outputs.sha_short }}
+            NGINX_VERSION=${{ needs.checks.outputs.nginx_version }}
             DATE=${{ steps.commit.outputs.date }}
             GIT_COMMIT=${{ github.sha }}
 
   package-helm:
     name: Package Helm Chart
     runs-on: ubuntu-20.04
-    needs: [smoke-tests, helm-tests, release-docker]
+    needs: release-docker
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Repository
@@ -412,7 +419,7 @@ jobs:
   release-helm:
     name: Release Helm Chart
     runs-on: ubuntu-20.04
-    needs: [smoke-tests, helm-tests, release-docker, package-helm]
+    needs: package-helm
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     steps:
       - name: Checkout Repository
@@ -448,7 +455,6 @@ jobs:
       - name: Output Variables
         id: commit
         run: |
-          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
           echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
       - name: Send Notification
         uses: 8398a7/action-slack@v3
@@ -466,7 +472,7 @@ jobs:
                 color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
                 fields: [{
                   title: 'Commit Hash',
-                  value: '${{ steps.commit.outputs.sha }}',
+                  value: '${{ needs.checks.outputs.sha_short }}',
                   short: true
                 },
                 {
