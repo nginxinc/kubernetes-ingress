@@ -85,16 +85,6 @@ class TestIngressClassArgs:
                 id="custom-ingress-class",
             ),
             pytest.param(
-                {"extra_args": ["-use-ingress-class-only"]},
-                {"custom-class": 404, "nginx-class": 200, "no-class": 404},
-                id="use-ingress-class-only",
-            ),
-            pytest.param(
-                {"extra_args": ["-use-ingress-class-only", "-ingress-class=custom"]},
-                {"custom-class": 200, "nginx-class": 404, "no-class": 404},
-                id="both-args-set",
-            ),
-            pytest.param(
                 {"extra_args": None},
                 {"custom-class": 404, "nginx-class": 200, "no-class": 200},
                 id="no-args-set",
@@ -133,16 +123,6 @@ class TestIngressClassArgs:
                 {"extra_args": ["-ingress-class=custom"]},
                 {"custom-class": 200, "nginx-class": 404, "no-class": 404},
                 id="custom-ingress-class",
-            ),
-            pytest.param(
-                {"extra_args": ["-use-ingress-class-only"]},
-                {"custom-class": 404, "nginx-class": 200, "no-class": 404},
-                id="use-ingress-class-only",
-            ),
-            pytest.param(
-                {"extra_args": ["-use-ingress-class-only", "-ingress-class=custom"]},
-                {"custom-class": 200, "nginx-class": 404, "no-class": 404},
-                id="both-args-set",
             ),
             pytest.param(
                 {"extra_args": None},
