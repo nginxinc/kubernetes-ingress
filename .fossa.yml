@@ -1,0 +1,7 @@
+version: 3
+targets:
+  exclude:
+    - type: setuptools
+paths:
+  exclude:
+    - docs
