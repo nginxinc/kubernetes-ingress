@@ -73,7 +73,7 @@ class TestTLSHSTSFlows:
         new_ing = generate_ingresses_with_annotation(hsts_setup.ingress_src_file, annotations)
         for ing in new_ing:
             if ing['metadata']['name'] == hsts_setup.ingress_name:
-                replace_ingress(kube_apis.extensions_v1_beta1,
+                replace_ingress(kube_apis.networking_v1,
                                 hsts_setup.ingress_name, hsts_setup.namespace, ing)
         wait_before_test(1)
 
@@ -90,7 +90,7 @@ class TestTLSHSTSFlows:
         new_ing = generate_ingresses_with_annotation(hsts_setup.ingress_src_file, annotations)
         for ing in new_ing:
             if ing['metadata']['name'] == hsts_setup.ingress_name:
-                replace_ingress(kube_apis.extensions_v1_beta1,
+                replace_ingress(kube_apis.networking_v1,
                                 hsts_setup.ingress_name, hsts_setup.namespace, ing)
         wait_before_test(1)
 
@@ -126,7 +126,7 @@ class TestNoTLSHSTS:
         new_ing = generate_ingresses_with_annotation(hsts_setup.ingress_src_file, annotations)
         for ing in new_ing:
             if ing['metadata']['name'] == hsts_setup.ingress_name:
-                replace_ingress(kube_apis.extensions_v1_beta1,
+                replace_ingress(kube_apis.networking_v1,
                                 hsts_setup.ingress_name, hsts_setup.namespace, ing)
         wait_before_test(1)
 

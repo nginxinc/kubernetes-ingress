@@ -224,7 +224,7 @@ class TestAppProtectPerf:
         test_namespace,
     ):
         """
-        Test reload times for changing paths 
+        Test reload times for changing paths
         """
 
         src1_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
@@ -287,7 +287,7 @@ class TestAppProtectPerf:
         with open(src2_ing_yaml) as f:
             doc = yaml.safe_load(f)
         # create ingress without AP annotation
-        create_ingress(kube_apis.extensions_v1_beta1, test_namespace, doc)
+        create_ingress(kube_apis.networking_v1, test_namespace, doc)
         wait_before_test(10)
         #  create ingress with AP annotations
         create_ingress_with_ap_annotations(

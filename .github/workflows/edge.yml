@@ -28,7 +28,7 @@ defaults:
 
 env:
   DOCKER_BUILDKIT: 1
-  K8S_VERSION: 1.21.1
+  K8S_VERSION: 1.22.0
   K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge
@@ -335,7 +335,7 @@ jobs:
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
           - tag: edge-ubi
             type: ubi
-            platforms: linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+            platforms: linux/arm64,linux/amd64
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2

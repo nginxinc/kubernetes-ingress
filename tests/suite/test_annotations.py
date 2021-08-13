@@ -1,6 +1,6 @@
 import pytest
 import yaml
-from kubernetes.client import ExtensionsV1beta1Api
+from kubernetes.client import NetworkingV1Api
 
 from suite.custom_assertions import assert_event_count_increased
 from suite.fixtures import PublicEndpoint
@@ -21,11 +21,11 @@ def get_event_count(event_text, events_list) -> int:
     return 0
 
 
-def replace_ingresses_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, yaml_manifest) -> None:
+def replace_ingresses_from_yaml(networking_v1: NetworkingV1Api, namespace, yaml_manifest) -> None:
     """
     Parse file and replace all Ingresses based on its contents.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param networking_v1: NetworkingV1Api
     :param namespace: namespace
     :param yaml_manifest: an absolute path to a file
     :return:
@@ -35,7 +35,7 @@ def replace_ingresses_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, names
         docs = yaml.safe_load_all(f)
         for doc in docs:
             if doc['kind'] == 'Ingress':
-                replace_ingress(extensions_v1_beta1, doc['metadata']['name'], namespace, doc)
+                replace_ingress(networking_v1, doc['metadata']['name'], namespace, doc)
 
 
 def get_minions_info_from_yaml(file) -> []:
@@ -51,7 +51,7 @@ def get_minions_info_from_yaml(file) -> []:
         for dep in docs:
             if 'minion' in dep['metadata']['name']:
                 res.append({"name": dep['metadata']['name'],
-                            "svc_name": dep['spec']['rules'][0]['http']['paths'][0]['backend']['serviceName']})
+                            "svc_name": dep['spec']['rules'][0]['http']['paths'][0]['backend']['service']['name']})
     return res
 
 
@@ -203,7 +203,7 @@ class TestAnnotations:
         for ing in new_ing:
             # in mergeable case this will update master ingress only
             if ing['metadata']['name'] == annotations_setup.ingress_name:
-                replace_ingress(kube_apis.extensions_v1_beta1,
+                replace_ingress(kube_apis.networking_v1,
                                 annotations_setup.ingress_name, annotations_setup.namespace, ing)
         wait_before_test(1)
         result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
@@ -234,7 +234,7 @@ class TestAnnotations:
         initial_events = get_events(kube_apis.v1, annotations_setup.namespace)
         initial_count = get_event_count(annotations_setup.ingress_event_text, initial_events)
         print("Case 3: keys in ConfigMap, no annotations in Ingress")
-        replace_ingresses_from_yaml(kube_apis.extensions_v1_beta1, annotations_setup.namespace,
+        replace_ingresses_from_yaml(kube_apis.networking_v1, annotations_setup.namespace,
                                     annotations_setup.ingress_src_file)
         replace_configmap_from_yaml(kube_apis.v1,
                                     ingress_controller_prerequisites.config_map['metadata']['name'],
@@ -272,7 +272,7 @@ class TestAnnotations:
         for ing in new_ing:
             # in mergeable case this will update master ingress only
             if ing['metadata']['name'] == annotations_setup.ingress_name:
-                replace_ingress(kube_apis.extensions_v1_beta1,
+                replace_ingress(kube_apis.networking_v1,
                                 annotations_setup.ingress_name, annotations_setup.namespace, ing)
         replace_configmap_from_yaml(kube_apis.v1,
                                     ingress_controller_prerequisites.config_map['metadata']['name'],
@@ -304,7 +304,7 @@ class TestAnnotations:
         for ing in new_ing:
             # in mergeable case this will update master ingress only
             if ing['metadata']['name'] == annotations_setup.ingress_name:
-                replace_ingress(kube_apis.extensions_v1_beta1,
+                replace_ingress(kube_apis.networking_v1,
                                 annotations_setup.ingress_name, annotations_setup.namespace, ing)
         wait_before_test(1)
         result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
@@ -338,7 +338,7 @@ class TestAnnotations:
         for ing in new_ing:
             # in mergeable case this will update master ingress only
             if ing['metadata']['name'] == annotations_setup.ingress_name:
-                replace_ingress(kube_apis.extensions_v1_beta1,
+                replace_ingress(kube_apis.networking_v1,
                                 annotations_setup.ingress_name, annotations_setup.namespace, ing)
         wait_before_test()
         result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
@@ -365,7 +365,7 @@ class TestMergeableFlows:
         initial_events = get_events(kube_apis.v1, annotations_setup.namespace)
         initial_count = get_event_count(annotations_setup.ingress_event_text, initial_events)
         print("Case 7: minion annotation overrides master")
-        replace_ingresses_from_yaml(kube_apis.extensions_v1_beta1, annotations_setup.namespace, yaml_file)
+        replace_ingresses_from_yaml(kube_apis.networking_v1, annotations_setup.namespace, yaml_file)
         wait_before_test(1)
         result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
                                                       annotations_setup.namespace,
@@ -395,7 +395,7 @@ class TestGrpcFlows:
                                                      annotations)
         for ing in new_ing:
             if ing['metadata']['name'] == annotations_grpc_setup.ingress_name:
-                replace_ingress(kube_apis.extensions_v1_beta1,
+                replace_ingress(kube_apis.networking_v1,
                                 annotations_grpc_setup.ingress_name, annotations_grpc_setup.namespace, ing)
         wait_before_test(1)
         result_conf = get_ingress_nginx_template_conf(kube_apis.v1,

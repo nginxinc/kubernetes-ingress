@@ -368,7 +368,7 @@ class TestAppProtect:
         print(response.text)
         wait_before_test(10)
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
-        
+
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
 
@@ -465,7 +465,7 @@ class TestAppProtect:
                 "appprotect.f5.com/app-protect-security-log-destination"
             ] = f"syslog:server={syslog_ep}:514,syslog:server={syslog2_ep}:514"
 
-        create_ingress(kube_apis.extensions_v1_beta1, test_namespace, doc)
+        create_ingress(kube_apis.networking_v1, test_namespace, doc)
 
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 
