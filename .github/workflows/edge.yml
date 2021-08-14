@@ -140,7 +140,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           target: goreleaser
-          tags: ${{ matrix.image }}:${{ github.sha }}
+          tags: docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }}
           load: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
@@ -149,7 +149,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ matrix.image }}:${{ github.sha }}'
+          image-ref: 'docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }}'
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results-${{ matrix.image }}.sarif'
@@ -200,7 +200,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           target: goreleaser
-          tags: ${{ matrix.image }}:${{ github.sha }}
+          tags: docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }}
           load: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
@@ -218,7 +218,7 @@ jobs:
         id: k8s
         run: |
           kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ env.K8S_VERSION }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ env.K8S_TIMEOUT }}
-          kind load docker-image ${{ matrix.image }}:${{ github.sha }} --name ${{ github.run_id }}
+          kind load docker-image docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }} --name ${{ github.run_id }}
           echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
           echo ::set-output name=cluster::$(echo 'nginx-${{ matrix.image }}-${{ matrix.marker }}')
       - name: Setup Kubeconfig
@@ -233,7 +233,7 @@ jobs:
           -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
           -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ github.sha }} \
           --context=kind-${{ github.run_id }} \
-          --image=${{ matrix.image }}:${{ github.sha }} \
+          --image=docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }} \
           --image-pull-policy=Never \
           --ic-type=nginx-ingress \
           --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
