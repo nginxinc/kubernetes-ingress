@@ -62,13 +62,19 @@ jobs:
     strategy:
       matrix:
         include:
-          - tag: ${{ needs.binary.outputs.version }}
+          - tags: |
+              nginx/nginx-ingress:${{ needs.binary.outputs.version }}
+              nginx/nginx-ingress:latest
             type: debian
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-          - tag: ${{ needs.binary.outputs.version }}-alpine
+          - tags: |
+              nginx/nginx-ingress:${{ needs.binary.outputs.version }}-alpine
+              nginx/nginx-ingress:alpine
             type: alpine
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-          - tag: ${{ needs.binary.outputs.version }}-ubi
+          - tags: |
+              nginx/nginx-ingress:${{ needs.binary.outputs.version }}-ubi
+              nginx/nginx-ingress:ubi
             type: ubi
             platforms: linux/arm64,linux/amd64
     steps:
@@ -111,7 +117,7 @@ jobs:
           context: '.'
           cache-to: type=local,dest=/tmp/.buildx-${{ matrix.image }}-cache
           target: goreleaser
-          tags: nginx/nginx-ingress:${{ matrix.tag }}
+          tags: ${{ matrix.tags }}
           platforms: ${{ matrix.platforms }}
           push: true
           build-args: |

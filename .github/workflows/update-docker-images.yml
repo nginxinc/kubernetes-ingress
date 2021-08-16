@@ -110,15 +110,21 @@ jobs:
     strategy:
       matrix:
         include:
-          - tag: ${{ needs.variables.outputs.kic-tag }}
+          - tags: |
+              nginx/nginx-ingress:${{ needs.variables.outputs.kic-tag }}
+              nginx/nginx-ingress:latest
             type: debian
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
-          - tag: ${{ needs.variables.outputs.kic-tag }}-alpine
+          - tags: |
+              nginx/nginx-ingress:${{ needs.variables.outputs.kic-tag }}-alpine
+              nginx/nginx-ingress:alpine
             type: alpine
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
-          - tag: ${{ needs.variables.outputs.kic-tag }}-ubi
+          - tags: |
+              nginx/nginx-ingress:${{ needs.variables.outputs.kic-tag }}-ubi
+              nginx/nginx-ingress:ubi
             type: ubi
             platforms: linux/arm64,linux/amd64
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
@@ -232,7 +238,7 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-${{ matrix.image }}-cache
           cache-to: type=local,dest=/tmp/.buildx-${{ matrix.type }}-cache
           target: goreleaser
-          tags: nginx/nginx-ingress:${{ matrix.tag }}
+          tags: ${{ matrix.tags }}
           platforms: ${{ matrix.platforms }}
           push: true
           build-args: |
