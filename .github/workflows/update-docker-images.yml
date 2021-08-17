@@ -25,6 +25,7 @@ jobs:
       nginx_version: ${{ steps.versions.outputs.nginx_version }}
       sha_short: ${{ steps.vars.outputs.sha }}
       go_version: ${{ steps.vars.outputs.go_version }}
+      repo_name: ${{ steps.vars.outputs.repo }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -51,6 +52,7 @@ jobs:
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
+          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
 
   check:
     name: Check if updates are needed
@@ -302,14 +304,9 @@ jobs:
       - name: Workflow Status
         id: check
         uses: martialonline/workflow-status@v2
-      - name: Get variables for Slack
-        id: slack
-        run: |
-          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
       - name: Send Notification
         uses: 8398a7/action-slack@v3
-        if:
-          steps.check.outputs.status == 'failure'
+        if: steps.check.outputs.status == 'failure'
         with:
           status: custom
           custom_payload: |
@@ -318,7 +315,7 @@ jobs:
               icon_emoji: ':octocat:',
               mention: 'channel',
               attachments: [{
-                title: '${{ steps.slack.outputs.repo }} ${{ github.workflow }} pipeline has failed',
+                title: '${{ needs.variables.outputs.repo_name }} ${{ github.workflow }} pipeline has failed',
                 color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
                 fields: [{
                   title: 'Commit Hash',
