@@ -25,7 +25,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/fake"
-
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -34,75 +33,15 @@ func TestHasCorrectIngressClass(t *testing.T) {
 	incorrectIngressClass := "gce"
 	emptyClass := ""
 
-	testsWithoutIngressClassOnly := []struct {
+	tests := []struct {
 		lbc      *LoadBalancerController
 		ing      *networking.Ingress
 		expected bool
 	}{
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&networking.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: emptyClass},
-				},
-			},
-			true,
-		},
-		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&networking.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: incorrectIngressClass},
-				},
-			},
-			false,
-		},
-		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&networking.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: ingressClass},
-				},
-			},
-			true,
-		},
-		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&networking.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{},
-				},
-			},
-			true,
-		},
-	}
-
-	testsWithIngressClassOnly := []struct {
-		lbc      *LoadBalancerController
-		ing      *networking.Ingress
-		expected bool
-	}{
-		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -113,9 +52,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -126,9 +64,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -139,9 +76,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -152,9 +88,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true, // always true for k8s >= 1.18
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{
@@ -165,9 +100,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true, // always true for k8s >= 1.18
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{
@@ -178,9 +112,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true, // always true for k8s >= 1.18
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -194,9 +127,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true, // always true for k8s >= 1.18
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{
@@ -207,25 +139,14 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 	}
 
-	for _, test := range testsWithoutIngressClassOnly {
+	for _, test := range tests {
 		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
 			classAnnotation := "N/A"
 			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
 				classAnnotation = class
 			}
-			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
-				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
-		}
-	}
-
-	for _, test := range testsWithIngressClassOnly {
-		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
-			classAnnotation := "N/A"
-			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
-				classAnnotation = class
-			}
-			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
-				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
+			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, ing.Annotations['%v']=%v; got %v, expected %v",
+				test.lbc.ingressClass, ingressClassKey, classAnnotation, result, test.expected)
 		}
 	}
 }
@@ -251,13 +172,7 @@ func deepCopyWithIngressClass(obj interface{}, class string) interface{} {
 
 func TestIngressClassForCustomResources(t *testing.T) {
 	ctrl := &LoadBalancerController{
-		ingressClass:        "nginx",
-		useIngressClassOnly: false,
-	}
-
-	ctrlWithUseICOnly := &LoadBalancerController{
-		ingressClass:        "nginx",
-		useIngressClassOnly: true,
+		ingressClass: "nginx",
 	}
 
 	tests := []struct {
@@ -273,34 +188,16 @@ func TestIngressClassForCustomResources(t *testing.T) {
 			msg:             "Ingress Controller handles a resource that matches its IngressClass",
 		},
 		{
-			lbc:             ctrlWithUseICOnly,
-			objIngressClass: "nginx",
-			expected:        true,
-			msg:             "Ingress Controller with useIngressClassOnly handles a resource that matches its IngressClass",
-		},
-		{
 			lbc:             ctrl,
 			objIngressClass: "",
 			expected:        true,
 			msg:             "Ingress Controller handles a resource with an empty IngressClass",
 		},
 		{
-			lbc:             ctrlWithUseICOnly,
-			objIngressClass: "",
-			expected:        true,
-			msg:             "Ingress Controller with useIngressClassOnly handles a resource with an empty IngressClass",
-		},
-		{
 			lbc:             ctrl,
 			objIngressClass: "gce",
 			expected:        false,
 			msg:             "Ingress Controller doesn't handle a resource that doesn't match its IngressClass",
-		},
-		{
-			lbc:             ctrlWithUseICOnly,
-			objIngressClass: "gce",
-			expected:        false,
-			msg:             "Ingress Controller with useIngressClassOnly doesn't handle a resource that doesn't match its IngressClass",
 		},
 	}
 

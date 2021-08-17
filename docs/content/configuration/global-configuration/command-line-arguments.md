@@ -91,11 +91,8 @@ Below we describe the available command-line arguments:
 
 		A class of the Ingress controller.
 
-		For Kubernetes >= 1.18, a corresponding IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start.
+		A corresponding IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start.
 		The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
-
-		For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class - i.e have the annotation "kubernetes.io/ingress.class" (for Ingress resources) or field "ingressClassName" equal to the class.
-		Additionally, the Ingress Controller processes resources that do not have the class set, which can be disabled by setting the "-use-ingress-class-only" flag.
 
 		The Ingress Controller processes all the resources that do not have the "ingressClassName" field.
 
@@ -169,12 +166,6 @@ Below we describe the available command-line arguments:
 
 		- Default for NGINX is "nginx.transportserver.tmpl"
 		- Default for NGINX Plus is "nginx-plus.transportserver.tmpl".
-
--use-ingress-class-only
-
-		For kubernetes versions >= 1.18 this flag will be IGNORED.
-
-		Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation.
 
 -v <value>
 
