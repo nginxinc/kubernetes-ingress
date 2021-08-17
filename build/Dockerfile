@@ -8,7 +8,9 @@ ARG FILES=
 FROM nginx:1.21.1 AS debian
 
 RUN apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin libsystemd0 libudev1 \
+	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	# temporary fix for CVE-2021-36222
+	&& apt-get install -y libgssapi-krb5-2 libk5crypto3 \
 	&& rm -rf /var/lib/apt/lists/*
 
 
@@ -40,8 +42,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temporary fix for CVE-2021-3520, CVE-2021-33560, CVE-2021-20231, CVE-2021-20305, CVE-2021-20305 CVE-2021-33910
-	&& apt-get install -y liblz4-1 libgcrypt20 libgnutls30 libhogweed4 libnettle6 libsystemd0 libudev1 \
 	&& curl -sSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -sSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \

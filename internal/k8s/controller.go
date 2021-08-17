@@ -125,7 +125,6 @@ type LoadBalancerController struct {
 	recorder                      record.EventRecorder
 	defaultServerSecret           string
 	ingressClass                  string
-	useIngressClassOnly           bool
 	statusUpdater                 *statusUpdater
 	leaderElector                 *leaderelection.LeaderElector
 	reportIngressStatus           bool
@@ -166,7 +165,6 @@ type NewLoadBalancerControllerInput struct {
 	AppProtectEnabled            bool
 	IsNginxPlus                  bool
 	IngressClass                 string
-	UseIngressClassOnly          bool
 	ExternalServiceName          string
 	IngressLink                  string
 	ControllerNamespace          string
@@ -200,7 +198,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		appProtectEnabled:            input.AppProtectEnabled,
 		isNginxPlus:                  input.IsNginxPlus,
 		ingressClass:                 input.IngressClass,
-		useIngressClassOnly:          input.UseIngressClassOnly,
 		reportIngressStatus:          input.ReportIngressStatus,
 		isLeaderElectionEnabled:      input.IsLeaderElectionEnabled,
 		leaderElectionLockName:       input.LeaderElectionLockName,
@@ -3067,7 +3064,6 @@ func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *networki
 // HasCorrectIngressClass checks if resource ingress class annotation (if exists) or ingressClass string for VS/VSR is matching with ingress controller class
 func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool {
 	var class string
-	var isIngress bool
 	switch obj := obj.(type) {
 	case *conf_v1.VirtualServer:
 		class = obj.Spec.IngressClass
@@ -3078,7 +3074,6 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 	case *conf_v1.Policy:
 		class = obj.Spec.IngressClass
 	case *networking.Ingress:
-		isIngress = true
 		class = obj.Annotations[ingressClassKey]
 		if class == "" && obj.Spec.IngressClassName != nil {
 			class = *obj.Spec.IngressClassName
@@ -3086,15 +3081,12 @@ func (lbc *LoadBalancerController) HasCorrectIngressClass(obj interface{}) bool 
 			// the annotation takes precedence over the field
 			glog.Warningln("Using the DEPRECATED annotation 'kubernetes.io/ingress.class'. The 'ingressClassName' field will be ignored.")
 		}
+		return class == lbc.ingressClass
 
 	default:
 		return false
 	}
 
-	// useIngressClassOnly only applies for Ingress resources
-	if lbc.useIngressClassOnly && isIngress {
-		return class == lbc.ingressClass
-	}
 	return class == lbc.ingressClass || class == ""
 }
 

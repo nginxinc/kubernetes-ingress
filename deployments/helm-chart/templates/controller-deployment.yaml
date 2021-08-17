@@ -107,9 +107,6 @@ spec:
           - -default-server-tls-secret=$(POD_NAMESPACE)/{{ include "nginx-ingress.defaultTLSName" . }}
 {{- end }}
           - -ingress-class={{ .Values.controller.ingressClass }}
-{{- if semverCompare "<1.18.0" .Capabilities.KubeVersion.GitVersion }}
-          - -use-ingress-class-only={{ .Values.controller.useIngressClassOnly }}
-{{- end }}
 {{- if .Values.controller.watchNamespace }}
           - -watch-namespace={{ .Values.controller.watchNamespace }}
 {{- end }}
