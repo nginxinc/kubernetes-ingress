@@ -58,7 +58,7 @@ In this section, we create resources common for most of the Ingress Controller i
     $ kubectl apply -f common/nginx-config.yaml
     ```
 
-1. Create an IngressClass resource (for Kubernetes >= 1.18):
+1. Create an IngressClass resource:
     ```
     $ kubectl apply -f common/ingress-class.yaml
     ```

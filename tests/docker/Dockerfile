@@ -12,5 +12,5 @@ RUN pip install -r requirements.txt
 
 COPY tests /workspace/tests
 COPY deployments /workspace/deployments
-
-ENTRYPOINT ["python3", "-m", "pytest", "suite/"]
+WORKDIR /workspace/tests/suite
+ENTRYPOINT ["python3", "-m", "pytest"]
