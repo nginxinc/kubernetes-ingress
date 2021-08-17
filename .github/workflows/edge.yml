@@ -43,7 +43,7 @@ jobs:
     outputs:
       sha_short: ${{ steps.vars.outputs.sha }}
       go_version: ${{ steps.vars.outputs.go_version }}
-      go_path: ${{ steps.vars.outputs.go_path }}
+      go_path: ${{ steps.go.outputs.go_path }}
       nginx_version: ${{ steps.vars.outputs.nginx_version }}
     steps:
       - name: Cancel Previous Runs
@@ -57,12 +57,14 @@ jobs:
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
-          echo "::set-output name=go_path::$(go env GOPATH)"
           echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
           go-version: ${{ steps.vars.outputs.go_version }}
+      - name: Determine GOPATH
+        id: go
+        run: echo "::set-output name=go_path::$(go env GOPATH)"
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
@@ -95,7 +97,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
 
   unit-tests:
     name: Unit Tests
@@ -129,7 +131,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Build ${{ matrix.image }} Container
