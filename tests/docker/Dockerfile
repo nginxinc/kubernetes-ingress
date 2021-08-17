@@ -15,6 +15,5 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 	&& install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 COPY tests /workspace/tests
-WORKDIR /workspace/tests/suite
 
 ENTRYPOINT ["python3", "-m", "pytest"]
