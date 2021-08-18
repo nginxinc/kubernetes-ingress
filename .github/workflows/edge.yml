@@ -193,7 +193,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Build ${{ matrix.image }} Container
@@ -269,7 +269,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Build Docker Image nginx-ingress
@@ -337,7 +337,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
 
   release-docker:
     name: Release Images
@@ -370,7 +370,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v1
         with:
