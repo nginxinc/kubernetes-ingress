@@ -22,6 +22,10 @@ jobs:
     outputs:
       kic-tag: ${{ steps.kic.outputs.tag }}
       versions: ${{ steps.versions.outputs.matrix }}
+      nginx_version: ${{ steps.versions.outputs.nginx_version }}
+      sha_short: ${{ steps.vars.outputs.sha }}
+      go_version: ${{ steps.vars.outputs.go_version }}
+      repo_name: ${{ steps.vars.outputs.repo }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -42,6 +46,13 @@ jobs:
           nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
           nginx_ubi=$(grep "FROM redhat" < build/Dockerfile | awk -F" " '{print $2}')
           echo "::set-output name=matrix::[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]"
+          echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
+      - name: Set other variables
+        id: vars
+        run: |
+          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+          echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
+          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
 
   check:
     name: Check if updates are needed
@@ -81,14 +92,13 @@ jobs:
         with:
           fetch-depth: 0
           ref: v${{ needs.variables.outputs.kic-tag }}
-      - name: Determine Go version from go.mod
-        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version: ${{ needs.variables.outputs.go_version }}
       - name: Determine GOPATH
-        run: echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+        id: go
+        run: echo "::set-output name=go_path::$(go env GOPATH)"
       - name: Build binaries
         uses: goreleaser/goreleaser-action@v2
         with:
@@ -96,7 +106,7 @@ jobs:
           args: build --rm-dist --id kubernetes-ingress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: ${{ env.GOPATH }}
+          GOPATH: ${{ steps.go.outputs.go_path }}
       - name: Store Artifacts in Cache
         uses: actions/cache@v2
         with:
@@ -134,13 +144,6 @@ jobs:
         with:
           ref: v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
-      - name: Output Variables
-        id: commit
-        run: |
-          echo "::set-output name=date::$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
-          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
-        if: ${{ matrix.needs-updating == 'true' }}
       - name: Fetch Cached Artifacts
         uses: actions/cache@v2
         with:
@@ -155,34 +158,27 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
         if: ${{ matrix.needs-updating == 'true' }}
-      - name: Cache Docker layers for ${{ matrix.type }}
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-${{ matrix.type }}-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.type }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.type }}-
-        if: ${{ matrix.needs-updating == 'true' }}
       - name: Build ${{ matrix.type }} Container for tests
         uses: docker/build-push-action@v2
         with:
           file: build/Dockerfile
           context: '.'
-          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.type }}-cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           target: goreleaser
           tags: ${{ matrix.type }}:${{ github.sha }}
           load: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
-            NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
+            NGINX_VERSION=${{ needs.variables.outputs.nginx_version }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Build Test-Runner Container
         uses: docker/build-push-action@v2
         with:
           file: tests/docker/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-test-cache
-          cache-to: type=local,dest=/tmp/.buildx-test-cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           tags: test-runner:${{ github.sha }}
           load: true
         if: ${{ matrix.needs-updating == 'true' }}
@@ -229,29 +225,33 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ matrix.needs-updating == 'true' }}
+      - name: Get date
+        id: var
+        run: |
+          echo "::set-output name=date::$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+        if: ${{ matrix.needs-updating == 'true' }}
       - name: Push to Dockerhub
         id: push
         uses: docker/build-push-action@v2
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=local,src=/tmp/.buildx-${{ matrix.image }}-cache
-          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.type }}-cache
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           target: goreleaser
           tags: ${{ matrix.tags }}
           platforms: ${{ matrix.platforms }}
           push: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
-            IC_VERSION=v${{ needs.variables.outputs.kic-tag }}-${{ steps.commit.outputs.sha }}
-            NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
-            DATE=${{ steps.commit.outputs.date }}
+            IC_VERSION=v${{ needs.variables.outputs.kic-tag }}-${{ needs.variables.outputs.sha_short }}
+            NGINX_VERSION=${{ needs.variables.outputs.nginx_version }}
+            DATE=${{ steps.var.outputs.date }}
             GIT_COMMIT=${{ github.sha }}
         if: ${{ matrix.needs-updating == 'true' }}
-      - name: Output Variables
+      - name: Get variables for Slack
         id: slack
         run: |
-          echo "::set-output name=sha::$(echo $(git rev-parse HEAD) | cut -c1-7)"
           echo "::set-output name=message::$(git log -1 --pretty=%B)"
           echo "::set-output name=date::$(date +%s)"
       - name: Send Notification
@@ -283,7 +283,7 @@ jobs:
                 },
                 {
                   title: "Commit Hash",
-                  value: "${{ steps.slack.outputs.sha }}",
+                  value: "${{ needs.variables.outputs.sha_short }}",
                   short: true
                 }],
                 footer: "Update DockerHub Image",
@@ -298,21 +298,15 @@ jobs:
   notify:
     name: Notify
     runs-on: ubuntu-20.04
-    needs: release-docker
+    needs: [release-docker, variables]
     if: always()
     steps:
       - name: Workflow Status
         id: check
         uses: martialonline/workflow-status@v2
-      - name: Output Variables
-        id: commit
-        run: |
-          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
-          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
       - name: Send Notification
         uses: 8398a7/action-slack@v3
-        if:
-          steps.check.outputs.status == 'failure'
+        if: steps.check.outputs.status == 'failure'
         with:
           status: custom
           custom_payload: |
@@ -321,11 +315,11 @@ jobs:
               icon_emoji: ':octocat:',
               mention: 'channel',
               attachments: [{
-                title: '${{ steps.commit.outputs.repo }} ${{ github.workflow }} pipeline has failed',
+                title: '${{ needs.variables.outputs.repo_name }} ${{ github.workflow }} pipeline has failed',
                 color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
                 fields: [{
                   title: 'Commit Hash',
-                  value: '${{ steps.commit.outputs.sha }}',
+                  value: '${{ needs.variables.outputs.sha_short }}',
                   short: true
                 },
                 {

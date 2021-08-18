@@ -31,7 +31,7 @@ $ kubectl create -f cafe.yaml
     $ kubectl create -f cafe-secret.yaml
     ```
 
-2. Create an Ingress resource (for Kubernetes >= 1.18, uncomment the ```ingressClassName``` field in the YAML file):
+2. Create an Ingress resource:
     ```
     $ kubectl create -f cafe-ingress.yaml
     ```

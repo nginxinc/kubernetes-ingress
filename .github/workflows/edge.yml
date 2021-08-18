@@ -43,8 +43,9 @@ jobs:
     outputs:
       sha_short: ${{ steps.vars.outputs.sha }}
       go_version: ${{ steps.vars.outputs.go_version }}
-      go_path: ${{ steps.vars.outputs.go_path }}
+      go_path: ${{ steps.go.outputs.go_path }}
       nginx_version: ${{ steps.vars.outputs.nginx_version }}
+      repo_name: ${{ steps.vars.outputs.repo }}
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.9.1
@@ -57,12 +58,15 @@ jobs:
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
-          echo "::set-output name=go_path::$(go env GOPATH)"
           echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
+          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
           go-version: ${{ steps.vars.outputs.go_version }}
+      - name: Determine GOPATH
+        id: go
+        run: echo "::set-output name=go_path::$(go env GOPATH)"
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
@@ -95,7 +99,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
 
   unit-tests:
     name: Unit Tests
@@ -129,7 +133,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Build ${{ matrix.image }} Container
@@ -452,14 +456,9 @@ jobs:
       - name: Workflow Status
         id: check
         uses: martialonline/workflow-status@v2
-      - name: Output Variables
-        id: commit
-        run: |
-          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
       - name: Send Notification
         uses: 8398a7/action-slack@v3
-        if:
-          steps.check.outputs.status == 'failure'
+        if: steps.check.outputs.status == 'failure'
         with:
           status: custom
           custom_payload: |
@@ -468,7 +467,7 @@ jobs:
               icon_emoji: ':octocat:',
               mention: 'channel',
               attachments: [{
-                title: '${{ steps.commit.outputs.repo }} ${{ github.workflow }} pipeline has failed',
+                title: '${{ needs.check.outputs.repo_name }} ${{ github.workflow }} pipeline has failed',
                 color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
                 fields: [{
                   title: 'Commit Hash',
