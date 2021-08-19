@@ -15,6 +15,9 @@ spec:
     metadata:
       labels:
         app: {{ include "nginx-ingress.appName" . }}
+{{- if .Values.controller.pod.extraLabels }}
+{{ toYaml .Values.controller.pod.extraLabels | indent 8 }}
+{{- end }}
 {{- if or (.Values.prometheus.create) (.Values.controller.pod.annotations) }}
       annotations:
 {{- if .Values.prometheus.create }}
