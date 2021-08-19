@@ -157,8 +157,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 FROM debian as opentracing-builder
 ARG NGINX_OPENTRACING=0.19.0
 ARG OPENTRACING_VERSION=1.6.0
-ARG JAEGER_VERSION=0.7.0 
-# Jaeger version matched based on: https://github.com/opentracing-contrib/nginx-opentracing/blob/master/Dockerfile
 
 RUN apt-get update && apt-get install -y -q --fix-missing --no-install-recommends \
 	autoconf \
@@ -183,18 +181,11 @@ RUN apt-get update && apt-get install -y -q --fix-missing --no-install-recommend
 RUN curl -sS -O -L http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz \
 	&& tar zxvf nginx-${NGINX_VERSION}.tar.gz && rm -f nginx-${NGINX_VERSION}.tar.gz \
 	&& git clone --branch v${NGINX_OPENTRACING} https://github.com/opentracing-contrib/nginx-opentracing.git \
-	&& git clone --branch v${OPENTRACING_VERSION} https://github.com/opentracing/opentracing-cpp.git \
-	&& git clone --branch v${JAEGER_VERSION} https://github.com/jaegertracing/cpp-client.git
+	&& git clone --branch v${OPENTRACING_VERSION} https://github.com/opentracing/opentracing-cpp.git 
 
 WORKDIR /opentracing-cpp/.build
 RUN	cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_STATIC_LIBS=OFF -DBUILD_MOCKTRACER=OFF -DENABLE_LINTING=OFF .. && \
 	make && make install
-
-WORKDIR /cpp-client/.build
-RUN cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJAEGERTRACING_WITH_YAML_CPP=ON .. && \
-	make && make install \
-	&& export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
-  	&& cp $HUNTER_INSTALL_DIR/lib/libyaml*so /usr/local/lib/
 
 WORKDIR /nginx-${NGINX_VERSION}
 RUN ./configure \
@@ -202,6 +193,7 @@ RUN ./configure \
 	--add-dynamic-module=/nginx-opentracing/opentracing && \
 	make modules
 
+WORKDIR /
 
 ############################################# Build image for Trace downloader #############################################
 FROM debian AS tracer-downloader
@@ -212,16 +204,34 @@ RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates apt-transport-https wget \
 	&& wget -nv https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
 
+############################################# Build image for Trace downloader #############################################
+FROM opentracing-builder AS tracer-builder
+
+ARG JAEGER_VERSION=0.7.0 
+# Jaeger version matched based on: https://github.com/opentracing-contrib/nginx-opentracing/blob/master/Dockerfile
+
+RUN git clone --branch v${JAEGER_VERSION} https://github.com/jaegertracing/cpp-client.git
+
+WORKDIR /cpp-client/.build
+RUN cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJAEGERTRACING_WITH_YAML_CPP=ON .. && \
+	make && make install \
+	&& export HUNTER_INSTALL_DIR=$(cat _3rdParty/Hunter/install-root-dir) \
+  	&& cp $HUNTER_INSTALL_DIR/lib/libyaml*so /usr/local/lib/
 
 ############################################# Build image for Opentracing #############################################
 FROM debian as opentracing
 ARG OPENTRACING_VERSION=1.6.0
-ARG JAEGER_VERSION=0.7.0
 
 COPY --from=opentracing-builder /nginx-${NGINX_VERSION}/objs/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ngx_http_opentracing_module.so
 COPY --from=opentracing-builder /usr/local/lib/libopentracing.so.${OPENTRACING_VERSION} /usr/local/lib/libopentracing.so.1
-COPY --from=opentracing-builder /usr/local/lib/libjaegertracing.so.${JAEGER_VERSION} /usr/local/lib/libjaegertracing_plugin.so
-COPY --from=opentracing-builder /usr/local/lib/libyaml*so /usr/local/lib/
+
+# If tracer version is available through tracer downloader
+# COPY --from=tracer-downloader /usr/local/lib/libjaegertracing_plugin.so /usr/local/lib/libjaegertracing_plugin.so
+
+# If tracer version is avilable through tracer builder
+ARG JAEGER_VERSION=0.7.0
+COPY --from=tracer-builder /usr/local/lib/libjaegertracing.so.${JAEGER_VERSION} /usr/local/lib/libjaegertracing_plugin.so
+COPY --from=tracer-builder /usr/local/lib/libyaml*so /usr/local/lib/
 
 RUN ldconfig
 
