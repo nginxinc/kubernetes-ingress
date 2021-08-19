@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}">
+
+<head>  
+{{ block "head" . }}
+
+  {{ partial "meta.html" . }}
+
+  {{ partial "favicon.html" . }}
+
+  {{ partial "styles.html" . }}
+
+  {{ if in .Params.doctypes "devportal" }}
+    {{ partial "devportal/style.html" . }}
+  {{ end }}
+
+  {{ if fileExists "/layouts/partials/head_custom.html" }}
+    {{ partial "head_custom.html" . }}
+  {{ end }}
+
+  {{ partial "load_jquery.html" . }}
+
+  {{ if or ( not .Site.IsServer ) ( not ( in .Site.Params.buildtype "package" ) ) }}
+    <!-- GDPR Section Start -->
+    {{ partial "gdpr2.html" . }}
+    <!-- GDPR Section End -->
+  {{ end }}
+
+{{ end }}
+
+</head>
+
+<body>
+  {{ if or ( not .Site.IsServer ) ( not ( in .Site.Params.buildtype "package" ) ) }} 
+    {{ partial "gtm.html" . }}
+  {{ end }}
+
+<header>
+  {{ block "header" . }}{{end}}
+</header>
+  {{ if not .IsHome }}
+    {{ partial "breadcrumb" .}}  
+  {{ end }}
+
+<div class="main container-fluid bg-white min-page-height">
+
+  
+  {{ block "main" . }}{{ end }}
+</div>
+<footer>
+  {{ block "footer" . }}
+  {{ partial "footer.html" . }}
+  {{ end }}
+</footer>
+
+{{ partial "scripts.html" . }} 
+
+</body>
+</html>

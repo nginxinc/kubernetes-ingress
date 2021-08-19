@@ -2,7 +2,7 @@
 
 It is often required that the requests from a client are always passed to the same backend container. You can enable such behavior with [Session Persistence](https://www.nginx.com/products/session-persistence/), available in the NGINX Plus Ingress controller.
 
-NGINX Plus supports *the sticky cookie* method. With this method, NGINX Plus adds a session cookie to the first response from the backend container, identifying the container that sent the response. When a client issues the next request, it will send the cookie value and NGINX Plus will route the request to the same container.  
+NGINX Plus supports *the sticky cookie* method. With this method, NGINX Plus adds a session cookie to the first response from the backend container, identifying the container that sent the response. When a client issues the next request, it will send the cookie value and NGINX Plus will route the request to the same container.
 
 ## Syntax
 
@@ -20,7 +20,7 @@ The syntax of the *cookieName*, *expires*, *domain*, *httponly*, *secure* and *p
 
 In the following example we enable session persistence for two services -- the *tea-svc* service and the *coffee-svc* service:
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: cafe-ingress-with-session-persistence
@@ -32,13 +32,19 @@ spec:
     http:
       paths:
       - path: /tea
+        pathType: Prefix
         backend:
-          serviceName: tea-svc
-          servicePort: 80
+          service:
+            name: tea-svc
+            port:
+              number: 80
       - path: /coffee
+        pathType: Prefix
         backend:
-          serviceName: coffee-svc
-          servicePort: 80
+          service:
+            name: coffee-svc
+            port:
+              number: 80
 ```
 For both services, the sticky cookie has the same *srv_id* name. However, we specify the different values of expiration time and  a path.
 

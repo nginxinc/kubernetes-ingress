@@ -1,0 +1,75 @@
+
+{{ $jsPath := .Get "path" }}
+{{ $metricsRef := getJSON $jsPath }}
+
+<div class="my-collapse" data-component="collapse" id="my-collapse">
+
+<button class="button outline" style="float: right; margin-top:8px; margin-bottom:8px;" >
+  <a class="collapse-toggle" href="#collapse-box-1" rel="#collapse-box-1" style="color:black;">Index</a>
+</button>
+
+  <div class="collapse-box hide" id="collapse-box-1">
+      <ul style="margin-bottom: 4px;">
+  {{ range where $metricsRef "visible" true}}
+  {{ $p := . }}
+    <li>
+      <a href="#{{$p.name}}">{{$p.name}}</a>
+    </li>
+
+  {{ end }}
+  </ul>
+  </div>
+
+</div>
+<hr>
+  {{ range where $metricsRef "visible" true}}
+  {{ $p := . }}
+
+  <a name="{{$p.name}}"></a>
+  <h3>{{$p.name}}</h3>
+  <table>
+      <tr>
+        <td>description</td>
+        <td>{{$p.description}}</td>
+      </tr>
+      <tr>
+        <td>type</td>
+        <td>{{$p.type}}</td>
+      </tr>
+      <tr>
+        <td>categories</td>
+        <td>{{$p.categories}}</td>
+      </tr>
+      <tr>
+        <td>source</td>
+        <td>{{$p.source}}</td>
+      </tr>
+      <tr>
+        <td>rollup_aggregate</td>
+        <td>{{$p.rollup_aggregate}}</td>
+      </tr>
+      <tr>
+        <td>unit</td>
+        <td>{{$p.unit}}</td>
+      </tr>
+      <tr>
+        <td>aggregations</td>
+        <td>{{$p.aggregations}}</td>
+      </tr>
+      <tr>
+        <td>dimensions</td>
+          <td>
+            <ul style="margin-left: 12px;">
+          {{range sort $p.dimensions}}
+          {{$dim := .}}
+              <li>{{$dim}}</li>
+          {{end}}
+            </ul>
+          </td>
+      </tr>
+
+  </table>
+
+  <hr>
+
+{{ end }}

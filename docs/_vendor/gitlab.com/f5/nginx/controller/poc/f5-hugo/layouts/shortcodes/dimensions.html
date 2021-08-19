@@ -1,0 +1,43 @@
+
+{{ $jsPath := .Get "path" }}
+{{ $dimensionsRef := getJSON $jsPath }}
+
+<div class="my-collapse" data-component="collapse" id="my-collapse">
+
+    <button class="button outline" style="float: right; margin-top:8px; margin-bottom:8px;" >
+        <a class="collapse-toggle" href="#collapse-box-1" rel="#collapse-box-1" style="color:black;">Index</a>
+    </button>
+
+    <div class="collapse-box hide" id="collapse-box-1">
+        <ul style="margin-bottom: 4px;">
+            {{ range $dimensionsRef}}
+            {{ $p := . }}
+            <li>
+                <a href="#{{$p.name}}">{{$p.name}}</a>
+            </li>
+
+            {{ end }}
+        </ul>
+    </div>
+
+</div>
+<hr>
+{{ range $dimensionsRef}}
+{{ $p := . }}
+
+<a name="{{$p.name}}"></a>
+<h3>{{$p.name}}</h3>
+<table>
+    <tr>
+        <td style="width: 200px">description</td>
+        <td>{{$p.description}}</td>
+    </tr>
+    <tr>
+        <td style="width: 200px">type</td>
+        <td>{{$p.type}}</td>
+    </tr>
+</table>
+
+<hr>
+
+{{ end }}

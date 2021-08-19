@@ -20,12 +20,11 @@ import (
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes/fake"
-
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -34,75 +33,15 @@ func TestHasCorrectIngressClass(t *testing.T) {
 	incorrectIngressClass := "gce"
 	emptyClass := ""
 
-	testsWithoutIngressClassOnly := []struct {
+	tests := []struct {
 		lbc      *LoadBalancerController
 		ing      *networking.Ingress
 		expected bool
 	}{
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&networking.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: emptyClass},
-				},
-			},
-			true,
-		},
-		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&networking.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: incorrectIngressClass},
-				},
-			},
-			false,
-		},
-		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&networking.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{ingressClassKey: ingressClass},
-				},
-			},
-			true,
-		},
-		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: false,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
-			},
-			&networking.Ingress{
-				ObjectMeta: meta_v1.ObjectMeta{
-					Annotations: map[string]string{},
-				},
-			},
-			true,
-		},
-	}
-
-	testsWithIngressClassOnly := []struct {
-		lbc      *LoadBalancerController
-		ing      *networking.Ingress
-		expected bool
-	}{
-		{
-			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -113,9 +52,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -126,9 +64,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -139,9 +76,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true,
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -152,9 +88,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true, // always true for k8s >= 1.18
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{
@@ -165,9 +100,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true, // always true for k8s >= 1.18
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{
@@ -178,9 +112,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true, // always true for k8s >= 1.18
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				ObjectMeta: meta_v1.ObjectMeta{
@@ -194,9 +127,8 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 		{
 			&LoadBalancerController{
-				ingressClass:        ingressClass,
-				useIngressClassOnly: true, // always true for k8s >= 1.18
-				metricsCollector:    collectors.NewControllerFakeCollector(),
+				ingressClass:     ingressClass,
+				metricsCollector: collectors.NewControllerFakeCollector(),
 			},
 			&networking.Ingress{
 				Spec: networking.IngressSpec{
@@ -207,25 +139,14 @@ func TestHasCorrectIngressClass(t *testing.T) {
 		},
 	}
 
-	for _, test := range testsWithoutIngressClassOnly {
+	for _, test := range tests {
 		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
 			classAnnotation := "N/A"
 			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
 				classAnnotation = class
 			}
-			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
-				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
-		}
-	}
-
-	for _, test := range testsWithIngressClassOnly {
-		if result := test.lbc.HasCorrectIngressClass(test.ing); result != test.expected {
-			classAnnotation := "N/A"
-			if class, exists := test.ing.Annotations[ingressClassKey]; exists {
-				classAnnotation = class
-			}
-			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, lbc.useIngressClassOnly=%v, ing.Annotations['%v']=%v; got %v, expected %v",
-				test.lbc.ingressClass, test.lbc.useIngressClassOnly, ingressClassKey, classAnnotation, result, test.expected)
+			t.Errorf("lbc.HasCorrectIngressClass(ing), lbc.ingressClass=%v, ing.Annotations['%v']=%v; got %v, expected %v",
+				test.lbc.ingressClass, ingressClassKey, classAnnotation, result, test.expected)
 		}
 	}
 }
@@ -251,13 +172,7 @@ func deepCopyWithIngressClass(obj interface{}, class string) interface{} {
 
 func TestIngressClassForCustomResources(t *testing.T) {
 	ctrl := &LoadBalancerController{
-		ingressClass:        "nginx",
-		useIngressClassOnly: false,
-	}
-
-	ctrlWithUseICOnly := &LoadBalancerController{
-		ingressClass:        "nginx",
-		useIngressClassOnly: true,
+		ingressClass: "nginx",
 	}
 
 	tests := []struct {
@@ -273,34 +188,16 @@ func TestIngressClassForCustomResources(t *testing.T) {
 			msg:             "Ingress Controller handles a resource that matches its IngressClass",
 		},
 		{
-			lbc:             ctrlWithUseICOnly,
-			objIngressClass: "nginx",
-			expected:        true,
-			msg:             "Ingress Controller with useIngressClassOnly handles a resource that matches its IngressClass",
-		},
-		{
 			lbc:             ctrl,
 			objIngressClass: "",
 			expected:        true,
 			msg:             "Ingress Controller handles a resource with an empty IngressClass",
 		},
 		{
-			lbc:             ctrlWithUseICOnly,
-			objIngressClass: "",
-			expected:        true,
-			msg:             "Ingress Controller with useIngressClassOnly handles a resource with an empty IngressClass",
-		},
-		{
 			lbc:             ctrl,
 			objIngressClass: "gce",
 			expected:        false,
 			msg:             "Ingress Controller doesn't handle a resource that doesn't match its IngressClass",
-		},
-		{
-			lbc:             ctrlWithUseICOnly,
-			objIngressClass: "gce",
-			expected:        false,
-			msg:             "Ingress Controller with useIngressClassOnly doesn't handle a resource that doesn't match its IngressClass",
 		},
 	}
 
@@ -531,25 +428,33 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 		},
 		Status: v1.ServiceStatus{},
 	}
-	ingSvcPort := intstr.FromString("foo")
-	svcPort := lbc.getServicePortForIngressPort(ingSvcPort, &svc)
+	backendPort := networking.ServiceBackendPort{
+		Name: "foo",
+	}
+	svcPort := lbc.getServicePortForIngressPort(backendPort, &svc)
 	if svcPort == nil || svcPort.Port != 80 {
 		t.Errorf("TargetPort string match failed: %+v", svcPort)
 	}
 
-	ingSvcPort = intstr.FromInt(80)
-	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
+	backendPort = networking.ServiceBackendPort{
+		Number: 80,
+	}
+	svcPort = lbc.getServicePortForIngressPort(backendPort, &svc)
 	if svcPort == nil || svcPort.Port != 80 {
 		t.Errorf("TargetPort int match failed: %+v", svcPort)
 	}
 
-	ingSvcPort = intstr.FromInt(22)
-	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
+	backendPort = networking.ServiceBackendPort{
+		Number: 22,
+	}
+	svcPort = lbc.getServicePortForIngressPort(backendPort, &svc)
 	if svcPort != nil {
 		t.Errorf("Mismatched ints should not return port: %+v", svcPort)
 	}
-	ingSvcPort = intstr.FromString("bar")
-	svcPort = lbc.getServicePortForIngressPort(ingSvcPort, &svc)
+	backendPort = networking.ServiceBackendPort{
+		Name: "bar",
+	}
+	svcPort = lbc.getServicePortForIngressPort(backendPort, &svc)
 	if svcPort != nil {
 		t.Errorf("Mismatched strings should not return port: %+v", svcPort)
 	}
@@ -711,6 +616,19 @@ func TestGetPolicies(t *testing.T) {
 		},
 	}
 
+	validPolicyIngressClass := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-policy-ingress-class",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			IngressClass: "test-class",
+			AccessControl: &conf_v1.AccessControl{
+				Allow: []string{"127.0.0.1"},
+			},
+		},
+	}
+
 	invalidPolicy := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "invalid-policy",
@@ -726,6 +644,8 @@ func TestGetPolicies(t *testing.T) {
 				switch key {
 				case "default/valid-policy":
 					return validPolicy, true, nil
+				case "default/valid-policy-ingress-class":
+					return validPolicyIngressClass, true, nil
 				case "default/invalid-policy":
 					return invalidPolicy, true, nil
 				case "nginx-ingress/valid-policy":
@@ -754,6 +674,10 @@ func TestGetPolicies(t *testing.T) {
 			Name:      "some-policy", // will make lister return error
 			Namespace: "nginx-ingress",
 		},
+		{
+			Name:      "valid-policy-ingress-class",
+			Namespace: "default",
+		},
 	}
 
 	expectedPolicies := []*conf_v1.Policy{validPolicy}
@@ -761,6 +685,7 @@ func TestGetPolicies(t *testing.T) {
 		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `jwt`, `oidc`, `waf`"),
 		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
 		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
+		errors.New("referenced policy default/valid-policy-ingress-class has incorrect ingress class: test-class (controller ingress class: )"),
 	}
 
 	result, errors := lbc.getPolicies(policyRefs, "default")

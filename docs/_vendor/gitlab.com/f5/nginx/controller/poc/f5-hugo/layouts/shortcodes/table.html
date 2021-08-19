@@ -1,0 +1,17 @@
+{{/* Use this shortcode to wrap big tables that you want to have scrollbars when being shown in smaller screens */}}
+<style>
+    table, th, td {
+      border: 1px solid #CCC;
+      border-collapse: collapse;
+      list-style-position: inside;
+    }
+    th, td {
+      padding: 5px;
+    }
+    th {
+      text-align: center;
+    }
+</style>
+<div style="width:100%;overflow-x:scroll;display:block;">
+{{.Inner}}
+</div>

@@ -8,7 +8,7 @@ nginx.org/ssl-services: "service1[,service2,...]"
 
 In the following example we load balance three applications, one of which requires HTTPS:
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: cafe-ingress
@@ -20,16 +20,25 @@ spec:
     http:
       paths:
       - path: /tea
+        pathType: Prefix
         backend:
-          serviceName: tea-svc
-          servicePort: 80
+          service:
+            name: tea-svc
+            port:
+              number: 80
       - path: /coffee
+        pathType: Prefix
         backend:
-          serviceName: coffee-svc
-          servicePort: 80
+          service:
+            name: coffee-svc
+            port:
+              number: 80
       - path: /ssl
+        pathType: Prefix
         backend:
-          serviceName: ssl-svc
-          servicePort: 443
+          service:
+            name: ssl-svc
+            port:
+              number: 443
 ```
 *ssl-svc* is a service for an HTTPS application. The service becomes available at the `/ssl` path. Note how we used the **nginx.org/ssl-services** annotation.

@@ -3,12 +3,13 @@ package configs
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	api_v1 "k8s.io/api/core/v1"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -84,14 +85,14 @@ func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinio
 		grpcServices = make(map[string]bool)
 	}
 
-	if ingEx.Ingress.Spec.Backend != nil {
-		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
-		upstream := createUpstream(ingEx, name, ingEx.Ingress.Spec.Backend, spServices[ingEx.Ingress.Spec.Backend.ServiceName], &cfgParams,
+	if ingEx.Ingress.Spec.DefaultBackend != nil {
+		name := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.DefaultBackend)
+		upstream := createUpstream(ingEx, name, ingEx.Ingress.Spec.DefaultBackend, spServices[ingEx.Ingress.Spec.DefaultBackend.Service.Name], &cfgParams,
 			isPlus, isResolverConfigured, staticParams.EnableLatencyMetrics)
 		upstreams[name] = upstream
 
 		if cfgParams.HealthCheckEnabled {
-			if hc, exists := ingEx.HealthChecks[ingEx.Ingress.Spec.Backend.ServiceName+ingEx.Ingress.Spec.Backend.ServicePort.String()]; exists {
+			if hc, exists := ingEx.HealthChecks[ingEx.Ingress.Spec.DefaultBackend.Service.Name+GetBackendPortAsString(ingEx.Ingress.Spec.DefaultBackend.Service.Port)]; exists {
 				healthChecks[name] = createHealthCheck(hc, name, &cfgParams)
 			}
 		}
@@ -169,7 +170,7 @@ func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinio
 		grpcOnly := true
 		if len(grpcServices) > 0 {
 			for _, path := range httpIngressRuleValue.Paths {
-				if _, exists := grpcServices[path.Backend.ServiceName]; !exists {
+				if _, exists := grpcServices[path.Backend.Service.Name]; !exists {
 					grpcOnly = false
 					break
 				}
@@ -187,20 +188,20 @@ func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinio
 			upsName := getNameForUpstream(ingEx.Ingress, rule.Host, &path.Backend)
 
 			if cfgParams.HealthCheckEnabled {
-				if hc, exists := ingEx.HealthChecks[path.Backend.ServiceName+path.Backend.ServicePort.String()]; exists {
+				if hc, exists := ingEx.HealthChecks[path.Backend.Service.Name+GetBackendPortAsString(path.Backend.Service.Port)]; exists {
 					healthChecks[upsName] = createHealthCheck(hc, upsName, &cfgParams)
 				}
 			}
 
 			if _, exists := upstreams[upsName]; !exists {
-				upstream := createUpstream(ingEx, upsName, &path.Backend, spServices[path.Backend.ServiceName], &cfgParams, isPlus, isResolverConfigured, staticParams.EnableLatencyMetrics)
+				upstream := createUpstream(ingEx, upsName, &path.Backend, spServices[path.Backend.Service.Name], &cfgParams, isPlus, isResolverConfigured, staticParams.EnableLatencyMetrics)
 				upstreams[upsName] = upstream
 			}
 
-			ssl := isSSLEnabled(sslServices[path.Backend.ServiceName], cfgParams, staticParams)
-			proxySSLName := generateProxySSLName(path.Backend.ServiceName, ingEx.Ingress.Namespace)
-			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &cfgParams, wsServices[path.Backend.ServiceName], rewrites[path.Backend.ServiceName],
-				ssl, grpcServices[path.Backend.ServiceName], proxySSLName, path.PathType, path.Backend.ServiceName)
+			ssl := isSSLEnabled(sslServices[path.Backend.Service.Name], cfgParams, staticParams)
+			proxySSLName := generateProxySSLName(path.Backend.Service.Name, ingEx.Ingress.Namespace)
+			loc := createLocation(pathOrDefault(path.Path), upstreams[upsName], &cfgParams, wsServices[path.Backend.Service.Name], rewrites[path.Backend.Service.Name],
+				ssl, grpcServices[path.Backend.Service.Name], proxySSLName, path.PathType, path.Backend.Service.Name)
 
 			if isMinion && cfgParams.JWTKey != "" {
 				jwtAuth, redirectLoc, warnings := generateJWTConfig(ingEx.Ingress, ingEx.SecretRefs, &cfgParams, getNameForRedirectLocation(ingEx.Ingress))
@@ -218,23 +219,23 @@ func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinio
 			}
 		}
 
-		if !rootLocation && ingEx.Ingress.Spec.Backend != nil {
-			upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.Backend)
-			ssl := isSSLEnabled(sslServices[ingEx.Ingress.Spec.Backend.ServiceName], cfgParams, staticParams)
-			proxySSLName := generateProxySSLName(ingEx.Ingress.Spec.Backend.ServiceName, ingEx.Ingress.Namespace)
+		if !rootLocation && ingEx.Ingress.Spec.DefaultBackend != nil {
+			upsName := getNameForUpstream(ingEx.Ingress, emptyHost, ingEx.Ingress.Spec.DefaultBackend)
+			ssl := isSSLEnabled(sslServices[ingEx.Ingress.Spec.DefaultBackend.Service.Name], cfgParams, staticParams)
+			proxySSLName := generateProxySSLName(ingEx.Ingress.Spec.DefaultBackend.Service.Name, ingEx.Ingress.Namespace)
 			pathtype := networking.PathTypePrefix
 
-			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &cfgParams, wsServices[ingEx.Ingress.Spec.Backend.ServiceName], rewrites[ingEx.Ingress.Spec.Backend.ServiceName],
-				ssl, grpcServices[ingEx.Ingress.Spec.Backend.ServiceName], proxySSLName, &pathtype, ingEx.Ingress.Spec.Backend.ServiceName)
+			loc := createLocation(pathOrDefault("/"), upstreams[upsName], &cfgParams, wsServices[ingEx.Ingress.Spec.DefaultBackend.Service.Name], rewrites[ingEx.Ingress.Spec.DefaultBackend.Service.Name],
+				ssl, grpcServices[ingEx.Ingress.Spec.DefaultBackend.Service.Name], proxySSLName, &pathtype, ingEx.Ingress.Spec.DefaultBackend.Service.Name)
 			locations = append(locations, loc)
 
 			if cfgParams.HealthCheckEnabled {
-				if hc, exists := ingEx.HealthChecks[ingEx.Ingress.Spec.Backend.ServiceName+ingEx.Ingress.Spec.Backend.ServicePort.String()]; exists {
+				if hc, exists := ingEx.HealthChecks[ingEx.Ingress.Spec.DefaultBackend.Service.Name+GetBackendPortAsString(ingEx.Ingress.Spec.DefaultBackend.Service.Port)]; exists {
 					healthChecks[upsName] = createHealthCheck(hc, upsName, &cfgParams)
 				}
 			}
 
-			if _, exists := grpcServices[ingEx.Ingress.Spec.Backend.ServiceName]; !exists {
+			if _, exists := grpcServices[ingEx.Ingress.Spec.DefaultBackend.Service.Name]; !exists {
 				grpcOnly = false
 			}
 		}
@@ -405,13 +406,13 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 	isPlus bool, isResolverConfigured bool, isLatencyMetricsEnabled bool) version1.Upstream {
 	var ups version1.Upstream
 	labels := version1.UpstreamLabels{
-		Service:           backend.ServiceName,
+		Service:           backend.Service.Name,
 		ResourceType:      "ingress",
 		ResourceName:      ingEx.Ingress.Name,
 		ResourceNamespace: ingEx.Ingress.Namespace,
 	}
 	if isPlus {
-		queue, timeout := upstreamRequiresQueue(backend.ServiceName+backend.ServicePort.String(), ingEx, cfg)
+		queue, timeout := upstreamRequiresQueue(backend.Service.Name+GetBackendPortAsString(backend.Service.Port), ingEx, cfg)
 		ups = version1.Upstream{Name: name, StickyCookie: stickyCookie, Queue: queue, QueueTimeout: timeout, UpstreamLabels: labels}
 	} else {
 		ups = version1.NewUpstreamWithDefaultServer(name)
@@ -420,13 +421,13 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 		}
 	}
 
-	endps, exists := ingEx.Endpoints[backend.ServiceName+backend.ServicePort.String()]
+	endps, exists := ingEx.Endpoints[backend.Service.Name+GetBackendPortAsString(backend.Service.Port)]
 	if exists {
 		var upsServers []version1.UpstreamServer
 		// Always false for NGINX OSS
-		_, isExternalNameSvc := ingEx.ExternalNameSvcs[backend.ServiceName]
+		_, isExternalNameSvc := ingEx.ExternalNameSvcs[backend.Service.Name]
 		if isExternalNameSvc && !isResolverConfigured {
-			glog.Warningf("A resolver must be configured for Type ExternalName service %s, no upstream servers will be created", backend.ServiceName)
+			glog.Warningf("A resolver must be configured for Type ExternalName service %s, no upstream servers will be created", backend.Service.Name)
 			endps = []string{}
 		}
 
@@ -482,7 +483,7 @@ func pathOrDefault(path string) string {
 }
 
 func getNameForUpstream(ing *networking.Ingress, host string, backend *networking.IngressBackend) string {
-	return fmt.Sprintf("%v-%v-%v-%v-%v", ing.Namespace, ing.Name, host, backend.ServiceName, backend.ServicePort.String())
+	return fmt.Sprintf("%v-%v-%v-%v-%v", ing.Namespace, ing.Name, host, backend.Service.Name, GetBackendPortAsString(backend.Service.Port))
 }
 
 func getNameForRedirectLocation(ing *networking.Ingress) string {
@@ -555,7 +556,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 		minion.Ingress = minion.Ingress.DeepCopy()
 
 		// Remove the default backend so that "/" will not be generated
-		minion.Ingress.Spec.Backend = nil
+		minion.Ingress.Spec.DefaultBackend = nil
 
 		// Add acceptable master annotations to minion
 		mergeMasterAnnotationsIntoMinion(minion.Ingress.Annotations, mergeableIngs.Master.Ingress.Annotations)
@@ -607,4 +608,12 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 
 func isSSLEnabled(isSSLService bool, cfgParams ConfigParams, staticCfgParams *StaticConfigParams) bool {
 	return isSSLService || staticCfgParams.NginxServiceMesh && !cfgParams.SpiffeServerCerts
+}
+
+// GetBackendPortAsString returns the port of a ServiceBackend of an Ingress resource as a string.
+func GetBackendPortAsString(port networking.ServiceBackendPort) string {
+	if port.Name != "" {
+		return port.Name
+	}
+	return strconv.Itoa(int(port.Number))
 }

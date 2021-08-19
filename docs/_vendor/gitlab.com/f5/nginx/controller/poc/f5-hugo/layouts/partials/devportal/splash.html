@@ -1,0 +1,5 @@
+{{/*  load devportal splash script */}}
+
+{{ $splashjs := resources.Get "js/devportal/splash.js" | fingerprint "sha512" }}
+
+<script src="{{$splashjs.RelPermalink}}" type="text/javascript" integrity="{{ $splashjs.Data.Integrity }}"></script>

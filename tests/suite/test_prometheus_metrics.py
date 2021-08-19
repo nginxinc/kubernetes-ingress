@@ -49,32 +49,6 @@ def prometheus_secret_setup(request, kube_apis, test_namespace):
 
 
 @pytest.fixture(scope="class")
-def enable_exporter_port(
-    cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller
-) -> None:
-    """
-    Set containerPort for Prometheus Exporter.
-
-    :param cli_arguments: context
-    :param kube_apis: client apis
-    :param ingress_controller_prerequisites
-    :param ingress_controller: IC name
-    :return:
-    """
-    namespace = ingress_controller_prerequisites.namespace
-    port = V1ContainerPort(9113, None, None, "prometheus", "TCP")
-    print("------------------------- Enable 9113 port in IC -----------------------------------")
-    body = kube_apis.apps_v1_api.read_namespaced_deployment(ingress_controller, namespace)
-    body.spec.template.spec.containers[0].ports.append(port)
-
-    if cli_arguments["deployment-type"] == "deployment":
-        kube_apis.apps_v1_api.patch_namespaced_deployment(ingress_controller, namespace, body)
-    else:
-        kube_apis.apps_v1_api.patch_namespaced_daemon_set(ingress_controller, namespace, body)
-    wait_until_all_pods_are_ready(kube_apis.v1, namespace)
-
-
-@pytest.fixture(scope="class")
 def ingress_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> IngressSetup:
     print("------------------------- Deploy Ingress Example -----------------------------------")
     secret_name = create_secret_from_yaml(
@@ -139,10 +113,10 @@ class TestPrometheusExporter:
         self,
         ingress_controller_endpoint,
         ingress_controller,
-        enable_exporter_port,
         expected_metrics,
         ingress_setup,
-    ):
+    ):  
+        ensure_connection(ingress_setup.req_url, 200, {"host": ingress_setup.ingress_host})
         resp = requests.get(ingress_setup.req_url, headers={"host": ingress_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
@@ -172,10 +146,10 @@ class TestPrometheusExporter:
         self,
         ingress_controller_endpoint,
         ingress_controller,
-        enable_exporter_port,
         expected_metrics,
         ingress_setup,
     ):
+        ensure_connection(ingress_setup.req_url, 200, {"host": ingress_setup.ingress_host})
         resp = requests.get(ingress_setup.req_url, headers={"host": ingress_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
@@ -204,21 +178,17 @@ class TestPrometheusExporter:
             prometheus_secret_setup,
             ingress_controller_endpoint,
             ingress_controller,
-            enable_exporter_port,
             expected_metrics,
             ingress_setup,
     ):
-        resp = {}
-
         # assert http fails
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
-        try:
-            resp = requests.get(req_url, verify=False)
-            assert False, "Expected HTTP request to fail for a HTTPS endpoint but it succeeded"
-        except:
-            print("request fails as expected")
-
-        assert resp.status_code == 400, f"Expected 400 code for http request to /metrics but got {resp.status_code}"
+        ensure_connection(req_url, 400)
+        resp = requests.get(req_url, verify=False)
+        assert (
+            "Client sent an HTTP request to an HTTPS server" in resp.text and
+            resp.status_code == 400, f"Expected 400 code for http request to /metrics and got {resp.status_code}"
+        )
 
         # assert https succeeds
         req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"

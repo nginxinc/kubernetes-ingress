@@ -52,7 +52,7 @@ def tls_setup(request, kube_apis, ingress_controller_prerequisites, ingress_cont
     test_data_path = f"{TEST_DATA}/tls"
 
     ingress_path = f"{test_data_path}/{request.param}/ingress.yaml"
-    create_ingress_from_yaml(kube_apis.extensions_v1_beta1, test_namespace, ingress_path)
+    create_ingress_from_yaml(kube_apis.networking_v1, test_namespace, ingress_path)
     wait_before_test(1)
 
     ingress_host = get_first_ingress_host_from_yaml(ingress_path)

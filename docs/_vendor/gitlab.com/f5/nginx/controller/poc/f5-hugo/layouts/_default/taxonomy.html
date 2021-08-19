@@ -1,0 +1,27 @@
+{{ define "main" }}
+<div class="container">
+  
+  <div id="container hero">
+    <h1>{{ .Title | humanize }} Index</h1>
+    {{ if .Description }}
+    <p>{{ .Description | markdownify }}</p>
+    {{ end}}
+    </div>
+</div>
+  
+<div class="container">
+
+  <div class="row gutters">
+    {{ range .Site.Taxonomies.categories }}
+      
+      <div class="col col-4 item">
+        <h3><a href="{{ .Page.RelPermalink }}">{{ .Page.Title | title }}</a></h3>
+        <p>{{ .Page.Description }}</p>
+      </div>  
+    {{ end }}
+
+
+  </div>
+
+</div>
+{{ end }}

@@ -1,17 +1,19 @@
 """Describe methods to utilize the kubernetes-client."""
-
+import re
+import os
 import time
 import yaml
+import json
 import pytest
 import requests
 
-from kubernetes.client import CoreV1Api, ExtensionsV1beta1Api, RbacAuthorizationV1Api, V1Service, AppsV1Api
+from kubernetes.client import CoreV1Api, NetworkingV1Api, RbacAuthorizationV1Api, V1Service, AppsV1Api
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from kubernetes import client
 from more_itertools import first
 
-from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS
+from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS, PROJECT_ROOT
 
 
 class RBACAuthorization:
@@ -195,7 +197,7 @@ def create_deployment_with_name(apps_v1_api: AppsV1Api, namespace, name) -> str:
         return create_deployment(apps_v1_api, namespace, dep)
 
 
-def scale_deployment(apps_v1_api: AppsV1Api, name, namespace, value) -> int:
+def scale_deployment(v1:CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, value) -> int:
     """
     Scale a deployment.
 
@@ -205,11 +207,28 @@ def scale_deployment(apps_v1_api: AppsV1Api, name, namespace, value) -> int:
     :param value: int
     :return: original: int the original amount of replicas
     """
-    print(f"Scale a deployment '{name}'")
     body = apps_v1_api.read_namespaced_deployment_scale(name, namespace)
     original = body.spec.replicas
+    print(f"Original number of replicas is {original}")
+    print(f"Scaling deployment '{name}' to {value} replica(s)")
     body.spec.replicas = value
     apps_v1_api.patch_namespaced_deployment_scale(name, namespace, body)
+    if value is not 0:
+        now = time.time()
+        wait_until_all_pods_are_ready(v1, namespace)
+        later = time.time()
+        print(f"All pods came up in {int(later-now)} seconds")
+
+    elif value is 0:
+            replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
+            while(replica_num is not None):
+                replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
+                time.sleep(1)
+                print("Number of replicas is not 0, retrying...")
+
+    else:
+        pytest.fail("wrong argument")
+
     print(f"Scale a deployment '{name}': complete")
     return original
 
@@ -228,6 +247,11 @@ def create_daemon_set(apps_v1_api: AppsV1Api, namespace, body) -> str:
     print(f"Daemon-Set created with name '{body['metadata']['name']}'")
     return body['metadata']['name']
 
+class PodNotReadyException(Exception):
+    def __init__(self, message="After several seconds the pods aren't ContainerReady. Exiting!"):
+        self.message = message
+        super().__init__(self.message)
+
 
 def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     """
@@ -239,12 +263,12 @@ def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     """
     print("Start waiting for all pods in a namespace to be ContainersReady")
     counter = 0
-    while not are_all_pods_in_ready_state(v1, namespace) and counter < 20:
-        print("There are pods that are not ContainersReady. Wait for 4 sec...")
+    while not are_all_pods_in_ready_state(v1, namespace) and counter < 50:
+        print("There are pods that are not ContainerReady. Wait for 4 sec...")
         time.sleep(4)
         counter = counter + 1
-    if counter >= 20:
-        pytest.fail("After several seconds the pods aren't ContainersReady. Exiting...")
+    if counter >= 50:
+        raise PodNotReadyException()
     print("All pods are ContainersReady")
 
 
@@ -293,7 +317,6 @@ def get_pods_amount(v1: CoreV1Api, namespace) -> int:
     """
     pods = v1.list_namespaced_pod(namespace)
     return 0 if not pods.items else len(pods.items)
-
 
 def create_service_from_yaml(v1: CoreV1Api, namespace, yaml_manifest) -> str:
     """
@@ -494,11 +517,11 @@ def ensure_item_removal(get_item, *args, **kwargs) -> None:
             print("Item was removed")
 
 
-def create_ingress_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, yaml_manifest) -> str:
+def create_ingress_from_yaml(networking_v1: NetworkingV1Api, namespace, yaml_manifest) -> str:
     """
     Create an ingress based on yaml file.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param networking_v1: NetworkingV1Api
     :param namespace: namespace name
     :param yaml_manifest: an absolute path to file
     :return: str
@@ -506,36 +529,36 @@ def create_ingress_from_yaml(extensions_v1_beta1: ExtensionsV1beta1Api, namespac
     print(f"Load {yaml_manifest}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        return create_ingress(extensions_v1_beta1, namespace, dep)
+        return create_ingress(networking_v1, namespace, dep)
 
 
-def create_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, namespace, body) -> str:
+def create_ingress(networking_v1: NetworkingV1Api, namespace, body) -> str:
     """
     Create an ingress based on a dict.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param networking_v1: NetworkingV1Api
     :param namespace: namespace name
     :param body: a dict
     :return: str
     """
     print("Create an ingress:")
-    extensions_v1_beta1.create_namespaced_ingress(namespace, body)
+    networking_v1.create_namespaced_ingress(namespace, body)
     print(f"Ingress created with name '{body['metadata']['name']}'")
     return body['metadata']['name']
 
 
-def delete_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace) -> None:
+def delete_ingress(networking_v1: NetworkingV1Api, name, namespace) -> None:
     """
     Delete an ingress.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param networking_v1: NetworkingV1Api
     :param namespace: namespace
     :param name:
     :return:
     """
     print(f"Delete an ingress: {name}")
-    extensions_v1_beta1.delete_namespaced_ingress(name, namespace)
-    ensure_item_removal(extensions_v1_beta1.read_namespaced_ingress, name, namespace)
+    networking_v1.delete_namespaced_ingress(name, namespace)
+    ensure_item_removal(networking_v1.read_namespaced_ingress, name, namespace)
     print(f"Ingress was removed with name '{name}'")
 
 
@@ -557,18 +580,18 @@ def generate_ingresses_with_annotation(yaml_manifest, annotations) -> []:
     return res
 
 
-def replace_ingress(extensions_v1_beta1: ExtensionsV1beta1Api, name, namespace, body) -> str:
+def replace_ingress(networking_v1: NetworkingV1Api, name, namespace, body) -> str:
     """
     Replace an Ingress based on a dict.
 
-    :param extensions_v1_beta1: ExtensionsV1beta1Api
+    :param networking_v1: NetworkingV1Api
     :param name:
     :param namespace: namespace
     :param body: dict
     :return: str
     """
     print(f"Replace a Ingress: {name}")
-    resp = extensions_v1_beta1.replace_namespaced_ingress(name, namespace, body)
+    resp = networking_v1.replace_namespaced_ingress(name, namespace, body)
     print(f"Ingress replaced with name '{name}'")
     return resp.metadata.name
 
@@ -912,8 +935,6 @@ def wait_for_event_increment(kube_apis, namespace, event_count, offset) -> bool:
     else:
         print(f"Event was not registered after {retry} retries, exiting...")
         return False
-    
-
 
 
 def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments,
@@ -932,6 +953,7 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
     yaml_manifest = f"{DEPLOYMENTS}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
+    dep['spec']['replicas'] = int(cli_arguments["replicas"])
     dep['spec']['template']['spec']['containers'][0]['image'] = cli_arguments["image"]
     dep['spec']['template']['spec']['containers'][0]['imagePullPolicy'] = cli_arguments["image-pull-policy"]
     if args is not None:
@@ -940,7 +962,10 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
         name = create_deployment(apps_v1_api, namespace, dep)
     else:
         name = create_daemon_set(apps_v1_api, namespace, dep)
+    before = time.time()
     wait_until_all_pods_are_ready(v1, namespace)
+    after = time.time()
+    print(f"All pods came up in {int(after-before)} seconds")
     print(f"Ingress Controller was created with name '{name}'")
     return name
 
@@ -949,7 +974,7 @@ def delete_ingress_controller(apps_v1_api: AppsV1Api, name, dep_type, namespace)
     """
     Delete IC according to its type.
 
-    :param apps_v1_api: ExtensionsV1beta1Api
+    :param apps_v1_api: NetworkingV1Api
     :param name: name
     :param dep_type: IC deployment type 'deployment' or 'daemon-set'
     :param namespace: namespace name
@@ -1000,7 +1025,7 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
             elif doc["kind"] == "ConfigMap":
                 create_configmap(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "Ingress":
-                create_ingress(kube_apis.extensions_v1_beta1, namespace, doc)
+                create_ingress(kube_apis.networking_v1, namespace, doc)
             elif doc["kind"] == "Service":
                 create_service(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "Deployment":
@@ -1037,7 +1062,7 @@ def create_ingress_with_ap_annotations(
         ] = ap_log_st
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log"] = logconf
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log-destination"] = f"syslog:server={syslog_ep}"
-        create_ingress(kube_apis.extensions_v1_beta1, namespace, doc)
+        create_ingress(kube_apis.networking_v1, namespace, doc)
 
 
 def replace_ingress_with_ap_annotations(
@@ -1068,7 +1093,7 @@ def replace_ingress_with_ap_annotations(
         ] = ap_log_st
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log"] = logconf
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log-destination"] = f"syslog:server={syslog_ep}"
-        replace_ingress(kube_apis.extensions_v1_beta1, name, namespace, doc)
+        replace_ingress(kube_apis.networking_v1, name, namespace, doc)
 
 
 def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
@@ -1089,7 +1114,7 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
             elif doc["kind"] == "Secret":
                 delete_secret(kube_apis.v1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Ingress":
-                delete_ingress(kube_apis.extensions_v1_beta1, doc['metadata']['name'], namespace)
+                delete_ingress(kube_apis.networking_v1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Service":
                 delete_service(kube_apis.v1, doc['metadata']['name'], namespace)
             elif doc["kind"] == "Deployment":
@@ -1100,7 +1125,7 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
                 delete_configmap(kube_apis.v1, doc['metadata']['name'], namespace)
 
 
-def ensure_connection(request_url, expected_code=404) -> None:
+def ensure_connection(request_url, expected_code=404, headers={}) -> None:
     """
     Wait for connection.
 
@@ -1110,7 +1135,7 @@ def ensure_connection(request_url, expected_code=404) -> None:
     """
     for _ in range(10):
         try:
-            resp = requests.get(request_url, verify=False, timeout=5)
+            resp = requests.get(request_url, headers=headers, verify=False, timeout=5)
             if resp.status_code == expected_code:
                 return
         except Exception as ex:
@@ -1130,7 +1155,6 @@ def ensure_connection_to_public_endpoint(ip_address, port, port_ssl) -> None:
     """
     ensure_connection(f"http://{ip_address}:{port}/")
     ensure_connection(f"https://{ip_address}:{port_ssl}/")
-
 
 def read_service(v1: CoreV1Api, name, namespace) -> V1Service:
     """
@@ -1186,7 +1210,7 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
     headers = {"host": host}
     if additional_headers:
         headers.update(additional_headers)
-    
+
     if check404:
         for _ in range(60):
             resp = requests.get(req_url, headers=headers, verify=False)
@@ -1205,7 +1229,7 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
             time.sleep(1)
         pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")
 
-def get_service_endpoint(kube_apis, service_name, namespace):
+def get_service_endpoint(kube_apis, service_name, namespace) -> str:
     """
     Wait for endpoint resource to spin up.
     :param kube_apis: Kubernates API object
@@ -1229,4 +1253,68 @@ def get_service_endpoint(kube_apis, service_name, namespace):
             print(f"Endpoint IP for {service_name} is {ep}")
         except TypeError as err:
             retry += 1
+        except ApiException as ex:
+            if ex.status == 500:
+                print("Reason: Internal server error and Request timed out")
+                raise ApiException
     return ep
+
+def get_last_reload_time(req_url, ingress_class) -> str:
+
+    reload_metric = ""
+    print(req_url)
+    ensure_connection(req_url, 200)
+    resp = requests.get(req_url)
+    assert resp.status_code == 200, f"Expected 200 code for /metrics and got {resp.status_code}"
+    resp_content = resp.content.decode("utf-8")
+    for line in resp_content.splitlines():
+        if 'last_reload_milliseconds{class="%s"}' %ingress_class in line:
+            reload_metric = re.findall("\d+", line)[0]
+            return reload_metric
+
+
+def get_reload_count(req_url) -> int:
+    print(req_url)
+    ensure_connection(req_url, 200)
+    resp = requests.get(req_url)
+
+    assert resp.status_code == 200, f"Expected 200 code for /metrics and got {resp.status_code}"
+    resp_content = resp.content.decode("utf-8")
+
+    count = 0
+    found = 0
+
+    for line in resp_content.splitlines():
+        # we search for endpoints and other reloads
+        # ex:
+        # nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="endpoints"} 0
+        # nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="other"} 1
+        if 'nginx_ingress_controller_nginx_reloads_total{class=' in line:
+            c = re.findall("\d+", line)[0]
+            count += int(c)
+            found += 1
+
+        if found == 2:
+            break
+
+    assert found == 2
+
+    return count
+
+def get_test_file_name(path) -> str:
+    """
+    :param path: full path to the test file
+    """
+    return (str(path).rsplit('/', 1)[-1])[:-3]
+
+def write_to_json(fname, data) -> None:
+    """
+    :param fname: filename.json
+    :param data: dictionary
+    """
+    file_path = f"{PROJECT_ROOT}/json_files/"
+    if os.path.isdir(file_path) == False:
+        os.mkdir(file_path)
+
+    with open(f"json_files/{fname}", "w+") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)

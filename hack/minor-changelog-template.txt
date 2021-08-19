@@ -1,0 +1,16 @@
+%%TITLE%%
+
+%%DATE%%
+
+CHANGES:
+* Update NGINX version to X.Y.Z.
+* Update NGINX Plus version to RX.
+
+HELM CHART:
+* The version of the Helm chart is now %%HELM_CHART_VERSION%%.
+
+UPGRADE:
+* For NGINX, use the %%IC_VERSION%% image from our DockerHub: `nginx/nginx-ingress:%%IC_VERSION%%`, `nginx/nginx-ingress:%%IC_VERSION%%-alpine` or `nginx/nginx-ingress:%%IC_VERSION%%-ubi`
+* For NGINX Plus, please build your own image using the %%IC_VERSION%% source code.
+* For Helm, use version %%HELM_CHART_VERSION%% of the chart.
+

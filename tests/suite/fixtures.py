@@ -9,7 +9,7 @@ import subprocess
 from kubernetes import config, client
 from kubernetes.client import (
     CoreV1Api,
-    ExtensionsV1beta1Api,
+    NetworkingV1Api,
     RbacAuthorizationV1Api,
     CustomObjectsApi,
     ApiextensionsV1Api,
@@ -88,7 +88,7 @@ class KubeApis:
 
     Attributes:
         v1: CoreV1Api
-        extensions_v1_beta1: ExtensionsV1beta1Api
+        networking_v1: NetworkingV1Api
         rbac_v1: RbacAuthorizationV1Api
         api_extensions_v1: ApiextensionsV1Api
         custom_objects: CustomObjectsApi
@@ -97,14 +97,14 @@ class KubeApis:
     def __init__(
         self,
         v1: CoreV1Api,
-        extensions_v1_beta1: ExtensionsV1beta1Api,
+        networking_v1: NetworkingV1Api,
         apps_v1_api: AppsV1Api,
         rbac_v1: RbacAuthorizationV1Api,
         api_extensions_v1: ApiextensionsV1Api,
         custom_objects: CustomObjectsApi,
     ):
         self.v1 = v1
-        self.extensions_v1_beta1 = extensions_v1_beta1
+        self.networking_v1 = networking_v1
         self.apps_v1_api = apps_v1_api
         self.rbac_v1 = rbac_v1
         self.api_extensions_v1 = api_extensions_v1
@@ -138,13 +138,11 @@ class IngressControllerPrerequisites:
     Attributes:
         namespace (str): namespace name
         config_map (str): config_map name
-        minorVer (int): k8s minor version
     """
 
-    def __init__(self, config_map, namespace, minorVer):
+    def __init__(self, config_map, namespace):
         self.namespace = namespace
         self.config_map = config_map
-        self.minorVer = minorVer
 
 
 @pytest.fixture(autouse=True)
@@ -285,22 +283,16 @@ def ingress_controller_prerequisites(
     print("------------------------- Create IC Prerequisites  -----------------------------------")
     rbac = configure_rbac(kube_apis.rbac_v1)
     namespace = create_ns_and_sa_from_yaml(kube_apis.v1, f"{DEPLOYMENTS}/common/ns-and-sa.yaml")
-    k8sVersionBin = subprocess.run(["kubectl", "version"], capture_output=True)
-    k8sVersion = (k8sVersionBin.stdout).decode("ascii")
-    serverVersion = k8sVersion[k8sVersion.find("Server Version:") :].lstrip()
-    minorSerVer = serverVersion[serverVersion.find("Minor") :].lstrip()[0:10]
-    k8sMinorVersion = int("".join(filter(str.isdigit, minorSerVer)))
-    if k8sMinorVersion >= 18:
-        print("Create IngressClass resources:")
-        subprocess.run(["kubectl", "apply", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
-        subprocess.run(
-            [
-                "kubectl",
-                "apply",
-                "-f",
-                f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml",
-            ]
-        )
+    print("Create IngressClass resources:")
+    subprocess.run(["kubectl", "apply", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
+    subprocess.run(
+        [
+            "kubectl",
+            "apply",
+            "-f",
+            f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml",
+        ]
+    )
     config_map_yaml = f"{DEPLOYMENTS}/common/nginx-config.yaml"
     create_configmap_from_yaml(kube_apis.v1, namespace, config_map_yaml)
     with open(config_map_yaml) as f:
@@ -312,22 +304,21 @@ def ingress_controller_prerequisites(
     def fin():
         print("Clean up prerequisites")
         delete_namespace(kube_apis.v1, namespace)
-        if k8sMinorVersion >= 18:
-            print("Delete IngressClass resources:")
-            subprocess.run(["kubectl", "delete", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
-            subprocess.run(
-                [
-                    "kubectl",
-                    "delete",
-                    "-f",
-                    f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml",
-                ]
-            )
+        print("Delete IngressClass resources:")
+        subprocess.run(["kubectl", "delete", "-f", f"{DEPLOYMENTS}/common/ingress-class.yaml"])
+        subprocess.run(
+            [
+                "kubectl",
+                "delete",
+                "-f",
+                f"{TEST_DATA}/ingress-class/resource/custom-ingress-class-res.yaml",
+            ]
+        )
         cleanup_rbac(kube_apis.rbac_v1, rbac)
 
     request.addfinalizer(fin)
 
-    return IngressControllerPrerequisites(config_map, namespace, k8sMinorVersion)
+    return IngressControllerPrerequisites(config_map, namespace)
 
 
 @pytest.fixture(scope="session")
@@ -342,13 +333,13 @@ def kube_apis(cli_arguments) -> KubeApis:
     kubeconfig = cli_arguments["kubeconfig"]
     config.load_kube_config(config_file=kubeconfig, context=context_name, persist_config=False)
     v1 = client.CoreV1Api()
-    extensions_v1_beta1 = client.ExtensionsV1beta1Api()
+    networking_v1 = client.NetworkingV1Api()
     apps_v1_api = client.AppsV1Api()
     rbac_v1 = client.RbacAuthorizationV1Api()
     api_extensions_v1 = client.ApiextensionsV1Api()
     custom_objects = client.CustomObjectsApi()
     return KubeApis(
-        v1, extensions_v1_beta1, apps_v1_api, rbac_v1, api_extensions_v1, custom_objects
+        v1, networking_v1, apps_v1_api, rbac_v1, api_extensions_v1, custom_objects
     )
 
 
@@ -389,6 +380,9 @@ def cli_arguments(request) -> {}:
     result["ic-type"] = request.config.getoption("--ic-type")
     assert result["ic-type"] in ALLOWED_IC_TYPES, f"IC type {result['ic-type']} is not allowed"
     print(f"Tests will run against the IC of type: {result['ic-type']}")
+
+    result["replicas"] = request.config.getoption("--replicas")
+    print(f"Number of pods spun up will be : {result['replicas']}")
 
     result["service"] = request.config.getoption("--service")
     assert result["service"] in ALLOWED_SERVICE_TYPES, f"Service {result['service']} is not allowed"
@@ -489,6 +483,7 @@ def crd_ingress_controller(
         delete_ingress_controller(
             kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
         )
+        pytest.fail("IC setup failed")
 
     def fin():
         delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
@@ -634,7 +629,7 @@ def crd_ingress_controller_with_ap(
         delete_ingress_controller(
             kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
         )
-
+        pytest.fail("IC setup failed")
     def fin():
         print("--------------Cleanup----------------")
         delete_crd(
@@ -705,6 +700,10 @@ class VirtualServerSetup:
         self.backend_2_url_ssl = (
             f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[1]}"
         )
+        self.metrics_url = (
+            f"http://{public_endpoint.public_ip}:{public_endpoint.metrics_port}/metrics"
+        )
+
 
 
 @pytest.fixture(scope="class")

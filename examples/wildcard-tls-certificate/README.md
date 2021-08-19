@@ -21,7 +21,7 @@ In the example below we configure TLS termination for two Ingress resources for 
 `foo-ingress` from the namespace `foo-namespace`:
 
  ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: foo-ingress
@@ -37,15 +37,18 @@ spec:
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: foo-service
-          servicePort: 80
+          service:
+            name: foo-service
+            port:
+              number: 80
  ```
 
 `bar-ingress` from the namespace `bar-namespace`:
 
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: bar-ingress
@@ -61,9 +64,12 @@ spec:
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: bar-service
-          servicePort: 80
+          service:
+            name: bar-service
+            port:
+              number: 80
 ```
 
 Because we don't reference any TLS secret in the `tls` section (there is no `secretName` field) in both Ingress resources, NGINX will use the wildcard secret specified in the `-wildcard-tls-secret` command-line argument.

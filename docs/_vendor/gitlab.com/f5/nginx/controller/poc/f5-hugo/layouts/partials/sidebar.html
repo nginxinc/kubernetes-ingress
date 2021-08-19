@@ -1,0 +1,43 @@
+{{ block "sidebar" . }}
+<!-- sidebar start -->
+
+<div id="sidebar" class="content" aria-label="Sidebar navigation">
+    
+    <h3 class="sidebar-title"> 
+        <a href="{{.Site.Home.Permalink}}" alt="{{.Site.Title}}">{{ if .Site.Params.logo }}<img class="card-img-top" src="{{ .Site.BaseURL}}/images/icons/{{ .Site.Params.logo }}" alt="{{.Site.Title}}">{{end}}
+        {{.Site.Title}}</a>
+    </h3> 
+
+    <ul>
+        
+        {{ range .Site.Sections }}
+        <h3 data-toggle="collapse" class="nginx-toc-link l1" id="accordion-{{.Section | urlize}}">
+            <a class="" data-toggle="collapse" href="#{{.Section | urlize}}" role="button" aria-expanded="false" aria-controls="{{.Section | urlize}}">
+                {{ .Title }}
+            </a>
+        </h3>
+
+        
+            {{ range .Pages }}
+            <div class="collapse" id="{{.Section | urlize }}">
+                <ul class="sidebar-ul-border">
+                    <li class="nginx-toc-link l2">
+                        <a href="{{ .Permalink }}">{{ .Title }}</a>
+                    </li>
+                </ul>
+            </div>
+            {{ end }}
+        
+        {{ end }}
+    </ul>
+
+    {{ range where .Site.RegularPages "Section" "=" "" }}
+    <ul>
+        <li class="nginx-toc-link l1">
+            <a href="{{ .Permalink }}">{{ .Title }}</a>
+        </li>
+    </ul>
+    {{ end }}
+</div>
+
+{{ end }}

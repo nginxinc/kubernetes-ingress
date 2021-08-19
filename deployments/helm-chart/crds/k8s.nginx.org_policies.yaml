@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.6.2
   creationTimestamp: null
   name: policies.k8s.nginx.org
 spec:
@@ -76,6 +76,8 @@ spec:
                       type: integer
                     verifyServer:
                       type: boolean
+                ingressClassName:
+                  type: string
                 ingressMTLS:
                   description: 'IngressMTLS defines an Ingress MTLS policy. policy status: preview'
                   type: object

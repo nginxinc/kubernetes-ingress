@@ -10,6 +10,7 @@ from settings import (
     DEFAULT_IC_TYPE,
     DEFAULT_SERVICE,
     DEFAULT_DEPLOYMENT_TYPE,
+    NUM_REPLICAS,
 )
 from suite.resources_utils import get_first_pod_name
 
@@ -55,6 +56,12 @@ def pytest_addoption(parser) -> None:
         action="store",
         default=DEFAULT_SERVICE,
         help="The type of the Ingress Controller service: nodeport or loadbalancer.",
+    )
+    parser.addoption(
+        "--replicas",
+        action="store",
+        default=NUM_REPLICAS,
+        help="Number of replica pods for type deployment",
     )
     parser.addoption(
         "--node-ip",

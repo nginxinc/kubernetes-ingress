@@ -73,22 +73,10 @@ var (
 	ingressClass = flag.String("ingress-class", "nginx",
 		`A class of the Ingress controller.
 
-	For Kubernetes >= 1.18, a corresponding IngressClass resource with the name equal to the class must be deployed. Otherwise,
-	the Ingress Controller will fail to start.
+	An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start.
 	The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
 
-	For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class -
-	i.e have the annotation "kubernetes.io/ingress.class" (for Ingress resources)
-	or field "ingressClassName" (for VirtualServer/VirtualServerRoute/TransportServer resources) equal to the class.
-	Additionally, the Ingress Controller processes resources that do not have the class set,
-	which can be disabled by setting the "-use-ingress-class-only" flag
-
 	The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of kubernetes.`)
-
-	useIngressClassOnly = flag.Bool("use-ingress-class-only", false,
-		`For kubernetes versions >= 1.18 this flag will be IGNORED.
-
-	Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation`)
 
 	defaultServerSecret = flag.String("default-server-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of the default server. Format: <namespace>/<name>.
@@ -142,9 +130,8 @@ var (
 	nginxDebug = flag.Bool("nginx-debug", false,
 		"Enable debugging for NGINX. Uses the nginx-debug binary. Requires 'error-log-level: debug' in the ConfigMap.")
 
-	nginxReloadTimeout = flag.Int("nginx-reload-timeout", 0,
-		`The timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
-		The default is 4000 (or 20000 if -enable-app-protect is true). If set to 0, the default value will be used`)
+	nginxReloadTimeout = flag.Int("nginx-reload-timeout", 60000,
+		`The timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start. (default 60000)`)
 
 	wildcardTLSSecret = flag.String("wildcard-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
@@ -207,6 +194,7 @@ func main() {
 		fmt.Println(versionInfo)
 		os.Exit(0)
 	}
+	glog.Infof("Starting NGINX Ingress controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 
 	if startupCheckFn != nil {
 		err := startupCheckFn()
@@ -270,8 +258,6 @@ func main() {
 		glog.Fatal("ingresslink and external-service cannot both be set")
 	}
 
-	glog.Infof("Starting NGINX Ingress controller %v PlusFlag=%v", versionInfo, *nginxPlus)
-
 	var config *rest.Config
 	if *proxyURL != "" {
 		config, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -300,25 +286,22 @@ func main() {
 		glog.Fatalf("error retrieving k8s version: %v", err)
 	}
 
-	minK8sVersion := minVersion("1.14.0")
-	if !k8sVersion.AtLeast(minK8sVersion) {
-		glog.Fatalf("Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions.", minK8sVersion)
+	minK8sVersion, err := util_version.ParseGeneric("1.19.0")
+	if err != nil {
+		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
 	}
 
-	// Ingress V1 is only available from k8s > 1.18
-	ingressV1Version := minVersion("1.18.0")
-	if k8sVersion.AtLeast(ingressV1Version) {
-		*useIngressClassOnly = true
-		glog.Warningln("The '-use-ingress-class-only' flag will be deprecated and has no effect on versions of kubernetes >= 1.18.0. Processing ONLY resources that have the 'ingressClassName' field in Ingress equal to the class.")
+	if !k8sVersion.AtLeast(minK8sVersion) {
+		glog.Fatalf("Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions and legacy controller support.", minK8sVersion)
+	}
 
-		ingressClassRes, err := kubeClient.NetworkingV1beta1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
-		if err != nil {
-			glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
-		}
+	ingressClassRes, err := kubeClient.NetworkingV1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
+	if err != nil {
+		glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
+	}
 
-		if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
-			glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v", ingressClassRes.Name, ingressClassRes.Spec.Controller)
-		}
+	if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
+		glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v", ingressClassRes.Name, ingressClassRes.Spec.Controller)
 	}
 
 	var dynClient dynamic.Interface
@@ -408,7 +391,8 @@ func main() {
 	if useFakeNginxManager {
 		nginxManager = nginx.NewFakeManager("/etc/nginx")
 	} else {
-		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, parseReloadTimeout(*appProtect, *nginxReloadTimeout))
+		timeout := time.Duration(*nginxReloadTimeout) * time.Millisecond
+		nginxManager = nginx.NewLocalManager("/etc/nginx/", *nginxDebug, managerCollector, timeout)
 	}
 	nginxVersion := nginxManager.Version()
 	isPlus := strings.Contains(nginxVersion, "plus")
@@ -637,7 +621,6 @@ func main() {
 		AppProtectEnabled:            *appProtect,
 		IsNginxPlus:                  *nginxPlus,
 		IngressClass:                 *ingressClass,
-		UseIngressClassOnly:          *useIngressClassOnly,
 		ExternalServiceName:          *externalService,
 		IngressLink:                  *ingressLink,
 		ControllerNamespace:          controllerNamespace,
@@ -856,21 +839,6 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 	os.Exit(0)
 }
 
-func parseReloadTimeout(appProtectEnabled bool, timeout int) time.Duration {
-	const defaultTimeout = 4000 * time.Millisecond
-	const defaultTimeoutAppProtect = 20000 * time.Millisecond
-
-	if timeout != 0 {
-		return time.Duration(timeout) * time.Millisecond
-	}
-
-	if appProtectEnabled {
-		return defaultTimeoutAppProtect
-	}
-
-	return defaultTimeout
-}
-
 func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
 		if !lbc.IsNginxReady() {
@@ -880,13 +848,4 @@ func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "Ready")
 	}
-}
-
-func minVersion(min string) (v *util_version.Version) {
-	minVer, err := util_version.ParseGeneric(min)
-	if err != nil {
-		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
-	}
-
-	return minVer
 }

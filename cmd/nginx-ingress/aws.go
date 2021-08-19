@@ -22,7 +22,6 @@ var (
 	productCode   string
 	pubKeyVersion int32 = 1
 	pubKeyString  string
-	nonce         string
 )
 
 func init() {
@@ -43,13 +42,21 @@ func checkAWSEntitlement() error {
 		return fmt.Errorf("error loading AWS configuration: %w", err)
 	}
 
-	mpm := marketplacemetering.New(marketplacemetering.Options{Region: cfg.Region, Credentials: cfg.Credentials})
+	mpm := marketplacemetering.NewFromConfig(cfg)
 
 	out, err := mpm.RegisterUsage(ctx, &marketplacemetering.RegisterUsageInput{ProductCode: &productCode, PublicKeyVersion: &pubKeyVersion, Nonce: &nonce})
 	if err != nil {
 		var notEnt *types.CustomerNotEntitledException
+		var invRegion *types.InvalidRegionException
+		var platNotSup *types.PlatformNotSupportedException
 		if errors.As(err, &notEnt) {
 			return fmt.Errorf("user not entitled, code: %v, message: %v, fault: %v", notEnt.ErrorCode(), notEnt.ErrorMessage(), notEnt.ErrorFault().String())
+		}
+		if errors.As(err, &invRegion) {
+			return fmt.Errorf("invalid region, code: %v, message: %v, fault: %v", invRegion.ErrorCode(), invRegion.ErrorMessage(), invRegion.ErrorFault().String())
+		}
+		if errors.As(err, &platNotSup) {
+			return fmt.Errorf("platform not supported, code: %v, message: %v, fault: %v", platNotSup.ErrorCode(), platNotSup.ErrorMessage(), platNotSup.ErrorFault().String())
 		}
 		return err
 	}

@@ -1,0 +1,52 @@
+{{ $start := string (.Get 0)  }}
+{{ $end := string (.Get 1)  }}
+{{ $product := string (.Get 2)  }}
+{{ $temp := slice }}
+{{ $result := ""}}
+{{ $ver := slice }}
+{{ $prodname := ""}}
+{{ $istart := 0}}
+{{ $iend := 100}}
+​
+{{if eq $product "apimvers"  }}
+  {{ $ver = $.Site.Params.apimvers }}
+  {{ $prodname = "NGINX Controller API Management module" }}
+{{else if eq $product "adcvers" }}
+  {{ $ver = $.Site.Params.adcvers }}
+  {{ $prodname = "NGINX Controller App Delivery module" }}
+{{else}}
+  {{ $ver = $.Site.Params.ctrlvers }}
+  {{ $prodname = "NGINX Controller" }}
+{{end}} 
+​
+{{if eq $start "first"}}
+{{$start = first 1 $ver}}
+{{end}}
+​
+{{if eq $end "latest"}}
+{{$end = last 1 $ver}}
+{{end}}
+​
+{{ $.Scratch.Set "counter" 0 }}
+{{ range $ver }}
+    {{ $index := $.Scratch.Get "counter"}}
+    {{ $current := index $ver $index}}
+    {{if eq $current $start }}
+        {{$istart = $index}}
+    {{end}}
+    {{if eq $current $end}}
+        {{$iend = $index}}
+    {{end}}
+​
+    {{ $.Scratch.Set "counter" (add ($.Scratch.Get "counter") 1) }}
+{{ end }}
+​
+{{ $temp = after $istart $ver }}
+{{ $iend = add (sub $iend $istart) 1 }}
+{{ $temp = first $iend $temp }}
+{{ $result = delimit $temp ", " " and " }}
+​
+<hr>
+<div id="versions-list">
+    <p>This documentation applies to the following versions of {{$prodname}}: {{$result}}.</p>
+</div>

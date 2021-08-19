@@ -1,0 +1,15 @@
+name: Release Drafter
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  update_release_draft:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: release-drafter/release-drafter@v5
+        with:
+          disable-releaser: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,7 +11,7 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
-	networking "k8s.io/api/networking/v1beta1"
+	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -597,6 +597,14 @@ func (c *Configuration) DeleteGlobalConfiguration() ([]ResourceChange, []Configu
 	return changes, problems
 }
 
+// GetGlobalConfiguration returns the current GlobalConfiguration.
+func (c *Configuration) GetGlobalConfiguration() *conf_v1alpha1.GlobalConfiguration {
+	c.lock.RLock()
+	defer c.lock.RUnlock()
+
+	return c.globalConfiguration
+}
+
 // AddOrUpdateTransportServer adds or updates the TransportServer.
 func (c *Configuration) AddOrUpdateTransportServer(ts *conf_v1alpha1.TransportServer) ([]ResourceChange, []ConfigurationProblem) {
 	c.lock.Lock()
@@ -765,14 +773,16 @@ func (c *Configuration) buildListenersAndTSConfigurations() (newListeners map[st
 // GetResources returns all configuration resources.
 func (c *Configuration) GetResources() []Resource {
 	return c.GetResourcesWithFilter(resourceFilter{
-		Ingresses:      true,
-		VirtualServers: true,
+		Ingresses:        true,
+		VirtualServers:   true,
+		TransportServers: true,
 	})
 }
 
 type resourceFilter struct {
-	Ingresses      bool
-	VirtualServers bool
+	Ingresses        bool
+	VirtualServers   bool
+	TransportServers bool
 }
 
 // GetResourcesWithFilter returns resources using the filter.
@@ -792,6 +802,16 @@ func (c *Configuration) GetResourcesWithFilter(filter resourceFilter) []Resource
 			if filter.VirtualServers {
 				resources[r.GetKeyWithKind()] = r
 			}
+		case *TransportServerConfiguration:
+			if filter.TransportServers {
+				resources[r.GetKeyWithKind()] = r
+			}
+		}
+	}
+
+	if filter.TransportServers {
+		for _, r := range c.listeners {
+			resources[r.GetKeyWithKind()] = r
 		}
 	}
 

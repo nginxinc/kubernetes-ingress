@@ -1,0 +1,52 @@
+{{ $css1 := resources.Get "css/docs-nginx-com/nginx-site-header.css" }}
+{{ $css2 := resources.Get "css/docs-nginx-com/style.css" }}
+{{ $css3 := resources.Get "css/bootstrap-docs.css" }}
+{{ $css5 := resources.Get "css/coveo.css" }}
+{{ $css4 := resources.Get "css/f5-hugo.css" }}
+
+{{ if in .Site.Params.buildtype "package" }}
+
+<!-- load FontAwesome from assets -->
+  {{ $cssFA := resources.Get "css/all.min.css" | fingerprint }}
+  <link href="{{ $cssFA.RelPermalink }}" integrity="{{ $cssFA.Data.Integrity }}" rel="stylesheet" type="text/css">
+
+<!-- load Bootstrap from local assets -->  
+  {{ $cssBootstrap := resources.Get "css/bootstrap.min.css" | fingerprint }}
+  <link href="{{ $cssBootstrap.RelPermalink }}" integrity="{{ $cssBootstrap.Data.Integrity }}" rel="stylesheet" type="text/css">
+  
+{{ else }}
+
+<!-- load FontAwesome from CDN -->
+  <script src="https://kit.fontawesome.com/e66b22f66d.js" crossorigin="anonymous"></script>
+<!-- load Bootstrap from CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+{{ end }}
+
+{{ if ( not ( in .Site.Params.buildtype "package" ) ) }}
+<!-- load Coveo CSS -->
+<link rel="stylesheet" href="https://static.cloud.coveo.com/searchui/v2.8959/css/CoveoFullSearch.min.css" />
+{{ end }}
+
+{{ $cssHeader := $css1 | minify | fingerprint "sha512"}}
+<link href="{{ $cssHeader.RelPermalink }}" rel="stylesheet" type="text/css">
+
+{{ $cssNginxStyles := $css2 | minify | fingerprint "sha512"}}
+<link href="{{ $cssNginxStyles.RelPermalink }}" rel="stylesheet" type="text/css">
+
+{{ $bootstrapDocs := $css3 | minify | fingerprint "sha512"}}
+<link href="{{ $bootstrapDocs.RelPermalink }}" rel="stylesheet" type="text/css">
+
+{{ if ( not ( in .Site.Params.buildtype "package" ) ) }}
+{{ $cssCoveo := $css5 | minify | fingerprint "sha512"}}
+<link href="{{ $cssCoveo.RelPermalink }}" rel="stylesheet" type="text/css">
+{{ end }}
+
+{{ $cssF5Hugo := $css4 | minify | fingerprint "sha512"}}
+<link href="{{ $cssF5Hugo.RelPermalink }}" rel="stylesheet" type="text/css">
+
+{{ if fileExists "assets/css/custom.css" }}
+  {{ $customCSS := resources.Get "css/custom.css" | minify | fingerprint "sha512" }}
+  <link href="{{ $customCSS.RelPermalink }}" rel="stylesheet" type="text/css">
+
+{{ end }}
+

@@ -1,0 +1,17 @@
+{{ if or .PrevInSection .NextInSection }}
+{{/* this div holds these a tags as a unit for flex-box display */}}
+	
+<div class="container flex">
+	<ul class="next-prev-icon">
+
+		{{if .NextInSection}}
+		
+		<li style="flex:1; text-align: left; white-space: nowrap;"><a href="{{.NextInSection.Permalink }}" class="" title="Previous -- {{ .NextInSection.Title }} ">{{ partial "svg/arrow-button-left.svg" (dict "fill" "#fff" "size" "12px") }}</a></li>
+		{{end}}
+
+		{{if .PrevInSection}}
+			<li style="flex:1; text-align: right; white-space: nowrap;"><a href="{{ .PrevInSection.Permalink }}" class="" title="Next -- {{ .PrevInSection.Title }}">{{ partial "svg/arrow-button-right.svg" (dict "fill" "#fff" "size" "12px") }}</a></li>
+		{{end}}
+		</ul>
+	</div>
+{{ end }}

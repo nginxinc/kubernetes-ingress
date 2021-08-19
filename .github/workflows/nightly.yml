@@ -47,7 +47,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: --rm-dist --debug --skip-publish --snapshot
+          args: build --snapshot --rm-dist --id kubernetes-ingress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ env.GOPATH }}
@@ -121,7 +121,7 @@ jobs:
     needs: [build, binary, unit-tests]
     strategy:
       matrix:
-        k8s: [1.21.1, 1.20.7, 1.19.11, 1.18.19, 1.17.17, 1.16.15]
+        k8s: [1.19.11, 1.20.7, 1.21.2, 1.22.0]
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2

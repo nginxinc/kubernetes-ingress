@@ -10,9 +10,7 @@ controller:
   nginxplus: false
 
   # Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
-  # Default is 4000 (default is 20000 instead if enable-app-protect is true)
-  # If set to 0, default values will be used.
-  nginxReloadTimeout: 0
+  nginxReloadTimeout: 60000
 
   ## Support for App Protect
   appprotect:
@@ -36,7 +34,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress controller image.
-    tag: "1.11.3"
+    tag: "1.12.0"
 
     ## The pull policy for the Ingress controller image.
     pullPolicy: IfNotPresent
@@ -121,24 +119,13 @@ controller:
 
   ## A class of the Ingress controller.
 
-  ## For Kubernetes >= 1.18, a corresponding IngressClass resource with the name equal to the class must be deployed. Otherwise,
+  ## IngressClass resource with the name equal to the class must be deployed. Otherwise,
   ## the Ingress Controller will fail to start.
   ## The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
 
-  ## For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class -
-  ## i.e have the annotation "kubernetes.io/ingress.class" (for Ingress resources)
-  ## or field "ingressClassName" (for VirtualServer/VirtualServerRoute/TransportServer resources) equal to the class.
-  ## Additionally, the Ingress Controller processes resources that do not have the class set,
-  ## which can be disabled by setting the controller.useIngressClassOnly parameter to true.
-
-  ## The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of kubernetes.
+  ## The Ingress Controller processes all the resources that do not have the "ingressClassName" field for all versions of kubernetes.
   ingressClass: nginx
 
-  ## For kubernetes versions >= 1.18 this flag will be IGNORED.
-  ## Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation
-  useIngressClassOnly: false
-
-  ## Only for Kubernetes >= 1.18
   ## New Ingresses without an ingressClassName field specified will be assigned the class specified in `controller.ingressClass`.
   setAsDefaultIngress: false
 

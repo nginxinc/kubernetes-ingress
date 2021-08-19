@@ -1,0 +1,8 @@
+
+{{ $string := (printf "window.__NGINX_DevPortal_Manifest__={paths:{docs:'%s',config:'%s'}};" ( .Params.devportal.spec | relURL ) ( .Params.devportal.config | relURL ) ) }}
+
+{{ $targetPath := "js/devportal/manifest.js" }}
+{{ $manifest := $string | resources.FromString $targetPath | fingerprint "sha512" }}
+
+<script type="text/javascript" src="{{ $manifest.Permalink }}" integrity="{{ $manifest.Data.Integrity }}"></script>
+

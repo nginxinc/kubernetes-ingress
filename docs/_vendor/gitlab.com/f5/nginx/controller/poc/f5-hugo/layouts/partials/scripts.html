@@ -1,0 +1,53 @@
+{{ $kubejs := resources.Get "/js/kube.js" }}
+
+{{ if .Site.IsServer }}
+  <script src="{{ $kubejs.RelPermalink }}"></script>
+{{ else }}
+  {{ $kubejs := $kubejs | minify | fingerprint "sha512" }}
+  <script src="{{ $kubejs.RelPermalink }}" type="text/javascript" integrity="{{ $kubejs.Data.Integrity }}"></script>
+{{ end }}
+
+{{ if in .Site.Params.buildtype "package" }}
+
+<!-- load FontAwesome from assets -->
+  {{ $jsFA := resources.Get "js/all.min.js" | fingerprint }}
+  <script src="{{ $jsFA.RelPermalink }}" type="text/javascript" integrity="{{ $jsFA.Data.Integrity }}"></script>
+
+<!-- load Bootstrap from local assets -->  
+  {{ $jsBootstrap := resources.Get "js/bootstrap.bundle.min.js" | fingerprint }}
+  <script src="{{ $jsBootstrap.RelPermalink }}" type="text/javascript" integrity="{{ $jsBootstrap.Data.Integrity }}"></script>
+  
+{{ else }}
+
+<!-- Load Bootstrap from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-Piv4xVNRyMGpqkS2by6br4gNJ7DXjqk09RmUpJ8jgGtD7zP9yug3goQfGII0yAns" crossorigin="anonymous"></script>
+<!-- end Bootstrap -->
+
+<!-- Don't need to load FontAwesome here as it's handled in partials/styles.html --> 
+
+{{ end }}
+
+{{ if ( not ( in .Site.Params.buildtype "package" ) ) }}
+<!-- START COVEO -->
+
+  <script class="coveo-script" src="https://static.cloud.coveo.com/searchui/v2.8959/js/CoveoJsSearch.Lazy.min.js"></script>
+
+  <script src="https://static.cloud.coveo.com/searchui/v2.8959/js/templates/templates.js"></script>
+
+  {{ $coveo := resources.Get "js/coveo.js" }}
+  {{ $secureCoveo := $coveo | minify | fingerprint "sha512" }}
+  <script src="{{ $secureCoveo.RelPermalink }}" integrity="{{ $secureCoveo.Data.Integrity }}" type="text/javascript"></script>
+
+<!-- END COVEO -->
+{{ end }}
+
+<!-- Load the Redoc resources if we're not using Dev Portal for the API reference layout-->
+{{ if not ( eq .Site.Params.useDevPortal true ) }}
+
+  {{ $redoc := resources.Get "js/redoc.standalone.js" }}
+  {{ $redoc := $redoc | fingerprint "sha512" }}
+  
+  <!-- only load the redoc js if we're on an api reference page -->
+  {{ if and (in .Params.doctypes "reference") (in .Params.tags "api") }}<script src="{{$redoc.RelPermalink}}" type="text/javascript"></script>{{ end }}
+
+{{ end }}

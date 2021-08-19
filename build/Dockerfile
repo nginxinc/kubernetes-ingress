@@ -1,20 +1,22 @@
-# syntax=docker/dockerfile:1.2
+# syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=r24
 ARG UBI_VERSION=8
 ARG FILES=
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.21.0 AS debian
+FROM nginx:1.21.1 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	# temporary fix for CVE-2021-36222
+	&& apt-get install -y libgssapi-krb5-2 libk5crypto3 \
 	&& rm -rf /var/lib/apt/lists/*
 
 
 ############################################# Base image for Alpine #############################################
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
-FROM docker.io/library/nginx:1.21.0-alpine AS alpine
+FROM docker.io/library/nginx:1.21-alpine AS alpine
 
 RUN apk add --no-cache libcap
 
@@ -40,8 +42,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temporary fix for CVE-2021-3520, CVE-2021-33560, CVE-2021-20231, CVE-2021-20305, CVE-2021-20305
-	&& apt-get install -y liblz4-1 libgcrypt20 libgnutls30 libhogweed4 libnettle6 \
 	&& curl -sSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -sSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
@@ -99,7 +99,7 @@ LABEL name="NGINX Ingress Controller" \
 	summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
-RUN microdnf --nodocs install -y shadow-utils ca-certificates \
+RUN microdnf --nodocs install -y shadow-utils ca-certificates systemd systemd-libs \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
@@ -262,6 +262,8 @@ ARG BUILD_OS
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
+ARG BUILDPLATFORM
+ARG TARGETPLATFORM
 
 RUN mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
@@ -292,10 +294,12 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 LABEL org.opencontainers.image.version="${IC_VERSION}-${BUILD_OS}-${NGINX_PLUS_VERSION}${NGINX_VERSION}"
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 LABEL org.opencontainers.image.created="${DATE}"
+LABEL org.nginx.kic.image.build.platform="${BUILDPLATFORM}"
+LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.16-alpine AS builder
+FROM golang:1.17-alpine AS builder
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
@@ -310,12 +314,18 @@ RUN CGO_ENABLED=0 GO111MODULE=on GOOS=linux GOARCH=$TARGETARCH go build -trimpat
 
 ############################################# Create image with nginx-ingress built in container #############################################
 FROM common AS container
+
+LABEL org.nginx.kic.image.build.version="container"
+
 COPY --chown=nginx:0 --from=builder /nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built locally #############################################
 FROM common AS local
-COPY --chown=nginx:0 nginx-ingress /
+
+LABEL org.nginx.kic.image.build.version="local"
+
+COPY --chown=nginx:0 ./nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
@@ -323,4 +333,15 @@ FROM common AS goreleaser
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-COPY --chown=nginx:0 dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+LABEL org.nginx.kic.image.build.version="goreleaser"
+
+COPY --chown=nginx:0 ./dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+
+
+############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
+FROM common AS aws
+ARG TARGETARCH
+
+LABEL org.nginx.kic.image.build.version="aws"
+
+COPY --chown=nginx:0 ./dist/aws_linux_$TARGETARCH/nginx-ingress /

@@ -15,7 +15,7 @@ The Ingress controller provides the following annotations for configuring active
 
 In the following example we enable active health checks in the cafe-ingress Ingress:
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: cafe-ingress
@@ -28,22 +28,31 @@ spec:
     http:
       paths:
       - path: /tea
+        pathType: Prefix
         backend:
-          serviceName: tea-svc
-          servicePort: 80
+          service:
+            name: tea-svc
+            port:
+              number: 80
       - path: /coffee
+        pathType: Prefix
         backend:
-          serviceName: coffee-svc
-          servicePort: 80
+          service:
+            name: coffee-svc
+            port:
+              number: 80
       - path: /beer
+        pathType: Prefix
         backend:
-          serviceName: beer-svc
-          servicePort: 80
+          service:
+            name: beer-svc
+            port:
+              number: 80
 ```
 
 Note that a Readiness Probe must be configured in the pod template:
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tea
@@ -52,7 +61,7 @@ spec:
   selector:
     matchLabels:
       app: tea
-  template: 
+  template:
     metadata:
       labels:
         app: tea

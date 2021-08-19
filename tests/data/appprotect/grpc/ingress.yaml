@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: appprotect-ingress
@@ -20,6 +20,9 @@ spec:
     http:
       paths:
       - path: /helloworld.Greeter
+        pathType: Prefix
         backend:
-          serviceName: grpc-svc
-          servicePort: 50051
+          service:
+            name: grpc-svc
+            port:
+              number: 50051

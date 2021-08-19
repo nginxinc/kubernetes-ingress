@@ -1,0 +1,16 @@
+{{ if or .PrevInSection .NextInSection }}
+{{/* this div holds these a tags as a unit for flex-box display */}}
+	<div date-pref>
+		{{if .NextInSection}}
+			<a href="{{.NextInSection.Permalink }}" class="dib f6 pl1 hover-bg-light-gray br-100" title="Go back to previous topic">
+				{{ partial "svg/arrow-button-left.svg" (dict "fill" "#0594CB" "size" "30px") }}
+			</a>
+		{{end}}
+
+		{{if .PrevInSection}}
+			<a href="{{ .PrevInSection.Permalink }}" class="dib f6 pr1 hover-bg-light-gray br-100" title="Next topic">
+			{{ partial "svg/arrow-button-right.svg" (dict "fill" "#0594CB" "size" "30px") }}
+			</a>
+		{{end}}
+	</div>
+{{ end }}
