@@ -197,7 +197,7 @@ def create_deployment_with_name(apps_v1_api: AppsV1Api, namespace, name) -> str:
         return create_deployment(apps_v1_api, namespace, dep)
 
 
-def scale_deployment(v1:CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, value) -> int:
+def scale_deployment(v1: CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, value) -> int:
     """
     Scale a deployment.
 
@@ -220,11 +220,9 @@ def scale_deployment(v1:CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, valu
         print(f"All pods came up in {int(later-now)} seconds")
 
     elif value is 0:
-            replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
-            while(replica_num is not None):
-                replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
-                time.sleep(1)
-                print("Number of replicas is not 0, retrying...")
+            while get_pods_amount(v1, namespace) is not 0:
+                print(f"Number of replicas not 0, retrying...")
+                wait_before_test()
 
     else:
         pytest.fail("wrong argument")
@@ -262,13 +260,9 @@ def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     :return:
     """
     print("Start waiting for all pods in a namespace to be ContainersReady")
-    counter = 0
-    while not are_all_pods_in_ready_state(v1, namespace) and counter < 50:
-        print("There are pods that are not ContainerReady. Wait for 4 sec...")
-        time.sleep(4)
-        counter = counter + 1
-    if counter >= 50:
-        raise PodNotReadyException()
+    while not are_all_pods_in_ready_state(v1, namespace):
+        print("There are pods that are not ContainersReady. Wait for 1 sec...")
+        time.sleep(1)
     print("All pods are ContainersReady")
 
 
