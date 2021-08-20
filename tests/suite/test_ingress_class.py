@@ -76,55 +76,6 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
 
 @pytest.mark.ingresses
 class TestIngressClassArgs:
-    @pytest.mark.parametrize(
-        "ingress_controller, expected_responses",
-        [
-            pytest.param(
-                {"extra_args": ["-ingress-class=custom"]},
-                {"custom-class": 200, "nginx-class": 404, "no-class": 200},
-                id="custom-ingress-class",
-            ),
-            pytest.param(
-                {"extra_args": ["-use-ingress-class-only"]},
-                {"custom-class": 404, "nginx-class": 200, "no-class": 404},
-                id="use-ingress-class-only",
-            ),
-            pytest.param(
-                {"extra_args": ["-use-ingress-class-only", "-ingress-class=custom"]},
-                {"custom-class": 200, "nginx-class": 404, "no-class": 404},
-                id="both-args-set",
-            ),
-            pytest.param(
-                {"extra_args": None},
-                {"custom-class": 404, "nginx-class": 200, "no-class": 200},
-                id="no-args-set",
-            ),
-        ],
-        indirect=["ingress_controller"],
-    )
-    def test_response_codes_117(
-        self,
-        ingress_controller,
-        backend_setup,
-        expected_responses,
-        ingress_controller_prerequisites,
-    ):
-        """
-        Checks for ingressClass behaviour in k8s < 1.18
-        """
-        if ingress_controller_prerequisites.minorVer < 18:
-            for item in ingresses_under_test:
-                ensure_response_from_backend(
-                    backend_setup.req_url, backend_setup.ingress_hosts[item]
-                )
-                resp = requests.get(
-                    backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[item]}
-                )
-                assert (
-                    resp.status_code == expected_responses[item]
-                ), f"Expected: {expected_responses[item]} response code for {backend_setup.ingress_hosts[item]}"
-        else:
-            print(f"Skipping test because k8s version is >= 1.18")
 
     @pytest.mark.parametrize(
         "ingress_controller, expected_responses",
@@ -133,16 +84,6 @@ class TestIngressClassArgs:
                 {"extra_args": ["-ingress-class=custom"]},
                 {"custom-class": 200, "nginx-class": 404, "no-class": 404},
                 id="custom-ingress-class",
-            ),
-            pytest.param(
-                {"extra_args": ["-use-ingress-class-only"]},
-                {"custom-class": 404, "nginx-class": 200, "no-class": 404},
-                id="use-ingress-class-only",
-            ),
-            pytest.param(
-                {"extra_args": ["-use-ingress-class-only", "-ingress-class=custom"]},
-                {"custom-class": 200, "nginx-class": 404, "no-class": 404},
-                id="both-args-set",
             ),
             pytest.param(
                 {"extra_args": None},
@@ -160,18 +101,15 @@ class TestIngressClassArgs:
         ingress_controller_prerequisites,
     ):
         """
-        Checks for ingressClass behaviour in k8s >= 1.18
+        Checks for ingressClass behaviour
         """
-        if ingress_controller_prerequisites.minorVer >= 18:
-            for item in ingresses_under_test:
-                ensure_response_from_backend(
-                    backend_setup.req_url, backend_setup.ingress_hosts[item]
-                )
-                resp = requests.get(
-                    backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[item]}
-                )
-                assert (
-                    resp.status_code == expected_responses[item]
-                ), f"Expected: {expected_responses[item]} response code for {backend_setup.ingress_hosts[item]}"
-        else:
-            print(f"Skipping test because k8s version is < 1.18")
+        for item in ingresses_under_test:
+            ensure_response_from_backend(
+                backend_setup.req_url, backend_setup.ingress_hosts[item]
+            )
+            resp = requests.get(
+                backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[item]}
+            )
+            assert (
+                resp.status_code == expected_responses[item]
+            ), f"Expected: {expected_responses[item]} response code for {backend_setup.ingress_hosts[item]}"

@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.2
+# syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=r24
 ARG UBI_VERSION=8
@@ -8,7 +8,9 @@ ARG FILES=
 FROM nginx:1.21.1 AS debian
 
 RUN apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin libsystemd0 libudev1 \
+	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	# temporary fix for CVE-2021-36222
+	&& apt-get install -y libgssapi-krb5-2 libk5crypto3 \
 	&& rm -rf /var/lib/apt/lists/*
 
 
@@ -40,8 +42,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temporary fix for CVE-2021-3520, CVE-2021-33560, CVE-2021-20231, CVE-2021-20305, CVE-2021-20305 CVE-2021-33910
-	&& apt-get install -y liblz4-1 libgcrypt20 libgnutls30 libhogweed4 libnettle6 libsystemd0 libudev1 \
 	&& curl -sSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -sSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
@@ -83,8 +83,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 ############################################# Base image for UBI 8 #############################################
 FROM redhat/ubi8-minimal AS ubi-base-8
 
-# temporary fix for CVE-2021-33910
-RUN microdnf --nodocs install -y systemd-pam
 
 ############################################# Base image for UBI 7 #############################################
 FROM registry.access.redhat.com/ubi7/ubi AS ubi-base-7
@@ -301,7 +299,7 @@ LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.16-alpine AS builder
+FROM golang:1.17-alpine AS builder
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
@@ -327,7 +325,7 @@ FROM common AS local
 
 LABEL org.nginx.kic.image.build.version="local"
 
-COPY --chown=nginx:0 nginx-ingress /
+COPY --chown=nginx:0 ./nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
@@ -337,7 +335,7 @@ ARG TARGETVARIANT
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
-COPY --chown=nginx:0 dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+COPY --chown=nginx:0 ./dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
@@ -346,4 +344,4 @@ ARG TARGETARCH
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --chown=nginx:0 dist/aws_linux_$TARGETARCH/nginx-ingress /
+COPY --chown=nginx:0 ./dist/aws_linux_$TARGETARCH/nginx-ingress /

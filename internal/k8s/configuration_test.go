@@ -15,8 +15,7 @@ import (
 
 func createTestConfiguration() *Configuration {
 	lbc := LoadBalancerController{
-		ingressClass:        "nginx",
-		useIngressClassOnly: true,
+		ingressClass: "nginx",
 	}
 	isPlus := false
 	appProtectEnabled := false

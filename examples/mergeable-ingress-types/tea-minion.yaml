@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: cafe-ingress-tea-minion
@@ -11,6 +11,9 @@ spec:
     http:
       paths:
       - path: /tea
+        pathType: Prefix
         backend:
-          serviceName: tea-svc
-          servicePort: 80
+          service:
+            name: tea-svc
+            port:
+              number: 80

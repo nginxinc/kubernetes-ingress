@@ -1,7 +1,7 @@
 # Support for Type ExternalName Services
 The Ingress Controller supports routing requests to services of the type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname).
- 
-An ExternalName service is defined by an external DNS name that is resolved into the IP addresses, typically external to the cluster. This enables to use the Ingress Controller to route requests to the destinations outside of the cluster. 
+
+An ExternalName service is defined by an external DNS name that is resolved into the IP addresses, typically external to the cluster. This enables to use the Ingress Controller to route requests to the destinations outside of the cluster.
 
 **Note:** This feature is only available in NGINX Plus.
 
@@ -40,7 +40,7 @@ spec:
 In the following Ingress resource we use my-service:
 
 ```yaml
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: example-ingress
@@ -52,9 +52,12 @@ spec:
     http:
       paths:
       - path: /
+        pathType: Prefix
         backend:
-          serviceName: my-service
-          servicePort: 80
+          service:
+            name: my-service
+            port:
+              number: 80
 
 ```
 

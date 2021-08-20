@@ -73,22 +73,10 @@ var (
 	ingressClass = flag.String("ingress-class", "nginx",
 		`A class of the Ingress controller.
 
-	For Kubernetes >= 1.18, a corresponding IngressClass resource with the name equal to the class must be deployed. Otherwise,
-	the Ingress Controller will fail to start.
+	An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start.
 	The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
 
-	For Kubernetes < 1.18, the Ingress Controller only processes resources that belong to its class -
-	i.e have the annotation "kubernetes.io/ingress.class" (for Ingress resources)
-	or field "ingressClassName" equal to the class.
-	Additionally, the Ingress Controller processes resources that do not have the class set,
-	which can be disabled by setting the "-use-ingress-class-only" flag
-
 	The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of kubernetes.`)
-
-	useIngressClassOnly = flag.Bool("use-ingress-class-only", false,
-		`For kubernetes versions >= 1.18 this flag will be IGNORED.
-
-	Ignore Ingress resources without the "kubernetes.io/ingress.class" annotation`)
 
 	defaultServerSecret = flag.String("default-server-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of the default server. Format: <namespace>/<name>.
@@ -296,25 +284,22 @@ func main() {
 		glog.Fatalf("error retrieving k8s version: %v", err)
 	}
 
-	minK8sVersion := minVersion("1.14.0")
-	if !k8sVersion.AtLeast(minK8sVersion) {
-		glog.Fatalf("Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions.", minK8sVersion)
+	minK8sVersion, err := util_version.ParseGeneric("1.19.0")
+	if err != nil {
+		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
 	}
 
-	// Ingress V1 is only available from k8s > 1.18
-	ingressV1Version := minVersion("1.18.0")
-	if k8sVersion.AtLeast(ingressV1Version) {
-		*useIngressClassOnly = true
-		glog.Warningln("The '-use-ingress-class-only' flag will be deprecated and has no effect on versions of kubernetes >= 1.18.0. Processing ONLY resources that have the 'ingressClassName' field in Ingress equal to the class.")
+	if !k8sVersion.AtLeast(minK8sVersion) {
+		glog.Fatalf("Versions of Kubernetes < %v are not supported, please refer to the documentation for details on supported versions and legacy controller support.", minK8sVersion)
+	}
 
-		ingressClassRes, err := kubeClient.NetworkingV1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
-		if err != nil {
-			glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
-		}
+	ingressClassRes, err := kubeClient.NetworkingV1().IngressClasses().Get(context.TODO(), *ingressClass, meta_v1.GetOptions{})
+	if err != nil {
+		glog.Fatalf("Error when getting IngressClass %v: %v", *ingressClass, err)
+	}
 
-		if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
-			glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v", ingressClassRes.Name, ingressClassRes.Spec.Controller)
-		}
+	if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
+		glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v", ingressClassRes.Name, ingressClassRes.Spec.Controller)
 	}
 
 	var dynClient dynamic.Interface
@@ -633,7 +618,6 @@ func main() {
 		AppProtectEnabled:            *appProtect,
 		IsNginxPlus:                  *nginxPlus,
 		IngressClass:                 *ingressClass,
-		UseIngressClassOnly:          *useIngressClassOnly,
 		ExternalServiceName:          *externalService,
 		IngressLink:                  *ingressLink,
 		ControllerNamespace:          controllerNamespace,
@@ -861,13 +845,4 @@ func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "Ready")
 	}
-}
-
-func minVersion(min string) (v *util_version.Version) {
-	minVer, err := util_version.ParseGeneric(min)
-	if err != nil {
-		glog.Fatalf("unexpected error parsing minimum supported version: %v", err)
-	}
-
-	return minVer
 }

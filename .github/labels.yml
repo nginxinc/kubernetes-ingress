@@ -43,3 +43,6 @@
 - color: ffffff
   description: An issue that does not need to be fixed
   name: wontfix
+- color: fbca04
+  description: Don't auto-update PR
+  name: no-autoupdate
