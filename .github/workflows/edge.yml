@@ -141,8 +141,9 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           target: goreleaser
           tags: docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }}
           load: true
@@ -201,8 +202,9 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           target: goreleaser
           tags: docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }}
           load: true
@@ -214,8 +216,9 @@ jobs:
         with:
           file: tests/docker/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           tags: test-runner:${{ github.sha }}
           load: true
       - name: Deploy Kubernetes
@@ -277,8 +280,9 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           target: goreleaser
           tags: nginx-ingress:${{ github.sha }}
           load: true
@@ -387,8 +391,9 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           target: goreleaser
           tags: nginx/nginx-ingress:${{ matrix.tag }}
           platforms: ${{ matrix.platforms }}
