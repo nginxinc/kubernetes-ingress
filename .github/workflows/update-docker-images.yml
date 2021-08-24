@@ -25,7 +25,6 @@ jobs:
       nginx_version: ${{ steps.versions.outputs.nginx_version }}
       sha_short: ${{ steps.vars.outputs.sha }}
       go_version: ${{ steps.vars.outputs.go_version }}
-      repo_name: ${{ steps.vars.outputs.repo }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -52,7 +51,6 @@ jobs:
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
-          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
 
   check:
     name: Check if updates are needed
@@ -294,51 +292,3 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         if: ${{ matrix.needs-updating == 'true' }}
-
-  notify:
-    name: Notify
-    runs-on: ubuntu-20.04
-    needs: [release-docker, variables]
-    if: always()
-    steps:
-      - name: Workflow Status
-        id: check
-        uses: martialonline/workflow-status@v2
-      - name: Send Notification
-        uses: 8398a7/action-slack@v3
-        if: steps.check.outputs.status == 'failure'
-        with:
-          status: custom
-          custom_payload: |
-            {
-              username: 'Github',
-              icon_emoji: ':octocat:',
-              mention: 'channel',
-              attachments: [{
-                title: '${{ needs.variables.outputs.repo_name }} ${{ github.workflow }} pipeline has failed',
-                color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
-                fields: [{
-                  title: 'Commit Hash',
-                  value: '${{ needs.variables.outputs.sha_short }}',
-                  short: true
-                },
-                {
-                  title: 'Author',
-                  value: '${{ github.actor }}',
-                  short: true
-                },
-                {
-                  title: 'Commit Message',
-                  value: `${{ github.event.head_commit.message }}`,
-                  short: false
-                },
-                {
-                  title: 'Pipeline URL',
-                  value: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-                  short: false
-                }]
-              }]
-            }
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
