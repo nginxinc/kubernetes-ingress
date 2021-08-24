@@ -16,57 +16,13 @@ jobs:
     name: Fossa
     runs-on: ubuntu-20.04
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Scan
         uses: fossas/fossa-action@v1
         with:
           api-key: ${{ secrets.FOSSA_TOKEN }}
-
-  notify:
-    name: Notify
-    runs-on: ubuntu-20.04
-    needs: scan
-    if: always()
-    steps:
-      - name: Workflow Status
-        id: check
-        uses: martialonline/workflow-status@v2
-      - name: Output Variables
-        id: commit
-        run: |
-          echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
-          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
-      - name: Send Notification
-        uses: 8398a7/action-slack@v3
-        if: steps.check.outputs.status == 'failure'
-        with:
-          status: custom
-          custom_payload: |
-            {
-              username: 'Fossa Scan',
-              icon_emoji: ':fossa:',
-              mention: 'channel',
-              attachments: [{
-                title: '${{ steps.commit.outputs.repo }} ${{ github.workflow }} license scan has failed',
-                color: 'danger',
-                fields: [{
-                  title: 'Commit Hash',
-                  value: '${{ steps.commit.outputs.sha }}',
-                  short: true
-                },
-                {
-                  title: 'Author',
-                  value: '${{ github.actor }}',
-                  short: true
-                },
-                {
-                  title: 'Job URL',
-                  value: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-                  short: false
-                }]
-              }]
-            }
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

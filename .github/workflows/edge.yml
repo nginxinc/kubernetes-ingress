@@ -43,7 +43,7 @@ jobs:
     outputs:
       sha_short: ${{ steps.vars.outputs.sha }}
       go_version: ${{ steps.vars.outputs.go_version }}
-      go_path: ${{ steps.vars.outputs.go_path }}
+      go_path: ${{ steps.go.outputs.go_path }}
       nginx_version: ${{ steps.vars.outputs.nginx_version }}
     steps:
       - name: Cancel Previous Runs
@@ -57,12 +57,14 @@ jobs:
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
-          echo "::set-output name=go_path::$(go env GOPATH)"
           echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
           go-version: ${{ steps.vars.outputs.go_version }}
+      - name: Determine GOPATH
+        id: go
+        run: echo "::set-output name=go_path::$(go env GOPATH)"
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
@@ -95,7 +97,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
 
   unit-tests:
     name: Unit Tests
@@ -129,7 +131,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Build ${{ matrix.image }} Container
@@ -137,8 +139,9 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           target: goreleaser
           tags: docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }}
           load: true
@@ -189,7 +192,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Build ${{ matrix.image }} Container
@@ -197,8 +200,9 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           target: goreleaser
           tags: docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }}
           load: true
@@ -210,8 +214,9 @@ jobs:
         with:
           file: tests/docker/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           tags: test-runner:${{ github.sha }}
           load: true
       - name: Deploy Kubernetes
@@ -265,7 +270,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v1
       - name: Build Docker Image nginx-ingress
@@ -273,8 +278,9 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           target: goreleaser
           tags: nginx-ingress:${{ github.sha }}
           load: true
@@ -333,7 +339,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
 
   release-docker:
     name: Release Images
@@ -366,7 +372,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v1
         with:
@@ -383,8 +389,9 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+          # cache-from: type=gha
+          # cache-to: type=gha,mode=max
           target: goreleaser
           tags: nginx/nginx-ingress:${{ matrix.tag }}
           platforms: ${{ matrix.platforms }}
@@ -442,56 +449,3 @@ jobs:
           git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' \
           commit -m "NGINX Ingress Controller - Edge Release (latest)"
           git push -u origin master
-
-  notify:
-    name: Notify
-    runs-on: ubuntu-20.04
-    needs: release-helm
-    if: always() && github.ref == 'refs/heads/master'
-    steps:
-      - name: Workflow Status
-        id: check
-        uses: martialonline/workflow-status@v2
-      - name: Output Variables
-        id: commit
-        run: |
-          echo "::set-output name=repo::$(echo ${GITHUB_REPOSITORY} | cut -d '/' -f 2)"
-      - name: Send Notification
-        uses: 8398a7/action-slack@v3
-        if:
-          steps.check.outputs.status == 'failure'
-        with:
-          status: custom
-          custom_payload: |
-            {
-              username: 'Github',
-              icon_emoji: ':octocat:',
-              mention: 'channel',
-              attachments: [{
-                title: '${{ steps.commit.outputs.repo }} ${{ github.workflow }} pipeline has failed',
-                color: '${{ steps.check.outputs.status }}' == 'failure' ? 'danger' : 'warning',
-                fields: [{
-                  title: 'Commit Hash',
-                  value: '${{ needs.checks.outputs.sha_short }}',
-                  short: true
-                },
-                {
-                  title: 'Author',
-                  value: '${{ github.actor }}',
-                  short: true
-                },
-                {
-                  title: 'Commit Message',
-                  value: `${{ github.event.head_commit.message }}`,
-                  short: false
-                },
-                {
-                  title: 'Pipeline URL',
-                  value: 'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}',
-                  short: false
-                }]
-              }]
-            }
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

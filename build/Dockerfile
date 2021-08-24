@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.2
+# syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=r24
 ARG UBI_VERSION=8
@@ -16,7 +16,7 @@ RUN apt-get update \
 
 ############################################# Base image for Alpine #############################################
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
-FROM docker.io/library/nginx:1.21-alpine AS alpine
+FROM docker.io/library/nginx:1.21.1-alpine AS alpine
 
 RUN apk add --no-cache libcap
 
@@ -83,8 +83,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 ############################################# Base image for UBI 8 #############################################
 FROM redhat/ubi8-minimal AS ubi-base-8
 
-# temporary fix for CVE-2021-33910
-RUN microdnf --nodocs install -y systemd-pam
 
 ############################################# Base image for UBI 7 #############################################
 FROM registry.access.redhat.com/ubi7/ubi AS ubi-base-7
@@ -301,7 +299,7 @@ LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.16-alpine AS builder
+FROM golang:1.17-alpine AS builder
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
@@ -327,7 +325,7 @@ FROM common AS local
 
 LABEL org.nginx.kic.image.build.version="local"
 
-COPY --chown=nginx:0 nginx-ingress /
+COPY --chown=nginx:0 ./nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
@@ -337,7 +335,7 @@ ARG TARGETVARIANT
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
-COPY --chown=nginx:0 dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+COPY --chown=nginx:0 ./dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
@@ -346,4 +344,4 @@ ARG TARGETARCH
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --chown=nginx:0 dist/aws_linux_$TARGETARCH/nginx-ingress /
+COPY --chown=nginx:0 ./dist/aws_linux_$TARGETARCH/nginx-ingress /
