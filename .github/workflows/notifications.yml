@@ -1,0 +1,58 @@
+on:
+  workflow_run:
+    branches: [master, release-*]
+    workflows:
+      - "CodeQL"
+      - "Edge"
+      - "Fossa"
+      - "Lint"
+      - "Nightly"
+      - "Release"
+      - "Update Docker Images"
+    types:
+      - completed
+
+jobs:
+  on-failure:
+    runs-on: ubuntu-20.04
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - name: Output Variables
+        id: vars
+        run: echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+      - name: Send Notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              username: 'Github',
+              icon_emoji: ':octocat:',
+              mention: 'channel',
+              attachments: [{
+                title: '[${{ github.event.repository.full_name }}] ${{ github.event.workflow.name }} pipeline has failed',
+                color: 'danger',
+                fields: [{
+                  title: 'Commit Hash',
+                  value: '<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ steps.vars.outputs.sha }}>',
+                  short: true
+                },
+                {
+                  title: 'Commit Message',
+                  value: `${{ github.event.workflow_run.head_commit.message }}`,
+                  short: true
+                },
+                {
+                  title: 'Author',
+                  value: '<${{ github.event.sender.html_url }}|${{ github.event.sender.login }}>',
+                  short: true
+                },
+                {
+                  title: 'Pipeline URL',
+                  value: '<https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}|${{ github.event.workflow_run.id }}>',
+                  short: true
+                }]
+              }]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
