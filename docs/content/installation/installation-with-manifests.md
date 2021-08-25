@@ -1,7 +1,7 @@
 ---
 title: Installation with Manifests
 description: 
-weight: 1700
+weight: 1800
 doctypes: [""]
 aliases:
     - /installation/
@@ -16,8 +16,9 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 1. Make sure you have access to the Ingress controller image:
     * For NGINX Ingress controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
     * For NGINX Plus Ingress controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
+    * To pull from the F5 Container registry in your Kubernetes cluster, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
     * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
-1. Clone the Ingress controller repo and change into the deployments folder:
+2. Clone the Ingress controller repo and change into the deployments folder:
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     $ cd kubernetes-ingress/deployments
@@ -120,7 +121,7 @@ We include two options for deploying the Ingress controller:
     $ kubectl apply -f deployment/nginx-plus-ingress.yaml
     ```
 
-    **Note**: Update the `nginx-plus-ingress.yaml` with the container image that you have built.
+    **Note**: Update the `nginx-plus-ingress.yaml` with the chosen image from the F5 Container registry; or the container image that you have built.
 
 * *Use a DaemonSet*:
     When you run the Ingress Controller by using a DaemonSet, Kubernetes will create an Ingress controller pod on every node of the cluster.
@@ -137,7 +138,7 @@ We include two options for deploying the Ingress controller:
     $ kubectl apply -f daemon-set/nginx-plus-ingress.yaml
     ```
 
-    **Note**: Update the `nginx-plus-ingress.yaml` with the container image that you have built.
+    **Note**: Update the `nginx-plus-ingress.yaml` with the chosen image from the F5 Container registry; or the container image that you have built.
 
 ### 3.2 Check that the Ingress Controller is Running
 

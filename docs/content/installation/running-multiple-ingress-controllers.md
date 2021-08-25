@@ -2,7 +2,7 @@
 title: Running Multiple Ingress Controllers
 
 description: 
-weight: 2000
+weight: 2100
 doctypes: [""]
 aliases:
     - /multiple-ingress-controllers/
