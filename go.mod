@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.6.1
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.4.3
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
-	github.com/golang/glog v0.0.0-20210429001901-424d2337a529
+	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.6
 	github.com/nginxinc/nginx-plus-go-client v0.8.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.9.0
