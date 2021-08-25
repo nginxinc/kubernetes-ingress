@@ -229,8 +229,7 @@ COPY --from=opentracing-builder /usr/local/lib/libopentracing.so.${OPENTRACING_V
 # COPY --from=tracer-downloader /usr/local/lib/libjaegertracing_plugin.so /usr/local/lib/libjaegertracing_plugin.so
 
 # If tracer version is avilable through tracer builder
-ARG JAEGER_VERSION=0.7.0
-COPY --from=tracer-builder /usr/local/lib/libjaegertracing.so.${JAEGER_VERSION} /usr/local/lib/libjaegertracing_plugin.so
+COPY --from=tracer-builder /usr/local/lib/libjaegertracing.so.* /usr/local/lib/libjaegertracing_plugin.so
 COPY --from=tracer-builder /usr/local/lib/libyaml*so /usr/local/lib/
 
 RUN ldconfig
