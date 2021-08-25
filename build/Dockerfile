@@ -222,10 +222,9 @@ RUN cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJAEGERTRACING_WITH_YA
 
 ############################################# Build image for Opentracing #############################################
 FROM debian as opentracing
-ARG OPENTRACING_VERSION=1.6.0
 
 COPY --from=opentracing-builder /nginx-${NGINX_VERSION}/objs/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ngx_http_opentracing_module.so
-COPY --from=opentracing-builder /usr/local/lib/libopentracing.so.${OPENTRACING_VERSION} /usr/local/lib/libopentracing.so.1
+COPY --from=opentracing-builder /usr/local/lib/libopentracing.so.* /usr/local/lib/libopentracing.so.1
 
 # If tracer version is available through tracer downloader
 # COPY --from=tracer-downloader /usr/local/lib/libjaegertracing_plugin.so /usr/local/lib/libjaegertracing_plugin.so
