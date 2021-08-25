@@ -9,8 +9,8 @@ FROM nginx:1.21.1 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temporary fix for CVE-2021-36222
-	&& apt-get install -y libgssapi-krb5-2 libk5crypto3 \
+	# temporary fix for CVE-2021-3711
+	&& apt-get install -y openssl libssl1.1 \
 	&& rm -rf /var/lib/apt/lists/*
 
 
@@ -18,7 +18,9 @@ RUN apt-get update \
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
 FROM docker.io/library/nginx:1.21.1-alpine AS alpine
 
-RUN apk add --no-cache libcap
+RUN apk add --no-cache libcap \
+	# temporary fix for CVE-2021-3711
+	&& apk upgrade --no-cache libcrypto1.1 libssl1.1
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
