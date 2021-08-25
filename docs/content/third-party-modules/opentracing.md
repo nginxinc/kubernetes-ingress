@@ -14,12 +14,17 @@ The Ingress Controller supports [OpenTracing](https://opentracing.io/) with the 
 This document explains how to use OpenTracing with the Ingress Controller.
 
 ## Prerequisites
-1. **Use the Ingress Controller image with OpenTracing.** The default Ingress Controller images don’t include the OpenTracing module. To use OpenTracing, you need to build the image with that module. Follow the build instructions to build the image using `openshift-image` for NGINX or `openshift-image-plus` for NGINX Plus.
-By default, the Dockerfiles install Jaeger as a tracer. However, it is possible to replace Jaeger with other supported [tracers](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source). For that, please modify the Dockerfile accordingly:
-   1. Change the download line in the tracer-downloader stage of the Dockerfile to download the right tracer.
-   1. Edit the COPY line of the final image to copy the previously downloaded tracer to the image
+1. **Use the Ingress Controller image with OpenTracing.** The default Ingress Controller images don’t include the OpenTracing module. To use OpenTracing, you need to build the image with that module. Follow the build instructions to build the image using `debian-image-opentracing` for NGINX or `debian-image-opentracing-plus` for NGINX Plus.
+By default, the Dockerfiles build & install Jaeger as a tracer. However, it is possible to replace Jaeger with other supported [tracers](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source). For that, please modify the Dockerfile accordingly:
+   1. Find out which version of supported tracer you will need based on the current OpenTracing C++ API
+   2. If direct download of that version is avilable:
+        1. Change the download line in the `tracer-downloader` stage of the Dockerfile to download the right tracer.
+        2. Edit the COPY line of the final image to copy the previously downloaded tracer to the image
+   2. If tracer needs to be built:
+        1. Change the content the `tracer-builder` stage of the Dockerfile to build the right tracer. Build steps can be found in [Nginx Opentracing Dockerfile](https://github.com/opentracing-contrib/nginx-opentracing/blob/master/Dockerfile)
+        2. Edit the COPY line of the final image to copy the previously built tracer to the image
 
-1. **Load the OpenTracing module.** You need to load the module with the configuration for the chosen tracer using the following ConfigMap keys:
+2. **Load the OpenTracing module.** You need to load the module with the configuration for the chosen tracer using the following ConfigMap keys:
    * `opentracing-tracer`: sets the path to the vendor tracer binary plugin. This is the path you used in the COPY line of step *ii* above.
    * `opentracing-tracer-config`: sets the tracer configuration in JSON format.
 
@@ -29,6 +34,7 @@ By default, the Dockerfiles install Jaeger as a tracer. However, it is possible 
     opentracing-tracer-config: |
             {
                 "service_name": "nginx-ingress",
+                "propagation_format": "w3c",
                 "sampler": {
                     "type": "const",
                     "param": 1
