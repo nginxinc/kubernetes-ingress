@@ -274,6 +274,9 @@ controller:
     ## The annotations of the Ingress Controller pod.
     annotations: {}
 
+    ## The additional extra labels of the Ingress Controller pod.
+    extraLabels: {}
+
   ## The PriorityClass of the ingress controller pods.
   priorityClassName:
 
