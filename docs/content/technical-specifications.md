@@ -29,7 +29,7 @@ The supported architecture is x86-64.
 | ---| ---| ---| --- | 
 |Debian-based image | ``nginx:1.21.0``, which is based on ``debian:buster-slim`` |  | ``nginx/nginx-ingress:1.12.0`` | 
 |Alpine-based image | ``nginx:1.21.0-alpine``, which is based on ``alpine:3.13`` |  | ``nginx/nginx-ingress:1.12.0-alpine`` | 
-|Debian-based image with Opentracing | ``nginx:1.21.0``, which is based on ``debian:buster-slim`` | OpenTracing API for C++ 1.5.1, NGINX plugin for OpenTracing, C++ OpenTracing binding for Jaeger 0.4.2 |  | 
+|Debian-based image with Opentracing | ``nginx:1.21.0``, which is based on ``debian:buster-slim`` | OpenTracing API for C++ 1.6.0, NGINX plugin for OpenTracing 0.19.0, C++ OpenTracing binding for Jaeger 0.7.0 |  | 
 |Ubi-based image | ``registry.access.redhat.com/ubi8/ubi:8.3`` |  | ``nginx/nginx-ingress:1.12.0-ubi`` | 
 {{% /table %}} 
 
@@ -38,7 +38,7 @@ The supported architecture is x86-64.
 All images include NGINX Plus R24.
 The supported architecture is x86-64.
 
-NGINX Plus images are available through the F5 Container registry `docker-registry.nginx.com` - see [Pulling the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
+NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Using the NGINX IC Plus JWT token in a Docker Config Secret](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [Pulling the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
 
 {{% table %}} 
 |Name | Base image | Third-party modules | F5 Container Registry Image |

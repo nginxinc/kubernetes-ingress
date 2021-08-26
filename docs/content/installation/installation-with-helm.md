@@ -1,7 +1,7 @@
 ---
 title: Installation with Helm
 description: 
-weight: 1800
+weight: 1900
 doctypes: [""]
 toc: true
 ---
@@ -15,7 +15,8 @@ This document describes how to install the NGINX Ingress Controller in your Kube
   - Helm 3.0+.
   - Git.
   - If you’d like to use NGINX Plus:
-    - Pull an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
+    - To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret). Make sure to specify the secret using `controller.serviceAccount.imagePullSecretName` parameter.
+    - Alternatively, pull an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
     - Alternatively, you can build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
     - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
 
