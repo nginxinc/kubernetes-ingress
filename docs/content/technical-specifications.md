@@ -1,6 +1,6 @@
 ---
 title: Technical Specifications
-description: 
+description:
 weight: 2000
 doctypes: ["concept"]
 toc: true
@@ -21,17 +21,16 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX
 
-All images include NGINX 1.21.0.
-The supported architecture is x86-64.
+All images include NGINX 1.21.1.
 
-{{% table %}} 
-|Name | Base image | Third-party modules | DockerHub image | 
-| ---| ---| ---| --- | 
-|Debian-based image | ``nginx:1.21.0``, which is based on ``debian:buster-slim`` |  | ``nginx/nginx-ingress:1.12.0`` | 
-|Alpine-based image | ``nginx:1.21.0-alpine``, which is based on ``alpine:3.13`` |  | ``nginx/nginx-ingress:1.12.0-alpine`` | 
-|Debian-based image with Opentracing | ``nginx:1.21.0``, which is based on ``debian:buster-slim`` | OpenTracing API for C++ 1.6.0, NGINX plugin for OpenTracing 0.19.0, C++ OpenTracing binding for Jaeger 0.7.0 |  | 
-|Ubi-based image | ``registry.access.redhat.com/ubi8/ubi:8.3`` |  | ``nginx/nginx-ingress:1.12.0-ubi`` | 
-{{% /table %}} 
+{{% table %}}
+|Name | Base image | Third-party modules | DockerHub image | Architectures |
+| ---| ---| ---| --- | --- |
+|Alpine-based image | ``nginx:1.21.1-alpine``, which is based on ``alpine:3.14`` |  | ``nginx/nginx-ingress:1.12.0-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image | ``nginx:1.21.1``, which is based on ``debian:buster-slim`` |  | ``nginx/nginx-ingress:1.12.0`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image with Opentracing | ``nginx:1.21.1``, which is based on ``debian:buster-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:1.12.0-ot`` | amd64 |
+|Ubi-based image | ``redhat/ubi8-minimal`` |  | ``nginx/nginx-ingress:1.12.0-ubi`` | arm64, amd64 |
+{{% /table %}}
 
 ### Images with NGINX Plus
 
@@ -40,16 +39,16 @@ The supported architecture is x86-64.
 
 NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Using the NGINX IC Plus JWT token in a Docker Config Secret](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [Pulling the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
 
-{{% table %}} 
+{{% table %}}
 |Name | Base image | Third-party modules | F5 Container Registry Image |
-| ---| ---| --- | --- | 
+| ---| ---| --- | --- |
 |Alpine-based image | ``alpine:3.13`` |  | `nginx-ic/nginx-plus-ingress:1.12.0-alpine` |
 |Debian-based image | ``debian:buster-slim`` |  | `nginx-ic/nginx-plus-ingress:1.12.0` |
-|Debian-based image with Opentracing | ``debian:buster-slim`` | NGINX Plus OpenTracing module, C++ OpenTracing binding for Jaeger 0.4.2 | `nginx-ic/nginx-plus-ingress:1.12.0-ot` |
-|Ubi-based image | ``redhat/ubi8-minimal`` |  | `nginx-ic/nginx-plus-ingress:1.12.0-ubi` |
+|Debian-based image with Opentracing | ``debian:buster-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:1.12.0-ot` |
 |Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module | `nginx-ic-nap/nginx-plus-ingress:1.12.0` |
+|Ubi-based image | ``redhat/ubi8-minimal`` |  | `nginx-ic/nginx-plus-ingress:1.12.0-ubi` |
 |Ubi-based image with App Protect | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect module | `nginx-ic-nap/nginx-plus-ingress:1.12.0-ubi` |
-{{% /table %}} 
+{{% /table %}}
 
 ### Custom Images
 

@@ -358,6 +358,9 @@ jobs:
           - tag: edge-ubi
             type: ubi
             platforms: linux/arm64,linux/amd64
+          - tag: edge-ot
+            type: opentracing
+            platforms: linux/amd64
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
