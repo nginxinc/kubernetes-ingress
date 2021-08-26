@@ -21,11 +21,15 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
 
 1. Create a `docker-registry` secret on the cluster using the JWT token as the username, and `none` for password (password is unused).  The name of the docker server is `private-registry.nginx.com`. Optionally namespace the secret.
 
-	`kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]`
+	```
+    kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]
+    ```
 	
 2. Confirm the details of the created secret by running:
 	
-	`kubectl get secret regcred --output=yaml`
+	```
+    kubectl get secret regcred --output=yaml
+    ```
 
 3. This secret can now be added to a deployment spec, or to a service account to apply to all deployments for a given SA spec. See the official documentation [here](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-pod-that-uses-your-secret) and [here](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account) for more details.
 
