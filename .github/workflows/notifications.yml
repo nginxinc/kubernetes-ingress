@@ -1,3 +1,5 @@
+name: Notification
+
 on:
   workflow_run:
     branches: [master, release-*]
@@ -44,7 +46,7 @@ jobs:
                 },
                 {
                   title: 'Author',
-                  value: '<${{ github.event.sender.html_url }}|${{ github.event.sender.login }}>',
+                  value: '${{ github.event.workflow_run.head_commit.author.name }}',
                   short: true
                 },
                 {
