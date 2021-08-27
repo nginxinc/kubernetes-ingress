@@ -304,6 +304,7 @@ tls:
 |``buffering`` | Enables buffering of responses from the upstream server. See the [proxy_buffering](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering) directive. The default is set in the ``proxy-buffering`` ConfigMap key. | ``boolean`` | No | 
 |``buffers`` | Configures the buffers used for reading a response from the upstream server for a single connection. | [buffers](#upstream-buffers) | No | 
 |``buffer-size`` | Sets the size of the buffer used for reading the first part of a response received from the upstream server. See the [proxy_buffer_size](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) directive. The default is set in the ``proxy-buffer-size`` ConfigMap key. | ``string`` | No | 
+|``ntlm`` | Allows proxying requests with NTLM Authentication. See the [ntlm](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#ntlm) directive. Note: this feature is supported only in NGINX Plus.| ``boolean`` | No |
 {{% /table %}} 
 
 ### Upstream.Buffers

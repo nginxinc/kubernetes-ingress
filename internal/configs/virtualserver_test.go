@@ -3597,6 +3597,51 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 	}
 }
 
+func TestGenerateUpstreamWithNTLM(t *testing.T) {
+	name := "test-upstream"
+	upstream := conf_v1.Upstream{Service: name, Port: 80, NTLM: true}
+	endpoints := []string{
+		"192.168.10.10:8080",
+	}
+	cfgParams := ConfigParams{
+		LBMethod:         "random",
+		MaxFails:         1,
+		MaxConns:         0,
+		FailTimeout:      "10s",
+		Keepalive:        21,
+		UpstreamZoneSize: "256k",
+	}
+
+	expected := version2.Upstream{
+		Name: "test-upstream",
+		UpstreamLabels: version2.UpstreamLabels{
+			Service: "test-upstream",
+		},
+		Servers: []version2.UpstreamServer{
+			{
+				Address: "192.168.10.10:8080",
+			},
+		},
+		MaxFails:         1,
+		MaxConns:         0,
+		FailTimeout:      "10s",
+		LBMethod:         "random",
+		Keepalive:        21,
+		UpstreamZoneSize: "256k",
+		NTLM:             true,
+	}
+
+	vsc := newVirtualServerConfigurator(&cfgParams, true, false, &StaticConfigParams{})
+	result := vsc.generateUpstream(nil, name, upstream, false, endpoints)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("generateUpstream() returned %v but expected %v", result, expected)
+	}
+
+	if len(vsc.warnings) != 0 {
+		t.Errorf("generateUpstream returned warnings for %v", upstream)
+	}
+}
+
 func TestGenerateProxyPass(t *testing.T) {
 	tests := []struct {
 		tlsEnabled   bool

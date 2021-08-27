@@ -539,6 +539,8 @@ spec:
                         type: string
                       next-upstream-tries:
                         type: integer
+                      ntlm:
+                        type: boolean
                       port:
                         type: integer
                       queue:

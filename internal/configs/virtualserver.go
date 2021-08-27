@@ -1165,6 +1165,7 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 
 	upstreamLabels := getUpstreamResourceLabels(owner)
 	upstreamLabels.Service = upstream.Service
+	upstreamNTLM := &upstream.NTLM
 
 	ups := version2.Upstream{
 		Name:             upstreamName,
@@ -1183,6 +1184,7 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 		ups.SlowStart = vsc.generateSlowStartForPlus(owner, upstream, lbMethod)
 		ups.Queue = generateQueueForPlus(upstream.Queue, "60s")
 		ups.SessionCookie = generateSessionCookie(upstream.SessionCookie)
+		ups.NTLM = generateBool(upstreamNTLM, false)
 	}
 
 	return ups

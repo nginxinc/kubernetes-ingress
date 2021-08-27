@@ -2571,6 +2571,11 @@ func TestRejectPlusResourcesInOSS(t *testing.T) {
 				Queue: &v1.UpstreamQueue{},
 			},
 		},
+		{
+			upstream: &v1.Upstream{
+				NTLM: true,
+			},
+		},
 	}
 
 	for _, test := range tests {

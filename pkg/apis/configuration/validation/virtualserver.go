@@ -1420,6 +1420,10 @@ func rejectPlusResourcesInOSS(upstream v1.Upstream, idxPath *field.Path, isPlus 
 		allErrs = append(allErrs, field.Forbidden(idxPath.Child("queue"), "queue is only supported in NGINX Plus"))
 	}
 
+	if upstream.NTLM {
+		allErrs = append(allErrs, field.Forbidden(idxPath.Child("ntlm"), "NTLM is only supported in NGINX Plus"))
+	}
+
 	return allErrs
 }
 
