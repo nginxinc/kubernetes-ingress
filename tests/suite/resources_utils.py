@@ -85,6 +85,30 @@ def configure_rbac_with_ap(rbac_v1: RbacAuthorizationV1Api) -> RBACAuthorization
         return RBACAuthorization(role_name, binding_name)
 
 
+def configure_rbac_with_dos(rbac_v1: RbacAuthorizationV1Api) -> RBACAuthorization:
+    """
+    Create cluster and binding for AppProtect module.
+    :param rbac_v1: RbacAuthorizationV1Api
+    :return: RBACAuthorization
+    """
+    with open(f"{DEPLOYMENTS}/rbac/apdos-rbac.yaml") as f:
+        docs = yaml.safe_load_all(f)
+        role_name = ""
+        binding_name = ""
+        for dep in docs:
+            if dep["kind"] == "ClusterRole":
+                print("Create cluster role for DOS")
+                role_name = dep["metadata"]["name"]
+                rbac_v1.create_cluster_role(dep)
+                print(f"Created role '{role_name}'")
+            elif dep["kind"] == "ClusterRoleBinding":
+                print("Create binding for DOS")
+                binding_name = dep["metadata"]["name"]
+                rbac_v1.create_cluster_role_binding(dep)
+                print(f"Created binding '{binding_name}'")
+        return RBACAuthorization(role_name, binding_name)
+
+
 def patch_rbac(rbac_v1: RbacAuthorizationV1Api, yaml_manifest) -> RBACAuthorization:
     """
     Patch a clusterrole and a binding.
@@ -1097,6 +1121,39 @@ def create_ingress_with_ap_annotations(
         doc["metadata"]["annotations"][
             "appprotect.f5.com/app-protect-security-log-destination"
         ] = f"syslog:server={syslog_ep}"
+        create_ingress(kube_apis.networking_v1, namespace, doc)
+
+
+def create_ingress_with_dos_annotations(
+        kube_apis, yaml_manifest, namespace, dos_pol_st, dos_log_st, syslog_ep
+) -> None:
+    """
+    Create an ingress with AppProtect annotations
+    :param kube_apis: KubeApis
+    :param yaml_manifest: an absolute path to ingress yaml
+    :param namespace: namespace
+    :param policy_name: AppProtect policy
+    :param ap_log_st: True/False for enabling/disabling AppProtect security logging
+    :param ap_pol_st: True/False for enabling/disabling AppProtect module for particular ingress
+    :param syslog_ep: Destination endpoint for security logs
+    :return:
+    """
+    print("Load ingress yaml and set DOS annotations")
+    policy = f"{namespace}/dospolicy"
+    logconf = f"{namespace}/doslogconf"
+
+    with open(yaml_manifest) as f:
+        doc = yaml.safe_load(f)
+
+        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-enable"] = dos_pol_st
+        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-policy"] = policy
+        doc["metadata"]["annotations"][
+            "appprotectdos.f5.com/app-protect-dos-security-log-enable"
+        ] = dos_log_st
+        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-security-log"] = logconf
+        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-security-log-destination"] = f"syslog:server={syslog_ep}"
+        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-monitor"] = "dos.example.com"
+        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-name"] = "dos.example.com"
         create_ingress(kube_apis.networking_v1, namespace, doc)
 
 
