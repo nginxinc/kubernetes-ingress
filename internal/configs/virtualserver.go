@@ -1165,7 +1165,6 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 
 	upstreamLabels := getUpstreamResourceLabels(owner)
 	upstreamLabels.Service = upstream.Service
-	upstreamNTLM := &upstream.NTLM
 
 	ups := version2.Upstream{
 		Name:             upstreamName,
