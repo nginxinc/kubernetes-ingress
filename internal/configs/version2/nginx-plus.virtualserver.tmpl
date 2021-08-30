@@ -21,6 +21,8 @@ upstream {{ $u.Name }} {
     sticky cookie {{ .Name }}{{ if .Expires }} expires={{ .Expires }}{{ end }}{{ if .Domain }} domain={{ .Domain }}{{ end }}{{ if .HTTPOnly }} httponly{{ end }}{{ if .Secure }} secure{{ end }}{{ if .Path }} path={{ .Path }}{{ end }};
         {{ end }}
     {{ end }}
+
+    {{ if $u.NTLM }}ntlm;{{ end }}
 }
 {{ end }}
 

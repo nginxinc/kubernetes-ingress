@@ -37,6 +37,7 @@ type Upstream struct {
 	Queue            *Queue
 	SessionCookie    *SessionCookie
 	UpstreamLabels   UpstreamLabels
+	NTLM             bool
 }
 
 // UpstreamServer defines an upstream server.
