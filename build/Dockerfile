@@ -11,7 +11,8 @@ RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
 	# temporary fix for CVE-2021-3711
 	&& apt-get install -y openssl libssl1.1 \
-	&& rm -rf /var/lib/apt/lists/*
+	&& rm -rf /var/lib/apt/lists/* \
+	&& echo $NGINX_VERSION > nginx_version
 
 
 ############################################# Base image for Alpine #############################################
@@ -112,9 +113,10 @@ COPY --chown=nginx:0 LICENSE /licenses/
 
 ############################################# Base image for UBI OSS #############################################
 FROM ubi-base AS ubi
-ARG NGINX_VERSION
 
-RUN rpm --import https://nginx.org/keys/nginx_signing.key \
+RUN --mount=type=bind,from=debian,source=/nginx_version,target=/tmp/nginx_version \
+	export NGINX_VERSION=$(</tmp/nginx_version) \
+	&& rpm --import https://nginx.org/keys/nginx_signing.key \
 	&& version=$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1) \
 	&& printf "%s\n" "[nginx]" "name=nginx repo" \
 	"baseurl=https://nginx.org/packages/mainline/centos/${version}/\$basearch/" \
