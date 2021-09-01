@@ -23,7 +23,9 @@ from suite.resources_utils import (
     delete_ingress,
     wait_before_test,
     scale_deployment,
-    get_pods_amount,
+    get_total_ingresses,
+    get_total_vs,
+    get_last_reload_status,
 )
 from suite.custom_resources_utils import (
     create_virtual_server_from_yaml,
@@ -48,14 +50,19 @@ class IngressSetup:
         ingress_host (str):
     """
 
-    def __init__(self, req_url, ingress_host):
+    def __init__(self, req_url, metrics_url, ingress_host):
         self.req_url = req_url
+        self.metrics_url = metrics_url
         self.ingress_host = ingress_host
 
 
 @pytest.fixture(scope="class")
 def simple_ingress_setup(
-    request, kube_apis, ingress_controller_endpoint, ingress_controller, test_namespace
+    request,
+    kube_apis,
+    ingress_controller_endpoint,
+    test_namespace,
+    ingress_controller,
 ) -> IngressSetup:
     """
     Deploy simple application and all the Ingress resources under test in one namespace.
@@ -67,6 +74,8 @@ def simple_ingress_setup(
     :return: BackendSetup
     """
     req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
+    metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+
     secret_name = create_secret_from_yaml(
         kube_apis.v1, test_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml"
     )
@@ -95,18 +104,28 @@ def simple_ingress_setup(
 
     request.addfinalizer(fin)
 
-    return IngressSetup(req_url, ingress_host)
+    return IngressSetup(req_url, metrics_url, ingress_host)
 
 
 @pytest.mark.batch_start
 class TestMultipleSimpleIngress:
+    @pytest.mark.parametrize(
+        "ingress_controller",
+        [
+            pytest.param(
+                {"extra_args": ["-enable-prometheus-metrics"]},
+            )
+        ],
+        indirect=["ingress_controller"],
+    )
     def test_simple_ingress_batch_start(
         self,
         request,
         kube_apis,
-        simple_ingress_setup,
-        test_namespace,
         ingress_controller_prerequisites,
+        ingress_controller,
+        test_namespace,
+        simple_ingress_setup,
     ):
         """
         Pod startup time with simple Ingress
@@ -114,7 +133,7 @@ class TestMultipleSimpleIngress:
         ensure_response_from_backend(
             simple_ingress_setup.req_url, simple_ingress_setup.ingress_host, check404=True
         )
-        # total_ing = int(request.config.getoption("--batch-reload-resources"))
+
         total_ing = int(request.config.getoption("--batch-resources"))
         manifest = f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml"
         for i in range(1, total_ing + 1):
@@ -125,16 +144,22 @@ class TestMultipleSimpleIngress:
                 create_ingress(kube_apis.networking_v1, test_namespace, doc)
         print(f"Total resources deployed is {total_ing}")
         wait_before_test()
-
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
+        assert (
+            get_total_ingresses(simple_ingress_setup.metrics_url, "nginx") == str(total_ing + 1)
+            and get_last_reload_status(simple_ingress_setup.metrics_url, "nginx") == "1"
+        )
+
         for i in range(1, total_ing + 1):
             delete_ingress(kube_apis.networking_v1, f"smoke-ingress-{i}", test_namespace)
 
         assert num is None
 
+
 ##############################################################################################################
+
 
 @pytest.fixture(scope="class")
 def ap_ingress_setup(
@@ -152,6 +177,7 @@ def ap_ingress_setup(
     print("------------------------- Deploy backend application -------------------------")
     create_example_app(kube_apis, "simple", test_namespace)
     req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
+    metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(
         ingress_controller_endpoint.public_ip,
@@ -192,7 +218,7 @@ def ap_ingress_setup(
 
     request.addfinalizer(fin)
 
-    return IngressSetup(req_url, ingress_host)
+    return IngressSetup(req_url, metrics_url, ingress_host)
 
 
 @pytest.mark.skip_for_nginx_oss
@@ -231,7 +257,6 @@ class TestAppProtect:
             ap_ingress_setup.req_url, ap_ingress_setup.ingress_host, check404=True
         )
 
-        # total_ing = int(request.config.getoption("--batch-reload-resources"))
         total_ing = int(request.config.getoption("--batch-resources"))
 
         manifest = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
@@ -246,19 +271,30 @@ class TestAppProtect:
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
+
+        assert (
+            get_total_ingresses(ap_ingress_setup.metrics_url, "nginx") == str(total_ing + 1)
+            and get_last_reload_status(ap_ingress_setup.metrics_url, "nginx") == "1"
+        )
+
         for i in range(1, total_ing + 1):
             delete_ingress(kube_apis.networking_v1, f"appprotect-ingress-{i}", test_namespace)
 
         assert num is None
 
+
 ##############################################################################################################
+
 
 @pytest.mark.batch_start
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
         (
-            {"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+            {
+                "type": "complete",
+                "extra_args": [f"-enable-custom-resources", f"-enable-prometheus-metrics"],
+            },
             {"example": "virtual-server", "app_type": "simple"},
         )
     ],
@@ -297,11 +333,19 @@ class TestVirtualServer:
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
+        assert (
+            get_total_vs(virtual_server_setup.metrics_url, "nginx") == str(total_vs + 1)
+            and get_last_reload_status(virtual_server_setup.metrics_url, "nginx") == "1"
+        )
+
         for i in range(1, total_vs + 1):
             delete_virtual_server(kube_apis.custom_objects, f"virtual-server-{i}", test_namespace)
+
         assert num is None
 
+
 ##############################################################################################################
+
 
 @pytest.fixture(scope="class")
 def appprotect_waf_setup(request, kube_apis, test_namespace) -> None:
@@ -353,6 +397,7 @@ def appprotect_waf_setup(request, kube_apis, test_namespace) -> None:
                     f"-enable-leader-election=false",
                     f"-enable-app-protect",
                     f"-enable-preview-policies",
+                    f"-enable-prometheus-metrics",
                 ],
             },
             {
@@ -435,9 +480,13 @@ class TestAppProtectWAFPolicyVS:
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
-        
+        assert (
+            get_total_vs(virtual_server_setup.metrics_url, "nginx") == str(total_vs + 1)
+            and get_last_reload_status(virtual_server_setup.metrics_url, "nginx") == "1"
+        )
+
         for i in range(1, total_vs + 1):
             delete_virtual_server(kube_apis.custom_objects, f"virtual-server-{i}", test_namespace)
-
         delete_policy(kube_apis.custom_objects, "waf-policy", test_namespace)
+
         assert num is None
