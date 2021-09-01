@@ -26,6 +26,7 @@ from suite.resources_utils import (
     get_total_ingresses,
     get_total_vs,
     get_last_reload_status,
+    get_pods_amount,
 )
 from suite.custom_resources_utils import (
     create_virtual_server_from_yaml,
@@ -146,6 +147,9 @@ class TestMultipleSimpleIngress:
         wait_before_test()
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
+        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+            print(f"Number of replicas not 0, retrying...")
+            wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
         assert (
             get_total_ingresses(simple_ingress_setup.metrics_url, "nginx") == str(total_ing + 1)
@@ -270,6 +274,9 @@ class TestAppProtect:
         wait_before_test()
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
+        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+            print(f"Number of replicas not 0, retrying...")
+            wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
 
         assert (
@@ -332,6 +339,9 @@ class TestVirtualServer:
         wait_before_test()
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
+        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+            print(f"Number of replicas not 0, retrying...")
+            wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
         assert (
             get_total_vs(virtual_server_setup.metrics_url, "nginx") == str(total_vs + 1)
@@ -479,6 +489,9 @@ class TestAppProtectWAFPolicyVS:
         wait_before_test()
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
+        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+            print(f"Number of replicas not 0, retrying...")
+            wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
         assert (
             get_total_vs(virtual_server_setup.metrics_url, "nginx") == str(total_vs + 1)

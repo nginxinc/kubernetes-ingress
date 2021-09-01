@@ -226,9 +226,11 @@ def scale_deployment(v1: CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, val
         print(f"All pods came up in {int(later-now)} seconds")
 
     elif value is 0:
-        while get_pods_amount(v1, namespace) is not 0:
-            print(f"Number of replicas not 0, retrying...")
-            wait_before_test()
+        replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
+        while(replica_num is not None):
+            replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
+            time.sleep(1)
+            print("Number of replicas is not 0, retrying...")
 
     else:
         pytest.fail("wrong argument")
