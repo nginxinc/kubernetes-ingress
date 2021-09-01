@@ -232,7 +232,6 @@ ARG BUILD_OS
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
-ARG BUILDPLATFORM
 ARG TARGETPLATFORM
 
 RUN mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
@@ -256,16 +255,12 @@ STOPSIGNAL SIGTERM
 ENTRYPOINT ["/nginx-ingress"]
 USER nginx
 
-LABEL org.opencontainers.image.title="NGINX Ingress Controller for Kubernetes"
-LABEL org.opencontainers.image.documentation="https://docs.nginx.com/nginx-ingress-controller"
-LABEL org.opencontainers.image.source="https://github.com/nginxinc/kubernetes-ingress"
-LABEL org.opencontainers.image.vendor="NGINX Inc <kubernetes@nginx.com>"
-LABEL org.opencontainers.image.licenses="Apache-2.0"
-LABEL org.opencontainers.image.version="${IC_VERSION}-${BUILD_OS}-${NGINX_PLUS_VERSION}${NGINX_VERSION}"
+LABEL org.opencontainers.image.version="${IC_VERSION}"
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 LABEL org.opencontainers.image.created="${DATE}"
-LABEL org.nginx.kic.image.build.platform="${BUILDPLATFORM}"
 LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
+LABEL org.nginx.kic.image.build.os="${BUILD_OS}"
+LABEL org.nginx.kic.image.build.nginx.vesion="${NGINX_PLUS_VERSION}${NGINX_VERSION}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################
