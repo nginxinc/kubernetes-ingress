@@ -1,4 +1,4 @@
-name: Edge
+name: CI
 
 on:
   push:
@@ -21,6 +21,8 @@ on:
       - opened
       - reopened
       - synchronize
+  schedule:
+    - cron:  '0 4 * * *'
 
 defaults:
   run:
@@ -28,7 +30,7 @@ defaults:
 
 env:
   DOCKER_BUILDKIT: 1
-  K8S_VERSION: 1.22.0
+  K8S_VERSION: 1.22.1
   K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge
@@ -143,6 +145,7 @@ jobs:
           target: goreleaser
           tags: docker.io/nginx/nginx-ingress:${{ matrix.image }}-${{ github.sha }}
           load: true
+          pull: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
             UBI_VERSION=${{ matrix.ubi_version }}
@@ -165,23 +168,31 @@ jobs:
           path: 'trivy-results-${{ matrix.image }}.sarif'
         if: always()
 
+  setup-matrix:
+    runs-on: ubuntu-20.04
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "::set-output name=matrix::{\"images\": \
+                                                [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
+                                                {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
+                                                {\"image\": \"opentracing\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"ubi\", \"marker\": \"ts\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"policies\"}], \
+                                                \"k8s\": [\"${{env.K8S_VERSION}}\"]}"
+          else
+            echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.1\"], \"images\": [{\"image\": \"debian\"}]}"
+          fi
+
   smoke-tests:
     name: Smoke Tests
     runs-on: ubuntu-20.04
-    needs: [checks, binary, build-image-scan, unit-tests]
+    needs: [checks, binary, build-image-scan, unit-tests, setup-matrix]
     strategy:
-      matrix:
-        include:
-          - image: debian
-            marker: 'ingresses'
-          - image: alpine
-            marker: 'vsr'
-          - image: opentracing
-            marker: 'vs'
-          - image: ubi
-            marker: 'ts'
-          - image: debian
-            marker: 'policies'
+      matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -189,8 +200,9 @@ jobs:
         id: smoke-tests
         uses: ./.github/actions/smoke-tests
         with:
-          image: ${{ matrix.image }}
-          marker: ${{ matrix.marker }}
+          image: ${{ matrix.images.image }}
+          marker: ${{ matrix.images.marker }}
+          k8s-version: ${{ matrix.k8s }}
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
         with:
@@ -260,7 +272,7 @@ jobs:
     name: Build Binaries for release
     runs-on: ubuntu-20.04
     needs: [checks, smoke-tests, helm-tests]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name != 'pull_request'
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -288,21 +300,21 @@ jobs:
     name: Release Images
     runs-on: ubuntu-20.04
     needs: [checks, binaries-release]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.event_name != 'pull_request'
     strategy:
       matrix:
         include:
-          - tag: edge
-            type: debian
+          - type: debian
+            suffix: ''
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-          - tag: edge-alpine
-            type: alpine
+          - type: alpine
+            suffix: '-alpine'
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-          - tag: edge-ubi
-            type: ubi
+          - type: ubi
+            suffix: '-ubi'
             platforms: linux/arm64,linux/amd64
-          - tag: edge-ot
-            type: opentracing
+          - type: opentracing
+            suffix: '-ot'
             platforms: linux/amd64
     steps:
       - name: Checkout Repository
@@ -313,7 +325,6 @@ jobs:
         id: commit
         run: |
           echo "::set-output name=tag::$(git describe --tags --abbrev=0)"
-          echo "::set-output name=date::$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
       - name: Fetch Cached Artifacts
         uses: actions/cache@v2
         with:
@@ -330,6 +341,18 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: nginx/nginx-ingress
+          tags: |
+            type=edge,suffix=${{ matrix.suffix }}
+            type=schedule,suffix=${{ matrix.suffix }}
+          labels: |
+            org.opencontainers.image.title=NGINX Ingress Controller for Kubernetes
+            org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
+            org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
       - name: Push to Dockerhub
         uses: docker/build-push-action@v2
         with:
@@ -339,14 +362,14 @@ jobs:
           # cache-from: type=gha
           # cache-to: type=gha,mode=max
           target: goreleaser
-          tags: nginx/nginx-ingress:${{ matrix.tag }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.platforms }}
+          pull: true
           push: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
             IC_VERSION=${{ steps.commit.outputs.tag }}-SNAPSHOT-${{ needs.checks.outputs.sha_short }}
-            DATE=${{ steps.commit.outputs.date }}
-            GIT_COMMIT=${{ github.sha }}
 
   package-helm:
     name: Package Helm Chart
