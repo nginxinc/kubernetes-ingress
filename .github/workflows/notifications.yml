@@ -18,8 +18,18 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     steps:
       - name: Output Variables
+        continue-on-error: true
         id: vars
-        run: echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+        run: |
+          suite_id=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }} | jq '.check_suite_id')
+          event=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }} | jq -r '.event')
+          name=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/check-suites/$suite_id/check-runs | jq -r '[.check_runs[] | select(.conclusion=="failure")][0].name')
+          url=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/check-suites/$suite_id/check-runs | jq -r '[.check_runs[] | select(.conclusion=="failure")][0].html_url')
+
+          echo "::set-output name=name::$name"
+          echo "::set-output name=url::$url"
+          echo "::set-output name=event::$event"
+
       - name: Send Notification
         uses: 8398a7/action-slack@v3
         with:
@@ -30,16 +40,16 @@ jobs:
               icon_emoji: ':octocat:',
               mention: 'channel',
               attachments: [{
-                title: '[${{ github.event.repository.full_name }}] ${{ github.event.workflow.name }} pipeline has failed',
+                title: '[${{ github.event.repository.full_name }}] ${{ github.event.workflow.name }} pipeline has failed (${{ steps.vars.outputs.event }})',
                 color: 'danger',
                 fields: [{
-                  title: 'Commit Hash',
-                  value: '<https://github.com/${{ github.repository }}/commit/${{ github.sha }}|${{ steps.vars.outputs.sha }}>',
+                  title: 'Commit',
+                  value: '<https://github.com/${{ github.repository }}/commit/${{ github.event.workflow_run.head_commit.id }}|${{ github.event.workflow_run.head_commit.message }}>',
                   short: true
                 },
                 {
-                  title: 'Commit Message',
-                  value: `${{ github.event.workflow_run.head_commit.message }}`,
+                  title: 'Job failed',
+                  value: `<${{ steps.vars.outputs.url }}|${{ steps.vars.outputs.name }}>`,
                   short: true
                 },
                 {
