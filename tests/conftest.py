@@ -11,6 +11,8 @@ from settings import (
     DEFAULT_SERVICE,
     DEFAULT_DEPLOYMENT_TYPE,
     NUM_REPLICAS,
+    BATCH_START,
+    BATCH_RESOURCES,
 )
 from suite.resources_utils import get_first_pod_name
 
@@ -80,6 +82,18 @@ def pytest_addoption(parser) -> None:
         default="no",
         help="Show IC logs in stdout on test failure",
     )
+    parser.addoption(
+        "--batch-start",
+        action="store",
+        default=BATCH_START,
+        help="Run tests for pods restarts with multiple resources deployed (Ingress/VS): True/False",
+    )
+    parser.addoption(
+        "--batch-resources",
+        action="store",
+        default=BATCH_RESOURCES,
+        help="Number of VS/Ingress resources to deploy",
+    )
 
 
 # import fixtures into pytest global namespace
@@ -110,6 +124,11 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "appprotect" in item.keywords:
                 item.add_marker(appprotect)
+    if  str(config.getoption("--batch-start")) != "True":
+        batch_start = pytest.mark.skip(reason="Skipping pod restart test with multiple resources")
+        for item in items:
+            if "batch_start" in item.keywords:
+                item.add_marker(batch_start)
 
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
