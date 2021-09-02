@@ -1,7 +1,7 @@
 
 [![Edge](https://github.com/nginxinc/kubernetes-ingress/workflows/Edge/badge.svg)](https://github.com/nginxinc/kubernetes-ingress/actions?query=workflow%3AEdge)  [![Nightly](https://github.com/nginxinc/kubernetes-ingress/workflows/Nightly/badge.svg)](https://github.com/nginxinc/kubernetes-ingress/actions?query=workflow%3ANightly)  [![FOSSA Status](https://app.fossa.com/api/projects/custom%2B5618%2Fgithub.com%2Fnginxinc%2Fkubernetes-ingress.svg?type=shield)](https://app.fossa.com/projects/custom%2B5618%2Fgithub.com%2Fnginxinc%2Fkubernetes-ingress?ref=badge_shield)  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)  [![Go Report Card](https://goreportcard.com/badge/github.com/nginxinc/kubernetes-ingress)](https://goreportcard.com/report/github.com/nginxinc/kubernetes-ingress)
 
-# 🚀 *Help make the NGINX Ingress Controller better by participating in our [survey](https://forms.office.com/Pages/ResponsePage.aspx?id=L_093Ttq0UCb4L-DJ9gcUM6Dh1A0cORCorfgZAMdkwJUREhJUFAyM1ZHRzZLSzQyMUlCNFhXVkZENy4u)!* 🚀
+# 🚀 *Help make the NGINX Ingress Controller better by participating in our [survey](https://forms.office.com/Pages/ResponsePage.aspx?id=L_093Ttq0UCb4L-DJ9gcUKLQ7uTJaE1PitM_37KR881UMEs0Rk5PMkYzMTJTWVA0V1hUVTRLUUMyNS4u)!* 🚀
 
 # NGINX Ingress Controller
 
