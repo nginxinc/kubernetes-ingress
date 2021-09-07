@@ -97,13 +97,13 @@ Starting from Kubernetes 1.18, you can use the following new features:
       - host: cafe.example.com
     . . .
   ```
-  When using this filed you need to create the `IngressClass` resource with the corresponding `name`. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](/nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources) section.
+  When using this filed you need to create the `IngressClass` resource with the corresponding `name`. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](/nginx-ingress-controller/installation/installation-with-manifests/#2-create-common-resources) section.
 
 ## Restrictions
 
 The NGINX Ingress Controller imposes the following restrictions on Ingress resources:
 * When defining an Ingress resource, the `host` field is required.
-* The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/). See also [Handling Host Collisions](/nginx-ingress-controller/configuration/handling-host-collisions).
+* The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/). See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions).
 
 ## Advanced Configuration
 
