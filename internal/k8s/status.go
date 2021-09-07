@@ -513,6 +513,10 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *con
 
 	vsrCopy := vsrLatest.(*conf_v1.VirtualServerRoute).DeepCopy()
 
+	if !hasVsrStatusChanged(vsrCopy, state, reason, message, referencedByString) {
+		return nil
+	}
+
 	vsrCopy.Status.State = state
 	vsrCopy.Status.Reason = reason
 	vsrCopy.Status.Message = message
