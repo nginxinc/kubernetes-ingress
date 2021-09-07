@@ -1082,7 +1082,10 @@ def create_ingress_with_ap_annotations(
     :return:
     """
     print("Load ingress yaml and set AppProtect annotations")
-    policy = f"{namespace}/{policy_name}"
+    if "/" in policy_name:
+        policy = policy_name
+    else:
+        policy = f"{namespace}/{policy_name}"
     logconf = f"{namespace}/logconf"
 
     with open(yaml_manifest) as f:

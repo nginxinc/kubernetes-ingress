@@ -244,7 +244,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.addPodHandler()
 
 	if lbc.appProtectEnabled {
-		lbc.dynInformerFactory = dynamicinformer.NewDynamicSharedInformerFactory(lbc.dynClient, 0)
+		lbc.dynInformerFactory = dynamicinformer.NewFilteredDynamicSharedInformerFactory(lbc.dynClient, 0, lbc.namespace, nil)
 
 		lbc.addAppProtectPolicyHandler(createAppProtectPolicyHandlers(lbc))
 		lbc.addAppProtectLogConfHandler(createAppProtectLogConfHandlers(lbc))
