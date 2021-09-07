@@ -1,3 +1,5 @@
+import time
+
 import requests
 import pytest
 import yaml
@@ -26,7 +28,7 @@ from suite.resources_utils import (
     get_total_ingresses,
     get_total_vs,
     get_last_reload_status,
-    get_pods_amount,
+    get_pods_amount, get_total_vsr,
 )
 from suite.custom_resources_utils import (
     create_virtual_server_from_yaml,
@@ -37,6 +39,8 @@ from suite.custom_resources_utils import (
     create_policy_from_yaml,
     create_ap_waf_policy_from_yaml,
     delete_policy,
+    create_virtual_server,
+    create_v_s_route,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 from settings import TEST_DATA
@@ -501,5 +505,94 @@ class TestAppProtectWAFPolicyVS:
         for i in range(1, total_vs + 1):
             delete_virtual_server(kube_apis.custom_objects, f"virtual-server-{i}", test_namespace)
         delete_policy(kube_apis.custom_objects, "waf-policy", test_namespace)
+
+        assert num is None
+
+
+##############################################################################################################
+
+@pytest.fixture(scope="class")
+def vs_vsr_setup(
+    request,
+    kube_apis,
+    test_namespace,
+    ingress_controller_endpoint,
+):
+    """
+    Deploy one VS with multiple VSRs.
+
+    :param kube_apis: client apis
+    :param test_namespace:
+    :param ingress_controller_endpoint: public endpoint
+    :return:
+    """
+    total_vsr = int(request.config.getoption("--batch-resources"))
+
+    vsr_source = f"{TEST_DATA}/startup/virtual-server-routes/route.yaml"
+
+    with open(vsr_source) as f:
+        vsr = yaml.safe_load(f)
+
+        for i in range(1, total_vsr + 1):
+            vsr["metadata"]["name"] = f"route-{i}"
+            vsr["spec"]["subroutes"][0]["path"] = f"/route-{i}"
+
+            create_v_s_route(kube_apis.custom_objects, vsr, test_namespace)
+
+    vs_source = f"{TEST_DATA}/startup/virtual-server-routes/virtual-server.yaml"
+
+    with open(vs_source) as f:
+        vs = yaml.safe_load(f)
+
+        routes = []
+        for i in range(1, total_vsr + 1):
+            route = {"path": f"/route-{i}", "route": f"route-{i}"}
+            routes.append(route)
+
+        vs["spec"]["routes"] = routes
+        create_virtual_server(kube_apis.custom_objects, vs, test_namespace)
+
+
+@pytest.mark.batch_start
+@pytest.mark.parametrize(
+    "crd_ingress_controller",
+    [
+        pytest.param(
+            {
+                "type": "complete",
+                "extra_args": ["-enable-custom-resources","-enable-prometheus-metrics", "-enable-leader-election=false"]
+            },
+        )
+    ],
+    indirect=True,
+)
+class TestSingleVSMultipleVSRs:
+    def test_startup_time(
+        self,
+        request,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        ingress_controller_endpoint,
+         vs_vsr_setup):
+        """
+        Pod startup time with 1 VS and multiple VSRs.
+        """
+        total_vsr = int(request.config.getoption("--batch-resources"))
+
+        ic_ns = ingress_controller_prerequisites.namespace
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
+        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+            print(f"Number of replicas not 0, retrying...")
+            wait_before_test()
+        num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
+
+        metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+
+        assert (
+            get_total_vs(metrics_url, "nginx") == "1"
+            and get_total_vsr(metrics_url, "nginx") == str(total_vsr)
+            and get_last_reload_status(metrics_url, "nginx") == "1"
+        )
 
         assert num is None

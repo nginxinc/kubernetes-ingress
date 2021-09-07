@@ -1337,6 +1337,15 @@ def get_total_vs(req_url, ingress_class) -> str:
     return parse_metric_data(resp_content, metric_string)
 
 
+def get_total_vsr(req_url, ingress_class) -> str:
+    # return total number of virtualserverroutes in specified ingress class
+    ensure_connection(req_url, 200)
+    resp = requests.get(req_url)
+    resp_content = resp.content.decode("utf-8")
+    metric_string = 'virtualserverroute_resources_total{class="%s"}' % ingress_class
+    return parse_metric_data(resp_content, metric_string)
+
+
 def get_last_reload_status(req_url, ingress_class) -> str:
     # returnb last reload status 0/1
     ensure_connection(req_url, 200)

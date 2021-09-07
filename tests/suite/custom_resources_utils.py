@@ -260,15 +260,31 @@ def create_virtual_server_from_yaml(
     print("Create a VirtualServer:")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
+
+    return create_virtual_server(custom_objects, dep, namespace)
+
+
+def create_virtual_server(
+    custom_objects: CustomObjectsApi, vs, namespace
+) -> str:
+    """
+    Create a VirtualServer.
+
+    :param custom_objects: CustomObjectsApi
+    :param vs: a VirtualServer
+    :param namespace:
+    :return: str
+    """
+    print("Create a VirtualServer:")
     try:
         custom_objects.create_namespaced_custom_object(
-            "k8s.nginx.org", "v1", namespace, "virtualservers", dep
+            "k8s.nginx.org", "v1", namespace, "virtualservers", vs
         )
-        print(f"VirtualServer created with name '{dep['metadata']['name']}'")
-        return dep["metadata"]["name"]
+        print(f"VirtualServer created with name '{vs['metadata']['name']}'")
+        return vs["metadata"]["name"]
     except ApiException as ex:
         logging.exception(
-            f"Exception: {ex} occurred while creating VirtualServer: {dep['metadata']['name']}"
+            f"Exception: {ex} occurred while creating VirtualServer: {vs['metadata']['name']}"
         )
         raise
 
@@ -697,11 +713,23 @@ def create_v_s_route_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, 
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
 
+    return create_v_s_route(custom_objects, dep, namespace)
+
+def create_v_s_route(custom_objects: CustomObjectsApi, vsr, namespace) -> str:
+    """
+    Create a VirtualServerRoute.
+
+    :param custom_objects: CustomObjectsApi
+    :param vsr: a VirtualServerRoute
+    :param namespace:
+    :return: str
+    """
+    print("Create a VirtualServerRoute:")
     custom_objects.create_namespaced_custom_object(
-        "k8s.nginx.org", "v1", namespace, "virtualserverroutes", dep
+        "k8s.nginx.org", "v1", namespace, "virtualserverroutes", vsr
     )
-    print(f"VirtualServerRoute created with a name '{dep['metadata']['name']}'")
-    return dep["metadata"]["name"]
+    print(f"VirtualServerRoute created with a name '{vsr['metadata']['name']}'")
+    return vsr["metadata"]["name"]
 
 
 def patch_v_s_route(custom_objects: CustomObjectsApi, name, namespace, body) -> str:
