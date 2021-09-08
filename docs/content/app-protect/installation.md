@@ -65,12 +65,12 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
 
 Take the steps below to set up and deploy the NGINX Ingress Controller and App Protect module in your Kubernetes cluster.
 
-1. [Configure role-based access control (RBAC)](/nginx-ingress-controller/installation/installation-with-manifests/#configure-rbac).
+1. [Configure role-based access control (RBAC)](/nginx-ingress-controller/installation/installation-with-manifests/#1-configure-rbac).
 
     > **Important**: You must have an admin role to configure RBAC in your Kubernetes cluster.
 
-2. [Create the common Kubernetes resources](/nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources).
+2. [Create the common Kubernetes resources](/nginx-ingress-controller/installation/installation-with-manifests/#2-create-common-resources).
 3. Enable the App Protect module by adding the `enable-app-protect` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect) to your Deployment or DaemonSet file.
-4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#deploy-the-ingress-controller).
+4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
 
 For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the [NGINX Ingress Controller with App Protect examples on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.0/examples/appprotect).

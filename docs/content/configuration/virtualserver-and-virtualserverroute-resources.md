@@ -13,41 +13,6 @@ The VirtualServer and VirtualServerRoute resources are new load balancing config
 
 This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/blob/v1.12.0/examples-of-custom-resources) folder in our GitHub repo.
 
-## Contents
-
-- [VirtualServer and VirtualServerRoute Resources](#virtualserver-and-virtualserverroute-resources)
-  - [Contents](#contents)
-  - [VirtualServer Specification](#virtualserver-specification)
-    - [VirtualServer.TLS](#virtualserver-tls)
-    - [VirtualServer.TLS.Redirect](#virtualserver-tls-redirect)
-    - [VirtualServer.Route](#virtualserver-route)
-  - [VirtualServerRoute Specification](#virtualserverroute-specification)
-    - [VirtualServerRoute.Subroute](#virtualserverroute-subroute)
-  - [Common Parts of the VirtualServer and VirtualServerRoute](#common-parts-of-the-virtualserver-and-virtualserverroute)
-    - [Upstream](#upstream)
-    - [Upstream.Buffers](#upstream-buffers)
-    - [Upstream.TLS](#upstream-tls)
-    - [Upstream.Queue](#upstream-queue)
-    - [Upstream.Healthcheck](#upstream-healthcheck)
-    - [Upstream.SessionCookie](#upstream-sessioncookie)
-    - [Header](#header)
-    - [Action](#action)
-    - [Action.Redirect](#action-redirect)
-    - [Action.Return](#action-return)
-    - [Action.Proxy](#action-proxy)
-    - [Split](#split)
-    - [Match](#match)
-    - [Condition](#condition)
-    - [ErrorPage](#errorpage)
-    - [ErrorPage.Redirect](#errorpage-redirect)
-    - [ErrorPage.Return](#errorpage-return)
-  - [Using VirtualServer and VirtualServerRoute](#using-virtualserver-and-virtualserverroute)
-    - [Using Snippets](#using-snippets)
-    - [Validation](#validation)
-      - [Structural Validation](#structural-validation)
-      - [Comprehensive Validation](#comprehensive-validation)
-  - [Customization via ConfigMap](#customization-via-configmap)
-
 ## VirtualServer Specification
 
 The VirtualServer resource defines load balancing configuration for a domain name, such as `example.com`. Below is an example of such configuration:
@@ -85,8 +50,8 @@ spec:
 {{% table %}} 
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
-|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host Collisions](/nginx-ingress-controller/configuration/handling-host-collisions). | ``string`` | Yes | 
-|``tls`` | The TLS termination configuration. | [tls](#virtualserver-tls) | No | 
+|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes | 
+|``tls`` | The TLS termination configuration. | [tls](#virtualservertls | No | 
 |``policies`` | A list of policies. | [[]policy](#virtualserver-policy) | No | 
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No | 
 |``routes`` | A list of routes. | [[]route](#virtualserver-route) | No | 
@@ -221,7 +186,7 @@ Note that each subroute must have a `path` that starts with the same prefix (her
 | ---| ---| ---| --- | 
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed. Must be the same as the ``host`` of the VirtualServer that references this resource. | ``string`` | Yes | 
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No | 
-|``subroutes`` | A list of subroutes. | [[]subroute](#virtualserverroute-subroute) | No | 
+|``subroutes`` | A list of subroutes. | [[]subroute](#virtualserverroutesubroute) | No | 
 |``ingressClassName`` | Specifies which Ingress controller must handle the VirtualServerRoute resource. Must be the same as the ``ingressClassName`` of the VirtualServer that references this resource. | ``string``_ | No | 
 {{% /table %}} 
 
@@ -297,12 +262,12 @@ tls:
 |``next-upstream-timeout`` | The time during which a request can be passed to the next upstream server. See the [proxy_next_upstream_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_timeout) directive. The ``0`` value turns off the time limit. The default is ``0``. | ``string`` | No | 
 |``next-upstream-tries`` | The number of possible tries for passing a request to the next upstream server. See the [proxy_next_upstream_tries](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_tries) directive. The ``0`` value turns off this limit. The default is ``0``. | ``int`` | No | 
 |``client-max-body-size`` | Sets the maximum allowed size of the client request body. See the [client_max_body_size](https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size) directive. The default is set in the ``client-max-body-size`` ConfigMap key. | ``string`` | No | 
-|``tls`` | The TLS configuration for the Upstream. | [tls](#upstream-tls) | No | 
-|``healthCheck`` | The health check configuration for the Upstream. See the [health_check](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [healthcheck](#upstream-healthcheck) | No | 
+|``tls`` | The TLS configuration for the Upstream. | [tls](#upstreamtls) | No | 
+|``healthCheck`` | The health check configuration for the Upstream. See the [health_check](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [healthcheck](#upstreamhealthcheck) | No | 
 |``slow-start`` | The slow start allows an upstream server to gradually recover its weight from 0 to its nominal value after it has been recovered or became available or when the server becomes available after a period of time it was considered unavailable. By default, the slow start is disabled. See the [slow_start](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#slow_start) parameter of the server directive. Note: The parameter cannot be used along with the ``random``\ , ``hash`` or ``ip_hash`` load balancing methods and will be ignored. | ``string`` | No | 
-|``queue`` | Configures a queue for an upstream. A client request will be placed into the queue if an upstream server cannot be selected immediately while processing the request. By default, no queue is configured. Note: this feature is supported only in NGINX Plus. | [queue](#upstream-queue) | No | 
+|``queue`` | Configures a queue for an upstream. A client request will be placed into the queue if an upstream server cannot be selected immediately while processing the request. By default, no queue is configured. Note: this feature is supported only in NGINX Plus. | [queue](#upstreamqueue) | No | 
 |``buffering`` | Enables buffering of responses from the upstream server. See the [proxy_buffering](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering) directive. The default is set in the ``proxy-buffering`` ConfigMap key. | ``boolean`` | No | 
-|``buffers`` | Configures the buffers used for reading a response from the upstream server for a single connection. | [buffers](#upstream-buffers) | No | 
+|``buffers`` | Configures the buffers used for reading a response from the upstream server for a single connection. | [buffers](#upstreambuffers) | No | 
 |``buffer-size`` | Sets the size of the buffer used for reading the first part of a response received from the upstream server. See the [proxy_buffer_size](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) directive. The default is set in the ``proxy-buffer-size`` ConfigMap key. | ``string`` | No | 
 |``ntlm`` | Allows proxying requests with NTLM Authentication. See the [ntlm](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#ntlm) directive. In order for NTLM authentication to work, it is necessary to enable keepalive connections to upstream servers using the ``keepalive`` field. Note: this feature is supported only in NGINX Plus.| ``boolean`` | No |
 {{% /table %}} 
@@ -390,7 +355,7 @@ Note: This feature is supported only in NGINX Plus.
 |``fails`` | The number of consecutive failed health checks of a particular upstream server after which this server will be considered unhealthy. The default is ``1``. | ``integer`` | No | 
 |``passes`` | The number of consecutive passed health checks of a particular upstream server after which the server will be considered healthy. The default is ``1``. | ``integer`` | No | 
 |``port`` | The port used for health check requests. By default, the port of the upstream is used. Note: in contrast with the port of the upstream, this port is not a service port, but a port of a pod. | ``integer`` | No | 
-|``tls`` | The TLS configuration used for health check requests. By default, the ``tls`` field of the upstream is used. | [upstream.tls](#upstream-tls) | No | 
+|``tls`` | The TLS configuration used for health check requests. By default, the ``tls`` field of the upstream is used. | [upstream.tls](#upstreamtls) | No | 
 |``connect-timeout`` | The timeout for establishing a connection with an upstream server. By default, the ``connect-timeout`` of the upstream is used. | ``string`` | No | 
 |``read-timeout`` | The timeout for reading a response from an upstream server. By default, the ``read-timeout`` of the upstream is used. | ``string`` | No | 
 |``send-timeout`` | The timeout for transmitting a request to an upstream server. By default, the ``send-timeout`` of the upstream is used. | ``string`` | No | 
@@ -463,9 +428,9 @@ In the example below, client requests are passed to an upstream `coffee`:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``pass`` | Passes requests to an upstream. The upstream with that name must be defined in the resource. | ``string`` | No | 
-|``redirect`` | Redirects requests to a provided URL. | [action.redirect](#action-redirect) | No | 
-|``return`` | Returns a preconfigured response. | [action.return](#action-return) | No | 
-|``proxy`` | Passes requests to an upstream with the ability to modify the request/response (for example, rewrite the URI or modify the headers). | [action.proxy](#action-proxy) | No | 
+|``redirect`` | Redirects requests to a provided URL. | [action.redirect](#actionredirect) | No | 
+|``return`` | Returns a preconfigured response. | [action.return](#actionreturn) | No | 
+|``proxy`` | Passes requests to an upstream with the ability to modify the request/response (for example, rewrite the URI or modify the headers). | [action.proxy](#actionproxy) | No | 
 {{% /table %}} 
 
 \* -- an action must include exactly one of the following: `pass`, `redirect`, `return` or `proxy`.
@@ -546,8 +511,8 @@ proxy:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``upstream`` | The name of the upstream which the requests will be proxied to. The upstream with that name must be defined in the resource. | ``string`` | Yes | 
-|``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#action-proxy-requestheaders) | No | 
-|``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#action-proxy-responseheaders) | No | 
+|``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#actionproxyrequestheaders) | No | 
+|``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#actionproxyresponseheaders) | No | 
 |``rewritePath`` | The rewritten URI. If the route path is a regular expression (starts with ~), the rewritePath can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.0/examples-of-custom-resources/rewrites) example. | ``string`` | No | 
 {{% /table %}} 
 
@@ -559,7 +524,7 @@ The RequestHeaders field modifies the headers of the request to the proxied upst
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``pass`` | Passes the original request headers to the proxied upstream server. See the [proxy_pass_request_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_request_headers) directive for more information. Default is true. | ``bool`` | No | 
-|``set`` | Allows redefining or appending fields to present request headers passed to the proxied upstream servers. See the [proxy_set_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) directive for more information. | [[]header](#action-proxy-requestheaders-set-header) | No | 
+|``set`` | Allows redefining or appending fields to present request headers passed to the proxied upstream servers. See the [proxy_set_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) directive for more information. | [[]header](#actionproxyrequestheaderssetheader) | No | 
 {{% /table %}} 
 
 ### Action.Proxy.RequestHeaders.Set.Header
@@ -747,8 +712,8 @@ errorPages:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``codes`` | A list of error status codes. | ``[]int`` | Yes | 
-|``redirect`` | The redirect action for the given status codes. | [errorPage.Redirect](#errorpage-redirect) | No | 
-|``return`` | The canned response action for the given status codes. | [errorPage.Return](#errorpage-return) | No | 
+|``redirect`` | The redirect action for the given status codes. | [errorPage.Redirect](#errorpageredirect) | No | 
+|``return`` | The canned response action for the given status codes. | [errorPage.Return](#errorpagereturn) | No | 
 {{% /table %}} 
 
 \* -- an errorPage must include exactly one of the following: `return` or `redirect`.
@@ -797,7 +762,7 @@ return:
 |``code`` | The status code of the response. The default is the status code of the original response. | ``int`` | No | 
 |``type`` | The MIME type of the response. The default is ``text/html``. | ``string`` | No | 
 |``body`` | The body of the response. Supported NGINX variable: ``$upstream_status`` \ . Variables must be enclosed in curly braces. For example: ``${upstream_status}``. | ``string`` | Yes | 
-|``headers`` | The custom headers of the response. | [errorPage.Return.Header](#errorpage-return-header) | No | 
+|``headers`` | The custom headers of the response. | [errorPage.Return.Header](#errorpagereturnheader) | No | 
 {{% /table %}} 
 
 ### ErrorPage.Return.Header

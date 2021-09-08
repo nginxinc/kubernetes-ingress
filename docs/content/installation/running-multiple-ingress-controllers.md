@@ -29,7 +29,7 @@ The smooth coexistence of multiple Ingress Controllers in one cluster is provide
 The default Ingress class of NGINX Ingress Controller is `nginx`, which means that it only handles configuration resources with the `class` set to `nginx`. You can customize the class through the `-ingress-class` command-line argument.
 
 **Notes**: 
-* If the class is not set in an Ingress resource, Kubernetes will set it to the class of the default Ingress Controller. To make the Ingress Controller the default one, the `ingressclass.kubernetes.io/is-default-class` must be set on the IngressClass resource. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](/nginx-ingress-controller/installation/installation-with-manifests/#create-common-resources) section.
+* If the class is not set in an Ingress resource, Kubernetes will set it to the class of the default Ingress Controller. To make the Ingress Controller the default one, the `ingressclass.kubernetes.io/is-default-class` must be set on the IngressClass resource. See Step 3 *Create an IngressClass resource* of the [Create Common Resources](/nginx-ingress-controller/installation/installation-with-manifests/#2-create-common-resources) section.
 * For VirtualServer, VirtualServerRoute, Policy and TransportServer resources the Ingress Controller will always handle resources with an empty class.
 
 ## Running NGINX Ingress Controller and Another Ingress Controller
