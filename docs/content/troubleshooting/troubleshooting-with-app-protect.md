@@ -30,7 +30,7 @@ The table below categorizes some potential problems with the Ingress Controller 
 
 ### Check the Ingress Controller and App Protect logs
 
-App Protect logs are part of the Ingress Controller logs when the module is enabled. To check the Ingress Controller logs, follow the steps of [Checking the Ingress Controller Logs](/nginx-ingress-controller/troubleshooting/#checking-the-ingress-controller-logs) of the Troubleshooting guide.
+App Protect logs are part of the Ingress Controller logs when the module is enabled. To check the Ingress Controller logs, follow the steps of [Checking the Ingress Controller Logs](/troubleshooting/troubleshoot-ingress-controller/#checking-the-ingress-controller-logs) of the Troubleshooting guide.
 
 For App Protect specific logs, look for messages starting with `APP_PROTECT`, for example:
 ```
@@ -39,7 +39,7 @@ For App Protect specific logs, look for messages starting with `APP_PROTECT`, fo
 
 ### Check events of an Ingress Resource
 
-Follow the steps of [Checking the Events of an Ingress Resource](/troubleshooting/#checking-the-events-of-an-ingress-resource).
+Follow the steps of [Checking the Events of an Ingress Resource](/troubleshooting/troubleshoot-ingress-controller/#checking-the-events-of-an-ingress-resource).
 
 ### Check events of APLogConf
 
@@ -99,7 +99,7 @@ curl -w '%{time_total}' http://192.168.100.100/resources/headersettings.txt
 
 ## Run App Protect in Debug Mode
 
-When you set the Ingress Controller to use debug mode, the setting also applies to the App Protect module.  See  [Running NGINX in the Debug Mode](/nginx-ingress-controller/troubleshooting/#running-nginx-in-the-debug-mode) for instructions.
+When you set the Ingress Controller to use debug mode, the setting also applies to the App Protect module.  See  [Running NGINX in the Debug Mode](/troubleshooting/troubleshoot-ingress-controller/#running-nginx-in-the-debug-mode) for instructions.
 
 ## Known Issues
 

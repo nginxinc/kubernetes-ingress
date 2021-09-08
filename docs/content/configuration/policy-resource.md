@@ -14,35 +14,6 @@ The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/co
 
 This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v1.12.0/examples-of-custom-resources/access-control).
 
-## Contents
-
-- [Policy Resource](#policy-resource)
-  - [Contents](#contents)
-  - [Prerequisites](#prerequisites)
-  - [Policy Specification](#policy-specification)
-    - [AccessControl](#accesscontrol)
-      - [AccessControl Merging Behavior](#accesscontrol-merging-behavior)
-    - [RateLimit](#ratelimit)
-      - [RateLimit Merging Behavior](#ratelimit-merging-behavior)
-    - [JWT](#jwt)
-      - [JWT Merging Behavior](#jwt-merging-behavior)
-    - [IngressMTLS](#ingressmtls)
-      - [IngressMTLS Merging Behavior](#ingressmtls-merging-behavior)
-    - [EgressMTLS](#egressmtls)
-      - [EgressMTLS Merging Behavior](#egressmtls-merging-behavior)
-    - [OIDC](#oidc)
-      - [Prerequisites](#prerequisites-1)
-      - [Limitations](#limitations)
-      - [OIDC Merging Behavior](#oidc-merging-behavior)
-  - [Using Policy](#using-policy)
-    - [WAF](#waf)
-      - [WAF Merging Behavior](#waf-merging-behavior)
-    - [Applying Policies](#applying-policies)
-    - [Invalid Policies](#invalid-policies)
-    - [Validation](#validation)
-      - [Structural Validation](#structural-validation)
-      - [Comprehensive Validation](#comprehensive-validation)
-
 ## Prerequisites
 
 Policies work together with [VirtualServer and VirtualServerRoute resources](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/), which you need to create separately.
@@ -190,7 +161,7 @@ action:
       - name: alg
         value: ${jwt_header_alg}
 ```
-We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of two headers that NGINX will pass to the upstream servers.
+We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#actionproxy) to set the values of two headers that NGINX will pass to the upstream servers.
 
 The value of the `${jwt_claim_user}` variable is the `user` claim of a JWT. For other claims, use `${jwt_claim_name}`, where `name` is the name of the claim. Note that nested claims and claims that include a period (`.`) are not supported. Similarly, use `${jwt_header_name}` where `name` is the name of a header. In our example, we use the `alg` header.
 
@@ -230,8 +201,8 @@ ingressMTLS:
 ```
 
 A VirtualServer that references an IngressMTLS policy must:
-* Enable [TLS termination](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-tls).
-* Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route `](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-route) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute-subroute).
+* Enable [TLS termination](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualservertls).
+* Reference the policy in the VirtualServer [`spec`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserver-specification). It is not allowed to reference an IngressMTLS policy in a [`route `](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroute) or in a VirtualServerRoute [`subroute`](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#virtualserverroutesubroute).
 
 If the conditions above are not met, NGINX will send the `500` status code to clients.
 
@@ -247,7 +218,7 @@ action:
       - name: client-cert
         value: ${ssl_client_escaped_cert} # client certificate in the PEM format (urlencoded)
 ```
-We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#action-proxy) to set the values of the two headers that NGINX will pass to the upstream servers. See the [list of embedded variables](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#variables) that are supported by the `ngx_http_ssl_module`, which you can use to pass the client certificate details.
+We use the `requestHeaders` of the [Action.Proxy](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#actionproxy) to set the values of the two headers that NGINX will pass to the upstream servers. See the [list of embedded variables](https://nginx.org/en/docs/http/ngx_http_ssl_module.html#variables) that are supported by the `ngx_http_ssl_module`, which you can use to pass the client certificate details.
 
 > Note: The feature is implemented using the NGINX [ngx_http_ssl_module](https://nginx.org/en/docs/http/ngx_http_ssl_module.html).
 
@@ -409,7 +380,7 @@ waf:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``enable`` | Enables NGINX App Protect. | ``bool`` | Yes | 
-|``apPolicy`` | The [App Protect policy](/nginx-ingress-controller/app-protect/configuration/#app-protect-policies/) of the WAF. Accepts an optional namespace. | ``string`` | No | 
+|``apPolicy`` | The [App Protect policy](/nginx-ingress-controller/app-protect/configuration/#app-protect-policies) of the WAF. Accepts an optional namespace. | ``string`` | No | 
 |``securityLog.enable`` | Enables security log. | ``bool`` | No | 
 |``securityLog.apLogConf`` | The [App Protect log conf](/nginx-ingress-controller/app-protect/configuration/#app-protect-logs) resource. Accepts an optional namespace. | ``string`` | No | 
 |``securityLog.logDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No | 
