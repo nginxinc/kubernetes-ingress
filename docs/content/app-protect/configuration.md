@@ -36,7 +36,7 @@ To add any [App Protect policy](/nginx-app-protect/policy/#policy) to an Ingress
 
    > **Note**: The relationship between the Policy JSON and the resource spec is 1:1. If you're defining your resources in YAML, as we do in our examples, you'll need to represent the policy as YAML. The fields must match those in the source JSON exactly in name and level.
 
-  For example, say you want to use the [DataGuard policy](/nginx-app-protect/policy/#data-guard) shown below:
+  For example, say you want to use the [DataGuard policy](/nginx-app-protect/policy/#policy/data-guard) shown below:
 
   ```json
   {
@@ -107,7 +107,7 @@ To add the [App Protect log configurations](/nginx-app-protect/configuration/#se
 
    > **Note**: The fields from the JSON must be presented in the YAML *exactly* the same, in name and level. The Ingress Controller will transform the YAML into a valid JSON App Protect log config.
 
-For example, say you want to [log state changing requests](/nginx-app-protect/troubleshooting/#log-state-changing-requests) for your Ingress resources using App Protect. The App Protect log configuration looks like this:
+For example, say you want to [log state changing requests](/nginx-app-protect/configuration/#security-log-configuration-file) for your Ingress resources using App Protect. The App Protect log configuration looks like this:
 
 ```json
 {
