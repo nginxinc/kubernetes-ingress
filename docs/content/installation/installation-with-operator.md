@@ -33,7 +33,7 @@ spec:
   type: deployment
   image:
     repository: nginx/nginx-ingress
-    tag: 1.12.0
+    tag: 1.12.1
     pullPolicy: Always
   serviceType: NodePort
   nginxPlus: False
