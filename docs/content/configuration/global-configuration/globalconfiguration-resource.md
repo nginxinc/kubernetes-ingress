@@ -14,18 +14,6 @@ The resource supports configuring listeners for TCP and UDP load balancing. List
 
 > **Feature Status**: The GlobalConfiguration resource is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resource specification in the next releases.
 
-## Contents
-
-- [GlobalConfiguration Resource](#globalconfiguration-resource)
-  - [Contents](#contents)
-  - [Prerequisites](#prerequisites)
-  - [GlobalConfiguration Specification](#globalconfiguration-specification)
-    - [Listener](#listener)
-  - [Using GlobalConfiguration](#using-globalconfiguration)
-    - [Validation](#validation)
-      - [Structural Validation](#structural-validation)
-      - [Comprehensive Validation](#comprehensive-validation)
-
 ## Prerequisites
 
 When [installing](/nginx-ingress-controller/installation/installation-with-manifests) the Ingress Controller, you need to reference a GlobalConfiguration resource in the [`-global-configuration`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument. The Ingress Controller only needs one GlobalConfiguration resource.
