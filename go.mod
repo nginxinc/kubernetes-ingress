@@ -3,7 +3,7 @@ module github.com/nginxinc/kubernetes-ingress
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go-v2/config v1.7.0
+	github.com/aws/aws-sdk-go-v2/config v1.8.0
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.5.0
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/golang/glog v1.0.0
