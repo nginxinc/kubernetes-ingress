@@ -371,20 +371,20 @@ waf:
   securityLog:
     enable: true
     apLogConf: "default/logconf"
-    logDest: "syslog:server=127.0.0.1:514"
+    logDest: "syslog:server=syslog-svc.default:514"
 ```
 
 > Note: The feature is implemented using the NGINX Plus [NGINX App Protect Module](https://docs.nginx.com/nginx-app-protect/configuration/).
 
-{{% table %}}
-|Field | Description | Type | Required |
-| ---| ---| ---| --- |
-|``enable`` | Enables NGINX App Protect. | ``bool`` | Yes |
-|``apPolicy`` | The [App Protect policy](/nginx-ingress-controller/app-protect/configuration/#app-protect-policies) of the WAF. Accepts an optional namespace. | ``string`` | No |
-|``securityLog.enable`` | Enables security log. | ``bool`` | No |
-|``securityLog.apLogConf`` | The [App Protect log conf](/nginx-ingress-controller/app-protect/configuration/#app-protect-logs) resource. Accepts an optional namespace. | ``string`` | No |
-|``securityLog.logDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
-{{% /table %}}
+{{% table %}} 
+|Field | Description | Type | Required | 
+| ---| ---| ---| --- | 
+|``enable`` | Enables NGINX App Protect. | ``bool`` | Yes | 
+|``apPolicy`` | The [App Protect policy](/nginx-ingress-controller/app-protect/configuration/#app-protect-policies) of the WAF. Accepts an optional namespace. | ``string`` | No | 
+|``securityLog.enable`` | Enables security log. | ``bool`` | No | 
+|``securityLog.apLogConf`` | The [App Protect log conf](/nginx-ingress-controller/app-protect/configuration/#app-protect-logs) resource. Accepts an optional namespace. | ``string`` | No | 
+|``securityLog.logDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost; fqdn>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No | 
+{{% /table %}} 
 
 #### WAF Merging Behavior
 

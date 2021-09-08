@@ -82,11 +82,11 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
         print("------------------------- Deploy Syslog -----------------------------")
         src_syslog_yaml = f"{TEST_DATA}/appprotect/syslog.yaml"
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
-        print(syslog_ep)
+        syslog_dst = f"syslog-svc.{test_namespace}"
+        print(syslog_dst)
         print("------------------------- Deploy ingress -----------------------------")
         src_ing_yaml = f"{TEST_DATA}/appprotect/grpc/ingress.yaml"
-        create_ingress_with_ap_annotations(kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", f"{syslog_ep}:514")
+        create_ingress_with_ap_annotations(kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", f"{syslog_dst}:514")
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
         wait_before_test(40)
     except Exception as ex:

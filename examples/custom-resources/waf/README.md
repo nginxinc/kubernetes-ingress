@@ -36,13 +36,6 @@ $ kubectl apply -f webapp.yaml
 
 ## Step 3 - Deploy the WAF Policy
 
-1. Update the `logDest` field from `waf.yaml` with the ClusterIP of the syslog service. For example, if the IP is `10.101.21.110`:
-    ```yaml
-    waf:
-        ...
-        logDest: "syslog:server=10.101.21.110:514"
-    ```
-
 1. Create the WAF policy
     ```
     $ kubectl apply -f waf.yaml

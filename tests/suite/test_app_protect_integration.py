@@ -328,13 +328,13 @@ class TestAppProtect:
 
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
 
-        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
+        syslog_dst = f"syslog-svc.{test_namespace}"
 
         # items[-1] because syslog pod is last one to spin-up
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
 
         create_ingress_with_ap_annotations(
-            kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", f"{syslog_ep}:514"
+            kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", f"{syslog_dst}:514"
         )
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 
@@ -401,13 +401,13 @@ class TestAppProtect:
         src_syslog_yaml = f"{TEST_DATA}/appprotect/syslog.yaml"
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
 
-        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
+        syslog_dst = f"syslog-svc.{test_namespace}"
 
         # items[-1] because syslog pod is last one to spin-up
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
 
         create_ingress_with_ap_annotations(
-            kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", f"{syslog_ep}:514"
+            kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", f"{syslog_dst}:514"
         )
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
         print("--------- AppProtect module is enabled with correct policy ---------")
@@ -439,8 +439,8 @@ class TestAppProtect:
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         create_items_from_yaml(kube_apis, src_syslog2_yaml, test_namespace)
 
-        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
-        syslog2_ep = get_service_endpoint(kube_apis, "syslog2-svc", test_namespace)
+        syslog_dst = f"syslog-svc.{test_namespace}"
+        syslog2_dst = f"syslog2-svc.{test_namespace}"
 
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-2].metadata.name
         syslog2_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
@@ -461,7 +461,7 @@ class TestAppProtect:
 
             doc["metadata"]["annotations"][
                 "appprotect.f5.com/app-protect-security-log-destination"
-            ] = f"syslog:server={syslog_ep}:514,syslog:server={syslog2_ep}:514"
+            ] = f"syslog:server={syslog_dst}:514,syslog:server={syslog2_dst}:514"
 
         create_ingress(kube_apis.networking_v1, test_namespace, doc)
 

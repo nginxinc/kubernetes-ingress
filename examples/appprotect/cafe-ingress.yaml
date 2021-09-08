@@ -8,7 +8,7 @@ metadata:
     appprotect.f5.com/app-protect-enable: "True"
     appprotect.f5.com/app-protect-security-log-enable: "True"
     appprotect.f5.com/app-protect-security-log: "default/logconf"
-    appprotect.f5.com/app-protect-security-log-destination: "syslog:server=127.0.0.1:514"
+    appprotect.f5.com/app-protect-security-log-destination: "syslog:server=syslog-svc.default:514"
 spec:
   tls:
   - hosts:

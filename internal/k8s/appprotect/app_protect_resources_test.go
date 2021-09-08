@@ -315,13 +315,13 @@ func TestValidateAppProtectLogConf(t *testing.T) {
 
 func TestValidateAppProtectLogDestinationAnnotation(t *testing.T) {
 	// Positive test cases
-	posDstAntns := []string{"stderr", "syslog:server=localhost:9000", "syslog:server=10.1.1.2:9000", "/var/log/ap.log"}
+	posDstAntns := []string{"stderr", "syslog:server=localhost:9000", "syslog:server=10.1.1.2:9000", "/var/log/ap.log", "syslog:server=my-syslog-server.my-namespace:515"}
 
 	// Negative test cases item, expected error message
 	negDstAntns := [][]string{
 		{"stdout", "Log Destination did not follow format"},
 		{"syslog:server=localhost:99999", "not a valid port number"},
-		{"syslog:server=999.99.99.99:5678", "is not a valid ip address"},
+		{"syslog:server=mysyslog-server:999", "not a valid ip address"},
 	}
 
 	for _, tCase := range posDstAntns {

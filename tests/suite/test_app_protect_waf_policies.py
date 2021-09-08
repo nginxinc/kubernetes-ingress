@@ -325,7 +325,7 @@ class TestAppProtectWAFPolicyVS:
         src_syslog_yaml = f"{TEST_DATA}/ap-waf/syslog.yaml"
         log_loc = f"/var/log/messages"
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
+        syslog_dst = f"syslog-svc.{test_namespace}"
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
         print(f"Create waf policy")
         create_ap_waf_policy_from_yaml(
@@ -337,7 +337,7 @@ class TestAppProtectWAFPolicyVS:
             True,
             ap_pol_name,
             log_name,
-            f"syslog:server={syslog_ep}:514",
+            f"syslog:server={syslog_dst}:514",
         )
         wait_before_test()
         print(f"Patch vs with policy: {waf_spec_vs_src}")
