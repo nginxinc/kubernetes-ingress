@@ -44,22 +44,22 @@ jobs:
                 color: 'danger',
                 fields: [{
                   title: 'Commit',
-                  value: '<https://github.com/${{ github.repository }}/commit/${{ github.event.workflow_run.head_commit.id }}|${{ github.event.workflow_run.head_commit.message }}>',
+                  value: `<https://github.com/${{ github.repository }}/commit/${{ github.event.workflow_run.head_commit.id }}|${{ github.event.workflow_run.head_commit.message }}>`,
                   short: true
                 },
                 {
-                  title: 'Job failed',
+                  title: 'Failed Job',
                   value: `<${{ steps.vars.outputs.url }}|${{ steps.vars.outputs.name }}>`,
                   short: true
                 },
                 {
                   title: 'Author',
-                  value: '${{ github.event.workflow_run.head_commit.author.name }}',
+                  value: `${{ github.event.workflow_run.head_commit.author.name }}`,
                   short: true
                 },
                 {
                   title: 'Pipeline URL',
-                  value: '<https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}|${{ github.event.workflow_run.id }}>',
+                  value: `<https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}|${{ github.event.workflow_run.id }}>`,
                   short: true
                 }]
               }]
