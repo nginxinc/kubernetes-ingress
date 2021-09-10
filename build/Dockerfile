@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=r24
+ARG NGINX_PLUS_VERSION=r25
 ARG UBI_VERSION=8
 ARG FILES=
 
@@ -23,13 +23,15 @@ RUN apk add --no-cache libcap \
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.13 as alpine-plus
+FROM alpine:3.14 as alpine-plus
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	# test R25
+	&& sed -i 's|pkgs|pkgs-test|g' /etc/apk/repositories \
 	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r}
 
 
@@ -37,6 +39,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 FROM debian:buster-slim AS debian-plus
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
+ARG BUILD_OS
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
@@ -47,6 +50,9 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& curl -sSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent  \"k8s-ic-$IC_VERSION-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
 	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/debian buster nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
+	# test R25
+	&& if [[ "${BUILD_OS}" != "debian-plus-nap" ]]; then sed -i 's|pkgs|pkgs-test|g' /etc/apt/apt.conf.d/90pkgs-nginx; fi \
+	&& if [[ "${BUILD_OS}" != "debian-plus-nap" ]]; then sed -i 's|pkgs|pkgs-test|g' /etc/apt/sources.list.d/nginx-plus.list; fi \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y \
 	nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION} \
@@ -124,11 +130,14 @@ RUN --mount=type=bind,from=debian,source=/nginx_version,target=/tmp/nginx_versio
 ############################################# Base image for UBI with NGINX Plus #############################################
 FROM ubi-base AS ubi-plus
 ARG NGINX_PLUS_VERSION
+ARG BUILD_OS
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
 	&& curl -sS "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
+	# test R25
+	&& if [[ "${BUILD_OS}" = "ubi-plus" ]]; then sed -i 's|pkgs|pkgs-test|g' /etc/yum.repos.d/nginx-plus.repo; fi \
 	&& microdnf --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION}
 
 
