@@ -38,8 +38,8 @@
 {{ end }}
 
 
-{{/* set custom CSP required for Dev Portal to load styles and scripts */}}
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://code.jquery.com/ https://cdn.jsdelivr.net/ https://static.cloud.coveo.com https://kit.fontawesome.com/ https://*.netlify.app {{ if in .Params.doctypes "devportal" }} 'unsafe-eval' 'unsafe-inline' {{end}}; worker-src 'self' blob:">
+{{/* set custom CSP to load styles and scripts with special handling for Dev Portal page(s) */}}
+<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://code.jquery.com/ https://cdn.jsdelivr.net/ https://static.cloud.coveo.com https://kit.fontawesome.com/ https://*.netlify.app https://gist.github.com 'sha512-581d121aee77fc285a73858b459b455fbc2aa08f3d5bb3a6e5e89bf5287346d9deed9529700a5a821590e0b7343b176c82f66676b9f5e65bba0646b22ba06105' {{ if in .Params.doctypes "devportal" }} 'unsafe-eval' 'unsafe-inline' {{end}}; worker-src 'self' blob:">
 {{/* end */}}
 
 <!-- build metadata -->

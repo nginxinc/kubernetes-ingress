@@ -568,7 +568,7 @@ code {
   }
   
 a>code:hover {
-    font-weight: 600;
+    color: var(--nginx-green);
 }
   
 .min-page-height {
@@ -678,11 +678,10 @@ button, input[type=button], input[type=reset], input[type=submit] {
 #TableOfContents a:hover {
     color: inherit;
     background-color: transparent;
-    font-weight: 600;
+    color: var(--nginx-green);
 }
 
 main a:hover {
-    font-weight: 600;
     color: var(--nginx-green);
 }
 
