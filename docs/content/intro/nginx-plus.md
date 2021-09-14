@@ -17,9 +17,9 @@ Below are the key characteristics that NGINX Plus brings on top of NGINX into th
 
 * *Real-time metrics* A number metrics about how NGINX Plus and applications are performing are available through the API or a [built-in dashboard](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/status-page/). Optionally, the metrics can be exported to [Prometheus](https://docs.nginx.com/nginx-ingress-controller/logging-and-monitoring/prometheus/).
 * *Additional load balancing methods*. The following additional methods are available: `least_time` and `random two least_time` and their derivatives. See the [documentation](https://nginx.org/en/docs/http/ngx_http_upstream_module.html) for the complete list of load balancing methods.
-* *Session persistence* The *sticky cookie* method is available. See the [Session Persistence](../examples/session-persistence) example.
-* *Active health checks*. See the [Support for Active Health Checks](../examples/health-checks) example.
-* *JWT validation*. See the [Support for JSON Web Tokens (JWTs)](../examples/jwt) example.
+* *Session persistence* The *sticky cookie* method is available. See the [Session Persistence](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/session-persistence) example.
+* *Active health checks*. See the [Support for Active Health Checks](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/health-checks) example.
+* *JWT validation*. See the [Support for JSON Web Tokens (JWTs)](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/jwt) example.
     
 See [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/) and [Annotations](https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/) doc for the complete list of available NGINX Plus features. Note that such features are configured through annotations that start with `nginx.com`, for example, `nginx.com/health-checks`.
 
