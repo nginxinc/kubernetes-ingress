@@ -9,7 +9,7 @@ toc: true
 
 The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples-of-custom-resources) folder in our GitHub repo.
+This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v1.13.0/examples-of-custom-resources) folder in our GitHub repo.
 
 > **Feature Status**: The TransportServer resource is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resource specification in the next releases.
 
@@ -378,4 +378,4 @@ The [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/con
 ## Limitations
 
 The TransportServer resource is a preview feature. Currently, it comes with the following limitation:
-* When using TLS Passthrough, it is not possible to configure [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/proxy-protocol) for port 443 both for regular HTTPS and TLS Passthrough traffic.
+* When using TLS Passthrough, it is not possible to configure [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v1.13.0/examples/proxy-protocol) for port 443 both for regular HTTPS and TLS Passthrough traffic.

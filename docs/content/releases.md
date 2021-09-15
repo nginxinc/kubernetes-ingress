@@ -6,6 +6,84 @@ doctypes: ["concept"]
 toc: true
 ---
 
+## NGINX Ingress Controller 1.13.0
+
+28 September 2021
+
+OVERVIEW:
+
+Release 1.13.0 includes:
+* *Support for Ingress networking.k8s.io/v1*. Kubernetes 1.22 removes support for networking.k8s.io/v1beta1. To support Kubernetes 1.22, NGINX Ingress Controller 1.13 is also compatible with only the networking.k8s.io/v1 version of the Ingress and IngressClass resources.  This has the following implications:
+  1. The minimum supported version of Kubernetes is now 1.19. For older Kubernetes versions, use the 1.12.x release of the Ingress Controller.
+  2. For Kubernetes versions 1.19-1.21, you can continue using the `networking.k8s.io/v1beta1` of the Ingress and IngressClass resources.
+  3. For Kubernetes 1.22, you need to migrate your Ingress and IngressClass resources to `networking.k8s.io/v1`.  Additionally, if you're using the deprecated `kubernetes.io/ingress.class` annotation in your Ingress resources, it is recommended to switch to the `ingressClassName` field instead.
+     
+     We migrated all our documentation and examples to use `networking.k8s.io/v1` and the `ingressClassName` field of the Ingress resource.
+* *Scalability improvements*. We improved the time for an Ingress Controller pod to become ready and start receiving traffic. This is especially noticeable when you have hundreds of Ingress or other configuration resources like VirtualServers: instead of several minutes or sometimes hours, a pod will become ready within a few minutes.  
+* *Documentation improvements* We changed the look and feel of our documentation at https://docs.nginx.com/nginx-ingress-controller as well as the underlying publishing technology, which will allow us to bring even more improvements in the next releases.
+* *Upgrade path for k8s.nginx.org/v1alpha1 Policy resource* If you’re running release 1.9.0 and using the k8s.nginx.org/v1alpha1 Policy, the Ingress Controller now supports an upgrade path from v1alpha1 to v1 Policy version without downtime. See UPDATING POLICIES section below.
+
+You will find the complete changelog for release 1.13.0, including bug fixes, improvements, and changes below.
+
+FEATURES:
+* [1908](https://github.com/nginxinc/kubernetes-ingress/pull/1908) Add NTLM support to VirtualServer and VirtualServerRoute upstreams.
+* [1850](https://github.com/nginxinc/kubernetes-ingress/pull/1850) Support Ingress and IngressClass v1.
+* [1746](https://github.com/nginxinc/kubernetes-ingress/pull/1746) Add ingressClassName field to Policy.
+
+IMPROVEMENTS:
+* [1956](https://github.com/nginxinc/kubernetes-ingress/pull/1956) Add v1alpha1 version back to policy CRD.
+* [1907](https://github.com/nginxinc/kubernetes-ingress/pull/1907) Remove libs compilation for OpenTracing in Dockerfile; add Zipkin and Datadog in addition to the already supported Jaeger tracer; additionally, for NGINX we now publish a Docker image with the tracers and the OpenTracing module on DockerHub: `nginx-ic/nginx-plus-ingress:1.12.0-ot`. Also thanks to [MatyRi](https://github.com/MatyRi) for upgrading OpenTracing in [1883](https://github.com/nginxinc/kubernetes-ingress/pull/1883).
+* [1788](https://github.com/nginxinc/kubernetes-ingress/pull/1788) Reload only once during the start. This significantly reduces the time it takes for an Ingress Controller pod to become ready when hundreds of Ingress or other supported resources are created in the cluster.
+
+FIXES:
+* [1926](https://github.com/nginxinc/kubernetes-ingress/pull/1926) Fix increased IC pod startup time when hundreds of VirtualServerRoutes are used
+* [1712](https://github.com/nginxinc/kubernetes-ingress/pull/1712) Allow `make` to build image when .git directory is missing.
+
+DOCUMENTATION IMPROVEMENTS:
+* [1932](https://github.com/nginxinc/kubernetes-ingress/pull/1932) Add IAM instructions for NGINX Plus AWS Marketplace images.
+* [1927](https://github.com/nginxinc/kubernetes-ingress/pull/1927) Fix function name comments typo. Thanks to [Sven Nebel](https://github.com/snebel29).
+* [1898](https://github.com/nginxinc/kubernetes-ingress/pull/1898) Add instructions for configuring MyF5 JWT as a Docker registry secret for the F5 Container registry for NGINX Plus images.
+* [1851](https://github.com/nginxinc/kubernetes-ingress/pull/1851) Update docs and examples to use networking.k8s.io/v1.
+* [1765](https://github.com/nginxinc/kubernetes-ingress/pull/1765) Create documentation for pulling NGINX Plus images from the F5 Container registry.
+* [1740](https://github.com/nginxinc/kubernetes-ingress/pull/1740) Publish docs using Hugo and Netlify.
+* [1702](https://github.com/nginxinc/kubernetes-ingress/pull/1702) Add security recommendations documentation.
+
+HELM CHART:
+* The version of the helm chart is now 0.11.0.
+* Add new parameters to the Chart: `controller.pod.extraLabels`. Added in [1884](https://github.com/nginxinc/kubernetes-ingress/pull/1884).
+
+CHANGES:
+* [1855](https://github.com/nginxinc/kubernetes-ingress/pull/1855) Update minimum Kubernetes version to 1.19; remove the `-use-ingress-class-only` command-line argument, which doesn't work with Kubernetes >= 1.19.
+* [1721](https://github.com/nginxinc/kubernetes-ingress/pull/1721) Increase default reload timeout to 60s: the Ingress Controller will wait for 60s for NGINX to start or reload. Previously, the default was 4 seconds.
+* Update NGINX Plus version to R25. **Note**: images with NGINX App Protect will continue to use R24 until App Protect 3.6 is released.
+* Update NGINX version to 1.21.3.
+
+UPGRADE:
+* For NGINX, use the 1.13.0 image from our DockerHub.
+* For NGINX Plus, use the 1.13.0 from the F5 Container registry or build your own image using the 1.13.0 source code.
+* For Helm, use version 0.11.0 of the chart.
+
+See the complete list of supported images for NGINX and NGINX Plus on the [Technical Specifications](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-docker-images) page.
+
+UPDATING POLICIES
+
+This section is only relevant if you’re running release 1.9.0 and planning to upgrade to release 1.13.0.
+
+Release 1.10 removed the `k8s.nginx.org/v1alpha1 version` of the Policy resource and introduced the `k8s.nginx.org/v1` version. This means that to upgrade to release 1.10 users had to re-create v1alpha1 Policies with the v1 version, which caused downtime for their applications. Release 1.13.0 brings back the support for the v1alpha1 Policy, which makes it possible to upgrade from 1.9.0 to 1.13.0 release without causing downtime:
+
+* If the Policy is marked as a preview feature in the [documentation](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/), make sure the -enable-preview-policies command-line argument is set in 1.13.0 Ingress Controller.
+* During the upgrade, the existing Policies will not be removed.
+* After the upgrade, make sure to update the Policy manifests to k8s.nginx.org/v1 version.
+
+Please also read the [release 1.10 changelog](https://docs.nginx.com/nginx-ingress-controller/releases/#nginx-ingress-controller-1100) for the instructions on how to update Secret resources, which is also necessary since some of the Policies reference Secrets.
+
+Note that 1.14.0 will remove the v1alpha1 Policy.
+
+SUPPORTED PLATFORMS:
+
+We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.22.
+
+
 ## NGINX Ingress Controller 1.12.1
 
 8 September 2021

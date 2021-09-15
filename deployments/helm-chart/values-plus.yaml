@@ -2,4 +2,4 @@ controller:
   nginxplus: true
   image:
     repository: nginx-plus-ingress
-    tag: "1.12.1"
+    tag: "1.13.0"

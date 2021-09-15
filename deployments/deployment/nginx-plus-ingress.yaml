@@ -19,7 +19,7 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       containers:
-      - image: nginx-plus-ingress:1.12.1
+      - image: nginx-plus-ingress:1.13.0
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
