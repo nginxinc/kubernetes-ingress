@@ -1,10 +1,10 @@
 {{ define "main" }}
 <div class="row flex-xl-nowrap">
-  <nav class="sidenav overflow-auto col-md-3 d-none d-xl-block d-print-none lt-gray-border-right">
+  <nav class="sidenav overflow-auto col-md-3 d-none d-xl-block d-print-none align-top">
     {{ partial "sidebar.html" . }}
   </nav>
   
-  <main class="content col-xl-6 d-block" role="main">
+  <main class="content col-xl-6 d-block align-top" role="main">
     
     <h1>{{ .Title }}</h1>
 
@@ -20,7 +20,7 @@
     
   </main>
   {{ if and (gt .WordCount 200 ) (.Params.toc) }}
-  <div class="col-md-3 d-none d-xl-block d-print-none nginx-toc content">
+  <div class="col-md-3 d-none d-xl-block d-print-none nginx-toc align-top">
   {{ partial "toc.html" . }}
   </div>
   {{ end }}

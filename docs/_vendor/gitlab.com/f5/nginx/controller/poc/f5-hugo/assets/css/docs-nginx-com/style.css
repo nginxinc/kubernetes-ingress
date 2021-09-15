@@ -437,7 +437,9 @@ input[type=url],
 textarea {
     color: #666;
     border: 1px solid #ccc;
-    border-radius: 3px
+    border-radius: 2px;
+    font-size: inherit;
+    font-weight: normal;
 }
 input[type=email]:focus,
 input[type=password]:focus,
@@ -452,11 +454,11 @@ input[type=password],
 input[type=search],
 input[type=text],
 input[type=url] {
-    padding: 3px
+    padding: 4px
 }
 textarea {
     overflow: auto;
-    padding-left: 3px;
+    padding-left: 4px;
     vertical-align: top;
     width: 100%
 }
@@ -1784,9 +1786,6 @@ input.pull-left {
     border-color: #666;
 }
 
-.footer-social li a img {
-    width: 26px;
-}
 
 @media screen and (min-width: 801px) {
     .nginx-doc-sidebar{
