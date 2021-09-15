@@ -159,7 +159,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image containing libs for Opentracing #############################################
-FROM opentracing/nginx-opentracing:nginx-1.21.1 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.21.3 as opentracing-lib
 
 
 ############################################# Build image for Opentracing #############################################
