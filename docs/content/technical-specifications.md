@@ -26,9 +26,9 @@ All images include NGINX 1.21.3.
 {{% table %}}
 |Name | Base image | Third-party modules | DockerHub image | Architectures |
 | ---| ---| ---| --- | --- |
-|Alpine-based image | ``nginx:1.21.1-alpine``, which is based on ``alpine:3.14`` |  | ``nginx/nginx-ingress:1.13.0-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image | ``nginx:1.21.1``, which is based on ``debian:buster-slim`` |  | ``nginx/nginx-ingress:1.13.0`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image with Opentracing | ``nginx:1.21.1``, which is based on ``debian:buster-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:1.13.0-ot`` | amd64 |
+|Alpine-based image | ``nginx:1.21.3-alpine``, which is based on ``alpine:3.14`` |  | ``nginx/nginx-ingress:1.13.0-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image | ``nginx:1.21.3``, which is based on ``debian:buster-slim`` |  | ``nginx/nginx-ingress:1.13.0`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image with Opentracing | ``nginx:1.21.3``, which is based on ``debian:buster-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:1.13.0-ot`` | amd64 |
 |Ubi-based image | ``redhat/ubi8-minimal`` |  | ``nginx/nginx-ingress:1.13.0-ubi`` | arm64, amd64 |
 {{% /table %}}
 
@@ -43,7 +43,7 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 {{% table %}}
 |Name | Base image | Third-party modules | F5 Container Registry Image |
 | ---| ---| --- | --- |
-|Alpine-based image | ``alpine:3.13`` |  | `nginx-ic/nginx-plus-ingress:1.13.0-alpine` |
+|Alpine-based image | ``alpine:3.14`` |  | `nginx-ic/nginx-plus-ingress:1.13.0-alpine` |
 |Debian-based image | ``debian:buster-slim`` |  | `nginx-ic/nginx-plus-ingress:1.13.0` |
 |Debian-based image with Opentracing | ``debian:buster-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:1.13.0-ot` |
 |Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module | `nginx-ic-nap/nginx-plus-ingress:1.13.0` |
