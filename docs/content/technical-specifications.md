@@ -21,7 +21,7 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX
 
-All images include NGINX 1.21.1.
+All images include NGINX 1.21.3.
 
 {{% table %}}
 |Name | Base image | Third-party modules | DockerHub image | Architectures |
