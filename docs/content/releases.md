@@ -16,7 +16,8 @@ Release 1.13.0 includes:
 * *Support for Ingress networking.k8s.io/v1*. Kubernetes 1.22 removes support for networking.k8s.io/v1beta1. To support Kubernetes 1.22, NGINX Ingress Controller 1.13 is also compatible with only the networking.k8s.io/v1 version of the Ingress and IngressClass resources.  This has the following implications:
   1. The minimum supported version of Kubernetes is now 1.19. For older Kubernetes versions, use the 1.12.x release of the Ingress Controller.
   2. For Kubernetes versions 1.19-1.21, you can continue using the `networking.k8s.io/v1beta1` of the Ingress and IngressClass resources.
-  3. For Kubernetes 1.22, you need to migrate your Ingress and IngressClass resources to `networking.k8s.io/v1`.  Additionally, if you're using the deprecated `kubernetes.io/ingress.class` annotation in your Ingress resources, it is recommended to switch to the `ingressClassName` field instead.
+  3. For Kubernetes 1.22, you need to migrate your Ingress and IngressClass resources to `networking.k8s.io/v1`.  
+  4. If you are using the deprecated `kubernetes.io/ingress.class` annotation in your Ingress resources, it is recommended to switch to the `ingressClassName` field.
      
      We migrated all our documentation and examples to use `networking.k8s.io/v1` and the `ingressClassName` field of the Ingress resource.
 * *Scalability improvements*. We improved the time for an Ingress Controller pod to become ready and start receiving traffic. This is especially noticeable when you have hundreds of Ingress or other configuration resources like VirtualServers: instead of several minutes or sometimes hours, a pod will become ready within a few minutes.  
