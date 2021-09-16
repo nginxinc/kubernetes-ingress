@@ -20,7 +20,7 @@ Release 1.13.0 includes:
   4. If you are using the deprecated `kubernetes.io/ingress.class` annotation in your Ingress resources, it is recommended to switch to the `ingressClassName` field.
      
      We migrated all our documentation and examples to use `networking.k8s.io/v1` and the `ingressClassName` field of the Ingress resource.
-* *Scalability improvements*. We improved the time for an Ingress Controller pod to become ready and start receiving traffic. This is especially noticeable when you have hundreds of Ingress or other configuration resources like VirtualServers: instead of several minutes or sometimes hours, a pod will become ready within a few minutes.  
+* *Scalability improvements*. We improved the time for an Ingress Controller pod to become ready and start receiving traffic. This is especially noticeable when you have hundreds of Ingress or other configuration resources like VirtualServers: instead of several minutes or more in rare cases, a pod will become ready within a few minutes.  
 * *Documentation improvements* We changed the look and feel of our documentation at https://docs.nginx.com/nginx-ingress-controller as well as the underlying publishing technology, which will allow us to bring even more improvements in the next releases.
 * *Upgrade path for k8s.nginx.org/v1alpha1 Policy resource* If you’re running release 1.9.0 and using the k8s.nginx.org/v1alpha1 Policy, the Ingress Controller now supports an upgrade path from v1alpha1 to v1 Policy version without downtime. See UPDATING POLICIES section below.
 
