@@ -67,7 +67,7 @@ autolabeler:
 filter-by-commitish: true
 commitish: master
 template: |
-  *Help make the NGINX Ingress Controller better by participating in our [survey](https://forms.office.com/Pages/ResponsePage.aspx?id=L_093Ttq0UCb4L-DJ9gcUM6Dh1A0cORCorfgZAMdkwJUREhJUFAyM1ZHRzZLSzQyMUlCNFhXVkZENy4u)!*
+  *Help make the NGINX Ingress Controller better by participating in our [survey](https://forms.office.com/Pages/ResponsePage.aspx?id=L_093Ttq0UCb4L-DJ9gcUKLQ7uTJaE1PitM_37KR881UMEs0Rk5PMkYzMTJTWVA0V1hUVTRLUUMyNS4u)!*
 
   ## New in NGINX Ingress Controller v$RESOLVED_VERSION
 
