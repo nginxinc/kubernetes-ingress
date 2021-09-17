@@ -1251,6 +1251,7 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
 
     if check404:
         for _ in range(60):
+            print(f"sending a request to {req_url} with headers {headers}")
             resp = requests.get(req_url, headers=headers, verify=False)
             if resp.status_code != 502 and resp.status_code != 504 and resp.status_code != 404:
                 print(
@@ -1262,6 +1263,7 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
 
     else:
         for _ in range(30):
+            print(f"sending a request to {req_url} with headers {headers}")
             resp = requests.get(req_url, headers=headers, verify=False)
             if resp.status_code != 502 and resp.status_code != 504:
                 print(
