@@ -99,10 +99,17 @@ class TestIngressClassArgs:
         backend_setup,
         expected_responses,
         ingress_controller_prerequisites,
+        ingress_controller_endpoint,
     ):
         """
         Checks for ingressClass behaviour
         """
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+
         for item in ingresses_under_test:
             ensure_response_from_backend(
                 backend_setup.req_url, backend_setup.ingress_hosts[item]
