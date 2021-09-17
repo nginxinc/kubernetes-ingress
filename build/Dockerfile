@@ -32,7 +32,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r} 
+	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r}
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
@@ -141,16 +141,17 @@ ARG NGINX_PLUS_VERSION
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
-	set -x \
-	&& source /tmp/rhel_license \
-	&& curl -sS https://cs.nginx.com/static/files/app-protect-7.repo > /etc/yum.repos.d/app-protect-7.repo \
+	source /tmp/rhel_license \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
-	&& subscription-manager attach --auto \
+	&& subscription-manager attach \
+	&& set -x \
+	&& curl -sS https://cs.nginx.com/static/files/app-protect-7.repo > /etc/yum.repos.d/app-protect-7.repo \
 	&& subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
 	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
 	&& yum clean all \
 	&& yum install -y nginx-plus-module-appprotect-${NGINX_PLUS_VERSION} $(repoquery app-protect-${NGINX_PLUS_VERSION#r}*) app-protect-attack-signatures app-protect-threat-campaigns \
-	&& rm /etc/yum.repos.d/app-protect-7.repo
+	&& rm /etc/yum.repos.d/app-protect-7.repo \
+	&& subscription-manager unregister
 
 # Uncomment the lines below if you want to install a custom CA certificate
 # COPY build/*.crt  /etc/pki/ca-trust/source/anchors/
@@ -158,14 +159,11 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image containing libs for Opentracing #############################################
-FROM opentracing/nginx-opentracing:nginx-1.21.1 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.21.3 as opentracing-lib
 
 
 ############################################# Build image for Opentracing #############################################
 FROM debian as opentracing
-
-RUN apt-get update && apt-get install --no-install-recommends --no-install-suggests -y libcurl3-gnutls \
-	&& rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libopentracing.so* /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
@@ -179,7 +177,7 @@ ARG NGINX_PLUS_VERSION
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y libcurl3-gnutls nginx-plus-module-opentracing-${NGINX_PLUS_VERSION} \
+	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus-module-opentracing-${NGINX_PLUS_VERSION} \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \

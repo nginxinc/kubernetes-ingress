@@ -257,7 +257,7 @@ jobs:
             platforms: linux/arm64,linux/amd64
           - type: opentracing
             suffix: '-ot'
-            platforms: linux/amd64
+            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
