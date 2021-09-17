@@ -90,6 +90,7 @@ runs:
         --html=tests-${{ steps.k8s.outputs.cluster }}.html \
         --self-contained-html \
         --show-ic-logs=yes --profile \
+        --capture=no \
         -m ${{ inputs.marker }}
       working-directory: ./tests
       shell: bash
