@@ -51,8 +51,8 @@ spec:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes | 
-|``tls`` | The TLS termination configuration. | [tls](#virtualservertls | No | 
-|``policies`` | A list of policies. | [[]policy](#virtualserver-policy) | No | 
+|``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No | 
+|``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No | 
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No | 
 |``routes`` | A list of routes. | [[]route](#virtualserver-route) | No | 
 |``ingressClassName`` | Specifies which Ingress controller must handle the VirtualServer resource. | ``string`` | No | 
@@ -73,8 +73,10 @@ redirect:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``secret`` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). If the secret doesn't exist or is invalid, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer. | ``string`` | No | 
-|``redirect`` | The redirect configuration of the TLS for a VirtualServer. | [tls.redirect](#virtualserver-tls-redirect) | No | ### VirtualServer.TLS.Redirect | 
+|``redirect`` | The redirect configuration of the TLS for a VirtualServer. | [tls.redirect](#virtualservertlsredirect) | No | ### VirtualServer.TLS.Redirect | 
 {{% /table %}} 
+
+### VirtualServer.TLS.Redirect
 
 The redirect field configures a TLS redirect for a VirtualServer:
 ```yaml
@@ -96,6 +98,8 @@ The policy field references a [Policy resource](/nginx-ingress-controller/config
 name: access-control
 ```
 
+### VirtualServer.Policy
+
 {{% table %}} 
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
@@ -116,7 +120,7 @@ The route defines rules for matching client requests to actions like passing a r
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``path`` | The path of the route. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix (must start with ``/``\ ) or an exact match (must start with ``=``\ ), the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``. In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all routes of the VirtualServer. Check the [location](https://nginx.org/en/docs/http/ngx_http_core_module.html#location) directive for more information. | ``string`` | Yes | 
-|``policies`` | A list of policies. The policies override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserver-policy) | No | 
+|``policies`` | A list of policies. The policies override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserverpolicy) | No | 
 |``action`` | The default action to perform for a request. | [action](#action) | No | 
 |``splits`` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [[]split](#split) | No | 
 |``matches`` | The matching rules for advanced content-based routing. Requires the default ``action`` or ``splits``.  Unmatched requests will be handled by the default ``action`` or ``splits``. | [matches](#match) | No | 
@@ -203,7 +207,7 @@ action:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``path`` | The path of the subroute. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix, the path must start with the same path as the path of the route of the VirtualServer that references this resource. In the case of an exact or regex match, the path must be the same as the path of the route of the VirtualServer that references this resource. In the case of a prefix or an exact match, the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``.  In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all subroutes of the VirtualServerRoute. | ``string`` | Yes | 
-|``policies`` | A list of policies. The policies override *all* policies defined in the route of the VirtualServer that references this resource. The policies also override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserver-policy) | No | 
+|``policies`` | A list of policies. The policies override *all* policies defined in the route of the VirtualServer that references this resource. The policies also override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserverpolicy) | No | 
 |``action`` | The default action to perform for a request. | [action](#action) | No | 
 |``splits`` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [[]split](#split) | No | 
 |``matches`` | The matching rules for advanced content-based routing. Requires the default ``action`` or ``splits``.  Unmatched requests will be handled by the default ``action`` or ``splits``. | [matches](#match) | No | 
