@@ -38,8 +38,28 @@
 {{ end }}
 
 
-{{/* set custom CSP to load styles and scripts with special handling for Dev Portal page(s) */}}
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://code.jquery.com/ https://cdn.jsdelivr.net/ https://static.cloud.coveo.com https://kit.fontawesome.com/ https://*.netlify.app https://gist.github.com 'sha512-581d121aee77fc285a73858b459b455fbc2aa08f3d5bb3a6e5e89bf5287346d9deed9529700a5a821590e0b7343b176c82f66676b9f5e65bba0646b22ba06105' {{ if in .Params.doctypes "devportal" }} 'unsafe-eval' 'unsafe-inline' {{end}}; worker-src 'self' blob:">
+{{/* set custom CSP to load styles and scripts with special handling for GTM scripts (requires unsafe-inline) and Dev Portal page(s) (requires 'unsafe-eval') */}}
+<meta http-equiv="Content-Security-Policy" content="script-src 
+    'self' 
+    https://code.jquery.com/ 
+    https://cdn.jsdelivr.net/ 
+    https://static.cloud.coveo.com 
+    https://kit.fontawesome.com/ 
+    https://*.netlify.app 
+    https://gist.github.com 
+    https://www.googletagmanager.com/gtm.js
+    https://tag.demandbase.com/pscSDsz4.min.js
+    https://cdn.f5.com
+    https://munchkin.brightfunnel.com/js/build/bf-munchkin.min.js
+    https://www.google-analytics.com/analytics.js
+    https://www.google-analytics.com/plugins/ua/linkid.js
+    https://cdn.bizible.com/scripts/bizible.js
+    https://cdn.bizible.com/xdc.js
+    https://mktg.aa.f5.com/
+    https://consent.trustarc.com/
+    'unsafe-inline'
+    {{ if in .Params.doctypes "devportal" }} 'unsafe-eval' {{end}}; 
+    worker-src 'self' blob:">
 {{/* end */}}
 
 <!-- build metadata -->
