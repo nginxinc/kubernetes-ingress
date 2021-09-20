@@ -12,14 +12,14 @@
         
         {{ range .Site.Sections }}
         <li data-toggle="collapse" class="nginx-toc-link l1" id="accordion-{{.Section | urlize}}">
-            <a class="" data-toggle="collapse" href="#{{.Section | urlize}}" role="button" aria-expanded="false" aria-controls="{{.Section | urlize}}">
+            <a class="" data-toggle="collapse" href="#{{.Section | urlize}}-section" role="button" aria-expanded="false" aria-controls="{{.Section | urlize}}-section">
                 {{ .Title }}
             </a>
         </li>
 
         
             {{ range .Pages }}
-            <div class="collapse" id="{{.Section | urlize }}" >
+            <div class="collapse" id="{{.Section | urlize }}-section" >
                 <ul class="sidebar-ul-border">
                     <li class="nginx-toc-link l2">
                         <a href="{{ .Permalink }}">{{ .Title }}</a>
