@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.8.2
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.5.0
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.5.1
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.6
