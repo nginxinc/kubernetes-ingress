@@ -1,7 +1,7 @@
 PyYAML==5.4.1
 requests==2.26.0
 forcediphttpsadapter==1.0.1
-git+git://github.com/kubernetes-client/python.git@release-19.0#egg=kubernetes
+kubernetes==19.15.0a1
 pytest==6.2.5
 ipaddress==1.0.23 # >= 1.0.17
 cffi==1.14.6
