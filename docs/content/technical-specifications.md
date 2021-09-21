@@ -43,12 +43,12 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 {{% table %}}
 |Name | Base image | Third-party modules | F5 Container Registry Image |
 | ---| ---| --- | --- |
-|Alpine-based image | ``alpine:3.14`` |  | `nginx-ic/nginx-plus-ingress:1.13.0-alpine` |
-|Debian-based image | ``debian:buster-slim`` |  | `nginx-ic/nginx-plus-ingress:1.13.0` |
-|Debian-based image with Opentracing | ``debian:buster-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:1.13.0-ot` |
-|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module | `nginx-ic-nap/nginx-plus-ingress:1.13.0` |
-|Ubi-based image | ``redhat/ubi8-minimal`` |  | `nginx-ic/nginx-plus-ingress:1.13.0-ubi` |
-|Ubi-based image with App Protect | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect module | `nginx-ic-nap/nginx-plus-ingress:1.13.0-ubi` |
+|Alpine-based image | ``alpine:3.14`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:1.13.0-alpine` |
+|Debian-based image | ``debian:buster-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:1.13.0` |
+|Debian-based image with Opentracing | ``debian:buster-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:1.13.0-ot` |
+|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:1.13.0` |
+|Ubi-based image | ``redhat/ubi8-minimal`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:1.13.0-ubi` |
+|Ubi-based image with App Protect | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:1.13.0-ubi` |
 {{% /table %}}
 
 We also provide NGINX Plus images through the AWS Marketplace. Please see [Using the AWS Marketplace Ingress Controller Image](/nginx-ingress-controller/installation/using-aws-marketplace-image.md) for details on how to set up the required IAM resources in your EKS cluster.
@@ -56,8 +56,8 @@ We also provide NGINX Plus images through the AWS Marketplace. Please see [Using
 {{% table %}}
 |Name | Base image | Third-party modules | AWS Marketplace Link |
 | ---| ---| --- | --- |
-|Debian-based image | ``debian:buster-slim`` |  | [NGINX Ingress Controller](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau) |
-|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module | [NGINX Ingress Controller with NGINX App Protect](https://aws.amazon.com/marketplace/pp/prodview-vnrnxbf6u3nra) |
+|Debian-based image | ``debian:buster-slim`` | NGINX Plus JavaScript module | [NGINX Ingress Controller](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau) |
+|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module; NGINX Plus JavaScript module | [NGINX Ingress Controller with NGINX App Protect](https://aws.amazon.com/marketplace/pp/prodview-vnrnxbf6u3nra) |
 {{% /table %}}
 
 ### Custom Images
