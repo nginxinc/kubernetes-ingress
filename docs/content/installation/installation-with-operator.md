@@ -7,6 +7,7 @@ doctypes: [""]
 toc: true
 ---
 
+**Note: an NGINX Ingress Operator version compatible with the 2.0.0 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.**
 
 This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using the NGINX Ingress Operator.
 
@@ -33,7 +34,7 @@ spec:
   type: deployment
   image:
     repository: nginx/nginx-ingress
-    tag: 1.12.1
+    tag: 2.0.0
     pullPolicy: Always
   serviceType: NodePort
   nginxPlus: False

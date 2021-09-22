@@ -21,20 +21,21 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX
 
-All images include NGINX 1.21.1.
+All images include NGINX 1.21.3.
 
 {{% table %}}
 |Name | Base image | Third-party modules | DockerHub image | Architectures |
 | ---| ---| ---| --- | --- |
-|Alpine-based image | ``nginx:1.21.1-alpine``, which is based on ``alpine:3.14`` |  | ``nginx/nginx-ingress:1.12.1-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image | ``nginx:1.21.1``, which is based on ``debian:buster-slim`` |  | ``nginx/nginx-ingress:1.12.1`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image with Opentracing | ``nginx:1.21.1``, which is based on ``debian:buster-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:1.12.1-ot`` | amd64 |
-|Ubi-based image | ``redhat/ubi8-minimal`` |  | ``nginx/nginx-ingress:1.12.1-ubi`` | arm64, amd64 |
+|Alpine-based image | ``nginx:1.21.3-alpine``, which is based on ``alpine:3.14`` |  | ``nginx/nginx-ingress:2.0.0-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image | ``nginx:1.21.3``, which is based on ``debian:buster-slim`` |  | ``nginx/nginx-ingress:2.0.0`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image with Opentracing | ``nginx:1.21.3``, which is based on ``debian:buster-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.0.0-ot`` | amd64 |
+|Ubi-based image | ``redhat/ubi8-minimal`` |  | ``nginx/nginx-ingress:2.0.0-ubi`` | arm64, amd64 |
 {{% /table %}}
 
 ### Images with NGINX Plus
 
-All images include NGINX Plus R24.
+NGINX Plus images include NGINX Plus R25. 
+NGINX Plus images with NGINX App Protect will continue to use R24 until App Protect 3.6 is released.
 The supported architecture is x86-64.
 
 NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Using the NGINX IC Plus JWT token in a Docker Config Secret](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [Pulling the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
@@ -42,12 +43,21 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 {{% table %}}
 |Name | Base image | Third-party modules | F5 Container Registry Image |
 | ---| ---| --- | --- |
-|Alpine-based image | ``alpine:3.13`` |  | `nginx-ic/nginx-plus-ingress:1.12.1-alpine` |
-|Debian-based image | ``debian:buster-slim`` |  | `nginx-ic/nginx-plus-ingress:1.12.1` |
-|Debian-based image with Opentracing | ``debian:buster-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog | `nginx-ic/nginx-plus-ingress:1.12.1-ot` |
-|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module | `nginx-ic-nap/nginx-plus-ingress:1.12.1` |
-|Ubi-based image | ``redhat/ubi8-minimal`` |  | `nginx-ic/nginx-plus-ingress:1.12.1-ubi` |
-|Ubi-based image with App Protect | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect module | `nginx-ic-nap/nginx-plus-ingress:1.12.1-ubi` |
+|Alpine-based image | ``alpine:3.14`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.0.0-alpine` |
+|Debian-based image | ``debian:buster-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.0.0` |
+|Debian-based image with Opentracing | ``debian:buster-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.0.0-ot` |
+|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.0.0` |
+|Ubi-based image | ``redhat/ubi8-minimal`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.0.0-ubi` |
+|Ubi-based image with App Protect | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.0.0-ubi` |
+{{% /table %}}
+
+We also provide NGINX Plus images through the AWS Marketplace. Please see [Using the AWS Marketplace Ingress Controller Image](/nginx-ingress-controller/installation/using-aws-marketplace-image.md) for details on how to set up the required IAM resources in your EKS cluster.
+
+{{% table %}}
+|Name | Base image | Third-party modules | AWS Marketplace Link |
+| ---| ---| --- | --- |
+|Debian-based image | ``debian:buster-slim`` | NGINX Plus JavaScript module | [NGINX Ingress Controller](https://aws.amazon.com/marketplace/pp/prodview-fx3faxl7zqeau) |
+|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module; NGINX Plus JavaScript module | [NGINX Ingress Controller with NGINX App Protect](https://aws.amazon.com/marketplace/pp/prodview-vnrnxbf6u3nra) |
 {{% /table %}}
 
 ### Custom Images
