@@ -19,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   Coveo.$('#search').on("newResultsDisplayed", function (e, args) {
     for (var i = 0; i < e.target.lastChild.children.length; i++) {
-      var currentResult = e.target.lastChild.children[i];
       //Remove the title for tooltip box  
       Coveo.$('.CoveoResultLink').removeAttr('title');         
     }

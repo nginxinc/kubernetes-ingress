@@ -860,19 +860,20 @@ All CSS related to site header includeing logo, CSR FTR buttons, search box, men
     position: relative;
 }
 .site-footer-inner {
-    padding: 38px 0;
+    padding: 0px 0;
 }
 .site-footer .site-info {
     clear: both;
     color: #999;
     width: 100%;
-    text-align: center;
     font-size: 12px;
     font-size: 1.2rem;
     font-weight: 300;
     padding-top: 35px;
     opacity: .5;
 }
+
+
 .footer-primary-nav, .footer-secondary-nav, .footer-connect-nav {
     content: "";
     display: table;
@@ -949,56 +950,6 @@ All CSS related to site header includeing logo, CSR FTR buttons, search box, men
     font-weight:300;
     padding:2px 0
 }
-.footer-social{
-    margin-top:14px
-}
-.footer-social ul{
-    list-style:none;
-    margin:0 0 24px -2px
-}
-.footer-social ul li{
-    display:inline-block;
-    height:28px;
-    width:32px
-}
-.footer-social ul a{
-    color:#999;
-    cursor:pointer;
-    font-size:0;
-    opacity:.5
-}
-.footer-social ul a:before{
-    font-size:28px
-}
-.footer-email-signup input{
-    background-color:transparent;
-    border-color:rgba(243,243,243,0.5);
-    border-width:2px;
-    color:#999;
-    display:block;
-    font-size:15px;
-    font-size:1.5rem;
-    height:36px;
-    line-height:15px;
-    padding:3px 35px 3px 10px;
-    width:100%
-}
-.footer-email-signup input:focus{
-    color:#999;
-    outline:none
-}
-.footer-email-signup .icon-arrow-submit{
-    cursor:pointer;
-    font-size:0;
-    float:right;
-    height:36px;
-    margin:-29px -3px 0 0;
-    width:36px
-}
-.footer-email-signup .icon-arrow-submit:before{
-    color:rgba(153,153,153,0.5);
-    font-size:24px
-}
 
 
 
@@ -1013,7 +964,7 @@ All CSS related to site header includeing logo, CSR FTR buttons, search box, men
 }
 @media screen and (min-width: 800px){
     .site-footer-inner {
-        padding: 55px 0;
+        padding: 20px 0;
     }
     .footer-primary-nav, .footer-secondary-nav, .footer-connect-nav {
         width: 31.61414%;

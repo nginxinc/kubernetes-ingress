@@ -38,8 +38,28 @@
 {{ end }}
 
 
-{{/* set custom CSP required for Dev Portal to load styles and scripts */}}
-<meta http-equiv="Content-Security-Policy" content="script-src 'self' https://code.jquery.com/ https://cdn.jsdelivr.net/ https://static.cloud.coveo.com https://kit.fontawesome.com/ https://*.netlify.app {{ if in .Params.doctypes "devportal" }} 'unsafe-eval' 'unsafe-inline' {{end}}; worker-src 'self' blob:">
+{{/* set custom CSP to load styles and scripts with special handling for GTM scripts (requires unsafe-inline) and Dev Portal page(s) (requires 'unsafe-eval') */}}
+<meta http-equiv="Content-Security-Policy" content="script-src 
+    'self' 
+    https://code.jquery.com/ 
+    https://cdn.jsdelivr.net/ 
+    https://static.cloud.coveo.com 
+    https://kit.fontawesome.com/ 
+    https://*.netlify.app 
+    https://gist.github.com 
+    https://www.googletagmanager.com/gtm.js
+    https://tag.demandbase.com/pscSDsz4.min.js
+    https://cdn.f5.com
+    https://munchkin.brightfunnel.com/js/build/bf-munchkin.min.js
+    https://www.google-analytics.com/analytics.js
+    https://www.google-analytics.com/plugins/ua/linkid.js
+    https://cdn.bizible.com/scripts/bizible.js
+    https://cdn.bizible.com/xdc.js
+    https://mktg.aa.f5.com/
+    https://consent.trustarc.com/
+    'unsafe-inline'
+    {{ if in .Params.doctypes "devportal" }} 'unsafe-eval' {{end}}; 
+    worker-src 'self' blob:">
 {{/* end */}}
 
 <!-- build metadata -->
