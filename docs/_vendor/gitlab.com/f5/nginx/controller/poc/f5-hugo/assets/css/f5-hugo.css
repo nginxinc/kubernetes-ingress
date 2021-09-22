@@ -621,6 +621,15 @@ h3.bd-links, #TableOfContents ul li a {
     border: none;
 }
 
+.bd-links ul > li:last-child {
+    padding-bottom: 0px !important;
+    margin-bottom: 0px !important;
+}
+
+.bd-links ul > li > ul:last-child{
+    padding-bottom: 0px !important;
+}
+
 .page {
     background-color: #F7F8FA;
 }
@@ -751,6 +760,7 @@ button, input[type=button], input[type=reset], input[type=submit] {
     display: list-item;
     padding-left: 0;
     margin-left: 0rem;
+    margin-bottom: 0 !important;
 }
 
 .sidebar-ul-border {
