@@ -52,10 +52,11 @@ func TestValidateVirtualServer(t *testing.T) {
 					},
 				},
 			},
+			Dos: "some-ns/some-name",
 		},
 	}
 
-	vsv := &VirtualServerValidator{isPlus: false}
+	vsv := &VirtualServerValidator{isPlus: false, isDosEnabled: true}
 
 	err := vsv.ValidateVirtualServer(&virtualServer)
 	if err != nil {
@@ -89,6 +90,58 @@ func TestValidateHost(t *testing.T) {
 		allErrs := validateHost(h, field.NewPath("host"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateHost(%q) returned no errors for invalid input", h)
+		}
+	}
+}
+
+func TestValidateDos(t *testing.T) {
+	validDosResources := []string{
+		"hello",
+		"ns/hello",
+		"hello-world-1",
+	}
+
+	for _, h := range validDosResources {
+		allErrs := validateDos(true, h, field.NewPath("dos"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateDos(%q) returned errors %v for valid input", h, allErrs)
+		}
+	}
+
+	invalidDos := []string{
+		"*",
+		"..",
+		".example.com",
+		"-hello-world-1",
+		"/hello/world-1",
+		"hello/world/other",
+	}
+
+	for _, h := range invalidDos {
+		allErrs := validateDos(true, h, field.NewPath("dos"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateDos(%q) returned no errors for invalid input", h)
+		}
+	}
+}
+
+func TestValidateDosDisabled(t *testing.T) {
+	invalidDos := []string{
+		"hello",
+		"ns/hello",
+		"hello-world-1",
+		"*",
+		"..",
+		".example.com",
+		"-hello-world-1",
+		"/hello/world-1",
+		"hello/world/other",
+	}
+
+	for _, h := range invalidDos {
+		allErrs := validateDos(false, h, field.NewPath("dos"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateDos(%q) returned no errors for invalid input", h)
 		}
 	}
 }

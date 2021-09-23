@@ -137,6 +137,8 @@ spec:
                                 type: integer
                               type:
                                 type: string
+                      dos:
+                        type: string
                       errorPages:
                         type: array
                         items:

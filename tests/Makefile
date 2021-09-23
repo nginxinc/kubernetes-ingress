@@ -1,8 +1,8 @@
 CONTEXT =
-BUILD_IMAGE = nginx/nginx-ingress:edge
+BUILD_IMAGE = nginx/nginx-ingress:2.0.3-SNAPSHOT-61b2a91-dos
 PULL_POLICY = IfNotPresent
 DEPLOYMENT_TYPE = deployment
-IC_TYPE = nginx-ingress
+IC_TYPE = nginx-plus-ingress
 SERVICE = nodeport
 NODE_IP =
 TAG = latest
@@ -10,7 +10,7 @@ PREFIX = test-runner
 KUBE_CONFIG_FOLDER = $${HOME}/.kube
 KIND_KUBE_CONFIG_FOLDER = $${HOME}/.kube/kind
 SHOW_IC_LOGS = no
-PYTEST_ARGS =
+PYTEST_ARGS = -m dos -v -s
 DOCKERFILEPATH = docker/Dockerfile
 
 .PHONY: build

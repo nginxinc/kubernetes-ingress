@@ -33,6 +33,6 @@ fi
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 bash "${CODEGEN_PKG}"/generate-groups.sh "deepcopy,client,informer,lister" \
   github.com/nginxinc/kubernetes-ingress/pkg/client github.com/nginxinc/kubernetes-ingress/pkg/apis \
-  configuration:v1alpha1,v1 \
+  "configuration:v1alpha1,v1 dos:v1beta1" \
   --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
   --go-header-file "${SCRIPT_ROOT}"/hack/boilerplate.go.txt
