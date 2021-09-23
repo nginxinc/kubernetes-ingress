@@ -326,6 +326,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 		vsName:         vsEx.VirtualServer.Name,
 	}
 	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
+
 	dosCfg := generateDosCfg(dosResources[""])
 
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
@@ -572,6 +573,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				routePoliciesCfg.OIDC = policiesCfg.OIDC
 			}
 			limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
+
+			dosRouteCfg := generateDosCfg(dosResources[r.Path])
+
 			if len(r.Matches) > 0 {
 				cfg := generateMatchesConfig(
 					r,
@@ -591,6 +595,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 					vsc.warnings,
 				)
 				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
+				addDosConfigToLocations(dosRouteCfg, cfg.Locations)
 
 				maps = append(maps, cfg.Maps...)
 				locations = append(locations, cfg.Locations...)
@@ -602,6 +607,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams,
 					errorPages, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace, vsc.warnings)
 				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
+				addDosConfigToLocations(dosRouteCfg, cfg.Locations)
 
 				splitClients = append(splitClients, cfg.SplitClients...)
 				locations = append(locations, cfg.Locations...)
@@ -615,6 +621,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 				loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false,
 					proxySSLName, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace, vsc.warnings)
 				addPoliciesCfgToLocation(routePoliciesCfg, &loc)
+				loc.Dos = dosRouteCfg
 
 				locations = append(locations, loc)
 				if returnLoc != nil {

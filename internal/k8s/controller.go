@@ -2545,6 +2545,14 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 			if err != nil {
 				glog.Warningf("Error getting WAF policies for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
+
+			if sr.Dos != "" {
+				routeDosEx, err := lbc.dosConfiguration.GetValidDosEx(vsr.Namespace, sr.Dos)
+				if err != nil {
+					glog.Warningf("Error getting App Protect Dos resource for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				}
+				virtualServerEx.DosProtectedEx[sr.Path] = routeDosEx
+			}
 		}
 
 		for _, u := range vsr.Spec.Upstreams {

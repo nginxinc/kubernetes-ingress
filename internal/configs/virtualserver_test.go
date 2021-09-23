@@ -1735,6 +1735,332 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	}
 }
 
+func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) {
+	dosResources := map[string]*appProtectDosResource{
+		"/coffee": {
+			AppProtectDosEnable:          "on",
+			AppProtectDosLogEnable:       false,
+			AppProtectDosMonitorURI:      "test.example.com",
+			AppProtectDosMonitorProtocol: "http",
+			AppProtectDosMonitorTimeout:  0,
+			AppProtectDosName:            "my-dos-coffee",
+			AppProtectDosAccessLogDst:    "svc.dns.com:123",
+			AppProtectDosPolicyFile:      "",
+			AppProtectDosLogConfFile:     "",
+		},
+		"/tea": {
+			AppProtectDosEnable:          "on",
+			AppProtectDosLogEnable:       false,
+			AppProtectDosMonitorURI:      "test.example.com",
+			AppProtectDosMonitorProtocol: "http",
+			AppProtectDosMonitorTimeout:  0,
+			AppProtectDosName:            "my-dos-tea",
+			AppProtectDosAccessLogDst:    "svc.dns.com:123",
+			AppProtectDosPolicyFile:      "",
+			AppProtectDosLogConfFile:     "",
+		},
+		"/juice": {
+			AppProtectDosEnable:          "on",
+			AppProtectDosLogEnable:       false,
+			AppProtectDosMonitorURI:      "test.example.com",
+			AppProtectDosMonitorProtocol: "http",
+			AppProtectDosMonitorTimeout:  0,
+			AppProtectDosName:            "my-dos-juice",
+			AppProtectDosAccessLogDst:    "svc.dns.com:123",
+			AppProtectDosPolicyFile:      "",
+			AppProtectDosLogConfFile:     "",
+		},
+	}
+
+	virtualServerEx := VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				Routes: []conf_v1.Route{
+					{
+						Path:  "/coffee",
+						Route: "default/coffee",
+					},
+					{
+						Path:  "/tea",
+						Route: "default/tea",
+					},
+					{
+						Path:  "/juice",
+						Route: "default/juice",
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tea-svc-v1:80": {
+				"10.0.0.20:80",
+			},
+			"default/tea-svc-v2:80": {
+				"10.0.0.21:80",
+			},
+			"default/coffee-svc-v1:80": {
+				"10.0.0.30:80",
+			},
+			"default/coffee-svc-v2:80": {
+				"10.0.0.31:80",
+			},
+			"default/juice-svc-v1:80": {
+				"10.0.0.33:80",
+			},
+			"default/juice-svc-v2:80": {
+				"10.0.0.34:80",
+			},
+		},
+		VirtualServerRoutes: []*conf_v1.VirtualServerRoute{
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "coffee",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "coffee-v1",
+							Service: "coffee-svc-v1",
+							Port:    80,
+						},
+						{
+							Name:    "coffee-v2",
+							Service: "coffee-svc-v2",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/coffee",
+							Matches: []conf_v1.Match{
+								{
+									Conditions: []conf_v1.Condition{
+										{
+											Argument: "version",
+											Value:    "v2",
+										},
+									},
+									Action: &conf_v1.Action{
+										Pass: "coffee-v2",
+									},
+								},
+							},
+							Dos: "test_ns/dos_protected",
+							Action: &conf_v1.Action{
+								Pass: "coffee-v1",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "tea",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "tea-v1",
+							Service: "tea-svc-v1",
+							Port:    80,
+						},
+						{
+							Name:    "tea-v2",
+							Service: "tea-svc-v2",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/tea",
+							Dos:  "test_ns/dos_protected",
+							Action: &conf_v1.Action{
+								Pass: "tea-v1",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "juice",
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerRouteSpec{
+					Host: "cafe.example.com",
+					Upstreams: []conf_v1.Upstream{
+						{
+							Name:    "juice-v1",
+							Service: "juice-svc-v1",
+							Port:    80,
+						},
+						{
+							Name:    "juice-v2",
+							Service: "juice-svc-v2",
+							Port:    80,
+						},
+					},
+					Subroutes: []conf_v1.Route{
+						{
+							Path: "/juice",
+							Dos:  "test_ns/dos_protected",
+							Splits: []conf_v1.Split{
+								{
+									Weight: 80,
+									Action: &conf_v1.Action{
+										Pass: "juice-v1",
+									},
+								},
+								{
+									Weight: 20,
+									Action: &conf_v1.Action{
+										Pass: "juice-v2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	baseCfgParams := ConfigParams{}
+
+	expected := []version2.Location{
+		{
+			Path:                     "/internal_location_matches_0_match_0",
+			ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v2$request_uri",
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			Internal:                 true,
+			ProxySSLName:             "coffee-svc-v2.default.svc",
+			ProxyPassRequestHeaders:  true,
+			ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+			ServiceName:              "coffee-svc-v2",
+			IsVSR:                    true,
+			VSRName:                  "coffee",
+			VSRNamespace:             "default",
+			Dos: &version2.Dos{
+				Enable:               "on",
+				Name:                 "my-dos-coffee",
+				ApDosMonitorURI:      "test.example.com",
+				ApDosMonitorProtocol: "http",
+				ApDosAccessLogDest:   "svc.dns.com:123",
+			},
+		},
+		{
+			Path:                     "/internal_location_matches_0_default",
+			ProxyPass:                "http://vs_default_cafe_vsr_default_coffee_coffee-v1$request_uri",
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			Internal:                 true,
+			ProxySSLName:             "coffee-svc-v1.default.svc",
+			ProxyPassRequestHeaders:  true,
+			ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+			ServiceName:              "coffee-svc-v1",
+			IsVSR:                    true,
+			VSRName:                  "coffee",
+			VSRNamespace:             "default",
+			Dos: &version2.Dos{
+				Enable:               "on",
+				Name:                 "my-dos-coffee",
+				ApDosMonitorURI:      "test.example.com",
+				ApDosMonitorProtocol: "http",
+				ApDosAccessLogDest:   "svc.dns.com:123",
+			},
+		},
+		{
+			Path:                     "/tea",
+			ProxyPass:                "http://vs_default_cafe_vsr_default_tea_tea-v1",
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyNextUpstreamTries:   0,
+			Internal:                 false,
+			ProxySSLName:             "tea-svc-v1.default.svc",
+			ProxyPassRequestHeaders:  true,
+			ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+			ServiceName:              "tea-svc-v1",
+			IsVSR:                    true,
+			VSRName:                  "tea",
+			VSRNamespace:             "default",
+			Dos: &version2.Dos{
+				Enable:               "on",
+				Name:                 "my-dos-tea",
+				ApDosMonitorURI:      "test.example.com",
+				ApDosMonitorProtocol: "http",
+				ApDosAccessLogDest:   "svc.dns.com:123",
+			},
+		},
+		{
+			Path:                     "/internal_location_splits_0_split_0",
+			Internal:                 true,
+			ProxyPass:                "http://vs_default_cafe_vsr_default_juice_juice-v1$request_uri",
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyPassRequestHeaders:  true,
+			ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+			ProxySSLName:             "juice-svc-v1.default.svc",
+			Dos: &version2.Dos{
+				Enable:               "on",
+				Name:                 "my-dos-juice",
+				ApDosMonitorURI:      "test.example.com",
+				ApDosMonitorProtocol: "http",
+				ApDosAccessLogDest:   "svc.dns.com:123",
+			},
+			ServiceName:  "juice-svc-v1",
+			IsVSR:        true,
+			VSRName:      "juice",
+			VSRNamespace: "default",
+		},
+		{
+			Path:                     "/internal_location_splits_0_split_1",
+			Internal:                 true,
+			ProxyPass:                "http://vs_default_cafe_vsr_default_juice_juice-v2$request_uri",
+			ProxyNextUpstream:        "error timeout",
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyPassRequestHeaders:  true,
+			ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+			ProxySSLName:             "juice-svc-v2.default.svc",
+			Dos: &version2.Dos{
+				Enable:               "on",
+				Name:                 "my-dos-juice",
+				ApDosMonitorURI:      "test.example.com",
+				ApDosMonitorProtocol: "http",
+				ApDosAccessLogDest:   "svc.dns.com:123",
+			},
+			ServiceName:  "juice-svc-v2",
+			IsVSR:        true,
+			VSRName:      "juice",
+			VSRNamespace: "default",
+		},
+	}
+
+	isPlus := false
+	isResolverConfigured := false
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{MainAppProtectDosLoadModule: true}, false)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, dosResources)
+	if diff := cmp.Diff(expected, result.Server.Locations); diff != "" {
+		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
+	}
+
+	if len(warnings) != 0 {
+		t.Errorf("GenerateVirtualServerConfig returned warnings: %v", vsc.warnings)
+	}
+}
+
 func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{

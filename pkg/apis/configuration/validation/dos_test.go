@@ -429,7 +429,7 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 			t.Errorf("got no error expected error containing %s", nTCase.msg)
 		} else {
 			if !strings.Contains(err.Error(), nTCase.msg) {
-				t.Errorf("got %v expected to contain: %s", err, nTCase.msg)
+				t.Errorf("got: \n%v\n expected to contain: \n%s", err, nTCase.msg)
 			}
 		}
 	}
