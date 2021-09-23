@@ -63,6 +63,8 @@ type VirtualServerEx struct {
 	SecretRefs          map[string]*secrets.SecretReference
 	ApPolRefs           map[string]*unstructured.Unstructured
 	LogConfRefs         map[string]*unstructured.Unstructured
+	DosProtectedRefs    map[string]*unstructured.Unstructured
+	DosProtectedEx      map[string]*DosEx
 }
 
 func (vsx *VirtualServerEx) String() string {
@@ -75,6 +77,19 @@ func (vsx *VirtualServerEx) String() string {
 	}
 
 	return fmt.Sprintf("%s/%s", vsx.VirtualServer.Namespace, vsx.VirtualServer.Name)
+}
+
+// appProtectResourcesForVS holds file names of APPolicy and APLogConf resources used in a VirtualServer.
+type appProtectResourcesForVS struct {
+	Policies map[string]string
+	LogConfs map[string]string
+}
+
+func newAppProtectVSResourcesForVS() *appProtectResourcesForVS {
+	return &appProtectResourcesForVS{
+		Policies: make(map[string]string),
+		LogConfs: make(map[string]string),
+	}
 }
 
 // GenerateEndpointsKey generates a key for the Endpoints map in VirtualServerEx.
@@ -266,7 +281,11 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(
 }
 
 // GenerateVirtualServerConfig generates a full configuration for a VirtualServer
-func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx, apResources map[string]string) (version2.VirtualServerConfig, Warnings) {
+func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
+	vsEx *VirtualServerEx,
+	apResources *appProtectResourcesForVS,
+	dosResources map[string]*appProtectDosResource,
+) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
 
 	sslConfig := vsc.generateSSLConfig(vsEx.VirtualServer, vsEx.VirtualServer.Spec.TLS, vsEx.VirtualServer.Namespace, vsEx.SecretRefs, vsc.cfgParams)
@@ -285,6 +304,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 		vsName:         vsEx.VirtualServer.Name,
 	}
 	policiesCfg := vsc.generatePolicies(ownerDetails, vsEx.VirtualServer.Spec.Policies, vsEx.Policies, specContext, policyOpts)
+	dosCfg := generateDosCfg(dosResources[""])
 
 	// crUpstreams maps an UpstreamName to its conf_v1.Upstream as they are generated
 	// necessary for generateLocation to know what Upstream each Location references
@@ -417,6 +437,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 		}
 		limitReqZones = append(limitReqZones, routePoliciesCfg.LimitReqZones...)
 
+		dosRouteCfg := generateDosCfg(dosResources[r.Path])
+
 		if len(r.Matches) > 0 {
 			cfg := generateMatchesConfig(
 				r,
@@ -435,6 +457,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 				"", "",
 			)
 			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
+			addDosConfigToLocations(dosRouteCfg, cfg.Locations)
 
 			maps = append(maps, cfg.Maps...)
 			locations = append(locations, cfg.Locations...)
@@ -446,6 +469,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients),
 				vsc.cfgParams, r.ErrorPages, errorPageIndex, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "")
 			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
+			addDosConfigToLocations(dosRouteCfg, cfg.Locations)
 
 			splitClients = append(splitClients, cfg.SplitClients...)
 			locations = append(locations, cfg.Locations...)
@@ -460,6 +484,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, r.ErrorPages, false,
 				errorPageIndex, proxySSLName, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "")
 			addPoliciesCfgToLocation(routePoliciesCfg, &loc)
+			loc.Dos = dosRouteCfg
 
 			locations = append(locations, loc)
 			if returnLoc != nil {
@@ -611,6 +636,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			OIDC:                      vsc.oidcPolCfg.oidc,
 			WAF:                       policiesCfg.WAF,
+			Dos:                       dosCfg,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
 			VSNamespace:               vsEx.VirtualServer.Namespace,
 			VSName:                    vsEx.VirtualServer.Name,
@@ -649,7 +675,7 @@ type policyOwnerDetails struct {
 type policyOptions struct {
 	tls         bool
 	secretRefs  map[string]*secrets.SecretReference
-	apResources map[string]string
+	apResources *appProtectResourcesForVS
 }
 
 type validationResults struct {
@@ -951,7 +977,7 @@ func (p *policiesCfg) addWAFConfig(
 	waf *conf_v1.WAF,
 	polKey string,
 	polNamespace string,
-	apResources map[string]string,
+	apResources *appProtectResourcesForVS,
 ) *validationResults {
 	res := newValidationResults()
 	if p.WAF != nil {
@@ -972,7 +998,7 @@ func (p *policiesCfg) addWAFConfig(
 			apPolKey = fmt.Sprintf("%v/%v", polNamespace, apPolKey)
 		}
 
-		if apPolPath, exists := apResources[apPolKey]; exists {
+		if apPolPath, exists := apResources.Policies[apPolKey]; exists {
 			p.WAF.ApPolicy = apPolPath
 		} else {
 			res.addWarningf("WAF policy %s references an invalid or non-existing App Protect policy %s", polKey, apPolKey)
@@ -990,7 +1016,7 @@ func (p *policiesCfg) addWAFConfig(
 			logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
 		}
 
-		if logConfPath, ok := apResources[logConfKey]; ok {
+		if logConfPath, ok := apResources.LogConfs[logConfKey]; ok {
 			logDest := generateString(waf.SecurityLog.LogDest, "syslog:server=localhost:514")
 			p.WAF.ApLogConf = fmt.Sprintf("%s %s", logConfPath, logDest)
 		} else {
@@ -1136,6 +1162,12 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 func addPoliciesCfgToLocations(cfg policiesCfg, locations []version2.Location) {
 	for i := range locations {
 		addPoliciesCfgToLocation(cfg, &locations[i])
+	}
+}
+
+func addDosConfigToLocations(dosCfg *version2.Dos, locations []version2.Location) {
+	for i := range locations {
+		locations[i].Dos = dosCfg
 	}
 }
 
@@ -2262,4 +2294,21 @@ func isTLSEnabled(u conf_v1.Upstream, spiffeCerts bool) bool {
 
 func isGRPC(protocolType string) bool {
 	return protocolType == "grpc"
+}
+
+func generateDosCfg(dosResource *appProtectDosResource) *version2.Dos {
+	if dosResource == nil {
+		return nil
+	}
+	dos := &version2.Dos{}
+	dos.Enable = dosResource.AppProtectDosEnable
+	dos.Name = dosResource.AppProtectDosName
+	dos.ApDosMonitorUri = dosResource.AppProtectDosMonitorUri
+	dos.ApDosMonitorProtocol = dosResource.AppProtectDosMonitorProtocol
+	dos.ApDosMonitorTimeout = dosResource.AppProtectDosMonitorTimeout
+	dos.ApDosAccessLogDest = dosResource.AppProtectDosAccessLogDst
+	dos.ApDosPolicy = dosResource.AppProtectDosPolicyFile
+	dos.ApDosSecurityLogEnable = dosResource.AppProtectDosLogEnable
+	dos.ApDosLogConf = dosResource.AppProtectDosLogConfFile
+	return dos
 }

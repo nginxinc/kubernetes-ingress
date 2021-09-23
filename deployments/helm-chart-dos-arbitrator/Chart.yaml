@@ -1,0 +1,17 @@
+name: nginx-appprotect-dos-arbitrator
+version: 0.0.1
+appVersion: 1.0.0
+apiVersion: v1
+kubeVersion: ">= 1.19.0-0"
+description: NGINX App Protect Dos arbitrator
+icon: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v1.12.1/deployments/helm-chart-dos-arbitrator/chart-icon.png
+home: https://github.com/nginxinc/kubernetes-ingress
+sources:
+  - https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/deployments/helm-chart-dos-arbitrator
+keywords:
+  - appprotect-dos
+  - nginx
+  - arbitrator
+maintainers:
+  - name: nginxinc
+    email: kubernetes@nginx.com

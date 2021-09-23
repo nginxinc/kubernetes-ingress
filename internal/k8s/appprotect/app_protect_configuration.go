@@ -5,6 +5,10 @@ import (
 	"sort"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
+
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -201,7 +205,7 @@ func (s appProtectUserSigSlice) Swap(i, j int) {
 }
 
 func createAppProtectPolicyEx(policyObj *unstructured.Unstructured) (*PolicyEx, error) {
-	err := validateAppProtectPolicy(policyObj)
+	err := validation.ValidateAppProtectPolicy(policyObj)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error validating policy %s: %v", policyObj.GetName(), err)
 		return &PolicyEx{Obj: policyObj, IsValid: false, ErrorMsg: failedValidationErrorMsg}, fmt.Errorf(errMsg)
@@ -255,7 +259,7 @@ func buildRevTimes(requirement map[string]interface{}) (RevTimes, error) {
 }
 
 func createAppProtectLogConfEx(logConfObj *unstructured.Unstructured) (*LogConfEx, error) {
-	err := validateAppProtectLogConf(logConfObj)
+	err := validation.ValidateAppProtectLogConf(logConfObj)
 	if err != nil {
 		return &LogConfEx{
 			Obj:      logConfObj,
@@ -271,7 +275,7 @@ func createAppProtectLogConfEx(logConfObj *unstructured.Unstructured) (*LogConfE
 
 func createAppProtectUserSigEx(userSigObj *unstructured.Unstructured) (*UserSigEx, error) {
 	sTag := ""
-	err := validateAppProtectUserSig(userSigObj)
+	err := validation.ValidateAppProtectUserSig(userSigObj)
 	if err != nil {
 		errMsg := failedValidationErrorMsg
 		return &UserSigEx{Obj: userSigObj, IsValid: false, Tag: sTag, ErrorMsg: errMsg}, fmt.Errorf(errMsg)
@@ -341,7 +345,7 @@ func (ci *ConfigurationImpl) verifyPolicyAgainstUserSigs(policy *PolicyEx) bool 
 
 // AddOrUpdatePolicy adds or updates an App Protect Policy to App Protect Configuration
 func (ci *ConfigurationImpl) AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := GetNsName(policyObj)
+	resNsName := appprotect_common.GetNsName(policyObj)
 	policy, err := createAppProtectPolicyEx(policyObj)
 	if err != nil {
 		ci.Policies[resNsName] = policy
@@ -361,7 +365,7 @@ func (ci *ConfigurationImpl) AddOrUpdatePolicy(policyObj *unstructured.Unstructu
 
 // AddOrUpdateLogConf adds or updates App Protect Log Configuration to App Protect Configuration
 func (ci *ConfigurationImpl) AddOrUpdateLogConf(logconfObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := GetNsName(logconfObj)
+	resNsName := appprotect_common.GetNsName(logconfObj)
 	logConf, err := createAppProtectLogConfEx(logconfObj)
 	ci.LogConfs[resNsName] = logConf
 	if err != nil {
@@ -373,7 +377,7 @@ func (ci *ConfigurationImpl) AddOrUpdateLogConf(logconfObj *unstructured.Unstruc
 
 // AddOrUpdateUserSig adds or updates App Protect User Defined Signature to App Protect Configuration
 func (ci *ConfigurationImpl) AddOrUpdateUserSig(userSigObj *unstructured.Unstructured) (change UserSigChange, problems []Problem) {
-	resNsName := GetNsName(userSigObj)
+	resNsName := appprotect_common.GetNsName(userSigObj)
 	userSig, err := createAppProtectUserSigEx(userSigObj)
 	ci.UserSigs[resNsName] = userSig
 	if err != nil {
@@ -563,7 +567,7 @@ func NewFakeConfiguration() Configuration {
 
 // AddOrUpdatePolicy adds or updates an App Protect Policy to App Protect Configuration
 func (fc *FakeConfiguration) AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := GetNsName(policyObj)
+	resNsName := appprotect_common.GetNsName(policyObj)
 	policy := &PolicyEx{
 		Obj:     policyObj,
 		IsValid: true,
@@ -574,7 +578,7 @@ func (fc *FakeConfiguration) AddOrUpdatePolicy(policyObj *unstructured.Unstructu
 
 // AddOrUpdateLogConf adds or updates App Protect Log Configuration to App Protect Configuration
 func (fc *FakeConfiguration) AddOrUpdateLogConf(logConfObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := GetNsName(logConfObj)
+	resNsName := appprotect_common.GetNsName(logConfObj)
 	logConf := &LogConfEx{
 		Obj:     logConfObj,
 		IsValid: true,

@@ -22,8 +22,7 @@ func TestGenerateNginxCfg(t *testing.T) {
 
 	expected := createExpectedConfigForCafeIngressEx(isPlus)
 
-	apRes := AppProtectResources{}
-	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, isPlus, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfg(&cafeIngressEx, nil, nil, false, configParams, isPlus, false, &StaticConfigParams{}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
@@ -63,8 +62,7 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 		},
 	}
 
-	apRes := AppProtectResources{}
-	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, true, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfg(&cafeIngressEx, nil, nil, false, configParams, true, false, &StaticConfigParams{}, false)
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -82,8 +80,7 @@ func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 	cafeIngressEx.SecretRefs["cafe-secret"].Error = errors.New("secret doesn't exist")
 	configParams := NewDefaultConfigParams(false)
 
-	apRes := AppProtectResources{}
-	result, resultWarnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, false)
+	result, resultWarnings := generateNginxCfg(&cafeIngressEx, nil, nil, false, configParams, false, false, &StaticConfigParams{}, false)
 
 	expectedSSLRejectHandshake := true
 	expectedWarnings := Warnings{
@@ -106,8 +103,7 @@ func TestGenerateNginxCfgWithWildcardTLSSecret(t *testing.T) {
 	cafeIngressEx.Ingress.Spec.TLS[0].SecretName = ""
 	configParams := NewDefaultConfigParams(false)
 
-	apRes := AppProtectResources{}
-	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, false, false, &StaticConfigParams{}, true)
+	result, warnings := generateNginxCfg(&cafeIngressEx, nil, nil, false, configParams, false, false, &StaticConfigParams{}, true)
 
 	resultServer := result.Servers[0]
 	if !reflect.DeepEqual(resultServer.SSLCertificate, pemFileNameForWildcardTLSSecret) {
@@ -362,8 +358,7 @@ func TestGenerateNginxCfgForMergeableIngresses(t *testing.T) {
 
 	configParams := NewDefaultConfigParams(isPlus)
 
-	masterApRes := AppProtectResources{}
-	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, false, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, nil, nil, configParams, false, false, &StaticConfigParams{}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
@@ -387,8 +382,7 @@ func TestGenerateNginxConfigForCrossNamespaceMergeableIngresses(t *testing.T) {
 	expected := createExpectedConfigForCrossNamespaceMergeableCafeIngress()
 	configParams := NewDefaultConfigParams(false)
 
-	emptyApResources := AppProtectResources{}
-	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, emptyApResources, configParams, false, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, nil, nil, configParams, false, false, &StaticConfigParams{}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
@@ -452,8 +446,7 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	minionJwtKeyFileNames[objectMetaToFileName(&mergeableIngresses.Minions[0].Ingress.ObjectMeta)] = "/etc/nginx/secrets/default-coffee-jwk"
 	configParams := NewDefaultConfigParams(isPlus)
 
-	masterApRes := AppProtectResources{}
-	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, masterApRes, configParams, isPlus, false, &StaticConfigParams{}, false)
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, nil, nil, configParams, isPlus, false, &StaticConfigParams{}, false)
 
 	if !reflect.DeepEqual(result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].JWTAuth, expected.Servers[0].JWTAuth)
@@ -860,8 +853,7 @@ func TestGenerateNginxCfgForSpiffe(t *testing.T) {
 		expected.Servers[0].Locations[i].SSL = true
 	}
 
-	apResources := AppProtectResources{}
-	result, warnings := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
+	result, warnings := generateNginxCfg(&cafeIngressEx, nil, nil, false, configParams, false, false,
 		&StaticConfigParams{NginxServiceMesh: true}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -883,8 +875,7 @@ func TestGenerateNginxCfgForInternalRoute(t *testing.T) {
 	expected.Servers[0].SpiffeCerts = true
 	expected.Ingress.Annotations[internalRouteAnnotation] = "true"
 
-	apResources := AppProtectResources{}
-	result, warnings := generateNginxCfg(&cafeIngressEx, apResources, false, configParams, false, false,
+	result, warnings := generateNginxCfg(&cafeIngressEx, nil, nil, false, configParams, false, false,
 		&StaticConfigParams{NginxServiceMesh: true, EnableInternalRoutes: true}, false)
 
 	if diff := cmp.Diff(expected, result); diff != "" {
@@ -1349,7 +1340,7 @@ func TestGenerateNginxCfgForAppProtect(t *testing.T) {
 	isPlus := true
 
 	configParams := NewDefaultConfigParams(isPlus)
-	apRes := AppProtectResources{
+	apResources := &AppProtectResources{
 		AppProtectPolicy:   "/etc/nginx/waf/nac-policies/default_dataguard-alarm",
 		AppProtectLogconfs: []string{"/etc/nginx/waf/nac-logconfs/default_logconf syslog:server=127.0.0.1:514"},
 	}
@@ -1364,7 +1355,7 @@ func TestGenerateNginxCfgForAppProtect(t *testing.T) {
 	expected.Servers[0].AppProtectLogEnable = "on"
 	expected.Ingress.Annotations = cafeIngressEx.Ingress.Annotations
 
-	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, isPlus, false, staticCfgParams, false)
+	result, warnings := generateNginxCfg(&cafeIngressEx, apResources, nil, false, configParams, isPlus, false, staticCfgParams, false)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
 	}
@@ -1400,7 +1391,7 @@ func TestGenerateNginxCfgForMergeableIngressesForAppProtect(t *testing.T) {
 
 	isPlus := true
 	configParams := NewDefaultConfigParams(isPlus)
-	apRes := AppProtectResources{
+	apResources := &AppProtectResources{
 		AppProtectPolicy:   "/etc/nginx/waf/nac-policies/default_dataguard-alarm",
 		AppProtectLogconfs: []string{"/etc/nginx/waf/nac-logconfs/default_logconf syslog:server=127.0.0.1:514"},
 	}
@@ -1415,7 +1406,101 @@ func TestGenerateNginxCfgForMergeableIngressesForAppProtect(t *testing.T) {
 	expected.Servers[0].AppProtectLogEnable = "on"
 	expected.Ingress.Annotations = mergeableIngresses.Master.Ingress.Annotations
 
-	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, apRes, configParams, isPlus, false, staticCfgParams, false)
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, apResources, nil, configParams, isPlus, false, staticCfgParams, false)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgForAppProtectDos(t *testing.T) {
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-resource"] = "dos-policy"
+
+	isPlus := true
+	configParams := NewDefaultConfigParams(isPlus)
+	dosResource := &appProtectDosResource{
+		AppProtectDosEnable:       "on",
+		AppProtectDosName:         "dos.example.com",
+		AppProtectDosMonitorUri:   "monitor-name",
+		AppProtectDosAccessLogDst: "access-log-dest",
+		AppProtectDosPolicyFile:   "/etc/nginx/dos/policies/default_policy",
+		AppProtectDosLogEnable:    true,
+		AppProtectDosLogConfFile:  "/etc/nginx/dos/logconfs/default_logconf syslog:server=127.0.0.1:514",
+	}
+	staticCfgParams := &StaticConfigParams{
+		MainAppProtectDosLoadModule: true,
+	}
+
+	expected := createExpectedConfigForCafeIngressEx(isPlus)
+	expected.Servers[0].AppProtectDosEnable = "on"
+	expected.Servers[0].AppProtectDosPolicyFile = "/etc/nginx/dos/policies/default_policy"
+	expected.Servers[0].AppProtectDosLogConfFile = "/etc/nginx/dos/logconfs/default_logconf syslog:server=127.0.0.1:514"
+	expected.Servers[0].AppProtectDosLogEnable = true
+	expected.Servers[0].AppProtectDosName = "dos.example.com"
+	expected.Servers[0].AppProtectDosMonitorUri = "monitor-name"
+	expected.Servers[0].AppProtectDosAccessLogDst = "access-log-dest"
+	expected.Ingress.Annotations = cafeIngressEx.Ingress.Annotations
+
+	result, warnings := generateNginxCfg(&cafeIngressEx, nil, dosResource, false, configParams, isPlus, false, staticCfgParams, false)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgForMergeableIngressesForAppProtectDos(t *testing.T) {
+	mergeableIngresses := createMergeableCafeIngress()
+	mergeableIngresses.Master.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-enable"] = "True"
+	mergeableIngresses.Master.DosEx = &DosEx{
+		DosPolicy: &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "policy",
+				},
+			},
+		},
+		DosLogConf: &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"namespace": "default",
+					"name":      "logconf",
+				},
+			},
+		},
+	}
+
+	isPlus := true
+	configParams := NewDefaultConfigParams(isPlus)
+	apRes := &appProtectDosResource{
+		AppProtectDosEnable:       "on",
+		AppProtectDosName:         "dos.example.com",
+		AppProtectDosMonitorUri:   "monitor-name",
+		AppProtectDosAccessLogDst: "access-log-dest",
+		AppProtectDosPolicyFile:   "/etc/nginx/dos/policies/default_policy",
+		AppProtectDosLogEnable:    true,
+		AppProtectDosLogConfFile:  "/etc/nginx/dos/logconfs/default_logconf syslog:server=127.0.0.1:514",
+	}
+	staticCfgParams := &StaticConfigParams{
+		MainAppProtectDosLoadModule: true,
+	}
+
+	expected := createExpectedConfigForMergeableCafeIngress(isPlus)
+	expected.Servers[0].AppProtectDosEnable = "on"
+	expected.Servers[0].AppProtectDosPolicyFile = "/etc/nginx/dos/policies/default_policy"
+	expected.Servers[0].AppProtectDosLogConfFile = "/etc/nginx/dos/logconfs/default_logconf syslog:server=127.0.0.1:514"
+	expected.Servers[0].AppProtectDosLogEnable = true
+	expected.Servers[0].AppProtectDosName = "dos.example.com"
+	expected.Servers[0].AppProtectDosMonitorUri = "monitor-name"
+	expected.Servers[0].AppProtectDosAccessLogDst = "access-log-dest"
+	expected.Ingress.Annotations = mergeableIngresses.Master.Ingress.Annotations
+
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, nil, apRes, configParams, isPlus, false, staticCfgParams, false)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
 	}

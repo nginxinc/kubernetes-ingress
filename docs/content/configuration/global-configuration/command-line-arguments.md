@@ -337,6 +337,69 @@ Requires [-nginx-plus](#cmdoption-nginx-plus).
 * If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.  
 
 &nbsp;  
+<a name="cmdoption-enable-app-protect-dos"></a> 
+
+### -enable-app-protect-dos
+
+Enables support for App Protect Dos.
+
+Requires [-nginx-plus](#cmdoption-nginx-plus).
+
+* If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.  
+
+&nbsp;  
+<a name="cmdoption-app-protect-dos-debug"></a> 
+
+### -app-protect-dos-debug
+
+Enable debugging for App Protect Dos.
+
+Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect-dos](#cmdoption-enable-app-protect-dos).
+
+* If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.  
+
+&nbsp;  
+<a name="cmdoption-app-protect-dos-max-daemons"></a> 
+
+### -app-protect-dos-max-daemons
+
+Max number of ADMD instances.
+
+Default `1`. 
+
+Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect-dos](#cmdoption-enable-app-protect-dos).
+
+* If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.  
+
+&nbsp;  
+<a name="cmdoption-app-protect-dos-max-workers"></a> 
+
+### -app-protect-dos-max-workers
+
+Max number of nginx processes to support.
+
+Default `Number of CPU cores in the machine`. 
+
+Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect-dos](#cmdoption-enable-app-protect-dos).
+
+* If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.  
+
+
+&nbsp;  
+<a name="cmdoption-app-protect-dos-memory"></a> 
+
+### -app-protect-dos-memory
+
+RAM memory size to consume in MB
+
+Default `50% of free RAM in the container or 80MB, the smaller`. 
+
+Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect-dos](#cmdoption-enable-app-protect-dos).
+
+* If the argument is set, but `nginx-plus` and `enable-app-protect-dos` are set to false, the Ingress Controller will fail to start.  
+
+
+&nbsp;  
 <a name="cmdoption-ready-status"></a> 
 
 ### -ready-status

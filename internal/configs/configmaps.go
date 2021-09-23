@@ -10,7 +10,7 @@ import (
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
-func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool) *ConfigParams {
+func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool) *ConfigParams {
 	cfgParams := NewDefaultConfigParams(nginxPlus)
 
 	if serverTokens, exists, err := GetMapKeyAsBool(cfgm.Data, "server-tokens", cfgm); exists {
@@ -501,6 +501,23 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool) *Con
 		}
 	}
 
+	if hasAppProtectDos {
+		if appProtectDosLogFormat, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "app-protect-dos-log-format", cfgm, "\n"); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				cfgParams.MainAppProtectDosLogFormat = appProtectDosLogFormat
+			}
+		}
+	
+		if appProtectDosLogFormatEscaping, exists := cfgm.Data["app-protect-dos-log-format-escaping"]; exists {
+			appProtectDosLogFormatEscaping = strings.TrimSpace(appProtectDosLogFormatEscaping)
+			if appProtectDosLogFormatEscaping != "" {
+				cfgParams.MainAppProtectDosLogFormatEscaping = appProtectDosLogFormatEscaping
+			}
+		}
+    }
+
 	return cfgParams
 }
 
@@ -556,11 +573,14 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		VariablesHashBucketSize:            config.VariablesHashBucketSize,
 		VariablesHashMaxSize:               config.VariablesHashMaxSize,
 		AppProtectLoadModule:               staticCfgParams.MainAppProtectLoadModule,
+		AppProtectDosLoadModule:            staticCfgParams.MainAppProtectDosLoadModule,
 		AppProtectFailureModeAction:        config.MainAppProtectFailureModeAction,
 		AppProtectCompressedRequestsAction: config.MainAppProtectCompressedRequestsAction,
 		AppProtectCookieSeed:               config.MainAppProtectCookieSeed,
 		AppProtectCPUThresholds:            config.MainAppProtectCPUThresholds,
 		AppProtectPhysicalMemoryThresholds: config.MainAppProtectPhysicalMemoryThresholds,
+		AppProtectDosLogFormat:             config.MainAppProtectDosLogFormat,
+		AppProtectDosLogFormatEscaping:     config.MainAppProtectDosLogFormatEscaping,
 		InternalRouteServer:                staticCfgParams.EnableInternalRoutes,
 		InternalRouteServerName:            staticCfgParams.PodName,
 		LatencyMetrics:                     staticCfgParams.EnableLatencyMetrics,

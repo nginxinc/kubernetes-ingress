@@ -51,6 +51,8 @@ spec:
               description: VirtualServerSpec is the spec of the VirtualServer resource.
               type: object
               properties:
+                dos:
+                  type: string
                 host:
                   type: string
                 http-snippets:
@@ -149,6 +151,8 @@ spec:
                                 type: integer
                               type:
                                 type: string
+                      dos:
+                        type: string
                       errorPages:
                         type: array
                         items:

@@ -249,8 +249,8 @@ func validateHashLoadBalancingMethod(method string, fieldPath *field.Path, isPlu
 		allErrs = append(allErrs, varErrs...)
 	}
 
-	if !escapedStringsFmtRegexp.MatchString(method) {
-		msg := fmt.Sprintf("invalid value for hash: %v", validation.RegexError(escapedStringsErrMsg, escapedStringsFmt))
+	if err := validateEscapedString(method); err != nil {
+		msg := fmt.Sprintf("invalid value for hash: %v", err)
 		return append(allErrs, field.Invalid(fieldPath, method, msg))
 	}
 
@@ -297,9 +297,8 @@ func validateMatchExpect(expect string, fieldPath *field.Path) field.ErrorList {
 		return allErrs
 	}
 
-	if !escapedStringsFmtRegexp.MatchString(expect) {
-		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt)
-		return append(allErrs, field.Invalid(fieldPath, expect, msg))
+	if err := validateEscapedString(expect); err != nil {
+		return append(allErrs, field.Invalid(fieldPath, expect, err.Error()))
 	}
 
 	if strings.HasPrefix(expect, "~") {
@@ -328,9 +327,9 @@ func validateMatchSend(send string, fieldPath *field.Path) field.ErrorList {
 	if send == "" {
 		return allErrs
 	}
-	if !escapedStringsFmtRegexp.MatchString(send) {
-		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt)
-		return append(allErrs, field.Invalid(fieldPath, send, msg))
+
+	if err := validateEscapedString(send); err != nil {
+		return append(allErrs, field.Invalid(fieldPath, send, err.Error()))
 	}
 
 	err := validateHexString(send)
