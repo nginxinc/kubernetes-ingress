@@ -61,6 +61,7 @@ func (c *FakeGlobalConfigurations) List(ctx context.Context, opts v1.ListOptions
 func (c *FakeGlobalConfigurations) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(globalconfigurationsResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a globalConfiguration and creates it.  Returns the server's representation of the globalConfiguration, and an error, if there is any.

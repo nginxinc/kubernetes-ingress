@@ -73,7 +73,29 @@ server {
 	{{range $AppProtectLogConf := $server.AppProtectLogConfs}}app_protect_security_log {{$AppProtectLogConf}};
 	{{end}}
 	{{- end}}
-	
+
+	{{- if $server.AppProtectDosEnable}}
+	app_protect_dos_enable {{$server.AppProtectDosEnable}};
+	{{if $server.AppProtectDosPolicyFile}}app_protect_dos_policy_file {{$server.AppProtectDosPolicyFile}};{{end}}
+	{{- if $server.AppProtectDosLogEnable}}
+	app_protect_dos_security_log_enable on;
+	{{if $server.AppProtectDosLogConfFile}}app_protect_dos_security_log {{$server.AppProtectDosLogConfFile}};{{end}}
+	{{- end}}
+	{{- if $server.AppProtectDosAccessLogDst}}
+	set $loggable '0';
+	# app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+	access_log {{ .AppProtectDosAccessLogDst }} log_dos if=$loggable;
+	{{- end}}
+	{{- if $server.AppProtectDosMonitorUri}}
+		{{- if or $server.AppProtectDosMonitorProtocol $server.AppProtectDosMonitorTimeout}}
+	app_protect_dos_monitor uri={{$server.AppProtectDosMonitorUri}}{{if $server.AppProtectDosMonitorProtocol}} protocol={{$server.AppProtectDosMonitorProtocol}}{{end}}{{if $server.AppProtectDosMonitorTimeout}} timeout={{$server.AppProtectDosMonitorTimeout}}{{end}};
+		{{- else}}
+	app_protect_dos_monitor "{{$server.AppProtectDosMonitorUri}}";
+		{{- end}}
+	{{- end}}
+	{{if $server.AppProtectDosName}}app_protect_dos_name "{{$server.AppProtectDosName}}";{{end}}
+	{{- end}}
+
 	{{if not $server.GRPCOnly}}
 	{{range $proxyHideHeader := $server.ProxyHideHeaders}}
 	proxy_hide_header {{$proxyHideHeader}};{{end}}

@@ -219,7 +219,6 @@ func newAppProtectResourceReferenceChecker(annotation string) *appProtectResourc
 	return &appProtectResourceReferenceChecker{annotation}
 }
 
-// In App Protect logConfs can be a coma separated list.
 func (rc *appProtectResourceReferenceChecker) IsReferencedByIngress(namespace string, name string, ing *networking.Ingress) bool {
 	if resName, exists := ing.Annotations[rc.annotation]; exists {
 		resNames := strings.Split(resName, ",")
@@ -260,5 +259,45 @@ func isPolicyReferenced(policies []v1.PolicyReference, resourceNamespace string,
 		}
 	}
 
+	return false
+}
+
+type dosResourceReferenceChecker struct {
+	annotation string
+}
+
+func newDosResourceReferenceChecker(annotation string) *dosResourceReferenceChecker {
+	return &dosResourceReferenceChecker{annotation}
+}
+
+func (rc *dosResourceReferenceChecker) IsReferencedByIngress(namespace string, name string, ing *networking.Ingress) bool {
+	res, exists := ing.Annotations[rc.annotation]
+	if !exists {
+		return false
+	}
+	return res == namespace+"/"+name || (namespace == ing.Namespace && res == name)
+}
+
+func (rc *dosResourceReferenceChecker) IsReferencedByMinion(namespace string, name string, ing *networking.Ingress) bool {
+	return false
+}
+
+func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServer(namespace string, name string, vs *v1.VirtualServer) bool {
+	if vs.Spec.Dos == namespace+"/"+name || (namespace == vs.Namespace && vs.Spec.Dos == name) {
+		return true
+	}
+	for _, route := range vs.Spec.Routes {
+		if route.Dos == namespace+"/"+name || (namespace == vs.Namespace && route.Dos == name) {
+			return true
+		}
+	}
+	return false
+}
+
+func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServerRoute(namespace string, name string, vsr *v1.VirtualServerRoute) bool {
+	return false
+}
+
+func (rc *dosResourceReferenceChecker) IsReferencedByTransportServer(namespace string, name string, ts *conf_v1alpha1.TransportServer) bool {
 	return false
 }

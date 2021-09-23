@@ -1,0 +1,28 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nginx-ingress-app-protect-dos
+rules:
+  - apiGroups:
+      - appprotectdos.f5.com
+    resources:
+      - apdospolicies
+      - apdoslogconfs
+      - dosprotectedresources
+    verbs:
+      - "get"
+      - "watch"
+      - "list"
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: nginx-ingress-app-protect-dos
+subjects:
+  - kind: ServiceAccount
+    name: nginx-ingress
+    namespace: nginx-ingress
+roleRef:
+  kind: ClusterRole
+  name: nginx-ingress-app-protect-dos
+  apiGroup: rbac.authorization.k8s.io

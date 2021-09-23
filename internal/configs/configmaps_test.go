@@ -35,13 +35,14 @@ func TestParseConfigMapWithAppProtectCompressedRequestsAction(t *testing.T) {
 	}
 	nginxPlus := true
 	hasAppProtect := true
+	hasAppProtectDos := false
 	for _, test := range tests {
 		cm := &v1.ConfigMap{
 			Data: map[string]string{
 				"app-protect-compressed-requests-action": test.action,
 			},
 		}
-		result := ParseConfigMap(cm, nginxPlus, hasAppProtect)
+		result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos)
 		if result.MainAppProtectCompressedRequestsAction != test.expect {
 			t.Errorf("ParseConfigMap() returned %q but expected %q for the case %s", result.MainAppProtectCompressedRequestsAction, test.expect, test.msg)
 		}

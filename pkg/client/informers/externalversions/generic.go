@@ -7,6 +7,7 @@ import (
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
+	v1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
 	cache "k8s.io/client-go/tools/cache"
 )
@@ -37,7 +38,11 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=k8s.nginx.org, Version=v1
+	// Group=appprotectdos.f5.com, Version=v1beta1
+	case v1beta1.SchemeGroupVersion.WithResource("dosprotectedresources"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Appprotectdos().V1beta1().DosProtectedResources().Informer()}, nil
+
+		// Group=k8s.nginx.org, Version=v1
 	case v1.SchemeGroupVersion.WithResource("policies"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1().Policies().Informer()}, nil
 	case v1.SchemeGroupVersion.WithResource("virtualservers"):
@@ -48,6 +53,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=k8s.nginx.org, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("globalconfigurations"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1alpha1().GlobalConfigurations().Informer()}, nil
+	case v1alpha1.SchemeGroupVersion.WithResource("policies"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1alpha1().Policies().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("transportservers"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.K8s().V1alpha1().TransportServers().Informer()}, nil
 

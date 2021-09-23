@@ -9,6 +9,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -51,6 +52,7 @@ const (
 	failTimeoutAnnotation                 = "nginx.org/fail-timeout"
 	appProtectEnableAnnotation            = "appprotect.f5.com/app-protect-enable"
 	appProtectSecurityLogEnableAnnotation = "appprotect.f5.com/app-protect-security-log-enable"
+	appProtectDosProtectedAnnotation      = "appprotectdos.f5.com/app-protect-dos-resource"
 	internalRouteAnnotation               = "nsm.nginx.com/internal-route"
 	websocketServicesAnnotation           = "nginx.org/websocket-services"
 	sslServicesAnnotation                 = "nginx.org/ssl-services"
@@ -66,6 +68,7 @@ type annotationValidationContext struct {
 	value                 string
 	isPlus                bool
 	appProtectEnabled     bool
+	appProtectDosEnabled  bool
 	internalRoutesEnabled bool
 	fieldPath             *field.Path
 	snippetsEnabled       bool
@@ -231,6 +234,11 @@ var (
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
+		appProtectDosProtectedAnnotation: {
+			validateAppProtectDosOnlyAnnotation,
+			validatePlusOnlyAnnotation,
+			validateQualifiedName,
+		},
 		internalRouteAnnotation: {
 			validateInternalRoutesOnlyAnnotation,
 			validateRequiredAnnotation,
@@ -276,6 +284,7 @@ func validateIngress(
 	ing *networking.Ingress,
 	isPlus bool,
 	appProtectEnabled bool,
+	appProtectDosEnabled bool,
 	internalRoutesEnabled bool,
 	snippetsEnabled bool,
 ) field.ErrorList {
@@ -285,6 +294,7 @@ func validateIngress(
 		getSpecServices(ing.Spec),
 		isPlus,
 		appProtectEnabled,
+		appProtectDosEnabled,
 		internalRoutesEnabled,
 		field.NewPath("annotations"),
 		snippetsEnabled,
@@ -306,6 +316,7 @@ func validateIngressAnnotations(
 	specServices map[string]bool,
 	isPlus bool,
 	appProtectEnabled bool,
+	appProtectDosEnabled bool,
 	internalRoutesEnabled bool,
 	fieldPath *field.Path,
 	snippetsEnabled bool,
@@ -321,6 +332,7 @@ func validateIngressAnnotations(
 				value:                 value,
 				isPlus:                isPlus,
 				appProtectEnabled:     appProtectEnabled,
+				appProtectDosEnabled:  appProtectDosEnabled,
 				internalRoutesEnabled: internalRoutesEnabled,
 				fieldPath:             fieldPath.Child(name),
 				snippetsEnabled:       snippetsEnabled,
@@ -359,6 +371,29 @@ func validateRelatedAnnotation(name string, validator validatorFunc) annotationV
 		}
 		return allErrs
 	}
+}
+
+func validateExistAnnotation(name string) annotationValidationFunc {
+	return func(context *annotationValidationContext) field.ErrorList {
+		allErrs := field.ErrorList{}
+		_, exists := context.annotations[name]
+		if !exists {
+			return append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s must exist", name)))
+		}
+		return allErrs
+	}
+}
+
+func validateQualifiedName(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	err := validation.IsQualifiedName(context.value)
+
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a qualified name"))
+	}
+
+	return allErrs
 }
 
 func validateMergeableIngressTypeAnnotation(context *annotationValidationContext) field.ErrorList {
@@ -413,6 +448,14 @@ func validateAppProtectOnlyAnnotation(context *annotationValidationContext) fiel
 	allErrs := field.ErrorList{}
 	if !context.appProtectEnabled {
 		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires AppProtect"))
+	}
+	return allErrs
+}
+
+func validateAppProtectDosOnlyAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if !context.appProtectDosEnabled {
+		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires AppProtectDos"))
 	}
 	return allErrs
 }

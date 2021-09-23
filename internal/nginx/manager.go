@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,6 +38,10 @@ const (
 
 	// appProtectLogConfigFileName is the location of the NGINX App Protect logging configuration file
 	appProtectLogConfigFileName = "/etc/app_protect/bd/logger.cfg"
+
+	appProtectDosAgentInstallCmd    = "/usr/bin/adminstall"
+	appProtectDosAgentStartCmd      = "/usr/bin/admd -d --standalone"
+	appProtectDosAgentStartDebugCmd = "/usr/bin/admd -d --standalone --log debug"
 )
 
 // ServerConfig holds the config data for an upstream server in NGINX Plus.
@@ -77,6 +82,8 @@ type Manager interface {
 	AppProtectAgentQuit()
 	AppProtectPluginStart(appDone chan error)
 	AppProtectPluginQuit()
+	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int)
+	AppProtectDosAgentQuit()
 }
 
 // LocalManager updates NGINX configuration, starts, reloads and quits NGINX,
@@ -99,6 +106,7 @@ type LocalManager struct {
 	OpenTracing                  bool
 	appProtectPluginPid          int
 	appProtectAgentPid           int
+	appProtectDosAgentPid        int
 }
 
 // NewLocalManager creates a LocalManager.
@@ -510,6 +518,58 @@ func (lm *LocalManager) AppProtectPluginQuit() {
 	if err := shellOut(killcmd); err != nil {
 		glog.Fatalf("Failed to quit AppProtect Plugin: %v", err)
 	}
+}
+
+// AppProtectDosAgentQuit gracefully ends AppProtect Agent.
+func (lm *LocalManager) AppProtectDosAgentQuit() {
+	glog.V(3).Info("Quitting AppProtectDos Agent")
+	killcmd := fmt.Sprintf("kill %d", lm.appProtectDosAgentPid)
+	if err := shellOut(killcmd); err != nil {
+		glog.Fatalf("Failed to quit AppProtect Agent: %v", err)
+	}
+}
+
+// AppProtectDosAgentStart starts the AppProtectDos agent
+func (lm *LocalManager) AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int) {
+	glog.V(3).Info("Starting AppProtectDos Agent")
+
+	// Perform installation by adminstall
+	appProtectDosAgentInstallCmdFull := appProtectDosAgentInstallCmd
+
+	if maxDaemon != 0 {
+		appProtectDosAgentInstallCmdFull += " -d " + strconv.Itoa(maxDaemon)
+	}
+
+	if maxWorkers != 0 {
+		appProtectDosAgentInstallCmdFull += " -w " + strconv.Itoa(maxWorkers)
+	}
+
+	if memory != 0 {
+		appProtectDosAgentInstallCmdFull += " -m " + strconv.Itoa(memory)
+	}
+
+	cmdInstall := exec.Command("sh", "-c", appProtectDosAgentInstallCmdFull)
+
+	if err := cmdInstall.Run(); err != nil {
+		glog.Fatalf("Failed to install AppProtectDos: %v", err)
+	}
+
+	// case debug add debug flag to admd
+	appProtectDosAgentCmd := appProtectDosAgentStartCmd
+	if debug {
+		appProtectDosAgentCmd = appProtectDosAgentStartDebugCmd
+	}
+
+	cmd := exec.Command("sh", "-c", appProtectDosAgentCmd)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
+	if err := cmd.Start(); err != nil {
+		glog.Fatalf("Failed to start AppProtectDos Agent: %v", err)
+	}
+	lm.appProtectDosAgentPid = cmd.Process.Pid
+	go func() {
+		apdaDone <- cmd.Wait()
+	}()
 }
 
 func getBinaryFileName(debug bool) string {

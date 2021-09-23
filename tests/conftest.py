@@ -117,7 +117,12 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "appprotect" in item.keywords:
                 item.add_marker(appprotect)
-    if str(config.getoption("--batch-start")) != "True":
+    if "-dos" not in config.getoption("--image"):
+        dos = pytest.mark.skip(reason="Skip DOS test in non-DOS image")
+        for item in items:
+            if "dos" in item.keywords:
+                item.add_marker(dos)
+    if  str(config.getoption("--batch-start")) != "True":
         batch_start = pytest.mark.skip(reason="Skipping pod restart test with multiple resources")
         for item in items:
             if "batch_start" in item.keywords:

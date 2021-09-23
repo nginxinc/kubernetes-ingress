@@ -14,6 +14,8 @@ This chart deploys the NGINX Ingress controller in your Kubernetes cluster.
     - Alternatively, pull an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/pulling-ingress-controller-image).
     - Alternatively, you can build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](https://docs.nginx.com/nginx-ingress-controller/installation/building-ingress-controller-image).
     - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
+  - If you’d like to use App Protect Dos, please install App Protect Dos Arbitrator helm chart
+
 
 ## Getting the Chart Sources
 
@@ -44,7 +46,7 @@ $ helm repo update
 
 By default, the Ingress Controller requires a number of custom resource definitions (CRDs) installed in the cluster. The Helm client will install those CRDs. If the CRDs are not installed, the Ingress Controller pods will not become `Ready`.
 
-If you do not use the custom resources that require those CRDs (which corresponds to `controller.enableCustomResources` set to `false` and `controller.appprotect.enable` set to `false`), the installation of the CRDs can be skipped by specifying `--skip-crds` for the helm install command.
+If you do not use the custom resources that require those CRDs (which corresponds to `controller.enableCustomResources` set to `false` and `controller.appprotect.enable` set to `false` and `controller.appprotectdos.enable` set to `false`), the installation of the CRDs can be skipped by specifying `--skip-crds` for the helm install command.
 
 ### Installing via Helm Repository
 
@@ -58,6 +60,10 @@ $ helm install my-release nginx-stable/nginx-ingress
 For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`)
 ```console
 $ helm install my-release nginx-stable/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
+```
+For App Protect Dos: (assuming you have pushed the Ingress controller image `nginx-plus-ingress` to your private registry `myregistry.example.com`
+```console
+$ helm install --create-namespace -n nginx-ingress my-release nginx-stable/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true --set controller.appprotectdos.enable=true
 ```
 
 **Note**: If you wish to use the experimental repository, replace `stable` with `edge` and add the `--devel` flag.
@@ -74,6 +80,14 @@ $ helm install my-release .
 For NGINX Plus:
 ```console
 $ helm install my-release -f values-plus.yaml .
+```
+
+For App Protect Dos: 
+
+replace the value in the `appprotectdos.enable` field inside the values.yaml file with `true`
+
+```console
+$ helm install --create-namespace -n nginx-ingress my-release -f values-plus.yaml .
 ```
 
 **Note**: If you wish to use the experimental repository, replace the value in the `tag` field inside the yaml files with `edge`.
@@ -105,10 +119,20 @@ To upgrade the release `my-release`:
 $ helm upgrade my-release .
 ```
 
+For App Protect Dos:
+```console
+$ helm upgrade -n nginx-ingress my-release .
+```
+
 #### Upgrade via Helm Repository:
 
 ```console
 $ helm upgrade my-release nginx-stable/nginx-ingress
+```
+
+For App Protect Dos:
+```console
+$ helm upgrade -n nginx-ingress my-release nginx-stable/nginx-ingress
 ```
 
 ## Uninstalling the Chart
@@ -119,6 +143,12 @@ To uninstall/delete the release `my-release`:
 
 ```console
 $ helm uninstall my-release
+```
+
+For App Protect Dos:
+```console
+$ helm uninstall -n nginx-ingress my-release
+$ kubectl delete ns nginx-ingress
 ```
 
 The command removes all the Kubernetes components associated with the release and deletes the release.
@@ -217,6 +247,11 @@ Parameter | Description | Default
 `controller.pod.annotations` | The annotations of the Ingress Controller pod. | {}
 `controller.pod.extraLabels` | The additional extra labels of the Ingress Controller pod. | {}
 `controller.appprotect.enable` | Enables the App Protect module in the Ingress Controller. | false
+`controller.appprotectdos.enable` | Enables the App Protect Dos module in the Ingress Controller. | false
+`controller.appprotectdos.debug` | Enable debugging for App Protect Dos. | false
+`controller.appprotectdos.maxDaemons` | Max number of ADMD instances. | 1
+`controller.appprotectdos.maxWorkers` | Max number of nginx processes to support. | Number of CPU cores in the machine
+`controller.appprotectdos.memory` | RAM memory size to consume in MB. | 50% of free RAM in the container or 80MB, the smaller
 `controller.readyStatus.enable` | Enables the readiness endpoint `"/nginx-ready"`. The endpoint returns a success code when NGINX has loaded all the config after the startup. This also configures a readiness probe for the Ingress Controller pods that uses the readiness endpoint. | true
 `controller.readyStatus.port` | The HTTP port for the readiness endpoint. | 8081
 `controller.enableLatencyMetrics` |  Enable collection of latency metrics for upstreams. Requires `prometheus.create`. | false

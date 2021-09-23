@@ -647,7 +647,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		isWildcardEnabled,
 	)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
@@ -1121,7 +1121,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	isWildcardEnabled := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams, isWildcardEnabled)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
@@ -1407,7 +1407,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	isWildcardEnabled := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
@@ -1725,7 +1725,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	isWildcardEnabled := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
@@ -2199,7 +2199,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 	isWildcardEnabled := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -2253,9 +2253,13 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 		},
-		apResources: map[string]string{
-			"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
-			"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+		apResources: &appProtectResourcesForVS{
+			Policies: map[string]string{
+				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+			},
+			LogConfs: map[string]string{
+				"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
 		},
 	}
 
@@ -3696,9 +3700,13 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				},
 			},
 			policyOpts: policyOptions{
-				apResources: map[string]string{
-					"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
-					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				apResources: &appProtectResourcesForVS{
+					Policies: map[string]string{
+						"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+					},
+					LogConfs: map[string]string{
+						"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+					},
 				},
 			},
 			context: "route",
@@ -7796,7 +7804,7 @@ func TestAddWafConfig(t *testing.T) {
 		wafInput     *conf_v1.WAF
 		polKey       string
 		polNamespace string
-		apResources  map[string]string
+		apResources  *appProtectResourcesForVS
 		wafConfig    *version2.WAF
 		expected     *validationResults
 		msg          string
@@ -7808,7 +7816,10 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "default",
-			apResources:  map[string]string{},
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{},
+				LogConfs: map[string]string{},
+			},
 			wafConfig: &version2.WAF{
 				Enable: "on",
 			},
@@ -7828,9 +7839,13 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "default",
-			apResources: map[string]string{
-				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
-				"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+				},
 			},
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
@@ -7853,8 +7868,11 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "",
-			apResources: map[string]string{
-				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				},
+				LogConfs: map[string]string{},
 			},
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
@@ -7881,8 +7899,11 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "",
-			apResources: map[string]string{
-				"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+				},
 			},
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
@@ -7910,9 +7931,13 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "",
-			apResources: map[string]string{
-				"ns1/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
-				"ns2/logconf":         "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"ns1/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				},
+				LogConfs: map[string]string{
+					"ns2/logconf": "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+				},
 			},
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
@@ -7930,9 +7955,13 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "default",
-			apResources: map[string]string{
-				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
-				"default/logconf":         "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+				},
 			},
 			wafConfig: &version2.WAF{
 				Enable:   "off",

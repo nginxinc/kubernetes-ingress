@@ -17,6 +17,14 @@ const (
 
 var escapedStringsFmtRegexp = regexp.MustCompile("^" + escapedStringsFmt + "$")
 
+func validateEscapedString(body string, examples ...string) error {
+	if !escapedStringsFmtRegexp.MatchString(body) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, examples...)
+		return fmt.Errorf(msg)
+	}
+	return nil
+}
+
 func validateVariable(nVar string, validVars map[string]bool, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
