@@ -72,6 +72,7 @@ type Server struct {
 	EgressMTLS                *EgressMTLS
 	OIDC                      *OIDC
 	WAF                       *WAF
+	Dos                       *Dos
 	PoliciesErrorReturn       *Return
 	VSNamespace               string
 	VSName                    string
@@ -124,6 +125,19 @@ type WAF struct {
 	ApLogConf           string
 }
 
+// Dos defines Dos configuration.
+type Dos struct {
+	Enable                 string
+	Name                   string
+	ApDosPolicy            string
+	ApDosSecurityLogEnable bool
+	ApDosLogConf           string
+	ApDosMonitorUri        string
+	ApDosMonitorProtocol   string
+	ApDosMonitorTimeout    uint64
+	ApDosAccessLogDest     string
+}
+
 // Location defines a location.
 type Location struct {
 	Path                     string
@@ -162,6 +176,7 @@ type Location struct {
 	EgressMTLS               *EgressMTLS
 	OIDC                     bool
 	WAF                      *WAF
+	Dos                      *Dos
 	PoliciesErrorReturn      *Return
 	ServiceName              string
 	IsVSR                    bool

@@ -52,6 +52,7 @@ func TestValidateVirtualServer(t *testing.T) {
 					},
 				},
 			},
+			Dos: "some-ns/some-name",
 		},
 	}
 
@@ -89,6 +90,37 @@ func TestValidateHost(t *testing.T) {
 		allErrs := validateHost(h, field.NewPath("host"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateHost(%q) returned no errors for invalid input", h)
+		}
+	}
+}
+
+func TestValidateDos(t *testing.T) {
+	validDosResources := []string{
+		"hello",
+		"ns/hello",
+		"hello-world-1",
+	}
+
+	for _, h := range validDosResources {
+		allErrs := validateDos(h, field.NewPath("dos"))
+		if len(allErrs) > 0 {
+			t.Errorf("validateDos(%q) returned errors %v for valid input", h, allErrs)
+		}
+	}
+
+	invalidDos := []string{
+		"*",
+		"..",
+		".example.com",
+		"-hello-world-1",
+		"/hello/world-1",
+		"hello/world/other",
+	}
+
+	for _, h := range invalidDos {
+		allErrs := validateDos(h, field.NewPath("dos"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateDos(%q) returned no errors for invalid input", h)
 		}
 	}
 }

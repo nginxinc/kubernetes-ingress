@@ -79,6 +79,30 @@ def configure_rbac_with_ap(rbac_v1: RbacAuthorizationV1Api) -> RBACAuthorization
         return RBACAuthorization(role_name, binding_name)
 
 
+def configure_rbac_with_dos(rbac_v1: RbacAuthorizationV1Api) -> RBACAuthorization:
+    """
+    Create cluster and binding for Dos module.
+    :param rbac_v1: RbacAuthorizationV1Api
+    :return: RBACAuthorization
+    """
+    with open(f"{DEPLOYMENTS}/rbac/apdos-rbac.yaml") as f:
+        docs = yaml.safe_load_all(f)
+        role_name = ""
+        binding_name = ""
+        for dep in docs:
+            if dep["kind"] == "ClusterRole":
+                print("Create cluster role for DOS")
+                role_name = dep["metadata"]["name"]
+                rbac_v1.create_cluster_role(dep)
+                print(f"Created role '{role_name}'")
+            elif dep["kind"] == "ClusterRoleBinding":
+                print("Create binding for DOS")
+                binding_name = dep["metadata"]["name"]
+                rbac_v1.create_cluster_role_binding(dep)
+                print(f"Created binding '{binding_name}'")
+        return RBACAuthorization(role_name, binding_name)
+
+
 def patch_rbac(rbac_v1: RbacAuthorizationV1Api, yaml_manifest) -> RBACAuthorization:
     """
     Patch a clusterrole and a binding.
@@ -782,7 +806,7 @@ def delete_testing_namespaces(v1: CoreV1Api) -> []:
         delete_namespace(v1, namespace.metadata.name)
 
 
-def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
+def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace, print_log=True) -> str:
     """
     Execute 'cat file_path' command in a pod.
 
@@ -790,6 +814,7 @@ def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
     :param pod_name: pod name
     :param pod_namespace: pod namespace
     :param file_path: an absolute path to a file in the pod
+    :param print_log: bool to decide if print log or not
     :return: str
     """
     command = ["cat", file_path]
@@ -804,7 +829,33 @@ def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
         tty=False,
     )
     result_conf = str(resp)
-    print("\nFile contents:\n" + result_conf)
+    if print_log:
+        print("\nFile contents:\n" + result_conf)
+    return result_conf
+
+
+def nginx_reload(v1: CoreV1Api, pod_name, pod_namespace) -> str:
+    """
+    Execute 'nginx -s reload' command in a pod.
+
+    :param v1: CoreV1Api
+    :param pod_name: pod name
+    :param pod_namespace: pod namespace
+    :return: str
+    """
+    command = ["nginx", "-s", "reload"]
+    resp = stream(
+        v1.connect_get_namespaced_pod_exec,
+        pod_name,
+        pod_namespace,
+        command=command,
+        stderr=True,
+        stdin=False,
+        stdout=True,
+        tty=False,
+    )
+    result_conf = str(resp)
+
     return result_conf
 
 
@@ -1011,6 +1062,54 @@ def delete_ingress_controller(apps_v1_api: AppsV1Api, name, dep_type, namespace)
         delete_daemon_set(apps_v1_api, name, namespace)
 
 
+def create_dos_arbitrator(
+    v1: CoreV1Api, apps_v1_api: AppsV1Api, namespace
+) -> str:
+    """
+    Create dos arbitrator according to the params.
+
+    :param v1: CoreV1Api
+    :param apps_v1_api: AppsV1Api
+    :param namespace: namespace name
+    :return: str
+    """
+    yaml_manifest = (
+        f"{DEPLOYMENTS}/deployment/appprotect-dos-arb.yaml"
+    )
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+
+    name = create_deployment(apps_v1_api, namespace, dep)
+
+    before = time.time()
+    wait_until_all_pods_are_ready(v1, namespace)
+    after = time.time()
+    print(f"All pods came up in {int(after-before)} seconds")
+    print(f"Dos arbitrator was created with name '{name}'")
+
+    print("create dos svc")
+    svc_name = create_service_from_yaml(
+        v1,
+        namespace,
+        f"{DEPLOYMENTS}/service/appprotect-dos-arb-svc.yaml",
+    )
+    print(f"Dos arbitrator svc was created with name '{svc_name}'")
+    return name
+
+
+def delete_dos_arbitrator(v1: CoreV1Api, apps_v1_api: AppsV1Api, name, namespace) -> None:
+    """
+    Delete dos arbitrator.
+
+    :param v1: CoreV1Api
+    :param apps_v1_api: AppsV1Api
+    :param name: name
+    :param namespace: namespace name
+    :return:
+    """
+    delete_deployment(apps_v1_api, name, namespace)
+    delete_service(v1, "svc-appprotect-dos-arb", namespace)
+
 def create_ns_and_sa_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
     """
     Create a namespace and a service account in that namespace.
@@ -1094,6 +1193,25 @@ def create_ingress_with_ap_annotations(
         doc["metadata"]["annotations"][
             "appprotect.f5.com/app-protect-security-log-destination"
         ] = f"syslog:server={syslog_ep}"
+        create_ingress(kube_apis.networking_v1, namespace, doc)
+
+
+def create_ingress_with_dos_annotations(
+        kube_apis, yaml_manifest, namespace, dos_protected
+) -> None:
+    """
+    Create an ingress with AppProtect annotations
+    :param dos_protected: the namepsace/name of the dos protected resource
+    :param kube_apis: KubeApis
+    :param yaml_manifest: an absolute path to ingress yaml
+    :param namespace: namespace
+    :return:
+    """
+    print("Load ingress yaml and set DOS annotations")
+
+    with open(yaml_manifest) as f:
+        doc = yaml.safe_load(f)
+        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-resource"] = dos_protected
         create_ingress(kube_apis.networking_v1, namespace, doc)
 
 

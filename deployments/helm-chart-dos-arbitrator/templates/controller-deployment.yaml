@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "arbitrator.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "arbitrator.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "arbitrator.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "arbitrator.name" . }}
+    spec:
+      containers:
+      - name: {{ include "arbitrator.name" . }}
+        image: "{{ .Values.arbitrator.image.repository }}:{{ .Values.arbitrator.image.tag }}"
+        imagePullPolicy: "{{ .Values.arbitrator.image.pullPolicy }}"
+        resources:
+{{ toYaml .Values.arbitrator.resources | indent 12 }}
+        ports:
+          - containerPort: 3000
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsUser: 1001
+          capabilities:
+            drop:
+              - ALL

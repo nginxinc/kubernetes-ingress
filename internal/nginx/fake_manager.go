@@ -169,3 +169,13 @@ func (*FakeManager) AppProtectPluginStart(appDone chan error) {
 func (*FakeManager) AppProtectPluginQuit() {
 	glog.V(3).Infof("Quitting FakeAppProtectPlugin")
 }
+
+// AppProtectDosAgentQuit is a fake implementtion AppProtectAgentQuit
+func (*FakeManager) AppProtectDosAgentQuit() {
+	glog.V(3).Infof("Quitting FakeAppProtectDosAgent")
+}
+
+// AppProtectDosAgentStart is a fake implementation of AppProtectAgentStart
+func (*FakeManager) AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int) {
+	glog.V(3).Infof("Starting FakeAppProtectDosAgent")
+}

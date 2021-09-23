@@ -93,12 +93,21 @@ type Server struct {
 	JWTAuth              *JWTAuth
 	JWTRedirectLocations []JWTRedirectLocation
 
-	Ports               []int
-	SSLPorts            []int
-	AppProtectEnable    string
-	AppProtectPolicy    string
-	AppProtectLogConfs  []string
-	AppProtectLogEnable string
+	Ports                     	 []int
+	SSLPorts                  	 []int
+	AppProtectEnable          	 string
+	AppProtectPolicy          	 string
+	AppProtectLogConfs        	 []string
+	AppProtectLogEnable       	 string
+	AppProtectDosEnable       	 string
+	AppProtectDosPolicyFile   	 string
+	AppProtectDosLogConfFile  	 string
+	AppProtectDosLogEnable    	 bool
+	AppProtectDosMonitorUri   	 string
+	AppProtectDosMonitorProtocol string
+	AppProtectDosMonitorTimeout  uint64
+	AppProtectDosName            string
+	AppProtectDosAccessLogDst    string
 
 	SpiffeCerts bool
 }
@@ -197,6 +206,9 @@ type MainConfig struct {
 	AppProtectCookieSeed               string
 	AppProtectCPUThresholds            string
 	AppProtectPhysicalMemoryThresholds string
+	AppProtectDosLoadModule            bool
+	AppProtectDosLogFormat             []string
+	AppProtectDosLogFormatEscaping     string
 	InternalRouteServer                bool
 	InternalRouteServerName            string
 	LatencyMetrics                     bool

@@ -61,6 +61,7 @@ func (c *FakeVirtualServerRoutes) List(ctx context.Context, opts v1.ListOptions)
 func (c *FakeVirtualServerRoutes) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(virtualserverroutesResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a virtualServerRoute and creates it.  Returns the server's representation of the virtualServerRoute, and an error, if there is any.

@@ -81,6 +81,37 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # COPY build/*.crt  /usr/local/share/ca-certificates/
 # RUN update-ca-certificates
 
+############################################# Base image for Debian with NGINX Plus and App Protect Dos #############################################
+FROM debian-plus as debian-plus-dos
+ARG IC_VERSION
+ARG NGINX_PLUS_VERSION
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	set -x \
+	&& apt-get update \
+	&& apt-get -y install lsb-release ca-certificates \
+	&& printf "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION^^}/debian `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+	&& apt-get update \
+	&& apt-get -y install app-protect-dos \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm /etc/apt/sources.list.d/nginx-app-protect-dos.list
+
+############################################# Base image for Debian with NGINX, App Protect and App Protect Dos #############################################
+FROM debian-plus-nap as debian-plus-nap-dos
+ARG IC_VERSION
+ARG NGINX_PLUS_VERSION
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	set -x \
+	&& apt-get update \
+	&& apt-get -y install lsb-release ca-certificates \
+	&& printf "deb https://pkgs.nginx.com/app-protect-dos/debian `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+	&& apt-get update \
+	&& apt-get -y install app-protect-dos \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm /etc/apt/sources.list.d/nginx-app-protect-dos.list
 
 ############################################# Base image for UBI 8 #############################################
 FROM redhat/ubi8-minimal AS ubi-base-8
@@ -162,6 +193,41 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # COPY build/*.crt  /etc/pki/ca-trust/source/anchors/
 # RUN update-ca-trust extract
 
+############################################# Base image for UBI with NGINX Plus and App Protect Dos #############################################
+FROM ubi-plus as ubi-plus-dos
+ARG NGINX_PLUS_VERSION
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
+	source /tmp/rhel_license \
+	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
+	&& subscription-manager attach \
+    && curl -sS https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
+    && subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
+    && rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+    && yum clean all \
+    && yum -y install epel-release \
+    && yum -y install app-protect-dos-${NGINX_PLUS_VERSION#r}* \
+    && rm /etc/yum.repos.d/app-protect-dos-7.repo \
+    && subscription-manager unregister
+
+############################################# Base image for UBI with NGINX Plus and App Protect and App Protect Dos #############################################
+FROM ubi-plus-nap as ubi-plus-nap-dos
+ARG NGINX_PLUS_VERSION
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
+	source /tmp/rhel_license \
+	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
+	&& subscription-manager attach \
+    && curl -sS https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
+    && yum clean all \
+    && yum -y install epel-release \
+    && yum -y install app-protect-dos-${NGINX_PLUS_VERSION#r}* \
+    && rm /etc/yum.repos.d/app-protect-dos-7.repo \
+    && subscription-manager unregister
 
 ############################################# Base images containing libs for Opentracing #############################################
 FROM opentracing/nginx-opentracing:nginx-1.21.4 as opentracing-lib
@@ -224,6 +290,9 @@ RUN --mount=target=/tmp [ -n "${BUILD_OS##*nap*}" ] && exit 0; mkdir -p /etc/ngi
 	; do sed -i "/\[$v/a log_level=fatal" "/etc/app_protect/tools/asm_logging.conf" \
 	; done \
 	&& cp -a /tmp/build/log-default.json /etc/nginx
+
+# run only on dos build
+RUN --mount=target=/tmp [ -n "${BUILD_OS##*dos*}" ] && exit 0; mkdir -p /root/app_protect_dos /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /var/run/adm && chmod 777 /shared/cores /var/log/adm /var/run/adm /etc/app_protect_dos
 
 RUN --mount=target=/tmp mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
