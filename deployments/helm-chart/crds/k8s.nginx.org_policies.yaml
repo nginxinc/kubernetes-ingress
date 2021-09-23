@@ -54,6 +54,30 @@ spec:
                       type: array
                       items:
                         type: string
+                bados:
+                  description: 'Bados defines an Bados policy. policy status: preview'
+                  type: object
+                  properties:
+                    apDosMonitor:
+                      type: string
+                    apDosPolicy:
+                      type: string
+                    dosAccessLogDest:
+                      type: string
+                    dosSecurityLog:
+                      description: DosSecurityLog defines the security log of a Bados policy.
+                      type: object
+                      properties:
+                        apDosLogConf:
+                          type: string
+                        dosLogDest:
+                          type: string
+                        enable:
+                          type: boolean
+                    enable:
+                      type: boolean
+                    name:
+                      type: string
                 egressMTLS:
                   description: 'EgressMTLS defines an Egress MTLS policy. policy status: preview'
                   type: object

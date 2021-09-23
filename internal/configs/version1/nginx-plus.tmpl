@@ -18,6 +18,9 @@ load_module modules/ngx_http_opentracing_module.so;
 {{- if .AppProtectLoadModule}}
 load_module modules/ngx_http_app_protect_module.so;
 {{- end}}
+{{- if .AppProtectDosLoadModule}}
+load_module modules/ngx_http_app_protect_dos_module.so;
+{{- end}}
 {{- if .MainSnippets}}
 {{range $value := .MainSnippets}}
 {{$value}}{{end}}
@@ -51,6 +54,10 @@ http {
                       '"$http_user_agent" "$http_x_forwarded_for"';
     {{- end}}
 
+    {{- if and .AppProtectDosLoadModule (.AppProtectDosLogFormat)}}
+    log_format log_dos '{{.AppProtectDosLogFormat}}';
+    {{- end}}
+
     {{if .AccessLogOff}}
     access_log off;
     {{else}}
@@ -70,6 +77,7 @@ http {
     {{if .AppProtectPhysicalMemoryThresholds}}app_protect_physical_memory_util_thresholds {{.AppProtectPhysicalMemoryThresholds}};{{end}}
     include /etc/nginx/waf/nac-usersigs/index.conf;
     {{- end}}
+
     sendfile        on;
     #tcp_nopush     on;
 

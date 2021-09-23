@@ -10,7 +10,7 @@ import (
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
-func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool) *ConfigParams {
+func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool) *ConfigParams {
 	cfgParams := NewDefaultConfigParams(nginxPlus)
 
 	if serverTokens, exists, err := GetMapKeyAsBool(cfgm.Data, "server-tokens", cfgm); exists {
@@ -501,6 +501,44 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool) *Con
 		}
 	}
 
+	if hasAppProtectDos {
+		if debugFlag, exists, err := GetMapKeyAsBool(cfgm.Data, "app-protect-dos-debug", cfgm); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				cfgParams.AppProtectDosDebug = debugFlag
+			}
+		}
+
+	    if appProtectDosLogFormat, exists := cfgm.Data["app-protect-dos-log-format"]; exists {
+            cfgParams.MainAppProtectDosLogFormat = appProtectDosLogFormat
+        }
+
+		if appProtectDosMaxDaemon, exists, err := GetMapKeyAsUint64(cfgm.Data, "app-protect-dos-install-max-daemons", cfgm, true); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				cfgParams.AppProtectDosMaxDaemon = appProtectDosMaxDaemon
+			}
+		}
+
+		if appProtectDosMaxWorkers, exists, err := GetMapKeyAsUint64(cfgm.Data, "app-protect-dos-install-max-workers", cfgm, true); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				cfgParams.AppProtectDosMaxWorkers = appProtectDosMaxWorkers
+			}
+		}
+
+		if appProtectDosMemory, exists, err := GetMapKeyAsUint64(cfgm.Data, "app-protect-dos-install-memory", cfgm, true); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				cfgParams.AppProtectDosMemory = appProtectDosMemory
+			}
+		}
+    }
+
 	return cfgParams
 }
 
@@ -556,11 +594,13 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		VariablesHashBucketSize:            config.VariablesHashBucketSize,
 		VariablesHashMaxSize:               config.VariablesHashMaxSize,
 		AppProtectLoadModule:               staticCfgParams.MainAppProtectLoadModule,
+		AppProtectDosLoadModule:            staticCfgParams.MainAppProtectDosLoadModule,
 		AppProtectFailureModeAction:        config.MainAppProtectFailureModeAction,
 		AppProtectCompressedRequestsAction: config.MainAppProtectCompressedRequestsAction,
 		AppProtectCookieSeed:               config.MainAppProtectCookieSeed,
 		AppProtectCPUThresholds:            config.MainAppProtectCPUThresholds,
 		AppProtectPhysicalMemoryThresholds: config.MainAppProtectPhysicalMemoryThresholds,
+		AppProtectDosLogFormat:             config.MainAppProtectDosLogFormat,
 		InternalRouteServer:                staticCfgParams.EnableInternalRoutes,
 		InternalRouteServerName:            staticCfgParams.PodName,
 		LatencyMetrics:                     staticCfgParams.EnableLatencyMetrics,

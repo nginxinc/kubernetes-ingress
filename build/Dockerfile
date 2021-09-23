@@ -80,6 +80,38 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # COPY build/*.crt  /usr/local/share/ca-certificates/
 # RUN update-ca-certificates
 
+############################################# Base image for Debian with NGINX Plus and App Protect Dos #############################################
+FROM debian-plus as debian-plus-napdos
+ARG IC_VERSION
+ARG NGINX_PLUS_VERSION
+
+RUN mkdir -p /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/ && chmod 777 /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+    --mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+    set -x \
+    && apt-get update \
+    && apt-get -y install lsb-release ca-certificates \
+    && printf "deb https://pkgs.nginx.com/app-protect-dos/debian `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+    && apt-get update \
+    && apt-get -y install app-protect-dos
+
+############################################# Base image for Debian with NGINX, App Protect and App Protect Dos #############################################
+FROM debian-plus-nap as debian-plus-nap-napdos
+ARG IC_VERSION
+ARG NGINX_PLUS_VERSION
+
+
+RUN mkdir -p /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/ && chmod 777 /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+    --mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+    set -x \
+    && apt-get update \
+    && apt-get -y install lsb-release ca-certificates \
+    && printf "deb https://pkgs.nginx.com/app-protect-dos/debian `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+    && apt-get update \
+    && apt-get -y install app-protect-dos
 
 ############################################# Base image for UBI 8 #############################################
 FROM redhat/ubi8-minimal AS ubi-base-8
@@ -218,7 +250,7 @@ ARG GIT_COMMIT
 ARG DATE
 ARG TARGETPLATFORM
 
-RUN mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
+RUN mkdir -p /etc/nginx/dos/policies /etc/nginx/dos/logconfs /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& setcap -v 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& chown -R nginx:0 /etc/nginx /etc/nginx/secrets /var/cache/nginx /var/lib/nginx \

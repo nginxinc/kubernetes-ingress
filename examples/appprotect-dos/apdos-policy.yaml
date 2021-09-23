@@ -1,0 +1,10 @@
+apiVersion: appprotectdos.f5.com/v1beta1
+kind: APDosPolicy
+metadata:
+  name: dospolicy
+spec:
+  mitigation_mode: "standard"
+  signatures: "on"
+  bad_actors: "on"
+  automation_tools_detection: "on"
+  tls_fingerprint: "on"

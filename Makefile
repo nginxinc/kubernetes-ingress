@@ -82,6 +82,14 @@ debian-image-plus: build ## Create Docker image for Ingress Controller (nginx pl
 debian-image-nap-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap)
 	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --build-arg BUILD_OS=debian-plus-nap
 
+.PHONY: debian-image-napdos-plus
+debian-image-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap-dos)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-napdos
+
+.PHONY: debian-image-nap-napdos-plus
+debian-image-nap-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap and nap-dos)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap-napdos --build-arg FILES=nap-common
+
 .PHONY: openshift-image
 openshift-image: build ## Create Docker image for Ingress Controller (ubi)
 	$(DOCKER_CMD) --build-arg BUILD_OS=ubi
@@ -103,7 +111,7 @@ debian-image-opentracing-plus: build ## Create Docker image for Ingress Controll
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=opentracing-plus
 
 .PHONY: all-images ## Create all the Docker images for Ingress Controller
-all-images: alpine-image alpine-image-plus debian-image debian-image-plus debian-image-nap-plus debian-image-opentracing debian-image-opentracing-plus openshift-image openshift-image-plus openshift-image-nap-plus
+all-images: alpine-image alpine-image-plus debian-image debian-image-plus debian-image-nap-plus debian-image-napdos-plus debian-image-nap-napdos-plus debian-image-opentracing debian-image-opentracing-plus openshift-image openshift-image-plus openshift-image-nap-plus
 
 .PHONY: push
 push: ## Docker push to $PREFIX and $TAG
@@ -121,3 +129,8 @@ deps: ## Add missing and remove unused modules, verify deps and dowload them to 
 .PHONY: clean-cache
 clean-cache: ## Clean go cache
 	@go clean -modcache
+
+.PHONY: app-protect-dos-arb
+app-protect-dos-arb: build ## Create Docker image for app-protect-dos-arb
+	docker build --no-cache -f build/app-protect-dos/Dockerfile --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key --tag $(PREFIX)/app-protect-dos-arb .
+

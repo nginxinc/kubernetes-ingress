@@ -7,56 +7,67 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 const (
-	mergeableIngressTypeAnnotation        = "nginx.org/mergeable-ingress-type"
-	lbMethodAnnotation                    = "nginx.org/lb-method"
-	healthChecksAnnotation                = "nginx.com/health-checks"
-	healthChecksMandatoryAnnotation       = "nginx.com/health-checks-mandatory"
-	healthChecksMandatoryQueueAnnotation  = "nginx.com/health-checks-mandatory-queue"
-	slowStartAnnotation                   = "nginx.com/slow-start"
-	serverTokensAnnotation                = "nginx.org/server-tokens" // #nosec G101
-	serverSnippetsAnnotation              = "nginx.org/server-snippets"
-	locationSnippetsAnnotation            = "nginx.org/location-snippets"
-	proxyConnectTimeoutAnnotation         = "nginx.org/proxy-connect-timeout"
-	proxyReadTimeoutAnnotation            = "nginx.org/proxy-read-timeout"
-	proxySendTimeoutAnnotation            = "nginx.org/proxy-send-timeout"
-	proxyHideHeadersAnnotation            = "nginx.org/proxy-hide-headers"
-	proxyPassHeadersAnnotation            = "nginx.org/proxy-pass-headers" // #nosec G101
-	clientMaxBodySizeAnnotation           = "nginx.org/client-max-body-size"
-	redirectToHTTPSAnnotation             = "nginx.org/redirect-to-https"
-	sslRedirectAnnotation                 = "ingress.kubernetes.io/ssl-redirect"
-	proxyBufferingAnnotation              = "nginx.org/proxy-buffering"
-	hstsAnnotation                        = "nginx.org/hsts"
-	hstsMaxAgeAnnotation                  = "nginx.org/hsts-max-age"
-	hstsIncludeSubdomainsAnnotation       = "nginx.org/hsts-include-subdomains"
-	hstsBehindProxyAnnotation             = "nginx.org/hsts-behind-proxy"
-	proxyBuffersAnnotation                = "nginx.org/proxy-buffers"
-	proxyBufferSizeAnnotation             = "nginx.org/proxy-buffer-size"
-	proxyMaxTempFileSizeAnnotation        = "nginx.org/proxy-max-temp-file-size"
-	upstreamZoneSizeAnnotation            = "nginx.org/upstream-zone-size"
-	jwtRealmAnnotation                    = "nginx.com/jwt-realm"
-	jwtKeyAnnotation                      = "nginx.com/jwt-key"
-	jwtTokenAnnotation                    = "nginx.com/jwt-token" // #nosec G101
-	jwtLoginURLAnnotation                 = "nginx.com/jwt-login-url"
-	listenPortsAnnotation                 = "nginx.org/listen-ports"
-	listenPortsSSLAnnotation              = "nginx.org/listen-ports-ssl"
-	keepaliveAnnotation                   = "nginx.org/keepalive"
-	maxFailsAnnotation                    = "nginx.org/max-fails"
-	maxConnsAnnotation                    = "nginx.org/max-conns"
-	failTimeoutAnnotation                 = "nginx.org/fail-timeout"
-	appProtectEnableAnnotation            = "appprotect.f5.com/app-protect-enable"
-	appProtectSecurityLogEnableAnnotation = "appprotect.f5.com/app-protect-security-log-enable"
-	internalRouteAnnotation               = "nsm.nginx.com/internal-route"
-	websocketServicesAnnotation           = "nginx.org/websocket-services"
-	sslServicesAnnotation                 = "nginx.org/ssl-services"
-	grpcServicesAnnotation                = "nginx.org/grpc-services"
-	rewritesAnnotation                    = "nginx.org/rewrites"
-	stickyCookieServicesAnnotation        = "nginx.com/sticky-cookie-services"
+	mergeableIngressTypeAnnotation           = "nginx.org/mergeable-ingress-type"
+	lbMethodAnnotation                       = "nginx.org/lb-method"
+	healthChecksAnnotation                   = "nginx.com/health-checks"
+	healthChecksMandatoryAnnotation          = "nginx.com/health-checks-mandatory"
+	healthChecksMandatoryQueueAnnotation     = "nginx.com/health-checks-mandatory-queue"
+	slowStartAnnotation                      = "nginx.com/slow-start"
+	serverTokensAnnotation                   = "nginx.org/server-tokens" // #nosec G101
+	serverSnippetsAnnotation                 = "nginx.org/server-snippets"
+	locationSnippetsAnnotation               = "nginx.org/location-snippets"
+	proxyConnectTimeoutAnnotation            = "nginx.org/proxy-connect-timeout"
+	proxyReadTimeoutAnnotation               = "nginx.org/proxy-read-timeout"
+	proxySendTimeoutAnnotation               = "nginx.org/proxy-send-timeout"
+	proxyHideHeadersAnnotation               = "nginx.org/proxy-hide-headers"
+	proxyPassHeadersAnnotation               = "nginx.org/proxy-pass-headers" // #nosec G101
+	clientMaxBodySizeAnnotation              = "nginx.org/client-max-body-size"
+	redirectToHTTPSAnnotation                = "nginx.org/redirect-to-https"
+	sslRedirectAnnotation                    = "ingress.kubernetes.io/ssl-redirect"
+	proxyBufferingAnnotation                 = "nginx.org/proxy-buffering"
+	hstsAnnotation                           = "nginx.org/hsts"
+	hstsMaxAgeAnnotation                     = "nginx.org/hsts-max-age"
+	hstsIncludeSubdomainsAnnotation          = "nginx.org/hsts-include-subdomains"
+	hstsBehindProxyAnnotation                = "nginx.org/hsts-behind-proxy"
+	proxyBuffersAnnotation                   = "nginx.org/proxy-buffers"
+	proxyBufferSizeAnnotation                = "nginx.org/proxy-buffer-size"
+	proxyMaxTempFileSizeAnnotation           = "nginx.org/proxy-max-temp-file-size"
+	upstreamZoneSizeAnnotation               = "nginx.org/upstream-zone-size"
+	jwtRealmAnnotation                       = "nginx.com/jwt-realm"
+	jwtKeyAnnotation                         = "nginx.com/jwt-key"
+	jwtTokenAnnotation                       = "nginx.com/jwt-token" // #nosec G101
+	jwtLoginURLAnnotation                    = "nginx.com/jwt-login-url"
+	listenPortsAnnotation                    = "nginx.org/listen-ports"
+	listenPortsSSLAnnotation                 = "nginx.org/listen-ports-ssl"
+	keepaliveAnnotation                      = "nginx.org/keepalive"
+	maxFailsAnnotation                       = "nginx.org/max-fails"
+	maxConnsAnnotation                       = "nginx.org/max-conns"
+	failTimeoutAnnotation                    = "nginx.org/fail-timeout"
+	appProtectEnableAnnotation               = "appprotect.f5.com/app-protect-enable"
+	appProtectSecurityLogEnableAnnotation    = "appprotect.f5.com/app-protect-security-log-enable"
+	appProtectDosEnableAnnotation            = "appprotectdos.f5.com/app-protect-dos-enable"
+	appProtectDosSecurityLogEnableAnnotation = "appprotectdos.f5.com/app-protect-dos-security-log-enable"
+	appProtectDosSecurityLogAnnotation 	     = "appprotectdos.f5.com/app-protect-dos-security-log"
+	appProtectDosSecurityLogDestAnnotation 	 = "appprotectdos.f5.com/app-protect-dos-security-log-destination"
+	appProtectDosAccessLogDestAnnotation     = "appprotectdos.f5.com/app-protect-dos-access-log-destination"
+	appProtectDosMonitorAnnotation     		 = "appprotectdos.f5.com/app-protect-dos-monitor"
+	appProtectDosNameAnnotation     		 = "appprotectdos.f5.com/app-protect-dos-name"
+	appProtectDosPolicyAnnotation     		 = "appprotectdos.f5.com/app-protect-dos-policy"
+	internalRouteAnnotation                  = "nsm.nginx.com/internal-route"
+	websocketServicesAnnotation              = "nginx.org/websocket-services"
+	sslServicesAnnotation                    = "nginx.org/ssl-services"
+	grpcServicesAnnotation                   = "nginx.org/grpc-services"
+	rewritesAnnotation                       = "nginx.org/rewrites"
+	stickyCookieServicesAnnotation           = "nginx.com/sticky-cookie-services"
 )
 
 type annotationValidationContext struct {
@@ -66,6 +77,7 @@ type annotationValidationContext struct {
 	value                 string
 	isPlus                bool
 	appProtectEnabled     bool
+	appProtectDosEnabled  bool
 	internalRoutesEnabled bool
 	fieldPath             *field.Path
 }
@@ -227,6 +239,47 @@ var (
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
+		appProtectDosEnableAnnotation: {
+			validateAppProtectDosOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		appProtectDosSecurityLogEnableAnnotation: {
+			validateAppProtectDosOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateBoolAnnotation,
+		},
+		appProtectDosSecurityLogAnnotation: {
+			validateAppProtectDosOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateQualifiedName,
+			validateExistAnnotation(appProtectDosSecurityLogDestAnnotation),
+		},
+		appProtectDosSecurityLogDestAnnotation: {
+			validateAppProtectDosOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateAppProtectDosLogDestAnnotation,
+		},
+		appProtectDosAccessLogDestAnnotation: {
+			validateAppProtectDosOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateAppProtectDosAccessLogDestAnnotation,
+		},
+		appProtectDosMonitorAnnotation: {
+			validateAppProtectDosOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateAppProtectDosMonitorAnnotation,
+		},
+		appProtectDosNameAnnotation: {
+			validateAppProtectDosOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateAppProtectDosNameAnnotation,
+		},
+		appProtectDosPolicyAnnotation: {
+			validateAppProtectDosOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateQualifiedName,
+		},
 		internalRouteAnnotation: {
 			validateInternalRoutesOnlyAnnotation,
 			validateRequiredAnnotation,
@@ -272,6 +325,7 @@ func validateIngress(
 	ing *networking.Ingress,
 	isPlus bool,
 	appProtectEnabled bool,
+	appProtectDosEnabled bool,
 	internalRoutesEnabled bool,
 ) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -280,6 +334,7 @@ func validateIngress(
 		getSpecServices(ing.Spec),
 		isPlus,
 		appProtectEnabled,
+		appProtectDosEnabled,
 		internalRoutesEnabled,
 		field.NewPath("annotations"),
 	)...)
@@ -300,6 +355,7 @@ func validateIngressAnnotations(
 	specServices map[string]bool,
 	isPlus bool,
 	appProtectEnabled bool,
+	appProtectDosEnabled bool,
 	internalRoutesEnabled bool,
 	fieldPath *field.Path,
 ) field.ErrorList {
@@ -314,6 +370,7 @@ func validateIngressAnnotations(
 				value:                 value,
 				isPlus:                isPlus,
 				appProtectEnabled:     appProtectEnabled,
+				appProtectDosEnabled:  appProtectDosEnabled,
 				internalRoutesEnabled: internalRoutesEnabled,
 				fieldPath:             fieldPath.Child(name),
 			}
@@ -351,6 +408,29 @@ func validateRelatedAnnotation(name string, validator validatorFunc) annotationV
 		}
 		return allErrs
 	}
+}
+
+func validateExistAnnotation(name string) annotationValidationFunc {
+	return func(context *annotationValidationContext) field.ErrorList {
+		allErrs := field.ErrorList{}
+		_, exists := context.annotations[name]
+		if !exists {
+			return append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s: must be exist", name)))
+		}
+		return allErrs
+	}
+}
+
+func validateQualifiedName(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	err := validation.IsQualifiedName(context.value)
+
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, fmt.Sprintf("annotation value: %v is not qualified name", context.value)))
+	}
+	
+	return allErrs
 }
 
 func validateMergeableIngressTypeAnnotation(context *annotationValidationContext) field.ErrorList {
@@ -406,6 +486,62 @@ func validateAppProtectOnlyAnnotation(context *annotationValidationContext) fiel
 	if !context.appProtectEnabled {
 		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires AppProtect"))
 	}
+	return allErrs
+}
+
+func validateAppProtectDosOnlyAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if !context.appProtectDosEnabled {
+		return append(allErrs, field.Forbidden(context.fieldPath, "annotation requires AppProtectDos"))
+	}
+	return allErrs
+}
+
+func validateAppProtectDosLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	err := appprotect_common.ValidateAppProtectLogDestination(context.value)
+
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+	}
+
+	return allErrs
+}
+
+func validateAppProtectDosNameAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	err := appprotectdos.ValidateAppProtectDosName(context.value)
+
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+	}
+
+	return allErrs
+}
+
+func validateAppProtectDosMonitorAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	err := appprotectdos.ValidateAppProtectDosMonitor(context.value)
+
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+	}
+
+	return allErrs
+}
+
+func validateAppProtectDosAccessLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	
+	err := appprotectdos.ValidateAppProtectDosAccessLogDest(context.value)
+
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+	}
+
 	return allErrs
 }
 

@@ -1424,6 +1424,100 @@ func TestGenerateNginxCfgForMergeableIngressesForAppProtect(t *testing.T) {
 	}
 }
 
+func TestGenerateNginxCfgForAppProtectDos(t *testing.T) {
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-enable"] = "True"
+	cafeIngressEx.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-security-log-enable"] = "True"
+	cafeIngressEx.AppProtectDosPolicy = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "policy",
+			},
+		},
+	}
+	cafeIngressEx.AppProtectDosLogConf = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "logconf",
+			},
+		},
+	}
+
+	isPlus := true
+	configParams := NewDefaultConfigParams(isPlus)
+	apRes := AppProtectResources{
+		AppProtectDosPolicy:   "/etc/nginx/dos/policies/default_policy",
+		AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/default_logconf syslog:server=127.0.0.1:514",
+	}
+	staticCfgParams := &StaticConfigParams{
+		MainAppProtectDosLoadModule: true,
+	}
+
+	expected := createExpectedConfigForCafeIngressEx(isPlus)
+	expected.Servers[0].AppProtectDosEnable = "on"
+	expected.Servers[0].AppProtectDosPolicy = "/etc/nginx/dos/policies/default_policy"
+	expected.Servers[0].AppProtectDosLogConf = "/etc/nginx/dos/logconfs/default_logconf syslog:server=127.0.0.1:514"
+	expected.Servers[0].AppProtectDosLogEnable = "on"
+	expected.Ingress.Annotations = cafeIngressEx.Ingress.Annotations
+
+	result, warnings := generateNginxCfg(&cafeIngressEx, apRes, false, configParams, isPlus, false, staticCfgParams, false)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgForMergeableIngressesForAppProtectDos(t *testing.T) {
+	mergeableIngresses := createMergeableCafeIngress()
+	mergeableIngresses.Master.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-enable"] = "True"
+	mergeableIngresses.Master.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-security-log-enable"] = "True"
+	mergeableIngresses.Master.AppProtectDosPolicy = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "policy",
+			},
+		},
+	}
+	mergeableIngresses.Master.AppProtectDosLogConf = &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "logconf",
+			},
+		},
+	}
+
+	isPlus := true
+	configParams := NewDefaultConfigParams(isPlus)
+	apRes := AppProtectResources{
+		AppProtectDosPolicy:   "/etc/nginx/dos/policies/default_policy",
+		AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/default_policy syslog:server=127.0.0.1:514",
+	}
+	staticCfgParams := &StaticConfigParams{
+		MainAppProtectDosLoadModule: true,
+	}
+
+	expected := createExpectedConfigForMergeableCafeIngress(isPlus)
+	expected.Servers[0].AppProtectDosEnable = "on"
+	expected.Servers[0].AppProtectDosPolicy = "/etc/nginx/dos/policies/default_policy"
+	expected.Servers[0].AppProtectDosLogConf = "/etc/nginx/dos/logconfs/default_policy syslog:server=127.0.0.1:514"
+	expected.Servers[0].AppProtectDosLogEnable = "on"
+	expected.Ingress.Annotations = mergeableIngresses.Master.Ingress.Annotations
+
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, apRes, configParams, isPlus, false, staticCfgParams, false)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfgForMergeableIngresses() returned warnings: %v", warnings)
+	}
+}
+
 func TestGetBackendPortAsString(t *testing.T) {
 	tests := []struct {
 		port     networking.ServiceBackendPort

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
+
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +19,7 @@ func TestValidateIngress(t *testing.T) {
 		ing                   *networking.Ingress
 		isPlus                bool
 		appProtectEnabled     bool
+		appProtectDosEnabled  bool
 		internalRoutesEnabled bool
 		expectedErrors        []string
 		msg                   string
@@ -33,6 +36,7 @@ func TestValidateIngress(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid input",
@@ -54,6 +58,7 @@ func TestValidateIngress(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/mergeable-ingress-type: Invalid value: "invalid": must be one of: 'master' or 'minion'`,
@@ -87,6 +92,7 @@ func TestValidateIngress(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"spec.rules[0].http.paths: Too many: 1: must have at most 0 items",
@@ -111,6 +117,7 @@ func TestValidateIngress(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"spec.rules[0].http.paths: Required value: must include at least one path",
@@ -120,7 +127,7 @@ func TestValidateIngress(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateIngress(test.ing, test.isPlus, test.appProtectEnabled, test.internalRoutesEnabled)
+		allErrs := validateIngress(test.ing, test.isPlus, test.appProtectEnabled, test.appProtectDosEnabled, test.internalRoutesEnabled)
 		assertion := assertErrors("validateIngress()", test.msg, allErrs, test.expectedErrors)
 		if assertion != "" {
 			t.Error(assertion)
@@ -134,6 +141,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		specServices          map[string]bool
 		isPlus                bool
 		appProtectEnabled     bool
+		appProtectDosEnabled  bool
 		internalRoutesEnabled bool
 		expectedErrors        []string
 		msg                   string
@@ -143,6 +151,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid no annotations",
@@ -156,6 +165,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/lb-method: Invalid value: "invalid_method": Invalid load balancing method: "invalid_method"`,
@@ -171,6 +181,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid input with master annotation",
@@ -182,6 +193,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid input with minion annotation",
@@ -193,6 +205,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.org/mergeable-ingress-type: Required value",
@@ -206,6 +219,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/mergeable-ingress-type: Invalid value: "abc": must be one of: 'master' or 'minion'`,
@@ -220,6 +234,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/lb-method annotation, nginx normal",
@@ -231,6 +246,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/lb-method: Invalid value: "least_time header": Invalid load balancing method: "least_time header"`,
@@ -244,6 +260,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/lb-method: Invalid value: "invalid_method": Invalid load balancing method: "invalid_method"`,
@@ -258,6 +275,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/health-checks: Forbidden: annotation requires NGINX Plus",
@@ -271,6 +289,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/health-checks annotation",
@@ -282,6 +301,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.com/health-checks: Invalid value: "not_a_boolean": must be a boolean`,
@@ -296,6 +316,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/health-checks-mandatory: Forbidden: annotation requires NGINX Plus",
@@ -310,6 +331,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/health-checks-mandatory annotation",
@@ -322,6 +344,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.com/health-checks-mandatory: Invalid value: "not_a_boolean": must be a boolean`,
@@ -335,6 +358,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/health-checks-mandatory: Forbidden: related annotation nginx.com/health-checks: must be set",
@@ -349,6 +373,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/health-checks-mandatory: Forbidden: related annotation nginx.com/health-checks: must be true",
@@ -363,6 +388,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/health-checks-mandatory-queue: Forbidden: annotation requires NGINX Plus",
@@ -378,6 +404,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/health-checks-mandatory-queue annotation",
@@ -391,6 +418,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.com/health-checks-mandatory-queue: Invalid value: "not_a_number": must be a non-negative integer`,
@@ -404,6 +432,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/health-checks-mandatory-queue: Forbidden: related annotation nginx.com/health-checks-mandatory: must be set",
@@ -419,6 +448,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/health-checks-mandatory-queue: Forbidden: related annotation nginx.com/health-checks-mandatory: must be true",
@@ -433,6 +463,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/slow-start: Forbidden: annotation requires NGINX Plus",
@@ -446,6 +477,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/slow-start annotation",
@@ -457,6 +489,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.com/slow-start: Invalid value: "not_a_time": must be a time`,
@@ -471,6 +504,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/server-tokens annotation, nginx",
@@ -482,6 +516,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/server-tokens annotation, nginx plus",
@@ -493,6 +528,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/server-tokens: Invalid value: "custom_setting": must be a boolean`,
@@ -507,6 +543,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/server-snippets annotation, single-value",
@@ -518,6 +555,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/server-snippets annotation, multi-value",
@@ -530,6 +568,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/location-snippets annotation, single-value",
@@ -541,6 +580,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/location-snippets annotation, multi-value",
@@ -553,6 +593,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-connect-timeout annotation",
@@ -564,6 +605,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/proxy-connect-timeout: Invalid value: "not_a_time": must be a time`,
@@ -578,6 +620,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-read-timeout annotation",
@@ -589,6 +632,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/proxy-read-timeout: Invalid value: "not_a_time": must be a time`,
@@ -603,6 +647,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-send-timeout annotation",
@@ -614,6 +659,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/proxy-send-timeout: Invalid value: "not_a_time": must be a time`,
@@ -628,6 +674,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-hide-headers annotation, single-value",
@@ -639,6 +686,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-hide-headers annotation, multi-value",
@@ -651,6 +699,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-pass-headers annotation, single-value",
@@ -662,6 +711,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-pass-headers annotation, multi-value",
@@ -674,6 +724,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/client-max-body-size annotation",
@@ -685,6 +736,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/client-max-body-size: Invalid value: "not_an_offset": must be an offset`,
@@ -699,6 +751,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/redirect-to-https annotation",
@@ -710,6 +763,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/redirect-to-https: Invalid value: "not_a_boolean": must be a boolean`,
@@ -724,6 +778,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid ingress.kubernetes.io/ssl-redirect annotation",
@@ -735,6 +790,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.ingress.kubernetes.io/ssl-redirect: Invalid value: "not_a_boolean": must be a boolean`,
@@ -749,6 +805,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-buffering annotation",
@@ -760,6 +817,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/proxy-buffering: Invalid value: "not_a_boolean": must be a boolean`,
@@ -774,6 +832,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/hsts annotation",
@@ -785,6 +844,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/hsts: Invalid value: "not_a_boolean": must be a boolean`,
@@ -800,6 +860,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/hsts-max-age annotation",
@@ -812,6 +873,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/hsts-max-age nginx.org/hsts can be false",
@@ -824,6 +886,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/hsts-max-age: Invalid value: "not_a_number": must be an integer`,
@@ -837,6 +900,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.org/hsts-max-age: Forbidden: related annotation nginx.org/hsts: must be set",
@@ -852,6 +916,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/hsts-include-subdomains annotation",
@@ -864,6 +929,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/hsts-include-subdomains, nginx.org/hsts can be false",
@@ -876,6 +942,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/hsts-include-subdomains: Invalid value: "not_a_boolean": must be a boolean`,
@@ -889,6 +956,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.org/hsts-include-subdomains: Forbidden: related annotation nginx.org/hsts: must be set",
@@ -904,6 +972,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/hsts-behind-proxy annotation",
@@ -916,6 +985,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/hsts-behind-proxy, nginx.org/hsts can be false",
@@ -928,6 +998,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/hsts-behind-proxy: Invalid value: "not_a_boolean": must be a boolean`,
@@ -941,6 +1012,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.org/hsts-behind-proxy: Forbidden: related annotation nginx.org/hsts: must be set",
@@ -955,6 +1027,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-buffers annotation",
@@ -966,6 +1039,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/proxy-buffers: Invalid value: "not_a_proxy_buffers_spec": must be a proxy buffer spec`,
@@ -980,6 +1054,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-buffer-size annotation",
@@ -991,6 +1066,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/proxy-buffer-size: Invalid value: "not_a_size": must be a size`,
@@ -1005,6 +1081,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/proxy-max-temp-file-size annotation",
@@ -1016,6 +1093,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/proxy-max-temp-file-size: Invalid value: "not_a_size": must be a size`,
@@ -1030,6 +1108,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/upstream-zone-size annotation",
@@ -1041,6 +1120,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/upstream-zone-size: Invalid value: "not a size": must be a size`,
@@ -1055,6 +1135,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/jwt-realm: Forbidden: annotation requires NGINX Plus",
@@ -1068,6 +1149,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/jwt-realm annotation",
@@ -1080,6 +1162,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/jwt-key: Forbidden: annotation requires NGINX Plus",
@@ -1093,6 +1176,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/jwt-key annotation",
@@ -1105,6 +1189,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/jwt-token: Forbidden: annotation requires NGINX Plus",
@@ -1118,6 +1203,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/jwt-token annotation",
@@ -1130,6 +1216,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/jwt-login-url: Forbidden: annotation requires NGINX Plus",
@@ -1143,6 +1230,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/jwt-login-url annotation",
@@ -1155,6 +1243,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/listen-ports annotation",
@@ -1166,6 +1255,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/listen-ports: Invalid value: "not_a_port_list": must be a comma-separated list of port numbers`,
@@ -1180,6 +1270,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/listen-ports-ssl annotation",
@@ -1191,6 +1282,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/listen-ports-ssl: Invalid value: "not_a_port_list": must be a comma-separated list of port numbers`,
@@ -1205,6 +1297,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/keepalive annotation",
@@ -1216,6 +1309,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/keepalive: Invalid value: "not_a_number": must be an integer`,
@@ -1230,6 +1324,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/max-fails annotation",
@@ -1241,6 +1336,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/max-fails: Invalid value: "-100": must be a non-negative integer`,
@@ -1254,6 +1350,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/max-fails: Invalid value: "not_a_number": must be a non-negative integer`,
@@ -1268,6 +1365,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/max-conns annotation",
@@ -1279,6 +1377,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/max-conns: Invalid value: "-100": must be a non-negative integer`,
@@ -1292,6 +1391,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/max-conns: Invalid value: "not_a_number": must be a non-negative integer`,
@@ -1306,6 +1406,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/fail-timeout annotation",
@@ -1317,6 +1418,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/fail-timeout: Invalid value: "not_a_time": must be a time`,
@@ -1331,6 +1433,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.appprotect.f5.com/app-protect-enable: Forbidden: annotation requires AppProtect",
@@ -1344,6 +1447,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid appprotect.f5.com/app-protect-enable annotation",
@@ -1355,6 +1459,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.appprotect.f5.com/app-protect-enable: Invalid value: "not_a_boolean": must be a boolean`,
@@ -1369,6 +1474,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.appprotect.f5.com/app-protect-security-log-enable: Forbidden: annotation requires AppProtect",
@@ -1382,6 +1488,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid appprotect.f5.com/app-protect-security-log-enable annotation",
@@ -1393,11 +1500,279 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.appprotect.f5.com/app-protect-security-log-enable: Invalid value: "not_a_boolean": must be a boolean`,
 			},
 			msg: "invalid appprotect.f5.com/app-protect-security-log-enable annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-enable": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotectdos.f5.com/app-protect-dos-enable: Forbidden: annotation requires AppProtectDos",
+			},
+			msg: "invalid appprotectdos.f5.com/app-protect-dos-enable annotation, requires app protect dos",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-enable": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid appprotectdos.f5.com/app-protect-dos-enable annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-enable": "not_a_boolean",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.appprotectdos.f5.com/app-protect-dos-enable: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid appprotectdos.f5.com/app-protect-dos-enable annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-security-log-enable": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotectdos.f5.com/app-protect-dos-security-log-enable: Forbidden: annotation requires AppProtectDos",
+			},
+			msg: "invalid appprotectdos.f5.com/app-protect-dos-security-log-enable annotation, requires app protect dos",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-security-log-enable": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid appprotectdos.f5.com/app-protect-dos-security-log-enable annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-security-log-enable": "not_a_boolean",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.appprotectdos.f5.com/app-protect-dos-security-log-enable: Invalid value: "not_a_boolean": must be a boolean`,
+			},
+			msg: "invalid appprotectdos.f5.com/app-protect-dos-security-log-enable annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-monitor": "example.com/%",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.appprotectdos.f5.com/app-protect-dos-monitor: Invalid value: "example.com/%": App Protect Dos Monitor must have valid URL`,
+			},
+			msg: "invalid appprotectdos.f5.com/app-protect-dos-monitor annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-monitor": "example.com:433",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: nil,
+			msg: "valid appprotectdos.f5.com/app-protect-dos-monitor annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-name": "example.com",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: nil,
+			msg: "valid appprotectdos.f5.com/app-protect-dos-name annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-name": "very very very very very very very very very very very very very long name",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-name: Invalid value: "very very very very very very very very very very very very very long name": App Protect Dos Name max length is %v`, appprotectdos.MaxNameLength),
+			},
+			msg: "invalid appprotectdos.f5.com/app-protect-dos-name annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-access-log-destination": "10.0.0.1:99999",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-access-log-destination: Invalid value: "10.0.0.1:99999": Error parsing port: 99999 not a valid port number`),
+			},
+			msg: "invalid app-protect-dos-access-log-destination annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-access-log-destination": "1.0.0.999:514",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-access-log-destination: Invalid value: "1.0.0.999:514": Error parsing host: 1.0.0.999 is not a valid ip address`),
+			},
+			msg: "invalid app-protect-dos-access-log-destination annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-access-log-destination": "1.0.0.1:514",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: nil,
+			msg: "valid app-protect-dos-access-log-destination annotation",
+		},
+		// syslog:server=<ip-address | localhost>:<port> or stderr
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "stderr",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: nil,
+			msg: "valid app-protect-dos-security-log-destination annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "Not Valid",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log-destination: Invalid value: "Not Valid": Error parsing App Protect Log config: Destination must follow format: syslog:server=<ip-address | localhost>:<port> or stderr Log Destination did not follow format`),
+			},
+			msg: "invalid app-protect-dos-security-log-destination annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-security-log": "ns/ns/example",
+				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "stderr",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Invalid value: "ns/ns/example": annotation value: ns/ns/example is not qualified name`),
+			},
+			msg: "invalid app-protect-dos-security-log annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-security-log": "example",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Forbidden: related annotation appprotectdos.f5.com/app-protect-dos-security-log-destination: must be exist`),
+			},
+			msg: "invalid app-protect-dos-security-log annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-security-log": "example",
+				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "stderr",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: nil,
+			msg: "valid app-protect-dos-security-log annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-policy": "ns/ns/example",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-policy: Invalid value: "ns/ns/example": annotation value: ns/ns/example is not qualified name`),
+			},
+			msg: "invalid app-protect-dos-policy annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotectdos.f5.com/app-protect-dos-policy": "ns/example",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  true,
+			internalRoutesEnabled: false,
+			expectedErrors: nil,
+			msg: "valid app-protect-dos-policy annotation",
 		},
 
 		{
@@ -1407,6 +1782,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nsm.nginx.com/internal-route: Forbidden: annotation requires Internal Routes enabled",
@@ -1420,6 +1796,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: true,
 			expectedErrors:        nil,
 			msg:                   "valid nsm.nginx.com/internal-route annotation",
@@ -1431,6 +1808,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: true,
 			expectedErrors: []string{
 				`annotations.nsm.nginx.com/internal-route: Invalid value: "not_a_boolean": must be a boolean`,
@@ -1447,6 +1825,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/websocket-services annotation, single-value",
@@ -1461,6 +1840,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/websocket-services annotation, multi-value",
@@ -1474,6 +1854,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/websocket-services: Invalid value: "service-1,service-2": must be a comma-separated list of services. The following services were not found: service-2`,
@@ -1490,6 +1871,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/ssl-services annotation, single-value",
@@ -1504,6 +1886,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/ssl-services annotation, multi-value",
@@ -1517,6 +1900,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/ssl-services: Invalid value: "service-1,service-2": must be a comma-separated list of services. The following services were not found: service-2`,
@@ -1533,6 +1917,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/grpc-services annotation, single-value",
@@ -1547,6 +1932,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/grpc-services annotation, multi-value",
@@ -1560,6 +1946,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/grpc-services: Invalid value: "service-1,service-2": must be a comma-separated list of services. The following services were not found: service-2`,
@@ -1574,6 +1961,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/rewrites annotation, single-value",
@@ -1585,6 +1973,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/rewrites annotation, multi-value",
@@ -1596,6 +1985,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: true,
 			expectedErrors: []string{
 				`annotations.nginx.org/rewrites: Invalid value: "not_a_rewrite": must be a semicolon-separated list of rewrites`,
@@ -1610,6 +2000,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.nginx.com/sticky-cookie-services: Forbidden: annotation requires NGINX Plus",
@@ -1623,6 +2014,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/sticky-cookie-services annotation, single-value",
@@ -1634,6 +2026,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/sticky-cookie-services annotation, multi-value",
@@ -1645,6 +2038,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.com/sticky-cookie-services: Invalid value: "not_a_rewrite": must be a semicolon-separated list of sticky services`,
@@ -1660,6 +2054,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				test.specServices,
 				test.isPlus,
 				test.appProtectEnabled,
+				test.appProtectDosEnabled,
 				test.internalRoutesEnabled,
 				field.NewPath("annotations"),
 			)

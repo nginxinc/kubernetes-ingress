@@ -337,15 +337,18 @@ type Configuration struct {
 	globalConfigurationValidator *validation.GlobalConfigurationValidator
 	transportServerValidator     *validation.TransportServerValidator
 
-	secretReferenceChecker     *secretReferenceChecker
-	serviceReferenceChecker    *serviceReferenceChecker
-	endpointReferenceChecker   *serviceReferenceChecker
-	policyReferenceChecker     *policyReferenceChecker
-	appPolicyReferenceChecker  *appProtectResourceReferenceChecker
-	appLogConfReferenceChecker *appProtectResourceReferenceChecker
+	secretReferenceChecker        *secretReferenceChecker
+	serviceReferenceChecker       *serviceReferenceChecker
+	endpointReferenceChecker      *serviceReferenceChecker
+	policyReferenceChecker        *policyReferenceChecker
+	appPolicyReferenceChecker     *appProtectResourceReferenceChecker
+	appLogConfReferenceChecker    *appProtectResourceReferenceChecker
+	appDosPolicyReferenceChecker  *appProtectResourceReferenceChecker
+	appDosLogConfReferenceChecker *appProtectResourceReferenceChecker
 
 	isPlus                  bool
 	appProtectEnabled       bool
+	appProtectDosEnabled    bool
 	internalRoutesEnabled   bool
 	isTLSPassthroughEnabled bool
 
@@ -357,6 +360,7 @@ func NewConfiguration(
 	hasCorrectIngressClass func(interface{}) bool,
 	isPlus bool,
 	appProtectEnabled bool,
+	appProtectDosEnabled bool,
 	internalRoutesEnabled bool,
 	virtualServerValidator *validation.VirtualServerValidator,
 	globalConfigurationValidator *validation.GlobalConfigurationValidator,
@@ -364,27 +368,30 @@ func NewConfiguration(
 	isTLSPassthroughEnabled bool,
 ) *Configuration {
 	return &Configuration{
-		hosts:                        make(map[string]Resource),
-		listeners:                    make(map[string]*TransportServerConfiguration),
-		ingresses:                    make(map[string]*networking.Ingress),
-		virtualServers:               make(map[string]*conf_v1.VirtualServer),
-		virtualServerRoutes:          make(map[string]*conf_v1.VirtualServerRoute),
-		transportServers:             make(map[string]*conf_v1alpha1.TransportServer),
-		hostProblems:                 make(map[string]ConfigurationProblem),
-		hasCorrectIngressClass:       hasCorrectIngressClass,
-		virtualServerValidator:       virtualServerValidator,
-		globalConfigurationValidator: globalConfigurationValidator,
-		transportServerValidator:     transportServerValidator,
-		secretReferenceChecker:       newSecretReferenceChecker(isPlus),
-		serviceReferenceChecker:      newServiceReferenceChecker(false),
-		endpointReferenceChecker:     newServiceReferenceChecker(true),
-		policyReferenceChecker:       newPolicyReferenceChecker(),
-		appPolicyReferenceChecker:    newAppProtectResourceReferenceChecker(configs.AppProtectPolicyAnnotation),
-		appLogConfReferenceChecker:   newAppProtectResourceReferenceChecker(configs.AppProtectLogConfAnnotation),
-		isPlus:                       isPlus,
-		appProtectEnabled:            appProtectEnabled,
-		internalRoutesEnabled:        internalRoutesEnabled,
-		isTLSPassthroughEnabled:      isTLSPassthroughEnabled,
+		hosts:                         make(map[string]Resource),
+		listeners:                     make(map[string]*TransportServerConfiguration),
+		ingresses:                     make(map[string]*networking.Ingress),
+		virtualServers:                make(map[string]*conf_v1.VirtualServer),
+		virtualServerRoutes:           make(map[string]*conf_v1.VirtualServerRoute),
+		transportServers:              make(map[string]*conf_v1alpha1.TransportServer),
+		hostProblems:                  make(map[string]ConfigurationProblem),
+		hasCorrectIngressClass:        hasCorrectIngressClass,
+		virtualServerValidator:        virtualServerValidator,
+		globalConfigurationValidator:  globalConfigurationValidator,
+		transportServerValidator:      transportServerValidator,
+		secretReferenceChecker:        newSecretReferenceChecker(isPlus),
+		serviceReferenceChecker:       newServiceReferenceChecker(false),
+		endpointReferenceChecker:      newServiceReferenceChecker(true),
+		policyReferenceChecker:        newPolicyReferenceChecker(),
+		appPolicyReferenceChecker:     newAppProtectResourceReferenceChecker(configs.AppProtectPolicyAnnotation),
+		appLogConfReferenceChecker:    newAppProtectResourceReferenceChecker(configs.AppProtectLogConfAnnotation),
+		appDosPolicyReferenceChecker:  newAppProtectResourceReferenceChecker(configs.AppProtectDosPolicyAnnotation),
+		appDosLogConfReferenceChecker: newAppProtectResourceReferenceChecker(configs.AppProtectDosLogConfAnnotation),
+		isPlus:                        isPlus,
+		appProtectEnabled:             appProtectEnabled,
+		appProtectDosEnabled:          appProtectDosEnabled,
+		internalRoutesEnabled:         internalRoutesEnabled,
+		isTLSPassthroughEnabled:       isTLSPassthroughEnabled,
 	}
 }
 
@@ -399,7 +406,7 @@ func (c *Configuration) AddOrUpdateIngress(ing *networking.Ingress) ([]ResourceC
 	if !c.hasCorrectIngressClass(ing) {
 		delete(c.ingresses, key)
 	} else {
-		validationError = validateIngress(ing, c.isPlus, c.appProtectEnabled, c.internalRoutesEnabled).ToAggregate()
+		validationError = validateIngress(ing, c.isPlus, c.appProtectEnabled, c.appProtectDosEnabled, c.internalRoutesEnabled).ToAggregate()
 		if validationError != nil {
 			delete(c.ingresses, key)
 		} else {
@@ -852,6 +859,16 @@ func (c *Configuration) FindResourcesForAppProtectPolicyAnnotation(policyNamespa
 // FindResourcesForAppProtectLogConfAnnotation finds resources that reference the specified AppProtect LogConf.
 func (c *Configuration) FindResourcesForAppProtectLogConfAnnotation(logConfNamespace string, logConfName string) []Resource {
 	return c.findResourcesForResourceReference(logConfNamespace, logConfName, c.appLogConfReferenceChecker)
+}
+
+// FindResourcesForAppProtectDosPolicyAnnotation finds resources that reference the specified AppProtectDos policy via annotation.
+func (c *Configuration) FindResourcesForAppProtectDosPolicyAnnotation(policyNamespace string, policyName string) []Resource {
+	return c.findResourcesForResourceReference(policyNamespace, policyName, c.appDosPolicyReferenceChecker)
+}
+
+// FindResourcesForAppProtectDosLogConfAnnotation finds resources that reference the specified AppProtectDos DosLogConf.
+func (c *Configuration) FindResourcesForAppProtectDosLogConfAnnotation(logConfNamespace string, logConfName string) []Resource {
+	return c.findResourcesForResourceReference(logConfNamespace, logConfName, c.appDosLogConfReferenceChecker)
 }
 
 func (c *Configuration) findResourcesForResourceReference(namespace string, name string, checker resourceReferenceChecker) []Resource {
