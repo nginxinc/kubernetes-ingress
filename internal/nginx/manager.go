@@ -536,15 +536,15 @@ func (lm *LocalManager) AppProtectDosAgentStart(apdaDone chan error, debug bool,
 	// Perform installation by adminstall
 	appProtectDosAgentInstallCmdFull := appProtectDosAgentInstallCmd
 
-	if (maxDaemon != 0) {
+	if maxDaemon != 0 {
 		appProtectDosAgentInstallCmdFull += " -d " + strconv.FormatUint(maxDaemon, 10)
 	}
 
-	if (maxWorkers != 0) {
+	if maxWorkers != 0 {
 		appProtectDosAgentInstallCmdFull += " -w " + strconv.FormatUint(maxWorkers, 10)
 	}
 
-	if (memory != 0) {
+	if memory != 0 {
 		appProtectDosAgentInstallCmdFull += " -m " + strconv.FormatUint(memory, 10)
 	}
 
@@ -561,8 +561,8 @@ func (lm *LocalManager) AppProtectDosAgentStart(apdaDone chan error, debug bool,
 	}
 
 	cmd := exec.Command("sh", "-c", appProtectDosAgentCmd)
-    cmd.Stdout = os.Stdout
-    cmd.Stderr = os.Stdout
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stdout
 	if err := cmd.Start(); err != nil {
 		glog.Fatalf("Failed to start AppProtectDos Agent: %v", err)
 	}
