@@ -42,6 +42,7 @@ spec:
 |``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | [ingressMTLS](#ingressmtls) | No | 
 |``egressMTLS`` | The EgressMTLS policy configures upstreams authentication and certificate verification. | [egressMTLS](#egressmtls) | No | 
 |``waf`` | The WAF policy configures WAF and log configuration policies for [NGINX AppProtect](/nginx-ingress-controller/app-protect/installation/) | [WAF](#waf) | No |
+|``bados`` | The Bados policy configures Bados and log configuration policies for [NGINX AppProtectDos] (/nginx-ingress-controller/app-protect-dos/installation/) | [BADOS](#bados) | No |
 {{% /table %}} 
 
 \* A policy must include exactly one policy.
@@ -395,6 +396,50 @@ policies:
 - name: waf-policy-two
 ```
 In this example the Ingress Controller will use the configuration from the first policy reference `waf-policy-one`, and ignores `waf-policy-two`.
+
+### BADOS
+
+> **Feature Status**: BADOS is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview status, we might introduce some backward-incompatible changes to the resource specification in the next releases. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+
+> Note: This feature is only available in NGINX Plus with AppProtectDos.
+
+The BADOS policy configures NGINX Plus to secure client requests using App Protect Dos policies.
+
+For example, the following policy will enable the referenced APDosPolicy and APDosLogConf with the configured log destination:
+```yaml
+bados:
+  enable: true
+  apPolicy: "default/dospolicy"
+  securityLog:
+    enable: true
+    apLogConf: "default/doslogconf"
+    logDest: "syslog:server=127.0.0.1:514"
+```
+
+> Note: The feature is implemented using the NGINX Plus [NGINX App Protect Dos Module](https://docs.nginx.com/nginx-app-protect-dos/configuration/).
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``enable`` | Enables NGINX App Protect Dos. | ``bool`` | Yes |
+|``name`` | Name of protected object. | ``string`` | No |
+|``apDosMonitor`` | URL to monitor server's stress. Default value: None, URL will be extracted from the first request which arrives and taken from "Host" header or from destination ip+port. | ``string`` | No |
+|``apDosPolicy`` | The `App Protect Dos policy </nginx-ingress-controller/app-protect-dos/configuration/#app-protect-policies/>`_ of the bados. Accepts an optional namespace. | ``string`` | No |
+|``dosSecurityLog.enable`` | Enables security log. | ``bool`` | No |
+|``dosSecurityLog.apDosLogConf`` | The `App Protect Dos log conf </nginx-ingress-controller/app-protect/configuration/#app-protect-logs>`_ resource. Accepts an optional namespace. | ``string`` | No |
+|``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address | localhost>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
+{{% /table %}}
+
+#### BADOS Merging Behavior
+
+A VirtualServer/VirtualServerRoute can reference multiple BADOS policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+```yaml
+policies:
+- name: bados-policy-one
+- name: bados-policy-two
+```
+In this example the Ingress Controller will use the configuration from the first policy reference `bados-policy-one`, and ignores `bados-policy-two`.
+
 
 ### Applying Policies
 

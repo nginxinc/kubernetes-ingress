@@ -338,6 +338,17 @@ Requires [-nginx-plus](#cmdoption-nginx-plus).
 * If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.  
 
 &nbsp;  
+<a name="cmdoption-enable-app-protect-dos"></a> 
+
+### -enable-app-protect-dos
+
+Enables support for App Protect Dos.
+
+Requires [-nginx-plus](#cmdoption-nginx-plus).
+
+* If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.  
+
+&nbsp;  
 <a name="cmdoption-ready-status"></a> 
 
 ### -ready-status

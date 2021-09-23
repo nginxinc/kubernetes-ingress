@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "arbitrator.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels: {{- include "arbitrator.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ include "arbitrator.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "arbitrator.name" . }}
+    spec:
+      containers:
+        - name: {{ include "arbitrator.name" . }}
+          image: "{{ .Values.arbitrator.image.repository }}:{{ .Values.arbitrator.image.tag }}"
+          imagePullPolicy: "{{ .Values.arbitrator.image.pullPolicy }}"
+          resources:
+{{ toYaml .Values.arbitrator.resources | indent 12 }}
+          ports:
+            - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-appprotect-dos-arb
+  namespace:  {{ .Release.Namespace }}
+  labels: {{- include "arbitrator.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: {{ include "arbitrator.name" . }}
+  ports:
+    - name: arb
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+  clusterIP: None

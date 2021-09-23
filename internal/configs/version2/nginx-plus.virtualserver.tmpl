@@ -193,6 +193,32 @@ server {
         {{ end }}
     {{ end }}
 
+    {{- with $s.Bados }}
+    app_protect_dos_enable {{ .Enable }};
+        {{- if .Name }}
+    app_protect_dos_name "{{ .Name }}";
+        {{- end }}
+
+        {{- if .ApDosPolicy }}
+    app_protect_dos_policy_file {{ .ApDosPolicy }};
+        {{- end }}
+
+        {{- if .ApDosSecurityLogEnable }}
+    app_protect_dos_security_log_enable on;
+    app_protect_dos_security_log {{ .ApDosLogConf }};
+        {{- end }}
+
+        {{- if .ApDosAccessLogDest }}
+    set $loggable '0';
+    # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+    access_log syslog:server={{ .ApDosAccessLogDest }} log_dos if=$loggable;
+        {{- end }}
+
+        {{- if .ApDosMonitor }}
+    app_protect_dos_monitor "{{ .ApDosMonitor }}";
+        {{- end }}
+    {{- end }}
+
     {{ range $snippet := $s.Snippets }}
     {{- $snippet }}
     {{ end }}
@@ -330,6 +356,32 @@ server {
         app_protect_security_log {{ .ApLogConf }};
             {{ end }}
         {{ end }}
+
+        {{- with $l.Bados }}
+        app_protect_dos_enable {{ .Enable }};
+
+            {{- if .Name }}
+        app_protect_dos_name "{{ .Name }}";
+            {{- end }}
+
+            {{- if .ApDosPolicy }}
+        app_protect_dos_policy_file {{ .ApDosPolicy }};
+            {{- end }}
+
+            {{ if .ApDosSecurityLogEnable }}
+        app_protect_dos_security_log_enable on;
+        app_protect_dos_security_log {{ .ApDosLogConf }};
+            {{ end }}
+            {{- if .ApDosAccessLogDest }}
+        set $loggable '0';
+        # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+        access_log syslog:server={{ .ApDosAccessLogDest }} log_dos if=$loggable;
+            {{- end }}
+
+            {{- if .ApDosMonitor }}
+        app_protect_dos_monitor "{{ .ApDosMonitor }}";
+            {{- end }}
+        {{- end }}
 
         {{ range $e := $l.ErrorPages }}
         error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";

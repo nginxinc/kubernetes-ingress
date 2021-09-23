@@ -83,6 +83,8 @@ Below you can find some of the most useful targets in the **Makefile**:
 * **debian-image**: for building a debian-based image with NGINX.
 * **debian-image-plus**: for building a debian-based image with NGINX Plus.
 * **debian-image-nap-plus**: for building a debian-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module.
+* **debian-image-napdos-plus**: for building a debian-based image with NGINX Plus and the appprotect-dos module.
+* **debian-image-nap-napdos-plus**: for building a debian-based image with NGINX Plus appprotect and appprotect-dos modules.
 * **debian-image-opentracing**: for building a debian-based image with NGINX, [opentracing](https://github.com/opentracing-contrib/nginx-opentracing) module and the [Jaeger](https://www.jaegertracing.io/) tracer.
 * **debian-image-opentracing-plus**: for building a debian-based image with NGINX Plus, [opentracing](https://github.com/opentracing-contrib/nginx-opentracing) module and the [Jaeger](https://www.jaegertracing.io/) tracer.
 * **openshift-image**: for building an ubi-based image with NGINX for [Openshift](https://www.openshift.com/) clusters.

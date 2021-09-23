@@ -1175,7 +1175,7 @@ func TestUpdateApResources(t *testing.T) {
 	for _, test := range tests {
 		result := conf.updateApResources(test.ingEx)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("updateApResources() returned \n%v but exexpected\n%v for the case of %s", result, test.expected, test.msg)
+			t.Errorf("updateApResources() returned \n%v but expected\n%v for the case of %s", result, test.expected, test.msg)
 		}
 	}
 }
@@ -1283,7 +1283,204 @@ func TestUpdateApResourcesForVs(t *testing.T) {
 	for _, test := range tests {
 		result := conf.updateApResourcesForVs(test.vsEx)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("updateApResourcesForVs() returned \n%v but exexpected\n%v for the case of %s", result, test.expected, test.msg)
+			t.Errorf("updateApResourcesForVs() returned \n%v but expected\n%v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestUpdateApDosResources(t *testing.T) {
+	appProtectDosPolicy := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "test-ns",
+				"name":      "test-name",
+			},
+		},
+	}
+	appProtectDosLogConf := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "test-ns",
+				"name":      "test-name",
+			},
+		},
+	}
+
+	appProtectDosLogDst := "test-dst"
+
+	tests := []struct {
+		ingEx    *IngressEx
+		expected AppProtectResources
+		msg      string
+	}{
+		{
+			ingEx: &IngressEx{
+				Ingress: &networking.Ingress{
+					ObjectMeta: meta_v1.ObjectMeta{},
+				},
+			},
+			expected: AppProtectResources{},
+			msg:      "no app protect dos resources",
+		},
+		{
+			ingEx: &IngressEx{
+				Ingress: &networking.Ingress{
+					ObjectMeta: meta_v1.ObjectMeta{},
+				},
+				AppProtectDosPolicy: appProtectDosPolicy,
+			},
+			expected: AppProtectResources{
+				AppProtectDosPolicy: "/etc/nginx/dos/policies/test-ns_test-name.json",
+			},
+			msg: "app protect dos policy",
+		},
+		{
+			ingEx: &IngressEx{
+				Ingress: &networking.Ingress{
+					ObjectMeta: meta_v1.ObjectMeta{},
+				},
+				AppProtectDosLogConf: appProtectDosLogConf,
+				AppProtectDosLogDst: appProtectDosLogDst,
+			},
+			expected: AppProtectResources{
+				AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/test-ns_test-name.json test-dst",
+			},
+			msg: "app protect dos log conf",
+		},
+		{
+			ingEx: &IngressEx{
+				Ingress: &networking.Ingress{
+					ObjectMeta: meta_v1.ObjectMeta{},
+				},
+				AppProtectDosPolicy: appProtectDosPolicy,
+				AppProtectDosLogConf: appProtectDosLogConf,
+				AppProtectDosLogDst: appProtectDosLogDst,
+			},
+			expected: AppProtectResources{
+				AppProtectDosPolicy:   "/etc/nginx/dos/policies/test-ns_test-name.json",
+				AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/test-ns_test-name.json test-dst",
+			},
+			msg: "app protect dos policy and log conf",
+		},
+	}
+
+	conf, err := createTestConfigurator()
+	if err != nil {
+		t.Errorf("Failed to create a test configurator: %v", err)
+	}
+
+	for _, test := range tests {
+		result := conf.updateApResources(test.ingEx)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("updateApResources() returned \n%v but expected\n%v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestUpdateApDosResourcesForVs(t *testing.T) {
+	apDosPolRefs := map[string]*unstructured.Unstructured{
+		"test-ns-1/test-name-1": {
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"namespace": "test-ns-1",
+					"name":      "test-name-1",
+				},
+			},
+		},
+		"test-ns-2/test-name-2": {
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"namespace": "test-ns-2",
+					"name":      "test-name-2",
+				},
+			},
+		},
+	}
+	dosLogConfRefs := map[string]*unstructured.Unstructured{
+		"test-ns-1/test-name-1": {
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"namespace": "test-ns-1",
+					"name":      "test-name-1",
+				},
+			},
+		},
+		"test-ns-2/test-name-2": {
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"namespace": "test-ns-2",
+					"name":      "test-name-2",
+				},
+			},
+		},
+	}
+
+	tests := []struct {
+		vsEx     *VirtualServerEx
+		expected map[string]string
+		msg      string
+	}{
+		{
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{},
+				},
+			},
+			expected: map[string]string{},
+			msg:      "no app protect dos resources",
+		},
+		{
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{},
+				},
+				ApDosPolRefs: apDosPolRefs,
+			},
+			expected: map[string]string{
+				"test-ns-1/test-name-1": "/etc/nginx/dos/policies/test-ns-1_test-name-1.json",
+				"test-ns-2/test-name-2": "/etc/nginx/dos/policies/test-ns-2_test-name-2.json",
+			},
+			msg: "app protect dos policies",
+		},
+		{
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{},
+				},
+				DosLogConfRefs: dosLogConfRefs,
+			},
+			expected: map[string]string{
+				"test-ns-1/test-name-1": "/etc/nginx/dos/logconfs/test-ns-1_test-name-1.json",
+				"test-ns-2/test-name-2": "/etc/nginx/dos/logconfs/test-ns-2_test-name-2.json",
+			},
+			msg: "app protect dos log confs",
+		},
+		{
+			vsEx: &VirtualServerEx{
+				VirtualServer: &conf_v1.VirtualServer{
+					ObjectMeta: meta_v1.ObjectMeta{},
+				},
+				ApDosPolRefs:   apDosPolRefs,
+				DosLogConfRefs: dosLogConfRefs,
+			},
+			expected: map[string]string{
+				// this is a bug - the result needs to include both policies and log confs
+				"test-ns-1/test-name-1": "/etc/nginx/dos/logconfs/test-ns-1_test-name-1.json",
+				"test-ns-2/test-name-2": "/etc/nginx/dos/logconfs/test-ns-2_test-name-2.json",
+			},
+			msg: "app protect Dos policies and log confs",
+		},
+	}
+
+	conf, err := createTestConfigurator()
+	if err != nil {
+		t.Errorf("Failed to create a test configurator: %v", err)
+	}
+
+	for _, test := range tests {
+		result := conf.updateApResourcesForVs(test.vsEx)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("updateApResourcesForVs() returned \n%v but expected\n%v for the case of %s", result, test.expected, test.msg)
 		}
 	}
 }

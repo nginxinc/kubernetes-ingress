@@ -8,19 +8,20 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // ValidatePolicy validates a Policy.
-func ValidatePolicy(policy *v1.Policy, isPlus, enablePreviewPolicies, enableAppProtect bool) error {
-	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enablePreviewPolicies, enableAppProtect)
+func ValidatePolicy(policy *v1.Policy, isPlus, enablePreviewPolicies, enableAppProtect bool, enableAppProtectDos bool) error {
+	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enablePreviewPolicies, enableAppProtect, enableAppProtectDos)
 	return allErrs.ToAggregate()
 }
 
-func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enablePreviewPolicies, enableAppProtect bool) field.ErrorList {
+func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enablePreviewPolicies, enableAppProtect bool, enableAppProtectDos bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -100,10 +101,27 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 		fieldCount++
 	}
 
+	if spec.Bados != nil {
+		if !enablePreviewPolicies {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("bados"),
+				"bados is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+		}
+		if !isPlus {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("bados"), "bados is only supported in NGINX Plus"))
+		}
+		if !enableAppProtectDos {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("bados"),
+				"App Protect dos must be enabled via cli argument -enable-appprotect-dos to use bados policy"))
+		}
+
+		allErrs = append(allErrs, validateBados(spec.Bados, fieldPath.Child("bados"))...)
+		fieldCount++
+	}
+
 	if fieldCount != 1 {
 		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`"
 		if isPlus {
-			msg = fmt.Sprint(msg, ", `jwt`, `oidc`, `waf`")
+			msg = fmt.Sprint(msg, ", `jwt`, `oidc`, `waf`, `bados`")
 		}
 		allErrs = append(allErrs, field.Invalid(fieldPath, "", msg))
 	}
@@ -277,9 +295,55 @@ func validateLogConf(logConf, logDest string, fieldPath *field.Path) field.Error
 		}
 	}
 
-	err := appprotect.ValidateAppProtectLogDestination(logDest)
+	err := appprotect_common.ValidateAppProtectLogDestination(logDest)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("logDest"), logDest, err.Error()))
+	}
+	return allErrs
+}
+
+func validateBados(bados *v1.Bados, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if bados.ApDosPolicy != "" {
+		for _, msg := range validation.IsQualifiedName(bados.ApDosPolicy) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apDosPolicy"), bados.ApDosPolicy, msg))
+		}
+	}
+
+    if bados.DosAccessLogDest != "" {
+        allErrs = append(allErrs, validateDosLogAccessLogDest(bados.DosAccessLogDest, fieldPath.Child("dosAccessLogDest"))...)
+    }
+
+	if bados.DosSecurityLog != nil {
+		allErrs = append(allErrs, validateDosLogConf(bados.DosSecurityLog.ApDosLogConf, bados.DosSecurityLog.DosLogDest, fieldPath.Child("dosSecurityLog"))...)
+	}
+
+	return allErrs
+}
+
+func validateDosLogConf(logConf, logDest string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if logConf != "" {
+		for _, msg := range validation.IsQualifiedName(logConf) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apDosLogConf"), logConf, msg))
+		}
+	}
+
+	err := appprotect_common.ValidateAppProtectLogDestination(logDest)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("dosLogDest"), logDest, err.Error()))
+	}
+	return allErrs
+}
+
+func validateDosLogAccessLogDest(accessLogDest string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	err := appprotectdos.ValidateAppProtectDosAccessLogDest(accessLogDest)
+	if err != nil {
+		allErrs = append(allErrs, field.Invalid(fieldPath, accessLogDest, err.Error()))
 	}
 	return allErrs
 }

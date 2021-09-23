@@ -19,6 +19,7 @@ func createTestConfiguration() *Configuration {
 	}
 	isPlus := false
 	appProtectEnabled := false
+	appProtectDosEnabled := false
 	internalRoutesEnabled := false
 	isTLSPassthroughEnabled := true
 	snippetsEnabled := true
@@ -26,6 +27,7 @@ func createTestConfiguration() *Configuration {
 		lbc.HasCorrectIngressClass,
 		isPlus,
 		appProtectEnabled,
+		appProtectDosEnabled,
 		internalRoutesEnabled,
 		validation.NewVirtualServerValidator(isTLSPassthroughEnabled),
 		validation.NewGlobalConfigurationValidator(map[int]bool{

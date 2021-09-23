@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -118,6 +119,8 @@ const (
 	appProtectPolicy
 	appProtectLogConf
 	appProtectUserSig
+	appProtectDosPolicy
+	appProtectDosLogConf
 	ingressLink
 )
 
@@ -160,6 +163,10 @@ func newTask(key string, obj interface{}) (task, error) {
 			k = ingressLink
 		} else if objectKind == appprotect.UserSigGVK.Kind {
 			k = appProtectUserSig
+		} else if objectKind == appprotectdos.DosPolicyGVK.Kind {
+			k = appProtectDosPolicy
+		} else if objectKind == appprotectdos.DosLogConfGVK.Kind {
+			k = appProtectDosLogConf
 		} else {
 			return task{}, fmt.Errorf("Unknown unstructured kind: %v", objectKind)
 		}

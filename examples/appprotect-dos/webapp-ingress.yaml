@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    appprotectdos.f5.com/app-protect-dos-enable: "True"
+    appprotectdos.f5.com/app-protect-dos-policy: "default/dospolicy"
+    appprotectdos.f5.com/app-protect-dos-security-log-enable: "True"
+    appprotectdos.f5.com/app-protect-dos-security-log: "default/doslogconf"
+    appprotectdos.f5.com/app-protect-dos-security-log-destination: "syslog:server=127.0.0.1:5261"
+    appprotectdos.f5.com/app-protect-dos-monitor: "webapp.example.com"
+    appprotectdos.f5.com/app-protect-dos-name: "webapp.example.com"
+#    appprotectdos.f5.com/app-protect-dos-access-log-destination: "127.0.0.1:5561"
+
+spec:
+  tls:
+    - hosts:
+      - webapp.example.com
+      secretName: webapp-secret
+  rules:
+    - host: webapp.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: 
+                name: webapp-svc
+                port:
+                  number: 80

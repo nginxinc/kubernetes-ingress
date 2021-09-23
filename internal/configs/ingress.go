@@ -21,8 +21,10 @@ const emptyHost = ""
 
 // AppProtectResources holds namespace names of App Protect resources relavant to an Ingress
 type AppProtectResources struct {
-	AppProtectPolicy   string
-	AppProtectLogconfs []string
+	AppProtectPolicy      string
+	AppProtectLogconfs    []string
+	AppProtectDosPolicy   string
+	AppProtectDosLogconfs string
 }
 
 // AppProtectLog holds a single pair of log config and log destination
@@ -33,16 +35,19 @@ type AppProtectLog struct {
 
 // IngressEx holds an Ingress along with the resources that are referenced in this Ingress.
 type IngressEx struct {
-	Ingress          *networking.Ingress
-	Endpoints        map[string][]string
-	HealthChecks     map[string]*api_v1.Probe
-	ExternalNameSvcs map[string]bool
-	PodsByIP         map[string]PodInfo
-	ValidHosts       map[string]bool
-	ValidMinionPaths map[string]bool
-	AppProtectPolicy *unstructured.Unstructured
-	AppProtectLogs   []AppProtectLog
-	SecretRefs       map[string]*secrets.SecretReference
+	Ingress              *networking.Ingress
+	Endpoints            map[string][]string
+	HealthChecks         map[string]*api_v1.Probe
+	ExternalNameSvcs     map[string]bool
+	PodsByIP             map[string]PodInfo
+	ValidHosts           map[string]bool
+	ValidMinionPaths     map[string]bool
+	AppProtectPolicy     *unstructured.Unstructured
+	AppProtectLogs       []AppProtectLog
+	AppProtectDosPolicy  *unstructured.Unstructured
+	AppProtectDosLogConf *unstructured.Unstructured
+	AppProtectDosLogDst  string
+	SecretRefs           map[string]*secrets.SecretReference
 }
 
 // JWTKey represents a secret that holds JSON Web Key.
@@ -68,7 +73,9 @@ type MergeableIngresses struct {
 func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinion bool, baseCfgParams *ConfigParams, isPlus bool,
 	isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
 	hasAppProtect := staticParams.MainAppProtectLoadModule
-	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus, hasAppProtect, staticParams.EnableInternalRoutes)
+	hasAppProtectDos := staticParams.MainAppProtectDosLoadModule
+
+	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus, hasAppProtect, hasAppProtectDos, staticParams.EnableInternalRoutes)
 
 	wsServices := getWebsocketServices(ingEx)
 	spServices := getSessionPersistenceServices(ingEx)
@@ -120,29 +127,34 @@ func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinio
 		statusZone := rule.Host
 
 		server := version1.Server{
-			Name:                  serverName,
-			ServerTokens:          cfgParams.ServerTokens,
-			HTTP2:                 cfgParams.HTTP2,
-			RedirectToHTTPS:       cfgParams.RedirectToHTTPS,
-			SSLRedirect:           cfgParams.SSLRedirect,
-			ProxyProtocol:         cfgParams.ProxyProtocol,
-			HSTS:                  cfgParams.HSTS,
-			HSTSMaxAge:            cfgParams.HSTSMaxAge,
-			HSTSIncludeSubdomains: cfgParams.HSTSIncludeSubdomains,
-			HSTSBehindProxy:       cfgParams.HSTSBehindProxy,
-			StatusZone:            statusZone,
-			RealIPHeader:          cfgParams.RealIPHeader,
-			SetRealIPFrom:         cfgParams.SetRealIPFrom,
-			RealIPRecursive:       cfgParams.RealIPRecursive,
-			ProxyHideHeaders:      cfgParams.ProxyHideHeaders,
-			ProxyPassHeaders:      cfgParams.ProxyPassHeaders,
-			ServerSnippets:        cfgParams.ServerSnippets,
-			Ports:                 cfgParams.Ports,
-			SSLPorts:              cfgParams.SSLPorts,
-			TLSPassthrough:        staticParams.TLSPassthrough,
-			AppProtectEnable:      cfgParams.AppProtectEnable,
-			AppProtectLogEnable:   cfgParams.AppProtectLogEnable,
-			SpiffeCerts:           cfgParams.SpiffeServerCerts,
+			Name:                      serverName,
+			ServerTokens:              cfgParams.ServerTokens,
+			HTTP2:                     cfgParams.HTTP2,
+			RedirectToHTTPS:           cfgParams.RedirectToHTTPS,
+			SSLRedirect:               cfgParams.SSLRedirect,
+			ProxyProtocol:             cfgParams.ProxyProtocol,
+			HSTS:                      cfgParams.HSTS,
+			HSTSMaxAge:                cfgParams.HSTSMaxAge,
+			HSTSIncludeSubdomains:     cfgParams.HSTSIncludeSubdomains,
+			HSTSBehindProxy:           cfgParams.HSTSBehindProxy,
+			StatusZone:                statusZone,
+			RealIPHeader:              cfgParams.RealIPHeader,
+			SetRealIPFrom:             cfgParams.SetRealIPFrom,
+			RealIPRecursive:           cfgParams.RealIPRecursive,
+			ProxyHideHeaders:          cfgParams.ProxyHideHeaders,
+			ProxyPassHeaders:          cfgParams.ProxyPassHeaders,
+			ServerSnippets:            cfgParams.ServerSnippets,
+			Ports:                     cfgParams.Ports,
+			SSLPorts:                  cfgParams.SSLPorts,
+			TLSPassthrough:            staticParams.TLSPassthrough,
+			AppProtectEnable:          cfgParams.AppProtectEnable,
+			AppProtectLogEnable:       cfgParams.AppProtectLogEnable,
+			AppProtectDosEnable:       cfgParams.AppProtectDosEnable,
+			AppProtectDosLogEnable:    cfgParams.AppProtectDosLogEnable,
+			AppProtectDosMonitor:      cfgParams.AppProtectDosMonitor,
+			AppProtectDosName:         cfgParams.AppProtectDosName,
+			AppProtectDosAccessLogDst: cfgParams.AppProtectDosAccessLogDst,
+			SpiffeCerts:               cfgParams.SpiffeServerCerts,
 		}
 
 		warnings := addSSLConfig(&server, ingEx.Ingress, rule.Host, ingEx.Ingress.Spec.TLS, ingEx.SecretRefs, isWildcardEnabled)
@@ -151,6 +163,11 @@ func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinio
 		if hasAppProtect {
 			server.AppProtectPolicy = apResources.AppProtectPolicy
 			server.AppProtectLogConfs = apResources.AppProtectLogconfs
+		}
+
+		if hasAppProtectDos {
+			server.AppProtectDosPolicy = apResources.AppProtectDosPolicy
+			server.AppProtectDosLogConf = apResources.AppProtectDosLogconfs
 		}
 
 		if !isMinion && cfgParams.JWTKey != "" {
