@@ -1,0 +1,17 @@
+apiVersion: appprotectdos.f5.com/v1beta1
+kind: DosProtectedResource
+metadata:
+  name: dos-protected
+spec:
+  enable: true
+  name: "webapp.example.com"
+  apDosPolicy: "dospolicy"
+  apDosMonitor:
+    uri: "webapp.example.com"
+    protocol: "http1"
+    timeout: 5
+  dosAccessLogDest: "syslog-svc-2.default.svc.cluster.local:514"
+  dosSecurityLog:
+    enable: true
+    apDosLogConf: "doslogconf"
+    dosLogDest: "syslog-svc.default.svc.cluster.local:514"

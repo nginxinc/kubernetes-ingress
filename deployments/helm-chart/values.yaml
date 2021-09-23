@@ -17,6 +17,19 @@ controller:
     ## Enable the App Protect module in the Ingress Controller.
     enable: false
 
+  ## Support for App Protect Dos
+  appprotectdos:
+    ## Enable the App Protect Dos module in the Ingress Controller.
+    enable: false
+    ## Enable debugging for App Protect Dos.
+    debug: false
+    ## Max number of nginx processes to support.
+    maxWorkers: 0
+    ## Max number of ADMD instances.
+    maxDaemons: 0
+    ## RAM memory size to consume in MB.
+    memory: 0
+
   ## Enables the Ingress controller pods to use the host's network namespace.
   hostNetwork: false
 

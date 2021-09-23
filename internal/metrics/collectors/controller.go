@@ -144,16 +144,16 @@ func NewControllerFakeCollector() *ControllerFakeCollector {
 }
 
 // Register implements a fake Register
-func (cc *ControllerFakeCollector) Register(registry *prometheus.Registry) error { return nil }
+func (cc *ControllerFakeCollector) Register(_ *prometheus.Registry) error { return nil }
 
 // SetIngresses implements a fake SetIngresses
-func (cc *ControllerFakeCollector) SetIngresses(ingressType string, count int) {}
+func (cc *ControllerFakeCollector) SetIngresses(_ string, _ int) {}
 
 // SetVirtualServers implements a fake SetVirtualServers
-func (cc *ControllerFakeCollector) SetVirtualServers(count int) {}
+func (cc *ControllerFakeCollector) SetVirtualServers(_ int) {}
 
 // SetVirtualServerRoutes implements a fake SetVirtualServerRoutes
-func (cc *ControllerFakeCollector) SetVirtualServerRoutes(count int) {}
+func (cc *ControllerFakeCollector) SetVirtualServerRoutes(_ int) {}
 
 // SetTransportServers implements a fake SetTransportServers
 func (cc *ControllerFakeCollector) SetTransportServers(int, int, int) {}

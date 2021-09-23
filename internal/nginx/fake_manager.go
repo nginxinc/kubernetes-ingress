@@ -70,12 +70,12 @@ func (*FakeManager) DeleteStreamConfig(name string) {
 }
 
 // CreateTLSPassthroughHostsConfig provides a fake implementation of CreateTLSPassthroughHostsConfig.
-func (*FakeManager) CreateTLSPassthroughHostsConfig(content []byte) {
+func (*FakeManager) CreateTLSPassthroughHostsConfig(_ []byte) {
 	glog.V(3).Infof("Writing TLS Passthrough Hosts config file")
 }
 
 // CreateSecret provides a fake implementation of CreateSecret.
-func (fm *FakeManager) CreateSecret(name string, content []byte, mode os.FileMode) string {
+func (fm *FakeManager) CreateSecret(name string, _ []byte, _ os.FileMode) string {
 	glog.V(3).Infof("Writing secret %v", name)
 	return fm.GetFilenameForSecret(name)
 }
@@ -91,7 +91,7 @@ func (fm *FakeManager) GetFilenameForSecret(name string) string {
 }
 
 // CreateDHParam provides a fake implementation of CreateDHParam.
-func (fm *FakeManager) CreateDHParam(content string) (string, error) {
+func (fm *FakeManager) CreateDHParam(_ string) (string, error) {
 	glog.V(3).Infof("Writing dhparam file")
 	return fm.dhparamFilename, nil
 }
@@ -103,12 +103,12 @@ func (*FakeManager) Version() string {
 }
 
 // Start provides a fake implementation of Start.
-func (*FakeManager) Start(done chan error) {
+func (*FakeManager) Start(_ chan error) {
 	glog.V(3).Info("Starting nginx")
 }
 
 // Reload provides a fake implementation of Reload.
-func (*FakeManager) Reload(isEndpointsUpdate bool) error {
+func (*FakeManager) Reload(_ bool) error {
 	glog.V(3).Infof("Reloading nginx")
 	return nil
 }
@@ -119,16 +119,16 @@ func (*FakeManager) Quit() {
 }
 
 // UpdateConfigVersionFile provides a fake implementation of UpdateConfigVersionFile.
-func (*FakeManager) UpdateConfigVersionFile(openTracing bool) {
+func (*FakeManager) UpdateConfigVersionFile(_ bool) {
 	glog.V(3).Infof("Writing config version")
 }
 
 // SetPlusClients provides a fake implementation of SetPlusClients.
-func (*FakeManager) SetPlusClients(plusClient *client.NginxClient, plusConfigVersionCheckClient *http.Client) {
+func (*FakeManager) SetPlusClients(_ *client.NginxClient, _ *http.Client) {
 }
 
 // UpdateServersInPlus provides a fake implementation of UpdateServersInPlus.
-func (*FakeManager) UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error {
+func (*FakeManager) UpdateServersInPlus(upstream string, servers []string, _ ServerConfig) error {
 	glog.V(3).Infof("Updating servers of %v: %v", upstream, servers)
 	return nil
 }
@@ -140,18 +140,18 @@ func (*FakeManager) UpdateStreamServersInPlus(upstream string, servers []string)
 }
 
 // CreateOpenTracingTracerConfig creates a fake implementation of CreateOpenTracingTracerConfig.
-func (*FakeManager) CreateOpenTracingTracerConfig(content string) error {
+func (*FakeManager) CreateOpenTracingTracerConfig(_ string) error {
 	glog.V(3).Infof("Writing OpenTracing tracer config file")
 
 	return nil
 }
 
 // SetOpenTracing creates a fake implementation of SetOpenTracing.
-func (*FakeManager) SetOpenTracing(openTracing bool) {
+func (*FakeManager) SetOpenTracing(_ bool) {
 }
 
 // AppProtectAgentStart is a fake implementation of AppProtectAgentStart
-func (*FakeManager) AppProtectAgentStart(apaDone chan error, debug bool) {
+func (*FakeManager) AppProtectAgentStart(_ chan error, _ bool) {
 	glog.V(3).Infof("Starting FakeAppProtectAgent")
 }
 
@@ -161,11 +161,21 @@ func (*FakeManager) AppProtectAgentQuit() {
 }
 
 // AppProtectPluginStart is a fake implementtion AppProtectPluginStart
-func (*FakeManager) AppProtectPluginStart(appDone chan error) {
+func (*FakeManager) AppProtectPluginStart(_ chan error) {
 	glog.V(3).Infof("Starting FakeAppProtectPlugin")
 }
 
 // AppProtectPluginQuit is a fake implementtion AppProtectPluginQuit
 func (*FakeManager) AppProtectPluginQuit() {
 	glog.V(3).Infof("Quitting FakeAppProtectPlugin")
+}
+
+// AppProtectDosAgentQuit is a fake implementtion AppProtectAgentQuit
+func (*FakeManager) AppProtectDosAgentQuit() {
+	glog.V(3).Infof("Quitting FakeAppProtectDosAgent")
+}
+
+// AppProtectDosAgentStart is a fake implementation of AppProtectAgentStart
+func (*FakeManager) AppProtectDosAgentStart(_ chan error, _ bool, _ int, _ int, _ int) {
+	glog.V(3).Infof("Starting FakeAppProtectDosAgent")
 }

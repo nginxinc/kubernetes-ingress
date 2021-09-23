@@ -350,9 +350,11 @@ type Configuration struct {
 	policyReferenceChecker     *policyReferenceChecker
 	appPolicyReferenceChecker  *appProtectResourceReferenceChecker
 	appLogConfReferenceChecker *appProtectResourceReferenceChecker
+	appDosProtectedChecker     *dosResourceReferenceChecker
 
 	isPlus                  bool
 	appProtectEnabled       bool
+	appProtectDosEnabled    bool
 	internalRoutesEnabled   bool
 	isTLSPassthroughEnabled bool
 	snippetsEnabled         bool
@@ -365,6 +367,7 @@ func NewConfiguration(
 	hasCorrectIngressClass func(interface{}) bool,
 	isPlus bool,
 	appProtectEnabled bool,
+	appProtectDosEnabled bool,
 	internalRoutesEnabled bool,
 	virtualServerValidator *validation.VirtualServerValidator,
 	globalConfigurationValidator *validation.GlobalConfigurationValidator,
@@ -388,10 +391,10 @@ func NewConfiguration(
 		serviceReferenceChecker:      newServiceReferenceChecker(false),
 		endpointReferenceChecker:     newServiceReferenceChecker(true),
 		policyReferenceChecker:       newPolicyReferenceChecker(),
-		appPolicyReferenceChecker:    newAppProtectResourceReferenceChecker(configs.AppProtectPolicyAnnotation),
-		appLogConfReferenceChecker:   newAppProtectResourceReferenceChecker(configs.AppProtectLogConfAnnotation),
+		appDosProtectedChecker:       newDosResourceReferenceChecker(configs.AppProtectDosProtectedAnnotation),
 		isPlus:                       isPlus,
 		appProtectEnabled:            appProtectEnabled,
+		appProtectDosEnabled:         appProtectDosEnabled,
 		internalRoutesEnabled:        internalRoutesEnabled,
 		isTLSPassthroughEnabled:      isTLSPassthroughEnabled,
 		snippetsEnabled:              snippetsEnabled,
@@ -409,7 +412,7 @@ func (c *Configuration) AddOrUpdateIngress(ing *networking.Ingress) ([]ResourceC
 	if !c.hasCorrectIngressClass(ing) {
 		delete(c.ingresses, key)
 	} else {
-		validationError = validateIngress(ing, c.isPlus, c.appProtectEnabled, c.internalRoutesEnabled, c.snippetsEnabled).ToAggregate()
+		validationError = validateIngress(ing, c.isPlus, c.appProtectEnabled, c.appProtectDosEnabled, c.internalRoutesEnabled, c.snippetsEnabled).ToAggregate()
 		if validationError != nil {
 			delete(c.ingresses, key)
 		} else {
@@ -862,6 +865,11 @@ func (c *Configuration) FindResourcesForAppProtectPolicyAnnotation(policyNamespa
 // FindResourcesForAppProtectLogConfAnnotation finds resources that reference the specified AppProtect LogConf.
 func (c *Configuration) FindResourcesForAppProtectLogConfAnnotation(logConfNamespace string, logConfName string) []Resource {
 	return c.findResourcesForResourceReference(logConfNamespace, logConfName, c.appLogConfReferenceChecker)
+}
+
+// FindResourcesForAppProtectDosProtected finds resources that reference the specified AppProtectDos DosLogConf.
+func (c *Configuration) FindResourcesForAppProtectDosProtected(namespace string, name string) []Resource {
+	return c.findResourcesForResourceReference(namespace, name, c.appDosProtectedChecker)
 }
 
 func (c *Configuration) findResourcesForResourceReference(namespace string, name string, checker resourceReferenceChecker) []Resource {

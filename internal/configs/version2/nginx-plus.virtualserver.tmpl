@@ -193,6 +193,37 @@ server {
         {{ end }}
     {{ end }}
 
+    {{- with $s.Dos }}
+    app_protect_dos_enable {{ .Enable }};
+        {{- if .Name }}
+    app_protect_dos_name "{{ .Name }}";
+        {{- end }}
+
+        {{- if .ApDosPolicy }}
+    app_protect_dos_policy_file {{ .ApDosPolicy }};
+        {{- end }}
+
+        {{- if .ApDosSecurityLogEnable }}
+    app_protect_dos_security_log_enable on;
+    app_protect_dos_security_log {{ .ApDosLogConf }};
+        {{- end }}
+
+        {{- if .ApDosAccessLogDest }}
+    set $loggable '0';
+    # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+    access_log {{ .ApDosAccessLogDest }} log_dos if=$loggable;
+        {{- end }}
+
+        {{- if .ApDosMonitor }}
+            {{- if or .ApDosMonitorProtocol .ApDosMonitorTimeout}}
+    app_protect_dos_monitor uri={{ .ApDosMonitor }}{{if .ApDosMonitorProtocol}} protocol={{.ApDosMonitorProtocol}}{{end}}{{if .ApDosMonitorTimeout}} timeout={{.ApDosMonitorTimeout}}{{end}};
+            {{- else}}
+    app_protect_dos_monitor "{{ .ApDosMonitor }}";
+            {{- end}}
+        {{- end}}
+
+    {{- end }}
+
     {{ range $snippet := $s.Snippets }}
     {{- $snippet }}
     {{ end }}
@@ -361,6 +392,36 @@ server {
         error_page 500 = @grpc_internal;
         error_page 501 = @grpc_internal;
             {{ end }}
+
+        {{- with $l.Dos }}
+        app_protect_dos_enable {{ .Enable }};
+
+            {{- if .Name }}
+        app_protect_dos_name "{{ .Name }}";
+            {{- end }}
+
+            {{- if .ApDosPolicy }}
+        app_protect_dos_policy_file {{ .ApDosPolicy }};
+            {{- end }}
+
+            {{ if .ApDosSecurityLogEnable }}
+        app_protect_dos_security_log_enable on;
+        app_protect_dos_security_log {{ .ApDosLogConf }};
+            {{ end }}
+            {{- if .ApDosAccessLogDest }}
+        set $loggable '0';
+        # app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
+        access_log {{ .ApDosAccessLogDest }} log_dos if=$loggable;
+            {{- end }}
+
+            {{- if .ApDosMonitorURI }}
+                {{- if or .ApDosMonitorProtocol .ApDosMonitorTimeout}}
+        app_protect_dos_monitor uri={{ .ApDosMonitorURI }}{{if .ApDosMonitorProtocol}} protocol={{.ApDosMonitorProtocol}}{{end}}{{if .ApDosMonitorTimeout}} timeout={{.ApDosMonitorTimeout}}{{end}};
+                {{- else}}
+        app_protect_dos_monitor "{{ .ApDosMonitorURI }}";
+                {{- end}}
+            {{- end}}
+        {{- end }}
 
         {{ range $e := $l.ErrorPages }}
         error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";

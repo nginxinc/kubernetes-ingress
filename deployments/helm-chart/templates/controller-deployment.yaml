@@ -103,6 +103,13 @@ spec:
           - -nginx-plus={{ .Values.controller.nginxplus }}
           - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
           - -enable-app-protect={{ .Values.controller.appprotect.enable }}
+          - -enable-app-protect-dos={{ .Values.controller.appprotectdos.enable }}
+{{- if .Values.controller.appprotectdos.enable }}
+          - -app-protect-dos-debug={{ .Values.controller.appprotectdos.debug }}
+          - -app-protect-dos-max-daemons={{ .Values.controller.appprotectdos.maxWorkers }}
+          - -app-protect-dos-max-workers={{ .Values.controller.appprotectdos.maxDaemons }}
+          - -app-protect-dos-memory={{ .Values.controller.appprotectdos.memory }}
+{{ end }}
           - -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
 {{- if .Values.controller.defaultTLS.secret }}
           - -default-server-tls-secret={{ .Values.controller.defaultTLS.secret }}

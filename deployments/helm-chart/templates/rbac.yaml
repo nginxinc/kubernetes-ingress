@@ -18,6 +18,18 @@ rules:
   - watch
   - list
 {{- end }}
+{{- if .Values.controller.appprotectdos.enable }}
+- apiGroups:
+    - appprotectdos.f5.com
+  resources:
+    - apdospolicies
+    - apdoslogconfs
+    - dosprotectedresources
+  verbs:
+    - get
+    - watch
+    - list
+{{- end }}
 - apiGroups:
   - ""
   resources:

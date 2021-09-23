@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"sort"
 
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	v1 "k8s.io/api/core/v1"
@@ -591,6 +593,83 @@ func createAppProtectUserSigHandlers(lbc *LoadBalancerController) cache.Resource
 			if different {
 				glog.V(3).Infof("ApUserSig %v changed, syncing", oldSig.GetName())
 				lbc.AddSyncQueue(newSig)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			lbc.AddSyncQueue(obj)
+		},
+	}
+	return handlers
+}
+
+func createAppProtectDosPolicyHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	handlers := cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			pol := obj.(*unstructured.Unstructured)
+			glog.V(3).Infof("Adding AppProtectDosPolicy: %v", pol.GetName())
+			lbc.AddSyncQueue(pol)
+		},
+		UpdateFunc: func(oldObj, obj interface{}) {
+			oldPol := oldObj.(*unstructured.Unstructured)
+			newPol := obj.(*unstructured.Unstructured)
+			different, err := areResourcesDifferent(oldPol, newPol)
+			if err != nil {
+				glog.V(3).Infof("Error when comparing policy %v", err)
+				lbc.AddSyncQueue(newPol)
+			}
+			if different {
+				glog.V(3).Infof("ApDosPolicy %v changed, syncing", oldPol.GetName())
+				lbc.AddSyncQueue(newPol)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			lbc.AddSyncQueue(obj)
+		},
+	}
+	return handlers
+}
+
+func createAppProtectDosLogConfHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	handlers := cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			conf := obj.(*unstructured.Unstructured)
+			glog.V(3).Infof("Adding AppProtectDosLogConf: %v", conf.GetName())
+			lbc.AddSyncQueue(conf)
+		},
+		UpdateFunc: func(oldObj, obj interface{}) {
+			oldConf := oldObj.(*unstructured.Unstructured)
+			newConf := obj.(*unstructured.Unstructured)
+			different, err := areResourcesDifferent(oldConf, newConf)
+			if err != nil {
+				glog.V(3).Infof("Error when comparing DosLogConfs %v", err)
+				lbc.AddSyncQueue(newConf)
+			}
+			if different {
+				glog.V(3).Infof("ApDosLogConf %v changed, syncing", oldConf.GetName())
+				lbc.AddSyncQueue(newConf)
+			}
+		},
+		DeleteFunc: func(obj interface{}) {
+			lbc.AddSyncQueue(obj)
+		},
+	}
+	return handlers
+}
+
+func createAppProtectDosProtectedResourceHandlers(lbc *LoadBalancerController) cache.ResourceEventHandlerFuncs {
+	handlers := cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			conf := obj.(*v1beta1.DosProtectedResource)
+			glog.V(3).Infof("Adding DosProtectedResource: %v", conf.GetName())
+			lbc.AddSyncQueue(conf)
+		},
+		UpdateFunc: func(oldObj, obj interface{}) {
+			oldConf := oldObj.(*v1beta1.DosProtectedResource)
+			newConf := obj.(*v1beta1.DosProtectedResource)
+
+			if !reflect.DeepEqual(oldConf.Spec, newConf.Spec) {
+				glog.V(3).Infof("DosProtectedResource %v changed, syncing", oldConf.GetName())
+				lbc.AddSyncQueue(newConf)
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
