@@ -1,6 +1,6 @@
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {
-    zone {{ $u.Name }} {{ if ne $u.UpstreamZoneSize "0" }}{{ $u.UpstreamZoneSize }}{{ else }}256k{{ end }};
+    zone {{ $u.Name }} {{ if ne $u.UpstreamZoneSize "0" }}{{ $u.UpstreamZoneSize }}{{ else }}512k{{ end }};
 
     {{ if $u.LBMethod }}{{ $u.LBMethod }};{{ end }}
 
