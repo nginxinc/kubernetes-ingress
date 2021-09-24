@@ -123,7 +123,7 @@ class TestVSRWithExternalNameService:
                                                     ingress_controller_prerequisites.namespace)
 
         line = f"zone vs_{vsr_externalname_setup.namespace}_{vsr_externalname_setup.vs_name}" \
-            f"_vsr_{vsr_externalname_setup.route.namespace}_{vsr_externalname_setup.route.name}_ext-backend 256k;"
+            f"_vsr_{vsr_externalname_setup.route.namespace}_{vsr_externalname_setup.route.name}_ext-backend 512k;"
         assert line in initial_config
         assert "random two least_conn;" in initial_config
         assert f"server {vsr_externalname_setup.external_host}:80 max_fails=1 fail_timeout=10s max_conns=0 resolve;"\

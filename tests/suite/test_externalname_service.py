@@ -93,7 +93,7 @@ class TestExternalNameService:
                                                       ingress_controller_prerequisites.namespace)
         line = f"zone {external_name_setup.namespace}-" \
                f"{external_name_setup.ingress_name}-" \
-               f"{external_name_setup.ingress_host}-{external_name_setup.service}-80 256k;"
+               f"{external_name_setup.ingress_host}-{external_name_setup.service}-80 512k;"
         assert line in result_conf
 
     def test_ic_template_config_upstream_rule(self, kube_apis, ingress_controller_prerequisites,

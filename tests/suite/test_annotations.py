@@ -165,7 +165,7 @@ def annotations_grpc_setup(request,
 @pytest.mark.ingresses
 @pytest.mark.parametrize('annotations_setup', ["standard", "mergeable"], indirect=True)
 class TestAnnotations:
-    def test_nginx_config_defaults(self, kube_apis, annotations_setup, ingress_controller_prerequisites):
+    def test_nginx_config_defaults(self, kube_apis, annotations_setup, ingress_controller_prerequisites, cli_arguments):
         print("Case 1: no ConfigMap keys, no annotations in Ingress")
         result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
                                                       annotations_setup.namespace,
@@ -178,8 +178,12 @@ class TestAnnotations:
 
         assert "Strict-Transport-Security" not in result_conf
 
+        expected_zone_size = "256k"
+        if cli_arguments["ic-type"] == "nginx-plus-ingress":
+            expected_zone_size = "512k"
+
         for upstream in annotations_setup.upstream_names:
-            assert f"zone {upstream} 256k;" in result_conf
+            assert f"zone {upstream} {expected_zone_size};" in result_conf
 
     @pytest.mark.parametrize('annotations, expected_strings, unexpected_strings', [
         ({"nginx.org/proxy-send-timeout": "10s", "nginx.org/max-conns": "1024",
@@ -318,7 +322,7 @@ class TestAnnotations:
         if cli_arguments["ic-type"] == "nginx-plus-ingress":
             print("Run assertions for Nginx Plus case")
             assert "zone " in result_conf
-            assert " 256k;" in result_conf
+            assert " 512k;" in result_conf
         elif cli_arguments["ic-type"] == "nginx-ingress":
             print("Run assertions for Nginx OSS case")
             assert "zone " not in result_conf
