@@ -78,7 +78,7 @@ class TestVSWithExternalNameService:
                                                  virtual_server_setup.vs_name,
                                                  vs_externalname_setup.ic_pod_name,
                                                  ingress_controller_prerequisites.namespace)
-        line = f"zone vs_{virtual_server_setup.namespace}_{virtual_server_setup.vs_name}_backend1 256k;"
+        line = f"zone vs_{virtual_server_setup.namespace}_{virtual_server_setup.vs_name}_backend1 512k;"
         assert line in result_conf
         assert "random two least_conn;" in result_conf
         assert f"server {vs_externalname_setup.external_host}:80 max_fails=1 fail_timeout=10s max_conns=0 resolve;"\
