@@ -1,13 +1,17 @@
 name: Auto-update
 on:
-  push:
-    branches:
-      - master
+  workflow_run:
+    branches: master
+    workflows:
+      - "Continuous Integration"
+    types:
+      - completed
 
 jobs:
   autoupdate:
     name: Auto-update PRs
     runs-on: ubuntu-20.04
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: docker://chinthakagodawita/autoupdate-action:v1
         env:
