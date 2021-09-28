@@ -1,0 +1,22 @@
+{{ define "main" }}
+
+<div class="d-xl-flex justify-content-center">
+  <main class="col-xl-6 d-block" role="main">
+    <div class="container">
+      <h1 class="align-center">{{ .Title }}</h1>
+      {{ if .Description }}
+      <p class="muted align-center pb-4">{{ .Description | markdownify }}</p><hr>{{ end}}
+      {{ if .Content }}
+      <div class="pb-4 mb-2">{{ .Content }}</div>
+      {{ end }}
+    </div>
+    
+    <div class="container pb-5">
+      {{ partial "feedback-form.html" . }}
+    </div>
+    
+    
+  </main>
+</div>
+
+{{ end }}

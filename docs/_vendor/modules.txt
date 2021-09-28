@@ -1,2 +1,2 @@
-# gitlab.com/f5/nginx/controller/poc/f5-hugo v0.11.12
+# gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.6
 # github.com/jquery/jquery-dist v0.0.0-20210302171154-e786e3d9707f

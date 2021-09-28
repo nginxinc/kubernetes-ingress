@@ -4,27 +4,27 @@
 <head>  
 {{ block "head" . }}
 
-  {{ partial "meta.html" . }}
+    {{ partial "meta.html" . }}
 
-  {{ partial "favicon.html" . }}
+    {{ partial "favicon.html" . }}
 
-  {{ partial "styles.html" . }}
+    {{ partial "styles.html" . }}
 
-  {{ if in .Params.doctypes "devportal" }}
-    {{ partial "devportal/style.html" . }}
-  {{ end }}
+    {{ if in .Params.doctypes "devportal" }}
+      {{ partial "devportal/style.html" . }}
+    {{ end }}
 
-  {{ if fileExists "/layouts/partials/head_custom.html" }}
-    {{ partial "head_custom.html" . }}
-  {{ end }}
+    {{ if fileExists "/layouts/partials/head_custom.html" }}
+      {{ partial "head_custom.html" . }}
+    {{ end }}
 
-  {{ partial "load_jquery.html" . }}
+    {{ partial "load_jquery.html" . }}
 
-  {{ if or ( not .Site.IsServer ) ( not ( in .Site.Params.buildtype "package" ) ) }}
-    <!-- GDPR Section Start -->
-    {{ partial "gdpr2.html" . }}
-    <!-- GDPR Section End -->
-  {{ end }}
+    {{ if or ( not .Site.IsServer ) ( not ( in .Site.Params.buildtype "package" ) ) }}
+      
+      {{ partial "trustarc.html" . }}
+
+    {{ end }}
 
 {{ end }}
 
@@ -35,25 +35,31 @@
     {{ partial "gtm.html" . }}
   {{ end }}
 
-<header>
-  {{ block "header" . }}{{end}}
-</header>
+  <header>
+    {{ block "header" . }}{{end}}
+  </header>
+
   {{ if not .IsHome }}
+    {{ if not (in .Params.display_breadcrumb "false" ) }}
     {{ partial "breadcrumb" .}}  
+    {{ end }}
   {{ end }}
 
-<div class="main container-fluid bg-white min-page-height">
+  <div class="main container-fluid min-page-height">
+    
+    {{ block "main" . }}{{ end }}
 
-  
-  {{ block "main" . }}{{ end }}
-</div>
-<footer>
-  {{ block "footer" . }}
-  {{ partial "footer.html" . }}
-  {{ end }}
-</footer>
+  </div>
+
+  <footer>
+
+    {{ block "footer" . }}
+    {{ partial "footer.html" . }}
+    {{ end }}
+
+  </footer>
 
 {{ partial "scripts.html" . }} 
-
+<div id="consent_blackbar" style="position:fixed;top:0px;width:100%"></div>
 </body>
 </html>
