@@ -1183,6 +1183,7 @@ func (vsc *virtualServerConfigurator) generateUpstream(
 		ups.SlowStart = vsc.generateSlowStartForPlus(owner, upstream, lbMethod)
 		ups.Queue = generateQueueForPlus(upstream.Queue, "60s")
 		ups.SessionCookie = generateSessionCookie(upstream.SessionCookie)
+		ups.NTLM = upstream.NTLM
 	}
 
 	return ups

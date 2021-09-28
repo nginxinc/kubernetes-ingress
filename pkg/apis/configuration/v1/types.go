@@ -78,6 +78,7 @@ type Upstream struct {
 	Queue                    *UpstreamQueue    `json:"queue"`
 	SessionCookie            *SessionCookie    `json:"sessionCookie"`
 	UseClusterIP             bool              `json:"use-cluster-ip"`
+	NTLM                     bool              `json:"ntlm"`
 }
 
 // UpstreamBuffers defines Buffer Configuration for an Upstream.
@@ -320,6 +321,7 @@ type VirtualServerRouteStatus struct {
 // +kubebuilder:validation:Optional
 // +kubebuilder:resource:shortName=pol
 // +kubebuilder:subresource:status
+// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="Current state of the Policy. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller."
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 

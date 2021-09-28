@@ -18,7 +18,8 @@
     </div>
 
     <section class="col-md-12 col-xl-12 py-md-3 pl-md-5" id="section-content-list">
-        <div class="row justify-content-center">
+        
+        <div class="row">
             <div class="card-deck">
             {{ if .Sections }}
                 {{ range .Sections }}
@@ -48,23 +49,21 @@
                     </div>
                 </div>
                 {{ end }}
-
             {{ end }}
             
-            {{ range where .Pages.ByWeight ".Kind" "!=" "section" }}
-              <div class="col-md-5 card">
-                <div class="card-body">
-                  <h3 class="card-title">
-                      <i class="far fa-{{if .Page.Params.icon}}{{ .Page.Params.icon }}{{else}}file-alt{{end}} fa-2x card-img-top"></i>
-                      <a href="{{ .Permalink }}">{{ .Title }}</a>
-                  </h3>
-                  {{/*}}
-                  <p class="card-text">
-                    {{ if .Description }} {{ .Description | markdownify }}{{ end }}
-                  </p>{{*/}}
-                  
+            {{ range (.Paginate ( where .Pages.ByWeight ".Kind" "!=" "section" )).Pages }}
+                <div class="col-md-5 card">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            <i class="far fa-{{if .Page.Params.icon}}{{ .Page.Params.icon }}{{else}}file-alt{{end}} fa-2x card-img-top"></i>
+                            <a href="{{ .Permalink }}">{{ .Title }}</a>
+                        </h3>
+                        {{/*}}
+                        <p class="card-text">
+                            {{ if .Description }} {{ .Description | markdownify }}{{ end }}
+                        </p>{{*/}}
+                    </div>
                 </div>
-              </div>
             {{ end }}        
           </div>
         </div>

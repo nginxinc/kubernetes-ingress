@@ -69,7 +69,7 @@ def assert_specific_keys_for_nginx_plus(config, expected_values):
     assert f"server_tokens \"{expected_values['server-tokens']}\";" in config
     assert "random two least_conn;" not in config \
            and expected_values['lb-method'] in config
-    assert "zone " in config and " 256k;" in config
+    assert "zone " in config and " 512k;" in config
 
 
 def assert_specific_keys_for_nginx_oss(config, expected_values):
@@ -79,8 +79,15 @@ def assert_specific_keys_for_nginx_oss(config, expected_values):
            and expected_values['lb-method'] in config
     assert "zone " not in config and " 256k;" not in config
 
+def assert_defaults_of_keys_with_validation_for_nginx_plus(config, unexpected_values):
+    assert_common_defaults_of_keys_with_validation(config, unexpected_values)
+    assert "zone " in config and " 512k;" in config
 
-def assert_defaults_of_keys_with_validation(config, unexpected_values):
+def assert_defaults_of_keys_with_validation_for_nginx_oss(config, unexpected_values):
+    assert_common_defaults_of_keys_with_validation(config, unexpected_values)
+    assert "zone " in config and " 256k;" in config
+
+def assert_common_defaults_of_keys_with_validation(config, unexpected_values):
     assert "proxy_buffering on;" in config
     assert "real_ip_recursive" not in config
     assert "max_fails=1" in config
@@ -89,7 +96,6 @@ def assert_defaults_of_keys_with_validation(config, unexpected_values):
     assert "server_tokens \"on\"" in config
     assert "random two least_conn;" in config and unexpected_values['lb-method'] not in config
     assert f"proxy_send_timeout 60s;" in config
-    assert "zone " in config and " 256k;" in config
 
 
 def assert_defaults_of_keys_with_validation_in_main_config(config, unexpected_values):
@@ -222,7 +228,10 @@ class TestVirtualServerConfigMapNoTls:
                                                    ingress_controller_prerequisites.namespace)
         step_4_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_update_event_count_increased(virtual_server_setup, step_4_events, step_3_events)
-        assert_defaults_of_keys_with_validation(step_4_config, expected_values)
+        if cli_arguments['ic-type'] == "nginx-ingress":
+            assert_defaults_of_keys_with_validation_for_nginx_oss(step_4_config, expected_values)
+        else:
+            assert_defaults_of_keys_with_validation_for_nginx_plus(step_4_config, expected_values)
 
     def test_keys_in_main_config(self, cli_arguments, kube_apis, ingress_controller_prerequisites,
                                  crd_ingress_controller, virtual_server_setup, clean_up):

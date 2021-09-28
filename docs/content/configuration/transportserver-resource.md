@@ -9,30 +9,9 @@ toc: true
 
 The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing. The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/blob/v1.12.0/examples-of-custom-resources) folder in our GitHub repo.
+This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples-of-custom-resources) folder in our GitHub repo.
 
 > **Feature Status**: The TransportServer resource is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resource specification in the next releases.
-
-## Contents
-
-- [TransportServer Resource](#transportserver-resource)
-  - [Contents](#contents)
-  - [Prerequisites](#prerequisites)
-  - [TransportServer Specification](#transportserver-specification)
-    - [Listener](#listener)
-    - [Upstream](#upstream)
-      - [Upstream.Healthcheck](#upstream-healthcheck)
-      - [Upstream.Healthcheck.Match](#upstream-healthcheck-match)
-    - [UpstreamParameters](#upstreamparameters)
-    - [SessionParameters](#sessionparameters)
-    - [Action](#action)
-  - [Using TransportServer](#using-transportserver)
-    - [Usings Snippets](#using-snippets)
-    - [Validation](#validation)
-      - [Structural Validation](#structural-validation)
-      - [Comprehensive Validation](#comprehensive-validation)
-  - [Customization via ConfigMap](#customization-via-configmap)
-  - [Limitations](#limitations)
 
 ## Prerequisites
 
@@ -154,7 +133,7 @@ loadBalancingMethod: least_conn
 |``maxFails`` | Sets the [number](https://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#max_fails) of unsuccessful attempts to communicate with the server that should happen in the duration set by the failTimeout parameter to consider the server unavailable. The default ``1``. | ``int`` | No | 
 |``maxConns`` | Sets the [number](https://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#max_conns) of maximum connections to the proxied server. Default value is zero, meaning there is no limit. The default is ``0``. | ``int`` | No | 
 |``failTimeout`` | Sets the [time](https://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#fail_timeout) during which the specified number of unsuccessful attempts to communicate with the server should happen to consider the server unavailable and the period of time the server will be considered unavailable. The default is ``10s``. | ``string`` | No | 
-|``healthCheck`` | The health check configuration for the Upstream. See the [health_check](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [healthcheck](#upstream-healthcheck) | No | 
+|``healthCheck`` | The health check configuration for the Upstream. See the [health_check](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [healthcheck](#upstreamhealthcheck) | No | 
 |``loadBalancingMethod`` | The method used to load balance the upstream servers. By default, connections are distributed between the servers using a weighted round-robin balancing method. See the [upstream](http://nginx.org/en/docs/stream/ngx_stream_upstream_module.html#upstream) section for available methods and their details. | ``string`` | No | 
 {{% /table %}} 
 
@@ -189,7 +168,7 @@ Note: This feature is supported only in NGINX Plus.
 |``fails`` | The number of consecutive failed health checks of a particular upstream server after which this server will be considered unhealthy. The default is ``1``. | ``integer`` | No | 
 |``passes`` | The number of consecutive passed health checks of a particular upstream server after which the server will be considered healthy. The default is ``1``. | ``integer`` | No | 
 |``port`` | The port used for health check requests. By default, the port of the upstream is used. Note: in contrast with the port of the upstream, this port is not a service port, but a port of a pod. | ``integer`` | No | 
-|``match`` | Controls the data to send and the response to expect for the healthcheck. | [match](#upstream-healthcheck-match) | No | 
+|``match`` | Controls the data to send and the response to expect for the healthcheck. | [match](#upstreamhealthcheckmatch) | No | 
 {{% /table %}} 
 
 ### Upstream.Healthcheck.Match
@@ -399,4 +378,4 @@ The [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/con
 ## Limitations
 
 The TransportServer resource is a preview feature. Currently, it comes with the following limitation:
-* When using TLS Passthrough, it is not possible to configure [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.0/examples/proxy-protocol) for port 443 both for regular HTTPS and TLS Passthrough traffic.
+* When using TLS Passthrough, it is not possible to configure [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/proxy-protocol) for port 443 both for regular HTTPS and TLS Passthrough traffic.

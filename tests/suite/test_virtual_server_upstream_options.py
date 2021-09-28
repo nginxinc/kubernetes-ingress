@@ -302,13 +302,14 @@ class TestOptionsSpecificForPlus:
           "healthCheck": {"enable": True, "port": 8080},
           "slow-start": "3h",
           "queue": {"size": 100},
+          "ntlm": True,
           "sessionCookie": {"enable": True,
                             "name": "TestCookie",
                             "path": "/some-valid/path",
                             "expires": "max",
                             "domain": "virtual-server-route.example.com", "httpOnly": True, "secure": True}},
          ["health_check uri=/ port=8080 interval=5s jitter=0s", "fails=1 passes=1;",
-          "slow_start=3h", "queue 100 timeout=60s;",
+          "slow_start=3h", "queue 100 timeout=60s;", "ntlm;",
           "sticky cookie TestCookie expires=max domain=virtual-server-route.example.com httponly secure path=/some-valid/path;"]),
         ({"lb-method": "least_conn",
           "healthCheck": {"enable": True, "path": "/health",
@@ -318,12 +319,12 @@ class TestOptionsSpecificForPlus:
                           "connect-timeout": "35s", "read-timeout": "45s", "send-timeout": "55s",
                           "headers": [{"name": "Host", "value": "virtual-server.example.com"}]},
           "queue": {"size": 1000, "timeout": "66s"},
-          "slow-start": "0s"},
+          "slow-start": "0s", "ntlm": True},
          ["health_check uri=/health port=8080 interval=15s jitter=3", "fails=2 passes=2 match=",
           "proxy_pass https://vs", "status 200;",
           "proxy_connect_timeout 35s;", "proxy_read_timeout 45s;", "proxy_send_timeout 55s;",
           'proxy_set_header Host "virtual-server.example.com";',
-          "slow_start=0s", "queue 1000 timeout=66s;"])
+          "slow_start=0s", "queue 1000 timeout=66s;", "ntlm;"])
 
     ])
     def test_config_and_events(self, kube_apis, ingress_controller_prerequisites,

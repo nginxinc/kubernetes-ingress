@@ -1,0 +1,11 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: route
+spec:
+  host: example.com
+  subroutes:
+  - path: "/route"
+    action:
+      return:
+        body: "Hello World\n"

@@ -125,7 +125,6 @@ class TestSmoke:
         while get_pods_amount(kube_apis.v1, ns) is not 0:
             print(f"Number of replicas not 0, retrying...")
             wait_before_test()
-
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)
         assert num is None
 

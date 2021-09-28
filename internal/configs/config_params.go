@@ -133,7 +133,12 @@ type Listener struct {
 }
 
 // NewDefaultConfigParams creates a ConfigParams with default values.
-func NewDefaultConfigParams() *ConfigParams {
+func NewDefaultConfigParams(isPlus bool) *ConfigParams {
+	upstreamZoneSize := "256k"
+	if isPlus {
+		upstreamZoneSize = "512k"
+	}
+
 	return &ConfigParams{
 		DefaultServerReturn:           "404",
 		ServerTokens:                  "on",
@@ -152,7 +157,7 @@ func NewDefaultConfigParams() *ConfigParams {
 		SSLPorts:                      []int{443},
 		MaxFails:                      1,
 		MaxConns:                      0,
-		UpstreamZoneSize:              "256k",
+		UpstreamZoneSize:              upstreamZoneSize,
 		FailTimeout:                   "10s",
 		LBMethod:                      "random two least_conn",
 		MainErrorLogLevel:             "notice",

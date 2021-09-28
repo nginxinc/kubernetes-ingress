@@ -1,0 +1,95 @@
+
+name: Run Smoke Tests
+description: Run Smoke Tests for the project
+
+inputs:
+  k8s-version:
+    description: Kubernetes version to use
+    required: false
+  k8s-timeout:
+    description: Timeout to use
+    default: 75s
+    required: false
+  image:
+    description: Docker image to use
+    default: debian
+    required: false
+  marker:
+    description: Marker to use
+    default: ""
+    required: false
+
+outputs:
+  test-results-name:
+    description: Test results name
+    value: tests-nginx-${{ inputs.image }}-${{ inputs.marker }}
+
+runs:
+  using: composite
+  steps:
+    - name: Fetch Cached Artifacts
+      uses: actions/cache@v2
+      with:
+        path: ${{ github.workspace }}/dist
+        key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
+
+    - name: Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build ${{ inputs.image }} Container
+      uses: docker/build-push-action@v2
+      with:
+        file: build/Dockerfile
+        context: '.'
+        # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+        # cache-from: type=gha,scope=${{ inputs.image }}
+        # cache-to: type=gha,scope=${{ inputs.image }},mode=max
+        target: goreleaser
+        tags: 'docker.io/nginx/nginx-ingress:${{ inputs.image }}-${{ github.sha }}'
+        load: true
+        build-args: BUILD_OS=${{ inputs.image }}
+
+    - name: Build Test-Runner Container
+      uses: docker/build-push-action@v2
+      with:
+        file: tests/docker/Dockerfile
+        context: '.'
+        # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
+        # cache-from: type=gha,scope=test-runner
+        # cache-to: type=gha,scope=test-runner,mode=max
+        tags: test-runner:${{ github.sha }}
+        load: true
+
+    - name: Deploy Kubernetes
+      id: k8s
+      run: |
+        kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ inputs.k8s-timeout }}
+        kind load docker-image docker.io/nginx/nginx-ingress:${{ inputs.image }}-${{ github.sha }} --name ${{ github.run_id }}
+        echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
+        echo ::set-output name=cluster::$(echo 'nginx-${{ inputs.image }}-${{ inputs.marker != '""' && inputs.marker || inputs.k8s-version }}')
+      shell: bash
+
+    - name: Setup Kubeconfig
+      run: |
+        sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
+      shell: bash
+
+    - name: Run Smoke Tests
+      run: |
+        touch tests-${{ steps.k8s.outputs.cluster }}.html
+        docker run --rm \
+        --name test-runner-${{ github.run_id }} \
+        --network=kind \
+        -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
+        -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ github.sha }} \
+        --context=kind-${{ github.run_id }} \
+        --image=docker.io/nginx/nginx-ingress:${{ inputs.image }}-${{ github.sha }} \
+        --image-pull-policy=Never \
+        --ic-type=nginx-ingress \
+        --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
+        --html=tests-${{ steps.k8s.outputs.cluster }}.html \
+        --self-contained-html \
+        --show-ic-logs=yes --profile \
+        -m ${{ inputs.marker }}
+      working-directory: ./tests
+      shell: bash

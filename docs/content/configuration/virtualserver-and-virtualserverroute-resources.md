@@ -11,42 +11,7 @@ toc: true
 
 The VirtualServer and VirtualServerRoute resources are new load balancing configuration, introduced in release 1.5 as an alternative to the Ingress resource. The resources enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/blob/v1.12.0/examples-of-custom-resources) folder in our GitHub repo.
-
-## Contents
-
-- [VirtualServer and VirtualServerRoute Resources](#virtualserver-and-virtualserverroute-resources)
-  - [Contents](#contents)
-  - [VirtualServer Specification](#virtualserver-specification)
-    - [VirtualServer.TLS](#virtualserver-tls)
-    - [VirtualServer.TLS.Redirect](#virtualserver-tls-redirect)
-    - [VirtualServer.Route](#virtualserver-route)
-  - [VirtualServerRoute Specification](#virtualserverroute-specification)
-    - [VirtualServerRoute.Subroute](#virtualserverroute-subroute)
-  - [Common Parts of the VirtualServer and VirtualServerRoute](#common-parts-of-the-virtualserver-and-virtualserverroute)
-    - [Upstream](#upstream)
-    - [Upstream.Buffers](#upstream-buffers)
-    - [Upstream.TLS](#upstream-tls)
-    - [Upstream.Queue](#upstream-queue)
-    - [Upstream.Healthcheck](#upstream-healthcheck)
-    - [Upstream.SessionCookie](#upstream-sessioncookie)
-    - [Header](#header)
-    - [Action](#action)
-    - [Action.Redirect](#action-redirect)
-    - [Action.Return](#action-return)
-    - [Action.Proxy](#action-proxy)
-    - [Split](#split)
-    - [Match](#match)
-    - [Condition](#condition)
-    - [ErrorPage](#errorpage)
-    - [ErrorPage.Redirect](#errorpage-redirect)
-    - [ErrorPage.Return](#errorpage-return)
-  - [Using VirtualServer and VirtualServerRoute](#using-virtualserver-and-virtualserverroute)
-    - [Using Snippets](#using-snippets)
-    - [Validation](#validation)
-      - [Structural Validation](#structural-validation)
-      - [Comprehensive Validation](#comprehensive-validation)
-  - [Customization via ConfigMap](#customization-via-configmap)
+This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples-of-custom-resources) folder in our GitHub repo.
 
 ## VirtualServer Specification
 
@@ -85,9 +50,9 @@ spec:
 {{% table %}} 
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
-|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host Collisions](/nginx-ingress-controller/configuration/handling-host-collisions). | ``string`` | Yes | 
-|``tls`` | The TLS termination configuration. | [tls](#virtualserver-tls) | No | 
-|``policies`` | A list of policies. | [[]policy](#virtualserver-policy) | No | 
+|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes | 
+|``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No | 
+|``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No | 
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No | 
 |``routes`` | A list of routes. | [[]route](#virtualserver-route) | No | 
 |``ingressClassName`` | Specifies which Ingress controller must handle the VirtualServer resource. | ``string`` | No | 
@@ -108,8 +73,10 @@ redirect:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``secret`` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). If the secret doesn't exist or is invalid, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer. | ``string`` | No | 
-|``redirect`` | The redirect configuration of the TLS for a VirtualServer. | [tls.redirect](#virtualserver-tls-redirect) | No | ### VirtualServer.TLS.Redirect | 
+|``redirect`` | The redirect configuration of the TLS for a VirtualServer. | [tls.redirect](#virtualservertlsredirect) | No | ### VirtualServer.TLS.Redirect | 
 {{% /table %}} 
+
+### VirtualServer.TLS.Redirect
 
 The redirect field configures a TLS redirect for a VirtualServer:
 ```yaml
@@ -131,6 +98,8 @@ The policy field references a [Policy resource](/nginx-ingress-controller/config
 name: access-control
 ```
 
+### VirtualServer.Policy
+
 {{% table %}} 
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
@@ -151,7 +120,7 @@ The route defines rules for matching client requests to actions like passing a r
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``path`` | The path of the route. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix (must start with ``/``\ ) or an exact match (must start with ``=``\ ), the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``. In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all routes of the VirtualServer. Check the [location](https://nginx.org/en/docs/http/ngx_http_core_module.html#location) directive for more information. | ``string`` | Yes | 
-|``policies`` | A list of policies. The policies override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserver-policy) | No | 
+|``policies`` | A list of policies. The policies override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserverpolicy) | No | 
 |``action`` | The default action to perform for a request. | [action](#action) | No | 
 |``splits`` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [[]split](#split) | No | 
 |``matches`` | The matching rules for advanced content-based routing. Requires the default ``action`` or ``splits``.  Unmatched requests will be handled by the default ``action`` or ``splits``. | [matches](#match) | No | 
@@ -221,7 +190,7 @@ Note that each subroute must have a `path` that starts with the same prefix (her
 | ---| ---| ---| --- | 
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed. Must be the same as the ``host`` of the VirtualServer that references this resource. | ``string`` | Yes | 
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No | 
-|``subroutes`` | A list of subroutes. | [[]subroute](#virtualserverroute-subroute) | No | 
+|``subroutes`` | A list of subroutes. | [[]subroute](#virtualserverroutesubroute) | No | 
 |``ingressClassName`` | Specifies which Ingress controller must handle the VirtualServerRoute resource. Must be the same as the ``ingressClassName`` of the VirtualServer that references this resource. | ``string``_ | No | 
 {{% /table %}} 
 
@@ -238,7 +207,7 @@ action:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``path`` | The path of the subroute. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix, the path must start with the same path as the path of the route of the VirtualServer that references this resource. In the case of an exact or regex match, the path must be the same as the path of the route of the VirtualServer that references this resource. In the case of a prefix or an exact match, the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``.  In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all subroutes of the VirtualServerRoute. | ``string`` | Yes | 
-|``policies`` | A list of policies. The policies override *all* policies defined in the route of the VirtualServer that references this resource. The policies also override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserver-policy) | No | 
+|``policies`` | A list of policies. The policies override *all* policies defined in the route of the VirtualServer that references this resource. The policies also override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserverpolicy) | No | 
 |``action`` | The default action to perform for a request. | [action](#action) | No | 
 |``splits`` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [[]split](#split) | No | 
 |``matches`` | The matching rules for advanced content-based routing. Requires the default ``action`` or ``splits``.  Unmatched requests will be handled by the default ``action`` or ``splits``. | [matches](#match) | No | 
@@ -281,7 +250,7 @@ tls:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``name`` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``upstream-123`` are valid. The name must be unique among all upstreams of the resource. | ``string`` | Yes | 
-|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.0/examples/externalname-services#prerequisites)\ ). | ``string`` | Yes | 
+|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/externalname-services#prerequisites)\ ). | ``string`` | Yes | 
 |``subselector`` | Selects the pods within the service using label keys and values. By default, all pods of the service are selected. Note: the specified labels are expected to be present in the pods when they are created. If the pod labels are updated, the Ingress Controller will not see that change until the number of the pods is changed. | ``map[string]string`` | No | 
 |``use-cluster-ip`` | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as the Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP. | ``boolean`` | No | 
 |``port`` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65535``. | ``uint16`` | Yes | 
@@ -297,13 +266,14 @@ tls:
 |``next-upstream-timeout`` | The time during which a request can be passed to the next upstream server. See the [proxy_next_upstream_timeout](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_timeout) directive. The ``0`` value turns off the time limit. The default is ``0``. | ``string`` | No | 
 |``next-upstream-tries`` | The number of possible tries for passing a request to the next upstream server. See the [proxy_next_upstream_tries](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream_tries) directive. The ``0`` value turns off this limit. The default is ``0``. | ``int`` | No | 
 |``client-max-body-size`` | Sets the maximum allowed size of the client request body. See the [client_max_body_size](https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size) directive. The default is set in the ``client-max-body-size`` ConfigMap key. | ``string`` | No | 
-|``tls`` | The TLS configuration for the Upstream. | [tls](#upstream-tls) | No | 
-|``healthCheck`` | The health check configuration for the Upstream. See the [health_check](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [healthcheck](#upstream-healthcheck) | No | 
+|``tls`` | The TLS configuration for the Upstream. | [tls](#upstreamtls) | No | 
+|``healthCheck`` | The health check configuration for the Upstream. See the [health_check](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [healthcheck](#upstreamhealthcheck) | No | 
 |``slow-start`` | The slow start allows an upstream server to gradually recover its weight from 0 to its nominal value after it has been recovered or became available or when the server becomes available after a period of time it was considered unavailable. By default, the slow start is disabled. See the [slow_start](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#slow_start) parameter of the server directive. Note: The parameter cannot be used along with the ``random``\ , ``hash`` or ``ip_hash`` load balancing methods and will be ignored. | ``string`` | No | 
-|``queue`` | Configures a queue for an upstream. A client request will be placed into the queue if an upstream server cannot be selected immediately while processing the request. By default, no queue is configured. Note: this feature is supported only in NGINX Plus. | [queue](#upstream-queue) | No | 
+|``queue`` | Configures a queue for an upstream. A client request will be placed into the queue if an upstream server cannot be selected immediately while processing the request. By default, no queue is configured. Note: this feature is supported only in NGINX Plus. | [queue](#upstreamqueue) | No | 
 |``buffering`` | Enables buffering of responses from the upstream server. See the [proxy_buffering](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering) directive. The default is set in the ``proxy-buffering`` ConfigMap key. | ``boolean`` | No | 
-|``buffers`` | Configures the buffers used for reading a response from the upstream server for a single connection. | [buffers](#upstream-buffers) | No | 
+|``buffers`` | Configures the buffers used for reading a response from the upstream server for a single connection. | [buffers](#upstreambuffers) | No | 
 |``buffer-size`` | Sets the size of the buffer used for reading the first part of a response received from the upstream server. See the [proxy_buffer_size](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) directive. The default is set in the ``proxy-buffer-size`` ConfigMap key. | ``string`` | No | 
+|``ntlm`` | Allows proxying requests with NTLM Authentication. See the [ntlm](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#ntlm) directive. In order for NTLM authentication to work, it is necessary to enable keepalive connections to upstream servers using the ``keepalive`` field. Note: this feature is supported only in NGINX Plus.| ``boolean`` | No |
 {{% /table %}} 
 
 ### Upstream.Buffers
@@ -389,7 +359,7 @@ Note: This feature is supported only in NGINX Plus.
 |``fails`` | The number of consecutive failed health checks of a particular upstream server after which this server will be considered unhealthy. The default is ``1``. | ``integer`` | No | 
 |``passes`` | The number of consecutive passed health checks of a particular upstream server after which the server will be considered healthy. The default is ``1``. | ``integer`` | No | 
 |``port`` | The port used for health check requests. By default, the port of the upstream is used. Note: in contrast with the port of the upstream, this port is not a service port, but a port of a pod. | ``integer`` | No | 
-|``tls`` | The TLS configuration used for health check requests. By default, the ``tls`` field of the upstream is used. | [upstream.tls](#upstream-tls) | No | 
+|``tls`` | The TLS configuration used for health check requests. By default, the ``tls`` field of the upstream is used. | [upstream.tls](#upstreamtls) | No | 
 |``connect-timeout`` | The timeout for establishing a connection with an upstream server. By default, the ``connect-timeout`` of the upstream is used. | ``string`` | No | 
 |``read-timeout`` | The timeout for reading a response from an upstream server. By default, the ``read-timeout`` of the upstream is used. | ``string`` | No | 
 |``send-timeout`` | The timeout for transmitting a request to an upstream server. By default, the ``send-timeout`` of the upstream is used. | ``string`` | No | 
@@ -462,9 +432,9 @@ In the example below, client requests are passed to an upstream `coffee`:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``pass`` | Passes requests to an upstream. The upstream with that name must be defined in the resource. | ``string`` | No | 
-|``redirect`` | Redirects requests to a provided URL. | [action.redirect](#action-redirect) | No | 
-|``return`` | Returns a preconfigured response. | [action.return](#action-return) | No | 
-|``proxy`` | Passes requests to an upstream with the ability to modify the request/response (for example, rewrite the URI or modify the headers). | [action.proxy](#action-proxy) | No | 
+|``redirect`` | Redirects requests to a provided URL. | [action.redirect](#actionredirect) | No | 
+|``return`` | Returns a preconfigured response. | [action.return](#actionreturn) | No | 
+|``proxy`` | Passes requests to an upstream with the ability to modify the request/response (for example, rewrite the URI or modify the headers). | [action.proxy](#actionproxy) | No | 
 {{% /table %}} 
 
 \* -- an action must include exactly one of the following: `pass`, `redirect`, `return` or `proxy`.
@@ -545,9 +515,9 @@ proxy:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``upstream`` | The name of the upstream which the requests will be proxied to. The upstream with that name must be defined in the resource. | ``string`` | Yes | 
-|``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#action-proxy-requestheaders) | No | 
-|``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#action-proxy-responseheaders) | No | 
-|``rewritePath`` | The rewritten URI. If the route path is a regular expression (starts with ~), the rewritePath can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.0/examples-of-custom-resources/rewrites) example. | ``string`` | No | 
+|``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#actionproxyrequestheaders) | No | 
+|``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#actionproxyresponseheaders) | No | 
+|``rewritePath`` | The rewritten URI. If the route path is a regular expression (starts with ~), the rewritePath can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples-of-custom-resources/rewrites) example. | ``string`` | No | 
 {{% /table %}} 
 
 ### Action.Proxy.RequestHeaders
@@ -558,7 +528,7 @@ The RequestHeaders field modifies the headers of the request to the proxied upst
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``pass`` | Passes the original request headers to the proxied upstream server. See the [proxy_pass_request_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_request_headers) directive for more information. Default is true. | ``bool`` | No | 
-|``set`` | Allows redefining or appending fields to present request headers passed to the proxied upstream servers. See the [proxy_set_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) directive for more information. | [[]header](#action-proxy-requestheaders-set-header) | No | 
+|``set`` | Allows redefining or appending fields to present request headers passed to the proxied upstream servers. See the [proxy_set_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header) directive for more information. | [[]header](#actionproxyrequestheaderssetheader) | No | 
 {{% /table %}} 
 
 ### Action.Proxy.RequestHeaders.Set.Header
@@ -746,8 +716,8 @@ errorPages:
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
 |``codes`` | A list of error status codes. | ``[]int`` | Yes | 
-|``redirect`` | The redirect action for the given status codes. | [errorPage.Redirect](#errorpage-redirect) | No | 
-|``return`` | The canned response action for the given status codes. | [errorPage.Return](#errorpage-return) | No | 
+|``redirect`` | The redirect action for the given status codes. | [errorPage.Redirect](#errorpageredirect) | No | 
+|``return`` | The canned response action for the given status codes. | [errorPage.Return](#errorpagereturn) | No | 
 {{% /table %}} 
 
 \* -- an errorPage must include exactly one of the following: `return` or `redirect`.
@@ -796,7 +766,7 @@ return:
 |``code`` | The status code of the response. The default is the status code of the original response. | ``int`` | No | 
 |``type`` | The MIME type of the response. The default is ``text/html``. | ``string`` | No | 
 |``body`` | The body of the response. Supported NGINX variable: ``$upstream_status`` \ . Variables must be enclosed in curly braces. For example: ``${upstream_status}``. | ``string`` | Yes | 
-|``headers`` | The custom headers of the response. | [errorPage.Return.Header](#errorpage-return-header) | No | 
+|``headers`` | The custom headers of the response. | [errorPage.Return.Header](#errorpagereturnheader) | No | 
 {{% /table %}} 
 
 ### ErrorPage.Return.Header

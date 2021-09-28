@@ -331,7 +331,7 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 	lbc.syncQueue.Enqueue(item)
 }
 
-// addappProtectPolicyHandler creates dynamic informers for custom appprotect policy resource
+// addAppProtectPolicyHandler creates dynamic informers for custom appprotect policy resource
 func (lbc *LoadBalancerController) addAppProtectPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := lbc.dynInformerFactory.ForResource(appprotect.PolicyGVR).Informer()
 	informer.AddEventHandler(handlers)
@@ -340,7 +340,7 @@ func (lbc *LoadBalancerController) addAppProtectPolicyHandler(handlers cache.Res
 	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
 }
 
-// addappProtectLogConfHandler creates dynamic informer for custom appprotect logging config resource
+// addAppProtectLogConfHandler creates dynamic informer for custom appprotect logging config resource
 func (lbc *LoadBalancerController) addAppProtectLogConfHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := lbc.dynInformerFactory.ForResource(appprotect.LogConfGVR).Informer()
 	informer.AddEventHandler(handlers)
@@ -349,7 +349,7 @@ func (lbc *LoadBalancerController) addAppProtectLogConfHandler(handlers cache.Re
 	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
 }
 
-// addappProtectUserSigHandler creates dynamic informer for custom appprotect user defined signature resource
+// addAppProtectUserSigHandler creates dynamic informer for custom appprotect user defined signature resource
 func (lbc *LoadBalancerController) addAppProtectUserSigHandler(handlers cache.ResourceEventHandlerFuncs) {
 	informer := lbc.dynInformerFactory.ForResource(appprotect.UserSigGVR).Informer()
 	informer.AddEventHandler(handlers)
@@ -635,7 +635,7 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 }
 
 func (lbc *LoadBalancerController) updateAllConfigs() {
-	cfgParams := configs.NewDefaultConfigParams()
+	cfgParams := configs.NewDefaultConfigParams(lbc.isNginxPlus)
 
 	if lbc.configMap != nil {
 		cfgParams = configs.ParseConfigMap(lbc.configMap, lbc.isNginxPlus, lbc.appProtectEnabled)

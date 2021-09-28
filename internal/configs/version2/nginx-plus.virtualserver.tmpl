@@ -1,6 +1,6 @@
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {
-    zone {{ $u.Name }} {{ if ne $u.UpstreamZoneSize "0" }}{{ $u.UpstreamZoneSize }}{{ else }}256k{{ end }};
+    zone {{ $u.Name }} {{ if ne $u.UpstreamZoneSize "0" }}{{ $u.UpstreamZoneSize }}{{ else }}512k{{ end }};
 
     {{ if $u.LBMethod }}{{ $u.LBMethod }};{{ end }}
 
@@ -21,6 +21,8 @@ upstream {{ $u.Name }} {
     sticky cookie {{ .Name }}{{ if .Expires }} expires={{ .Expires }}{{ end }}{{ if .Domain }} domain={{ .Domain }}{{ end }}{{ if .HTTPOnly }} httponly{{ end }}{{ if .Secure }} secure{{ end }}{{ if .Path }} path={{ .Path }}{{ end }};
         {{ end }}
     {{ end }}
+
+    {{ if $u.NTLM }}ntlm;{{ end }}
 }
 {{ end }}
 
