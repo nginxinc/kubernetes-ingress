@@ -11,7 +11,7 @@ import (
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
 func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool) *ConfigParams {
-	cfgParams := NewDefaultConfigParams()
+	cfgParams := NewDefaultConfigParams(nginxPlus)
 
 	if serverTokens, exists, err := GetMapKeyAsBool(cfgm.Data, "server-tokens", cfgm); exists {
 		if err != nil {
