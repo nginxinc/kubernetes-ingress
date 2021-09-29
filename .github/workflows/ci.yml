@@ -244,20 +244,12 @@ jobs:
     runs-on: ubuntu-20.04
     needs: build-binaries
     strategy:
-      matrix:
-        include:
-          - type: debian
-            suffix: ''
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-          - type: alpine
-            suffix: '-alpine'
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-          - type: ubi
-            suffix: '-ubi'
-            platforms: linux/arm64,linux/amd64
-          - type: opentracing
-            suffix: '-ot'
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+        matrix:
+          image: [debian, alpine, opentracing]
+          platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
+          include:
+            - image: ubi
+              platforms: "linux/arm64, linux/amd64"
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -286,12 +278,13 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: nginx/nginx-ingress
-          flavor: suffix=${{ matrix.suffix }}
+          flavor: suffix=${{ matrix.image != 'debian' && '-' || '' }}${{ matrix.image != 'debian' && matrix.image != 'opentracing' && matrix.image || '' }}${{ matrix.image == 'opentracing' && 'ot' || '' }},onlatest=true
           tags: |
             type=edge
             type=ref,event=pr
             type=schedule
             type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
           labels: |
             org.opencontainers.image.description=NGINX Ingress Controller for Kubernetes
             org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
@@ -324,25 +317,28 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           pull: true
           build-args: |
-            BUILD_OS=${{ matrix.type }}
+            BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
           format: 'template'
           template: '@/contrib/sarif.tpl'
-          output: 'trivy-results-${{ matrix.type }}.sarif'
+          output: 'trivy-results-${{ matrix.image }}.sarif'
           ignore-unfixed: 'true'
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v1
+        continue-on-error: true
         with:
-          sarif_file: 'trivy-results-${{ matrix.type }}.sarif'
+          sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
       - name: Upload Scan Results
         uses: actions/upload-artifact@v2
+        continue-on-error: true
         with:
-          name: 'trivy-results-${{ matrix.type }}.sarif'
-          path: 'trivy-results-${{ matrix.type }}.sarif'
+          name: 'trivy-results-${{ matrix.image }}.sarif'
+          path: 'trivy-results-${{ matrix.image }}.sarif'
         if: always()
 
   package-helm:
