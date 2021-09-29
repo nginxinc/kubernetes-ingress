@@ -26,7 +26,6 @@
     name = "NGINX Open Source"
     weight = 100
     url = "https://nginx.org/en/docs"
-    #post = "<i class='fas fa-external-link-alt fa-xs'></i>"
     #pre = "<i class='nginx-oss'></i>"
 
   [[menu.products]]

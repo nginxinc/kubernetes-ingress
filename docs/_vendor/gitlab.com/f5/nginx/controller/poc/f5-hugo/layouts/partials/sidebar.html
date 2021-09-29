@@ -1,7 +1,7 @@
 {{ block "sidebar" . }}
 <!-- sidebar start -->
 
-<div id="sidebar" class="content" aria-label="Sidebar navigation">
+<div id="sidebar" class="sidebar" aria-label="Sidebar navigation">
     
     <h3 class="sidebar-title"> 
         <a href="{{.Site.Home.Permalink}}" alt="{{.Site.Title}}">{{ if .Site.Params.logo }}<img class="card-img-top" src="{{ .Site.BaseURL}}/images/icons/{{ .Site.Params.logo }}" alt="{{.Site.Title}}">{{end}}
@@ -11,15 +11,15 @@
     <ul>
         
         {{ range .Site.Sections }}
-        <h3 data-toggle="collapse" class="nginx-toc-link l1" id="accordion-{{.Section | urlize}}">
-            <a class="" data-toggle="collapse" href="#{{.Section | urlize}}" role="button" aria-expanded="false" aria-controls="{{.Section | urlize}}">
+        <li data-toggle="collapse" class="nginx-toc-link l1" id="accordion-{{.Section | urlize}}">
+            <a class="" data-toggle="collapse" href="#{{.Section | urlize}}-section" role="button" aria-expanded="false" aria-controls="{{.Section | urlize}}-section">
                 {{ .Title }}
             </a>
-        </h3>
+        </li>
 
         
             {{ range .Pages }}
-            <div class="collapse" id="{{.Section | urlize }}">
+            <div class="collapse" id="{{.Section | urlize }}-section" >
                 <ul class="sidebar-ul-border">
                     <li class="nginx-toc-link l2">
                         <a href="{{ .Permalink }}">{{ .Title }}</a>

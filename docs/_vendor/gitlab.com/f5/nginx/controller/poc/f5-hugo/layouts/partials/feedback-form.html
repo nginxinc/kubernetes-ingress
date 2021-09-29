@@ -1,0 +1,34 @@
+<div class="card">
+    <form name="submit-feedback" method="POST" data-netlify="true" action="/success">
+        <div class="form-group">
+            <label for="feedbackFormName1">Your Name<sup>*</sup></label>
+            <input type="text" class="form-control" id="feedbackFormName1" name="name" required> 
+        </div>
+
+        <div class="form-group">
+            <label for="feedbackFormEmail1">Email address<sup>*</sup></label>
+            <input type="email" class="form-control" id="feedbackFormEmail1" aria-describedby="emailHelp" name="email" required>
+            <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="urlForm1">URL</label>
+            <input type="url" class="form-control" id="urlForm1" name="url"></input>
+            <small id="urlHelp" class="form-text text-muted">If you are reporting a bug, please provide the URL of the page where you found the issue.</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="FormControlTextarea1">Comments<sup>*</sup></label>
+            <textarea class="form-control" id="FormControlTextarea1" rows="4" name="comments" required></textarea>
+        </div>
+            
+        <div class="form-group">
+            <small id="requiredTip" class="form-text text-muted">All fields marked with an asterisk (*) are required.</small>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="button navbar-button btn-lg m-0">Submit</button>
+        </div>
+          
+    </form>
+</div>
