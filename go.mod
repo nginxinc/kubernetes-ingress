@@ -8,7 +8,7 @@ require (
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.6
-	github.com/nginxinc/nginx-plus-go-client v0.8.0
+	github.com/nginxinc/nginx-plus-go-client v0.9.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.9.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spiffe/go-spiffe v1.1.0
