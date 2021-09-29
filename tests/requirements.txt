@@ -5,7 +5,7 @@ kubernetes==19.15.0a1
 pytest==6.2.5
 ipaddress==1.0.23 # >= 1.0.17
 cffi==1.14.6
-pyOpenSSL==20.0.1
+pyOpenSSL==21.0.0
 certifi==2021.5.30
 urllib3==1.26.7
 pytest-html==3.1.1
