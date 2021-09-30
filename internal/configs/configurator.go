@@ -1457,10 +1457,10 @@ func (cnf *Configurator) DeleteAppProtectDosPolicy(resource *unstructured.Unstru
 		cnf.nginxManager.DeleteAppProtectResourceFile(appProtectResourceFromNsName(appProtectDosPolicyFolder, polNamespaceName))
 	}
 
-	return  cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes, true)
+	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes, true)
 }
 
-// DeleteAppProtectLogConf updates Ingresses and VirtualServers that use AP Log Configuration after that policy is deleted
+// DeleteAppProtectDosLogConf updates Ingresses and VirtualServers that use AP Log Configuration after that policy is deleted
 func (cnf *Configurator) DeleteAppProtectDosLogConf(resource *unstructured.Unstructured, logConfNamespaceName string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
 	if len(ingExes)+len(mergeableIngresses)+len(vsExes) > 0 {
 		cnf.nginxManager.DeleteAppProtectResourceFile(appProtectResourceFromNsName(appProtectDosLogConfFolder, logConfNamespaceName))
