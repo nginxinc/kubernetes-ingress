@@ -559,7 +559,7 @@ func main() {
 
 	if *appProtectDos {
 		aPPDosAgentDone = make(chan error, 1)
-		nginxManager.AppProtectDosAgentStart(aPPDosAgentDone, *nginxDebug || cfgParams.AppProtectDosDebug, cfgParams.AppProtectDosMaxDaemon, cfgParams.AppProtectDosMaxWorkers, cfgParams.AppProtectDosMemory) // Add Debug bool option via config file
+		nginxManager.AppProtectDosAgentStart(aPPDosAgentDone, *nginxDebug || cfgParams.AppProtectDosDebug, cfgParams.AppProtectDosMaxDaemon, cfgParams.AppProtectDosMaxWorkers, cfgParams.AppProtectDosMemory)
 	}
 
 	nginxDone := make(chan error, 1)
