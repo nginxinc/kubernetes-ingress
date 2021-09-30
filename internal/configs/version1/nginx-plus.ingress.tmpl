@@ -67,6 +67,7 @@ server {
 	{{- if $server.AppProtectEnable}}
 	app_protect_enable {{$server.AppProtectEnable}};
 	{{if $server.AppProtectPolicy}}app_protect_policy_file {{$server.AppProtectPolicy}};{{end}}
+	{{- end}}
 	{{- if $server.AppProtectLogEnable}}
 	app_protect_security_log_enable {{$server.AppProtectLogEnable}};
 	{{range $AppProtectLogConf := $server.AppProtectLogConfs}}app_protect_security_log {{$AppProtectLogConf}};
