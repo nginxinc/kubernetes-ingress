@@ -90,14 +90,6 @@ debian-image-napdos-plus: build ## Create Docker image for Ingress Controller (n
 debian-image-nap-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap and nap-dos)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap-napdos --build-arg FILES=nap-common
 
-.PHONY: debian-image-napdos-plus
-debian-image-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap-dos)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-napdos
-
-.PHONY: debian-image-nap-napdos-plus
-debian-image-nap-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap and nap-dos)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap-napdos --build-arg FILES=nap-common
-
 .PHONY: openshift-image
 openshift-image: build ## Create Docker image for Ingress Controller (ubi)
 	$(DOCKER_CMD) --build-arg BUILD_OS=ubi
