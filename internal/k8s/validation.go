@@ -56,12 +56,12 @@ const (
 	appProtectSecurityLogEnableAnnotation    = "appprotect.f5.com/app-protect-security-log-enable"
 	appProtectDosEnableAnnotation            = "appprotectdos.f5.com/app-protect-dos-enable"
 	appProtectDosSecurityLogEnableAnnotation = "appprotectdos.f5.com/app-protect-dos-security-log-enable"
-	appProtectDosSecurityLogAnnotation 	     = "appprotectdos.f5.com/app-protect-dos-security-log"
-	appProtectDosSecurityLogDestAnnotation 	 = "appprotectdos.f5.com/app-protect-dos-security-log-destination"
+	appProtectDosSecurityLogAnnotation       = "appprotectdos.f5.com/app-protect-dos-security-log"
+	appProtectDosSecurityLogDestAnnotation   = "appprotectdos.f5.com/app-protect-dos-security-log-destination"
 	appProtectDosAccessLogDestAnnotation     = "appprotectdos.f5.com/app-protect-dos-access-log-destination"
-	appProtectDosMonitorAnnotation     		 = "appprotectdos.f5.com/app-protect-dos-monitor"
-	appProtectDosNameAnnotation     		 = "appprotectdos.f5.com/app-protect-dos-name"
-	appProtectDosPolicyAnnotation     		 = "appprotectdos.f5.com/app-protect-dos-policy"
+	appProtectDosMonitorAnnotation           = "appprotectdos.f5.com/app-protect-dos-monitor"
+	appProtectDosNameAnnotation              = "appprotectdos.f5.com/app-protect-dos-name"
+	appProtectDosPolicyAnnotation            = "appprotectdos.f5.com/app-protect-dos-policy"
 	internalRouteAnnotation                  = "nsm.nginx.com/internal-route"
 	websocketServicesAnnotation              = "nginx.org/websocket-services"
 	sslServicesAnnotation                    = "nginx.org/ssl-services"
@@ -415,7 +415,7 @@ func validateExistAnnotation(name string) annotationValidationFunc {
 		allErrs := field.ErrorList{}
 		_, exists := context.annotations[name]
 		if !exists {
-			return append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s: must be exist", name)))
+			return append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s must exist", name)))
 		}
 		return allErrs
 	}
@@ -429,7 +429,7 @@ func validateQualifiedName(context *annotationValidationContext) field.ErrorList
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, fmt.Sprintf("annotation value: %v is not qualified name", context.value)))
 	}
-	
+
 	return allErrs
 }
 
@@ -535,7 +535,7 @@ func validateAppProtectDosMonitorAnnotation(context *annotationValidationContext
 
 func validateAppProtectDosAccessLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-	
+
 	err := appprotectdos.ValidateAppProtectDosAccessLogDest(context.value)
 
 	if err != nil {
