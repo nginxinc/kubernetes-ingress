@@ -41,7 +41,7 @@ func createTestConfigurator() (*Configurator, error) {
 
 	manager := nginx.NewFakeManager("/etc/nginx")
 
-	cnf, err := NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), templateExecutor, templateExecutorV2, false, false, nil, false, nil, false), nil
+	cnf, err := NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(false), templateExecutor, templateExecutorV2, false, false, nil, false, nil, false), nil
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
 
 	manager := nginx.NewFakeManager("/etc/nginx")
 
-	cnf, err := NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(), templateExecutor, &version2.TemplateExecutor{}, false, false, nil, false, nil, false), nil
+	cnf, err := NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(false), templateExecutor, &version2.TemplateExecutor{}, false, false, nil, false, nil, false), nil
 	if err != nil {
 		return nil, err
 	}

@@ -151,7 +151,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
 | ---| ---| ---| --- | 
 |``lb-method`` | Sets the [load balancing method](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-load-balancer/#choosing-a-load-balancing-method). To use the round-robin method, specify ``"round_robin"``. | ``"random two least_conn"`` |  | 
 |``max-fails`` | Sets the value of the [max_fails](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#max_fails) parameter of the ``server`` directive. | ``1`` |  | 
-|``upstream-zone-size`` | Sets the size of the shared memory [zone](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#zone) for upstreams. For NGINX, the special value 0 disables the shared memory zones. For NGINX Plus, shared memory zones are required and cannot be disabled. The special value 0 will be ignored. | ``256K`` |  | 
+|``upstream-zone-size`` | Sets the size of the shared memory [zone](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#zone) for upstreams. For NGINX, the special value 0 disables the shared memory zones. For NGINX Plus, shared memory zones are required and cannot be disabled. The special value 0 will be ignored. | ``256k`` for NGINX, ``512k`` for NGINX Plus  |  | 
 |``fail-timeout`` | Sets the value of the [fail_timeout](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#fail_timeout) parameter of the ``server`` directive. | ``10s`` |  | 
 |``keepalive`` | Sets the value of the [keepalive](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#keepalive) directive. Note that ``proxy_set_header Connection "";`` is added to the generated configuration when the value > 0. | ``0`` |  | 
 {{% /table %}} 

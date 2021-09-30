@@ -6,10 +6,12 @@ DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION = $(GIT_TAG)-SNAPSHOT-$(GIT_COMMIT_SHORT)
 TAG = $(VERSION:v%=%)
 TARGET ?= local
+NAP_PLUS_VERSION ?= r24
 
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg DATE=$(DATE)
 DOCKER_CMD = docker build $(DOCKER_BUILD_OPTIONS) --target $(TARGET) -f build/Dockerfile -t $(PREFIX):$(TAG) .
 PLUS_ARGS = --build-arg PLUS=-plus --build-arg FILES=plus-common --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
+NAP_ARGS = --build-arg FILES=nap-common --build-arg NGINX_PLUS_VERSION=$(NAP_PLUS_VERSION)
 
 export DOCKER_BUILDKIT = 1
 
@@ -78,7 +80,15 @@ debian-image-plus: build ## Create Docker image for Ingress Controller (nginx pl
 
 .PHONY: debian-image-nap-plus
 debian-image-nap-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg FILES=nap-common
+	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --build-arg BUILD_OS=debian-plus-nap
+
+.PHONY: debian-image-napdos-plus
+debian-image-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap-dos)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-napdos
+
+.PHONY: debian-image-nap-napdos-plus
+debian-image-nap-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap and nap-dos)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap-napdos --build-arg FILES=nap-common
 
 .PHONY: debian-image-napdos-plus
 debian-image-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap-dos)
@@ -98,7 +108,7 @@ openshift-image-plus: build ## Create Docker image for Ingress Controller (ubi w
 
 .PHONY: openshift-image-nap-plus
 openshift-image-nap-plus: build ## Create Docker image for Ingress Controller (ubi with plus and nap)
-	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg FILES=nap-common --build-arg UBI_VERSION=7
+	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg UBI_VERSION=7
 
 .PHONY: debian-image-opentracing
 debian-image-opentracing: build ## Create Docker image for Ingress Controller (with opentracing)

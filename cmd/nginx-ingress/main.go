@@ -482,7 +482,7 @@ func main() {
 		}
 	}
 
-	cfgParams := configs.NewDefaultConfigParams()
+	cfgParams := configs.NewDefaultConfigParams(*nginxPlus)
 
 	if *nginxConfigMaps != "" {
 		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)

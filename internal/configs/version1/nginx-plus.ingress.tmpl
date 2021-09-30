@@ -1,7 +1,7 @@
 # configuration for {{.Ingress.Namespace}}/{{.Ingress.Name}}
 {{range $upstream := .Upstreams}}
 upstream {{$upstream.Name}} {
-	zone {{$upstream.Name}} {{if ne $upstream.UpstreamZoneSize "0"}}{{$upstream.UpstreamZoneSize}}{{else}}256k{{end}};
+	zone {{$upstream.Name}} {{if ne $upstream.UpstreamZoneSize "0"}}{{$upstream.UpstreamZoneSize}}{{else}}512k{{end}};
 	{{if $upstream.LBMethod }}{{$upstream.LBMethod}};{{end}}
 	{{range $server := $upstream.UpstreamServers}}
 	server {{$server.Address}}:{{$server.Port}} max_fails={{$server.MaxFails}} fail_timeout={{$server.FailTimeout}} max_conns={{$server.MaxConns}}

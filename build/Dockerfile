@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=r24
+ARG NGINX_PLUS_VERSION=r25
 ARG UBI_VERSION=8
 ARG FILES=
 
@@ -23,7 +23,7 @@ RUN apk add --no-cache libcap \
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.13 as alpine-plus
+FROM alpine:3.14 as alpine-plus
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
