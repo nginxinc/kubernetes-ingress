@@ -1731,7 +1731,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Forbidden: related annotation appprotectdos.f5.com/app-protect-dos-security-log-destination: must be exist`),
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Forbidden: related annotation appprotectdos.f5.com/app-protect-dos-security-log-destination must exist`),
 			},
 			msg: "invalid app-protect-dos-security-log annotation",
 		},
