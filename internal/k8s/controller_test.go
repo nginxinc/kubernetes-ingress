@@ -683,7 +683,7 @@ func TestGetPolicies(t *testing.T) {
 
 	expectedPolicies := []*conf_v1.Policy{validPolicy}
 	expectedErrors := []error{
-		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `jwt`, `oidc`, `waf`, `bados`"),
+		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `jwt`, `oidc`, `waf`, `dos`"),
 		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
 		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
 		errors.New("referenced policy default/valid-policy-ingress-class has incorrect ingress class: test-class (controller ingress class: )"),
@@ -1978,7 +1978,7 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 	}
 }
 
-func TestAddBadosPolicyRefs(t *testing.T) {
+func TestAddDosPolicyRefs(t *testing.T) {
 	apDosPol := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -2008,13 +2008,13 @@ func TestAddBadosPolicyRefs(t *testing.T) {
 			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "bados-pol",
+						Name:      "dos-pol",
 						Namespace: "default",
 					},
 					Spec: conf_v1.PolicySpec{
-						Bados: &conf_v1.Bados{
+						Dos: &conf_v1.Dos{
 							Enable:   true,
-							Name: "bados",
+							Name: "dos",
 							ApDosPolicy: "default/apdos-pol",
 							DosSecurityLog: &conf_v1.DosSecurityLog{
 								Enable:    true,
@@ -2039,11 +2039,11 @@ func TestAddBadosPolicyRefs(t *testing.T) {
 			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "bados-pol",
+						Name:      "dos-pol",
 						Namespace: "default",
 					},
 					Spec: conf_v1.PolicySpec{
-						Bados: &conf_v1.Bados{
+						Dos: &conf_v1.Dos{
 							Enable:   true,
 							ApDosPolicy: "non-existing-apdos-pol",
 						},
@@ -2059,11 +2059,11 @@ func TestAddBadosPolicyRefs(t *testing.T) {
 			policies: []*conf_v1.Policy{
 				{
 					ObjectMeta: meta_v1.ObjectMeta{
-						Name:      "bados-pol",
+						Name:      "Dos-pol",
 						Namespace: "default",
 					},
 					Spec: conf_v1.PolicySpec{
-						Bados: &conf_v1.Bados{
+						Dos: &conf_v1.Dos{
 							Enable:   true,
 							ApDosPolicy: "apdos-pol",
 							DosSecurityLog: &conf_v1.DosSecurityLog{
@@ -2093,22 +2093,22 @@ func TestAddBadosPolicyRefs(t *testing.T) {
 		resApDosPolicy := make(map[string]*unstructured.Unstructured)
 		resDosLogConf := make(map[string]*unstructured.Unstructured)
 
-		if err := lbc.addBadosPolicyRefs(resApDosPolicy, resDosLogConf, test.policies); (err != nil) != test.wantErr {
-			t.Errorf("LoadBalancerController.addBadosPolicyRefs() error = %v, wantErr %v", err, test.wantErr)
+		if err := lbc.addDosPolicyRefs(resApDosPolicy, resDosLogConf, test.policies); (err != nil) != test.wantErr {
+			t.Errorf("LoadBalancerController.addDosPolicyRefs() error = %v, wantErr %v", err, test.wantErr)
 		}
 		if diff := cmp.Diff(test.expectedApDosPolRefs, resApDosPolicy); diff != "" {
-			t.Errorf("LoadBalancerController.addBadosPolicyRefs() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			t.Errorf("LoadBalancerController.addDosPolicyRefs() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 		if diff := cmp.Diff(test.expectedDosLogConfRefs, resDosLogConf); diff != "" {
-			t.Errorf("LoadBalancerController.addBadosPolicyRefs() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			t.Errorf("LoadBalancerController.addDosPolicyRefs() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }
 
-func TestGetBadosPoliciesForAppProtectDosPolicy(t *testing.T) {
+func TestGetDosPoliciesForAppProtectDosPolicy(t *testing.T) {
 	apDosPol := &conf_v1.Policy{
 		Spec: conf_v1.PolicySpec{
-			Bados: &conf_v1.Bados{
+			Dos: &conf_v1.Dos{
 				Enable:   true,
 				ApDosPolicy: "ns1/apDosPol",
 			},
@@ -2120,7 +2120,7 @@ func TestGetBadosPoliciesForAppProtectDosPolicy(t *testing.T) {
 			Namespace: "ns1",
 		},
 		Spec: conf_v1.PolicySpec{
-			Bados: &conf_v1.Bados{
+			Dos: &conf_v1.Dos{
 				Enable:   true,
 				ApDosPolicy: "ns2/apDosPol",
 			},
@@ -2132,7 +2132,7 @@ func TestGetBadosPoliciesForAppProtectDosPolicy(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: conf_v1.PolicySpec{
-			Bados: &conf_v1.Bados{
+			Dos: &conf_v1.Dos{
 				Enable:   true,
 				ApDosPolicy: "apDosPol",
 			},
@@ -2153,39 +2153,39 @@ func TestGetBadosPoliciesForAppProtectDosPolicy(t *testing.T) {
 			pols: policies,
 			key:  "ns1/apDosPol",
 			want: []*conf_v1.Policy{apDosPol},
-			msg:  "Bados pols that ref apDosPol which has a namepace",
+			msg:  "Dos pols that ref apDosPol which has a namepace",
 		},
 		{
 			pols: policies,
 			key:  "default/apDosPol",
 			want: []*conf_v1.Policy{apDosPolNoNs},
-			msg:  "Bados pols that ref apDosPol which has no namepace",
+			msg:  "Dos pols that ref apDosPol which has no namepace",
 		},
 		{
 			pols: policies,
 			key:  "ns2/apDosPol",
 			want: []*conf_v1.Policy{apDosPolNs2},
-			msg:  "Bados pols that ref apDosPol which is in another ns",
+			msg:  "Dos pols that ref apDosPol which is in another ns",
 		},
 		{
 			pols: policies,
 			key:  "ns1/apDosPol-with-no-valid-refs",
 			want: nil,
-			msg:  "Bados pols where there is no valid ref",
+			msg:  "Dos pols where there is no valid ref",
 		},
 	}
 	for _, test := range tests {
-		got := getBadosPoliciesForAppProtectDosPolicy(test.pols, test.key)
+		got := getDosPoliciesForAppProtectDosPolicy(test.pols, test.key)
 		if diff := cmp.Diff(test.want, got); diff != "" {
-			t.Errorf("getBadosPoliciesForAppProtectDosPolicy() returned unexpected result for the case of: %v (-want +got):\n%s", test.msg, diff)
+			t.Errorf("getDosPoliciesForAppProtectDosPolicy() returned unexpected result for the case of: %v (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }
 
-func TestGetBadosPoliciesForAppProtectLogConf(t *testing.T) {
+func TestGetDosPoliciesForAppProtectLogConf(t *testing.T) {
 	logConf := &conf_v1.Policy{
 		Spec: conf_v1.PolicySpec{
-			Bados: &conf_v1.Bados{
+			Dos: &conf_v1.Dos{
 				Enable: true,
 				DosSecurityLog: &conf_v1.DosSecurityLog{
 					Enable:    true,
@@ -2200,7 +2200,7 @@ func TestGetBadosPoliciesForAppProtectLogConf(t *testing.T) {
 			Namespace: "ns1",
 		},
 		Spec: conf_v1.PolicySpec{
-			Bados: &conf_v1.Bados{
+			Dos: &conf_v1.Dos{
 				Enable: true,
 				DosSecurityLog: &conf_v1.DosSecurityLog{
 					Enable:    true,
@@ -2215,7 +2215,7 @@ func TestGetBadosPoliciesForAppProtectLogConf(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: conf_v1.PolicySpec{
-			Bados: &conf_v1.Bados{
+			Dos: &conf_v1.Dos{
 				Enable: true,
 				DosSecurityLog: &conf_v1.DosSecurityLog{
 					Enable:    true,
@@ -2239,31 +2239,31 @@ func TestGetBadosPoliciesForAppProtectLogConf(t *testing.T) {
 			pols: policies,
 			key:  "ns1/logConf",
 			want: []*conf_v1.Policy{logConf},
-			msg:  "Bados pols that ref logConf which has a namepace",
+			msg:  "Dos pols that ref logConf which has a namepace",
 		},
 		{
 			pols: policies,
 			key:  "default/logConf",
 			want: []*conf_v1.Policy{logConfNoNs},
-			msg:  "Bados pols that ref logConf which has no namepace",
+			msg:  "Dos pols that ref logConf which has no namepace",
 		},
 		{
 			pols: policies,
 			key:  "ns2/logConf",
 			want: []*conf_v1.Policy{logConfNs2},
-			msg:  "Bados pols that ref logConf which is in another ns",
+			msg:  "Dos pols that ref logConf which is in another ns",
 		},
 		{
 			pols: policies,
 			key:  "ns1/logConf-with-no-valid-refs",
 			want: nil,
-			msg:  "Bados pols where there is no valid logConf ref",
+			msg:  "Dos pols where there is no valid logConf ref",
 		},
 	}
 	for _, test := range tests {
-		got := getBadosPoliciesForAppProtectLogConf(test.pols, test.key)
+		got := getDosPoliciesForAppProtectLogConf(test.pols, test.key)
 		if diff := cmp.Diff(test.want, got); diff != "" {
-			t.Errorf("getBadosPoliciesForAppProtectLogConf() returned unexpected result for the case of: %v (-want +got):\n%s", test.msg, diff)
+			t.Errorf("getDosPoliciesForAppProtectLogConf() returned unexpected result for the case of: %v (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }

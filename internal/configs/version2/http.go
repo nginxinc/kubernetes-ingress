@@ -72,7 +72,7 @@ type Server struct {
 	EgressMTLS                *EgressMTLS
 	OIDC                      *OIDC
 	WAF                       *WAF
-	Bados                     *Bados
+	Dos                       *Dos
 	PoliciesErrorReturn       *Return
 	VSNamespace               string
 	VSName                    string
@@ -125,8 +125,8 @@ type WAF struct {
 	ApLogConf           string
 }
 
-// Bados defines Bados configuration.
-type Bados struct {
+// Dos defines Dos configuration.
+type Dos struct {
 	Enable                 string
 	Name                   string
 	ApDosPolicy            string
@@ -174,7 +174,7 @@ type Location struct {
 	EgressMTLS               *EgressMTLS
 	OIDC                     bool
 	WAF                      *WAF
-	Bados                    *Bados
+	Dos                      *Dos
 	PoliciesErrorReturn      *Return
 	ServiceName              string
 	IsVSR                    bool

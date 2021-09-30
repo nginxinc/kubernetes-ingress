@@ -7304,72 +7304,72 @@ func TestAddWafConfig(t *testing.T) {
 	}
 }
 
-func TestAddBadosConfig(t *testing.T) {
+func TestAddDosConfig(t *testing.T) {
 	tests := []struct {
-		badosInput   *conf_v1.Bados
+		dosInput     *conf_v1.Dos
 		polKey       string
 		polNamespace string
 		apResources  map[string]string
-		badosConfig  *version2.Bados
+		dosConfig    *version2.Dos
 		expected     *validationResults
 		msg          string
 	}{
 		{
 
-			badosInput: &conf_v1.Bados{
+			dosInput: &conf_v1.Dos{
 				Enable: true,
 			},
-			polKey:       "default/bados-policy",
+			polKey:       "default/dos-policy",
 			polNamespace: "default",
 			apResources:  map[string]string{},
-			badosConfig: &version2.Bados{
+			dosConfig: &version2.Dos{
 				Enable: "on",
 			},
 			expected: &validationResults{isError: false},
-			msg:      "valid bados config, default App Protect dos config",
+			msg:      "valid dos config, default App Protect dos config",
 		},
 		{
 
-			badosInput: &conf_v1.Bados{
-				Enable:   true,
+			dosInput: &conf_v1.Dos{
+				Enable:      true,
 				ApDosPolicy: "policy",
 				DosSecurityLog: &conf_v1.DosSecurityLog{
-					Enable:    true,
+					Enable:       true,
 					ApDosLogConf: "logconf",
 					DosLogDest:   "syslog:server=127.0.0.1:514",
 				},
 			},
-			polKey:       "default/bados-policy",
+			polKey:       "default/dos-policy",
 			polNamespace: "default",
 			apResources: map[string]string{
-				"default/policy": "/etc/nginx/dos/policies/default-bados-policy",
-				"default/logconf":         "/etc/nginx/dos/logconfs/default-logconf",
+				"default/policy":  "/etc/nginx/dos/policies/default-dos-policy",
+				"default/logconf": "/etc/nginx/dos/logconfs/default-logconf",
 			},
-			badosConfig: &version2.Bados{
-				ApDosPolicy:            "/etc/nginx/dos/policies/default-bados-policy",
+			dosConfig: &version2.Dos{
+				ApDosPolicy:            "/etc/nginx/dos/policies/default-dos-policy",
 				ApDosSecurityLogEnable: true,
 				ApDosLogConf:           "/etc/nginx/dos/logconfs/default-logconf",
 			},
 			expected: &validationResults{isError: false},
-			msg:      "valid bados config",
+			msg:      "valid dos config",
 		},
 		{
 
-			badosInput: &conf_v1.Bados{
-				Enable:   true,
+			dosInput: &conf_v1.Dos{
+				Enable:      true,
 				ApDosPolicy: "default/policy",
 				DosSecurityLog: &conf_v1.DosSecurityLog{
-					Enable:    true,
+					Enable:       true,
 					ApDosLogConf: "default/logconf",
 					DosLogDest:   "syslog:server=127.0.0.1:514",
 				},
 			},
-			polKey:       "default/bados-policy",
+			polKey:       "default/dos-policy",
 			polNamespace: "",
 			apResources: map[string]string{
 				"default/policy": "/etc/nginx/dos/policies/policy",
 			},
-			badosConfig: &version2.Bados{
+			dosConfig: &version2.Dos{
 				ApDosPolicy:            "/etc/nginx/dos/policies/policy",
 				ApDosSecurityLogEnable: true,
 				ApDosLogConf:           "/etc/nginx/dos/logconfs/default-logconf",
@@ -7377,27 +7377,27 @@ func TestAddBadosConfig(t *testing.T) {
 			expected: &validationResults{
 				isError: true,
 				warnings: []string{
-					`Bados policy default/bados-policy references an invalid or non-existing log config default/logconf`,
+					`Dos policy default/dos-policy references an invalid or non-existing log config default/logconf`,
 				},
 			},
-			msg: "invalid bados config, apLogConf references non-existing log conf",
+			msg: "invalid dos config, apLogConf references non-existing log conf",
 		},
 		{
 
-			badosInput: &conf_v1.Bados{
-				Enable:   true,
+			dosInput: &conf_v1.Dos{
+				Enable:      true,
 				ApDosPolicy: "default/policy",
 				DosSecurityLog: &conf_v1.DosSecurityLog{
-					Enable:  true,
+					Enable:     true,
 					DosLogDest: "syslog:server=127.0.0.1:514",
 				},
 			},
-			polKey:       "default/bados-policy",
+			polKey:       "default/dos-policy",
 			polNamespace: "",
 			apResources: map[string]string{
 				"default/logconf": "/etc/nginx/dos/logconfs/default-logconf",
 			},
-			badosConfig: &version2.Bados{
+			dosConfig: &version2.Dos{
 				ApDosPolicy:            "/etc/nginx/dos/policies/default-policy",
 				ApDosSecurityLogEnable: true,
 				ApDosLogConf:           "/etc/nginx/dos/logconfs/default-logconf",
@@ -7405,62 +7405,62 @@ func TestAddBadosConfig(t *testing.T) {
 			expected: &validationResults{
 				isError: true,
 				warnings: []string{
-					`Bados policy default/bados-policy references an invalid or non-existing App Protect Dos policy default/policy`,
+					`Dos policy default/dos-policy references an invalid or non-existing App Protect Dos policy default/policy`,
 				},
 			},
-			msg: "invalid Bados config, apDosLogConf references non-existing ap dos conf",
+			msg: "invalid Dos config, apDosLogConf references non-existing ap dos conf",
 		},
 		{
 
-			badosInput: &conf_v1.Bados{
-				Enable:   true,
+			dosInput: &conf_v1.Dos{
+				Enable:      true,
 				ApDosPolicy: "ns1/policy",
 				DosSecurityLog: &conf_v1.DosSecurityLog{
-					Enable:    true,
+					Enable:       true,
 					ApDosLogConf: "ns2/logconf",
 					DosLogDest:   "syslog:server=127.0.0.1:514",
 				},
 			},
-			polKey:       "default/bados-policy",
+			polKey:       "default/dos-policy",
 			polNamespace: "",
 			apResources: map[string]string{
-				"ns1/policy": "/etc/nginx/dos/policies/ns1-policy",
-				"ns2/logconf":         "/etc/nginx/dos/logconfs/ns2-logconf",
+				"ns1/policy":  "/etc/nginx/dos/policies/ns1-policy",
+				"ns2/logconf": "/etc/nginx/dos/logconfs/ns2-logconf",
 			},
-			badosConfig: &version2.Bados{
+			dosConfig: &version2.Dos{
 				ApDosPolicy:            "/etc/nginx/dos/policies/ns1-policy",
 				ApDosSecurityLogEnable: true,
 				ApDosLogConf:           "/etc/nginx/dos/logconfs/ns2-logconf",
 			},
 			expected: &validationResults{},
-			msg:      "valid bados config, cross ns reference",
+			msg:      "valid dos config, cross ns reference",
 		},
 		{
 
-			badosInput: &conf_v1.Bados{
-				Enable:   false,
+			dosInput: &conf_v1.Dos{
+				Enable:      false,
 				ApDosPolicy: "policy",
 			},
-			polKey:       "default/bados-policy",
+			polKey:       "default/dos-policy",
 			polNamespace: "default",
 			apResources: map[string]string{
-				"default/policy": "/etc/nginx/dos/policies/ns1-policy",
-				"default/logconf":         "/etc/nginx/dos/logconfs/ns2-logconf",
+				"default/policy":  "/etc/nginx/dos/policies/ns1-policy",
+				"default/logconf": "/etc/nginx/dos/logconfs/ns2-logconf",
 			},
-			badosConfig: &version2.Bados{
-				Enable:   "off",
+			dosConfig: &version2.Dos{
+				Enable:      "off",
 				ApDosPolicy: "/etc/nginx/dos/policy",
 			},
 			expected: &validationResults{},
-			msg:      "valid bados config, disable bados",
+			msg:      "valid dos config, disable dos",
 		},
 	}
 
 	for _, test := range tests {
 		polCfg := newPoliciesConfig()
-		result := polCfg.addBadosConfig(test.badosInput, test.polKey, test.polNamespace, test.apResources)
+		result := polCfg.addDosConfig(test.dosInput, test.polKey, test.polNamespace, test.apResources)
 		if diff := cmp.Diff(test.expected.warnings, result.warnings); diff != "" {
-			t.Errorf("policiesCfg.addBadosConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+			t.Errorf("policiesCfg.addDosConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }

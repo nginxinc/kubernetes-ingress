@@ -1,6 +1,6 @@
-# BADOS
+# DOS
 
-In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect Dos](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and BADOS protection for that application using the VirtualServer resource.
+In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect Dos](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and DOS protection for that application using the VirtualServer resource.
 
 ## Prerequisites
 
@@ -33,21 +33,21 @@ $ kubectl apply -f webapp.yaml
     $ kubectl apply -f apdos-logconf.yaml
     ```
 
-## Step 3 - Deploy the BADOS Policy
+## Step 3 - Deploy the DOS Policy
 
-1. Update the `logDest` field from `bados.yaml` with the ClusterIP of the syslog service. For example, if the IP is `10.101.21.110`:
+1. Update the `logDest` field from `dos.yaml` with the ClusterIP of the syslog service. For example, if the IP is `10.101.21.110`:
     ```yaml
-    bados:
+    dos:
         ...
         logDest: "syslog:server=10.101.21.110:514"
     ```
 
-1. Create the BADOS policy
+1. Create the DOS policy
     ```
-    $ kubectl apply -f bados.yaml
+    $ kubectl apply -f dos.yaml
     ```
 
-Note the App Protect Dos configuration settings in the Policy resource. They enable BADOS protection by configuring App Protect Dos with the policy and log configuration created in the previous step.
+Note the App Protect Dos configuration settings in the Policy resource. They enable DOS protection by configuring App Protect Dos with the policy and log configuration created in the previous step.
 
 ## Step 4 - Configure Load Balancing
 
@@ -56,7 +56,7 @@ Note the App Protect Dos configuration settings in the Policy resource. They ena
     $ kubectl apply -f virtual-server.yaml
     ```
 
-Note that the VirtualServer references the policy `bados-policy` created in Step 3.
+Note that the VirtualServer references the policy `dos-policy` created in Step 3.
 
 ## Step 5 - Test the Application
 
