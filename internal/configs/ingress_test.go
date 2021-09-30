@@ -1471,7 +1471,7 @@ func TestGenerateNginxCfgForAppProtectDos(t *testing.T) {
 	}
 }
 
-func TestGenerateNginxCfgForMergeableIngressesForAppProtectDos(t *testing.T) {
+func TestGenerateNginxCfgForMergeableIngressesForAppProtectDos2(t *testing.T) {
 	mergeableIngresses := createMergeableCafeIngress()
 	mergeableIngresses.Master.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-enable"] = "True"
 	mergeableIngresses.Master.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-security-log-enable"] = "True"
