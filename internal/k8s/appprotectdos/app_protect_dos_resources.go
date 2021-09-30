@@ -24,7 +24,7 @@ var appProtectDosLogConfRequiredFields = [][]string{
 
 const MaxNameLength = 64
 
-// ValidateAppDosProtectLogConf validates LogConfiguration resource
+// validateAppProtectDosLogConf validates LogConfiguration resource
 func validateAppProtectDosLogConf(logConf *unstructured.Unstructured) error {
 	lcName := logConf.GetName()
 	err := appprotect_common.ValidateRequiredFields(logConf, appProtectDosLogConfRequiredFields)
