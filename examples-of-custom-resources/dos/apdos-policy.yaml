@@ -4,7 +4,7 @@ metadata:
   name: dospolicy
 spec:
   mitigation_mode: "standard"
-  signatures: "on"
-  bad_actors: "on"
-  automation_tools_detection: "on"
+  signatures: "off"
+  bad_actors: "off"
+  automation_tools_detection: "off"
   tls_fingerprint: "on"

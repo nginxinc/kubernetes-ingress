@@ -353,7 +353,7 @@ type PolicySpec struct {
 	EgressMTLS    *EgressMTLS    `json:"egressMTLS"`
 	OIDC          *OIDC          `json:"oidc"`
 	WAF           *WAF           `json:"waf"`
-	Bados         *Bados         `json:"bados"`
+	Dos           *Dos           `json:"dos"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -443,20 +443,20 @@ type SecurityLog struct {
 	LogDest   string `json:"logDest"`
 }
 
-// Bados defines an Bados policy.
+// Dos defines an Dos policy.
 // policy status: preview
-type Bados struct {
+type Dos struct {
 	Enable           bool            `json:"enable"`
 	Name             string          `json:"name"`
 	ApDosPolicy      string          `json:"apDosPolicy"`
 	DosSecurityLog   *DosSecurityLog `json:"dosSecurityLog"`
 	ApDosMonitor     string          `json:"apDosMonitor"`
-    DosAccessLogDest string          `json:"dosAccessLogDest"`
+	DosAccessLogDest string          `json:"dosAccessLogDest"`
 }
 
-// DosSecurityLog defines the security log of a Bados policy.
+// DosSecurityLog defines the security log of a Dos policy.
 type DosSecurityLog struct {
-	Enable           bool   `json:"enable"`
-	ApDosLogConf     string `json:"apDosLogConf"`
-	DosLogDest       string `json:"dosLogDest"`
+	Enable       bool   `json:"enable"`
+	ApDosLogConf string `json:"apDosLogConf"`
+	DosLogDest   string `json:"dosLogDest"`
 }

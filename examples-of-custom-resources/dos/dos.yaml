@@ -1,9 +1,9 @@
 apiVersion: k8s.nginx.org/v1
 kind: Policy
 metadata:
-  name: bados-policy
+  name: dos-policy
 spec:
-  bados:
+  dos:
     enable: true
     name: "webapp.example.com"
     apDosPolicy: "dospolicy"

@@ -1204,26 +1204,26 @@ func TestValidateWAFInvalid(t *testing.T) {
 	}
 }
 
-func TestValidateBados(t *testing.T) {
+func TestValidateDos(t *testing.T) {
 	tests := []struct {
-		bados *v1.Bados
+		dos *v1.Dos
 		msg string
 	}{
 		{
-			bados: &v1.Bados{
+			dos: &v1.Dos{
 				Enable: true,
 			},
 			msg: "waf enabled",
 		},
 		{
-			bados: &v1.Bados{
+			dos: &v1.Dos{
 				Enable:   true,
-				ApDosPolicy: "ns1/bados-pol",
+				ApDosPolicy: "ns1/dos-pol",
 			},
 			msg: "cross ns reference",
 		},
 		{
-			bados: &v1.Bados{
+			dos: &v1.Dos{
 				Enable: true,
 				DosSecurityLog: &v1.DosSecurityLog{
 					Enable:  true,
@@ -1235,27 +1235,27 @@ func TestValidateBados(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateBados(test.bados, field.NewPath("bados"))
+		allErrs := validateDos(test.dos, field.NewPath("dos"))
 		if len(allErrs) != 0 {
-			t.Errorf("validateBados() returned errors %v for valid input for the case of %v", allErrs, test.msg)
+			t.Errorf("validateDos() returned errors %v for valid input for the case of %v", allErrs, test.msg)
 		}
 	}
 }
 
-func TestValidateBadosInvalid(t *testing.T) {
+func TestValidateDosInvalid(t *testing.T) {
 	tests := []struct {
-		bados *v1.Bados
+		dos *v1.Dos
 		msg string
 	}{
 		{
-			bados: &v1.Bados{
+			dos: &v1.Dos{
 				Enable:   true,
 				ApDosPolicy: "ns1/ap-pol/ns2",
 			},
 			msg: "invalid apDosPolicy format",
 		},
 		{
-			bados: &v1.Bados{
+			dos: &v1.Dos{
 				Enable: true,
 				DosSecurityLog: &v1.DosSecurityLog{
 					Enable:  true,
@@ -1265,7 +1265,7 @@ func TestValidateBadosInvalid(t *testing.T) {
 			msg: "invalid doslogdest",
 		},
 		{
-			bados: &v1.Bados{
+			dos: &v1.Dos{
 				Enable: true,
 				DosSecurityLog: &v1.DosSecurityLog{
 					Enable:    true,
@@ -1277,9 +1277,9 @@ func TestValidateBadosInvalid(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateBados(test.bados, field.NewPath("bados"))
+		allErrs := validateDos(test.dos, field.NewPath("dos"))
 		if len(allErrs) == 0 {
-			t.Errorf("validateBados() returned no errors for invalid input for the case of %v", test.msg)
+			t.Errorf("validateDos() returned no errors for invalid input for the case of %v", test.msg)
 		}
 	}
 }

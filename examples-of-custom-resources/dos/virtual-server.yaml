@@ -11,6 +11,6 @@ spec:
   routes:
     - path: /
       policies:
-        - name: bados-policy
+        - name: dos-policy
       action:
         pass: webapp

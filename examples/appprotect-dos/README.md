@@ -1,6 +1,6 @@
 # NGINX App Protect Dos Support
 
-In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect Dos](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and BADOS protection for that application using the Ingress resource.
+In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect Dos](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and DOS protection for that application using the Ingress resource.
 
 ## Running the Example
 
@@ -49,7 +49,7 @@ $ kubectl create -f webapp.yaml
     ```
     $ kubectl create -f webapp-ingress.yaml
     ```
-    Note the App Protect Dos annotations in the Ingress resource. They enable BADOS protection by configuring App Protect Dos with the policy and log configuration created in the previous step.
+    Note the App Protect Dos annotations in the Ingress resource. They enable DOS protection by configuring App Protect Dos with the policy and log configuration created in the previous step.
 
 ## 4. Test the Application
 
