@@ -1106,7 +1106,7 @@ func TestUpdateApResources(t *testing.T) {
 
 	tests := []struct {
 		ingEx    *IngressEx
-		expected AppProtectResources
+		expected *appProtectResources
 		msg      string
 	}{
 		{
@@ -1115,7 +1115,7 @@ func TestUpdateApResources(t *testing.T) {
 					ObjectMeta: meta_v1.ObjectMeta{},
 				},
 			},
-			expected: AppProtectResources{},
+			expected: &appProtectResources{},
 			msg:      "no app protect resources",
 		},
 		{
@@ -1125,7 +1125,7 @@ func TestUpdateApResources(t *testing.T) {
 				},
 				AppProtectPolicy: appProtectPolicy,
 			},
-			expected: AppProtectResources{
+			expected: &appProtectResources{
 				AppProtectPolicy: "/etc/nginx/waf/nac-policies/test-ns_test-name",
 			},
 			msg: "app protect policy",
@@ -1142,7 +1142,7 @@ func TestUpdateApResources(t *testing.T) {
 					},
 				},
 			},
-			expected: AppProtectResources{
+			expected: &appProtectResources{
 				AppProtectLogconfs: []string{"/etc/nginx/waf/nac-logconfs/test-ns_test-name test-dst"},
 			},
 			msg: "app protect log conf",
@@ -1160,7 +1160,7 @@ func TestUpdateApResources(t *testing.T) {
 					},
 				},
 			},
-			expected: AppProtectResources{
+			expected: &appProtectResources{
 				AppProtectPolicy:   "/etc/nginx/waf/nac-policies/test-ns_test-name",
 				AppProtectLogconfs: []string{"/etc/nginx/waf/nac-logconfs/test-ns_test-name test-dst"},
 			},
@@ -1325,7 +1325,7 @@ func TestUpdateApDosResources(t *testing.T) {
 
 	tests := []struct {
 		ingEx    *IngressEx
-		expected AppProtectResources
+		expected *appProtectDosResources
 		msg      string
 	}{
 		{
@@ -1334,7 +1334,7 @@ func TestUpdateApDosResources(t *testing.T) {
 					ObjectMeta: meta_v1.ObjectMeta{},
 				},
 			},
-			expected: AppProtectResources{},
+			expected: &appProtectDosResources{},
 			msg:      "no app protect dos resources",
 		},
 		{
@@ -1344,7 +1344,7 @@ func TestUpdateApDosResources(t *testing.T) {
 				},
 				AppProtectDosPolicy: appProtectDosPolicy,
 			},
-			expected: AppProtectResources{
+			expected: &appProtectDosResources{
 				AppProtectDosPolicy: "/etc/nginx/dos/policies/test-ns_test-name.json",
 			},
 			msg: "app protect dos policy",
@@ -1357,7 +1357,7 @@ func TestUpdateApDosResources(t *testing.T) {
 				AppProtectDosLogConf: appProtectDosLogConf,
 				AppProtectDosLogDst:  appProtectDosLogDst,
 			},
-			expected: AppProtectResources{
+			expected: &appProtectDosResources{
 				AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/test-ns_test-name.json test-dst",
 			},
 			msg: "app protect dos log conf",
@@ -1371,7 +1371,7 @@ func TestUpdateApDosResources(t *testing.T) {
 				AppProtectDosLogConf: appProtectDosLogConf,
 				AppProtectDosLogDst:  appProtectDosLogDst,
 			},
-			expected: AppProtectResources{
+			expected: &appProtectDosResources{
 				AppProtectDosPolicy:   "/etc/nginx/dos/policies/test-ns_test-name.json",
 				AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/test-ns_test-name.json test-dst",
 			},
@@ -1385,7 +1385,7 @@ func TestUpdateApDosResources(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		result := conf.updateApResources(test.ingEx)
+		result := conf.updateApDosResources(test.ingEx)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("updateApResources() returned \n%v but expected\n%v for the case of %s", result, test.expected, test.msg)
 		}
