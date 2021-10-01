@@ -79,6 +79,32 @@ func (vsx *VirtualServerEx) String() string {
 	return fmt.Sprintf("%s/%s", vsx.VirtualServer.Namespace, vsx.VirtualServer.Name)
 }
 
+// appProtectResourcesForVS holds file names of APPolicy and APLogConf resources used in a VirtualServer.
+type appProtectResourcesForVS struct {
+	Policies map[string]string
+	LogConfs map[string]string
+}
+
+func newAppProtectVSResourcesForVS() *appProtectResourcesForVS {
+	return &appProtectResourcesForVS{
+		Policies: make(map[string]string),
+		LogConfs: make(map[string]string),
+	}
+}
+
+// appProtectResourcesForVS holds file names of APDosPolicy and APDosLogConf resources used in a VirtualServer.
+type appProtectDosResourcesForVS struct {
+	Policies map[string]string
+	LogConfs map[string]string
+}
+
+func newAppProtectDosVSResourcesForVS() *appProtectDosResourcesForVS {
+	return &appProtectDosResourcesForVS{
+		Policies: make(map[string]string),
+		LogConfs: make(map[string]string),
+	}
+}
+
 // GenerateEndpointsKey generates a key for the Endpoints map in VirtualServerEx.
 func GenerateEndpointsKey(
 	serviceNamespace string,
@@ -263,7 +289,11 @@ func (vsc *virtualServerConfigurator) generateEndpointsForUpstream(
 }
 
 // GenerateVirtualServerConfig generates a full configuration for a VirtualServer
-func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualServerEx, apResources map[string]string) (version2.VirtualServerConfig, Warnings) {
+func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
+	vsEx *VirtualServerEx,
+	apResources *appProtectResourcesForVS,
+	dosResources *appProtectDosResourcesForVS,
+) (version2.VirtualServerConfig, Warnings) {
 	vsc.clearWarnings()
 
 	sslConfig := vsc.generateSSLConfig(vsEx.VirtualServer, vsEx.VirtualServer.Spec.TLS, vsEx.VirtualServer.Namespace, vsEx.SecretRefs, vsc.cfgParams)
@@ -273,6 +303,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 		tls:         sslConfig != nil,
 		secretRefs:  vsEx.SecretRefs,
 		apResources: apResources,
+		dosResources: dosResources,
 	}
 
 	ownerDetails := policyOwnerDetails{
@@ -639,7 +670,8 @@ type policyOwnerDetails struct {
 type policyOptions struct {
 	tls         bool
 	secretRefs  map[string]*secrets.SecretReference
-	apResources map[string]string
+	apResources *appProtectResourcesForVS
+	dosResources *appProtectDosResourcesForVS
 }
 
 type validationResults struct {
@@ -941,7 +973,7 @@ func (p *policiesCfg) addWAFConfig(
 	waf *conf_v1.WAF,
 	polKey string,
 	polNamespace string,
-	apResources map[string]string,
+	apResources *appProtectResourcesForVS,
 ) *validationResults {
 	res := newValidationResults()
 	if p.WAF != nil {
@@ -962,7 +994,7 @@ func (p *policiesCfg) addWAFConfig(
 			apPolKey = fmt.Sprintf("%v/%v", polNamespace, apPolKey)
 		}
 
-		if apPolPath, exists := apResources[apPolKey]; exists {
+		if apPolPath, exists := apResources.Policies[apPolKey]; exists {
 			p.WAF.ApPolicy = apPolPath
 		} else {
 			res.addWarningf("WAF policy %s references an invalid or non-existing App Protect policy %s", polKey, apPolKey)
@@ -980,7 +1012,7 @@ func (p *policiesCfg) addWAFConfig(
 			logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
 		}
 
-		if logConfPath, ok := apResources[logConfKey]; ok {
+		if logConfPath, ok := apResources.LogConfs[logConfKey]; ok {
 			logDest := generateString(waf.SecurityLog.LogDest, "syslog:server=localhost:514")
 			p.WAF.ApLogConf = fmt.Sprintf("%s %s", logConfPath, logDest)
 		} else {
@@ -996,7 +1028,7 @@ func (p *policiesCfg) addBadosConfig(
 	Bados *conf_v1.Bados,
 	polKey string,
 	polNamespace string,
-	apResources map[string]string,
+	dosResources *appProtectDosResourcesForVS,
 ) *validationResults {
 	res := newValidationResults()
 	if p.Bados != nil {
@@ -1019,7 +1051,7 @@ func (p *policiesCfg) addBadosConfig(
 			apPolKey = fmt.Sprintf("%v/%v", polNamespace, apPolKey)
 		}
 
-		if apPolPath, exists := apResources[apPolKey]; exists {
+		if apPolPath, exists := dosResources.Policies[apPolKey]; exists {
 			p.Bados.ApDosPolicy = apPolPath
 		} else {
 			res.addWarningf("Bados policy %s references an invalid or non-existing App Protect Dos policy %s", polKey, apPolKey)
@@ -1037,7 +1069,7 @@ func (p *policiesCfg) addBadosConfig(
 			logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
 		}
 
-		if logConfPath, ok := apResources[logConfKey]; ok {
+		if logConfPath, ok := dosResources.LogConfs[logConfKey]; ok {
 			logDest := generateString(Bados.DosSecurityLog.DosLogDest, "stderr")
 			p.Bados.ApDosLogConf = fmt.Sprintf("%s %s", logConfPath, logDest)
 		} else {
@@ -1101,7 +1133,7 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 			case pol.Spec.WAF != nil:
 				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
 			case pol.Spec.Bados != nil:
-				res = config.addBadosConfig(pol.Spec.Bados, key, polNamespace, policyOpts.apResources)
+				res = config.addBadosConfig(pol.Spec.Bados, key, polNamespace, policyOpts.dosResources)
 			default:
 				res = newValidationResults()
 			}
