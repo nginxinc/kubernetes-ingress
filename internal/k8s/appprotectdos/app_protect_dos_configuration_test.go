@@ -268,7 +268,7 @@ func TestAddOrUpdateDosLogConf(t *testing.T) {
 
 func TestDeletePolicy(t *testing.T) {
 	appProtectConfiguration := newConfigurationImpl()
-	appProtectConfiguration.DosPolicies["testing/test"] = &DosPolicyEx{}
+	appProtectConfiguration.dosPolicies["testing/test"] = &DosPolicyEx{}
 	tests := []struct {
 		key              string
 		expectedChanges  []Change
@@ -306,7 +306,7 @@ func TestDeletePolicy(t *testing.T) {
 
 func TestDeleteDosLogConf(t *testing.T) {
 	appProtectConfiguration := newConfigurationImpl()
-	appProtectConfiguration.DosLogConfs["testing/test"] = &DosLogConfEx{}
+	appProtectConfiguration.dosLogConfs["testing/test"] = &DosLogConfEx{}
 	tests := []struct {
 		key              string
 		expectedChanges  []Change
@@ -399,10 +399,10 @@ func TestGetAppProtectDosResource(t *testing.T) {
 		},
 	}
 	appProtectConfiguration := newConfigurationImpl()
-	appProtectConfiguration.DosPolicies["testing/test1"] = &DosPolicyEx{IsValid: true, Obj: &unstructured.Unstructured{}}
-	appProtectConfiguration.DosPolicies["testing/test2"] = &DosPolicyEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "Validation Failed"}
-	appProtectConfiguration.DosLogConfs["testing/test1"] = &DosLogConfEx{IsValid: true, Obj: &unstructured.Unstructured{}}
-	appProtectConfiguration.DosLogConfs["testing/test2"] = &DosLogConfEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "Validation Failed"}
+	appProtectConfiguration.dosPolicies["testing/test1"] = &DosPolicyEx{IsValid: true, Obj: &unstructured.Unstructured{}}
+	appProtectConfiguration.dosPolicies["testing/test2"] = &DosPolicyEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "Validation Failed"}
+	appProtectConfiguration.dosLogConfs["testing/test1"] = &DosLogConfEx{IsValid: true, Obj: &unstructured.Unstructured{}}
+	appProtectConfiguration.dosLogConfs["testing/test2"] = &DosLogConfEx{IsValid: false, Obj: &unstructured.Unstructured{}, ErrorMsg: "Validation Failed"}
 
 	for _, test := range tests {
 		_, err := appProtectConfiguration.GetAppResource(test.kind, test.key)
