@@ -424,9 +424,9 @@ dos:
 |``enable`` | Enables NGINX App Protect Dos. | ``bool`` | Yes |
 |``name`` | Name of protected object. | ``string`` | No |
 |``apDosMonitor`` | URL to monitor server's stress. Default value: None, URL will be extracted from the first request which arrives and taken from "Host" header or from destination ip+port. | ``string`` | No |
-|``apDosPolicy`` | The `App Protect Dos policy </nginx-ingress-controller/app-protect-dos/configuration/#app-protect-policies/>`_ of the dos. Accepts an optional namespace. | ``string`` | No |
+|``apDosPolicy`` | The [App Protect Dos policy](nginx-ingress-controller/app-protect-dos/configuration/#app-protect-dos-policies/) of the dos. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.enable`` | Enables security log. | ``bool`` | No |
-|``dosSecurityLog.apDosLogConf`` | The `App Protect Dos log conf </nginx-ingress-controller/app-protect/configuration/#app-protect-logs>`_ resource. Accepts an optional namespace. | ``string`` | No |
+|``dosSecurityLog.apDosLogConf`` | The [App Protect Dos log conf](nginx-ingress-controller/app-protect-dos/configuration/#app-protect-dos-logs) resource. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address | localhost>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
 {{% /table %}}
 
