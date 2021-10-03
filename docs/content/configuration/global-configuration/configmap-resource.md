@@ -184,7 +184,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
 |``app-protect-failure-mode-action`` | Sets the ``app_protect_failure_mode_action`` [global directive](/nginx-app-protect/configuration/#global-directives). | ``pass`` |  | 
 |``app-protect-cpu-thresholds`` | Sets the ``app_protect_cpu_thresholds`` [global directive](/nginx-app-protect/configuration/#global-directives). | ``high=100 low=100`` |  | 
 |``app-protect-physical-memory-util-thresholds`` | Sets the ``app_protect_physical_memory_util_thresholds`` [global directive](/nginx-app-protect/configuration/#global-directives). | ``high=100 low=100`` |  | 
-|``app-protect-dos-log-format`` | Set new directive ``log_format`` with the name "log_dos" with customize format | N/A |  | 
+|``app-protect-dos-log-format`` | Set new directive ``log_format`` with the name "log_dos" with customize format | , vs_name_al=$app_protect_dos_vs_name, ip=$remote_addr, tls_fp=$app_protect_dos_tls_fp, outcome=$app_protect_dos_outcome, reason=$app_protect_dos_outcome_reason, policy_name=$app_protect_dos_policy_name, dos_version=$app_protect_dos_version, ip_tls=$remote_addr:$app_protect_dos_tls_fp,  |  | 
 |``app-protect-dos-debug`` | Set debug log level for App Protect Dos | False |  |
 |``app-protect-dos-install-max-daemons`` | Max number of ADMD instances | 1 |  |
 |``app-protect-dos-install-memory`` | RAM memory size to consume in MB | 50% of free RAM in the container or 80MB, the smaller |  |

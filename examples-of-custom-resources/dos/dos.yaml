@@ -8,7 +8,7 @@ spec:
     name: "webapp.example.com"
     apDosPolicy: "dospolicy"
     apDosMonitor: "webapp.example.com"
-#   dosAccessLogDest: "127.0.0.1.166:5561"
+#   dosAccessLogDest: "127.0.0.1:5561"
     dosSecurityLog:
       enable: true
       apDosLogConf: "doslogconf"
