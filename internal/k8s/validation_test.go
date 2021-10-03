@@ -1690,7 +1690,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors: nil,
-			msg: "valid app-protect-dos-security-log-destination annotation",
+			msg: "valid app-protect-dos-security-log-destination annotation with stderr",
 		},
 		{
 			annotations: map[string]string{
