@@ -75,6 +75,20 @@ func TestValidatePolicy(t *testing.T) {
 			enableAppProtectDos:   false,
 			msg:                   "use WAF(plus only) policy",
 		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					Dos: &v1.Dos{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: true,
+			enableAppProtect:      false,
+			enableAppProtectDos:   true,
+			msg:                   "use Dos(plus only) policy",
+		},
 	}
 	for _, test := range tests {
 		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect, test.enableAppProtectDos)
@@ -271,6 +285,48 @@ func TestValidatePolicyFails(t *testing.T) {
 			enableAppProtect:      false,
 			enableAppProtectDos:   false,
 			msg:                   "WAF policy with AP disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					Dos: &v1.Dos{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: true,
+			enableAppProtect:      false,
+			enableAppProtectDos:   false,
+			msg:                   "Dos policy with AP Dos disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					Dos: &v1.Dos{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: true,
+			enableAppProtect:      false,
+			enableAppProtectDos:   true,
+			msg:                   "Dos policy with nginx plus disabled",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					Dos: &v1.Dos{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: false,
+			enableAppProtect:      false,
+			enableAppProtectDos:   true,
+			msg:                   "Dos policy with enable preview policies disabled",
 		},
 	}
 	for _, test := range tests {
@@ -1213,7 +1269,7 @@ func TestValidateDos(t *testing.T) {
 			dos: &v1.Dos{
 				Enable: true,
 			},
-			msg: "waf enabled",
+			msg: "dos enabled",
 		},
 		{
 			dos: &v1.Dos{
@@ -1231,6 +1287,27 @@ func TestValidateDos(t *testing.T) {
 				},
 			},
 			msg: "custom logdest",
+		},
+		{
+			dos: &v1.Dos{
+				Enable: true,
+				DosAccessLogDest: "8.7.7.7:517",
+			},
+			msg: "access log dest",
+		},
+		{
+			dos: &v1.Dos{
+				Enable: true,
+				ApDosMonitor: "example.com",
+			},
+			msg: "valid url for monitor",
+		},
+		{
+			dos: &v1.Dos{
+				Enable: true,
+				Name: "example.com",
+			},
+			msg: "valid name",
 		},
 	}
 
@@ -1273,6 +1350,34 @@ func TestValidateDosInvalid(t *testing.T) {
 				},
 			},
 			msg: "invalid doslogConf format",
+		},
+		{
+			dos: &v1.Dos{
+				Enable: true,
+				DosAccessLogDest: "fdd8.7.7.7:517",
+			},
+			msg: "invalid access log dest",
+		},
+		{
+			dos: &v1.Dos{
+				Enable: true,
+				DosAccessLogDest: "8.7.7.7:999999",
+			},
+			msg: "invalid access log dest",
+		},
+		{
+			dos: &v1.Dos{
+				Enable: true,
+				ApDosMonitor: "example.com/%",
+			},
+			msg: "invalid access log dest",
+		},
+		{
+			dos: &v1.Dos{
+				Enable: true,
+				Name: "long_name123456789012345678901234567890123456789012345678901234567890",
+			},
+			msg: "invalid name - long",
 		},
 	}
 
