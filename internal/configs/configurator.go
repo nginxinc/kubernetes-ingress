@@ -1371,8 +1371,22 @@ func appProtectResourceFromNsName(folderName string, polNamespaceName string) st
 	return folderName + fName
 }
 
-// AddOrUpdateAppProtectResource updates Ingresses and VirtualServers that use App Protect Resources
-func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Unstructured, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx, reload bool) (Warnings, error) {
+// AddOrUpdateAppProtectResource updates Ingresses and VirtualServers that use App Protect or App Protect DoS resources.
+func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Unstructured, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
+	warnings, err := cnf.addOrUpdateIngressesAndVirtualServers(ingExes, mergeableIngresses, vsExes)
+	if err != nil {
+		return warnings, fmt.Errorf("Error when updating %v %v/%v: %w", resource.GetKind(), resource.GetNamespace(), resource.GetName(), err)
+	}
+
+	err = cnf.reload(nginx.ReloadForOtherUpdate)
+	if err != nil {
+		return warnings, fmt.Errorf("Error when reloading NGINX when updating %v %v/%v: %w", resource.GetKind(), resource.GetNamespace(), resource.GetName(), err)
+	}
+
+	return warnings, nil
+}
+
+func (cnf *Configurator) addOrUpdateIngressesAndVirtualServers(ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx) (Warnings, error) {
 	allWarnings := newWarnings()
 
 	for _, ingEx := range ingExes {
@@ -1399,12 +1413,6 @@ func (cnf *Configurator) AddOrUpdateAppProtectResource(resource *unstructured.Un
 		allWarnings.Add(warnings)
 	}
 
-	if reload {
-		if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-			return allWarnings, fmt.Errorf("Error when reloading NGINX when updating %v: %w", resource.GetKind(), err)
-		}
-	}
-
 	return allWarnings, nil
 }
 
@@ -1414,7 +1422,7 @@ func (cnf *Configurator) DeleteAppProtectPolicy(resource *unstructured.Unstructu
 		cnf.nginxManager.DeleteAppProtectResourceFile(appProtectResourceFromNsName(appProtectPolicyFolder, polNamespaceName))
 	}
 
-	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes, true)
+	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes)
 }
 
 // DeleteAppProtectLogConf updates Ingresses and VirtualServers that use AP Log Configuration after that policy is deleted
@@ -1423,7 +1431,7 @@ func (cnf *Configurator) DeleteAppProtectLogConf(resource *unstructured.Unstruct
 		cnf.nginxManager.DeleteAppProtectResourceFile(appProtectResourceFromNsName(appProtectLogConfFolder, logConfNamespaceName))
 	}
 
-	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes, true)
+	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes)
 }
 
 // RefreshAppProtectUserSigs writes all valid UDS files to fs and reloads NGINX
@@ -1431,7 +1439,7 @@ func (cnf *Configurator) RefreshAppProtectUserSigs(
 	userSigs []*unstructured.Unstructured, delPols []string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx,
 ) (Warnings, error) {
 
-	allWarnings, err := cnf.AddOrUpdateAppProtectResource(userSigs[0], ingExes, mergeableIngresses, vsExes, false)
+	allWarnings, err := cnf.addOrUpdateIngressesAndVirtualServers(ingExes, mergeableIngresses, vsExes)
 	if err != nil {
 		return allWarnings, err
 	}
@@ -1466,7 +1474,7 @@ func (cnf *Configurator) DeleteAppProtectDosPolicy(resource *unstructured.Unstru
 		cnf.nginxManager.DeleteAppProtectResourceFile(appProtectResourceFromNsName(appProtectDosPolicyFolder, polNamespaceName))
 	}
 
-	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes, true)
+	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes)
 }
 
 // DeleteAppProtectLogConf updates Ingresses and VirtualServers that use AP Log Configuration after that policy is deleted
@@ -1475,7 +1483,7 @@ func (cnf *Configurator) DeleteAppProtectDosLogConf(resource *unstructured.Unstr
 		cnf.nginxManager.DeleteAppProtectResourceFile(appProtectResourceFromNsName(appProtectDosLogConfFolder, logConfNamespaceName))
 	}
 
-	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes, true)
+	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes)
 }
 
 // AddInternalRouteConfig adds internal route server to NGINX Configuration and reloads NGINX
