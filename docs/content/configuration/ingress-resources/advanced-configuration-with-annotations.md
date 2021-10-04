@@ -222,3 +222,7 @@ The table below summarizes the available annotations.
 |``appprotectdos.f5.com/app-protect-dos-name`` | N/A | This is the VS (protected object) name, it should be unique and is used to identify the VS in the logs. Max of 63 characters. | N/A | [Example for App Protect Dos](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/appprotect-dos). | 
 |``appprotectdos.f5.com/app-protect-dos-access-log-destination`` | N/A | Create access log with the log_dos format which must be added. (log_dos is described by config map option) | N/A | [Example for App Protect Dos](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/appprotect-dos). | 
 {{% /table %}} 
+
+
+**Note**: If `appprotectdos.f5.com/app-protect-dos-monitor` annotation is used there will be log for the monitor requests in the log file, example for such log: 
+`$ 127.0.0.1 - - [27/Aug/2021:01:24:51 +0000] "GET / HTTP/1.1" 301 170 "-" "-" "-"`

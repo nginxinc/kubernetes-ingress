@@ -430,6 +430,9 @@ dos:
 |``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address | localhost>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
 {{% /table %}}
 
+> Note: If `apDosMonitor` field is used there will be log for the monitor requests in the log file, example for such log: 
+`$ 127.0.0.1 - - [27/Aug/2021:01:24:51 +0000] "GET / HTTP/1.1" 301 170 "-" "-" "-"`
+
 #### DOS Merging Behavior
 
 A VirtualServer/VirtualServerRoute can reference multiple DOS policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
