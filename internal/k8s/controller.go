@@ -1201,7 +1201,7 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 
 				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, deleteErr := lbc.configurator.DeleteAppProtectPolicy(impl.Obj, namespace+"/"+name, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
+				warnings, deleteErr := lbc.configurator.DeleteAppProtectPolicy(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 
 				lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 
@@ -1216,7 +1216,7 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 
 				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(impl.Obj, namespace+"/"+name, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
+				warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 
 				lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 			}
@@ -1329,7 +1329,7 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 
 				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, deleteErr := lbc.configurator.DeleteAppProtectDosPolicy(impl.Obj, namespace+"/"+name, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
+				warnings, deleteErr := lbc.configurator.DeleteAppProtectDosPolicy(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 
 				lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 			case *appprotectdos.DosLogConfEx:
@@ -1343,7 +1343,7 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 
 				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(impl.Obj, namespace+"/"+name, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
+				warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 
 				lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 			}
