@@ -23,8 +23,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
 	"k8s.io/client-go/informers"
 
@@ -1170,7 +1170,7 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 
 				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes, true)
+				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 				lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 				lbc.recorder.Eventf(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectPolicy %v was added or updated", namespace+"/"+name)
 			case *appprotect.LogConfEx:
@@ -1184,7 +1184,7 @@ func (lbc *LoadBalancerController) processAppProtectChanges(changes []appprotect
 
 				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes, true)
+				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 				lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 				lbc.recorder.Eventf(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectLogConfig %v was added or updated", namespace+"/"+name)
 			}
@@ -1296,7 +1296,7 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 				resourceExes := lbc.createExtendedResources(resources)
 
 				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses,
-					resourceExes.VirtualServerExes, true)
+					resourceExes.VirtualServerExes)
 				lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 				lbc.recorder.Eventf(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectDosPolicy %v was added or updated", namespace+"/"+name)
 			case *appprotectdos.DosLogConfEx:
@@ -1311,7 +1311,7 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 				resourceExes := lbc.createExtendedResources(resources)
 
 				warnings, updateErr := lbc.configurator.AddOrUpdateAppProtectResource(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses,
-					resourceExes.VirtualServerExes, true)
+					resourceExes.VirtualServerExes)
 				lbc.updateResourcesStatusAndEvents(resources, warnings, updateErr)
 				lbc.recorder.Eventf(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", "AppProtectDosLogConfig %v was added or updated", namespace+"/"+name)
 
