@@ -55,14 +55,14 @@ var minionBlacklist = map[string]bool{
 	"appprotect.f5.com/app_protect_policy":                          true,
 	"appprotect.f5.com/app_protect_security_log_enable":             true,
 	"appprotect.f5.com/app_protect_security_log":                    true,
-	"appprotectdos.f5.com/app_protect_dos_enable":                   true,
-	"appprotectdos.f5.com/app_protect_dos_policy":                   true,
-	"appprotectdos.f5.com/app_protect_dos_security_log_enable":      true,
-	"appprotectdos.f5.com/app_protect_dos_security_log":             true,
-	"appprotectdos.f5.com/app_protect_dos_security_log_destination": true,
-	"appprotectdos.f5.com/app_protect_dos_monitor":                  true,
-	"appprotectdos.f5.com/app_protect_dos_name":                     true,
-	"appprotectdos.f5.com/app_protect_dos_access_log_destination":   true,
+	"appprotectdos.f5.com/app-protect-dos-enable":                   true,
+	"appprotectdos.f5.com/app-protect-dos-policy":                   true,
+	"appprotectdos.f5.com/app-protect-dos-security-log-enable":      true,
+	"appprotectdos.f5.com/app-protect-dos-security-log":             true,
+	"appprotectdos.f5.com/app-protect-dos-security-log-destination": true,
+	"appprotectdos.f5.com/app-protect-dos-monitor":                  true,
+	"appprotectdos.f5.com/app-protect-dos-name":                     true,
+	"appprotectdos.f5.com/app-protect-dos-access-log-destination":   true,
 }
 
 var minionInheritanceList = map[string]bool{
