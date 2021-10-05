@@ -7508,7 +7508,7 @@ func TestAddDosConfig(t *testing.T) {
 
 	for _, test := range tests {
 		polCfg := newPoliciesConfig()
-		result := polCfg.DadosConfig(test.dosInput, test.polKey, test.polNamespace, test.dosResources)
+		result := polCfg.addDosConfig(test.dosInput, test.polKey, test.polNamespace, test.dosResources)
 		if diff := cmp.Diff(test.expected.warnings, result.warnings); diff != "" {
 			t.Errorf("policiesCfg.addDosConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
