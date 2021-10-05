@@ -225,11 +225,18 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
+      - name: Publish Release Notes on new tag
+        uses: release-drafter/release-drafter@v5
+        with:
+            publish: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
       - name: Build binaries
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: build --rm-dist --id kubernetes-ingress ${{ github.event_name == 'pull_request' && '--single-target' || '' }} ${{ !startsWith(github.ref, 'refs/tags/') && '--snapshot' || '' }}
+          args: ${{ !startsWith(github.ref, 'refs/tags/') && 'build --snapshot' || 'release' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist --id kubernetes-ingress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ needs.check.outputs.go_path }}
@@ -400,16 +407,3 @@ jobs:
           git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' \
           commit -m "NGINX Ingress Controller - Release ${{ needs.package-helm.outputs.type }} ${{ needs.package-helm.outputs.version }}"
           git push -u origin master
-
-  publish-release-notes:
-    name: Publish Release Notes
-    runs-on: ubuntu-20.04
-    needs: release-helm
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    steps:
-      - name: Publish Release Notes
-        uses: release-drafter/release-drafter@v5
-        with:
-            publish: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
