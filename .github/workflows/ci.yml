@@ -3,7 +3,7 @@ name: Continuous Integration
 on:
   push:
     branches:
-      - master
+      - bados/python-test
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
@@ -13,7 +13,7 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches:
-      - master
+      - bados/python-test
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
