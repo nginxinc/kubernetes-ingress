@@ -641,7 +641,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 		&StaticConfigParams{TLSPassthrough: true},
 	)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
@@ -749,7 +749,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	staticConfigParams := &StaticConfigParams{TLSPassthrough: true, NginxServiceMesh: true}
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, staticConfigParams)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
@@ -1034,7 +1034,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 	isResolverConfigured := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
@@ -1351,7 +1351,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 	isResolverConfigured := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("GenerateVirtualServerConfig() mismatch (-want +got):\n%s", diff)
 	}
@@ -1824,7 +1824,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 	isResolverConfigured := false
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{})
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("GenerateVirtualServerConfig returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -1878,9 +1878,13 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 		},
-		apResources: map[string]string{
-			"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
-			"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+		apResources: &appProtectResourcesForVS{
+			Policies: map[string]string{
+				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+			},
+			LogConfs: map[string]string{
+				"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+			},
 		},
 	}
 
@@ -3321,9 +3325,13 @@ func TestGeneratePoliciesFails(t *testing.T) {
 				},
 			},
 			policyOpts: policyOptions{
-				apResources: map[string]string{
-					"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
-					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				apResources: &appProtectResourcesForVS{
+					Policies: map[string]string{
+						"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+					},
+					LogConfs: map[string]string{
+						"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+					},
 				},
 			},
 			context: "route",
@@ -7148,7 +7156,7 @@ func TestAddWafConfig(t *testing.T) {
 		wafInput     *conf_v1.WAF
 		polKey       string
 		polNamespace string
-		apResources  map[string]string
+		apResources  *appProtectResourcesForVS
 		wafConfig    *version2.WAF
 		expected     *validationResults
 		msg          string
@@ -7160,7 +7168,10 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "default",
-			apResources:  map[string]string{},
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{},
+				LogConfs: map[string]string{},
+			},
 			wafConfig: &version2.WAF{
 				Enable: "on",
 			},
@@ -7180,9 +7191,13 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "default",
-			apResources: map[string]string{
-				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
-				"default/logconf":         "/etc/nginx/waf/nac-logconfs/default-logconf",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+				},
 			},
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
@@ -7205,8 +7220,11 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "",
-			apResources: map[string]string{
-				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				},
+				LogConfs: map[string]string{},
 			},
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
@@ -7233,8 +7251,11 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "",
-			apResources: map[string]string{
-				"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+				},
 			},
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
@@ -7262,9 +7283,13 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "",
-			apResources: map[string]string{
-				"ns1/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
-				"ns2/logconf":         "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"ns1/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				},
+				LogConfs: map[string]string{
+					"ns2/logconf": "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+				},
 			},
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
@@ -7282,9 +7307,13 @@ func TestAddWafConfig(t *testing.T) {
 			},
 			polKey:       "default/waf-policy",
 			polNamespace: "default",
-			apResources: map[string]string{
-				"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
-				"default/logconf":         "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
+				},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+				},
 			},
 			wafConfig: &version2.WAF{
 				Enable:   "off",
@@ -7309,8 +7338,8 @@ func TestAddDosConfig(t *testing.T) {
 		dosInput     *conf_v1.Dos
 		polKey       string
 		polNamespace string
-		apResources  map[string]string
-		dosConfig    *version2.Dos
+		dosResources *appProtectDosResourcesForVS
+		dosConfig  *version2.Dos
 		expected     *validationResults
 		msg          string
 	}{
@@ -7321,7 +7350,10 @@ func TestAddDosConfig(t *testing.T) {
 			},
 			polKey:       "default/dos-policy",
 			polNamespace: "default",
-			apResources:  map[string]string{},
+			dosResources: &appProtectDosResourcesForVS{
+				Policies: map[string]string{},
+				LogConfs: map[string]string{},
+			},
 			dosConfig: &version2.Dos{
 				Enable: "on",
 			},
@@ -7341,9 +7373,13 @@ func TestAddDosConfig(t *testing.T) {
 			},
 			polKey:       "default/dos-policy",
 			polNamespace: "default",
-			apResources: map[string]string{
-				"default/policy":  "/etc/nginx/dos/policies/default-dos-policy",
-				"default/logconf": "/etc/nginx/dos/logconfs/default-logconf",
+			dosResources: &appProtectDosResourcesForVS{
+				Policies: map[string]string{
+					"default/policy": "/etc/nginx/dos/policies/default-bados-policy",
+				},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/dos/logconfs/default-logconf",
+				},
 			},
 			dosConfig: &version2.Dos{
 				ApDosPolicy:            "/etc/nginx/dos/policies/default-dos-policy",
@@ -7366,8 +7402,11 @@ func TestAddDosConfig(t *testing.T) {
 			},
 			polKey:       "default/dos-policy",
 			polNamespace: "",
-			apResources: map[string]string{
-				"default/policy": "/etc/nginx/dos/policies/policy",
+			dosResources: &appProtectDosResourcesForVS{
+				Policies: map[string]string{
+					"default/policy": "/etc/nginx/dos/policies/policy",
+				},
+				LogConfs: map[string]string{},
 			},
 			dosConfig: &version2.Dos{
 				ApDosPolicy:            "/etc/nginx/dos/policies/policy",
@@ -7394,8 +7433,11 @@ func TestAddDosConfig(t *testing.T) {
 			},
 			polKey:       "default/dos-policy",
 			polNamespace: "",
-			apResources: map[string]string{
-				"default/logconf": "/etc/nginx/dos/logconfs/default-logconf",
+			dosResources: &appProtectDosResourcesForVS{
+				Policies: map[string]string{},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/dos/logconfs/default-logconf",
+				},
 			},
 			dosConfig: &version2.Dos{
 				ApDosPolicy:            "/etc/nginx/dos/policies/default-policy",
@@ -7423,9 +7465,13 @@ func TestAddDosConfig(t *testing.T) {
 			},
 			polKey:       "default/dos-policy",
 			polNamespace: "",
-			apResources: map[string]string{
-				"ns1/policy":  "/etc/nginx/dos/policies/ns1-policy",
-				"ns2/logconf": "/etc/nginx/dos/logconfs/ns2-logconf",
+			dosResources: &appProtectDosResourcesForVS{
+				Policies: map[string]string{
+					"ns1/policy": "/etc/nginx/dos/policies/ns1-policy",
+				},
+				LogConfs: map[string]string{
+					"ns2/logconf": "/etc/nginx/dos/logconfs/ns2-logconf",
+				},
 			},
 			dosConfig: &version2.Dos{
 				ApDosPolicy:            "/etc/nginx/dos/policies/ns1-policy",
@@ -7443,9 +7489,13 @@ func TestAddDosConfig(t *testing.T) {
 			},
 			polKey:       "default/dos-policy",
 			polNamespace: "default",
-			apResources: map[string]string{
-				"default/policy":  "/etc/nginx/dos/policies/ns1-policy",
-				"default/logconf": "/etc/nginx/dos/logconfs/ns2-logconf",
+			dosResources: &appProtectDosResourcesForVS{
+				Policies: map[string]string{
+					"default/policy": "/etc/nginx/dos/policies/ns1-policy",
+				},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/dos/logconfs/ns2-logconf",
+				},
 			},
 			dosConfig: &version2.Dos{
 				Enable:      "off",
@@ -7458,7 +7508,7 @@ func TestAddDosConfig(t *testing.T) {
 
 	for _, test := range tests {
 		polCfg := newPoliciesConfig()
-		result := polCfg.addDosConfig(test.dosInput, test.polKey, test.polNamespace, test.apResources)
+		result := polCfg.DadosConfig(test.dosInput, test.polKey, test.polNamespace, test.dosResources)
 		if diff := cmp.Diff(test.expected.warnings, result.warnings); diff != "" {
 			t.Errorf("policiesCfg.addDosConfig() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}

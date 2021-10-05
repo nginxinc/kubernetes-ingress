@@ -19,10 +19,14 @@ import (
 
 const emptyHost = ""
 
-// AppProtectResources holds namespace names of App Protect resources relavant to an Ingress
-type AppProtectResources struct {
-	AppProtectPolicy      string
-	AppProtectLogconfs    []string
+// appProtectResources holds the file names of APPolicy and APLogConf resources used in an Ingress resource.
+type appProtectResources struct {
+	AppProtectPolicy   string
+	AppProtectLogconfs []string
+}
+
+// appProtectDosResources holds the file names of APDosPolicy and APDosLogConf resources used in an Ingress resource.
+type appProtectDosResources struct {
 	AppProtectDosPolicy   string
 	AppProtectDosLogconfs string
 }
@@ -70,8 +74,8 @@ type MergeableIngresses struct {
 	Minions []*IngressEx
 }
 
-func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinion bool, baseCfgParams *ConfigParams, isPlus bool,
-	isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
+func generateNginxCfg(ingEx *IngressEx, apResources *appProtectResources, dosResources *appProtectDosResources, isMinion bool,
+	baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
 	hasAppProtect := staticParams.MainAppProtectLoadModule
 	hasAppProtectDos := staticParams.MainAppProtectDosLoadModule
 
@@ -166,8 +170,8 @@ func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinio
 		}
 
 		if hasAppProtectDos {
-			server.AppProtectDosPolicy = apResources.AppProtectDosPolicy
-			server.AppProtectDosLogConf = apResources.AppProtectDosLogconfs
+			server.AppProtectDosPolicy = dosResources.AppProtectDosPolicy
+			server.AppProtectDosLogConf = dosResources.AppProtectDosLogconfs
 		}
 
 		if !isMinion && cfgParams.JWTKey != "" {
@@ -527,9 +531,9 @@ func upstreamMapToSlice(upstreams map[string]version1.Upstream) []version1.Upstr
 	return result
 }
 
-func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, masterApResources AppProtectResources,
-	baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams,
-	isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
+func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, apResources *appProtectResources,
+	dosResources *appProtectDosResources, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool,
+	staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
 
 	var masterServer version1.Server
 	var locations []version1.Location
@@ -548,7 +552,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 	}
 	isMinion := false
 
-	masterNginxCfg, warnings := generateNginxCfg(mergeableIngs.Master, masterApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
+	masterNginxCfg, warnings := generateNginxCfg(mergeableIngs.Master, apResources, dosResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
 
 	// because mergeableIngs.Master.Ingress is a deepcopy of the original master
 	// we need to change the key in the warnings to the original master
@@ -586,8 +590,9 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ma
 
 		isMinion := true
 		// App Protect Resources not allowed in minions - pass empty struct
-		dummyApResources := AppProtectResources{}
-		nginxCfg, minionWarnings := generateNginxCfg(minion, dummyApResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
+		dummyApResources := &appProtectResources{}
+		dummyDosResources := &appProtectDosResources{}
+		nginxCfg, minionWarnings := generateNginxCfg(minion, dummyApResources, dummyDosResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
 		warnings.Add(minionWarnings)
 
 		// because minion.Ingress is a deepcopy of the original minion
