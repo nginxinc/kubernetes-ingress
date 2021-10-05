@@ -265,6 +265,7 @@ func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) (Warnings, error) 
 
 func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (Warnings, error) {
 	apResources := cnf.updateApResources(ingEx)
+	dosResources := cnf.updateApDosResources(ingEx)
 
 	if jwtKey, exists := ingEx.Ingress.Annotations[JWTKeyAnnotation]; exists {
 		// LocalSecretStore will not set Path if the secret is not on the filesystem.
@@ -274,7 +275,7 @@ func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (Warnings, error) 
 	}
 
 	isMinion := false
-	nginxCfg, warnings := generateNginxCfg(ingEx, apResources, isMinion, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(),
+	nginxCfg, warnings := generateNginxCfg(ingEx, apResources, dosResources, isMinion, cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(),
 		cnf.staticCfgParams, cnf.isWildcardEnabled)
 	name := objectMetaToFileName(&ingEx.Ingress.ObjectMeta)
 	content, err := cnf.templateExecutor.ExecuteIngressConfigTemplate(&nginxCfg)
@@ -305,7 +306,8 @@ func (cnf *Configurator) AddOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 }
 
 func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIngresses) (Warnings, error) {
-	masterApResources := cnf.updateApResources(mergeableIngs.Master)
+	apResources := cnf.updateApResources(mergeableIngs.Master)
+	dosResources := cnf.updateApDosResources(mergeableIngs.Master)
 
 	// LocalSecretStore will not set Path if the secret is not on the filesystem.
 	// However, NGINX configuration for an Ingress resource, to handle the case of a missing secret,
@@ -319,7 +321,7 @@ func (cnf *Configurator) addOrUpdateMergeableIngress(mergeableIngs *MergeableIng
 		}
 	}
 
-	nginxCfg, warnings := generateNginxCfgForMergeableIngresses(mergeableIngs, masterApResources, cnf.cfgParams, cnf.isPlus,
+	nginxCfg, warnings := generateNginxCfgForMergeableIngresses(mergeableIngs, apResources, dosResources, cnf.cfgParams, cnf.isPlus,
 		cnf.IsResolverConfigured(), cnf.staticCfgParams, cnf.isWildcardEnabled)
 
 	name := objectMetaToFileName(&mergeableIngs.Master.Ingress.ObjectMeta)
@@ -442,11 +444,12 @@ func (cnf *Configurator) addOrUpdateOpenTracingTracerConfig(content string) erro
 
 func (cnf *Configurator) addOrUpdateVirtualServer(virtualServerEx *VirtualServerEx) (Warnings, error) {
 	apResources := cnf.updateApResourcesForVs(virtualServerEx)
+	dosResources := cnf.updateApDosResourcesForVS(virtualServerEx)
 
 	name := getFileNameForVirtualServer(virtualServerEx.VirtualServer)
 
 	vsc := newVirtualServerConfigurator(cnf.cfgParams, cnf.isPlus, cnf.IsResolverConfigured(), cnf.staticCfgParams)
-	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, apResources)
+	vsCfg, warnings := vsc.GenerateVirtualServerConfig(virtualServerEx, apResources, dosResources)
 	content, err := cnf.templateExecutorV2.ExecuteVirtualServerTemplate(&vsCfg)
 	if err != nil {
 		return warnings, fmt.Errorf("Error generating VirtualServer config: %v: %w", name, err)
@@ -1264,78 +1267,84 @@ func createSpiffeCert(certs []*x509.Certificate) []byte {
 	return pemData
 }
 
-func (cnf *Configurator) updateApResources(ingEx *IngressEx) (apRes AppProtectResources) {
+func (cnf *Configurator) updateApResources(ingEx *IngressEx) *appProtectResources {
+	var apResources appProtectResources
+
 	if ingEx.AppProtectPolicy != nil {
 		policyFileName := appProtectPolicyFileNameFromUnstruct(ingEx.AppProtectPolicy)
 		policyContent := generateApResourceFileContent(ingEx.AppProtectPolicy)
 		cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
-		apRes.AppProtectPolicy = policyFileName
+		apResources.AppProtectPolicy = policyFileName
 	}
 
 	for _, logConf := range ingEx.AppProtectLogs {
 		logConfFileName := appProtectLogConfFileNameFromUnstruct(logConf.LogConf)
 		logConfContent := generateApResourceFileContent(logConf.LogConf)
 		cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
-		apRes.AppProtectLogconfs = append(apRes.AppProtectLogconfs, logConfFileName+" "+logConf.Dest)
+		apResources.AppProtectLogconfs = append(apResources.AppProtectLogconfs, logConfFileName+" "+logConf.Dest)
 	}
+
+	return &apResources
+}
+
+func (cnf *Configurator) updateApDosResources(ingEx *IngressEx) *appProtectDosResources {
+	var dosResources appProtectDosResources
 
 	if ingEx.AppProtectDosPolicy != nil {
 		policyFileName := appProtectDosPolicyFileNameFromUnstruct(ingEx.AppProtectDosPolicy)
 		policyContent := generateApResourceFileContent(ingEx.AppProtectDosPolicy)
 		cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
-		apRes.AppProtectDosPolicy = policyFileName
+		dosResources.AppProtectDosPolicy = policyFileName
 	}
 
 	if ingEx.AppProtectDosLogConf != nil {
 		logConfFileName := appProtectDosLogConfFileNameFromUnstruct(ingEx.AppProtectDosLogConf)
 		logConfContent := generateApResourceFileContent(ingEx.AppProtectDosLogConf)
 		cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
-		apRes.AppProtectDosLogconfs = logConfFileName + " " + ingEx.AppProtectDosLogDst
+		dosResources.AppProtectDosLogconfs = logConfFileName + " " + ingEx.AppProtectDosLogDst
 	}
 
-	return apRes
+	return &dosResources
 }
 
-func (cnf *Configurator) updateApResourcesForVs(vsEx *VirtualServerEx) map[string]string {
-	apRes := make(map[string]string)
+func (cnf *Configurator) updateApResourcesForVs(vsEx *VirtualServerEx) *appProtectResourcesForVS {
+	resources := newAppProtectVSResourcesForVS()
 
-	if vsEx.ApPolRefs != nil {
-		for apPolKey, apPol := range vsEx.ApPolRefs {
-			policyFileName := appProtectPolicyFileNameFromUnstruct(apPol)
-			policyContent := generateApResourceFileContent(apPol)
-			cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
-			apRes[apPolKey] = policyFileName
-		}
+	for apPolKey, apPol := range vsEx.ApPolRefs {
+		policyFileName := appProtectPolicyFileNameFromUnstruct(apPol)
+		policyContent := generateApResourceFileContent(apPol)
+		cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
+		resources.Policies[apPolKey] = policyFileName
 	}
 
-	if vsEx.LogConfRefs != nil {
-		for logConfKey, logConf := range vsEx.LogConfRefs {
-			logConfFileName := appProtectLogConfFileNameFromUnstruct(logConf)
-			logConfContent := generateApResourceFileContent(logConf)
-			cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
-			apRes[logConfKey] = logConfFileName
-		}
+	for logConfKey, logConf := range vsEx.LogConfRefs {
+		logConfFileName := appProtectLogConfFileNameFromUnstruct(logConf)
+		logConfContent := generateApResourceFileContent(logConf)
+		cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
+		resources.LogConfs[logConfKey] = logConfFileName
 	}
 
-	if vsEx.ApDosPolRefs != nil {
-		for apPolKey, apPol := range vsEx.ApDosPolRefs {
-			policyFileName := appProtectDosPolicyFileNameFromUnstruct(apPol)
-			policyContent := generateApResourceFileContent(apPol)
-			cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
-			apRes[apPolKey] = policyFileName
-		}
+	return resources
+}
+
+func (cnf *Configurator) updateApDosResourcesForVS(vsEx *VirtualServerEx) *appProtectDosResourcesForVS {
+	resources := newAppProtectDosVSResourcesForVS()
+
+	for apPolKey, apPol := range vsEx.ApDosPolRefs {
+		policyFileName := appProtectDosPolicyFileNameFromUnstruct(apPol)
+		policyContent := generateApResourceFileContent(apPol)
+		cnf.nginxManager.CreateAppProtectResourceFile(policyFileName, policyContent)
+		resources.Policies[apPolKey] = policyFileName
 	}
 
-	if vsEx.DosLogConfRefs != nil {
-		for logConfKey, logConf := range vsEx.DosLogConfRefs {
-			logConfFileName := appProtectDosLogConfFileNameFromUnstruct(logConf)
-			logConfContent := generateApResourceFileContent(logConf)
-			cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
-			apRes[logConfKey] = logConfFileName
-		}
+	for logConfKey, logConf := range vsEx.DosLogConfRefs {
+		logConfFileName := appProtectDosLogConfFileNameFromUnstruct(logConf)
+		logConfContent := generateApResourceFileContent(logConf)
+		cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
+		resources.LogConfs[logConfKey] = logConfFileName
 	}
 
-	return apRes
+	return resources
 }
 
 func appProtectPolicyFileNameFromUnstruct(unst *unstructured.Unstructured) string {
@@ -1457,7 +1466,7 @@ func (cnf *Configurator) DeleteAppProtectDosPolicy(resource *unstructured.Unstru
 		cnf.nginxManager.DeleteAppProtectResourceFile(appProtectResourceFromNsName(appProtectDosPolicyFolder, polNamespaceName))
 	}
 
-	return  cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes, true)
+	return cnf.AddOrUpdateAppProtectResource(resource, ingExes, mergeableIngresses, vsExes, true)
 }
 
 // DeleteAppProtectLogConf updates Ingresses and VirtualServers that use AP Log Configuration after that policy is deleted
