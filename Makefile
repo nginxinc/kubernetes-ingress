@@ -10,8 +10,8 @@ NAP_PLUS_VERSION ?= r24
 
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg DATE=$(DATE)
 DOCKER_CMD = docker build $(DOCKER_BUILD_OPTIONS) --target $(TARGET) -f build/Dockerfile -t $(PREFIX):$(TAG) .
-PLUS_ARGS = --build-arg PLUS=-plus --build-arg FILES=plus-common --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
-NAP_ARGS = --build-arg FILES=nap-common --build-arg NGINX_PLUS_VERSION=$(NAP_PLUS_VERSION)
+PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
+NAP_ARGS = --build-arg NGINX_PLUS_VERSION=$(NAP_PLUS_VERSION)
 
 export DOCKER_BUILDKIT = 1
 
