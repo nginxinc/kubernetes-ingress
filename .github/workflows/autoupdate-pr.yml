@@ -13,8 +13,9 @@ jobs:
     runs-on: ubuntu-20.04
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - uses: docker://chinthakagodawita/autoupdate-action:v1
-        env:
-          GITHUB_TOKEN: "${{ secrets.NGINX_PAT }}"
-          PR_READY_STATE: "ready_for_review"
-          EXCLUDED_LABELS: "dependencies,no-autoupdate"
+      - uses: peter-evans/rebase@v1
+        with:
+          token: ${{ secrets.NGINX_PAT }}
+          exclude-labels: |
+            no-autoupdate
+            dependencies
