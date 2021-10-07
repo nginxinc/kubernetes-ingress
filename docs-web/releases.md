@@ -1,5 +1,20 @@
 # Releases
 
+## NGINX Ingress Controller 1.12.2
+
+7 October 2021
+
+FIXES:
+* [2048](https://github.com/nginxinc/kubernetes-ingress/pull/2048) Use release specific repo for NGINX Plus on Debian.
+
+HELM CHART:
+* The version of the Helm chart is now 0.10.2.
+
+UPGRADE:
+* For NGINX, use the 1.12.2 image from our DockerHub: `nginx/nginx-ingress:1.12.2`, `nginx/nginx-ingress:1.12.2-alpine` or `nginx/nginx-ingress:1.12.2-ubi`
+* For NGINX Plus, please build your own image using the 1.12.2 source code.
+* For Helm, use version 0.10.2 of the chart.
+
 ## NGINX Ingress Controller 1.12.1
 
 8 September 2021
@@ -66,7 +81,7 @@ HELM CHART:
 
 CHANGES:
 * [1604](https://github.com/nginxinc/kubernetes-ingress/pull/1604) Update NGINX Plus to R24. Previously, the Dockerfile had a fixed NGINX Plus version. Now the Dockerfile has a floating version that corresponds to the latest major NGINX Plus version. In the event of a patch version of NGINX Plus being released, make sure to rebuild your image to get the latest version (previously, we released a new Ingress Controller release in that case). Additionally, the AppProtect related packages are no longer fixed -- the Dockerfile will always install the latest version of the packages that work with the latest NGINX Plus version.
-* [1500](https://github.com/nginxinc/kubernetes-ingress/pull/1500) Support ssl_reject_handshake in Ingress and VS. Previously, to handle missing or invalid TLS Secrets in Ingress and VirtualServer resources, the Ingress Controller would configure NGINX to break any attempts for clients to establish TLS connections to the affected hosts using `ssl_ciphers NULL;` in the NGINX configuration. The method didn't work for TLS v1.3. Now the Ingress Controller uses `ssl_reject_handshake on;`, which works for TLS v1.3. 
+* [1500](https://github.com/nginxinc/kubernetes-ingress/pull/1500) Support ssl_reject_handshake in Ingress and VS. Previously, to handle missing or invalid TLS Secrets in Ingress and VirtualServer resources, the Ingress Controller would configure NGINX to break any attempts for clients to establish TLS connections to the affected hosts using `ssl_ciphers NULL;` in the NGINX configuration. The method didn't work for TLS v1.3. Now the Ingress Controller uses `ssl_reject_handshake on;`, which works for TLS v1.3.
 * Update NGINX Plus version to R24.
 * Update NGINX version to 1.21.0.
 
