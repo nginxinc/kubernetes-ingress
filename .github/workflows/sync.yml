@@ -1,9 +1,12 @@
 name: Sync
 
 on:
-  push:
-    branches:
-      - master
+  workflow_run:
+    branches: master
+    workflows:
+      - "Continuous Integration"
+    types:
+      - completed
 
 jobs:
   # This job sync this repo to our internal repo
