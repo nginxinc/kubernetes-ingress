@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
@@ -1610,8 +1610,8 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
-			expectedErrors: nil,
-			msg: "valid appprotectdos.f5.com/app-protect-dos-monitor annotation",
+			expectedErrors:        nil,
+			msg:                   "valid appprotectdos.f5.com/app-protect-dos-monitor annotation",
 		},
 		{
 			annotations: map[string]string{
@@ -1622,8 +1622,8 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
-			expectedErrors: nil,
-			msg: "valid appprotectdos.f5.com/app-protect-dos-name annotation",
+			expectedErrors:        nil,
+			msg:                   "valid appprotectdos.f5.com/app-protect-dos-name annotation",
 		},
 		{
 			annotations: map[string]string{
@@ -1635,7 +1635,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-name: Invalid value: "very very very very very very very very very very very very very long name": App Protect Dos Name max length is %v`, appprotectdos.MaxNameLength),
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-name: Invalid value: "very very very very very very very very very very very very very long name": App Protect Dos Name max length is %v`, validation.MaxNameLength),
 			},
 			msg: "invalid appprotectdos.f5.com/app-protect-dos-name annotation",
 		},
@@ -1676,8 +1676,8 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
-			expectedErrors: nil,
-			msg: "valid app-protect-dos-access-log-destination annotation",
+			expectedErrors:        nil,
+			msg:                   "valid app-protect-dos-access-log-destination annotation",
 		},
 		// syslog:server=<ip-address | localhost>:<port> or stderr
 		{
@@ -1689,8 +1689,8 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
-			expectedErrors: nil,
-			msg: "valid app-protect-dos-security-log-destination annotation",
+			expectedErrors:        nil,
+			msg:                   "valid app-protect-dos-security-log-destination annotation",
 		},
 		{
 			annotations: map[string]string{
@@ -1708,7 +1708,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log": "ns/ns/example",
+				"appprotectdos.f5.com/app-protect-dos-security-log":             "ns/ns/example",
 				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "stderr",
 			},
 			specServices:          map[string]bool{},
@@ -1737,7 +1737,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log": "example",
+				"appprotectdos.f5.com/app-protect-dos-security-log":             "example",
 				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "stderr",
 			},
 			specServices:          map[string]bool{},
@@ -1745,8 +1745,8 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
-			expectedErrors: nil,
-			msg: "valid app-protect-dos-security-log annotation",
+			expectedErrors:        nil,
+			msg:                   "valid app-protect-dos-security-log annotation",
 		},
 		{
 			annotations: map[string]string{
@@ -1771,8 +1771,8 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
-			expectedErrors: nil,
-			msg: "valid app-protect-dos-policy annotation",
+			expectedErrors:        nil,
+			msg:                   "valid app-protect-dos-policy annotation",
 		},
 
 		{

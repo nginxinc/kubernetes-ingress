@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
+	api_validation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -56,12 +55,12 @@ const (
 	appProtectSecurityLogEnableAnnotation    = "appprotect.f5.com/app-protect-security-log-enable"
 	appProtectDosEnableAnnotation            = "appprotectdos.f5.com/app-protect-dos-enable"
 	appProtectDosSecurityLogEnableAnnotation = "appprotectdos.f5.com/app-protect-dos-security-log-enable"
-	appProtectDosSecurityLogAnnotation 	     = "appprotectdos.f5.com/app-protect-dos-security-log"
-	appProtectDosSecurityLogDestAnnotation 	 = "appprotectdos.f5.com/app-protect-dos-security-log-destination"
+	appProtectDosSecurityLogAnnotation       = "appprotectdos.f5.com/app-protect-dos-security-log"
+	appProtectDosSecurityLogDestAnnotation   = "appprotectdos.f5.com/app-protect-dos-security-log-destination"
 	appProtectDosAccessLogDestAnnotation     = "appprotectdos.f5.com/app-protect-dos-access-log-destination"
-	appProtectDosMonitorAnnotation     		 = "appprotectdos.f5.com/app-protect-dos-monitor"
-	appProtectDosNameAnnotation     		 = "appprotectdos.f5.com/app-protect-dos-name"
-	appProtectDosPolicyAnnotation     		 = "appprotectdos.f5.com/app-protect-dos-policy"
+	appProtectDosMonitorAnnotation           = "appprotectdos.f5.com/app-protect-dos-monitor"
+	appProtectDosNameAnnotation              = "appprotectdos.f5.com/app-protect-dos-name"
+	appProtectDosPolicyAnnotation            = "appprotectdos.f5.com/app-protect-dos-policy"
 	internalRouteAnnotation                  = "nsm.nginx.com/internal-route"
 	websocketServicesAnnotation              = "nginx.org/websocket-services"
 	sslServicesAnnotation                    = "nginx.org/ssl-services"
@@ -429,7 +428,7 @@ func validateQualifiedName(context *annotationValidationContext) field.ErrorList
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, fmt.Sprintf("annotation value: %v is not qualified name", context.value)))
 	}
-	
+
 	return allErrs
 }
 
@@ -500,7 +499,7 @@ func validateAppProtectDosOnlyAnnotation(context *annotationValidationContext) f
 func validateAppProtectDosLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := appprotect_common.ValidateAppProtectLogDestination(context.value)
+	err := api_validation.ValidateAppProtectLogDestination(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
@@ -512,7 +511,7 @@ func validateAppProtectDosLogDestAnnotation(context *annotationValidationContext
 func validateAppProtectDosNameAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := appprotectdos.ValidateAppProtectDosName(context.value)
+	err := api_validation.ValidateAppProtectDosName(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
@@ -524,7 +523,7 @@ func validateAppProtectDosNameAnnotation(context *annotationValidationContext) f
 func validateAppProtectDosMonitorAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := appprotectdos.ValidateAppProtectDosMonitor(context.value)
+	err := api_validation.ValidateAppProtectDosMonitor(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
@@ -535,8 +534,8 @@ func validateAppProtectDosMonitorAnnotation(context *annotationValidationContext
 
 func validateAppProtectDosAccessLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-	
-	err := appprotectdos.ValidateAppProtectDosAccessLogDest(context.value)
+
+	err := api_validation.ValidateAppProtectDosAccessLogDest(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))

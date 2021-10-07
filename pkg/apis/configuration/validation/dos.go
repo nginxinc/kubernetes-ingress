@@ -1,4 +1,4 @@
-package appprotectdos
+package validation
 
 import (
 	"fmt"
@@ -7,8 +7,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -24,10 +22,10 @@ var appProtectDosLogConfRequiredFields = [][]string{
 
 const MaxNameLength = 64
 
-// ValidateAppDosProtectLogConf validates LogConfiguration resource
-func validateAppProtectDosLogConf(logConf *unstructured.Unstructured) error {
+// ValidateAppProtectDosLogConf validates LogConfiguration resource
+func ValidateAppProtectDosLogConf(logConf *unstructured.Unstructured) error {
 	lcName := logConf.GetName()
-	err := appprotect_common.ValidateRequiredFields(logConf, appProtectDosLogConfRequiredFields)
+	err := ValidateRequiredFields(logConf, appProtectDosLogConfRequiredFields)
 	if err != nil {
 		return fmt.Errorf("Error validating App Protect Dos Log Configuration %v: %w", lcName, err)
 	}
@@ -37,7 +35,7 @@ func validateAppProtectDosLogConf(logConf *unstructured.Unstructured) error {
 
 var accessLog = regexp.MustCompile(`^(((\d{1,3}\.){3}\d{1,3}):\d{1,5})$`)
 
-// ValidateAppProtectDosAccessLog validates destination for access log configuration
+// ValidateAppProtectDosAccessLogDest validates destination for access log configuration
 func ValidateAppProtectDosAccessLogDest(accessLogDest string) error {
 	errormsg := "Error parsing App Protect Dos Access Log Dest config: Destination must follow format: <ip-address>:<port>"
 	if !accessLog.MatchString(accessLogDest) {
@@ -62,7 +60,7 @@ func ValidateAppProtectDosAccessLogDest(accessLogDest string) error {
 
 // ValidateAppProtectDosName validates name of App Protect Dos
 func ValidateAppProtectDosName(name string) error {
-	if (len(name) > MaxNameLength) {
+	if len(name) > MaxNameLength {
 		return fmt.Errorf("App Protect Dos Name max length is %v", MaxNameLength)
 	}
 
@@ -79,11 +77,11 @@ func ValidateAppProtectDosMonitor(monitor string) error {
 	return nil
 }
 
-// validateAppProtectDosPolicy validates Policy resource
-func validateAppProtectDosPolicy(policy *unstructured.Unstructured) error {
+// ValidateAppProtectDosPolicy validates Policy resource
+func ValidateAppProtectDosPolicy(policy *unstructured.Unstructured) error {
 	polName := policy.GetName()
 
-	err := appprotect_common.ValidateRequiredFields(policy, appProtectDosPolicyRequiredFields)
+	err := ValidateRequiredFields(policy, appProtectDosPolicyRequiredFields)
 	if err != nil {
 		return fmt.Errorf("Error validating App Protect Dos Policy %v: %w", polName, err)
 	}

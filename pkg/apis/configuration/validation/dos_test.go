@@ -1,4 +1,4 @@
-package appprotectdos
+package validation
 
 import (
 	"strings"
@@ -92,7 +92,7 @@ func TestValidateAppProtectDosLogConf(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := validateAppProtectDosLogConf(test.logConf)
+		err := ValidateAppProtectDosLogConf(test.logConf)
 		if test.expectErr && err == nil {
 			t.Errorf("validateAppProtectDosLogConf() returned no error for the case of %s", test.msg)
 		}
@@ -129,7 +129,7 @@ func TestValidateAppProtectDosPolicy(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := validateAppProtectDosPolicy(test.policy)
+		err := ValidateAppProtectDosPolicy(test.policy)
 		if test.expectErr && err == nil {
 			t.Errorf("validateAppProtectPolicy() returned no error for the case of %s", test.msg)
 		}

@@ -8,8 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -295,7 +293,7 @@ func validateLogConf(logConf, logDest string, fieldPath *field.Path) field.Error
 		}
 	}
 
-	err := appprotect_common.ValidateAppProtectLogDestination(logDest)
+	err := ValidateAppProtectLogDestination(logDest)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("logDest"), logDest, err.Error()))
 	}
@@ -311,9 +309,9 @@ func validateBados(bados *v1.Bados, fieldPath *field.Path) field.ErrorList {
 		}
 	}
 
-    if bados.DosAccessLogDest != "" {
-        allErrs = append(allErrs, validateDosLogAccessLogDest(bados.DosAccessLogDest, fieldPath.Child("dosAccessLogDest"))...)
-    }
+	if bados.DosAccessLogDest != "" {
+		allErrs = append(allErrs, validateDosLogAccessLogDest(bados.DosAccessLogDest, fieldPath.Child("dosAccessLogDest"))...)
+	}
 
 	if bados.DosSecurityLog != nil {
 		allErrs = append(allErrs, validateDosLogConf(bados.DosSecurityLog.ApDosLogConf, bados.DosSecurityLog.DosLogDest, fieldPath.Child("dosSecurityLog"))...)
@@ -331,7 +329,7 @@ func validateDosLogConf(logConf, logDest string, fieldPath *field.Path) field.Er
 		}
 	}
 
-	err := appprotect_common.ValidateAppProtectLogDestination(logDest)
+	err := ValidateAppProtectLogDestination(logDest)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("dosLogDest"), logDest, err.Error()))
 	}
@@ -341,7 +339,7 @@ func validateDosLogConf(logConf, logDest string, fieldPath *field.Path) field.Er
 func validateDosLogAccessLogDest(accessLogDest string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := appprotectdos.ValidateAppProtectDosAccessLogDest(accessLogDest)
+	err := ValidateAppProtectDosAccessLogDest(accessLogDest)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath, accessLogDest, err.Error()))
 	}

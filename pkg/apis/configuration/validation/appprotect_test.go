@@ -1,4 +1,4 @@
-package appprotect
+package validation
 
 import (
 	"testing"
@@ -48,7 +48,7 @@ func TestValidateAppProtectPolicy(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := validateAppProtectPolicy(test.policy)
+		err := ValidateAppProtectPolicy(test.policy)
 		if test.expectErr && err == nil {
 			t.Errorf("validateAppProtectPolicy() returned no error for the case of %s", test.msg)
 		}
@@ -113,7 +113,7 @@ func TestValidateAppProtectLogConf(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := validateAppProtectLogConf(test.logConf)
+		err := ValidateAppProtectLogConf(test.logConf)
 		if test.expectErr && err == nil {
 			t.Errorf("validateAppProtectLogConf() returned no error for the case of %s", test.msg)
 		}
@@ -165,7 +165,7 @@ func TestValidateAppProtectUserSig(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		err := validateAppProtectUserSig(test.userSig)
+		err := ValidateAppProtectUserSig(test.userSig)
 		if test.expectErr && err == nil {
 			t.Errorf("validateAppProtectUserSig() returned no error for the case of %s", test.msg)
 		}

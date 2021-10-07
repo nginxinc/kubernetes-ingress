@@ -1,9 +1,7 @@
-package appprotect
+package validation
 
 import (
 	"fmt"
-
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
@@ -21,11 +19,11 @@ var appProtectUserSigRequiredSlices = [][]string{
 	{"spec", "signatures"},
 }
 
-// validateAppProtectPolicy validates Policy resource
-func validateAppProtectPolicy(policy *unstructured.Unstructured) error {
+// ValidateAppProtectPolicy validates Policy resource
+func ValidateAppProtectPolicy(policy *unstructured.Unstructured) error {
 	polName := policy.GetName()
 
-	err := appprotect_common.ValidateRequiredFields(policy, appProtectPolicyRequiredFields)
+	err := ValidateRequiredFields(policy, appProtectPolicyRequiredFields)
 	if err != nil {
 		return fmt.Errorf("Error validating App Protect Policy %v: %w", polName, err)
 	}
@@ -33,10 +31,10 @@ func validateAppProtectPolicy(policy *unstructured.Unstructured) error {
 	return nil
 }
 
-// validateAppProtectLogConf validates LogConfiguration resource
-func validateAppProtectLogConf(logConf *unstructured.Unstructured) error {
+// ValidateAppProtectLogConf validates LogConfiguration resource
+func ValidateAppProtectLogConf(logConf *unstructured.Unstructured) error {
 	lcName := logConf.GetName()
-	err := appprotect_common.ValidateRequiredFields(logConf, appProtectLogConfRequiredFields)
+	err := ValidateRequiredFields(logConf, appProtectLogConfRequiredFields)
 	if err != nil {
 		return fmt.Errorf("Error validating App Protect Log Configuration %v: %w", lcName, err)
 	}
@@ -44,9 +42,9 @@ func validateAppProtectLogConf(logConf *unstructured.Unstructured) error {
 	return nil
 }
 
-func validateAppProtectUserSig(userSig *unstructured.Unstructured) error {
+func ValidateAppProtectUserSig(userSig *unstructured.Unstructured) error {
 	sigName := userSig.GetName()
-	err := appprotect_common.ValidateRequiredSlices(userSig, appProtectUserSigRequiredSlices)
+	err := ValidateRequiredSlices(userSig, appProtectUserSigRequiredSlices)
 	if err != nil {
 		return fmt.Errorf("Error validating App Protect User Signature %v: %w", sigName, err)
 	}
