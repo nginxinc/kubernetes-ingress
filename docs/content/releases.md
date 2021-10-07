@@ -11,7 +11,7 @@ toc: true
 07 Oct 2021
 
 FIXES:
-* [2051](https://github.com/nginxinc/kubernetes-ingress/pull/2051) Use release specific repo for NGINX Plus on Debian. This fixes an error when building Debian-based images with NGINX Plus: previously, building an image would fail with the error `Package 'nginx-plus-r24' has no installation candidate`. The bug first appeared when NGINX Plus R25 was released on 28 September 2021.
+* [2051](https://github.com/nginxinc/kubernetes-ingress/pull/2051) Use release specific repo for NGINX Plus on Debian. This fixes an error when building the Debian-based image with NGINX Plus and App Protect: previously, building the image would fail with the error `Package 'nginx-plus-r24' has no installation candidate`.
 
 DOCUMENTATION IMPROVEMENTS:
 * [2059](https://github.com/nginxinc/kubernetes-ingress/pull/2059) fixes issues with the 404 and robots.txts redirects.
