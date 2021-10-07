@@ -38,6 +38,13 @@ builds:
     tags:
       - aws
 archives:
-- format: binary
+  - id: kubernetes-ingress
+    format: binary
+    builds: [kubernetes-ingress]
+  - id: aws
+    format: binary
+    builds: [aws]
 changelog:
   skip: true
+release:
+  ids: [kubernetes-ingress]
