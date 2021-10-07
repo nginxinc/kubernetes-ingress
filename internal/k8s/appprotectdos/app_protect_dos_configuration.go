@@ -3,6 +3,8 @@ package appprotectdos
 import (
 	"fmt"
 
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -107,7 +109,7 @@ type DosPolicyEx struct {
 }
 
 func createAppProtectDosPolicyEx(policyObj *unstructured.Unstructured) (*DosPolicyEx, error) {
-	err := validateAppProtectDosPolicy(policyObj)
+	err := validation.ValidateAppProtectDosPolicy(policyObj)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error validating dos policy %s: %v", policyObj.GetName(), err)
 		return &DosPolicyEx{Obj: policyObj, IsValid: false, ErrorMsg: failedValidationErrorMsg}, fmt.Errorf(errMsg)
@@ -127,7 +129,7 @@ type DosLogConfEx struct {
 }
 
 func createAppProtectDosLogConfEx(dosLogConfObj *unstructured.Unstructured) (*DosLogConfEx, error) {
-	err := validateAppProtectDosLogConf(dosLogConfObj)
+	err := validation.ValidateAppProtectDosLogConf(dosLogConfObj)
 	if err != nil {
 		return &DosLogConfEx{
 			Obj:      dosLogConfObj,

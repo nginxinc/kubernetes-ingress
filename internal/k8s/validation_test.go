@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
@@ -1635,7 +1635,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-name: Invalid value: "very very very very very very very very very very very very very long name": App Protect Dos Name max length is %v`, appprotectdos.MaxNameLength),
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-name: Invalid value: "very very very very very very very very very very very very very long name": App Protect Dos Name max length is %v`, validation.MaxNameLength),
 			},
 			msg: "invalid appprotectdos.f5.com/app-protect-dos-name annotation",
 		},

@@ -2360,7 +2360,7 @@ func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.In
 	}
 
 	for _, logDst := range logDsts {
-		err := appprotect_common.ValidateAppProtectLogDestination(logDst)
+		err := validation.ValidateAppProtectLogDestination(logDst)
 		if err != nil {
 			return apLogs, fmt.Errorf("Error Validating App Protect Destination Config for Ingress %v: %w", ing.Name, err)
 		}

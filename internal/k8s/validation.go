@@ -7,8 +7,7 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
+	api_validation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -500,7 +499,7 @@ func validateAppProtectDosOnlyAnnotation(context *annotationValidationContext) f
 func validateAppProtectDosLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := appprotect_common.ValidateAppProtectLogDestination(context.value)
+	err := api_validation.ValidateAppProtectLogDestination(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
@@ -512,7 +511,7 @@ func validateAppProtectDosLogDestAnnotation(context *annotationValidationContext
 func validateAppProtectDosNameAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := appprotectdos.ValidateAppProtectDosName(context.value)
+	err := api_validation.ValidateAppProtectDosName(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
@@ -524,7 +523,7 @@ func validateAppProtectDosNameAnnotation(context *annotationValidationContext) f
 func validateAppProtectDosMonitorAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := appprotectdos.ValidateAppProtectDosMonitor(context.value)
+	err := api_validation.ValidateAppProtectDosMonitor(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
@@ -536,7 +535,7 @@ func validateAppProtectDosMonitorAnnotation(context *annotationValidationContext
 func validateAppProtectDosAccessLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := appprotectdos.ValidateAppProtectDosAccessLogDest(context.value)
+	err := api_validation.ValidateAppProtectDosAccessLogDest(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
