@@ -34,14 +34,14 @@
 
 
 [[redirects]]
-  from = "https://nginx-kubernetes-ingress/robots.txt"
+  from = "/nginx-ingress-controller/robots.txt"
   to = "https://docs.nginx.com/robots.txt"
   status = 301
   force = true
 
 [[redirects]]
   from = "*"
-  to = "https://docs.nginx.com/404.html"
+  to = "/nginx-ingress-controller/404.html"
   status = 404
 
 
