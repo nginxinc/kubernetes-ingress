@@ -310,14 +310,14 @@ func validateDos(dos *v1.Dos, fieldPath *field.Path) field.ErrorList {
 	}
 
 	if dos.Name != "" {
-		err := appprotectdos.ValidateAppProtectDosName(dos.Name)
+		err := ValidateAppProtectDosName(dos.Name)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("Name"), dos.Name, err.Error()))
 		}
 	}
 
 	if dos.ApDosMonitor != "" {
-		err := appprotectdos.ValidateAppProtectDosMonitor(dos.ApDosMonitor)
+		err := ValidateAppProtectDosMonitor(dos.ApDosMonitor)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("ApDosMonitor"), dos.ApDosMonitor, err.Error()))
 		}
