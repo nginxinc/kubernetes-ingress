@@ -297,7 +297,7 @@ See the [proxy_buffers](https://nginx.org/en/docs/http/ngx_http_proxy_module.htm
 {{% table %}} 
 |Field | Description | Type | Required | 
 | ---| ---| ---| --- | 
-|``enable`` | Enables HTTPS for requests to upstream servers. The default is ``False``\ , meaning that HTTP will be used. | ``boolean`` | No | 
+|``enable`` | Enables HTTPS for requests to upstream servers. The default is ``False``\ , meaning that HTTP will be used. Note: by default, NGINX will not verify the upstream server certificate. To enable the verification, configure an [EgressMTLS Policy](/nginx-ingress-controller/configuration/policy-resource/#egressmtls). | ``boolean`` | No | 
 {{% /table %}} 
 
 ### Upstream.Queue
