@@ -5,6 +5,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
+
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -203,7 +205,7 @@ func (s appProtectUserSigSlice) Swap(i, j int) {
 }
 
 func createAppProtectPolicyEx(policyObj *unstructured.Unstructured) (*PolicyEx, error) {
-	err := validateAppProtectPolicy(policyObj)
+	err := validation.ValidateAppProtectPolicy(policyObj)
 	if err != nil {
 		errMsg := fmt.Sprintf("Error validating policy %s: %v", policyObj.GetName(), err)
 		return &PolicyEx{Obj: policyObj, IsValid: false, ErrorMsg: failedValidationErrorMsg}, fmt.Errorf(errMsg)
@@ -257,7 +259,7 @@ func buildRevTimes(requirement map[string]interface{}) (RevTimes, error) {
 }
 
 func createAppProtectLogConfEx(logConfObj *unstructured.Unstructured) (*LogConfEx, error) {
-	err := validateAppProtectLogConf(logConfObj)
+	err := validation.ValidateAppProtectLogConf(logConfObj)
 	if err != nil {
 		return &LogConfEx{
 			Obj:      logConfObj,
@@ -273,7 +275,7 @@ func createAppProtectLogConfEx(logConfObj *unstructured.Unstructured) (*LogConfE
 
 func createAppProtectUserSigEx(userSigObj *unstructured.Unstructured) (*UserSigEx, error) {
 	sTag := ""
-	err := validateAppProtectUserSig(userSigObj)
+	err := validation.ValidateAppProtectUserSig(userSigObj)
 	if err != nil {
 		errMsg := failedValidationErrorMsg
 		return &UserSigEx{Obj: userSigObj, IsValid: false, Tag: sTag, ErrorMsg: errMsg}, fmt.Errorf(errMsg)
