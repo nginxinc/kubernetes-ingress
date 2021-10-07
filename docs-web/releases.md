@@ -5,7 +5,7 @@
 7 October 2021
 
 FIXES:
-* [2048](https://github.com/nginxinc/kubernetes-ingress/pull/2048) Use release specific repo for NGINX Plus on Debian.
+* [2048](https://github.com/nginxinc/kubernetes-ingress/pull/2048) Use release specific repo for NGINX Plus on Debian. This fixes an error when building Debian-based images with NGINX Plus: previously, building an image would fail with the error `Package 'nginx-plus-r24' has no installation candidate`. The bug first appeared when NGINX Plus R25 was released on 28 September 2021.
 
 HELM CHART:
 * The version of the Helm chart is now 0.10.2.
