@@ -1,5 +1,17 @@
 # Changelog
 
+### 2.0.1
+
+An automatically generated list of changes can be found on Github at: [2.0.1 Release](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.0.1)
+
+A curated list of changes can be found in the [Releases](http://docs.nginx.com/nginx-ingress-controller/releases/) page on NGINX Documentation website.
+
+### 1.12.2
+
+An automatically generated list of changes can be found on Github at: [1.12.2 Release](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v1.12.2)
+
+A curated list of changes can be found in the [Releases](http://docs.nginx.com/nginx-ingress-controller/releases/) page on NGINX Documentation website.
+
 ### 2.0.0
 
 An automatically generated list of changes can be found on Github at: [2.0.0 Release](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.0.0)

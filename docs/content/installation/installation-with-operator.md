@@ -32,7 +32,7 @@ spec:
   type: deployment
   image:
     repository: nginx/nginx-ingress
-    tag: 2.0.0
+    tag: 2.0.1
     pullPolicy: Always
   serviceType: NodePort
   nginxPlus: False

@@ -1,10 +1,44 @@
 ---
 title: Releases
-description: 
+description:
 weight: 1900
 doctypes: ["concept"]
 toc: true
 ---
+
+## NGINX Ingress Controller 2.0.1
+
+07 Oct 2021
+
+FIXES:
+* [2051](https://github.com/nginxinc/kubernetes-ingress/pull/2051) Use release specific repo for NGINX Plus on Debian. This fixes an error when building Debian-based images with NGINX Plus: previously, building an image would fail with the error `Package 'nginx-plus-r24' has no installation candidate`. The bug first appeared when NGINX Plus R25 was released on 28 September 2021.
+
+DOCUMENTATION IMPROVEMENTS:
+* [2059](https://github.com/nginxinc/kubernetes-ingress/pull/2059) fixes issues with the 404 and robots.txts redirects.
+* [2049](https://github.com/nginxinc/kubernetes-ingress/pull/2049) Remove note from operator installation. A version of the Operator compatible with 2.0.x is now available.
+
+HELM CHART:
+* The version of the Helm chart is now 0.11.1.
+
+UPGRADE:
+* For NGINX, use the 2.0.1 image from our DockerHub.
+* For NGINX Plus, use the 2.0.1 from the F5 Container registry or build your own image using the 2.0.1 source code.
+* For Helm, use version 0.11.1 of the chart.
+
+## NGINX Ingress Controller 1.12.2
+
+7 October 2021
+
+FIXES:
+* [2048](https://github.com/nginxinc/kubernetes-ingress/pull/2048) Use release specific repo for NGINX Plus on Debian. This fixes an error when building Debian-based images with NGINX Plus: previously, building an image would fail with the error `Package 'nginx-plus-r24' has no installation candidate`. The bug first appeared when NGINX Plus R25 was released on 28 September 2021.
+
+HELM CHART:
+* The version of the Helm chart is now 0.10.2.
+
+UPGRADE:
+* For NGINX, use the 1.12.2 image from our DockerHub: `nginx/nginx-ingress:1.12.2`, `nginx/nginx-ingress:1.12.2-alpine` or `nginx/nginx-ingress:1.12.2-ubi`
+* For NGINX Plus, please build your own image using the 1.12.2 source code.
+* For Helm, use version 0.10.2 of the chart.
 
 ## NGINX Ingress Controller 2.0.0
 
@@ -16,11 +50,11 @@ Release 2.0.0 includes:
 * *Support for Ingress networking.k8s.io/v1*. Kubernetes 1.22 removes support for networking.k8s.io/v1beta1. To support Kubernetes 1.22, NGINX Ingress Controller 2.0 is also compatible with only the networking.k8s.io/v1 version of the Ingress and IngressClass resources.  This has the following implications:
   1. The minimum supported version of Kubernetes is now 1.19. For older Kubernetes versions, use the 1.12.x release of the Ingress Controller.
   2. For Kubernetes versions 1.19-1.21, you can continue using the `networking.k8s.io/v1beta1` of the Ingress and IngressClass resources.
-  3. For Kubernetes 1.22, you need to migrate your Ingress and IngressClass resources to `networking.k8s.io/v1`.  
+  3. For Kubernetes 1.22, you need to migrate your Ingress and IngressClass resources to `networking.k8s.io/v1`.
   4. If you are using the deprecated `kubernetes.io/ingress.class` annotation in your Ingress resources, it is recommended to switch to the `ingressClassName` field.
-     
+
      We migrated all our documentation and examples to use `networking.k8s.io/v1` and the `ingressClassName` field of the Ingress resource.
-* *Scalability improvements*. We improved the time for an Ingress Controller pod to become ready and start receiving traffic. This is especially noticeable when you have hundreds of Ingress or other configuration resources like VirtualServers: instead of several minutes or more in rare cases, a pod will become ready within a few minutes.  
+* *Scalability improvements*. We improved the time for an Ingress Controller pod to become ready and start receiving traffic. This is especially noticeable when you have hundreds of Ingress or other configuration resources like VirtualServers: instead of several minutes or more in rare cases, a pod will become ready within a few minutes.
 * *Documentation improvements* We changed the look and feel of our documentation at https://docs.nginx.com/nginx-ingress-controller as well as the underlying publishing technology, which will allow us to bring even more improvements in the next releases.
 * *Upgrade path for k8s.nginx.org/v1alpha1 Policy resource* If you’re running release 1.9.0 and using the k8s.nginx.org/v1alpha1 Policy, the Ingress Controller now supports an upgrade path from v1alpha1 to v1 Policy version without downtime. See UPDATING POLICIES section below.
 
@@ -162,7 +196,7 @@ HELM CHART:
 
 CHANGES:
 * [1604](https://github.com/nginxinc/kubernetes-ingress/pull/1604) Update NGINX Plus to R24. Previously, the Dockerfile had a fixed NGINX Plus version. Now the Dockerfile has a floating version that corresponds to the latest major NGINX Plus version. In the event of a patch version of NGINX Plus being released, make sure to rebuild your image to get the latest version (previously, we released a new Ingress Controller release in that case). Additionally, the AppProtect related packages are no longer fixed -- the Dockerfile will always install the latest version of the packages that work with the latest NGINX Plus version.
-* [1500](https://github.com/nginxinc/kubernetes-ingress/pull/1500) Support ssl_reject_handshake in Ingress and VS. Previously, to handle missing or invalid TLS Secrets in Ingress and VirtualServer resources, the Ingress Controller would configure NGINX to break any attempts for clients to establish TLS connections to the affected hosts using `ssl_ciphers NULL;` in the NGINX configuration. The method didn't work for TLS v1.3. Now the Ingress Controller uses `ssl_reject_handshake on;`, which works for TLS v1.3. 
+* [1500](https://github.com/nginxinc/kubernetes-ingress/pull/1500) Support ssl_reject_handshake in Ingress and VS. Previously, to handle missing or invalid TLS Secrets in Ingress and VirtualServer resources, the Ingress Controller would configure NGINX to break any attempts for clients to establish TLS connections to the affected hosts using `ssl_ciphers NULL;` in the NGINX configuration. The method didn't work for TLS v1.3. Now the Ingress Controller uses `ssl_reject_handshake on;`, which works for TLS v1.3.
 * Update NGINX Plus version to R24.
 * Update NGINX version to 1.21.0.
 
