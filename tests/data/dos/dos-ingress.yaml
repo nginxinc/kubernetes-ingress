@@ -8,7 +8,7 @@ metadata:
     appprotectdos.f5.com/app-protect-dos-policy: "test-namespace/dospolicy"
     appprotectdos.f5.com/app-protect-dos-security-log-enable: "True"
     appprotectdos.f5.com/app-protect-dos-security-log: "test-namespace/doslogconf"
-    appprotectdos.f5.com/app-protect-dos-security-log-destination: "syslog:server=<IP>:<PORT>"
+    appprotectdos.f5.com/app-protect-dos-security-log-destination: "syslog-svc.<NAMESPACE>.svc.cluster.local:<PORT>"
     appprotectdos.f5.com/app-protect-dos-monitor: "dos.example.com"
     appprotectdos.f5.com/app-protect-dos-name: "dos.example.com"
 spec:

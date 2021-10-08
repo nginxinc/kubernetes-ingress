@@ -343,7 +343,7 @@ func validateDosLogConf(logConf, logDest string, fieldPath *field.Path) field.Er
 		}
 	}
 
-	err := ValidateAppProtectLogDestination(logDest)
+	err := ValidateAppProtectDosLogDest(logDest)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("dosLogDest"), logDest, err.Error()))
 	}
@@ -353,7 +353,7 @@ func validateDosLogConf(logConf, logDest string, fieldPath *field.Path) field.Er
 func validateDosLogAccessLogDest(accessLogDest string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := ValidateAppProtectDosAccessLogDest(accessLogDest)
+	err := ValidateAppProtectDosLogDest(accessLogDest)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath, accessLogDest, err.Error()))
 	}

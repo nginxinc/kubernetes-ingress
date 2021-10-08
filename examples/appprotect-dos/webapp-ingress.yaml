@@ -8,7 +8,7 @@ metadata:
     appprotectdos.f5.com/app-protect-dos-policy: "default/dospolicy"
     appprotectdos.f5.com/app-protect-dos-security-log-enable: "True"
     appprotectdos.f5.com/app-protect-dos-security-log: "default/doslogconf"
-    appprotectdos.f5.com/app-protect-dos-security-log-destination: "syslog:server=127.0.0.1:5261"
+    appprotectdos.f5.com/app-protect-dos-security-log-destination: "127.0.0.1:5261"
     appprotectdos.f5.com/app-protect-dos-monitor: "webapp.example.com"
     appprotectdos.f5.com/app-protect-dos-name: "webapp.example.com"
 #    appprotectdos.f5.com/app-protect-dos-access-log-destination: "127.0.0.1:5561"

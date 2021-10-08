@@ -300,9 +300,9 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	tlsRedirectConfig := generateTLSRedirectConfig(vsEx.VirtualServer.Spec.TLS)
 
 	policyOpts := policyOptions{
-		tls:         sslConfig != nil,
-		secretRefs:  vsEx.SecretRefs,
-		apResources: apResources,
+		tls:          sslConfig != nil,
+		secretRefs:   vsEx.SecretRefs,
+		apResources:  apResources,
 		dosResources: dosResources,
 	}
 
@@ -668,9 +668,9 @@ type policyOwnerDetails struct {
 }
 
 type policyOptions struct {
-	tls         bool
-	secretRefs  map[string]*secrets.SecretReference
-	apResources *appProtectResourcesForVS
+	tls          bool
+	secretRefs   map[string]*secrets.SecretReference
+	apResources  *appProtectResourcesForVS
 	dosResources *appProtectDosResourcesForVS
 }
 
@@ -1071,14 +1071,16 @@ func (p *policiesCfg) addDosConfig(
 
 		if logConfPath, ok := dosResources.LogConfs[logConfKey]; ok {
 			logDest := generateString(dos.DosSecurityLog.DosLogDest, "stderr")
-			p.Dos.ApDosLogConf = fmt.Sprintf("%s %s", logConfPath, logDest)
+			p.Dos.ApDosLogConf = fmt.Sprintf("%s %s", logConfPath, generateDosLogDest(logDest))
 		} else {
 			res.addWarningf("Dos policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
 			res.isError = true
 		}
 	}
 
-	p.Dos.ApDosAccessLogDest = dos.DosAccessLogDest
+	if dos.DosAccessLogDest != "" {
+		p.Dos.ApDosAccessLogDest = generateDosLogDest(dos.DosAccessLogDest)
+	}
 	p.Dos.ApDosMonitor = dos.ApDosMonitor
 
 	return res

@@ -423,7 +423,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		}
 
 		if appProtectDosAccessLogDst, exists := ingEx.Ingress.Annotations["appprotectdos.f5.com/app-protect-dos-access-log-destination"]; exists {
-			cfgParams.AppProtectDosAccessLogDst = appProtectDosAccessLogDst
+			cfgParams.AppProtectDosAccessLogDst = generateDosLogDest(appProtectDosAccessLogDst)
 		}
 
 	}

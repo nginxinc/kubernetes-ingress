@@ -413,7 +413,7 @@ dos:
   securityLog:
     enable: true
     apLogConf: "default/doslogconf"
-    logDest: "syslog:server=127.0.0.1:514"
+    logDest: "127.0.0.1:514"
 ```
 
 > Note: The feature is implemented using the NGINX Plus [NGINX App Protect Dos Module](https://docs.nginx.com/nginx-app-protect-dos/configuration/).
@@ -427,7 +427,7 @@ dos:
 |``apDosPolicy`` | The [App Protect Dos policy](/nginx-ingress-controller/app-protect-dos/configuration/#app-protect-dos-policies/) of the dos. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.enable`` | Enables security log. | ``bool`` | No |
 |``dosSecurityLog.apDosLogConf`` | The [App Protect Dos log conf](/nginx-ingress-controller/app-protect-dos/configuration/#app-protect-dos-logs) resource. Accepts an optional namespace. | ``string`` | No |
-|``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address | localhost>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
+|``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address | localhost | dns-name>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
 {{% /table %}}
 
 > Note: If `apDosMonitor` field is used there will be log for the monitor requests in the log file, example for such log: 

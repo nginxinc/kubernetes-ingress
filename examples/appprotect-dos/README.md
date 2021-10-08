@@ -43,7 +43,7 @@ $ kubectl create -f webapp.yaml
     Update the `appprotectdos.f5.com/app-protect-dos-security-log-destination` annotation from `webapp-ingress.yaml` with the ClusterIP of the syslog service. For example, if the IP is `10.101.21.110`:
     ```yaml
     . . .
-    appprotect.f5.com/app-protect-security-log-destination: "syslog:server=10.101.21.110:514"
+    appprotect.f5.com/app-protect-security-log-destination: "10.101.21.110:514"
     ```
     Create the Ingress Resource:
     ```

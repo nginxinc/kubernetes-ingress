@@ -122,7 +122,7 @@ class TestDos:
         ]
 
         create_ingress_with_dos_annotations(
-            kube_apis, src_ing_yaml, test_namespace, "True", "True", "127.0.0.1:514"
+            kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
         )
 
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
@@ -160,7 +160,7 @@ class TestDos:
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
 
         create_ingress_with_dos_annotations(
-            kube_apis, src_ing_yaml, test_namespace, "True", "True", f"{syslog_ep}:514"
+            kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
         )
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 

@@ -12,6 +12,6 @@ spec:
     dosSecurityLog:
       enable: true
       apDosLogConf: "doslogconf"
-      dosLogDest: "syslog:server=127.0.0.1:514"
+      dosLogDest: "127.0.0.1:514"
 
 

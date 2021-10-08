@@ -1649,21 +1649,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-access-log-destination: Invalid value: "10.0.0.1:99999": Error parsing port: 99999 not a valid port number`),
-			},
-			msg: "invalid app-protect-dos-access-log-destination annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-access-log-destination": "1.0.0.999:514",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-access-log-destination: Invalid value: "1.0.0.999:514": Error parsing host: 1.0.0.999 is not a valid ip address`),
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-access-log-destination: Invalid value: "10.0.0.1:99999": invalid log destination: error parsing port: 99999 not a valid port number`),
 			},
 			msg: "invalid app-protect-dos-access-log-destination annotation",
 		},
@@ -1702,7 +1688,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log-destination: Invalid value: "Not Valid": Error parsing App Protect Log config: Destination must follow format: syslog:server=<ip-address | localhost>:<port> or stderr Log Destination did not follow format`),
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log-destination: Invalid value: "Not Valid": invalid log destination: Not Valid, must follow format: <ip-address | localhost | dns name>:<port> or stderr`),
 			},
 			msg: "invalid app-protect-dos-security-log-destination annotation",
 		},

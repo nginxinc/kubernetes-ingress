@@ -39,7 +39,7 @@ $ kubectl apply -f webapp.yaml
     ```yaml
     dos:
         ...
-        logDest: "syslog:server=10.101.21.110:514"
+        logDest: "10.101.21.110:514"
     ```
 
 1. Create the DOS policy
