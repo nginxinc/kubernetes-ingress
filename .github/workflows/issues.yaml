@@ -14,7 +14,7 @@ jobs:
         id: controller
         if: contains(github.event.issue.body, 'nginx.ingress.kubernetes.io')
         run: |
-          text="\n\n I\'ve parsed the text of your issue and it looks like you might be mixing up the two Ingress Controllers, please take a look at this [page](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-ingress-controllers) to see the differences between \`nginxinc/kubernetes-ingress\` (this repo) and \`kubernetes/ingress-nginx\`."
+          text="\n\n I\'ve parsed the text of your issue and it looks like you might be mixing up the two Ingress Controllers, please take a look at this [page](https://www.nginx.com/blog/guide-to-choosing-ingress-controller-part-4-nginx-ingress-controller-options#NGINX-vs.-Kubernetes-Community-Ingress-Controller) to see the differences between \`nginxinc/kubernetes-ingress\` (this repo) and \`kubernetes/ingress-nginx\`."
           echo "::set-output name=text::$text"
       - uses: actions/github-script@v5
         with:

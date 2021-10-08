@@ -7,7 +7,7 @@
 
 This repo provides an implementation of an Ingress controller for NGINX and NGINX Plus.
 
-**Note**: this project is different from the NGINX Ingress controller in [kubernetes/ingress-nginx](https://github.com/kubernetes/ingress-nginx) repo. See [this doc](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-ingress-controllers) to find out about the key differences.
+**Note**: this project is different from the NGINX Ingress controller in [kubernetes/ingress-nginx](https://github.com/kubernetes/ingress-nginx) repo. See [this blog](https://www.nginx.com/blog/guide-to-choosing-ingress-controller-part-4-nginx-ingress-controller-options#NGINX-vs.-Kubernetes-Community-Ingress-Controller) to find out about the key differences.
 
 ## What is the Ingress?
 
