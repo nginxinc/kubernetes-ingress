@@ -62,6 +62,7 @@ from suite.resources_utils import (
     create_configmap_from_yaml,
     create_secret_from_yaml,
     configure_rbac_with_ap,
+    configure_rbac_with_dos,
     create_items_from_yaml,
     delete_items_from_yaml,
 )
@@ -396,24 +397,19 @@ def cli_arguments(request) -> {}:
 
 
 @pytest.fixture(scope="class")
-def crd_ingress_controller(
-    cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, request
+def crds(
+        kube_apis, request
 ) -> None:
     """
     Create an Ingress Controller with CRD enabled.
 
-    :param cli_arguments: pytest context
     :param kube_apis: client apis
-    :param ingress_controller_prerequisites
-    :param ingress_controller_endpoint:
     :param request: pytest fixture to parametrize this method
         {type: complete|rbac-without-vs, extra_args: }
         'type' type of test pre-configuration
         'extra_args' list of IC cli arguments
     :return:
     """
-    namespace = ingress_controller_prerequisites.namespace
-    name = "nginx-ingress"
     vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml")
     vsr_crd_name = get_name_from_yaml(
         f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml"
@@ -427,9 +423,6 @@ def crd_ingress_controller(
     )
 
     try:
-        print("------------------------- Update ClusterRole -----------------------------------")
-        if request.param["type"] == "rbac-without-vs":
-            patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
         print("------------------------- Register CRDs -----------------------------------")
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
@@ -456,6 +449,51 @@ def crd_ingress_controller(
             gc_crd_name,
             f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_globalconfigurations.yaml",
         )
+    except ApiException as ex:
+        # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
+        print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
+        delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
+        pytest.fail("IC setup failed")
+
+    def fin():
+        delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
+        delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
+
+    request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="class")
+def crd_ingress_controller(
+    cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, request, crds
+) -> None:
+    """
+    Create an Ingress Controller with CRD enabled.
+
+    :param crds: the common ingress controller crds.
+    :param cli_arguments: pytest context
+    :param kube_apis: client apis
+    :param ingress_controller_prerequisites
+    :param ingress_controller_endpoint:
+    :param request: pytest fixture to parametrize this method
+        {type: complete|rbac-without-vs, extra_args: }
+        'type' type of test pre-configuration
+        'extra_args' list of IC cli arguments
+    :return:
+    """
+    namespace = ingress_controller_prerequisites.namespace
+    name = "nginx-ingress"
+
+    try:
+        print("------------------------- Update ClusterRole -----------------------------------")
+        if request.param["type"] == "rbac-without-vs":
+            patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
         print("------------------------- Create IC -----------------------------------")
         name = create_ingress_controller(
             kube_apis.v1,
@@ -471,12 +509,6 @@ def crd_ingress_controller(
         )
     except ApiException as ex:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
-        print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
-        delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")
@@ -486,11 +518,6 @@ def crd_ingress_controller(
         pytest.fail("IC setup failed")
 
     def fin():
-        delete_crd(kube_apis.api_extensions_v1, vs_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, vsr_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, pol_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, ts_crd_name)
-        delete_crd(kube_apis.api_extensions_v1, gc_crd_name)
         print("Restore the ClusterRole:")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         print("Remove the IC:")
@@ -503,10 +530,11 @@ def crd_ingress_controller(
 
 @pytest.fixture(scope="class")
 def crd_ingress_controller_with_ap(
-    cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, request
+    cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, request, crds
 ) -> None:
     """
     Create an Ingress Controller with AppProtect CRD enabled.
+    :param crds: the common IC crds.
     :param cli_arguments: pytest context
     :param kube_apis: client apis
     :param ingress_controller_prerequisites
@@ -534,16 +562,6 @@ def crd_ingress_controller_with_ap(
         ap_uds_crd_name = get_name_from_yaml(
             f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_apusersigs.yaml"
         )
-        vs_crd_name = get_name_from_yaml(
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml"
-        )
-        vsr_crd_name = get_name_from_yaml(
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml"
-        )
-        pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml")
-        ts_crd_name = get_name_from_yaml(
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml"
-        )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             ap_pol_crd_name,
@@ -558,26 +576,6 @@ def crd_ingress_controller_with_ap(
             kube_apis.api_extensions_v1,
             ap_uds_crd_name,
             f"{DEPLOYMENTS}/common/crds/appprotect.f5.com_apusersigs.yaml",
-        )
-        create_crd_from_yaml(
-            kube_apis.api_extensions_v1,
-            vs_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml",
-        )
-        create_crd_from_yaml(
-            kube_apis.api_extensions_v1,
-            vsr_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml",
-        )
-        create_crd_from_yaml(
-            kube_apis.api_extensions_v1,
-            pol_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml",
-        )
-        create_crd_from_yaml(
-            kube_apis.api_extensions_v1,
-            ts_crd_name,
-            f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml",
         )
 
         print("------------------------- Create IC -----------------------------------")
@@ -607,22 +605,6 @@ def crd_ingress_controller_with_ap(
             kube_apis.api_extensions_v1,
             ap_uds_crd_name,
         )
-        delete_crd(
-            kube_apis.api_extensions_v1,
-            vs_crd_name,
-        )
-        delete_crd(
-            kube_apis.api_extensions_v1,
-            vsr_crd_name,
-        )
-        delete_crd(
-            kube_apis.api_extensions_v1,
-            pol_crd_name,
-        )
-        delete_crd(
-            kube_apis.api_extensions_v1,
-            ts_crd_name,
-        )
         print("Remove ap-rbac")
         cleanup_rbac(kube_apis.rbac_v1, rbac)
         print("Remove the IC:")
@@ -644,21 +626,99 @@ def crd_ingress_controller_with_ap(
             kube_apis.api_extensions_v1,
             ap_uds_crd_name,
         )
+        print("Remove ap-rbac")
+        cleanup_rbac(kube_apis.rbac_v1, rbac)
+        print("Remove the IC:")
+        delete_ingress_controller(
+            kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
+        )
+
+    request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="class")
+def crd_ingress_controller_with_dos(
+        cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, request, crds
+) -> None:
+    """
+    Create an Ingress Controller with DOS CRDs enabled.
+    :param crds: the common IC crds.
+    :param cli_arguments: pytest context
+    :param kube_apis: client apis
+    :param ingress_controller_prerequisites
+    :param ingress_controller_endpoint:
+    :param request: pytest fixture to parametrize this method
+        {extra_args: }
+        'extra_args' list of IC arguments
+    :return:
+    """
+    namespace = ingress_controller_prerequisites.namespace
+    name = "nginx-ingress"
+
+    try:
+        print(
+            "--------------------Create roles and bindings for AppProtect------------------------"
+        )
+        rbac = configure_rbac_with_dos(kube_apis.rbac_v1)
+
+        print("------------------------- Register AP CRD -----------------------------------")
+        dos_pol_crd_name = get_name_from_yaml(
+            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdospolicy.yaml"
+        )
+        dos_log_crd_name = get_name_from_yaml(
+            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdoslogconfs.yaml"
+        )
+        create_crd_from_yaml(
+            kube_apis.api_extensions_v1,
+            dos_pol_crd_name,
+            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdospolicy.yaml",
+        )
+        create_crd_from_yaml(
+            kube_apis.api_extensions_v1,
+            dos_log_crd_name,
+            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdoslogconfs.yaml",
+        )
+
+        print("------------------------- Create IC -----------------------------------")
+        name = create_ingress_controller(
+            kube_apis.v1,
+            kube_apis.apps_v1_api,
+            cli_arguments,
+            namespace,
+            request.param.get("extra_args", None),
+        )
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+    except Exception as ex:
+        print(f"Failed to complete CRD IC fixture: {ex}\nClean up the cluster as much as possible.")
         delete_crd(
             kube_apis.api_extensions_v1,
-            vs_crd_name,
+            dos_pol_crd_name,
         )
         delete_crd(
             kube_apis.api_extensions_v1,
-            vsr_crd_name,
+            dos_log_crd_name,
+        )
+        print("Remove ap-rbac")
+        cleanup_rbac(kube_apis.rbac_v1, rbac)
+        print("Remove the IC:")
+        delete_ingress_controller(
+            kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
+        )
+        pytest.fail("IC setup failed")
+
+    def fin():
+        print("--------------Cleanup----------------")
+        delete_crd(
+            kube_apis.api_extensions_v1,
+            dos_pol_crd_name,
         )
         delete_crd(
             kube_apis.api_extensions_v1,
-            pol_crd_name,
-        )
-        delete_crd(
-            kube_apis.api_extensions_v1,
-            ts_crd_name,
+            dos_log_crd_name,
         )
         print("Remove ap-rbac")
         cleanup_rbac(kube_apis.rbac_v1, rbac)
