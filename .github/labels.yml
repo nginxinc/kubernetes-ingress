@@ -28,6 +28,9 @@
 - color: c5def5
   description: Gathering information
   name: in_review
+- color: fbca04
+  description: Don't auto-update PR
+  name: no-autoupdate
 - color: db754c
   description: An issue that proposes a feature request
   name: proposal
@@ -40,9 +43,9 @@
 - color: 8E7888
   description: Pull requests/issues with no activity
   name: stale
+- color: C2E0C6
+  description: Waiting for author's response
+  name: waiting for response
 - color: ffffff
   description: An issue that does not need to be fixed
   name: wontfix
-- color: fbca04
-  description: Don't auto-update PR
-  name: no-autoupdate

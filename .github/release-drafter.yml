@@ -75,7 +75,7 @@ template: |
 
   ## Upgrade
 
-  - For NGINX, use the v$RESOLVED_VERSION image from our DockerHub: `nginx/nginx-ingress:$RESOLVED_VERSION`, `nginx/nginx-ingress:$RESOLVED_VERSION-alpine` or `nginx/nginx-ingress:$RESOLVED_VERSION-ubi`
+  - For NGINX, use the v$RESOLVED_VERSION image from our DockerHub: `nginx/nginx-ingress:$RESOLVED_VERSION`, `nginx/nginx-ingress:$RESOLVED_VERSION-alpine`, `nginx/nginx-ingress:$RESOLVED_VERSION-ubi` or `nginx/nginx-ingress:$RESOLVED_VERSION-ot`
   - For NGINX Plus, please build your own image using the v$RESOLVED_VERSION source code.
   - For Helm, use version HELM_VERSION_REPLACE_ME! of the chart.
 
