@@ -61,7 +61,8 @@ type ConfigParams struct {
 	AppProtectDosMonitor                   string
 	AppProtectDosName                      string
 	AppProtectDosAccessLogDst              string
-	MainAppProtectDosLogFormat             string
+	MainAppProtectDosLogFormat             []string
+	MainAppProtectDosLogFormatEscaping     string
 	AppProtectDosMaxDaemon             	   uint64
 	AppProtectDosMemory                    uint64
 	AppProtectDosMaxWorkers            	   uint64
@@ -179,7 +180,6 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 		MainKeepaliveRequests:           100,
 		VariablesHashBucketSize:         256,
 		VariablesHashMaxSize:            1024,
-		MainAppProtectDosLogFormat:      ", vs_name_al=$app_protect_dos_vs_name, ip=$remote_addr, tls_fp=$app_protect_dos_tls_fp, outcome=$app_protect_dos_outcome, reason=$app_protect_dos_outcome_reason, policy_name=$app_protect_dos_policy_name, dos_version=$app_protect_dos_version, ip_tls=$remote_addr:$app_protect_dos_tls_fp, ",
 		AppProtectDosMaxDaemon:      	 0,
 		AppProtectDosMemory:         	 0,
 		AppProtectDosMaxWorkers: 	 	 0,

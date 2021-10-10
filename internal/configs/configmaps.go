@@ -510,9 +510,20 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			}
 		}
 
-	    if appProtectDosLogFormat, exists := cfgm.Data["app-protect-dos-log-format"]; exists {
-            cfgParams.MainAppProtectDosLogFormat = appProtectDosLogFormat
-        }
+		if appProtectDosLogFormat, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "app-protect-dos-log-format", cfgm, "\n"); exists {
+			if err != nil {
+				glog.Error(err)
+			} else {
+				cfgParams.MainAppProtectDosLogFormat = appProtectDosLogFormat
+			}
+		}
+	
+		if appProtectDosLogFormatEscaping, exists := cfgm.Data["app-protect-dos-log-format-escaping"]; exists {
+			appProtectDosLogFormatEscaping = strings.TrimSpace(appProtectDosLogFormatEscaping)
+			if appProtectDosLogFormatEscaping != "" {
+				cfgParams.MainAppProtectDosLogFormatEscaping = appProtectDosLogFormatEscaping
+			}
+		}
 
 		if appProtectDosMaxDaemon, exists, err := GetMapKeyAsUint64(cfgm.Data, "app-protect-dos-install-max-daemons", cfgm, true); exists {
 			if err != nil {
@@ -601,6 +612,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		AppProtectCPUThresholds:            config.MainAppProtectCPUThresholds,
 		AppProtectPhysicalMemoryThresholds: config.MainAppProtectPhysicalMemoryThresholds,
 		AppProtectDosLogFormat:             config.MainAppProtectDosLogFormat,
+		AppProtectDosLogFormatEscaping:     config.MainAppProtectDosLogFormatEscaping,
 		InternalRouteServer:                staticCfgParams.EnableInternalRoutes,
 		InternalRouteServerName:            staticCfgParams.PodName,
 		LatencyMetrics:                     staticCfgParams.EnableLatencyMetrics,
