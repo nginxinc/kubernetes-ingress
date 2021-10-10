@@ -1025,7 +1025,7 @@ func (p *policiesCfg) addWAFConfig(
 }
 
 func (p *policiesCfg) addDosConfig(
-	Dos *conf_v1.Dos,
+	dos *conf_v1.Dos,
 	polKey string,
 	polNamespace string,
 	dosResources *appProtectDosResourcesForVS,
@@ -1036,16 +1036,16 @@ func (p *policiesCfg) addDosConfig(
 		return res
 	}
 
-	if Dos.Enable {
+	if dos.Enable {
 		p.Dos = &version2.Dos{Enable: "on"}
 	} else {
 		p.Dos = &version2.Dos{Enable: "off"}
 	}
 
-	p.Dos.Name = Dos.Name
+	p.Dos.Name = dos.Name
 
-	if Dos.ApDosPolicy != "" {
-		apPolKey := Dos.ApDosPolicy
+	if dos.ApDosPolicy != "" {
+		apPolKey := dos.ApDosPolicy
 		hasNamepace := strings.Contains(apPolKey, "/")
 		if !hasNamepace {
 			apPolKey = fmt.Sprintf("%v/%v", polNamespace, apPolKey)
@@ -1060,17 +1060,17 @@ func (p *policiesCfg) addDosConfig(
 		}
 	}
 
-	if Dos.DosSecurityLog != nil {
+	if dos.DosSecurityLog != nil {
 		p.Dos.ApDosSecurityLogEnable = true
 
-		logConfKey := Dos.DosSecurityLog.ApDosLogConf
+		logConfKey := dos.DosSecurityLog.ApDosLogConf
 		hasNamepace := strings.Contains(logConfKey, "/")
 		if !hasNamepace {
 			logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
 		}
 
 		if logConfPath, ok := dosResources.LogConfs[logConfKey]; ok {
-			logDest := generateString(Dos.DosSecurityLog.DosLogDest, "stderr")
+			logDest := generateString(dos.DosSecurityLog.DosLogDest, "stderr")
 			p.Dos.ApDosLogConf = fmt.Sprintf("%s %s", logConfPath, logDest)
 		} else {
 			res.addWarningf("Dos policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
@@ -1078,8 +1078,8 @@ func (p *policiesCfg) addDosConfig(
 		}
 	}
 
-	p.Dos.ApDosAccessLogDest = Dos.DosAccessLogDest
-	p.Dos.ApDosMonitor = Dos.ApDosMonitor
+	p.Dos.ApDosAccessLogDest = dos.DosAccessLogDest
+	p.Dos.ApDosMonitor = dos.ApDosMonitor
 
 	return res
 }
