@@ -435,6 +435,42 @@ def create_ap_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, 
     return dep["metadata"]["name"]
 
 
+def create_dos_logconf_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
+    """
+    Create a logconf for Dos, based on yaml file.
+    :param custom_objects: CustomObjectsApi
+    :param yaml_manifest: an absolute path to file
+    :param namespace:
+    :return: str
+    """
+    print("Create DOS logconf:")
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    custom_objects.create_namespaced_custom_object(
+        "appprotectdos.f5.com", "v1beta1", namespace, "apdoslogconfs", dep
+    )
+    print(f"DOS logconf created with name '{dep['metadata']['name']}'")
+    return dep["metadata"]["name"]
+
+
+def create_dos_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
+    """
+    Create a policy for Dos based on yaml file.
+    :param custom_objects: CustomObjectsApi
+    :param yaml_manifest: an absolute path to file
+    :param namespace:
+    :return: str
+    """
+    print("Create Dos Policy:")
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    custom_objects.create_namespaced_custom_object(
+        "appprotectdos.f5.com", "v1beta1", namespace, "apdospolicies", dep
+    )
+    print(f"DOS Policy created with name '{dep['metadata']['name']}'")
+    return dep["metadata"]["name"]
+
+
 def create_ap_usersig_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
     """
     Create a UserSig for AppProtect based on yaml file.
@@ -542,6 +578,53 @@ def delete_ap_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
     )
     time.sleep(3)
     print(f"AP policy was removed with name: {name}")
+
+
+def delete_dos_logconf(custom_objects: CustomObjectsApi, name, namespace) -> None:
+    """
+    Delete a Dos logconf.
+    :param custom_objects: CustomObjectsApi
+    :param namespace: namespace
+    :param name:
+    :return:
+    """
+    print(f"Delete DOS logconf: {name}")
+    custom_objects.delete_namespaced_custom_object(
+        "appprotectdos.f5.com", "v1beta1", namespace, "apdoslogconfs", name
+    )
+    ensure_item_removal(
+        custom_objects.get_namespaced_custom_object,
+        "appprotectdos.f5.com",
+        "v1beta1",
+        namespace,
+        "apdoslogconfs",
+        name,
+    )
+    print(f"DOS logconf was removed with name: {name}")
+
+
+def delete_dos_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
+    """
+    Delete a Dos policy.
+    :param custom_objects: CustomObjectsApi
+    :param namespace: namespace
+    :param name:
+    :return:
+    """
+    print(f"Delete a DOS policy: {name}")
+    custom_objects.delete_namespaced_custom_object(
+        "appprotectdos.f5.com", "v1beta1", namespace, "apdospolicies", name
+    )
+    ensure_item_removal(
+        custom_objects.get_namespaced_custom_object,
+        "appprotectdos.f5.com",
+        "v1beta1",
+        namespace,
+        "apdospolicies",
+        name,
+    )
+    time.sleep(3)
+    print(f"DOS policy was removed with name: {name}")
 
 
 def delete_virtual_server(custom_objects: CustomObjectsApi, name, namespace) -> None:
