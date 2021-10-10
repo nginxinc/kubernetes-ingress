@@ -1273,7 +1273,7 @@ func TestValidateDos(t *testing.T) {
 		},
 		{
 			dos: &v1.Dos{
-				Enable:   true,
+				Enable:      true,
 				ApDosPolicy: "ns1/dos-pol",
 			},
 			msg: "cross ns reference",
@@ -1282,7 +1282,7 @@ func TestValidateDos(t *testing.T) {
 			dos: &v1.Dos{
 				Enable: true,
 				DosSecurityLog: &v1.DosSecurityLog{
-					Enable:  true,
+					Enable:     true,
 					DosLogDest: "syslog:server=8.7.7.7:517",
 				},
 			},
@@ -1290,14 +1290,14 @@ func TestValidateDos(t *testing.T) {
 		},
 		{
 			dos: &v1.Dos{
-				Enable: true,
+				Enable:           true,
 				DosAccessLogDest: "8.7.7.7:517",
 			},
 			msg: "access log dest",
 		},
 		{
 			dos: &v1.Dos{
-				Enable: true,
+				Enable:       true,
 				ApDosMonitor: "example.com",
 			},
 			msg: "valid url for monitor",
@@ -1305,7 +1305,7 @@ func TestValidateDos(t *testing.T) {
 		{
 			dos: &v1.Dos{
 				Enable: true,
-				Name: "example.com",
+				Name:   "example.com",
 			},
 			msg: "valid name",
 		},
@@ -1326,7 +1326,7 @@ func TestValidateDosInvalid(t *testing.T) {
 	}{
 		{
 			dos: &v1.Dos{
-				Enable:   true,
+				Enable:      true,
 				ApDosPolicy: "ns1/ap-pol/ns2",
 			},
 			msg: "invalid apDosPolicy format",
@@ -1335,7 +1335,7 @@ func TestValidateDosInvalid(t *testing.T) {
 			dos: &v1.Dos{
 				Enable: true,
 				DosSecurityLog: &v1.DosSecurityLog{
-					Enable:  true,
+					Enable:     true,
 					DosLogDest: "stdout",
 				},
 			},
@@ -1345,7 +1345,7 @@ func TestValidateDosInvalid(t *testing.T) {
 			dos: &v1.Dos{
 				Enable: true,
 				DosSecurityLog: &v1.DosSecurityLog{
-					Enable:    true,
+					Enable:       true,
 					ApDosLogConf: "ns1/log-conf/ns2",
 				},
 			},
@@ -1353,29 +1353,29 @@ func TestValidateDosInvalid(t *testing.T) {
 		},
 		{
 			dos: &v1.Dos{
-				Enable: true,
+				Enable:           true,
 				DosAccessLogDest: "fdd8.7.7.7:517",
 			},
 			msg: "invalid access log dest",
 		},
 		{
 			dos: &v1.Dos{
-				Enable: true,
+				Enable:           true,
 				DosAccessLogDest: "8.7.7.7:999999",
 			},
 			msg: "invalid access log dest",
 		},
 		{
 			dos: &v1.Dos{
-				Enable: true,
+				Enable:       true,
 				ApDosMonitor: "example.com/%",
 			},
-			msg: "invalid access log dest",
+			msg: "invalid dos monitor",
 		},
 		{
 			dos: &v1.Dos{
 				Enable: true,
-				Name: "long_name123456789012345678901234567890123456789012345678901234567890",
+				Name:   "long_name123456789012345678901234567890123456789012345678901234567890",
 			},
 			msg: "invalid name - long",
 		},
