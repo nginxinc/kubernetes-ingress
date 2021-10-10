@@ -88,13 +88,14 @@ ARG NGINX_PLUS_VERSION
 RUN mkdir -p /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/ && chmod 777 /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
-    --mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-    set -x \
-    && apt-get update \
-    && apt-get -y install lsb-release ca-certificates \
-    && printf "deb https://pkgs.nginx.com/app-protect-dos/debian `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-app-protect-dos.list \
-    && apt-get update \
-    && apt-get -y install app-protect-dos \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	set -x \
+	&& apt-get update \
+	&& apt-get -y install lsb-release ca-certificates \
+	&& printf "deb https://pkgs.nginx.com/app-protect-dos/debian `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+	&& apt-get update \
+	&& apt-get -y install app-protect-dos \
+	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect-dos.list
 
 ############################################# Base image for Debian with NGINX, App Protect and App Protect Dos #############################################
@@ -106,13 +107,14 @@ ARG NGINX_PLUS_VERSION
 RUN mkdir -p /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/ && chmod 777 /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
-    --mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-    set -x \
-    && apt-get update \
-    && apt-get -y install lsb-release ca-certificates \
-    && printf "deb https://pkgs.nginx.com/app-protect-dos/debian `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-app-protect-dos.list \
-    && apt-get update \
-    && apt-get -y install app-protect-dos \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	set -x \
+	&& apt-get update \
+	&& apt-get -y install lsb-release ca-certificates \
+	&& printf "deb https://pkgs.nginx.com/app-protect-dos/debian `lsb_release -cs` nginx-plus\n" | tee /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+	&& apt-get update \
+	&& apt-get -y install app-protect-dos \
+	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect-dos.list
 
 ############################################# Base image for UBI 8 #############################################
