@@ -149,11 +149,13 @@ func TestValidateAppProtectDosPolicy(t *testing.T) {
 
 func TestValidateAppProtectDosName(t *testing.T) {
 	// Positive test cases
-	posDstAntns := []string{"example.com"}
+	posDstAntns := []string{"example.com", "\\\"example.com\\\""}
 
 	// Negative test cases item, expected error message
 	negDstAntns := [][]string{
 		{"very very very very very very very very very very very very very very very very very very long Name", fmt.Sprintf(`App Protect Dos Name max length is %v`, MaxNameLength)},
+		{"example.com\\", "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'protected-object-one', regex used for validation is '([^\"\\\\]|\\\\.)*')"},
+		{"\"example.com\"", "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'protected-object-one', regex used for validation is '([^\"\\\\]|\\\\.)*')"},
 	}
 
 	for _, tCase := range posDstAntns {
@@ -182,6 +184,7 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 	// Negative test cases item, expected error message
 	negDstAntns := [][]string{
 		{"http://example.com/%", "App Protect Dos Monitor must have valid URL"},
+		{"http://example.com/\\", "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'http://www.example.com', regex used for validation is '([^\"\\\\]|\\\\.)*')"},
 	}
 
 	for _, tCase := range posDstAntns {

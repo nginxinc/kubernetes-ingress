@@ -532,9 +532,8 @@ func validateRateLimitKey(key string, fieldPath *field.Path, isPlus bool) field.
 		return append(allErrs, field.Required(fieldPath, ""))
 	}
 
-	if !escapedStringsFmtRegexp.MatchString(key) {
-		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, `Hello World! \n`, `\"${request_uri}\" is unavailable. \n`)
-		allErrs = append(allErrs, field.Invalid(fieldPath, key, msg))
+	if err := validateEscapedString(key, `Hello World! \n`, `\"${request_uri}\" is unavailable. \n`); err != nil {
+		allErrs = append(allErrs, field.Invalid(fieldPath, key, err.Error()))
 	}
 
 	allErrs = append(allErrs, validateStringWithVariables(key, fieldPath, rateLimitKeySpecialVariables, rateLimitKeyVariables, isPlus)...)

@@ -69,6 +69,10 @@ func ValidateAppProtectDosName(name string) error {
 		return fmt.Errorf("App Protect Dos Name max length is %v", MaxNameLength)
 	}
 
+	if err := validateEscapedString(name, "protected-object-one"); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -77,6 +81,10 @@ func ValidateAppProtectDosMonitor(monitor string) error {
 	_, err := url.Parse(monitor)
 	if err != nil {
 		return fmt.Errorf("App Protect Dos Monitor must have valid URL")
+	}
+
+	if err := validateEscapedString(monitor, "http://www.example.com"); err != nil {
+		return err
 	}
 
 	return nil
