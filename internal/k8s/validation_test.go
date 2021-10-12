@@ -1690,7 +1690,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
-			msg:                   "valid app-protect-dos-security-log-destination annotation",
+			msg:                   "valid app-protect-dos-security-log-destination annotation with stderr",
 		},
 		{
 			annotations: map[string]string{
@@ -1717,7 +1717,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Invalid value: "ns/ns/example": annotation value: ns/ns/example is not qualified name`),
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Invalid value: "ns/ns/example": must be a qualified name`),
 			},
 			msg: "invalid app-protect-dos-security-log annotation",
 		},
@@ -1731,7 +1731,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Forbidden: related annotation appprotectdos.f5.com/app-protect-dos-security-log-destination: must be exist`),
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Forbidden: related annotation appprotectdos.f5.com/app-protect-dos-security-log-destination must exist`),
 			},
 			msg: "invalid app-protect-dos-security-log annotation",
 		},
@@ -1758,7 +1758,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-policy: Invalid value: "ns/ns/example": annotation value: ns/ns/example is not qualified name`),
+				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-policy: Invalid value: "ns/ns/example": must be a qualified name`),
 			},
 			msg: "invalid app-protect-dos-policy annotation",
 		},

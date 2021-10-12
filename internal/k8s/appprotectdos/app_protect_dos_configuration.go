@@ -84,8 +84,8 @@ type Configuration interface {
 
 // ConfigurationImpl holds representations of App Protect Dos cluster resources
 type ConfigurationImpl struct {
-	DosPolicies map[string]*DosPolicyEx
-	DosLogConfs map[string]*DosLogConfEx
+	dosPolicies map[string]*DosPolicyEx
+	dosLogConfs map[string]*DosLogConfEx
 }
 
 // NewConfiguration creates a new App Protect Dos Configuration
@@ -96,8 +96,8 @@ func NewConfiguration() Configuration {
 // newConfigurationImpl creates a new App Protect Dos ConfigurationImpl
 func newConfigurationImpl() *ConfigurationImpl {
 	return &ConfigurationImpl{
-		DosPolicies: make(map[string]*DosPolicyEx),
-		DosLogConfs: make(map[string]*DosLogConfEx),
+		dosPolicies: make(map[string]*DosPolicyEx),
+		dosLogConfs: make(map[string]*DosLogConfEx),
 	}
 }
 
@@ -148,11 +148,11 @@ func (ci *ConfigurationImpl) AddOrUpdatePolicy(policyObj *unstructured.Unstructu
 	resNsName := appprotect_common.GetNsName(policyObj)
 	policy, err := createAppProtectDosPolicyEx(policyObj)
 	if err != nil {
-		ci.DosPolicies[resNsName] = policy
+		ci.dosPolicies[resNsName] = policy
 		return append(changes, Change{Op: Delete, Resource: policy}),
 			append(problems, Problem{Object: policyObj, Reason: "Rejected", Message: err.Error()})
 	}
-	ci.DosPolicies[resNsName] = policy
+	ci.dosPolicies[resNsName] = policy
 	return append(changes, Change{Op: AddOrUpdate, Resource: policy}), problems
 }
 
@@ -160,7 +160,7 @@ func (ci *ConfigurationImpl) AddOrUpdatePolicy(policyObj *unstructured.Unstructu
 func (ci *ConfigurationImpl) AddOrUpdateLogConf(logconfObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
 	resNsName := appprotect_common.GetNsName(logconfObj)
 	logConf, err := createAppProtectDosLogConfEx(logconfObj)
-	ci.DosLogConfs[resNsName] = logConf
+	ci.dosLogConfs[resNsName] = logConf
 	if err != nil {
 		return append(changes, Change{Op: Delete, Resource: logConf}),
 			append(problems, Problem{Object: logconfObj, Reason: "Rejected", Message: err.Error()})
@@ -172,7 +172,7 @@ func (ci *ConfigurationImpl) AddOrUpdateLogConf(logconfObj *unstructured.Unstruc
 func (ci *ConfigurationImpl) GetAppResource(kind, key string) (*unstructured.Unstructured, error) {
 	switch kind {
 	case DosPolicyGVK.Kind:
-		if obj, ok := ci.DosPolicies[key]; ok {
+		if obj, ok := ci.dosPolicies[key]; ok {
 			if obj.IsValid {
 				return obj.Obj, nil
 			}
@@ -180,7 +180,7 @@ func (ci *ConfigurationImpl) GetAppResource(kind, key string) (*unstructured.Uns
 		}
 		return nil, fmt.Errorf("App Protect Dos Policy %s not found", key)
 	case DosLogConfGVK.Kind:
-		if obj, ok := ci.DosLogConfs[key]; ok {
+		if obj, ok := ci.dosLogConfs[key]; ok {
 			if obj.IsValid {
 				return obj.Obj, nil
 			}
@@ -193,9 +193,9 @@ func (ci *ConfigurationImpl) GetAppResource(kind, key string) (*unstructured.Uns
 
 // DeletePolicy deletes an App Protect Policy from App Protect Dos Configuration
 func (ci *ConfigurationImpl) DeletePolicy(key string) (changes []Change, problems []Problem) {
-	if _, has := ci.DosPolicies[key]; has {
-		change := Change{Op: Delete, Resource: ci.DosPolicies[key]}
-		delete(ci.DosPolicies, key)
+	if _, has := ci.dosPolicies[key]; has {
+		change := Change{Op: Delete, Resource: ci.dosPolicies[key]}
+		delete(ci.dosPolicies, key)
 		return append(changes, change), problems
 	}
 	return changes, problems
@@ -203,9 +203,9 @@ func (ci *ConfigurationImpl) DeletePolicy(key string) (changes []Change, problem
 
 // DeleteLogConf deletes an App Protect Dos Log Configuration from App Protect Dos Configuration
 func (ci *ConfigurationImpl) DeleteLogConf(key string) (changes []Change, problems []Problem) {
-	if _, has := ci.DosLogConfs[key]; has {
-		change := Change{Op: Delete, Resource: ci.DosLogConfs[key]}
-		delete(ci.DosLogConfs, key)
+	if _, has := ci.dosLogConfs[key]; has {
+		change := Change{Op: Delete, Resource: ci.dosLogConfs[key]}
+		delete(ci.dosLogConfs, key)
 		return append(changes, change), problems
 	}
 	return changes, problems
@@ -213,15 +213,15 @@ func (ci *ConfigurationImpl) DeleteLogConf(key string) (changes []Change, proble
 
 // FakeConfiguration holds representations of fake App Protect Dos cluster resources
 type FakeConfiguration struct {
-	DosPolicies map[string]*DosPolicyEx
-	DosLogConfs map[string]*DosLogConfEx
+	dosPolicies map[string]*DosPolicyEx
+	dosLogConfs map[string]*DosLogConfEx
 }
 
 // NewFakeConfiguration creates a new App Protect Dos Configuration
 func NewFakeConfiguration() Configuration {
 	return &FakeConfiguration{
-		DosPolicies: make(map[string]*DosPolicyEx),
-		DosLogConfs: make(map[string]*DosLogConfEx),
+		dosPolicies: make(map[string]*DosPolicyEx),
+		dosLogConfs: make(map[string]*DosLogConfEx),
 	}
 }
 
@@ -232,7 +232,7 @@ func (fc *FakeConfiguration) AddOrUpdatePolicy(policyObj *unstructured.Unstructu
 		Obj:     policyObj,
 		IsValid: true,
 	}
-	fc.DosPolicies[resNsName] = policy
+	fc.dosPolicies[resNsName] = policy
 	return changes, problems
 }
 
@@ -243,7 +243,7 @@ func (fc *FakeConfiguration) AddOrUpdateLogConf(logConfObj *unstructured.Unstruc
 		Obj:     logConfObj,
 		IsValid: true,
 	}
-	fc.DosLogConfs[resNsName] = logConf
+	fc.dosLogConfs[resNsName] = logConf
 	return changes, problems
 }
 
@@ -251,12 +251,12 @@ func (fc *FakeConfiguration) AddOrUpdateLogConf(logConfObj *unstructured.Unstruc
 func (fc *FakeConfiguration) GetAppResource(kind, key string) (*unstructured.Unstructured, error) {
 	switch kind {
 	case DosPolicyGVK.Kind:
-		if obj, ok := fc.DosPolicies[key]; ok {
+		if obj, ok := fc.dosPolicies[key]; ok {
 			return obj.Obj, nil
 		}
 		return nil, fmt.Errorf("App Protect Dos Policy %s not found", key)
 	case DosLogConfGVK.Kind:
-		if obj, ok := fc.DosLogConfs[key]; ok {
+		if obj, ok := fc.dosLogConfs[key]; ok {
 			return obj.Obj, nil
 		}
 		return nil, fmt.Errorf("App Protect Dos LogConf %s not found", key)

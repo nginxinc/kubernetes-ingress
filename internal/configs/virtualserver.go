@@ -630,7 +630,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			OIDC:                      vsc.oidcPolCfg.oidc,
 			WAF:                       policiesCfg.WAF,
-			Bados:                     policiesCfg.Bados,
+			Dos:                       policiesCfg.Dos,
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
 			VSNamespace:               vsEx.VirtualServer.Namespace,
 			VSName:                    vsEx.VirtualServer.Name,
@@ -652,7 +652,7 @@ type policiesCfg struct {
 	EgressMTLS      *version2.EgressMTLS
 	OIDC            bool
 	WAF             *version2.WAF
-	Bados           *version2.Bados
+	Dos             *version2.Dos
 	ErrorReturn     *version2.Return
 }
 
@@ -1024,62 +1024,62 @@ func (p *policiesCfg) addWAFConfig(
 	return res
 }
 
-func (p *policiesCfg) addBadosConfig(
-	Bados *conf_v1.Bados,
+func (p *policiesCfg) addDosConfig(
+	dos *conf_v1.Dos,
 	polKey string,
 	polNamespace string,
 	dosResources *appProtectDosResourcesForVS,
 ) *validationResults {
 	res := newValidationResults()
-	if p.Bados != nil {
-		res.addWarningf("Multiple Bados policies in the same context is not valid. Bados policy %s will be ignored", polKey)
+	if p.Dos != nil {
+		res.addWarningf("Multiple Dos policies in the same context is not valid. Dos policy %s will be ignored", polKey)
 		return res
 	}
 
-	if Bados.Enable {
-		p.Bados = &version2.Bados{Enable: "on"}
+	if dos.Enable {
+		p.Dos = &version2.Dos{Enable: "on"}
 	} else {
-		p.Bados = &version2.Bados{Enable: "off"}
+		p.Dos = &version2.Dos{Enable: "off"}
 	}
 
-    p.Bados.Name = Bados.Name
+	p.Dos.Name = dos.Name
 
-	if Bados.ApDosPolicy != "" {
-		apPolKey := Bados.ApDosPolicy
+	if dos.ApDosPolicy != "" {
+		apPolKey := dos.ApDosPolicy
 		hasNamepace := strings.Contains(apPolKey, "/")
 		if !hasNamepace {
 			apPolKey = fmt.Sprintf("%v/%v", polNamespace, apPolKey)
 		}
 
 		if apPolPath, exists := dosResources.Policies[apPolKey]; exists {
-			p.Bados.ApDosPolicy = apPolPath
+			p.Dos.ApDosPolicy = apPolPath
 		} else {
-			res.addWarningf("Bados policy %s references an invalid or non-existing App Protect Dos policy %s", polKey, apPolKey)
+			res.addWarningf("Dos policy %s references an invalid or non-existing App Protect Dos policy %s", polKey, apPolKey)
 			res.isError = true
 			return res
 		}
 	}
 
-	if Bados.DosSecurityLog != nil {
-		p.Bados.ApDosSecurityLogEnable = true
+	if dos.DosSecurityLog != nil {
+		p.Dos.ApDosSecurityLogEnable = true
 
-		logConfKey := Bados.DosSecurityLog.ApDosLogConf
+		logConfKey := dos.DosSecurityLog.ApDosLogConf
 		hasNamepace := strings.Contains(logConfKey, "/")
 		if !hasNamepace {
 			logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
 		}
 
 		if logConfPath, ok := dosResources.LogConfs[logConfKey]; ok {
-			logDest := generateString(Bados.DosSecurityLog.DosLogDest, "stderr")
-			p.Bados.ApDosLogConf = fmt.Sprintf("%s %s", logConfPath, logDest)
+			logDest := generateString(dos.DosSecurityLog.DosLogDest, "stderr")
+			p.Dos.ApDosLogConf = fmt.Sprintf("%s %s", logConfPath, logDest)
 		} else {
-			res.addWarningf("Bados policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
+			res.addWarningf("Dos policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
 			res.isError = true
 		}
 	}
 
-    p.Bados.ApDosAccessLogDest = Bados.DosAccessLogDest
-    p.Bados.ApDosMonitor = Bados.ApDosMonitor
+	p.Dos.ApDosAccessLogDest = dos.DosAccessLogDest
+	p.Dos.ApDosMonitor = dos.ApDosMonitor
 
 	return res
 }
@@ -1132,8 +1132,8 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 				res = config.addOIDCConfig(pol.Spec.OIDC, key, polNamespace, policyOpts.secretRefs, vsc.oidcPolCfg)
 			case pol.Spec.WAF != nil:
 				res = config.addWAFConfig(pol.Spec.WAF, key, polNamespace, policyOpts.apResources)
-			case pol.Spec.Bados != nil:
-				res = config.addBadosConfig(pol.Spec.Bados, key, polNamespace, policyOpts.dosResources)
+			case pol.Spec.Dos != nil:
+				res = config.addDosConfig(pol.Spec.Dos, key, polNamespace, policyOpts.dosResources)
 			default:
 				res = newValidationResults()
 			}
@@ -1214,7 +1214,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.EgressMTLS = cfg.EgressMTLS
 	location.OIDC = cfg.OIDC
 	location.WAF = cfg.WAF
-	location.Bados = cfg.Bados
+	location.Dos = cfg.Dos
 	location.PoliciesErrorReturn = cfg.ErrorReturn
 }
 

@@ -193,7 +193,7 @@ server {
         {{ end }}
     {{ end }}
 
-    {{- with $s.Bados }}
+    {{- with $s.Dos }}
     app_protect_dos_enable {{ .Enable }};
         {{- if .Name }}
     app_protect_dos_name "{{ .Name }}";
@@ -357,7 +357,7 @@ server {
             {{ end }}
         {{ end }}
 
-        {{- with $l.Bados }}
+        {{- with $l.Dos }}
         app_protect_dos_enable {{ .Enable }};
 
             {{- if .Name }}

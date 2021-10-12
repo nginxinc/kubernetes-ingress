@@ -127,8 +127,3 @@ deps: ## Add missing and remove unused modules, verify deps and dowload them to 
 .PHONY: clean-cache
 clean-cache: ## Clean go cache
 	@go clean -modcache
-
-.PHONY: app-protect-dos-arb
-app-protect-dos-arb: build ## Create Docker image for app-protect-dos-arb
-	docker build --no-cache -f build/app-protect-dos/Dockerfile --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key --tag $(PREFIX)/app-protect-dos-arb .
-

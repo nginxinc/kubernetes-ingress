@@ -1289,8 +1289,8 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 				name := impl.Obj.GetName()
 				resources := lbc.configuration.FindResourcesForAppProtectDosPolicyAnnotation(namespace, name)
 
-				for _, badosPol := range getBadosPoliciesForAppProtectDosPolicy(lbc.getAllPolicies(), namespace+"/"+name) {
-					resources = append(resources, lbc.configuration.FindResourcesForPolicy(badosPol.Namespace, badosPol.Name)...)
+				for _, dosPol := range getDosPoliciesForAppProtectDosPolicy(lbc.getAllPolicies(), namespace+"/"+name) {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(dosPol.Namespace, dosPol.Name)...)
 				}
 
 				resourceExes := lbc.createExtendedResources(resources)
@@ -1304,8 +1304,8 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 				name := impl.Obj.GetName()
 				resources := lbc.configuration.FindResourcesForAppProtectDosLogConfAnnotation(namespace, name)
 
-				for _, badosPol := range getBadosPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name) {
-					resources = append(resources, lbc.configuration.FindResourcesForPolicy(badosPol.Namespace, badosPol.Name)...)
+				for _, dosPol := range getDosPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name) {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(dosPol.Namespace, dosPol.Name)...)
 				}
 
 				resourceExes := lbc.createExtendedResources(resources)
@@ -1323,8 +1323,8 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 				name := impl.Obj.GetName()
 				resources := lbc.configuration.FindResourcesForAppProtectDosPolicyAnnotation(namespace, name)
 
-				for _, badosPol := range getBadosPoliciesForAppProtectDosPolicy(lbc.getAllPolicies(), namespace+"/"+name) {
-					resources = append(resources, lbc.configuration.FindResourcesForPolicy(badosPol.Namespace, badosPol.Name)...)
+				for _, dosPol := range getDosPoliciesForAppProtectDosPolicy(lbc.getAllPolicies(), namespace+"/"+name) {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(dosPol.Namespace, dosPol.Name)...)
 				}
 
 				resourceExes := lbc.createExtendedResources(resources)
@@ -1337,13 +1337,13 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 				name := impl.Obj.GetName()
 				resources := lbc.configuration.FindResourcesForAppProtectDosLogConfAnnotation(namespace, name)
 
-				for _, wafPol := range getBadosPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name) {
-					resources = append(resources, lbc.configuration.FindResourcesForPolicy(wafPol.Namespace, wafPol.Name)...)
+				for _, dosPol := range getDosPoliciesForAppProtectLogConf(lbc.getAllPolicies(), namespace+"/"+name) {
+					resources = append(resources, lbc.configuration.FindResourcesForPolicy(dosPol.Namespace, dosPol.Name)...)
 				}
 
 				resourceExes := lbc.createExtendedResources(resources)
 
-				warnings, deleteErr := lbc.configurator.DeleteAppProtectLogConf(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
+				warnings, deleteErr := lbc.configurator.DeleteAppProtectDosLogConf(impl.Obj, resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 
 				lbc.updateResourcesStatusAndEvents(resources, warnings, deleteErr)
 			}
@@ -2463,7 +2463,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		glog.Warningf("Error getting App Protect resource for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
 
-	err = lbc.addBadosPolicyRefs(virtualServerEx.ApDosPolRefs, virtualServerEx.DosLogConfRefs, policies)
+	err = lbc.addDosPolicyRefs(virtualServerEx.ApDosPolRefs, virtualServerEx.DosLogConfRefs, policies)
 	if err != nil {
 		glog.Warningf("Error getting App Protect Dos resource for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 	}
@@ -2540,9 +2540,9 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 			glog.Warningf("Error getting WAF policies for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 		}
 
-		err = lbc.addBadosPolicyRefs(virtualServerEx.ApDosPolRefs, virtualServerEx.DosLogConfRefs, vsRoutePolicies)
+		err = lbc.addDosPolicyRefs(virtualServerEx.ApDosPolRefs, virtualServerEx.DosLogConfRefs, vsRoutePolicies)
 		if err != nil {
-			glog.Warningf("Error getting Bados policies for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
+			glog.Warningf("Error getting Dos policies for VirtualServer %v/%v: %v", virtualServer.Namespace, virtualServer.Name, err)
 		}
 
 		err = lbc.addOIDCSecretRefs(virtualServerEx.SecretRefs, vsRoutePolicies)
@@ -2579,9 +2579,9 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 				glog.Warningf("Error getting WAF policies for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
 
-			err = lbc.addBadosPolicyRefs(virtualServerEx.ApDosPolRefs, virtualServerEx.DosLogConfRefs, vsrSubroutePolicies)
+			err = lbc.addDosPolicyRefs(virtualServerEx.ApDosPolRefs, virtualServerEx.DosLogConfRefs, vsrSubroutePolicies)
 			if err != nil {
-				glog.Warningf("Error getting Bados policies for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
+				glog.Warningf("Error getting Dos policies for VirtualServerRoute %v/%v: %v", vsr.Namespace, vsr.Name, err)
 			}
 		}
 
@@ -2833,38 +2833,38 @@ func (lbc *LoadBalancerController) addWAFPolicyRefs(
 	return nil
 }
 
-// addBadosPolicyRefs ensures the app protect dos resources that are referenced in policies exist.
-func (lbc *LoadBalancerController) addBadosPolicyRefs(
+// addDosPolicyRefs ensures the app protect dos resources that are referenced in policies exist.
+func (lbc *LoadBalancerController) addDosPolicyRefs(
 	apDosPolRef, logConfRef map[string]*unstructured.Unstructured,
 	policies []*conf_v1.Policy,
 ) error {
 	for _, pol := range policies {
-		if pol.Spec.Bados == nil {
+		if pol.Spec.Dos == nil {
 			continue
 		}
 
-		if pol.Spec.Bados.ApDosPolicy != "" {
-			apDosPolKey := pol.Spec.Bados.ApDosPolicy
-			if !strings.Contains(pol.Spec.Bados.ApDosPolicy, "/") {
+		if pol.Spec.Dos.ApDosPolicy != "" {
+			apDosPolKey := pol.Spec.Dos.ApDosPolicy
+			if !strings.Contains(pol.Spec.Dos.ApDosPolicy, "/") {
 				apDosPolKey = fmt.Sprintf("%v/%v", pol.Namespace, apDosPolKey)
 			}
 
 			apDosPolicy, err := lbc.appProtectDosConfiguration.GetAppResource(appprotectdos.DosPolicyGVK.Kind, apDosPolKey)
 			if err != nil {
-				return fmt.Errorf("Bados policy %v is invalid: %w", apDosPolKey, err)
+				return fmt.Errorf("Dos policy %v is invalid: %w", apDosPolKey, err)
 			}
 			apDosPolRef[apDosPolKey] = apDosPolicy
 		}
 
-		if pol.Spec.Bados.DosSecurityLog != nil && pol.Spec.Bados.DosSecurityLog.ApDosLogConf != "" {
-			logConfKey := pol.Spec.Bados.DosSecurityLog.ApDosLogConf
-			if !strings.Contains(pol.Spec.Bados.DosSecurityLog.ApDosLogConf, "/") {
+		if pol.Spec.Dos.DosSecurityLog != nil && pol.Spec.Dos.DosSecurityLog.ApDosLogConf != "" {
+			logConfKey := pol.Spec.Dos.DosSecurityLog.ApDosLogConf
+			if !strings.Contains(pol.Spec.Dos.DosSecurityLog.ApDosLogConf, "/") {
 				logConfKey = fmt.Sprintf("%v/%v", pol.Namespace, logConfKey)
 			}
 
 			logConf, err := lbc.appProtectDosConfiguration.GetAppResource(appprotectdos.DosLogConfGVK.Kind, logConfKey)
 			if err != nil {
-				return fmt.Errorf("Bados policy %v is invalid: %w", logConfKey, err)
+				return fmt.Errorf("Dos policy %v is invalid: %w", logConfKey, err)
 			}
 			logConfRef[logConfKey] = logConf
 		}
@@ -2921,11 +2921,11 @@ func getWAFPoliciesForAppProtectLogConf(pols []*conf_v1.Policy, key string) []*c
 	return policies
 }
 
-func getBadosPoliciesForAppProtectDosPolicy(pols []*conf_v1.Policy, key string) []*conf_v1.Policy {
+func getDosPoliciesForAppProtectDosPolicy(pols []*conf_v1.Policy, key string) []*conf_v1.Policy {
 	var policies []*conf_v1.Policy
 
 	for _, pol := range pols {
-		if pol.Spec.Bados != nil && isMatchingResourceRef(pol.Namespace, pol.Spec.Bados.ApDosPolicy, key) {
+		if pol.Spec.Dos != nil && isMatchingResourceRef(pol.Namespace, pol.Spec.Dos.ApDosPolicy, key) {
 			policies = append(policies, pol)
 		}
 	}
@@ -2933,11 +2933,11 @@ func getBadosPoliciesForAppProtectDosPolicy(pols []*conf_v1.Policy, key string) 
 	return policies
 }
 
-func getBadosPoliciesForAppProtectLogConf(pols []*conf_v1.Policy, key string) []*conf_v1.Policy {
+func getDosPoliciesForAppProtectLogConf(pols []*conf_v1.Policy, key string) []*conf_v1.Policy {
 	var policies []*conf_v1.Policy
 
 	for _, pol := range pols {
-		if pol.Spec.Bados != nil && pol.Spec.Bados.DosSecurityLog != nil && isMatchingResourceRef(pol.Namespace, pol.Spec.Bados.DosSecurityLog.ApDosLogConf, key) {
+		if pol.Spec.Dos != nil && pol.Spec.Dos.DosSecurityLog != nil && isMatchingResourceRef(pol.Namespace, pol.Spec.Dos.DosSecurityLog.ApDosLogConf, key) {
 			policies = append(policies, pol)
 		}
 	}

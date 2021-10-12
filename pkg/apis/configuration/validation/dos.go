@@ -20,7 +20,7 @@ var appProtectDosLogConfRequiredFields = [][]string{
 	{"spec", "filter"},
 }
 
-const MaxNameLength = 64
+const MaxNameLength = 63
 
 // ValidateAppProtectDosLogConf validates LogConfiguration resource
 func ValidateAppProtectDosLogConf(logConf *unstructured.Unstructured) error {

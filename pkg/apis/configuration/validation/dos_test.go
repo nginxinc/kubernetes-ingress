@@ -3,7 +3,7 @@ package validation
 import (
 	"strings"
 	"testing"
-
+	"fmt"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
@@ -145,7 +145,7 @@ func TestValidateAppProtectDosName(t *testing.T) {
 
 	// Negative test cases item, expected error message
 	negDstAntns := [][]string{
-		{"very very very very very very very very very very very very very very very very very very long Name", "App Protect Dos Name max length is 64"},
+		{"very very very very very very very very very very very very very very very very very very long Name", fmt.Sprintf(`App Protect Dos Name max length is %v`, MaxNameLength)},
 	}
 
 	for _, tCase := range posDstAntns {

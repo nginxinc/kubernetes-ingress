@@ -205,7 +205,8 @@ type MainConfig struct {
 	AppProtectCPUThresholds            string
 	AppProtectPhysicalMemoryThresholds string
 	AppProtectDosLoadModule            bool
-	AppProtectDosLogFormat             string
+	AppProtectDosLogFormat             []string
+	AppProtectDosLogFormatEscaping	   string
 	InternalRouteServer                bool
 	InternalRouteServerName            string
 	LatencyMetrics                     bool

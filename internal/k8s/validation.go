@@ -414,7 +414,7 @@ func validateExistAnnotation(name string) annotationValidationFunc {
 		allErrs := field.ErrorList{}
 		_, exists := context.annotations[name]
 		if !exists {
-			return append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s: must be exist", name)))
+			return append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s must exist", name)))
 		}
 		return allErrs
 	}
@@ -426,7 +426,7 @@ func validateQualifiedName(context *annotationValidationContext) field.ErrorList
 	err := validation.IsQualifiedName(context.value)
 
 	if err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, fmt.Sprintf("annotation value: %v is not qualified name", context.value)))
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a qualified name" ))
 	}
 
 	return allErrs

@@ -65,8 +65,9 @@ server {
 	set $resource_namespace "{{$.Ingress.Namespace}}";
 
 	{{- if $server.AppProtectEnable}}
-	app_protect_enable {{$server.AppProtectEnable}};{{- end}}
+	app_protect_enable {{$server.AppProtectEnable}};
 	{{if $server.AppProtectPolicy}}app_protect_policy_file {{$server.AppProtectPolicy}};{{end}}
+	{{- end}}
 	{{- if $server.AppProtectLogEnable}}
 	app_protect_security_log_enable {{$server.AppProtectLogEnable}};
 	{{range $AppProtectLogConf := $server.AppProtectLogConfs}}app_protect_security_log {{$AppProtectLogConf}};
@@ -87,7 +88,7 @@ server {
 	{{- end}}
 	{{if $server.AppProtectDosMonitor}}app_protect_dos_monitor "{{$server.AppProtectDosMonitor}}";{{end}}
 	{{if $server.AppProtectDosName}}app_protect_dos_name "{{$server.AppProtectDosName}}";{{end}}
-    {{- end}}
+	{{- end}}
 
 	{{if not $server.GRPCOnly}}
 	{{range $proxyHideHeader := $server.ProxyHideHeaders}}

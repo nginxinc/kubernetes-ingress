@@ -54,8 +54,8 @@ spec:
                       type: array
                       items:
                         type: string
-                bados:
-                  description: 'Bados defines an Bados policy. policy status: preview'
+                dos:
+                  description: 'Dos defines an Dos policy. policy status: preview'
                   type: object
                   properties:
                     apDosMonitor:
@@ -65,7 +65,7 @@ spec:
                     dosAccessLogDest:
                       type: string
                     dosSecurityLog:
-                      description: DosSecurityLog defines the security log of a Bados policy.
+                      description: DosSecurityLog defines the security log of a Dos policy.
                       type: object
                       properties:
                         apDosLogConf:

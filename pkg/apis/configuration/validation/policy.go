@@ -99,27 +99,27 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 		fieldCount++
 	}
 
-	if spec.Bados != nil {
+	if spec.Dos != nil {
 		if !enablePreviewPolicies {
-			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("bados"),
-				"bados is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("dos"),
+				"dos is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
 		}
 		if !isPlus {
-			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("bados"), "bados is only supported in NGINX Plus"))
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("dos"), "dos is only supported in NGINX Plus"))
 		}
 		if !enableAppProtectDos {
-			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("bados"),
-				"App Protect dos must be enabled via cli argument -enable-appprotect-dos to use bados policy"))
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("dos"),
+				"App Protect dos must be enabled via cli argument -enable-appprotect-dos to use dos policy"))
 		}
 
-		allErrs = append(allErrs, validateBados(spec.Bados, fieldPath.Child("bados"))...)
+		allErrs = append(allErrs, validateDos(spec.Dos, fieldPath.Child("dos"))...)
 		fieldCount++
 	}
 
 	if fieldCount != 1 {
 		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`"
 		if isPlus {
-			msg = fmt.Sprint(msg, ", `jwt`, `oidc`, `waf`, `bados`")
+			msg = fmt.Sprint(msg, ", `jwt`, `oidc`, `waf`, `dos`")
 		}
 		allErrs = append(allErrs, field.Invalid(fieldPath, "", msg))
 	}
@@ -300,21 +300,35 @@ func validateLogConf(logConf, logDest string, fieldPath *field.Path) field.Error
 	return allErrs
 }
 
-func validateBados(bados *v1.Bados, fieldPath *field.Path) field.ErrorList {
+func validateDos(dos *v1.Dos, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if bados.ApDosPolicy != "" {
-		for _, msg := range validation.IsQualifiedName(bados.ApDosPolicy) {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apDosPolicy"), bados.ApDosPolicy, msg))
+	if dos.ApDosPolicy != "" {
+		for _, msg := range validation.IsQualifiedName(dos.ApDosPolicy) {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apDosPolicy"), dos.ApDosPolicy, msg))
 		}
 	}
 
-	if bados.DosAccessLogDest != "" {
-		allErrs = append(allErrs, validateDosLogAccessLogDest(bados.DosAccessLogDest, fieldPath.Child("dosAccessLogDest"))...)
+	if dos.Name != "" {
+		err := ValidateAppProtectDosName(dos.Name)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("Name"), dos.Name, err.Error()))
+		}
 	}
 
-	if bados.DosSecurityLog != nil {
-		allErrs = append(allErrs, validateDosLogConf(bados.DosSecurityLog.ApDosLogConf, bados.DosSecurityLog.DosLogDest, fieldPath.Child("dosSecurityLog"))...)
+	if dos.ApDosMonitor != "" {
+		err := ValidateAppProtectDosMonitor(dos.ApDosMonitor)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fieldPath.Child("ApDosMonitor"), dos.ApDosMonitor, err.Error()))
+		}
+	}
+
+	if dos.DosAccessLogDest != "" {
+		allErrs = append(allErrs, validateDosLogAccessLogDest(dos.DosAccessLogDest, fieldPath.Child("dosAccessLogDest"))...)
+	}
+
+	if dos.DosSecurityLog != nil {
+		allErrs = append(allErrs, validateDosLogConf(dos.DosSecurityLog.ApDosLogConf, dos.DosSecurityLog.DosLogDest, fieldPath.Child("dosSecurityLog"))...)
 	}
 
 	return allErrs

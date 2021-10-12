@@ -219,6 +219,10 @@ The table below summarizes the available annotations.
 |``appprotectdos.f5.com/app-protect-dos-security-log`` | N/A | The App Protect Dos log configuration for the Ingress Resource. Format is ``namespace/name``. If no namespace is specified, the same namespace as the Ingress Resource is used. If not specified the  default is used. | N/A | [Example for App Protect Dos](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/appprotect-dos). | 
 |``appprotectdos.f5.com/app-protect-dos-security-log-destination`` | N/A | The destination of the security log. Both log configurations and destinations list (see above) must be of equal length. Configs and destinations are paired by the list indices. | ``syslog:server=localhost:514`` | [Example for App Protect](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/appprotect-dos). | 
 |``appprotectdos.f5.com/app-protect-dos-monitor`` | N/A | This is the URL which is going to be monitored in order to know the VS stress. | N/A | [Example for App Protect Dos](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/appprotect-dos). | 
-|``appprotectdos.f5.com/app-protect-dos-name`` | N/A | This is the VS (protected object) name, it should be unique and is used to identify the VS in the logs. | N/A | [Example for App Protect Dos](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/appprotect-dos). | 
+|``appprotectdos.f5.com/app-protect-dos-name`` | N/A | This is the VS (protected object) name, it should be unique and is used to identify the VS in the logs. Max of 63 characters. | N/A | [Example for App Protect Dos](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/appprotect-dos). | 
 |``appprotectdos.f5.com/app-protect-dos-access-log-destination`` | N/A | Create access log with the log_dos format which must be added. (log_dos is described by config map option) | N/A | [Example for App Protect Dos](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/appprotect-dos). | 
 {{% /table %}} 
+
+
+**Note**: If `appprotectdos.f5.com/app-protect-dos-monitor` annotation is used there will be log for the monitor requests in the log file, example for such log: 
+`$ 127.0.0.1 - - [27/Aug/2021:01:24:51 +0000] "GET / HTTP/1.1" 301 170 "-" "-" "-"`

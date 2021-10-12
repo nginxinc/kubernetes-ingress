@@ -61,7 +61,8 @@ type ConfigParams struct {
 	AppProtectDosMonitor                   string
 	AppProtectDosName                      string
 	AppProtectDosAccessLogDst              string
-	MainAppProtectDosLogFormat             string
+	MainAppProtectDosLogFormat             []string
+	MainAppProtectDosLogFormatEscaping     string
 	AppProtectDosMaxDaemon             	   uint64
 	AppProtectDosMemory                    uint64
 	AppProtectDosMaxWorkers            	   uint64

@@ -9,8 +9,8 @@ arbitrator:
     ## The image repository of the Arbitrator.
     repository: docker-registry.nginx.com/nap-dos/app_protect_dos_arb
 
-    ## The tag of the Ingress controller image.
+    ## The tag of the Arbitrator image.
     tag: "latest"
 
-    ## The pull policy for the Ingress controller image.
+    ## The pull policy for the Arbitrator image.
     pullPolicy: IfNotPresent
