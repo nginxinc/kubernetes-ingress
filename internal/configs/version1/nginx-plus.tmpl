@@ -55,7 +55,7 @@ http {
     {{- end}}
 
     {{- if .AppProtectDosLoadModule}}
-        {{- if .AppProtectDosLogFormat}}
+    {{- if .AppProtectDosLogFormat}}
     log_format  log_dos {{if .AppProtectDosLogFormatEscaping}}escape={{ .AppProtectDosLogFormatEscaping }} {{end}}
                     {{range $i, $value := .AppProtectDosLogFormat -}}
                     {{with $value}}'{{if $i}} {{end}}{{$value}}'
@@ -65,7 +65,7 @@ http {
                         'outcome=$app_protect_dos_outcome, reason=$app_protect_dos_outcome_reason, '
                         'ip_tls=$remote_addr:$app_protect_dos_tls_fp, ';
 
-        {{- end}}
+    {{- end}}
     {{- end}}
 
     {{if .AccessLogOff}}
