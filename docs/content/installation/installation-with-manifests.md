@@ -22,7 +22,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     $ cd kubernetes-ingress/deployments
-    $ git checkout v2.0.1
+    $ git checkout v2.0.2
     ```
 
 ## 1. Configure RBAC

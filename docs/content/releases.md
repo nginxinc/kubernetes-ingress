@@ -6,6 +6,23 @@ doctypes: ["concept"]
 toc: true
 ---
 
+## NGINX Ingress Controller 2.0.2
+
+13 Oct 2021
+
+CHANGES:
+* Update NGINX App Protect version to 3.6.
+* Update NGINX Plus version to R25 in NAP enabled images.
+* [2074](https://github.com/nginxinc/kubernetes-ingress/pull/2074) Update JWT library to golang-jwt/jwt. 
+
+HELM CHART:
+* The version of the Helm chart is now 0.11.2.
+
+UPGRADE:
+* For NGINX, use the 2.0.2 image from our DockerHub: `nginx/nginx-ingress:2.0.2`, `nginx/nginx-ingress:2.0.2-alpine` or `nginx/nginx-ingress:2.0.2-ubi`
+* For NGINX Plus, please build your own image using the 2.0.2 source code.
+* For Helm, use version 0.11.2 of the chart.
+
 ## NGINX Ingress Controller 2.0.1
 
 07 Oct 2021
