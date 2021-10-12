@@ -176,13 +176,9 @@ func TestAddOrUpdateDosPolicy(t *testing.T) {
 	for _, test := range tests {
 		aPChans, aPProbs := apc.AddOrUpdatePolicy(test.policy)
 		if diff := cmp.Diff(test.expectedChanges, aPChans); diff != "" {
-			t.Errorf("test.expectedChanges: %q", test.expectedChanges)
-			t.Errorf("aPChans              : %q", aPChans)
 			t.Errorf("AddOrUpdatePolicy() %q changes returned unexpected result (-want +got):\n%s", test.msg, diff)
 		}
 		if diff := cmp.Diff(test.expectedProblems, aPProbs); diff != "" {
-			t.Errorf("test.expectedProblems: %v", test.expectedProblems)
-			t.Errorf("aPProbs              : %v", aPProbs)
 			t.Errorf("AddOrUpdatePolicy() %q problems returned unexpected result (-want +got):\n%s", test.msg, diff)
 		}
 	}
