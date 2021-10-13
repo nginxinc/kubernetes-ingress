@@ -209,13 +209,14 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
           target: goreleaser
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.platforms }}
           push: true
+          pull: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=v${{ needs.variables.outputs.kic-tag }}

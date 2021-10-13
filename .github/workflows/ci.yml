@@ -178,11 +178,11 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=debian
+          cache-to: type=gha,scope=debian,mode=max
           target: goreleaser
           tags: nginx-ingress:${{ github.sha }}
+          pull: true
           load: true
           build-args: BUILD_OS=debian
       - name: Deploy Kubernetes
@@ -322,9 +322,8 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
-          # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
           target: goreleaser
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
