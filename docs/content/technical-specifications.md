@@ -34,8 +34,7 @@ All images include NGINX 1.21.3.
 
 ### Images with NGINX Plus
 
-NGINX Plus images include NGINX Plus R25. 
-NGINX Plus images with NGINX App Protect will continue to use R24 until App Protect 3.6 is released.
+NGINX Plus images include NGINX Plus R25.
 The supported architecture is x86-64.
 
 NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Using the NGINX IC Plus JWT token in a Docker Config Secret](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [Pulling the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
