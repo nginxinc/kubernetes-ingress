@@ -12,7 +12,7 @@ The GlobalConfiguration resource allows you to define the global configuration p
 
 The resource supports configuring listeners for TCP and UDP load balancing. Listeners are required by [TransportServer resources](/nginx-ingress-controller/configuration/transportserver-resource).
 
-> **Feature Status**: The GlobalConfiguration resource is available as a preview feature: it is suitable for experimenting and testing; however, it must be used with caution in production environments. Additionally, while the feature is in preview, we might introduce some backward-incompatible changes to the resource specification in the next releases.
+> **Feature Status**: The GlobalConfiguration resource is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default.
 
 ## Prerequisites
 
@@ -134,3 +134,7 @@ Events:
   Warning  Rejected  6s    nginx-ingress-controller  GlobalConfiguration nginx-ingress/nginx-configuration is invalid and was rejected: spec.listeners: Duplicate value: "Duplicated port/protocol combination 53/UDP"
 ```
 Note how the events section includes a Warning event with the Rejected reason.
+
+## Footnotes
+
+[^1]: Capabilities labeled in preview status are fully supported.
