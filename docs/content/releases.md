@@ -20,7 +20,7 @@ HELM CHART:
 
 UPGRADE:
 * For NGINX, use the 2.0.2 image from our DockerHub.
-* For NGINX Plus, please build your own image using the 2.0.2 source code.
+* For NGINX Plus, use the 2.0.2 from the F5 Container registry or build your own image using the 2.0.2 source code.
 * For Helm, use version 0.11.2 of the chart.
 
 ## NGINX Ingress Controller 2.0.1
