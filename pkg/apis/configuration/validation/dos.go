@@ -2,7 +2,6 @@ package validation
 
 import (
 	"fmt"
-	"net"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -33,28 +32,34 @@ func ValidateAppProtectDosLogConf(logConf *unstructured.Unstructured) error {
 	return nil
 }
 
-var accessLog = regexp.MustCompile(`^(((\d{1,3}\.){3}\d{1,3}):\d{1,5})$`)
+var (
+	validDnsRegex       = regexp.MustCompile(`^([A-Za-z0-9][A-Za-z0-9-]{1,62}\.)([A-Za-z0-9-]{1,63}\.)*[A-Za-z]{2,6}:\d{1,5}$`)
+	validIpRegex        = regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}:\d{1,5}$`)
+	validLocalhostRegex = regexp.MustCompile(`^localhost:\d{1,5}$`)
+)
 
-// ValidateAppProtectDosAccessLogDest validates destination for access log configuration
-func ValidateAppProtectDosAccessLogDest(accessLogDest string) error {
-	errormsg := "Error parsing App Protect Dos Access Log Dest config: Destination must follow format: <ip-address>:<port>"
-	if !accessLog.MatchString(accessLogDest) {
-		return fmt.Errorf("%s Log Destination did not follow format", errormsg)
+// ValidateAppProtectDosLogDest validates destination for log configuration
+func ValidateAppProtectDosLogDest(dstAntn string) error {
+	if validIpRegex.MatchString(dstAntn) || validDnsRegex.MatchString(dstAntn) || validLocalhostRegex.MatchString(dstAntn) {
+		chunks := strings.Split(dstAntn, ":")
+		err := validatePort(chunks[1])
+		if err != nil {
+			return fmt.Errorf("invalid log destination: %w", err)
+		}
+		return nil
+	}
+	if dstAntn == "stderr" {
+		return nil
 	}
 
-	dstchunks := strings.Split(accessLogDest, ":")
+	return fmt.Errorf("invalid log destination: %s, must follow format: <ip-address | localhost | dns name>:<port> or stderr", dstAntn)
+}
 
-	// This error can be ignored since the regex check ensures this string will be parsable
-	port, _ := strconv.Atoi(dstchunks[1])
-
+func validatePort(value string) error {
+	port, _ := strconv.Atoi(value)
 	if port > 65535 || port < 1 {
-		return fmt.Errorf("Error parsing port: %v not a valid port number", port)
+		return fmt.Errorf("error parsing port: %v not a valid port number", port)
 	}
-
-	if net.ParseIP(dstchunks[0]) == nil {
-		return fmt.Errorf("Error parsing host: %v is not a valid ip address", dstchunks[0])
-	}
-
 	return nil
 }
 

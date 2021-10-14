@@ -7368,7 +7368,7 @@ func TestAddDosConfig(t *testing.T) {
 				DosSecurityLog: &conf_v1.DosSecurityLog{
 					Enable:       true,
 					ApDosLogConf: "logconf",
-					DosLogDest:   "syslog:server=127.0.0.1:514",
+					DosLogDest:   "127.0.0.1:514",
 				},
 			},
 			polKey:       "default/dos-policy",
@@ -7397,7 +7397,7 @@ func TestAddDosConfig(t *testing.T) {
 				DosSecurityLog: &conf_v1.DosSecurityLog{
 					Enable:       true,
 					ApDosLogConf: "default/logconf",
-					DosLogDest:   "syslog:server=127.0.0.1:514",
+					DosLogDest:   "127.0.0.1:514",
 				},
 			},
 			polKey:       "default/dos-policy",
@@ -7428,7 +7428,7 @@ func TestAddDosConfig(t *testing.T) {
 				ApDosPolicy: "default/policy",
 				DosSecurityLog: &conf_v1.DosSecurityLog{
 					Enable:     true,
-					DosLogDest: "syslog:server=127.0.0.1:514",
+					DosLogDest: "127.0.0.1:514",
 				},
 			},
 			polKey:       "default/dos-policy",
@@ -7460,7 +7460,7 @@ func TestAddDosConfig(t *testing.T) {
 				DosSecurityLog: &conf_v1.DosSecurityLog{
 					Enable:       true,
 					ApDosLogConf: "ns2/logconf",
-					DosLogDest:   "syslog:server=127.0.0.1:514",
+					DosLogDest:   "127.0.0.1:514",
 				},
 			},
 			polKey:       "default/dos-policy",

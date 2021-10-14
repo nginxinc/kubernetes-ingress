@@ -499,7 +499,7 @@ func validateAppProtectDosOnlyAnnotation(context *annotationValidationContext) f
 func validateAppProtectDosLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := api_validation.ValidateAppProtectLogDestination(context.value)
+	err := api_validation.ValidateAppProtectDosLogDest(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
@@ -535,7 +535,7 @@ func validateAppProtectDosMonitorAnnotation(context *annotationValidationContext
 func validateAppProtectDosAccessLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	err := api_validation.ValidateAppProtectDosAccessLogDest(context.value)
+	err := api_validation.ValidateAppProtectDosLogDest(context.value)
 
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))

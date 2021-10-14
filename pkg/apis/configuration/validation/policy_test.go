@@ -1283,7 +1283,7 @@ func TestValidateDos(t *testing.T) {
 				Enable: true,
 				DosSecurityLog: &v1.DosSecurityLog{
 					Enable:     true,
-					DosLogDest: "syslog:server=8.7.7.7:517",
+					DosLogDest: "8.7.7.7:517",
 				},
 			},
 			msg: "custom logdest",

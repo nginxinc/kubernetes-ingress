@@ -1301,7 +1301,7 @@ func (cnf *Configurator) updateApDosResources(ingEx *IngressEx) *appProtectDosRe
 		logConfFileName := appProtectDosLogConfFileNameFromUnstruct(ingEx.AppProtectDosLogConf)
 		logConfContent := generateApResourceFileContent(ingEx.AppProtectDosLogConf)
 		cnf.nginxManager.CreateAppProtectResourceFile(logConfFileName, logConfContent)
-		dosResources.AppProtectDosLogconfs = logConfFileName + " " + ingEx.AppProtectDosLogDst
+		dosResources.AppProtectDosLogconfs = logConfFileName + " " + generateDosLogDest(ingEx.AppProtectDosLogDst)
 	}
 
 	return &dosResources
@@ -1357,6 +1357,13 @@ func appProtectLogConfFileNameFromUnstruct(unst *unstructured.Unstructured) stri
 
 func appProtectUserSigFileNameFromUnstruct(unst *unstructured.Unstructured) string {
 	return fmt.Sprintf("%s%s_%s", appProtectUserSigFolder, unst.GetNamespace(), unst.GetName())
+}
+
+func generateDosLogDest(dest string) string {
+	if dest == "stderr" {
+		return dest
+	}
+	return "syslog:server=" + dest
 }
 
 func generateApResourceFileContent(apResource *unstructured.Unstructured) []byte {

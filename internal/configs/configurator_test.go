@@ -1358,7 +1358,7 @@ func TestUpdateApDosResources(t *testing.T) {
 				AppProtectDosLogDst:  appProtectDosLogDst,
 			},
 			expected: &appProtectDosResources{
-				AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/test-ns_test-name.json test-dst",
+				AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/test-ns_test-name.json syslog:server=test-dst",
 			},
 			msg: "app protect dos log conf",
 		},
@@ -1373,7 +1373,7 @@ func TestUpdateApDosResources(t *testing.T) {
 			},
 			expected: &appProtectDosResources{
 				AppProtectDosPolicy:   "/etc/nginx/dos/policies/test-ns_test-name.json",
-				AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/test-ns_test-name.json test-dst",
+				AppProtectDosLogconfs: "/etc/nginx/dos/logconfs/test-ns_test-name.json syslog:server=test-dst",
 			},
 			msg: "app protect dos policy and log conf",
 		},

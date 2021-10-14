@@ -84,7 +84,7 @@ server {
 	{{- if $server.AppProtectDosAccessLogDst}}
 	set $loggable '0';
 	# app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
-	access_log syslog:server={{ .AppProtectDosAccessLogDst }} log_dos if=$loggable;
+	access_log {{ .AppProtectDosAccessLogDst }} log_dos if=$loggable;
 	{{- end}}
 	{{if $server.AppProtectDosMonitor}}app_protect_dos_monitor "{{$server.AppProtectDosMonitor}}";{{end}}
 	{{if $server.AppProtectDosName}}app_protect_dos_name "{{$server.AppProtectDosName}}";{{end}}
