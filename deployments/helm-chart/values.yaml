@@ -114,6 +114,8 @@ controller:
   #   mountPath: /etc/nginx/conf.d/extra.conf
   #   subPath: extra.conf
 
+  initContainers: []
+
   ## The number of replicas of the Ingress controller deployment.
   replicaCount: 1
 

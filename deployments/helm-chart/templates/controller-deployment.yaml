@@ -155,3 +155,6 @@ spec:
           - -ready-status-port={{ .Values.controller.readyStatus.port }}
           - -enable-latency-metrics={{ .Values.controller.enableLatencyMetrics }}
 {{- end }}
+{{- if .Values.controller.initContainers }}
+      initContainers: {{ toYaml .Values.controller.initContainers | nindent 8 }}
+{{- end }}
