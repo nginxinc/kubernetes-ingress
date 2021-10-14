@@ -617,6 +617,8 @@ spec:
                         properties:
                           enable:
                             type: boolean
+                      type:
+                        type: string
                       use-cluster-ip:
                         type: boolean
             status:

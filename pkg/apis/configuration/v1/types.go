@@ -79,6 +79,7 @@ type Upstream struct {
 	SessionCookie            *SessionCookie    `json:"sessionCookie"`
 	UseClusterIP             bool              `json:"use-cluster-ip"`
 	NTLM                     bool              `json:"ntlm"`
+	Type                     string            `json:"type"`
 }
 
 // UpstreamBuffers defines Buffer Configuration for an Upstream.

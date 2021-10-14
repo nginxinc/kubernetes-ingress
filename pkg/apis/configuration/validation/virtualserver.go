@@ -281,6 +281,23 @@ func validateSessionCookie(sc *v1.SessionCookie, fieldPath *field.Path) field.Er
 	return allErrs
 }
 
+// validateUpstreamType validates that the protocol type of the upstream is of a supported protocol.
+// Current supported protocols are "http" and "grpc". If unset, it will default to "http".
+func validateUpstreamType(typeName string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if typeName == "" {
+		return allErrs
+	}
+
+	t := strings.ToLower(strings.TrimSpace((typeName)))
+	if t != "grpc" && t != "http" {
+		allErrs = append(allErrs, field.Invalid(fieldPath, typeName, "Invalid upstream type - must be one of `grpc` or `http`"))
+	}
+
+	return allErrs
+}
+
 func validateStatusMatch(s string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -435,6 +452,7 @@ func (vsv *VirtualServerValidator) validateUpstreams(upstreams []v1.Upstream, fi
 		allErrs = append(allErrs, validateSize(u.ProxyBufferSize, idxPath.Child("buffer-size"))...)
 		allErrs = append(allErrs, validateQueue(u.Queue, idxPath.Child("queue"))...)
 		allErrs = append(allErrs, validateSessionCookie(u.SessionCookie, idxPath.Child("sessionCookie"))...)
+		allErrs = append(allErrs, validateUpstreamType(u.Type, idxPath.Child("type"))...)
 
 		for _, msg := range validation.IsValidPortNum(int(u.Port)) {
 			allErrs = append(allErrs, field.Invalid(idxPath.Child("port"), u.Port, msg))

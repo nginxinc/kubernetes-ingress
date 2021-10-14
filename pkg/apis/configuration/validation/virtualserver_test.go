@@ -30,6 +30,7 @@ func TestValidateVirtualServer(t *testing.T) {
 					MaxFails:  createPointerFromInt(8),
 					MaxConns:  createPointerFromInt(16),
 					Keepalive: createPointerFromInt(32),
+					Type:      "grpc",
 				},
 				{
 					Name:    "second",
@@ -299,6 +300,7 @@ func TestValidateUpstreams(t *testing.T) {
 					ProxyNextUpstreamTimeout: "10s",
 					ProxyNextUpstreamTries:   5,
 					MaxConns:                 createPointerFromInt(16),
+					Type:                     "grpc",
 				},
 				{
 					Name:                     "upstream2",
@@ -308,6 +310,7 @@ func TestValidateUpstreams(t *testing.T) {
 					ProxyNextUpstream:        "error timeout",
 					ProxyNextUpstreamTimeout: "10s",
 					ProxyNextUpstreamTries:   5,
+					Type:                     "http",
 				},
 				{
 					Name:         "upstream3",
@@ -563,6 +566,21 @@ func TestValidateUpstreamsFails(t *testing.T) {
 				"upstream1": {},
 			},
 			msg: "invalid use of subselector with use-cluster-ip",
+		},
+		{
+			upstreams: []v1.Upstream{
+				{
+					Name:         "upstream1",
+					Service:      "test-1",
+					UseClusterIP: true,
+					Port:         80,
+					Type:         "unsupported",
+				},
+			},
+			expectedUpstreamNames: map[string]sets.Empty{
+				"upstream1": {},
+			},
+			msg: "Invalid upstream type - must be one of `grpc` or `http`",
 		},
 	}
 

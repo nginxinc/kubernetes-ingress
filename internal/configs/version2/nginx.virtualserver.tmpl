@@ -224,22 +224,28 @@ server {
             {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
         {{ end }}
 
-        {{ with $l.EgressMTLS }}
-            {{ if .Certificate }}
-        proxy_ssl_certificate {{ .Certificate }};
-        proxy_ssl_certificate_key {{ .CertificateKey }};
-            {{ end }}
-            {{ if .TrustedCert }}
-        proxy_ssl_trusted_certificate {{ .TrustedCert }};
+        {{ if or $l.ProxyPass $l.GRPCPass}}
+            {{ $proxyOrGRPC := "proxy" }}
+            {{ if $l.GRPCPass }}
+                {{ $proxyOrGRPC = "grpc" }}
             {{ end }}
 
-        proxy_ssl_verify {{ if .VerifyServer }}on{{else}}off{{end}};
-        proxy_ssl_verify_depth {{ .VerifyDepth }};
-        proxy_ssl_protocols {{ .Protocols }};
-        proxy_ssl_ciphers {{ .Ciphers }};
-        proxy_ssl_session_reuse {{ if .SessionReuse }}on{{else}}off{{end}};
-        proxy_ssl_server_name {{ if .ServerName }}on{{else}}off{{end}};
-        proxy_ssl_name {{ .SSLName }};
+        {{ with $l.EgressMTLS }}
+            {{ if .Certificate }}
+        {{ $proxyOrGRPC }}_ssl_certificate {{ .Certificate }};
+        {{ $proxyOrGRPC }}_ssl_certificate_key {{ .CertificateKey }};
+            {{ end }}
+            {{ if .TrustedCert }}
+        {{ $proxyOrGRPC }}_ssl_trusted_certificate {{ .TrustedCert }};
+            {{ end }}
+
+        {{ $proxyOrGRPC }}_ssl_verify {{ if .VerifyServer }}on{{else}}off{{end}};
+        {{ $proxyOrGRPC }}_ssl_verify_depth {{ .VerifyDepth }};
+        {{ $proxyOrGRPC }}_ssl_protocols {{ .Protocols }};
+        {{ $proxyOrGRPC }}_ssl_ciphers {{ .Ciphers }};
+        {{ $proxyOrGRPC }}_ssl_session_reuse {{ if .SessionReuse }}on{{else}}off{{end}};
+        {{ $proxyOrGRPC }}_ssl_server_name {{ if .ServerName }}on{{else}}off{{end}};
+        {{ $proxyOrGRPC }}_ssl_name {{ .SSLName }};
         {{ end }}
 
         {{ range $e := $l.ErrorPages }}
@@ -247,22 +253,21 @@ server {
         {{ end }}
 
         {{ if $l.ProxyInterceptErrors }}
-        proxy_intercept_errors on;
+        {{ $proxyOrGRPC }}_intercept_errors on;
         {{ end }}
 
         {{ if $l.InternalProxyPass }}
         proxy_pass {{ $l.InternalProxyPass }};
         {{ end }}
 
-        {{ if $l.ProxyPass }}
         set $default_connection_header {{ if $l.HasKeepalive }}""{{ else }}close{{ end }};
 
             {{ range $r := $l.Rewrites }}
         rewrite {{ $r }};
             {{ end }}
-        proxy_connect_timeout {{ $l.ProxyConnectTimeout }};
-        proxy_read_timeout {{ $l.ProxyReadTimeout }};
-        proxy_send_timeout {{ $l.ProxySendTimeout }};
+        {{ $proxyOrGRPC }}_connect_timeout {{ $l.ProxyConnectTimeout }};
+        {{ $proxyOrGRPC }}_read_timeout {{ $l.ProxyReadTimeout }};
+        {{ $proxyOrGRPC }}_send_timeout {{ $l.ProxySendTimeout }};
         client_max_body_size {{ $l.ClientMaxBodySize }};
 
             {{ if $l.ProxyMaxTempFileSize }}
@@ -274,36 +279,40 @@ server {
         proxy_buffers {{ $l.ProxyBuffers }};
             {{ end }}
             {{ if $l.ProxyBufferSize }}
-        proxy_buffer_size {{ $l.ProxyBufferSize }};
+        {{ $proxyOrGRPC }}_buffer_size {{ $l.ProxyBufferSize }};
             {{ end }}
         proxy_http_version 1.1;
 
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $vs_connection_header;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Port $server_port;
-        proxy_set_header X-Forwarded-Proto {{ with $s.TLSRedirect }}{{ .BasedOn }}{{ else }}$scheme{{ end }};
+        {{ $proxyOrGRPC }}_set_header X-Real-IP $remote_addr;
+        {{ $proxyOrGRPC }}_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        {{ $proxyOrGRPC }}_set_header X-Forwarded-Host $host;
+        {{ $proxyOrGRPC }}_set_header X-Forwarded-Port $server_port;
+        {{ $proxyOrGRPC }}_set_header X-Forwarded-Proto {{ with $s.TLSRedirect }}{{ .BasedOn }}{{ else }}$scheme{{ end }};
             {{ range $h := $l.ProxySetHeaders }}
-        proxy_set_header {{ $h.Name }} "{{ $h.Value }}";
+        {{ $proxyOrGRPC }}_set_header {{ $h.Name }} "{{ $h.Value }}";
             {{ end }}
             {{ range $h := $l.ProxyHideHeaders }}
-        proxy_hide_header {{ $h }};
+        {{ $proxyOrGRPC }}_hide_header {{ $h }};
             {{ end }}
             {{ range $h := $l.ProxyPassHeaders }}
-        proxy_pass_header {{ $h }};
+        {{ $proxyOrGRPC }}_pass_header {{ $h }};
             {{ end }}
             {{ with $l.ProxyIgnoreHeaders }}
-        proxy_ignore_headers {{ $l.ProxyIgnoreHeaders }};
+        {{ $proxyOrGRPC }}_ignore_headers {{ $l.ProxyIgnoreHeaders }};
             {{ end }}
             {{ range $h := $l.AddHeaders }}
         add_header {{ $h.Name }} "{{ $h.Value }}" {{ if $h.Always }}always{{ end }};
             {{ end }}
+            {{if $l.GRPCPass}}
+        grpc_pass {{ $l.GRPCPass }};
+            {{ else }}
         proxy_pass {{ $l.ProxyPass }}{{ $l.ProxyPassRewrite }};
-        proxy_next_upstream {{ $l.ProxyNextUpstream }};
-        proxy_next_upstream_timeout {{ $l.ProxyNextUpstreamTimeout }};
-        proxy_next_upstream_tries {{ $l.ProxyNextUpstreamTries }};
+            {{ end }}
+        {{ $proxyOrGRPC }}_next_upstream {{ $l.ProxyNextUpstream }};
+        {{ $proxyOrGRPC }}_next_upstream_timeout {{ $l.ProxyNextUpstreamTimeout }};
+        {{ $proxyOrGRPC }}_next_upstream_tries {{ $l.ProxyNextUpstreamTries }};
         proxy_pass_request_headers {{ if $l.ProxyPassRequestHeaders }}on{{ else }}off{{ end }};
         {{ end }}
     }

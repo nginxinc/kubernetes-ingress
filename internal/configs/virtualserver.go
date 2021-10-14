@@ -298,6 +298,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 
 	// generate upstreams for VirtualServer
 	for _, u := range vsEx.VirtualServer.Spec.Upstreams {
+
+		if (sslConfig == nil || !vsc.cfgParams.HTTP2) && isGRPC(u.Type) {
+			vsc.addWarningf(vsEx.VirtualServer, "gRPC will not be enabled for upstream %s. gRPC requires enabled HTTP/2 and TLS termination", u.Name)
+		}
+
 		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
 		upstreamNamespace := vsEx.VirtualServer.Namespace
 		endpoints := vsc.generateEndpointsForUpstream(vsEx.VirtualServer, upstreamNamespace, u, vsEx)
@@ -324,6 +329,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 	for _, vsr := range vsEx.VirtualServerRoutes {
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(vsEx.VirtualServer, vsr)
 		for _, u := range vsr.Spec.Upstreams {
+			if (sslConfig == nil || !vsc.cfgParams.HTTP2) && isGRPC(u.Type) {
+				vsc.addWarningf(vsr, "gRPC will not be enabled for upstream %s. gRPC requires enabled HTTP/2 and TLS termination", u.Name)
+			}
+
 			upstreamName := upstreamNamer.GetNameForUpstream(u.Name)
 			upstreamNamespace := vsr.Namespace
 			endpoints := vsc.generateEndpointsForUpstream(vsr, upstreamNamespace, u, vsEx)
@@ -1329,7 +1338,11 @@ func upstreamHasKeepalive(upstream conf_v1.Upstream, cfgParams *ConfigParams) bo
 	return cfgParams.Keepalive != 0
 }
 
-func generateRewrites(path string, proxy *conf_v1.ActionProxy, internal bool, originalPath string) []string {
+func generateRewrites(path string, proxy *conf_v1.ActionProxy, internal bool, originalPath string, grpcEnabled bool) []string {
+	if grpcEnabled && internal {
+		return []string{"rewrite ^ $request_uri break;"}
+	}
+
 	if proxy == nil || proxy.RewritePath == "" {
 		return nil
 	}
@@ -1389,6 +1402,23 @@ func generateProxyPassProtocol(enableTLS bool) string {
 		return "https"
 	}
 	return "http"
+}
+
+func generateGRPCPass(grpcEnabled bool, tlsEnabled bool, upstreamName string) string {
+	grpcPass := fmt.Sprintf("%v://%v", generateGRPCPassProtocol(tlsEnabled), upstreamName)
+
+	if !grpcEnabled {
+		return ""
+	}
+
+	return grpcPass
+}
+
+func generateGRPCPassProtocol(enableTLS bool) string {
+	if enableTLS {
+		return "grpcs"
+	}
+	return "grpc"
 }
 
 func generateString(s string, defaultS string) string {
@@ -1584,7 +1614,7 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 		ProxyIgnoreHeaders:       generateProxyIgnoreHeaders(proxy),
 		AddHeaders:               generateProxyAddHeaders(proxy),
 		ProxyPassRewrite:         generateProxyPassRewrite(path, proxy, internal),
-		Rewrites:                 generateRewrites(path, proxy, internal, originalPath),
+		Rewrites:                 generateRewrites(path, proxy, internal, originalPath, isGRPC(upstream.Type)),
 		HasKeepalive:             upstreamHasKeepalive(upstream, cfgParams),
 		ErrorPages:               generateErrorPages(errPageIndex, errorPages),
 		ProxySSLName:             proxySSLName,
@@ -1592,6 +1622,7 @@ func generateLocationForProxying(path string, upstreamName string, upstream conf
 		IsVSR:                    isVSR,
 		VSRName:                  vsrName,
 		VSRNamespace:             vsrNamespace,
+		GRPCPass:                 generateGRPCPass(isGRPC(upstream.Type), upstream.TLS.Enable, upstreamName),
 	}
 }
 
@@ -2222,4 +2253,8 @@ func generateProxySSLName(svcName, ns string) string {
 
 func isTLSEnabled(u conf_v1.Upstream, spiffeCerts bool) bool {
 	return u.TLS.Enable || spiffeCerts
+}
+
+func isGRPC(protocolType string) bool {
+	return (strings.ToLower(strings.TrimSpace((protocolType))) == "grpc")
 }
