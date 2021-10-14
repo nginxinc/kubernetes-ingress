@@ -33,23 +33,21 @@ $ kubectl create -f webapp.yaml
     ```
     $ kubectl create -f webapp-secret.yaml
     ```
-3. Create the App Protect Dos policy and log configuration:
+3. Create the App Protect Dos Protected Resource:
+    ```
+    $ kubectl create -f apdos-protected.yaml
+    ```
+4. Create the App Protect Dos policy and log configuration:
     ```
     $ kubectl create -f apdos-policy.yaml
     $ kubectl create -f apdos-logconf.yaml
     ```
-4. Create an Ingress Resource:
+5. Create an Ingress Resource:
 
-    Update the `appprotectdos.f5.com/app-protect-dos-security-log-destination` annotation from `webapp-ingress.yaml` with the ClusterIP of the syslog service. For example, if the IP is `10.101.21.110`:
-    ```yaml
-    . . .
-    appprotect.f5.com/app-protect-security-log-destination: "10.101.21.110:514"
-    ```
-    Create the Ingress Resource:
     ```
     $ kubectl create -f webapp-ingress.yaml
     ```
-    Note the App Protect Dos annotations in the Ingress resource. They enable DOS protection by configuring App Protect Dos with the policy and log configuration created in the previous step.
+    Note the App Protect Dos annotation in the Ingress resource. This enables DOS protection by specifying the DOS protected resource configuration that applies to this Ingress.
 
 ## 4. Test the Application
 

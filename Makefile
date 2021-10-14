@@ -40,7 +40,7 @@ update-codegen: ## Generate code
 
 .PHONY: update-crds
 update-crds: ## Update CRDs
-	go run sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 schemapatch:manifests=./deployments/common/crds/ paths=./pkg/apis/configuration/... output:dir=./deployments/common/crds
+	go run sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 schemapatch:manifests=./deployments/common/crds/ paths=./pkg/apis/.../... output:dir=./deployments/common/crds
 	@cp -Rp deployments/common/crds/ deployments/helm-chart/crds
 
 .PHONY: certificate-and-key

@@ -44,6 +44,8 @@ func (vsv *VirtualServerValidator) validateVirtualServerSpec(spec *v1.VirtualSer
 
 	allErrs = append(allErrs, vsv.validateVirtualServerRoutes(spec.Routes, fieldPath.Child("routes"), upstreamNames, namespace)...)
 
+	allErrs = append(allErrs, validateDos(spec.Dos, fieldPath.Child("dos"))...)
+
 	return allErrs
 }
 
@@ -110,6 +112,21 @@ func validateTLS(tls *v1.TLS, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateSecretName(tls.Secret, fieldPath.Child("secret"))...)
 
 	allErrs = append(allErrs, validateTLSRedirect(tls.Redirect, fieldPath.Child("redirect"))...)
+
+	return allErrs
+}
+
+func validateDos(dos string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if dos == "" {
+		// valid, dos is not required
+		return allErrs
+	}
+
+	for _, msg := range validation.IsQualifiedName(dos) {
+		allErrs = append(allErrs, field.Invalid(fieldPath, dos, msg))
+	}
 
 	return allErrs
 }

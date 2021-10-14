@@ -14,12 +14,12 @@ import (
 )
 
 // ValidatePolicy validates a Policy.
-func ValidatePolicy(policy *v1.Policy, isPlus, enablePreviewPolicies, enableAppProtect bool, enableAppProtectDos bool) error {
-	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enablePreviewPolicies, enableAppProtect, enableAppProtectDos)
+func ValidatePolicy(policy *v1.Policy, isPlus, enablePreviewPolicies, enableAppProtect bool) error {
+	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enablePreviewPolicies, enableAppProtect)
 	return allErrs.ToAggregate()
 }
 
-func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enablePreviewPolicies, enableAppProtect bool, enableAppProtectDos bool) field.ErrorList {
+func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enablePreviewPolicies, enableAppProtect bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -96,23 +96,6 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 		}
 
 		allErrs = append(allErrs, validateWAF(spec.WAF, fieldPath.Child("waf"))...)
-		fieldCount++
-	}
-
-	if spec.Dos != nil {
-		if !enablePreviewPolicies {
-			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("dos"),
-				"dos is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
-		}
-		if !isPlus {
-			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("dos"), "dos is only supported in NGINX Plus"))
-		}
-		if !enableAppProtectDos {
-			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("dos"),
-				"App Protect dos must be enabled via cli argument -enable-appprotect-dos to use dos policy"))
-		}
-
-		allErrs = append(allErrs, validateDos(spec.Dos, fieldPath.Child("dos"))...)
 		fieldCount++
 	}
 
@@ -296,66 +279,6 @@ func validateLogConf(logConf, logDest string, fieldPath *field.Path) field.Error
 	err := ValidateAppProtectLogDestination(logDest)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("logDest"), logDest, err.Error()))
-	}
-	return allErrs
-}
-
-func validateDos(dos *v1.Dos, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if dos.ApDosPolicy != "" {
-		for _, msg := range validation.IsQualifiedName(dos.ApDosPolicy) {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apDosPolicy"), dos.ApDosPolicy, msg))
-		}
-	}
-
-	if dos.Name != "" {
-		err := ValidateAppProtectDosName(dos.Name)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("Name"), dos.Name, err.Error()))
-		}
-	}
-
-	if dos.ApDosMonitor != "" {
-		err := ValidateAppProtectDosMonitor(dos.ApDosMonitor)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("ApDosMonitor"), dos.ApDosMonitor, err.Error()))
-		}
-	}
-
-	if dos.DosAccessLogDest != "" {
-		allErrs = append(allErrs, validateDosLogAccessLogDest(dos.DosAccessLogDest, fieldPath.Child("dosAccessLogDest"))...)
-	}
-
-	if dos.DosSecurityLog != nil {
-		allErrs = append(allErrs, validateDosLogConf(dos.DosSecurityLog.ApDosLogConf, dos.DosSecurityLog.DosLogDest, fieldPath.Child("dosSecurityLog"))...)
-	}
-
-	return allErrs
-}
-
-func validateDosLogConf(logConf, logDest string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	if logConf != "" {
-		for _, msg := range validation.IsQualifiedName(logConf) {
-			allErrs = append(allErrs, field.Invalid(fieldPath.Child("apDosLogConf"), logConf, msg))
-		}
-	}
-
-	err := ValidateAppProtectDosLogDest(logDest)
-	if err != nil {
-		allErrs = append(allErrs, field.Invalid(fieldPath.Child("dosLogDest"), logDest, err.Error()))
-	}
-	return allErrs
-}
-
-func validateDosLogAccessLogDest(accessLogDest string, fieldPath *field.Path) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	err := ValidateAppProtectDosLogDest(accessLogDest)
-	if err != nil {
-		allErrs = append(allErrs, field.Invalid(fieldPath, accessLogDest, err.Error()))
 	}
 	return allErrs
 }

@@ -2,18 +2,15 @@ package appprotectdos
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
-
+	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
-
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-)
-
-// reasons for invalidity
-const (
-	failedValidationErrorMsg = "Validation Failed"
 )
 
 var (
@@ -66,53 +63,289 @@ type Change struct {
 // Problem represents a problem with an App Protect Dos resource
 type Problem struct {
 	// Object is a configuration object.
-	Object *unstructured.Unstructured
+	Object runtime.Object
 	// Reason tells the reason. It matches the reason in the events of our configuration objects.
 	Reason string
 	// Message gives the details about the problem. It matches the message in the events of our configuration objects.
 	Message string
 }
 
-// Configuration configures App Protect Dos resources that the Ingress Controller uses.
-type Configuration interface {
-	AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem)
-	AddOrUpdateLogConf(logConfObj *unstructured.Unstructured) (changes []Change, problems []Problem)
-	GetAppResource(kind, key string) (*unstructured.Unstructured, error)
-	DeletePolicy(key string) (changes []Change, problems []Problem)
-	DeleteLogConf(key string) (changes []Change, problems []Problem)
-}
-
-// ConfigurationImpl holds representations of App Protect Dos cluster resources
-type ConfigurationImpl struct {
-	dosPolicies map[string]*DosPolicyEx
-	dosLogConfs map[string]*DosLogConfEx
+// Configuration holds representations of App Protect Dos cluster resources
+type Configuration struct {
+	dosPolicies          map[string]*DosPolicyEx
+	dosLogConfs          map[string]*DosLogConfEx
+	dosProtectedResource map[string]*DosProtectedResourceEx
+	isDosEnabled         bool
 }
 
 // NewConfiguration creates a new App Protect Dos Configuration
-func NewConfiguration() Configuration {
-	return newConfigurationImpl()
-}
-
-// newConfigurationImpl creates a new App Protect Dos ConfigurationImpl
-func newConfigurationImpl() *ConfigurationImpl {
-	return &ConfigurationImpl{
-		dosPolicies: make(map[string]*DosPolicyEx),
-		dosLogConfs: make(map[string]*DosLogConfEx),
+func NewConfiguration(isDosEnabled bool) *Configuration {
+	return &Configuration{
+		dosPolicies:          make(map[string]*DosPolicyEx),
+		dosLogConfs:          make(map[string]*DosLogConfEx),
+		dosProtectedResource: make(map[string]*DosProtectedResourceEx),
+		isDosEnabled:         isDosEnabled,
 	}
 }
 
-// DosPolicyEx represents an App Protect Dos policy cluster resource
+// DosProtectedResourceEx represents an DosProtectedResource cluster resource
+type DosProtectedResourceEx struct {
+	Obj      *v1beta1.DosProtectedResource
+	IsValid  bool
+	ErrorMsg string
+}
+
+// DosPolicyEx represents an DosPolicy cluster resource
 type DosPolicyEx struct {
 	Obj      *unstructured.Unstructured
 	IsValid  bool
 	ErrorMsg string
 }
 
+// DosLogConfEx represents an DosLogConf cluster resource
+type DosLogConfEx struct {
+	Obj      *unstructured.Unstructured
+	IsValid  bool
+	ErrorMsg string
+}
+
+// AddOrUpdatePolicy adds or updates an App Protect Dos Policy to App Protect Dos Configuration
+func (ci *Configuration) AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
+	resNsName := appprotect_common.GetNsName(policyObj)
+	policy, err := createAppProtectDosPolicyEx(policyObj)
+	ci.dosPolicies[resNsName] = policy
+	if err != nil {
+		changes = append(changes, Change{Op: Delete, Resource: policy})
+		problems = append(problems, Problem{Object: policyObj, Reason: "Rejected", Message: err.Error()})
+	}
+
+	protectedResources := ci.GetDosProtectedThatReferencedDosPolicy(resNsName)
+	for _, p := range protectedResources {
+		proChanges, proProblems := ci.AddOrUpdateDosProtectedResource(p)
+		changes = append(changes, proChanges...)
+		problems = append(problems, proProblems...)
+	}
+
+	return changes, problems
+}
+
+// AddOrUpdateLogConf adds or updates App Protect Dos Log Configuration to App Protect Dos Configuration
+func (ci *Configuration) AddOrUpdateLogConf(logConfObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
+	resNsName := appprotect_common.GetNsName(logConfObj)
+	logConf, err := createAppProtectDosLogConfEx(logConfObj)
+	ci.dosLogConfs[resNsName] = logConf
+	if err != nil {
+		changes = append(changes, Change{Op: Delete, Resource: logConf})
+		problems = append(problems, Problem{Object: logConfObj, Reason: "Rejected", Message: err.Error()})
+	}
+
+	protectedResources := ci.GetDosProtectedThatReferencedDosLogConf(resNsName)
+	for _, p := range protectedResources {
+		proChanges, proProblems := ci.AddOrUpdateDosProtectedResource(p)
+		changes = append(changes, proChanges...)
+		problems = append(problems, proProblems...)
+	}
+
+	return changes, problems
+}
+
+// AddOrUpdateDosProtectedResource adds or updates App Protect Dos ProtectedResource Configuration
+func (ci *Configuration) AddOrUpdateDosProtectedResource(protectedConf *v1beta1.DosProtectedResource) ([]Change, []Problem) {
+	resNsName := protectedConf.Namespace + "/" + protectedConf.Name
+	protectedEx, err := createDosProtectedResourceEx(protectedConf)
+	ci.dosProtectedResource[resNsName] = protectedEx
+	if err != nil {
+		return []Change{{Op: Delete, Resource: protectedEx}},
+			[]Problem{{Object: protectedConf, Reason: "Rejected", Message: err.Error()}}
+	}
+	if protectedEx.Obj.Spec.ApDosPolicy != "" {
+		policyReference := protectedEx.Obj.Spec.ApDosPolicy
+		// if the policy reference does not have a namespace, use the dos protected' namespace
+		if !strings.Contains(policyReference, "/") {
+			policyReference = protectedEx.Obj.Namespace + "/" + policyReference
+		}
+		_, err := ci.getPolicy(policyReference)
+		if err != nil {
+			return []Change{{Op: Delete, Resource: protectedEx}},
+				[]Problem{{Object: protectedConf, Reason: "Rejected", Message: fmt.Sprintf("dos protected refers (%s) to an invalid DosPolicy: %s", policyReference, err.Error())}}
+		}
+	}
+	if protectedEx.Obj.Spec.DosSecurityLog != nil && protectedEx.Obj.Spec.DosSecurityLog.ApDosLogConf != "" {
+		logConfReference := protectedEx.Obj.Spec.DosSecurityLog.ApDosLogConf
+		// if the log conf reference does not have a namespace, use the dos protected' namespace
+		if !strings.Contains(logConfReference, "/") {
+			logConfReference = protectedEx.Obj.Namespace + "/" + logConfReference
+		}
+		_, err := ci.getLogConf(logConfReference)
+		if err != nil {
+			return []Change{{Op: Delete, Resource: protectedEx}},
+				[]Problem{{Object: protectedConf, Reason: "Rejected", Message: fmt.Sprintf("dos protected refers (%s) to an invalid DosLogConf: %s", logConfReference, err.Error())}}
+		}
+	}
+	return []Change{{Op: AddOrUpdate, Resource: protectedEx}}, nil
+}
+
+func (ci *Configuration) getPolicy(key string) (*unstructured.Unstructured, error) {
+	obj, ok := ci.dosPolicies[key]
+	if !ok {
+		return nil, fmt.Errorf("DosPolicy %s not found", key)
+	}
+	if !obj.IsValid {
+		return nil, fmt.Errorf(obj.ErrorMsg)
+	}
+	return obj.Obj, nil
+}
+
+func (ci *Configuration) getLogConf(key string) (*unstructured.Unstructured, error) {
+	obj, ok := ci.dosLogConfs[key]
+	if !ok {
+		return nil, fmt.Errorf("DosLogConf %s not found", key)
+	}
+	if !obj.IsValid {
+		return nil, fmt.Errorf(obj.ErrorMsg)
+	}
+	return obj.Obj, nil
+}
+
+func (ci *Configuration) getDosProtected(key string) (*v1beta1.DosProtectedResource, error) {
+	if obj, ok := ci.dosProtectedResource[key]; ok {
+		if obj.IsValid {
+			return obj.Obj, nil
+		}
+		return nil, fmt.Errorf(obj.ErrorMsg)
+	}
+	return nil, fmt.Errorf("DosProtectedResource %s not found", key)
+}
+
+// GetValidDosEx returns a valid DosProtectedResource - extended with referenced policies and logs
+func (ci *Configuration) GetValidDosEx(parentNamespace string, nsName string) (*configs.DosEx, error) {
+	var key = getNsName(parentNamespace, nsName)
+	if !ci.isDosEnabled {
+		return nil, fmt.Errorf("DosProtectedResource is referenced but Dos feature is not enabled. resource: %v", key)
+	}
+	dosEx := &configs.DosEx{}
+	protectedEx, ok := ci.dosProtectedResource[key]
+	if !ok {
+		return nil, fmt.Errorf("DosProtectedResource %s not found", key)
+	}
+	if !protectedEx.IsValid {
+		return nil, fmt.Errorf(protectedEx.ErrorMsg)
+	}
+	dosEx.DosProtected = protectedEx.Obj
+	if protectedEx.Obj.Spec.ApDosPolicy != "" {
+		policyReference := protectedEx.Obj.Spec.ApDosPolicy
+		// if the policy reference does not have a namespace, use the dos protected' namespace
+		if !strings.Contains(policyReference, "/") {
+			policyReference = protectedEx.Obj.Namespace + "/" + policyReference
+		}
+		pol, err := ci.getPolicy(policyReference)
+		if err != nil {
+			return nil, fmt.Errorf("DosProtectedResource references a missing DosPolicy: %w", err)
+		}
+		dosEx.DosPolicy = pol
+	}
+	if protectedEx.Obj.Spec.DosSecurityLog != nil && protectedEx.Obj.Spec.DosSecurityLog.ApDosLogConf != "" {
+		logConfReference := protectedEx.Obj.Spec.DosSecurityLog.ApDosLogConf
+		// if the log conf reference does not have a namespace, use the dos protected' namespace
+		if !strings.Contains(logConfReference, "/") {
+			logConfReference = protectedEx.Obj.Namespace + "/" + logConfReference
+		}
+		log, err := ci.getLogConf(logConfReference)
+		if err != nil {
+			return nil, fmt.Errorf("DosProtectedResource references a missing DosLogConf: %w", err)
+		}
+		dosEx.DosLogConf = log
+	}
+	return dosEx, nil
+}
+
+func getNsName(defaultNamespace string, name string) string {
+	if !strings.Contains(name, "/") {
+		return defaultNamespace + "/" + name
+	}
+	return name
+}
+
+func (ci *Configuration) GetDosProtectedThatReferencedDosPolicy(key string) []*v1beta1.DosProtectedResource {
+	var protectedResources []*v1beta1.DosProtectedResource
+	for _, protectedEx := range ci.dosProtectedResource {
+		protected := protectedEx.Obj
+		dosPolRef := protected.Spec.ApDosPolicy
+		if key == dosPolRef || key == protected.Namespace+"/"+dosPolRef {
+			protectedResources = append(protectedResources, protected)
+		}
+	}
+	return protectedResources
+}
+
+func (ci *Configuration) GetDosProtectedThatReferencedDosLogConf(key string) []*v1beta1.DosProtectedResource {
+	var protectedResources []*v1beta1.DosProtectedResource
+	for _, protectedEx := range ci.dosProtectedResource {
+		protected := protectedEx.Obj
+		if protected.Spec.DosSecurityLog != nil {
+			dosLogConf := protected.Spec.DosSecurityLog.ApDosLogConf
+			if key == dosLogConf || key == protected.Namespace+"/"+dosLogConf {
+				protectedResources = append(protectedResources, protected)
+			}
+		}
+	}
+	return protectedResources
+}
+
+// DeletePolicy deletes an App Protect Policy from App Protect Dos Configuration
+func (ci *Configuration) DeletePolicy(key string) (changes []Change, problems []Problem) {
+	_, has := ci.dosPolicies[key]
+	if has {
+		changes = append(changes, Change{Op: Delete, Resource: ci.dosPolicies[key]})
+		delete(ci.dosPolicies, key)
+	}
+
+	protectedResources := ci.GetDosProtectedThatReferencedDosPolicy(key)
+	for _, p := range protectedResources {
+		proChanges, proProblems := ci.AddOrUpdateDosProtectedResource(p)
+		changes = append(changes, proChanges...)
+		problems = append(problems, proProblems...)
+	}
+
+	return changes, problems
+}
+
+// DeleteLogConf deletes an App Protect Dos LogConf from App Protect Dos Configuration
+func (ci *Configuration) DeleteLogConf(key string) (changes []Change, problems []Problem) {
+	_, has := ci.dosLogConfs[key]
+	if has {
+		changes = append(changes, Change{Op: Delete, Resource: ci.dosLogConfs[key]})
+		delete(ci.dosLogConfs, key)
+	}
+
+	protectedResources := ci.GetDosProtectedThatReferencedDosLogConf(key)
+	for _, p := range protectedResources {
+		proChanges, proProblems := ci.AddOrUpdateDosProtectedResource(p)
+		changes = append(changes, proChanges...)
+		problems = append(problems, proProblems...)
+	}
+
+	return changes, problems
+}
+
+// DeleteProtectedResource deletes an App Protect Dos ProtectedResource Configuration
+func (ci *Configuration) DeleteProtectedResource(key string) (changes []Change, problems []Problem) {
+	if _, has := ci.dosProtectedResource[key]; has {
+		change := Change{Op: Delete, Resource: ci.dosProtectedResource[key]}
+		delete(ci.dosProtectedResource, key)
+		return append(changes, change), problems
+	}
+	return changes, problems
+}
+
 func createAppProtectDosPolicyEx(policyObj *unstructured.Unstructured) (*DosPolicyEx, error) {
 	err := validation.ValidateAppProtectDosPolicy(policyObj)
 	if err != nil {
-		errMsg := fmt.Sprintf("Error validating dos policy %s: %v", policyObj.GetName(), err)
-		return &DosPolicyEx{Obj: policyObj, IsValid: false, ErrorMsg: failedValidationErrorMsg}, fmt.Errorf(errMsg)
+		return &DosPolicyEx{
+			Obj:      policyObj,
+			IsValid:  false,
+			ErrorMsg: fmt.Sprintf("failed to store ApDosPolicy: %v", err),
+		}, err
 	}
 
 	return &DosPolicyEx{
@@ -121,20 +354,13 @@ func createAppProtectDosPolicyEx(policyObj *unstructured.Unstructured) (*DosPoli
 	}, nil
 }
 
-// DosLogConfEx represents an App Protect Dos Log Configuration cluster resource
-type DosLogConfEx struct {
-	Obj      *unstructured.Unstructured
-	IsValid  bool
-	ErrorMsg string
-}
-
 func createAppProtectDosLogConfEx(dosLogConfObj *unstructured.Unstructured) (*DosLogConfEx, error) {
 	err := validation.ValidateAppProtectDosLogConf(dosLogConfObj)
 	if err != nil {
 		return &DosLogConfEx{
 			Obj:      dosLogConfObj,
 			IsValid:  false,
-			ErrorMsg: failedValidationErrorMsg,
+			ErrorMsg: fmt.Sprintf("failed to store ApDosLogconf: %v", err),
 		}, err
 	}
 	return &DosLogConfEx{
@@ -143,133 +369,17 @@ func createAppProtectDosLogConfEx(dosLogConfObj *unstructured.Unstructured) (*Do
 	}, nil
 }
 
-// AddOrUpdatePolicy adds or updates an App Protect Dos Policy to App Protect Dos Configuration
-func (ci *ConfigurationImpl) AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(policyObj)
-	policy, err := createAppProtectDosPolicyEx(policyObj)
+func createDosProtectedResourceEx(protectedConf *v1beta1.DosProtectedResource) (*DosProtectedResourceEx, error) {
+	err := validation.ValidateDosProtectedResource(protectedConf)
 	if err != nil {
-		ci.dosPolicies[resNsName] = policy
-		return append(changes, Change{Op: Delete, Resource: policy}),
-			append(problems, Problem{Object: policyObj, Reason: "Rejected", Message: err.Error()})
+		return &DosProtectedResourceEx{
+			Obj:      protectedConf,
+			IsValid:  false,
+			ErrorMsg: fmt.Sprintf("failed to store DosProtectedResource: %v", err),
+		}, err
 	}
-	ci.dosPolicies[resNsName] = policy
-	return append(changes, Change{Op: AddOrUpdate, Resource: policy}), problems
-}
-
-// AddOrUpdateLogConf adds or updates App Protect Dos Log Configuration to App Protect Dos Configuration
-func (ci *ConfigurationImpl) AddOrUpdateLogConf(logconfObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(logconfObj)
-	logConf, err := createAppProtectDosLogConfEx(logconfObj)
-	ci.dosLogConfs[resNsName] = logConf
-	if err != nil {
-		return append(changes, Change{Op: Delete, Resource: logConf}),
-			append(problems, Problem{Object: logconfObj, Reason: "Rejected", Message: err.Error()})
-	}
-	return append(changes, Change{Op: AddOrUpdate, Resource: logConf}), problems
-}
-
-// GetAppResource returns a pointer to an App Protect Dos resource
-func (ci *ConfigurationImpl) GetAppResource(kind, key string) (*unstructured.Unstructured, error) {
-	switch kind {
-	case DosPolicyGVK.Kind:
-		if obj, ok := ci.dosPolicies[key]; ok {
-			if obj.IsValid {
-				return obj.Obj, nil
-			}
-			return nil, fmt.Errorf(obj.ErrorMsg)
-		}
-		return nil, fmt.Errorf("App Protect Dos Policy %s not found", key)
-	case DosLogConfGVK.Kind:
-		if obj, ok := ci.dosLogConfs[key]; ok {
-			if obj.IsValid {
-				return obj.Obj, nil
-			}
-			return nil, fmt.Errorf(obj.ErrorMsg)
-		}
-		return nil, fmt.Errorf("App Protect DosLogConf %s not found", key)
-	}
-	return nil, fmt.Errorf("Unknown App Protect Dos resource kind %s", kind)
-}
-
-// DeletePolicy deletes an App Protect Policy from App Protect Dos Configuration
-func (ci *ConfigurationImpl) DeletePolicy(key string) (changes []Change, problems []Problem) {
-	if _, has := ci.dosPolicies[key]; has {
-		change := Change{Op: Delete, Resource: ci.dosPolicies[key]}
-		delete(ci.dosPolicies, key)
-		return append(changes, change), problems
-	}
-	return changes, problems
-}
-
-// DeleteLogConf deletes an App Protect Dos Log Configuration from App Protect Dos Configuration
-func (ci *ConfigurationImpl) DeleteLogConf(key string) (changes []Change, problems []Problem) {
-	if _, has := ci.dosLogConfs[key]; has {
-		change := Change{Op: Delete, Resource: ci.dosLogConfs[key]}
-		delete(ci.dosLogConfs, key)
-		return append(changes, change), problems
-	}
-	return changes, problems
-}
-
-// FakeConfiguration holds representations of fake App Protect Dos cluster resources
-type FakeConfiguration struct {
-	dosPolicies map[string]*DosPolicyEx
-	dosLogConfs map[string]*DosLogConfEx
-}
-
-// NewFakeConfiguration creates a new App Protect Dos Configuration
-func NewFakeConfiguration() Configuration {
-	return &FakeConfiguration{
-		dosPolicies: make(map[string]*DosPolicyEx),
-		dosLogConfs: make(map[string]*DosLogConfEx),
-	}
-}
-
-// AddOrUpdatePolicy adds or updates an App Protect Policy to App Protect Dos Configuration
-func (fc *FakeConfiguration) AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(policyObj)
-	policy := &DosPolicyEx{
-		Obj:     policyObj,
+	return &DosProtectedResourceEx{
+		Obj:     protectedConf,
 		IsValid: true,
-	}
-	fc.dosPolicies[resNsName] = policy
-	return changes, problems
-}
-
-// AddOrUpdateLogConf adds or updates App Protect Dos Log Configuration to App Protect Dos Configuration
-func (fc *FakeConfiguration) AddOrUpdateLogConf(logConfObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(logConfObj)
-	logConf := &DosLogConfEx{
-		Obj:     logConfObj,
-		IsValid: true,
-	}
-	fc.dosLogConfs[resNsName] = logConf
-	return changes, problems
-}
-
-// GetAppResource returns a pointer to an App Protect Dos resource
-func (fc *FakeConfiguration) GetAppResource(kind, key string) (*unstructured.Unstructured, error) {
-	switch kind {
-	case DosPolicyGVK.Kind:
-		if obj, ok := fc.dosPolicies[key]; ok {
-			return obj.Obj, nil
-		}
-		return nil, fmt.Errorf("App Protect Dos Policy %s not found", key)
-	case DosLogConfGVK.Kind:
-		if obj, ok := fc.dosLogConfs[key]; ok {
-			return obj.Obj, nil
-		}
-		return nil, fmt.Errorf("App Protect Dos LogConf %s not found", key)
-	}
-	return nil, fmt.Errorf("Unknown App Protect Dos resource kind %s", kind)
-}
-
-// DeletePolicy deletes an App Protect Dos Policy from App Protect Dos Configuration
-func (fc *FakeConfiguration) DeletePolicy(key string) (changes []Change, problems []Problem) {
-	return changes, problems
-}
-
-// DeleteLogConf deletes an App Protect Dos Log Configuration from App Protect Dos Configuration
-func (fc *FakeConfiguration) DeleteLogConf(key string) (changes []Change, problems []Problem) {
-	return changes, problems
+	}, nil
 }

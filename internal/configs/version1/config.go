@@ -100,9 +100,9 @@ type Server struct {
 	AppProtectLogConfs        []string
 	AppProtectLogEnable       string
 	AppProtectDosEnable       string
-	AppProtectDosPolicy       string
-	AppProtectDosLogConf      string
-	AppProtectDosLogEnable    string
+	AppProtectDosPolicyFile   string
+	AppProtectDosLogConfFile  string
+	AppProtectDosLogEnable    bool
 	AppProtectDosMonitor      string
 	AppProtectDosName         string
 	AppProtectDosAccessLogDst string
@@ -206,7 +206,7 @@ type MainConfig struct {
 	AppProtectPhysicalMemoryThresholds string
 	AppProtectDosLoadModule            bool
 	AppProtectDosLogFormat             []string
-	AppProtectDosLogFormatEscaping	   string
+	AppProtectDosLogFormatEscaping     string
 	InternalRouteServer                bool
 	InternalRouteServerName            string
 	LatencyMetrics                     bool

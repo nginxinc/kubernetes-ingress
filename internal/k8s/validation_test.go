@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
-
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1509,7 +1507,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-enable": "true",
+				"appprotectdos.f5.com/app-protect-dos-resource": "dos-resource-name",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
@@ -1517,13 +1515,13 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				"annotations.appprotectdos.f5.com/app-protect-dos-enable: Forbidden: annotation requires AppProtectDos",
+				"annotations.appprotectdos.f5.com/app-protect-dos-resource: Forbidden: annotation requires AppProtectDos",
 			},
-			msg: "invalid appprotectdos.f5.com/app-protect-dos-enable annotation, requires app protect dos",
+			msg: "invalid appprotectdos.f5.com/app-protect-dos-resource annotation, requires app protect dos",
 		},
 		{
 			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-enable": "true",
+				"appprotectdos.f5.com/app-protect-dos-resource": "dos-resource-name",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
@@ -1535,35 +1533,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-enable": "not_a_boolean",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				`annotations.appprotectdos.f5.com/app-protect-dos-enable: Invalid value: "not_a_boolean": must be a boolean`,
-			},
-			msg: "invalid appprotectdos.f5.com/app-protect-dos-enable annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log-enable": "true",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  false,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				"annotations.appprotectdos.f5.com/app-protect-dos-security-log-enable: Forbidden: annotation requires AppProtectDos",
-			},
-			msg: "invalid appprotectdos.f5.com/app-protect-dos-security-log-enable annotation, requires app protect dos",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log-enable": "true",
+				"appprotectdos.f5.com/app-protect-dos-resource": "some-namespace/dos-resource-name",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
@@ -1571,196 +1541,36 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
-			msg:                   "valid appprotectdos.f5.com/app-protect-dos-security-log-enable annotation",
+			msg:                   "valid appprotectdos.f5.com/app-protect-dos-enable annotation",
 		},
 		{
 			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log-enable": "not_a_boolean",
+				"appprotectdos.f5.com/app-protect-dos-resource": "special-chars-&%^",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				`annotations.appprotectdos.f5.com/app-protect-dos-security-log-enable: Invalid value: "not_a_boolean": must be a boolean`,
+			expectedErrors:        []string{
+				"annotations.appprotectdos.f5.com/app-protect-dos-resource: Invalid value: \"special-chars-&%^\": must be a qualified name",
 			},
-			msg: "invalid appprotectdos.f5.com/app-protect-dos-security-log-enable annotation",
+			msg:                   "valid appprotectdos.f5.com/app-protect-dos-enable annotation",
 		},
 		{
 			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-monitor": "example.com/%",
+				"appprotectdos.f5.com/app-protect-dos-resource": "too/many/qualifiers",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  true,
 			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				`annotations.appprotectdos.f5.com/app-protect-dos-monitor: Invalid value: "example.com/%": App Protect Dos Monitor must have valid URL`,
+			expectedErrors:        []string{
+				"annotations.appprotectdos.f5.com/app-protect-dos-resource: Invalid value: \"too/many/qualifiers\": must be a qualified name",
 			},
-			msg: "invalid appprotectdos.f5.com/app-protect-dos-monitor annotation",
+			msg:                   "valid appprotectdos.f5.com/app-protect-dos-enable annotation",
 		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-monitor": "example.com:433",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "valid appprotectdos.f5.com/app-protect-dos-monitor annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-name": "example.com",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "valid appprotectdos.f5.com/app-protect-dos-name annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-name": "very very very very very very very very very very very very very long name",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-name: Invalid value: "very very very very very very very very very very very very very long name": App Protect Dos Name max length is %v`, validation.MaxNameLength),
-			},
-			msg: "invalid appprotectdos.f5.com/app-protect-dos-name annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-access-log-destination": "10.0.0.1:99999",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-access-log-destination: Invalid value: "10.0.0.1:99999": invalid log destination: error parsing port: 99999 not a valid port number`),
-			},
-			msg: "invalid app-protect-dos-access-log-destination annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-access-log-destination": "1.0.0.1:514",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "valid app-protect-dos-access-log-destination annotation",
-		},
-		// syslog:server=<ip-address | localhost>:<port> or stderr
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "stderr",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "valid app-protect-dos-security-log-destination annotation with stderr",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "Not Valid",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log-destination: Invalid value: "Not Valid": invalid log destination: Not Valid, must follow format: <ip-address | localhost | dns name>:<port> or stderr`),
-			},
-			msg: "invalid app-protect-dos-security-log-destination annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log":             "ns/ns/example",
-				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "stderr",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Invalid value: "ns/ns/example": must be a qualified name`),
-			},
-			msg: "invalid app-protect-dos-security-log annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log": "example",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-security-log: Forbidden: related annotation appprotectdos.f5.com/app-protect-dos-security-log-destination must exist`),
-			},
-			msg: "invalid app-protect-dos-security-log annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-security-log":             "example",
-				"appprotectdos.f5.com/app-protect-dos-security-log-destination": "stderr",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "valid app-protect-dos-security-log annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-policy": "ns/ns/example",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				fmt.Sprintf(`annotations.appprotectdos.f5.com/app-protect-dos-policy: Invalid value: "ns/ns/example": must be a qualified name`),
-			},
-			msg: "invalid app-protect-dos-policy annotation",
-		},
-		{
-			annotations: map[string]string{
-				"appprotectdos.f5.com/app-protect-dos-policy": "ns/example",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  true,
-			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "valid app-protect-dos-policy annotation",
-		},
-
 		{
 			annotations: map[string]string{
 				"nsm.nginx.com/internal-route": "true",

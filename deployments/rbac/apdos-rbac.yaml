@@ -8,6 +8,7 @@ rules:
     resources:
       - apdospolicies
       - apdoslogconfs
+      - dosprotectedresources
     verbs:
       - "get"
       - "watch"

@@ -14,20 +14,41 @@ This document describes how to configure the NGINX App Protect Dos module
 
 The NGINX Ingress Controller has a set of global configuration parameters that align with those available in the NGINX App Protect Dos module. See [ConfigMap keys](/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#modules) for the complete list. The App Protect parameters use the `app-protect-dos*` prefix.
 
-## Enable App Protect Dos for an Ingress Resource
+## Enable App Protect Dos for Ingress
 
-You can enable and configure NGINX App Protect Dos on a per-Ingress-resource basis. To do so, you can apply the [App Protect Dos annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect-dos) to each desired resource.
+You can enable and configure NGINX App Protect Dos on a per-Ingress-resource basis. To do so, you can apply the [App Protect Dos annotation](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect-dos) to each desired resource.
 
-## App Protect Dos Policies
+## App Protect Dos Protected Resources
 
-You can define App Protect Dos policies for your Ingress resources by creating an `APDosPolicy` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
+An `DosProtectedResource` is a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) that holds the configuration of a collection of protected resources. 
+An Ingress or VirtualServer can be protected by adding a reference to the Dos Protected Resource.
 
-To add App Protect Dos policy to an Ingress resource:
+To enable DOS protection to an Ingress:
 
-1. Create an `APDosPolicy` Custom resource manifest.
-2. Add the desired policy to the `spec` field in the `APDosPolicy` resource.
+1. Create an `DosProtectedResource` Custom resource manifest. As an example:
+  ```yaml
+   apiVersion: appprotectdos.f5.com/v1beta1
+   kind: DosProtectedResource
+   metadata:
+      name: dos-protected
+   spec:
+      enable: true
+      name: "my-dos"
+      apDosMonitor: "webapp.example.com"
+  ```
+2. Add an annotation to an Ingress that refers to that resource by `namespace/name`:
+  ```yaml
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+      name: webapp-ingress
+      annotations:
+         appprotectdos.f5.com/app-protect-dos-resource: "default/dos-protected"
+  ```
+## Dos Policy configuration
 
-   > **Note**: The relationship between the Policy JSON and the resource spec is 1:1. If you're defining your resources in YAML, as we do in our examples, you'll need to represent the policy as YAML. The fields must match those in the source JSON exactly in name and level.
+You can set the App Protect Dos Policy configurations by creating an `APDosPolicy` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and referencing that in the `DosProtectedResource`.
+
 
 For example, say you want to use Dos Policy as shown below:
 
@@ -56,7 +77,23 @@ You would create an `APDosPolicy` resource with the policy defined in the `spec`
       tls_fingerprint: "on"
   ```
 
+Then add a reference in the `DosProtectedResrouce` to the `ApDosPolicy`:
+  ```yaml
+   apiVersion: appprotectdos.f5.com/v1beta1
+   kind: DosProtectedResource
+   metadata:
+      name: dos-protected
+   spec:
+      enable: true
+      name: "my-dos"
+      apDosMonitor: "webapp.example.com"
+      apDosPolicy: "default/dospolicy"
+  ```
+
 > Notice how the fields match exactly in name and level. The Ingress Controller will transform the YAML into a valid JSON App Protect Dos policy config.
+
+> **Note**: The relationship between the Policy JSON and the resource spec is 1:1. If you're defining your resources in YAML, as we do in our examples, you'll need to represent the policy as YAML. The fields must match those in the source JSON exactly in name and level.
+
 
 ## App Protect Dos Logs
 
@@ -100,3 +137,19 @@ spec:
       bad-actors: top 10
       attack-signatures: top 10
 ```
+
+Then add a reference in the `DosProtectedResrouce` to the `APDosLogConf`:
+  ```yaml
+   apiVersion: appprotectdos.f5.com/v1beta1
+   kind: DosProtectedResource
+   metadata:
+      name: dos-protected
+   spec:
+      enable: true
+      name: "my-dos"
+      apDosMonitor: "webapp.example.com"
+      dosSecurityLog:
+         enable: true
+         apDosLogConf: "doslogconf"
+         dosLogDest: "syslog-svc.default.svc.cluster.local:514"
+  ```

@@ -76,10 +76,10 @@ server {
 
 	{{- if $server.AppProtectDosEnable}}
 	app_protect_dos_enable {{$server.AppProtectDosEnable}};
-	{{if $server.AppProtectDosPolicy}}app_protect_dos_policy_file {{$server.AppProtectDosPolicy}};{{end}}
+	{{if $server.AppProtectDosPolicyFile}}app_protect_dos_policy_file {{$server.AppProtectDosPolicyFile}};{{end}}
 	{{- if $server.AppProtectDosLogEnable}}
-	app_protect_dos_security_log_enable {{$server.AppProtectDosLogEnable}};
-	{{if $server.AppProtectDosLogConf}}app_protect_dos_security_log {{$server.AppProtectDosLogConf}};{{end}}
+	app_protect_dos_security_log_enable on;
+	{{if $server.AppProtectDosLogConfFile}}app_protect_dos_security_log {{$server.AppProtectDosLogConfFile}};{{end}}
 	{{- end}}
 	{{- if $server.AppProtectDosAccessLogDst}}
 	set $loggable '0';

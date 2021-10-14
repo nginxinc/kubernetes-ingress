@@ -7,7 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 var appProtectDosPolicyRequiredFields = [][]string{
@@ -21,12 +23,76 @@ var appProtectDosLogConfRequiredFields = [][]string{
 
 const MaxNameLength = 63
 
+func ValidateDosProtectedResource(protected *v1beta1.DosProtectedResource) error {
+	var err error
+
+	// name
+	if protected.Spec.Name == "" {
+		return fmt.Errorf("error validating DosProtectedResource: %v missing value for field: %v", protected.Name, "name")
+	}
+	err = validateAppProtectDosName(protected.Spec.Name)
+	if err != nil {
+		return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "name", err)
+	}
+
+	// apDosMonitor
+	if protected.Spec.ApDosMonitor != "" {
+		err = validateAppProtectDosMonitor(protected.Spec.ApDosMonitor)
+		if err != nil {
+			return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "apDosMonitor", err)
+		}
+	}
+
+	// dosAccessLogDest
+	if protected.Spec.DosAccessLogDest == "" {
+		return fmt.Errorf("error validating DosProtectedResource: %v missing value for field: %v", protected.Name, "dosAccessLogDest")
+	}
+	err = validateAppProtectDosLogDest(protected.Spec.DosAccessLogDest)
+	if err != nil {
+		return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "dosAccessLogDest", err)
+	}
+
+	// apDosPolicy
+	if protected.Spec.ApDosPolicy != "" {
+		err = validateResourceReference(protected.Spec.ApDosPolicy)
+		if err != nil {
+			return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "apDosPolicy", err)
+		}
+	}
+
+	// dosSecurityLog
+	if protected.Spec.DosSecurityLog != nil {
+		// dosLogDest
+		err = validateAppProtectDosLogDest(protected.Spec.DosSecurityLog.DosLogDest)
+		if err != nil {
+			return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "dosSecurityLog/dosLogDest", err)
+		}
+		// apDosLogConf
+		err = validateResourceReference(protected.Spec.DosSecurityLog.ApDosLogConf)
+		if err != nil {
+			return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "dosSecurityLog/apDosLogConf", err)
+		}
+	}
+
+	return nil
+}
+
+// validateResourceReference validates a resource reference. A valid resource can be either namespace/name or name.
+func validateResourceReference(ref string) error {
+	errs := validation.IsQualifiedName(ref)
+	if len(errs) != 0 {
+		return fmt.Errorf("reference name is invalid: %v", ref)
+	}
+
+	return nil
+}
+
 // ValidateAppProtectDosLogConf validates LogConfiguration resource
 func ValidateAppProtectDosLogConf(logConf *unstructured.Unstructured) error {
 	lcName := logConf.GetName()
 	err := ValidateRequiredFields(logConf, appProtectDosLogConfRequiredFields)
 	if err != nil {
-		return fmt.Errorf("Error validating App Protect Dos Log Configuration %v: %w", lcName, err)
+		return fmt.Errorf("error validating App Protect Dos Log Configuration %v: %w", lcName, err)
 	}
 
 	return nil
@@ -38,8 +104,7 @@ var (
 	validLocalhostRegex = regexp.MustCompile(`^localhost:\d{1,5}$`)
 )
 
-// ValidateAppProtectDosLogDest validates destination for log configuration
-func ValidateAppProtectDosLogDest(dstAntn string) error {
+func validateAppProtectDosLogDest(dstAntn string) error {
 	if validIpRegex.MatchString(dstAntn) || validDnsRegex.MatchString(dstAntn) || validLocalhostRegex.MatchString(dstAntn) {
 		chunks := strings.Split(dstAntn, ":")
 		err := validatePort(chunks[1])
@@ -63,10 +128,9 @@ func validatePort(value string) error {
 	return nil
 }
 
-// ValidateAppProtectDosName validates name of App Protect Dos
-func ValidateAppProtectDosName(name string) error {
+func validateAppProtectDosName(name string) error {
 	if len(name) > MaxNameLength {
-		return fmt.Errorf("App Protect Dos Name max length is %v", MaxNameLength)
+		return fmt.Errorf("app Protect Dos Name max length is %v", MaxNameLength)
 	}
 
 	if err := validateEscapedString(name, "protected-object-one"); err != nil {
@@ -76,11 +140,10 @@ func ValidateAppProtectDosName(name string) error {
 	return nil
 }
 
-// ValidateAppProtectDosMonitor validates monitor value of App Protect Dos
-func ValidateAppProtectDosMonitor(monitor string) error {
+func validateAppProtectDosMonitor(monitor string) error {
 	_, err := url.Parse(monitor)
 	if err != nil {
-		return fmt.Errorf("App Protect Dos Monitor must have valid URL")
+		return fmt.Errorf("app Protect Dos Monitor must have valid URL")
 	}
 
 	if err := validateEscapedString(monitor, "http://www.example.com"); err != nil {
@@ -96,7 +159,7 @@ func ValidateAppProtectDosPolicy(policy *unstructured.Unstructured) error {
 
 	err := ValidateRequiredFields(policy, appProtectDosPolicyRequiredFields)
 	if err != nil {
-		return fmt.Errorf("Error validating App Protect Dos Policy %v: %w", polName, err)
+		return fmt.Errorf("error validating DosPolicy %v: %w", polName, err)
 	}
 
 	return nil

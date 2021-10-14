@@ -16,6 +16,10 @@ func (c *FakeK8sV1alpha1) GlobalConfigurations(namespace string) v1alpha1.Global
 	return &FakeGlobalConfigurations{c, namespace}
 }
 
+func (c *FakeK8sV1alpha1) Policies(namespace string) v1alpha1.PolicyInterface {
+	return &FakePolicies{c, namespace}
+}
+
 func (c *FakeK8sV1alpha1) TransportServers(namespace string) v1alpha1.TransportServerInterface {
 	return &FakeTransportServers{c, namespace}
 }

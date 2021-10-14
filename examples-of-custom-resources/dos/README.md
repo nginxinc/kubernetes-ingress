@@ -21,44 +21,31 @@ Create the application deployment and service:
 $ kubectl apply -f webapp.yaml
 ```
 
-## Step 2 - Deploy the AP Dos Policy
+## Step 2 - Deploy the DOS configuration resources
 
 1. Create the syslog service and pod for the App Protect security logs:
     ```
     $ kubectl apply -f syslog.yaml
     ```
-1. Create the App Protect Dos policy and log configuration:
+2. Create the Dos protected resource configuration:
+    ```
+    $ kubectl apply -f apdos-protected.yaml
+    ```
+3. Create the App Protect Dos policy and log configuration:
     ```
     $ kubectl apply -f apdos-policy.yaml
     $ kubectl apply -f apdos-logconf.yaml
     ```
 
-## Step 3 - Deploy the DOS Policy
-
-1. Update the `logDest` field from `dos.yaml` with the ClusterIP of the syslog service. For example, if the IP is `10.101.21.110`:
-    ```yaml
-    dos:
-        ...
-        logDest: "10.101.21.110:514"
-    ```
-
-1. Create the DOS policy
-    ```
-    $ kubectl apply -f dos.yaml
-    ```
-
-Note the App Protect Dos configuration settings in the Policy resource. They enable DOS protection by configuring App Protect Dos with the policy and log configuration created in the previous step.
-
-## Step 4 - Configure Load Balancing
+## Step 3 - Configure Load Balancing
 
 1. Create the VirtualServer Resource:
     ```
     $ kubectl apply -f virtual-server.yaml
     ```
+Note the reference to the DOS protected resource in the Policy resource. By specifying the resource it enables DOS protection for the VirtualServer.
 
-Note that the VirtualServer references the policy `dos-policy` created in Step 3.
-
-## Step 5 - Test the Application
+## Step 4 - Test the Application
 
 To access the application, curl the Webapp service. We'll use the --resolve option to set the Host header of a request with `webapp.example.com`
 

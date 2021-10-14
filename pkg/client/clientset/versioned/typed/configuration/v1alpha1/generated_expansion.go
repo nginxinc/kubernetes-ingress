@@ -4,4 +4,6 @@ package v1alpha1
 
 type GlobalConfigurationExpansion interface{}
 
+type PolicyExpansion interface{}
+
 type TransportServerExpansion interface{}
