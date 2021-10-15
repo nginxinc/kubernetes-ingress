@@ -4,7 +4,7 @@ import time
 import pytest
 import requests
 
-from suite.custom_resources_utils import get_vs_nginx_template_conf
+from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf
 from suite.resources_utils import get_events
 
 
