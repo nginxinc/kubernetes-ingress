@@ -9,6 +9,8 @@ from suite.resources_utils import (
 )
 from suite.custom_resources_utils import (
     read_custom_resource,
+)
+from suite.vs_vsr_resources_utils import (
     delete_virtual_server,
     create_virtual_server_from_yaml,
     delete_and_create_vs_from_yaml,

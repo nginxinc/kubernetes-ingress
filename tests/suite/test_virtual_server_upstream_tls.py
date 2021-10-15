@@ -5,7 +5,7 @@ from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
 from suite.custom_assertions import assert_event_and_get_count, assert_event_count_increased, assert_response_codes, \
     assert_event, assert_no_new_events
-from suite.custom_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml
+from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml
 from suite.resources_utils import get_first_pod_name, wait_before_test, get_events
 
 

@@ -3,7 +3,7 @@ import requests
 
 from settings import TEST_DATA
 from suite.custom_assertions import assert_vs_conf_not_exists, assert_vs_conf_exists
-from suite.custom_resources_utils import patch_virtual_server_from_yaml,\
+from suite.vs_vsr_resources_utils import patch_virtual_server_from_yaml,\
     delete_virtual_server, create_virtual_server_from_yaml
 from suite.resources_utils import wait_before_test, get_events, get_first_pod_name, get_pods_amount
 

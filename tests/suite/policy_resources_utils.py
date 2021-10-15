@@ -1,3 +1,5 @@
+"""Describe methods to utilize the Policy resource."""
+
 import yaml
 import logging
 from kubernetes.client import CustomObjectsApi, ApiextensionsV1Api, CoreV1Api
@@ -5,11 +7,13 @@ from kubernetes.client.rest import ApiException
 from suite.custom_resources_utils import read_custom_resource
 from suite.resources_utils import ensure_item_removal
 
+
 def read_policy(custom_objects: CustomObjectsApi, namespace, name) -> object:
     """
     Read Policy resource.
     """
     return read_custom_resource(custom_objects, namespace, "policies", name)
+
 
 def create_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
     """
@@ -32,6 +36,7 @@ def create_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, nam
     except ApiException:
         logging.exception(f"Exception occurred while creating Policy: {dep['metadata']['name']}")
         raise
+
 
 def delete_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
     """

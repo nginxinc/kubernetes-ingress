@@ -6,11 +6,16 @@ from suite.resources_utils import (
 )
 from suite.custom_resources_utils import (
     read_custom_resource,
+)
+from suite.vs_vsr_resources_utils import (
     delete_virtual_server,
     create_virtual_server_from_yaml,
     patch_virtual_server_from_yaml,
+)
+from suite.policy_resources_utils import (
     create_policy_from_yaml,
     delete_policy,
+    read_policy,
 )
 from settings import TEST_DATA
 

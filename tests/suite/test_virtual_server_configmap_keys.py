@@ -3,7 +3,7 @@ import pytest
 from settings import TEST_DATA, DEPLOYMENTS
 from suite.resources_utils import wait_before_test, replace_configmap_from_yaml, get_events, get_first_pod_name, \
     get_file_contents, get_pods_amount
-from suite.custom_resources_utils import get_vs_nginx_template_conf
+from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf
 from suite.yaml_utils import get_configmap_fields_from_yaml
 
 
