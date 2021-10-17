@@ -82,7 +82,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # RUN update-ca-certificates
 
 ############################################# Base image for Debian with NGINX Plus and App Protect Dos #############################################
-FROM debian-plus as debian-plus-napdos
+FROM debian-plus as debian-plus-dos
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 
@@ -100,7 +100,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& rm /etc/apt/sources.list.d/nginx-app-protect-dos.list
 
 ############################################# Base image for Debian with NGINX, App Protect and App Protect Dos #############################################
-FROM debian-plus-nap as debian-plus-nap-napdos
+FROM debian-plus-nap as debian-plus-nap-dos
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 

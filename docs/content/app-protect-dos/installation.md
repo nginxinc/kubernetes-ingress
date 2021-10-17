@@ -23,10 +23,10 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
 
 - [Build the NGINX Ingress Controller image](/nginx-ingress-controller/installation/building-ingress-controller-image).
 
-  When running the `make` command to build the image, be sure to use the `debian-image-napdos-plus` target. For example:
+  When running the `make` command to build the image, be sure to use the `debian-image-dos-plus` target. For example:
 
     ```bash
-    make debian-image-napdos-plus PREFIX=<your Docker registry domain>/nginx-plus-ingress
+    make debian-image-dos-plus PREFIX=<your Docker registry domain>/nginx-plus-ingress
     ```
 
 - [Push the image to your local Docker registry](/nginx-ingress-controller/installation/building-ingress-controller-image/#building-the-image-and-pushing-it-to-the-private-registry).

@@ -80,13 +80,13 @@ debian-image-plus: build ## Create Docker image for Ingress Controller (nginx pl
 debian-image-nap-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap)
 	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --build-arg BUILD_OS=debian-plus-nap
 
-.PHONY: debian-image-napdos-plus
-debian-image-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap-dos)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-napdos
+.PHONY: debian-image-dos-plus
+debian-image-dos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap-dos)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-dos
 
-.PHONY: debian-image-nap-napdos-plus
-debian-image-nap-napdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap and nap-dos)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap-napdos --build-arg FILES=nap-common
+.PHONY: debian-image-nap-dos-plus
+debian-image-nap-pdos-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap and nap-dos)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap-dos --build-arg FILES=nap-common
 
 .PHONY: openshift-image
 openshift-image: build ## Create Docker image for Ingress Controller (ubi)
@@ -109,7 +109,7 @@ debian-image-opentracing-plus: build ## Create Docker image for Ingress Controll
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=opentracing-plus
 
 .PHONY: all-images ## Create all the Docker images for Ingress Controller
-all-images: alpine-image alpine-image-plus debian-image debian-image-plus debian-image-nap-plus debian-image-napdos-plus debian-image-nap-napdos-plus debian-image-opentracing debian-image-opentracing-plus openshift-image openshift-image-plus openshift-image-nap-plus
+all-images: alpine-image alpine-image-plus debian-image debian-image-plus debian-image-nap-plus debian-image-dos-plus debian-image-nap-dos-plus debian-image-opentracing debian-image-opentracing-plus openshift-image openshift-image-plus openshift-image-nap-plus
 
 .PHONY: push
 push: ## Docker push to $PREFIX and $TAG
