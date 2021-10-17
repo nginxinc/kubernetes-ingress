@@ -1,8 +1,10 @@
 import requests
 import pytest
 import time
+import subprocess
+import os
 
-from settings import TEST_DATA, DEPLOYMENTS
+from settings import TEST_DATA
 from suite.custom_resources_utils import (
     create_dos_logconf_from_yaml,
     create_dos_policy_from_yaml,
@@ -27,8 +29,10 @@ from suite.resources_utils import (
     get_service_endpoint,
     get_test_file_name,
     write_to_json,
+    replace_configmap_from_yaml, scale_deployment, get_pods_amount,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
+from datetime import datetime
 
 src_ing_yaml = f"{TEST_DATA}/dos/dos-ingress.yaml"
 valid_resp_addr = "Server address:"
@@ -38,19 +42,41 @@ invalid_resp_body = "The requested URL was rejected. Please consult with your ad
 reload_times = {}
 
 
+def log_content_to_dic(log_contents):
+    arr = []
+    for line in log_contents.splitlines():
+        if line.__contains__('dos.example.com:'):
+            arr.append(line)
+
+    log_info_dic = []
+    for line in arr:
+        chunks = line.split(",")
+        d = {}
+        for chunk in chunks:
+            tmp = chunk.split("=")
+            if len(tmp) == 2:
+                if 'date_time' in tmp[0]:
+                    tmp[0] = 'date_time'
+                d[tmp[0].strip()] = tmp[1].replace('"', '')
+        log_info_dic.append(d)
+    return log_info_dic
+
+
 class DosSetup:
     """
     Encapsulate the example details.
     Attributes:
-        req_url (str):
+        req_url_http (str):
     """
-    def __init__(self, req_url):
-        self.req_url = req_url
+    def __init__(self, req_url_http, pol_name, log_name):
+        self.req_url_http = req_url_http
+        self.pol_name = pol_name
+        self.log_name = log_name
 
 
 @pytest.fixture(scope="class")
 def dos_setup(
-    request, kube_apis, ingress_controller_endpoint, test_namespace
+    request, kube_apis, ingress_controller_endpoint, ingress_controller_prerequisites, test_namespace
 ) -> DosSetup:
     """
     Deploy simple application and all the DOS resources under test in one namespace.
@@ -58,12 +84,22 @@ def dos_setup(
     :param request: pytest fixture
     :param kube_apis: client apis
     :param ingress_controller_endpoint: public endpoint
+    :param ingress_controller_prerequisites: IC pre-requisites
     :param test_namespace:
-    :return: BackendSetup
+    :return: DosSetup
     """
-    print("------------------------- Deploy simple backend application -------------------------")
-    create_example_app(kube_apis, "simple", test_namespace)
-    req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/"
+
+    print(f"------------- Replace ConfigMap --------------")
+    replace_configmap_from_yaml(
+        kube_apis.v1,
+        ingress_controller_prerequisites.config_map["metadata"]["name"],
+        ingress_controller_prerequisites.namespace,
+        f"{TEST_DATA}/dos/nginx-config.yaml"
+    )
+
+    print("------------------------- Deploy Dos backend application -------------------------")
+    create_example_app(kube_apis, "dos", test_namespace)
+    req_url_http = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/"
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(
         ingress_controller_endpoint.public_ip,
@@ -79,7 +115,7 @@ def dos_setup(
     src_log_yaml = f"{TEST_DATA}/dos/dos-logconf.yaml"
     log_name = create_dos_logconf_from_yaml(kube_apis.custom_objects, src_log_yaml, test_namespace)
 
-    print(f"------------------------- Deploy dataguard-alarm appolicy ---------------------------")
+    print(f"------------------------- Deploy dospolicy ---------------------------")
     src_pol_yaml = f"{TEST_DATA}/dos/dos-policy.yaml"
     pol_name = create_dos_policy_from_yaml(kube_apis.custom_objects, src_pol_yaml, test_namespace)
 
@@ -92,13 +128,13 @@ def dos_setup(
         delete_dos_policy(kube_apis.custom_objects, pol_name, test_namespace)
         delete_dos_logconf(kube_apis.custom_objects, log_name, test_namespace)
         delete_dos_protected(kube_apis.custom_objects, protected_name, test_namespace)
-        delete_common_app(kube_apis, "simple", test_namespace)
+        delete_common_app(kube_apis, "dos", test_namespace)
         delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
         write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
 
     request.addfinalizer(fin)
 
-    return DosSetup(req_url)
+    return DosSetup(req_url_http, pol_name, log_name)
 
 
 @pytest.mark.dos
@@ -116,6 +152,39 @@ def dos_setup(
     indirect=["crd_ingress_controller_with_dos"],
 )
 class TestDos:
+    def test_ap_nginx_config_entries(
+            self, kube_apis, crd_ingress_controller_with_dos, dos_setup, test_namespace
+    ):
+        """
+        Test to verify Dos directive in nginx config
+        """
+        conf_directive = [
+            f"app_protect_dos_enable on;",
+            f"app_protect_dos_security_log_enable on;",
+            f"app_protect_dos_monitor \"dos.example.com\";",
+            f"app_protect_dos_name \"{test_namespace}/dos-protected/name\";",
+            f"app_protect_dos_policy_file /etc/nginx/dos/policies/{test_namespace}_{dos_setup.pol_name}.json;",
+            f"app_protect_dos_security_log_enable on;",
+            f"app_protect_dos_security_log /etc/nginx/dos/logconfs/{test_namespace}_{dos_setup.log_name}.json syslog:server=syslog-svc.{test_namespace}.svc.cluster.local:514;",
+        ]
+
+        create_ingress_with_dos_annotations(
+            kube_apis, src_ing_yaml, test_namespace, test_namespace + "/dos-protected",
+        )
+
+        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
+        ensure_response_from_backend(dos_setup.req_url, ingress_host, check404=True)
+
+        pod_name = get_first_pod_name(kube_apis.v1, "nginx-ingress")
+
+        result_conf = get_ingress_nginx_template_conf(
+            kube_apis.v1, test_namespace, "dos-ingress", pod_name, "nginx-ingress"
+        )
+
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+
+        for _ in conf_directive:
+            assert _ in result_conf
 
     def test_dos_sec_logs_on(
         self,
@@ -151,7 +220,7 @@ class TestDos:
 
         print("----------------------- Send request ----------------------")
         response = requests.get(
-            dos_setup.req_url, headers={"host": "dos.example.com"}, verify=False
+            dos_setup.req_url_http, headers={"host": "dos.example.com"}, verify=False
         )
         print(response.text)
         wait_before_test(10)
@@ -168,35 +237,235 @@ class TestDos:
         assert f'vs_name="{test_namespace}/dos-protected/name"' in log_contents
         assert 'bad_actor' in log_contents
 
-    def test_ap_nginx_config_entries(
+    def test_dos_under_attack_no_learning(
             self, kube_apis, crd_ingress_controller_with_dos, dos_setup, test_namespace
     ):
         """
-        Test to verify Dos annotations in nginx config
+        Test App Protect Dos: Block bad clients attack
         """
-        conf_directive = [
-            f"app_protect_dos_enable on;",
-            f"app_protect_dos_security_log_enable on;",
-            f"app_protect_dos_monitor uri=\"dos.example.com\" protocol=http1 timeout=5;",
-            f"app_protect_dos_name \"{test_namespace}/dos-protected/name\";",
-        ]
 
-        wait_before_test(20)
+        print("------------------------- Deploy Syslog -----------------------------")
+        src_syslog_yaml = f"{TEST_DATA}/dos/dos-syslog.yaml"
+        log_loc = f"/var/log/messages"
+        create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
+        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
 
+        print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
-            kube_apis, src_ing_yaml, test_namespace, test_namespace+"/dos-protected",
+            kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
         )
-
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
-        ensure_response_from_backend(dos_setup.req_url, ingress_host, check404=True)
 
-        pod_name = get_first_pod_name(kube_apis.v1, "nginx-ingress")
+        print("------------------------- Attack -----------------------------")
+        wait_before_test(10)
+        print("start bad clients requests")
+        p_attack = subprocess.Popen(
+            [f"exec {TEST_DATA}/dos/bad_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
+            shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        result_conf = get_ingress_nginx_template_conf(
-            kube_apis.v1, test_namespace, "dos-ingress", pod_name, "nginx-ingress"
+        print("Attack for 60 seconds")
+        wait_before_test(60)
+
+        print("Stop Attack")
+        p_attack.terminate()
+
+        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+        log_info_dic = log_content_to_dic(log_contents)
+
+        # Analyze the log
+        no_attack = False
+        attack_started = False
+        under_attack = False
+        for log in log_info_dic:
+            # Start with no attack
+            if log['attack_event'] == "No Attack" and int(log['dos_attack_id']) == 0 and not no_attack:
+                no_attack = True
+            # Attack started
+            elif log['attack_event'] == "Attack started" and int(log['dos_attack_id']) > 0 and not attack_started:
+                attack_started = True
+            # Under attack
+            elif log['attack_event'] == "Under Attack" and int(log['dos_attack_id']) > 0 and not under_attack:
+                under_attack = True
+
+        assert (
+            no_attack and attack_started and under_attack
         )
 
-        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+    def test_dos_under_attack_with_learning(
+            self, kube_apis, crd_ingress_controller_with_dos, dos_setup, test_namespace
+    ):
+        """
+        Test App Protect Dos: Block bad clients attack with learning
+        """
 
-        for _ in conf_directive:
-            assert _ in result_conf
+        print("------------------------- Deploy Syslog -----------------------------")
+        src_syslog_yaml = f"{TEST_DATA}/dos/dos-syslog.yaml"
+        log_loc = f"/var/log/messages"
+        create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
+        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
+
+        print("------------------------- Deploy ingress -----------------------------")
+        create_ingress_with_dos_annotations(
+            kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
+        )
+        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
+
+        print("------------------------- Learning Phase -----------------------------")
+        print("start good clients requests")
+        p_good_client = subprocess.Popen(
+            [f"exec {TEST_DATA}/dos/good_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
+            preexec_fn=os.setsid, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        print("Learning for max 10 minutes")
+        log_contents = ""
+        retry = 0
+        while (
+            'learning_confidence="Ready"' not in log_contents
+            and retry <= 6 * 10
+        ):
+            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace, False)
+            retry += 1
+            wait_before_test(10)
+            print(f"Learning confidence not ready, retrying... #{retry}")
+
+        print("------------------------- Attack -----------------------------")
+        print("start bad clients requests")
+        p_attack = subprocess.Popen(
+            [f"exec {TEST_DATA}/dos/bad_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
+            preexec_fn=os.setsid, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        print("Attack for 300 seconds")
+        wait_before_test(300)
+
+        print("Stop Attack")
+        p_attack.terminate()
+
+        print("wait max 120 seconds after attack stop, to get attack ended")
+        log_contents = ""
+        retry = 0
+        while (
+            'attack_event="Attack ended"' not in log_contents
+            and retry <= 6 * 2
+        ):
+            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace, False)
+            retry += 1
+            wait_before_test(10)
+            print(f"Attack not ended, retrying... #{retry}")
+
+        print("Stop Good Client")
+        p_good_client.terminate()
+
+        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+        log_info_dic = log_content_to_dic(log_contents)
+
+        # Analyze the log
+        no_attack = False
+        attack_started = False
+        under_attack = False
+        attack_ended = False
+        bad_actor_detected = False
+        signature_detected = False
+        health_ok = False
+        bad_ip = ['1.1.1.1', '1.1.1.2', '1.1.1.3']
+        fmt = '%b %d %Y %H:%M:%S'
+        for log in log_info_dic:
+            if log['attack_event'] == 'No Attack':
+                if int(log['dos_attack_id']) == 0 and not no_attack:
+                    no_attack = True
+            elif log['attack_event'] == 'Attack started':
+                if int(log['dos_attack_id']) > 0 and not attack_started:
+                    attack_started = True
+                    start_attack_time = datetime.strptime(log['date_time'], fmt)
+            elif log['attack_event'] == 'Under Attack':
+                under_attack = True
+                if not health_ok and float(log['stress_level']) < 0.6:
+                    health_ok = True
+                    health_ok_time = datetime.strptime(log['date_time'], fmt)
+            elif log['attack_event'] == 'Attack signature detected':
+                signature_detected = True
+            elif log['attack_event'] == 'Bad actors detected':
+                if under_attack:
+                    bad_actor_detected = True
+            elif log['attack_event'] == 'Bad actor detection':
+                if under_attack and log['source_ip'] in bad_ip:
+                    bad_ip.remove(log['source_ip'])
+            elif log['attack_event'] == 'Attack ended':
+                attack_ended = True
+
+        assert (
+            no_attack
+            and attack_started
+            and under_attack
+            and attack_ended
+            and health_ok
+            and (health_ok_time - start_attack_time).total_seconds() < 100
+            and signature_detected
+            and bad_actor_detected
+            and len(bad_ip) == 0
+        )
+
+    def test_dos_arbitrator(
+            self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, dos_setup, test_namespace
+    ):
+        """
+        Test App Protect Dos: Check new IC pod get learning info
+        """
+        print("------------------------- Deploy Syslog -----------------------------")
+        src_syslog_yaml = f"{TEST_DATA}/dos/dos-syslog.yaml"
+        log_loc = f"/var/log/messages"
+        create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
+        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
+
+        print("------------------------- Deploy ingress -----------------------------")
+        create_ingress_with_dos_annotations(
+            kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
+        )
+        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
+
+        # print("------------------------- Learning Phase -----------------------------")
+        print("start good clients requests")
+        p_good_client = subprocess.Popen(
+            [f"exec {TEST_DATA}/dos/good_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
+            preexec_fn=os.setsid, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        print("Learning for max 8 minutes")
+        log_contents = ""
+        retry = 0
+        while (
+                'learning_confidence="Ready"' not in log_contents
+                and retry <= 6 * 8
+        ):
+            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace, False)
+            retry += 1
+            wait_before_test(10)
+            print(f"Learning confidence not ready, retrying... #{retry}")
+
+        print("------------------------- Check new IC pod get info from arbitrator -----------------------------")
+        ic_ns = ingress_controller_prerequisites.namespace
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 2)
+        while get_pods_amount(kube_apis.v1, "nginx-ingress") is not 3:
+            print(f"Number of replicas is not 2, retrying...")
+            wait_before_test()
+
+        print("------------------------- Check if new pod receive info from arbitrator -----------------------------")
+        print("Wait for 30 seconds")
+        wait_before_test(30)
+
+        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+        log_info_dic = log_content_to_dic(log_contents)
+
+        print("Stop Good Client")
+        p_good_client.terminate()
+
+        learning_units_hostname = []
+        for log in log_info_dic:
+            if log['unit_hostname'] not in learning_units_hostname and log['learning_confidence'] == "Ready":
+                learning_units_hostname.append(log['unit_hostname'])
+
+        assert (
+            len(learning_units_hostname) == 2
+        )
+

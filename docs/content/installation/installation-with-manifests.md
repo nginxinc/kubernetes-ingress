@@ -126,15 +126,14 @@ We include two options for deploying the Ingress controller:
 ### Deploy Arbitrator for NGINX App Protect Dos
 If you would like to use the App Protect Dos module, need to add arbitrator deployment.
 
-* build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/app-protect-dos/installation#Build the app-protect-dos-arb Docker Image).
+* build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/app-protect-dos/installation#Build-the-app-protect-dos-arb-Docker-Image).
 
-* run the Arbitrator by using a Deployment
+* run the Arbitrator by using a Deployment and Service
 
    ```
    $ kubectl apply -f deployment/appprotect-dos-arb.yaml
+   $ kubectl apply -f service/appprotect-dos-arb-svc.yaml
    ```
-
-**Note**: Update the `appprotect-dos-arb.yaml` with the container image that you have built.
 
 ### 3.1 Run the Ingress Controller
 * *Use a Deployment*.

@@ -806,7 +806,7 @@ def delete_testing_namespaces(v1: CoreV1Api) -> []:
         delete_namespace(v1, namespace.metadata.name)
 
 
-def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
+def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace, print_log=True) -> str:
     """
     Execute 'cat file_path' command in a pod.
 
@@ -814,6 +814,7 @@ def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
     :param pod_name: pod name
     :param pod_namespace: pod namespace
     :param file_path: an absolute path to a file in the pod
+    :param print_log: bool to decide if print log or not
     :return: str
     """
     command = ["cat", file_path]
@@ -828,7 +829,8 @@ def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
         tty=False,
     )
     result_conf = str(resp)
-    print("\nFile contents:\n" + result_conf)
+    if print_log:
+        print("\nFile contents:\n" + result_conf)
     return result_conf
 
 
@@ -1034,6 +1036,52 @@ def delete_ingress_controller(apps_v1_api: AppsV1Api, name, dep_type, namespace)
     elif dep_type == "daemon-set":
         delete_daemon_set(apps_v1_api, name, namespace)
 
+
+def create_dos_arbitrator(
+    v1: CoreV1Api, apps_v1_api: AppsV1Api, namespace
+) -> str:
+    """
+    Create dos arbitrator according to the params.
+
+    :param v1: CoreV1Api
+    :param apps_v1_api: AppsV1Api
+    :param namespace: namespace name
+    :return: str
+    """
+    yaml_manifest = (
+        f"{DEPLOYMENTS}/deployment/appprotect-dos-arb.yaml"
+    )
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+
+    name = create_deployment(apps_v1_api, namespace, dep)
+
+    before = time.time()
+    wait_until_all_pods_are_ready(v1, namespace)
+    after = time.time()
+    print(f"All pods came up in {int(after-before)} seconds")
+    print(f"Dos arbitrator was created with name '{name}'")
+
+    print("create dos svc")
+    svc_name = create_service_from_yaml(
+        v1,
+        namespace,
+        f"{DEPLOYMENTS}/service/appprotect-dos-arb-svc.yaml",
+    )
+    print(f"Dos arbitrator svc was created with name '{svc_name}'")
+    return name
+
+
+def delete_dos_arbitrator(apps_v1_api: AppsV1Api, name, namespace) -> None:
+    """
+    Delete dos arbitrator.
+
+    :param apps_v1_api: NetworkingV1Api
+    :param name: name
+    :param namespace: namespace name
+    :return:
+    """
+    delete_deployment(apps_v1_api, name, namespace)
 
 def create_ns_and_sa_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
     """

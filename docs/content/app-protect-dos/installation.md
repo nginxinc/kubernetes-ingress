@@ -15,6 +15,7 @@ This document provides an overview of the steps required to use NGINX App Protec
 - Deploy the app protect dos arbitrator
     ```bash
     kubectl apply -f deployment/appprotect-dos-arb.yaml
+    kubectl apply -f service/appprotect-dos-arb-svc.yaml
     ```
 
 ## Build the Docker Image

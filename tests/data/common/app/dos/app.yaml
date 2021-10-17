@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dos-svc
+spec:
+  selector:
+    app: dos-server
+  ports:
+  - protocol: "TCP"
+    port: 80
+    targetPort: 8083
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dos-server
+spec:
+  selector:
+    matchLabels:
+      app: dos-server
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: dos-server
+    spec:
+      containers:
+      - name: dos-server
+        image: nginxkic/test-dos-server:1.0.0
