@@ -1,6 +1,9 @@
 ---
 name: Bug report
 about: Create a report to help us improve
+title: ''
+labels: ''
+assignees: ''
 
 ---
 
@@ -21,6 +24,7 @@ A clear and concise description of what you expected to happen.
 * Version of Kubernetes
 * Kubernetes platform (e.g. Mini-kube or GCP)
 * Using NGINX or NGINX Plus
+<!-- output from `docker inspect --format '{{ json .Config.Labels }}' <docker image> | jq` if available -->
 
 **Additional context**
 Add any other context about the problem here. Any log files you want to share.
