@@ -1,8 +1,4 @@
 github.com/jquery/jquery-dist v0.0.0-20210302171154-e786e3d9707f h1:VrcFwwDo/nKErNIKmp//iOGu7DlRkBTeW//hN7tl7SU=
 github.com/jquery/jquery-dist v0.0.0-20210302171154-e786e3d9707f/go.mod h1:/lTfttEqFU0GWTaOOMIeNTzLGQ7yTIgyzjtkS/pYIoc=
-gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.1-0.20210915172724-df3b014edc7e h1:avqPA9izQN98jtkm5xVnnW/MGBsTRx3tcUgxLhPUtHM=
-gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.1-0.20210915172724-df3b014edc7e/go.mod h1:G+e4mnMJBHCT04TKm3Bbnm5I5OGVoeLlmbaDFF3GPBc=
-gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.4-0.20210920200041-c38578cf7945 h1:7O1KjKaRVEthmXNhoZ7D48qcV/N0EbL7n13JoRL5KzE=
-gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.4-0.20210920200041-c38578cf7945/go.mod h1:G+e4mnMJBHCT04TKm3Bbnm5I5OGVoeLlmbaDFF3GPBc=
-gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.6 h1:yDtJ1xqECha6lZ04fSG2wiSWCJMosjIVb/D0RoKLC6M=
-gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.6/go.mod h1:G+e4mnMJBHCT04TKm3Bbnm5I5OGVoeLlmbaDFF3GPBc=
+gitlab.com/f5/nginx/controller/poc/f5-hugo v0.14.0 h1:IQqJN1O0DILmJTTzCGr2zOAo6YXSwOW77d2MX9F765w=
+gitlab.com/f5/nginx/controller/poc/f5-hugo v0.14.0/go.mod h1:G+e4mnMJBHCT04TKm3Bbnm5I5OGVoeLlmbaDFF3GPBc=
