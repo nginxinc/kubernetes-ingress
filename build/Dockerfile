@@ -2,6 +2,7 @@
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=r25
 ARG UBI_VERSION=8
+ARG DOWNLOAD_TAG=edge
 
 ############################################# Base image for Debian #############################################
 FROM nginx:1.21.3 AS debian
@@ -281,3 +282,13 @@ ARG TARGETARCH
 LABEL org.nginx.kic.image.build.version="aws"
 
 COPY --chown=nginx:0 ./dist/aws_linux_$TARGETARCH/nginx-ingress /
+
+
+############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
+FROM nginx/nginx-ingress:${DOWNLOAD_TAG} as kic
+
+FROM common as download
+
+LABEL org.nginx.kic.image.build.version="binaries"
+
+COPY --from=kic /nginx-ingress /

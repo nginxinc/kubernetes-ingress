@@ -1,12 +1,12 @@
 ---
 title: Building the Ingress Controller Image
-description: 
+description:
 weight: 2200
 doctypes: [""]
 toc: true
 ---
 
-This document explains how to build an Ingress Controller image using the source code. You can also use pre-built images: please see [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the NGINX Ingress Controller based on NGINX Plus from the F5 Docker registry; for NGINX Ingress Controller based on NGINX OSS, we provide the images through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
+This document explains how to build an Ingress Controller image using the source code. You can also use pre-built images: please see [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the NGINX Ingress Controller based on NGINX Plus from the F5 Docker registry; for NGINX Ingress Controller based on NGINX OSS, we provide the images through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) and [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress).
 
 ## Prerequisites
 
@@ -17,13 +17,13 @@ Before you can build the image, make sure that the following software is install
 * [OpenSSL](https://www.openssl.org/), optionally, if you would like to generate a self-signed certificate and a key for the default server.
 * For NGINX Plus, you must have the NGINX Plus license -- the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`).
 
-Although the Ingress Controller is written in golang, golang is not required, you have the option to build the Ingress Controller in a Docker container.
+Although the Ingress Controller is written in golang, golang is not required, you have the option to download the binary or to build the Ingress Controller in a Docker container.
 
 ## Building the Image and Pushing It to the Private Registry
 
 We build the image using the make utility and the provided `Makefile`. Let’s create the Ingress Controller binary, build an image and push the image to the private registry.
 
-**Note**: If you have a local golang environment, you can remove `TARGET=container` from the `make` commands to speed up the build.
+**Note**: If you have a local golang environment and you want to build the binary, you can remove `TARGET=download` from the `make` commands. If you want to build the binary, but you don't have a local golang environment you can use `TARGET=container`.
 
 1. Make sure to run the `docker login` command first to log in to the registry.
 
@@ -39,11 +39,11 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 1. Build the image:
     * For **NGINX**:
       ```
-      $ make debian-image PREFIX=myregistry.example.com/nginx-ingress TARGET=container
+      $ make debian-image PREFIX=myregistry.example.com/nginx-ingress TARGET=download
       ```
       or if you wish to use alpine
       ```
-      $ make alpine-image PREFIX=myregistry.example.com/nginx-ingress TARGET=container
+      $ make alpine-image PREFIX=myregistry.example.com/nginx-ingress TARGET=download
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
@@ -56,13 +56,13 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       Then run:
       ```
-      $ make debian-image-plus PREFIX=myregistry.example.com/nginx-plus-ingress TARGET=container
+      $ make debian-image-plus PREFIX=myregistry.example.com/nginx-plus-ingress TARGET=download
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
       As a result, the image **myregistry.example.com/nginx-plus-ingress:2.0.2** is built. Note that the tag `2.0.2` comes from the `VERSION` variable, defined in the Makefile.
 
-      **Note**: In the event of a patch version of [NGINX Plus being released](/nginx/releases/), make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--no-cache"` to the `make` command.
+      **Note**: In the event of a patch version of [NGINX Plus being released](/nginx/releases/), make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the `make` command.
 
 1. Push the image:
     ```
@@ -107,4 +107,4 @@ The **Makefile** contains the following main variables for you to customize (eit
 * **VERSION** -- the current version of the Ingress Controller.
 * **TAG** -- the tag added to the image. It's set to the value of the `VERSION` variable by default.
 * **DOCKER_BUILD_OPTIONS** -- the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `docker build` command. For example, `--pull`.
-* **TARGET** -- By default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the Ingress Controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`.
+* **TARGET** -- By default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the Ingress Controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`. If you checked out a tag or are on the latest commit on `master` you can specify `TARGET=download` to avoid compiling the binary.
