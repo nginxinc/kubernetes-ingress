@@ -58,11 +58,11 @@ endif
 download-binary-docker: ## Download Docker image from which to extract Ingress Controller binary
 	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
 ifeq (${TARGET},download)
-DOWLOAD_TAG := $(shell ./hack/docker.sh $(GIT_COMMIT) $(GIT_TAG))
-ifeq ($(DOWLOAD_TAG),fail)
+DOWNLOAD_TAG := $(shell ./hack/docker.sh $(GIT_COMMIT) $(GIT_TAG))
+ifeq ($(DOWNLOAD_TAG),fail)
 $(error unable to build with TARGET=download, this function is only available when building from a git tag or from the latest commit matching the edge image)
 endif
-override DOCKER_BUILD_OPTIONS += --build-arg DOWLOAD_TAG=$(DOWLOAD_TAG)
+override DOCKER_BUILD_OPTIONS += --build-arg DOWNLOAD_TAG=$(DOWNLOAD_TAG)
 endif
 
 .PHONY: build-goreleaser
