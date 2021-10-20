@@ -1,23 +1,28 @@
-PREFIX = nginx/nginx-ingress
+# variables that should not be overridden by the user
 GIT_COMMIT = $(shell git rev-parse HEAD || echo unknown)
 GIT_COMMIT_SHORT = $(shell echo ${GIT_COMMIT} | cut -c1-7)
 GIT_TAG = $(shell git describe --tags --abbrev=0 || echo untagged)
 DATE = $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 VERSION = $(GIT_TAG)-SNAPSHOT-$(GIT_COMMIT_SHORT)
-TAG = $(VERSION:v%=%)
-TARGET ?= local
-
-override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg DATE=$(DATE)
-DOCKER_CMD = docker build $(DOCKER_BUILD_OPTIONS) --target $(TARGET) -f build/Dockerfile -t $(PREFIX):$(TAG) .
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
+
+# variables that can be overridden by the user
+PREFIX = nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
+TAG = $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
+TARGET ?= local ## The target of the build. Possible values: local, container and download
+override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg DATE=$(DATE) ## The options for the docker build command. For example, --pull.
+
+# final docker build command
+DOCKER_CMD = docker build $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
 
 export DOCKER_BUILDKIT = 1
 
 .DEFAULT_GOAL:=help
 
 .PHONY: help
-help: ## Display this help
+help: Makefile ## Display this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "; printf "Usage:\n\n    make \033[36m<target>\033[0m [VARIABLE=value...]\n\nTargets:\n\n"}; {printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^(override )?[a-zA-Z_-]+ \??\+?= .*?## .*$$' $< | sort | awk 'BEGIN {FS = " \\??\\+?= .*?## "; printf "\nVariables:\n\n"}; {gsub(/override /, "", $$1); printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: all
 all: test lint verify-codegen update-crds debian-image
@@ -48,15 +53,19 @@ certificate-and-key: ## Create default cert and key
 	./build/generate_default_cert_and_key.sh
 
 .PHONY: build
-build: download-binary-docker ## Build Ingress Controller binary
+build: ## Build Ingress Controller binary
+	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
 ifeq (${TARGET},local)
 	@go version || (code=$$?; printf "\033[0;31mError\033[0m: unable to build locally, try using the parameter TARGET=container or TARGET=download\n"; exit $$code)
 	CGO_ENABLED=0 GO111MODULE=on GOOS=linux go build -trimpath -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${GIT_COMMIT} -X main.date=$(DATE)" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
+else ifeq (${TARGET},goreleaser)
+	@$(MAKE) build-goreleaser
+else ifeq (${TARGET},download)
+	@$(MAKE) download-binary-docker
 endif
 
 .PHONY: download-binary-docker
-download-binary-docker: ## Download Docker image from which to extract Ingress Controller binary
-	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
+download-binary-docker: ## Download Docker image from which to extract Ingress Controller binary, TARGET=download is required
 ifeq (${TARGET},download)
 DOWNLOAD_TAG := $(shell ./hack/docker.sh $(GIT_COMMIT) $(GIT_TAG))
 ifeq ($(DOWNLOAD_TAG),fail)
@@ -71,50 +80,50 @@ build-goreleaser: ## Build Ingress Controller binary using GoReleaser
 	GOPATH=$(shell go env GOPATH) goreleaser build --rm-dist --debug --snapshot --id kubernetes-ingress
 
 .PHONY: debian-image
-debian-image: build ## Create Docker image for Ingress Controller (debian)
+debian-image: build ## Create Docker image for Ingress Controller (Debian)
 	$(DOCKER_CMD) --build-arg BUILD_OS=debian
 
 .PHONY: alpine-image
-alpine-image: build ## Create Docker image for Ingress Controller (alpine)
+alpine-image: build ## Create Docker image for Ingress Controller (Alpine)
 	$(DOCKER_CMD) --build-arg BUILD_OS=alpine
 
 .PHONY: alpine-image-plus
-alpine-image-plus: build ## Create Docker image for Ingress Controller (alpine plus)
+alpine-image-plus: build ## Create Docker image for Ingress Controller (Alpine with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=alpine-plus
 
 .PHONY: debian-image-plus
-debian-image-plus: build ## Create Docker image for Ingress Controller (nginx plus)
+debian-image-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus
 
 .PHONY: debian-image-nap-plus
-debian-image-nap-plus: build ## Create Docker image for Ingress Controller (nginx plus with nap)
+debian-image-nap-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect WAF)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap
 
 .PHONY: openshift-image
-openshift-image: build ## Create Docker image for Ingress Controller (ubi)
+openshift-image: build ## Create Docker image for Ingress Controller (UBI)
 	$(DOCKER_CMD) --build-arg BUILD_OS=ubi
 
 .PHONY: openshift-image-plus
-openshift-image-plus: build ## Create Docker image for Ingress Controller (ubi with plus)
+openshift-image-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=ubi-plus
 
 .PHONY: openshift-image-nap-plus
-openshift-image-nap-plus: build ## Create Docker image for Ingress Controller (ubi with plus and nap)
+openshift-image-nap-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect WAF)
 	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg UBI_VERSION=7
 
 .PHONY: debian-image-opentracing
-debian-image-opentracing: build ## Create Docker image for Ingress Controller (with opentracing)
+debian-image-opentracing: build ## Create Docker image for Ingress Controller (Debian with OpenTracing)
 	$(DOCKER_CMD) --build-arg BUILD_OS=opentracing
 
 .PHONY: debian-image-opentracing-plus
-debian-image-opentracing-plus: build ## Create Docker image for Ingress Controller (with opentracing and plus)
+debian-image-opentracing-plus: build ## Create Docker image for Ingress Controller (Debian with OpenTracing and NGINX Plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=opentracing-plus
 
 .PHONY: all-images ## Create all the Docker images for Ingress Controller
 all-images: alpine-image alpine-image-plus debian-image debian-image-plus debian-image-nap-plus debian-image-opentracing debian-image-opentracing-plus openshift-image openshift-image-plus openshift-image-nap-plus
 
 .PHONY: push
-push: ## Docker push to $PREFIX and $TAG
+push: ## Docker push to PREFIX and TAG
 	docker push $(PREFIX):$(TAG)
 
 .PHONY: clean

@@ -104,7 +104,6 @@ A few other useful targets:
 
 The **Makefile** contains the following main variables for you to customize (either by changing the Makefile or by overriding the variables in the make command):
 * **PREFIX** -- the name of the image. The default is `nginx/nginx-ingress`.
-* **VERSION** -- the current version of the Ingress Controller.
-* **TAG** -- the tag added to the image. It's set to the value of the `VERSION` variable by default.
+* **TAG** -- the tag added to the image. It's set to the version of the Ingress Controller by default.
 * **DOCKER_BUILD_OPTIONS** -- the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `docker build` command. For example, `--pull`.
 * **TARGET** -- By default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the Ingress Controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`. If you checked out a tag or are on the latest commit on `master` you can specify `TARGET=download` to avoid compiling the binary.
