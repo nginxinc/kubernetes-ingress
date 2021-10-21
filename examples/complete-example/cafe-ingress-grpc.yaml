@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cafe-ingress
+  annotations:
+    nginx.org/grpc-services: "grpc-svc"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - cafe.example.com
+    secretName: cafe-secret
+  rules:
+  - host: cafe.example.com
+    http:
+      paths:
+      - path: /helloworld.Greeter
+        pathType: Prefix
+        backend:
+          service:
+            name: grpc-svc
+            port:
+              number: 50051
