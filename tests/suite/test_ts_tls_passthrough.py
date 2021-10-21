@@ -10,10 +10,13 @@ from suite.resources_utils import (
     get_first_pod_name,
 )
 from suite.custom_resources_utils import (
-    read_vs,
     read_ts,
     delete_ts,
     create_ts_from_yaml,
+
+)
+from suite.vs_vsr_resources_utils import (
+    read_vs,
     create_virtual_server_from_yaml,
     delete_virtual_server,
 )

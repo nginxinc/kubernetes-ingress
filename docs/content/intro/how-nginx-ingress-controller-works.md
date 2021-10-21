@@ -108,7 +108,7 @@ This section covers the architecture of the IC process, including:
 
 The following diagram depicts how the IC processes a new Ingress resource. We represent the NGINX master and worker processes as a single rectangle *NGINX* for simplicity. Also, note that VirtualServer and VirtualServerRoute resources are processed similarly.
 
-{< img title="IC process" src="./img/ic-process.png" >}}
+{{< img title="IC process" src="./img/ic-process.png" >}}
 
 Processing a new Ingress resource involves the following steps, where each step corresponds to the arrow on the diagram with the same number:
 

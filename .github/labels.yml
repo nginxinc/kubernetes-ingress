@@ -40,9 +40,15 @@
 - color: cc317c
   description: An issue asking a question
   name: question
+- color: FEF2C0
+  description: Pull requests that don't need to be added to the changelog
+  name: skip-changelog
 - color: 8E7888
   description: Pull requests/issues with no activity
   name: stale
+- color: A4EF7D
+  description: Pull requests that update tests
+  name: tests
 - color: C2E0C6
   description: Waiting for author's response
   name: waiting for response

@@ -1,4 +1,4 @@
-PyYAML==5.4.1
+PyYAML==6.0
 requests==2.26.0
 kubernetes==18.20.0
 pytest==4.4.1

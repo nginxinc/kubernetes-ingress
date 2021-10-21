@@ -3,7 +3,7 @@ import pytest
 from settings import TEST_DATA
 from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count, wait_and_assert_status_code, \
     wait_for_event_count_increases, assert_event_with_full_equality_and_count
-from suite.custom_resources_utils import get_vs_nginx_template_conf
+from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf
 from suite.resources_utils import replace_configmap_from_yaml, \
     ensure_connection_to_public_endpoint, replace_configmap, create_service_from_yaml, get_first_pod_name, get_events, \
     read_service, replace_service, wait_before_test, delete_namespace, create_service_with_name, \

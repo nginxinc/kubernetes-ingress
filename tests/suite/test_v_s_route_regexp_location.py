@@ -3,7 +3,7 @@ import pytest
 
 from settings import TEST_DATA
 from suite.custom_assertions import assert_event, assert_vs_conf_not_exists
-from suite.custom_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml, \
+from suite.vs_vsr_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml, \
     get_vs_nginx_template_conf, create_virtual_server_from_yaml, create_v_s_route_from_yaml
 from suite.resources_utils import wait_before_test, get_events, get_first_pod_name, \
     create_example_app, wait_until_all_pods_are_ready, ensure_response_from_backend

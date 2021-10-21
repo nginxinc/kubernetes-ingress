@@ -2,6 +2,7 @@
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=r25
 ARG UBI_VERSION=8
+ARG DOWNLOAD_TAG=edge
 
 ############################################# Base image for Debian #############################################
 FROM nginx:1.21.3 AS debian
@@ -50,8 +51,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent \"k8s-ic-$IC_VERSION${BUILD_OS##debian-plus}-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
 	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION^^}/debian buster nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
 	&& apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y \
-	nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION} \
+	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -66,13 +66,11 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y gnupg curl apt-transport-https \
 	&& curl -sSL https://cs.nginx.com/static/keys/app-protect-security-updates.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_app_signing.gpg \
-	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect/debian buster nginx-plus" \
+	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect/${NGINX_PLUS_VERSION^^}/debian buster nginx-plus" \
 	"deb https://pkgs.nginx.com/app-protect-security-updates/debian buster nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect.list \
 	&& apt-get update \
-	# searching apt-cache for the latest version of NAP package compatible with the $NGINX_PLUS_VERSION
-	&& module_version=$(apt-cache showpkg nginx-plus-module-appprotect | awk -v ver="nginx-plus-$NGINX_PLUS_VERSION" '{ if ($6 == ver) {print $1; exit}}') \
-	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus-module-appprotect=${module_version} app-protect=${module_version} \
-	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect-attack-signatures app-protect-threat-campaigns \
+	&& apt-get install --no-install-recommends --no-install-suggests -y \
+	nginx-plus-module-appprotect app-protect app-protect-attack-signatures app-protect-threat-campaigns \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect.list
@@ -284,3 +282,13 @@ ARG TARGETARCH
 LABEL org.nginx.kic.image.build.version="aws"
 
 COPY --chown=nginx:0 ./dist/aws_linux_$TARGETARCH/nginx-ingress /
+
+
+############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
+FROM nginx/nginx-ingress:${DOWNLOAD_TAG} as kic
+
+FROM common as download
+
+LABEL org.nginx.kic.image.build.version="binaries"
+
+COPY --from=kic /nginx-ingress /

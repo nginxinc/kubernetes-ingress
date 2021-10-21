@@ -10,7 +10,7 @@ HELM CHART:
 * The version of the Helm chart is now %%HELM_CHART_VERSION%%.
 
 UPGRADE:
-* For NGINX, use the %%IC_VERSION%% image from our DockerHub: `nginx/nginx-ingress:%%IC_VERSION%%`, `nginx/nginx-ingress:%%IC_VERSION%%-alpine` or `nginx/nginx-ingress:%%IC_VERSION%%-ubi`
-* For NGINX Plus, please build your own image using the %%IC_VERSION%% source code.
+* For NGINX, use the %%IC_VERSION%% image from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=%%IC_VERSION%%) or [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress).
+* For NGINX Plus, use the %%IC_VERSION%% image from the F5 Container registry or build your own image using the %%IC_VERSION%% source code.
 * For Helm, use version %%HELM_CHART_VERSION%% of the chart.
 

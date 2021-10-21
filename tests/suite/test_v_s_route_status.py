@@ -3,6 +3,8 @@ from kubernetes.client.rest import ApiException
 from suite.resources_utils import wait_before_test
 from suite.custom_resources_utils import (
     read_custom_resource,
+)
+from suite.vs_vsr_resources_utils import (
     patch_virtual_server_from_yaml,
     patch_v_s_route_from_yaml,
     delete_virtual_server,

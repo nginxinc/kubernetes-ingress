@@ -19,3 +19,4 @@ jobs:
           exclude-labels: |
             no-autoupdate
             dependencies
+          exclude-drafts: true

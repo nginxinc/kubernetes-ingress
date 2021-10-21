@@ -3,7 +3,7 @@ import pytest
 from settings import TEST_DATA
 from suite.custom_assertions import assert_event_and_count, assert_event_and_get_count, wait_and_assert_status_code, \
     wait_for_event_count_increases
-from suite.custom_resources_utils import create_virtual_server_from_yaml, \
+from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, \
     create_v_s_route_from_yaml, get_vs_nginx_template_conf
 from suite.fixtures import VirtualServerRoute, PublicEndpoint
 from suite.resources_utils import get_first_pod_name, get_events, \
