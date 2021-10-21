@@ -3947,8 +3947,8 @@ func TestGenerateLocationForGrpcProxying(t *testing.T) {
 	}
 
 	result := generateLocationForProxying(path, upstreamName, conf_v1.Upstream{Type: "grpc"}, &cfgParams, nil, false, 0, "", nil, "", vsLocSnippets, false, "", "")
-	if !reflect.DeepEqual(result, expected) {
-		t.Errorf("TestGenerateLocationForGrpcProxying() returned \n%v but expected \n%v", result, expected)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("generateLocationForForGrpcProxying() mismatch (-want +got):\n%s", diff)
 	}
 }
 

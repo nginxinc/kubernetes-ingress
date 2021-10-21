@@ -274,6 +274,7 @@ tls:
 |``buffers`` | Configures the buffers used for reading a response from the upstream server for a single connection. | [buffers](#upstreambuffers) | No | 
 |``buffer-size`` | Sets the size of the buffer used for reading the first part of a response received from the upstream server. See the [proxy_buffer_size](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffer_size) directive. The default is set in the ``proxy-buffer-size`` ConfigMap key. | ``string`` | No | 
 |``ntlm`` | Allows proxying requests with NTLM Authentication. See the [ntlm](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#ntlm) directive. In order for NTLM authentication to work, it is necessary to enable keepalive connections to upstream servers using the ``keepalive`` field. Note: this feature is supported only in NGINX Plus.| ``boolean`` | No |
+|``type`` |The type of the upstream. Supported values are ``http`` and ``grpc``. The default is ``http``. For gRPC, it is necessary to enable HTTP/2 in the `ConfigMap </nginx-ingress-controller/configuration/global-configuration/configmap-resource/#listeners)>`_ and configure TLS termination in the VirtualServer.
 {{% /table %}} 
 
 ### Upstream.Buffers

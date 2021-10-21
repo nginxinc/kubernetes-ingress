@@ -66,6 +66,7 @@ from suite.resources_utils import (
     configure_rbac_with_ap,
     create_items_from_yaml,
     delete_items_from_yaml,
+    delete_secret
 )
 from suite.yaml_utils import (
     get_first_host_from_yaml,
@@ -732,14 +733,14 @@ def virtual_server_setup(
     vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects, vs_source, test_namespace)
     vs_host = get_first_host_from_yaml(vs_source)
     vs_paths = get_paths_from_vs_yaml(vs_source)
-    if request.param["app_type"]:
+    if request.param.get("app_type"):
         create_example_app(kube_apis, request.param["app_type"], test_namespace)
         wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
     def fin():
         print("Clean up Virtual Server Example:")
         delete_virtual_server(kube_apis.custom_objects, vs_name, test_namespace)
-        if request.param["app_type"]:
+        if request.param.get("app_type"):
             delete_common_app(kube_apis, request.param["app_type"], test_namespace)
 
     request.addfinalizer(fin)

@@ -1,0 +1,23 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server
+spec:
+  host: virtual-server.example.com
+  tls:
+    secret: virtual-server-tls-grpc-secret
+  upstreams:
+  - name: grpc1
+    service: grpc1-svc
+    port: 50051
+    type: grpc
+  - name: backend1
+    service: backend1-svc
+    port: 80
+  routes:
+  - path: "/helloworld.Greeter"
+    action:
+      pass: grpc1
+  - path: "/backend1"
+    action:
+      pass: backend1
