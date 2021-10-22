@@ -6,3 +6,5 @@ gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.4-0.20210920200041-c38578cf7945
 gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.4-0.20210920200041-c38578cf7945/go.mod h1:G+e4mnMJBHCT04TKm3Bbnm5I5OGVoeLlmbaDFF3GPBc=
 gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.6 h1:yDtJ1xqECha6lZ04fSG2wiSWCJMosjIVb/D0RoKLC6M=
 gitlab.com/f5/nginx/controller/poc/f5-hugo v0.12.6/go.mod h1:G+e4mnMJBHCT04TKm3Bbnm5I5OGVoeLlmbaDFF3GPBc=
+gitlab.com/f5/nginx/controller/poc/f5-hugo v0.14.1-0.20211019184158-5e5bd366bfcd h1:YXRkPqW1POhQHdPsjchsMVz8JmTtQvWRhAWG4v2T2E4=
+gitlab.com/f5/nginx/controller/poc/f5-hugo v0.14.1-0.20211019184158-5e5bd366bfcd/go.mod h1:G+e4mnMJBHCT04TKm3Bbnm5I5OGVoeLlmbaDFF3GPBc=

@@ -51,3 +51,7 @@
   {{ if and (in .Params.doctypes "reference") (in .Params.tags "api") }}<script src="{{$redoc.RelPermalink}}" type="text/javascript"></script>{{ end }}
 
 {{ end }}
+
+<!-- Load Sidebar javascript -->
+{{ $jsSidebar := resources.Get "js/sidebar.js" | fingerprint }}
+  <script src="{{ $jsSidebar.RelPermalink }}" type="text/javascript" integrity="{{ $jsSidebar.Data.Integrity }}"></script>
