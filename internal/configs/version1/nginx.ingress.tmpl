@@ -69,7 +69,7 @@ server {
 	{{if not $server.GRPCOnly}}
 	{{- if $server.SSLRedirect}}
 	if ($scheme = http) {
-		return 301 https://$host:{{index $server.SSLPorts 0}}$request_uri;
+		return 301 https://$host$request_uri;
 	}
 	{{- end}}
 	{{end}}
