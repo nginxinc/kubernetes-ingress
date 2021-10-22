@@ -2,39 +2,85 @@
 <!-- sidebar start -->
 
 <div id="sidebar" class="sidebar" aria-label="Sidebar navigation">
-    
-    <h3 class="sidebar-title"> 
-        <a href="{{.Site.Home.Permalink}}" alt="{{.Site.Title}}">{{ if .Site.Params.logo }}<img class="card-img-top" src="{{ .Site.BaseURL}}/images/icons/{{ .Site.Params.logo }}" alt="{{.Site.Title}}">{{end}}
-        {{.Site.Title}}</a>
-    </h3> 
 
+    <h3>
+        <a class="sidebar-title" href="{{.Site.Home.Permalink}}" alt="{{.Site.Title}}">{{ if .Site.Params.logo }}<img
+                class="card-img-top" src="{{ .Site.BaseURL}}/images/icons/{{ .Site.Params.logo }}"
+                alt="{{.Site.Title}}">{{end}}
+            {{.Site.Title}}</a>
+    </h3>
     <ul>
-        
         {{ range .Site.Sections }}
-        <li data-toggle="collapse" class="nginx-toc-link l1" id="accordion-{{.Section | urlize}}">
-            <a class="" data-toggle="collapse" href="#{{.Section | urlize}}-section" role="button" aria-expanded="false" aria-controls="{{.Section | urlize}}-section">
-                {{ .Title }}
-            </a>
-        </li>
-
-        
-            {{ range .Pages }}
-            <div class="collapse" id="{{.Section | urlize }}-section" >
-                <ul class="sidebar-ul-border">
-                    <li class="nginx-toc-link l2">
-                        <a href="{{ .Permalink }}">{{ .Title }}</a>
+        <div class="accordion" id="accordion1">
+            <div class="accordion-group">
+                <div class="accordion-heading">
+                    <li class="nginx-toc-link l1">
+                        <a data-menu-id="{{.Title | urlize}}" class="accordion-toggle" aria-expanded="false"
+                            data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}-collapseOne"
+                            aria-controls="{{.Section | urlize}}-collapseOne">
+                            <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
+                                class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }} </a>
                     </li>
-                </ul>
+                </div>
+                <div id="{{.Section | urlize}}-collapseOne" class="accordion-body collapse">
+                    <div class="accordion-inner">
+                        {{ range .Sections }}
+                        <div class="accordion" id="accordion2">
+                            <div class="sidebar-l1-padding">
+                                <div class="accordion-group sidebar-il-border">
+                                    <div class="accordion-heading">
+                                        <ul>
+                                            <li class="nginx-toc-link l2">
+                                                <a data-menu-id="{{.Title | urlize}}" class="accordion-toggle"
+                                                    aria-expanded="false" data-toggle="collapse"
+                                                    href="#{{.Title | urlize}}--collapseTwo">
+                                                    <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
+                                                        class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }} </a>
+                                            </li>
+                                            <ul>
+                                    </div>
+                                    <div id="{{.Title | urlize}}--collapseTwo" class="accordion-body collapse leaf">
+                                        <div class="accordion-inner">
+                                            {{ range .Pages }}
+                                            <ul class="sidebar-l2-padding">
+                                                <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                    <a data-menu-id="{{.Title | urlize}}"
+                                                        href="{{ .Permalink }}">{{ .Title }}</a>
+                                                </li>
+                                            </ul>
+                                            {{ end }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {{ end }}
+                        {{ range .RegularPages }}
+                        <ul class="sidebar-reg-padding">
+                            <div class="accordion" id="accordion2">
+                                <div class="accordion-group sidebar-il-border">
+                                    <div class="accordion-heading">
+                                        <ul>
+                                            <li class="nginx-toc-link l2">
+                                                <a data-menu-id="{{.Title | urlize}}"
+                                                    href="{{ .Permalink }}">{{ .Title }}</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </ul>
+                        {{ end }}
+                    </div>
+                </div>
             </div>
-            {{ end }}
-        
+        </div>
         {{ end }}
     </ul>
-
     {{ range where .Site.RegularPages "Section" "=" "" }}
     <ul>
         <li class="nginx-toc-link l1">
-            <a href="{{ .Permalink }}">{{ .Title }}</a>
+            <a data-menu-id="{{.Title | urlize}}" href="{{ .Permalink }}">{{ .Title }}</a>
         </li>
     </ul>
     {{ end }}

@@ -61,18 +61,51 @@ ol > li > ol {
     padding-bottom: 2em;
 }
 
+.card-holder {
+    padding: 12px;
+}
+
 .card {
     padding: 1.5em;
     margin-top: 2em;
     /*min-height: 330px;*/
     min-width: 40%;
     max-width: 100%;
-    /*background: #FFFFFF;*/
+    background: #FFFFFF;
     border: 1px solid #EEEEEE;
     box-sizing: border-box;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.15);
-    border-radius: 4px;
+    border-radius: 2px;
 }
+
+.products-card {
+    color: #33444d;
+    background-color: #fff;
+    box-shadow: 0px 1px 4px 0px #4856653D;
+    box-shadow: 0px 4px 8px 0px #48566529;
+    padding: 24px 36px;
+    min-height: 180px;
+    border: 1px solid #f8f9f9;
+    box-sizing: border-box;
+    border-radius: 4px;
+  }
+  
+  a.products-card {
+    display: block;
+    transition: transform 150ms ease-in-out;
+    color: #000;
+  }
+  
+  a.products-card:hover {
+    opacity: 1;
+    /* transform: scale(1.03); */
+    box-shadow: 0px 5px 10px 0px #4856650F;
+    box-shadow: 0px 12px 24px 0px #48566533;
+  }
+  
+  .card-img {
+    background-repeat: no-repeat;
+  }
 
 .card-text-placeholder {
     min-height: 35px;
@@ -119,8 +152,8 @@ ol > li > ol {
 }
 
 .card-img, .card-img-top {
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
     color: var(--nginx-green);
     margin-right: 5px;
 }
@@ -159,6 +192,10 @@ h3.card-title {
     line-height: 18px;
     /* or 129% */
     font-feature-settings: 'case' on;
+}
+
+.card-description {
+    padding-left: 52px;
 }
 
 .card-list {
@@ -631,7 +668,7 @@ h3.bd-links, #TableOfContents ul li a {
 }
 
 .page {
-    background-color: #F7F8FA;
+    background-color: #FFFFFF;
 }
 
 .bg-md-gray {
@@ -763,13 +800,27 @@ button, input[type=button], input[type=reset], input[type=submit] {
     margin-bottom: 0 !important;
 }
 
-.sidebar-ul-border {
-    border-left: 1px solid #C5CCD3;
+.sidebar-l1-padding {
+    padding-left: 7px !important;
 }
+
+.sidebar-l2-padding {
+    padding-left: 8px !important;
+}
+
+.sidebar-reg-padding {
+    padding-left: 7px !important;
+}
+
+.sidebar-il-border {
+    border-left: 1px solid #C5CCD3;
+    padding-left: 10px !important;
+}
+
 
 #sidebar ul:not(:first-child) {
     display: list-item;
-    padding-left: 1rem;
+    padding-left: 0px;
     font-size: 95%;
     
 }  
@@ -781,11 +832,15 @@ button, input[type=button], input[type=reset], input[type=submit] {
     padding-bottom: 8px;
 }
 
+#sidebar .l3{
+    padding-left: 21px;
+}
+
 #sidebar a {
     color: inherit;
     text-align: left;
     padding: 0;
-    font-weight: 500;
+    font-weight: 300;
 }  
 
 #sidebar a:hover,
@@ -801,10 +856,20 @@ main a:hover {
 
 .sidebar-title {
     font-size: 22px;
+    font-weight: 600 !important;
 }
 
 #sidebar > h3 > a:hover {
     color: #000;
+}
+
+#sidebar > ul li {
+    padding-bottom: 8px !important;
+    padding-top: 8px !important;
+}
+
+#sidebar > ul ul li {
+    padding-left: 0px;
 }
 
 .nginx-toc {
@@ -833,6 +898,14 @@ main a:hover {
     letter-spacing: -0.11px;
 }
 
+.nginx-toc-link.l3,
+.nginx-toc-link.l3 > a {
+    color: #111922;
+    font-size: 18px;
+    line-height: 26px;
+    letter-spacing: -0.11px;
+}
+
 .l2, .l2 > a {
     padding-left: 14px;
     font-weight: normal;
@@ -840,11 +913,13 @@ main a:hover {
 }
 
 .l3, .l3 > a {
-    color: #666666;
-    padding-left: 16px;
+   
+    padding-left: 15px;
     font-weight: normal;
     line-height: 20px;
 }
+
+
 
 .sidenav {
     background: #f8f9f9;
@@ -913,6 +988,13 @@ nav#TableOfContents > ul:not(:first-child) {
     cursor: pointer;
     color: #898787;
 }
+
+a[aria-expanded=true] .fa-chevron-right {
+    display: none;
+ }
+ a[aria-expanded=false] .fa-chevron-down {
+    display: none;
+ }
 
 a.headerlink {
     font-size: 2rem;

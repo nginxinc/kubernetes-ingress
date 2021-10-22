@@ -45,7 +45,7 @@
     {{ end }}
   {{ end }}
 
-  <div class="main container-fluid min-page-height">
+  <div class="main container-fluid min-page-height" data-menu-id="{{.Title | urlize}}">
     
     {{ block "main" . }}{{ end }}
 
