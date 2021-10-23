@@ -2,13 +2,6 @@ import requests, logging
 import pytest, json
 
 from settings import TEST_DATA, DEPLOYMENTS
-from suite.custom_resources_utils import (
-    create_ap_logconf_from_yaml,
-    create_ap_policy_from_yaml,
-    delete_ap_policy,
-    delete_ap_logconf,
-    create_ap_waf_policy_from_yaml,
-)
 from suite.resources_utils import (
     wait_before_test,
     create_items_from_yaml,
@@ -17,21 +10,32 @@ from suite.resources_utils import (
     get_service_endpoint,
 )
 from suite.custom_resources_utils import (
-    read_ap_custom_resource,
     create_crd_from_yaml,
     delete_crd,
-    create_ap_usersig_from_yaml,
-    delete_ap_usersig,
-    delete_and_create_ap_policy_from_yaml,
+)
+from suite.vs_vsr_resources_utils import(
     delete_virtual_server,
     create_virtual_server_from_yaml,
     patch_virtual_server_from_yaml,
     patch_v_s_route_from_yaml,
     create_v_s_route_from_yaml,
     delete_v_s_route,
+)
+from suite.policy_resources_utils import(
     create_policy_from_yaml,
     delete_policy,
     read_policy,
+)
+from suite.ap_resources_utils import (
+    create_ap_usersig_from_yaml,
+    delete_ap_usersig,
+    delete_and_create_ap_policy_from_yaml,
+    read_ap_custom_resource,
+    create_ap_logconf_from_yaml,
+    create_ap_policy_from_yaml,
+    delete_ap_policy,
+    delete_ap_logconf,
+    create_ap_waf_policy_from_yaml,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml, get_name_from_yaml
 

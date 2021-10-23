@@ -18,16 +18,18 @@ from kubernetes.client import (
 from kubernetes.client.rest import ApiException
 
 from suite.custom_resources_utils import (
-    create_virtual_server_from_yaml,
-    delete_virtual_server,
-    create_v_s_route_from_yaml,
-    delete_v_s_route,
     create_crd_from_yaml,
     delete_crd,
     create_ts_from_yaml,
     create_gc_from_yaml,
     delete_ts,
     delete_gc,
+)
+from suite.vs_vsr_resources_utils import (
+    create_virtual_server_from_yaml,
+    delete_virtual_server,
+    create_v_s_route_from_yaml,
+    delete_v_s_route,
 )
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.resources_utils import (

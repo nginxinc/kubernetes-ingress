@@ -6,6 +6,23 @@ doctypes: ["concept"]
 toc: true
 ---
 
+## NGINX Ingress Controller 2.0.2
+
+13 Oct 2021
+
+CHANGES:
+* Update NGINX App Protect version to 3.6.
+* Update NGINX Plus version to R25 in NGINX App Protect enabled images.
+* [2074](https://github.com/nginxinc/kubernetes-ingress/pull/2074) Update JWT library to `golang-jwt/jwt`. Previously, the Ingress Controller used `dgrijalva/jwt-go`, which has a vulnerability [CVE-2020-26160](https://nvd.nist.gov/vuln/detail/CVE-2020-26160). Note that the Ingress Controller wasn’t affected by this vulnerability, and the jwt library was used only in the NGINX Plus images from AWS Marketplace for Containers.
+
+HELM CHART:
+* The version of the Helm chart is now 0.11.2.
+
+UPGRADE:
+* For NGINX, use the 2.0.2 image from our DockerHub.
+* For NGINX Plus, use the 2.0.2 from the F5 Container registry or build your own image using the 2.0.2 source code.
+* For Helm, use version 0.11.2 of the chart.
+
 ## NGINX Ingress Controller 2.0.1
 
 07 Oct 2021

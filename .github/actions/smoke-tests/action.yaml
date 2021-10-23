@@ -40,12 +40,12 @@ runs:
       with:
         file: build/Dockerfile
         context: '.'
-        # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
-        # cache-from: type=gha,scope=${{ inputs.image }}
-        # cache-to: type=gha,scope=${{ inputs.image }},mode=max
+        cache-from: type=gha,scope=${{ inputs.image }}
+        cache-to: type=gha,scope=${{ inputs.image }},mode=max
         target: goreleaser
         tags: 'docker.io/nginx/nginx-ingress:${{ inputs.image }}-${{ github.sha }}'
         load: true
+        pull: true
         build-args: BUILD_OS=${{ inputs.image }}
 
     - name: Build Test-Runner Container
@@ -53,10 +53,10 @@ runs:
       with:
         file: tests/docker/Dockerfile
         context: '.'
-        # Disable cache until https://github.com/docker/buildx/issues/681 is fixed
-        # cache-from: type=gha,scope=test-runner
-        # cache-to: type=gha,scope=test-runner,mode=max
+        cache-from: type=gha,scope=test-runner
+        cache-to: type=gha,scope=test-runner,mode=max
         tags: test-runner:${{ github.sha }}
+        pull: true
         load: true
 
     - name: Deploy Kubernetes

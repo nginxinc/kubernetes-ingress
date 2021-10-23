@@ -3,7 +3,7 @@ import requests
 from kubernetes.client.rest import ApiException
 
 from settings import TEST_DATA
-from suite.custom_resources_utils import patch_virtual_server_from_yaml, get_vs_nginx_template_conf
+from suite.vs_vsr_resources_utils import patch_virtual_server_from_yaml, get_vs_nginx_template_conf
 from suite.resources_utils import wait_before_test, get_first_pod_name
 
 

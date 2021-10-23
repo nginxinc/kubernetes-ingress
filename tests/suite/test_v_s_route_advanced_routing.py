@@ -2,7 +2,7 @@ import pytest
 import requests
 
 from settings import TEST_DATA
-from suite.custom_resources_utils import create_virtual_server_from_yaml, create_v_s_route_from_yaml, \
+from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, create_v_s_route_from_yaml, \
     patch_v_s_route_from_yaml
 from suite.fixtures import VirtualServerRoute
 from suite.resources_utils import wait_before_test, ensure_response_from_backend, create_example_app, \

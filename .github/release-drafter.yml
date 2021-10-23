@@ -13,6 +13,9 @@ categories:
   - title: '📝 Documentation'
     labels:
       - "documentation"
+  - title: '🧪 Tests'
+    labels:
+      - "tests"
   - title: '🔨 Maintenance'
     labels:
       - "chore"
@@ -32,6 +35,7 @@ version-resolver:
       - 'chore'
       - 'dependencies'
       - 'documentation'
+      - 'tests'
   default: patch
 exclude-labels:
   - 'skip-changelog'
@@ -41,6 +45,9 @@ autolabeler:
       - '*.md'
     branch:
       - '/docs{0,1}\/.+/'
+  - label: 'tests'
+    branch:
+      - '/tests\/.+/'
   - label: 'chore'
     branch:
       - '/chore\/.+/'
@@ -75,8 +82,8 @@ template: |
 
   ## Upgrade
 
-  - For NGINX, use the v$RESOLVED_VERSION image from our DockerHub: `nginx/nginx-ingress:$RESOLVED_VERSION`, `nginx/nginx-ingress:$RESOLVED_VERSION-alpine`, `nginx/nginx-ingress:$RESOLVED_VERSION-ubi` or `nginx/nginx-ingress:$RESOLVED_VERSION-ot`
-  - For NGINX Plus, please build your own image using the v$RESOLVED_VERSION source code.
+  - For NGINX, use the v$RESOLVED_VERSION image from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=$RESOLVED_VERSION) or [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress).
+  - For NGINX Plus, use the v$RESOLVED_VERSION image from the F5 Container registry or build your own image using the v$RESOLVED_VERSION source code.
   - For Helm, use version HELM_VERSION_REPLACE_ME! of the chart.
 
   ## Resources

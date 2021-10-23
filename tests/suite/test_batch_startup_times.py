@@ -4,11 +4,14 @@ import requests
 import pytest
 import yaml
 
-from suite.custom_resources_utils import (
+from suite.ap_resources_utils import (
+    create_ap_usersig_from_yaml,
+    delete_ap_usersig,
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
     delete_ap_policy,
     delete_ap_logconf,
+    create_ap_waf_policy_from_yaml,
 )
 from suite.resources_utils import (
     ensure_connection_to_public_endpoint,
@@ -30,17 +33,16 @@ from suite.resources_utils import (
     get_last_reload_status,
     get_pods_amount, get_total_vsr,
 )
-from suite.custom_resources_utils import (
+from suite.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
     delete_virtual_server,
-    create_ap_usersig_from_yaml,
-    delete_ap_usersig,
     patch_virtual_server_from_yaml,
-    create_policy_from_yaml,
-    create_ap_waf_policy_from_yaml,
-    delete_policy,
     create_virtual_server,
     create_v_s_route,
+)
+from suite.policy_resources_utils import (
+    create_policy_from_yaml,
+    delete_policy,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 from settings import TEST_DATA

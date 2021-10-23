@@ -2,7 +2,7 @@ import requests
 import pytest, json
 
 from settings import TEST_DATA, DEPLOYMENTS
-from suite.custom_resources_utils import (
+from suite.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
     delete_ap_policy,
