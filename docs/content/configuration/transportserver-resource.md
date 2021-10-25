@@ -11,7 +11,7 @@ The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrou
 
 This document is the reference documentation for the TransportServer resource. To see additional examples of using the resource for specific use cases, go to the [examples-of-custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.0.2/examples-of-custom-resources) folder in our GitHub repo.
 
-> **Feature Status**: The TransportServer resource is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default.
+> **Feature Status**: The TransportServer resource is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
 
 ## Prerequisites
 
