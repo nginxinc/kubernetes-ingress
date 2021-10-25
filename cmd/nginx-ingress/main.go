@@ -154,7 +154,7 @@ var (
 		"Enable preview policies")
 
 	enableSnippets = flag.Bool("enable-snippets", false,
-		"Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources.")
+		"Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.")
 
 	globalConfiguration = flag.String("global-configuration", "",
 		`The namespace/name of the GlobalConfiguration resource for global configuration of the Ingress Controller. Requires -enable-custom-resources. Format: <namespace>/<name>`)
@@ -638,6 +638,7 @@ func main() {
 		IsPrometheusEnabled:          *enablePrometheusMetrics,
 		IsLatencyMetricsEnabled:      *enableLatencyMetrics,
 		IsTLSPassthroughEnabled:      *enableTLSPassthrough,
+		SnippetsEnabled:              *enableSnippets,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

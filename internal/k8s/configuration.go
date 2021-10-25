@@ -348,6 +348,7 @@ type Configuration struct {
 	appProtectEnabled       bool
 	internalRoutesEnabled   bool
 	isTLSPassthroughEnabled bool
+	snippetsEnabled         bool
 
 	lock sync.RWMutex
 }
@@ -362,6 +363,7 @@ func NewConfiguration(
 	globalConfigurationValidator *validation.GlobalConfigurationValidator,
 	transportServerValidator *validation.TransportServerValidator,
 	isTLSPassthroughEnabled bool,
+	snippetsEnabled bool,
 ) *Configuration {
 	return &Configuration{
 		hosts:                        make(map[string]Resource),
@@ -385,6 +387,7 @@ func NewConfiguration(
 		appProtectEnabled:            appProtectEnabled,
 		internalRoutesEnabled:        internalRoutesEnabled,
 		isTLSPassthroughEnabled:      isTLSPassthroughEnabled,
+		snippetsEnabled:              snippetsEnabled,
 	}
 }
 
@@ -399,7 +402,7 @@ func (c *Configuration) AddOrUpdateIngress(ing *networking.Ingress) ([]ResourceC
 	if !c.hasCorrectIngressClass(ing) {
 		delete(c.ingresses, key)
 	} else {
-		validationError = validateIngress(ing, c.isPlus, c.appProtectEnabled, c.internalRoutesEnabled).ToAggregate()
+		validationError = validateIngress(ing, c.isPlus, c.appProtectEnabled, c.internalRoutesEnabled, c.snippetsEnabled).ToAggregate()
 		if validationError != nil {
 			delete(c.ingresses, key)
 		} else {
