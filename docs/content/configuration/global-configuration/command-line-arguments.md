@@ -18,7 +18,7 @@ Below we describe the available command-line arguments:
 
 ### -enable-snippets
 
-Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources.
+Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
 
 Default `false`.  
 &nbsp;
