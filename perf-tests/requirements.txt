@@ -1,6 +1,6 @@
 PyYAML==6.0
 requests==2.26.0
-kubernetes==18.20.0
+kubernetes==19.15.0
 pytest==4.4.1
 ipaddress==1.0.23 # >= 1.0.17
 cffi==1.15.0
