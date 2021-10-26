@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.org/server-snippets: "tcp_nodelay on;"
+  name: annotations-ingress
+spec:
+  rules:
+  - host: annotations.example.com
+    http:
+      paths:
+      - path: /backend2
+        pathType: Prefix
+        backend:
+          service:
+            name: backend2-svc
+            port:
+              number: 80
+

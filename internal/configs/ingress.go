@@ -68,7 +68,7 @@ type MergeableIngresses struct {
 func generateNginxCfg(ingEx *IngressEx, apResources AppProtectResources, isMinion bool, baseCfgParams *ConfigParams, isPlus bool,
 	isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
 	hasAppProtect := staticParams.MainAppProtectLoadModule
-	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus, hasAppProtect, staticParams.EnableInternalRoutes)
+	cfgParams := parseAnnotations(ingEx, baseCfgParams, isPlus, hasAppProtect, staticParams.EnableInternalRoutes, staticParams.EnableSnippets)
 
 	wsServices := getWebsocketServices(ingEx)
 	spServices := getSessionPersistenceServices(ingEx)

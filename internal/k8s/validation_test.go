@@ -1679,8 +1679,8 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				test.isPlus,
 				test.appProtectEnabled,
 				test.internalRoutesEnabled,
-				test.snippetsEnabled,
 				field.NewPath("annotations"),
+				test.snippetsEnabled,
 			)
 			assertion := assertErrors("validateIngressAnnotations()", test.msg, allErrs, test.expectedErrors)
 			if assertion != "" {

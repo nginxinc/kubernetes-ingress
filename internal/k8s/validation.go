@@ -67,8 +67,8 @@ type annotationValidationContext struct {
 	isPlus                bool
 	appProtectEnabled     bool
 	internalRoutesEnabled bool
-	snippetsEnabled       bool
 	fieldPath             *field.Path
+	snippetsEnabled       bool
 }
 
 type (
@@ -287,8 +287,8 @@ func validateIngress(
 		isPlus,
 		appProtectEnabled,
 		internalRoutesEnabled,
-		snippetsEnabled,
 		field.NewPath("annotations"),
+		snippetsEnabled,
 	)...)
 
 	allErrs = append(allErrs, validateIngressSpec(&ing.Spec, field.NewPath("spec"))...)
@@ -308,8 +308,8 @@ func validateIngressAnnotations(
 	isPlus bool,
 	appProtectEnabled bool,
 	internalRoutesEnabled bool,
-	snippetsEnabled bool,
 	fieldPath *field.Path,
+	snippetsEnabled bool,
 ) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -323,8 +323,8 @@ func validateIngressAnnotations(
 				isPlus:                isPlus,
 				appProtectEnabled:     appProtectEnabled,
 				internalRoutesEnabled: internalRoutesEnabled,
-				snippetsEnabled:       snippetsEnabled,
 				fieldPath:             fieldPath.Child(name),
+				snippetsEnabled:       snippetsEnabled,
 			}
 			allErrs = append(allErrs, validateIngressAnnotation(context)...)
 		}

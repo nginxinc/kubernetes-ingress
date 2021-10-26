@@ -66,7 +66,7 @@ var minionInheritanceList = map[string]bool{
 	"nginx.org/fail-timeout":             true,
 }
 
-func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool, enableInternalRoutes bool) ConfigParams {
+func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool, enableInternalRoutes bool, enableSnippets bool) ConfigParams {
 	cfgParams := *baseCfgParams
 
 	if lbMethod, exists := ingEx.Ingress.Annotations["nginx.org/lb-method"]; exists {
@@ -145,7 +145,11 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		if err != nil {
 			glog.Error(err)
 		} else {
-			cfgParams.ServerSnippets = serverSnippets
+			if !enableSnippets {
+
+			} else {
+				cfgParams.ServerSnippets = serverSnippets
+			}
 		}
 	}
 
@@ -153,7 +157,11 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		if err != nil {
 			glog.Error(err)
 		} else {
-			cfgParams.LocationSnippets = locationSnippets
+			if !enableSnippets {
+
+			} else {
+				cfgParams.LocationSnippets = locationSnippets
+			}
 		}
 	}
 
