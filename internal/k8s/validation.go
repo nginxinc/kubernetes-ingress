@@ -111,7 +111,6 @@ var (
 			validateTimeAnnotation,
 		},
 		serverTokensAnnotation: {
-			validateRequiredAnnotation,
 			validateServerTokensAnnotation,
 		},
 		serverSnippetsAnnotation:   {},
