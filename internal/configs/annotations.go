@@ -145,11 +145,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		if err != nil {
 			glog.Error(err)
 		} else {
-			if !enableSnippets {
-
-			} else {
-				cfgParams.ServerSnippets = serverSnippets
-			}
+			cfgParams.ServerSnippets = serverSnippets
 		}
 	}
 
@@ -157,11 +153,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		if err != nil {
 			glog.Error(err)
 		} else {
-			if !enableSnippets {
-
-			} else {
-				cfgParams.LocationSnippets = locationSnippets
-			}
+			cfgParams.LocationSnippets = locationSnippets
 		}
 	}
 
