@@ -953,7 +953,7 @@ func (cnf *Configurator) updatePlusEndpointsForTransportServer(transportServerEx
 }
 
 func (cnf *Configurator) updatePlusEndpoints(ingEx *IngressEx) error {
-	ingCfg := parseAnnotations(ingEx, cnf.cfgParams, cnf.isPlus, cnf.staticCfgParams.MainAppProtectLoadModule, cnf.staticCfgParams.EnableInternalRoutes, cnf.staticCfgParams.EnableSnippets)
+	ingCfg := parseAnnotations(ingEx, cnf.cfgParams, cnf.isPlus, cnf.staticCfgParams.MainAppProtectLoadModule, cnf.staticCfgParams.EnableInternalRoutes)
 
 	cfg := nginx.ServerConfig{
 		MaxFails:    ingCfg.MaxFails,

@@ -66,7 +66,7 @@ var minionInheritanceList = map[string]bool{
 	"nginx.org/fail-timeout":             true,
 }
 
-func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool, enableInternalRoutes bool, enableSnippets bool) ConfigParams {
+func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool, hasAppProtect bool, enableInternalRoutes bool) ConfigParams {
 	cfgParams := *baseCfgParams
 
 	if lbMethod, exists := ingEx.Ingress.Annotations["nginx.org/lb-method"]; exists {
