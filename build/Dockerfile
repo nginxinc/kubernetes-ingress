@@ -168,12 +168,11 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/li
 
 ############################################# Build image for Opentracing with NGINX Plus #############################################
 FROM debian-plus as opentracing-plus
-ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus-module-opentracing-${NGINX_PLUS_VERSION} \
+	&& apt-get install --no-install-recommends --no-install-suggests -y libcurl4 nginx-plus-module-opentracing \
 	&& rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
