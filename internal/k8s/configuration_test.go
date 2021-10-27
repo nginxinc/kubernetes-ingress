@@ -3256,6 +3256,104 @@ func TestGetResources(t *testing.T) {
 	}
 }
 
+func TestGetTransportServerMetrics(t *testing.T) {
+	tsPass := createTestTLSPassthroughTransportServer("transportserver", "abc.example.com")
+	tsTCP := createTestTransportServer("transportserver-tcp", "tcp-7777", "TCP")
+	tsUDP := createTestTransportServer("transportserver-udp", "udp-7777", "UDP")
+
+	tests := []struct {
+		tses     []*conf_v1alpha1.TransportServer
+		expected *TransportServerMetrics
+		msg      string
+	}{
+		{
+			tses: nil,
+			expected: &TransportServerMetrics{
+				TotalTLSPassthrough: 0,
+				TotalTCP:            0,
+				TotalUDP:            0,
+			},
+			msg: "no TransportServers",
+		},
+		{
+			tses: []*conf_v1alpha1.TransportServer{
+				tsPass,
+			},
+			expected: &TransportServerMetrics{
+				TotalTLSPassthrough: 1,
+				TotalTCP:            0,
+				TotalUDP:            0,
+			},
+			msg: "one TLSPassthrough TransportServer",
+		},
+		{
+			tses: []*conf_v1alpha1.TransportServer{
+				tsTCP,
+			},
+			expected: &TransportServerMetrics{
+				TotalTLSPassthrough: 0,
+				TotalTCP:            1,
+				TotalUDP:            0,
+			},
+			msg: "one TCP TransportServer",
+		},
+		{
+			tses: []*conf_v1alpha1.TransportServer{
+				tsUDP,
+			},
+			expected: &TransportServerMetrics{
+				TotalTLSPassthrough: 0,
+				TotalTCP:            0,
+				TotalUDP:            1,
+			},
+			msg: "one UDP TransportServer",
+		},
+		{
+			tses: []*conf_v1alpha1.TransportServer{
+				tsPass, tsTCP, tsUDP,
+			},
+			expected: &TransportServerMetrics{
+				TotalTLSPassthrough: 1,
+				TotalTCP:            1,
+				TotalUDP:            1,
+			},
+			msg: "TLSPasstrough, TCP and UDP TransportServers",
+		},
+	}
+
+	listeners := []conf_v1alpha1.Listener{
+		{
+			Name:     "tcp-7777",
+			Port:     7777,
+			Protocol: "TCP",
+		},
+		{
+			Name:     "udp-7777",
+			Port:     7777,
+			Protocol: "UDP",
+		},
+	}
+	gc := createTestGlobalConfiguration(listeners)
+
+	for _, test := range tests {
+		configuration := createTestConfiguration()
+
+		_, _, err := configuration.AddOrUpdateGlobalConfiguration(gc)
+		if err != nil {
+			t.Fatalf("AddOrUpdateGlobalConfiguration() returned unexpected error %v", err)
+		}
+
+		for _, ts := range test.tses {
+			configuration.AddOrUpdateTransportServer(ts)
+		}
+
+		result := configuration.GetTransportServerMetrics()
+		if diff := cmp.Diff(test.expected, result); diff != "" {
+			t.Errorf("GetTransportServerMetrics() returned unexpected result for the case of %s (-want +got):\n%s", test.msg, diff)
+		}
+	}
+}
+
 func TestIsEqualForIngressConfigurationes(t *testing.T) {
 	regularIng := createTestIngress("regular-ingress", "foo.example.com")
 

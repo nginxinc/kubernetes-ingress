@@ -315,7 +315,6 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	lbc.secretStore = secrets.NewLocalSecretStore(lbc.configurator)
 
-	lbc.updateIngressMetrics()
 	return lbc
 }
 
@@ -712,6 +711,7 @@ func (lbc *LoadBalancerController) sync(task task) {
 	case ingress:
 		lbc.syncIngress(task)
 		lbc.updateIngressMetrics()
+		lbc.updateTransportServerMetrics()
 	case configMap:
 		lbc.syncConfigMap(task)
 	case endpoints:
@@ -723,13 +723,16 @@ func (lbc *LoadBalancerController) sync(task task) {
 	case virtualserver:
 		lbc.syncVirtualServer(task)
 		lbc.updateVirtualServerMetrics()
+		lbc.updateTransportServerMetrics()
 	case virtualServerRoute:
 		lbc.syncVirtualServerRoute(task)
 		lbc.updateVirtualServerMetrics()
 	case globalConfiguration:
 		lbc.syncGlobalConfiguration(task)
+		lbc.updateTransportServerMetrics()
 	case transportserver:
 		lbc.syncTransportServer(task)
+		lbc.updateTransportServerMetrics()
 	case policy:
 		lbc.syncPolicy(task)
 	case appProtectPolicy:
@@ -1636,6 +1639,15 @@ func (lbc *LoadBalancerController) updateVirtualServerMetrics() {
 	vsCount, vsrCount := lbc.configurator.GetVirtualServerCounts()
 	lbc.metricsCollector.SetVirtualServers(vsCount)
 	lbc.metricsCollector.SetVirtualServerRoutes(vsrCount)
+}
+
+func (lbc *LoadBalancerController) updateTransportServerMetrics() {
+	if !lbc.areCustomResourcesEnabled {
+		return
+	}
+
+	metrics := lbc.configuration.GetTransportServerMetrics()
+	lbc.metricsCollector.SetTransportServers(metrics.TotalTLSPassthrough, metrics.TotalTCP, metrics.TotalUDP)
 }
 
 func (lbc *LoadBalancerController) syncService(task task) {
