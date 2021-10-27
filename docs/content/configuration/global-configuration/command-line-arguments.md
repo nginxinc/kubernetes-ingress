@@ -38,6 +38,8 @@ Format: `<namespace>/<name>`
 
 ### -wildcard-tls-secret `<string>`
 
+This parameter works with **Ingress resources only**.
+
 A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
 
 * If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection.
