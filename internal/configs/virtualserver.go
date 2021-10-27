@@ -300,7 +300,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 	for _, u := range vsEx.VirtualServer.Spec.Upstreams {
 
 		if (sslConfig == nil || !vsc.cfgParams.HTTP2) && isGRPC(u.Type) {
-			vsc.addWarningf(vsEx.VirtualServer, "gRPC will not be enabled for upstream %s. gRPC requires enabled HTTP/2 and TLS termination", u.Name)
+			vsc.addWarningf(vsEx.VirtualServer, "gRPC cannot be configured for upstream %s. gRPC requires enabled HTTP/2 and TLS termination.", u.Name)
 		}
 
 		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
@@ -330,7 +330,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(vsEx.VirtualServer, vsr)
 		for _, u := range vsr.Spec.Upstreams {
 			if (sslConfig == nil || !vsc.cfgParams.HTTP2) && isGRPC(u.Type) {
-				vsc.addWarningf(vsr, "gRPC will not be enabled for upstream %s. gRPC requires enabled HTTP/2 and TLS termination", u.Name)
+				vsc.addWarningf(vsr, "gRPC cannot be configured for upstream %s. gRPC requires enabled HTTP/2 and TLS termination", u.Name)
 			}
 
 			upstreamName := upstreamNamer.GetNameForUpstream(u.Name)

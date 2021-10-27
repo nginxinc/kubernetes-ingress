@@ -1,0 +1,22 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: grpcs
+spec:
+  host: virtual-server.example.com
+  upstreams:
+  - name: grpc1
+    service: grpc1-svc
+    port: 50051
+    type: goose
+  - name: grpc3
+    service: grpc3-svc
+    port: 50051
+    type: goose
+  subroutes:
+  - path: /grpcs/helloworld.Greeter
+    action:
+      pass: grpc1
+  - path: /grpcs/grpc3
+    action:
+      pass: grpc3

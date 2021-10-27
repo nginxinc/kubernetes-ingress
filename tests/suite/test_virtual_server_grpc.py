@@ -1,14 +1,19 @@
 import grpc
 import pytest
+from kubernetes.client.rest import ApiException
 
 from settings import TEST_DATA, DEPLOYMENTS
+from suite.custom_assertions import assert_event_starts_with_text_and_contains_errors
+from suite.custom_resources_utils import read_custom_resource
 from suite.grpc.helloworld_pb2 import HelloRequest
 from suite.grpc.helloworld_pb2_grpc import GreeterStub
 from suite.resources_utils import create_example_app, wait_until_all_pods_are_ready, \
     delete_common_app, create_secret_from_yaml, replace_configmap_from_yaml, \
-    delete_items_from_yaml, get_first_pod_name
+    delete_items_from_yaml, get_first_pod_name, get_events
 from suite.ssl_utils import get_certificate
-from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf
+from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, \
+    patch_virtual_server_from_yaml
+from suite.resources_utils import wait_before_test
 
 
 @pytest.fixture(scope="function")
@@ -63,6 +68,40 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
                            {"example": "virtual-server-grpc"})],
                          indirect=True)
 class TestVirtualServerGrpc:
+ 
+    def connect_grpc_backend(self, virtual_server_setup) -> None:
+        """
+        Function to connect to a gRPC enabled backend
+        """
+        cert = get_certificate(virtual_server_setup.public_endpoint.public_ip,
+                               virtual_server_setup.vs_host,
+                               virtual_server_setup.public_endpoint.port_ssl)
+        target = f'{virtual_server_setup.public_endpoint.public_ip}:{virtual_server_setup.public_endpoint.port_ssl}'
+        credentials = grpc.ssl_channel_credentials(root_certificates=cert.encode())
+        options = (('grpc.ssl_target_name_override', virtual_server_setup.vs_host),)
+
+        with grpc.secure_channel(target, credentials, options) as channel:
+            stub = GreeterStub(channel)
+            response = ""
+            try:
+                response = stub.SayHello(HelloRequest(name=virtual_server_setup.public_endpoint.public_ip))
+                print(response)
+            except grpc.RpcError as e:
+                print(e.details())
+                pytest.fail("RPC error was not expected during call, exiting...")
+
+    def patch_valid_vs(self, kube_apis, virtual_server_setup) -> None:
+        """
+        Function to revert vs deployment to valid state
+        """
+        patch_src = f"{TEST_DATA}/virtual-server-grpc/standard/virtual-server.yaml"
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            patch_src,
+            virtual_server_setup.namespace,
+        )
+
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_config_after_setup(self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, 
                                 backend_setup, virtual_server_setup):
@@ -102,19 +141,51 @@ class TestVirtualServerGrpc:
         assert "grpc_next_upstream_tries 0;" in config
 
         print("\nStep 2: Check connection to app")
-        cert = get_certificate(virtual_server_setup.public_endpoint.public_ip,
-                               virtual_server_setup.vs_host,
-                               virtual_server_setup.public_endpoint.port_ssl)
-        target = f'{virtual_server_setup.public_endpoint.public_ip}:{virtual_server_setup.public_endpoint.port_ssl}'
-        credentials = grpc.ssl_channel_credentials(root_certificates=cert.encode())
-        options = (('grpc.ssl_target_name_override', virtual_server_setup.vs_host),)
+        self.connect_grpc_backend(virtual_server_setup)
 
-        with grpc.secure_channel(target, credentials, options) as channel:
-            stub = GreeterStub(channel)
-            response = ""
-            try:
-                response = stub.SayHello(HelloRequest(name=virtual_server_setup.public_endpoint.public_ip))
-                print(response)
-            except grpc.RpcError as e:
-                print(e.details())
-                pytest.fail("RPC error was not expected during call, exiting...")
+    @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
+    def test_config_after_enable_tls(self, kube_apis, ingress_controller_prerequisites,
+                                     crd_ingress_controller, backend_setup, virtual_server_setup):
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        patch_virtual_server_from_yaml(kube_apis.custom_objects,
+                                       virtual_server_setup.vs_name,
+                                       f"{TEST_DATA}/virtual-server-grpc/virtual-server-updated.yaml",
+                                       virtual_server_setup.namespace)
+        wait_before_test()
+        config = get_vs_nginx_template_conf(kube_apis.v1,
+                                            virtual_server_setup.namespace,
+                                            virtual_server_setup.vs_name,
+                                            ic_pod_name,
+                                            ingress_controller_prerequisites.namespace)
+        assert 'grpc_pass grpcs://' in config
+
+    @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
+    def test_validation_flow(self, kube_apis, ingress_controller_prerequisites,
+                             crd_ingress_controller, backend_setup, virtual_server_setup):
+        print("\nTest 1: Wrong type")
+        patch_virtual_server_from_yaml(kube_apis.custom_objects,
+                                        virtual_server_setup.vs_name,
+                                        f"{TEST_DATA}/virtual-server-grpc/virtual-server-invalid-type.yaml",
+                                        virtual_server_setup.namespace)
+        wait_before_test()
+        text = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
+        event_text1 = f"VirtualServer {text} was rejected with error:"
+        invalid_fields1 = ["spec.upstreams[0].type"]
+        vs_events1 = get_events(kube_apis.v1, virtual_server_setup.namespace)
+        assert_event_starts_with_text_and_contains_errors(event_text1, vs_events1, invalid_fields1)
+
+        self.patch_valid_vs(kube_apis, virtual_server_setup)
+        wait_before_test()
+
+        print("\nTest 2: No HTTP2")
+        replace_configmap_from_yaml(kube_apis.v1,
+                    ingress_controller_prerequisites.config_map['metadata']['name'],
+                    ingress_controller_prerequisites.namespace,
+                    f"{DEPLOYMENTS}/common/nginx-config.yaml")
+        wait_before_test()
+        text = "gRPC requires enabled HTTP/2 and TLS termination"
+        response = read_custom_resource(kube_apis.custom_objects, virtual_server_setup.namespace,
+                                        "virtualservers", virtual_server_setup.vs_name)
+        assert (response["status"] and response["status"]["reason"] == "AddedOrUpdatedWithWarning"
+                and response["status"]["state"] == "Warning")
+        assert text in response["status"]["message"]

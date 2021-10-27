@@ -1,0 +1,16 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: grpc2
+spec:
+  host: virtual-server.example.com
+  upstreams:
+  - name: grpc2
+    service: grpc2-svc
+    port: 50051
+    type: grpc
+  subroutes:
+  - path: /helloworld.Greeter
+    action:
+      pass: grpc2
+
