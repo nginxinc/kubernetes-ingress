@@ -3,7 +3,7 @@ import pytest
 from suite.resources_utils import wait_before_test
 from suite.custom_resources_utils import (
     read_ts,
-    patch_ts,
+    patch_ts_from_yaml,
 )
 from settings import TEST_DATA
 
@@ -33,7 +33,7 @@ class TestTransportServerStatus:
         Function to revert a TransportServer resource to a valid state.
         """
         patch_src = f"{TEST_DATA}/transport-server-status/standard/transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -65,7 +65,7 @@ class TestTransportServerStatus:
         Test TransportServer status with a missing listener.
         """
         patch_src = f"{TEST_DATA}/transport-server-status/rejected-warning.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -91,7 +91,7 @@ class TestTransportServerStatus:
         Test TransportServer status with an invalid protocol.
         """
         patch_src = f"{TEST_DATA}/transport-server-status/rejected-invalid.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,

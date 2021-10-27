@@ -5,7 +5,7 @@ from suite.resources_utils import (
     get_ts_nginx_template_conf,
 )
 from suite.custom_resources_utils import (
-    patch_ts,
+    patch_ts_from_yaml,
 )
 from settings import TEST_DATA
 
@@ -36,7 +36,7 @@ class TestTransportServer:
         Test snippets are present in conf when enabled
         """
         patch_src = f"{TEST_DATA}/transport-server/transport-server-snippets.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -54,7 +54,7 @@ class TestTransportServer:
         print(conf)
 
         std_src = f"{TEST_DATA}/transport-server-status/standard/transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             std_src,
@@ -73,7 +73,7 @@ class TestTransportServer:
         Test session and upstream configurable timeouts are present in conf
         """
         patch_src = f"{TEST_DATA}/transport-server/transport-server-configurable-timeouts.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -91,7 +91,7 @@ class TestTransportServer:
         print(conf)
 
         std_src = f"{TEST_DATA}/transport-server-status/standard/transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             std_src,
