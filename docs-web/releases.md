@@ -1,5 +1,22 @@
 # Releases
 
+## NGINX Ingress Controller 1.12.3
+
+28 October 2021
+
+FIXES:
+* [2133](https://github.com/nginxinc/kubernetes-ingress/pull/2133) Use release specific repo for the App Protect packages on Debian. This fixes an error when building Debian-based images with NGINX Plus with App Protect: previously, building an image would fail with the error `nginx-plus-module-appprotect : Depends: app-protect-plugin (= 3.639.0-1~buster) but 3.671.0-1~buster is to be installed`. The bug first appeared when NGINX App Protect version 3.6 was released on 13 October 2021.
+* [2134](https://github.com/nginxinc/kubernetes-ingress/pull/2134) Apply -enable-snippets cli arg to Ingresses. This PR extends the existing -enable-snippets cli argument to apply to Ingress resources. If snippets are not enabled, the Ingress Controller will reject any Ingress resources with snippets annotations. Previously, the argument only applied to VirtualServer, VirtualServerRoute and TransportServer resources. Please Note: this is a breaking change. See the `UPGRADE` instructions below.
+
+HELM CHART:
+* The version of the Helm chart is now 0.10.3.
+
+UPGRADE:
+* For NGINX, use the 1.12.3 image from our DockerHub: `nginx/nginx-ingress:1.12.3`, `nginx/nginx-ingress:1.12.3-alpine` or `nginx/nginx-ingress:1.12.3-ubi`
+* For NGINX Plus, please build your own image using the 1.12.3 source code.
+* For Helm, use version 0.10.3 of the chart.
+* We changed the behaviour of snippets in Ingress resources by extending the existing -enable-snippets cli argument to apply to Ingress resources as well as VirtualServer, VirtualServerRoute and TransportServer resources. Because the default value of -enable-snippets is false, if you are using snippets in Ingress resources, you must explicitly set the -enable-snippets to true before upgrading the Ingress Controller, so that the new version of the Ingress Controller doesn't reject Ingresses with snippets annotations.
+
 ## NGINX Ingress Controller 1.12.2
 
 7 October 2021
