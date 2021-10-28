@@ -41,10 +41,10 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "2.0.2-alpine",
-        "2.0.2-ot",
-        "2.0.2-ubi",
-        "2.0.2"
+        "2.0.3-alpine",
+        "2.0.3-ot",
+        "2.0.3-ubi",
+        "2.0.3"
     ]
     }
 
@@ -52,8 +52,8 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "2.0.2-ubi",
-        "2.0.2"
+        "2.0.3-ubi",
+        "2.0.3"
     ]
     }
    ```

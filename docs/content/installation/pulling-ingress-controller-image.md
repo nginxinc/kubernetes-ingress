@@ -48,10 +48,10 @@ Before you can pull the image, make sure that the following software is installe
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "2.0.2-alpine",
-        "2.0.2-ot",
-        "2.0.2-ubi",
-        "2.0.2"
+        "2.0.3-alpine",
+        "2.0.3-ot",
+        "2.0.3-ubi",
+        "2.0.3"
     ]
     }
 
@@ -59,8 +59,8 @@ Before you can pull the image, make sure that the following software is installe
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "2.0.2-ubi",
-        "2.0.2"
+        "2.0.3-ubi",
+        "2.0.3"
     ]
     }
    ```
