@@ -68,6 +68,7 @@ server {
 ## Summary of Snippets
 
 See the [snippets annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#snippets-and-custom-templates) documentation for more information.
+However, because of the disadvantages described below, snippets are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument.
 
 ## Disadvantages of Using Snippets
 

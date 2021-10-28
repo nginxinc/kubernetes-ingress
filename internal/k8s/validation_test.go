@@ -13,12 +13,9 @@ import (
 
 func TestValidateIngress(t *testing.T) {
 	tests := []struct {
-		ing                   *networking.Ingress
-		isPlus                bool
-		appProtectEnabled     bool
-		internalRoutesEnabled bool
-		expectedErrors        []string
-		msg                   string
+		ing            *networking.Ingress
+		expectedErrors []string
+		msg            string
 	}{
 		{
 			ing: &networking.Ingress{
@@ -30,11 +27,8 @@ func TestValidateIngress(t *testing.T) {
 					},
 				},
 			},
-			isPlus:                false,
-			appProtectEnabled:     false,
-			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "valid input",
+			expectedErrors: nil,
+			msg:            "valid input",
 		},
 		{
 			ing: &networking.Ingress{
@@ -51,9 +45,6 @@ func TestValidateIngress(t *testing.T) {
 					},
 				},
 			},
-			isPlus:                false,
-			appProtectEnabled:     false,
-			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				`annotations.nginx.org/mergeable-ingress-type: Invalid value: "invalid": must be one of: 'master' or 'minion'`,
 				"spec.rules[0].host: Required value",
@@ -84,9 +75,6 @@ func TestValidateIngress(t *testing.T) {
 					},
 				},
 			},
-			isPlus:                false,
-			appProtectEnabled:     false,
-			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"spec.rules[0].http.paths: Too many: 1: must have at most 0 items",
 			},
@@ -108,9 +96,6 @@ func TestValidateIngress(t *testing.T) {
 					},
 				},
 			},
-			isPlus:                false,
-			appProtectEnabled:     false,
-			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"spec.rules[0].http.paths: Required value: must include at least one path",
 			},
@@ -119,7 +104,7 @@ func TestValidateIngress(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		allErrs := validateIngress(test.ing, test.isPlus, test.appProtectEnabled, test.internalRoutesEnabled)
+		allErrs := validateIngress(test.ing, false, false, false, false)
 		assertion := assertErrors("validateIngress()", test.msg, allErrs, test.expectedErrors)
 		if assertion != "" {
 			t.Error(assertion)
@@ -134,6 +119,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		isPlus                bool
 		appProtectEnabled     bool
 		internalRoutesEnabled bool
+		snippetsEnabled       bool
 		expectedErrors        []string
 		msg                   string
 	}{
@@ -507,6 +493,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
+			snippetsEnabled:       true,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/server-snippets annotation, single-value",
 		},
@@ -518,8 +505,23 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
+			snippetsEnabled:       true,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/server-snippets annotation, multi-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/server-snippets": "snippet-1",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			snippetsEnabled:       false,
+			expectedErrors: []string{
+				`annotations.nginx.org/server-snippets: Forbidden: snippet specified but snippets feature is not enabled`,
+			},
+			msg: "invalid nginx.org/server-snippets annotation when snippets are disabled",
 		},
 
 		{
@@ -530,6 +532,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
+			snippetsEnabled:       true,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/location-snippets annotation, single-value",
 		},
@@ -541,8 +544,23 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			isPlus:                false,
 			appProtectEnabled:     false,
 			internalRoutesEnabled: false,
+			snippetsEnabled:       true,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/location-snippets annotation, multi-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/location-snippets": "snippet-1",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			internalRoutesEnabled: false,
+			snippetsEnabled:       false,
+			expectedErrors: []string{
+				`annotations.nginx.org/location-snippets: Forbidden: snippet specified but snippets feature is not enabled`,
+			},
+			msg: "invalid nginx.org/location-snippets annotation when snippets are disabled",
 		},
 
 		{
@@ -1661,6 +1679,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				test.appProtectEnabled,
 				test.internalRoutesEnabled,
 				field.NewPath("annotations"),
+				test.snippetsEnabled,
 			)
 			assertion := assertErrors("validateIngressAnnotations()", test.msg, allErrs, test.expectedErrors)
 			if assertion != "" {

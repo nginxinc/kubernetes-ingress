@@ -252,7 +252,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
      - The spec of the GlobalConfiguration for defining the global configuration parameters of the Ingress Controller.
      - {}
    * - ``controller.enableSnippets``
-     - Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources.
+     - Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
      - false
    * - ``controller.healthStatus``
      - Add a location "/nginx-health" to the default server. The location responds with the 200 status code for any request. Useful for external health-checking of the Ingress controller.

@@ -68,6 +68,7 @@ type annotationValidationContext struct {
 	appProtectEnabled     bool
 	internalRoutesEnabled bool
 	fieldPath             *field.Path
+	snippetsEnabled       bool
 }
 
 type (
@@ -114,8 +115,12 @@ var (
 			validateRequiredAnnotation,
 			validateServerTokensAnnotation,
 		},
-		serverSnippetsAnnotation:   {},
-		locationSnippetsAnnotation: {},
+		serverSnippetsAnnotation: {
+			validateSnippetsAnnotation,
+		},
+		locationSnippetsAnnotation: {
+			validateSnippetsAnnotation,
+		},
 		proxyConnectTimeoutAnnotation: {
 			validateRequiredAnnotation,
 			validateTimeAnnotation,
@@ -273,6 +278,7 @@ func validateIngress(
 	isPlus bool,
 	appProtectEnabled bool,
 	internalRoutesEnabled bool,
+	snippetsEnabled bool,
 ) field.ErrorList {
 	allErrs := field.ErrorList{}
 	allErrs = append(allErrs, validateIngressAnnotations(
@@ -282,6 +288,7 @@ func validateIngress(
 		appProtectEnabled,
 		internalRoutesEnabled,
 		field.NewPath("annotations"),
+		snippetsEnabled,
 	)...)
 
 	allErrs = append(allErrs, validateIngressSpec(&ing.Spec, field.NewPath("spec"))...)
@@ -302,6 +309,7 @@ func validateIngressAnnotations(
 	appProtectEnabled bool,
 	internalRoutesEnabled bool,
 	fieldPath *field.Path,
+	snippetsEnabled bool,
 ) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -316,6 +324,7 @@ func validateIngressAnnotations(
 				appProtectEnabled:     appProtectEnabled,
 				internalRoutesEnabled: internalRoutesEnabled,
 				fieldPath:             fieldPath.Child(name),
+				snippetsEnabled:       snippetsEnabled,
 			}
 			allErrs = append(allErrs, validateIngressAnnotation(context)...)
 		}
@@ -520,6 +529,15 @@ func validateRewriteListAnnotation(context *annotationValidationContext) field.E
 	allErrs := field.ErrorList{}
 	if _, err := configs.ParseRewriteList(context.value); err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a semicolon-separated list of rewrites"))
+	}
+	return allErrs
+}
+
+func validateSnippetsAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !context.snippetsEnabled {
+		return append(allErrs, field.Forbidden(context.fieldPath, "snippet specified but snippets feature is not enabled"))
 	}
 	return allErrs
 }

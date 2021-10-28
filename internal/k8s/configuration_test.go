@@ -35,6 +35,7 @@ func createTestConfiguration() *Configuration {
 		}),
 		validation.NewTransportServerValidator(isTLSPassthroughEnabled, snippetsEnabled, isPlus),
 		isTLSPassthroughEnabled,
+		snippetsEnabled,
 	)
 }
 

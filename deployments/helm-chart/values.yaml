@@ -168,7 +168,7 @@ controller:
       #   port: 5353
       #   protocol: TCP
 
-  ## Enable custom NGINX configuration snippets in VirtualServer, VirtualServerRoute and TransportServer resources.
+  ## Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.
   enableSnippets: false
 
   ## Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
