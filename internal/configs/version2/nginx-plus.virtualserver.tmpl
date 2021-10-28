@@ -383,7 +383,7 @@ server {
         error_page 502 @grpcerror502;
         error_page 503 @grpcerror503;
         error_page 504 @grpcerror504;
-		{{end}}
+        {{ end }}
 
         {{ if not $l.GRPCPass }}
         proxy_http_version 1.1;
