@@ -56,7 +56,6 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
 
     request.addfinalizer(fin)
 
-@pytest.mark.ciara
 @pytest.mark.vsr
 @pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
@@ -159,20 +158,6 @@ class TestVirtualServerRouteGrpc:
 
         self.patch_valid_vs_route(kube_apis, v_s_route_setup)
         wait_before_test()
-
-        print("\nTest 2: No HTTP2")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    f"{DEPLOYMENTS}/common/nginx-config.yaml")
-        wait_before_test()
-        text = "gRPC requires enabled HTTP/2 and TLS termination"
-        response_m = read_custom_resource(kube_apis.custom_objects, v_s_route_setup.route_m.namespace,
-                                          "virtualserverroutes",v_s_route_setup.route_m.name)
-        assert (response_m["status"]
-            and response_m["status"]["reason"] == "AddedOrUpdatedWithWarning"
-            and response_m["status"]["state"] == "Warning"
-            and text in response_m["status"]["message"])
 
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs-mixed"}], indirect=True)
     def test_mixed_config(self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, 

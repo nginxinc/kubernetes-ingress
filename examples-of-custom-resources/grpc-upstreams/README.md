@@ -53,10 +53,8 @@ $ kubectl create -f grpc-app.yaml
       ----    ------          ----  ----                      -------
       Normal  AddedOrUpdated  7s    nginx-ingress-controller  Configuration for default/virtual-server was added or updated
     ```
-2. Access the application using grpcurl
-    
-    ```
-    $ grpcurl -insecure -d '{\"name\": \"world!\"}' -protoset helloworld.protoset $IC_IP:$IC_HTTPS_PORT helloWorld.greeter/SayHello
-    Greeting: Hello world!
-    ...
-    ```
+2. Access the application using a version of the helloworld gRPC client; see the (documentation here)[https://grpc.io/docs/languages/go/quickstart/] - e.g.:
+
+$(go env GOPATH)/bin/greeter_client
+2021/11/01 14:22:25 Received: world
+2021/11/01 14:22:25 Greeting: Hello world

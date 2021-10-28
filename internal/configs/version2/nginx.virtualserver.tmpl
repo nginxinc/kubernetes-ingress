@@ -224,23 +224,7 @@ server {
             {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
         {{ end }}
 
-        {{ range $e := $l.ErrorPages }}
-        error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";
-        {{ end }}
-
-        {{ if $l.ProxyInterceptErrors }}
-        proxy_intercept_errors on;
-        {{ end }}
-
-        {{ if $l.InternalProxyPass }}
-        proxy_pass {{ $l.InternalProxyPass }};
-        {{ end }}
-
-        {{ if or $l.ProxyPass $l.GRPCPass}}
-            {{ $proxyOrGRPC := "proxy" }}
-            {{ if $l.GRPCPass }}
-                {{ $proxyOrGRPC = "grpc" }}
-        {{ end }}
+        {{ $proxyOrGRPC := "proxy" }}{{ if $l.GRPCPass }}{{ $proxyOrGRPC = "grpc" }}{{ end }}
 
         {{ with $l.EgressMTLS }}
             {{ if .Certificate }}
@@ -260,6 +244,19 @@ server {
         {{ $proxyOrGRPC }}_ssl_name {{ .SSLName }};
         {{ end }}
 
+        {{ range $e := $l.ErrorPages }}
+        error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";
+        {{ end }}
+
+        {{ if $l.ProxyInterceptErrors }}
+        {{ $proxyOrGRPC }}_intercept_errors on;
+        {{ end }}
+
+        {{ if $l.InternalProxyPass }}
+        proxy_pass {{ $l.InternalProxyPass }};
+        {{ end }}
+
+        {{ if or $l.ProxyPass $l.GRPCPass}}
             {{ range $r := $l.Rewrites }}
         rewrite {{ $r }};
             {{ end }}
@@ -337,19 +334,48 @@ server {
 
     {{ with $ssl := $s.SSL }}
         {{ if $ssl.HTTP2 }}
-	location @grpcerror400 { default_type application/grpc; return 400 "\n"; }
-	location @grpcerror401 { default_type application/grpc; return 401 "\n"; }
-	location @grpcerror403 { default_type application/grpc; return 403 "\n"; }
-	location @grpcerror404 { default_type application/grpc; return 404 "\n"; }
-	location @grpcerror405 { default_type application/grpc; return 405 "\n"; }
-	location @grpcerror408 { default_type application/grpc; return 408 "\n"; }
-	location @grpcerror414 { default_type application/grpc; return 414 "\n"; }
-	location @grpcerror426 { default_type application/grpc; return 426 "\n"; }
-	location @grpcerror500 { default_type application/grpc; return 500 "\n"; }
-	location @grpcerror501 { default_type application/grpc; return 501 "\n"; }
-	location @grpcerror502 { default_type application/grpc; return 502 "\n"; }
-	location @grpcerror503 { default_type application/grpc; return 503 "\n"; }
-	location @grpcerror504 { default_type application/grpc; return 504 "\n"; }
+	location @grpc_deadline_exceeded {
+    default_type application/grpc;
+    add_header grpc-status 4;
+    add_header grpc-message 'deadline exceeded';
+    return 204;
+    }
+    location @grpc_permission_denied {
+    default_type application/grpc;
+    add_header grpc-status 7;
+    add_header grpc-message 'permission denied';
+    return 204;
+    }
+    location @grpc_resource_exhausted {
+    default_type application/grpc;
+    add_header grpc-status 8;
+    add_header grpc-message 'resource exhausted';
+    return 204;
+    }
+    location @grpc_unimplemented {
+    default_type application/grpc;
+    add_header grpc-status 12;
+    add_header grpc-message unimplemented;
+    return 204;
+    }
+    location @grpc_internal {
+    default_type application/grpc;
+    add_header grpc-status 13;
+    add_header grpc-message 'internal error';
+    return 204;
+    }
+    location @grpc_unavailable {
+    default_type application/grpc;
+    add_header grpc-status 14;
+    add_header grpc-message unavailable;
+    return 204;
+    }
+    location @grpc_unauthenticated {
+    default_type application/grpc;
+    add_header grpc-status 16;
+    add_header grpc-message unauthenticated;
+    return 204;
+    }
 	    {{ end }}
     {{ end }}
 }

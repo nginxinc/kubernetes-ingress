@@ -176,16 +176,3 @@ class TestVirtualServerGrpc:
 
         self.patch_valid_vs(kube_apis, virtual_server_setup)
         wait_before_test()
-
-        print("\nTest 2: No HTTP2")
-        replace_configmap_from_yaml(kube_apis.v1,
-                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                    ingress_controller_prerequisites.namespace,
-                    f"{DEPLOYMENTS}/common/nginx-config.yaml")
-        wait_before_test()
-        text = "gRPC requires enabled HTTP/2 and TLS termination"
-        response = read_custom_resource(kube_apis.custom_objects, virtual_server_setup.namespace,
-                                        "virtualservers", virtual_server_setup.vs_name)
-        assert (response["status"] and response["status"]["reason"] == "AddedOrUpdatedWithWarning"
-                and response["status"]["state"] == "Warning")
-        assert text in response["status"]["message"]
