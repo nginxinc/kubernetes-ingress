@@ -114,7 +114,17 @@ controller:
   #   mountPath: /etc/nginx/conf.d/extra.conf
   #   subPath: extra.conf
 
+  ## InitContainers for the Ingress controller pods.
+  ## Useful for fetching crl files from a URL and copy the data to a mounted volume to crl.pem for using with nginx
   initContainers: []
+  # - name: init-container
+  #   image: busybox:1.34
+  #   command: ['sh', '-c', 'wget http://example.com/crl.pem -O /data/pem/crl.pem']
+  #   volumeMounts:
+  #     - name: extra-volume
+  #       mountPath: /data/pem
+  # additionally then create a volume mount the crl.pem to /etc/nginx/crl.pem and add ssl_crl crl.pem; in the nginx config
+  # To update the crl file create a cron job with kubectl rollout restart deployment/{ nginx deployment name }
 
   ## The number of replicas of the Ingress controller deployment.
   replicaCount: 1
