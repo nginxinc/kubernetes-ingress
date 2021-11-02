@@ -186,8 +186,4 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
 |``app-protect-physical-memory-util-thresholds`` | Sets the ``app_protect_physical_memory_util_thresholds`` [global directive](/nginx-app-protect/configuration/#global-directives). | ``high=100 low=100`` |  | 
 |``app-protect-dos-log-format`` | Sets the custom [log format](https://nginx.org/en/docs/http/ngx_http_log_module.html#log_format) for Dos Access log traffic. For convenience, it is possible to define the log format across multiple lines (each line separated by ``\n``). In that case, the Ingress Controller will replace every ``\n`` character with a space character. All ``'`` characters must be escaped. | `, vs_name_al=$app_protect_dos_vs_name, ip=$remote_addr, tls_fp=$app_protect_dos_tls_fp, outcome=$app_protect_dos_outcome, reason=$app_protect_dos_outcome_reason, policy_name=$app_protect_dos_policy_name, dos_version=$app_protect_dos_version, ip_tls=$remote_addr:$app_protect_dos_tls_fp,` | |  
 |``app-protect-dos-log-format-escaping`` | Sets the characters escaping for the variables of the stream log format. Supported values: ``json`` (JSON escaping), ``default`` (the default escaping) ``none`` (disables escaping). | ``default`` |  | 
-|``app-protect-dos-debug`` | Set debug log level for App Protect Dos | False |  |
-|``app-protect-dos-install-max-daemons`` | Max number of ADMD instances | 1 |  |
-|``app-protect-dos-install-memory`` | RAM memory size to consume in MB | 50% of free RAM in the container or 80MB, the smaller |  |
-|``app-protect-dos-install-max-workers`` | Max number of nginx processes to support | Number of CPU cores in the machine |  |
 {{% /table %}} 

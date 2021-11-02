@@ -82,7 +82,7 @@ type Manager interface {
 	AppProtectAgentQuit()
 	AppProtectPluginStart(appDone chan error)
 	AppProtectPluginQuit()
-	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon uint64, maxWorkers uint64, memory uint64)
+	AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int)
 	AppProtectDosAgentQuit()
 }
 
@@ -530,22 +530,22 @@ func (lm *LocalManager) AppProtectDosAgentQuit() {
 }
 
 // AppProtectDosAgentStart starts the AppProtectDos agent
-func (lm *LocalManager) AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon uint64, maxWorkers uint64, memory uint64) {
+func (lm *LocalManager) AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int) {
 	glog.V(3).Info("Starting AppProtectDos Agent")
 
 	// Perform installation by adminstall
 	appProtectDosAgentInstallCmdFull := appProtectDosAgentInstallCmd
 
 	if maxDaemon != 0 {
-		appProtectDosAgentInstallCmdFull += " -d " + strconv.FormatUint(maxDaemon, 10)
+		appProtectDosAgentInstallCmdFull += " -d " + strconv.Itoa(maxDaemon)
 	}
 
 	if maxWorkers != 0 {
-		appProtectDosAgentInstallCmdFull += " -w " + strconv.FormatUint(maxWorkers, 10)
+		appProtectDosAgentInstallCmdFull += " -w " + strconv.Itoa(maxWorkers)
 	}
 
 	if memory != 0 {
-		appProtectDosAgentInstallCmdFull += " -m " + strconv.FormatUint(memory, 10)
+		appProtectDosAgentInstallCmdFull += " -m " + strconv.Itoa(memory)
 	}
 
 	cmdInstall := exec.Command("sh", "-c", appProtectDosAgentInstallCmdFull)

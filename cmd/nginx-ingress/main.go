@@ -71,6 +71,12 @@ var (
 	appProtect = flag.Bool("enable-app-protect", false, "Enable support for NGINX App Protect. Requires -nginx-plus.")
 
 	appProtectDos = flag.Bool("enable-app-protect-dos", false, "Enable support for NGINX App Protect dos. Requires -nginx-plus.")
+	
+	appProtectDosDebug = flag.Bool("app-protect-dos-debug", false, "Enable debugging for App Protect Dos. Requires -nginx-plus and -enable-app-protect-dos.")
+
+	appProtectDosMaxDaemons = flag.Int("app-protect-dos-max-daemons", 0, "Max number of ADMD instances. Requires -nginx-plus and -enable-app-protect-dos.")
+	appProtectDosMaxWorkers = flag.Int("app-protect-dos-max-workers", 0, "Max number of nginx processes to support. Requires -nginx-plus and -enable-app-protect-dos.")
+	appProtectDosMemory = flag.Int("app-protect-dos-memory", 0, "RAM memory size to consume in MB. Requires -nginx-plus and -enable-app-protect-dos.")
 
 	ingressClass = flag.String("ingress-class", "nginx",
 		`A class of the Ingress controller.
@@ -242,7 +248,23 @@ func main() {
 	}
 
 	if *appProtectDos && !*nginxPlus {
-		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
+		glog.Fatal("NGINX App Protect Dos support is for NGINX Plus only")
+	}
+
+	if *appProtectDosDebug && !*appProtectDos && !*nginxPlus {
+		glog.Fatal("NGINX App Protect Dos debug support is for NGINX Plus only and App Protect Dos is enable")
+	}
+
+	if *appProtectDosMaxDaemons != 0 && !*appProtectDos && !*nginxPlus {
+		glog.Fatal("NGINX App Protect Dos max daemons support is for NGINX Plus only and App Protect Dos is enable")
+	}
+
+	if *appProtectDosMaxWorkers != 0 && !*appProtectDos && !*nginxPlus {
+		glog.Fatal("NGINX App Protect Dos max workers support is for NGINX Plus and App Protect Dos is enable")
+	}
+
+	if *appProtectDosMemory != 0 && !*appProtectDos && !*nginxPlus {
+		glog.Fatal("NGINX App Protect Dos memory support is for NGINX Plus and App Protect Dos is enable")
 	}
 
 	if *spireAgentAddress != "" && !*nginxPlus {
@@ -429,6 +451,13 @@ func main() {
 		nginxManager.AppProtectPluginStart(aPPluginDone)
 	}
 
+	var aPPDosAgentDone chan error
+
+	if *appProtectDos {
+		aPPDosAgentDone = make(chan error, 1)
+		nginxManager.AppProtectDosAgentStart(aPPDosAgentDone, *appProtectDosDebug, *appProtectDosMaxDaemons, *appProtectDosMaxWorkers, *appProtectDosMemory)
+	}
+
 	var sslRejectHandshake bool
 
 	if *defaultServerSecret != "" {
@@ -553,13 +582,6 @@ func main() {
 	if *enableTLSPassthrough {
 		var emptyFile []byte
 		nginxManager.CreateTLSPassthroughHostsConfig(emptyFile)
-	}
-
-	var aPPDosAgentDone chan error
-
-	if *appProtectDos {
-		aPPDosAgentDone = make(chan error, 1)
-		nginxManager.AppProtectDosAgentStart(aPPDosAgentDone, *nginxDebug || cfgParams.AppProtectDosDebug, cfgParams.AppProtectDosMaxDaemon, cfgParams.AppProtectDosMaxWorkers, cfgParams.AppProtectDosMemory)
 	}
 
 	nginxDone := make(chan error, 1)

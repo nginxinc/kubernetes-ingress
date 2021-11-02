@@ -176,6 +176,6 @@ func (*FakeManager) AppProtectDosAgentQuit() {
 }
 
 // AppProtectDosAgentStart is a fake implementation of AppProtectAgentStart
-func (*FakeManager) AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon uint64, maxWorkers uint64, memory uint64) {
+func (*FakeManager) AppProtectDosAgentStart(apdaDone chan error, debug bool, maxDaemon int, maxWorkers int, memory int) {
 	glog.V(3).Infof("Starting FakeAppProtectDosAgent")
 }
