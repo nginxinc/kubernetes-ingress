@@ -134,7 +134,11 @@ jobs:
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Run Tests
-        run: go test ./...
+        run: make cover
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: ./coverage.txt
 
   setup-matrix:
     name: Setup Matrix for Smoke Tests

@@ -33,7 +33,10 @@ lint: ## Run linter
 
 .PHONY: test
 test: ## Run tests
-	GO111MODULE=on go test ./...
+	go test ./...
+
+cover: ## Generate coverage report
+	@./hack/test-cover.sh
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify code generation
