@@ -123,7 +123,7 @@ clean:  ## Remove nginx-ingress binary
 	-rm -r dist
 
 .PHONY: deps
-deps: ## Add missing and remove unused modules, verify deps and dowload them to local cache
+deps: ## Add missing and remove unused modules, verify deps and download them to local cache
 	@go mod tidy && go mod verify && go mod download
 
 .PHONY: clean-cache

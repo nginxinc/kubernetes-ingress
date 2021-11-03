@@ -2393,7 +2393,7 @@ func TestAddGlobalConfiguration(t *testing.T) {
 
 	// Swap listeners
 
-	// We need to hanlde this case in Controller propoperly - update config for all TransportServers and reload once
+	// We need to handle this case in Controller propoperly - update config for all TransportServers and reload once
 	// to avoid any race conditions
 	// and errors like nginx: [emerg] duplicate "0.0.0.0:8888" address and port pair in /etc/nginx/nginx.conf:73
 

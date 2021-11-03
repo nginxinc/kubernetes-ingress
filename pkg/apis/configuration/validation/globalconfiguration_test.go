@@ -75,7 +75,7 @@ func TestValidateListeners(t *testing.T) {
 
 	allErrs := gcv.validateListeners(listeners, field.NewPath("listeners"))
 	if len(allErrs) > 0 {
-		t.Errorf("validateListeners() returned errors %v for valid intput", allErrs)
+		t.Errorf("validateListeners() returned errors %v for valid input", allErrs)
 	}
 }
 
@@ -137,7 +137,7 @@ func TestValidateListener(t *testing.T) {
 
 	allErrs := gcv.validateListener(listener, field.NewPath("listener"))
 	if len(allErrs) > 0 {
-		t.Errorf("validateListener() returned errors %v for valid intput", allErrs)
+		t.Errorf("validateListener() returned errors %v for valid input", allErrs)
 	}
 }
 

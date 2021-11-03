@@ -226,7 +226,7 @@ sessionParameters:
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``timeout`` | The timeout between two succesive read or write operations on client or proxied server connections. See [proxy_timeout](http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_timeout) directive. The default is ``10m``. | ``string`` | No |
+|``timeout`` | The timeout between two successive read or write operations on client or proxied server connections. See [proxy_timeout](http://nginx.org/en/docs/stream/ngx_stream_proxy_module.html#proxy_timeout) directive. The default is ``10m``. | ``string`` | No |
 {{% /table %}}
 
 ### Action

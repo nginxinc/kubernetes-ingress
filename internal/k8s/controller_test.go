@@ -1862,13 +1862,13 @@ func TestGetWAFPoliciesForAppProtectPolicy(t *testing.T) {
 			pols: policies,
 			key:  "ns1/apPol",
 			want: []*conf_v1.Policy{apPol},
-			msg:  "WAF pols that ref apPol which has a namepace",
+			msg:  "WAF pols that ref apPol which has a namespace",
 		},
 		{
 			pols: policies,
 			key:  "default/apPol",
 			want: []*conf_v1.Policy{apPolNoNs},
-			msg:  "WAF pols that ref apPol which has no namepace",
+			msg:  "WAF pols that ref apPol which has no namespace",
 		},
 		{
 			pols: policies,
@@ -1948,13 +1948,13 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 			pols: policies,
 			key:  "ns1/logConf",
 			want: []*conf_v1.Policy{logConf},
-			msg:  "WAF pols that ref logConf which has a namepace",
+			msg:  "WAF pols that ref logConf which has a namespace",
 		},
 		{
 			pols: policies,
 			key:  "default/logConf",
 			want: []*conf_v1.Policy{logConfNoNs},
-			msg:  "WAF pols that ref logConf which has no namepace",
+			msg:  "WAF pols that ref logConf which has no namespace",
 		},
 		{
 			pols: policies,
