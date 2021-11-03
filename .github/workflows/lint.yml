@@ -7,7 +7,6 @@ on:
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
-      - 'examples-of-custom-resources/**'
       - '**.md'
     types:
       - opened

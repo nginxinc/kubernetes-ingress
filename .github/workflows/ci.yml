@@ -7,7 +7,6 @@ on:
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
-      - 'examples-of-custom-resources/**'
       - '**.md'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
@@ -17,7 +16,6 @@ on:
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
-      - 'examples-of-custom-resources/**'
       - '**.md'
     types:
       - opened

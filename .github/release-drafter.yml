@@ -89,6 +89,6 @@ template: |
   ## Resources
 
   - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
-  - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v$RESOLVED_VERSION/examples and https://github.com/nginxinc/kubernetes-ingress/tree/v$RESOLVED_VERSION/examples-of-custom-resources
+  - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v$RESOLVED_VERSION/examples
   - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/v$RESOLVED_VERSION/deployments/helm-chart
   - Operator -- https://github.com/nginxinc/nginx-ingress-operator/
