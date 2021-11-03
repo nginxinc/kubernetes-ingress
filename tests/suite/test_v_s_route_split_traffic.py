@@ -1,3 +1,4 @@
+from yaml.loader import Loader
 import pytest
 import requests
 import yaml
@@ -16,7 +17,7 @@ def get_weights_of_splitting(file) -> []:
     """
     weights = []
     with open(file) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.load_all(f, Loader=Loader)
         for dep in docs:
             for item in dep['spec']['subroutes'][0]['splits']:
                 weights.append(item['weight'])
@@ -32,7 +33,7 @@ def get_upstreams_of_splitting(file) -> []:
     """
     upstreams = []
     with open(file) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.load_all(f, Loader=Loader)
         for dep in docs:
             for item in dep['spec']['subroutes'][0]['splits']:
                 upstreams.append(item['action']['pass'])

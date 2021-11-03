@@ -2,6 +2,7 @@ import pytest
 import requests
 import yaml
 
+from yaml.loader import Loader
 from settings import TEST_DATA
 from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, create_v_s_route_from_yaml
 from suite.fixtures import VirtualServerRoute
@@ -19,7 +20,7 @@ def get_weights_of_splitting(file) -> []:
     """
     weights = []
     with open(file) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.load_all(f, Loader=Loader)
         for dep in docs:
             for item in dep['spec']['subroutes'][0]['matches'][0]['splits']:
                 weights.append(item['weight'])
@@ -35,7 +36,7 @@ def get_upstreams_of_splitting(file) -> []:
     """
     upstreams = []
     with open(file) as f:
-        docs = yaml.load_all(f)
+        docs = yaml.load_all(f, Loader=Loader)
         for dep in docs:
             for item in dep['spec']['subroutes'][0]['matches'][0]['splits']:
                 upstreams.append(item['action']['pass'])
