@@ -170,6 +170,7 @@ Parameter | Description | Default
 `controller.affinity` | The affinity of the Ingress controller pods. | {}
 `controller.volumes` | The volumes of the Ingress controller pods. | []
 `controller.volumeMounts` | The volumeMounts of the Ingress controller pods. | []
+`controller.initContainers` | InitContainers for the Ingress controller pods. | []
 `controller.resources` | The resources of the Ingress controller pods. | {}
 `controller.replicaCount` | The number of replicas of the Ingress controller deployment. | 1
 `controller.ingressClass` | A class of the Ingress controller. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start. The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class. The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of kubernetes. | nginx
