@@ -83,11 +83,17 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 ############################################# Base image for UBI 8 #############################################
 FROM redhat/ubi8-minimal AS ubi-base-8
 
+# temporary fix for CVE-2021-22946, CVE-2021-22947, CVE-2021-33928, CVE-2021-33929, CVE-2021-33930, CVE-2021-33938
+RUN microdnf upgrade -y curl libsolv
+
 
 ############################################# Base image for UBI 7 #############################################
 FROM registry.access.redhat.com/ubi7/ubi AS ubi-base-7
 
 RUN yum install -y microdnf
+
+# temporary fix for CVE-2021-42574
+RUN yum upgrade -y binutils
 
 
 ############################################# Base image for UBI #############################################
