@@ -233,6 +233,10 @@ spec:
                             anomalies:
                               items:
                                 properties:
+                                  $action:
+                                    enum:
+                                      - delete
+                                    type: string
                                   action:
                                     enum:
                                       - alarm
@@ -261,6 +265,21 @@ spec:
                                       - block
                                       - detect
                                     type: string
+                                  browserDefinition:
+                                    properties:
+                                      $action:
+                                        enum:
+                                          - delete
+                                        type: string
+                                      isUserDefined:
+                                        type: boolean
+                                      matchRegex:
+                                        type: string
+                                      matchString:
+                                        type: string
+                                      name:
+                                        type: string
+                                    type: object
                                   maxVersion:
                                     maximum: 2147483647
                                     minimum: 0
@@ -297,6 +316,10 @@ spec:
                             signatures:
                               items:
                                 properties:
+                                  $action:
+                                    enum:
+                                      - delete
+                                    type: string
                                   action:
                                     enum:
                                       - alarm
@@ -386,6 +409,10 @@ spec:
                     cookies:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           accessibleOnlyThroughTheHttpProtocol:
                             type: boolean
                           attackSignaturesCheck:
@@ -504,6 +531,26 @@ spec:
                         - transparent
                         - blocking
                       type: string
+                    enforcer-settings:
+                      properties:
+                        enforcerStateCookies:
+                          properties:
+                            httpOnlyAttribute:
+                              type: boolean
+                            sameSiteAttribute:
+                              enum:
+                                - lax
+                                - none
+                                - none-value
+                                - strict
+                              type: string
+                            secureAttribute:
+                              enum:
+                                - always
+                                - never
+                              type: string
+                          type: object
+                      type: object
                     filetypeReference:
                       properties:
                         link:
@@ -513,7 +560,9 @@ spec:
                     filetypes:
                       items:
                         properties:
-                          action:
+                          $action:
+                            enum:
+                              - delete
                             type: string
                           allowed:
                             type: boolean
@@ -575,6 +624,10 @@ spec:
                     grpc-profiles:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           associateUrls:
                             type: boolean
                           attackSignaturesCheck:
@@ -603,6 +656,8 @@ spec:
                                     isBase64:
                                       type: boolean
                                   type: object
+                                importUrl:
+                                  type: string
                                 isPrimary:
                                   type: boolean
                                 primaryIdlFileName:
@@ -649,6 +704,10 @@ spec:
                     headers:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           allowRepeatedOccurrences:
                             type: boolean
                           base64Decoding:
@@ -724,6 +783,10 @@ spec:
                     json-profiles:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           attackSignaturesCheck:
                             type: boolean
                           defenseAttributes:
@@ -782,6 +845,10 @@ spec:
                                   type: boolean
                                 jsonValidationFile:
                                   properties:
+                                    $action:
+                                      enum:
+                                        - delete
+                                      type: string
                                     contents:
                                       type: string
                                     fileName:
@@ -796,6 +863,10 @@ spec:
                     json-validation-files:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           contents:
                             type: string
                           fileName:
@@ -825,7 +896,9 @@ spec:
                     methods:
                       items:
                         properties:
-                          action:
+                          $action:
+                            enum:
+                              - delete
                             type: string
                           name:
                             type: string
@@ -850,6 +923,10 @@ spec:
                     parameters:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           allowEmptyValue:
                             type: boolean
                           allowRepeatedParameterName:
@@ -1078,6 +1155,10 @@ spec:
                     sensitive-parameters:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           name:
                             type: string
                         type: object
@@ -1091,6 +1172,10 @@ spec:
                     server-technologies:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           serverTechnologyName:
                             enum:
                               - Jenkins
@@ -1178,6 +1263,10 @@ spec:
                     signature-requirements:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           tag:
                             type: string
                         type: object
@@ -1185,6 +1274,10 @@ spec:
                     signature-sets:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           alarm:
                             type: boolean
                           block:
@@ -1441,6 +1534,10 @@ spec:
                               properties:
                                 parameter:
                                   properties:
+                                    $action:
+                                      enum:
+                                        - delete
+                                      type: string
                                     allowEmptyValue:
                                       type: boolean
                                     allowRepeatedParameterName:
@@ -1668,6 +1765,10 @@ spec:
                     whitelist-ips:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           blockRequests:
                             enum:
                               - always
@@ -1680,6 +1781,8 @@ spec:
                           ipMask:
                             pattern: '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'
                             type: string
+                          neverLogRequests:
+                            type: boolean
                         type: object
                       type: array
                     whitelistIpReference:
@@ -1691,6 +1794,10 @@ spec:
                     xml-profiles:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           attackSignaturesCheck:
                             type: boolean
                           defenseAttributes:
@@ -1763,6 +1870,10 @@ spec:
                     xml-validation-files:
                       items:
                         properties:
+                          $action:
+                            enum:
+                              - delete
+                            type: string
                           contents:
                             type: string
                           fileName:
