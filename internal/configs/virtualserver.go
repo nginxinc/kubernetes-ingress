@@ -1340,7 +1340,7 @@ func upstreamHasKeepalive(upstream conf_v1.Upstream, cfgParams *ConfigParams) bo
 
 func generateRewrites(path string, proxy *conf_v1.ActionProxy, internal bool, originalPath string, grpcEnabled bool) []string {
 	if grpcEnabled && internal {
-		return []string{"rewrite ^ $request_uri break;"}
+		return []string{"^ $request_uri break"}
 	}
 
 	if proxy == nil || proxy.RewritePath == "" {
@@ -2256,5 +2256,5 @@ func isTLSEnabled(u conf_v1.Upstream, spiffeCerts bool) bool {
 }
 
 func isGRPC(protocolType string) bool {
-	return (strings.ToLower(strings.TrimSpace((protocolType))) == "grpc")
+	return protocolType == "grpc"
 }

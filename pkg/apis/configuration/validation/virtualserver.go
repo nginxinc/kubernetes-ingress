@@ -290,8 +290,7 @@ func validateUpstreamType(typeName string, fieldPath *field.Path) field.ErrorLis
 		return allErrs
 	}
 
-	t := strings.ToLower(strings.TrimSpace((typeName)))
-	if t != "grpc" && t != "http" {
+	if typeName != "grpc" && typeName != "http" {
 		allErrs = append(allErrs, field.Invalid(fieldPath, typeName, "must be one of `grpc` or `http`"))
 	}
 
