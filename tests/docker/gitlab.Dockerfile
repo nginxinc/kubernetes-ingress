@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y curl git jq \
 	&& mv ./kubectl /usr/local/bin \
 	&& curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-linux-x86_64.tar.gz \
 	&& tar xvzf google-cloud-sdk-${GCLOUD_VERSION}-linux-x86_64.tar.gz \
-	&& mv google-cloud-sdk /usr/lib/
+	&& mv google-cloud-sdk /usr/lib/ \
+	&& install -y apache2-utils
 
 WORKDIR /workspace/tests
 
