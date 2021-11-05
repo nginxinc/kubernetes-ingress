@@ -8,7 +8,7 @@ Below you will find the instructions on how to run the tests against a Minikube 
 
 ### Prerequisites:
 
-* Minikube. 
+* Minikube.
 * Python3 or Docker.
 
 #### Step 1 - Create a Minikube Cluster
@@ -18,7 +18,7 @@ $ minikube start
 ```
 
 #### Step 2 - Run the Tests
- 
+
 **Note**: if you have the Ingress Controller deployed in the cluster, please uninstall it first, making sure to remove its namespace and RBAC resources.
 
 Run the tests:
@@ -46,7 +46,7 @@ The tests will use the Ingress Controller for NGINX with the default *nginx/ngin
 #### Step 1 - Create a Kind Cluster
 
 ```bash
-$ make create-kind-cluster 
+$ make create-kind-cluster
 ```
 
 #### Step 2 - Run the Tests
@@ -72,7 +72,7 @@ The table below shows various configuration options for the tests. If you use Py
 | `--image` | `BUILD_IMAGE` | The Ingress Controller image. | `nginx/nginx-ingress:edge` |
 | `--image-pull-policy` | `PULL_POLICY` | The pull policy of the Ingress Controller image. | `IfNotPresent` |
 | `--deployment-type` | `DEPLOYMENT_TYPE` | The type of the IC deployment: deployment or daemon-set. | `deployment` |
-| `--ic-type` | `IC_TYPE` | The type of the Ingress Controller: nginx-ingress or nginx-ingress-plus. | `nginx-ingress` |
+| `--ic-type` | `IC_TYPE` | The type of the Ingress Controller: nginx-ingress or nginx-plus-ingress. | `nginx-ingress` |
 | `--service` | `SERVICE`, not supported by `run-tests-in-kind` target.  | The type of the Ingress Controller service: nodeport or loadbalancer. | `nodeport` |
 | `--node-ip` | `NODE_IP`, not supported by `run-tests-in-kind` target.  | The public IP of a cluster node. Not required if you use the loadbalancer service (see --service argument). | `""` |
 | `--kubeconfig` | `N/A` | An absolute path to a kubeconfig file. | `~/.kube/config` or the value of the `KUBECONFIG` env variable |

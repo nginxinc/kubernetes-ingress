@@ -43,7 +43,7 @@ The table below shows various configuration options for the performance tests. U
 | `--image` | The Ingress Controller image. | `nginx/nginx-ingress:edge` |
 | `--image-pull-policy` | The pull policy of the Ingress Controller image. | `IfNotPresent` |
 | `--deployment-type` | The type of the IC deployment: deployment or daemon-set. | `deployment` |
-| `--ic-type` | The type of the Ingress Controller: nginx-ingress or nginx-ingress-plus. | `nginx-ingress` |
+| `--ic-type` | The type of the Ingress Controller: nginx-ingress or nginx-plus-ingress. | `nginx-ingress` |
 | `--service` | The type of the Ingress Controller service: nodeport or loadbalancer. | `nodeport` |
 | `--node-ip` | The public IP of a cluster node. Not required if you use the loadbalancer service (see --service argument). | `""` |
 | `--kubeconfig` | An absolute path to a kubeconfig file. | `~/.kube/config` or the value of the `KUBECONFIG` env variable |

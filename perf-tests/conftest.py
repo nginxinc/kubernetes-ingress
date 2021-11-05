@@ -1,11 +1,6 @@
 """Describe overall framework configuration."""
 
-import os
-import pytest
-import sys
-
-sys.path.insert(0, "../tests")
-from kubernetes.config.kube_config import KUBE_CONFIG_DEFAULT_LOCATION
+from suite.resources_utils import get_first_pod_name
 from settings import (
     DEFAULT_IMAGE,
     DEFAULT_PULL_POLICY,
@@ -13,7 +8,12 @@ from settings import (
     DEFAULT_SERVICE,
     DEFAULT_DEPLOYMENT_TYPE,
 )
-from suite.resources_utils import get_first_pod_name
+from kubernetes.config.kube_config import KUBE_CONFIG_DEFAULT_LOCATION
+import os
+import pytest
+import sys
+
+sys.path.insert(0, "../tests")
 
 
 def pytest_addoption(parser) -> None:
@@ -44,7 +44,7 @@ def pytest_addoption(parser) -> None:
         "--ic-type",
         action="store",
         default=DEFAULT_IC_TYPE,
-        help="The type of the Ingress Controller: nginx-ingress or nginx-ingress-plus.",
+        help="The type of the Ingress Controller: nginx-ingress or nginx-plus-ingress.",
     )
     parser.addoption(
         "--service",
@@ -97,17 +97,20 @@ def pytest_collection_modifyitems(config, items) -> None:
     :return:
     """
     if config.getoption("--ic-type") == "nginx-ingress":
-        skip_for_nginx_oss = pytest.mark.skip(reason="Skip a test for Nginx OSS")
+        skip_for_nginx_oss = pytest.mark.skip(
+            reason="Skip a test for Nginx OSS")
         for item in items:
             if "skip_for_nginx_oss" in item.keywords:
                 item.add_marker(skip_for_nginx_oss)
     if config.getoption("--ic-type") == "nginx-plus-ingress":
-        skip_for_nginx_plus = pytest.mark.skip(reason="Skip a test for Nginx Plus")
+        skip_for_nginx_plus = pytest.mark.skip(
+            reason="Skip a test for Nginx Plus")
         for item in items:
             if "skip_for_nginx_plus" in item.keywords:
                 item.add_marker(skip_for_nginx_plus)
     if "-ap" not in config.getoption("--image"):
-        appprotect = pytest.mark.skip(reason="Skip AppProtect test in non-AP image")
+        appprotect = pytest.mark.skip(
+            reason="Skip AppProtect test in non-AP image")
         for item in items:
             if "appprotect" in item.keywords:
                 item.add_marker(appprotect)
@@ -131,7 +134,9 @@ def pytest_runtest_makereport(item) -> None:
     # we only look at actual failing test calls, not setup/teardown
     if rep.when == "call" and rep.failed and item.config.getoption("--show-ic-logs") == "yes":
         pod_namespace = item.funcargs["ingress_controller_prerequisites"].namespace
-        pod_name = get_first_pod_name(item.funcargs["kube_apis"].v1, pod_namespace)
+        pod_name = get_first_pod_name(
+            item.funcargs["kube_apis"].v1, pod_namespace)
         print("\n===================== IC Logs Start =====================")
-        print(item.funcargs["kube_apis"].v1.read_namespaced_pod_log(pod_name, pod_namespace))
+        print(item.funcargs["kube_apis"].v1.read_namespaced_pod_log(
+            pod_name, pod_namespace))
         print("\n===================== IC Logs End =====================")

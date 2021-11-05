@@ -72,14 +72,14 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: backend2 
+      app: backend2
   template:
     metadata:
       labels:
-        app: backend2 
+        app: backend2
     spec:
       containers:
-      - name: backend2 
+      - name: backend2
         image: nginxdemos/nginx-hello:plain-text
         ports:
         - containerPort: 8080

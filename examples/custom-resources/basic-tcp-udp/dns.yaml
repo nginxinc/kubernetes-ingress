@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: coredns
-        image: coredns/coredns:1.6.7
+        image: coredns/coredns:1.8.6
         args: [ "-conf", "/etc/coredns/Corefile" ]
         volumeMounts:
         - name: config-volume
@@ -51,10 +51,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: coredns 
+  name: coredns
 spec:
   selector:
-   app: coredns 
+   app: coredns
   ports:
   - name: dns
     port: 5353

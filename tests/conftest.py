@@ -51,7 +51,7 @@ def pytest_addoption(parser) -> None:
         "--ic-type",
         action="store",
         default=DEFAULT_IC_TYPE,
-        help="The type of the Ingress Controller: nginx-ingress or nginx-ingress-plus.",
+        help="The type of the Ingress Controller: nginx-ingress or nginx-plus-ingress.",
     )
     parser.addoption(
         "--service",
@@ -124,7 +124,7 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "appprotect" in item.keywords:
                 item.add_marker(appprotect)
-    if  str(config.getoption("--batch-start")) != "True":
+    if str(config.getoption("--batch-start")) != "True":
         batch_start = pytest.mark.skip(reason="Skipping pod restart test with multiple resources")
         for item in items:
             if "batch_start" in item.keywords:

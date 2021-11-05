@@ -43,10 +43,10 @@ spec:
   template:
     metadata:
       labels:
-        app: backend3 
+        app: backend3
     spec:
       containers:
-      - name: backend3 
+      - name: backend3
         image: nginxdemos/nginx-hello:plain-text
         ports:
         - containerPort: 8080

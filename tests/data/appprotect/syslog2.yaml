@@ -6,18 +6,18 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: syslog2 
+      app: syslog2
   template:
     metadata:
       labels:
-        app: syslog2 
+        app: syslog2
     spec:
       containers:
-      - name: syslog2 
-        image: balabit/syslog-ng:3.28.1
+      - name: syslog2
+        image: balabit/syslog-ng:3.31.2-buster
         ports:
         - containerPort: 514
-        - containerPort: 601 
+        - containerPort: 601
 ---
 apiVersion: v1
 kind: Service
