@@ -3,7 +3,8 @@ import pytest
 from kubernetes.client.rest import ApiException
 
 from settings import TEST_DATA, DEPLOYMENTS
-from suite.custom_assertions import assert_event_starts_with_text_and_contains_errors
+from suite.custom_assertions import assert_event_starts_with_text_and_contains_errors, \
+    assert_grpc_entries_exist, assert_proxy_entries_do_not_exist, assert_proxy_entries_exist
 from suite.custom_resources_utils import read_custom_resource
 from suite.grpc.helloworld_pb2 import HelloRequest
 from suite.grpc.helloworld_pb2_grpc import GreeterStub
@@ -97,33 +98,8 @@ class TestVirtualServerRouteGrpc:
                                             v_s_route_setup.vs_name,
                                             ic_pod_name,
                                             ingress_controller_prerequisites.namespace)
-
-        assert "proxy_connect_timeout 60s;" not in config
-        assert "proxy_read_timeout 60s;" not in config
-        assert "proxy_send_timeout 60s;" not in config
-
-        assert "proxy_set_header Upgrade $http_upgrade;" not in config
-        assert "proxy_http_version 1.1;" not in config
-
-        assert "proxy_next_upstream error timeout;" not in config
-        assert "proxy_next_upstream_timeout 0s;" not in config
-        assert "proxy_next_upstream_tries 0;" not in config
-
-        assert "grpc_connect_timeout 60s;" in config
-        assert "grpc_read_timeout 60s;" in config
-        assert "grpc_send_timeout 60s;" in config
-
-        assert "grpc_set_header X-Real-IP $remote_addr;" in config
-        assert "grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" in config
-        assert "grpc_set_header X-Forwarded-Host $host;" in config
-        assert "grpc_set_header X-Forwarded-Port $server_port;" in config
-        assert "grpc_set_header X-Forwarded-Proto $scheme;" in config
-
-        assert 'grpc_set_header Host "$host";' in config
-
-        assert "grpc_next_upstream error timeout;" in config
-        assert "grpc_next_upstream_timeout 0s;" in config
-        assert "grpc_next_upstream_tries 0;" in config
+        assert_proxy_entries_do_not_exist(config)
+        assert_grpc_entries_exist(config)
 
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_config_after_enable_tls(self, kube_apis, ingress_controller_prerequisites,
@@ -173,29 +149,5 @@ class TestVirtualServerRouteGrpc:
                                             v_s_route_setup.vs_name,
                                             ic_pod_name,
                                             ingress_controller_prerequisites.namespace)
-        assert "proxy_connect_timeout 60s;" in config
-        assert "proxy_read_timeout 60s;" in config
-        assert "proxy_send_timeout 60s;" in config
-
-        assert "proxy_set_header Upgrade $http_upgrade;" in config
-        assert "proxy_http_version 1.1;" in config
-
-        assert "proxy_next_upstream error timeout;" in config
-        assert "proxy_next_upstream_timeout 0s;" in config
-        assert "proxy_next_upstream_tries 0;" in config
-
-        assert "grpc_connect_timeout 60s;" in config
-        assert "grpc_read_timeout 60s;" in config
-        assert "grpc_send_timeout 60s;" in config
-
-        assert "grpc_set_header X-Real-IP $remote_addr;" in config
-        assert "grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" in config
-        assert "grpc_set_header X-Forwarded-Host $host;" in config
-        assert "grpc_set_header X-Forwarded-Port $server_port;" in config
-        assert "grpc_set_header X-Forwarded-Proto $scheme;" in config
-
-        assert 'grpc_set_header Host "$host";' in config
-
-        assert "grpc_next_upstream error timeout;" in config
-        assert "grpc_next_upstream_timeout 0s;" in config
-        assert "grpc_next_upstream_tries 0;" in config
+        assert_proxy_entries_exist(config)
+        assert_grpc_entries_exist(config)

@@ -10,6 +10,7 @@ from suite.resources_utils import create_example_app, wait_until_all_pods_are_re
     delete_items_from_yaml, get_first_pod_name
 from suite.ssl_utils import get_certificate
 from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf
+from suite.custom_assertions import assert_grpc_entries_exist, assert_proxy_entries_exist
 
 
 @pytest.fixture(scope="function")
@@ -75,32 +76,8 @@ class TestVirtualServerMixedUpstreamType:
                                             ic_pod_name,
                                             ingress_controller_prerequisites.namespace)
 
-        assert "proxy_connect_timeout 60s;" in config
-        assert "proxy_read_timeout 60s;" in config
-        assert "proxy_send_timeout 60s;" in config
-
-        assert "proxy_set_header Upgrade $http_upgrade;" in config
-        assert "proxy_http_version 1.1;" in config
-
-        assert "proxy_next_upstream error timeout;" in config
-        assert "proxy_next_upstream_timeout 0s;" in config
-        assert "proxy_next_upstream_tries 0;" in config
-
-        assert "grpc_connect_timeout 60s;" in config
-        assert "grpc_read_timeout 60s;" in config
-        assert "grpc_send_timeout 60s;" in config
-
-        assert "grpc_set_header X-Real-IP $remote_addr;" in config
-        assert "grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" in config
-        assert "grpc_set_header X-Forwarded-Host $host;" in config
-        assert "grpc_set_header X-Forwarded-Port $server_port;" in config
-        assert "grpc_set_header X-Forwarded-Proto $scheme;" in config
-
-        assert 'grpc_set_header Host "$host";' in config
-
-        assert "grpc_next_upstream error timeout;" in config
-        assert "grpc_next_upstream_timeout 0s;" in config
-        assert "grpc_next_upstream_tries 0;" in config
+        assert_grpc_entries_exist(config)
+        assert_proxy_entries_exist(config)
 
         print("\nStep 2: check connection to http backend")
         resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
@@ -120,7 +97,8 @@ class TestVirtualServerMixedUpstreamType:
             response = ""
             try:
                 response = stub.SayHello(HelloRequest(name=virtual_server_setup.public_endpoint.public_ip))
-                print(response)
+                valid_message = "Hello {}".format(virtual_server_setup.public_endpoint.public_ip)
+                assert valid_message in response.message
             except grpc.RpcError as e:
                 print(e.details())
                 pytest.fail("RPC error was not expected during call, exiting...")

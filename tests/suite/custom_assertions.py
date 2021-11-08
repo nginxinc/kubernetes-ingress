@@ -197,5 +197,65 @@ def wait_and_assert_status_code(code, req_url, host, **kwargs) -> None:
         resp = requests.get(req_url, headers={"host": host}, **kwargs)
     assert resp.status_code == code, f"After 30 seconds the status_code is still not {code}"
 
-    
-        
+
+def assert_grpc_entries_exist(config) -> None:
+    """
+    Assert that the gPRC config entries are present in the config file.
+
+    :param config: the nginx config
+    :return:
+    """
+    assert "grpc_connect_timeout 60s;" in config
+    assert "grpc_read_timeout 60s;" in config
+    assert "grpc_send_timeout 60s;" in config
+
+    assert "grpc_set_header X-Real-IP $remote_addr;" in config
+    assert "grpc_set_header X-Forwarded-For $proxy_add_x_forwarded_for;" in config
+    assert "grpc_set_header X-Forwarded-Host $host;" in config
+    assert "grpc_set_header X-Forwarded-Port $server_port;" in config
+    assert "grpc_set_header X-Forwarded-Proto $scheme;" in config
+
+    assert 'grpc_set_header Host "$host";' in config
+
+    assert "grpc_next_upstream error timeout;" in config
+    assert "grpc_next_upstream_timeout 0s;" in config
+    assert "grpc_next_upstream_tries 0;" in config
+
+
+def assert_proxy_entries_do_not_exist(config) -> None:
+    """
+    Assert that the proxy config entries are not present in the config file.
+
+    :param config: the nginx config
+    :return:
+    """
+    assert "proxy_connect_timeout 60s;" not in config
+    assert "proxy_read_timeout 60s;" not in config
+    assert "proxy_send_timeout 60s;" not in config
+
+    assert "proxy_set_header Upgrade $http_upgrade;" not in config
+    assert "proxy_http_version 1.1;" not in config
+
+    assert "proxy_next_upstream error timeout;" not in config
+    assert "proxy_next_upstream_timeout 0s;" not in config
+    assert "proxy_next_upstream_tries 0;" not in config
+
+
+def assert_proxy_entries_exist(config) -> None:
+    """
+    Assert that the proxy config entries are present in the config file.
+
+    :param config: the nginx config
+    :return:
+    """
+
+    assert "proxy_connect_timeout 60s;" in config
+    assert "proxy_read_timeout 60s;" in config
+    assert "proxy_send_timeout 60s;" in config
+
+    assert "proxy_set_header Upgrade $http_upgrade;" in config
+    assert "proxy_http_version 1.1;" in config
+
+    assert "proxy_next_upstream error timeout;" in config
+    assert "proxy_next_upstream_timeout 0s;" in config
+    assert "proxy_next_upstream_tries 0;" in config
