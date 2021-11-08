@@ -215,9 +215,22 @@ server {
         {{- end }}
 
         {{- if .ApDosMonitor }}
+        {{if or $ssl.HTTP2 .ApDosMonitorTimeout}}
+    app_protect_dos_monitor uri="{{ .ApDosMonitor }}" protocol={{if $ssl.HTTP2}}http2{{else}}http1{{end}} {{if .ApDosMonitorTimeout}}timeout={{.ApDosMonitorTimeout}}{{end}};
+        {{else}}
     app_protect_dos_monitor "{{ .ApDosMonitor }}";
         {{- end }}
     {{- end }}
+
+
+	{{if $server.AppProtectDosMonitor}}
+	{{if or $server.GRPCOnly $server.HTTP2 $server.AppProtectDosMonitorTimeout}}
+	app_protect_dos_monitor uri="{{$server.AppProtectDosMonitor}}" protocol={{if $server.GRPCOnly}}grpc{{else if $server.HTTP2}}http2{{else}}http1{{end}} {{if $server.AppProtectDosMonitorTimeout}}timeout=$server.AppProtectDosMonitorTimeout{{end}};
+	{{else}}
+	app_protect_dos_monitor "{{$server.AppProtectDosMonitor}}";
+	{{end}}
+
+
 
     {{ range $snippet := $s.Snippets }}
     {{- $snippet }}

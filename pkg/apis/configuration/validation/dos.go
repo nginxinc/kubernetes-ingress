@@ -140,6 +140,12 @@ func validateAppProtectDosName(name string) error {
 	return nil
 }
 
+var validMonitorProtocol = map[string]bool{
+	"http1": true,
+	"http2": true,
+	"grpc": true,
+}
+
 func validateAppProtectDosMonitor(monitor string) error {
 	_, err := url.Parse(monitor)
 	if err != nil {
@@ -148,6 +154,21 @@ func validateAppProtectDosMonitor(monitor string) error {
 
 	if err := validateEscapedString(monitor, "http://www.example.com"); err != nil {
 		return err
+	}
+
+	if !validMonitorProtocol[monitor] {
+		keys := make([]string, len(validMonitorProtocol))
+
+		i := 0
+		for k, _ := range validMonitorProtocol {
+				keys[i] = k
+				i++
+		}
+		return fmt.Errorf("App Protect Dos Monitor Protocol must be: %v", keys)
+	}
+
+	if _, err := configs.ParseUint64(monitor); err != nil {
+		return fmt.Errorf("must be a non-negative integer")
 	}
 
 	return nil
