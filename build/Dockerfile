@@ -192,6 +192,45 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # COPY build/*.crt  /etc/pki/ca-trust/source/anchors/
 # RUN update-ca-trust extract
 
+############################################# Base image for UBI with NGINX Plus and App Protect Dos #############################################
+FROM ubi-plus as ubi-plus-dos
+ARG NGINX_PLUS_VERSION
+
+RUN mkdir  -p /root/app_protect_dos /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /var/run/adm && chmod 755 /shared/cores /var/log/adm /var/run/adm
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
+	source /tmp/rhel_license \
+	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
+	&& subscription-manager attach \
+    && curl -sS https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
+    && subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
+    && rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+    && yum clean all \
+    && yum -y install epel-release deltarpm \
+    && yum -y install app-protect-dos-${NGINX_PLUS_VERSION#r}* \
+    && rm /etc/yum.repos.d/app-protect-dos-7.repo \
+    && subscription-manager unregister
+
+############################################# Base image for UBI with NGINX Plus and App Protect and App Protect Dos #############################################
+FROM ubi-plus-nap as ubi-plus-nap-dos
+ARG NGINX_PLUS_VERSION
+
+RUN mkdir  -p /root/app_protect_dos /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /var/run/adm && chmod 755 /shared/cores /var/log/adm /var/run/adm
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
+	source /tmp/rhel_license \
+	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
+	&& subscription-manager attach \
+    && curl -sS https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
+    && yum clean all \
+    && yum -y install epel-release deltarpm \
+    && yum -y install app-protect-dos-${NGINX_PLUS_VERSION#r}* \
+    && rm /etc/yum.repos.d/app-protect-dos-7.repo \
+    && subscription-manager unregister
 
 ############################################# Base image containing libs for Opentracing #############################################
 FROM opentracing/nginx-opentracing:nginx-1.21.3 as opentracing-lib

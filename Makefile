@@ -100,6 +100,14 @@ openshift-image-plus: build ## Create Docker image for Ingress Controller (ubi w
 openshift-image-nap-plus: build ## Create Docker image for Ingress Controller (ubi with plus and nap)
 	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg UBI_VERSION=7
 
+.PHONY: openshift-image-dos-plus
+openshift-image-dos-plus: build ## Create Docker image for Ingress Controller (ubi with plus and dos)
+	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-dos --build-arg UBI_VERSION=7
+
+.PHONY: openshift-image-nap-dos-plus
+openshift-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (ubi with plus, nap and dos)
+	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap-dos --build-arg UBI_VERSION=7
+
 .PHONY: debian-image-opentracing
 debian-image-opentracing: build ## Create Docker image for Ingress Controller (with opentracing)
 	$(DOCKER_CMD) --build-arg BUILD_OS=opentracing
