@@ -1339,11 +1339,10 @@ func upstreamHasKeepalive(upstream conf_v1.Upstream, cfgParams *ConfigParams) bo
 }
 
 func generateRewrites(path string, proxy *conf_v1.ActionProxy, internal bool, originalPath string, grpcEnabled bool) []string {
-	if grpcEnabled && internal {
-		return []string{"^ $request_uri break"}
-	}
-
 	if proxy == nil || proxy.RewritePath == "" {
+		if grpcEnabled && internal {
+			return []string{"^ $request_uri break"}
+		}
 		return nil
 	}
 

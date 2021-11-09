@@ -6838,6 +6838,13 @@ func TestGenerateRewrites(t *testing.T) {
 			},
 			originalPath: "/path",
 			grpcEnabled:  true,
+			expected:     []string{`^ $request_uri`, `"^/path(.*)$" "/rewrite$1" break`},
+		},
+		{
+			path:         "/_internal_path",
+			internal:     true,
+			originalPath: "/path",
+			grpcEnabled:  true,
 			expected:     []string{`^ $request_uri break`},
 		},
 	}
