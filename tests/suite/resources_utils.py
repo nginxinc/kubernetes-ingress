@@ -1,25 +1,19 @@
 """Describe methods to utilize the kubernetes-client."""
-import re
-import os
-import time
-import yaml
 import json
+import os
+import re
+import time
+
 import pytest
 import requests
-
-from kubernetes.client import (
-    CoreV1Api,
-    NetworkingV1Api,
-    RbacAuthorizationV1Api,
-    V1Service,
-    AppsV1Api,
-)
+import yaml
+from kubernetes.client import (AppsV1Api, CoreV1Api, NetworkingV1Api,
+                               RbacAuthorizationV1Api, V1Service)
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
-from kubernetes import client
 from more_itertools import first
-
-from settings import TEST_DATA, RECONFIGURATION_DELAY, DEPLOYMENTS, PROJECT_ROOT
+from settings import (DEPLOYMENTS, PROJECT_ROOT, RECONFIGURATION_DELAY,
+                      TEST_DATA)
 
 
 class RBACAuthorization:
@@ -193,7 +187,7 @@ def create_deployment_with_name(apps_v1_api: AppsV1Api, namespace, name) -> str:
     :param name:
     :return: str
     """
-    print(f"Create a Deployment with a specific name")
+    print(f"Create a Deployment with a specific name: {name}")
     with open(f"{TEST_DATA}/common/backend1.yaml") as f:
         dep = yaml.safe_load(f)
         dep["metadata"]["name"] = name
@@ -219,13 +213,13 @@ def scale_deployment(v1: CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, val
     print(f"Scaling deployment '{name}' to {value} replica(s)")
     body.spec.replicas = value
     apps_v1_api.patch_namespaced_deployment_scale(name, namespace, body)
-    if value is not 0:
+    if value != 0:
         now = time.time()
         wait_until_all_pods_are_ready(v1, namespace)
         later = time.time()
         print(f"All pods came up in {int(later-now)} seconds")
 
-    elif value is 0:
+    elif value == 0:
         replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
         while(replica_num is not None):
             replica_num = (apps_v1_api.read_namespaced_deployment_scale(
@@ -276,7 +270,7 @@ def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
         print("There are pods that are not ContainersReady. Wait for 1 sec...")
         time.sleep(1)
         counter = counter + 1
-    if counter >= 200:
+    if counter >= 300:
         raise PodNotReadyException()
     print("All pods are ContainersReady")
 
@@ -367,7 +361,7 @@ def create_service_with_name(v1: CoreV1Api, namespace, name) -> str:
     :param name: name
     :return: str
     """
-    print(f"Create a Service with a specific name:")
+    print(f"Create a Service with a specific name: {name}")
     with open(f"{TEST_DATA}/common/backend1-svc.yaml") as f:
         dep = yaml.safe_load(f)
         dep["metadata"]["name"] = name
@@ -651,7 +645,7 @@ def create_namespace_with_name_from_yaml(v1: CoreV1Api, name, yaml_manifest) -> 
     :param yaml_manifest: an absolute path to file
     :return: str
     """
-    print(f"Create a namespace with specific name:")
+    print(f"Create a namespace with specific name: {name}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
         dep["metadata"]["name"] = name
@@ -1287,7 +1281,7 @@ def get_service_endpoint(kube_apis, service_name, namespace) -> str:
     found = False
     retry = 0
     ep = ""
-    while not found and retry < 40:
+    while not found and retry < 60:
         time.sleep(1)
         try:
             ep = (
@@ -1299,6 +1293,7 @@ def get_service_endpoint(kube_apis, service_name, namespace) -> str:
             found = True
             print(f"Endpoint IP for {service_name} is {ep}")
         except TypeError as err:
+            print(f"TypeError: {err}")
             retry += 1
         except ApiException as ex:
             if ex.status == 500:
@@ -1310,7 +1305,7 @@ def get_service_endpoint(kube_apis, service_name, namespace) -> str:
 def parse_metric_data(resp_content, metric_string) -> str:
     for line in resp_content.splitlines():
         if metric_string in line:
-            return re.findall("\d+", line)[0]
+            return re.findall(r"\d+", line)[0]
 
 
 def get_last_reload_time(req_url, ingress_class) -> str:
@@ -1324,7 +1319,7 @@ def get_last_reload_time(req_url, ingress_class) -> str:
 
 
 def get_total_ingresses(req_url, ingress_class) -> str:
-    # retuen total number of ingresses in specified class of regular type
+    # return total number of ingresses in specified class of regular type
     ensure_connection(req_url, 200)
     resp = requests.get(req_url)
     resp_content = resp.content.decode("utf-8")
@@ -1351,7 +1346,7 @@ def get_total_vsr(req_url, ingress_class) -> str:
 
 
 def get_last_reload_status(req_url, ingress_class) -> str:
-    # returnb last reload status 0/1
+    # return last reload status 0/1
     ensure_connection(req_url, 200)
     resp = requests.get(req_url)
     resp_content = resp.content.decode("utf-8")
@@ -1376,7 +1371,7 @@ def get_reload_count(req_url) -> int:
         # nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="endpoints"} 0
         # nginx_ingress_controller_nginx_reloads_total{class="nginx",reason="other"} 1
         if "nginx_ingress_controller_nginx_reloads_total{class=" in line:
-            c = re.findall("\d+", line)[0]
+            c = re.findall(r"\d+", line)[0]
             count += int(c)
             found += 1
 
@@ -1401,7 +1396,7 @@ def write_to_json(fname, data) -> None:
     :param data: dictionary
     """
     file_path = f"{PROJECT_ROOT}/json_files/"
-    if os.path.isdir(file_path) == False:
+    if not os.path.isdir(file_path):
         os.mkdir(file_path)
 
     with open(f"json_files/{fname}", "w+") as f:
