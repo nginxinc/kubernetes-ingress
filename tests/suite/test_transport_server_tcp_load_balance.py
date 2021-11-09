@@ -13,7 +13,7 @@ from suite.resources_utils import (
     wait_for_event_increment,
 )
 from suite.custom_resources_utils import (
-    patch_ts,
+    patch_ts_from_yaml,
     read_ts,
     delete_ts,
     create_ts_from_yaml,
@@ -46,7 +46,7 @@ class TestTransportServerTcpLoadBalance:
         Function to revert a TransportServer resource to a valid state.
         """
         patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/standard/transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -236,7 +236,7 @@ class TestTransportServerTcpLoadBalance:
         """
 
         patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/wrong-port-transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -267,7 +267,7 @@ class TestTransportServerTcpLoadBalance:
         """
 
         patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/missing-service-transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -310,7 +310,7 @@ class TestTransportServerTcpLoadBalance:
 
         # step 1 - set max connections to 2 with 1 replica
         patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/max-connections-transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -358,7 +358,7 @@ class TestTransportServerTcpLoadBalance:
 
         # step 4 - revert to config with no max connections
         patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/standard/transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -386,7 +386,7 @@ class TestTransportServerTcpLoadBalance:
         # Step 1 - set the load balancing method.
 
         patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/method-transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -474,7 +474,7 @@ class TestTransportServerTcpLoadBalance:
         # Step 1 - configure a passing health check
 
         patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/passing-hc-transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -539,7 +539,7 @@ class TestTransportServerTcpLoadBalance:
         # Step 1 - configure a failing health check
 
         patch_src = f"{TEST_DATA}/transport-server-tcp-load-balance/failing-hc-transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,

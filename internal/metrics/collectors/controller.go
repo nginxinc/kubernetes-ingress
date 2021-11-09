@@ -9,6 +9,7 @@ type ControllerCollector interface {
 	SetIngresses(ingressType string, count int)
 	SetVirtualServers(count int)
 	SetVirtualServerRoutes(count int)
+	SetTransportServers(tlsPassthroughCount, tcpCount, udpCount int)
 	Register(registry *prometheus.Registry) error
 }
 
@@ -18,6 +19,7 @@ type ControllerMetricsCollector struct {
 	ingressesTotal           *prometheus.GaugeVec
 	virtualServersTotal      prometheus.Gauge
 	virtualServerRoutesTotal prometheus.Gauge
+	transportServersTotal    *prometheus.GaugeVec
 }
 
 // NewControllerMetricsCollector creates a new ControllerMetricsCollector
@@ -32,34 +34,58 @@ func NewControllerMetricsCollector(crdsEnabled bool, constLabels map[string]stri
 		labelNamesController,
 	)
 
-	if !crdsEnabled {
-		return &ControllerMetricsCollector{ingressesTotal: ingResTotal}
+	var vsResTotal, vsrResTotal prometheus.Gauge
+	var tsResTotal *prometheus.GaugeVec
+
+	if crdsEnabled {
+		vsResTotal = prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name:        "virtualserver_resources_total",
+				Namespace:   metricsNamespace,
+				Help:        "Number of handled VirtualServer resources",
+				ConstLabels: constLabels,
+			},
+		)
+
+		vsrResTotal = prometheus.NewGauge(
+			prometheus.GaugeOpts{
+				Name:        "virtualserverroute_resources_total",
+				Namespace:   metricsNamespace,
+				Help:        "Number of handled VirtualServerRoute resources",
+				ConstLabels: constLabels,
+			},
+		)
+
+		tsResTotal = prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name:        "transportserver_resources_total",
+				Namespace:   metricsNamespace,
+				Help:        "Number of handled TransportServer resources",
+				ConstLabels: constLabels,
+			},
+			labelNamesController,
+		)
 	}
 
-	vsResTotal := prometheus.NewGauge(
-		prometheus.GaugeOpts{
-			Name:        "virtualserver_resources_total",
-			Namespace:   metricsNamespace,
-			Help:        "Number of handled VirtualServer resources",
-			ConstLabels: constLabels,
-		},
-	)
-
-	vsrResTotal := prometheus.NewGauge(
-		prometheus.GaugeOpts{
-			Name:        "virtualserverroute_resources_total",
-			Namespace:   metricsNamespace,
-			Help:        "Number of handled VirtualServerRoute resources",
-			ConstLabels: constLabels,
-		},
-	)
-
-	return &ControllerMetricsCollector{
-		crdsEnabled:              true,
+	c := &ControllerMetricsCollector{
+		crdsEnabled:              crdsEnabled,
 		ingressesTotal:           ingResTotal,
 		virtualServersTotal:      vsResTotal,
 		virtualServerRoutesTotal: vsrResTotal,
+		transportServersTotal:    tsResTotal,
 	}
+
+	// if we don't set to 0 metrics with the label type, the metrics will not be created initially
+
+	c.SetIngresses("regular", 0)
+	c.SetIngresses("master", 0)
+	c.SetIngresses("minion", 0)
+
+	if crdsEnabled {
+		c.SetTransportServers(0, 0, 0)
+	}
+
+	return c
 }
 
 // SetIngresses sets the value of the ingress resources gauge for a given type
@@ -77,12 +103,20 @@ func (cc *ControllerMetricsCollector) SetVirtualServerRoutes(count int) {
 	cc.virtualServerRoutesTotal.Set(float64(count))
 }
 
+// SetTransportServers sets the value of the TransportServer resources gauge
+func (cc *ControllerMetricsCollector) SetTransportServers(tlsPassthroughCount, tcpCount, udpCount int) {
+	cc.transportServersTotal.WithLabelValues("passthrough").Set(float64(tlsPassthroughCount))
+	cc.transportServersTotal.WithLabelValues("tcp").Set(float64(tcpCount))
+	cc.transportServersTotal.WithLabelValues("udp").Set(float64(udpCount))
+}
+
 // Describe implements prometheus.Collector interface Describe method
 func (cc *ControllerMetricsCollector) Describe(ch chan<- *prometheus.Desc) {
 	cc.ingressesTotal.Describe(ch)
 	if cc.crdsEnabled {
 		cc.virtualServersTotal.Describe(ch)
 		cc.virtualServerRoutesTotal.Describe(ch)
+		cc.transportServersTotal.Describe(ch)
 	}
 }
 
@@ -92,6 +126,7 @@ func (cc *ControllerMetricsCollector) Collect(ch chan<- prometheus.Metric) {
 	if cc.crdsEnabled {
 		cc.virtualServersTotal.Collect(ch)
 		cc.virtualServerRoutesTotal.Collect(ch)
+		cc.transportServersTotal.Collect(ch)
 	}
 }
 
@@ -119,3 +154,6 @@ func (cc *ControllerFakeCollector) SetVirtualServers(count int) {}
 
 // SetVirtualServerRoutes implements a fake SetVirtualServerRoutes
 func (cc *ControllerFakeCollector) SetVirtualServerRoutes(count int) {}
+
+// SetTransportServers implements a fake SetTransportServers
+func (cc *ControllerFakeCollector) SetTransportServers(int, int, int) {}

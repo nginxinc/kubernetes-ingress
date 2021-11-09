@@ -226,7 +226,7 @@ def delete_resource(custom_objects: CustomObjectsApi, resource, namespace, plura
     print(f"Resource '{kind}' was removed with name '{name}'")
 
 
-def patch_ts(
+def patch_ts_from_yaml(
         custom_objects: CustomObjectsApi, name, yaml_manifest, namespace
 ) -> None:
     """
@@ -246,6 +246,22 @@ def patch_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, name, yaml_
     try:
         custom_objects.patch_namespaced_custom_object(
             "k8s.nginx.org", "v1alpha1", namespace, plural, name, dep
+        )
+    except ApiException:
+        logging.exception(f"Failed with exception while patching custom resource: {name}")
+        raise
+
+def patch_ts(custom_objects: CustomObjectsApi, namespace, body) -> None:
+    """
+    Patch a TransportServer
+    """
+    name = body['metadata']['name']
+
+    print(f"Update a Resource: {name}")
+
+    try:
+        custom_objects.patch_namespaced_custom_object(
+            "k8s.nginx.org", "v1alpha1", namespace, "transportservers", name, body
         )
     except ApiException:
         logging.exception(f"Failed with exception while patching custom resource: {name}")

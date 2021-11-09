@@ -10,7 +10,7 @@ from suite.resources_utils import (
     wait_for_event_increment,
 )
 from suite.custom_resources_utils import (
-    patch_ts,
+    patch_ts_from_yaml,
     read_ts,
     delete_ts,
     create_ts_from_yaml,
@@ -43,7 +43,7 @@ class TestTransportServerUdpLoadBalance:
         Function to revert a TransportServer resource to a valid state.
         """
         patch_src = f"{TEST_DATA}/transport-server-udp-load-balance/standard/transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -223,7 +223,7 @@ class TestTransportServerUdpLoadBalance:
             self, kube_apis, crd_ingress_controller, transport_server_setup, file
     ):
         patch_src = f"{TEST_DATA}/transport-server-udp-load-balance/{file}"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -263,7 +263,7 @@ class TestTransportServerUdpLoadBalance:
         # Step 1 - configure a passing health check
 
         patch_src = f"{TEST_DATA}/transport-server-udp-load-balance/passing-hc-transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
@@ -331,7 +331,7 @@ class TestTransportServerUdpLoadBalance:
         # Step 1 - configure a failing health check
 
         patch_src = f"{TEST_DATA}/transport-server-udp-load-balance/failing-hc-transport-server.yaml"
-        patch_ts(
+        patch_ts_from_yaml(
             kube_apis.custom_objects,
             transport_server_setup.name,
             patch_src,
