@@ -1,8 +1,9 @@
 """Describe methods to utilize the VS/VSR resources."""
 
-import yaml
 import logging
-from kubernetes.client import CustomObjectsApi, ApiextensionsV1Api, CoreV1Api
+
+import yaml
+from kubernetes.client import CoreV1Api, CustomObjectsApi
 from kubernetes.client.rest import ApiException
 from suite.custom_resources_utils import read_custom_resource
 from suite.resources_utils import ensure_item_removal, get_file_contents
@@ -99,17 +100,21 @@ def patch_virtual_server_from_yaml(
     :param namespace:
     :return:
     """
-    print(f"Update a VirtualServer: {name}")
+    print(f"Update a VirtualServer: {name}, namespace: {namespace}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
 
     try:
+        print(f"Try to patch VirtualServer: {dep}")
         custom_objects.patch_namespaced_custom_object(
             "k8s.nginx.org", "v1", namespace, "virtualservers", name, dep
         )
         print(f"VirtualServer updated with name '{dep['metadata']['name']}'")
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServer: {name}")
+        raise
+    except Exception as ex:
+        logging.exception(f"Failed with exception while patching VirtualServer: {name}, Exception: {ex.with_traceback}")
         raise
 
 
@@ -163,16 +168,21 @@ def patch_v_s_route_from_yaml(
     :param namespace:
     :return:
     """
-    print(f"Update a VirtualServerRoute: {name}")
+    print(f"Update a VirtualServerRoute: {name}, namespace: {namespace}")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     try:
+        print(f"Try to patch VirtualServerRoute: {dep}")
         custom_objects.patch_namespaced_custom_object(
             "k8s.nginx.org", "v1", namespace, "virtualserverroutes", name, dep
         )
         print(f"VirtualServerRoute updated with name '{dep['metadata']['name']}'")
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServerRoute: {name}")
+        raise
+    except Exception as ex:
+        logging.exception(
+            f"Failed with exception while patching VirtualServerRoute: {name}, Exception: {ex.with_traceback}")
         raise
 
 
