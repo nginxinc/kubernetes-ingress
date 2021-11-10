@@ -5,7 +5,7 @@ ARG UBI_VERSION=8
 ARG DOWNLOAD_TAG=edge
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.21.3 AS debian
+FROM nginx:1.21.4 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
