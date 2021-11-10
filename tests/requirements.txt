@@ -10,7 +10,7 @@ certifi==2021.10.8
 urllib3==1.26.7
 pytest-html==3.1.1
 pytest-profiling==1.7.0
-more-itertools==8.10.0
+more-itertools==8.11.0
 mock==4.0.3
 grpcio==1.41.1
 grpcio-tools==1.41.1
