@@ -8,7 +8,7 @@ spec:
   ports:
   - protocol: "TCP"
     port: 80
-    targetPort: 8083
+    targetPort: 8080
   type: NodePort
 ---
 apiVersion: apps/v1
@@ -19,7 +19,7 @@ spec:
   selector:
     matchLabels:
       app: dos-server
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
@@ -27,4 +27,10 @@ spec:
     spec:
       containers:
       - name: dos-server
-        image: nginxkic/test-dos-server:1.0.0
+        image: "test-dos-server:1.0.1"
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'python3 /root/webserver.py;  tail -f "/dev/null"']
+        lifecycle:
+          preStop:
+            exec:
+              command: ['sh', '-c', 'python3 /root/webserver.py;']

@@ -24,12 +24,13 @@ from suite.resources_utils import (
     create_ingress_with_dos_annotations,
     ensure_response_from_backend,
     get_ingress_nginx_template_conf,
-    get_first_pod_name,
     get_file_contents,
     get_service_endpoint,
     get_test_file_name,
     write_to_json,
-    replace_configmap_from_yaml, scale_deployment, get_pods_amount,
+    replace_configmap_from_yaml,
+    scale_deployment,
+    get_pods_amount,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 from datetime import datetime
@@ -45,7 +46,7 @@ reload_times = {}
 def log_content_to_dic(log_contents):
     arr = []
     for line in log_contents.splitlines():
-        if line.__contains__('dos.example.com:'):
+        if line.__contains__('dos.example.com'):
             arr.append(line)
 
     log_info_dic = []
@@ -76,7 +77,7 @@ class DosSetup:
 
 @pytest.fixture(scope="class")
 def dos_setup(
-    request, kube_apis, ingress_controller_endpoint, ingress_controller_prerequisites, test_namespace
+        request, kube_apis, ingress_controller_endpoint, ingress_controller_prerequisites, test_namespace
 ) -> DosSetup:
     """
     Deploy simple application and all the DOS resources under test in one namespace.
@@ -187,12 +188,12 @@ class TestDos:
             assert _ in result_conf
 
     def test_dos_sec_logs_on(
-        self,
-        kube_apis,
-        ingress_controller_prerequisites,
-        crd_ingress_controller_with_dos,
-        dos_setup,
-        test_namespace,
+            self,
+            kube_apis,
+            ingress_controller_prerequisites,
+            crd_ingress_controller_with_dos,
+            dos_setup,
+            test_namespace,
     ):
         """
         Test corresponding log entries with correct policy (includes setting up a syslog server as defined in syslog.yaml)
@@ -204,7 +205,7 @@ class TestDos:
 
         # items[-1] because syslog pod is last one to spin-up
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
-
+        wait_before_test(30)
         create_ingress_with_dos_annotations(
             kube_apis, src_ing_yaml, test_namespace, test_namespace+"/dos-protected"
         )
@@ -250,6 +251,7 @@ class TestDos:
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
         syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
+        wait_before_test(30)
 
         print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
@@ -288,8 +290,11 @@ class TestDos:
             elif log['attack_event'] == "Under Attack" and int(log['dos_attack_id']) > 0 and not under_attack:
                 under_attack = True
 
+        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+
         assert (
-            no_attack and attack_started and under_attack
+                no_attack and attack_started and under_attack
         )
 
     def test_dos_under_attack_with_learning(
@@ -305,7 +310,7 @@ class TestDos:
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
         syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
-
+        wait_before_test(30)
         print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
             kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
@@ -322,8 +327,8 @@ class TestDos:
         log_contents = ""
         retry = 0
         while (
-            'learning_confidence="Ready"' not in log_contents
-            and retry <= 6 * 10
+                'learning_confidence="Ready"' not in log_contents
+                and retry <= 6 * 10
         ):
             log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace, False)
             retry += 1
@@ -346,8 +351,8 @@ class TestDos:
         log_contents = ""
         retry = 0
         while (
-            'attack_event="Attack ended"' not in log_contents
-            and retry <= 6 * 2
+                'attack_event="Attack ended"' not in log_contents
+                and retry <= 6 * 2
         ):
             log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace, False)
             retry += 1
@@ -394,20 +399,24 @@ class TestDos:
             elif log['attack_event'] == 'Attack ended':
                 attack_ended = True
 
+        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+
         assert (
-            no_attack
-            and attack_started
-            and under_attack
-            and attack_ended
-            and health_ok
-            and (health_ok_time - start_attack_time).total_seconds() < 100
-            and signature_detected
-            and bad_actor_detected
-            and len(bad_ip) == 0
+                no_attack
+                and attack_started
+                and under_attack
+                and attack_ended
+                and health_ok
+                and (health_ok_time - start_attack_time).total_seconds() < 100
+                and signature_detected
+                and bad_actor_detected
+                and len(bad_ip) == 0
         )
 
     def test_dos_arbitrator(
-            self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, dos_setup, test_namespace
+            self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, dos_setup,
+            test_namespace
     ):
         """
         Test App Protect Dos: Check new IC pod get learning info
@@ -418,7 +427,7 @@ class TestDos:
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
         syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
-
+        wait_before_test(30)
         print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
             kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
@@ -465,7 +474,9 @@ class TestDos:
             if log['unit_hostname'] not in learning_units_hostname and log['learning_confidence'] == "Ready":
                 learning_units_hostname.append(log['unit_hostname'])
 
-        assert (
-            len(learning_units_hostname) == 2
-        )
+        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
+        assert (
+                len(learning_units_hostname) == 2
+        )
