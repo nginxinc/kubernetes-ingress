@@ -19,9 +19,7 @@ RUN apt-get update \
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
 FROM docker.io/library/nginx:1.21.4-alpine AS alpine
 
-RUN apk add --no-cache libcap \
-	# temporary fix for CVE-2021-22945
-	&& apk upgrade --no-cache curl libcurl
+RUN apk add --no-cache libcap
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
@@ -83,8 +81,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 ############################################# Base image for UBI 8 #############################################
 FROM redhat/ubi8-minimal AS ubi-base-8
 
-# temporary fix for CVE-2021-22946, CVE-2021-22947, CVE-2021-33928, CVE-2021-33929, CVE-2021-33930, CVE-2021-33938
-RUN microdnf upgrade -y curl libsolv
+# temporary fix for CVE-2021-42574
+RUN microdnf upgrade -y libgcc libstdc++
 
 
 ############################################# Base image for UBI 7 #############################################
