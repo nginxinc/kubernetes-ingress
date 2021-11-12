@@ -257,22 +257,22 @@ class PodNotReadyException(Exception):
 
 def wait_until_all_pods_are_ready(v1: CoreV1Api, namespace) -> None:
     """
-    Wait for all the pods to be 'ContainersReady'.
+    Wait for all the pods to be 'Ready'.
 
     :param v1: CoreV1Api
     :param namespace: namespace of a pod
     :return:
     """
-    print("Start waiting for all pods in a namespace to be ContainersReady")
+    print("Start waiting for all pods in a namespace to be Ready")
     counter = 0
     while not are_all_pods_in_ready_state(v1, namespace) and counter < 200:
         # remove counter based condition from line #264 and #269 if --batch-start="True"
-        print("There are pods that are not ContainersReady. Wait for 1 sec...")
+        print("There are pods that are not Ready. Wait for 1 sec...")
         time.sleep(1)
         counter = counter + 1
     if counter >= 300:
         raise PodNotReadyException()
-    print("All pods are ContainersReady")
+    print("All pods are Ready")
 
 
 def get_first_pod_name(v1: CoreV1Api, namespace) -> str:
@@ -289,7 +289,7 @@ def get_first_pod_name(v1: CoreV1Api, namespace) -> str:
 
 def are_all_pods_in_ready_state(v1: CoreV1Api, namespace) -> bool:
     """
-    Check if all the pods have ContainersReady condition.
+    Check if all the pods have Ready condition.
 
     :param v1: CoreV1Api
     :param namespace: namespace
@@ -303,8 +303,7 @@ def are_all_pods_in_ready_state(v1: CoreV1Api, namespace) -> bool:
         if pod.status.conditions is None:
             return False
         for condition in pod.status.conditions:
-            # wait for 'Ready' state instead of 'ContainersReady' for backwards compatibility with k8s 1.10
-            if condition.type == "ContainersReady" and condition.status == "True":
+            if condition.type == "Ready" and condition.status == "True":
                 pod_ready_amount = pod_ready_amount + 1
                 break
     return pod_ready_amount == len(pods.items)
