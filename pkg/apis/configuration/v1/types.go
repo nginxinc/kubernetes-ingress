@@ -108,6 +108,8 @@ type HealthCheck struct {
 	SendTimeout    string       `json:"send-timeout"`
 	Headers        []Header     `json:"headers"`
 	StatusMatch    string       `json:"statusMatch"`
+	GRPCStatus     *int         `json:"grpcStatus"`
+	GRPCService    string       `json:"grpcService"`
 }
 
 // Header defines an HTTP Header.

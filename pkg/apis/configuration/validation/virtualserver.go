@@ -213,12 +213,14 @@ func validateUpstreamLBMethod(lBMethod string, fieldPath *field.Path, isPlus boo
 	return allErrs
 }
 
-func validateUpstreamHealthCheck(hc *v1.HealthCheck, fieldPath *field.Path) field.ErrorList {
+func validateUpstreamHealthCheck(hc *v1.HealthCheck, typeName string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if hc == nil {
 		return allErrs
 	}
+
+	allErrs = append(allErrs, validateGrpcHealthCheck(hc, typeName, fieldPath)...)
 
 	if hc.Path != "" {
 		allErrs = append(allErrs, validatePath(hc.Path, fieldPath.Child("path"))...)
@@ -241,6 +243,45 @@ func validateUpstreamHealthCheck(hc *v1.HealthCheck, fieldPath *field.Path) fiel
 	if hc.Port > 0 {
 		for _, msg := range validation.IsValidPortNum(hc.Port) {
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("port"), hc.Port, msg))
+		}
+	}
+
+	return allErrs
+}
+
+func validateGrpcHealthCheck(hc *v1.HealthCheck, typeName string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if typeName != "grpc" {
+		if hc.GRPCStatus != nil {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("grpcStatus"), "cannot specify `grpcStatus` on http type health checks"))
+		}
+		if hc.GRPCService != "" {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("grpcService"), "cannot specify `grpcService` on http type health checks"))
+		}
+		return allErrs
+	}
+
+	if hc.Path != "" {
+		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("path"), "cannot specify `path` on gRPC type health checks"))
+	}
+	if hc.StatusMatch != "" {
+		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("statusMatch"), "cannot specify `statusMatch` on gRPC type health checks"))
+	}
+
+	allErrs = append(allErrs, validateGrpcStatus(hc.GRPCStatus, fieldPath.Child("grpcStatus"))...)
+
+	allErrs = append(allErrs, validateGrpcService(hc.GRPCService, fieldPath.Child("grpcService"))...)
+
+	return allErrs
+}
+
+func validateGrpcStatus(i *int, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if i != nil {
+		if msg := validateGrpcStatusCode(i); msg != "" {
+			allErrs = append(allErrs, field.Invalid(fieldPath, i, msg))
 		}
 	}
 
@@ -379,6 +420,14 @@ func validateStatusCode(status string) string {
 	return ""
 }
 
+func validateGrpcStatusCode(code *int) string {
+	if *code < 0 || *code > 16 {
+		return validation.InclusiveRangeError(0, 16)
+	}
+
+	return ""
+}
+
 func validateHeader(h v1.Header, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -445,7 +494,7 @@ func (vsv *VirtualServerValidator) validateUpstreams(upstreams []v1.Upstream, fi
 		allErrs = append(allErrs, validatePositiveIntOrZeroFromPointer(u.Keepalive, idxPath.Child("keepalive"))...)
 		allErrs = append(allErrs, validatePositiveIntOrZeroFromPointer(u.MaxConns, idxPath.Child("max-conns"))...)
 		allErrs = append(allErrs, validateOffset(u.ClientMaxBodySize, idxPath.Child("client-max-body-size"))...)
-		allErrs = append(allErrs, validateUpstreamHealthCheck(u.HealthCheck, idxPath.Child("healthCheck"))...)
+		allErrs = append(allErrs, validateUpstreamHealthCheck(u.HealthCheck, u.Type, idxPath.Child("healthCheck"))...)
 		allErrs = append(allErrs, validateTime(u.SlowStart, idxPath.Child("slow-start"))...)
 		allErrs = append(allErrs, validateBuffer(u.ProxyBuffers, idxPath.Child("buffers"))...)
 		allErrs = append(allErrs, validateSize(u.ProxyBufferSize, idxPath.Child("buffer-size"))...)
@@ -1187,6 +1236,28 @@ func validatePath(path string, fieldPath *field.Path) field.ErrorList {
 	if !pathRegexp.MatchString(path) {
 		msg := validation.RegexError(pathErrMsg, pathFmt, "/", "/path", "/path/subpath-123")
 		return append(allErrs, field.Invalid(fieldPath, path, msg))
+	}
+
+	return allErrs
+}
+
+const (
+	grpcFmt    = `[^\s{};]*`
+	grpcErrMsg = "must not include any whitespace character, `{`, `}`, or `;`"
+)
+
+var grpcRegexp = regexp.MustCompile("^" + grpcFmt + "$")
+
+func validateGrpcService(service string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if service == "" {
+		return append(allErrs, field.Required(fieldPath, ""))
+	}
+
+	if !grpcRegexp.MatchString(service) {
+		msg := validation.RegexError(grpcErrMsg, grpcFmt, "GrpcService", "GrpcService.MyService")
+		return append(allErrs, field.Invalid(fieldPath, service, msg))
 	}
 
 	return allErrs

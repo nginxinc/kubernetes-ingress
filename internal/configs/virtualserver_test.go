@@ -20,6 +20,10 @@ func createPointerFromBool(b bool) *bool {
 	return &b
 }
 
+func createPointerFromInt(n int) *int {
+	return &n
+}
+
 func TestVirtualServerExString(t *testing.T) {
 	tests := []struct {
 		input    *VirtualServerEx
@@ -6069,6 +6073,106 @@ func TestGenerateHealthCheck(t *testing.T) {
 				Headers:             make(map[string]string),
 			},
 			msg: "HealthCheck with time parameters have correct format",
+		},
+	}
+
+	baseCfgParams := &ConfigParams{
+		ProxySendTimeout:    "5s",
+		ProxyReadTimeout:    "5s",
+		ProxyConnectTimeout: "5s",
+	}
+
+	for _, test := range tests {
+		result := generateHealthCheck(test.upstream, test.upstreamName, baseCfgParams)
+		if !reflect.DeepEqual(result, test.expected) {
+			t.Errorf("generateHealthCheck returned \n%v but expected \n%v \n for case: %v", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestGenerateGrpcHealthCheck(t *testing.T) {
+	upstreamName := "test-upstream"
+	tests := []struct {
+		upstream     conf_v1.Upstream
+		upstreamName string
+		expected     *version2.HealthCheck
+		msg          string
+	}{
+		{
+
+			upstream: conf_v1.Upstream{
+				HealthCheck: &conf_v1.HealthCheck{
+					Enable:         true,
+					Interval:       "5s",
+					Jitter:         "2s",
+					Fails:          3,
+					Passes:         2,
+					Port:           50051,
+					ConnectTimeout: "20s",
+					SendTimeout:    "20s",
+					ReadTimeout:    "20s",
+					GRPCStatus:     createPointerFromInt(12),
+					GRPCService:    "grpc-service",
+					Headers: []conf_v1.Header{
+						{
+							Name:  "Host",
+							Value: "my.service",
+						},
+						{
+							Name:  "User-Agent",
+							Value: "nginx",
+						},
+					},
+				},
+				Type: "grpc",
+			},
+			upstreamName: upstreamName,
+			expected: &version2.HealthCheck{
+				Name:                upstreamName,
+				ProxyConnectTimeout: "20s",
+				ProxySendTimeout:    "20s",
+				ProxyReadTimeout:    "20s",
+				ProxyPass:           fmt.Sprintf("http://%v", upstreamName),
+				GRPCPass:            fmt.Sprintf("grpc://%v", upstreamName),
+				Interval:            "5s",
+				Jitter:              "2s",
+				Fails:               3,
+				Passes:              2,
+				Port:                50051,
+				GRPCStatus:          createPointerFromInt(12),
+				GRPCService:         "grpc-service",
+				Headers: map[string]string{
+					"Host":       "my.service",
+					"User-Agent": "nginx",
+				},
+			},
+			msg: "HealthCheck with changed parameters",
+		},
+		{
+			upstream: conf_v1.Upstream{
+				HealthCheck: &conf_v1.HealthCheck{
+					Enable: true,
+				},
+				ProxyConnectTimeout: "30s",
+				ProxyReadTimeout:    "30s",
+				ProxySendTimeout:    "30s",
+				Type:                "grpc",
+			},
+			upstreamName: upstreamName,
+			expected: &version2.HealthCheck{
+				Name:                upstreamName,
+				ProxyConnectTimeout: "30s",
+				ProxyReadTimeout:    "30s",
+				ProxySendTimeout:    "30s",
+				ProxyPass:           fmt.Sprintf("http://%v", upstreamName),
+				GRPCPass:            fmt.Sprintf("grpc://%v", upstreamName),
+				Interval:            "5s",
+				Jitter:              "0s",
+				Fails:               1,
+				Passes:              1,
+				Headers:             make(map[string]string),
+			},
+			msg: "HealthCheck with default parameters from Upstream",
 		},
 	}
 

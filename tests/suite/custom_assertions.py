@@ -153,7 +153,7 @@ def assert_event_starts_with_text_and_contains_errors(event_text, events_list, f
     :param fields_list: expected message contents
     :return:
     """
-    for i in range(len(events_list) - 1, -1, -1):
+    for i in range(len(events_list) -1, -1, -1):
         if str(events_list[i].message).startswith(event_text):
             for field_error in fields_list:
                 assert field_error in events_list[i].message

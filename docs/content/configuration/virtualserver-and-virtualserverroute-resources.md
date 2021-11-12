@@ -354,7 +354,7 @@ Note: This feature is supported only in NGINX Plus.
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``enable`` | Enables a health check for an upstream server. The default is ``false``. | ``boolean`` | No |
-|``path`` | The path used for health check requests. The default is ``/``. | ``string`` | No |
+|``path`` | The path used for health check requests. The default is ``/``. This not configurable for gRPC type upstreams. | ``string`` | No |
 |``interval`` | The interval between two consecutive health checks. The default is ``5s``. | ``string`` | No |
 |``jitter`` | The time within which each health check will be randomly delayed. By default, there is no delay. | ``string`` | No |
 |``fails`` | The number of consecutive failed health checks of a particular upstream server after which this server will be considered unhealthy. The default is ``1``. | ``integer`` | No |
@@ -365,8 +365,10 @@ Note: This feature is supported only in NGINX Plus.
 |``read-timeout`` | The timeout for reading a response from an upstream server. By default, the ``read-timeout`` of the upstream is used. | ``string`` | No |
 |``send-timeout`` | The timeout for transmitting a request to an upstream server. By default, the ``send-timeout`` of the upstream is used. | ``string`` | No |
 |``headers`` | The request headers used for health check requests. NGINX Plus always sets the ``Host``\ , ``User-Agent`` and ``Connection`` headers for health check requests. | [[]header](#header) | No |
-|``statusMatch`` | The expected response status codes of a health check. By default, the response should have status code 2xx or 3xx. Examples: ``"200"``\ , ``"! 500"``\ , ``"301-303 307"``. See the documentation of the [match](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html?#match) directive. | ``string`` | No |
-{{% /table %}}
+|``statusMatch`` | The expected response status codes of a health check. By default, the response should have status code 2xx or 3xx. Examples: ``"200"``\ , ``"! 500"``\ , ``"301-303 307"``. See the documentation of the [match](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html?#match) directive. This not supported for gRPC type upstreams. | ``string`` | No |
+|``grpcStatus`` | The expected [gRPC status code](https://github.com/grpc/grpc/blob/master/doc/statuscodes.md#status-codes-and-their-use-in-grpc) of the upstream server response to the [Check method](https://github.com/grpc/grpc/blob/master/doc/health-checking.md). Configure this field only if your gRPC services do not implement the gRPC health checking protocol. For example, configure ``12`` if the upstream server responds with `12 (UNIMPLEMENTED)` status code. Only valid on gRPC type upstreams. | ``int`` | No |
+|``grpcService`` | The gRPC service to be monitored on the upstream server. Only valid on gRPC type upstreams. | ``string`` | No |
+{{% /table %}} 
 
 ### Upstream.SessionCookie
 

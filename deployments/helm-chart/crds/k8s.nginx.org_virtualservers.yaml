@@ -521,6 +521,10 @@ spec:
                             type: boolean
                           fails:
                             type: integer
+                          grpcService:
+                            type: string
+                          grpcStatus:
+                            type: integer
                           headers:
                             type: array
                             items:

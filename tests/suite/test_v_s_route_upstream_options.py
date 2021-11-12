@@ -370,7 +370,7 @@ class TestOptionsSpecificForPlus:
                             "path": "/some-valid/path",
                             "expires": "max",
                             "domain": "virtual-server-route.example.com", "httpOnly": True, "secure": True}},
-         ["health_check uri=/ port=8080 interval=5s jitter=0s", "fails=1 passes=1;",
+         ["health_check uri=/ port=8080 interval=5s jitter=0s", "fails=1 passes=1",
           "slow_start=3h", "queue 100 timeout=60s;",
           "sticky cookie TestCookie expires=max domain=virtual-server-route.example.com httponly secure path=/some-valid/path;"]),
         ({"lb-method": "least_conn",

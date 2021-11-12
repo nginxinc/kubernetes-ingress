@@ -232,6 +232,9 @@ type HealthCheck struct {
 	ProxySendTimeout    string
 	Headers             map[string]string
 	Match               string
+	GRPCPass            string
+	GRPCStatus          *int
+	GRPCService         string
 }
 
 // TLSRedirect defines a redirect in a Server.

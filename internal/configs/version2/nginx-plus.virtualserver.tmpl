@@ -205,15 +205,22 @@ server {
 
     {{ range $hc := $s.HealthChecks }}
     location @hc-{{ $hc.Name }} {
+        {{ $proxyOrGRPC := "proxy" }}{{ if $hc.GRPCPass }}{{ $proxyOrGRPC = "grpc" }}{{ end }}
         {{ range $n, $v := $hc.Headers }}
-        proxy_set_header {{ $n }} "{{ $v }}";
+        {{ $proxyOrGRPC }}_set_header {{ $n }} "{{ $v }}";
         {{ end }}
-        proxy_connect_timeout {{ $hc.ProxyConnectTimeout }};
-        proxy_read_timeout {{ $hc.ProxyReadTimeout }};
-        proxy_send_timeout {{ $hc.ProxySendTimeout }};
+        {{ $proxyOrGRPC }}_connect_timeout {{ $hc.ProxyConnectTimeout }};
+        {{ $proxyOrGRPC }}_read_timeout {{ $hc.ProxyReadTimeout }};
+        {{ $proxyOrGRPC }}_send_timeout {{ $hc.ProxySendTimeout }};
+            {{ if $hc.GRPCPass }}
+        grpc_pass {{ $hc.GRPCPass }};
+            {{ else }}
         proxy_pass {{ $hc.ProxyPass }};
-        health_check uri={{ $hc.URI }} port={{ $hc.Port }} interval={{ $hc.Interval }} jitter={{ $hc.Jitter }}
-            fails={{ $hc.Fails }} passes={{ $hc.Passes }}{{ if $hc.Match }} match={{ $hc.Match }}{{ end }};
+            {{ end }}
+        health_check {{ if $hc.URI }}uri={{ $hc.URI }} {{ end }}port={{ $hc.Port }} interval={{ $hc.Interval }} jitter={{ $hc.Jitter }}
+            fails={{ $hc.Fails }} passes={{ $hc.Passes }}{{ if $hc.Match }} match={{ $hc.Match }}{{ end }}
+            {{ if $hc.GRPCPass }} type=grpc{{ if $hc.GRPCStatus }} grpc_status={{ $hc.GRPCStatus }}{{ end }}
+            {{ if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{ end }}{{ end }};
     }
     {{ end }}
 

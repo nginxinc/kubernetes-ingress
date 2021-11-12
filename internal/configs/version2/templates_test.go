@@ -163,6 +163,30 @@ var virtualServerCfg = VirtualServerConfig{
 				Destination: "@match",
 			},
 		},
+		HealthChecks: []HealthCheck{
+			{
+				Name:      "coffee",
+				URI:       "/",
+				Interval:  "5s",
+				Jitter:    "0s",
+				Fails:     1,
+				Passes:    1,
+				Port:      50,
+				ProxyPass: "http://coffee-v2",
+			},
+			{
+				Name:        "tea",
+				Interval:    "5s",
+				Jitter:      "0s",
+				Fails:       1,
+				Passes:      1,
+				Port:        50,
+				ProxyPass:   "http://tea-v2",
+				GRPCPass:    "grpc://tea-v3",
+				GRPCStatus:  createPointerFromInt(12),
+				GRPCService: "tea-servicev2",
+			},
+		},
 		Locations: []Location{
 			{
 				Path:     "/",

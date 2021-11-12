@@ -2346,7 +2346,38 @@ func TestValidateUpstreamHealthCheck(t *testing.T) {
 		StatusMatch: "! 500",
 	}
 
-	allErrs := validateUpstreamHealthCheck(hc, field.NewPath("healthCheck"))
+	allErrs := validateUpstreamHealthCheck(hc, "", field.NewPath("healthCheck"))
+
+	if len(allErrs) != 0 {
+		t.Errorf("validateUpstreamHealthCheck() returned errors for valid input %v", hc)
+	}
+}
+
+func TestValidateGrpcUpstreamHealthCheck(t *testing.T) {
+	hc := &v1.HealthCheck{
+		Enable:   true,
+		Interval: "4s",
+		Jitter:   "2s",
+		Fails:    3,
+		Passes:   2,
+		Port:     8080,
+		TLS: &v1.UpstreamTLS{
+			Enable: true,
+		},
+		ConnectTimeout: "1s",
+		ReadTimeout:    "1s",
+		SendTimeout:    "1s",
+		Headers: []v1.Header{
+			{
+				Name:  "Host",
+				Value: "my.service",
+			},
+		},
+		GRPCStatus:  createPointerFromInt(12),
+		GRPCService: "tea-servicev2",
+	}
+
+	allErrs := validateUpstreamHealthCheck(hc, "grpc", field.NewPath("healthCheck"))
 
 	if len(allErrs) != 0 {
 		t.Errorf("validateUpstreamHealthCheck() returned errors for valid input %v", hc)
@@ -2369,10 +2400,63 @@ func TestValidateUpstreamHealthCheckFails(t *testing.T) {
 				Path:   "/healthz//;",
 			},
 		},
+		{
+			hc: &v1.HealthCheck{
+				Enable:     true,
+				Path:       "/healthz",
+				GRPCStatus: createPointerFromInt(12),
+			},
+		},
+		{
+			hc: &v1.HealthCheck{
+				Enable:      true,
+				Path:        "/healthz",
+				GRPCService: "tea-servicev2",
+			},
+		},
 	}
 
 	for _, test := range tests {
-		allErrs := validateUpstreamHealthCheck(test.hc, field.NewPath("healthCheck"))
+		allErrs := validateUpstreamHealthCheck(test.hc, "", field.NewPath("healthCheck"))
+
+		if len(allErrs) == 0 {
+			t.Errorf("validateUpstreamHealthCheck() returned no errors for invalid input %v", test.hc)
+		}
+	}
+}
+
+func TestValidateGrpcUpstreamHealthCheckFails(t *testing.T) {
+	tests := []struct {
+		hc *v1.HealthCheck
+	}{
+		{
+			hc: &v1.HealthCheck{
+				Enable: true,
+				Path:   "/healthz",
+			},
+		},
+		{
+			hc: &v1.HealthCheck{
+				Enable:      true,
+				StatusMatch: "! 500",
+			},
+		},
+		{
+			hc: &v1.HealthCheck{
+				Enable:     true,
+				GRPCStatus: createPointerFromInt(400),
+			},
+		},
+		{
+			hc: &v1.HealthCheck{
+				Enable:      true,
+				GRPCService: "bh tyh",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateUpstreamHealthCheck(test.hc, "grpc", field.NewPath("healthCheck"))
 
 		if len(allErrs) == 0 {
 			t.Errorf("validateUpstreamHealthCheck() returned no errors for invalid input %v", test.hc)

@@ -166,14 +166,15 @@ func (namer *variableNamer) GetNameForVariableForMatchesRouteMainMap(matchesInde
 	return fmt.Sprintf("$vs_%s_matches_%d", namer.safeNsName, matchesIndex)
 }
 
-func newHealthCheckWithDefaults(
-	upstream conf_v1.Upstream,
-	upstreamName string,
-	cfgParams *ConfigParams,
-) *version2.HealthCheck {
+func newHealthCheckWithDefaults(upstream conf_v1.Upstream, upstreamName string, cfgParams *ConfigParams) *version2.HealthCheck {
+	uri := "/"
+	if isGRPC(upstream.Type) {
+		uri = ""
+	}
+
 	return &version2.HealthCheck{
 		Name:                upstreamName,
-		URI:                 "/",
+		URI:                 uri,
 		Interval:            "5s",
 		Jitter:              "0s",
 		Fails:               1,
@@ -184,6 +185,7 @@ func newHealthCheckWithDefaults(
 		ProxyReadTimeout:    generateTimeWithDefault(upstream.ProxyReadTimeout, cfgParams.ProxyReadTimeout),
 		ProxySendTimeout:    generateTimeWithDefault(upstream.ProxySendTimeout, cfgParams.ProxySendTimeout),
 		Headers:             make(map[string]string),
+		GRPCPass:            generateGRPCPass(isGRPC(upstream.Type), upstream.TLS.Enable, upstreamName),
 	}
 }
 
@@ -1279,6 +1281,10 @@ func generateHealthCheck(
 	if upstream.HealthCheck.StatusMatch != "" {
 		hc.Match = generateStatusMatchName(upstreamName)
 	}
+
+	hc.GRPCStatus = upstream.HealthCheck.GRPCStatus
+
+	hc.GRPCService = upstream.HealthCheck.GRPCService
 
 	return hc
 }
