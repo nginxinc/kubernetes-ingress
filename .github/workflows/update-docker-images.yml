@@ -180,6 +180,13 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
         if: ${{ matrix.needs-updating == 'true' }}
+      - name: Login to Public ECR
+        uses: docker/login-action@v1
+        with:
+          registry: public.ecr.aws
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        if: ${{ matrix.needs-updating == 'true' }}
       - name: Get short tag
         id: tag
         run: |
@@ -194,6 +201,7 @@ jobs:
           images: |
             nginx/nginx-ingress
             ghcr.io/nginxinc/kubernetes-ingress
+            public.ecr.aws/nginx/nginx-ingress
           flavor: |
             latest=true
             suffix=${{ matrix.image != 'debian' && '-' || '' }}${{ matrix.image != 'debian' && matrix.image != 'opentracing' && matrix.image || '' }}${{ matrix.image == 'opentracing' && 'ot' || '' }},onlatest=true
