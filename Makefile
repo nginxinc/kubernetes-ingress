@@ -58,8 +58,6 @@ build: ## Build Ingress Controller binary
 ifeq (${TARGET},local)
 	@go version || (code=$$?; printf "\033[0;31mError\033[0m: unable to build locally, try using the parameter TARGET=container or TARGET=download\n"; exit $$code)
 	CGO_ENABLED=0 GO111MODULE=on GOOS=linux go build -trimpath -ldflags "-s -w -X main.version=${VERSION} -X main.commit=${GIT_COMMIT} -X main.date=$(DATE)" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
-else ifeq (${TARGET},goreleaser)
-	@$(MAKE) build-goreleaser
 else ifeq (${TARGET},download)
 	@$(MAKE) download-binary-docker
 endif
