@@ -502,14 +502,6 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 	}
 
 	if hasAppProtectDos {
-		if debugFlag, exists, err := GetMapKeyAsBool(cfgm.Data, "app-protect-dos-debug", cfgm); exists {
-			if err != nil {
-				glog.Error(err)
-			} else {
-				cfgParams.AppProtectDosDebug = debugFlag
-			}
-		}
-
 		if appProtectDosLogFormat, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "app-protect-dos-log-format", cfgm, "\n"); exists {
 			if err != nil {
 				glog.Error(err)
@@ -522,30 +514,6 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			appProtectDosLogFormatEscaping = strings.TrimSpace(appProtectDosLogFormatEscaping)
 			if appProtectDosLogFormatEscaping != "" {
 				cfgParams.MainAppProtectDosLogFormatEscaping = appProtectDosLogFormatEscaping
-			}
-		}
-
-		if appProtectDosMaxDaemon, exists, err := GetMapKeyAsUint64(cfgm.Data, "app-protect-dos-install-max-daemons", cfgm, true); exists {
-			if err != nil {
-				glog.Error(err)
-			} else {
-				cfgParams.AppProtectDosMaxDaemon = appProtectDosMaxDaemon
-			}
-		}
-
-		if appProtectDosMaxWorkers, exists, err := GetMapKeyAsUint64(cfgm.Data, "app-protect-dos-install-max-workers", cfgm, true); exists {
-			if err != nil {
-				glog.Error(err)
-			} else {
-				cfgParams.AppProtectDosMaxWorkers = appProtectDosMaxWorkers
-			}
-		}
-
-		if appProtectDosMemory, exists, err := GetMapKeyAsUint64(cfgm.Data, "app-protect-dos-install-memory", cfgm, true); exists {
-			if err != nil {
-				glog.Error(err)
-			} else {
-				cfgParams.AppProtectDosMemory = appProtectDosMemory
 			}
 		}
     }

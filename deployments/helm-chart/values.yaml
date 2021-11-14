@@ -21,6 +21,10 @@ controller:
   appprotectdos:
     ## Enable the App Protect Dos module in the Ingress Controller.
     enable: false
+    debug: true
+    maxWorkers: 0
+    maxDaemons: 0
+    memory: 0
 
   ## Enables the Ingress controller pods to use the host's network namespace.
   hostNetwork: false

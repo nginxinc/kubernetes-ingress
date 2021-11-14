@@ -247,6 +247,10 @@ Parameter | Description | Default
 `controller.pod.extraLabels` | The additional extra labels of the Ingress Controller pod. | {}
 `controller.appprotect.enable` | Enables the App Protect module in the Ingress Controller. | false
 `controller.appprotectdos.enable` | Enables the App Protect Dos module in the Ingress Controller. | false
+`controller.appprotectdos.debug` | Enable debugging for App Protect Dos. | false
+`controller.appprotectdos.maxDaemons` | Max number of ADMD instances. | 1
+`controller.appprotectdos.maxWorkers` | Max number of nginx processes to support. | Number of CPU cores in the machine
+`controller.appprotectdos.memory` | RAM memory size to consume in MB. | 50% of free RAM in the container or 80MB, the smaller
 `controller.readyStatus.enable` | Enables the readiness endpoint `"/nginx-ready"`. The endpoint returns a success code when NGINX has loaded all the config after the startup. This also configures a readiness probe for the Ingress Controller pods that uses the readiness endpoint. | true
 `controller.readyStatus.port` | The HTTP port for the readiness endpoint. | 8081
 `controller.enableLatencyMetrics` |  Enable collection of latency metrics for upstreams. Requires `prometheus.create`. | false

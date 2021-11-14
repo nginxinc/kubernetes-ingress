@@ -54,7 +54,6 @@ type ConfigParams struct {
 	MainAppProtectCPUThresholds            string
 	MainAppProtectPhysicalMemoryThresholds string
 	AppProtectDosEnable                    string
-	AppProtectDosDebug					   bool
 	AppProtectDosPolicy                    string
 	AppProtectDosLogConf                   string
 	AppProtectDosLogEnable                 string
@@ -63,9 +62,6 @@ type ConfigParams struct {
 	AppProtectDosAccessLogDst              string
 	MainAppProtectDosLogFormat             []string
 	MainAppProtectDosLogFormatEscaping     string
-	AppProtectDosMaxDaemon             	   uint64
-	AppProtectDosMemory                    uint64
-	AppProtectDosMaxWorkers            	   uint64
 	ProxyBuffering                         bool
 	ProxyBuffers                           string
 	ProxyBufferSize                        string
@@ -180,9 +176,6 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 		MainKeepaliveRequests:           100,
 		VariablesHashBucketSize:         256,
 		VariablesHashMaxSize:            1024,
-		AppProtectDosMaxDaemon:      	 0,
-		AppProtectDosMemory:         	 0,
-		AppProtectDosMaxWorkers: 	 	 0,
 	}
 }
 
