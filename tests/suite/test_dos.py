@@ -63,6 +63,19 @@ def log_content_to_dic(log_contents):
     return log_info_dic
 
 
+def find_in_log(kube_apis, log_location, syslog_pod, namespace, time, value):
+    log_contents = ""
+    retry = 0
+    while (
+            value not in log_contents
+            and retry <= time / 10
+    ):
+        log_contents = get_file_contents(kube_apis.v1, log_location, syslog_pod, namespace, False)
+        retry += 1
+        wait_before_test(10)
+        print(f"{value} Not in log, retrying... #{retry}")
+
+
 class DosSetup:
     """
     Encapsulate the example details.
@@ -266,11 +279,14 @@ class TestDos:
             [f"exec {TEST_DATA}/dos/bad_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
             shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        print("Attack for 60 seconds")
-        wait_before_test(60)
+        print("Attack for 30 seconds")
+        wait_before_test(30)
 
         print("Stop Attack")
         p_attack.terminate()
+
+        print("wait max 120 seconds after attack stop, to get attack ended")
+        find_in_log(kube_apis, log_loc, syslog_pod, test_namespace, 120, "attack_event=\"Attack ended\"")
 
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
         log_info_dic = log_content_to_dic(log_contents)
@@ -279,6 +295,7 @@ class TestDos:
         no_attack = False
         attack_started = False
         under_attack = False
+        attack_ended = False
         for log in log_info_dic:
             # Start with no attack
             if log['attack_event'] == "No Attack" and int(log['dos_attack_id']) == 0 and not no_attack:
@@ -289,12 +306,15 @@ class TestDos:
             # Under attack
             elif log['attack_event'] == "Under Attack" and int(log['dos_attack_id']) > 0 and not under_attack:
                 under_attack = True
+            # Attack ended
+            elif log['attack_event'] == "Attack ended" and int(log['dos_attack_id']) > 0 and not attack_ended:
+                attack_ended = True
 
         delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
         assert (
-                no_attack and attack_started and under_attack
+                no_attack and attack_started and under_attack and attack_ended
         )
 
     def test_dos_under_attack_with_learning(
@@ -324,16 +344,7 @@ class TestDos:
             preexec_fn=os.setsid, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         print("Learning for max 10 minutes")
-        log_contents = ""
-        retry = 0
-        while (
-                'learning_confidence="Ready"' not in log_contents
-                and retry <= 6 * 10
-        ):
-            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace, False)
-            retry += 1
-            wait_before_test(10)
-            print(f"Learning confidence not ready, retrying... #{retry}")
+        find_in_log(kube_apis, log_loc, syslog_pod, test_namespace, 600, "learning_confidence=\"Ready\"")
 
         print("------------------------- Attack -----------------------------")
         print("start bad clients requests")
@@ -348,16 +359,7 @@ class TestDos:
         p_attack.terminate()
 
         print("wait max 120 seconds after attack stop, to get attack ended")
-        log_contents = ""
-        retry = 0
-        while (
-                'attack_event="Attack ended"' not in log_contents
-                and retry <= 6 * 2
-        ):
-            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace, False)
-            retry += 1
-            wait_before_test(10)
-            print(f"Attack not ended, retrying... #{retry}")
+        find_in_log(kube_apis, log_loc, syslog_pod, test_namespace, 120, "attack_event=\"Attack ended\"")
 
         print("Stop Good Client")
         p_good_client.terminate()
@@ -440,17 +442,8 @@ class TestDos:
             [f"exec {TEST_DATA}/dos/good_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
             preexec_fn=os.setsid, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-        print("Learning for max 8 minutes")
-        log_contents = ""
-        retry = 0
-        while (
-                'learning_confidence="Ready"' not in log_contents
-                and retry <= 6 * 8
-        ):
-            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace, False)
-            retry += 1
-            wait_before_test(10)
-            print(f"Learning confidence not ready, retrying... #{retry}")
+        print("Learning for max 10 minutes")
+        find_in_log(kube_apis, log_loc, syslog_pod, test_namespace, 600, "learning_confidence=\"Ready\"")
 
         print("------------------------- Check new IC pod get info from arbitrator -----------------------------")
         ic_ns = ingress_controller_prerequisites.namespace
