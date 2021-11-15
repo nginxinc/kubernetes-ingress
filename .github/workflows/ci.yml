@@ -333,7 +333,7 @@ jobs:
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.0.21
+        uses: aquasecurity/trivy-action@0.1.0
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
