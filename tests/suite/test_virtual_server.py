@@ -23,6 +23,7 @@ from suite.yaml_utils import get_paths_from_vs_yaml, get_first_host_from_yaml, g
 class TestVirtualServer:
     def test_responses_after_setup(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("\nStep 1: initial check")
+        wait_before_test(1)
         resp = requests.get(virtual_server_setup.backend_1_url,
                             headers={"host": virtual_server_setup.vs_host})
         assert resp.status_code == 200
