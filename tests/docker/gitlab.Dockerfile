@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.3
-FROM python:3.9
+FROM python:3.10
 
-ARG GCLOUD_VERSION=360.0.0
+ARG GCLOUD_VERSION=364.0.0
 
 RUN apt-get update && apt-get install -y curl git jq \
 	&& curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
