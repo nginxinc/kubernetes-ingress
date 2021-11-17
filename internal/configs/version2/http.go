@@ -133,6 +133,8 @@ type Dos struct {
 	ApDosSecurityLogEnable bool
 	ApDosLogConf           string
 	ApDosMonitor           string
+	ApDosMonitorProtocol   string
+	ApDosMonitorTimeout    uint64
 	ApDosAccessLogDest     string
 }
 

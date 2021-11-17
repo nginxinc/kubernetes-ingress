@@ -86,12 +86,13 @@ server {
 	# app-protect-dos module will set it to '1'  if a request doesn't pass the rate limit
 	access_log {{ .AppProtectDosAccessLogDst }} log_dos if=$loggable;
 	{{- end}}
-	{{if $server.AppProtectDosMonitor}}
-	{{if or $server.GRPCOnly $server.HTTP2 $server.AppProtectDosMonitorTimeout}}
-	app_protect_dos_monitor uri="{{$server.AppProtectDosMonitor}}" protocol={{if $server.GRPCOnly}}grpc{{else if $server.HTTP2}}http2{{else}}http1{{end}} {{if $server.AppProtectDosMonitorTimeout}}timeout=$server.AppProtectDosMonitorTimeout{{end}};
-	{{else}}
+	{{- if $server.AppProtectDosMonitor}}
+		{{- if or $server.AppProtectDosMonitorProtocol $server.AppProtectDosMonitorTimeout}}
+	app_protect_dos_monitor uri="{{$server.AppProtectDosMonitor}}"{{if $server.AppProtectDosMonitorProtocol}} protocol={{$server.AppProtectDosMonitorProtocol}}{{end}}{{if $server.AppProtectDosMonitorTimeout}} timeout={{$server.AppProtectDosMonitorTimeout}}{{end}};
+		{{- else}}
 	app_protect_dos_monitor "{{$server.AppProtectDosMonitor}}";
-	{{end}}
+		{{- end}}
+	{{- end}}
 	{{if $server.AppProtectDosName}}app_protect_dos_name "{{$server.AppProtectDosName}}";{{end}}
 	{{- end}}
 

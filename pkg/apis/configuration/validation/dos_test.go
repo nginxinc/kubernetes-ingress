@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestValidateDosProtectedResource(t *testing.T) {
@@ -370,6 +371,34 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 		} else {
 			if !strings.Contains(err.Error(), nTCase[1]) {
 				t.Errorf("got %v expected to contain: %s", err, nTCase[1])
+			}
+		}
+	}
+}
+
+func TestValidateAppProtectDosMonitorProtocol(t *testing.T) {
+	// Positive test cases
+	posDstAntns := []string{"http1", "http2", "grpc"}
+
+	// Negative test cases item, expected error message
+	negDstAntns := [][]string{
+		{"http3", "Invalid value: \"http3\": 'http3' contains an invalid NGINX parameter. Accepted parameters are: http1, http2, grpc"},
+	}
+
+	for _, tCase := range posDstAntns {
+		allErrs := ValidateAppProtectDosMonitorProtocol(tCase, field.NewPath("protocol"))
+		if len(allErrs) > 0 {
+			t.Errorf("got %v expected nil", allErrs)
+		}
+	}
+
+	for _, nTCase := range negDstAntns {
+		allErrs := ValidateAppProtectDosMonitorProtocol(nTCase[0], field.NewPath("protocol"))
+		if len(allErrs) == 0 {
+			t.Errorf("got no error expected error containing %s", nTCase[1])
+		} else {
+			if !strings.Contains(allErrs.ToAggregate().Error(), nTCase[1]) {
+				t.Errorf("got %v expected to contain: %s", allErrs, nTCase[1])
 			}
 		}
 	}
