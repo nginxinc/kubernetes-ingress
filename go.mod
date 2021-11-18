@@ -13,7 +13,7 @@ require (
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spiffe/go-spiffe v1.1.0
 	k8s.io/api v0.22.3
-	k8s.io/apimachinery v0.22.3
+	k8s.io/apimachinery v0.22.4
 	k8s.io/client-go v0.22.3
 	k8s.io/code-generator v0.22.3
 	sigs.k8s.io/controller-tools v0.7.0
@@ -83,7 +83,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.22.2 // indirect
 	k8s.io/gengo v0.0.0-20201214224949-b6c5ce23f027 // indirect
 	k8s.io/klog/v2 v2.9.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
+	k8s.io/kube-openapi v0.0.0-20211109043538-20434351676c // indirect
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
 	sigs.k8s.io/yaml v1.2.0 // indirect
