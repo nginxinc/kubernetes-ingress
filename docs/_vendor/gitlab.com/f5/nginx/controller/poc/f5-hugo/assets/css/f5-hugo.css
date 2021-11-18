@@ -40,13 +40,13 @@ li {
 
 ol > li {
     list-style: decimal;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: roboto-regular, Arial, Helvetica, sans-serif;
     font-size: inherit; 
 }
 
 ol > li > ol {
     list-style: lower-alpha;
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: roboto-regular, Arial, Helvetica, sans-serif;
     font-size: inherit; 
 }
 
@@ -709,7 +709,7 @@ code {
     text-align: left;
     font-size: inherit;
     white-space: nowrap;
-    padding: 1px 2px;
+    padding: 1px 0px;
     background: #f1f1f1;
     border-radius: 4px;
 }
