@@ -151,7 +151,11 @@ jobs:
                                                 {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
                                                 {\"image\": \"alpine-opentracing\", \"marker\":\"policies\"}, \
                                                 {\"image\": \"opentracing\", \"marker\": \"vs\"}, \
-                                                {\"image\": \"ubi\", \"marker\": \"ts\"}]}"
+                                                {\"image\": \"ubi\", \"marker\": \"ts\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
+                                                {\"image\": \"opentracing-plus\", \"marker\": \"vsr\"}, \
+                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}]}"
           else
             echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.2\"]}"
           fi
@@ -172,6 +176,8 @@ jobs:
           image: ${{ matrix.images.image != '' && matrix.images.image || 'debian' }}
           marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}
           k8s-version: ${{ matrix.k8s != '' && matrix.k8s || env.K8S_VERSION }}
+          nginx-crt: ${{ secrets.NGINX_CRT }}
+          nginx-key: ${{ secrets.NGINX_KEY }}
       - name: Upload Test Results
         uses: actions/upload-artifact@v2
         with:
