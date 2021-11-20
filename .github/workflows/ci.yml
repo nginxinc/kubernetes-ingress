@@ -149,6 +149,7 @@ jobs:
             echo "::set-output name=matrix::{\"images\": \
                                                 [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
                                                 {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
+                                                {\"image\": \"alpine-opentracing\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"opentracing\", \"marker\": \"vs\"}, \
                                                 {\"image\": \"ubi\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"debian\", \"marker\": \"policies\"}]}"
@@ -286,7 +287,7 @@ jobs:
     needs: build-binaries
     strategy:
         matrix:
-          image: [debian, alpine, opentracing]
+          image: [debian, alpine, opentracing, alpine-opentracing]
           platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
           include:
             - image: ubi
@@ -336,7 +337,7 @@ jobs:
             nginx/nginx-ingress
             ghcr.io/nginxinc/kubernetes-ingress
             public.ecr.aws/nginx/nginx-ingress
-          flavor: suffix=${{ matrix.image != 'debian' && '-' || '' }}${{ matrix.image != 'debian' && matrix.image != 'opentracing' && matrix.image || '' }}${{ matrix.image == 'opentracing' && 'ot' || '' }},onlatest=true
+          flavor: suffix=${{ matrix.image == 'ubi' && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
           tags: |
             type=edge
             type=ref,event=pr

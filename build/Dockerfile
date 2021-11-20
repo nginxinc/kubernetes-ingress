@@ -163,11 +163,20 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # RUN update-ca-trust extract
 
 
-############################################# Base image containing libs for Opentracing #############################################
+############################################# Base images containing libs for Opentracing #############################################
 FROM opentracing/nginx-opentracing:nginx-1.21.4 as opentracing-lib
+FROM docker.io/opentracing/nginx-opentracing:nginx-1.21.4-alpine as alpine-opentracing-lib
 
 
-############################################# Build image for Opentracing #############################################
+############################################# Build image for Alpine with Opentracing #############################################
+FROM alpine as alpine-opentracing
+
+RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libopentracing.so* /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	&& cp -av /tmp/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
+	&& ldconfig /usr/local/lib/
+
+
+############################################# Build image for Debian with Opentracing #############################################
 FROM debian as opentracing
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libopentracing.so* /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \

@@ -109,6 +109,10 @@ openshift-image-plus: build ## Create Docker image for Ingress Controller (UBI w
 openshift-image-nap-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect WAF)
 	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg UBI_VERSION=7
 
+.PHONY: alpine-image-opentracing
+alpine-image-opentracing: build ## Create Docker image for Ingress Controller (Alpine with OpenTracing)
+	$(DOCKER_CMD) --build-arg BUILD_OS=alpine-opentracing
+
 .PHONY: debian-image-opentracing
 debian-image-opentracing: build ## Create Docker image for Ingress Controller (Debian with OpenTracing)
 	$(DOCKER_CMD) --build-arg BUILD_OS=opentracing
