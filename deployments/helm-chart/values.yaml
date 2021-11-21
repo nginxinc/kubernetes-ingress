@@ -21,7 +21,7 @@ controller:
   appprotectdos:
     ## Enable the App Protect Dos module in the Ingress Controller.
     enable: false
-    debug: true
+    debug: false
     maxWorkers: 0
     maxDaemons: 0
     memory: 0
