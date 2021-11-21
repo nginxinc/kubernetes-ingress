@@ -86,8 +86,6 @@ FROM debian-plus as debian-plus-dos
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
 
-RUN mkdir -p /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/ && chmod 777 /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/
-
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	set -x \
@@ -103,9 +101,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 FROM debian-plus-nap as debian-plus-nap-dos
 ARG IC_VERSION
 ARG NGINX_PLUS_VERSION
-
-
-RUN mkdir -p /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/ && chmod 777 /shared/cores /var/log/adm /etc/app_protect_dos /var/run/adm/
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -196,8 +191,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 FROM ubi-plus as ubi-plus-dos
 ARG NGINX_PLUS_VERSION
 
-RUN mkdir  -p /root/app_protect_dos /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /var/run/adm && chmod 777 /shared/cores /var/log/adm /var/run/adm
-
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
@@ -208,7 +201,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
     && subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
     && rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
     && yum clean all \
-    && yum -y install epel-release deltarpm \
+    && yum -y install epel-release \
     && yum -y install app-protect-dos-${NGINX_PLUS_VERSION#r}* \
     && rm /etc/yum.repos.d/app-protect-dos-7.repo \
     && subscription-manager unregister
@@ -216,8 +209,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 ############################################# Base image for UBI with NGINX Plus and App Protect and App Protect Dos #############################################
 FROM ubi-plus-nap as ubi-plus-nap-dos
 ARG NGINX_PLUS_VERSION
-
-RUN mkdir  -p /root/app_protect_dos /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /var/run/adm && chmod 777 /shared/cores /var/log/adm /var/run/adm
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
@@ -227,7 +218,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& subscription-manager attach \
     && curl -sS https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
     && yum clean all \
-    && yum -y install epel-release deltarpm \
+    && yum -y install epel-release \
     && yum -y install app-protect-dos-${NGINX_PLUS_VERSION#r}* \
     && rm /etc/yum.repos.d/app-protect-dos-7.repo \
     && subscription-manager unregister
@@ -285,6 +276,9 @@ RUN --mount=target=/tmp [ -n "${BUILD_OS##*nap*}" ] && exit 0; mkdir -p /etc/ngi
 	; do sed -i "/\[$v/a log_level=fatal" "/etc/app_protect/tools/asm_logging.conf" \
 	; done \
 	&& cp -a /tmp/build/log-default.json /etc/nginx
+
+# run only on dos build
+RUN --mount=target=/tmp [ -n "${BUILD_OS##*dos*}" ] && exit 0; mkdir -p /root/app_protect_dos /etc/nginx/dos/policies /etc/nginx/dos/logconfs /shared/cores /var/log/adm /var/run/adm && chmod 777 /shared/cores /var/log/adm /var/run/adm /etc/app_protect_dos
 
 RUN --mount=target=/tmp mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
