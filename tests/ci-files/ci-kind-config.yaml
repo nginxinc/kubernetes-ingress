@@ -1,7 +1,43 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  apiServerAddress: "0.0.0.0"
+  apiServerPort: 6443
+# nodes:
+#   - role: control-plane
+#   - role: worker
+#   - role: worker
+#   - role: worker
 nodes:
-  - role: control-plane
-  - role: worker
-  - role: worker
-  - role: worker
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+    listenAddress: "0.0.0.0"
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+    listenAddress: "0.0.0.0"
+  - containerPort: 8080
+    hostPort: 8080
+    protocol: TCP
+    listenAddress: "0.0.0.0"
+  - containerPort: 9113
+    hostPort: 9113
+    protocol: TCP
+    listenAddress: "0.0.0.0"
+  - containerPort: 3333
+    hostPort: 3333
+    protocol: TCP
+    listenAddress: "0.0.0.0"
+  - containerPort: 3334
+    hostPort: 3334
+    protocol: UDP
+    listenAddress: "0.0.0.0"

@@ -6,10 +6,6 @@ inputs:
   k8s-version:
     description: Kubernetes version to use
     required: false
-  k8s-timeout:
-    description: Timeout to use
-    default: 75s
-    required: false
   image:
     description: Docker image to use
     default: debian
@@ -67,47 +63,39 @@ runs:
           "nginx-repo.crt=${{ inputs.nginx-crt }}"
           "nginx-repo.key=${{ inputs.nginx-key }}"
 
-    - name: Build Test-Runner Container
-      uses: docker/build-push-action@v2
-      with:
-        file: tests/docker/Dockerfile
-        context: '.'
-        cache-from: type=gha,scope=test-runner
-        cache-to: type=gha,scope=test-runner,mode=max
-        tags: test-runner:${{ github.sha }}
-        pull: true
-        load: true
-
     - name: Deploy Kubernetes
       id: k8s
       run: |
-        kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ inputs.k8s-timeout }}
-        kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }} --name ${{ github.run_id }}
-        echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
+        minikube start --kubernetes-version=v${{ inputs.k8s-version }} --wait=all --memory 4096
+        minikube image load docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }}
+        echo ::set-output name=cluster_ip::$(minikube ip)
         echo ::set-output name=cluster::$(echo nginx-${{ inputs.image }}-${{ inputs.marker != '' && inputs.marker || inputs.k8s-version }})
+      working-directory: ./tests
       shell: bash
 
-    - name: Setup Kubeconfig
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+        # cache: 'pip'
+        # cache-dependency-path: '**/requirements.txt'
+
+    - name: Install dependencies
       run: |
-        sed -i 's|server:.*|server: https://${{ steps.k8s.outputs.cluster_ip }}:6443|' kube-${{ github.run_id }}
+        python -m pip install --upgrade pip setuptools wheel
+        pip install -r tests/requirements.txt
       shell: bash
 
     - name: Run Smoke Tests
       run: |
         touch tests-${{ steps.k8s.outputs.cluster }}.html
-        docker run --rm \
-        --name test-runner-${{ github.run_id }} \
-        --network=kind \
-        -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
-        -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ github.sha }} \
-        --context=kind-${{ github.run_id }} \
+        python -m pytest \
         --image=docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }} \
         --image-pull-policy=Never \
         --ic-type=${{ steps.ingress-type.outputs.name }} \
         --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
         --html=tests-${{ steps.k8s.outputs.cluster }}.html \
         --self-contained-html \
-        --show-ic-logs=yes --profile -vv -l \
+        --show-ic-logs=yes --profile -vv -l -x -ra \
         -m ${{ inputs.marker != '' && inputs.marker || '""' }}
       working-directory: ./tests
       shell: bash
