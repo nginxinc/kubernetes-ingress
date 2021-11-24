@@ -10,7 +10,7 @@ toc: true
 
 This document describes how to troubleshoot problems with the Ingress Controller with the [App Protect](/nginx-app-protect/) module enabled.
 
-For general troubleshooting of the Ingress Controller, check the general [troubleshooting]({{< relref "troubleshooting//troubleshoot-ingress-controller.md" >}}) documentation.
+For general troubleshooting of the Ingress Controller, check the general [troubleshooting]({{< relref "troubleshooting/troubleshoot-ingress-controller.md" >}}) documentation.
 
 For additional troubleshooting of the App Protect module itself, check the [troubleshooting](/nginx-app-protect/troubleshooting/) guide in the App Protect module documentation. 
 
