@@ -157,7 +157,8 @@ jobs:
                                                 {\"image\": \"opentracing-plus\", \"marker\": \"vsr\"}, \
                                                 {\"image\": \"ubi-plus\", \"marker\": \"policies\"}]}"
           else
-            echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.2\"]}"
+            echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.2\"], \
+                                             \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}"
           fi
 
   smoke-tests:
