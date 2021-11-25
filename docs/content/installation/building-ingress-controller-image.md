@@ -90,6 +90,8 @@ Below you can find some of the most useful targets in the **Makefile**:
 * **openshift-image**: for building an ubi-based image with NGINX for [Openshift](https://www.openshift.com/) clusters.
 * **openshift-image-plus**: for building an ubi-based image with NGINX Plus for [Openshift](https://www.openshift.com/) clusters.
 * **openshift-image-nap-plus**: for building an ubi-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module for [Openshift](https://www.openshift.com/) clusters.
+* **openshift-image-dos-plus**: for building an ubi-based image with NGINX Plus and the [appprotect_dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
+* **openshift-image-nap-dos-plus**: for building an ubi-based image with NGINX Plus, [appprotect](/nginx-app-protect/) and the [appprotect_dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
 Note: You need to store your RHEL organization and activation keys in a file named `rhel_license` in the project root. Example:
   ```bash
   RHEL_ORGANIZATION=1111111
