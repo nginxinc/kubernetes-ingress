@@ -1,20 +1,19 @@
 import grpc
 import pytest
+import time
 from kubernetes.client.rest import ApiException
 
 from settings import TEST_DATA, DEPLOYMENTS
 from suite.custom_assertions import assert_event_starts_with_text_and_contains_errors, \
     assert_grpc_entries_exist, assert_proxy_entries_do_not_exist, assert_vs_conf_not_exists
-from suite.custom_resources_utils import read_custom_resource
 from suite.grpc.helloworld_pb2 import HelloRequest
 from suite.grpc.helloworld_pb2_grpc import GreeterStub
 from suite.resources_utils import create_example_app, wait_until_all_pods_are_ready, \
     delete_common_app, create_secret_from_yaml, replace_configmap_from_yaml, \
-    delete_items_from_yaml, get_first_pod_name, get_events
+    delete_items_from_yaml, get_first_pod_name, get_events, wait_before_test, scale_deployment
 from suite.ssl_utils import get_certificate
 from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, \
     patch_virtual_server_from_yaml
-from suite.resources_utils import wait_before_test
 
 
 @pytest.fixture(scope="function")
@@ -64,6 +63,7 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
 
 @pytest.mark.vs
 @pytest.mark.smoke
+@pytest.mark.ciara
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-grpc"})],
@@ -136,6 +136,42 @@ class TestVirtualServerGrpc:
                 pytest.fail("RPC error was not expected during call, exiting...")
 
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
+    def test_grpc_error_intercept(self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, 
+                                  backend_setup, virtual_server_setup):
+        cert = get_certificate(virtual_server_setup.public_endpoint.public_ip,
+                               virtual_server_setup.vs_host,
+                               virtual_server_setup.public_endpoint.port_ssl)
+        target = f'{virtual_server_setup.public_endpoint.public_ip}:{virtual_server_setup.public_endpoint.port_ssl}'
+        credentials = grpc.ssl_channel_credentials(root_certificates=cert.encode())
+        options = (('grpc.ssl_target_name_override', virtual_server_setup.vs_host),)
+
+        with grpc.secure_channel(target, credentials, options) as channel:
+            stub = GreeterStub(channel)
+            response = ""
+            try:
+                response = stub.SayHello(HelloRequest(name=virtual_server_setup.public_endpoint.public_ip))
+                valid_message = "Hello {}".format(virtual_server_setup.public_endpoint.public_ip)
+                # no status has been returned in the response
+                assert valid_message in response.message
+            except grpc.RpcError as e:
+                print(e.details())
+                pytest.fail("RPC error was not expected during call, exiting...")
+
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "grpc1", virtual_server_setup.namespace, 0)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "grpc2", virtual_server_setup.namespace, 0)
+        time.sleep(1)
+
+        with grpc.secure_channel(target, credentials, options) as channel:
+            stub = GreeterStub(channel)
+            try:
+                response = stub.SayHello(HelloRequest(name=virtual_server_setup.public_endpoint.public_ip))
+                # assert the grpc status has been returned in the header
+                assert response.status == 14
+                pytest.fail("RPC error was expected during call, exiting...")
+            except grpc.RpcError as e:
+                print(e)
+
+    @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_config_after_enable_tls(self, kube_apis, ingress_controller_prerequisites,
                                      crd_ingress_controller, backend_setup, virtual_server_setup):
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
@@ -150,6 +186,7 @@ class TestVirtualServerGrpc:
                                             ic_pod_name,
                                             ingress_controller_prerequisites.namespace)
         assert 'grpc_pass grpcs://' in config
+
 
 @pytest.mark.vs
 @pytest.mark.smoke
