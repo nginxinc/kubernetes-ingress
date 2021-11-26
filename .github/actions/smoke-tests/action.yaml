@@ -17,6 +17,12 @@ inputs:
   marker:
     description: Marker to use
     required: false
+  nginx-key:
+    description: Nginx key to use
+    required: false
+  nginx-crt:
+    description: Nginx cert to use
+    required: false
 
 outputs:
   test-results-name:
@@ -32,6 +38,16 @@ runs:
         path: ${{ github.workspace }}/dist
         key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
 
+    - name: Ingress type
+      id: ingress-type
+      run: |
+        plus=""
+        if [[ ${{ inputs.image }} == *plus* ]]; then
+          plus="-plus"
+        fi
+        echo ::set-output name=name::nginx$plus-ingress
+      shell: bash
+
     - name: Docker Buildx
       uses: docker/setup-buildx-action@v1
 
@@ -43,10 +59,13 @@ runs:
         cache-from: type=gha,scope=${{ inputs.image }}
         cache-to: type=gha,scope=${{ inputs.image }},mode=max
         target: goreleaser
-        tags: 'docker.io/nginx/nginx-ingress:${{ inputs.image }}-${{ github.sha }}'
+        tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }}'
         load: true
         pull: true
         build-args: BUILD_OS=${{ inputs.image }}
+        secrets: |
+          "nginx-repo.crt=${{ inputs.nginx-crt }}"
+          "nginx-repo.key=${{ inputs.nginx-key }}"
 
     - name: Build Test-Runner Container
       uses: docker/build-push-action@v2
@@ -63,7 +82,7 @@ runs:
       id: k8s
       run: |
         kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ inputs.k8s-timeout }}
-        kind load docker-image docker.io/nginx/nginx-ingress:${{ inputs.image }}-${{ github.sha }} --name ${{ github.run_id }}
+        kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }} --name ${{ github.run_id }}
         echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
         echo ::set-output name=cluster::$(echo nginx-${{ inputs.image }}-${{ inputs.marker != '' && inputs.marker || inputs.k8s-version }})
       shell: bash
@@ -82,9 +101,9 @@ runs:
         -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
         -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ github.sha }} \
         --context=kind-${{ github.run_id }} \
-        --image=docker.io/nginx/nginx-ingress:${{ inputs.image }}-${{ github.sha }} \
+        --image=docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }} \
         --image-pull-policy=Never \
-        --ic-type=nginx-ingress \
+        --ic-type=${{ steps.ingress-type.outputs.name }} \
         --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
         --html=tests-${{ steps.k8s.outputs.cluster }}.html \
         --self-contained-html \

@@ -10,7 +10,7 @@ toc: true
 
 This document describes how to troubleshoot problems with the Ingress Controller with the [App Protect](/nginx-app-protect/) module enabled.
 
-For general troubleshooting of the Ingress Controller, check the general [troubleshooting](/nginx-ingress-controller/troubleshooting/) documentation.
+For general troubleshooting of the Ingress Controller, check the general [troubleshooting]({{< relref "troubleshooting/troubleshoot-ingress-controller.md" >}}) documentation.
 
 For additional troubleshooting of the App Protect module itself, check the [troubleshooting](/nginx-app-protect/troubleshooting/) guide in the App Protect module documentation. 
 
@@ -30,7 +30,7 @@ The table below categorizes some potential problems with the Ingress Controller 
 
 ### Check the Ingress Controller and App Protect logs
 
-App Protect logs are part of the Ingress Controller logs when the module is enabled. To check the Ingress Controller logs, follow the steps of [Checking the Ingress Controller Logs](/troubleshooting/troubleshoot-ingress-controller/#checking-the-ingress-controller-logs) of the Troubleshooting guide.
+App Protect logs are part of the Ingress Controller logs when the module is enabled. To check the Ingress Controller logs, follow the steps of [Checking the Ingress Controller Logs]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#checking-the-ingress-controller-logs" >}}) of the Troubleshooting guide.
 
 For App Protect specific logs, look for messages starting with `APP_PROTECT`, for example:
 ```
@@ -39,7 +39,7 @@ For App Protect specific logs, look for messages starting with `APP_PROTECT`, fo
 
 ### Check events of an Ingress Resource
 
-Follow the steps of [Checking the Events of an Ingress Resource](/troubleshooting/troubleshoot-ingress-controller/#checking-the-events-of-an-ingress-resource).
+Follow the steps of [Checking the Events of an Ingress Resource]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#checking-the-events-of-an-ingress-resource" >}}).
 
 ### Check events of APLogConf
 
@@ -73,7 +73,7 @@ Note that in the events section, we have a `Normal` event with the `AddedOrUpdat
 
 ### Replace the policy
 
-NOTE: This method only applies if using [external references](https://docs.nginx.com/nginx-app-protect/configuration/#external-references) 
+NOTE: This method only applies if using [external references](/nginx-app-protect/configuration/#external-references) 
 If items on the external reference change but the spec of the APPolicy remains unchanged (even when re-applying the policy), kubernetes will not detect the update.
 In this case you can force-replace the resource. This will remove the resource and add it again, triggering a reload. For example:
 
@@ -83,7 +83,7 @@ kubectl replace appolicy -f your-policy-manifest.yaml --force
 
 ### Check the Availability of APPolicy External References.
 
-NOTE: This method only applies if you're using [external references](https://docs.nginx.com/nginx-app-protect/configuration/#external-references) in NGINX App Protect policies.
+NOTE: This method only applies if you're using [external references](/nginx-app-protect/configuration/#external-references) in NGINX App Protect policies.
 
 To check what servers host the external references of a policy: 
 ```
@@ -99,7 +99,7 @@ curl -w '%{time_total}' http://192.168.100.100/resources/headersettings.txt
 
 ## Run App Protect in Debug Mode
 
-When you set the Ingress Controller to use debug mode, the setting also applies to the App Protect module.  See  [Running NGINX in the Debug Mode](/troubleshooting/troubleshoot-ingress-controller/#running-nginx-in-the-debug-mode) for instructions.
+When you set the Ingress Controller to use debug mode, the setting also applies to the App Protect module.  See  [Running NGINX in the Debug Mode]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#running-nginx-in-the-debug-mode" >}}) for instructions.
 
 ## Known Issues
 
@@ -122,7 +122,7 @@ This timeout should be more than enough to verify configurations. However, when 
 - You need to apply a large amount of Ingress Resources at once.
 - You are running the Ingress Controller for the first time in a cluster where the Ingress Resources with App Protect enabled are already present.
 
-You can increase this timeout by setting the `nginx-reload-timeout` [cli-argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-nginx-reload-timeout).
+You can increase this timeout by setting the `nginx-reload-timeout` [cli-argument]({{< relref "configuration/global-configuration/command-line-arguments.md#cmdoption-nginx-reload-timeout" >}}).
 
 When using the User Defined Signature feature, an update to an `APUserSig` requires more reload time from NGINX Plus compared with the other AppProtect resources. As a consequence, we recommend increasing the `nginx-reload-timeout` to 30 seconds if you're planning to use this feature.
 
