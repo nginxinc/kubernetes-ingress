@@ -2,11 +2,180 @@ package validation
 
 import (
 	"fmt"
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"strings"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
+
+func TestValidateDosProtectedResource(t *testing.T) {
+	tests := []struct {
+		protected *v1beta1.DosProtectedResource
+		expectErr string
+		msg       string
+	}{
+		{
+			protected: &v1beta1.DosProtectedResource{},
+			expectErr: "error validating DosProtectedResource:  missing value for field: name",
+			msg:       "empty resource",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{},
+			},
+			expectErr: "error validating DosProtectedResource:  missing value for field: name",
+			msg:       "empty spec",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name: "name",
+				},
+			},
+			expectErr: "error validating DosProtectedResource:  missing value for field: dosAccessLogDest",
+			msg:       "only name specified",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:         "name",
+					ApDosMonitor: "example.com",
+				},
+			},
+			expectErr: "error validating DosProtectedResource:  missing value for field: dosAccessLogDest",
+			msg:       "name and apDosMonitor specified",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:         "name",
+					ApDosMonitor: "exabad-$%^$-example.com",
+				},
+			},
+			expectErr: "error validating DosProtectedResource:  invalid field: apDosMonitor err: app Protect Dos Monitor must have valid URL",
+			msg:       "invalid apDosMonitor specified",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:             "name",
+					ApDosMonitor:     "example.com",
+					DosAccessLogDest: "example.service.com:123",
+				},
+			},
+			msg: "name, dosAccessLogDest and apDosMonitor specified",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:             "name",
+					ApDosMonitor:     "example.com",
+					DosAccessLogDest: "bad&$%^logdest",
+				},
+			},
+			expectErr: "error validating DosProtectedResource:  invalid field: dosAccessLogDest err: invalid log destination: bad&$%^logdest, must follow format: <ip-address | localhost | dns name>:<port> or stderr",
+			msg:       "invalid DosAccessLogDest specified",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:             "name",
+					ApDosMonitor:     "example.com",
+					DosAccessLogDest: "example.service.com:123",
+					ApDosPolicy:      "ns/name",
+				},
+			},
+			expectErr: "",
+			msg:       "required fields and apdospolicy specified",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:             "name",
+					ApDosMonitor:     "example.com",
+					DosAccessLogDest: "example.service.com:123",
+					ApDosPolicy:      "bad$%^name",
+				},
+			},
+			expectErr: "error validating DosProtectedResource:  invalid field: apDosPolicy err: reference name is invalid: bad$%^name",
+			msg:       "invalid apdospolicy specified",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:             "name",
+					ApDosMonitor:     "example.com",
+					DosAccessLogDest: "example.service.com:123",
+					DosSecurityLog:   &v1beta1.DosSecurityLog{},
+				},
+			},
+			expectErr: "error validating DosProtectedResource:  invalid field: dosSecurityLog/dosLogDest err: invalid log destination: , must follow format: <ip-address | localhost | dns name>:<port> or stderr",
+			msg:       "empty DosSecurityLog specified",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:             "name",
+					ApDosMonitor:     "example.com",
+					DosAccessLogDest: "example.service.com:123",
+					DosSecurityLog: &v1beta1.DosSecurityLog{
+						DosLogDest: "service.org:123",
+					},
+				},
+			},
+			expectErr: "error validating DosProtectedResource:  invalid field: dosSecurityLog/apDosLogConf err: reference name is invalid: ",
+			msg:       "DosSecurityLog with missing apDosLogConf",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:             "name",
+					ApDosMonitor:     "example.com",
+					DosAccessLogDest: "example.service.com:123",
+					DosSecurityLog: &v1beta1.DosSecurityLog{
+						DosLogDest:   "service.org:123",
+						ApDosLogConf: "bad$%^$%name",
+					},
+				},
+			},
+			expectErr: "error validating DosProtectedResource:  invalid field: dosSecurityLog/apDosLogConf err: reference name is invalid: bad$%^$%name",
+			msg:       "DosSecurityLog with invalid apDosLogConf",
+		},
+		{
+			protected: &v1beta1.DosProtectedResource{
+				Spec: v1beta1.DosProtectedResourceSpec{
+					Name:             "name",
+					ApDosMonitor:     "example.com",
+					DosAccessLogDest: "example.service.com:123",
+					DosSecurityLog: &v1beta1.DosSecurityLog{
+						DosLogDest:   "service.org:123",
+						ApDosLogConf: "ns/name",
+					},
+				},
+			},
+			expectErr: "",
+			msg:       "DosSecurityLog with valid apDosLogConf",
+		},
+	}
+
+	for _, test := range tests {
+		err := ValidateDosProtectedResource(test.protected)
+		if err != nil {
+			if test.expectErr == "" {
+				t.Errorf("ValidateDosProtectedResource() returned unexpected error: '%v' for the case of: '%s'", err, test.msg)
+				continue
+			}
+			if test.expectErr != err.Error() {
+				t.Errorf("ValidateDosProtectedResource() returned error for the case of '%s', expected err: '%s' got err: '%s'", test.msg, test.expectErr, err.Error())
+			}
+		} else {
+			if test.expectErr != "" {
+				t.Errorf("ValidateDosProtectedResource() failed to return expected error: '%v' for the case of: '%s'", test.expectErr, test.msg)
+			}
+		}
+	}
+}
 
 func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 	// Positive test cases
@@ -27,14 +196,14 @@ func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 	}
 
 	for _, tCase := range posDstAntns {
-		err := ValidateAppProtectDosLogDest(tCase)
+		err := validateAppProtectDosLogDest(tCase)
 		if err != nil {
 			t.Errorf("expected nil, got %v", err)
 		}
 	}
 
 	for _, nTCase := range negDstAntns {
-		err := ValidateAppProtectDosLogDest(nTCase[0])
+		err := validateAppProtectDosLogDest(nTCase[0])
 		if err == nil {
 			t.Errorf("got no error expected error containing '%s'", nTCase[1])
 		} else {
@@ -153,25 +322,25 @@ func TestValidateAppProtectDosName(t *testing.T) {
 
 	// Negative test cases item, expected error message
 	negDstAntns := [][]string{
-		{"very very very very very very very very very very very very very very very very very very long Name", fmt.Sprintf(`App Protect Dos Name max length is %v`, MaxNameLength)},
+		{"very very very very very very very very very very very very very very very very very very long Name", fmt.Sprintf(`app Protect Dos Name max length is %v`, MaxNameLength)},
 		{"example.com\\", "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'protected-object-one', regex used for validation is '([^\"\\\\]|\\\\.)*')"},
 		{"\"example.com\"", "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'protected-object-one', regex used for validation is '([^\"\\\\]|\\\\.)*')"},
 	}
 
 	for _, tCase := range posDstAntns {
-		err := ValidateAppProtectDosName(tCase)
+		err := validateAppProtectDosName(tCase)
 		if err != nil {
 			t.Errorf("got %v expected nil", err)
 		}
 	}
 
 	for _, nTCase := range negDstAntns {
-		err := ValidateAppProtectDosName(nTCase[0])
+		err := validateAppProtectDosName(nTCase[0])
 		if err == nil {
 			t.Errorf("got no error expected error containing %s", nTCase[1])
 		} else {
 			if !strings.Contains(err.Error(), nTCase[1]) {
-				t.Errorf("got %v expected to contain: %s", err, nTCase[1])
+				t.Errorf("got '%v'\n expected: '%s'\n", err, nTCase[1])
 			}
 		}
 	}
@@ -183,19 +352,19 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 
 	// Negative test cases item, expected error message
 	negDstAntns := [][]string{
-		{"http://example.com/%", "App Protect Dos Monitor must have valid URL"},
+		{"http://example.com/%", "app Protect Dos Monitor must have valid URL"},
 		{"http://example.com/\\", "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'http://www.example.com', regex used for validation is '([^\"\\\\]|\\\\.)*')"},
 	}
 
 	for _, tCase := range posDstAntns {
-		err := ValidateAppProtectDosMonitor(tCase)
+		err := validateAppProtectDosMonitor(tCase)
 		if err != nil {
 			t.Errorf("got %v expected nil", err)
 		}
 	}
 
 	for _, nTCase := range negDstAntns {
-		err := ValidateAppProtectDosMonitor(nTCase[0])
+		err := validateAppProtectDosMonitor(nTCase[0])
 		if err == nil {
 			t.Errorf("got no error expected error containing %s", nTCase[1])
 		} else {

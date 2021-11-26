@@ -406,6 +406,27 @@ def create_dos_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest,
     return dep["metadata"]["name"]
 
 
+def create_dos_protected_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
+    """
+    Create a protected resource for Dos based on yaml file.
+    :param custom_objects: CustomObjectsApi
+    :param yaml_manifest: an absolute path to file
+    :param namespace:
+    :return: str
+    """
+    print("Create Dos Protected:")
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+        dep['spec']['dosSecurityLog']['apDosLogConf'] = dep['spec']['dosSecurityLog']['apDosLogConf'].replace("<NAMESPACE>", namespace)
+        dep['spec']['dosSecurityLog']['dosLogDest'] = dep['spec']['dosSecurityLog']['dosLogDest'].replace("<NAMESPACE>", namespace)
+        dep['spec']['apDosPolicy'] = dep['spec']['apDosPolicy'].replace("<NAMESPACE>", namespace)
+    custom_objects.create_namespaced_custom_object(
+        "appprotectdos.f5.com", "v1beta1", namespace, "dosprotectedresources", dep
+    )
+    print(f"DOS Protected resource created with name '{namespace}/{dep['metadata']['name']}'")
+    return dep["metadata"]["name"]
+
+
 def create_ap_usersig_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
     """
     Create a UserSig for AppProtect based on yaml file.
@@ -533,6 +554,29 @@ def delete_dos_logconf(custom_objects: CustomObjectsApi, name, namespace) -> Non
         "v1beta1",
         namespace,
         "apdoslogconfs",
+        name,
+    )
+    print(f"DOS logconf was removed with name: {name}")
+
+
+def delete_dos_protected(custom_objects: CustomObjectsApi, name, namespace) -> None:
+    """
+    Delete a Dos protected.
+    :param custom_objects: CustomObjectsApi
+    :param namespace: namespace
+    :param name:
+    :return:
+    """
+    print(f"Delete DOS protected: {name}")
+    custom_objects.delete_namespaced_custom_object(
+        "appprotectdos.f5.com", "v1beta1", namespace, "dosprotectedresources", name
+    )
+    ensure_item_removal(
+        custom_objects.get_namespaced_custom_object,
+        "appprotectdos.f5.com",
+        "v1beta1",
+        namespace,
+        "dosprotectedresources",
         name,
     )
     print(f"DOS logconf was removed with name: {name}")

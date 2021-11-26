@@ -1125,34 +1125,21 @@ def create_ingress_with_ap_annotations(
 
 
 def create_ingress_with_dos_annotations(
-        kube_apis, yaml_manifest, namespace, dos_pol_st, dos_log_st, syslog_port
+        kube_apis, yaml_manifest, namespace, dos_protected
 ) -> None:
     """
     Create an ingress with AppProtect annotations
-    :param dos_log_st: True/False for enabling/disabling Dos logging
-    :param dos_pol_st: True/False for enabling/disabling Dos module for an ingress
+    :param dos_protected: the namepsace/name of the dos protected resource
     :param kube_apis: KubeApis
     :param yaml_manifest: an absolute path to ingress yaml
     :param namespace: namespace
-    :param syslog_port: Destination endpoint for security logs
     :return:
     """
     print("Load ingress yaml and set DOS annotations")
-    policy = f"{namespace}/dospolicy"
-    logconf = f"{namespace}/doslogconf"
 
     with open(yaml_manifest) as f:
         doc = yaml.safe_load(f)
-
-        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-enable"] = dos_pol_st
-        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-policy"] = policy
-        doc["metadata"]["annotations"][
-            "appprotectdos.f5.com/app-protect-dos-security-log-enable"
-        ] = dos_log_st
-        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-security-log"] = logconf
-        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-security-log-destination"] = f"syslog-svc.{namespace}.svc.cluster.local:{syslog_port}"
-        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-monitor"] = "dos.example.com"
-        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-name"] = "dos.example.com"
+        doc["metadata"]["annotations"]["appprotectdos.f5.com/app-protect-dos-resource"] = dos_protected
         create_ingress(kube_apis.networking_v1, namespace, doc)
 
 

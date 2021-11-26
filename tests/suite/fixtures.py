@@ -668,6 +668,9 @@ def crd_ingress_controller_with_dos(
         dos_log_crd_name = get_name_from_yaml(
             f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdoslogconfs.yaml"
         )
+        dos_protected_crd_name = get_name_from_yaml(
+            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_dosprotectedresources.yaml"
+        )
         create_crd_from_yaml(
             kube_apis.api_extensions_v1,
             dos_pol_crd_name,
@@ -677,6 +680,11 @@ def crd_ingress_controller_with_dos(
             kube_apis.api_extensions_v1,
             dos_log_crd_name,
             f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_apdoslogconfs.yaml",
+        )
+        create_crd_from_yaml(
+            kube_apis.api_extensions_v1,
+            dos_protected_crd_name,
+            f"{DEPLOYMENTS}/common/crds/appprotectdos.f5.com_dosprotectedresources.yaml",
         )
 
         print("------------------------- Create IC -----------------------------------")
@@ -702,6 +710,10 @@ def crd_ingress_controller_with_dos(
             kube_apis.api_extensions_v1,
             dos_log_crd_name,
         )
+        delete_crd(
+            kube_apis.api_extensions_v1,
+            dos_protected_crd_name,
+        )
         print("Remove ap-rbac")
         cleanup_rbac(kube_apis.rbac_v1, rbac)
         print("Remove the IC:")
@@ -719,6 +731,10 @@ def crd_ingress_controller_with_dos(
         delete_crd(
             kube_apis.api_extensions_v1,
             dos_log_crd_name,
+        )
+        delete_crd(
+            kube_apis.api_extensions_v1,
+            dos_protected_crd_name,
         )
         print("Remove ap-rbac")
         cleanup_rbac(kube_apis.rbac_v1, rbac)

@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	api_v1 "k8s.io/api/core/v1"
@@ -25,12 +27,6 @@ type appProtectResources struct {
 	AppProtectLogconfs []string
 }
 
-// appProtectDosResources holds the file names of APDosPolicy and APDosLogConf resources used in an Ingress resource.
-type appProtectDosResources struct {
-	AppProtectDosPolicy   string
-	AppProtectDosLogconfs string
-}
-
 // AppProtectLog holds a single pair of log config and log destination
 type AppProtectLog struct {
 	LogConf *unstructured.Unstructured
@@ -39,19 +35,23 @@ type AppProtectLog struct {
 
 // IngressEx holds an Ingress along with the resources that are referenced in this Ingress.
 type IngressEx struct {
-	Ingress              *networking.Ingress
-	Endpoints            map[string][]string
-	HealthChecks         map[string]*api_v1.Probe
-	ExternalNameSvcs     map[string]bool
-	PodsByIP             map[string]PodInfo
-	ValidHosts           map[string]bool
-	ValidMinionPaths     map[string]bool
-	AppProtectPolicy     *unstructured.Unstructured
-	AppProtectLogs       []AppProtectLog
-	AppProtectDosPolicy  *unstructured.Unstructured
-	AppProtectDosLogConf *unstructured.Unstructured
-	AppProtectDosLogDst  string
-	SecretRefs           map[string]*secrets.SecretReference
+	Ingress          *networking.Ingress
+	Endpoints        map[string][]string
+	HealthChecks     map[string]*api_v1.Probe
+	ExternalNameSvcs map[string]bool
+	PodsByIP         map[string]PodInfo
+	ValidHosts       map[string]bool
+	ValidMinionPaths map[string]bool
+	AppProtectPolicy *unstructured.Unstructured
+	AppProtectLogs   []AppProtectLog
+	DosEx            *DosEx
+	SecretRefs       map[string]*secrets.SecretReference
+}
+
+type DosEx struct {
+	DosProtected *v1beta1.DosProtectedResource
+	DosPolicy    *unstructured.Unstructured
+	DosLogConf   *unstructured.Unstructured
 }
 
 // JWTKey represents a secret that holds JSON Web Key.
@@ -74,7 +74,7 @@ type MergeableIngresses struct {
 	Minions []*IngressEx
 }
 
-func generateNginxCfg(ingEx *IngressEx, apResources *appProtectResources, dosResources *appProtectDosResources, isMinion bool,
+func generateNginxCfg(ingEx *IngressEx, apResources *appProtectResources, dosResource *appProtectDosResource, isMinion bool,
 	baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
 	hasAppProtect := staticParams.MainAppProtectLoadModule
 	hasAppProtectDos := staticParams.MainAppProtectDosLoadModule
@@ -131,34 +131,29 @@ func generateNginxCfg(ingEx *IngressEx, apResources *appProtectResources, dosRes
 		statusZone := rule.Host
 
 		server := version1.Server{
-			Name:                      serverName,
-			ServerTokens:              cfgParams.ServerTokens,
-			HTTP2:                     cfgParams.HTTP2,
-			RedirectToHTTPS:           cfgParams.RedirectToHTTPS,
-			SSLRedirect:               cfgParams.SSLRedirect,
-			ProxyProtocol:             cfgParams.ProxyProtocol,
-			HSTS:                      cfgParams.HSTS,
-			HSTSMaxAge:                cfgParams.HSTSMaxAge,
-			HSTSIncludeSubdomains:     cfgParams.HSTSIncludeSubdomains,
-			HSTSBehindProxy:           cfgParams.HSTSBehindProxy,
-			StatusZone:                statusZone,
-			RealIPHeader:              cfgParams.RealIPHeader,
-			SetRealIPFrom:             cfgParams.SetRealIPFrom,
-			RealIPRecursive:           cfgParams.RealIPRecursive,
-			ProxyHideHeaders:          cfgParams.ProxyHideHeaders,
-			ProxyPassHeaders:          cfgParams.ProxyPassHeaders,
-			ServerSnippets:            cfgParams.ServerSnippets,
-			Ports:                     cfgParams.Ports,
-			SSLPorts:                  cfgParams.SSLPorts,
-			TLSPassthrough:            staticParams.TLSPassthrough,
-			AppProtectEnable:          cfgParams.AppProtectEnable,
-			AppProtectLogEnable:       cfgParams.AppProtectLogEnable,
-			AppProtectDosEnable:       cfgParams.AppProtectDosEnable,
-			AppProtectDosLogEnable:    cfgParams.AppProtectDosLogEnable,
-			AppProtectDosMonitor:      cfgParams.AppProtectDosMonitor,
-			AppProtectDosName:         cfgParams.AppProtectDosName,
-			AppProtectDosAccessLogDst: cfgParams.AppProtectDosAccessLogDst,
-			SpiffeCerts:               cfgParams.SpiffeServerCerts,
+			Name:                  serverName,
+			ServerTokens:          cfgParams.ServerTokens,
+			HTTP2:                 cfgParams.HTTP2,
+			RedirectToHTTPS:       cfgParams.RedirectToHTTPS,
+			SSLRedirect:           cfgParams.SSLRedirect,
+			ProxyProtocol:         cfgParams.ProxyProtocol,
+			HSTS:                  cfgParams.HSTS,
+			HSTSMaxAge:            cfgParams.HSTSMaxAge,
+			HSTSIncludeSubdomains: cfgParams.HSTSIncludeSubdomains,
+			HSTSBehindProxy:       cfgParams.HSTSBehindProxy,
+			StatusZone:            statusZone,
+			RealIPHeader:          cfgParams.RealIPHeader,
+			SetRealIPFrom:         cfgParams.SetRealIPFrom,
+			RealIPRecursive:       cfgParams.RealIPRecursive,
+			ProxyHideHeaders:      cfgParams.ProxyHideHeaders,
+			ProxyPassHeaders:      cfgParams.ProxyPassHeaders,
+			ServerSnippets:        cfgParams.ServerSnippets,
+			Ports:                 cfgParams.Ports,
+			SSLPorts:              cfgParams.SSLPorts,
+			TLSPassthrough:        staticParams.TLSPassthrough,
+			AppProtectEnable:      cfgParams.AppProtectEnable,
+			AppProtectLogEnable:   cfgParams.AppProtectLogEnable,
+			SpiffeCerts:           cfgParams.SpiffeServerCerts,
 		}
 
 		warnings := addSSLConfig(&server, ingEx.Ingress, rule.Host, ingEx.Ingress.Spec.TLS, ingEx.SecretRefs, isWildcardEnabled)
@@ -169,9 +164,14 @@ func generateNginxCfg(ingEx *IngressEx, apResources *appProtectResources, dosRes
 			server.AppProtectLogConfs = apResources.AppProtectLogconfs
 		}
 
-		if hasAppProtectDos {
-			server.AppProtectDosPolicy = dosResources.AppProtectDosPolicy
-			server.AppProtectDosLogConf = dosResources.AppProtectDosLogconfs
+		if hasAppProtectDos && dosResource != nil {
+			server.AppProtectDosEnable = dosResource.AppProtectDosEnable
+			server.AppProtectDosLogEnable = dosResource.AppProtectDosLogEnable
+			server.AppProtectDosMonitor = dosResource.AppProtectDosMonitor
+			server.AppProtectDosName = dosResource.AppProtectDosName
+			server.AppProtectDosAccessLogDst = dosResource.AppProtectDosAccessLogDst
+			server.AppProtectDosPolicyFile = dosResource.AppProtectDosPolicyFile
+			server.AppProtectDosLogConfFile = dosResource.AppProtectDosLogConfFile
 		}
 
 		if !isMinion && cfgParams.JWTKey != "" {
@@ -532,7 +532,7 @@ func upstreamMapToSlice(upstreams map[string]version1.Upstream) []version1.Upstr
 }
 
 func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, apResources *appProtectResources,
-	dosResources *appProtectDosResources, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool,
+	dosResource *appProtectDosResource, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool,
 	staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
 
 	var masterServer version1.Server
@@ -552,7 +552,7 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ap
 	}
 	isMinion := false
 
-	masterNginxCfg, warnings := generateNginxCfg(mergeableIngs.Master, apResources, dosResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
+	masterNginxCfg, warnings := generateNginxCfg(mergeableIngs.Master, apResources, dosResource, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
 
 	// because mergeableIngs.Master.Ingress is a deepcopy of the original master
 	// we need to change the key in the warnings to the original master
@@ -591,8 +591,8 @@ func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, ap
 		isMinion := true
 		// App Protect Resources not allowed in minions - pass empty struct
 		dummyApResources := &appProtectResources{}
-		dummyDosResources := &appProtectDosResources{}
-		nginxCfg, minionWarnings := generateNginxCfg(minion, dummyApResources, dummyDosResources, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
+		dummyDosResource := &appProtectDosResource{}
+		nginxCfg, minionWarnings := generateNginxCfg(minion, dummyApResources, dummyDosResource, isMinion, baseCfgParams, isPlus, isResolverConfigured, staticParams, isWildcardEnabled)
 		warnings.Add(minionWarnings)
 
 		// because minion.Ingress is a deepcopy of the original minion

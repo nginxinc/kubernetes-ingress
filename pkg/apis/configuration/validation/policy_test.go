@@ -13,7 +13,6 @@ func TestValidatePolicy(t *testing.T) {
 		isPlus                bool
 		enablePreviewPolicies bool
 		enableAppProtect      bool
-		enableAppProtectDos   bool
 		msg                   string
 	}{
 		{
@@ -27,7 +26,6 @@ func TestValidatePolicy(t *testing.T) {
 			isPlus:                false,
 			enablePreviewPolicies: false,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 		},
 		{
 			policy: &v1.Policy{
@@ -41,7 +39,6 @@ func TestValidatePolicy(t *testing.T) {
 			isPlus:                true,
 			enablePreviewPolicies: true,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "use jwt(plus only) policy",
 		},
 		{
@@ -72,26 +69,11 @@ func TestValidatePolicy(t *testing.T) {
 			isPlus:                true,
 			enablePreviewPolicies: true,
 			enableAppProtect:      true,
-			enableAppProtectDos:   false,
 			msg:                   "use WAF(plus only) policy",
-		},
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{
-					Dos: &v1.Dos{
-						Enable: true,
-					},
-				},
-			},
-			isPlus:                true,
-			enablePreviewPolicies: true,
-			enableAppProtect:      false,
-			enableAppProtectDos:   true,
-			msg:                   "use Dos(plus only) policy",
 		},
 	}
 	for _, test := range tests {
-		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect, test.enableAppProtectDos)
+		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect)
 		if err != nil {
 			t.Errorf("ValidatePolicy() returned error %v for valid input for the case of %v", err, test.msg)
 		}
@@ -104,7 +86,6 @@ func TestValidatePolicyFails(t *testing.T) {
 		isPlus                bool
 		enablePreviewPolicies bool
 		enableAppProtect      bool
-		enableAppProtectDos   bool
 		msg                   string
 	}{
 		{
@@ -114,7 +95,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                false,
 			enablePreviewPolicies: false,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "empty policy spec",
 		},
 		{
@@ -133,7 +113,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                true,
 			enablePreviewPolicies: true,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "multiple policies in spec",
 		},
 		{
@@ -148,7 +127,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                false,
 			enablePreviewPolicies: true,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "jwt(plus only) policy on OSS",
 		},
 		{
@@ -162,7 +140,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                false,
 			enablePreviewPolicies: true,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "WAF(plus only) policy on OSS",
 		},
 		{
@@ -178,7 +155,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                false,
 			enablePreviewPolicies: false,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "rateLimit policy with preview policies disabled",
 		},
 		{
@@ -193,7 +169,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                true,
 			enablePreviewPolicies: false,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "jwt policy with preview policies disabled",
 		},
 		{
@@ -207,7 +182,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                false,
 			enablePreviewPolicies: false,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "ingressMTLS policy with preview policies disabled",
 		},
 		{
@@ -221,7 +195,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                false,
 			enablePreviewPolicies: false,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "egressMTLS policy with preview policies disabled",
 		},
 		{
@@ -269,7 +242,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                true,
 			enablePreviewPolicies: false,
 			enableAppProtect:      true,
-			enableAppProtectDos:   false,
 			msg:                   "WAF policy with preview policies disabled",
 		},
 		{
@@ -283,54 +255,11 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                true,
 			enablePreviewPolicies: true,
 			enableAppProtect:      false,
-			enableAppProtectDos:   false,
 			msg:                   "WAF policy with AP disabled",
-		},
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{
-					Dos: &v1.Dos{
-						Enable: true,
-					},
-				},
-			},
-			isPlus:                true,
-			enablePreviewPolicies: true,
-			enableAppProtect:      false,
-			enableAppProtectDos:   false,
-			msg:                   "Dos policy with AP Dos disabled",
-		},
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{
-					Dos: &v1.Dos{
-						Enable: true,
-					},
-				},
-			},
-			isPlus:                false,
-			enablePreviewPolicies: true,
-			enableAppProtect:      false,
-			enableAppProtectDos:   true,
-			msg:                   "Dos policy with nginx plus disabled",
-		},
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{
-					Dos: &v1.Dos{
-						Enable: true,
-					},
-				},
-			},
-			isPlus:                true,
-			enablePreviewPolicies: false,
-			enableAppProtect:      false,
-			enableAppProtectDos:   true,
-			msg:                   "Dos policy with enable preview policies disabled",
 		},
 	}
 	for _, test := range tests {
-		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect, test.enableAppProtectDos)
+		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect)
 		if err == nil {
 			t.Errorf("ValidatePolicy() returned no error for invalid input")
 		}
@@ -1256,135 +1185,6 @@ func TestValidateWAFInvalid(t *testing.T) {
 		allErrs := validateWAF(test.waf, field.NewPath("waf"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateWAF() returned no errors for invalid input for the case of %v", test.msg)
-		}
-	}
-}
-
-func TestValidateDos(t *testing.T) {
-	tests := []struct {
-		dos *v1.Dos
-		msg string
-	}{
-		{
-			dos: &v1.Dos{
-				Enable: true,
-			},
-			msg: "dos enabled",
-		},
-		{
-			dos: &v1.Dos{
-				Enable:      true,
-				ApDosPolicy: "ns1/dos-pol",
-			},
-			msg: "cross ns reference",
-		},
-		{
-			dos: &v1.Dos{
-				Enable: true,
-				DosSecurityLog: &v1.DosSecurityLog{
-					Enable:     true,
-					DosLogDest: "8.7.7.7:517",
-				},
-			},
-			msg: "custom logdest",
-		},
-		{
-			dos: &v1.Dos{
-				Enable:           true,
-				DosAccessLogDest: "8.7.7.7:517",
-			},
-			msg: "access log dest",
-		},
-		{
-			dos: &v1.Dos{
-				Enable:       true,
-				ApDosMonitor: "example.com",
-			},
-			msg: "valid url for monitor",
-		},
-		{
-			dos: &v1.Dos{
-				Enable: true,
-				Name:   "example.com",
-			},
-			msg: "valid name",
-		},
-	}
-
-	for _, test := range tests {
-		allErrs := validateDos(test.dos, field.NewPath("dos"))
-		if len(allErrs) != 0 {
-			t.Errorf("validateDos() returned errors %v for valid input for the case of %v", allErrs, test.msg)
-		}
-	}
-}
-
-func TestValidateDosInvalid(t *testing.T) {
-	tests := []struct {
-		dos *v1.Dos
-		msg string
-	}{
-		{
-			dos: &v1.Dos{
-				Enable:      true,
-				ApDosPolicy: "ns1/ap-pol/ns2",
-			},
-			msg: "invalid apDosPolicy format",
-		},
-		{
-			dos: &v1.Dos{
-				Enable: true,
-				DosSecurityLog: &v1.DosSecurityLog{
-					Enable:     true,
-					DosLogDest: "stdout",
-				},
-			},
-			msg: "invalid doslogdest",
-		},
-		{
-			dos: &v1.Dos{
-				Enable: true,
-				DosSecurityLog: &v1.DosSecurityLog{
-					Enable:       true,
-					ApDosLogConf: "ns1/log-conf/ns2",
-				},
-			},
-			msg: "invalid doslogConf format",
-		},
-		{
-			dos: &v1.Dos{
-				Enable:           true,
-				DosAccessLogDest: "fdd8.7.7.7:517",
-			},
-			msg: "invalid access log dest",
-		},
-		{
-			dos: &v1.Dos{
-				Enable:           true,
-				DosAccessLogDest: "8.7.7.7:999999",
-			},
-			msg: "invalid access log dest",
-		},
-		{
-			dos: &v1.Dos{
-				Enable:       true,
-				ApDosMonitor: "example.com/%",
-			},
-			msg: "invalid dos monitor",
-		},
-		{
-			dos: &v1.Dos{
-				Enable: true,
-				Name:   "long_name123456789012345678901234567890123456789012345678901234567890",
-			},
-			msg: "invalid name - long",
-		},
-	}
-
-	for _, test := range tests {
-		allErrs := validateDos(test.dos, field.NewPath("dos"))
-		if len(allErrs) == 0 {
-			t.Errorf("validateDos() returned no errors for invalid input for the case of %v", test.msg)
 		}
 	}
 }

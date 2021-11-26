@@ -10,7 +10,6 @@ spec:
       port: 80
   routes:
     - path: /
-      policies:
-        - name: dos-policy
+      dos: dos-protected
       action:
         pass: webapp

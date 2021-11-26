@@ -61,6 +61,7 @@ func (c *FakeVirtualServers) List(ctx context.Context, opts v1.ListOptions) (res
 func (c *FakeVirtualServers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(virtualserversResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a virtualServer and creates it.  Returns the server's representation of the virtualServer, and an error, if there is any.

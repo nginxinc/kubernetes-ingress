@@ -54,30 +54,6 @@ spec:
                       type: array
                       items:
                         type: string
-                dos:
-                  description: 'Dos defines an Dos policy. policy status: preview'
-                  type: object
-                  properties:
-                    apDosMonitor:
-                      type: string
-                    apDosPolicy:
-                      type: string
-                    dosAccessLogDest:
-                      type: string
-                    dosSecurityLog:
-                      description: DosSecurityLog defines the security log of a Dos policy.
-                      type: object
-                      properties:
-                        apDosLogConf:
-                          type: string
-                        dosLogDest:
-                          type: string
-                        enable:
-                          type: boolean
-                    enable:
-                      type: boolean
-                    name:
-                      type: string
                 egressMTLS:
                   description: 'EgressMTLS defines an Egress MTLS policy. policy status: preview'
                   type: object

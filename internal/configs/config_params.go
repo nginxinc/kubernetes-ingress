@@ -53,13 +53,7 @@ type ConfigParams struct {
 	MainAppProtectCookieSeed               string
 	MainAppProtectCPUThresholds            string
 	MainAppProtectPhysicalMemoryThresholds string
-	AppProtectDosEnable                    string
-	AppProtectDosPolicy                    string
-	AppProtectDosLogConf                   string
-	AppProtectDosLogEnable                 string
-	AppProtectDosMonitor                   string
-	AppProtectDosName                      string
-	AppProtectDosAccessLogDst              string
+	AppProtectDosResource                  string
 	MainAppProtectDosLogFormat             []string
 	MainAppProtectDosLogFormatEscaping     string
 	ProxyBuffering                         bool
@@ -150,32 +144,32 @@ func NewDefaultConfigParams(isPlus bool) *ConfigParams {
 	}
 
 	return &ConfigParams{
-		DefaultServerReturn:             "404",
-		ServerTokens:                    "on",
-		ProxyConnectTimeout:             "60s",
-		ProxyReadTimeout:                "60s",
-		ProxySendTimeout:                "60s",
-		ClientMaxBodySize:               "1m",
-		SSLRedirect:                     true,
-		MainServerNamesHashBucketSize:   "256",
-		MainServerNamesHashMaxSize:      "1024",
-		ProxyBuffering:                  true,
-		MainWorkerProcesses:             "auto",
-		MainWorkerConnections:           "1024",
-		HSTSMaxAge:                      2592000,
-		Ports:                           []int{80},
-		SSLPorts:                        []int{443},
-		MaxFails:                        1,
-		MaxConns:                        0,
-		UpstreamZoneSize:                upstreamZoneSize,
-		FailTimeout:                     "10s",
-		LBMethod:                        "random two least_conn",
-		MainErrorLogLevel:               "notice",
-		ResolverIPV6:                    true,
-		MainKeepaliveTimeout:            "65s",
-		MainKeepaliveRequests:           100,
-		VariablesHashBucketSize:         256,
-		VariablesHashMaxSize:            1024,
+		DefaultServerReturn:           "404",
+		ServerTokens:                  "on",
+		ProxyConnectTimeout:           "60s",
+		ProxyReadTimeout:              "60s",
+		ProxySendTimeout:              "60s",
+		ClientMaxBodySize:             "1m",
+		SSLRedirect:                   true,
+		MainServerNamesHashBucketSize: "256",
+		MainServerNamesHashMaxSize:    "1024",
+		ProxyBuffering:                true,
+		MainWorkerProcesses:           "auto",
+		MainWorkerConnections:         "1024",
+		HSTSMaxAge:                    2592000,
+		Ports:                         []int{80},
+		SSLPorts:                      []int{443},
+		MaxFails:                      1,
+		MaxConns:                      0,
+		UpstreamZoneSize:              upstreamZoneSize,
+		FailTimeout:                   "10s",
+		LBMethod:                      "random two least_conn",
+		MainErrorLogLevel:             "notice",
+		ResolverIPV6:                  true,
+		MainKeepaliveTimeout:          "65s",
+		MainKeepaliveRequests:         100,
+		VariablesHashBucketSize:       256,
+		VariablesHashMaxSize:          1024,
 	}
 }
 
