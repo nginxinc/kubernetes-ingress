@@ -119,7 +119,9 @@ func TestAddOrUpdateDosProtected(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 		},
 	}
@@ -220,7 +222,9 @@ func TestAddOrUpdateDosPolicy(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			ApDosPolicy:      "testing/name",
 		},
@@ -313,7 +317,9 @@ func TestAddOrUpdateDosLogConf(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
 				Enable:       true,
@@ -661,7 +667,9 @@ func TestGetDosEx(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 		},
 	}
@@ -674,7 +682,9 @@ func TestGetDosEx(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
 				Enable:       true,
@@ -692,7 +702,9 @@ func TestGetDosEx(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			ApDosPolicy:      "dosPolicy",
 		},
@@ -706,7 +718,9 @@ func TestGetDosEx(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
 				Enable:       true,
@@ -724,7 +738,9 @@ func TestGetDosEx(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			ApDosPolicy:      "invalid-dosPolicy",
 		},
@@ -848,7 +864,9 @@ func TestGetDosExDosDisabled(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 		},
 	}
@@ -861,7 +879,9 @@ func TestGetDosExDosDisabled(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
 				Enable:       true,
@@ -879,7 +899,9 @@ func TestGetDosExDosDisabled(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			ApDosPolicy:      "dosPolicy",
 		},
@@ -893,7 +915,9 @@ func TestGetDosExDosDisabled(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
 				Enable:       true,
@@ -911,7 +935,9 @@ func TestGetDosExDosDisabled(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			ApDosPolicy:      "invalid-dosPolicy",
 		},
@@ -1031,7 +1057,9 @@ func TestGetDosProtectedThatReferencedDosPolicy(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 		},
 	}
@@ -1044,7 +1072,9 @@ func TestGetDosProtectedThatReferencedDosPolicy(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			ApDosPolicy:      "dosPolicyOne",
 		},
@@ -1058,7 +1088,9 @@ func TestGetDosProtectedThatReferencedDosPolicy(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			ApDosPolicy:      "dev/dosPolicyTwo",
 		},
@@ -1072,7 +1104,9 @@ func TestGetDosProtectedThatReferencedDosPolicy(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			ApDosPolicy:      "dosPolicyTwo",
 		},
@@ -1169,7 +1203,9 @@ func TestGetDosProtectedThatReferencedDosLogConf(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 		},
 	}
@@ -1182,7 +1218,9 @@ func TestGetDosProtectedThatReferencedDosLogConf(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
 				Enable:       true,
@@ -1200,7 +1238,9 @@ func TestGetDosProtectedThatReferencedDosLogConf(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
 				Enable:       true,
@@ -1218,7 +1258,9 @@ func TestGetDosProtectedThatReferencedDosLogConf(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor:     &v1beta1.ApDosMonitor{
+				Uri: "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
 				Enable:       true,

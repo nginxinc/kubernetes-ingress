@@ -41,7 +41,9 @@ func TestUpdateApDosResource(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor: &v1beta1.ApDosMonitor{
+				Uri:       "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 		},
 	}
@@ -54,7 +56,9 @@ func TestUpdateApDosResource(t *testing.T) {
 		Spec: v1beta1.DosProtectedResourceSpec{
 			Enable:           true,
 			Name:             "dos-protected",
-			ApDosMonitor:     "example.com",
+			ApDosMonitor: &v1beta1.ApDosMonitor{
+				Uri:       "example.com",
+			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
 				Enable:       true,
@@ -86,7 +90,7 @@ func TestUpdateApDosResource(t *testing.T) {
 			expected: &appProtectDosResource{
 				AppProtectDosEnable:       "on",
 				AppProtectDosName:         "test-ns/dosOnly/dos-protected",
-				AppProtectDosMonitor:      "example.com",
+				AppProtectDosMonitorUri:      "example.com",
 				AppProtectDosAccessLogDst: "syslog:server=127.0.0.1:5561",
 			},
 			msg: "app protect basic protected config",
@@ -99,7 +103,7 @@ func TestUpdateApDosResource(t *testing.T) {
 			expected: &appProtectDosResource{
 				AppProtectDosEnable:       "on",
 				AppProtectDosName:         "test-ns/dosOnly/dos-protected",
-				AppProtectDosMonitor:      "example.com",
+				AppProtectDosMonitorUri:   "example.com",
 				AppProtectDosAccessLogDst: "syslog:server=127.0.0.1:5561",
 				AppProtectDosPolicyFile:   "/etc/nginx/dos/policies/test-ns_test-name.json",
 			},
@@ -114,7 +118,7 @@ func TestUpdateApDosResource(t *testing.T) {
 			expected: &appProtectDosResource{
 				AppProtectDosEnable:       "on",
 				AppProtectDosName:         "test-ns/dosWithLogConf/dos-protected",
-				AppProtectDosMonitor:      "example.com",
+				AppProtectDosMonitorUri:   "example.com",
 				AppProtectDosAccessLogDst: "syslog:server=127.0.0.1:5561",
 				AppProtectDosPolicyFile:   "/etc/nginx/dos/policies/test-ns_test-name.json",
 				AppProtectDosLogEnable:    true,

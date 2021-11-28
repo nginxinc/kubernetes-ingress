@@ -6,7 +6,10 @@ spec:
   enable: true
   name: "name"
   apDosPolicy: "<NAMESPACE>/dospolicy"
-  apDosMonitor: "dos.example.com"
+  apDosMonitor:
+    uri: "dos.example.com"
+    protocol: "http1"
+    timeout: 5
   dosAccessLogDest: "127.0.0.1:5561"
   dosSecurityLog:
     enable: true

@@ -10,6 +10,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 var appProtectDosPolicyRequiredFields = [][]string{
@@ -157,15 +158,12 @@ func validateAppProtectDosMonitor(apDosMonitor v1beta1.ApDosMonitor) error {
 	}
 
 	if apDosMonitor.Protocol != "" {
-		if !validMonitorProtocol[apDosMonitor.Protocol] {
-			keys := make([]string, len(validMonitorProtocol))
-
-			i := 0
-			for k := range validMonitorProtocol {
-				keys[i] = k
-				i++
-			}
-			return fmt.Errorf("app Protect Dos Monitor Protocol must be: %v", keys)
+		allErrs := field.ErrorList{}
+		fieldPath := field.NewPath("dosMonitorProtocol")
+		allErrs = append(allErrs, validateParameter(apDosMonitor.Protocol, validMonitorProtocol, fieldPath)...)
+		err := allErrs.ToAggregate()
+		if err != nil {
+			return fmt.Errorf("app Protect Dos Monitor Protocol must be: %v", err)
 		}
 	}
 

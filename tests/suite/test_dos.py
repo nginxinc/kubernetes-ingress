@@ -174,10 +174,10 @@ class TestDos:
         """
         Test to verify Dos annotations in nginx config
         """
-        conf_annotations = [
+        conf_directive = [
             f"app_protect_dos_enable on;",
             f"app_protect_dos_security_log_enable on;",
-            f"app_protect_dos_monitor \"dos.example.com\";",
+            f"app_protect_dos_monitor uri=\"dos.example.com\" protocol=http1 timeout=5;",
             f"app_protect_dos_name \"{test_namespace}/dos-protected/name\";",
         ]
 
@@ -198,5 +198,5 @@ class TestDos:
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
-        for _ in conf_annotations:
+        for _ in conf_directive:
             assert _ in result_conf

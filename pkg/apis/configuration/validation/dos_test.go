@@ -2,12 +2,12 @@ package validation
 
 import (
 	"fmt"
-	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"strings"
 	"testing"
 
+	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
+
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func TestValidateDosProtectedResource(t *testing.T) {
@@ -40,8 +40,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:         "name",
-					ApDosMonitor: "example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "example.com",
+					},
 				},
 			},
 			expectErr: "error validating DosProtectedResource:  missing value for field: dosAccessLogDest",
@@ -50,8 +52,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:         "name",
-					ApDosMonitor: "exabad-$%^$-example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "exabad-$%^$-example.com",
+					},
 				},
 			},
 			expectErr: "error validating DosProtectedResource:  invalid field: apDosMonitor err: app Protect Dos Monitor must have valid URL",
@@ -60,8 +64,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:             "name",
-					ApDosMonitor:     "example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "example.com",
+					},
 					DosAccessLogDest: "example.service.com:123",
 				},
 			},
@@ -70,8 +76,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:             "name",
-					ApDosMonitor:     "example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "example.com",
+					},
 					DosAccessLogDest: "bad&$%^logdest",
 				},
 			},
@@ -81,8 +89,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:             "name",
-					ApDosMonitor:     "example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "example.com",
+					},
 					DosAccessLogDest: "example.service.com:123",
 					ApDosPolicy:      "ns/name",
 				},
@@ -93,8 +103,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:             "name",
-					ApDosMonitor:     "example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "example.com",
+					},
 					DosAccessLogDest: "example.service.com:123",
 					ApDosPolicy:      "bad$%^name",
 				},
@@ -105,8 +117,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:             "name",
-					ApDosMonitor:     "example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "example.com",
+					},
 					DosAccessLogDest: "example.service.com:123",
 					DosSecurityLog:   &v1beta1.DosSecurityLog{},
 				},
@@ -117,8 +131,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:             "name",
-					ApDosMonitor:     "example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "example.com",
+					},
 					DosAccessLogDest: "example.service.com:123",
 					DosSecurityLog: &v1beta1.DosSecurityLog{
 						DosLogDest: "service.org:123",
@@ -131,8 +147,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:             "name",
-					ApDosMonitor:     "example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "example.com",
+					},
 					DosAccessLogDest: "example.service.com:123",
 					DosSecurityLog: &v1beta1.DosSecurityLog{
 						DosLogDest:   "service.org:123",
@@ -146,8 +164,10 @@ func TestValidateDosProtectedResource(t *testing.T) {
 		{
 			protected: &v1beta1.DosProtectedResource{
 				Spec: v1beta1.DosProtectedResourceSpec{
-					Name:             "name",
-					ApDosMonitor:     "example.com",
+					Name: "name",
+					ApDosMonitor: &v1beta1.ApDosMonitor{
+						Uri: "example.com",
+					},
 					DosAccessLogDest: "example.service.com:123",
 					DosSecurityLog: &v1beta1.DosSecurityLog{
 						DosLogDest:   "service.org:123",
@@ -349,12 +369,51 @@ func TestValidateAppProtectDosName(t *testing.T) {
 
 func TestValidateAppProtectDosMonitor(t *testing.T) {
 	// Positive test cases
-	posDstAntns := []string{"example.com", "https://example.com/good_path"}
-
-	// Negative test cases item, expected error message
-	negDstAntns := [][]string{
-		{"http://example.com/%", "app Protect Dos Monitor must have valid URL"},
-		{"http://example.com/\\", "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'http://www.example.com', regex used for validation is '([^\"\\\\]|\\\\.)*')"},
+	posDstAntns := []v1beta1.ApDosMonitor{
+		{
+			Uri:      "example.com",
+			Protocol: "http1",
+			Timeout:  5,
+		},
+		{
+			Uri:      "https://example.com/good_path",
+			Protocol: "http2",
+			Timeout:  10,
+		},		
+		{
+			Uri:      "https://example.com/good_path",
+			Protocol: "grpc",
+			Timeout:  10,
+		},
+	}
+	negDstAntns := []struct {
+		apDosMonitor v1beta1.ApDosMonitor
+		msg          string
+	}{
+		{
+			apDosMonitor: v1beta1.ApDosMonitor{
+				Uri:      "http://example.com/%",
+				Protocol: "http1",
+				Timeout:  5,
+			},
+			msg: "app Protect Dos Monitor must have valid URL",
+		},
+		{
+			apDosMonitor: v1beta1.ApDosMonitor{
+				Uri:      "http://example.com/\\",
+				Protocol: "http1",
+				Timeout:  5,
+			},
+			msg: "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'http://www.example.com', regex used for validation is '([^\"\\\\]|\\\\.)*')",
+		},
+		{
+			apDosMonitor: v1beta1.ApDosMonitor{
+				Uri:      "example.com",
+				Protocol: "http3",
+				Timeout:  5,
+			},
+			msg: "app Protect Dos Monitor Protocol must be: dosMonitorProtocol: Invalid value: \"http3\": 'http3' contains an invalid NGINX parameter. Accepted parameters are: http1, http2, grpc",
+		},
 	}
 
 	for _, tCase := range posDstAntns {
@@ -365,40 +424,12 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 	}
 
 	for _, nTCase := range negDstAntns {
-		err := validateAppProtectDosMonitor(nTCase[0])
+		err := validateAppProtectDosMonitor(nTCase.apDosMonitor)
 		if err == nil {
-			t.Errorf("got no error expected error containing %s", nTCase[1])
+			t.Errorf("got no error expected error containing %s", nTCase.msg)
 		} else {
-			if !strings.Contains(err.Error(), nTCase[1]) {
-				t.Errorf("got %v expected to contain: %s", err, nTCase[1])
-			}
-		}
-	}
-}
-
-func TestValidateAppProtectDosMonitorProtocol(t *testing.T) {
-	// Positive test cases
-	posDstAntns := []string{"http1", "http2", "grpc"}
-
-	// Negative test cases item, expected error message
-	negDstAntns := [][]string{
-		{"http3", "Invalid value: \"http3\": 'http3' contains an invalid NGINX parameter. Accepted parameters are: http1, http2, grpc"},
-	}
-
-	for _, tCase := range posDstAntns {
-		allErrs := ValidateAppProtectDosMonitorProtocol(tCase, field.NewPath("protocol"))
-		if len(allErrs) > 0 {
-			t.Errorf("got %v expected nil", allErrs)
-		}
-	}
-
-	for _, nTCase := range negDstAntns {
-		allErrs := ValidateAppProtectDosMonitorProtocol(nTCase[0], field.NewPath("protocol"))
-		if len(allErrs) == 0 {
-			t.Errorf("got no error expected error containing %s", nTCase[1])
-		} else {
-			if !strings.Contains(allErrs.ToAggregate().Error(), nTCase[1]) {
-				t.Errorf("got %v expected to contain: %s", allErrs, nTCase[1])
+			if !strings.Contains(err.Error(), nTCase.msg) {
+				t.Errorf("got %v expected to contain: %s", err, nTCase.msg)
 			}
 		}
 	}
