@@ -6,7 +6,10 @@ spec:
   enable: true
   name: "webapp.example.com"
   apDosPolicy: "dospolicy"
-  apDosMonitor: "webapp.example.com"
+  apDosMonitor:
+    uri: "webapp.example.com"
+    protocol: "http1"
+    timeout: 5
   dosAccessLogDest: "127.0.0.1:5561"
   dosSecurityLog:
     enable: true

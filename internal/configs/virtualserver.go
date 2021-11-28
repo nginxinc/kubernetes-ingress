@@ -2251,7 +2251,9 @@ func generateDosCfg(dosResource *appProtectDosResource) *version2.Dos {
 	dos := &version2.Dos{}
 	dos.Enable = dosResource.AppProtectDosEnable
 	dos.Name = dosResource.AppProtectDosName
-	dos.ApDosMonitor = dosResource.AppProtectDosMonitor
+	dos.ApDosMonitorUri = dosResource.AppProtectDosMonitorUri
+	dos.ApDosMonitorProtocol = dosResource.AppProtectDosMonitorProtocol
+	dos.ApDosMonitorTimeout = dosResource.AppProtectDosMonitorTimeout
 	dos.ApDosAccessLogDest = dosResource.AppProtectDosAccessLogDst
 	dos.ApDosPolicy = dosResource.AppProtectDosPolicyFile
 	dos.ApDosSecurityLogEnable = dosResource.AppProtectDosLogEnable

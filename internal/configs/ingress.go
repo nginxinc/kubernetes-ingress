@@ -167,7 +167,9 @@ func generateNginxCfg(ingEx *IngressEx, apResources *appProtectResources, dosRes
 		if hasAppProtectDos && dosResource != nil {
 			server.AppProtectDosEnable = dosResource.AppProtectDosEnable
 			server.AppProtectDosLogEnable = dosResource.AppProtectDosLogEnable
-			server.AppProtectDosMonitor = dosResource.AppProtectDosMonitor
+			server.AppProtectDosMonitorUri = dosResource.AppProtectDosMonitorUri
+			server.AppProtectDosMonitorProtocol = dosResource.AppProtectDosMonitorProtocol
+			server.AppProtectDosMonitorTimeout = dosResource.AppProtectDosMonitorTimeout
 			server.AppProtectDosName = dosResource.AppProtectDosName
 			server.AppProtectDosAccessLogDst = dosResource.AppProtectDosAccessLogDst
 			server.AppProtectDosPolicyFile = dosResource.AppProtectDosPolicyFile

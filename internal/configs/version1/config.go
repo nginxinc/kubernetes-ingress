@@ -93,19 +93,21 @@ type Server struct {
 	JWTAuth              *JWTAuth
 	JWTRedirectLocations []JWTRedirectLocation
 
-	Ports                     []int
-	SSLPorts                  []int
-	AppProtectEnable          string
-	AppProtectPolicy          string
-	AppProtectLogConfs        []string
-	AppProtectLogEnable       string
-	AppProtectDosEnable       string
-	AppProtectDosPolicyFile   string
-	AppProtectDosLogConfFile  string
-	AppProtectDosLogEnable    bool
-	AppProtectDosMonitor      string
-	AppProtectDosName         string
-	AppProtectDosAccessLogDst string
+	Ports                     	 []int
+	SSLPorts                  	 []int
+	AppProtectEnable          	 string
+	AppProtectPolicy          	 string
+	AppProtectLogConfs        	 []string
+	AppProtectLogEnable       	 string
+	AppProtectDosEnable       	 string
+	AppProtectDosPolicyFile   	 string
+	AppProtectDosLogConfFile  	 string
+	AppProtectDosLogEnable    	 bool
+	AppProtectDosMonitorUri   	 string
+	AppProtectDosMonitorProtocol string
+	AppProtectDosMonitorTimeout  uint64
+	AppProtectDosName            string
+	AppProtectDosAccessLogDst    string
 
 	SpiffeCerts bool
 }

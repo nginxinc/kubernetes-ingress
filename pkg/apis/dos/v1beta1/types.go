@@ -19,14 +19,24 @@ type DosProtectedResourceSpec struct {
 	// Enable enables the DOS feature if set to true
 	Enable bool `json:"enable"`
 	// Name is the name of protected object, max of 63 characters.
-	Name string `json:"name"`
-	// ApDosMonitor is the URL to monitor server's stress. Default value: None, URL will be extracted from the first request which arrives and taken from "Host" header or from destination ip+port.
-	ApDosMonitor string `json:"apDosMonitor"`
+	Name         string        `json:"name"`
+	ApDosMonitor *ApDosMonitor `json:"apDosMonitor"`
 	// DosAccessLogDest is the network address for the access logs
 	DosAccessLogDest string `json:"dosAccessLogDest"`
 	// ApDosPolicy is the namespace/name of a ApDosPolicy resource
 	ApDosPolicy    string          `json:"apDosPolicy"`
 	DosSecurityLog *DosSecurityLog `json:"dosSecurityLog"`
+}
+
+// ApDosMonitor is how NGINX App Protect DoS monitors the stress level of the protected object. The monitor requests are sent from localhost (127.0.0.1). Default value: URI - None, protocol - http1, timeout - NGINX App Protect DoS default.
+type ApDosMonitor struct {
+	// Uri is the destination to the desired protected object in the nginx.conf:
+	Uri string `json:"uri"`
+	// +kubebuilder:validation:Enum=http1;http2;grpc
+	// Protocol determines if the server listens on http1 / http2 / grpc. The default is http1.
+	Protocol string `json:"protocol"`
+	// Timeout determines how long (in seconds) should NGINX App Protect DoS wait for a response. Default is 10 seconds for http1/http2 and 5 seconds for grpc.
+	Timeout uint64 `json:"timeout"`
 }
 
 // DosSecurityLog defines the security log of the DosProtectedResource.

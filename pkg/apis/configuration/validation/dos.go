@@ -36,8 +36,8 @@ func ValidateDosProtectedResource(protected *v1beta1.DosProtectedResource) error
 	}
 
 	// apDosMonitor
-	if protected.Spec.ApDosMonitor != "" {
-		err = validateAppProtectDosMonitor(protected.Spec.ApDosMonitor)
+	if protected.Spec.ApDosMonitor != nil {
+		err = validateAppProtectDosMonitor(*protected.Spec.ApDosMonitor)
 		if err != nil {
 			return fmt.Errorf("error validating DosProtectedResource: %v invalid field: %v err: %w", protected.Name, "apDosMonitor", err)
 		}
@@ -143,32 +143,30 @@ func validateAppProtectDosName(name string) error {
 var validMonitorProtocol = map[string]bool{
 	"http1": true,
 	"http2": true,
-	"grpc": true,
+	"grpc":  true,
 }
 
-func validateAppProtectDosMonitor(monitor string) error {
-	_, err := url.Parse(monitor)
+func validateAppProtectDosMonitor(apDosMonitor v1beta1.ApDosMonitor) error {
+	_, err := url.Parse(apDosMonitor.Uri)
 	if err != nil {
 		return fmt.Errorf("app Protect Dos Monitor must have valid URL")
 	}
 
-	if err := validateEscapedString(monitor, "http://www.example.com"); err != nil {
+	if err := validateEscapedString(apDosMonitor.Uri, "http://www.example.com"); err != nil {
 		return err
 	}
 
-	if !validMonitorProtocol[monitor] {
-		keys := make([]string, len(validMonitorProtocol))
+	if apDosMonitor.Protocol != "" {
+		if !validMonitorProtocol[apDosMonitor.Protocol] {
+			keys := make([]string, len(validMonitorProtocol))
 
-		i := 0
-		for k, _ := range validMonitorProtocol {
+			i := 0
+			for k := range validMonitorProtocol {
 				keys[i] = k
 				i++
+			}
+			return fmt.Errorf("app Protect Dos Monitor Protocol must be: %v", keys)
 		}
-		return fmt.Errorf("App Protect Dos Monitor Protocol must be: %v", keys)
-	}
-
-	if _, err := configs.ParseUint64(monitor); err != nil {
-		return fmt.Errorf("must be a non-negative integer")
 	}
 
 	return nil
