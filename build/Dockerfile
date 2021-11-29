@@ -178,6 +178,18 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig
 
+############################################# Build image for Opentracing with NGINX Plus and NAP ######################################
+FROM debian-plus-nap as opentracing-plus-nap
+
+RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
+	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	apt-get update \
+	&& apt-get install --no-install-recommends --no-install-suggests -y libcurl4 nginx-plus-module-opentracing \
+	&& rm -rf /var/lib/apt/lists/*
+
+RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	&& ldconfig
+
 
 ############################################# Create common files for NGINX Plus #############################################
 FROM $BUILD_OS as plus-common

@@ -18,7 +18,7 @@ export DOCKER_BUILDKIT = 1
 
 .PHONY: help
 help: ## Display this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "; printf "Usage:\n\n    make \033[36m<target>\033[0m [VARIABLE=value...]\n\nTargets:\n\n"}; {printf "    \033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "; printf "Usage:\n\n    make \033[36m<target>\033[0m [VARIABLE=value...]\n\nTargets:\n\n"}; {printf "    \033[36m%-35s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: all
 all: test lint verify-codegen update-crds debian-image
@@ -100,6 +100,10 @@ debian-image-opentracing: build ## Create Docker image for Ingress Controller (w
 .PHONY: debian-image-opentracing-plus
 debian-image-opentracing-plus: build ## Create Docker image for Ingress Controller (with opentracing and plus)
 	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=opentracing-plus
+
+.PHONY: debian-image-opentracing-nap-plus
+debian-image-opentracing-nap-plus: build ## Create Docker image for Ingress Controller (nginx plus with opentracing and nap)
+	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --build-arg BUILD_OS=opentracing-plus-nap
 
 .PHONY: all-images ## Create all the Docker images for Ingress Controller
 all-images: alpine-image alpine-image-plus debian-image debian-image-plus debian-image-nap-plus debian-image-opentracing debian-image-opentracing-plus openshift-image openshift-image-plus openshift-image-nap-plus
