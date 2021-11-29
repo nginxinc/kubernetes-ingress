@@ -1,6 +1,5 @@
 import requests
 import pytest
-import time
 import subprocess
 import os
 
@@ -30,7 +29,7 @@ from suite.resources_utils import (
     write_to_json,
     replace_configmap_from_yaml,
     scale_deployment,
-    get_pods_amount,
+    get_pods_amount, get_first_pod_name,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 from datetime import datetime
@@ -46,7 +45,7 @@ reload_times = {}
 def log_content_to_dic(log_contents):
     arr = []
     for line in log_contents.splitlines():
-        if line.__contains__('dos.example.com'):
+        if line.__contains__('app-protect-dos'):
             arr.append(line)
 
     log_info_dic = []
@@ -80,10 +79,12 @@ class DosSetup:
     """
     Encapsulate the example details.
     Attributes:
-        req_url_http (str):
+        req_url (str):
+        pol_name (str):
+        log_name (str):
     """
-    def __init__(self, req_url_http, pol_name, log_name):
-        self.req_url_http = req_url_http
+    def __init__(self, req_url, pol_name, log_name):
+        self.req_url = req_url
         self.pol_name = pol_name
         self.log_name = log_name
 
@@ -113,7 +114,7 @@ def dos_setup(
 
     print("------------------------- Deploy Dos backend application -------------------------")
     create_example_app(kube_apis, "dos", test_namespace)
-    req_url_http = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/"
+    req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}/"
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(
         ingress_controller_endpoint.public_ip,
@@ -148,7 +149,7 @@ def dos_setup(
 
     request.addfinalizer(fin)
 
-    return DosSetup(req_url_http, pol_name, log_name)
+    return DosSetup(req_url, pol_name, log_name)
 
 
 @pytest.mark.dos
@@ -189,7 +190,8 @@ class TestDos:
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
         ensure_response_from_backend(dos_setup.req_url, ingress_host, check404=True)
 
-        pod_name = get_first_pod_name(kube_apis.v1, "nginx-ingress")
+        # items[-1] because syslog pod is last one to spin-up
+        pod_name = kube_apis.v1.list_namespaced_pod("nginx-ingress").items[-1].metadata.name
 
         result_conf = get_ingress_nginx_template_conf(
             kube_apis.v1, test_namespace, "dos-ingress", pod_name, "nginx-ingress"
@@ -218,6 +220,7 @@ class TestDos:
 
         # items[-1] because syslog pod is last one to spin-up
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
+
         wait_before_test(30)
         create_ingress_with_dos_annotations(
             kube_apis, src_ing_yaml, test_namespace, test_namespace+"/dos-protected"
@@ -227,14 +230,15 @@ class TestDos:
         print("--------- Run test while DOS module is enabled with correct policy ---------")
 
         ensure_response_from_backend(dos_setup.req_url, ingress_host, check404=True)
-        pod_name = get_first_pod_name(kube_apis.v1, "nginx-ingress")
+        # items[-1] because syslog pod is last one to spin-up
+        pod_name = kube_apis.v1.list_namespaced_pod("nginx-ingress").items[-1].metadata.name
         get_ingress_nginx_template_conf(
             kube_apis.v1, test_namespace, "dos-ingress", pod_name, "nginx-ingress"
         )
 
         print("----------------------- Send request ----------------------")
         response = requests.get(
-            dos_setup.req_url_http, headers={"host": "dos.example.com"}, verify=False
+            dos_setup.req_url, headers={"host": "dos.example.com"}, verify=False
         )
         print(response.text)
         wait_before_test(10)
@@ -263,12 +267,12 @@ class TestDos:
         log_loc = f"/var/log/messages"
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
-        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
+
         wait_before_test(30)
 
         print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
-            kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
+            kube_apis, src_ing_yaml, test_namespace, test_namespace+"/dos-protected"
         )
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 
@@ -276,7 +280,7 @@ class TestDos:
         wait_before_test(10)
         print("start bad clients requests")
         p_attack = subprocess.Popen(
-            [f"exec {TEST_DATA}/dos/bad_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
+            [f"exec {TEST_DATA}/dos/bad_clients_xff.sh {ingress_host} {dos_setup.req_url}"],
             shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         print("Attack for 30 seconds")
@@ -285,8 +289,8 @@ class TestDos:
         print("Stop Attack")
         p_attack.terminate()
 
-        print("wait max 120 seconds after attack stop, to get attack ended")
-        find_in_log(kube_apis, log_loc, syslog_pod, test_namespace, 120, "attack_event=\"Attack ended\"")
+        print("wait max 140 seconds after attack stop, to get attack ended")
+        find_in_log(kube_apis, log_loc, syslog_pod, test_namespace, 140, "attack_event=\"Attack ended\"")
 
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
         log_info_dic = log_content_to_dic(log_contents)
@@ -314,7 +318,10 @@ class TestDos:
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
         assert (
-                no_attack and attack_started and under_attack and attack_ended
+                no_attack
+                and attack_started
+                and under_attack
+                and attack_ended
         )
 
     def test_dos_under_attack_with_learning(
@@ -329,18 +336,17 @@ class TestDos:
         log_loc = f"/var/log/messages"
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
-        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
         wait_before_test(30)
         print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
-            kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
+            kube_apis, src_ing_yaml, test_namespace, test_namespace+"/dos-protected"
         )
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 
         print("------------------------- Learning Phase -----------------------------")
         print("start good clients requests")
         p_good_client = subprocess.Popen(
-            [f"exec {TEST_DATA}/dos/good_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
+            [f"exec {TEST_DATA}/dos/good_clients_xff.sh {ingress_host} {dos_setup.req_url}"],
             preexec_fn=os.setsid, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         print("Learning for max 10 minutes")
@@ -349,7 +355,7 @@ class TestDos:
         print("------------------------- Attack -----------------------------")
         print("start bad clients requests")
         p_attack = subprocess.Popen(
-            [f"exec {TEST_DATA}/dos/bad_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
+            [f"exec {TEST_DATA}/dos/bad_clients_xff.sh {ingress_host} {dos_setup.req_url}"],
             preexec_fn=os.setsid, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         print("Attack for 300 seconds")
@@ -358,8 +364,8 @@ class TestDos:
         print("Stop Attack")
         p_attack.terminate()
 
-        print("wait max 120 seconds after attack stop, to get attack ended")
-        find_in_log(kube_apis, log_loc, syslog_pod, test_namespace, 120, "attack_event=\"Attack ended\"")
+        print("wait max 140 seconds after attack stop, to get attack ended")
+        find_in_log(kube_apis, log_loc, syslog_pod, test_namespace, 140, "attack_event=\"Attack ended\"")
 
         print("Stop Good Client")
         p_good_client.terminate()
@@ -428,18 +434,17 @@ class TestDos:
         log_loc = f"/var/log/messages"
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
-        syslog_ep = get_service_endpoint(kube_apis, "syslog-svc", test_namespace)
         wait_before_test(30)
         print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
-            kube_apis, src_ing_yaml, test_namespace, "True", "True", "514"
+            kube_apis, src_ing_yaml, test_namespace, test_namespace+"/dos-protected"
         )
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 
         # print("------------------------- Learning Phase -----------------------------")
         print("start good clients requests")
         p_good_client = subprocess.Popen(
-            [f"exec {TEST_DATA}/dos/good_clients_xff.sh {ingress_host} {dos_setup.req_url_http}"],
+            [f"exec {TEST_DATA}/dos/good_clients_xff.sh {ingress_host} {dos_setup.req_url}"],
             preexec_fn=os.setsid, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
         print("Learning for max 10 minutes")
