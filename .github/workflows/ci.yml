@@ -35,6 +35,10 @@ env:
   GIT_NAME: NGINX Kubernetes Team
   GIT_MAIL: kubernetes@nginx.com
 
+concurrency:
+  group: ${{ github.ref_name }}-ci
+  cancel-in-progress: true
+
 jobs:
 
   checks:
@@ -44,10 +48,6 @@ jobs:
       go_version: ${{ steps.vars.outputs.go_version }}
       go_path: ${{ steps.go.outputs.go_path }}
     steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Cache Go controller tools

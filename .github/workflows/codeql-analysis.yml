@@ -9,6 +9,10 @@ on:
   schedule:
     - cron: '36 6 * * 4'
 
+concurrency:
+  group: ${{ github.ref_name }}-codeql
+  cancel-in-progress: true
+
 jobs:
   analyze:
     name: Analyze
@@ -20,10 +24,6 @@ jobs:
         language: [ 'go', 'python' ]
 
     steps:
-    - name: Cancel Previous Runs
-      uses: styfle/cancel-workflow-action@0.9.1
-      with:
-        access_token: ${{ secrets.GITHUB_TOKEN }}
     - name: Checkout repository
       uses: actions/checkout@v2
 
