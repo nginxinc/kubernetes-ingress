@@ -42,7 +42,7 @@ def create_ap_waf_policy_from_yaml(
     appolicy,
     aplogconf,
     logdest,
-) -> None:
+) -> str:
     """
     Create a Policy based on yaml file.
 
@@ -55,7 +55,7 @@ def create_ap_waf_policy_from_yaml(
     :param appolicy: AppProtect policy name
     :param aplogconf: Logconf name
     :param logdest: AP log destination (syslog)
-    :return: None
+    :return: str
     """
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
@@ -70,6 +70,7 @@ def create_ap_waf_policy_from_yaml(
             "k8s.nginx.org", "v1", namespace, "policies", dep
         )
         print(f"Policy created: {dep}")
+        return dep["metadata"]["name"]
     except ApiException:
         logging.exception(f"Exception occurred while creating Policy: {dep['metadata']['name']}")
         raise

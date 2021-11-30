@@ -63,7 +63,6 @@ def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_nam
 
 @pytest.mark.vs
 @pytest.mark.smoke
-@pytest.mark.ciara
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-grpc"})],
