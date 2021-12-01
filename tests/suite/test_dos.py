@@ -176,7 +176,7 @@ class TestDos:
         conf_directive = [
             f"app_protect_dos_enable on;",
             f"app_protect_dos_security_log_enable on;",
-            f"app_protect_dos_monitor \"dos.example.com\";",
+            f"app_protect_dos_monitor uri=\"dos.example.com\" protocol=http1 timeout=5;",
             f"app_protect_dos_name \"{test_namespace}/dos-protected/name\";",
             f"app_protect_dos_policy_file /etc/nginx/dos/policies/{test_namespace}_{dos_setup.pol_name}.json;",
             f"app_protect_dos_security_log_enable on;",

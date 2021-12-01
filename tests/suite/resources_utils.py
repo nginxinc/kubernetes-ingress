@@ -1082,6 +1082,7 @@ def delete_dos_arbitrator(apps_v1_api: AppsV1Api, name, namespace) -> None:
     :return:
     """
     delete_deployment(apps_v1_api, name, namespace)
+    delete_service(apps_v1_api, name, namespace)
 
 def create_ns_and_sa_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
     """

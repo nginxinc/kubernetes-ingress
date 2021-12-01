@@ -612,6 +612,10 @@ def crd_ingress_controller_with_ap(
         )
         print("Remove ap-rbac")
         cleanup_rbac(kube_apis.rbac_v1, rbac)
+        print("Remove dos arbitrator:")
+        delete_dos_arbitrator(
+            kube_apis.apps_v1_api, dos_arbitrator_name, namespace
+        )
         print("Remove the IC:")
         delete_ingress_controller(
             kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
@@ -633,6 +637,10 @@ def crd_ingress_controller_with_ap(
         )
         print("Remove ap-rbac")
         cleanup_rbac(kube_apis.rbac_v1, rbac)
+        print("Remove dos arbitrator:")
+        delete_dos_arbitrator(
+            kube_apis.apps_v1_api, dos_arbitrator_name, namespace
+        )
         print("Remove the IC:")
         delete_ingress_controller(
             kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
