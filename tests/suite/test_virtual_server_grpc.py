@@ -1,7 +1,5 @@
 import grpc
 import pytest
-import time
-from kubernetes.client.rest import ApiException
 
 from settings import TEST_DATA, DEPLOYMENTS
 from suite.custom_assertions import assert_event_starts_with_text_and_contains_errors, \
@@ -10,7 +8,8 @@ from suite.grpc.helloworld_pb2 import HelloRequest
 from suite.grpc.helloworld_pb2_grpc import GreeterStub
 from suite.resources_utils import create_example_app, wait_until_all_pods_are_ready, \
     delete_common_app, create_secret_from_yaml, replace_configmap_from_yaml, \
-    delete_items_from_yaml, get_first_pod_name, get_events, wait_before_test, scale_deployment
+    delete_items_from_yaml, get_first_pod_name, get_events, wait_before_test, \
+    scale_deployment, get_last_log_entry
 from suite.ssl_utils import get_certificate
 from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, \
     patch_virtual_server_from_yaml
@@ -155,10 +154,14 @@ class TestVirtualServerGrpc:
             except grpc.RpcError as e:
                 print(e.details())
                 pytest.fail("RPC error was not expected during call, exiting...")
+        # Assert grpc_status is in the logs. The gRPC response in a successful call is 0.
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        last_log = get_last_log_entry(kube_apis.v1, ic_pod_name, ingress_controller_prerequisites.namespace)
+        assert '"POST /helloworld.Greeter/SayHello HTTP/2.0" 200 0' in last_log
 
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "grpc1", virtual_server_setup.namespace, 0)
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "grpc2", virtual_server_setup.namespace, 0)
-        time.sleep(1)
+        wait_before_test()
 
         with grpc.secure_channel(target, credentials, options) as channel:
             stub = GreeterStub(channel)
@@ -169,6 +172,11 @@ class TestVirtualServerGrpc:
                 pytest.fail("RPC error was expected during call, exiting...")
             except grpc.RpcError as e:
                 print(e)
+        # Assert the grpc_status is also in the logs.
+        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        wait_before_test()
+        last_log = get_last_log_entry(kube_apis.v1, ic_pod_name, ingress_controller_prerequisites.namespace)
+        assert '"POST /helloworld.Greeter/SayHello HTTP/2.0" 204 14' in last_log
 
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_config_after_enable_tls(self, kube_apis, ingress_controller_prerequisites,
@@ -229,7 +237,6 @@ class TestVirtualServerGrpcHealthCheck:
         wait_before_test(2)
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)        
         vs_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        print(vs_events)
         assert_event_starts_with_text_and_contains_errors(vs_event_text, vs_events, invalid_fields)
         assert_vs_conf_not_exists(kube_apis, ic_pod_name, ingress_controller_prerequisites.namespace,
                                   virtual_server_setup)

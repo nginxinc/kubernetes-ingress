@@ -1400,3 +1400,15 @@ def write_to_json(fname, data) -> None:
 
     with open(f"json_files/{fname}", "w+") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
+
+
+def get_last_log_entry(kube_apis, pod_name, namespace) -> str:
+    """
+    :param kube_apis: kube apis
+    :param pod_name: the name of the pod
+    :param namespace: the namespace
+    """
+    logs = kube_apis.read_namespaced_pod_log(pod_name, namespace)
+    # Our log entries end in '\n' which means the final entry when we split on a new line
+    # is an empty string. Return the second to last entry instead.
+    return logs.split('\n')[-2]
