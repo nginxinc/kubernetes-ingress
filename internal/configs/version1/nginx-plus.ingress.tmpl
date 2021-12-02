@@ -88,7 +88,7 @@ server {
 	{{- end}}
 	{{- if $server.AppProtectDosMonitorUri}}
 		{{- if or $server.AppProtectDosMonitorProtocol $server.AppProtectDosMonitorTimeout}}
-	app_protect_dos_monitor uri="{{$server.AppProtectDosMonitorUri}}"{{if $server.AppProtectDosMonitorProtocol}} protocol={{$server.AppProtectDosMonitorProtocol}}{{end}}{{if $server.AppProtectDosMonitorTimeout}} timeout={{$server.AppProtectDosMonitorTimeout}}{{end}};
+	app_protect_dos_monitor uri={{$server.AppProtectDosMonitorUri}}{{if $server.AppProtectDosMonitorProtocol}} protocol={{$server.AppProtectDosMonitorProtocol}}{{end}}{{if $server.AppProtectDosMonitorTimeout}} timeout={{$server.AppProtectDosMonitorTimeout}}{{end}};
 		{{- else}}
 	app_protect_dos_monitor "{{$server.AppProtectDosMonitorUri}}";
 		{{- end}}

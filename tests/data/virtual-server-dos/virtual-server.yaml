@@ -1,16 +1,16 @@
 apiVersion: k8s.nginx.org/v1
 kind: VirtualServer
 metadata:
-  name: webapp
+  name: dosapp
 spec:
-  host: webapp.example.com
+  host: dos.example.com
 
   upstreams:
-    - name: webapp
-      service: webapp-svc
+    - name: dosapp
+      service: dos-svc
       port: 80
   routes:
     - path: /
       dos: dos-protected
       action:
-        pass: webapp
+        pass: dosapp

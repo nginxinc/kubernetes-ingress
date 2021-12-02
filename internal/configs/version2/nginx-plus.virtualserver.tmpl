@@ -216,7 +216,7 @@ server {
 
         {{- if .ApDosMonitor }}
             {{- if or .ApDosMonitorProtocol .ApDosMonitorTimeout}}
-    app_protect_dos_monitor uri="{{ .ApDosMonitor }}"{{if .ApDosMonitorProtocol}} protocol={{.ApDosMonitorProtocol}}{{end}}{{if .ApDosMonitorTimeout}} timeout={{.ApDosMonitorTimeout}}{{end}};
+    app_protect_dos_monitor uri={{ .ApDosMonitor }}{{if .ApDosMonitorProtocol}} protocol={{.ApDosMonitorProtocol}}{{end}}{{if .ApDosMonitorTimeout}} timeout={{.ApDosMonitorTimeout}}{{end}};
             {{- else}}
     app_protect_dos_monitor "{{ .ApDosMonitor }}";
             {{- end}}
@@ -394,7 +394,7 @@ server {
 
             {{- if .ApDosMonitorUri }}
                 {{- if or .ApDosMonitorProtocol .ApDosMonitorTimeout}}
-        app_protect_dos_monitor uri="{{ .ApDosMonitorUri }}"{{if .ApDosMonitorProtocol}} protocol={{.ApDosMonitorProtocol}}{{end}}{{if .ApDosMonitorTimeout}} timeout={{.ApDosMonitorTimeout}}{{end}};
+        app_protect_dos_monitor uri={{ .ApDosMonitorUri }}{{if .ApDosMonitorProtocol}} protocol={{.ApDosMonitorProtocol}}{{end}}{{if .ApDosMonitorTimeout}} timeout={{.ApDosMonitorTimeout}}{{end}};
                 {{- else}}
         app_protect_dos_monitor "{{ .ApDosMonitorUri }}";
                 {{- end}}

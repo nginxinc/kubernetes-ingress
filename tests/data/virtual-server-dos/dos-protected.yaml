@@ -6,7 +6,8 @@ spec:
   enable: true
   name: "name"
   apDosPolicy: "dospolicy"
-  apDosMonitor: "webapp.example.com"
+  apDosMonitor:
+    uri: "dos.example.com"
   dosAccessLogDest: "127.0.0.1:5561"
   dosSecurityLog:
     enable: true
