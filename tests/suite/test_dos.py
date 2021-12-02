@@ -25,12 +25,11 @@ from suite.resources_utils import (
     ensure_response_from_backend,
     get_ingress_nginx_template_conf,
     get_file_contents,
-    get_service_endpoint,
     get_test_file_name,
     write_to_json,
     replace_configmap_from_yaml,
     scale_deployment,
-    get_pods_amount, get_first_pod_name,
+    get_pods_amount,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 from datetime import datetime
@@ -383,7 +382,7 @@ class TestDos:
                 and under_attack
                 and attack_ended
                 and health_ok
-                and (health_ok_time - start_attack_time).total_seconds() < 100
+                and (health_ok_time - start_attack_time).total_seconds() < 150
                 and signature_detected
                 and bad_actor_detected
                 and len(bad_ip) == 0

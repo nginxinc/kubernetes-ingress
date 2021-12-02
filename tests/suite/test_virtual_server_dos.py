@@ -12,9 +12,6 @@ from suite.custom_resources_utils import (
     delete_dos_policy,
     delete_dos_logconf,
     delete_dos_protected,
-    get_vs_nginx_template_conf,
-    create_virtual_server_from_yaml,
-    delete_virtual_server,
 )
 from suite.dos_utils import find_in_log, log_content_to_dic
 from suite.resources_utils import (
@@ -24,13 +21,16 @@ from suite.resources_utils import (
     create_items_from_yaml,
     delete_items_from_yaml,
     delete_common_app,
-    create_ingress_with_dos_annotations,
     ensure_response_from_backend,
     get_file_contents,
-    replace_configmap_from_yaml, ensure_connection_to_public_endpoint, nginx_reload, scale_deployment, get_pods_amount,
+    replace_configmap_from_yaml,
+    nginx_reload,
+    scale_deployment,
+    get_pods_amount,
 )
+from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server, \
+    get_vs_nginx_template_conf
 from suite.yaml_utils import (
-    get_first_ingress_host_from_yaml,
     get_first_host_from_yaml,
     get_paths_from_vs_yaml,
 )
@@ -400,7 +400,7 @@ class TestDos:
                 and under_attack
                 and attack_ended
                 and health_ok
-                and (health_ok_time - start_attack_time).total_seconds() < 100
+                and (health_ok_time - start_attack_time).total_seconds() < 150
                 and signature_detected
                 and bad_actor_detected
                 and len(bad_ip) == 0
