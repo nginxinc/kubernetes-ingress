@@ -1252,7 +1252,7 @@ func validateGrpcService(service string, fieldPath *field.Path) field.ErrorList 
 	allErrs := field.ErrorList{}
 
 	if service == "" {
-		return append(allErrs, field.Required(fieldPath, ""))
+		return allErrs
 	}
 
 	if !grpcRegexp.MatchString(service) {

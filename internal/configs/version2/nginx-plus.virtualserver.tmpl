@@ -447,6 +447,7 @@ server {
         {{ if $ssl.HTTP2 }}
 	location @grpc_deadline_exceeded {
         default_type application/grpc;
+        add_header content-type application/grpc;
         add_header grpc-status 4;
         add_header grpc-message 'deadline exceeded';
         return 204;
@@ -454,6 +455,7 @@ server {
 
     location @grpc_permission_denied {
         default_type application/grpc;
+        add_header content-type application/grpc;
         add_header grpc-status 7;
         add_header grpc-message 'permission denied';
         return 204;
@@ -461,6 +463,7 @@ server {
 
     location @grpc_resource_exhausted {
         default_type application/grpc;
+        add_header content-type application/grpc;
         add_header grpc-status 8;
         add_header grpc-message 'resource exhausted';
         return 204;
@@ -468,6 +471,7 @@ server {
 
     location @grpc_unimplemented {
         default_type application/grpc;
+        add_header content-type application/grpc;
         add_header grpc-status 12;
         add_header grpc-message unimplemented;
         return 204;
@@ -475,6 +479,7 @@ server {
 
     location @grpc_internal {
         default_type application/grpc;
+        add_header content-type application/grpc;
         add_header grpc-status 13;
         add_header grpc-message 'internal error';
         return 204;
@@ -482,6 +487,7 @@ server {
 
     location @grpc_unavailable {
         default_type application/grpc;
+        add_header content-type application/grpc;
         add_header grpc-status 14;
         add_header grpc-message unavailable;
         return 204;
@@ -489,6 +495,7 @@ server {
 
     location @grpc_unauthenticated {
         default_type application/grpc;
+        add_header content-type application/grpc;
         add_header grpc-status 16;
         add_header grpc-message unauthenticated;
         return 204;

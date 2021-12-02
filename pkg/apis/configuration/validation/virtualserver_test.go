@@ -2354,33 +2354,46 @@ func TestValidateUpstreamHealthCheck(t *testing.T) {
 }
 
 func TestValidateGrpcUpstreamHealthCheck(t *testing.T) {
-	hc := &v1.HealthCheck{
-		Enable:   true,
-		Interval: "4s",
-		Jitter:   "2s",
-		Fails:    3,
-		Passes:   2,
-		Port:     8080,
-		TLS: &v1.UpstreamTLS{
-			Enable: true,
-		},
-		ConnectTimeout: "1s",
-		ReadTimeout:    "1s",
-		SendTimeout:    "1s",
-		Headers: []v1.Header{
-			{
-				Name:  "Host",
-				Value: "my.service",
+	tests := []struct {
+		hc *v1.HealthCheck
+	}{
+		{
+			hc: &v1.HealthCheck{
+				Enable:   true,
+				Interval: "4s",
+				Jitter:   "2s",
+				Fails:    3,
+				Passes:   2,
+				Port:     8080,
+				TLS: &v1.UpstreamTLS{
+					Enable: true,
+				},
+				ConnectTimeout: "1s",
+				ReadTimeout:    "1s",
+				SendTimeout:    "1s",
+				Headers: []v1.Header{
+					{
+						Name:  "Host",
+						Value: "my.service",
+					},
+				},
+				GRPCStatus:  createPointerFromInt(12),
+				GRPCService: "tea-servicev2",
 			},
 		},
-		GRPCStatus:  createPointerFromInt(12),
-		GRPCService: "tea-servicev2",
+		{
+			hc: &v1.HealthCheck{
+				Enable: true,
+			},
+		},
 	}
 
-	allErrs := validateUpstreamHealthCheck(hc, "grpc", field.NewPath("healthCheck"))
+	for _, test := range tests {
+		allErrs := validateUpstreamHealthCheck(test.hc, "grpc", field.NewPath("healthCheck"))
 
-	if len(allErrs) != 0 {
-		t.Errorf("validateUpstreamHealthCheck() returned errors for valid input %v", hc)
+		if len(allErrs) != 0 {
+			t.Errorf("validateUpstreamHealthCheck() returned errors for valid input %v", test.hc)
+		}
 	}
 }
 
