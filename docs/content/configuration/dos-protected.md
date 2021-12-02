@@ -30,7 +30,8 @@ metadata:
 spec:
   enable: true
   name: "my-dos"
-  apDosMonitor: "webapp.example.com"
+  apDosMonitor: 
+    uri: "webapp.example.com"
   apDosPolicy: "dospolicy"
   dosSecurityLog:
     enable: true
@@ -44,7 +45,9 @@ spec:
 | ---| ---| ---| --- |
 |``enable`` | Enables NGINX App Protect Dos. | ``bool`` | Yes |
 |``name`` | Name of the protected object, max of 63 characters. | ``string`` | No |
-|``apDosMonitor`` | URL to monitor server's stress. [App Protect Dos policy](#dosprotectedresourceapdosmonitor) Default value: None, URL will be extracted from the first request which arrives and taken from "Host" header or from destination ip+port. | ``string`` | No |
+|``apDosMonitor.uri`` | The destination to the desired protected object. [App Protect Dos monitor](#dosprotectedresourceapdosmonitor) Default value: None, URL will be extracted from the first request which arrives and taken from "Host" header or from destination ip+port. | ``string`` | No |
+|``apDosMonitor.protocol`` | Determines if the server listens on http1 / http2 / grpc. [App Protect Dos monitor](#dosprotectedresourceapdosmonitor) Default value: http1. | ``enum`` | No |
+|``apDosMonitor.timeout`` | Determines how long (in seconds) should NGINX App Protect DoS wait for a response. [App Protect Dos monitor](#dosprotectedresourceapdosmonitor) Default value: 10 seconds for http1/http2 and 5 seconds for grpc. | ``int64`` | No |
 |``apDosPolicy`` | The [App Protect Dos policy](#dosprotectedresourceapdospolicy) of the dos. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.enable`` | Enables security log. | ``bool`` | No |
 |``dosSecurityLog.apDosLogConf`` | The [App Protect Dos log conf](/nginx-ingress-controller/app-protect-dos/configuration/#app-protect-dos-logs) resource. Accepts an optional namespace. | ``string`` | No |
@@ -57,8 +60,7 @@ The `apDosPolicy` is a reference to the policy configuration defined as an `ApDo
 
 ### DosProtectedResource.apDosMonitor
 
-If `apDosMonitor` field is used there will be log for the monitor requests in the log file, example for such log: 
-`$ 127.0.0.1 - - [27/Aug/2021:01:24:51 +0000] "GET / HTTP/1.1" 301 170 "-" "-" "-"`
+This is how NGINX App Protect DoS monitors the stress level of the protected object. The monitor requests are sent from localhost (127.0.0.1).
 
 ### Applying Policies
 

@@ -34,7 +34,8 @@ To enable DOS protection to an Ingress:
    spec:
       enable: true
       name: "my-dos"
-      apDosMonitor: "webapp.example.com"
+      apDosMonitor: 
+         uri: "webapp.example.com"
   ```
 2. Add an annotation to an Ingress that refers to that resource by `namespace/name`:
   ```yaml
@@ -86,7 +87,8 @@ Then add a reference in the `DosProtectedResrouce` to the `ApDosPolicy`:
    spec:
       enable: true
       name: "my-dos"
-      apDosMonitor: "webapp.example.com"
+      apDosMonitor: 
+         uri: "webapp.example.com"
       apDosPolicy: "default/dospolicy"
   ```
 
@@ -147,7 +149,8 @@ Then add a reference in the `DosProtectedResrouce` to the `APDosLogConf`:
    spec:
       enable: true
       name: "my-dos"
-      apDosMonitor: "webapp.example.com"
+      apDosMonitor: 
+         uri: "webapp.example.com"
       dosSecurityLog:
          enable: true
          apDosLogConf: "doslogconf"
