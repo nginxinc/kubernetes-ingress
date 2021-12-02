@@ -27,6 +27,28 @@ const (
 	subRouteContext        = "subroute"
 )
 
+var grpcConflictingErrors = map[int]bool{
+	400: true,
+	401: true,
+	403: true,
+	404: true,
+	405: true,
+	408: true,
+	413: true,
+	414: true,
+	415: true,
+	426: true,
+	429: true,
+	495: true,
+	496: true,
+	497: true,
+	500: true,
+	501: true,
+	502: true,
+	503: true,
+	504: true,
+}
+
 var incompatibleLBMethodsForSlowStart = map[string]bool{
 	"random":                          true,
 	"ip_hash":                         true,
@@ -375,8 +397,12 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 
 	// generates config for VirtualServer routes
 	for _, r := range vsEx.VirtualServer.Spec.Routes {
-		errorPageIndex := len(errorPageLocations)
-		errorPageLocations = append(errorPageLocations, generateErrorPageLocations(errorPageIndex, r.ErrorPages)...)
+		errorPages := errorPageDetails{
+			pages: r.ErrorPages,
+			index: len(errorPageLocations),
+			owner: vsEx.VirtualServer,
+		}
+		errorPageLocations = append(errorPageLocations, generateErrorPageLocations(errorPages.index, errorPages.pages)...)
 
 		// ignore routes that reference VirtualServerRoute
 		if r.Route != "" {
@@ -392,8 +418,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 
 			// store route error pages and route index for the referenced VirtualServerRoute in case they don't define their own
 			if len(r.ErrorPages) > 0 {
-				vsrErrorPagesFromVs[name] = r.ErrorPages
-				vsrErrorPagesRouteIndex[name] = errorPageIndex
+				vsrErrorPagesFromVs[name] = errorPages.pages
+				vsrErrorPagesRouteIndex[name] = errorPages.index
 			}
 
 			// store route policies for the referenced VirtualServerRoute in case they don't define their own
@@ -426,13 +452,13 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 				matchesRoutes,
 				len(splitClients),
 				vsc.cfgParams,
-				r.ErrorPages,
-				errorPageIndex,
+				errorPages,
 				vsLocSnippets,
 				vsc.enableSnippets,
 				len(returnLocations),
 				isVSR,
 				"", "",
+				vsc.warnings,
 			)
 			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 
@@ -444,9 +470,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 			matchesRoutes++
 		} else if len(r.Splits) > 0 {
 			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients),
-				vsc.cfgParams, r.ErrorPages, errorPageIndex, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "")
+				vsc.cfgParams, errorPages, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "", vsc.warnings)
 			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
-
 			splitClients = append(splitClients, cfg.SplitClients...)
 			locations = append(locations, cfg.Locations...)
 			internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
@@ -457,8 +482,8 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 
 			proxySSLName := generateProxySSLName(upstream.Service, vsEx.VirtualServer.Namespace)
 
-			loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, r.ErrorPages, false,
-				errorPageIndex, proxySSLName, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "")
+			loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false,
+				proxySSLName, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "", vsc.warnings)
 			addPoliciesCfgToLocation(routePoliciesCfg, &loc)
 
 			locations = append(locations, loc)
@@ -473,15 +498,18 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 		isVSR := true
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(vsEx.VirtualServer, vsr)
 		for _, r := range vsr.Spec.Subroutes {
-			errorPageIndex := len(errorPageLocations)
-			errorPageLocations = append(errorPageLocations, generateErrorPageLocations(errorPageIndex, r.ErrorPages)...)
-			errorPages := r.ErrorPages
+			errorPages := errorPageDetails{
+				pages: r.ErrorPages,
+				index: len(errorPageLocations),
+				owner: vsr,
+			}
+			errorPageLocations = append(errorPageLocations, generateErrorPageLocations(errorPages.index, errorPages.pages)...)
 			vsrNamespaceName := fmt.Sprintf("%v/%v", vsr.Namespace, vsr.Name)
 			// use the VirtualServer error pages if the route does not define any
 			if r.ErrorPages == nil {
 				if vsErrorPages, ok := vsrErrorPagesFromVs[vsrNamespaceName]; ok {
-					errorPages = vsErrorPages
-					errorPageIndex = vsrErrorPagesRouteIndex[vsrNamespaceName]
+					errorPages.pages = vsErrorPages
+					errorPages.index = vsrErrorPagesRouteIndex[vsrNamespaceName]
 				}
 			}
 
@@ -529,13 +557,13 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 					len(splitClients),
 					vsc.cfgParams,
 					errorPages,
-					errorPageIndex,
 					locSnippets,
 					vsc.enableSnippets,
 					len(returnLocations),
 					isVSR,
 					vsr.Name,
 					vsr.Namespace,
+					vsc.warnings,
 				)
 				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 
@@ -547,7 +575,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 				matchesRoutes++
 			} else if len(r.Splits) > 0 {
 				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams,
-					errorPages, errorPageIndex, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace)
+					errorPages, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace, vsc.warnings)
 				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
 
 				splitClients = append(splitClients, cfg.SplitClients...)
@@ -560,7 +588,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(vsEx *VirtualS
 				proxySSLName := generateProxySSLName(upstream.Service, vsr.Namespace)
 
 				loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false,
-					errorPageIndex, proxySSLName, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace)
+					proxySSLName, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace, vsc.warnings)
 				addPoliciesCfgToLocation(routePoliciesCfg, &loc)
 
 				locations = append(locations, loc)
@@ -1495,9 +1523,16 @@ func generateReturnBlock(text string, code int, defaultCode int) *version2.Retur
 	return returnBlock
 }
 
+type errorPageDetails struct {
+	pages []conf_v1.ErrorPage
+	index int
+	owner runtime.Object
+}
+
 func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, action *conf_v1.Action,
-	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int, proxySSLName string,
-	originalPath string, locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string) (version2.Location, *version2.ReturnLocation) {
+	cfgParams *ConfigParams, errorPages errorPageDetails, internal bool, proxySSLName string,
+	originalPath string, locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string,
+	vsrNamespace string, vscWarnings Warnings) (version2.Location, *version2.ReturnLocation) {
 	locationSnippets := generateSnippets(enableSnippets, locSnippets, cfgParams.LocationSnippets)
 
 	if action.Redirect != nil {
@@ -1508,8 +1543,10 @@ func generateLocation(path string, upstreamName string, upstream conf_v1.Upstrea
 		return generateLocationForReturn(path, cfgParams.LocationSnippets, action.Return, retLocIndex)
 	}
 
-	return generateLocationForProxying(path, upstreamName, upstream, cfgParams, errorPages, internal,
-		errPageIndex, proxySSLName, action.Proxy, originalPath, locationSnippets, isVSR, vsrName, vsrNamespace), nil
+	checkGrpcErrorPageCodes(errorPages, isGRPC(upstream.Type), upstream.Name, vscWarnings)
+
+	return generateLocationForProxying(path, upstreamName, upstream, cfgParams, errorPages.pages, internal,
+		errorPages.index, proxySSLName, action.Proxy, originalPath, locationSnippets, isVSR, vsrName, vsrNamespace), nil
 }
 
 func generateProxySetHeaders(proxy *conf_v1.ActionProxy) []version2.Header {
@@ -1710,8 +1747,7 @@ func generateSplits(
 	variableNamer *variableNamer,
 	scIndex int,
 	cfgParams *ConfigParams,
-	errorPages []conf_v1.ErrorPage,
-	errPageIndex int,
+	errorPages errorPageDetails,
 	originalPath string,
 	locSnippets string,
 	enableSnippets bool,
@@ -1719,6 +1755,7 @@ func generateSplits(
 	isVSR bool,
 	vsrName string,
 	vsrNamespace string,
+	vscWarnings Warnings,
 ) (version2.SplitClient, []version2.Location, []version2.ReturnLocation) {
 	var distributions []version2.Distribution
 
@@ -1746,7 +1783,7 @@ func generateSplits(
 		proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
 		newRetLocIndex := retLocIndex + len(returnLocations)
 		loc, returnLoc := generateLocation(path, upstreamName, upstream, s.Action, cfgParams, errorPages, true,
-			errPageIndex, proxySSLName, originalPath, locSnippets, enableSnippets, newRetLocIndex, isVSR, vsrName, vsrNamespace)
+			proxySSLName, originalPath, locSnippets, enableSnippets, newRetLocIndex, isVSR, vsrName, vsrNamespace, vscWarnings)
 		locations = append(locations, loc)
 		if returnLoc != nil {
 			returnLocations = append(returnLocations, *returnLoc)
@@ -1763,8 +1800,7 @@ func generateDefaultSplitsConfig(
 	variableNamer *variableNamer,
 	scIndex int,
 	cfgParams *ConfigParams,
-	errorPages []conf_v1.ErrorPage,
-	errPageIndex int,
+	errorPages errorPageDetails,
 	originalPath string,
 	locSnippets string,
 	enableSnippets bool,
@@ -1772,9 +1808,10 @@ func generateDefaultSplitsConfig(
 	isVSR bool,
 	vsrName string,
 	vsrNamespace string,
+	vscWarnings Warnings,
 ) routingCfg {
 	sc, locs, returnLocs := generateSplits(route.Splits, upstreamNamer, crUpstreams, variableNamer, scIndex, cfgParams,
-		errorPages, errPageIndex, originalPath, locSnippets, enableSnippets, retLocIndex, isVSR, vsrName, vsrNamespace)
+		errorPages, originalPath, locSnippets, enableSnippets, retLocIndex, isVSR, vsrName, vsrNamespace, vscWarnings)
 
 	splitClientVarName := variableNamer.GetNameForSplitClientVariable(scIndex)
 
@@ -1792,8 +1829,8 @@ func generateDefaultSplitsConfig(
 }
 
 func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream,
-	variableNamer *variableNamer, index int, scIndex int, cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage,
-	errPageIndex int, locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string) routingCfg {
+	variableNamer *variableNamer, index int, scIndex int, cfgParams *ConfigParams, errorPages errorPageDetails,
+	locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string, vscWarnings Warnings) routingCfg {
 	// Generate maps
 	var maps []version2.Map
 
@@ -1876,7 +1913,6 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 				scIndex+scLocalIndex,
 				cfgParams,
 				errorPages,
-				errPageIndex,
 				route.Path,
 				locSnippets,
 				enableSnippets,
@@ -1884,6 +1920,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 				isVSR,
 				vsrName,
 				vsrNamespace,
+				vscWarnings,
 			)
 			scLocalIndex++
 			splitClients = append(splitClients, sc)
@@ -1896,7 +1933,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 			proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
 			newRetLocIndex := retLocIndex + len(returnLocations)
 			loc, returnLoc := generateLocation(path, upstreamName, upstream, m.Action, cfgParams, errorPages, true,
-				errPageIndex, proxySSLName, route.Path, locSnippets, enableSnippets, newRetLocIndex, isVSR, vsrName, vsrNamespace)
+				proxySSLName, route.Path, locSnippets, enableSnippets, newRetLocIndex, isVSR, vsrName, vsrNamespace, vscWarnings)
 			locations = append(locations, loc)
 			if returnLoc != nil {
 				returnLocations = append(returnLocations, *returnLoc)
@@ -1915,7 +1952,6 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 			scIndex+scLocalIndex,
 			cfgParams,
 			errorPages,
-			errPageIndex,
 			route.Path,
 			locSnippets,
 			enableSnippets,
@@ -1923,6 +1959,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 			isVSR,
 			vsrName,
 			vsrNamespace,
+			vscWarnings,
 		)
 		splitClients = append(splitClients, sc)
 		locations = append(locations, locs...)
@@ -1934,7 +1971,7 @@ func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, cr
 		proxySSLName := generateProxySSLName(upstream.Service, upstreamNamer.namespace)
 		newRetLocIndex := retLocIndex + len(returnLocations)
 		loc, returnLoc := generateLocation(path, upstreamName, upstream, route.Action, cfgParams, errorPages, true,
-			errPageIndex, proxySSLName, route.Path, locSnippets, enableSnippets, newRetLocIndex, isVSR, vsrName, vsrNamespace)
+			proxySSLName, route.Path, locSnippets, enableSnippets, newRetLocIndex, isVSR, vsrName, vsrNamespace, vscWarnings)
 		locations = append(locations, loc)
 		if returnLoc != nil {
 			returnLocations = append(returnLocations, *returnLoc)
@@ -2177,6 +2214,24 @@ func generateQueueForPlus(upstreamQueue *conf_v1.UpstreamQueue, defaultTimeout s
 
 func generateErrorPageName(errPageIndex int, index int) string {
 	return fmt.Sprintf("@error_page_%v_%v", errPageIndex, index)
+}
+
+func checkGrpcErrorPageCodes(errorPages errorPageDetails, isGRPC bool, uName string, vscWarnings Warnings) {
+	if errorPages.pages == nil || !isGRPC {
+		return
+	}
+
+	var c []int
+	for _, e := range errorPages.pages {
+		for _, code := range e.Codes {
+			if grpcConflictingErrors[code] {
+				c = append(c, code)
+			}
+		}
+	}
+	if len(c) > 0 {
+		vscWarnings.AddWarningf(errorPages.owner, "The error page configuration for the upstream %s is ignored for status code(s) %v, which cannot be used for GRPC upstreams.", uName, c)
+	}
 }
 
 func generateErrorPageCodes(codes []int) string {

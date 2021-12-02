@@ -244,6 +244,28 @@ server {
         {{ $proxyOrGRPC }}_ssl_name {{ .SSLName }};
         {{ end }}
 
+            {{ if $l.GRPCPass }}
+        error_page 400 = @grpc_internal;
+        error_page 401 = @grpc_unauthenticated;
+        error_page 403 = @grpc_permission_denied;
+        error_page 404 = @grpc_unimplemented;
+        error_page 429 = @grpc_unavailable;
+        error_page 502 = @grpc_unavailable;
+        error_page 503 = @grpc_unavailable;
+        error_page 504 = @grpc_unavailable;
+        error_page 405 = @grpc_internal;
+        error_page 408 = @grpc_deadline_exceeded;
+        error_page 413 = @grpc_resource_exhausted;
+        error_page 414 = @grpc_resource_exhausted;
+        error_page 415 = @grpc_internal;
+        error_page 426 = @grpc_internal;
+        error_page 495 = @grpc_unauthenticated;
+        error_page 496 = @grpc_unauthenticated;
+        error_page 497 = @grpc_internal;
+        error_page 500 = @grpc_internal;
+        error_page 501 = @grpc_internal;
+            {{ end }}
+
         {{ range $e := $l.ErrorPages }}
         error_page {{ $e.Codes }} {{ if ne 0 $e.ResponseCode }}={{ $e.ResponseCode }}{{ end }} "{{ $e.Name }}";
         {{ end }}
@@ -275,28 +297,6 @@ server {
             {{ end }}
             {{ if $l.ProxyBufferSize }}
         {{ $proxyOrGRPC }}_buffer_size {{ $l.ProxyBufferSize }};
-            {{ end }}
-        
-            {{ if $l.GRPCPass }}
-        error_page 400 = @grpc_internal;
-        error_page 401 = @grpc_unauthenticated;
-        error_page 403 = @grpc_permission_denied;
-        error_page 404 = @grpc_unimplemented;
-        error_page 429 = @grpc_unavailable;
-        error_page 502 = @grpc_unavailable;
-        error_page 503 = @grpc_unavailable;
-        error_page 504 = @grpc_unavailable;
-        error_page 405 = @grpc_internal;
-        error_page 408 = @grpc_deadline_exceeded;
-        error_page 413 = @grpc_resource_exhausted;
-        error_page 414 = @grpc_resource_exhausted;
-        error_page 415 = @grpc_internal;
-        error_page 426 = @grpc_internal;
-        error_page 495 = @grpc_unauthenticated;
-        error_page 496 = @grpc_unauthenticated;
-        error_page 497 = @grpc_internal;
-        error_page 500 = @grpc_internal;
-        error_page 501 = @grpc_internal;
             {{ end }}
 
             {{ if not $l.GRPCPass }}
