@@ -15,10 +15,16 @@ spec:
         app: {{ include "arbitrator.name" . }}
     spec:
       containers:
-        - name: {{ include "arbitrator.name" . }}
-          image: "{{ .Values.arbitrator.image.repository }}:{{ .Values.arbitrator.image.tag }}"
-          imagePullPolicy: "{{ .Values.arbitrator.image.pullPolicy }}"
-          resources:
+      - name: {{ include "arbitrator.name" . }}
+        image: "{{ .Values.arbitrator.image.repository }}:{{ .Values.arbitrator.image.tag }}"
+        imagePullPolicy: "{{ .Values.arbitrator.image.pullPolicy }}"
+        resources:
 {{ toYaml .Values.arbitrator.resources | indent 12 }}
-          ports:
-            - containerPort: 3000
+        ports:
+          - containerPort: 3000
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsUser: 1001
+          capabilities:
+            drop:
+              - ALL
