@@ -834,6 +834,31 @@ def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace, print_l
     return result_conf
 
 
+def nginx_reload(v1: CoreV1Api, pod_name, pod_namespace) -> str:
+    """
+    Execute 'nginx -s reload' command in a pod.
+
+    :param v1: CoreV1Api
+    :param pod_name: pod name
+    :param pod_namespace: pod namespace
+    :return: str
+    """
+    command = ["nginx", "-s", "reload"]
+    resp = stream(
+        v1.connect_get_namespaced_pod_exec,
+        pod_name,
+        pod_namespace,
+        command=command,
+        stderr=True,
+        stdin=False,
+        stdout=True,
+        tty=False,
+    )
+    result_conf = str(resp)
+
+    return result_conf
+
+
 def get_ingress_nginx_template_conf(
     v1: CoreV1Api, ingress_namespace, ingress_name, pod_name, pod_namespace
 ) -> str:
@@ -1072,17 +1097,18 @@ def create_dos_arbitrator(
     return name
 
 
-def delete_dos_arbitrator(apps_v1_api: AppsV1Api, name, namespace) -> None:
+def delete_dos_arbitrator(v1: CoreV1Api, apps_v1_api: AppsV1Api, name, namespace) -> None:
     """
     Delete dos arbitrator.
 
-    :param apps_v1_api: NetworkingV1Api
+    :param v1: CoreV1Api
+    :param apps_v1_api: AppsV1Api
     :param name: name
     :param namespace: namespace name
     :return:
     """
     delete_deployment(apps_v1_api, name, namespace)
-    delete_service(apps_v1_api, name, namespace)
+    delete_service(v1, "svc-appprotect-dos-arb", namespace)
 
 def create_ns_and_sa_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
     """

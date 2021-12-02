@@ -12,6 +12,7 @@ from suite.custom_resources_utils import (
     delete_dos_logconf,
     delete_dos_protected,
 )
+from suite.dos_utils import find_in_log, log_content_to_dic
 from suite.resources_utils import (
     wait_before_test,
     create_example_app,
@@ -40,40 +41,6 @@ valid_resp_name = "Server name:"
 invalid_resp_title = "Request Rejected"
 invalid_resp_body = "The requested URL was rejected. Please consult with your administrator."
 reload_times = {}
-
-
-def log_content_to_dic(log_contents):
-    arr = []
-    for line in log_contents.splitlines():
-        if line.__contains__('app-protect-dos'):
-            arr.append(line)
-
-    log_info_dic = []
-    for line in arr:
-        chunks = line.split(",")
-        d = {}
-        for chunk in chunks:
-            tmp = chunk.split("=")
-            if len(tmp) == 2:
-                if 'date_time' in tmp[0]:
-                    tmp[0] = 'date_time'
-                d[tmp[0].strip()] = tmp[1].replace('"', '')
-        log_info_dic.append(d)
-    return log_info_dic
-
-
-def find_in_log(kube_apis, log_location, syslog_pod, namespace, time, value):
-    log_contents = ""
-    retry = 0
-    while (
-            value not in log_contents
-            and retry <= time / 10
-    ):
-        log_contents = get_file_contents(kube_apis.v1, log_location, syslog_pod, namespace, False)
-        retry += 1
-        wait_before_test(10)
-        print(f"{value} Not in log, retrying... #{retry}")
-
 
 class DosSetup:
     """
@@ -176,7 +143,7 @@ class TestDos:
         conf_directive = [
             f"app_protect_dos_enable on;",
             f"app_protect_dos_security_log_enable on;",
-            f"app_protect_dos_monitor uri=\"dos.example.com\" protocol=http1 timeout=5;",
+            f"app_protect_dos_monitor uri=dos.example.com protocol=http1 timeout=5;",
             f"app_protect_dos_name \"{test_namespace}/dos-protected/name\";",
             f"app_protect_dos_policy_file /etc/nginx/dos/policies/{test_namespace}_{dos_setup.pol_name}.json;",
             f"app_protect_dos_security_log_enable on;",
