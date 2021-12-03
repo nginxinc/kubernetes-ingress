@@ -177,10 +177,16 @@ func main() {
 		}()
 	}
 
+	// Start the usage-based metering process, if defined.
+	meteringDone := make(chan error, 1)
+	if startMeteringFn != nil {
+		startMeteringFn(meteringDone)
+	}
+
 	if *appProtect || *appProtectDos {
-		go handleTerminationWithAppProtect(lbc, nginxManager, syslogListener, nginxDone, aPAgentDone, aPPluginDone, aPPDosAgentDone, *appProtect, *appProtectDos)
+		go handleTerminationWithAppProtect(lbc, nginxManager, syslogListener, nginxDone, aPAgentDone, aPPluginDone, aPPDosAgentDone, *appProtect, *appProtectDos, meteringDone)
 	} else {
-		go handleTermination(lbc, nginxManager, syslogListener, nginxDone)
+		go handleTermination(lbc, nginxManager, syslogListener, nginxDone, meteringDone)
 	}
 
 	lbc.Run()
@@ -478,7 +484,7 @@ func processNginxConfig(staticCfgParams *configs.StaticConfigParams, cfgParams *
 	}
 }
 
-func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone chan error) {
+func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone chan error, meteringDone <-chan error) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
@@ -494,12 +500,25 @@ func handleTermination(lbc *k8s.LoadBalancerController, nginxManager nginx.Manag
 			glog.Info("nginx command exited successfully")
 		}
 		exited = true
+	case err := <-meteringDone:
+		if err != nil {
+			glog.Errorf("metering function exited with an error: %v", err)
+			exitStatus = 1
+		} else {
+			glog.Info("metering function exited successfully")
+		}
 	case <-signalChan:
 		glog.Info("Received SIGTERM, shutting down")
 	}
 
 	glog.Info("Shutting down the controller")
 	lbc.Stop()
+
+	if stopMeteringFn != nil {
+		glog.Info("Stopping metering")
+		stopMeteringFn()
+		<-meteringDone
+	}
 
 	if !exited {
 		glog.Info("Shutting down NGINX")
@@ -540,7 +559,7 @@ func getAndValidateSecret(kubeClient *kubernetes.Clientset, secretNsName string)
 	return secret, nil
 }
 
-func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone, agentDone, pluginDone, agentDosDone chan error, appProtectEnabled, appProtectDosEnabled bool) {
+func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManager nginx.Manager, listener metrics.SyslogListener, nginxDone, agentDone, pluginDone, agentDosDone chan error, appProtectEnabled, appProtectDosEnabled bool, meteringDone <-chan error) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGTERM)
 
@@ -553,6 +572,8 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 		glog.Fatalf("AppProtectAgent command exited unexpectedly with status: %v", err)
 	case err := <-agentDosDone:
 		glog.Fatalf("AppProtectDosAgent command exited unexpectedly with status: %v", err)
+	case err := <-meteringDone:
+		glog.Fatalf("Metering function exited unexpectedly with status: %v", err)
 	case <-signalChan:
 		glog.Infof("Received SIGTERM, shutting down")
 		lbc.Stop()
@@ -567,6 +588,10 @@ func handleTerminationWithAppProtect(lbc *k8s.LoadBalancerController, nginxManag
 		if appProtectDosEnabled {
 			nginxManager.AppProtectDosAgentQuit()
 			<-agentDosDone
+		}
+		if stopMeteringFn != nil {
+			stopMeteringFn()
+			<-meteringDone
 		}
 		listener.Stop()
 	}

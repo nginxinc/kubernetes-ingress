@@ -193,6 +193,11 @@ var (
 		`Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack`)
 
 	startupCheckFn func() error
+	// Optional function to start a metering process for usage-based billing,
+	// that will write errors to the supplied channel.
+	startMeteringFn func(chan<- error)
+	// Optional function to stop a metering process for usage-based billing.
+	stopMeteringFn func()
 )
 
 //gocyclo:ignore

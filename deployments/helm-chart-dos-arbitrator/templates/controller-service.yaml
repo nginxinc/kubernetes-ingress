@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: svc-appprotect-dos-arb
+  name: {{ default "svc-appprotect-dos-arb" .Values.arbitrator.serviceName }}
   namespace:  {{ .Release.Namespace }}
   labels: {{- include "arbitrator.labels" . | nindent 4 }}
 spec:

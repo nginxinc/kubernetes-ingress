@@ -142,6 +142,10 @@ spec:
             fieldRef:
               fieldPath: spec.serviceAccountName
 {{- end }}
+{{- if .Values.controller.gcpReportingSecret }}
+        - name: GCP_REPORTING_SECRET_NAME
+          value: $(POD_NAMESPACE)/{{ .Values.controller.gcpReportingSecret }}
+{{- end }}
         resources:
 {{ toYaml .Values.controller.resources | indent 10 }}
         args:

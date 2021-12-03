@@ -147,6 +147,10 @@ spec:
             fieldRef:
               fieldPath: spec.serviceAccountName
 {{- end }}
+{{- if .Values.controller.gcpReportingSecret }}
+        - name: GCP_REPORTING_SECRET_NAME
+          value: $(POD_NAMESPACE)/{{ .Values.controller.gcpReportingSecret }}
+{{- end }}
         args:
           - -nginx-plus={{ .Values.controller.nginxplus }}
           - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}

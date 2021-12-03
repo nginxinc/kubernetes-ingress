@@ -269,6 +269,16 @@ LABEL org.nginx.kic.image.build.version="aws"
 COPY --link --chown=101:0 dist/aws*${NAP_MODULES_AWS}_linux_${TARGETARCH}*/nginx-ingress /
 
 
+############################################# Create image with nginx-ingress built by GoReleaser for GCP Marketplace #############################################
+FROM common AS gcp
+ARG TARGETARCH
+ARG NAP_MODULES_GCP
+
+LABEL org.nginx.kic.image.build.version="gcp"
+
+COPY --link --chown=101:0 dist/gcp*${NAP_MODULES_GCP}_linux_$TARGETARCH*/nginx-ingress /
+
+
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
 FROM nginx/nginx-ingress:${DOWNLOAD_TAG} as kic
 
