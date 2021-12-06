@@ -7,7 +7,7 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectcommon"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -345,7 +345,7 @@ func (ci *ConfigurationImpl) verifyPolicyAgainstUserSigs(policy *PolicyEx) bool 
 
 // AddOrUpdatePolicy adds or updates an App Protect Policy to App Protect Configuration
 func (ci *ConfigurationImpl) AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(policyObj)
+	resNsName := appprotectcommon.GetNsName(policyObj)
 	policy, err := createAppProtectPolicyEx(policyObj)
 	if err != nil {
 		ci.Policies[resNsName] = policy
@@ -365,7 +365,7 @@ func (ci *ConfigurationImpl) AddOrUpdatePolicy(policyObj *unstructured.Unstructu
 
 // AddOrUpdateLogConf adds or updates App Protect Log Configuration to App Protect Configuration
 func (ci *ConfigurationImpl) AddOrUpdateLogConf(logconfObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(logconfObj)
+	resNsName := appprotectcommon.GetNsName(logconfObj)
 	logConf, err := createAppProtectLogConfEx(logconfObj)
 	ci.LogConfs[resNsName] = logConf
 	if err != nil {
@@ -377,7 +377,7 @@ func (ci *ConfigurationImpl) AddOrUpdateLogConf(logconfObj *unstructured.Unstruc
 
 // AddOrUpdateUserSig adds or updates App Protect User Defined Signature to App Protect Configuration
 func (ci *ConfigurationImpl) AddOrUpdateUserSig(userSigObj *unstructured.Unstructured) (change UserSigChange, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(userSigObj)
+	resNsName := appprotectcommon.GetNsName(userSigObj)
 	userSig, err := createAppProtectUserSigEx(userSigObj)
 	ci.UserSigs[resNsName] = userSig
 	if err != nil {
@@ -567,7 +567,7 @@ func NewFakeConfiguration() Configuration {
 
 // AddOrUpdatePolicy adds or updates an App Protect Policy to App Protect Configuration
 func (fc *FakeConfiguration) AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(policyObj)
+	resNsName := appprotectcommon.GetNsName(policyObj)
 	policy := &PolicyEx{
 		Obj:     policyObj,
 		IsValid: true,
@@ -578,7 +578,7 @@ func (fc *FakeConfiguration) AddOrUpdatePolicy(policyObj *unstructured.Unstructu
 
 // AddOrUpdateLogConf adds or updates App Protect Log Configuration to App Protect Configuration
 func (fc *FakeConfiguration) AddOrUpdateLogConf(logConfObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(logConfObj)
+	resNsName := appprotectcommon.GetNsName(logConfObj)
 	logConf := &LogConfEx{
 		Obj:     logConfObj,
 		IsValid: true,

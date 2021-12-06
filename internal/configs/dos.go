@@ -2,15 +2,15 @@ package configs
 
 // appProtectDosResource holds the file names of APDosPolicy and APDosLogConf resources used in an Ingress resource.
 type appProtectDosResource struct {
-	AppProtectDosEnable       	 string
-	AppProtectDosLogEnable    	 bool
-	AppProtectDosMonitorUri   	 string
+	AppProtectDosEnable          string
+	AppProtectDosLogEnable       bool
+	AppProtectDosMonitorURI      string
 	AppProtectDosMonitorProtocol string
 	AppProtectDosMonitorTimeout  uint64
-	AppProtectDosName         	 string
-	AppProtectDosAccessLogDst 	 string
-	AppProtectDosPolicyFile   	 string
-	AppProtectDosLogConfFile  	 string
+	AppProtectDosName            string
+	AppProtectDosAccessLogDst    string
+	AppProtectDosPolicyFile      string
+	AppProtectDosLogConfFile     string
 }
 
 func getAppProtectDosResource(dosEx *DosEx) *appProtectDosResource {
@@ -25,9 +25,9 @@ func getAppProtectDosResource(dosEx *DosEx) *appProtectDosResource {
 		dosResource.AppProtectDosEnable = "on"
 	}
 	dosResource.AppProtectDosName = protected.Namespace + "/" + protected.Name + "/" + protected.Spec.Name
-	
+
 	if protected.Spec.ApDosMonitor != nil {
-		dosResource.AppProtectDosMonitorUri = protected.Spec.ApDosMonitor.Uri
+		dosResource.AppProtectDosMonitorURI = protected.Spec.ApDosMonitor.URI
 		dosResource.AppProtectDosMonitorProtocol = protected.Spec.ApDosMonitor.Protocol
 		dosResource.AppProtectDosMonitorTimeout = protected.Spec.ApDosMonitor.Timeout
 	}

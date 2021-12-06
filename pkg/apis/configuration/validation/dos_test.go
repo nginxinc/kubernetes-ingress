@@ -42,7 +42,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "example.com",
+						URI: "example.com",
 					},
 				},
 			},
@@ -54,7 +54,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "exabad-$%^$-example.com",
+						URI: "exabad-$%^$-example.com",
 					},
 				},
 			},
@@ -66,7 +66,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "example.com",
+						URI: "example.com",
 					},
 					DosAccessLogDest: "example.service.com:123",
 				},
@@ -78,7 +78,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "example.com",
+						URI: "example.com",
 					},
 					DosAccessLogDest: "bad&$%^logdest",
 				},
@@ -91,7 +91,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "example.com",
+						URI: "example.com",
 					},
 					DosAccessLogDest: "example.service.com:123",
 					ApDosPolicy:      "ns/name",
@@ -105,7 +105,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "example.com",
+						URI: "example.com",
 					},
 					DosAccessLogDest: "example.service.com:123",
 					ApDosPolicy:      "bad$%^name",
@@ -119,7 +119,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "example.com",
+						URI: "example.com",
 					},
 					DosAccessLogDest: "example.service.com:123",
 					DosSecurityLog:   &v1beta1.DosSecurityLog{},
@@ -133,7 +133,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "example.com",
+						URI: "example.com",
 					},
 					DosAccessLogDest: "example.service.com:123",
 					DosSecurityLog: &v1beta1.DosSecurityLog{
@@ -149,7 +149,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "example.com",
+						URI: "example.com",
 					},
 					DosAccessLogDest: "example.service.com:123",
 					DosSecurityLog: &v1beta1.DosSecurityLog{
@@ -166,7 +166,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 				Spec: v1beta1.DosProtectedResourceSpec{
 					Name: "name",
 					ApDosMonitor: &v1beta1.ApDosMonitor{
-						Uri: "example.com",
+						URI: "example.com",
 					},
 					DosAccessLogDest: "example.service.com:123",
 					DosSecurityLog: &v1beta1.DosSecurityLog{
@@ -343,7 +343,7 @@ func TestValidateAppProtectDosName(t *testing.T) {
 
 	// Negative test cases item, expected error message
 	negDstAntns := [][]string{
-		{"very very very very very very very very very very very very very very very very very very long Name", fmt.Sprintf(`app Protect Dos Name max length is %v`, MaxNameLength)},
+		{"very very very very very very very very very very very very very very very very very very long Name", fmt.Sprintf(`app Protect Dos Name max length is %v`, maxNameLength)},
 		{"example.com\\", "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'protected-object-one', regex used for validation is '([^\"\\\\]|\\\\.)*')"},
 		{"\"example.com\"", "must have all '\"' (double quotes) escaped and must not end with an unescaped '\\' (backslash) (e.g. 'protected-object-one', regex used for validation is '([^\"\\\\]|\\\\.)*')"},
 	}
@@ -371,17 +371,17 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 	// Positive test cases
 	posDstAntns := []v1beta1.ApDosMonitor{
 		{
-			Uri:      "example.com",
+			URI:      "example.com",
 			Protocol: "http1",
 			Timeout:  5,
 		},
 		{
-			Uri:      "https://example.com/good_path",
+			URI:      "https://example.com/good_path",
 			Protocol: "http2",
 			Timeout:  10,
-		},		
+		},
 		{
-			Uri:      "https://example.com/good_path",
+			URI:      "https://example.com/good_path",
 			Protocol: "grpc",
 			Timeout:  10,
 		},
@@ -392,7 +392,7 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 	}{
 		{
 			apDosMonitor: v1beta1.ApDosMonitor{
-				Uri:      "http://example.com/%",
+				URI:      "http://example.com/%",
 				Protocol: "http1",
 				Timeout:  5,
 			},
@@ -400,7 +400,7 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 		},
 		{
 			apDosMonitor: v1beta1.ApDosMonitor{
-				Uri:      "http://example.com/\\",
+				URI:      "http://example.com/\\",
 				Protocol: "http1",
 				Timeout:  5,
 			},
@@ -408,7 +408,7 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 		},
 		{
 			apDosMonitor: v1beta1.ApDosMonitor{
-				Uri:      "example.com",
+				URI:      "example.com",
 				Protocol: "http3",
 				Timeout:  5,
 			},

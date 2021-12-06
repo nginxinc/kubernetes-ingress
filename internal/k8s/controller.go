@@ -26,7 +26,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectcommon"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
 	"k8s.io/client-go/informers"
 
@@ -1255,7 +1255,7 @@ func (lbc *LoadBalancerController) processAppProtectUserSigChange(change appprot
 	for _, poladd := range change.PolicyAddsOrUpdates {
 		resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(poladd.GetNamespace(), poladd.GetName())
 
-		for _, wafPol := range getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), appprotect_common.GetNsName(poladd)) {
+		for _, wafPol := range getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), appprotectcommon.GetNsName(poladd)) {
 			resources = append(resources, lbc.configuration.FindResourcesForPolicy(wafPol.Namespace, wafPol.Name)...)
 		}
 
@@ -1268,7 +1268,7 @@ func (lbc *LoadBalancerController) processAppProtectUserSigChange(change appprot
 	for _, poldel := range change.PolicyDeletions {
 		resources := lbc.configuration.FindResourcesForAppProtectPolicyAnnotation(poldel.GetNamespace(), poldel.GetName())
 
-		polNsName := appprotect_common.GetNsName(poldel)
+		polNsName := appprotectcommon.GetNsName(poldel)
 		for _, wafPol := range getWAFPoliciesForAppProtectPolicy(lbc.getAllPolicies(), polNsName) {
 			resources = append(resources, lbc.configuration.FindResourcesForPolicy(wafPol.Namespace, wafPol.Name)...)
 		}
@@ -2337,7 +2337,7 @@ func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.In
 	}
 
 	logDsts := strings.Split(ing.Annotations[configs.AppProtectLogConfDstAnnotation], ",")
-	logConfNsNs := appprotect_common.ParseResourceReferenceAnnotationList(ing.Namespace, ing.Annotations[configs.AppProtectLogConfAnnotation])
+	logConfNsNs := appprotectcommon.ParseResourceReferenceAnnotationList(ing.Namespace, ing.Annotations[configs.AppProtectLogConfAnnotation])
 	if len(logDsts) != len(logConfNsNs) {
 		return apLogs, fmt.Errorf("Error Validating App Protect Destination and Config for Ingress %v: LogConf and LogDestination must have equal number of items", ing.Name)
 	}
@@ -2364,7 +2364,7 @@ func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.In
 }
 
 func (lbc *LoadBalancerController) getAppProtectPolicy(ing *networking.Ingress) (apPolicy *unstructured.Unstructured, err error) {
-	polNsN := appprotect_common.ParseResourceReferenceAnnotation(ing.Namespace, ing.Annotations[configs.AppProtectPolicyAnnotation])
+	polNsN := appprotectcommon.ParseResourceReferenceAnnotation(ing.Namespace, ing.Annotations[configs.AppProtectPolicyAnnotation])
 
 	apPolicy, err = lbc.appProtectConfiguration.GetAppResource(appprotect.PolicyGVK.Kind, polNsN)
 	if err != nil {

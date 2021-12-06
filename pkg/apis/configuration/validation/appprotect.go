@@ -42,6 +42,7 @@ func ValidateAppProtectLogConf(logConf *unstructured.Unstructured) error {
 	return nil
 }
 
+// ValidateAppProtectUserSig validates the app protect user sig.
 func ValidateAppProtectUserSig(userSig *unstructured.Unstructured) error {
 	sigName := userSig.GetName()
 	err := ValidateRequiredSlices(userSig, appProtectUserSigRequiredSlices)

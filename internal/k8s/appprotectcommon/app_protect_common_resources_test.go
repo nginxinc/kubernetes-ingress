@@ -1,4 +1,4 @@
-package appprotect_common
+package appprotectcommon
 
 import (
 	"reflect"

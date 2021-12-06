@@ -1424,7 +1424,7 @@ func TestGenerateNginxCfgForAppProtectDos(t *testing.T) {
 	dosResource := &appProtectDosResource{
 		AppProtectDosEnable:       "on",
 		AppProtectDosName:         "dos.example.com",
-		AppProtectDosMonitorUri:   "monitor-name",
+		AppProtectDosMonitorURI:   "monitor-name",
 		AppProtectDosAccessLogDst: "access-log-dest",
 		AppProtectDosPolicyFile:   "/etc/nginx/dos/policies/default_policy",
 		AppProtectDosLogEnable:    true,
@@ -1480,7 +1480,7 @@ func TestGenerateNginxCfgForMergeableIngressesForAppProtectDos(t *testing.T) {
 	apRes := &appProtectDosResource{
 		AppProtectDosEnable:       "on",
 		AppProtectDosName:         "dos.example.com",
-		AppProtectDosMonitorUri:   "monitor-name",
+		AppProtectDosMonitorURI:   "monitor-name",
 		AppProtectDosAccessLogDst: "access-log-dest",
 		AppProtectDosPolicyFile:   "/etc/nginx/dos/policies/default_policy",
 		AppProtectDosLogEnable:    true,
