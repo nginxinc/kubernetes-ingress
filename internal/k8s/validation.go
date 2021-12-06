@@ -373,17 +373,6 @@ func validateRelatedAnnotation(name string, validator validatorFunc) annotationV
 	}
 }
 
-func validateExistAnnotation(name string) annotationValidationFunc {
-	return func(context *annotationValidationContext) field.ErrorList {
-		allErrs := field.ErrorList{}
-		_, exists := context.annotations[name]
-		if !exists {
-			return append(allErrs, field.Forbidden(context.fieldPath, fmt.Sprintf("related annotation %s must exist", name)))
-		}
-		return allErrs
-	}
-}
-
 func validateQualifiedName(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
