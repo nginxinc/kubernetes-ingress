@@ -1440,7 +1440,7 @@ func TestGenerateNginxCfgForAppProtectDos(t *testing.T) {
 	expected.Servers[0].AppProtectDosLogConfFile = "/etc/nginx/dos/logconfs/default_logconf syslog:server=127.0.0.1:514"
 	expected.Servers[0].AppProtectDosLogEnable = true
 	expected.Servers[0].AppProtectDosName = "dos.example.com"
-	expected.Servers[0].AppProtectDosMonitorUri = "monitor-name"
+	expected.Servers[0].AppProtectDosMonitorURI = "monitor-name"
 	expected.Servers[0].AppProtectDosAccessLogDst = "access-log-dest"
 	expected.Ingress.Annotations = cafeIngressEx.Ingress.Annotations
 
@@ -1496,7 +1496,7 @@ func TestGenerateNginxCfgForMergeableIngressesForAppProtectDos(t *testing.T) {
 	expected.Servers[0].AppProtectDosLogConfFile = "/etc/nginx/dos/logconfs/default_logconf syslog:server=127.0.0.1:514"
 	expected.Servers[0].AppProtectDosLogEnable = true
 	expected.Servers[0].AppProtectDosName = "dos.example.com"
-	expected.Servers[0].AppProtectDosMonitorUri = "monitor-name"
+	expected.Servers[0].AppProtectDosMonitorURI = "monitor-name"
 	expected.Servers[0].AppProtectDosAccessLogDst = "access-log-dest"
 	expected.Ingress.Annotations = mergeableIngresses.Master.Ingress.Annotations
 

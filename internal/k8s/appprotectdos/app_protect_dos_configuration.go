@@ -219,7 +219,7 @@ func (ci *Configuration) getDosProtected(key string) (*v1beta1.DosProtectedResou
 
 // GetValidDosEx returns a valid DosProtectedResource - extended with referenced policies and logs
 func (ci *Configuration) GetValidDosEx(parentNamespace string, nsName string) (*configs.DosEx, error) {
-	var key = getNsName(parentNamespace, nsName)
+	key := getNsName(parentNamespace, nsName)
 	if !ci.isDosEnabled {
 		return nil, fmt.Errorf("DosProtectedResource is referenced but Dos feature is not enabled. resource: %v", key)
 	}
