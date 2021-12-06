@@ -63,17 +63,13 @@ func (l LatencyMetricsListener) Stop() {
 
 func isErrorRecoverable(err error) bool {
 	var nerr *net.OpError
-	if errors.As(err, &nerr) && nerr.Temporary() {
-		return true
-	} else {
-		return false
-	}
+	return errors.As(err, &nerr) && nerr.Temporary()
 }
 
 // SyslogFakeListener is a fake implementation of the SyslogListener interface
 type SyslogFakeListener struct{}
 
-// NewFakeSyslogServer returns a SyslogFakeListener
+// NewSyslogFakeServer returns a SyslogFakeListener
 func NewSyslogFakeServer() *SyslogFakeListener {
 	return &SyslogFakeListener{}
 }

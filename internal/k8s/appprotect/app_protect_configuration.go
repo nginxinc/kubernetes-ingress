@@ -588,7 +588,7 @@ func (fc *FakeConfiguration) AddOrUpdateLogConf(logConfObj *unstructured.Unstruc
 }
 
 // AddOrUpdateUserSig adds or updates App Protect User Defined Signature to App Protect Configuration
-func (fc *FakeConfiguration) AddOrUpdateUserSig(userSigObj *unstructured.Unstructured) (change UserSigChange, problems []Problem) {
+func (fc *FakeConfiguration) AddOrUpdateUserSig(_ *unstructured.Unstructured) (change UserSigChange, problems []Problem) {
 	return change, problems
 }
 
@@ -610,16 +610,16 @@ func (fc *FakeConfiguration) GetAppResource(kind, key string) (*unstructured.Uns
 }
 
 // DeletePolicy deletes an App Protect Policy from App Protect Configuration
-func (fc *FakeConfiguration) DeletePolicy(key string) (changes []Change, problems []Problem) {
+func (fc *FakeConfiguration) DeletePolicy(_ string) (changes []Change, problems []Problem) {
 	return changes, problems
 }
 
 // DeleteLogConf deletes an App Protect Log Configuration from App Protect Configuration
-func (fc *FakeConfiguration) DeleteLogConf(key string) (changes []Change, problems []Problem) {
+func (fc *FakeConfiguration) DeleteLogConf(_ string) (changes []Change, problems []Problem) {
 	return changes, problems
 }
 
 // DeleteUserSig deletes an App Protect User Defined Signature from App Protect Configuration
-func (fc *FakeConfiguration) DeleteUserSig(key string) (change UserSigChange, problems []Problem) {
+func (fc *FakeConfiguration) DeleteUserSig(_ string) (change UserSigChange, problems []Problem) {
 	return change, problems
 }

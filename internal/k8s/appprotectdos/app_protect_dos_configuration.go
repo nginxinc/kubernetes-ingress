@@ -266,6 +266,7 @@ func getNsName(defaultNamespace string, name string) string {
 	return name
 }
 
+// GetDosProtectedThatReferencedDosPolicy gets dos protected resources that mention the given dos policy
 func (ci *Configuration) GetDosProtectedThatReferencedDosPolicy(key string) []*v1beta1.DosProtectedResource {
 	var protectedResources []*v1beta1.DosProtectedResource
 	for _, protectedEx := range ci.dosProtectedResource {
@@ -278,6 +279,7 @@ func (ci *Configuration) GetDosProtectedThatReferencedDosPolicy(key string) []*v
 	return protectedResources
 }
 
+// GetDosProtectedThatReferencedDosLogConf gets dos protected resources that mention the given dos log conf
 func (ci *Configuration) GetDosProtectedThatReferencedDosLogConf(key string) []*v1beta1.DosProtectedResource {
 	var protectedResources []*v1beta1.DosProtectedResource
 	for _, protectedEx := range ci.dosProtectedResource {
