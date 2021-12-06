@@ -48,6 +48,7 @@ type IngressEx struct {
 	SecretRefs       map[string]*secrets.SecretReference
 }
 
+// DosEx holds a DosProtectedResource and the dos policy and log confs it references.
 type DosEx struct {
 	DosProtected *v1beta1.DosProtectedResource
 	DosPolicy    *unstructured.Unstructured
