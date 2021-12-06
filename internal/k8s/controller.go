@@ -1329,7 +1329,6 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 				warnings, err := lbc.configurator.AddOrUpdateResourcesThatUseDosProtected(resourceExes.IngressExes, resourceExes.MergeableIngresses, resourceExes.VirtualServerExes)
 				lbc.updateResourcesStatusAndEvents(resources, warnings, err)
 			}
-
 		}
 	}
 }

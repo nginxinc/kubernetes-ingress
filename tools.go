@@ -1,3 +1,4 @@
+//go:build tools
 // +build tools
 
 // This file just exists to ensure we download the tools we need for building
