@@ -5148,14 +5148,15 @@ func TestGenerateSplits(t *testing.T) {
 		"default",
 		vsc.warnings,
 	)
-	if !reflect.DeepEqual(resultSplitClient, expectedSplitClient) {
-		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultSplitClient, expectedSplitClient)
+
+	if diff := cmp.Diff(expectedSplitClient, resultSplitClient); diff != "" {
+		t.Errorf("generateSplits() resultSplitClient mismatch (-want +got):\n%s", diff)
 	}
-	if !reflect.DeepEqual(resultLocations, expectedLocations) {
-		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultLocations, expectedLocations)
+	if diff := cmp.Diff(expectedLocations, resultLocations); diff != "" {
+		t.Errorf("generateSplits() resultLocations mismatch (-want +got):\n%s", diff)
 	}
-	if !reflect.DeepEqual(resultReturnLocations, expectedReturnLocations) {
-		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultReturnLocations, expectedReturnLocations)
+	if diff := cmp.Diff(expectedReturnLocations, resultReturnLocations); diff != "" {
+		t.Errorf("generateSplits() resultReturnLocations mismatch (-want +got):\n%s", diff)
 	}
 }
 
