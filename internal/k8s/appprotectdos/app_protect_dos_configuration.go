@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect_common"
+	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectcommon"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	"github.com/nginxinc/kubernetes-ingress/pkg/apis/dos/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -111,7 +111,7 @@ type DosLogConfEx struct {
 
 // AddOrUpdatePolicy adds or updates an App Protect Dos Policy to App Protect Dos Configuration
 func (ci *Configuration) AddOrUpdatePolicy(policyObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(policyObj)
+	resNsName := appprotectcommon.GetNsName(policyObj)
 	policy, err := createAppProtectDosPolicyEx(policyObj)
 	ci.dosPolicies[resNsName] = policy
 	if err != nil {
@@ -131,7 +131,7 @@ func (ci *Configuration) AddOrUpdatePolicy(policyObj *unstructured.Unstructured)
 
 // AddOrUpdateLogConf adds or updates App Protect Dos Log Configuration to App Protect Dos Configuration
 func (ci *Configuration) AddOrUpdateLogConf(logConfObj *unstructured.Unstructured) (changes []Change, problems []Problem) {
-	resNsName := appprotect_common.GetNsName(logConfObj)
+	resNsName := appprotectcommon.GetNsName(logConfObj)
 	logConf, err := createAppProtectDosLogConfEx(logConfObj)
 	ci.dosLogConfs[resNsName] = logConf
 	if err != nil {

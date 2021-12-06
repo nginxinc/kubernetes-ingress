@@ -39,10 +39,10 @@ func TestUpdateApDosResource(t *testing.T) {
 			Namespace: "test-ns",
 		},
 		Spec: v1beta1.DosProtectedResourceSpec{
-			Enable:           true,
-			Name:             "dos-protected",
+			Enable: true,
+			Name:   "dos-protected",
 			ApDosMonitor: &v1beta1.ApDosMonitor{
-				Uri:       "example.com",
+				URI: "example.com",
 			},
 			DosAccessLogDest: "127.0.0.1:5561",
 		},
@@ -54,10 +54,10 @@ func TestUpdateApDosResource(t *testing.T) {
 			Namespace: "test-ns",
 		},
 		Spec: v1beta1.DosProtectedResourceSpec{
-			Enable:           true,
-			Name:             "dos-protected",
+			Enable: true,
+			Name:   "dos-protected",
 			ApDosMonitor: &v1beta1.ApDosMonitor{
-				Uri:       "example.com",
+				URI: "example.com",
 			},
 			DosAccessLogDest: "127.0.0.1:5561",
 			DosSecurityLog: &v1beta1.DosSecurityLog{
@@ -90,7 +90,7 @@ func TestUpdateApDosResource(t *testing.T) {
 			expected: &appProtectDosResource{
 				AppProtectDosEnable:       "on",
 				AppProtectDosName:         "test-ns/dosOnly/dos-protected",
-				AppProtectDosMonitorUri:      "example.com",
+				AppProtectDosMonitorURI:   "example.com",
 				AppProtectDosAccessLogDst: "syslog:server=127.0.0.1:5561",
 			},
 			msg: "app protect basic protected config",
@@ -103,7 +103,7 @@ func TestUpdateApDosResource(t *testing.T) {
 			expected: &appProtectDosResource{
 				AppProtectDosEnable:       "on",
 				AppProtectDosName:         "test-ns/dosOnly/dos-protected",
-				AppProtectDosMonitorUri:   "example.com",
+				AppProtectDosMonitorURI:   "example.com",
 				AppProtectDosAccessLogDst: "syslog:server=127.0.0.1:5561",
 				AppProtectDosPolicyFile:   "/etc/nginx/dos/policies/test-ns_test-name.json",
 			},
@@ -118,7 +118,7 @@ func TestUpdateApDosResource(t *testing.T) {
 			expected: &appProtectDosResource{
 				AppProtectDosEnable:       "on",
 				AppProtectDosName:         "test-ns/dosWithLogConf/dos-protected",
-				AppProtectDosMonitorUri:   "example.com",
+				AppProtectDosMonitorURI:   "example.com",
 				AppProtectDosAccessLogDst: "syslog:server=127.0.0.1:5561",
 				AppProtectDosPolicyFile:   "/etc/nginx/dos/policies/test-ns_test-name.json",
 				AppProtectDosLogEnable:    true,

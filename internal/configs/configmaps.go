@@ -509,14 +509,14 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 				cfgParams.MainAppProtectDosLogFormat = appProtectDosLogFormat
 			}
 		}
-	
+
 		if appProtectDosLogFormatEscaping, exists := cfgm.Data["app-protect-dos-log-format-escaping"]; exists {
 			appProtectDosLogFormatEscaping = strings.TrimSpace(appProtectDosLogFormatEscaping)
 			if appProtectDosLogFormatEscaping != "" {
 				cfgParams.MainAppProtectDosLogFormatEscaping = appProtectDosLogFormatEscaping
 			}
 		}
-    }
+	}
 
 	return cfgParams
 }

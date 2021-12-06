@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
+// ValidateRequiredSlices validates the required slices.
 func ValidateRequiredSlices(obj *unstructured.Unstructured, fieldsList [][]string) error {
 	for _, fields := range fieldsList {
 		field, found, err := unstructured.NestedSlice(obj.Object, fields...)
@@ -23,6 +24,7 @@ func ValidateRequiredSlices(obj *unstructured.Unstructured, fieldsList [][]strin
 	return nil
 }
 
+// ValidateRequiredFields validates the required fields.
 func ValidateRequiredFields(obj *unstructured.Unstructured, fieldsList [][]string) error {
 	for _, fields := range fieldsList {
 		field, found, err := unstructured.NestedMap(obj.Object, fields...)

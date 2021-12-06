@@ -22,8 +22,9 @@ var appProtectDosLogConfRequiredFields = [][]string{
 	{"spec", "filter"},
 }
 
-const MaxNameLength = 63
+const maxNameLength = 63
 
+// ValidateDosProtectedResource validates a dos protected resource.
 func ValidateDosProtectedResource(protected *v1beta1.DosProtectedResource) error {
 	var err error
 
@@ -100,13 +101,13 @@ func ValidateAppProtectDosLogConf(logConf *unstructured.Unstructured) error {
 }
 
 var (
-	validDnsRegex       = regexp.MustCompile(`^([A-Za-z0-9][A-Za-z0-9-]{1,62}\.)([A-Za-z0-9-]{1,63}\.)*[A-Za-z]{2,6}:\d{1,5}$`)
-	validIpRegex        = regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}:\d{1,5}$`)
+	validDNSRegex       = regexp.MustCompile(`^([A-Za-z0-9][A-Za-z0-9-]{1,62}\.)([A-Za-z0-9-]{1,63}\.)*[A-Za-z]{2,6}:\d{1,5}$`)
+	validIPRegex        = regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}:\d{1,5}$`)
 	validLocalhostRegex = regexp.MustCompile(`^localhost:\d{1,5}$`)
 )
 
 func validateAppProtectDosLogDest(dstAntn string) error {
-	if validIpRegex.MatchString(dstAntn) || validDnsRegex.MatchString(dstAntn) || validLocalhostRegex.MatchString(dstAntn) {
+	if validIPRegex.MatchString(dstAntn) || validDNSRegex.MatchString(dstAntn) || validLocalhostRegex.MatchString(dstAntn) {
 		chunks := strings.Split(dstAntn, ":")
 		err := validatePort(chunks[1])
 		if err != nil {
@@ -130,15 +131,11 @@ func validatePort(value string) error {
 }
 
 func validateAppProtectDosName(name string) error {
-	if len(name) > MaxNameLength {
-		return fmt.Errorf("app Protect Dos Name max length is %v", MaxNameLength)
+	if len(name) > maxNameLength {
+		return fmt.Errorf("app Protect Dos Name max length is %v", maxNameLength)
 	}
 
-	if err := validateEscapedString(name, "protected-object-one"); err != nil {
-		return err
-	}
-
-	return nil
+	return validateEscapedString(name, "protected-object-one")
 }
 
 var validMonitorProtocol = map[string]bool{
@@ -148,12 +145,12 @@ var validMonitorProtocol = map[string]bool{
 }
 
 func validateAppProtectDosMonitor(apDosMonitor v1beta1.ApDosMonitor) error {
-	_, err := url.Parse(apDosMonitor.Uri)
+	_, err := url.Parse(apDosMonitor.URI)
 	if err != nil {
 		return fmt.Errorf("app Protect Dos Monitor must have valid URL")
 	}
 
-	if err := validateEscapedString(apDosMonitor.Uri, "http://www.example.com"); err != nil {
+	if err := validateEscapedString(apDosMonitor.URI, "http://www.example.com"); err != nil {
 		return err
 	}
 
@@ -170,7 +167,7 @@ func validateAppProtectDosMonitor(apDosMonitor v1beta1.ApDosMonitor) error {
 	return nil
 }
 
-// ValidateAppProtectDosPolicy validates Policy resource
+// ValidateAppProtectDosPolicy validates Policy resource.
 func ValidateAppProtectDosPolicy(policy *unstructured.Unstructured) error {
 	polName := policy.GetName()
 

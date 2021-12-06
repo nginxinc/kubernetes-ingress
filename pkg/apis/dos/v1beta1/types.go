@@ -30,8 +30,8 @@ type DosProtectedResourceSpec struct {
 
 // ApDosMonitor is how NGINX App Protect DoS monitors the stress level of the protected object. The monitor requests are sent from localhost (127.0.0.1). Default value: URI - None, protocol - http1, timeout - NGINX App Protect DoS default.
 type ApDosMonitor struct {
-	// Uri is the destination to the desired protected object in the nginx.conf:
-	Uri string `json:"uri"`
+	// URI is the destination to the desired protected object in the nginx.conf:
+	URI string `json:"uri"`
 	// +kubebuilder:validation:Enum=http1;http2;grpc
 	// Protocol determines if the server listens on http1 / http2 / grpc. The default is http1.
 	Protocol string `json:"protocol"`
