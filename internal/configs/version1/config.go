@@ -103,7 +103,7 @@ type Server struct {
 	AppProtectDosPolicyFile      string
 	AppProtectDosLogConfFile     string
 	AppProtectDosLogEnable       bool
-	AppProtectDosMonitorUri      string
+	AppProtectDosMonitorURI      string
 	AppProtectDosMonitorProtocol string
 	AppProtectDosMonitorTimeout  uint64
 	AppProtectDosName            string

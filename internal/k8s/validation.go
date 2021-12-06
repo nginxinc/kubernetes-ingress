@@ -377,7 +377,6 @@ func validateQualifiedName(context *annotationValidationContext) field.ErrorList
 	allErrs := field.ErrorList{}
 
 	err := validation.IsQualifiedName(context.value)
-
 	if err != nil {
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a qualified name"))
 	}

@@ -38,9 +38,7 @@ func ValidateRequiredFields(obj *unstructured.Unstructured, fieldsList [][]strin
 	return nil
 }
 
-var (
-	logDstEx = regexp.MustCompile(`(?:syslog:server=((?:\d{1,3}\.){3}\d{1,3}|localhost):\d{1,5})|stderr`)
-)
+var logDstEx = regexp.MustCompile(`(?:syslog:server=((?:\d{1,3}\.){3}\d{1,3}|localhost):\d{1,5})|stderr`)
 
 // ValidateAppProtectLogDestination validates destination for log configuration
 func ValidateAppProtectLogDestination(dstAntn string) error {
