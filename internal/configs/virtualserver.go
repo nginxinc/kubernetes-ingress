@@ -1395,8 +1395,11 @@ func generateRewrites(path string, proxy *conf_v1.ActionProxy, internal bool, or
 	var rewrites []string
 
 	if internal {
-		// For internal locations (splits locations) only, recover the original request_uri.
-		rewrites = append(rewrites, "^ $request_uri")
+		// For internal locations only, recover the original request_uri without (!) the arguments.
+		// This is necessary, because if we just use $request_uri (which includes the arguments),
+		// the rewrite that follows will result in an URI with duplicated arguments:
+		// for example, /test%3Fhello=world?hello=world instead of /test?hello=world
+		rewrites = append(rewrites, "^ $request_uri_no_args")
 	}
 
 	if isRegex {
