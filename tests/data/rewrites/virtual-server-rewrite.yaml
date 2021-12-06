@@ -1,0 +1,44 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: rewrite
+spec:
+  host: vs.example.com
+  upstreams:
+  - name: hello
+    service: hello-svc
+    port: 80
+  routes:
+  - path: /backend1/
+    action:
+      proxy:
+        upstream: hello
+        rewritePath: /
+  - path: /backend2
+    action:
+      proxy:
+        upstream: hello
+        rewritePath: /backend2_1
+  - path: /match/
+    matches:
+    - conditions:
+      - cookie: user
+        value: john
+      action:
+        proxy:
+          upstream: hello
+          rewritePath: /user/john/
+    action:
+      proxy:
+        upstream: hello
+        rewritePath: /
+  - path: ~ /regex1/?(.*)
+    action:
+      proxy:
+        upstream: hello
+        rewritePath: /$1
+  - path: ~ /regex2/?(.*)
+    action:
+      proxy:
+        upstream: hello
+        rewritePath: /$1

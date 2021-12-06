@@ -1,0 +1,17 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: rewrite-parent
+spec:
+  host: vsr.example.com
+  upstreams:
+  - name: hello
+    service: hello-svc
+    port: 80
+  routes:
+  - path: /
+    route: prefixes
+  - path: ~ /regex1/?(.*)
+    route: regex-1
+  - path: ~ /regex2/?(.*)
+    route: regex-2

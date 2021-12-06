@@ -1,0 +1,16 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServerRoute
+metadata:
+  name: regex-2
+spec:
+  host: vsr.example.com
+  upstreams:
+  - name: hello
+    service: hello-svc
+    port: 80
+  subroutes:
+  - path: ~ /regex2/?(.*)
+    action:
+      proxy:
+        upstream: hello
+        rewritePath: /$1
