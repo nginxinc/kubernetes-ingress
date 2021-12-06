@@ -31,6 +31,7 @@ spec:
             metadata:
               type: object
             spec:
+              description: DosProtectedResourceSpec deines the properties and values a DosProtectedResource can have.
               type: object
               properties:
                 apDosMonitor:
