@@ -49,7 +49,7 @@ spec:
                       type: integer
                       format: int64
                     uri:
-                      description: 'Uri is the destination to the desired protected object in the nginx.conf:'
+                      description: 'URI is the destination to the desired protected object in the nginx.conf:'
                       type: string
                 apDosPolicy:
                   description: ApDosPolicy is the namespace/name of a ApDosPolicy resource
