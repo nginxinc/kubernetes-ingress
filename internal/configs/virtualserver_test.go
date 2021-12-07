@@ -6800,6 +6800,35 @@ func TestGenerateHealthCheck(t *testing.T) {
 			},
 			msg: "HealthCheck with time parameters have correct format",
 		},
+		{
+			upstream: conf_v1.Upstream{
+				HealthCheck: &conf_v1.HealthCheck{
+					Enable:     true,
+					Mandatory:  true,
+					Persistent: true,
+				},
+				ProxyConnectTimeout: "30s",
+				ProxyReadTimeout:    "30s",
+				ProxySendTimeout:    "30s",
+			},
+			upstreamName: upstreamName,
+			expected: &version2.HealthCheck{
+				Name:                upstreamName,
+				ProxyConnectTimeout: "30s",
+				ProxyReadTimeout:    "30s",
+				ProxySendTimeout:    "30s",
+				ProxyPass:           fmt.Sprintf("http://%v", upstreamName),
+				URI:                 "/",
+				Interval:            "5s",
+				Jitter:              "0s",
+				Fails:               1,
+				Passes:              1,
+				Headers:             make(map[string]string),
+				Mandatory:           true,
+				Persistent:          true,
+			},
+			msg: "HealthCheck with mandatory and persistent set",
+		},
 	}
 
 	baseCfgParams := &ConfigParams{

@@ -543,10 +543,14 @@ spec:
                             type: string
                           jitter:
                             type: string
+                          mandatory:
+                            type: boolean
                           passes:
                             type: integer
                           path:
                             type: string
+                          persistent:
+                            type: boolean
                           port:
                             type: integer
                           read-timeout:

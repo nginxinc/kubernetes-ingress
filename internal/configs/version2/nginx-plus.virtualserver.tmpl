@@ -250,6 +250,7 @@ server {
             {{ end }}
         health_check {{ if $hc.URI }}uri={{ $hc.URI }} {{ end }}port={{ $hc.Port }} interval={{ $hc.Interval }} jitter={{ $hc.Jitter }}
             fails={{ $hc.Fails }} passes={{ $hc.Passes }}{{ if $hc.Match }} match={{ $hc.Match }}{{ end }}
+            {{ if $hc.Mandatory }} mandatory{{ if $hc.Persistent }} persistent{{ end }}{{ end }}
             {{ if $hc.GRPCPass }} type=grpc{{ if $hc.GRPCStatus }} grpc_status={{ $hc.GRPCStatus }}{{ end }}
             {{ if $hc.GRPCService }} grpc_service={{ $hc.GRPCService }}{{ end }}{{ end }};
     }

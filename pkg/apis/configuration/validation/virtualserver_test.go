@@ -2397,6 +2397,8 @@ func TestValidateUpstreamHealthCheck(t *testing.T) {
 			},
 		},
 		StatusMatch: "! 500",
+		Mandatory:   true,
+		Persistent:  true,
 	}
 
 	allErrs := validateUpstreamHealthCheck(hc, "", field.NewPath("healthCheck"))
@@ -2478,6 +2480,13 @@ func TestValidateUpstreamHealthCheckFails(t *testing.T) {
 				Enable:      true,
 				Path:        "/healthz",
 				GRPCService: "tea-servicev2",
+			},
+		},
+		{
+			hc: &v1.HealthCheck{
+				Enable:     true,
+				Path:       "/healthz",
+				Persistent: true,
 			},
 		},
 	}

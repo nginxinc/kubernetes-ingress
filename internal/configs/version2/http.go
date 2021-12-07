@@ -251,6 +251,8 @@ type HealthCheck struct {
 	GRPCPass            string
 	GRPCStatus          *int
 	GRPCService         string
+	Mandatory           bool
+	Persistent          bool
 }
 
 // TLSRedirect defines a redirect in a Server.

@@ -269,6 +269,10 @@ func validateUpstreamHealthCheck(hc *v1.HealthCheck, typeName string, fieldPath 
 		}
 	}
 
+	if hc.Persistent && !hc.Mandatory {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("mandatory"), "must be true when `persistent` is true"))
+	}
+
 	return allErrs
 }
 

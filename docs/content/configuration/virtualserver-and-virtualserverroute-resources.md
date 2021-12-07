@@ -327,12 +327,13 @@ Note: This feature is supported only in NGINX Plus.
 
 ### Upstream.Healthcheck
 
-The Healthcheck defines an [active health check](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/). In the example below we enable a health check for an upstream and configure all the available parameters:
+The Healthcheck defines an [active health check](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/). In the example below we enable a health check for an upstream and configure all the available parameters, including the `slow-start` parameter combined with [`mandatory` and `persistent`](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#mandatory-health-checks):
 
 ```yaml
 name: tea
 service: tea-svc
 port: 80
+slow-start: 30s
 healthCheck:
   enable: true
   path: /healthz
@@ -350,6 +351,8 @@ healthCheck:
   - name: Host
     value: my.service
   statusMatch: "! 500"
+  mandatory: true
+  persistent: true
 ```
 
 Note: This feature is supported only in NGINX Plus.
@@ -372,6 +375,8 @@ Note: This feature is supported only in NGINX Plus.
 |``statusMatch`` | The expected response status codes of a health check. By default, the response should have status code 2xx or 3xx. Examples: ``"200"`` , ``"! 500"`` , ``"301-303 307"``. See the documentation of the [match](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html?#match) directive. This not supported for gRPC type upstreams. | ``string`` | No |
 |``grpcStatus`` | The expected [gRPC status code](https://github.com/grpc/grpc/blob/master/doc/statuscodes.md#status-codes-and-their-use-in-grpc) of the upstream server response to the [Check method](https://github.com/grpc/grpc/blob/master/doc/health-checking.md). Configure this field only if your gRPC services do not implement the gRPC health checking protocol. For example, configure ``12`` if the upstream server responds with `12 (UNIMPLEMENTED)` status code. Only valid on gRPC type upstreams. | ``int`` | No |
 |``grpcService`` | The gRPC service to be monitored on the upstream server. Only valid on gRPC type upstreams. | ``string`` | No |
+|``mandatory`` | Require every newly added server to pass all configured health checks before NGINX Plus sends traffic to it. If this is not specified, or is set to false, the server will be initially considered healthy. When combined with [slow-start](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#slow_start), it gives a new server more time to connect to databases and “warm up” before being asked to handle their full share of traffic. | ``bool`` | No |
+|``persistent`` | Set the initial “up” state for a server after reload if the server was considered healthy before reload. Enabling persistent requires that the mandatory parameter is also set to `true`. | ``bool`` | No |
 {{% /table %}} 
 
 ### Upstream.SessionCookie
