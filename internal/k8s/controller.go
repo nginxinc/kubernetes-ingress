@@ -147,7 +147,7 @@ type LoadBalancerController struct {
 	metricsCollector              collectors.ControllerCollector
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
-	spiffeController              *spiffeController
+	spiffeController              *SpiffeController
 	internalRoutesEnabled         bool
 	syncLock                      sync.Mutex
 	isNginxReady                  bool
@@ -1381,6 +1381,7 @@ func (lbc *LoadBalancerController) updateTransportServerStatusAndEventsOnDelete(
 	}
 }
 
+// UpdateVirtualServerStatusAndEventsOnDelete updates the virtual server status and events
 func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vsConfig *VirtualServerConfiguration, changeError string, deleteErr error) {
 	eventType := api_v1.EventTypeWarning
 	eventTitle := "Rejected"
@@ -1422,6 +1423,7 @@ func (lbc *LoadBalancerController) UpdateVirtualServerStatusAndEventsOnDelete(vs
 	// for each VSR, a dedicated problem exists
 }
 
+// UpdateIngressStatusAndEventsOnDelete updates the ingress status and events.
 func (lbc *LoadBalancerController) UpdateIngressStatusAndEventsOnDelete(ingConfig *IngressConfiguration, changeError string, deleteErr error) {
 	eventTitle := "Rejected"
 	eventWarningMessage := ""

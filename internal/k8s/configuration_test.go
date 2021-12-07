@@ -3048,23 +3048,23 @@ type testReferenceChecker struct {
 	onlyTransportServers    bool
 }
 
-func (rc *testReferenceChecker) IsReferencedByIngress(namespace string, name string, ing *networking.Ingress) bool {
+func (rc *testReferenceChecker) IsReferencedByIngress(namespace string, name string, _ *networking.Ingress) bool {
 	return rc.onlyIngresses && namespace == rc.resourceNamespace && name == rc.resourceName
 }
 
-func (rc *testReferenceChecker) IsReferencedByMinion(namespace string, name string, ing *networking.Ingress) bool {
+func (rc *testReferenceChecker) IsReferencedByMinion(namespace string, name string, _ *networking.Ingress) bool {
 	return rc.onlyMinions && namespace == rc.resourceNamespace && name == rc.resourceName
 }
 
-func (rc *testReferenceChecker) IsReferencedByVirtualServer(namespace string, name string, vs *conf_v1.VirtualServer) bool {
+func (rc *testReferenceChecker) IsReferencedByVirtualServer(namespace string, name string, _ *conf_v1.VirtualServer) bool {
 	return rc.onlyVirtualServers && namespace == rc.resourceNamespace && name == rc.resourceName
 }
 
-func (rc *testReferenceChecker) IsReferencedByVirtualServerRoute(namespace string, name string, vsr *conf_v1.VirtualServerRoute) bool {
+func (rc *testReferenceChecker) IsReferencedByVirtualServerRoute(namespace string, name string, _ *conf_v1.VirtualServerRoute) bool {
 	return rc.onlyVirtualServerRoutes && namespace == rc.resourceNamespace && name == rc.resourceName
 }
 
-func (rc *testReferenceChecker) IsReferencedByTransportServer(namespace string, name string, ts *conf_v1alpha1.TransportServer) bool {
+func (rc *testReferenceChecker) IsReferencedByTransportServer(namespace string, name string, _ *conf_v1alpha1.TransportServer) bool {
 	return rc.onlyTransportServers && namespace == rc.resourceNamespace && name == rc.resourceName
 }
 

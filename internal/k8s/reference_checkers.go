@@ -75,11 +75,11 @@ func (rc *secretReferenceChecker) IsReferencedByVirtualServer(secretNamespace st
 	return false
 }
 
-func (rc *secretReferenceChecker) IsReferencedByVirtualServerRoute(secretNamespace string, secretName string, vsr *v1.VirtualServerRoute) bool {
+func (rc *secretReferenceChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *v1.VirtualServerRoute) bool {
 	return false
 }
 
-func (rc *secretReferenceChecker) IsReferencedByTransportServer(secretNamespace string, secretName string, ts *conf_v1alpha1.TransportServer) bool {
+func (rc *secretReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1alpha1.TransportServer) bool {
 	return false
 }
 
@@ -173,11 +173,11 @@ func newPolicyReferenceChecker() *policyReferenceChecker {
 	return &policyReferenceChecker{}
 }
 
-func (rc *policyReferenceChecker) IsReferencedByIngress(policyNamespace string, policyName string, ing *networking.Ingress) bool {
+func (rc *policyReferenceChecker) IsReferencedByIngress(_ string, _ string, _ *networking.Ingress) bool {
 	return false
 }
 
-func (rc *policyReferenceChecker) IsReferencedByMinion(policyNamespace string, policyName string, ing *networking.Ingress) bool {
+func (rc *policyReferenceChecker) IsReferencedByMinion(_ string, _ string, _ *networking.Ingress) bool {
 	return false
 }
 
@@ -205,7 +205,7 @@ func (rc *policyReferenceChecker) IsReferencedByVirtualServerRoute(policyNamespa
 	return false
 }
 
-func (rc *policyReferenceChecker) IsReferencedByTransportServer(policyNamespace string, policyName string, ts *conf_v1alpha1.TransportServer) bool {
+func (rc *policyReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1alpha1.TransportServer) bool {
 	return false
 }
 
@@ -231,19 +231,19 @@ func (rc *appProtectResourceReferenceChecker) IsReferencedByIngress(namespace st
 	return false
 }
 
-func (rc *appProtectResourceReferenceChecker) IsReferencedByMinion(namespace string, name string, ing *networking.Ingress) bool {
+func (rc *appProtectResourceReferenceChecker) IsReferencedByMinion(_ string, _ string, _ *networking.Ingress) bool {
 	return false
 }
 
-func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServer(namespace string, name string, vs *v1.VirtualServer) bool {
+func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServer(_ string, _ string, _ *v1.VirtualServer) bool {
 	return false
 }
 
-func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServerRoute(namespace string, name string, vsr *v1.VirtualServerRoute) bool {
+func (rc *appProtectResourceReferenceChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *v1.VirtualServerRoute) bool {
 	return false
 }
 
-func (rc *appProtectResourceReferenceChecker) IsReferencedByTransportServer(namespace string, name string, ts *conf_v1alpha1.TransportServer) bool {
+func (rc *appProtectResourceReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1alpha1.TransportServer) bool {
 	return false
 }
 
@@ -278,7 +278,7 @@ func (rc *dosResourceReferenceChecker) IsReferencedByIngress(namespace string, n
 	return res == namespace+"/"+name || (namespace == ing.Namespace && res == name)
 }
 
-func (rc *dosResourceReferenceChecker) IsReferencedByMinion(namespace string, name string, ing *networking.Ingress) bool {
+func (rc *dosResourceReferenceChecker) IsReferencedByMinion(_ string, _ string, _ *networking.Ingress) bool {
 	return false
 }
 
@@ -294,10 +294,10 @@ func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServer(namespace str
 	return false
 }
 
-func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServerRoute(namespace string, name string, vsr *v1.VirtualServerRoute) bool {
+func (rc *dosResourceReferenceChecker) IsReferencedByVirtualServerRoute(_ string, _ string, _ *v1.VirtualServerRoute) bool {
 	return false
 }
 
-func (rc *dosResourceReferenceChecker) IsReferencedByTransportServer(namespace string, name string, ts *conf_v1alpha1.TransportServer) bool {
+func (rc *dosResourceReferenceChecker) IsReferencedByTransportServer(_ string, _ string, _ *conf_v1alpha1.TransportServer) bool {
 	return false
 }

@@ -107,6 +107,7 @@ type EgressMTLS struct {
 	SSLName        string
 }
 
+// OIDC holds OIDC configuration data.
 type OIDC struct {
 	AuthEndpoint  string
 	ClientID      string
