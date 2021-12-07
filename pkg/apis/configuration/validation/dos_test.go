@@ -412,7 +412,7 @@ func TestValidateAppProtectDosMonitor(t *testing.T) {
 				Protocol: "http3",
 				Timeout:  5,
 			},
-			msg: "app Protect Dos Monitor Protocol must be: dosMonitorProtocol: Invalid value: \"http3\": 'http3' contains an invalid NGINX parameter. Accepted parameters are: http1, http2, grpc",
+			msg: "app Protect Dos Monitor Protocol must be: dosMonitorProtocol: Invalid value: \"http3\": 'http3' contains an invalid NGINX parameter. Accepted parameters are:",
 		},
 	}
 
