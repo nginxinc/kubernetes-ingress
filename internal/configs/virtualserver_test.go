@@ -1012,7 +1012,7 @@ func TestGenerateVirtualServerConfigGrpcErrorPageWarning(t *testing.T) {
 	isWildcardEnabled := true
 	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
 
-	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil, nil)
 	if diff := cmp.Diff(expected, result); diff != "" {
 		t.Errorf("TestGenerateVirtualServerConfigGrpcErrorPageWarning() mismatch (-want +got):\n%s", diff)
 	}
