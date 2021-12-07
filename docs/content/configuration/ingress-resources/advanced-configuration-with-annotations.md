@@ -213,5 +213,5 @@ The table below summarizes the available annotations.
 {{% table %}} 
 |Annotation | ConfigMap Key | Description | Default | Example | 
 | ---| ---| ---| ---| --- | 
-|``appprotectdos.f5.com/app-protect-dos-resource`` | N/A | Enable App Protect Dos for the Ingress Resource by specifying a DosProtectedResource. | N/A | [Example for App Protect Dos](https://github.com/nginxinc/kubernetes-ingress/tree/v1.12.1/examples/appprotect-dos). | 
+|``appprotectdos.f5.com/app-protect-dos-resource`` | N/A | Enable App Protect Dos for the Ingress Resource by specifying a DosProtectedResource. | N/A | [Example for App Protect Dos](https://github.com/nginxinc/kubernetes-ingress/tree/v2.0.3/examples/appprotect-dos). | 
 {% /table %}} 
