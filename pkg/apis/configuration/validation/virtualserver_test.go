@@ -811,7 +811,6 @@ func TestValidateRoute(t *testing.T) {
 	}{
 		{
 			route: v1.Route{
-
 				Path: "/",
 				Action: &v1.Action{
 					Pass: "test",
@@ -877,7 +876,6 @@ func TestValidateRoute(t *testing.T) {
 		},
 		{
 			route: v1.Route{
-
 				Path:  "/",
 				Route: "default/test",
 			},
@@ -1111,7 +1109,6 @@ func TestValidateActionFails(t *testing.T) {
 		action *v1.Action
 		msg    string
 	}{
-
 		{
 			action: &v1.Action{},
 			msg:    "empty action",
@@ -1240,7 +1237,6 @@ func TestValidateRedirectURLFails(t *testing.T) {
 		redirectURL string
 		msg         string
 	}{
-
 		{
 			redirectURL: "",
 			msg:         "url is blank",

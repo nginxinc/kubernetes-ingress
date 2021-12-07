@@ -1575,7 +1575,8 @@ type errorPageDetails struct {
 func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, action *conf_v1.Action,
 	cfgParams *ConfigParams, errorPages errorPageDetails, internal bool, proxySSLName string,
 	originalPath string, locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string,
-	vsrNamespace string, vscWarnings Warnings) (version2.Location, *version2.ReturnLocation) {
+	vsrNamespace string, vscWarnings Warnings,
+) (version2.Location, *version2.ReturnLocation) {
 	locationSnippets := generateSnippets(enableSnippets, locSnippets, cfgParams.LocationSnippets)
 
 	if action.Redirect != nil {
@@ -1674,7 +1675,8 @@ func generateProxyAddHeaders(proxy *conf_v1.ActionProxy) []version2.AddHeader {
 
 func generateLocationForProxying(path string, upstreamName string, upstream conf_v1.Upstream,
 	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int,
-	proxySSLName string, proxy *conf_v1.ActionProxy, originalPath string, locationSnippets []string, isVSR bool, vsrName string, vsrNamespace string) version2.Location {
+	proxySSLName string, proxy *conf_v1.ActionProxy, originalPath string, locationSnippets []string, isVSR bool, vsrName string, vsrNamespace string,
+) version2.Location {
 	return version2.Location{
 		Path:                     generatePath(path),
 		Internal:                 internal,
@@ -1741,7 +1743,8 @@ func generateLocationForRedirect(
 }
 
 func generateLocationForReturn(path string, locationSnippets []string, actionReturn *conf_v1.ActionReturn,
-	retLocIndex int) (version2.Location, *version2.ReturnLocation) {
+	retLocIndex int,
+) (version2.Location, *version2.ReturnLocation) {
 	defaultType := actionReturn.Type
 	if defaultType == "" {
 		defaultType = "text/plain"
@@ -1873,7 +1876,8 @@ func generateDefaultSplitsConfig(
 
 func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream,
 	variableNamer *variableNamer, index int, scIndex int, cfgParams *ConfigParams, errorPages errorPageDetails,
-	locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string, vscWarnings Warnings) routingCfg {
+	locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string, vscWarnings Warnings,
+) routingCfg {
 	// Generate maps
 	var maps []version2.Map
 
@@ -2101,7 +2105,8 @@ func getNameForSourceForMatchesRouteMapFromCondition(condition conf_v1.Condition
 }
 
 func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tls *conf_v1.TLS, namespace string,
-	secretRefs map[string]*secrets.SecretReference, cfgParams *ConfigParams) *version2.SSL {
+	secretRefs map[string]*secrets.SecretReference, cfgParams *ConfigParams,
+) *version2.SSL {
 	if tls == nil {
 		return nil
 	}

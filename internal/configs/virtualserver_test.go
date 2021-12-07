@@ -6673,7 +6673,6 @@ func TestGenerateHealthCheck(t *testing.T) {
 		msg          string
 	}{
 		{
-
 			upstream: conf_v1.Upstream{
 				HealthCheck: &conf_v1.HealthCheck{
 					Enable:         true,
@@ -6854,7 +6853,6 @@ func TestGenerateGrpcHealthCheck(t *testing.T) {
 		msg          string
 	}{
 		{
-
 			upstream: conf_v1.Upstream{
 				HealthCheck: &conf_v1.HealthCheck{
 					Enable:         true,
@@ -8174,7 +8172,6 @@ func TestAddWafConfig(t *testing.T) {
 		msg          string
 	}{
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable: true,
 			},
@@ -8191,7 +8188,6 @@ func TestAddWafConfig(t *testing.T) {
 			msg:      "valid waf config, default App Protect config",
 		},
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable:   true,
 				ApPolicy: "dataguard-alarm",
@@ -8220,7 +8216,6 @@ func TestAddWafConfig(t *testing.T) {
 			msg:      "valid waf config",
 		},
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable:   true,
 				ApPolicy: "default/dataguard-alarm",
@@ -8252,7 +8247,6 @@ func TestAddWafConfig(t *testing.T) {
 			msg: "invalid waf config, apLogConf references non-existing log conf",
 		},
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable:   true,
 				ApPolicy: "default/dataguard-alarm",
@@ -8283,7 +8277,6 @@ func TestAddWafConfig(t *testing.T) {
 			msg: "invalid waf config, apLogConf references non-existing ap conf",
 		},
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable:   true,
 				ApPolicy: "ns1/dataguard-alarm",
@@ -8312,7 +8305,6 @@ func TestAddWafConfig(t *testing.T) {
 			msg:      "valid waf config, cross ns reference",
 		},
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable:   false,
 				ApPolicy: "dataguard-alarm",
