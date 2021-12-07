@@ -14,7 +14,7 @@ COPY deployments /workspace/deployments
 
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
 	&& install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
-	&& install -y apache2-utils
+	&& install apache2-utils
 
 COPY tests /workspace/tests
 
