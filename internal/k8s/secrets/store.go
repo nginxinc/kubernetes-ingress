@@ -136,7 +136,7 @@ func (s *FakeSecretStore) AddOrUpdateSecret(secret *api_v1.Secret) {
 }
 
 // DeleteSecret is a fake implementation of DeleteSecret.
-func (s *FakeSecretStore) DeleteSecret(key string) {
+func (s *FakeSecretStore) DeleteSecret(_ string) {
 }
 
 // GetSecret is a fake implementation of GetSecret.

@@ -18,10 +18,14 @@ import (
 )
 
 const (
-	ReloadForEndpointsUpdate     = true  // ReloadForEndpointsUpdate means that is caused by an endpoints update.
-	ReloadForOtherUpdate         = false // ReloadForOtherUpdate means that a reload is caused by an update for a resource(s) other than endpoints.
-	TLSSecretFileMode            = 0o600 // TLSSecretFileMode defines the default filemode for files with TLS Secrets.
-	JWKSecretFileMode            = 0o644 // JWKSecretFileMode defines the default filemode for files with JWK Secrets.
+	// ReloadForEndpointsUpdate means that is caused by an endpoints update.
+	ReloadForEndpointsUpdate = true
+	// ReloadForOtherUpdate means that a reload is caused by an update for a resource(s) other than endpoints.
+	ReloadForOtherUpdate = false
+	// TLSSecretFileMode defines the default filemode for files with TLS Secrets.
+	TLSSecretFileMode = 0o600
+	// JWKSecretFileMode defines the default filemode for files with JWK Secrets.
+	JWKSecretFileMode            = 0o644
 	configFileMode               = 0o644
 	jsonFileForOpenTracingTracer = "/var/lib/nginx/tracer-config.json"
 	nginxBinaryPath              = "/usr/sbin/nginx"
