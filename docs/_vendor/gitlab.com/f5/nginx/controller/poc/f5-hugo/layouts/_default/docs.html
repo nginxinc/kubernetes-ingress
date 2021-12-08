@@ -20,9 +20,11 @@
     
   </main>
   {{ if and (gt .WordCount 200 ) (.Params.toc) }}
-  <div class="col-md-3 d-none d-xl-block d-print-none nginx-toc align-top">
-  {{ partial "toc.html" . }}
-  </div>
+    {{ if (add  (len (findRE "<h3" .Content)) (len (findRE "<h2" .Content))) }}
+      <div class="col-md-3 d-none d-xl-block d-print-none nginx-toc align-top">
+      {{ partial "toc.html" . }}
+      </div>
+    {{ end }}
   {{ end }}
 </div>
 <!-- If there is a script defined in the page metadata, load it  -->
