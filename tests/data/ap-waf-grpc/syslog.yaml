@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: syslog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: syslog
+  template:
+    metadata:
+      labels:
+        app: syslog
+    spec:
+      containers:
+        - name: syslog
+          image: balabit/syslog-ng:3.31.2-buster
+          ports:
+            - containerPort: 514
+            - containerPort: 601
+          volumeMounts:
+          - name: config-volume
+            mountPath: /etc/syslog-ng/syslog-ng.conf
+            subPath: syslog-ng.conf
+      volumes:
+        - name: config-volume
+          configMap:
+            name: syslog-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: syslog-svc
+spec:
+  ports:
+    - port: 514
+      targetPort: 514
+      protocol: TCP
+  selector:
+    app: syslog
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: syslog-config
+data:
+  syslog-ng.conf: |-
+    @version: 3.29
+    @include "scl.conf"
+
+    source s_local {
+      internal();
+    };
+
+    source s_network {
+      default-network-drivers(
+        max_connections(300)
+      );
+    };
+
+    destination d_local {
+      file("/var/log/messages");
+      file("/var/log/messages-kv.log" template("$ISODATE $HOST $(format-welf --scope all-nv-pairs)\n") frac-digits(3));
+    };
+
+    log {
+      source(s_local);
+      source(s_network);
+      destination(d_local);
+    };

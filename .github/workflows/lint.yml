@@ -20,16 +20,16 @@ defaults:
 env:
   GOLANGCI_TIMEOUT: 10m0s
 
+concurrency:
+  group: ${{ github.ref_name }}-lint
+  cancel-in-progress: true
+
 jobs:
 
   lint:
     name: Lint
     runs-on: ubuntu-20.04
     steps:
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
-        with:
-          access_token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Lint Code

@@ -1,0 +1,13 @@
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  name: waf-policy
+spec:
+  ingressClassName: nginx
+  waf:
+    enable: true
+    apPolicy: "default/grpc-block-saygoodbye"
+    securityLog:
+      enable: true
+      apLogConf: "default/logconf"
+      logDest: "syslog:server=127.0.0.1:514"

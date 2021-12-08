@@ -7,9 +7,9 @@ VERSION = $(GIT_TAG)-SNAPSHOT-$(GIT_COMMIT_SHORT)
 PLUS_ARGS = --secret id=nginx-repo.crt,src=nginx-repo.crt --secret id=nginx-repo.key,src=nginx-repo.key
 
 # variables that can be overridden by the user
-PREFIX = nginx/nginx-ingress ## The name of the image. For example, nginx/nginx-ingress
-TAG = $(VERSION:v%=%) ## The tag of the image. For example, 2.0.0
-TARGET ?= local ## The target of the build. Possible values: local, container and download
+PREFIX = nginx/nginx-ingress## The name of the image. For example, nginx/nginx-ingress
+TAG = $(VERSION:v%=%)## The tag of the image. For example, 2.0.0
+TARGET ?= local## The target of the build. Possible values: local, container and download
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT) --build-arg DATE=$(DATE) ## The options for the docker build command. For example, --pull.
 
 # final docker build command
@@ -33,7 +33,10 @@ lint: ## Run linter
 
 .PHONY: test
 test: ## Run tests
-	GO111MODULE=on go test ./...
+	go test ./...
+
+cover: ## Generate coverage report
+	@./hack/test-cover.sh
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify code generation

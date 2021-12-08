@@ -657,6 +657,371 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 	}
 }
 
+func TestGenerateVirtualServerConfigGrpcErrorPageWarning(t *testing.T) {
+	virtualServerEx := VirtualServerEx{
+		VirtualServer: &conf_v1.VirtualServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "cafe",
+				Namespace: "default",
+			},
+			Spec: conf_v1.VirtualServerSpec{
+				Host: "cafe.example.com",
+				TLS: &conf_v1.TLS{
+					Secret: "",
+				},
+				Upstreams: []conf_v1.Upstream{
+					{
+						Name:    "grpc-app-1",
+						Service: "grpc-svc",
+						Port:    50051,
+						Type:    "grpc",
+						TLS: conf_v1.UpstreamTLS{
+							Enable: true,
+						},
+					},
+					{
+						Name:    "grpc-app-2",
+						Service: "grpc-svc2",
+						Port:    50052,
+						Type:    "grpc",
+						TLS: conf_v1.UpstreamTLS{
+							Enable: true,
+						},
+					},
+					{
+						Name:    "tea",
+						Service: "tea-svc",
+						Port:    80,
+					},
+				},
+				Routes: []conf_v1.Route{
+					{
+						Path: "/grpc-errorpage",
+						Action: &conf_v1.Action{
+							Pass: "grpc-app-1",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{404, 405},
+								Return: &conf_v1.ErrorPageReturn{
+									ActionReturn: conf_v1.ActionReturn{
+										Code: 200,
+										Type: "text/plain",
+										Body: "All Good",
+									},
+								},
+							},
+						},
+					},
+					{
+						Path: "/grpc-matches",
+						Matches: []conf_v1.Match{
+							{
+								Conditions: []conf_v1.Condition{
+									{
+										Variable: "$request_method",
+										Value:    "POST",
+									},
+								},
+								Action: &conf_v1.Action{
+									Pass: "grpc-app-2",
+								},
+							},
+						},
+						Action: &conf_v1.Action{
+							Pass: "tea",
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{404},
+								Return: &conf_v1.ErrorPageReturn{
+									ActionReturn: conf_v1.ActionReturn{
+										Code: 200,
+										Type: "text/plain",
+										Body: "Original resource not found, but success!",
+									},
+								},
+							},
+						},
+					},
+					{
+						Path: "/grpc-splits",
+						Splits: []conf_v1.Split{
+							{
+								Weight: 90,
+								Action: &conf_v1.Action{
+									Pass: "grpc-app-1",
+								},
+							},
+							{
+								Weight: 10,
+								Action: &conf_v1.Action{
+									Pass: "grpc-app-2",
+								},
+							},
+						},
+						ErrorPages: []conf_v1.ErrorPage{
+							{
+								Codes: []int{404, 405},
+								Return: &conf_v1.ErrorPageReturn{
+									ActionReturn: conf_v1.ActionReturn{
+										Code: 200,
+										Type: "text/plain",
+										Body: "All Good",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/grpc-svc:50051": {
+				"10.0.0.20:80",
+			},
+		},
+	}
+
+	baseCfgParams := ConfigParams{
+		HTTP2: true,
+	}
+
+	expected := version2.VirtualServerConfig{
+		Upstreams: []version2.Upstream{
+			{
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "grpc-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Name: "vs_default_cafe_grpc-app-1",
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "10.0.0.20:80",
+					},
+				},
+			},
+			{
+				Name: "vs_default_cafe_grpc-app-2",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "grpc-svc2",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "unix:/var/lib/nginx/nginx-502-server.sock",
+					},
+				},
+			},
+			{
+				Name: "vs_default_cafe_tea",
+				UpstreamLabels: version2.UpstreamLabels{
+					Service:           "tea-svc",
+					ResourceType:      "virtualserver",
+					ResourceName:      "cafe",
+					ResourceNamespace: "default",
+				},
+				Servers: []version2.UpstreamServer{
+					{
+						Address: "unix:/var/lib/nginx/nginx-502-server.sock",
+					},
+				},
+			},
+		},
+		HTTPSnippets:  []string{},
+		LimitReqZones: []version2.LimitReqZone{},
+		Maps: []version2.Map{
+			{
+				Source:   "$request_method",
+				Variable: "$vs_default_cafe_matches_0_match_0_cond_0",
+				Parameters: []version2.Parameter{
+					{
+						Value:  `"POST"`,
+						Result: "1",
+					},
+					{
+						Value:  "default",
+						Result: "0",
+					},
+				},
+			},
+			{
+				Source:   "$vs_default_cafe_matches_0_match_0_cond_0",
+				Variable: "$vs_default_cafe_matches_0",
+				Parameters: []version2.Parameter{
+					{
+						Value:  "~^1",
+						Result: "/internal_location_matches_0_match_0",
+					},
+					{
+						Value:  "default",
+						Result: "/internal_location_matches_0_default",
+					},
+				},
+			},
+		},
+		Server: version2.Server{
+			ServerName:  "cafe.example.com",
+			StatusZone:  "cafe.example.com",
+			VSNamespace: "default",
+			VSName:      "cafe",
+			SSL: &version2.SSL{
+				HTTP2:          true,
+				Certificate:    "/etc/nginx/secrets/wildcard",
+				CertificateKey: "/etc/nginx/secrets/wildcard",
+			},
+			InternalRedirectLocations: []version2.InternalRedirectLocation{
+				{
+					Path:        "/grpc-matches",
+					Destination: "$vs_default_cafe_matches_0",
+				},
+				{
+					Path:        "/grpc-splits",
+					Destination: "$vs_default_cafe_splits_0",
+				},
+			},
+			Locations: []version2.Location{
+				{
+					Path:                     "/grpc-errorpage",
+					ProxyPass:                "https://vs_default_cafe_grpc-app-1",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					ErrorPages:               []version2.ErrorPage{{Name: "@error_page_0_0", Codes: "404 405", ResponseCode: 200}},
+					ProxyInterceptErrors:     true,
+					ProxySSLName:             "grpc-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "grpc-svc",
+					GRPCPass:                 "grpcs://vs_default_cafe_grpc-app-1",
+				},
+				{
+					Path:                     "/internal_location_matches_0_match_0",
+					Internal:                 true,
+					ProxyPass:                "https://vs_default_cafe_grpc-app-2$request_uri",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					Rewrites:                 []string{"^ $request_uri break"},
+					ErrorPages:               []version2.ErrorPage{{Name: "@error_page_1_0", Codes: "404", ResponseCode: 200}},
+					ProxyInterceptErrors:     true,
+					ProxySSLName:             "grpc-svc2.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "grpc-svc2",
+					GRPCPass:                 "grpcs://vs_default_cafe_grpc-app-2",
+				},
+				{
+					Path:                     "/internal_location_matches_0_default",
+					Internal:                 true,
+					ProxyPass:                "http://vs_default_cafe_tea$request_uri",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					ErrorPages:               []version2.ErrorPage{{Name: "@error_page_1_0", Codes: "404", ResponseCode: 200}},
+					ProxyInterceptErrors:     true,
+					ProxySSLName:             "tea-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "tea-svc",
+				},
+				{
+					Path:                     "/internal_location_splits_0_split_0",
+					Internal:                 true,
+					ProxyPass:                "https://vs_default_cafe_grpc-app-1$request_uri",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             false,
+					ErrorPages:               []version2.ErrorPage{{Name: "@error_page_2_0", Codes: "404 405", ResponseCode: 200}},
+					ProxyInterceptErrors:     true,
+					Rewrites:                 []string{"^ $request_uri break"},
+					ProxySSLName:             "grpc-svc.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "grpc-svc",
+					GRPCPass:                 "grpcs://vs_default_cafe_grpc-app-1",
+				},
+				{
+					Path:                     "/internal_location_splits_0_split_1",
+					Internal:                 true,
+					ProxyPass:                "https://vs_default_cafe_grpc-app-2$request_uri",
+					ProxyNextUpstream:        "error timeout",
+					ProxyNextUpstreamTimeout: "0s",
+					ProxyNextUpstreamTries:   0,
+					HasKeepalive:             false,
+					ErrorPages:               []version2.ErrorPage{{Name: "@error_page_2_0", Codes: "404 405", ResponseCode: 200}},
+					ProxyInterceptErrors:     true,
+					Rewrites:                 []string{"^ $request_uri break"},
+					ProxySSLName:             "grpc-svc2.default.svc",
+					ProxyPassRequestHeaders:  true,
+					ProxySetHeaders:          []version2.Header{{Name: "Host", Value: "$host"}},
+					ServiceName:              "grpc-svc2",
+					GRPCPass:                 "grpcs://vs_default_cafe_grpc-app-2",
+				},
+			},
+			ErrorPageLocations: []version2.ErrorPageLocation{
+				{
+					Name:        "@error_page_0_0",
+					DefaultType: "text/plain",
+					Return:      &version2.Return{Text: "All Good"},
+				},
+				{
+					Name:        "@error_page_1_0",
+					DefaultType: "text/plain",
+					Return:      &version2.Return{Text: "Original resource not found, but success!"},
+				},
+				{
+					Name:        "@error_page_2_0",
+					DefaultType: "text/plain",
+					Return:      &version2.Return{Text: "All Good"},
+				},
+			},
+		},
+		SplitClients: []version2.SplitClient{
+			{
+				Source:   "$request_id",
+				Variable: "$vs_default_cafe_splits_0",
+				Distributions: []version2.Distribution{
+					{
+						Weight: "90%",
+						Value:  "/internal_location_splits_0_split_0",
+					},
+					{
+						Weight: "10%",
+						Value:  "/internal_location_splits_0_split_1",
+					},
+				},
+			},
+		},
+	}
+	expectedWarnings := Warnings{
+		virtualServerEx.VirtualServer: {
+			`The error page configuration for the upstream grpc-app-1 is ignored for status code(s) [404 405], which cannot be used for GRPC upstreams.`,
+			`The error page configuration for the upstream grpc-app-2 is ignored for status code(s) [404], which cannot be used for GRPC upstreams.`,
+			`The error page configuration for the upstream grpc-app-1 is ignored for status code(s) [404 405], which cannot be used for GRPC upstreams.`,
+			`The error page configuration for the upstream grpc-app-2 is ignored for status code(s) [404 405], which cannot be used for GRPC upstreams.`,
+		},
+	}
+	isPlus := false
+	isResolverConfigured := false
+	isWildcardEnabled := true
+	vsc := newVirtualServerConfigurator(&baseCfgParams, isPlus, isResolverConfigured, &StaticConfigParams{}, isWildcardEnabled)
+
+	result, warnings := vsc.GenerateVirtualServerConfig(&virtualServerEx, nil)
+	if diff := cmp.Diff(expected, result); diff != "" {
+		t.Errorf("TestGenerateVirtualServerConfigGrpcErrorPageWarning() mismatch (-want +got):\n%s", diff)
+	}
+
+	if !reflect.DeepEqual(vsc.warnings, expectedWarnings) {
+		t.Errorf("GenerateVirtualServerConfig() returned warnings of \n%v but expected \n%v", warnings, expectedWarnings)
+	}
+}
+
 func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
@@ -4652,7 +5017,6 @@ func TestGenerateSplits(t *testing.T) {
 			},
 		},
 	}
-
 	expectedSplitClient := version2.SplitClient{
 		Source:   "$request_id",
 		Variable: "$vs_default_cafe_splits_1",
@@ -4759,6 +5123,14 @@ func TestGenerateSplits(t *testing.T) {
 	}
 	returnLocationIndex := 1
 
+	errorPageDetails := errorPageDetails{
+		pages: errorPages,
+		index: 0,
+		owner: nil,
+	}
+
+	vsc := newVirtualServerConfigurator(&cfgParams, false, false, &StaticConfigParams{}, false)
+
 	resultSplitClient, resultLocations, resultReturnLocations := generateSplits(
 		splits,
 		upstreamNamer,
@@ -4766,8 +5138,7 @@ func TestGenerateSplits(t *testing.T) {
 		variableNamer,
 		scIndex,
 		&cfgParams,
-		errorPages,
-		0,
+		errorPageDetails,
 		originalPath,
 		locSnippet,
 		enableSnippets,
@@ -4775,6 +5146,7 @@ func TestGenerateSplits(t *testing.T) {
 		true,
 		"coffee",
 		"default",
+		vsc.warnings,
 	)
 	if !reflect.DeepEqual(resultSplitClient, expectedSplitClient) {
 		t.Errorf("generateSplits() returned \n%+v but expected \n%+v", resultSplitClient, expectedSplitClient)
@@ -4882,8 +5254,14 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 		},
 	}
 
+	errorPageDetails := errorPageDetails{
+		pages: route.ErrorPages,
+		index: 0,
+		owner: nil,
+	}
+
 	result := generateDefaultSplitsConfig(route, upstreamNamer, crUpstreams, variableNamer, index, &cfgParams,
-		route.ErrorPages, 0, "", locSnippet, enableSnippets, 0, true, "coffee", "default")
+		errorPageDetails, "", locSnippet, enableSnippets, 0, true, "coffee", "default", Warnings{})
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateDefaultSplitsConfig() returned \n%+v but expected \n%+v", result, expected)
 	}
@@ -5273,6 +5651,12 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		"vs_default_cafe_tea":       {Service: "tea"},
 	}
 
+	errorPageDetails := errorPageDetails{
+		pages: errorPages,
+		index: 2,
+		owner: nil,
+	}
+
 	result := generateMatchesConfig(
 		route,
 		upstreamNamer,
@@ -5281,14 +5665,14 @@ func TestGenerateMatchesConfig(t *testing.T) {
 		index,
 		scIndex,
 		&cfgParams,
-		errorPages,
-		2,
+		errorPageDetails,
 		locSnippets,
 		enableSnippets,
 		0,
 		false,
 		"",
 		"",
+		Warnings{},
 	)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)
@@ -5675,6 +6059,13 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		"vs_default_cafe_coffee-v1": {Service: "coffee-v1"},
 		"vs_default_cafe_coffee-v2": {Service: "coffee-v2"},
 	}
+
+	errorPageDetails := errorPageDetails{
+		pages: errorPages,
+		index: 0,
+		owner: nil,
+	}
+
 	result := generateMatchesConfig(
 		route,
 		upstreamNamer,
@@ -5683,14 +6074,14 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 		index,
 		scIndex,
 		&cfgParams,
-		errorPages,
-		0,
+		errorPageDetails,
 		locSnippets,
 		enableSnippets,
 		0,
 		true,
 		"coffee",
 		"default",
+		Warnings{},
 	)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("generateMatchesConfig() returned \n%+v but expected \n%+v", result, expected)

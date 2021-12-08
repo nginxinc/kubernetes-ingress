@@ -13,6 +13,10 @@ env:
   DOCKER_BUILDKIT: 1
   K8S_TIMEOUT: 75s
 
+concurrency:
+  group: ${{ github.ref_name }}-update
+  cancel-in-progress: true
+
 jobs:
 
   variables:
