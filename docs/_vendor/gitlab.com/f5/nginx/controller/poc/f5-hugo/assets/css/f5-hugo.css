@@ -169,9 +169,14 @@ ol > li > ol {
 
 .card-title {
     overflow-wrap: normal;
+
+}
+.products-card > .card-title {
     padding-left: 52px;
     text-indent: -52px;
 }
+
+
 
 h3.card-title a {
     color: #000;
