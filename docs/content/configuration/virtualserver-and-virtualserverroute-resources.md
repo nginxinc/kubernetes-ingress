@@ -93,12 +93,13 @@ basedOn: scheme
 |``basedOn`` | The attribute of a request that NGINX will evaluate to send a redirect. The allowed values are ``scheme`` (the scheme of the request) or ``x-forwarded-proto`` (the ``X-Forwarded-Proto`` header of the request). The default is ``scheme``. | ``string`` | No | ### VirtualServer.Policy |
 {{% /table %}}
 
+### VirtualServer.Policy
+
 The policy field references a [Policy resource](/nginx-ingress-controller/configuration/policy-resource/) by its name and optional namespace. For example:
 ```yaml
 name: access-control
 ```
 
-### VirtualServer.Policy
 
 {{% table %}}
 |Field | Description | Type | Required |
