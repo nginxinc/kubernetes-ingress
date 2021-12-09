@@ -83,7 +83,8 @@ function auth(r) {
                         r.variables.session_jwt = tokenset.id_token; // Update key-value store
 
                         // Update refresh token (if we got a new one)
-                        if (r.variables.refresh_token != tokenset.refresh_token) {
+                        // 12.2021 - In rare cases the IdP does not include the refresh-token in the response. The rt will be undefined in this case.
+                        if (r.variables.refresh_token != tokenset.refresh_token && tokenset.refresh_token != undefined) {
                             r.log("OIDC replacing previous refresh token (" + r.variables.refresh_token + ") with new value: " + tokenset.refresh_token);
                             r.variables.refresh_token = tokenset.refresh_token; // Update key-value store
                         }
