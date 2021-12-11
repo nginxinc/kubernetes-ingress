@@ -1,0 +1,11 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: virtual-server-route
+spec:
+  host: virtual-server.example.com
+  tls:
+    secret: virtual-server-tls-grpc-secret
+  routes:
+  - path: "~* /helloworld.greeter/"
+    route: helloworld.greeter

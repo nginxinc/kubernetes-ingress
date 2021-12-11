@@ -84,10 +84,6 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 	}
 
 	if spec.WAF != nil {
-		if !enablePreviewPolicies {
-			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"),
-				"waf is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
-		}
 		if !isPlus {
 			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("waf"), "WAF is only supported in NGINX Plus"))
 		}

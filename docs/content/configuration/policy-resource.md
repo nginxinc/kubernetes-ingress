@@ -357,8 +357,6 @@ For `kubectl get` and similar commands, you can also use the short name `pol` in
 
 ### WAF
 
-> **Feature Status**: WAF is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
-
 > Note: This feature is only available in NGINX Plus with AppProtect.
 
 The WAF policy configures NGINX Plus to secure client requests using App Protect policies.

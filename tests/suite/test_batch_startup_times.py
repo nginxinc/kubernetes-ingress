@@ -412,7 +412,6 @@ def appprotect_waf_setup(request, kube_apis, test_namespace) -> None:
                     f"-enable-custom-resources",
                     f"-enable-leader-election=false",
                     f"-enable-app-protect",
-                    f"-enable-preview-policies",
                     f"-enable-prometheus-metrics",
                 ],
             },
