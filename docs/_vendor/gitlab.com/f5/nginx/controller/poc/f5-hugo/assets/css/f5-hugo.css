@@ -88,6 +88,7 @@ ol > li > ol {
     border: 1px solid #f8f9f9;
     box-sizing: border-box;
     border-radius: 4px;
+    height: 100%;
   }
   
   a.products-card {
@@ -168,7 +169,14 @@ ol > li > ol {
 
 .card-title {
     overflow-wrap: normal;
+
 }
+.products-card > .card-title {
+    padding-left: 52px;
+    text-indent: -52px;
+}
+
+
 
 h3.card-title a {
     color: #000;

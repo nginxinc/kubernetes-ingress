@@ -71,6 +71,19 @@ func TestValidatePolicy(t *testing.T) {
 			enableAppProtect:      true,
 			msg:                   "use WAF(plus only) policy",
 		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					WAF: &v1.WAF{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: false,
+			enableAppProtect:      true,
+			msg:                   "WAF policy with preview policies disabled",
+		},
 	}
 	for _, test := range tests {
 		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect)
@@ -230,19 +243,6 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                false,
 			enablePreviewPolicies: true,
 			msg:                   "OIDC policy in OSS",
-		},
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{
-					WAF: &v1.WAF{
-						Enable: true,
-					},
-				},
-			},
-			isPlus:                true,
-			enablePreviewPolicies: false,
-			enableAppProtect:      true,
-			msg:                   "WAF policy with preview policies disabled",
 		},
 		{
 			policy: &v1.Policy{
