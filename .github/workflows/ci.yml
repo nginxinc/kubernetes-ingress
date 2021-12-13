@@ -159,12 +159,12 @@ jobs:
                                                 {\"image\": \"opentracing\", \"marker\": \"vs\"}, \
                                                 {\"image\": \"ubi\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"opentracing-plus\", \"marker\": \"vsr\"}, \
                                                 {\"image\": \"ubi-plus\", \"marker\": \"policies\"}]}"
           else
-            echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.4\", \"1.23.0\"], \
-                                             \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}"
+            echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.4\", \"1.23.0\"]}"
           fi
 
   smoke-tests:

@@ -22,6 +22,7 @@ from settings import TEST_DATA
 
 
 @pytest.mark.ts
+@pytest.mark.skip_for_loadbalancer
 @pytest.mark.parametrize(
     "crd_ingress_controller, transport_server_setup",
     [

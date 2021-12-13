@@ -333,9 +333,9 @@ class TestAppProtect:
             appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
         )
         print(response_block.text)
-        log_contents = ""
+        log_contents_block = ""
         retry = 0
-        while "ASM:attack_type" not in log_contents and retry <= 60:
+        while "ASM:attack_type" not in log_contents_block and retry <= 30:
             log_contents_block = get_file_contents(
                 kube_apis.v1, log_loc, syslog_pod, test_namespace
             )

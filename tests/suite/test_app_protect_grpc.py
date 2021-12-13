@@ -161,8 +161,16 @@ class TestAppProtect:
                 # grpc.RpcError is also grpc.Call https://grpc.github.io/grpc/python/grpc.html#client-side-context
                 ex = e.details()
                 print(ex)
-                
-        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+        
+        log_contents = ""
+        retry = 0
+        while "ASM:attack_type" not in log_contents and retry <= 30:
+            log_contents = get_file_contents(
+                kube_apis.v1, log_loc, syslog_pod, test_namespace)
+            retry += 1
+            wait_before_test(1)
+            print(f"Security log not updated, retrying... #{retry}")
+
         assert (
             invalid_resp_text in ex and
             'ASM:attack_type="Directory Indexing"' in log_contents and
@@ -195,8 +203,16 @@ class TestAppProtect:
             except grpc.RpcError as e:
                 print(e.details())
                 pytest.fail("RPC error was not expected during call, exiting...")
-                
-        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+
+        log_contents = ""
+        retry = 0
+        while "ASM:attack_type" not in log_contents and retry <= 30:
+            log_contents = get_file_contents(
+                kube_apis.v1, log_loc, syslog_pod, test_namespace)
+            retry += 1
+            wait_before_test(1)
+            print(f"Security log not updated, retrying... #{retry}")
+
         assert (
             valid_resp_txt in response.message and
             'ASM:attack_type="N/A"' in log_contents and

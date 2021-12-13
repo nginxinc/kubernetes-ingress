@@ -112,6 +112,11 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "skip_for_nginx_plus" in item.keywords:
                 item.add_marker(skip_for_nginx_plus)
+    if config.getoption("--service") == "loadbalancer":
+        skip_for_loadbalancer = pytest.mark.skip(reason="Skip a test for loadbalancer service")
+        for item in items:
+            if "skip_for_loadbalancer" in item.keywords:
+                item.add_marker(skip_for_loadbalancer)
     if "-ap" not in config.getoption("--image"):
         appprotect = pytest.mark.skip(reason="Skip AppProtect test in non-AP image")
         for item in items:
