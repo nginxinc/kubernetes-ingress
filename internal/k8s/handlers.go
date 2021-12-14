@@ -533,11 +533,11 @@ func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bo
 		return false, err
 	}
 	spec, found, err := unstructured.NestedMap(resource.Object, "spec")
-	if !found {
-		return false, fmt.Errorf("Error, spec has unexpected format")
-	}
 	if err != nil {
 		return false, err
+	}
+	if !found {
+		return false, fmt.Errorf("Error, spec has unexpected format")
 	}
 	eq := reflect.DeepEqual(oldSpec, spec)
 	if eq {
