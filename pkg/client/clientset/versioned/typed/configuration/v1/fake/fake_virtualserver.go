@@ -61,6 +61,7 @@ func (c *FakeVirtualServers) List(ctx context.Context, opts v1.ListOptions) (res
 func (c *FakeVirtualServers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(virtualserversResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a virtualServer and creates it.  Returns the server's representation of the virtualServer, and an error, if there is any.
@@ -100,7 +101,7 @@ func (c *FakeVirtualServers) UpdateStatus(ctx context.Context, virtualServer *co
 // Delete takes name of the virtualServer and deletes it. Returns an error if one occurs.
 func (c *FakeVirtualServers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(virtualserversResource, c.ns, name), &configurationv1.VirtualServer{})
+		Invokes(testing.NewDeleteActionWithOptions(virtualserversResource, c.ns, name, opts), &configurationv1.VirtualServer{})
 
 	return err
 }
