@@ -61,6 +61,7 @@ func (c *FakePolicies) List(ctx context.Context, opts v1.ListOptions) (result *c
 func (c *FakePolicies) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(policiesResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a policy and creates it.  Returns the server's representation of the policy, and an error, if there is any.
@@ -100,7 +101,7 @@ func (c *FakePolicies) UpdateStatus(ctx context.Context, policy *configurationv1
 // Delete takes name of the policy and deletes it. Returns an error if one occurs.
 func (c *FakePolicies) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(policiesResource, c.ns, name), &configurationv1.Policy{})
+		Invokes(testing.NewDeleteActionWithOptions(policiesResource, c.ns, name, opts), &configurationv1.Policy{})
 
 	return err
 }
