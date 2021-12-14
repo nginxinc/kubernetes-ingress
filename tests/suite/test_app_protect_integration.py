@@ -297,6 +297,7 @@ class TestAppProtect:
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_valid_responses(response)
 
+    @pytest.mark.flaky(max_runs=3)
     def test_ap_sec_logs_on(
         self,
         request,
@@ -412,6 +413,8 @@ class TestAppProtect:
 
         assert num is None
 
+    @pytest.mark.ciara
+    @pytest.mark.flaky(max_runs=3)
     def test_ap_multi_sec_logs(
         self, request, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
@@ -450,34 +453,40 @@ class TestAppProtect:
                 "appprotect.f5.com/app-protect-security-log-destination"
             ] = f"syslog:server={syslog_dst}:514,syslog:server={syslog2_dst}:514"
 
-        create_ingress(kube_apis.networking_v1, test_namespace, doc)
+        try:
+            create_ingress(kube_apis.networking_v1, test_namespace, doc)
 
-        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
+            ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 
-        ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
+            ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
 
-        print("----------------------- Send request ----------------------")
-        response = requests.get(
-            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
-        )
-        print(response.text)
-        log_contents = ""
-        log2_contents = ""
-        retry = 0
-        while (
-            "ASM:attack_type" not in log_contents
-            and "ASM:attack_type" not in log2_contents
-            and retry <= 60
-        ):
-            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
-            log2_contents = get_file_contents(kube_apis.v1, log_loc, syslog2_pod, test_namespace)
-            retry += 1
-            wait_before_test(1)
-            print(f"Security log not updated, retrying... #{retry}")
+            print("----------------------- Send request ----------------------")
+            response = requests.get(
+                appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
+            )
+            print(response.text)
+            log_contents = ""
+            log2_contents = ""
+            retry = 0
+            while (
+                "ASM:attack_type" not in log_contents
+                and "ASM:attack_type" not in log2_contents
+                and retry <= 60
+            ):
+                log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+                log2_contents = get_file_contents(kube_apis.v1, log_loc, syslog2_pod, test_namespace)
+                retry += 1
+                wait_before_test(1)
+                print(f"Security log not updated, retrying... #{retry}")
 
-        reload_ms = get_last_reload_time(appprotect_setup.metrics_url, "nginx")
-        print(f"last reload duration: {reload_ms} ms")
-        reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
+            reload_ms = get_last_reload_time(appprotect_setup.metrics_url, "nginx")
+            print(f"last reload duration: {reload_ms} ms")
+            reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
+        except Exception as ex:
+            delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+            delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+            delete_items_from_yaml(kube_apis, src_syslog2_yaml, test_namespace)
+            raise ex
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
@@ -501,6 +510,7 @@ class TestAppProtect:
             and 'outcome="REJECTED"' in log2_contents
         )
 
+    @pytest.mark.flaky(max_runs=3)
     def test_ap_enable_true_policy_correct_uds(
         self, request, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):

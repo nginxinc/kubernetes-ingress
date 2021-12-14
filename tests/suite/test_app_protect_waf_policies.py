@@ -310,6 +310,7 @@ class TestAppProtectWAFPolicyVS:
         assert_valid_responses(response1)
         assert_valid_responses(response2)
 
+    @pytest.mark.flaky(max_runs=3)
     def test_ap_waf_policy_logs(
         self,
         kube_apis,
@@ -361,8 +362,15 @@ class TestAppProtectWAFPolicyVS:
             headers={"host": virtual_server_setup.vs_host},
         )
         print(response.text)
-        wait_before_test(5)
-        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
+        log_contents = ""
+        retry = 0
+        while "ASM:attack_type" not in log_contents and retry <= 30:
+            log_contents = get_file_contents(
+                kube_apis.v1, log_loc, syslog_pod, test_namespace
+            )
+            retry += 1
+            wait_before_test(1)
+            print(f"Security log not updated, retrying... #{retry}")
 
         delete_policy(kube_apis.custom_objects, "waf-policy", test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)

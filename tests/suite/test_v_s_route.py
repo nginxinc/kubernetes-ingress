@@ -364,6 +364,7 @@ class TestVirtualServerRouteValidation:
 
 
 @pytest.mark.vsr
+@pytest.mark.flaky(max_runs=3)
 @pytest.mark.parametrize('crd_ingress_controller, v_s_route_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
                            {"example": "virtual-server-route"})],
