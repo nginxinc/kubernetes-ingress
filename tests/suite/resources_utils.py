@@ -320,6 +320,19 @@ def get_pods_amount(v1: CoreV1Api, namespace) -> int:
     pods = v1.list_namespaced_pod(namespace)
     return 0 if not pods.items else len(pods.items)
 
+def get_pod_name_that_contains(v1: CoreV1Api, namespace, contains_string) -> str:
+    """
+    Get an amount of pods.
+
+    :param v1: CoreV1Api
+    :param namespace: namespace
+    :param contains_string: string to search on
+    :return: string
+    """
+    for item in v1.list_namespaced_pod(namespace).items:
+        if contains_string in item.metadata.name:
+            return item.metadata.name
+    return ""
 
 def create_service_from_yaml(v1: CoreV1Api, namespace, yaml_manifest) -> str:
     """
@@ -806,6 +819,28 @@ def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
     result_conf = str(resp)
     print("\nFile contents:\n" + result_conf)
     return result_conf
+
+
+def clear_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace):
+    """
+    Execute 'cat /dev/null > file_path' command in a pod.
+
+    :param v1: CoreV1Api
+    :param pod_name: pod name
+    :param pod_namespace: pod namespace
+    :param file_path: an absolute path to a file in the pod
+    """
+    command = ["cat /dev/null > ", file_path]
+    resp = stream(
+        v1.connect_get_namespaced_pod_exec,
+        pod_name,
+        pod_namespace,
+        command=command,
+        stderr=True,
+        stdin=False,
+        stdout=True,
+        tty=False,
+    )
 
 
 def get_ingress_nginx_template_conf(
