@@ -89,7 +89,7 @@ basedOn: scheme
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``enable`` | Enables a TLS redirect for a VirtualServer. The default is ``False``. | ``boolean`` | No |
-|``code`` | The status code of a redirect. The allowed values are: ``301``\ , ``302``\ , ``307``\ , ``308``.  The default is ``301``. | ``int`` | No |
+|``code`` | The status code of a redirect. The allowed values are: ``301`` , ``302`` , ``307`` , ``308``.  The default is ``301``. | ``int`` | No |
 |``basedOn`` | The attribute of a request that NGINX will evaluate to send a redirect. The allowed values are ``scheme`` (the scheme of the request) or ``x-forwarded-proto`` (the ``X-Forwarded-Proto`` header of the request). The default is ``scheme``. | ``string`` | No | ### VirtualServer.Policy |
 {{% /table %}}
 
@@ -120,7 +120,7 @@ The route defines rules for matching client requests to actions like passing a r
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``path`` | The path of the route. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix (must start with ``/``\ ) or an exact match (must start with ``=``\ ), the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``. In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all routes of the VirtualServer. Check the [location](https://nginx.org/en/docs/http/ngx_http_core_module.html#location) directive for more information. | ``string`` | Yes |
+|``path`` | The path of the route. NGINX will match it against the URI of a request. Possible values are: a prefix ( ``/`` , ``/path`` ), an exact match ( ``=/exact/match`` ), a case insensitive regular expression ( ``~*^/Bar.*\.jpg`` ) or a case sensitive regular expression ( ``~^/foo.*\.jpg`` ). In the case of a prefix (must start with ``/`` ) or an exact match (must start with ``=`` ), the path must not include any whitespace characters, ``{`` , ``}`` or ``;``. In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all routes of the VirtualServer. Check the [location](https://nginx.org/en/docs/http/ngx_http_core_module.html#location) directive for more information. | ``string`` | Yes |
 |``policies`` | A list of policies. The policies override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserverpolicy) | No |
 |``action`` | The default action to perform for a request. | [action](#action) | No |
 |``splits`` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [[]split](#split) | No |
@@ -207,7 +207,7 @@ action:
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``path`` | The path of the subroute. NGINX will match it against the URI of a request. Possible values are: a prefix (\ ``/``\ , ``/path``\ ), an exact match (\ ``=/exact/match``\ ), a case insensitive regular expression (\ ``~*^/Bar.*\\.jpg``\ ) or a case sensitive regular expression (\ ``~^/foo.*\\.jpg``\ ). In the case of a prefix, the path must start with the same path as the path of the route of the VirtualServer that references this resource. In the case of an exact or regex match, the path must be the same as the path of the route of the VirtualServer that references this resource. In the case of a prefix or an exact match, the path must not include any whitespace characters, ``{``\ , ``}`` or ``;``.  In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all subroutes of the VirtualServerRoute. | ``string`` | Yes |
+|``path`` | The path of the subroute. NGINX will match it against the URI of a request. Possible values are: a prefix ( ``/`` , ``/path`` ), an exact match ( ``=/exact/match`` ), a case insensitive regular expression ( ``~*^/Bar.*\.jpg`` ) or a case sensitive regular expression ( ``~^/foo.*\.jpg`` ). In the case of a prefix, the path must start with the same path as the path of the route of the VirtualServer that references this resource. In the case of an exact or regex match, the path must be the same as the path of the route of the VirtualServer that references this resource. In the case of a prefix or an exact match, the path must not include any whitespace characters, ``{`` , ``}`` or ``;``.  In the case of the regex matches, all double quotes ``"`` must be escaped and the match can't end in an unescaped backslash ``\``. The path must be unique among the paths of all subroutes of the VirtualServerRoute. | ``string`` | Yes |
 |``policies`` | A list of policies. The policies override *all* policies defined in the route of the VirtualServer that references this resource. The policies also override the policies of the same type defined in the ``spec`` of the VirtualServer. See [Applying Policies](/nginx-ingress-controller/configuration/policy-resource/#applying-policies) for more details. | [[]policy](#virtualserverpolicy) | No |
 |``action`` | The default action to perform for a request. | [action](#action) | No |
 |``splits`` | The default splits configuration for traffic splitting. Must include at least 2 splits. | [[]split](#split) | No |
@@ -251,7 +251,7 @@ tls:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``upstream-123`` are valid. The name must be unique among all upstreams of the resource. | ``string`` | Yes |
-|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v2.0.3/examples/externalname-services#prerequisites)\ ). | ``string`` | Yes |
+|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v2.0.3/examples/externalname-services#prerequisites) ). | ``string`` | Yes |
 |``subselector`` | Selects the pods within the service using label keys and values. By default, all pods of the service are selected. Note: the specified labels are expected to be present in the pods when they are created. If the pod labels are updated, the Ingress Controller will not see that change until the number of the pods is changed. | ``map[string]string`` | No |
 |``use-cluster-ip`` | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as the Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP. | ``boolean`` | No |
 |``port`` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65535``. | ``uint16`` | Yes |
@@ -269,7 +269,7 @@ tls:
 |``client-max-body-size`` | Sets the maximum allowed size of the client request body. See the [client_max_body_size](https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size) directive. The default is set in the ``client-max-body-size`` ConfigMap key. | ``string`` | No |
 |``tls`` | The TLS configuration for the Upstream. | [tls](#upstreamtls) | No |
 |``healthCheck`` | The health check configuration for the Upstream. See the [health_check](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html#health_check) directive. Note: this feature is supported only in NGINX Plus. | [healthcheck](#upstreamhealthcheck) | No |
-|``slow-start`` | The slow start allows an upstream server to gradually recover its weight from 0 to its nominal value after it has been recovered or became available or when the server becomes available after a period of time it was considered unavailable. By default, the slow start is disabled. See the [slow_start](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#slow_start) parameter of the server directive. Note: The parameter cannot be used along with the ``random``\ , ``hash`` or ``ip_hash`` load balancing methods and will be ignored. | ``string`` | No |
+|``slow-start`` | The slow start allows an upstream server to gradually recover its weight from 0 to its nominal value after it has been recovered or became available or when the server becomes available after a period of time it was considered unavailable. By default, the slow start is disabled. See the [slow_start](https://nginx.org/en/docs/http/ngx_http_upstream_module.html#slow_start) parameter of the server directive. Note: The parameter cannot be used along with the ``random`` , ``hash`` or ``ip_hash`` load balancing methods and will be ignored. | ``string`` | No |
 |``queue`` | Configures a queue for an upstream. A client request will be placed into the queue if an upstream server cannot be selected immediately while processing the request. By default, no queue is configured. Note: this feature is supported only in NGINX Plus. | [queue](#upstreamqueue) | No |
 |``buffering`` | Enables buffering of responses from the upstream server. See the [proxy_buffering](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering) directive. The default is set in the ``proxy-buffering`` ConfigMap key. | ``boolean`` | No |
 |``buffers`` | Configures the buffers used for reading a response from the upstream server for a single connection. | [buffers](#upstreambuffers) | No |
@@ -299,7 +299,7 @@ See the [proxy_buffers](https://nginx.org/en/docs/http/ngx_http_proxy_module.htm
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``enable`` | Enables HTTPS for requests to upstream servers. The default is ``False``\ , meaning that HTTP will be used. Note: by default, NGINX will not verify the upstream server certificate. To enable the verification, configure an [EgressMTLS Policy](/nginx-ingress-controller/configuration/policy-resource/#egressmtls). | ``boolean`` | No |
+|``enable`` | Enables HTTPS for requests to upstream servers. The default is ``False`` , meaning that HTTP will be used. Note: by default, NGINX will not verify the upstream server certificate. To enable the verification, configure an [EgressMTLS Policy](/nginx-ingress-controller/configuration/policy-resource/#egressmtls). | ``boolean`` | No |
 {{% /table %}}
 
 ### Upstream.Queue
@@ -365,8 +365,8 @@ Note: This feature is supported only in NGINX Plus.
 |``connect-timeout`` | The timeout for establishing a connection with an upstream server. By default, the ``connect-timeout`` of the upstream is used. | ``string`` | No |
 |``read-timeout`` | The timeout for reading a response from an upstream server. By default, the ``read-timeout`` of the upstream is used. | ``string`` | No |
 |``send-timeout`` | The timeout for transmitting a request to an upstream server. By default, the ``send-timeout`` of the upstream is used. | ``string`` | No |
-|``headers`` | The request headers used for health check requests. NGINX Plus always sets the ``Host``\ , ``User-Agent`` and ``Connection`` headers for health check requests. | [[]header](#header) | No |
-|``statusMatch`` | The expected response status codes of a health check. By default, the response should have status code 2xx or 3xx. Examples: ``"200"``\ , ``"! 500"``\ , ``"301-303 307"``. See the documentation of the [match](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html?#match) directive. This not supported for gRPC type upstreams. | ``string`` | No |
+|``headers`` | The request headers used for health check requests. NGINX Plus always sets the ``Host`` , ``User-Agent`` and ``Connection`` headers for health check requests. | [[]header](#header) | No |
+|``statusMatch`` | The expected response status codes of a health check. By default, the response should have status code 2xx or 3xx. Examples: ``"200"`` , ``"! 500"`` , ``"301-303 307"``. See the documentation of the [match](https://nginx.org/en/docs/http/ngx_http_upstream_hc_module.html?#match) directive. This not supported for gRPC type upstreams. | ``string`` | No |
 |``grpcStatus`` | The expected [gRPC status code](https://github.com/grpc/grpc/blob/master/doc/statuscodes.md#status-codes-and-their-use-in-grpc) of the upstream server response to the [Check method](https://github.com/grpc/grpc/blob/master/doc/health-checking.md). Configure this field only if your gRPC services do not implement the gRPC health checking protocol. For example, configure ``12`` if the upstream server responds with `12 (UNIMPLEMENTED)` status code. Only valid on gRPC type upstreams. | ``int`` | No |
 |``grpcService`` | The gRPC service to be monitored on the upstream server. Only valid on gRPC type upstreams. | ``string`` | No |
 {{% /table %}} 
@@ -400,7 +400,7 @@ Note: This feature is supported only in NGINX Plus.
 |``enable`` | Enables session persistence with a session cookie for an upstream server. The default is ``false``. | ``boolean`` | No |
 |``name`` | The name of the cookie. | ``string`` | Yes |
 |``path`` | The path for which the cookie is set. | ``string`` | No |
-|``expires`` | The time for which a browser should keep the cookie. Can be set to the special value ``max``\ , which will cause the cookie to expire on ``31 Dec 2037 23:55:55 GMT``. | ``string`` | No |
+|``expires`` | The time for which a browser should keep the cookie. Can be set to the special value ``max`` , which will cause the cookie to expire on ``31 Dec 2037 23:55:55 GMT``. | ``string`` | No |
 |``domain`` | The domain for which the cookie is set. | ``string`` | No |
 |``httpOnly`` | Adds the ``HttpOnly`` attribute to the cookie. | ``boolean`` | No |
 |``secure`` | Adds the ``Secure`` attribute to the cookie. | ``boolean`` | No |
@@ -457,8 +457,8 @@ redirect:
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``url`` | The URL to redirect the request to. Supported NGINX variables: ``$scheme``\ , ``$http_x_forwarded_proto``\ , ``$request_uri``\ , ``$host``. Variables must be enclosed in curly braces. For example: ``${host}${request_uri}``. | ``string`` | Yes |
-|``code`` | The status code of a redirect. The allowed values are: ``301``\ , ``302``\ , ``307``\ , ``308``. The default is ``301``. | ``int`` | No |
+|``url`` | The URL to redirect the request to. Supported NGINX variables: ``$scheme`` , ``$http_x_forwarded_proto`` , ``$request_uri`` , ``$host``. Variables must be enclosed in curly braces. For example: ``${host}${request_uri}``. | ``string`` | Yes |
+|``code`` | The status code of a redirect. The allowed values are: ``301`` , ``302`` , ``307`` , ``308``. The default is ``301``. | ``int`` | No |
 {{% /table %}}
 
 ### Action.Return
@@ -742,8 +742,8 @@ redirect:
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``code`` | The status code of a redirect. The allowed values are: ``301``\ , ``302``\ , ``307``\ , ``308``.  The default is ``301``. | ``int`` | No |
-|``url`` | The URL to redirect the request to. Supported NGINX variables: ``$scheme``\ and ``$http_x_forwarded_proto``\. Variables must be enclosed in curly braces. For example: ``${scheme}``. | ``string`` | Yes |
+|``code`` | The status code of a redirect. The allowed values are: ``301`` , ``302`` , ``307`` , ``308``.  The default is ``301``. | ``int`` | No |
+|``url`` | The URL to redirect the request to. Supported NGINX variables: ``$scheme`` and ``$http_x_forwarded_proto``. Variables must be enclosed in curly braces. For example: ``${scheme}``. | ``string`` | Yes |
 {{% /table %}}
 
 ### ErrorPage.Return
@@ -769,7 +769,7 @@ return:
 | ---| ---| ---| --- |
 |``code`` | The status code of the response. The default is the status code of the original response. | ``int`` | No |
 |``type`` | The MIME type of the response. The default is ``text/html``. | ``string`` | No |
-|``body`` | The body of the response. Supported NGINX variable: ``$upstream_status`` \ . Variables must be enclosed in curly braces. For example: ``${upstream_status}``. | ``string`` | Yes |
+|``body`` | The body of the response. Supported NGINX variable: ``$upstream_status`` . Variables must be enclosed in curly braces. For example: ``${upstream_status}``. | ``string`` | Yes |
 |``headers`` | The custom headers of the response. | [errorPage.Return.Header](#errorpagereturnheader) | No |
 {{% /table %}}
 
@@ -786,7 +786,7 @@ value: ${upstream_status}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the header. | ``string`` | Yes |
-|``value`` | The value of the header. Supported NGINX variable: ``$upstream_status`` \ . Variables must be enclosed in curly braces. For example: ``${upstream_status}``. | ``string`` | No |
+|``value`` | The value of the header. Supported NGINX variable: ``$upstream_status`` . Variables must be enclosed in curly braces. For example: ``${upstream_status}``. | ``string`` | No |
 {{% /table %}}
 
 ## Using VirtualServer and VirtualServerRoute
