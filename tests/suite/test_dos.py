@@ -31,6 +31,7 @@ from suite.resources_utils import (
     scale_deployment,
     nginx_reload,
     get_pods_amount,
+    clear_file_contents,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 from datetime import datetime
@@ -194,6 +195,8 @@ class TestDos:
         assert "syslog" in syslog_pod
 
         log_loc = f"/var/log/messages"
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
+
         create_ingress_with_dos_annotations(
             kube_apis, src_ing_yaml, test_namespace, test_namespace+"/dos-protected"
         )
@@ -233,10 +236,10 @@ class TestDos:
         Test App Protect Dos: Block bad clients attack
         """
         log_loc = f"/var/log/messages"
-
         print("----------------------- Get syslog pod name ----------------------")
         syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
         assert "syslog" in syslog_pod
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
 
         print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
@@ -297,12 +300,11 @@ class TestDos:
         """
         Test App Protect Dos: Block bad clients attack with learning
         """
-
-
         log_loc = f"/var/log/messages"
         print("----------------------- Get syslog pod name ----------------------")
         syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
         assert "syslog" in syslog_pod
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
 
         print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
@@ -399,6 +401,7 @@ class TestDos:
         syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
         assert "syslog" in syslog_pod
         log_loc = f"/var/log/messages"
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
 
         print("------------------------- Deploy ingress -----------------------------")
         create_ingress_with_dos_annotations(
