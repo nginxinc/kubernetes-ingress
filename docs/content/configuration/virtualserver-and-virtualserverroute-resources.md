@@ -179,7 +179,6 @@ spec:
     port: 80
   subroutes:
   - path: /coffee/latte
-    dos: default/dos-protected
     action:
       pass: latte
   - path: /coffee/espresso
