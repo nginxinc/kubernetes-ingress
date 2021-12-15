@@ -167,8 +167,7 @@ class TestDos:
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
         ensure_response_from_backend(dos_setup.req_url, ingress_host, check404=True)
 
-        # items[-1] because syslog pod is last one to spin-up
-        pod_name = kube_apis.v1.list_namespaced_pod("nginx-ingress").items[-1].metadata.name
+        pod_name = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "nginx-ingress")
 
         result_conf = get_ingress_nginx_template_conf(
             kube_apis.v1, test_namespace, "dos-ingress", pod_name, "nginx-ingress"
