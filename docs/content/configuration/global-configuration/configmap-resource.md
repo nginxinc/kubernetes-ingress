@@ -125,7 +125,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
 | ---| ---| ---| --- | 
 |``redirect-to-https`` | Sets the 301 redirect rule based on the value of the ``http_x_forwarded_proto`` header on the server block to force incoming traffic to be over HTTPS. Useful when terminating SSL in a load balancer in front of the Ingress controller — see [115](https://github.com/nginxinc/kubernetes-ingress/issues/115) | ``False`` |  | 
 |``ssl-redirect`` | Sets an unconditional 301 redirect rule for all incoming HTTP traffic to force incoming traffic over HTTPS. | ``True`` |  | 
-|``hsts`` | Enables [HTTP Strict Transport Security (HSTS)](https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/)\ : the HSTS header is added to the responses from backends. The ``preload`` directive is included in the header. | ``False`` |  | 
+|``hsts`` | Enables [HTTP Strict Transport Security (HSTS)](https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/) : the HSTS header is added to the responses from backends. The ``preload`` directive is included in the header. | ``False`` |  | 
 |``hsts-max-age`` | Sets the value of the ``max-age`` directive of the HSTS header. | ``2592000`` (1 month) |  | 
 |``hsts-include-subdomains`` | Adds the ``includeSubDomains`` directive to the HSTS header. | ``False`` |  | 
 |``hsts-behind-proxy`` | Enables HSTS based on the value of the ``http_x_forwarded_proto`` request header. Should only be used when TLS termination is configured in a load balancer (proxy) in front of the Ingress Controller. Note: to control redirection from HTTP to HTTPS configure the ``nginx.org/redirect-to-https`` annotation. | ``False`` |  | 
