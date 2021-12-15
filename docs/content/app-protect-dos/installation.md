@@ -23,7 +23,11 @@ This document provides an overview of the steps required to use NGINX App Protec
     $ git checkout v2.0.3
     ```
 
-## todo create ns first
+## Create the namespace and service account
+
+```bash
+  kubectl apply -f common/ns-and-sa.yaml
+```
 
 ## Install the App Protect Dos Arbitrator
 
