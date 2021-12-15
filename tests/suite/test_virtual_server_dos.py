@@ -27,7 +27,7 @@ from suite.resources_utils import (
     replace_configmap_from_yaml,
     nginx_reload,
     scale_deployment,
-    get_pods_amount,
+    get_pods_amount, clear_file_contents,
 )
 from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server, \
     get_vs_nginx_template_conf
@@ -189,6 +189,8 @@ class TestDos:
         print("----------------------- Get syslog pod name ----------------------")
         syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
         assert "syslog" in syslog_pod
+        log_loc = f"/var/log/messages"
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
 
         print("----------------------- Send request ----------------------")
         ensure_response_from_backend(virtual_server_setup_dos.backend_1_url, virtual_server_setup_dos.vs_host)
@@ -200,7 +202,6 @@ class TestDos:
         wait_before_test(20)
 
         print("----------------------- Check Logs ----------------------")
-        log_loc = f"/var/log/messages"
         print(f'log_loc: {log_loc} syslog_pod: {syslog_pod} namespace: {ingress_controller_prerequisites.namespace}')
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
 
@@ -248,6 +249,8 @@ class TestDos:
         print("----------------------- Get syslog pod name ----------------------")
         syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
         assert "syslog" in syslog_pod
+        log_loc = f"/var/log/messages"
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
 
         print("------------------------- Attack -----------------------------")
         print("start bad clients requests")
@@ -262,7 +265,6 @@ class TestDos:
         p_attack.terminate()
 
         print("wait max 140 seconds after attack stop, to get attack ended")
-        log_loc = f"/var/log/messages"
         find_in_log(kube_apis, log_loc, syslog_pod, ingress_controller_prerequisites.namespace, 140, "attack_event=\"Attack ended\"")
 
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
@@ -304,6 +306,7 @@ class TestDos:
         print("----------------------- Get syslog pod name ----------------------")
         syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
         assert "syslog" in syslog_pod
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
 
         print("------------------------- Learning Phase -----------------------------")
         print("start good clients requests")
@@ -391,6 +394,7 @@ class TestDos:
         log_loc = f"/var/log/messages"
         syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
         assert "syslog" in syslog_pod
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
 
         # print("------------------------- Learning Phase -----------------------------")
         print("start good clients requests")
