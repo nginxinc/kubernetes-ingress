@@ -107,7 +107,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get update \
 	&& apt-get -y install ca-certificates \
     && DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
-	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
 	&& apt-get update \
 	&& apt-get -y install app-protect-dos \
 	&& rm -rf /var/lib/apt/lists/* \
