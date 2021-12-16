@@ -25,9 +25,10 @@ $ kubectl create -f webapp.yaml
 ```
 
 ## 3. Configure Load Balancing
-1. Create the syslog service and pod for the App Protect Dos security logs:
+1. Create the syslog services and pod for the App Protect Dos security and access logs:
     ```
     $ kubectl create -f syslog.yaml
+    $ kubectl create -f syslog2.yaml
     ```
 2. Create a secret with an SSL certificate and a key:
     ```
@@ -65,3 +66,7 @@ certificate and the --resolve option to set the Host header of a request with `w
     ```
     $ kubectl exec -it <SYSLOG_POD> -- cat /var/log/messages
     ```
+2. To check the access logs in the syslog pod:
+ ```
+ $ kubectl exec -it <SYSLOG_2_POD> -- cat /var/log/messages
+ ```
