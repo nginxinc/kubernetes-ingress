@@ -23,9 +23,10 @@ $ kubectl apply -f webapp.yaml
 
 ## Step 2 - Deploy the DOS configuration resources
 
-1. Create the syslog service and pod for the App Protect security logs:
+1. Create the syslog services and pod for the App Protect security and access logs:
     ```
     $ kubectl apply -f syslog.yaml
+    $ kubectl apply -f syslog2.yaml
     ```
 2. Create the Dos protected resource configuration:
     ```
@@ -60,4 +61,8 @@ To access the application, curl the Webapp service. We'll use the --resolve opti
 1. To check the security logs in the syslog pod:
     ```
     $ kubectl exec -it <SYSLOG_POD> -- cat /var/log/messages
+    ```
+2. To check the access logs in the syslog pod:
+    ```
+    $ kubectl exec -it <SYSLOG_POD_2> -- cat /var/log/messages
     ```
