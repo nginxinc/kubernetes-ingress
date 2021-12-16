@@ -344,6 +344,23 @@ def get_pods_amount(v1: CoreV1Api, namespace) -> int:
     pods = v1.list_namespaced_pod(namespace)
     return 0 if not pods.items else len(pods.items)
 
+def get_pods_amount_with_name(v1: CoreV1Api, namespace, name) -> int:
+    """
+    Get an amount of pods.
+
+    :param v1: CoreV1Api
+    :param namespace: namespace
+    :param name: name
+    :return: int
+    """
+    pods = v1.list_namespaced_pod(namespace)
+    count = 0
+    if pods and pods.items:
+        for item in pods.items:
+            if name in item.metadata.name:
+                count += 1
+    return count
+
 def get_pod_name_that_contains(v1: CoreV1Api, namespace, contains_string) -> str:
     """
     Get an amount of pods.

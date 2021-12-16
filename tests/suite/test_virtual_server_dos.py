@@ -27,6 +27,7 @@ from suite.resources_utils import (
     replace_configmap_from_yaml,
     nginx_reload,
     scale_deployment,
+    get_pods_amount_with_name,
     get_pods_amount, clear_file_contents,
 )
 from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server, \
@@ -408,7 +409,7 @@ class TestDos:
         print("------------------------- Check new IC pod get info from arbitrator -----------------------------")
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 2)
-        while get_pods_amount(kube_apis.v1, "nginx-ingress") is not 4:
+        while get_pods_amount_with_name(kube_apis.v1, "nginx-ingress", "nginx-ingress") is not 2:
             print(f"Number of replicas is not 2, retrying...")
             wait_before_test()
 
