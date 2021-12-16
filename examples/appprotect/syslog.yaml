@@ -27,6 +27,6 @@ spec:
   ports:
     - port: 514
       targetPort: 514
-      protocol: UDP
+      protocol: TCP
   selector:
     app: syslog
