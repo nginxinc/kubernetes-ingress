@@ -38,9 +38,9 @@ Format: `<namespace>/<name>`
 
 ### -wildcard-tls-secret `<string>`
 
-A Secret with a TLS certificate and key for TLS termination of every Ingress host for which TLS termination is enabled but the Secret is not specified.
+A Secret with a TLS certificate and key for TLS termination of every Ingress/VirtualServer host for which TLS termination is enabled but the Secret is not specified.
 
-* If the argument is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection.
+* If the argument is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection.
 
 * If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.
 
