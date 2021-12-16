@@ -93,7 +93,7 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 	if err != nil {
 		return nil, err
 	}
-	cs.appprotectdosV1beta1, err = appprotectdosv1beta1.NewForConfig(&configShallowCopy)
+	cs.appprotectdosV1beta1, err = appprotectdosv1beta1.NewForConfigAndClient(&configShallowCopy, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -108,13 +108,11 @@ func NewForConfigAndClient(c *rest.Config, httpClient *http.Client) (*Clientset,
 // NewForConfigOrDie creates a new Clientset for the given config and
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
-	var cs Clientset
-	cs.k8sV1alpha1 = k8sv1alpha1.NewForConfigOrDie(c)
-	cs.k8sV1 = k8sv1.NewForConfigOrDie(c)
-	cs.appprotectdosV1beta1 = appprotectdosv1beta1.NewForConfigOrDie(c)
-
-	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
-	return &cs
+	cs, err := NewForConfig(c)
+	if err != nil {
+		panic(err)
+	}
+	return cs
 }
 
 // New creates a new Clientset for the given RESTClient.

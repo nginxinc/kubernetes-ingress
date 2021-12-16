@@ -75,7 +75,9 @@ jobs:
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
       - name: Check if Codegen changed
         run: |
+          cd ../.. && mkdir -p github.com/nginxinc && mv kubernetes-ingress/kubernetes-ingress github.com/nginxinc/ && cd github.com/nginxinc/kubernetes-ingress
           make update-codegen && git diff --name-only --exit-code pkg/**/zz_generated.deepcopy.go
+          cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
 
   binary:
     name: Build binary

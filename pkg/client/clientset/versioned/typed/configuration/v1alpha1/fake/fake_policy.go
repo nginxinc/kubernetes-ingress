@@ -90,6 +90,7 @@ func (c *FakePolicies) Update(ctx context.Context, policy *v1alpha1.Policy, opts
 func (c *FakePolicies) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteActionWithOptions(policiesResource, c.ns, name, opts), &v1alpha1.Policy{})
+
 	return err
 }
 
