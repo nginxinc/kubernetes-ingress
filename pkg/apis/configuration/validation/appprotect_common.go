@@ -38,11 +38,15 @@ func ValidateRequiredFields(obj *unstructured.Unstructured, fieldsList [][]strin
 	return nil
 }
 
-var logDstEx = regexp.MustCompile(`(?:syslog:server=((?:\d{1,3}\.){3}\d{1,3}|localhost):\d{1,5})|stderr`)
+var (
+	logDstEx     = regexp.MustCompile(`(?:syslog:server=((?:\d{1,3}\.){3}\d{1,3}|localhost|[a-zA-Z0-9._-]+):\d{1,5})|stderr|(?:\/[\S]+)+`)
+	logDstFileEx = regexp.MustCompile(`(?:\/[\S]+)+`)
+	logDstFQDNEx = regexp.MustCompile(`(?:[a-zA-Z0-9_-]+\.)+[a-zA-Z0-9_-]+`)
+)
 
 // ValidateAppProtectLogDestination validates destination for log configuration
 func ValidateAppProtectLogDestination(dstAntn string) error {
-	errormsg := "Error parsing App Protect Log config: Destination must follow format: syslog:server=<ip-address | localhost>:<port> or stderr"
+	errormsg := "Error parsing App Protect Log config: Destination must follow format: syslog:server=<ip-address | localhost>:<port> or fqdn or stderr or absolute path to file"
 	if !logDstEx.MatchString(dstAntn) {
 		return fmt.Errorf("%s Log Destination did not follow format", errormsg)
 	}
@@ -50,9 +54,13 @@ func ValidateAppProtectLogDestination(dstAntn string) error {
 		return nil
 	}
 
+	if logDstFileEx.MatchString(dstAntn) {
+		return nil
+	}
+
 	dstchunks := strings.Split(dstAntn, ":")
 
-	// // This error can be ignored since the regex check ensures this string will be parsable
+	// This error can be ignored since the regex check ensures this string will be parsable
 	port, _ := strconv.Atoi(dstchunks[2])
 
 	if port > 65535 || port < 1 {
@@ -64,8 +72,12 @@ func ValidateAppProtectLogDestination(dstAntn string) error {
 		return nil
 	}
 
+	if logDstFQDNEx.MatchString(ipstr) {
+		return nil
+	}
+
 	if net.ParseIP(ipstr) == nil {
-		return fmt.Errorf("Error parsing host: %v is not a valid ip address", ipstr)
+		return fmt.Errorf("Error parsing host: %v is not a valid ip address or host name", ipstr)
 	}
 
 	return nil
