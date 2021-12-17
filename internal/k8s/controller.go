@@ -271,7 +271,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	if lbc.appProtectEnabled || lbc.appProtectDosEnabled {
-		lbc.dynInformerFactory = dynamicinformer.NewDynamicSharedInformerFactory(lbc.dynClient, 0)
+		lbc.dynInformerFactory = dynamicinformer.NewFilteredDynamicSharedInformerFactory(lbc.dynClient, 0, lbc.namespace, nil)
 
 		if lbc.appProtectEnabled {
 			lbc.addAppProtectPolicyHandler(createAppProtectPolicyHandlers(lbc))
