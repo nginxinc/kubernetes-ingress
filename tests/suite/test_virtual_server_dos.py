@@ -241,6 +241,7 @@ class TestDos:
         for _ in conf_directives:
             assert _ in result_conf
 
+    @pytest.mark.skip
     def test_vs_dos_under_attack_no_learning(
             self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, virtual_server_setup_dos, dos_setup, test_namespace
     ):
@@ -297,6 +298,7 @@ class TestDos:
                 and attack_ended
         )
 
+    @pytest.mark.skip
     def test_dos_under_attack_with_learning(
             self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, virtual_server_setup_dos, dos_setup, test_namespace
     ):
@@ -385,7 +387,7 @@ class TestDos:
                 and len(bad_ip) == 0
         )
 
-    @pytest.mark.xfail
+    @pytest.mark.skip
     def test_dos_arbitrator(
             self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos,
             virtual_server_setup_dos, dos_setup, test_namespace
