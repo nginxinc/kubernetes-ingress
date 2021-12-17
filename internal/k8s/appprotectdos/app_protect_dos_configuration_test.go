@@ -1,6 +1,7 @@
 package appprotectdos
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -1150,15 +1151,17 @@ func TestGetDosProtectedThatReferencedDosPolicy(t *testing.T) {
 			policyNamespace: "dev",
 			policyName:      "dosPolicyTwo",
 			expected: []*v1beta1.DosProtectedResource{
-				dosProtectedWithPolicyTwo,
 				anotherDosProtectedWithPolicyTwo,
+				dosProtectedWithPolicyTwo,
 			},
 			msg: "return two referenced objects, from policy reference with mixed namespaces",
 		},
 	}
 	for _, test := range tests {
 		resources := dosConf.GetDosProtectedThatReferencedDosPolicy(test.policyNamespace + "/" + test.policyName)
-
+		sort.SliceStable(resources, func(i, j int) bool {
+			return resources[i].Name < resources[j].Name
+		})
 		if diff := cmp.Diff(test.expected, resources); diff != "" {
 			t.Errorf("GetDosProtectedThatReferencedDosPolicy() returned unexpected result for the case of: %v (-want +got):\n%s", test.msg, diff)
 		}
