@@ -1,6 +1,7 @@
 package k8s
 
 import (
+	"errors"
 	"testing"
 
 	v1 "k8s.io/api/core/v1"
@@ -158,9 +159,10 @@ func TestHasServicePortChanges(t *testing.T) {
 
 func TestAreResourcesDifferent(t *testing.T) {
 	tests := []struct {
-		oldR, newR          *unstructured.Unstructured
-		expected, expectErr bool
-		msg                 string
+		oldR, newR *unstructured.Unstructured
+		expected   bool
+		expectErr  error
+		msg        string
 	}{
 		{
 			oldR: &unstructured.Unstructured{
@@ -174,7 +176,7 @@ func TestAreResourcesDifferent(t *testing.T) {
 				},
 			},
 			expected:  false,
-			expectErr: true,
+			expectErr: errors.New(`.spec accessor error: true is of the type bool, expected map[string]interface{}`),
 			msg:       "invalid old resource",
 		},
 		{
@@ -189,7 +191,7 @@ func TestAreResourcesDifferent(t *testing.T) {
 				},
 			},
 			expected:  false,
-			expectErr: true,
+			expectErr: errors.New(`.spec accessor error: true is of the type bool, expected map[string]interface{}`),
 			msg:       "invalid new resource",
 		},
 		{
@@ -202,7 +204,7 @@ func TestAreResourcesDifferent(t *testing.T) {
 				Object: map[string]interface{}{},
 			},
 			expected:  false,
-			expectErr: true,
+			expectErr: errors.New(`Error, spec has unexpected format`),
 			msg:       "new resource with missing spec",
 		},
 		{
@@ -221,7 +223,7 @@ func TestAreResourcesDifferent(t *testing.T) {
 				},
 			},
 			expected:  false,
-			expectErr: false,
+			expectErr: nil,
 			msg:       "equal resources",
 		},
 		{
@@ -240,7 +242,7 @@ func TestAreResourcesDifferent(t *testing.T) {
 				},
 			},
 			expected:  true,
-			expectErr: false,
+			expectErr: nil,
 			msg:       "not equal resources",
 		},
 		{
@@ -255,7 +257,7 @@ func TestAreResourcesDifferent(t *testing.T) {
 				},
 			},
 			expected:  true,
-			expectErr: false,
+			expectErr: nil,
 			msg:       "not equal resources with with first resource missing spec",
 		},
 	}
@@ -265,10 +267,14 @@ func TestAreResourcesDifferent(t *testing.T) {
 		if result != test.expected {
 			t.Errorf("areResourcesDifferent() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
-		if test.expectErr && err == nil {
-			t.Errorf("areResourcesDifferent() returned no error for the case of %s", test.msg)
+		if test.expectErr != nil {
+			if err == nil {
+				t.Errorf("areResourcesDifferent() returned no error for the case of %s", test.msg)
+			} else if test.expectErr.Error() != err.Error() {
+				t.Errorf("areResourcesDifferent() returned an unexpected error '%v' for the case of %s", err, test.msg)
+			}
 		}
-		if !test.expectErr && err != nil {
+		if test.expectErr == nil && err != nil {
 			t.Errorf("areResourcesDifferent() returned unexpected error %v for the case of %s", err, test.msg)
 		}
 	}

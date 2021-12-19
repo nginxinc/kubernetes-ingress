@@ -29,7 +29,7 @@ defaults:
     shell: bash
 
 env:
-  K8S_VERSION: 1.22.4
+  K8S_VERSION: 1.23.0
   K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   GIT_NAME: NGINX Kubernetes Team
@@ -75,7 +75,9 @@ jobs:
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
       - name: Check if Codegen changed
         run: |
+          cd ../.. && mkdir -p github.com/nginxinc && mv kubernetes-ingress/kubernetes-ingress github.com/nginxinc/ && cd github.com/nginxinc/kubernetes-ingress
           make update-codegen && git diff --name-only --exit-code pkg/**/zz_generated.deepcopy.go
+          cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
 
   binary:
     name: Build binary
@@ -157,12 +159,12 @@ jobs:
                                                 {\"image\": \"opentracing\", \"marker\": \"vs\"}, \
                                                 {\"image\": \"ubi\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"opentracing-plus\", \"marker\": \"vsr\"}, \
                                                 {\"image\": \"ubi-plus\", \"marker\": \"policies\"}]}"
           else
-            echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.4\"], \
-                                             \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}"
+            echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.4\", \"1.23.0\"]}"
           fi
 
   smoke-tests:

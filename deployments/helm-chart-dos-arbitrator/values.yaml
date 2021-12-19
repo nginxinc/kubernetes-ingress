@@ -1,0 +1,16 @@
+arbitrator:
+  ## The resources of the Arbitrator pods.
+  resources: 
+    limits:
+      cpu: 500m
+      memory: 128Mi
+
+  image:
+    ## The image repository of the Arbitrator.
+    repository: docker-registry.nginx.com/nap-dos/app_protect_dos_arb
+
+    ## The tag of the Arbitrator image.
+    tag: "1.1.0"
+
+    ## The pull policy for the Arbitrator image.
+    pullPolicy: IfNotPresent

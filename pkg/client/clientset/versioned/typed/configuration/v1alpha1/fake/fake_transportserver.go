@@ -61,6 +61,7 @@ func (c *FakeTransportServers) List(ctx context.Context, opts v1.ListOptions) (r
 func (c *FakeTransportServers) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(transportserversResource, c.ns, opts))
+
 }
 
 // Create takes the representation of a transportServer and creates it.  Returns the server's representation of the transportServer, and an error, if there is any.
@@ -100,7 +101,7 @@ func (c *FakeTransportServers) UpdateStatus(ctx context.Context, transportServer
 // Delete takes name of the transportServer and deletes it. Returns an error if one occurs.
 func (c *FakeTransportServers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(transportserversResource, c.ns, name), &v1alpha1.TransportServer{})
+		Invokes(testing.NewDeleteActionWithOptions(transportserversResource, c.ns, name, opts), &v1alpha1.TransportServer{})
 
 	return err
 }

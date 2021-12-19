@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/prometheus/client_golang/prometheus"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1105,7 +1106,7 @@ func TestUpdateApResources(t *testing.T) {
 
 	tests := []struct {
 		ingEx    *IngressEx
-		expected AppProtectResources
+		expected *AppProtectResources
 		msg      string
 	}{
 		{
@@ -1114,7 +1115,7 @@ func TestUpdateApResources(t *testing.T) {
 					ObjectMeta: meta_v1.ObjectMeta{},
 				},
 			},
-			expected: AppProtectResources{},
+			expected: &AppProtectResources{},
 			msg:      "no app protect resources",
 		},
 		{
@@ -1124,7 +1125,7 @@ func TestUpdateApResources(t *testing.T) {
 				},
 				AppProtectPolicy: appProtectPolicy,
 			},
-			expected: AppProtectResources{
+			expected: &AppProtectResources{
 				AppProtectPolicy: "/etc/nginx/waf/nac-policies/test-ns_test-name",
 			},
 			msg: "app protect policy",
@@ -1141,7 +1142,7 @@ func TestUpdateApResources(t *testing.T) {
 					},
 				},
 			},
-			expected: AppProtectResources{
+			expected: &AppProtectResources{
 				AppProtectLogconfs: []string{"/etc/nginx/waf/nac-logconfs/test-ns_test-name test-dst"},
 			},
 			msg: "app protect log conf",
@@ -1159,7 +1160,7 @@ func TestUpdateApResources(t *testing.T) {
 					},
 				},
 			},
-			expected: AppProtectResources{
+			expected: &AppProtectResources{
 				AppProtectPolicy:   "/etc/nginx/waf/nac-policies/test-ns_test-name",
 				AppProtectLogconfs: []string{"/etc/nginx/waf/nac-logconfs/test-ns_test-name test-dst"},
 			},
@@ -1175,7 +1176,7 @@ func TestUpdateApResources(t *testing.T) {
 	for _, test := range tests {
 		result := conf.updateApResources(test.ingEx)
 		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("updateApResources() returned \n%v but exexpected\n%v for the case of %s", result, test.expected, test.msg)
+			t.Errorf("updateApResources() returned \n%v but expected\n%v for the case of %s", result, test.expected, test.msg)
 		}
 	}
 }
@@ -1220,7 +1221,7 @@ func TestUpdateApResourcesForVs(t *testing.T) {
 
 	tests := []struct {
 		vsEx     *VirtualServerEx
-		expected map[string]string
+		expected *appProtectResourcesForVS
 		msg      string
 	}{
 		{
@@ -1229,8 +1230,11 @@ func TestUpdateApResourcesForVs(t *testing.T) {
 					ObjectMeta: meta_v1.ObjectMeta{},
 				},
 			},
-			expected: map[string]string{},
-			msg:      "no app protect resources",
+			expected: &appProtectResourcesForVS{
+				Policies: map[string]string{},
+				LogConfs: map[string]string{},
+			},
+			msg: "no app protect resources",
 		},
 		{
 			vsEx: &VirtualServerEx{
@@ -1239,9 +1243,12 @@ func TestUpdateApResourcesForVs(t *testing.T) {
 				},
 				ApPolRefs: apPolRefs,
 			},
-			expected: map[string]string{
-				"test-ns-1/test-name-1": "/etc/nginx/waf/nac-policies/test-ns-1_test-name-1",
-				"test-ns-2/test-name-2": "/etc/nginx/waf/nac-policies/test-ns-2_test-name-2",
+			expected: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"test-ns-1/test-name-1": "/etc/nginx/waf/nac-policies/test-ns-1_test-name-1",
+					"test-ns-2/test-name-2": "/etc/nginx/waf/nac-policies/test-ns-2_test-name-2",
+				},
+				LogConfs: map[string]string{},
 			},
 			msg: "app protect policies",
 		},
@@ -1252,9 +1259,12 @@ func TestUpdateApResourcesForVs(t *testing.T) {
 				},
 				LogConfRefs: logConfRefs,
 			},
-			expected: map[string]string{
-				"test-ns-1/test-name-1": "/etc/nginx/waf/nac-logconfs/test-ns-1_test-name-1",
-				"test-ns-2/test-name-2": "/etc/nginx/waf/nac-logconfs/test-ns-2_test-name-2",
+			expected: &appProtectResourcesForVS{
+				Policies: map[string]string{},
+				LogConfs: map[string]string{
+					"test-ns-1/test-name-1": "/etc/nginx/waf/nac-logconfs/test-ns-1_test-name-1",
+					"test-ns-2/test-name-2": "/etc/nginx/waf/nac-logconfs/test-ns-2_test-name-2",
+				},
 			},
 			msg: "app protect log confs",
 		},
@@ -1266,10 +1276,15 @@ func TestUpdateApResourcesForVs(t *testing.T) {
 				ApPolRefs:   apPolRefs,
 				LogConfRefs: logConfRefs,
 			},
-			expected: map[string]string{
-				// this is a bug - the result needs to include both policies and log confs
-				"test-ns-1/test-name-1": "/etc/nginx/waf/nac-logconfs/test-ns-1_test-name-1",
-				"test-ns-2/test-name-2": "/etc/nginx/waf/nac-logconfs/test-ns-2_test-name-2",
+			expected: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"test-ns-1/test-name-1": "/etc/nginx/waf/nac-policies/test-ns-1_test-name-1",
+					"test-ns-2/test-name-2": "/etc/nginx/waf/nac-policies/test-ns-2_test-name-2",
+				},
+				LogConfs: map[string]string{
+					"test-ns-1/test-name-1": "/etc/nginx/waf/nac-logconfs/test-ns-1_test-name-1",
+					"test-ns-2/test-name-2": "/etc/nginx/waf/nac-logconfs/test-ns-2_test-name-2",
+				},
 			},
 			msg: "app protect policies and log confs",
 		},
@@ -1282,8 +1297,8 @@ func TestUpdateApResourcesForVs(t *testing.T) {
 
 	for _, test := range tests {
 		result := conf.updateApResourcesForVs(test.vsEx)
-		if !reflect.DeepEqual(result, test.expected) {
-			t.Errorf("updateApResourcesForVs() returned \n%v but exexpected\n%v for the case of %s", result, test.expected, test.msg)
+		if diff := cmp.Diff(test.expected, result); diff != "" {
+			t.Errorf("updateApResourcesForVs() '%s' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }

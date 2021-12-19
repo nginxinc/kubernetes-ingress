@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp-ingress
+  annotations:
+    appprotectdos.f5.com/app-protect-dos-resource: "default/dos-protected"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+      - webapp.example.com
+      secretName: webapp-secret
+  rules:
+    - host: webapp.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: 
+                name: webapp-svc
+                port:
+                  number: 80

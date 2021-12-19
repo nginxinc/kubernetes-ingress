@@ -137,6 +137,8 @@ spec:
                                 type: integer
                               type:
                                 type: string
+                      dos:
+                        type: string
                       errorPages:
                         type: array
                         items:
@@ -509,10 +511,14 @@ spec:
                             type: string
                           jitter:
                             type: string
+                          mandatory:
+                            type: boolean
                           passes:
                             type: integer
                           path:
                             type: string
+                          persistent:
+                            type: boolean
                           port:
                             type: integer
                           read-timeout:

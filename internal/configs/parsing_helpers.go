@@ -79,7 +79,7 @@ func GetMapKeyAsUint64(m map[string]string, key string, context apiObject, nonZe
 }
 
 // GetMapKeyAsStringSlice tries to find and parse a key in the map as string slice splitting it on delimiter.
-func GetMapKeyAsStringSlice(m map[string]string, key string, context apiObject, delimiter string) ([]string, bool, error) {
+func GetMapKeyAsStringSlice(m map[string]string, key string, _ apiObject, delimiter string) ([]string, bool, error) {
 	if str, exists := m[key]; exists {
 		slice := strings.Split(str, delimiter)
 		return slice, exists, nil

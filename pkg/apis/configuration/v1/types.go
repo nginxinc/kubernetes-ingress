@@ -43,6 +43,7 @@ type VirtualServerSpec struct {
 	Routes         []Route           `json:"routes"`
 	HTTPSnippets   string            `json:"http-snippets"`
 	ServerSnippets string            `json:"server-snippets"`
+	Dos            string            `json:"dos"`
 }
 
 // PolicyReference references a policy by name and an optional namespace.
@@ -110,6 +111,8 @@ type HealthCheck struct {
 	StatusMatch    string       `json:"statusMatch"`
 	GRPCStatus     *int         `json:"grpcStatus"`
 	GRPCService    string       `json:"grpcService"`
+	Mandatory      bool         `json:"mandatory"`
+	Persistent     bool         `json:"persistent"`
 }
 
 // Header defines an HTTP Header.
@@ -139,6 +142,7 @@ type Route struct {
 	Matches          []Match           `json:"matches"`
 	ErrorPages       []ErrorPage       `json:"errorPages"`
 	LocationSnippets string            `json:"location-snippets"`
+	Dos              string            `json:"dos"`
 }
 
 // Action defines an action.
@@ -297,6 +301,7 @@ type VirtualServerRouteSpec struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// VirtualServerRouteList is a list of VirtualServerRoute
 type VirtualServerRouteList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`

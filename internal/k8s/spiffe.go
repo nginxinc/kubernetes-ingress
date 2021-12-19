@@ -10,20 +10,21 @@ import (
 	"github.com/spiffe/go-spiffe/workload"
 )
 
-type spiffeController struct {
+// SpiffeController controls spiffe
+type SpiffeController struct {
 	watcher *spiffeWatcher
 	client  *workload.X509SVIDClient
 }
 
 // NewSpiffeController creates the spiffeWatcher and the Spiffe Workload API Client,
 // returns an error if the client cannot connect to the Spire Agent.
-func NewSpiffeController(sync func(*workload.X509SVIDs), spireAgentAddr string) (*spiffeController, error) {
+func NewSpiffeController(sync func(*workload.X509SVIDs), spireAgentAddr string) (*SpiffeController, error) {
 	watcher := &spiffeWatcher{sync: sync}
 	client, err := workload.NewX509SVIDClient(watcher, workload.WithAddr("unix://"+spireAgentAddr))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Spiffe Workload API Client: %w", err)
 	}
-	sc := &spiffeController{
+	sc := &SpiffeController{
 		watcher: watcher,
 		client:  client,
 	}
@@ -33,7 +34,7 @@ func NewSpiffeController(sync func(*workload.X509SVIDs), spireAgentAddr string) 
 // Start starts the Spiffe Workload API Client and waits for the Spiffe certs to be written to disk.
 // If the certs are not available after 30 seconds an error is returned.
 // On success, calls onStart function and kicks off the Spiffe Controller's run loop.
-func (sc *spiffeController) Start(stopCh <-chan struct{}, onStart func()) error {
+func (sc *SpiffeController) Start(stopCh <-chan struct{}, onStart func()) error {
 	glog.V(3).Info("Starting SPIFFE Workload API Client")
 	err := sc.client.Start()
 	if err != nil {
@@ -62,7 +63,7 @@ func (sc *spiffeController) Start(stopCh <-chan struct{}, onStart func()) error 
 }
 
 // Run waits until a message is sent on the stop channel and stops the Spiffe Workload API Client.
-func (sc *spiffeController) Run(stopCh <-chan struct{}) {
+func (sc *SpiffeController) Run(stopCh <-chan struct{}) {
 	<-stopCh
 	err := sc.client.Stop()
 	if err != nil {

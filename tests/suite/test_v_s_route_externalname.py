@@ -129,6 +129,7 @@ class TestVSRWithExternalNameService:
         assert f"server {vsr_externalname_setup.external_host}:80 max_fails=1 fail_timeout=10s max_conns=0 resolve;"\
                in initial_config
 
+    @pytest.mark.xfail
     def test_events_flows(self, kube_apis,
                           ingress_controller_prerequisites,
                           crd_ingress_controller,

@@ -127,13 +127,13 @@ func NewManagerFakeCollector() *ManagerFakeCollector {
 }
 
 // Register implements a fake Register
-func (nc *ManagerFakeCollector) Register(registry *prometheus.Registry) error { return nil }
+func (nc *ManagerFakeCollector) Register(_ *prometheus.Registry) error { return nil }
 
 // IncNginxReloadCount implements a fake IncNginxReloadCount
-func (nc *ManagerFakeCollector) IncNginxReloadCount(isEndPointUpdate bool) {}
+func (nc *ManagerFakeCollector) IncNginxReloadCount(_ bool) {}
 
 // IncNginxReloadErrors implements a fake IncNginxReloadErrors
 func (nc *ManagerFakeCollector) IncNginxReloadErrors() {}
 
 // UpdateLastReloadTime implements a fake UpdateLastReloadTime
-func (nc *ManagerFakeCollector) UpdateLastReloadTime(ms time.Duration) {}
+func (nc *ManagerFakeCollector) UpdateLastReloadTime(_ time.Duration) {}
