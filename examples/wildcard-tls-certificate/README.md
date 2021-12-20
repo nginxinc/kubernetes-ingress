@@ -67,4 +67,4 @@ spec:
       pass: bar
 ```
 
-Because we don't reference any TLS secret in the resources above -- there is no `secret` field  in the `tls` section of the Ingress resource and the `secret` field is empty in the VirtualServer -- NGINX will use the wildcard secret specified in the `-wildcard-tls-secret` command-line argument.
+Because we don't reference any TLS secret in the resources above -- there is no `secret` field in the `tls` section of the Ingress resource and the `secret` field is empty in the VirtualServer -- NGINX will use the wildcard secret specified in the `-wildcard-tls-secret` command-line argument.
