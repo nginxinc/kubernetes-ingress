@@ -996,7 +996,7 @@ func TestAppProtectResourceIsReferencedByIngresses(t *testing.T) {
 
 		result := rc.IsReferencedByIngress(test.resourceNamespace, test.resourceName, test.ing)
 		if result != test.expected {
-			t.Errorf("IsReferencedByIngress() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+			t.Errorf("IsReferencedByIngress() returned '%v' but expected '%v' for the case of '%s'", result, test.expected, test.msg)
 		}
 
 		result = rc.IsReferencedByMinion(test.resourceNamespace, test.resourceName, test.ing)
@@ -1217,6 +1217,205 @@ func TestEndpointIsReferencedByVirtualServerAndVirtualServerRoutes(t *testing.T)
 		result = rc.IsReferencedByVirtualServerRoute(test.serviceNamespace, test.serviceName, test.vsr)
 		if result != test.expected {
 			t.Errorf("IsReferencedByVirtualServerRoute() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestDosProtectedIsReferencedByIngresses(t *testing.T) {
+	tests := []struct {
+		ing               *networking.Ingress
+		resourceNamespace string
+		resourceName      string
+		expected          bool
+		msg               string
+	}{
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						configs.AppProtectDosProtectedAnnotation: "default/test-resource",
+					},
+				},
+			},
+			resourceNamespace: "default",
+			resourceName:      "test-resource",
+			expected:          true,
+			msg:               "resource is referenced",
+		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						configs.AppProtectDosProtectedAnnotation: "test-resource",
+					},
+				},
+			},
+			resourceNamespace: "default",
+			resourceName:      "test-resource",
+			expected:          true,
+			msg:               "resource is referenced with implicit namespace",
+		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						configs.AppProtectDosProtectedAnnotation: "default/test-resource",
+					},
+				},
+			},
+			resourceNamespace: "default",
+			resourceName:      "some-resource",
+			expected:          false,
+			msg:               "wrong name",
+		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						configs.AppProtectDosProtectedAnnotation: "default/test-resource",
+					},
+				},
+			},
+			resourceNamespace: "some-namespace",
+			resourceName:      "test-resource",
+			expected:          false,
+			msg:               "wrong namespace",
+		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						configs.AppProtectDosProtectedAnnotation: "test-resource",
+					},
+				},
+			},
+			resourceNamespace: "some-namespace",
+			resourceName:      "test-resource",
+			expected:          false,
+			msg:               "wrong namespace with implicit namespace",
+		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						configs.AppProtectDosProtectedAnnotation: "some-namespace/test-resource,some-namespace/different-resource",
+					},
+				},
+			},
+			resourceNamespace: "some-namespace",
+			resourceName:      "test-resource",
+			expected:          false,
+			msg:               "resource is referenced with namespace within multiple resources",
+		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						configs.AppProtectDosProtectedAnnotation: "test-resource,some-namespace/different-resource",
+					},
+				},
+			},
+			resourceNamespace: "default",
+			resourceName:      "test-resource",
+			expected:          false,
+			msg:               "resource is referenced with implicit namespace within multiple resources",
+		},
+		{
+			ing: &networking.Ingress{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+					Annotations: map[string]string{
+						configs.AppProtectDosProtectedAnnotation: "test-resource,some-namespace/different-resource",
+					},
+				},
+			},
+			resourceNamespace: "some-namespace",
+			resourceName:      "test-resource",
+			expected:          false,
+			msg:               "wrong namespace within multiple resources",
+		},
+	}
+
+	for _, test := range tests {
+		rc := newDosResourceReferenceChecker(configs.AppProtectDosProtectedAnnotation)
+
+		result := rc.IsReferencedByIngress(test.resourceNamespace, test.resourceName, test.ing)
+		if result != test.expected {
+			t.Errorf("IsReferencedByIngress() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+
+		result = rc.IsReferencedByMinion(test.resourceNamespace, test.resourceName, test.ing)
+		if result != false {
+			t.Errorf("IsReferencedByMinion() returned true but expected false for the case of %s", test.msg)
+		}
+	}
+}
+
+func TestDosProtectedIsReferencedByVirtualServer(t *testing.T) {
+	tests := []struct {
+		vs                 *conf_v1.VirtualServer
+		protectedNamespace string
+		protectedName      string
+		expected           bool
+		msg                string
+	}{
+		{
+			vs: &conf_v1.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerSpec{
+					Dos: "test-dos",
+				},
+			},
+			protectedNamespace: "default",
+			protectedName:      "test-dos",
+			expected:           true,
+			msg:                "dos protected is referenced",
+		},
+		{
+			vs: &conf_v1.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerSpec{
+					Dos: "test-dos",
+				},
+			},
+			protectedNamespace: "default",
+			protectedName:      "some-dos",
+			expected:           false,
+			msg:                "wrong name for dos protected",
+		},
+		{
+			vs: &conf_v1.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "default",
+				},
+				Spec: conf_v1.VirtualServerSpec{
+					Dos: "test-dos",
+				},
+			},
+			protectedNamespace: "some-namespace",
+			protectedName:      "test-dos",
+			expected:           false,
+			msg:                "wrong namespace for dos protected",
+		},
+	}
+
+	for _, test := range tests {
+		rc := newDosResourceReferenceChecker(configs.AppProtectDosProtectedAnnotation)
+
+		result := rc.IsReferencedByVirtualServer(test.protectedNamespace, test.protectedName, test.vs)
+		if result != test.expected {
+			t.Errorf("IsReferencedByVirtualServer() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
 		}
 	}
 }

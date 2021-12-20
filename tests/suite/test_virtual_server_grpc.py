@@ -157,8 +157,15 @@ class TestVirtualServerGrpc:
                 pytest.fail("RPC error was not expected during call, exiting...")
         # Assert grpc_status is in the logs. The gRPC response in a successful call is 0.
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
-        last_log = get_last_log_entry(kube_apis.v1, ic_pod_name, ingress_controller_prerequisites.namespace)
-        assert '"POST /helloworld.Greeter/SayHello HTTP/2.0" 200 0' in last_log
+        log_contents = kube_apis.v1.read_namespaced_pod_log(ic_pod_name, ingress_controller_prerequisites.namespace)
+        retry = 0
+        while '"POST /helloworld.Greeter/SayHello HTTP/2.0" 200 0' not in log_contents and retry <= 60:
+            log_contents = kube_apis.v1.read_namespaced_pod_log(
+                ic_pod_name, ingress_controller_prerequisites.namespace)
+            retry += 1
+            wait_before_test(1)
+            print(f"Logs not yet updated, retrying... #{retry}")
+        assert '"POST /helloworld.Greeter/SayHello HTTP/2.0" 200 0' in log_contents
 
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "grpc1", virtual_server_setup.namespace, 0)
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "grpc2", virtual_server_setup.namespace, 0)

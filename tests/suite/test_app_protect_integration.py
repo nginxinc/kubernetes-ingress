@@ -17,10 +17,10 @@ from suite.resources_utils import (create_example_app, create_ingress,
                                    get_file_contents, get_first_pod_name,
                                    get_ingress_nginx_template_conf,
                                    get_last_reload_time, get_pods_amount,
-                                   get_service_endpoint, get_test_file_name,
+                                   clear_file_contents, get_test_file_name,
                                    scale_deployment, wait_before_test,
                                    wait_until_all_pods_are_ready,
-                                   write_to_json)
+                                   write_to_json, get_pod_name_that_contains)
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 
 src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
@@ -84,8 +84,13 @@ def appprotect_setup(
     src_pol_yaml = f"{TEST_DATA}/appprotect/{ap_policy}.yaml"
     pol_name = create_ap_policy_from_yaml(kube_apis.custom_objects, src_pol_yaml, test_namespace)
 
+    print("------------------------- Deploy syslog server ---------------------------")
+    src_syslog_yaml = f"{TEST_DATA}/appprotect/syslog.yaml"
+    create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+
     def fin():
         print("Clean up:")
+        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         delete_ap_policy(kube_apis.custom_objects, pol_name, test_namespace)
         delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
         delete_common_app(kube_apis, "simple", test_namespace)
@@ -297,6 +302,7 @@ class TestAppProtect:
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_valid_responses(response)
 
+    @pytest.mark.flaky(max_runs=3)
     def test_ap_sec_logs_on(
         self,
         request,
@@ -309,15 +315,9 @@ class TestAppProtect:
         """
         Test corresponding log entries with correct policy (includes setting up a syslog server as defined in syslog.yaml)
         """
-        src_syslog_yaml = f"{TEST_DATA}/appprotect/syslog.yaml"
         log_loc = "/var/log/messages"
-
-        create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-
         syslog_dst = f"syslog-svc.{test_namespace}"
-
-        # items[-1] because syslog pod is last one to spin-up
-        syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
+        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-")
 
         create_ingress_with_ap_annotations(
             kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", f"{syslog_dst}:514"
@@ -333,9 +333,9 @@ class TestAppProtect:
             appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
         )
         print(response_block.text)
-        log_contents = ""
+        log_contents_block = ""
         retry = 0
-        while "ASM:attack_type" not in log_contents and retry <= 60:
+        while "ASM:attack_type" not in log_contents_block and retry <= 30:
             log_contents_block = get_file_contents(
                 kube_apis.v1, log_loc, syslog_pod, test_namespace
             )
@@ -354,7 +354,7 @@ class TestAppProtect:
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
-        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
 
         assert_invalid_responses(response_block)
         assert (
@@ -384,14 +384,7 @@ class TestAppProtect:
         """
         Log pod startup time while scaling up from 0 to 1
         """
-        src_syslog_yaml = f"{TEST_DATA}/appprotect/syslog.yaml"
-        create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
-
         syslog_dst = f"syslog-svc.{test_namespace}"
-
-        # FIXME this is not used
-        # items[-1] because syslog pod is last one to spin-up
-        # syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
 
         create_ingress_with_ap_annotations(
             kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", f"{syslog_dst}:514"
@@ -408,29 +401,27 @@ class TestAppProtect:
             wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ns, 1)
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
-        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
 
         assert num is None
 
+    @pytest.mark.flaky(max_runs=3)
     def test_ap_multi_sec_logs(
         self, request, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):
         """
         Test corresponding log entries with multiple log destinations (in this case, two syslog servers)
         """
-        src_syslog_yaml = f"{TEST_DATA}/appprotect/syslog.yaml"
         src_syslog2_yaml = f"{TEST_DATA}/appprotect/syslog2.yaml"
         log_loc = "/var/log/messages"
 
-        print("Create two syslog servers")
-        create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        print("Create a second syslog server")
         create_items_from_yaml(kube_apis, src_syslog2_yaml, test_namespace)
 
         syslog_dst = f"syslog-svc.{test_namespace}"
         syslog2_dst = f"syslog2-svc.{test_namespace}"
 
-        syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-2].metadata.name
-        syslog2_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
+        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-")
+        syslog2_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog2")
 
         with open(src_ing_yaml) as f:
             doc = yaml.safe_load(f)
@@ -454,6 +445,7 @@ class TestAppProtect:
 
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
 
+        wait_before_test(30)
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
 
         print("----------------------- Send request ----------------------")
@@ -480,8 +472,8 @@ class TestAppProtect:
         reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
-        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         delete_items_from_yaml(kube_apis, src_syslog2_yaml, test_namespace)
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
 
         assert_invalid_responses(response)
         # check logs in dest. #1 i.e. syslog server #1
@@ -501,6 +493,7 @@ class TestAppProtect:
             and 'outcome="REJECTED"' in log2_contents
         )
 
+    @pytest.mark.flaky(max_runs=3)
     def test_ap_enable_true_policy_correct_uds(
         self, request, kube_apis, crd_ingress_controller_with_ap, appprotect_setup, test_namespace
     ):

@@ -74,6 +74,10 @@ http {
     variables_hash_bucket_size {{.VariablesHashBucketSize}};
     variables_hash_max_size {{.VariablesHashMaxSize}};
 
+    map $request_uri $request_uri_no_args {
+        "~^(?P<path>[^?]*)(\?.*)?$" $path;
+    }
+
     map $http_upgrade $connection_upgrade {
         default upgrade;
         ''      close;

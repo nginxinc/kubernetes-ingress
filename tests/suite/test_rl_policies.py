@@ -103,13 +103,13 @@ class TestRateLimitingPolicies:
         assert occur.count(200) <= 1
 
     @pytest.mark.parametrize("src", [rl_vs_sec_src])
-    def test_rl_policy_10rs(
+    def test_rl_policy_5rs(
         self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, src,
     ):
         """
-        Test if rate-limiting policy is working with 10 rps
+        Test if rate-limiting policy is working with 5 rps
         """
-        rate_sec = 10
+        rate_sec = 5
         print(f"Create rl policy")
         pol_name = create_policy_from_yaml(kube_apis.custom_objects, rl_pol_sec_src, test_namespace)
         print(f"Patch vs with policy: {src}")
@@ -251,10 +251,10 @@ class TestRateLimitingPolicies:
     ):
         """
         List policies in vs spec and route resp. and test if route overrides spec
-        route:policy = secondary (10 rps)
+        route:policy = secondary (5 rps)
         spec:policy = primary (1 rps)
         """
-        rate_sec = 10
+        rate_sec = 5
         print(f"Create rl policy")
         pol_name_pri = create_policy_from_yaml(
             kube_apis.custom_objects, rl_pol_pri_src, test_namespace

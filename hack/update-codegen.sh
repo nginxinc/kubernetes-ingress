@@ -20,7 +20,7 @@ set -o pipefail
 
 SCRIPT_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 CODEGEN_VERSION=$(grep 'k8s.io/code-generator' go.sum | awk '{print $2}' | sed 's/\/go.mod//g' | tail -1)
-CODEGEN_PKG=$(echo `go env GOPATH`"/pkg/mod/k8s.io/code-generator@${CODEGEN_VERSION}")
+CODEGEN_PKG=$(echo $(go env GOPATH)"/pkg/mod/k8s.io/code-generator@${CODEGEN_VERSION}")
 
 if [[ ! -d ${CODEGEN_PKG} ]]; then
   echo "${CODEGEN_PKG} is missing. Running 'go mod download'."
@@ -33,6 +33,6 @@ fi
 #                  instead of the $GOPATH directly. For normal projects this can be dropped.
 bash "${CODEGEN_PKG}"/generate-groups.sh "deepcopy,client,informer,lister" \
   github.com/nginxinc/kubernetes-ingress/pkg/client github.com/nginxinc/kubernetes-ingress/pkg/apis \
-  configuration:v1alpha1,v1 \
+  "configuration:v1alpha1,v1 dos:v1beta1" \
   --output-base "$(dirname "${BASH_SOURCE[0]}")/../../../.." \
   --go-header-file "${SCRIPT_ROOT}"/hack/boilerplate.go.txt

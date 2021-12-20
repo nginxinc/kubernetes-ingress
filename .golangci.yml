@@ -29,7 +29,7 @@ linters-settings:
       - name: var-declaration
       - name: var-naming
   gocyclo:
-    min-complexity: 15
+    min-complexity: 150
 
 linters:
     enable:
@@ -64,7 +64,7 @@ linters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  new: true
+  new: false
   exclude-use-default: false
 run:
   timeout: 5m

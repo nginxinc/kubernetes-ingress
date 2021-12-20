@@ -11,7 +11,7 @@ import (
 
 type Transport struct{}
 
-func (c Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (c Transport) RoundTrip(_ *http.Request) (*http.Response, error) {
 	return &http.Response{
 		StatusCode: 200,
 		Body:       ioutil.NopCloser(bytes.NewBufferString("42")),

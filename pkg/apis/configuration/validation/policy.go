@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotect"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -273,7 +272,7 @@ func validateLogConf(logConf, logDest string, fieldPath *field.Path) field.Error
 		}
 	}
 
-	err := appprotect.ValidateAppProtectLogDestination(logDest)
+	err := ValidateAppProtectLogDestination(logDest)
 	if err != nil {
 		allErrs = append(allErrs, field.Invalid(fieldPath.Child("logDest"), logDest, err.Error()))
 	}
@@ -387,7 +386,7 @@ var validateVerifyClientKeyParameters = map[string]bool{
 func validateIngressMTLSVerifyClient(verifyClient string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if verifyClient != "" {
-		allErrs = append(allErrs, validateParameter(verifyClient, validateVerifyClientKeyParameters, fieldPath)...)
+		allErrs = append(allErrs, ValidateParameter(verifyClient, validateVerifyClientKeyParameters, fieldPath)...)
 	}
 	return allErrs
 }
@@ -452,9 +451,8 @@ func validateRateLimitKey(key string, fieldPath *field.Path, isPlus bool) field.
 		return append(allErrs, field.Required(fieldPath, ""))
 	}
 
-	if !escapedStringsFmtRegexp.MatchString(key) {
-		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, `Hello World! \n`, `\"${request_uri}\" is unavailable. \n`)
-		allErrs = append(allErrs, field.Invalid(fieldPath, key, msg))
+	if err := ValidateEscapedString(key, `Hello World! \n`, `\"${request_uri}\" is unavailable. \n`); err != nil {
+		allErrs = append(allErrs, field.Invalid(fieldPath, key, err.Error()))
 	}
 
 	allErrs = append(allErrs, validateStringWithVariables(key, fieldPath, rateLimitKeySpecialVariables, rateLimitKeyVariables, isPlus)...)

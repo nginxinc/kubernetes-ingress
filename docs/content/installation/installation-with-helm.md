@@ -19,6 +19,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     - Alternatively, pull an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
     - Alternatively, you can build an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
     - Update the `controller.image.repository` field of the `values-plus.yaml` accordingly.
+  - If you’d like to use App Protect Dos, please install App Protect Dos Arbitrator helm chart. Make sure to install in the same namespace as the NGINX Ingress Controller. Note that if you install multiple NGINX Ingress Controllers in the same namespace, they will need to share the same Arbitrator because it is not possible to install more than one Arbitrator in a single namespace.
 
 ## Getting the Chart Sources
 
@@ -149,7 +150,12 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
 |``controller.kind`` | The kind of the Ingress controller installation - deployment or daemonset. | deployment | 
 |``controller.nginxplus`` | Deploys the Ingress controller for NGINX Plus. | false | 
 |``controller.nginxReloadTimeout`` | The timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start. The default is 4000 (or 20000 if `controller.appprotect.enable` is true). If set to 0, the default value will be used. | 0 | 
-|``controller.appprotect.enable`` | Enables the App Protect module in the Ingress Controller. | false | 
+|``controller.appprotect.enable`` | Enables the App Protect module in the Ingress Controller. | false |
+|``controller.appprotectdos.enable`` | Enables the App Protect Dos module in the Ingress Controller. | false |
+|``controller.appprotectdos.debug`` | Enables App Protect Dos debug logs. | false |
+|``controller.appprotectdos.maxWorkers`` | Max number of nginx processes to support. | Number of CPU cores in the machine
+|``controller.appprotectdos.maxDaemons`` | Max number of ADMD instances. | 1
+|``controller.appprotectdos.memory`` | RAM memory size to consume in MB. | 50% of free RAM in the container or 80MB, the smaller
 |``controller.hostNetwork`` | Enables the Ingress controller pods to use the host's network namespace. | false | 
 |``controller.nginxDebug`` | Enables debugging for NGINX. Uses the ``nginx-debug`` binary. Requires ``error-log-level: debug`` in the ConfigMap via ``controller.config.entries``. | false | 
 |``controller.logLevel`` | The log level of the Ingress Controller. | 1 | 

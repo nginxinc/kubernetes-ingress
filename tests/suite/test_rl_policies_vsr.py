@@ -125,7 +125,7 @@ class TestRateLimitingPoliciesVsr:
         assert occur.count(200) <= 1
 
     @pytest.mark.parametrize("src", [rl_vsr_sec_src])
-    def test_rl_policy_10rs_vsr(
+    def test_rl_policy_5rs_vsr(
         self,
         kube_apis,
         crd_ingress_controller,
@@ -135,9 +135,9 @@ class TestRateLimitingPoliciesVsr:
         src,
     ):
         """
-        Test if rate-limiting policy is working with ~10 rps in vsr:subroute
+        Test if rate-limiting policy is working with ~5 rps in vsr:subroute
         """
-        rate_sec = 10
+        rate_sec = 5
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         print(f"Create rl policy")
         pol_name = create_policy_from_yaml(
@@ -198,7 +198,7 @@ class TestRateLimitingPoliciesVsr:
         pol_name_pri = create_policy_from_yaml(
             kube_apis.custom_objects, rl_pol_pri_src, v_s_route_setup.route_m.namespace
         )
-        print(f"Create rl policy: 10rps")
+        print(f"Create rl policy: 5rps")
         pol_name_sec = create_policy_from_yaml(
             kube_apis.custom_objects, rl_pol_sec_src, v_s_route_setup.route_m.namespace
         )
@@ -330,7 +330,7 @@ class TestRateLimitingPoliciesVsr:
         Test if vsr subroute policy overrides vs spec policy 
         And vsr subroute policy overrides vs route policy
         """
-        rate_sec = 10
+        rate_sec = 5
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
 
         # policy for virtualserver
@@ -339,12 +339,12 @@ class TestRateLimitingPoliciesVsr:
             kube_apis.custom_objects, rl_pol_pri_src, v_s_route_setup.route_m.namespace
         )
         # policy for virtualserverroute
-        print(f"Create rl policy: 10rps")
+        print(f"Create rl policy: 5rps")
         pol_name_vsr = create_policy_from_yaml(
             kube_apis.custom_objects, rl_pol_sec_src, v_s_route_setup.route_m.namespace
         )
 
-        # patch vsr with 10rps policy
+        # patch vsr with 5rps policy
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.name,
