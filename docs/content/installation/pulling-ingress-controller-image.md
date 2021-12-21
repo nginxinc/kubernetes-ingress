@@ -1,6 +1,6 @@
 ---
 title: Pulling the Ingress Controller Image
-description: 
+description:
 weight: 1700
 doctypes: [""]
 toc: true
@@ -20,7 +20,7 @@ Before you can pull the image, make sure that the following software is installe
 
 ## Pulling the Image using Docker and Pushing It to the Private Registry
 
-1. First, configure the Docker environment to use certificate-based client-server authentication with the F5 Container registry - `private-registry.nginx.com`. 
+1. First, configure the Docker environment to use certificate-based client-server authentication with the F5 Container registry - `private-registry.nginx.com`.
    To do so in a Linux based environment, create a `private-registry.nginx.com` directory under `/etc/docker/certs.d` and create a certificate `client.cert` (using `nginx-repo.crt` - please note that the certificate MUST have the `.cert` suffix, not `.crt`) and a key `client.key` (using `nginx-repo.key`). See [this document](https://docs.docker.com/engine/security/certificates/) for more details.
 
    ```
@@ -34,14 +34,14 @@ Before you can pull the image, make sure that the following software is installe
 2. Use docker to pull the required image from `private-registry.nginx.com`. Choose the image from the available images listed [here](nginx-ingress-controller/technical-specifications/#images-with-nginx-plus).
    For NGINX Plus Ingress Controller, pull from `private-registry.nginx.com/nginx-ic/nginx-plus-ingress`, e.g.:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic/nginx-plus-ingress:1.12.0
+   $ docker pull private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.0.3
    ```
 
    For NGINX Plus Ingress Controller with App Protect, pull from `private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress`, e.g.:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:1.12.0
+   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.0.3
    ```
-   
+
    To list the available image tags for the repositories, you can also use the Docker registry API, e.g.:
    ```
    $ curl https://private-registry.nginx.com/v2/nginx-ic/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
@@ -68,12 +68,12 @@ Before you can pull the image, make sure that the following software is installe
 3. Tag and push the image to your private registry.
    Make sure to run the `docker login` command first to log in to the registry.
    ```
-   $ docker tag private-registry.nginx.com/nginx-ic/nginx-plus-ingress:1.12.0 <my-docker-registry>/nginx-ic/nginx-plus-ingress:1.12.0
-   $ docker push <my-docker-registry>/nginx-ic/nginx-plus-ingress:1.12.0
+   $ docker tag private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.0.3 <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.0.3
+   $ docker push <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.0.3
    ```
-   
+
    or for NGINX App Protect enabled image
    ```
-   $ docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:1.12.0 <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:1.12.0
-   $ docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:1.12.0
+   $ docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.0.3 <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.0.3
+   $ docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.0.3
    ```

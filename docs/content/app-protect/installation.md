@@ -1,6 +1,6 @@
 ---
 title: Installation with NGINX App Protect
-description: 
+description:
 weight: 1800
 doctypes: [""]
 toc: true
@@ -22,20 +22,20 @@ Take the steps below to either configure a Docker Registry secret in your Kubern
 
     For NGINX Plus Ingress Controller with App Protect, pull from `private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress`:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:1.12.0
+   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.0.3
    ```
-    `1.12.0` will pull down the Debian based image. The other available image tag is `1.12.0-ubi` for the UBI based image.
+    `2.0.3` will pull down the Debian based image. The other available image tag is `2.0.3-ubi` for the UBI based image.
 
 - Use the docker registry API to list the available image tags for the repository.
-   
+
    To list the available image tags for the repository, you can use the Docker registry API, e.g.:
    ```
    $ curl https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "1.12.0-ubi",
-        "1.12.0"
+        "2.0.3-ubi",
+        "2.0.3"
     ]
     }
    ```
