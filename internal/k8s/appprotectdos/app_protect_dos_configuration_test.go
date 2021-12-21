@@ -1320,6 +1320,9 @@ func TestGetDosProtectedThatReferencedDosLogConf(t *testing.T) {
 	for _, test := range tests {
 		resources := dosConf.GetDosProtectedThatReferencedDosLogConf(test.policyNamespace + "/" + test.policyName)
 		if diff := cmp.Diff(test.expected, resources); diff != "" {
+			sort.SliceStable(resources, func(i, j int) bool {
+				return resources[i].Name < resources[j].Name
+			})
 			t.Errorf("GetDosProtectedThatReferencedDosLogConf() returned unexpected result for the case of: %v (-want +got):\n%s", test.msg, diff)
 		}
 	}

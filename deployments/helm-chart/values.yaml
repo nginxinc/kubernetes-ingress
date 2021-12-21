@@ -80,15 +80,15 @@ controller:
     secret:
 
   wildcardTLS:
-    ## The base64-encoded TLS certificate for every Ingress host that has TLS enabled but no secret specified.
-    ## If the parameter is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection.
+    ## The base64-encoded TLS certificate for every Ingress/VirtualServer host that has TLS enabled but no secret specified.
+    ## If the parameter is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection.
     cert: ""
 
-    ## The base64-encoded TLS key for every Ingress host that has TLS enabled but no secret specified.
-    ## If the parameter is not set, for such Ingress hosts NGINX will break any attempt to establish a TLS connection.
+    ## The base64-encoded TLS key for every Ingress/VirtualServer host that has TLS enabled but no secret specified.
+    ## If the parameter is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection.
     key: ""
 
-    ## The secret with a TLS certificate and key for every Ingress host that has TLS enabled but no secret specified.
+    ## The secret with a TLS certificate and key for every Ingress/VirtualServer host that has TLS enabled but no secret specified.
     ## The value must follow the following format: `<namespace>/<name>`.
     ## Used as an alternative to specifying a certificate and key using `controller.wildcardTLS.cert` and `controller.wildcardTLS.key` parameters.
     ## Format: <namespace>/<secret_name>

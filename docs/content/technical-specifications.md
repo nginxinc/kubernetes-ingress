@@ -11,6 +11,9 @@ toc: true
 
 We advise users to run the most recent release of the NGINX Ingress Controller, and we issue software updates to the most recent release. We provide technical support for F5 customers who are using the most recent version of the NGINX Ingress Controller, and any version released within two years of the current release.
 
+Additionally, the current release version is 2.x which is compatible with the Kubernetes Ingress v1 API.  Therefore Kubernetes 1.19 and later.
+The 1.12 release supports the Ingress v1beta1 API and continues to receive security fixes to support those unable to upgrade to Kubernetes 1.19 or later. The v1beta1 Ingress API was deprecated with Kubernetes release 1.19 and removed with the Kubernetes 1.22 release.
+
 ## Supported Kubernetes Versions
 
 We explicitly test the NGINX Ingress Controller on a range of Kubernetes platforms at each release, and the [release notes](/nginx-ingress-controller/releases) list which platforms were tested. We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the [Kubernetes conformance tests](https://www.cncf.io/certification/software-conformance/).
