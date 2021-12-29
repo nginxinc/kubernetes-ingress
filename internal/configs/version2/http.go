@@ -123,7 +123,7 @@ type WAF struct {
 	Enable              string
 	ApPolicy            string
 	ApSecurityLogEnable bool
-	ApLogConf           string
+	ApLogConf           []string
 }
 
 // Dos defines Dos configuration.

@@ -355,17 +355,20 @@ For `kubectl get` and similar commands, you can also use the short name `pol` in
 
 The WAF policy configures NGINX Plus to secure client requests using App Protect policies.
 
-For example, the following policy will enable the referenced APPolicy and APLogConf with the configured log destination:
+For example, the following policy will enable the referenced APPolicy. You can configure multiple APLogConfs with log destinations:
 ```yaml
 waf:
   enable: true
   apPolicy: "default/dataguard-alarm"
-  securityLog:
-    enable: true
+  securityLogs:
+  - enable: true
     apLogConf: "default/logconf"
     logDest: "syslog:server=syslog-svc.default:514"
+  - enable: true
+    apLogConf: "default/logconf"
+    logDest: "syslog:server=syslog-svc-secondary.default:514"    
 ```
-
+> Note: The field `waf.securityLog` is deprecated and will be removed in future releases.It will be ignored if `waf.securityLogs` is populated.
 > Note: The feature is implemented using the NGINX Plus [NGINX App Protect Module](https://docs.nginx.com/nginx-app-protect/configuration/).
 
 {{% table %}}

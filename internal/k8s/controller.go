@@ -2802,19 +2802,37 @@ func (lbc *LoadBalancerController) addWAFPolicyRefs(
 			apPolRef[apPolKey] = apPolicy
 		}
 
-		if pol.Spec.WAF.SecurityLog != nil && pol.Spec.WAF.SecurityLog.ApLogConf != "" {
-			logConfKey := pol.Spec.WAF.SecurityLog.ApLogConf
-			if !strings.Contains(pol.Spec.WAF.SecurityLog.ApLogConf, "/") {
-				logConfKey = fmt.Sprintf("%v/%v", pol.Namespace, logConfKey)
-			}
+		if pol.Spec.WAF.SecurityLog != nil && pol.Spec.WAF.SecurityLogs == nil {
+			if pol.Spec.WAF.SecurityLog.ApLogConf != "" {
+				logConfKey := pol.Spec.WAF.SecurityLog.ApLogConf
+				if !strings.Contains(pol.Spec.WAF.SecurityLog.ApLogConf, "/") {
+					logConfKey = fmt.Sprintf("%v/%v", pol.Namespace, logConfKey)
+				}
 
-			logConf, err := lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfKey)
-			if err != nil {
-				return fmt.Errorf("WAF policy %q is invalid: %w", logConfKey, err)
+				logConf, err := lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfKey)
+				if err != nil {
+					return fmt.Errorf("WAF policy %q is invalid: %w", logConfKey, err)
+				}
+				logConfRef[logConfKey] = logConf
 			}
-			logConfRef[logConfKey] = logConf
 		}
 
+		if pol.Spec.WAF.SecurityLogs != nil {
+			for _, SecLog := range pol.Spec.WAF.SecurityLogs {
+				if SecLog.ApLogConf != "" {
+					logConfKey := SecLog.ApLogConf
+					if !strings.Contains(SecLog.ApLogConf, "/") {
+						logConfKey = fmt.Sprintf("%v/%v", pol.Namespace, logConfKey)
+					}
+
+					logConf, err := lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfKey)
+					if err != nil {
+						return fmt.Errorf("WAF policy %q is invalid: %w", logConfKey, err)
+					}
+					logConfRef[logConfKey] = logConf
+				}
+			}
+		}
 	}
 	return nil
 }
@@ -2861,6 +2879,13 @@ func getWAFPoliciesForAppProtectLogConf(pols []*conf_v1.Policy, key string) []*c
 	for _, pol := range pols {
 		if pol.Spec.WAF != nil && pol.Spec.WAF.SecurityLog != nil && isMatchingResourceRef(pol.Namespace, pol.Spec.WAF.SecurityLog.ApLogConf, key) {
 			policies = append(policies, pol)
+		}
+		if pol.Spec.WAF != nil && pol.Spec.WAF.SecurityLogs != nil {
+			for _, logConf := range pol.Spec.WAF.SecurityLogs {
+				if isMatchingResourceRef(pol.Namespace, logConf.ApLogConf, key) {
+					policies = append(policies, pol)
+				}
+			}
 		}
 	}
 

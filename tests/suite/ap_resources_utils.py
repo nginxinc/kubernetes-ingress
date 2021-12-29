@@ -30,8 +30,6 @@ def read_ap_custom_resource(custom_objects: CustomObjectsApi, namespace, plural,
         logging.exception(f"Exception occurred while reading CRD")
         raise
 
-
-
 def create_ap_waf_policy_from_yaml(
     custom_objects: CustomObjectsApi,
     yaml_manifest,
@@ -66,6 +64,55 @@ def create_ap_waf_policy_from_yaml(
         dep["spec"]["waf"]["securityLog"]["apLogConf"] = f"{ap_namespace}/{aplogconf}"
         dep["spec"]["waf"]["securityLog"]["logDest"] = f"{logdest}"
 
+        custom_objects.create_namespaced_custom_object(
+            "k8s.nginx.org", "v1", namespace, "policies", dep
+        )
+        print(f"Policy created: {dep}")
+        return dep["metadata"]["name"]
+    except ApiException:
+        logging.exception(f"Exception occurred while creating Policy: {dep['metadata']['name']}")
+        raise
+
+def create_ap_multilog_waf_policy_from_yaml(
+    custom_objects: CustomObjectsApi,
+    yaml_manifest,
+    namespace,
+    ap_namespace,
+    waf_enable,
+    log_enable,
+    appolicy,
+    aplogconfs,
+    logdests,
+) -> str:
+    """
+    Create a Policy based on yaml file.
+
+    :param custom_objects: CustomObjectsApi
+    :param yaml_manifest: an absolute path to file
+    :param namespace: namespace for test resources
+    :param ap_namespace: namespace for AppProtect resources
+    :param waf_enable: true/false
+    :param log_enable: true/false
+    :param appolicy: AppProtect policy name
+    :param aplogconfs: List of Logconf names
+    :param logdests: List of AP log destinations (syslog)
+    :return: str
+    """
+    with open(yaml_manifest) as f:
+        dep = yaml.safe_load(f)
+    try:
+        dep["spec"]["waf"]["enable"] = waf_enable
+        dep["spec"]["waf"]["apPolicy"] = f"{ap_namespace}/{appolicy}"
+        seclogs = []
+        try:
+            for i in range(len(aplogconfs)): 
+                seclogs.append({"enable": True,"apLogConf": f"{ap_namespace}/{aplogconfs[i]}", "logDest": f"{logdests[i]}"})
+            dep["spec"]["waf"]["securityLogs"] = seclogs
+        except KeyError:
+            logging.exception(f"Exception occurred while creating Policy: {dep['metadata']['name']}")
+            raise
+        del dep["spec"]["waf"]["securityLog"]
+        
         custom_objects.create_namespaced_custom_object(
             "k8s.nginx.org", "v1", namespace, "policies", dep
         )

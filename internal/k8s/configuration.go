@@ -1190,7 +1190,8 @@ func createResourceChangesForHosts(removedHosts []string, updatedHosts []string,
 }
 
 func createResourceChangesForListeners(removedListeners []string, updatedListeners []string, addedListeners []string, oldListeners map[string]*TransportServerConfiguration,
-	newListeners map[string]*TransportServerConfiguration) []ResourceChange {
+	newListeners map[string]*TransportServerConfiguration,
+) []ResourceChange {
 	var changes []ResourceChange
 	var deleteChanges []ResourceChange
 
@@ -1597,7 +1598,8 @@ func detectChangesInHosts(oldHosts map[string]Resource, newHosts map[string]Reso
 }
 
 func detectChangesInListeners(oldListeners map[string]*TransportServerConfiguration, newListeners map[string]*TransportServerConfiguration) (removedListeners []string,
-	updatedListeners []string, addedListeners []string) {
+	updatedListeners []string, addedListeners []string,
+) {
 	for _, l := range getSortedTransportServerConfigurationKeys(oldListeners) {
 		_, exists := newListeners[l]
 		if !exists {

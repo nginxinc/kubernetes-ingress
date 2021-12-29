@@ -191,7 +191,9 @@ server {
 
         {{ if .ApSecurityLogEnable }}
     app_protect_security_log_enable on;
-    app_protect_security_log {{ .ApLogConf }};
+        {{ range $logconf := .ApLogConf }}
+    app_protect_security_log {{ $logconf }};
+        {{ end }}
         {{ end }}
     {{ end }}
 
@@ -370,7 +372,9 @@ server {
 
             {{ if .ApSecurityLogEnable }}
         app_protect_security_log_enable on;
-        app_protect_security_log {{ .ApLogConf }};
+            {{ range $logconf := .ApLogConf }}
+        app_protect_security_log {{ $logconf }};
+            {{ end }}
             {{ end }}
         {{ end }}
 

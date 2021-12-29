@@ -1166,6 +1166,17 @@ func (in *WAF) DeepCopyInto(out *WAF) {
 		*out = new(SecurityLog)
 		**out = **in
 	}
+	if in.SecurityLogs != nil {
+		in, out := &in.SecurityLogs, &out.SecurityLogs
+		*out = make([]*SecurityLog, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(SecurityLog)
+				**out = **in
+			}
+		}
+	}
 	return
 }
 

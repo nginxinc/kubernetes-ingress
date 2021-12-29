@@ -445,9 +445,10 @@ type OIDC struct {
 
 // WAF defines an WAF policy.
 type WAF struct {
-	Enable      bool         `json:"enable"`
-	ApPolicy    string       `json:"apPolicy"`
-	SecurityLog *SecurityLog `json:"securityLog"`
+	Enable       bool           `json:"enable"`
+	ApPolicy     string         `json:"apPolicy"`
+	SecurityLog  *SecurityLog   `json:"securityLog"`
+	SecurityLogs []*SecurityLog `json:"securityLogs"`
 }
 
 // SecurityLog defines the security log of a WAF policy.
