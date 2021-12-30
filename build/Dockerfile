@@ -6,7 +6,7 @@ ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_VERSION=bullseye-slim
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.21.4 AS debian
+FROM nginx:1.21.5 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin libgmp10 \
