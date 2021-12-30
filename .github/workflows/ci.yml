@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - release-*
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
@@ -13,7 +14,7 @@ on:
   pull_request:
     branches:
       - master
-      - 'release-*'
+      - release-*
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
@@ -291,6 +292,7 @@ jobs:
     name: Build Docker Images
     runs-on: ubuntu-20.04
     needs: build-binaries
+    if: ${{ !startsWith(github.ref, 'refs/heads/release') }}
     strategy:
         matrix:
           image: [debian, alpine, opentracing, alpine-opentracing]
@@ -357,7 +359,7 @@ jobs:
       - name: Output Variables
         id: var
         run: |
-          version=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+          version=${{ steps.meta.outputs.version }}
           if ${{ startsWith(github.ref, 'refs/tags/') }}; then
               ic_version=v$version
           else
@@ -366,7 +368,7 @@ jobs:
               ic_version=$tag-$version-$sha_short
           fi
           echo "::set-output name=ic_version::$ic_version"
-      - name: Build Docker images (and push to Dockerhub if not a PR)
+      - name: Build Docker image (and push if not a PR)
         uses: docker/build-push-action@v2
         with:
           file: build/Dockerfile
@@ -387,7 +389,127 @@ jobs:
         uses: aquasecurity/trivy-action@0.2.1
         continue-on-error: true
         with:
-          image-ref: nginx/nginx-ingress:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+          image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results-${{ matrix.image }}.sarif'
+          ignore-unfixed: 'true'
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v1
+        continue-on-error: true
+        with:
+          sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
+      - name: Upload Scan Results
+        uses: actions/upload-artifact@v2
+        continue-on-error: true
+        with:
+          name: 'trivy-results-${{ matrix.image }}.sarif'
+          path: 'trivy-results-${{ matrix.image }}.sarif'
+        if: always()
+
+  build-docker-plus:
+    name: Build Plus Docker Images
+    runs-on: ubuntu-20.04
+    needs: build-binaries
+    strategy:
+        matrix:
+          image: [debian-plus, alpine-plus, opentracing-plus]
+          platforms: ["linux/arm64, linux/amd64"]
+          include:
+            - image: ubi-plus
+              platforms: "linux/arm64, linux/amd64, linux/s390x"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v2
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: arm64
+        if: github.event_name != 'pull_request'
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: GCR Login
+        uses: docker/login-action@v1
+        with:
+          registry: gcr.io
+          username: _json_key
+          password: ${{ secrets.GCR_JSON_KEY }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            ${{ startsWith(github.ref, 'refs/tags/') && 'gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress' || 'gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress' }}
+            ${{ startsWith(github.ref, 'refs/heads/release') && 'gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic/nginx-plus-ingress' || '' }}
+          flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
+          tags: |
+            type=edge
+            type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+          labels: |
+            org.opencontainers.image.description=NGINX Plus Ingress Controller for Kubernetes
+            org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
+            org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
+
+      - name: Output Variables
+        id: var
+        run: |
+          version=${{ steps.meta.outputs.version }}
+          if ${{ startsWith(github.ref, 'refs/tags/') }}; then
+              ic_version=v$version
+          else
+              tag=$(git describe --tags --abbrev=0)
+              sha_short=$(echo ${{ github.sha }} | cut -c1-7)
+              ic_version=$tag-$version-$sha_short
+          fi
+          echo "::set-output name=ic_version::$ic_version"
+      - name: Build Plus Docker image
+        uses: docker/build-push-action@v2
+        with:
+          file: build/Dockerfile
+          context: '.'
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+          target: goreleaser
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
+          push: true
+          pull: true
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            IC_VERSION=${{ steps.var.outputs.ic_version }}
+          secrets: |
+            "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ secrets.NGINX_KEY }}"
+      - name: Load image for Trivy
+        uses: docker/build-push-action@v2
+        with:
+          file: build/Dockerfile
+          context: '.'
+          cache-from: type=gha,scope=${{ matrix.image }}
+          target: goreleaser
+          tags: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}
+          load: true
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+          secrets: |
+            "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ secrets.NGINX_KEY }}"
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.2.1
+        continue-on-error: true
+        with:
+          image-ref: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results-${{ matrix.image }}.sarif'
@@ -412,7 +534,7 @@ jobs:
     outputs:
       version: ${{ steps.var.outputs.helm_version }}
       type: ${{ steps.var.outputs.helm_type }}
-    if: github.event_name == 'push'
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/heads/release') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -442,7 +564,7 @@ jobs:
     name: Release Helm Chart
     runs-on: ubuntu-20.04
     needs: package-helm
-    if: github.event_name == 'push'
+    if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/heads/release') }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
