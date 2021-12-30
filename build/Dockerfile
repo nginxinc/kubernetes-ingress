@@ -94,7 +94,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	set -x \
 	&& apt-get update \
 	&& apt-get -y install ca-certificates \
-    && DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
+	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
 	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
 	&& apt-get update \
 	&& apt-get -y install app-protect-dos \
@@ -110,7 +110,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	set -x \
 	&& apt-get update \
 	&& apt-get -y install ca-certificates \
-    && DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
+	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
 	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
 	&& apt-get update \
 	&& apt-get -y install app-protect-dos \
@@ -174,7 +174,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& microdnf --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION}
 
 
-############################################# Base image for UBI with NGINX Plus and App Protect #############################################
+############################################# Base image for UBI with NGINX Plus and App Protect WAF #############################################
 FROM ubi-plus as ubi-plus-nap
 ARG NGINX_PLUS_VERSION
 
@@ -184,18 +184,18 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	source /tmp/rhel_license \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
-	&& set -x \
-	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-7.repo > /etc/yum.repos.d/app-protect-7.repo \
 	&& subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
-	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-	&& yum clean all \
-	&& yum install -y nginx-plus-module-appprotect-${NGINX_PLUS_VERSION} $(repoquery app-protect-${NGINX_PLUS_VERSION#r}*) app-protect-attack-signatures app-protect-threat-campaigns \
+	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-7.repo > /etc/yum.repos.d/app-protect-7.repo \
+	&& yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+	&& yum install -y app-protect-${NGINX_PLUS_VERSION#r}* app-protect-attack-signatures app-protect-threat-campaigns \
 	&& rm /etc/yum.repos.d/app-protect-7.repo \
-	&& subscription-manager unregister
+	&& subscription-manager unregister \
+	&& yum clean all && rm -rf /var/cache/yum
 
 # Uncomment the lines below if you want to install a custom CA certificate
 # COPY build/*.crt  /etc/pki/ca-trust/source/anchors/
 # RUN update-ca-trust extract
+
 
 ############################################# Base image for UBI with NGINX Plus and App Protect Dos #############################################
 FROM ubi-plus as ubi-plus-dos
@@ -207,16 +207,16 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	source /tmp/rhel_license \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
-    && curl -sS https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
-    && subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
-    && rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-    && yum clean all \
-    && yum -y install epel-release \
-    && yum -y install app-protect-dos-${NGINX_PLUS_VERSION#r}* \
-    && rm /etc/yum.repos.d/app-protect-dos-7.repo \
-    && subscription-manager unregister
+	&& subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
+	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
+	&& yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+	&& yum install -y app-protect-dos-${NGINX_PLUS_VERSION#r}* \
+	&& rm /etc/yum.repos.d/app-protect-dos-7.repo \
+	&& subscription-manager unregister \
+	&& yum clean all && rm -rf /var/cache/yum
 
-############################################# Base image for UBI with NGINX Plus and App Protect and App Protect Dos #############################################
+
+############################################# Base image for UBI with NGINX Plus, App Protect WAF and App Protect Dos #############################################
 FROM ubi-plus-nap as ubi-plus-nap-dos
 ARG NGINX_PLUS_VERSION
 
@@ -226,12 +226,13 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	source /tmp/rhel_license \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
-    && curl -sS https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
-    && yum clean all \
-    && yum -y install epel-release \
-    && yum -y install app-protect-dos-${NGINX_PLUS_VERSION#r}* \
-    && rm /etc/yum.repos.d/app-protect-dos-7.repo \
-    && subscription-manager unregister
+	&& subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
+	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
+	&& yum install -y app-protect-dos-${NGINX_PLUS_VERSION#r}* \
+	&& rm /etc/yum.repos.d/app-protect-dos-7.repo \
+	&& subscription-manager unregister \
+	&& yum clean all && rm -rf /var/cache/yum
+
 
 ############################################# Base images containing libs for Opentracing #############################################
 FROM opentracing/nginx-opentracing:nginx-1.21.4 as opentracing-lib
