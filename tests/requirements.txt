@@ -1,5 +1,5 @@
 PyYAML==6.0
-requests==2.26.0
+requests==2.27.0
 forcediphttpsadapter==1.0.2
 kubernetes==21.7.0
 pytest==6.2.5
