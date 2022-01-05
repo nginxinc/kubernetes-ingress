@@ -1,0 +1,86 @@
+##################################################################################################
+# FILES - BACKEND
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: default
+  labels:
+    app: backend
+spec:
+  ports:
+  - name: backend-80
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: backend
+  type: ClusterIP
+  sessionAffinity: None
+---
+##################################################################################################
+# MAIN
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: main
+  namespace: default
+  labels:
+    app: main
+    service: main
+spec:
+  ports:
+  - name: main-80
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: main
+  type: ClusterIP
+  sessionAffinity: None    
+---
+##################################################################################################
+# APP2
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: app2
+  namespace: default
+  labels:
+    app: app2
+    service: app2
+spec:
+  ports:
+  - name: app2-80
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: app2
+  type: ClusterIP
+  sessionAffinity: None
+---
+##################################################################################################
+# APP3
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: app3
+  namespace: default
+  labels:
+    app: app3
+    service: app3
+spec:
+  ports:
+  - name: app3-80
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: app3
+  type: ClusterIP
+  sessionAffinity: None

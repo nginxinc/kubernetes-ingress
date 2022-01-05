@@ -1,0 +1,54 @@
+{
+  "client": "Thunder Client",
+  "collectionName": "Arcadia",
+  "dateExported": "2021-10-01T13:39:46.119Z",
+  "version": "1.1",
+  "folders": [],
+  "requests": [
+    {
+      "containerId": "",
+      "sortNum": 10000,
+      "headers": [
+        { "name": "Accept", "value": "*/*" },
+        {
+          "name": "User-Agent",
+          "value": "Thunder Client (https://www.thunderclient.io)"
+        }
+      ],
+      "colId": "b858e9de-c3b4-4738-a75d-784d2fb9fc89",
+      "name": "get transactions",
+      "url": "http://arcadia-api.gke.nginx.rocks/trading/transactions.php",
+      "method": "GET",
+      "modified": "2021-10-01T13:38:22.768Z",
+      "created": "2021-10-01T13:37:04.251Z",
+      "_id": "ca916430-addc-4ac5-a2a4-21d657414e7c",
+      "params": [],
+      "tests": []
+    },
+    {
+      "containerId": "",
+      "sortNum": 20000,
+      "headers": [
+        { "name": "Accept", "value": "*/*" },
+        {
+          "name": "User-Agent",
+          "value": "Thunder Client (https://www.thunderclient.io)"
+        }
+      ],
+      "colId": "b858e9de-c3b4-4738-a75d-784d2fb9fc89",
+      "name": "buy stocks",
+      "url": "http://arcadia-api.gke.nginx.rocks/trading/rest/buy_stocks.php",
+      "method": "POST",
+      "modified": "2021-10-01T13:39:40.295Z",
+      "created": "2021-10-01T13:39:05.794Z",
+      "_id": "1d038163-3458-40b4-a7a3-9a153f6cc41c",
+      "params": [],
+      "body": {
+        "type": "json",
+        "raw": "{\r\n\t\"trans_value\":12,\r\n\t\"qty\":2,\r\n\t\"company\":\"FFIV\",\r\n\t\"action\":\"buy\",\r\n\t\"stock_price\":198\r\n}",
+        "form": []
+      },
+      "tests": []
+    }
+  ]
+}

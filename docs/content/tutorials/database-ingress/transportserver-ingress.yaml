@@ -1,0 +1,19 @@
+apiVersion: k8s.nginx.org/v1alpha1
+kind: TransportServer
+metadata:
+  name: redis-transportserver
+spec:
+  action:
+    pass: redis-upstream
+  ingressClassName: nginx
+  listener:
+    name: redis-tcp
+    protocol: TCP
+  upstreams:
+  - name: redis-upstream
+    port: 6379
+    service: redis
+    maxFails: 3
+    maxConns: 100
+    failTimeout: 10s
+    loadBalancingMethod: least_time last_byte
