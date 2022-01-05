@@ -1,0 +1,48 @@
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: vs-arcadia
+spec:
+  ingressClassName: nginx
+  host: k8s.arcadia-finance.io
+  policies:
+  - name: waf-policy-threat-campaign
+  upstreams:
+    - name: main
+      service: main
+      port: 80
+    - name: backend
+      service: backend
+      port: 80
+    - name: app2
+      service: app2
+      port: 80
+    - name: app3
+      service: app3
+      port: 80
+  routes:
+    - path: /
+      action:
+        pass: main
+    - path: /trading
+      action:
+        pass: main        
+    - path: /trading/rest
+      policies:
+      - name: waf-policy-arcadia-open-api
+      action:
+        pass: main
+    - path: /files
+      action:
+        pass: backend
+    - path: /api
+      action:
+        pass: app2        
+    - path: /api/rest
+      action:
+        pass: app2
+      policies:
+      - name: waf-policy-arcadia-open-api
+    - path: /app3
+      action:
+        pass: app3

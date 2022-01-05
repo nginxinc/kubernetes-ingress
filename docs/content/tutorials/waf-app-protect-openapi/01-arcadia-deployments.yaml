@@ -1,0 +1,164 @@
+##################################################################################################
+# FILES - BACKEND
+##################################################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: default
+  labels:
+    app: backend
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: backend
+        version: v1
+    spec:
+      containers:
+      - env:
+        - name: service_name
+          value: backend
+        image: registry.gitlab.com/arcadia-application/back-end/backend:latest
+        imagePullPolicy: IfNotPresent
+        name: backend
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: "100Mi"
+          requests:
+            cpu: "0.01"
+            memory: "20Mi"
+---
+##################################################################################################
+# MAIN
+##################################################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: main
+  namespace: default
+  labels:
+    app: main
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: main
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: main
+        version: v1
+    spec:
+      containers:
+      - env:
+        - name: service_name
+          value: main
+        image: registry.gitlab.com/arcadia-application/main-app/mainapp:latest
+        imagePullPolicy: IfNotPresent
+        name: main
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: "100Mi"
+          requests:
+            cpu: "0.01"
+            memory: "20Mi"
+---
+##################################################################################################
+# APP2
+##################################################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2
+  namespace: default
+  labels:
+    app: app2
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app2
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: app2
+        version: v1
+    spec:
+      containers:
+      - env:
+        - name: service_name
+          value: app2
+        image: registry.gitlab.com/arcadia-application/app2/app2:latest
+        imagePullPolicy: IfNotPresent
+        name: app2
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: "100Mi"
+          requests:
+            cpu: "0.01"
+            memory: "20Mi"
+---
+##################################################################################################
+# APP3
+##################################################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app3
+  namespace: default
+  labels:
+    app: app3
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app3
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: app3
+        version: v1
+    spec:
+      containers:
+      - env:
+        - name: service_name
+          value: app3
+        image: registry.gitlab.com/arcadia-application/app3/app3:latest
+        imagePullPolicy: IfNotPresent
+        name: app3
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: "100Mi"
+          requests:
+            cpu: "0.01"
+            memory: "20Mi"
+---

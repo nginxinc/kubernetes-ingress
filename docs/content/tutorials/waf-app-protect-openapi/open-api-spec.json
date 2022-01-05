@@ -1,0 +1,269 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "description": "Arcadia OpenAPI",
+    "title": "API Arcadia Finance",
+    "version": "2.0.2-oas3"
+  },
+  "paths": {
+    "/api/lower_bar.php": {
+      "get": {
+        "summary": "get lower bar",
+        "responses": {
+          "200": {
+            "description": "200 response"
+          }
+        }
+      }
+    },
+    "/api/side_bar.php": {
+      "get": {
+        "summary": "get side bar",
+        "responses": {
+          "200": {
+            "description": "200 response"
+          }
+        }
+      }
+    },
+    "/api/side_bar_accounts.php": {
+      "get": {
+        "summary": "get side bar",
+        "responses": {
+          "200": {
+            "description": "200 response"
+          }
+        }
+      }
+    },
+    "/trading/rest/portfolio.php": {
+      "get": {
+        "summary": "get portfolio",
+        "responses": {
+          "200": {
+            "description": "200 response"
+          }
+        }
+      }
+    },
+    "/trading/rest/buy_stocks.php": {
+      "post": {
+        "summary": "buy stocks",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/buy"
+              },
+              "example": {
+                "trans_value": "312",
+                "qty": "16",
+                "company": "MSFT",
+                "action": "buy",
+                "stock_price": "198"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success",
+                  "name": "Microsoft",
+                  "qty": "16",
+                  "amount": "312",
+                  "transid": "855415223"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trading/rest/sell_stocks.php": {
+      "post": {
+        "summary": "Sell stocks that you own",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sell"
+              },
+              "example": {
+                "trans_value": "212",
+                "qty": "16",
+                "company": "MSFT",
+                "action": "sell",
+                "stock_price": "158"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "success",
+                  "name": "Microsoft",
+                  "qty": "16",
+                  "amount": "212",
+                  "transid": "658854124"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trading/transactions.php": {
+      "get": {
+        "summary": "Get the latests transactions that have happened",
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "YourLastTransaction": "MFST 2000"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rest/execute_money_transfer.php": {
+      "post": {
+        "summary": "Transfer money to a friend",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/money_transfer"
+              },
+              "example": {
+                "amount": "92",
+                "account": "2075894",
+                "currency": "GBP",
+                "friend": "Vincent"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "example": {
+                  "name": "Vincent",
+                  "status": "success",
+                  "currency": "GBP",
+                  "transid": "524569855",
+                  "msg": "The money transfer has been successfully completed"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "buy": {
+        "type": "object",
+        "required": [
+          "trans_value",
+          "qty",
+          "company",
+          "action",
+          "stock_price"
+        ],
+        "properties": {
+          "trans_value": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "qty": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "company": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "stock_price": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "sell": {
+        "type": "object",
+        "required": [
+          "trans_value",
+          "qty",
+          "company",
+          "action",
+          "stock_price"
+        ],
+        "properties": {
+          "trans_value": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "qty": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "company": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "stock_price": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "money_transfer": {
+        "type": "object",
+        "required": [
+          "amount",
+          "account",
+          "currency",
+          "friend"
+        ],
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "account": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "friend": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+---
+#### policy for the virtualServer ###
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  name: waf-policy-threat-campaign
+spec:
+  waf:
+    enable: true
+    apPolicy: "default/threat-campaign"
+    securityLog:
+      enable: true
+      apLogConf: "default/logconf"
+      logDest: "stderr"
+---
+### App Protect Logs ###
+apiVersion: appprotect.f5.com/v1beta1
+kind: APLogConf
+metadata:
+  name: logconf
+spec:
+  filter:
+    request_type: all
+  content:
+    format: default
+    max_request_size: any
+    max_message_size: 5k
+---
+#### NginxApiSecurityPolicy ###
+apiVersion: appprotect.f5.com/v1beta1
+kind: APPolicy
+metadata:
+  name: threat-campaign
+spec:
+  policy:
+    name: threat-campaign
+    template:
+      name: POLICY_TEMPLATE_NGINX_BASE
+    applicationLanguage: utf-8
+    enforcementMode: blocking
+    blocking-settings:
+      violations:
+        - name: VIOL_THREAT_CAMPAIGN
+          alarm: true
+          block: true
