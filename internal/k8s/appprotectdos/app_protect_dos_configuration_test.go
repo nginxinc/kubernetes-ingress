@@ -1311,18 +1311,18 @@ func TestGetDosProtectedThatReferencedDosLogConf(t *testing.T) {
 			policyNamespace: "dev",
 			policyName:      "dosLogConfTwo",
 			expected: []*v1beta1.DosProtectedResource{
-				dosProtectedWithLogConfTwo,
 				anotherDosProtectedWithLogConfTwo,
+				dosProtectedWithLogConfTwo,
 			},
 			msg: "return two referenced objects, from log conf reference with mixed namespaces",
 		},
 	}
 	for _, test := range tests {
 		resources := dosConf.GetDosProtectedThatReferencedDosLogConf(test.policyNamespace + "/" + test.policyName)
+		sort.SliceStable(resources, func(i, j int) bool {
+			return resources[i].Name < resources[j].Name
+		})
 		if diff := cmp.Diff(test.expected, resources); diff != "" {
-			sort.SliceStable(resources, func(i, j int) bool {
-				return resources[i].Name < resources[j].Name
-			})
 			t.Errorf("GetDosProtectedThatReferencedDosLogConf() returned unexpected result for the case of: %v (-want +got):\n%s", test.msg, diff)
 		}
 	}

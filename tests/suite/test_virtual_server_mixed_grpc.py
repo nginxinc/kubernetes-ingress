@@ -80,11 +80,12 @@ class TestVirtualServerMixedUpstreamType:
         assert_proxy_entries_exist(config)
 
         print("\nStep 2: check connection to http backend")
+        print("\nrequest URL: ", virtual_server_setup.backend_2_url)
         resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
         print("Response from http backend: {}".format(resp))
         assert resp.status_code == 200
 
-        print("\nStep 2: Check connection to app")
+        print("\nStep 3: Check connection to app")
         cert = get_certificate(virtual_server_setup.public_endpoint.public_ip,
                                virtual_server_setup.vs_host,
                                virtual_server_setup.public_endpoint.port_ssl)
