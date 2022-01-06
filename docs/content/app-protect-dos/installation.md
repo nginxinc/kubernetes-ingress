@@ -20,7 +20,7 @@ This document provides an overview of the steps required to use NGINX App Protec
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     $ cd kubernetes-ingress
-    $ git checkout v2.0.3
+    $ git checkout v2.1.0
     ```
 
 ## Create the namespace and service account
@@ -63,4 +63,4 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
 4. Enable the App Protect Dos module by adding the `enable-app-protect-dos` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments.md#cmdoption-enable-app-protect-dos) to your Deployment or DaemonSet file.
 5. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests.md#3-deploy-the-ingress-controller).
 
-For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect-dos/configuration),the [NGINX Ingress Controller with App Protect Dos example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v2.0.3/examples/appprotect-dos) and the [NGINX Ingress Controller with App Protect Dos example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v2.0.3/examples/custom-resources/dos).
+For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect-dos/configuration),the [NGINX Ingress Controller with App Protect Dos example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.0/examples/appprotect-dos) and the [NGINX Ingress Controller with App Protect Dos example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.0/examples/custom-resources/dos).

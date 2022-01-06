@@ -11,7 +11,7 @@ toc: true
 
 We advise users to run the most recent release of the NGINX Ingress Controller, and we issue software updates to the most recent release. We provide technical support for F5 customers who are using the most recent version of the NGINX Ingress Controller, and any version released within two years of the current release.
 
-Additionally, the current release version is 2.x which is compatible with the Kubernetes Ingress v1 API.  Therefore Kubernetes 1.19 and later.
+Additionally, the current release version is 2.x which is compatible with the Kubernetes Ingress v1 API. Therefore Kubernetes 1.19 and later.
 The 1.12 release supports the Ingress v1beta1 API and continues to receive security fixes to support those unable to upgrade to Kubernetes 1.19 or later. The v1beta1 Ingress API was deprecated with Kubernetes release 1.19 and removed with the Kubernetes 1.22 release.
 
 ## Supported Kubernetes Versions
@@ -24,16 +24,16 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX
 
-All images include NGINX 1.21.4.
+All images include NGINX 1.21.5.
 
 {{% table %}}
 |Name | Base image | Third-party modules | DockerHub image | Architectures |
 | ---| ---| ---| --- | --- |
-|Alpine-based image | ``nginx:1.21.4-alpine``, which is based on ``alpine:3.14`` |  | ``nginx/nginx-ingress:2.0.3-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Alpine-based image with OpenTracing | ``nginx:1.21.4-alpine``, which is based on ``alpine:3.14`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.0.3-alpine-ot`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image | ``nginx:1.21.4``, which is based on ``debian:bullseye-slim`` |  | ``nginx/nginx-ingress:2.0.3`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image with OpenTracing | ``nginx:1.21.4``, which is based on ``debian:bullseye-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.0.3-ot`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Ubi-based image | ``redhat/ubi8-minimal`` |  | ``nginx/nginx-ingress:2.0.3-ubi`` | arm64, amd64 |
+|Alpine-based image | ``nginx:1.21.5-alpine``, which is based on ``alpine:3.15`` |  | ``nginx/nginx-ingress:2.1.0-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Alpine-based image with OpenTracing | ``nginx:1.21.5-alpine``, which is based on ``alpine:3.15`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.1.0-alpine-ot`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image | ``nginx:1.21.5``, which is based on ``debian:bullseye-slim`` |  | ``nginx/nginx-ingress:2.1.0`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image with OpenTracing | ``nginx:1.21.5``, which is based on ``debian:bullseye-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.1.0-ot`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Ubi-based image | ``redhat/ubi8-minimal`` |  | ``nginx/nginx-ingress:2.1.0-ubi`` | arm64, amd64 |
 {{% /table %}}
 
 ### Images with NGINX Plus
@@ -46,12 +46,16 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 {{% table %}}
 |Name | Base image | Third-party modules | F5 Container Registry Image |
 | ---| ---| --- | --- |
-|Alpine-based image | ``alpine:3.14`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.0.3-alpine` |
-|Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.0.3` |
-|Debian-based image with OpenTracing | ``debian:bullseye-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.0.3-ot` |
-|Debian-based image with App Protect | ``debian:buster-slim`` | NGINX Plus App Protect module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.0.3` |
-|Ubi-based image | ``redhat/ubi8-minimal`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.0.3-ubi` |
-|Ubi-based image with App Protect | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.0.3-ubi` |
+|Alpine-based image | ``alpine:3.14`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-alpine` |
+|Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0` |
+|Debian-based image with OpenTracing | ``debian:bullseye-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ot` |
+|Debian-based image with App Protect WAF|  ``debian:buster-slim`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0` |
+|Debian-based image with App Protect DoS | ``debian:buster-slim`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module |  |
+|Debian-based image with App Protect WAF and DoS | ``debian:buster-slim`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | |
+|Ubi-based image | ``redhat/ubi8-minimal`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ubi` |
+|Ubi-based image with App Protect WAF | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0-ubi` |
+|Ubi-based image with App Protect DoS | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | |
+|Ubi-based image with App Protect WAF and DoS | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module |  |
 {{% /table %}}
 
 We also provide NGINX Plus images through the AWS Marketplace. Please see [Using the AWS Marketplace Ingress Controller Image](/nginx-ingress-controller/installation/using-aws-marketplace-image.md) for details on how to set up the required IAM resources in your EKS cluster.

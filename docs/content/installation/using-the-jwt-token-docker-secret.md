@@ -1,6 +1,6 @@
 ---
-title: Using the NGINX IC Plus JWT token in a Docker Config Secret 
-description: 
+title: Using the NGINX IC Plus JWT token in a Docker Config Secret
+description:
 weight: 1600
 doctypes: [""]
 toc: true
@@ -9,7 +9,7 @@ toc: true
 This document explains how to use the NGINX Plus Ingress Controller image from the F5 Docker registry in your Kubernetes cluster by using your NGINX Ingress Controller subscription JWT token. **Please note that an NGINX Plus subscription certificate and key will not work with the F5 Docker registry.** You can also get the image using alternative methods:
 
 * You can use Docker to pull an Ingress controller image with NGINX Plus and push it to your private registry by following the instructions from [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
-* Please see [here](/nginx-ingress-controller/installation/building-ingress-controller-image) for information on how to build an Ingress Controller image using the source code from this repository and your NGINX Plus subscription certificate and key. 
+* Please see [here](/nginx-ingress-controller/installation/building-ingress-controller-image) for information on how to build an Ingress Controller image using the source code from this repository and your NGINX Plus subscription certificate and key.
 * Note that for NGINX Ingress Controller based on NGINX OSS, we provide the image through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/).
 
 ## Prerequisites
@@ -24,9 +24,9 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
 	```
     kubectl create secret docker-registry regcred --docker-server=private-registry.nginx.com --docker-username=<JWT Token> --docker-password=none [-n nginx-ingress]
     ```
-	
+
 2. Confirm the details of the created secret by running:
-	
+
 	```
     kubectl get secret regcred --output=yaml
     ```
@@ -41,10 +41,10 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "2.0.3-alpine",
-        "2.0.3-ot",
-        "2.0.3-ubi",
-        "2.0.3"
+        "2.1.0-alpine",
+        "2.1.0-ot",
+        "2.1.0-ubi",
+        "2.1.0"
     ]
     }
 
@@ -52,8 +52,8 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "2.0.3-ubi",
-        "2.0.3"
+        "2.1.0-ubi",
+        "2.1.0"
     ]
     }
    ```

@@ -12,7 +12,7 @@ The Policy resource allows you to configure features like access control and rat
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.0.3/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.0/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -304,7 +304,7 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 
 #### Prerequisites
 
-For the OIDC feature to work, it is necessary to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/), otherwise NGINX Plus will fail to reload. Additionally, it is necessary to configure a resolver, so that NGINX Plus can resolve the IDP authorization endpoint. For an example of the necessary configuration see the documentation [here](https://github.com/nginxinc/kubernetes-ingress/blob/v2.0.3/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+For the OIDC feature to work, it is necessary to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/), otherwise NGINX Plus will fail to reload. Additionally, it is necessary to configure a resolver, so that NGINX Plus can resolve the IDP authorization endpoint. For an example of the necessary configuration see the documentation [here](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.0/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 
@@ -374,15 +374,15 @@ waf:
 
 > Note: The feature is implemented using the NGINX Plus [NGINX App Protect Module](https://docs.nginx.com/nginx-app-protect/configuration/).
 
-{{% table %}} 
-|Field | Description | Type | Required | 
-| ---| ---| ---| --- | 
-|``enable`` | Enables NGINX App Protect. | ``bool`` | Yes | 
-|``apPolicy`` | The [App Protect policy](/nginx-ingress-controller/app-protect/configuration/#app-protect-policies) of the WAF. Accepts an optional namespace. | ``string`` | No | 
-|``securityLog.enable`` | Enables security log. | ``bool`` | No | 
-|``securityLog.apLogConf`` | The [App Protect log conf](/nginx-ingress-controller/app-protect/configuration/#app-protect-logs) resource. Accepts an optional namespace. | ``string`` | No | 
-|``securityLog.logDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost; fqdn>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No | 
-{{% /table %}} 
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``enable`` | Enables NGINX App Protect. | ``bool`` | Yes |
+|``apPolicy`` | The [App Protect policy](/nginx-ingress-controller/app-protect/configuration/#app-protect-policies) of the WAF. Accepts an optional namespace. | ``string`` | No |
+|``securityLog.enable`` | Enables security log. | ``bool`` | No |
+|``securityLog.apLogConf`` | The [App Protect log conf](/nginx-ingress-controller/app-protect/configuration/#app-protect-logs) resource. Accepts an optional namespace. | ``string`` | No |
+|``securityLog.logDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address &#124; localhost; fqdn>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
+{{% /table %}}
 
 #### WAF Merging Behavior
 
