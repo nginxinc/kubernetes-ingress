@@ -1,3 +1,4 @@
+
 prometheus:
   create: true
   scheme: http
@@ -6,14 +7,18 @@ controller:
   nginxplus: true
   # hostNetwork: true
   image:
-    repository: private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress
-    tag: 2.0.3-ubi
+    repository: private-registry.nginx.com/nginx-ic/nginx-plus-ingress
+    tag: 2.1.0-ubi
   serviceAccount:
-    # name: nginx-ingress
+    # the name of the pull secret to your repo, it should be in the same namespace
     imagePullSecretName: regcred
+  # run a deployment or daemonset (one pod per node)
+  kind: daemonset
   setAsDefaultIngress: true
   ingressClass: nginx
+  # enableCustomResources this must be true to use the transportServer resource
   enableCustomResources: true
+  # the below settings are shown for examples, edit as needed
   enablePreviewPolicies: true
   enableTLSPassthrough: true  
   appprotect:
@@ -22,11 +27,12 @@ controller:
   healthStatus: true
   latency-metrics: true
   nginxStatus:
-    ## Enable the NGINX stub_status, or the NGINX Plus API.
+    # Enable the NGINX stub_status, or the NGINX Plus API.
     enable: true
     port: 8080
-    ## Add IPv4 IP/CIDR blocks to the allow list for the NGINX Plus API. Separate multiple IP/CIDR by commas.
+    # Add IPv4 IP/CIDR blocks to the allow list for the NGINX Plus API. Separate multiple IP/CIDR by commas.
     allowCidrs: "0.0.0.0/0"
+  # tell NGINX to listen on redis' default port
   globalConfiguration:
     create: true
     spec:
@@ -36,7 +42,6 @@ controller:
           protocol: TCP
   service:
     extraLabels:
-      # needs to match ServiceMonitor matchLabels
       app: nginx-ingress-controller
     customPorts:
     - name: dashboard
@@ -59,4 +64,5 @@ controller:
       # for debugging
       error-log-level: info
       # custom logging:
+      log-format:  'remote_addr: "$remote_addr", remote_user: "$remote_user", time_local: "$time_local", request: "$request", status: $status, grpc_status: "$grpc_status", body_bytes_sent: $body_bytes_sent, http_referer: "$http_referer", http_user_agent: "$http_user_agent", http_x_forwarded_for: "$http_x_forwarded_for", resource_name: "$resource_name", resource_type: "$resource_type", resource_namespace: "$resource_namespace", service: "$service"'
       stream-log-format: 'remote_addr: $remote_addr, time: $time_local, protocol: $protocol, status: $status, bytes_sent: $bytes_sent, bytes_received: $bytes_received, session_time: $session_time, upstream_addr: $upstream_addr, upstream_bytes_sent: $upstream_bytes_sent, upstream_bytes_received: $upstream_bytes_received, upstream_connect_time: $upstream_connect_time, ssl_preread_server_name: $ssl_preread_server_name'
