@@ -283,7 +283,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: ${{ !startsWith(github.ref, 'refs/tags/') && 'build --snapshot' || 'release' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist ${{ !startsWith(github.ref, 'refs/tags/') && '--id kubernetes-ingress' || '' }}
+          args: ${{ !startsWith(github.ref, 'refs/tags/') && 'build --snapshot' || 'release' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist --id kubernetes-ingress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ needs.check.outputs.go_path }}
