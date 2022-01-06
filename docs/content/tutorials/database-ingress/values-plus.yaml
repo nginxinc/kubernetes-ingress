@@ -1,0 +1,62 @@
+prometheus:
+  create: true
+  scheme: http
+  port: 9113
+controller:
+  nginxplus: true
+  # hostNetwork: true
+  image:
+    repository: private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress
+    tag: 2.0.3-ubi
+  serviceAccount:
+    # name: nginx-ingress
+    imagePullSecretName: regcred
+  setAsDefaultIngress: true
+  ingressClass: nginx
+  enableCustomResources: true
+  enablePreviewPolicies: true
+  enableTLSPassthrough: true  
+  appprotect:
+    enable: false
+  enableSnippets: true
+  healthStatus: true
+  latency-metrics: true
+  nginxStatus:
+    ## Enable the NGINX stub_status, or the NGINX Plus API.
+    enable: true
+    port: 8080
+    ## Add IPv4 IP/CIDR blocks to the allow list for the NGINX Plus API. Separate multiple IP/CIDR by commas.
+    allowCidrs: "0.0.0.0/0"
+  globalConfiguration:
+    create: true
+    spec:
+      listeners:
+        - name: redis-tcp
+          port: 6379
+          protocol: TCP
+  service:
+    extraLabels:
+      # needs to match ServiceMonitor matchLabels
+      app: nginx-ingress-controller
+    customPorts:
+    - name: dashboard
+      targetPort: 8080
+      protocol: TCP
+      port: 8080
+    - name: prometheus
+      targetPort: 9113
+      protocol: TCP
+      port: 9113
+    - name: redis-tcp
+      targetPort: 6379
+      protocol: TCP
+      port: 6379
+  config:
+    entries:
+      # http2: "true"
+      # smarter LB method:
+      # lb-method: "least_time last_byte"
+      # for debugging
+      error-log-level: info
+      # custom logging:
+      stream-log-format: 'remote_addr: $remote_addr, time: $time_local, protocol: $protocol, status: $status, bytes_sent: $bytes_sent, bytes_received: $bytes_received, session_time: $session_time, upstream_addr: $upstream_addr, upstream_bytes_sent: $upstream_bytes_sent, upstream_bytes_received: $upstream_bytes_received, upstream_connect_time: $upstream_connect_time, ssl_preread_server_name: $ssl_preread_server_name'
