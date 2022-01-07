@@ -32,7 +32,7 @@ Before you can pull the image, make sure that the following software is installe
 
     > **Note**: The preceding example is operating-system specific and is for illustrative purposes only. You should consult your operating system documentation for creating an os-provided bundled certificate chain. For example, to configure this for Docker Desktop for Mac or Docker Desktop for Windows, see [this document](https://docs.docker.com/docker-for-mac/#add-client-certificates) or [this document](https://docs.docker.com/docker-for-windows/#how-do-i-add-client-certificates) for more details.
 
-2. Use docker to pull the required image from `private-registry.nginx.com`. Choose the image from the available images listed [here](nginx-ingress-controller/technical-specifications/#images-with-nginx-plus).
+2. Use docker to pull the required image from `private-registry.nginx.com`. Choose the image from the available images listed [here](/nginx-ingress-controller/technical-specifications/#images-with-nginx-plus).
    For NGINX Plus Ingress Controller, pull from `private-registry.nginx.com/nginx-ic/nginx-plus-ingress`, e.g.:
    ```
    $ docker pull private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.1.0

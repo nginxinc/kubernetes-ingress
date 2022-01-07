@@ -10,7 +10,7 @@ docs: "DOCS-581"
 
 > Note: This feature is only available in NGINX Plus with AppProtectDos.
 
-> Note: The feature is implemented using the NGINX Plus [NGINX App Protect Dos Module](https://docs.nginx.com/nginx-app-protect-dos/configuration/).
+> Note: The feature is implemented using the NGINX Plus [NGINX App Protect Dos Module](/nginx-app-protect-dos/deployment-guide/learn-about-deployment/).
 
 
 ## Dos Protected Resource Specification

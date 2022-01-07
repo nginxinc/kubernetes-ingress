@@ -30,14 +30,14 @@ You can define App Protect policies for your Ingress resources by creating an `A
  > **Note**: [The Advanced gRPC Protection for Unary Traffic](/nginx-app-protect/configuration/#advanced-grpc-protection-for-unary-traffic) only supports providing an `idl-file` inline. The fields `policy.idl-files[].link`, `policy.idl-files[].$ref`, and
  `policy.idl-files[].file` are not supported. The IDL file should be provided in field `policy.idl-files[].contents`. The value of this field can be base64 encoded. In this case the field `policy.idl-files[].isBase64` should be set to `true`.
 
-To add any [App Protect policy](/nginx-app-protect/policy/#policy) to an Ingress resource:
+To add any [App Protect policy](/nginx-app-protect/declarative-policy/policy/) to an Ingress resource:
 
 1. Create an `APPolicy` Custom resource manifest.
 2. Add the desired policy to the `spec` field in the `APPolicy` resource.
 
    > **Note**: The relationship between the Policy JSON and the resource spec is 1:1. If you're defining your resources in YAML, as we do in our examples, you'll need to represent the policy as YAML. The fields must match those in the source JSON exactly in name and level.
 
-  For example, say you want to use the [DataGuard policy](/nginx-app-protect/policy/#policy/data-guard) shown below:
+  For example, say you want to use the [DataGuard policy](/nginx-app-protect/declarative-policy/policy/#policy/data-guard) shown below:
 
   ```json
   {

@@ -59,7 +59,7 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 |Ubi-based image with App Protect WAF and DoS | ``registry.access.redhat.com/ubi7/ubi`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module |  |
 {{% /table %}}
 
-We also provide NGINX Plus images through the AWS Marketplace. Please see [Using the AWS Marketplace Ingress Controller Image](/nginx-ingress-controller/installation/using-aws-marketplace-image.md) for details on how to set up the required IAM resources in your EKS cluster.
+We also provide NGINX Plus images through the AWS Marketplace. Please see [Using the AWS Marketplace Ingress Controller Image](/nginx-ingress-controller/installation/using-aws-marketplace-image/) for details on how to set up the required IAM resources in your EKS cluster.
 
 {{% table %}}
 |Name | Base image | Third-party modules | AWS Marketplace Link |
