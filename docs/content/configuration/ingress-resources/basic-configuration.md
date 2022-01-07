@@ -1,10 +1,11 @@
 ---
 title: Basic Configuration
 
-description:
+description: "The example in this document shows a basic Ingress resource definition."
 weight: 1600
 doctypes: [""]
 toc: true
+docs: "DOCS-593"
 ---
 
 

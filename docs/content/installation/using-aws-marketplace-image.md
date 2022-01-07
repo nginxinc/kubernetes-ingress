@@ -1,9 +1,10 @@
 ---
 title: Using the AWS Marketplace Ingress Controller Image
-description: 
+description: "This document will walk you through the steps needed to use the NGINX Ingress Controller through the AWS Marketplace."
 weight: 2300
 doctypes: [""]
 toc: true
+docs: "DOCS-607"
 ---
 
 This document will walk you through the steps needed to use the NGINX Ingress Controller through the AWS Marketplace. There are additional steps that must be followed in order for the AWS Marketplace NGINX Ingress Controller to work properly.

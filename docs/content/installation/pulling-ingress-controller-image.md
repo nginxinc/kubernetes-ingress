@@ -1,9 +1,10 @@
 ---
 title: Pulling the Ingress Controller Image
-description:
+description: "This document explains how to pull an NGINX Plus Ingress Controller image from the F5 Docker registry."
 weight: 1700
 doctypes: [""]
 toc: true
+docs: "DOCS-605"
 ---
 
 This document explains how to pull an NGINX Plus Ingress Controller image from the F5 Docker registry using your NGINX Ingress Controller subscription certificate and key. **Please note that an NGINX Plus subscription certificate and key will not work with the F5 Docker registry.** You can also get the image using alternative methods:

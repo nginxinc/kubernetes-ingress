@@ -1,10 +1,11 @@
 ---
 title: Configuration Examples
 
-description:
+description: "NGINX Ingress Controller configuration examples."
 weight: 2000
 doctypes: [""]
 toc: true
+docs: "DOCS-584"
 ---
 
 

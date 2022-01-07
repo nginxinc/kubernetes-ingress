@@ -1,10 +1,11 @@
 ---
 title: ConfigMap Resource
 
-description:
+description: "The ConfigMap resources allows you to customize or fine tune NGINX behavior."
 weight: 1600
 doctypes: [""]
 toc: true
+docs: "DOCS-586"
 ---
 
 

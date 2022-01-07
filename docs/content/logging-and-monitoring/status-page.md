@@ -1,10 +1,11 @@
 ---
 title: Status Page
 
-description: 
+description: "This document explains how to get access to the stub status in NGINX and the dashboard in NGINX Plus."
 weight: 1900
 doctypes: [""]
 toc: true
+docs: "DOCS-615"
 ---
 
 

@@ -1,11 +1,12 @@
 ---
 title: Troubleshooting with NGINX App Protect
-description: 
+description: "This document describes how to troubleshoot problems with the Ingress Controller with the App Protect module enabled."
 weight: 2000
 doctypes: [""]
 aliases:
     - /app-protect/troubleshooting/
 toc: true
+docs: "DOCS-621"
 ---
 
 This document describes how to troubleshoot problems with the Ingress Controller with the [App Protect](/nginx-app-protect/) module enabled.

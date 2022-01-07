@@ -1,9 +1,10 @@
 ---
 title: Technical Specifications
-description:
+description: "NGINX Ingress Controller Technical Specifications."
 weight: 2000
 doctypes: ["concept"]
 toc: true
+docs: "DOCS-617"
 ---
 
 

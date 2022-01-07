@@ -1,10 +1,11 @@
 ---
 title: Logging
 
-description: 
+description: "This document gives an overview of logging provided by NGINX Ingress Controller."
 weight: 1800
 doctypes: [""]
 toc: true
+docs: "DOCS-613"
 ---
 
 

@@ -1,12 +1,13 @@
 ---
 title: Prometheus
 
-description: 
+description: "The Ingress Controller exposes a number of metrics in the Prometheus format."
 weight: 2000
 doctypes: [""]
 aliases:
     - /prometheus/
 toc: true
+docs: "DOCS-614"
 ---
 
 

@@ -1,10 +1,11 @@
 ---
 title: Policy Resource
 
-description:
+description: "The Policy resource allows you to configure features like access control and rate-limiting."
 weight: 1800
 doctypes: [""]
 toc: true
+docs: "DOCS-596"
 ---
 
 

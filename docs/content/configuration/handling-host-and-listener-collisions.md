@@ -1,9 +1,10 @@
 ---
 title: Handling Host and Listener Collisions
-description:
+description: "This document explains how the Ingress Controller handles host and listener collisions among resources."
 weight: 1700
 doctypes: [""]
 toc: true
+docs: "DOCS-590"
 ---
 
 

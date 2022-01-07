@@ -1,10 +1,11 @@
 ---
 title: Cross-namespace Configuration
 
-description:
+description: "This document explains how to spread Ingress configuration across different namespaces."
 weight: 2000
 doctypes: [""]
 toc: true
+docs: "DOCS-594"
 ---
 
 

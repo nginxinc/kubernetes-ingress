@@ -1,9 +1,10 @@
 ---
 title: TransportServer Resource
-description:
+description: "The TransportServer resource allows you to configure TCP, UDP, and TLS Passthrough load balancing."
 weight: 1900
 doctypes: [""]
 toc: true
+docs: "DOCS-598"
 ---
 
 

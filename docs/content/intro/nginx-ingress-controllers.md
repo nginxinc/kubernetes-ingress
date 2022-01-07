@@ -5,6 +5,7 @@ weight: 200
 draft: true
 doctypes: ["concept"]
 toc: true
+docs: "DOCS-610"
 aliases:
   - /nginx-ingress-controllers/
 ---

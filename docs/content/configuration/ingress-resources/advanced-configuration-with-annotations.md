@@ -1,9 +1,10 @@
 ---
 title: Advanced Configuration with Annotations
-description:
+description: "This document explains how to use advanced features using annotations."
 weight: 1700
 doctypes: [""]
 toc: true
+docs: "DOCS-591"
 ---
 
 

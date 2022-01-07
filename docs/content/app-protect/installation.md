@@ -1,9 +1,10 @@
 ---
 title: Installation with NGINX App Protect
-description:
+description: "This document provides an overview of the steps required to use NGINX App Protect with your NGINX Ingress Controller deployment."
 weight: 1800
 doctypes: [""]
 toc: true
+docs: "DOCS-579"
 ---
 
 > **Note**: The NGINX Kubernetes Ingress Controller integration with NGINX App Protect requires the use of NGINX Plus.

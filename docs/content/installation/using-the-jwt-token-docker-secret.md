@@ -1,9 +1,10 @@
 ---
 title: Using the NGINX IC Plus JWT token in a Docker Config Secret
-description:
+description: "This document explains how to use the NGINX Plus Ingress Controller image from the F5 Docker registry in your Kubernetes cluster by using your NGINX Ingress Controller subscription JWT token."
 weight: 1600
 doctypes: [""]
 toc: true
+docs: "DOCS-608"
 ---
 
 This document explains how to use the NGINX Plus Ingress Controller image from the F5 Docker registry in your Kubernetes cluster by using your NGINX Ingress Controller subscription JWT token. **Please note that an NGINX Plus subscription certificate and key will not work with the F5 Docker registry.** You can also get the image using alternative methods:

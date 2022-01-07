@@ -1,10 +1,11 @@
 ---
 title: Dos Protected Resource
 
-description: 
+description: "Dos Protected Resource Specification"
 weight: 1800
 doctypes: [""]
 toc: true
+docs: "DOCS-581"
 ---
 
 > Note: This feature is only available in NGINX Plus with AppProtectDos.

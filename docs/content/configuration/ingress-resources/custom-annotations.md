@@ -1,12 +1,13 @@
 ---
 title: Custom Annotations
 
-description:
+description: "Custom annotations enable you to quickly extend the Ingress resource to support many advanced features of NGINX, such as rate limiting, caching, etc."
 weight: 1900
 doctypes: [""]
 aliases:
     - /custom-annotations/
 toc: true
+docs: "DOCS-595"
 ---
 
 

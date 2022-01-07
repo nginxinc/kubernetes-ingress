@@ -1,9 +1,10 @@
 ---
 title: Releases
-description:
+description: "NGINX Ingress Controller Release Notes."
 weight: 1900
 doctypes: ["concept"]
 toc: true
+docs: "DOCS-616"
 ---
 
 ## NGINX Ingress Controller 2.1.0
