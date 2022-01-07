@@ -120,6 +120,9 @@ spec:
 {{- if .Values.controller.watchNamespace }}
           - -watch-namespace={{ .Values.controller.watchNamespace }}
 {{- end }}
+{{- if .Values.controller.watchNamespaceSelector }}
+          - -watch-namespace-selector={{ .Values.controller.watchNamespaceSelector }}
+{{- end }}
           - -health-status={{ .Values.controller.healthStatus }}
           - -health-status-uri={{ .Values.controller.healthStatusURI }}
           - -nginx-debug={{ .Values.controller.nginxDebug }}

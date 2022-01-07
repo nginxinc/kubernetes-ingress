@@ -151,6 +151,9 @@ controller:
   ## Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces.
   watchNamespace: ""
 
+  ## The controller will watch namespaces whose labels match the given selector. This flag only takes effective when watchNamespace is empty. By default the Ingress controller watches all namespaces.
+  watchNamespaceSelector: ""
+
   ## Enable the custom resources.
   enableCustomResources: true
 
