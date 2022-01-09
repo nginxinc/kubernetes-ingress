@@ -3,7 +3,7 @@ package collectors
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 
 	"github.com/golang/glog"
@@ -45,7 +45,7 @@ func getWorkerProcesses() (int, int, error) {
 	var workerProcesses int
 	var prevWorkerProcesses int
 
-	procFolders, err := ioutil.ReadDir("/proc")
+	procFolders, err := os.ReadDir("/proc")
 	if err != nil {
 		return 0, 0, fmt.Errorf("unable to read directory /proc : %w", err)
 	}
@@ -57,7 +57,7 @@ func getWorkerProcesses() (int, int, error) {
 		}
 
 		cmdlineFile := fmt.Sprintf("/proc/%v/cmdline", folder.Name())
-		content, err := ioutil.ReadFile(cmdlineFile)
+		content, err := os.ReadFile(cmdlineFile)
 		if err != nil {
 			return 0, 0, fmt.Errorf("unable to read file %v: %w", cmdlineFile, err)
 		}

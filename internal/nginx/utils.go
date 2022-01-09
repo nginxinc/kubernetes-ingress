@@ -3,7 +3,6 @@ package nginx
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -51,7 +50,7 @@ func createFileAndWrite(name string, b []byte) error {
 }
 
 func createFileAndWriteAtomically(filename string, tempPath string, mode os.FileMode, content []byte) {
-	file, err := ioutil.TempFile(tempPath, path.Base(filename))
+	file, err := os.CreateTemp(tempPath, path.Base(filename))
 	if err != nil {
 		glog.Fatalf("Couldn't create a temp file for the file %v: %v", filename, err)
 	}
