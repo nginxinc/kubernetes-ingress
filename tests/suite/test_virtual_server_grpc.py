@@ -134,6 +134,7 @@ class TestVirtualServerGrpc:
                 print(e.details())
                 pytest.fail("RPC error was not expected during call, exiting...")
 
+    @pytest.mark.flaky(max_runs=3)
     @pytest.mark.parametrize("backend_setup", [{"app_type": "grpc-vs"}], indirect=True)
     def test_grpc_error_intercept(self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller, 
                                   backend_setup, virtual_server_setup):
