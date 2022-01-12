@@ -135,11 +135,17 @@ RUN yum upgrade -y binutils
 
 ############################################# Base image for UBI #############################################
 FROM ubi-base-${UBI_VERSION} AS ubi-base
+ARG IC_VERSION
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 LABEL name="NGINX Ingress Controller" \
-	description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	maintainer="kubernetes@nginx.com" \
+	vendor="NGINX Inc" \
+	version="${IC_VERSION}" \
+	release="1" \
 	summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	io.k8s.description="The NGINX Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 RUN microdnf --nodocs install -y shadow-utils ca-certificates \
