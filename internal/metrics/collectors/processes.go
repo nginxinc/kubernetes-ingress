@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/prometheus/client_golang/prometheus"
@@ -56,7 +58,10 @@ func getWorkerProcesses() (int, int, error) {
 			continue
 		}
 
-		cmdlineFile := fmt.Sprintf("/proc/%v/cmdline", folder.Name())
+		cmdlineFile := filepath.Clean(fmt.Sprintf("/proc/%v/cmdline", folder.Name()))
+		if !strings.HasPrefix(cmdlineFile, "/proc/") {
+			panic(fmt.Errorf("unsafe input"))
+		}
 		content, err := os.ReadFile(cmdlineFile)
 		if err != nil {
 			return 0, 0, fmt.Errorf("unable to read file %v: %w", cmdlineFile, err)
