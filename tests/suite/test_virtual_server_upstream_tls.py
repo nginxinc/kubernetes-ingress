@@ -9,6 +9,7 @@ from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_virtu
 from suite.resources_utils import get_first_pod_name, wait_before_test, get_events
 
 
+@pytest.mark.flaky(max_runs=3)
 @pytest.mark.vs
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
