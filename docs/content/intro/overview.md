@@ -4,6 +4,7 @@ description: Overview of the NGINX Ingress Controller
 weight: 100
 doctypes: [""]
 toc: true
+docs: "DOCS-612"
 ---
 
 

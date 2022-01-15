@@ -1,11 +1,12 @@
 ---
 title: Installation with Manifests
-description: 
+description: "This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using Kubernetes manifests."
 weight: 1800
 doctypes: [""]
 aliases:
     - /installation/
 toc: true
+docs: "DOCS-603"
 ---
 
 
@@ -22,7 +23,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     $ cd kubernetes-ingress/deployments
-    $ git checkout v2.0.3
+    $ git checkout v2.1.0
     ```
 
 ## 1. Configure RBAC
@@ -41,7 +42,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     ```
     $ kubectl apply -f rbac/ap-rbac.yaml
     ```
-   
+
 4. (App Protect Dos only) Create the App Protect Dos role and role binding:
 
     ```

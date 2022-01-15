@@ -1,9 +1,10 @@
 ---
 title: How NGINX Ingress Controller Works
-description: 
+description: "This document explains how NGINX Ingress Controller works."
 weight: 300
 doctypes: [""]
 toc: true
+docs: "DOCS-609"
 ---
 
 

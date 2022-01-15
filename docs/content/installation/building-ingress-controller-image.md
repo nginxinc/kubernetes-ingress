@@ -1,9 +1,10 @@
 ---
 title: Building the Ingress Controller Image
-description:
+description: "This document explains how to build an Ingress Controller image using the source code."
 weight: 2200
 doctypes: [""]
 toc: true
+docs: "DOCS-601"
 ---
 
 This document explains how to build an Ingress Controller image using the source code. You can also use pre-built images: please see [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the NGINX Ingress Controller based on NGINX Plus from the F5 Docker registry; for NGINX Ingress Controller based on NGINX OSS, we provide the images through [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/) and [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress).
@@ -33,7 +34,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     $ cd kubernetes-ingress
-    $ git checkout v2.0.3
+    $ git checkout v2.1.0
     ```
 
 1. Build the image:
@@ -47,7 +48,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-ingress:2.0.3** is built. Note that the tag `2.0.3` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-ingress:2.1.0** is built. Note that the tag `2.1.0` comes from the `VERSION` variable, defined in the Makefile.
 
     * For **NGINX Plus**, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
       ```
@@ -60,7 +61,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-plus-ingress:2.0.3** is built. Note that the tag `2.0.3` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-plus-ingress:2.1.0** is built. Note that the tag `2.1.0` comes from the `VERSION` variable, defined in the Makefile.
 
       **Note**: In the event of a patch version of [NGINX Plus being released](/nginx/releases/), make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the `make` command.
 

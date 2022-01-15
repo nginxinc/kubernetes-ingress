@@ -1,9 +1,10 @@
 ---
 title: Security
-description: 
+description: "NGINX Ingress controller security recommendations."
 weight: 1500
 doctypes: [""]
 toc: true
+docs: "DOCS-597"
 ---
 
 

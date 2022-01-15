@@ -7,6 +7,7 @@ doctypes: [""]
 aliases:
     - /report-ingress-status/
 toc: true
+docs: "DOCS-589"
 ---
 
 

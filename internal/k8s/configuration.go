@@ -391,6 +391,8 @@ func NewConfiguration(
 		serviceReferenceChecker:      newServiceReferenceChecker(false),
 		endpointReferenceChecker:     newServiceReferenceChecker(true),
 		policyReferenceChecker:       newPolicyReferenceChecker(),
+		appPolicyReferenceChecker:    newAppProtectResourceReferenceChecker(configs.AppProtectPolicyAnnotation),
+		appLogConfReferenceChecker:   newAppProtectResourceReferenceChecker(configs.AppProtectLogConfAnnotation),
 		appDosProtectedChecker:       newDosResourceReferenceChecker(configs.AppProtectDosProtectedAnnotation),
 		isPlus:                       isPlus,
 		appProtectEnabled:            appProtectEnabled,

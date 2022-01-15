@@ -1,10 +1,11 @@
 ---
 title: GlobalConfiguration Resource
 
-description: 
+description: "The GlobalConfiguration resource allows you to define the global configuration parameters of the Ingress Controller."
 weight: 2000
 doctypes: [""]
 toc: true
+docs: "DOCS-588"
 ---
 
 
