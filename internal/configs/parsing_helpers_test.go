@@ -644,3 +644,46 @@ func TestParseUint64(t *testing.T) {
 		}
 	}
 }
+
+func TestParseFloat64(t *testing.T) {
+	testsWithValidInput := []struct {
+		input    string
+		expected float64
+	}{
+		{"0", 0},
+		{"1", 1},
+		{"123.456", 123.456},
+		{"-100", -100},
+		{"-12345.6789", -12345.6789},
+		{"123456789", 123456789},
+		{"1.7E+308", 1.7e+308},
+		{"-1.7E+308", -1.7e+308},
+	}
+
+	invalidInput := []string{
+		"",
+		"blablah",
+		"100.15.12",
+		"1,000",
+		"1.8E+308",
+		"-1.8E+308",
+	}
+
+	for _, test := range testsWithValidInput {
+		result, err := ParseFloat64(test.input)
+		if err != nil {
+			t.Errorf("TestParseFloat64(%q) returned an error for valid input", test.input)
+		}
+
+		if result != test.expected {
+			t.Errorf("TestParseFloat64(%q) returned %e expected %e", test.input, result, test.expected)
+		}
+	}
+
+	for _, input := range invalidInput {
+		_, err := ParseFloat64(input)
+		if err == nil {
+			t.Errorf("TestParseFloat64(%q) does not return an error for invalid input", input)
+		}
+	}
+}
