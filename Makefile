@@ -29,7 +29,8 @@ all: test lint verify-codegen update-crds debian-image
 
 .PHONY: lint
 lint: ## Run linter
-	docker run --pull always --rm -v $(shell pwd):/kubernetes-ingress -w /kubernetes-ingress -v $(shell go env GOCACHE):/cache/go -e GOCACHE=/cache/go -e GOLANGCI_LINT_CACHE=/cache/go -v $(shell go env GOPATH)/pkg:/go/pkg golangci/golangci-lint:latest golangci-lint --color always run -v
+	@git fetch
+	docker run --pull always --rm -v $(shell pwd):/kubernetes-ingress -w /kubernetes-ingress -v $(shell go env GOCACHE):/cache/go -e GOCACHE=/cache/go -e GOLANGCI_LINT_CACHE=/cache/go -v $(shell go env GOPATH)/pkg:/go/pkg golangci/golangci-lint:latest git diff -p origin/master > /tmp/diff.patch && golangci-lint --color always run -v --new-from-patch=/tmp/diff.patch
 
 .PHONY: test
 test: ## Run tests
