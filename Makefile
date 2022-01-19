@@ -98,15 +98,15 @@ debian-image-plus: build ## Create Docker image for Ingress Controller (Debian w
 
 .PHONY: debian-image-nap-plus
 debian-image-nap-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect WAF)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg DEBIAN_VERSION=buster-slim
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg DEBIAN_VERSION=buster-slim --build-arg NAP_MODULES=waf
 
 .PHONY: debian-image-dos-plus
-debian-image-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect Dos)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-dos --build-arg DEBIAN_VERSION=buster-slim
+debian-image-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect DoS)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg DEBIAN_VERSION=buster-slim --build-arg NAP_MODULES=dos
 
 .PHONY: debian-image-nap-dos-plus
-debian-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus and App Protect WAF and Dos)
-	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap-dos --build-arg DEBIAN_VERSION=buster-slim
+debian-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (Debian with NGINX Plus, App Protect WAF and DoS)
+	$(DOCKER_CMD) $(PLUS_ARGS) --build-arg BUILD_OS=debian-plus-nap --build-arg DEBIAN_VERSION=buster-slim --build-arg NAP_MODULES=waf,dos
 
 .PHONY: openshift-image
 openshift-image: build ## Create Docker image for Ingress Controller (UBI)
@@ -118,19 +118,19 @@ openshift-image-plus: build ## Create Docker image for Ingress Controller (UBI w
 
 .PHONY: openshift-image-nap-plus
 openshift-image-nap-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect WAF)
-	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg UBI_VERSION=7
+	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=waf
+
+.PHONY: openshift-image-dos-plus
+openshift-image-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus and App Protect DoS)
+	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=dos
+
+.PHONY: openshift-image-nap-dos-plus
+openshift-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus, App Protect WAF and DoS)
+	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=waf,dos
 
 .PHONY: alpine-image-opentracing
 alpine-image-opentracing: build ## Create Docker image for Ingress Controller (Alpine with OpenTracing)
 	$(DOCKER_CMD) --build-arg BUILD_OS=alpine-opentracing
-
-.PHONY: openshift-image-dos-plus
-openshift-image-dos-plus: build ## Create Docker image for Ingress Controller (ubi with plus and dos)
-	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-dos --build-arg UBI_VERSION=7
-
-.PHONY: openshift-image-nap-dos-plus
-openshift-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (ubi with plus, nap and dos)
-	$(DOCKER_CMD) $(PLUS_ARGS) $(NAP_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap-dos --build-arg UBI_VERSION=7
 
 .PHONY: debian-image-opentracing
 debian-image-opentracing: build ## Create Docker image for Ingress Controller (Debian with OpenTracing)
