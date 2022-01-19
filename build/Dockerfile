@@ -212,7 +212,7 @@ ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
 ARG TARGETPLATFORM
-ARG NAP_MODULES
+ARG NAP_MODULES=none
 
 # copy oidc files on plus build
 RUN --mount=target=/tmp [ -n "${BUILD_OS##*plus*}" ] && exit 0; mkdir -p etc/nginx/oidc/ && cp -a /tmp/internal/configs/oidc/* /etc/nginx/oidc/
