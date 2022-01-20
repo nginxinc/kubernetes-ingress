@@ -59,7 +59,8 @@ Note: if you’d like to implement a new feature, please consider creating a fea
 ### Git Style Guide
 
 * Keep a clean, concise and meaningful git commit history on your branch, rebasing locally and squashing before submitting a PR
-* Follow the guidelines of writing a good commit message as described here https://chris.beams.io/posts/git-commit/ and summarised in the next few points
+* Follow these [guidelines of writing a good commit message](https://chris.beams.io/posts/git-commit/), summarised in the next few points:
+
     * In the subject line, use the present tense ("Add feature" not "Added feature")
     * In the subject line, use the imperative mood ("Move cursor to..." not "Moves cursor to...")
     * Limit the subject line to 72 characters or less

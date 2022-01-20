@@ -1,3 +1,7 @@
+## NOTE: These commands require access to the f5-hugo theme, 
+## which is a private module developed by F5, Inc. 
+## Non-F5/NGINX contributors will be able to build docs for 
+## review after opening a pull request in GitHub.
 LOCAL_ROOT = $(git rev-parse --show-toplevel)
 SHELL = /bin/bash
 THEME_MODULE = gitlab.com/f5/nginx/controller/poc/f5-hugo
