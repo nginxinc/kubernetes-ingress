@@ -9,8 +9,8 @@ FROM nginx:1.21.5 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temporary fix for CVE-2021-43618
-	&& apt-get install --no-install-recommends --no-install-suggests -y libgmp10 \
+	# temporary fix for CVE-2021-3995 and CVE-2021-3996
+	&& apt-get install -y bsdutils mount util-linux libuuid1 libmount1 libblkid1 libsmartcols1 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& echo $NGINX_VERSION > nginx_version
 
@@ -19,9 +19,7 @@ RUN apt-get update \
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
 FROM docker.io/library/nginx:1.21.5-alpine AS alpine
 
-RUN apk add --no-cache libcap \
-	# temporary fix for CVE-2021-42374
-	&& apk upgrade --no-cache busybox
+RUN apk add --no-cache libcap
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
@@ -32,8 +30,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	# temporary fix for CVE-2021-42374
-	&& apk upgrade --no-cache busybox \
 	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r}
 
 
@@ -48,8 +44,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temporary fix for CVE-2021-43618
-	&& apt-get install --no-install-recommends --no-install-suggests -y libgmp10 \
+	# temporary fix for CVE-2021-3995 and CVE-2021-3996
+	&& apt-get install -y bsdutils mount util-linux libuuid1 libmount1 libblkid1 libsmartcols1 \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
