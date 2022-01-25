@@ -62,7 +62,9 @@ runs:
         tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }}'
         load: true
         pull: true
-        build-args: BUILD_OS=${{ inputs.image }}
+        build-args: |
+          BUILD_OS=${{ inputs.image }}
+          IC_VERSION=CI
         secrets: |
           "nginx-repo.crt=${{ inputs.nginx-crt }}"
           "nginx-repo.key=${{ inputs.nginx-key }}"
