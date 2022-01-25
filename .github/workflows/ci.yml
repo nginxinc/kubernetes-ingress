@@ -43,6 +43,9 @@ concurrency:
 
 jobs:
 
+  worflow-test:
+    uses: nginxinc/kic-workflows/.github/workflows/ci-plus.yml@main
+
   checks:
     name: Checks and variables
     runs-on: ubuntu-20.04
