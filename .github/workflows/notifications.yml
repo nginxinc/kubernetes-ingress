@@ -24,7 +24,7 @@ jobs:
         with:
           script: |
             const message = context.payload.workflow_run.head_commit.message
-            message_sanitized = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            message_sanitized = message.split('\n')[0]
 
             const check_data = (await github.rest.checks.listForRef({
               owner: context.payload.repository.owner.login,
