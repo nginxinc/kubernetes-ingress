@@ -168,7 +168,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 ############################################# Base images containing libs for Opentracing #############################################
 FROM opentracing/nginx-opentracing:nginx-1.21.6 as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.21.6 as alpine-opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.21.6-alpine as alpine-opentracing-lib
 
 
 ############################################# Build image for Alpine with Opentracing #############################################
