@@ -345,7 +345,7 @@ jobs:
             nginx/nginx-ingress
             ghcr.io/nginxinc/kubernetes-ingress
             public.ecr.aws/nginx/nginx-ingress
-          flavor: suffix=${{ matrix.image == 'ubi' && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
+          flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
           tags: |
             type=edge
             type=ref,event=pr
