@@ -491,7 +491,7 @@ jobs:
           pull: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
-            IC_VERSION=${{ github.event_name != 'pull_request' && steps.var.outputs.ic_version || 'CI' }}
+            IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.var.outputs.ic_version || 'CI' }}
           secrets: |
             "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.NGINX_KEY }}"
