@@ -386,7 +386,7 @@ jobs:
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.1
+        uses: aquasecurity/trivy-action@0.2.2
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -511,7 +511,7 @@ jobs:
             "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.NGINX_KEY }}"
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.1
+        uses: aquasecurity/trivy-action@0.2.2
         continue-on-error: true
         with:
           image-ref: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}
