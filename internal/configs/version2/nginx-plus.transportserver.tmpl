@@ -53,7 +53,7 @@ server {
     proxy_pass {{ $s.ProxyPass }};
 
     {{ if $s.HealthCheck }}
-    health_check interval={{ $s.HealthCheck.Interval }} port={{ $s.HealthCheck.Port }} 
+    health_check interval={{ $s.HealthCheck.Interval }} {{ if $s.HealthCheck.Port }} port={{ $s.HealthCheck.Port }}{{ end }}
         passes={{ $s.HealthCheck.Passes }} jitter={{ $s.HealthCheck.Jitter }} fails={{ $s.HealthCheck.Fails }}{{ if $s.UDP }} udp{{ end }}{{ if $s.HealthCheck.Match }} match={{ $s.HealthCheck.Match }}{{ end }};
     health_check_timeout {{ $s.HealthCheck.Timeout }};
     {{ end }}
