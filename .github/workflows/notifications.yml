@@ -17,20 +17,26 @@ jobs:
     runs-on: ubuntu-20.04
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     steps:
-      - name: Output Variables
+      - name: Data
+        uses: actions/github-script@v5
         continue-on-error: true
-        id: vars
-        run: |
-          suite_id=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }} | jq '.check_suite_id')
-          event=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }} | jq -r '.event')
-          name=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/check-suites/$suite_id/check-runs | jq -r '[.check_runs[] | select(.conclusion=="failure")][0].name')
-          url=$(curl -sS -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/${{ github.repository }}/check-suites/$suite_id/check-runs | jq -r '[.check_runs[] | select(.conclusion=="failure")][0].html_url')
-          message_sanitized=$(awk '{gsub("&","&amp;");gsub("<","\\&lt;");gsub(">","\\&gt;");print}' <<<'${{ github.event.workflow_run.head_commit.message }}')
+        id: data
+        with:
+          script: |
+            const message = context.payload.workflow_run.head_commit.message
+            message_sanitized = message.split('\n')[0]
 
-          echo "::set-output name=name::$name"
-          echo "::set-output name=url::$url"
-          echo "::set-output name=event::$event"
-          echo "::set-output name=message::$message_sanitized"
+            const check_data = (await github.rest.checks.listForRef({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              ref: context.payload.workflow_run.head_commit.id,
+            })).data.check_runs.filter(check_run => check_run.conclusion === 'failure')[0]
+
+            return {
+              job_name: check_data.name,
+              job_url: check_data.html_url,
+              commit_message: message_sanitized,
+            }
 
       - name: Send Notification
         uses: 8398a7/action-slack@v3
@@ -42,16 +48,16 @@ jobs:
               icon_emoji: ':github:',
               mention: 'channel',
               attachments: [{
-                title: '[${{ github.event.repository.full_name }}] ${{ github.event.workflow.name }} pipeline has failed (${{ steps.vars.outputs.event }})',
+                title: '[${{ github.event.repository.full_name }}] ${{ github.event.workflow.name }} pipeline has failed (${{ github.event.workflow_run.event }})',
                 color: 'danger',
                 fields: [{
                   title: 'Commit',
-                  value: `<https://github.com/${{ github.repository }}/commit/${{ github.event.workflow_run.head_commit.id }}|${{ steps.vars.outputs.message }}>`,
+                  value: `<https://github.com/${{ github.repository }}/commit/${{ github.event.workflow_run.head_commit.id }}|${{ fromJSON(steps.data.outputs.result).commit_message }}>`,
                   short: true
                 },
                 {
                   title: 'Failed Job',
-                  value: `<${{ steps.vars.outputs.url }}|${{ steps.vars.outputs.name }}>`,
+                  value: `<${{ fromJSON(steps.data.outputs.result).job_url }}|${{ fromJSON(steps.data.outputs.result).job_name }}>`,
                   short: true
                 },
                 {

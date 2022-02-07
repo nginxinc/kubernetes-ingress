@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -195,7 +196,7 @@ func main() {
 		glog.Fatalf("Error setting logtostderr to true: %v", err)
 	}
 
-	versionInfo := fmt.Sprintf("Version=%v GitCommit=%v Date=%v", version, commit, date)
+	versionInfo := fmt.Sprintf("Version=%v GitCommit=%v Date=%v Arch=%v/%v", version, commit, date, runtime.GOOS, runtime.GOARCH)
 	if *versionFlag {
 		fmt.Println(versionInfo)
 		os.Exit(0)
@@ -311,6 +312,7 @@ func main() {
 	if err != nil {
 		glog.Fatalf("error retrieving k8s version: %v", err)
 	}
+	glog.Infof("Kubernetes version: %v", k8sVersion)
 
 	minK8sVersion, err := util_version.ParseGeneric("1.19.0")
 	if err != nil {

@@ -28,9 +28,6 @@
 - color: c5def5
   description: Gathering information
   name: in_review
-- color: fbca04
-  description: Don't auto-update PR
-  name: no-autoupdate
 - color: db754c
   description: An issue that proposes a feature request
   name: proposal
