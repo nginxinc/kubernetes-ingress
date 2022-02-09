@@ -2,7 +2,7 @@ package nginx
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,7 +14,7 @@ type Transport struct{}
 func (c Transport) RoundTrip(_ *http.Request) (*http.Response, error) {
 	return &http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewBufferString("42")),
+		Body:       io.NopCloser(bytes.NewBufferString("42")),
 		Header:     make(http.Header),
 	}, nil
 }

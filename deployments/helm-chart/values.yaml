@@ -133,6 +133,12 @@ controller:
   #   image: busybox:1.34
   #   command: ['sh', '-c', 'echo this is initial setup!']
 
+  ## Extra containers for the Ingress controller pods.
+  extraContainers: []
+  # - name: container
+  #   image: busybox:1.34
+  #   command: ['sh', '-c', 'echo this is a sidecar!']
+
   ## The number of replicas of the Ingress controller deployment.
   replicaCount: 1
 

@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
@@ -75,7 +74,7 @@ func runServer(port string, registry prometheus.Gatherer, prometheusSecret *api_
 }
 
 func writeTempFile(data []byte, name string) (*os.File, error) {
-	f, err := ioutil.TempFile("", name)
+	f, err := os.CreateTemp("", name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp file: %w", err)
 	}
