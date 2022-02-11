@@ -18,7 +18,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     steps:
       - name: Data
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         continue-on-error: true
         id: data
         with:
