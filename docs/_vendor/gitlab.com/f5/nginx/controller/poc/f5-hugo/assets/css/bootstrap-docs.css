@@ -1392,6 +1392,7 @@ b
   color: #bbb
 }
 
+/* 
 .chroma .language-bash::before,.chroma .language-sh::before {
   color: #009;
   content: "$ ";
@@ -1400,6 +1401,7 @@ b
   -ms-user-select: none;
   user-select: none
 }
+*/
 
 .chroma .language-powershell::before {
   color: #009;

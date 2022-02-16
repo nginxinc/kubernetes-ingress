@@ -11,6 +11,8 @@ toc: true
 tags: [ "api" ]
 menu: api
 layout: api
+# Create a new entry in the Jira DOCS Catalog and add the ticket ID (DOCS-<number>) below
+docs: "DOCS-000"
 # Taxonomies
 # These are pre-populated with all available terms for your convenience.
 # Remove all terms that do not apply.
