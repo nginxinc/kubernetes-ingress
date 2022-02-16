@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=r25
+ARG NGINX_PLUS_VERSION=r26
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_VERSION=bullseye-slim
 
