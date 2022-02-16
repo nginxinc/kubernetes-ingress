@@ -284,7 +284,7 @@ class TestTransportServerUdpLoadBalance:
 
         match = f"match_ts_{transport_server_setup.namespace}_transport-server_udp-app"
 
-        assert "health_check interval=5s port=3334" in result_conf
+        assert "health_check interval=5s" in result_conf
         assert f"passes=1 jitter=0s fails=1 udp match={match}" in result_conf
         assert "health_check_timeout 3s;"
         assert 'send "health"' in result_conf
@@ -350,7 +350,7 @@ class TestTransportServerUdpLoadBalance:
 
         match = f"match_ts_{transport_server_setup.namespace}_transport-server_udp-app"
 
-        assert "health_check interval=5s port=3334" in result_conf
+        assert "health_check interval=5s" in result_conf
         assert f"passes=1 jitter=0s fails=1 udp match={match}" in result_conf
         assert "health_check_timeout 3s;"
         assert 'send "health"' in result_conf
