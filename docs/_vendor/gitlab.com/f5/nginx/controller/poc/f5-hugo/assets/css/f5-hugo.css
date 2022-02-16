@@ -631,8 +631,8 @@ redoc {
     opacity: 1;
 }
 
-div>pre>code {
-   white-space: pre-wrap;
+div pre>code {
+   white-space: pre;
 }
 
 pre::-webkit-scrollbar, pre code::-webkit-scrollbar {
