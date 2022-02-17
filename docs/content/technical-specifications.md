@@ -50,12 +50,12 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 |Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0` | arm64, amd64 |
 |Debian-based image with OpenTracing | ``debian:bullseye-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ot` | arm64, amd64 |
 |Debian-based image with App Protect WAF|  ``debian:buster-slim`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0` | amd64 |
-|Debian-based image with App Protect DoS | ``debian:buster-slim`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | | |
-|Debian-based image with App Protect WAF and DoS | ``debian:buster-slim`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | | |
+|Debian-based image with App Protect DoS | ``debian:buster-slim`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | | amd64 |
+|Debian-based image with App Protect WAF and DoS | ``debian:buster-slim`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | | amd64 |
 |Ubi-based image | ``redhat/ubi8`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ubi` | arm64, amd64, s390x |
 |Ubi-based image with App Protect WAF | ``redhat/ubi8`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0-ubi` | amd64 |
-|Ubi-based image with App Protect DoS | ``redhat/ubi8`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | | |
-|Ubi-based image with App Protect WAF and DoS | ``redhat/ubi8`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | | |
+|Ubi-based image with App Protect DoS | ``redhat/ubi8`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | | amd64 |
+|Ubi-based image with App Protect WAF and DoS | ``redhat/ubi8`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | | amd64 |
 {{% /table %}}
 
 We also provide NGINX Plus images through the AWS Marketplace. Please see [Using the AWS Marketplace Ingress Controller Image](/nginx-ingress-controller/installation/using-aws-marketplace-image/) for details on how to set up the required IAM resources in your EKS cluster.
