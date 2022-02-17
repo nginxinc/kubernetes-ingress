@@ -46,7 +46,7 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 {{% table %}}
 |Name | Base image | Third-party modules | F5 Container Registry Image | Architectures |
 | ---| ---| --- | --- | --- |
-|Alpine-based image | ``alpine:3.14`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-alpine` | arm64, amd64 |
+|Alpine-based image | ``alpine:3.15`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-alpine` | arm64, amd64 |
 |Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0` | arm64, amd64 |
 |Debian-based image with OpenTracing | ``debian:bullseye-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ot` | arm64, amd64 |
 |Debian-based image with App Protect WAF|  ``debian:buster-slim`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0` | amd64 |
