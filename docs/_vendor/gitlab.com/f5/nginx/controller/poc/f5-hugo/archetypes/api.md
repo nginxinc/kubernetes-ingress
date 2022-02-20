@@ -10,6 +10,8 @@ categories: []
 doctypes: ["reference"]
 menu: "api"
 version: ["<version>"]
+# Create a new entry in the Jira DOCS Catalog and add the ticket ID (DOCS-<number>) below
+docs: "DOCS-000"
 ---
 
 {{< openapi spec="/specs/release-<version>/openapi.yaml" >}}

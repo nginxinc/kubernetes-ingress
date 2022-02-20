@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=r25
+ARG NGINX_PLUS_VERSION=r26
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_VERSION=bullseye-slim
 
@@ -9,8 +9,8 @@ FROM nginx:1.21.6 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temporary fix for CVE-2021-3995 and CVE-2021-3996
-	&& apt-get install -y bsdutils mount util-linux libuuid1 libmount1 libblkid1 libsmartcols1 \
+	# temporary fix for CVE-2022-22822
+	&& apt-get install -y libexpat1 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& echo $NGINX_VERSION > nginx_version
 
@@ -23,7 +23,7 @@ RUN apk add --no-cache libcap
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.14 as alpine-plus
+FROM alpine:3.15 as alpine-plus
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
@@ -44,8 +44,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temporary fix for CVE-2021-3995 and CVE-2021-3996
-	&& apt-get install -y bsdutils mount util-linux libuuid1 libmount1 libblkid1 libsmartcols1 \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
