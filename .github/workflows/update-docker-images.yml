@@ -141,13 +141,17 @@ jobs:
             marker: vsr
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
+          - image: alpine-opentracing
+            marker: policies
+            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
+            needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
           - image: opentracing
             marker: vs
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
           - image: ubi
             marker: ts
-            platforms: linux/arm64,linux/amd64
+            platforms: linux/arm64,linux/amd64,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
     steps:
       - name: Checkout Repository
@@ -217,7 +221,7 @@ jobs:
             public.ecr.aws/nginx/nginx-ingress
           flavor: |
             latest=true
-            suffix=${{ matrix.image != 'debian' && '-' || '' }}${{ matrix.image != 'debian' && matrix.image != 'opentracing' && matrix.image || '' }}${{ matrix.image == 'opentracing' && 'ot' || '' }},onlatest=true
+            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
           tags: |
             type=raw,value=${{ needs.variables.outputs.kic-tag }}
             type=raw,value=${{ steps.tag.outputs.short }}
@@ -246,10 +250,10 @@ jobs:
             IC_VERSION=v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.1
+        uses: aquasecurity/trivy-action@0.2.2
         continue-on-error: true
         with:
-          image-ref: nginx/nginx-ingress:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+          image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
           format: 'template'
           template: '@/contrib/sarif.tpl'
           output: 'trivy-results-${{ matrix.image }}.sarif'
@@ -287,7 +291,7 @@ jobs:
                 color: "good",
                 fields: [{
                   title: "Docker Image",
-                  value: "<https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=${{ needs.variables.outputs.kic-tag }}|nginx/nginx-ingress:${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}>",
+                  value: `<https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=${{ needs.variables.outputs.kic-tag }}|nginx/nginx-ingress:${{ steps.meta.outputs.version }}>`,
                   short: true
                 },
                 {
@@ -297,7 +301,7 @@ jobs:
                 },
                 {
                   title: "Commit Message",
-                  value: "${{ steps.slack.outputs.message }}",
+                  value: `${{ steps.slack.outputs.message }}`,
                   short: true
                 },
                 {

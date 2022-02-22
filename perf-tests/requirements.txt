@@ -1,11 +1,11 @@
 PyYAML==6.0
 requests==2.27.1
-kubernetes==21.7.0
-pytest==4.4.1
+kubernetes==22.6.0
+pytest==7.0.1
 ipaddress==1.0.23 # >= 1.0.17
 cffi==1.15.0
 certifi==2021.10.8
 urllib3==1.26.8
 pytest-html==3.1.1
 pytest-repeat==0.9.1
-locust==2.7.0
+locust==2.8.2

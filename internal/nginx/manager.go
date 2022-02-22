@@ -2,7 +2,6 @@ package nginx
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -265,7 +264,7 @@ func (lm *LocalManager) DeleteAppProtectResourceFile(name string) {
 
 // ClearAppProtectFolder clears contents of a config folder
 func (lm *LocalManager) ClearAppProtectFolder(name string) {
-	files, err := ioutil.ReadDir(name)
+	files, err := os.ReadDir(name)
 	if err != nil {
 		glog.Fatalf("Failed to read the App Protect folder %s: %v", name, err)
 	}

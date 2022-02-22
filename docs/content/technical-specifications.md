@@ -39,24 +39,23 @@ All images include NGINX 1.21.5.
 
 ### Images with NGINX Plus
 
-NGINX Plus images include NGINX Plus R25.
-The supported architecture is x86-64.
+NGINX Plus images include NGINX Plus R26.
 
 NGINX Plus images are available through the F5 Container registry `private-registry.nginx.com` - see [Using the NGINX IC Plus JWT token in a Docker Config Secret](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret) and [Pulling the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
 
 {{% table %}}
-|Name | Base image | Third-party modules | F5 Container Registry Image |
-| ---| ---| --- | --- |
-|Alpine-based image | ``alpine:3.14`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-alpine` |
-|Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0` |
-|Debian-based image with OpenTracing | ``debian:bullseye-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ot` |
-|Debian-based image with App Protect WAF|  ``debian:buster-slim`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0` |
-|Debian-based image with App Protect DoS | ``debian:buster-slim`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module |  |
-|Debian-based image with App Protect WAF and DoS | ``debian:buster-slim`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | |
-|Ubi-based image | ``redhat/ubi8`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ubi` |
-|Ubi-based image with App Protect WAF | ``redhat/ubi8`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0-ubi` |
-|Ubi-based image with App Protect DoS | ``redhat/ubi8`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | |
-|Ubi-based image with App Protect WAF and DoS | ``redhat/ubi8`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module |  |
+|Name | Base image | Third-party modules | F5 Container Registry Image | Architectures |
+| ---| ---| --- | --- | --- |
+|Alpine-based image | ``alpine:3.15`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-alpine` | arm64, amd64 |
+|Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0` | arm64, amd64 |
+|Debian-based image with OpenTracing | ``debian:bullseye-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ot` | arm64, amd64 |
+|Debian-based image with App Protect WAF|  ``debian:buster-slim`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0` | amd64 |
+|Debian-based image with App Protect DoS | ``debian:buster-slim`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | | amd64 |
+|Debian-based image with App Protect WAF and DoS | ``debian:buster-slim`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | | amd64 |
+|Ubi-based image | ``redhat/ubi8`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ubi` | arm64, amd64, s390x |
+|Ubi-based image with App Protect WAF | ``redhat/ubi8`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0-ubi` | amd64 |
+|Ubi-based image with App Protect DoS | ``redhat/ubi8`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | | amd64 |
+|Ubi-based image with App Protect WAF and DoS | ``redhat/ubi8`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | | amd64 |
 {{% /table %}}
 
 We also provide NGINX Plus images through the AWS Marketplace. Please see [Using the AWS Marketplace Ingress Controller Image](/nginx-ingress-controller/installation/using-aws-marketplace-image/) for details on how to set up the required IAM resources in your EKS cluster.

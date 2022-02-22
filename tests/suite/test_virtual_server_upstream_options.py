@@ -302,7 +302,7 @@ class TestVirtualServerUpstreamOptionValidation:
 class TestOptionsSpecificForPlus:
     @pytest.mark.parametrize('options, expected_strings', [
         ({"lb-method": "least_conn",
-          "healthCheck": {"enable": True, "port": 8080, "mandatory": True, "persistent": True},
+          "healthCheck": {"enable": True, "mandatory": True, "persistent": True},
           "slow-start": "3h",
           "queue": {"size": 100},
           "ntlm": True,
@@ -311,7 +311,7 @@ class TestOptionsSpecificForPlus:
                             "path": "/some-valid/path",
                             "expires": "max",
                             "domain": "virtual-server-route.example.com", "httpOnly": True, "secure": True}},
-         ["health_check uri=/ port=8080 interval=5s jitter=0s", "fails=1 passes=1", "mandatory persistent", ";",
+         ["health_check uri=/ interval=5s jitter=0s", "fails=1 passes=1", "mandatory persistent", ";",
           "slow_start=3h", "queue 100 timeout=60s;", "ntlm;",
           "sticky cookie TestCookie expires=max domain=virtual-server-route.example.com httponly secure path=/some-valid/path;"]),
         ({"lb-method": "least_conn",

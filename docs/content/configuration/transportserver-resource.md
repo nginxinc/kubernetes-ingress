@@ -168,7 +168,7 @@ Note: This feature is supported only in NGINX Plus.
 |``jitter`` | The time within which each health check will be randomly delayed. By default, there is no delay. | ``string`` | No |
 |``fails`` | The number of consecutive failed health checks of a particular upstream server after which this server will be considered unhealthy. The default is ``1``. | ``integer`` | No |
 |``passes`` | The number of consecutive passed health checks of a particular upstream server after which the server will be considered healthy. The default is ``1``. | ``integer`` | No |
-|``port`` | The port used for health check requests. By default, the port of the upstream is used. Note: in contrast with the port of the upstream, this port is not a service port, but a port of a pod. | ``integer`` | No |
+|``port`` | The port used for health check requests. By default, the [server port is used](https://nginx.org/en/docs/stream/ngx_stream_upstream_hc_module.html#health_check_port). Note: in contrast with the port of the upstream, this port is not a service port, but a port of a pod. | ``integer`` | No |
 |``match`` | Controls the data to send and the response to expect for the healthcheck. | [match](#upstreamhealthcheckmatch) | No |
 {{% /table %}}
 
