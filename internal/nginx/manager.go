@@ -34,7 +34,7 @@ const (
 	appProtectAgentStartCmd  = "/opt/app_protect/bin/bd_agent"
 
 	// appPluginParams is the configuration of App-Protect plugin
-	appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 307200000 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
+	appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 471859200 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
 
 	// appProtectDebugLogConfigFileContent holds the content of the file to be written when nginx debug is enabled. It will enable NGINX App Protect debug logs
 	appProtectDebugLogConfigFileContent = "MODULE = IO_PLUGIN;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\nMODULE = ECARD_POLICY;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\n"
