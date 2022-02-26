@@ -244,7 +244,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ matrix.platforms }}
           push: true
-          pull: true
+          no-cache: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=v${{ needs.variables.outputs.kic-tag }}
