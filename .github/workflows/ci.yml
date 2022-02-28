@@ -381,7 +381,7 @@ jobs:
           platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
-          pull: true
+          no-cache: ${{ github.event_name != 'pull_request' }}
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
@@ -488,7 +488,7 @@ jobs:
           platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
-          pull: true
+          no-cache: ${{ github.event_name != 'pull_request' }}
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.var.outputs.ic_version || 'CI' }}
