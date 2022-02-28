@@ -24,7 +24,7 @@ This step is required if you're installing the chart using its sources. Addition
 2. Change your working directory to /deployments/helm-chart-dos-arbitrator:
     ```console
     $ cd kubernetes-ingress/deployments/helm-chart-dos-arbitrator
-    $ git checkout v2.1.0
+    $ git checkout v2.1.1
     ```
 
 ## Adding the Helm Repository
