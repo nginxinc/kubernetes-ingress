@@ -9,7 +9,7 @@ docs: "DOCS-580"
 ---
 
 This document describes how to configure the NGINX App Protect Dos module
-> Check out the complete [NGINX Ingress Controller with App Protect Dos example resources on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.0/examples/appprotect-dos).
+> Check out the complete [NGINX Ingress Controller with App Protect Dos example resources on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.1/examples/appprotect-dos).
 
 ## App Protect Dos Configuration
 
