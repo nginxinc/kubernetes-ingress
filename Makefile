@@ -34,7 +34,7 @@ lint: ## Run linter
 
 .PHONY: test
 test: ## Run tests
-	go test ./...
+	go test -shuffle=on -race ./...
 
 cover: ## Generate coverage report
 	@./hack/test-cover.sh
