@@ -51,7 +51,7 @@ jobs:
       go_path: ${{ steps.go.outputs.go_path }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache Go controller tools
         uses: actions/cache@v2
         with:
@@ -87,7 +87,7 @@ jobs:
     needs: checks
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Cache Go build
@@ -123,7 +123,7 @@ jobs:
     needs: checks
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache Go tests
         uses: actions/cache@v2
         with:
@@ -177,7 +177,7 @@ jobs:
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Run Smoke Tests
         id: smoke-tests
         uses: ./.github/actions/smoke-tests
@@ -205,7 +205,7 @@ jobs:
       HELM_HTTP_POSTFIX: s
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Fetch Cached Artifacts
         uses: actions/cache@v2
         with:
@@ -258,7 +258,7 @@ jobs:
     needs: [checks, smoke-tests]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Cache Go build
@@ -302,7 +302,7 @@ jobs:
               platforms: "linux/arm64, linux/amd64, linux/s390x"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Fetch Cached Artifacts
@@ -420,7 +420,7 @@ jobs:
               platforms: "linux/arm64, linux/amd64, linux/s390x"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Fetch Cached Artifacts
@@ -542,7 +542,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/heads/release') }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Output Variables
         id: var
         run: |
@@ -572,7 +572,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/heads/release') }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: nginxinc/helm-charts
           fetch-depth: 1
