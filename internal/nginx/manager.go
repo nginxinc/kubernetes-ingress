@@ -278,7 +278,7 @@ func (lm *LocalManager) Start(done chan error) {
 	glog.V(3).Info("Starting nginx")
 
 	binaryFilename := getBinaryFileName(lm.debug)
-	cmd := exec.Command(binaryFilename)
+	cmd := exec.Command(binaryFilename, "-e", "stderr") // #nosec G204
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
@@ -305,7 +305,7 @@ func (lm *LocalManager) Reload(isEndpointsUpdate bool) error {
 	t1 := time.Now()
 
 	binaryFilename := getBinaryFileName(lm.debug)
-	if err := shellOut(fmt.Sprintf("%v -s %v", binaryFilename, "reload")); err != nil {
+	if err := shellOut(fmt.Sprintf("%v -s %v -e stderr", binaryFilename, "reload")); err != nil {
 		lm.metricsCollector.IncNginxReloadErrors()
 		return fmt.Errorf("nginx reload failed: %w", err)
 	}

@@ -7,15 +7,31 @@ toc: true
 docs: "DOCS-616"
 ---
 
+## NGINX Ingress Controller 2.1.1
+
+17 Feb 2022
+
+CHANGES:
+* Update NGINX version to 1.21.6.
+* Update NGINX Plus version to R26.
+
+HELM CHART:
+* The version of the Helm chart is now 0.12.1.
+
+UPGRADE:
+* For NGINX, use the 2.1.1 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.1.1), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
+* For NGINX Plus, use the 2.1.1 images from the F5 Container registry or build your own image using the 2.1.1 source code.
+* For Helm, use version 0.12.1 of the chart.
+
 ## NGINX Ingress Controller 2.1.0
 
 06 Jan 2022
 
 OVERVIEW:
 
-* Support for NGINX App Protect Denial of Service protection with NGINX Ingress Controller. More information about [NGINX App Protect DoS](https://www.nginx.com/products/nginx-app-protect/denial-of-service/). Examples for configuring NGINX App Protect DoS with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.0/examples/appprotect-dos).
+* Support for NGINX App Protect Denial of Service protection with NGINX Ingress Controller. More information about [NGINX App Protect DoS](https://www.nginx.com/products/nginx-app-protect/denial-of-service/). Examples for configuring NGINX App Protect DoS with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.1/examples/appprotect-dos).
 
-* Full support for gRPC services using the NGINX Ingress Controller [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) custom resource definitions.  This makes configuring and supporting gRPC services much easier, giving a simple YAML configuration and removing the need for snippets. Resource definition examples for gRPC can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.0/examples/custom-resources/grpc-upstreams).
+* Full support for gRPC services using the NGINX Ingress Controller [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) custom resource definitions.  This makes configuring and supporting gRPC services much easier, giving a simple YAML configuration and removing the need for snippets. Resource definition examples for gRPC can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.1/examples/custom-resources/grpc-upstreams).
 
 * Implementation of NGINX mandatory and persistent health checks in VirtualServer and VirtualServerRoute to further reduce interruptions to your service traffic as configuration changes continuously happen in your dynamic Kubernetes environment(s). Health checks have been extended to include `mandatory` and `persistent` fields. Mandatory health checks ensures that a new upstream server starts receiving traffic only after the health check passes. Mandatory health checks can be marked as persistent, so that the previous state is remembered when the Ingress Controller reloads NGINX Plus configuration. When combined with the slow-start parameter, the mandatory health check give a new upstream server more time to connect to databases and “warm up” before being asked to handle their full share of traffic. See the settings [here](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstreamhealthcheck). More about the [NGINX Plus mandatory and persistent health check features](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#mandatory-health-checks).
 Mandatory health checks can be marked as persistent, so that the previous state is remembered when reloading configuration. When combined with the slow-start parameter, it gives a new service pod more time to connect to databases and “warm up” before being asked to handle their full share of traffic.

@@ -37,11 +37,11 @@ For App Protect Dos specific logs, look for messages starting with `APP_PROTECT_
 
 ### Check events of an Ingress Resource
 
-Follow the steps of [Checking the Events of an Ingress Resource](/troubleshooting/#checking-the-events-of-an-ingress-resource).
+Follow the steps of [Checking the Events of an Ingress Resource]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#checking-the-events-of-an-ingress-resource" >}}).
 
 ### Check events of a VirtualServer Resource
 
-Follow the steps of [Checking the Events of a VirtualServer Resource](/troubleshooting/#checking-the-events-of-a-virtualeerver-and-virtualserverroute-resources).
+Follow the steps of [Checking the Events of a VirtualServer Resource]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#checking-the-events-of-a-virtualserver-and-virtualserverroute-resources" >}}).
 
 ### Check events of DosProtectedResource
 
