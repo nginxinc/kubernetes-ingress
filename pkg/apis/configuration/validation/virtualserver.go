@@ -15,15 +15,17 @@ import (
 
 // VirtualServerValidator validates a VirtualServer/VirtualServerRoute resource.
 type VirtualServerValidator struct {
-	isPlus       bool
-	isDosEnabled bool
+	isPlus               bool
+	isDosEnabled         bool
+	isCertManagerEnabled bool
 }
 
 // NewVirtualServerValidator creates a new VirtualServerValidator.
-func NewVirtualServerValidator(isPlus bool, isDosEnabled bool) *VirtualServerValidator {
+func NewVirtualServerValidator(isPlus bool, isDosEnabled bool, isCertManagerEnabled bool) *VirtualServerValidator {
 	return &VirtualServerValidator{
-		isPlus:       isPlus,
-		isDosEnabled: isDosEnabled,
+		isPlus:               isPlus,
+		isDosEnabled:         isDosEnabled,
+		isCertManagerEnabled: isCertManagerEnabled,
 	}
 }
 
@@ -38,7 +40,7 @@ func (vsv *VirtualServerValidator) validateVirtualServerSpec(spec *v1.VirtualSer
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateHost(spec.Host, fieldPath.Child("host"))...)
-	allErrs = append(allErrs, validateTLS(spec.TLS, fieldPath.Child("tls"))...)
+	allErrs = append(allErrs, validateTLS(vsv.isCertManagerEnabled, spec.TLS, fieldPath.Child("tls"))...)
 	allErrs = append(allErrs, validatePolicies(spec.Policies, fieldPath.Child("policies"), namespace)...)
 
 	upstreamErrs, upstreamNames := vsv.validateUpstreams(spec.Upstreams, fieldPath.Child("upstreams"))
@@ -103,7 +105,7 @@ func validatePolicies(policies []v1.PolicyReference, fieldPath *field.Path, name
 	return allErrs
 }
 
-func validateTLS(tls *v1.TLS, fieldPath *field.Path) field.ErrorList {
+func validateTLS(isCertManagerEnabled bool, tls *v1.TLS, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if tls == nil {
@@ -114,6 +116,28 @@ func validateTLS(tls *v1.TLS, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateSecretName(tls.Secret, fieldPath.Child("secret"))...)
 
 	allErrs = append(allErrs, validateTLSRedirect(tls.Redirect, fieldPath.Child("redirect"))...)
+
+	allErrs = append(allErrs, validateTLSCmFields(tls.CertManager, isCertManagerEnabled, tls.Secret, fieldPath.Child("cert-manager"))...)
+
+	return allErrs
+}
+
+func validateTLSCmFields(cm *v1.CertManager, isCertManagerEnabled bool, secret string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if cm == nil {
+		// valid, cert-manager is not required
+		return allErrs
+	}
+
+	if !isCertManagerEnabled {
+		allErrs = append(allErrs, field.Forbidden(fieldPath, "field requires cert-manager enablement"))
+	}
+
+	if secret == "" {
+		// invalid, secret name is required for cert-manager configuration
+		allErrs = append(allErrs, field.Forbidden(fieldPath, "field requires TLS.Secret to be specified"))
+	}
 
 	return allErrs
 }

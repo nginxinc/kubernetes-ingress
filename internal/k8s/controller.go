@@ -198,6 +198,7 @@ type NewLoadBalancerControllerInput struct {
 	IsLatencyMetricsEnabled      bool
 	IsTLSPassthroughEnabled      bool
 	SnippetsEnabled              bool
+	CertManagerEnabled           bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -2386,7 +2387,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		DosProtectedEx: make(map[string]*configs.DosEx),
 	}
 
-	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
+	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" && virtualServer.Spec.TLS.CertManager == nil {
 		secretKey := virtualServer.Namespace + "/" + virtualServer.Spec.TLS.Secret
 
 		secretRef := lbc.secretStore.GetSecret(secretKey)

@@ -123,6 +123,7 @@ type StaticConfigParams struct {
 	EnableLatencyMetrics           bool
 	EnablePreviewPolicies          bool
 	SSLRejectHandshake             bool
+	EnableCertManager              bool
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.

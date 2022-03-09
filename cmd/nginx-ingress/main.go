@@ -187,6 +187,9 @@ var (
 
 	enableLatencyMetrics = flag.Bool("enable-latency-metrics", false,
 		"Enable collection of latency metrics for upstreams. Requires -enable-prometheus-metrics")
+	
+	enableCertManager = flag.Bool("enable-cert-manager", false,
+		"Enable cert-manager controller for VirtualServer resources. Requires -enable-custom-resources")
 
 	startupCheckFn func() error
 )
@@ -293,6 +296,10 @@ func main() {
 	if *enableLatencyMetrics && !*enablePrometheusMetrics {
 		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
 		*enableLatencyMetrics = false
+	}
+
+	if *enableCertManager && !*enableCustomResources {
+		glog.Fatal("enable-cert-manager flag requires -enable-custom-resources")
 	}
 
 	if *ingressLink != "" && *externalService != "" {
@@ -575,6 +582,7 @@ func main() {
 		EnableLatencyMetrics:           *enableLatencyMetrics,
 		EnablePreviewPolicies:          *enablePreviewPolicies,
 		SSLRejectHandshake:             sslRejectHandshake,
+		EnableCertManager:              *enableCertManager,
 	}
 
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
@@ -657,7 +665,7 @@ func main() {
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
-	virtualServerValidator := cr_validation.NewVirtualServerValidator(*nginxPlus, *appProtectDos)
+	virtualServerValidator := cr_validation.NewVirtualServerValidator(*nginxPlus, *appProtectDos, *enableCertManager)
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
@@ -692,6 +700,7 @@ func main() {
 		IsLatencyMetricsEnabled:      *enableLatencyMetrics,
 		IsTLSPassthroughEnabled:      *enableTLSPassthrough,
 		SnippetsEnabled:              *enableSnippets,
+		CertManagerEnabled:           *enableCertManager,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

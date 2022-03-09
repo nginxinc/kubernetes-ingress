@@ -264,77 +264,142 @@ func TestValidatePoliciesFails(t *testing.T) {
 
 func TestValidateTLS(t *testing.T) {
 	t.Parallel()
-	validTLSes := []*v1.TLS{
-		nil,
+	tests := []struct {
+		certManagerEnabled    bool
+		tls                   *v1.TLS
+	}{
 		{
-			Secret: "",
+			certManagerEnabled: false,
+			tls: nil,
 		},
 		{
-			Secret: "my-secret",
-		},
-		{
-			Secret:   "my-secret",
-			Redirect: &v1.TLSRedirect{},
-		},
-		{
-			Secret: "my-secret",
-			Redirect: &v1.TLSRedirect{
-				Enable: true,
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "",
 			},
 		},
 		{
-			Secret: "my-secret",
-			Redirect: &v1.TLSRedirect{
-				Enable:  true,
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "my-secret",
+			},
+		},
+		{
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "my-secret",
+				Redirect: &v1.TLSRedirect{},
+			},
+		},
+		{
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "my-secret",
+				Redirect: &v1.TLSRedirect{
+					Enable: true,
+				},
+			},
+		},
+		{
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "my-secret",
+				Redirect: &v1.TLSRedirect{
+					Enable:  true,
 				Code:    createPointerFromInt(302),
 				BasedOn: "scheme",
+				},
 			},
 		},
 		{
-			Secret: "my-secret",
-			Redirect: &v1.TLSRedirect{
-				Enable: true,
-				Code:   createPointerFromInt(307),
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "my-secret",
+				Redirect: &v1.TLSRedirect{
+					Enable:  true,
+				Code:    createPointerFromInt(307),
+				},
+			},
+		},
+		{
+			certManagerEnabled: true,
+            tls: &v1.TLS{
+				Secret: "my-secret",
+				CertManager: &v1.CertManager{
+					Issuer: "my-issuer",
+				},
 			},
 		},
 	}
 
-	for _, tls := range validTLSes {
-		allErrs := validateTLS(tls, field.NewPath("tls"))
+	for _, test := range tests {
+		allErrs := validateTLS(test.certManagerEnabled, test.tls, field.NewPath("tls"))
 		if len(allErrs) > 0 {
-			t.Errorf("validateTLS() returned errors %v for valid input %v", allErrs, tls)
+			t.Errorf("validateTLS() returned errors %v for valid input %v", allErrs, test.tls)
 		}
 	}
 
-	invalidTLSes := []*v1.TLS{
+	invalidTests := []struct {
+		certManagerEnabled    bool
+		tls                   *v1.TLS
+	}{
 		{
-			Secret: "-",
-		},
-		{
-			Secret: "a/b",
-		},
-		{
-			Secret: "my-secret",
-			Redirect: &v1.TLSRedirect{
-				Enable:  true,
-				Code:    createPointerFromInt(305),
-				BasedOn: "scheme",
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "-",
 			},
 		},
 		{
-			Secret: "my-secret",
-			Redirect: &v1.TLSRedirect{
-				Enable:  true,
-				Code:    createPointerFromInt(301),
-				BasedOn: "invalidScheme",
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "a/b",
 			},
+		},
+		{
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "my-secret",
+				Redirect: &v1.TLSRedirect{
+					Enable:  true,
+					Code:    createPointerFromInt(305),
+					BasedOn: "scheme",
+				},
+		    },
+		},
+		{
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "my-secret",
+				Redirect: &v1.TLSRedirect{
+					Enable:  true,
+					Code:    createPointerFromInt(301),
+					BasedOn: "invalidScheme",
+				},
+		    },
+		},
+		{
+			certManagerEnabled: true,
+            tls: &v1.TLS{
+				CertManager: &v1.CertManager{
+					Issuer: "my-issuer",
+				},
+		    },
+		},
+		{
+			certManagerEnabled: false,
+            tls: &v1.TLS{
+				Secret: "my-secret",
+				CertManager: &v1.CertManager{
+					Issuer: "my-issuer",
+				},
+		    },
 		},
 	}
 
-	for _, tls := range invalidTLSes {
-		allErrs := validateTLS(tls, field.NewPath("tls"))
+	for _, test := range invalidTests {
+		allErrs := validateTLS(test.certManagerEnabled, test.tls, field.NewPath("tls"))
 		if len(allErrs) == 0 {
-			t.Errorf("validateTLS() returned no errors for invalid input %v", tls)
+			t.Errorf("validateTLS() returned no errors for invalid input %v", test.tls)
 		}
 	}
 }
