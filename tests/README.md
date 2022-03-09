@@ -28,6 +28,21 @@ Run the tests:
     $ pip3 install -r requirements.txt
     $ python3 -m pytest --node-ip=$(minikube ip)
     ```
+* Use Python3 virtual environment:
+
+    Create and activate ```virtualenv```
+    ```bash
+    $ cd tests
+    $ python3 -m venv ~/venv
+    $ source ~/venv/bin/activate
+    (venv) $
+    ```
+    Install dependencies and run tests
+    ```bash
+    (venv) $ cd tests
+    (venv) $ pip3 install -r requirements.txt
+    (venv) $ python3 -m pytest --node-ip=$(minikube ip)
+    ```
 * Use Docker:
     ```bash
     $ cd tests
@@ -43,6 +58,20 @@ The tests will use the Ingress Controller for NGINX with the default *nginx/ngin
 * [Kind](https://kind.sigs.k8s.io/).
 * Docker.
 
+**Note**: all commands in steps below are executed from the ```tests``` directory
+
+List available make commands
+
+```bash
+$ make
+
+help                 Show available make targets
+build                Run build
+run-tests            Run tests
+run-tests-in-kind    Run tests in Kind
+create-kind-cluster  Create Kind cluster
+delete-kind-cluster  Delete Kind cluster
+```
 #### Step 1 - Create a Kind Cluster
 
 ```bash
@@ -55,7 +84,6 @@ $ make create-kind-cluster
 
 Run the tests in Docker:
 ```bash
-$ cd tests
 $ make build
 $ make run-tests-in-kind
 ```
