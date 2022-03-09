@@ -236,9 +236,9 @@ type ErrorPageRedirect struct {
 
 // TLS defines TLS configuration for a VirtualServer.
 type TLS struct {
-	Secret   		string       `json:"secret"`
-	Redirect 		*TLSRedirect `json:"redirect"`
-	CertManager     *CertManager `json:"cert-manager"`
+	Secret      string       `json:"secret"`
+	Redirect    *TLSRedirect `json:"redirect"`
+	CertManager *CertManager `json:"cert-manager"`
 }
 
 // TLSRedirect defines a redirect for a TLS.
@@ -250,14 +250,14 @@ type TLSRedirect struct {
 
 // CertManager defines a cert manager config for a TLS.
 type CertManager struct {
-	ClusterIssuer string 		 `json:"cluster-issuer"`
-	Issuer        string         `json:"issuer"`
-	IssuerKind	  string		 `json:"issuer-kind"`
-	IssuerGroup   string		 `json:"issuer-group"`
-	CommonName    string		 `json:"common-name"`
-	Duration      string		 `json:"duration"`
-	RenewBefore   string		 `json:"renew-before"`
-	Usages        string		 `json:"usages"`
+	ClusterIssuer string `json:"cluster-issuer"`
+	Issuer        string `json:"issuer"`
+	IssuerKind    string `json:"issuer-kind"`
+	IssuerGroup   string `json:"issuer-group"`
+	CommonName    string `json:"common-name"`
+	Duration      string `json:"duration"`
+	RenewBefore   string `json:"renew-before"`
+	Usages        string `json:"usages"`
 }
 
 // VirtualServerStatus defines the status for the VirtualServer resource.

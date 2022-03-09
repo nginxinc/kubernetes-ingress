@@ -2119,21 +2119,21 @@ func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tl
 		return nil
 	}
 
-	secretRef := secretRefs[fmt.Sprintf("%s/%s", namespace, tls.Secret)]
-	var secretType api_v1.SecretType
-	if secretRef.Secret != nil {
-		secretType = secretRef.Secret.Type
-	}
-
 	// if cert manager is configured, secrets will be created/ updated/ verified there
 	if tls.CertManager != nil {
 		ssl := version2.SSL{
 			HTTP2:           cfgParams.HTTP2,
-			Certificate:     secretRef.Path,
-			CertificateKey:  secretRef.Path,
+			Certificate:     fmt.Sprintf("%s/%s", namespace, tls.Secret),
+			CertificateKey:  fmt.Sprintf("%s/%s", namespace, tls.Secret),
 			RejectHandshake: false,
 		}
 		return &ssl
+	}
+
+	secretRef := secretRefs[fmt.Sprintf("%s/%s", namespace, tls.Secret)]
+	var secretType api_v1.SecretType
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
 	}
 
 	var name string

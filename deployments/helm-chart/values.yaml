@@ -168,6 +168,9 @@ controller:
   ## Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.
   enableTLSPassthrough: false
 
+  ## Enable cert manager for Virtual Server resources. Requires controller.enableCustomResources.
+  enableCertManager: false
+
   globalConfiguration:
     ## Creates the GlobalConfiguration custom resource. Requires controller.enableCustomResources.
     create: false

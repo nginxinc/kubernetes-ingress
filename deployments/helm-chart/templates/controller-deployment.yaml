@@ -179,6 +179,7 @@ spec:
 {{- if .Values.controller.enableCustomResources }}
           - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}
           - -enable-preview-policies={{ .Values.controller.enablePreviewPolicies }}
+          - -enable-cert-manager={{ .Values.controller.enableCertManager }}
 {{- if .Values.controller.globalConfiguration.create }}
           - -global-configuration=$(POD_NAMESPACE)/{{ include "nginx-ingress.name" . }}
 {{- end }}

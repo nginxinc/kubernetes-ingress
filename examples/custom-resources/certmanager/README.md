@@ -1,7 +1,7 @@
 # Example
 
 In this example, we deploy [cert-manager](https://cert-manager.io/docs/installation/#default-static-install) and a [self signed certificate issuer](https://cert-manager.io/docs/configuration/selfsigned/#bootstrapping-ca-issuers).
-Then, we deploy the NGINX or NGINX Plus Ingress controller, a simple web application and then configure load balancing for that application using the Ingress resource.
+Then, we deploy the NGINX or NGINX Plus Ingress controller, a simple web application and then configure load balancing for that application using the VirtualServer resource.
 
 ## Deploying the Certmanager and the self signed authority
 
@@ -41,9 +41,9 @@ $ kubectl create -f cafe.yaml
 
 ## 3. Configure Load Balancing
 
-1. Create an Ingress resource:
+1. Create a VirtualServer resource:
     ```
-    $ kubectl create -f cafe-ingress.yaml
+    $ kubectl create -f cafe-virtual-server.yaml
     ```
 
 ## 4. Test the Application

@@ -265,35 +265,35 @@ func TestValidatePoliciesFails(t *testing.T) {
 func TestValidateTLS(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		certManagerEnabled    bool
-		tls                   *v1.TLS
+		certManagerEnabled bool
+		tls                *v1.TLS
 	}{
 		{
 			certManagerEnabled: false,
-			tls: nil,
+			tls:                nil,
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "",
 			},
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "my-secret",
 			},
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
-				Secret: "my-secret",
+			tls: &v1.TLS{
+				Secret:   "my-secret",
 				Redirect: &v1.TLSRedirect{},
 			},
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "my-secret",
 				Redirect: &v1.TLSRedirect{
 					Enable: true,
@@ -302,28 +302,28 @@ func TestValidateTLS(t *testing.T) {
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "my-secret",
 				Redirect: &v1.TLSRedirect{
 					Enable:  true,
-				Code:    createPointerFromInt(302),
-				BasedOn: "scheme",
+					Code:    createPointerFromInt(302),
+					BasedOn: "scheme",
 				},
 			},
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "my-secret",
 				Redirect: &v1.TLSRedirect{
-					Enable:  true,
-				Code:    createPointerFromInt(307),
+					Enable: true,
+					Code:   createPointerFromInt(307),
 				},
 			},
 		},
 		{
 			certManagerEnabled: true,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "my-secret",
 				CertManager: &v1.CertManager{
 					Issuer: "my-issuer",
@@ -340,59 +340,59 @@ func TestValidateTLS(t *testing.T) {
 	}
 
 	invalidTests := []struct {
-		certManagerEnabled    bool
-		tls                   *v1.TLS
+		certManagerEnabled bool
+		tls                *v1.TLS
 	}{
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "-",
 			},
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "a/b",
 			},
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "my-secret",
 				Redirect: &v1.TLSRedirect{
 					Enable:  true,
 					Code:    createPointerFromInt(305),
 					BasedOn: "scheme",
 				},
-		    },
+			},
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "my-secret",
 				Redirect: &v1.TLSRedirect{
 					Enable:  true,
 					Code:    createPointerFromInt(301),
 					BasedOn: "invalidScheme",
 				},
-		    },
+			},
 		},
 		{
 			certManagerEnabled: true,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				CertManager: &v1.CertManager{
 					Issuer: "my-issuer",
 				},
-		    },
+			},
 		},
 		{
 			certManagerEnabled: false,
-            tls: &v1.TLS{
+			tls: &v1.TLS{
 				Secret: "my-secret",
 				CertManager: &v1.CertManager{
 					Issuer: "my-issuer",
 				},
-		    },
+			},
 		},
 	}
 
@@ -891,7 +891,6 @@ func TestValidateRoute(t *testing.T) {
 	}{
 		{
 			route: v1.Route{
-
 				Path: "/",
 				Action: &v1.Action{
 					Pass: "test",
@@ -957,7 +956,6 @@ func TestValidateRoute(t *testing.T) {
 		},
 		{
 			route: v1.Route{
-
 				Path:  "/",
 				Route: "default/test",
 			},
@@ -1194,7 +1192,6 @@ func TestValidateActionFails(t *testing.T) {
 		action *v1.Action
 		msg    string
 	}{
-
 		{
 			action: &v1.Action{},
 			msg:    "empty action",
@@ -1326,7 +1323,6 @@ func TestValidateRedirectURLFails(t *testing.T) {
 		redirectURL string
 		msg         string
 	}{
-
 		{
 			redirectURL: "",
 			msg:         "url is blank",
