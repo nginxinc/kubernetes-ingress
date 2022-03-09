@@ -125,8 +125,7 @@ type Configurator struct {
 // NewConfigurator creates a new Configurator.
 func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams,
 	templateExecutor *version1.TemplateExecutor, templateExecutorV2 *version2.TemplateExecutor, isPlus bool, isWildcardEnabled bool,
-	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool, latencyCollector latCollector.LatencyCollector, isLatencyMetricsEnabled bool,
-) *Configurator {
+	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool, latencyCollector latCollector.LatencyCollector, isLatencyMetricsEnabled bool) *Configurator {
 	metricLabelsIndex := &metricLabelsIndex{
 		ingressUpstreams:             make(map[string][]string),
 		virtualServerUpstreams:       make(map[string][]string),
@@ -1446,6 +1445,7 @@ func (cnf *Configurator) DeleteAppProtectLogConf(resource *unstructured.Unstruct
 func (cnf *Configurator) RefreshAppProtectUserSigs(
 	userSigs []*unstructured.Unstructured, delPols []string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx,
 ) (Warnings, error) {
+
 	allWarnings, err := cnf.addOrUpdateIngressesAndVirtualServers(ingExes, mergeableIngresses, vsExes)
 	if err != nil {
 		return allWarnings, err

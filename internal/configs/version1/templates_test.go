@@ -40,6 +40,7 @@ var (
 )
 
 var ingCfg = IngressNginxConfig{
+
 	Servers: []Server{
 		{
 			Name:         "test.example.com",

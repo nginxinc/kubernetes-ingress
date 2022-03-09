@@ -76,8 +76,7 @@ type MergeableIngresses struct {
 }
 
 func generateNginxCfg(ingEx *IngressEx, apResources *AppProtectResources, dosResource *appProtectDosResource, isMinion bool,
-	baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool,
-) (version1.IngressNginxConfig, Warnings) {
+	baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool, staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
 	hasAppProtect := staticParams.MainAppProtectLoadModule
 	hasAppProtectDos := staticParams.MainAppProtectDosLoadModule
 
@@ -291,8 +290,7 @@ func generateNginxCfg(ingEx *IngressEx, apResources *AppProtectResources, dosRes
 }
 
 func generateJWTConfig(owner runtime.Object, secretRefs map[string]*secrets.SecretReference, cfgParams *ConfigParams,
-	redirectLocationName string,
-) (*version1.JWTAuth, *version1.JWTRedirectLocation, Warnings) {
+	redirectLocationName string) (*version1.JWTAuth, *version1.JWTRedirectLocation, Warnings) {
 	warnings := newWarnings()
 
 	secretRef := secretRefs[cfgParams.JWTKey]
@@ -328,8 +326,7 @@ func generateJWTConfig(owner runtime.Object, secretRefs map[string]*secrets.Secr
 }
 
 func addSSLConfig(server *version1.Server, owner runtime.Object, host string, ingressTLS []networking.IngressTLS,
-	secretRefs map[string]*secrets.SecretReference, isWildcardEnabled bool,
-) Warnings {
+	secretRefs map[string]*secrets.SecretReference, isWildcardEnabled bool) Warnings {
 	warnings := newWarnings()
 
 	var tlsEnabled bool
@@ -430,8 +427,7 @@ func upstreamRequiresQueue(name string, ingEx *IngressEx, cfg *ConfigParams) (n 
 }
 
 func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBackend, stickyCookie string, cfg *ConfigParams,
-	isPlus bool, isResolverConfigured bool, isLatencyMetricsEnabled bool,
-) version1.Upstream {
+	isPlus bool, isResolverConfigured bool, isLatencyMetricsEnabled bool) version1.Upstream {
 	var ups version1.Upstream
 	labels := version1.UpstreamLabels{
 		Service:           backend.Service.Name,
@@ -540,8 +536,8 @@ func upstreamMapToSlice(upstreams map[string]version1.Upstream) []version1.Upstr
 
 func generateNginxCfgForMergeableIngresses(mergeableIngs *MergeableIngresses, apResources *AppProtectResources,
 	dosResource *appProtectDosResource, baseCfgParams *ConfigParams, isPlus bool, isResolverConfigured bool,
-	staticParams *StaticConfigParams, isWildcardEnabled bool,
-) (version1.IngressNginxConfig, Warnings) {
+	staticParams *StaticConfigParams, isWildcardEnabled bool) (version1.IngressNginxConfig, Warnings) {
+
 	var masterServer version1.Server
 	var locations []version1.Location
 	var upstreams []version1.Upstream
