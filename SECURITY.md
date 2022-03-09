@@ -4,12 +4,6 @@
 
 We advise users to run the most recent release of the NGINX Ingress Controller, and we issue software updates to the most recent release. We provide technical support for F5 customers who are using the most recent version of the NGINX Ingress Controller, and any version released within two years of the current release.
 
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 2.x.x   | :white_check_mark: |
-| < 1.6.3   | :x:                |
-
 For more information visit https://docs.nginx.com/nginx-ingress-controller/technical-specifications/
 
 ## Reporting a Vulnerability
