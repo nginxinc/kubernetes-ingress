@@ -390,8 +390,7 @@ jobs:
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
+          format: 'sarif'
           output: 'trivy-results-${{ matrix.image }}.sarif'
           ignore-unfixed: 'true'
       - name: Upload Trivy scan results to GitHub Security tab
@@ -515,8 +514,7 @@ jobs:
         continue-on-error: true
         with:
           image-ref: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
+          format: 'sarif'
           output: 'trivy-results-${{ matrix.image }}.sarif'
           ignore-unfixed: 'true'
       - name: Upload Trivy scan results to GitHub Security tab
