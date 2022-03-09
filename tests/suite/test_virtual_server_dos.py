@@ -241,6 +241,35 @@ class TestDos:
         for _ in conf_directives:
             assert _ in result_conf
 
+        print("Remove Virtual Server in location block")
+        delete_virtual_server(kube_apis.custom_objects, virtual_server_setup_dos.vs_name, test_namespace)
+        print("Add Virtual Server in server block")
+
+        vs_source_server_block = f"{TEST_DATA}/virtual-server-dos/virtual-server-block-server.yaml"
+        create_virtual_server_from_yaml(kube_apis.custom_objects, vs_source_server_block, test_namespace)
+        wait_before_test(5)
+
+        print("\n confirm response for standard request")
+        resp = requests.get(virtual_server_setup_dos.backend_1_url,
+                            headers={"host": virtual_server_setup_dos.vs_host})
+        assert resp.status_code == 200
+
+        result_conf = get_vs_nginx_template_conf(kube_apis.v1,
+                                                 virtual_server_setup_dos.namespace,
+                                                 virtual_server_setup_dos.vs_name,
+                                                 pod_name,
+                                                 "nginx-ingress")
+
+        for _ in conf_directives:
+            assert _ in result_conf
+
+        print("Clean up new VS server block")
+        delete_virtual_server(kube_apis.custom_objects, virtual_server_setup_dos.vs_name, test_namespace)
+
+        print("Return VS location block")
+        vs_source = f"{TEST_DATA}/virtual-server-dos/virtual-server.yaml"
+        create_virtual_server_from_yaml(kube_apis.custom_objects, vs_source, test_namespace)
+
     @pytest.mark.skip
     def test_vs_dos_under_attack_no_learning(
             self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, virtual_server_setup_dos, dos_setup, test_namespace
