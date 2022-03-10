@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: NGINX Ingress Controller Documentation
+    url: https://docs.nginx.com/nginx-ingress-controller
+    about: Check out our documentation.
+  - name: General inquiries
+    url: https://github.com/nginxinc/kubernetes-ingress/discussions
+    about: Please use Discussions for all other questions.

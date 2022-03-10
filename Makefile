@@ -34,10 +34,14 @@ lint: ## Run linter
 
 .PHONY: test
 test: ## Run tests
-	go test ./...
+	go test -shuffle=on -race ./...
 
 cover: ## Generate coverage report
 	@./hack/test-cover.sh
+
+cover-html: ## Generate and show coverage report in HTML format
+	go test -shuffle=on -race ./... -count=1 -cover -covermode=atomic -coverprofile=coverage.out
+	go tool cover -html coverage.out
 
 .PHONY: verify-codegen
 verify-codegen: ## Verify code generation

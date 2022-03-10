@@ -24,7 +24,7 @@ func TestCreateAppProtectDosPolicyEx(t *testing.T) {
 			},
 			expectedPolicyEx: &DosPolicyEx{
 				IsValid:  false,
-				ErrorMsg: "failed to store ApDosPolicy: error validating DosPolicy : Required field map[] not found",
+				ErrorMsg: "failed to store ApDosPolicy: error validating DosPolicy : required field map[] not found",
 			},
 			wantErr: true,
 			msg:     "dos policy no spec",
@@ -90,7 +90,7 @@ func TestCreateAppProtectDosLogConfEx(t *testing.T) {
 			},
 			expectedLogConfEx: &DosLogConfEx{
 				IsValid:  false,
-				ErrorMsg: "failed to store ApDosLogconf: error validating App Protect Dos Log Configuration : Required field map[] not found",
+				ErrorMsg: "failed to store ApDosLogconf: error validating App Protect Dos Log Configuration : required field map[] not found",
 			},
 			wantErr: true,
 			msg:     "Invalid DosLogConf",
@@ -259,7 +259,7 @@ func TestAddOrUpdateDosPolicy(t *testing.T) {
 					Resource: &DosPolicyEx{
 						Obj:      invalidTestPolicy,
 						IsValid:  false,
-						ErrorMsg: "failed to store ApDosPolicy: error validating DosPolicy : Required field map[] not found",
+						ErrorMsg: "failed to store ApDosPolicy: error validating DosPolicy : required field map[] not found",
 					},
 					Op: Delete,
 				},
@@ -268,7 +268,7 @@ func TestAddOrUpdateDosPolicy(t *testing.T) {
 				{
 					Object:  invalidTestPolicy,
 					Reason:  "Rejected",
-					Message: "error validating DosPolicy : Required field map[] not found",
+					Message: "error validating DosPolicy : required field map[] not found",
 				},
 			},
 			msg: "validation failed",
@@ -358,7 +358,7 @@ func TestAddOrUpdateDosLogConf(t *testing.T) {
 					Resource: &DosLogConfEx{
 						Obj:      invalidLogConf,
 						IsValid:  false,
-						ErrorMsg: "failed to store ApDosLogconf: error validating App Protect Dos Log Configuration invalid-logconf: Required field map[] not found",
+						ErrorMsg: "failed to store ApDosLogconf: error validating App Protect Dos Log Configuration invalid-logconf: required field map[] not found",
 					},
 					Op: Delete,
 				},
@@ -367,7 +367,7 @@ func TestAddOrUpdateDosLogConf(t *testing.T) {
 				{
 					Object:  invalidLogConf,
 					Reason:  "Rejected",
-					Message: "error validating App Protect Dos Log Configuration invalid-logconf: Required field map[] not found",
+					Message: "error validating App Protect Dos Log Configuration invalid-logconf: required field map[] not found",
 				},
 			},
 			msg: "validation failed",

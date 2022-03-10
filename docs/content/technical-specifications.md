@@ -17,7 +17,20 @@ The 1.12 release supports the Ingress v1beta1 API and continues to receive secur
 
 ## Supported Kubernetes Versions
 
-We explicitly test the NGINX Ingress Controller on a range of Kubernetes platforms at each release, and the [release notes](/nginx-ingress-controller/releases) list which platforms were tested. We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the [Kubernetes conformance tests](https://www.cncf.io/certification/software-conformance/).
+We explicitly test the NGINX Ingress Controller (NIC) on a range of Kubernetes platforms at each release, and the [release notes](/nginx-ingress-controller/releases) list which platforms were tested. We will provide technical support for the NGINX Ingress Controller (NIC) on any Kubernetes platform that is currently supported by its provider and which passes the [Kubernetes conformance tests](https://www.cncf.io/certification/software-conformance/).
+
+{{% table %}}
+| NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
+| --- | --- | --- | --- | --- |
+| 2.1.1 | 1.23 - 1.19 | 0.12.1 | 0.5.1 | 1.21.6 / R26 |
+| 2.0.3 | 1.22 - 1.19 | 0.11.3 | 0.4.0 | 1.21.3 / R25 |
+| 1.12.3 | 1.21 - 1.16 | 0.10.3 | 0.3.0 | 1.21.0 / R24 |
+| 1.11.3 | 1.20 - 1.16 | 0.9.0 | 0.2.0 | 1.21.0 / R23 P1 |
+| 1.10.1 | 1.19 - 1.16 | 0.8.0 | 0.1.0 | 1.19.8 / R23 |
+| 1.9.1 | 1.18 - 1.16 | 0.7.1 | 0.0.7 | 1.19.3 / R22 |
+| 1.8.1 |  | 0.6.0 | 0.0.6 | 1.19.2 / R22 |
+| 1.7.2 |  | 0.5.1 | 0.0.4 | 1.19.0 / R22 |
+| 1.6.3 |  | 0.4.3 | -- | 1.17.9 / R21 |
 
 ## Supported Docker Images
 
@@ -25,16 +38,16 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX
 
-All images include NGINX 1.21.5.
+All images include NGINX 1.21.6.
 
 {{% table %}}
 |Name | Base image | Third-party modules | DockerHub image | Architectures |
 | ---| ---| ---| --- | --- |
-|Alpine-based image | ``nginx:1.21.5-alpine``, which is based on ``alpine:3.15`` |  | ``nginx/nginx-ingress:2.1.0-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Alpine-based image with OpenTracing | ``nginx:1.21.5-alpine``, which is based on ``alpine:3.15`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.1.0-alpine-ot`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image | ``nginx:1.21.5``, which is based on ``debian:bullseye-slim`` |  | ``nginx/nginx-ingress:2.1.0`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image with OpenTracing | ``nginx:1.21.5``, which is based on ``debian:bullseye-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.1.0-ot`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Ubi-based image | ``redhat/ubi8`` |  | ``nginx/nginx-ingress:2.1.0-ubi`` | arm64, amd64, s390x |
+|Alpine-based image | ``nginx:1.21.6-alpine``, which is based on ``alpine:3.15`` |  | ``nginx/nginx-ingress:2.1.1-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Alpine-based image with OpenTracing | ``nginx:1.21.6-alpine``, which is based on ``alpine:3.15`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.1.1-alpine-ot`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image | ``nginx:1.21.6``, which is based on ``debian:bullseye-slim`` |  | ``nginx/nginx-ingress:2.1.1`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image with OpenTracing | ``nginx:1.21.6``, which is based on ``debian:bullseye-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.1.1-ot`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Ubi-based image | ``redhat/ubi8`` |  | ``nginx/nginx-ingress:2.1.1-ubi`` | arm64, amd64, s390x |
 {{% /table %}}
 
 ### Images with NGINX Plus
@@ -46,14 +59,14 @@ NGINX Plus images are available through the F5 Container registry `private-regis
 {{% table %}}
 |Name | Base image | Third-party modules | F5 Container Registry Image | Architectures |
 | ---| ---| --- | --- | --- |
-|Alpine-based image | ``alpine:3.15`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-alpine` | arm64, amd64 |
-|Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0` | arm64, amd64 |
-|Debian-based image with OpenTracing | ``debian:bullseye-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ot` | arm64, amd64 |
-|Debian-based image with App Protect WAF|  ``debian:buster-slim`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0` | amd64 |
+|Alpine-based image | ``alpine:3.15`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.1-alpine` | arm64, amd64 |
+|Debian-based image | ``debian:bullseye-slim`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.1` | arm64, amd64 |
+|Debian-based image with OpenTracing | ``debian:bullseye-slim`` | NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog; NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.1-ot` | arm64, amd64 |
+|Debian-based image with App Protect WAF|  ``debian:buster-slim`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.1` | amd64 |
 |Debian-based image with App Protect DoS | ``debian:buster-slim`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | | amd64 |
 |Debian-based image with App Protect WAF and DoS | ``debian:buster-slim`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | | amd64 |
-|Ubi-based image | ``redhat/ubi8`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.0-ubi` | arm64, amd64, s390x |
-|Ubi-based image with App Protect WAF | ``redhat/ubi8`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.0-ubi` | amd64 |
+|Ubi-based image | ``redhat/ubi8`` | NGINX Plus JavaScript module | `nginx-ic/nginx-plus-ingress:2.1.1-ubi` | arm64, amd64, s390x |
+|Ubi-based image with App Protect WAF | ``redhat/ubi8`` | NGINX Plus App Protect WAF module; NGINX Plus JavaScript module | `nginx-ic-nap/nginx-plus-ingress:2.1.1-ubi` | amd64 |
 |Ubi-based image with App Protect DoS | ``redhat/ubi8`` | NGINX Plus App Protect DoS module; NGINX Plus JavaScript module | | amd64 |
 |Ubi-based image with App Protect WAF and DoS | ``redhat/ubi8`` | NGINX Plus App Protect WAF and DoS modules; NGINX Plus JavaScript module | | amd64 |
 {{% /table %}}

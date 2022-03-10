@@ -214,11 +214,11 @@ server {
     access_log {{ .ApDosAccessLogDest }} log_dos if=$loggable;
         {{- end }}
 
-        {{- if .ApDosMonitor }}
+        {{- if .ApDosMonitorURI }}
             {{- if or .ApDosMonitorProtocol .ApDosMonitorTimeout}}
-    app_protect_dos_monitor uri={{ .ApDosMonitor }}{{if .ApDosMonitorProtocol}} protocol={{.ApDosMonitorProtocol}}{{end}}{{if .ApDosMonitorTimeout}} timeout={{.ApDosMonitorTimeout}}{{end}};
+    app_protect_dos_monitor uri={{ .ApDosMonitorURI }}{{if .ApDosMonitorProtocol}} protocol={{.ApDosMonitorProtocol}}{{end}}{{if .ApDosMonitorTimeout}} timeout={{.ApDosMonitorTimeout}}{{end}};
             {{- else}}
-    app_protect_dos_monitor "{{ .ApDosMonitor }}";
+    app_protect_dos_monitor "{{ .ApDosMonitorURI }}";
             {{- end}}
         {{- end}}
 
