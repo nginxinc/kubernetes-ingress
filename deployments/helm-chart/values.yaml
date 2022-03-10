@@ -16,6 +16,8 @@ controller:
   appprotect:
     ## Enable the App Protect module in the Ingress Controller.
     enable: false
+    ## Sets log level for App Protect. Allowed values: fatal, error, warn, info, debug, trace
+    # logLevel: fatal
 
   ## Support for App Protect Dos
   appprotectdos:
