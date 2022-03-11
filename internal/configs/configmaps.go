@@ -500,10 +500,9 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			}
 		}
 		if appProtectReconnectPeriod, exists := cfgm.Data["app-protect-reconnect-period-seconds"]; exists {
-			if period, err := ParseFloat64(appProtectReconnectPeriod); err == nil {
-				if period > 0 && period <= 60 {
-					cfgParams.MainAppProtectReconnectPeriod = appProtectReconnectPeriod
-				}
+			period, err := ParseFloat64(appProtectReconnectPeriod)
+			if err == nil && period > 0 && period <= 60 {
+				cfgParams.MainAppProtectReconnectPeriod = appProtectReconnectPeriod
 			} else {
 				glog.Error("ConfigMap Key 'app-protect-reconnect-period-second' must have value between '0' and '60'. '0' is illegal. Ignoring.")
 			}
