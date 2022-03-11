@@ -7,6 +7,7 @@ import (
 )
 
 func TestValidateAppProtectPolicy(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		policy    *unstructured.Unstructured
 		expectErr bool
@@ -59,6 +60,7 @@ func TestValidateAppProtectPolicy(t *testing.T) {
 }
 
 func TestValidateAppProtectLogConf(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		logConf   *unstructured.Unstructured
 		expectErr bool
@@ -124,6 +126,7 @@ func TestValidateAppProtectLogConf(t *testing.T) {
 }
 
 func TestValidateAppProtectUserSig(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		userSig   *unstructured.Unstructured
 		expectErr bool
@@ -176,6 +179,7 @@ func TestValidateAppProtectUserSig(t *testing.T) {
 }
 
 func TestCheckForExtRefs(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		policy      *unstructured.Unstructured
 		expectFound int

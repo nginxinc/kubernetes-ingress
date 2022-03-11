@@ -7,6 +7,7 @@ import (
 )
 
 func TestParseConfigMapWithAppProtectCompressedRequestsAction(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		action string
 		expect string

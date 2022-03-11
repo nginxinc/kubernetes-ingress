@@ -403,6 +403,7 @@ func createPointerFromInt(n int) *int {
 }
 
 func TestVirtualServerForNginxPlus(t *testing.T) {
+	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
 	if err != nil {
 		t.Fatalf("Failed to create template executor: %v", err)
@@ -417,6 +418,7 @@ func TestVirtualServerForNginxPlus(t *testing.T) {
 }
 
 func TestVirtualServerForNginx(t *testing.T) {
+	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
 	if err != nil {
 		t.Fatalf("Failed to create template executor: %v", err)
@@ -431,6 +433,7 @@ func TestVirtualServerForNginx(t *testing.T) {
 }
 
 func TestTransportServerForNginxPlus(t *testing.T) {
+	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
 	if err != nil {
 		t.Fatalf("Failed to create template executor: %v", err)
@@ -445,6 +448,7 @@ func TestTransportServerForNginxPlus(t *testing.T) {
 }
 
 func TestTransportServerForNginx(t *testing.T) {
+	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
 	if err != nil {
 		t.Fatalf("Failed to create template executor: %v", err)
@@ -459,6 +463,7 @@ func TestTransportServerForNginx(t *testing.T) {
 }
 
 func TestTLSPassthroughHosts(t *testing.T) {
+	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
 	if err != nil {
 		t.Fatalf("Failed to create template executor: %v", err)

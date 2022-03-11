@@ -32,6 +32,7 @@ var ingress = networking.Ingress{
 }
 
 func TestGetMapKeyAsBool(t *testing.T) {
+	t.Parallel()
 	configMap := configMap
 	configMap.Data = map[string]string{
 		"key": "True",
@@ -50,6 +51,7 @@ func TestGetMapKeyAsBool(t *testing.T) {
 }
 
 func TestGetMapKeyAsBoolNotFound(t *testing.T) {
+	t.Parallel()
 	configMap := configMap
 	configMap.Data = map[string]string{}
 
@@ -60,6 +62,7 @@ func TestGetMapKeyAsBoolNotFound(t *testing.T) {
 }
 
 func TestGetMapKeyAsBoolErrorMessage(t *testing.T) {
+	t.Parallel()
 	cfgm := configMap
 	cfgm.Data = map[string]string{
 		"key": "string",
@@ -92,6 +95,7 @@ func TestGetMapKeyAsBoolErrorMessage(t *testing.T) {
 }
 
 func TestGetMapKeyAsInt(t *testing.T) {
+	t.Parallel()
 	configMap := configMap
 	configMap.Data = map[string]string{
 		"key": "123456789",
@@ -111,6 +115,7 @@ func TestGetMapKeyAsInt(t *testing.T) {
 }
 
 func TestGetMapKeyAsIntNotFound(t *testing.T) {
+	t.Parallel()
 	configMap := configMap
 	configMap.Data = map[string]string{}
 
@@ -121,6 +126,7 @@ func TestGetMapKeyAsIntNotFound(t *testing.T) {
 }
 
 func TestGetMapKeyAsIntErrorMessage(t *testing.T) {
+	t.Parallel()
 	cfgm := configMap
 	cfgm.Data = map[string]string{
 		"key": "string",
@@ -153,6 +159,7 @@ func TestGetMapKeyAsIntErrorMessage(t *testing.T) {
 }
 
 func TestGetMapKeyAsInt64(t *testing.T) {
+	t.Parallel()
 	configMap := configMap
 	configMap.Data = map[string]string{
 		"key": "123456789",
@@ -172,6 +179,7 @@ func TestGetMapKeyAsInt64(t *testing.T) {
 }
 
 func TestGetMapKeyAsInt64NotFound(t *testing.T) {
+	t.Parallel()
 	configMap := configMap
 	configMap.Data = map[string]string{}
 
@@ -182,6 +190,7 @@ func TestGetMapKeyAsInt64NotFound(t *testing.T) {
 }
 
 func TestGetMapKeyAsInt64ErrorMessage(t *testing.T) {
+	t.Parallel()
 	cfgm := configMap
 	cfgm.Data = map[string]string{
 		"key": "string",
@@ -214,6 +223,7 @@ func TestGetMapKeyAsInt64ErrorMessage(t *testing.T) {
 }
 
 func TestGetMapKeyAsStringSlice(t *testing.T) {
+	t.Parallel()
 	configMap := configMap
 	configMap.Data = map[string]string{
 		"key": "1.String,2.String,3.String",
@@ -234,6 +244,7 @@ func TestGetMapKeyAsStringSlice(t *testing.T) {
 }
 
 func TestGetMapKeyAsStringSliceMultilineSnippets(t *testing.T) {
+	t.Parallel()
 	configMap := configMap
 	configMap.Data = map[string]string{
 		"server-snippets": `
@@ -257,6 +268,7 @@ func TestGetMapKeyAsStringSliceMultilineSnippets(t *testing.T) {
 }
 
 func TestGetMapKeyAsStringSliceNotFound(t *testing.T) {
+	t.Parallel()
 	configMap := configMap
 	configMap.Data = map[string]string{}
 
@@ -267,6 +279,7 @@ func TestGetMapKeyAsStringSliceNotFound(t *testing.T) {
 }
 
 func TestParseLBMethod(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []struct {
 		input    string
 		expected string
@@ -313,6 +326,7 @@ func TestParseLBMethod(t *testing.T) {
 }
 
 func TestParseLBMethodForPlus(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []struct {
 		input    string
 		expected string
@@ -364,6 +378,7 @@ func TestParseLBMethodForPlus(t *testing.T) {
 }
 
 func TestParseTime(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []struct {
 		input    string
 		expected string
@@ -403,6 +418,7 @@ func TestParseTime(t *testing.T) {
 }
 
 func TestParseOffset(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []string{"1", "2k", "2K", "3m", "3M", "4g", "4G"}
 	invalidInput := []string{"-1", "", "blah"}
 	for _, test := range testsWithValidInput {
@@ -423,6 +439,7 @@ func TestParseOffset(t *testing.T) {
 }
 
 func TestParseSize(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []string{"1", "2k", "2K", "3m", "3M"}
 	invalidInput := []string{"-1", "", "blah", "4g", "4G"}
 	for _, test := range testsWithValidInput {
@@ -443,6 +460,7 @@ func TestParseSize(t *testing.T) {
 }
 
 func TestParseProxyBuffersSpec(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []string{"1 1k", "10 24k", "2 2K", "6 3m", "128 3M"}
 	invalidInput := []string{"-1", "-6 2k", "", "blah", "16k", "10M", "2 4g", "3 4G"}
 	for _, test := range testsWithValidInput {
@@ -463,6 +481,7 @@ func TestParseProxyBuffersSpec(t *testing.T) {
 }
 
 func TestVerifyThresholds(t *testing.T) {
+	t.Parallel()
 	validInput := []string{
 		"high=3 low=1",
 		"high=12 low=2",
@@ -497,6 +516,7 @@ func TestVerifyThresholds(t *testing.T) {
 }
 
 func TestParseBool(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []struct {
 		input    string
 		expected bool
@@ -534,6 +554,7 @@ func TestParseBool(t *testing.T) {
 }
 
 func TestParseInt(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []struct {
 		input    string
 		expected int
@@ -571,6 +592,7 @@ func TestParseInt(t *testing.T) {
 }
 
 func TestParseInt64(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []struct {
 		input    string
 		expected int64
@@ -608,6 +630,7 @@ func TestParseInt64(t *testing.T) {
 }
 
 func TestParseUint64(t *testing.T) {
+	t.Parallel()
 	testsWithValidInput := []struct {
 		input    string
 		expected uint64

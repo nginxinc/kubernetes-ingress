@@ -8,6 +8,7 @@ import (
 )
 
 func TestParseResourceReferenceAnnotation(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		ns, antn, expected string
 	}{
@@ -32,6 +33,7 @@ func TestParseResourceReferenceAnnotation(t *testing.T) {
 }
 
 func TestGenNsName(t *testing.T) {
+	t.Parallel()
 	obj := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -50,6 +52,7 @@ func TestGenNsName(t *testing.T) {
 }
 
 func TestParseResourceReferenceAnnotationList(t *testing.T) {
+	t.Parallel()
 	namespace := "test_ns"
 	tests := []struct {
 		annotation string
