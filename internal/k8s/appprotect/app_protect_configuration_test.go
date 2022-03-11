@@ -567,7 +567,7 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 				{
 					Object:  invalidTestPolicy,
 					Reason:  "Rejected",
-					Message: "Error validating policy : Error validating App Protect Policy : Required field map[] not found",
+					Message: "Error validating policy : error validating App Protect Policy : required field map[] not found",
 				},
 			},
 			msg: "validation failed",
@@ -674,7 +674,7 @@ func TestAddOrUpdateLogConf(t *testing.T) {
 				{
 					Object:  invalidLogConf,
 					Reason:  "Rejected",
-					Message: "Error validating App Protect Log Configuration testlogconf: Required field map[] not found",
+					Message: "error validating App Protect Log Configuration testlogconf: required field map[] not found",
 				},
 			},
 			msg: "validation failed",

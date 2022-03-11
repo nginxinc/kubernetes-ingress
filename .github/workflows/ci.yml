@@ -31,7 +31,7 @@ defaults:
     shell: bash
 
 env:
-  K8S_VERSION: 1.23.3
+  K8S_VERSION: 1.23.4
   K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   GIT_NAME: NGINX Kubernetes Team
@@ -166,7 +166,7 @@ jobs:
                                                 {\"image\": \"opentracing-plus\", \"marker\": \"vsr\"}, \
                                                 {\"image\": \"ubi-plus\", \"marker\": \"policies\"}]}"
           else
-            echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.5\", \"1.23.3\"]}"
+            echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.10\", \"1.22.7\", \"1.23.4\"]}"
           fi
 
   smoke-tests:

@@ -17,7 +17,20 @@ The 1.12 release supports the Ingress v1beta1 API and continues to receive secur
 
 ## Supported Kubernetes Versions
 
-We explicitly test the NGINX Ingress Controller on a range of Kubernetes platforms at each release, and the [release notes](/nginx-ingress-controller/releases) list which platforms were tested. We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the [Kubernetes conformance tests](https://www.cncf.io/certification/software-conformance/).
+We explicitly test the NGINX Ingress Controller (NIC) on a range of Kubernetes platforms at each release, and the [release notes](/nginx-ingress-controller/releases) list which platforms were tested. We will provide technical support for the NGINX Ingress Controller (NIC) on any Kubernetes platform that is currently supported by its provider and which passes the [Kubernetes conformance tests](https://www.cncf.io/certification/software-conformance/).
+
+{{% table %}}
+| NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
+| --- | --- | --- | --- | --- |
+| 2.1.1 | 1.23 - 1.19 | 0.12.1 | 0.5.1 | 1.21.6 / R26 |
+| 2.0.3 | 1.22 - 1.19 | 0.11.3 | 0.4.0 | 1.21.3 / R25 |
+| 1.12.3 | 1.21 - 1.16 | 0.10.3 | 0.3.0 | 1.21.0 / R24 |
+| 1.11.3 | 1.20 - 1.16 | 0.9.0 | 0.2.0 | 1.21.0 / R23 P1 |
+| 1.10.1 | 1.19 - 1.16 | 0.8.0 | 0.1.0 | 1.19.8 / R23 |
+| 1.9.1 | 1.18 - 1.16 | 0.7.1 | 0.0.7 | 1.19.3 / R22 |
+| 1.8.1 |  | 0.6.0 | 0.0.6 | 1.19.2 / R22 |
+| 1.7.2 |  | 0.5.1 | 0.0.4 | 1.19.0 / R22 |
+| 1.6.3 |  | 0.4.3 | -- | 1.17.9 / R21 |
 
 ## Supported Docker Images
 
