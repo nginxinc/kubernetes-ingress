@@ -179,7 +179,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.volumeMounts`` | The volumeMounts of the Ingress Controller pods. | [] |
 |``controller.initContainers`` | InitContainers for the Ingress Controller pods. | []
 |``controller.extraContainers`` | Extra (eg. sidecar) containers for the Ingress Controller pods. | []
-|``controller.resources`` | The resources of the Ingress Controller pods. | {} |
+|``controller.resources`` | The resources of the Ingress Controller pods. | requests: cpu=100m,memory=128Mi |
 |``controller.replicaCount`` | The number of replicas of the Ingress Controller deployment. | 1 |
 |``controller.ingressClass`` | A class of the Ingress Controller. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start. The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class. The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of kubernetes. | nginx |
 |``controller.setAsDefaultIngress`` | New Ingresses without an ingressClassName field specified will be assigned the class specified in `controller.ingressClass`. | false |
