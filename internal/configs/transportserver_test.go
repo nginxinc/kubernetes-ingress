@@ -10,6 +10,7 @@ import (
 )
 
 func TestUpstreamNamerForTransportServer(t *testing.T) {
+	t.Parallel()
 	transportServer := conf_v1alpha1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "tcp-app",
@@ -28,6 +29,7 @@ func TestUpstreamNamerForTransportServer(t *testing.T) {
 }
 
 func TestTransportServerExString(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		input    *TransportServerEx
 		expected string
@@ -62,6 +64,7 @@ func TestTransportServerExString(t *testing.T) {
 }
 
 func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
+	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -141,6 +144,7 @@ func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 }
 
 func TestGenerateTransportServerConfigForTCP(t *testing.T) {
+	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -227,6 +231,7 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 }
 
 func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
+	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -315,6 +320,7 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 }
 
 func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
+	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -401,6 +407,7 @@ func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
 }
 
 func TestGenerateTransportServerConfigForUDP(t *testing.T) {
+	t.Parallel()
 	udpRequests := 1
 	udpResponses := 5
 
@@ -492,6 +499,7 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 }
 
 func TestGenerateUnixSocket(t *testing.T) {
+	t.Parallel()
 	transportServerEx := &TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -523,6 +531,7 @@ func TestGenerateUnixSocket(t *testing.T) {
 }
 
 func TestGenerateTransportServerHealthChecks(t *testing.T) {
+	t.Parallel()
 	upstreamName := "dns-tcp"
 	generatedUpsteamName := "ts_namespace_name_dns-tcp"
 
@@ -694,6 +703,7 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 }
 
 func TestGenerateHealthCheckMatch(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		match    *conf_v1alpha1.Match
 		expected *version2.Match

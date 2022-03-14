@@ -11,6 +11,7 @@ func createPointerFromInt(n int) *int {
 }
 
 func TestValidateVariable(t *testing.T) {
+	t.Parallel()
 	validVars := map[string]bool{
 		"scheme":                 true,
 		"http_x_forwarded_proto": true,
@@ -33,6 +34,7 @@ func TestValidateVariable(t *testing.T) {
 }
 
 func TestValidateVariableFails(t *testing.T) {
+	t.Parallel()
 	validVars := map[string]bool{
 		"host": true,
 	}
@@ -53,6 +55,7 @@ func TestValidateVariableFails(t *testing.T) {
 }
 
 func TestParseSpecialVariable(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		specialVar    string
 		expectedName  string
@@ -105,6 +108,7 @@ func TestParseSpecialVariable(t *testing.T) {
 }
 
 func TestParseSpecialVariableFails(t *testing.T) {
+	t.Parallel()
 	specialVars := []string{
 		"arg",
 		"jwt_header",
@@ -120,6 +124,7 @@ func TestParseSpecialVariableFails(t *testing.T) {
 }
 
 func TestValidateSpecialVariable(t *testing.T) {
+	t.Parallel()
 	specialVars := []string{
 		"arg_username",
 		"arg_user_name",
@@ -138,6 +143,7 @@ func TestValidateSpecialVariable(t *testing.T) {
 }
 
 func TestValidateSpecialVariableForPlus(t *testing.T) {
+	t.Parallel()
 	specialVars := []string{
 		"arg_username",
 		"arg_user_name",
@@ -158,6 +164,7 @@ func TestValidateSpecialVariableForPlus(t *testing.T) {
 }
 
 func TestValidateSpecialVariableFails(t *testing.T) {
+	t.Parallel()
 	specialVars := []string{
 		"arg",
 		"arg_invalid%",
@@ -179,6 +186,7 @@ func TestValidateSpecialVariableFails(t *testing.T) {
 }
 
 func TestValidateSpecialVariableForPlusFails(t *testing.T) {
+	t.Parallel()
 	specialVars := []string{
 		"arg",
 		"arg_invalid%",
@@ -200,6 +208,7 @@ func TestValidateSpecialVariableForPlusFails(t *testing.T) {
 }
 
 func TestValidateStringWithVariables(t *testing.T) {
+	t.Parallel()
 	isPlus := false
 
 	testStrings := []string{
@@ -233,6 +242,7 @@ func TestValidateStringWithVariables(t *testing.T) {
 }
 
 func TestValidateStringWithVariablesFail(t *testing.T) {
+	t.Parallel()
 	isPlus := false
 
 	testStrings := []string{
@@ -267,6 +277,7 @@ func TestValidateStringWithVariablesFail(t *testing.T) {
 }
 
 func TestValidateSize(t *testing.T) {
+	t.Parallel()
 	validInput := []string{"", "4k", "8K", "16m", "32M"}
 	for _, test := range validInput {
 		allErrs := validateSize(test, field.NewPath("size-field"))
@@ -285,6 +296,7 @@ func TestValidateSize(t *testing.T) {
 }
 
 func TestValidateTime(t *testing.T) {
+	t.Parallel()
 	time := "1h 2s"
 	allErrs := validateTime(time, field.NewPath("time-field"))
 
@@ -294,6 +306,7 @@ func TestValidateTime(t *testing.T) {
 }
 
 func TestValidateTimeFails(t *testing.T) {
+	t.Parallel()
 	time := "invalid"
 	allErrs := validateTime(time, field.NewPath("time-field"))
 
@@ -303,6 +316,7 @@ func TestValidateTimeFails(t *testing.T) {
 }
 
 func TestValidateOffset(t *testing.T) {
+	t.Parallel()
 	validInput := []string{"", "1", "10k", "11m", "1K", "100M", "5G"}
 	for _, test := range validInput {
 		allErrs := validateOffset(test, field.NewPath("offset-field"))

@@ -3,6 +3,7 @@ package configs
 import "testing"
 
 func TestNewDefaultConfigParamsUpstreamZoneSize(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		isPlus   bool
 		expected string
