@@ -2,7 +2,7 @@ name: Sync
 
 on:
   workflow_run:
-    branches: master
+    branches: main
     workflows:
       - "Continuous Integration"
     types:
@@ -21,9 +21,9 @@ jobs:
         uses: wei/git-sync@v3
         with:
           source_repo: "nginxinc/kubernetes-ingress"
-          source_branch: "master"
+          source_branch: "main"
           destination_repo: ${{ secrets.SYNC_DEST_REPO_URL }}
-          destination_branch: "master"
+          destination_branch: "main"
           ssh_private_key: ${{ secrets.SYNC_SSH_PRIVATE_KEY }}
 
   # This job open a PR to sync the generated CRD files across to nginx-ingress-operator

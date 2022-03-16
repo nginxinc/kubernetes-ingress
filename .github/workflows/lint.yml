@@ -3,7 +3,7 @@ name: Lint
 on:
   pull_request:
     branches:
-      - master
+      - main
     paths-ignore:
       - 'docs/**'
       - 'examples/**'
