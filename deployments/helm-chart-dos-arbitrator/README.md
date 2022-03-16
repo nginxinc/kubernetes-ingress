@@ -9,19 +9,18 @@ This chart deploys the NGINX App Protect Dos Arbitrator in your Kubernetes clust
   - A [Kubernetes Version Supported by the Ingress Controller](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#supported-kubernetes-versions)
   - Helm 3.0+.
   - Git.
-  
+
 ## Getting the Chart Sources
 
 This step is required if you're installing the chart using its sources. Additionally, the step is also required for managing the custom resource definitions (CRDs), which the Ingress Controller requires by default, or for upgrading/deleting the CRDs.
 
 1. Clone the Ingress controller repo:
     ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.1.1
     ```
 2. Change your working directory to /deployments/helm-chart-dos-arbitrator:
     ```console
     $ cd kubernetes-ingress/deployments/helm-chart-dos-arbitrator
-    $ git checkout v2.1.0
     ```
 
 ## Adding the Helm Repository
