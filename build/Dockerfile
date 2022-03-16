@@ -22,8 +22,8 @@ RUN apt-get update \
 FROM docker.io/library/nginx:1.21.6-alpine AS alpine
 
 RUN apk add --no-cache libcap \
-    # Temp fix for CVE-2022-0778
-    && apk add libcrypto1.1~1.1.1n-r0 libssl1.1~1.1.1n-r0
+	# Temp fix for CVE-2022-0778 and CVE-2022-23308
+	&& apk upgrade --no-cache libcrypto1.1 libssl1.1 libxml2 libxslt
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
@@ -35,8 +35,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
 	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r} \
-    # Temp fix for CVE-2022-0778
-    && apk add libcrypto1.1~1.1.1n-r0 libssl1.1~1.1.1n-r0
+	# Temp fix for CVE-2022-0778
+	&& apk upgrade --no-cache libcrypto1.1 libssl1.1
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
