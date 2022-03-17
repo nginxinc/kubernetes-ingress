@@ -7,10 +7,8 @@ This document explains how to use OpenTracing with the Ingress Controller.
 **Note**: The examples below use the snippets annotations, which are disabled by default. To use snippets, set the [`enable-snippets`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-enable-snippets) command-line argument.
 
 ## Prerequisites
-1. **Use the Ingress Controller image with OpenTracing.** The default Ingress Controller images don’t include the OpenTracing module. To use OpenTracing, you need to build the image with that module. Follow the build instructions to build the image using `openshift-image` for NGINX or `openshift-image-plus` for NGINX Plus.
-By default, the Dockerfiles install Jaeger as a tracer. However, it is possible to replace Jaeger with other supported [tracers](https://github.com/opentracing-contrib/nginx-opentracing#building-from-source). For that, please modify the Dockerfile accordingly:
-   1. Change the download line in the tracer-downloader stage of the Dockerfile to download the right tracer.
-   1. Edit the COPY line of the final image to copy the previously downloaded tracer to the image
+1. **Use the Ingress Controller image with OpenTracing.** You can find the images with NGINX or NGINX Plus with OpenTracing listed [here](/nginx-ingress-controller/technical-specifications/#supported-docker-images). Alternatively, you can follow the build instructions to build the image using `debian-image-opentracing` for NGINX or `debian-image-opentracing-plus` for NGINX Plus.
+[Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing) and [Datadog](https://github.com/DataDog/dd-opentracing-cpp/) tracers are installed by default.
 
 1. **Load the OpenTracing module.** You need to load the module with the configuration for the chosen tracer using the following ConfigMap keys:
    * `opentracing-tracer`: sets the path to the vendor tracer binary plugin. This is the path you used in the COPY line of step *ii* above.

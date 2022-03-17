@@ -35,7 +35,7 @@ The supported architecture is x86-64.
       - ``nginx/nginx-ingress:1.12.3-alpine``
     * - Debian-based image with Opentracing
       - ``nginx:1.21.6``, which is based on ``debian:buster-slim``
-      - OpenTracing API for C++ 1.5.1, NGINX plugin for OpenTracing, C++ OpenTracing binding for Jaeger 0.4.2
+      - NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog
       -
     * - Ubi-based image
       - ``registry.access.redhat.com/ubi8/ubi:8.3``
@@ -65,7 +65,7 @@ NGINX Plus images are not available through DockerHub.
       -
     * - Debian-based image with Opentracing
       - ``debian:buster-slim``
-      - NGINX Plus OpenTracing module, C++ OpenTracing binding for Jaeger 0.4.2
+      - NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog
     * - Ubi-based image
       - ``registry.access.redhat.com/ubi8/ubi:8.3``
       -

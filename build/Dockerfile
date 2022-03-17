@@ -152,79 +152,29 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # RUN update-ca-trust extract
 
 
-############################################# Build image for Opentracing Builder #############################################
-FROM debian as opentracing-builder
-ARG NGINX_OPENTRACING=0.10.0
-ARG OPENTRACING_VERSION=1.6.0
-
-RUN apt-get update && apt-get install -y -q --fix-missing --no-install-recommends \
-	autoconf \
-	automake \
-	build-essential \
-	cmake \
-	git \
-	libcurl4-openssl-dev \
-	libgeoip-dev \
-	liblmdb-dev \
-	libpcre3-dev \
-	libprotobuf-dev \
-	libssl-dev \
-	libtool \
-	libxml2-dev \
-	libyajl-dev \
-	pkgconf \
-	protobuf-compiler \
-	zlib1g-dev
-
-# Get nginx to build against
-RUN curl -sS -O -L http://nginx.org/download/nginx-${NGINX_VERSION}.tar.gz \
-	&& tar zxvf nginx-${NGINX_VERSION}.tar.gz && rm -f nginx-${NGINX_VERSION}.tar.gz \
-	&& git clone --branch v${NGINX_OPENTRACING} https://github.com/opentracing-contrib/nginx-opentracing.git \
-	&& git clone --branch v${OPENTRACING_VERSION} https://github.com/opentracing/opentracing-cpp.git
-
-WORKDIR /opentracing-cpp/.build
-RUN	cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DBUILD_STATIC_LIBS=OFF -DBUILD_MOCKTRACER=OFF -DENABLE_LINTING=OFF .. && \
-	make && make install
-
-WORKDIR /nginx-${NGINX_VERSION}
-RUN ./configure \
-	--with-compat --with-debug \
-	--add-dynamic-module=/nginx-opentracing/opentracing && \
-	make modules
+############################################# Base images containing libs for Opentracing #############################################
+FROM opentracing/nginx-opentracing:nginx-1.21.6 as opentracing-lib
 
 
-############################################# Build image for Trace downloader #############################################
-FROM debian AS tracer-downloader
-
-ARG JAEGER_VERSION=v0.4.2
-
-RUN apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates apt-transport-https wget \
-	&& wget -nv https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so
-
-
-############################################# Build image for Opentracing #############################################
+############################################# Build image for Debian with Opentracing #############################################
 FROM debian as opentracing
-ARG OPENTRACING_VERSION=1.6.0
 
-COPY --from=opentracing-builder /nginx-${NGINX_VERSION}/objs/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ngx_http_opentracing_module.so
-COPY --from=opentracing-builder /usr/local/lib/libopentracing.so.${OPENTRACING_VERSION} /usr/local/lib/libopentracing.so.1
-COPY --from=tracer-downloader /usr/local/lib/libjaegertracing_plugin.so /usr/local/lib/libjaegertracing_plugin.so
-
-RUN ldconfig
+RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libopentracing.so* /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	&& cp -av /tmp/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
+	&& ldconfig
 
 
 ############################################# Build image for Opentracing with NGINX Plus #############################################
 FROM debian-plus as opentracing-plus
-ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus-module-opentracing-${NGINX_PLUS_VERSION} \
+	&& apt-get install --no-install-recommends --no-install-suggests -y libcurl4 nginx-plus-module-opentracing \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY --from=tracer-downloader /usr/local/lib/libjaegertracing_plugin.so /usr/local/lib/libjaegertracing_plugin.so
+RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	&& ldconfig
 
 
 ############################################# Create common files for NGINX Plus #############################################
