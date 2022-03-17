@@ -235,7 +235,9 @@ Parameter | Description | Default
 `prometheus.port` | Configures the port to scrape the metrics. | 9113
 `prometheus.scheme` | Configures the HTTP scheme to use for connections to the Prometheus endpoint. | http
 `prometheus.secret` | The namespace / name of a Kubernetes TLS Secret. If specified, this secret is used to secure the Prometheus endpoint with TLS connections. | ""
-
+`nginxServiceMesh.enable` | Enable integration with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details. Requires `controller.nginxplus`. | false
+`nginxServiceMesh.enableEgress` | Enable NGINX Service Mesh workloads to route egress traffic through the Ingress controller. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/#enabling-egress) for more details. Requires `nginxServiceMesh.enable`. | false
 
 ## Notes
 * The values-icp.yaml file is used for deploying the Ingress controller on IBM Cloud Private. See the [blog post](https://www.nginx.com/blog/nginx-ingress-controller-ibm-cloud-private/) for more details.
+* The values-nsm.yaml file is used for deploying the Ingress controller with NGINX Service Mesh. See the NGINX Service Mesh [docs](https://docs.nginx.com/nginx-service-mesh/tutorials/kic/deploy-with-kic/) for more details.

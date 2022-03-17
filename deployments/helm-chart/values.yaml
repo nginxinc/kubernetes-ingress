@@ -331,3 +331,12 @@ prometheus:
 
   ## Configures the HTTP scheme used.
   scheme: http
+
+nginxServiceMesh:
+  ## Enables integration with NGINX Service Mesh.
+  ## Requires controller.nginxplus
+  enable: false
+
+  ## Enables NGINX Service Mesh workload to route egress traffic through the Ingress Controller.
+  ## Requires nginxServiceMesh.enable
+  enableEgress: false
