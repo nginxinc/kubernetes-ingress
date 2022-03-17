@@ -13,7 +13,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/spiffe/go-spiffe v1.1.0
 	k8s.io/api v0.23.4
-	k8s.io/apimachinery v0.23.4
+	k8s.io/apimachinery v0.23.5
 	k8s.io/client-go v0.23.4
 	k8s.io/code-generator v0.23.4
 	sigs.k8s.io/controller-tools v0.8.0
