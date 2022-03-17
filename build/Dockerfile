@@ -5,7 +5,7 @@ ARG UBI_VERSION=8
 ARG FILES=
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.21.0 AS debian
+FROM nginx:1.21.6 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
@@ -14,7 +14,7 @@ RUN apt-get update \
 
 ############################################# Base image for Alpine #############################################
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
-FROM docker.io/library/nginx:1.21.0-alpine AS alpine
+FROM docker.io/library/nginx:1.21.6-alpine AS alpine
 
 RUN apk add --no-cache libcap
 
