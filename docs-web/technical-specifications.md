@@ -45,7 +45,7 @@ The supported architecture is x86-64.
 
 ### Images with NGINX Plus
 
-All images include NGINX Plus R24.
+All images include NGINX Plus R26.
 The supported architecture is x86-64.
 
 NGINX Plus images are not available through DockerHub.
