@@ -16,7 +16,9 @@ RUN apt-get update \
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
 FROM docker.io/library/nginx:1.21.6-alpine AS alpine
 
-RUN apk add --no-cache libcap
+RUN apk add --no-cache libcap \
+	# temp fix for CVE-2022-0778
+	&& apk upgrade --no-cache libretls
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
@@ -40,8 +42,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temporary fix for CVE-2021-3520, CVE-2021-33560, CVE-2021-20231, CVE-2021-20305, CVE-2021-20305
-	&& apt-get install -y liblz4-1 libgcrypt20 libgnutls30 libhogweed4 libnettle6 \
 	&& curl -sSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -sSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent \"k8s-ic-$IC_VERSION${BUILD_OS##debian-plus}-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
@@ -216,6 +216,7 @@ ARG BUILD_OS
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
+ARG TARGETPLATFORM
 
 RUN mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/stream-conf.d \
 	&& setcap 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
@@ -243,9 +244,12 @@ LABEL org.opencontainers.image.documentation="https://docs.nginx.com/nginx-ingre
 LABEL org.opencontainers.image.source="https://github.com/nginxinc/kubernetes-ingress"
 LABEL org.opencontainers.image.vendor="NGINX Inc <kubernetes@nginx.com>"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
-LABEL org.opencontainers.image.version="${IC_VERSION}-${BUILD_OS}-${NGINX_PLUS_VERSION}${NGINX_VERSION}"
+LABEL org.opencontainers.image.version="${IC_VERSION}"
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
 LABEL org.opencontainers.image.created="${DATE}"
+LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
+LABEL org.nginx.kic.image.build.os="${BUILD_OS}"
+LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERSION}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################

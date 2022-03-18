@@ -70,7 +70,7 @@ jobs:
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
           - tag: ${{ needs.binary.outputs.version }}-ubi
             type: ubi
-            platforms: linux/arm64,linux/amd64
+            platforms: linux/arm64,linux/amd64,linux/s390x
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -109,6 +109,7 @@ jobs:
         with:
           file: build/Dockerfile
           context: '.'
+          no-cache: true
           cache-to: type=local,dest=/tmp/.buildx-${{ matrix.image }}-cache
           target: goreleaser
           tags: nginx/nginx-ingress:${{ matrix.tag }}
@@ -116,7 +117,7 @@ jobs:
           push: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
-            IC_VERSION=${GITHUB_REF#refs/tags/}
+            IC_VERSION=${{ GITHUB_REF#refs/tags/ }}
             NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
             DATE=${{ steps.commit.outputs.date }}
             GIT_COMMIT=${{ github.sha }}

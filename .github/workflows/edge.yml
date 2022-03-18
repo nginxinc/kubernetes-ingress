@@ -13,6 +13,7 @@ on:
   pull_request:
     branches:
       - master
+      - release-1.12
     paths-ignore:
       - 'docs/**'
       - 'docs-web/**'
@@ -30,7 +31,7 @@ defaults:
 
 env:
   DOCKER_BUILDKIT: 1
-  K8S_VERSION: 1.20.2
+  K8S_VERSION: 1.20.15
   K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   HELM_CHART_VERSION: 0.0.0-edge

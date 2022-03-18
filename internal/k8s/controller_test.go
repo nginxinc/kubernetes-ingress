@@ -422,7 +422,7 @@ func TestFindProbeForPods(t *testing.T) {
 				Containers: []v1.Container{
 					{
 						ReadinessProbe: &v1.Probe{
-							Handler: v1.Handler{
+							ProbeHandler: v1.ProbeHandler{
 								HTTPGet: &v1.HTTPGetAction{
 									Path: "/",
 									Host: "asdf.com",

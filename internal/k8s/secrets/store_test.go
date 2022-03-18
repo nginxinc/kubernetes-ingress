@@ -115,7 +115,7 @@ func TestAddOrUpdateSecret(t *testing.T) {
 	expectedSecretRef = &SecretReference{
 		Secret: invalidSecret,
 		Path:   "",
-		Error:  errors.New("Failed to validate TLS cert and key: asn1: syntax error: sequence truncated"),
+		Error:  errors.New("Failed to validate TLS cert and key: x509: malformed certificate"),
 	}
 	expectedManager = &fakeSecretFileManager{}
 
