@@ -4,7 +4,6 @@
   "description": "Documentation for NGINX Controller",
   "main": "index.js",
   "dependencies": {
-    "jquery": "^3.5.1",
     "redoc": "^2.0.0-rc.36"
   },
   "devDependencies": {

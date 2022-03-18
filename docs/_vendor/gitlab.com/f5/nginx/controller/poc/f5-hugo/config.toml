@@ -3,12 +3,6 @@
     dir = "/tmp/hugo_cache/modules"
     maxAge = -1
 
-[module]
-[[module.imports]]
-  path="github.com/jquery/jquery-dist"
-[[module.imports.mounts]]
-  source="dist/jquery.min.js"
-  target="assets/js/jquery.min.js"
 
 [frontmatter]
   lastmod = ["lastmod", ":fileModTime", ":default"]
