@@ -26,19 +26,19 @@ The supported architecture is x86-64.
       - Third-party modules
       - DockerHub image
     * - Debian-based image
-      - ``nginx:1.21.6``, which is based on ``debian:buster-slim``
+      - ``nginx:1.21.6``, which is based on ``debian:bullseye-slim``
       -
       - ``nginx/nginx-ingress:1.12.3``
     * - Alpine-based image
-      - ``nginx:1.21.6-alpine``, which is based on ``alpine:3.13``
+      - ``nginx:1.21.6-alpine``, which is based on ``alpine:3.15``
       -
       - ``nginx/nginx-ingress:1.12.3-alpine``
     * - Debian-based image with Opentracing
-      - ``nginx:1.21.6``, which is based on ``debian:buster-slim``
+      - ``nginx:1.21.6``, which is based on ``debian:bullseye-slim``
       - NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog
       -
     * - Ubi-based image
-      - ``registry.access.redhat.com/ubi8/ubi:8.3``
+      - ``redhat/ubi8-minimal``
       -
       - ``nginx/nginx-ingress:1.12.3-ubi``
 ```
@@ -58,16 +58,16 @@ NGINX Plus images are not available through DockerHub.
       - Base image
       - Third-party modules
     * - Alpine-based image
-      - ``alpine:3.13``
+      - ``alpine:3.15``
       -
     * - Debian-based image
-      - ``debian:buster-slim``
+      - ``debian:bullseye-slim``
       -
     * - Debian-based image with Opentracing
-      - ``debian:buster-slim``
+      - ``debian:bullseye-slim``
       - NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog
     * - Ubi-based image
-      - ``registry.access.redhat.com/ubi8/ubi:8.3``
+      - ``redhat/ubi8-minimal``
       -
     * - Debian-based image with App Protect
       - ``debian:buster-slim``
