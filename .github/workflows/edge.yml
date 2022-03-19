@@ -100,12 +100,9 @@ jobs:
     runs-on: ubuntu-20.04
     needs: binary
     strategy:
+      fail-fast: false
       matrix:
         image: [debian, alpine, opentracing, ubi]
-        ubi_version: ["8"]
-        include:
-          - image: ubi
-            ubi_version: 7
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -140,7 +137,6 @@ jobs:
           build-args: |
             BUILD_OS=${{ matrix.image }}
             NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
-            UBI_VERSION=${{ matrix.ubi_version }}
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -165,6 +161,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [binary, unit-tests]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - image: debian
@@ -328,6 +325,7 @@ jobs:
     needs: [smoke-tests, helm-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     strategy:
+      fail-fast: false
       matrix:
         include:
           - tag: edge

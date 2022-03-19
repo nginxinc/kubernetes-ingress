@@ -38,7 +38,7 @@ The supported architecture is x86-64.
       - NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog
       -
     * - Ubi-based image
-      - ``redhat/ubi8-minimal``
+      - ``redhat/ubi8``
       -
       - ``nginx/nginx-ingress:1.12.3-ubi``
 ```
@@ -67,13 +67,13 @@ NGINX Plus images are not available through DockerHub.
       - ``debian:bullseye-slim``
       - NGINX Plus OpenTracing module, OpenTracing tracers for Jaeger, Zipkin and Datadog
     * - Ubi-based image
-      - ``redhat/ubi8-minimal``
+      - ``redhat/ubi8``
       -
     * - Debian-based image with App Protect
       - ``debian:buster-slim``
       - NGINX Plus App Protect module
     * - Ubi-based image with App Protect
-      - ``registry.access.redhat.com/ubi7/ubi``
+      - ``redhat/ubi8``
       - NGINX Plus App Protect module
 ```
 

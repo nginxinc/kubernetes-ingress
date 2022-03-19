@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1.2
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=r26
-ARG UBI_VERSION=8
 ARG FILES=
 ARG DEBIAN_VERSION=bullseye-slim
 
@@ -81,18 +80,9 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # RUN update-ca-certificates
 
 
-############################################# Base image for UBI 8 #############################################
-FROM redhat/ubi8-minimal AS ubi-base-8
-
-
-############################################# Base image for UBI 7 #############################################
-FROM registry.access.redhat.com/ubi7/ubi AS ubi-base-7
-
-RUN yum install -y microdnf
-
-
 ############################################# Base image for UBI #############################################
-FROM ubi-base-${UBI_VERSION} AS ubi-base
+FROM redhat/ubi8 AS ubi-base
+ARG IC_VERSION
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 LABEL name="NGINX Ingress Controller" \
@@ -105,7 +95,9 @@ LABEL name="NGINX Ingress Controller" \
 	io.k8s.description="The NGINX Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
-RUN microdnf --nodocs install -y shadow-utils ca-certificates \
+RUN dnf --nodocs install -y shadow-utils ca-certificates \
+	# temporary fix for CVE-2022-24407
+	&& dnf --nodocs install -y cyrus-sasl-lib \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
@@ -121,7 +113,7 @@ RUN rpm --import https://nginx.org/keys/nginx_signing.key \
 	&& printf "%s\n" "[nginx]" "name=nginx repo" \
 	"baseurl=https://nginx.org/packages/mainline/centos/${version}/\$basearch/" \
 	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
-	&& microdnf --nodocs install -y nginx-${NGINX_VERSION} \
+	&& dnf --nodocs install -y nginx-${NGINX_VERSION} \
 	&& rm /etc/yum.repos.d/nginx.repo
 
 
@@ -132,8 +124,8 @@ ARG NGINX_PLUS_VERSION
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
-	&& curl -sS "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
-	&& microdnf --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION}
+	&& curl -fsSL "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
+	&& dnf --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION}
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect #############################################
@@ -143,16 +135,16 @@ ARG NGINX_PLUS_VERSION
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	--mount=type=secret,id=rhel_license,dst=/tmp/rhel_license,mode=0644 \
-	set -x \
-	&& source /tmp/rhel_license \
-	&& curl -sS https://cs.nginx.com/static/files/app-protect-7.repo > /etc/yum.repos.d/app-protect-7.repo \
+	source /tmp/rhel_license \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
-	&& subscription-manager attach --auto \
-	&& subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
-	&& rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-	&& yum clean all \
-	&& yum install -y nginx-plus-module-appprotect-${NGINX_PLUS_VERSION} $(repoquery app-protect-${NGINX_PLUS_VERSION#r}*) app-protect-attack-signatures app-protect-threat-campaigns \
-	&& rm /etc/yum.repos.d/app-protect-7.repo
+	&& subscription-manager attach \
+	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
+	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
+	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-8.repo > /etc/yum.repos.d/app-protect-8.repo \
+	&& dnf --nodocs install -y app-protect-${NGINX_PLUS_VERSION#r}* app-protect-attack-signatures app-protect-threat-campaigns \
+	&& rm /etc/yum.repos.d/app-protect*.repo \
+	&& subscription-manager unregister \
+	&& dnf clean all && rm -rf /var/cache/dnf
 
 # Uncomment the lines below if you want to install a custom CA certificate
 # COPY build/*.crt  /etc/pki/ca-trust/source/anchors/

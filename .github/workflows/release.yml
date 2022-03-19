@@ -60,6 +60,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: [binary]
     strategy:
+      fail-fast: false
       matrix:
         include:
           - tag: ${{ needs.binary.outputs.version }}
