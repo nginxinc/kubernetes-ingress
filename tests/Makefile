@@ -46,8 +46,8 @@ run-tests-in-kind: ## Run tests in Kind
 
 .PHONY: create-kind-cluster
 create-kind-cluster: ## Create Kind cluster
-	$(eval K8S_VERSION=$(shell grep "K8S_VERSION:" ../.github/workflows/ci.yml | awk -F" " '{print $$2}'))
-	kind create cluster --image kindest/node:v$(K8S_VERSION)
+	$(eval KIND_IMAGE=$(shell grep -m1 'FROM kindest/node' <docker/Dockerfile | awk -F'[ ]' '{print $$2}'))
+	kind create cluster --image $(KIND_IMAGE)
 	kind export kubeconfig --kubeconfig $(KIND_KUBE_CONFIG_FOLDER)/config
 
 .PHONY: delete-kind-cluster

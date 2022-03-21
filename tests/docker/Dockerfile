@@ -1,4 +1,7 @@
 # syntax=docker/dockerfile:1.3
+# this is here so we can grab the latest version of kind and have dependabot keep it up to date
+FROM kindest/node:v1.23.4
+
 FROM python:3.10
 
 RUN apt-get update \
