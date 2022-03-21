@@ -459,7 +459,7 @@ func (lm *LocalManager) SetOpenTracing(openTracing bool) {
 func (lm *LocalManager) AppProtectAgentStart(apaDone chan error, logLevel string) {
 	glog.V(3).Info("Setting log level for App Protect - ", logLevel)
 	appProtectLogLevelCmdfull := fmt.Sprintf("%v %v", appProtectLogLevelCmd, logLevel)
-	logLevelCmd := exec.Command("sh", "-c", appProtectLogLevelCmdfull)
+	logLevelCmd := exec.Command("sh", "-c", appProtectLogLevelCmdfull) // #nosec G204
 	if err := logLevelCmd.Run(); err != nil {
 		glog.Fatalf("Failed to set log level for AppProtect: %v", err)
 	}
