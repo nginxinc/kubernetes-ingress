@@ -1,6 +1,6 @@
 ---
 title: Installation with Helm
-description: "This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using Helm." 
+description: "This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using Helm."
 weight: 1900
 doctypes: [""]
 toc: true
@@ -28,12 +28,11 @@ This step is required if you're installing the chart using its sources. Addition
 
 1. Clone the Ingress controller repo:
     ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.1.1
     ```
 2. Change your working directory to /deployments/helm-chart:
     ```console
     $ cd kubernetes-ingress/deployments/helm-chart
-    $ git checkout v2.1.1
     ```
 
 ## Adding the Helm Repository
