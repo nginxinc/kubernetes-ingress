@@ -9,10 +9,6 @@ FROM nginx:1.21.6 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temporary fix for CVE-2022-22822
-	&& apt-get install -y libexpat1 \
-	# temporary fix for CVE-2022-0778 and CVE-2021-4160
-	&& apt-get install -y libssl1.1 openssl \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& echo $NGINX_VERSION > nginx_version
 
@@ -22,8 +18,8 @@ RUN apt-get update \
 FROM docker.io/library/nginx:1.21.6-alpine AS alpine
 
 RUN apk add --no-cache libcap \
-	# Temp fix for CVE-2022-0778 and CVE-2022-23308
-	&& apk upgrade --no-cache libcrypto1.1 libssl1.1 libxml2 libxslt
+	# Temp fix for CVE-2022-0778
+	&& apk upgrade --no-cache libretls
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
@@ -36,7 +32,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
 	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r} \
 	# Temp fix for CVE-2022-0778
-	&& apk upgrade --no-cache libcrypto1.1 libssl1.1
+	&& apk upgrade --no-cache libretls
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
@@ -50,10 +46,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temporary fix for CVE-2022-22822
-	&& apt-get install -y libexpat1 \
-	# temporary fix for CVE-2022-0778 and CVE-2021-4160
-	&& apt-get install -y libssl1.1 openssl \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
@@ -113,8 +105,8 @@ LABEL name="NGINX Ingress Controller" \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 RUN dnf --nodocs install -y shadow-utils ca-certificates \
-	# temporary fix for CVE-2022-24407
-	&& dnf --nodocs install -y cyrus-sasl-lib \
+	# temporary fix for CVE-2022-24407, CVE-2022-25315 and CVE-2022-23308
+	&& dnf --nodocs upgrade -y cyrus-sasl-lib expat libxml2 \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
