@@ -28,11 +28,11 @@ The supported architecture is x86-64.
     * - Debian-based image
       - ``nginx:1.21.6``, which is based on ``debian:bullseye-slim``
       -
-      - ``nginx/nginx-ingress:1.12.3``
+      - ``nginx/nginx-ingress:1.12.4``
     * - Alpine-based image
       - ``nginx:1.21.6-alpine``, which is based on ``alpine:3.15``
       -
-      - ``nginx/nginx-ingress:1.12.3-alpine``
+      - ``nginx/nginx-ingress:1.12.4-alpine``
     * - Debian-based image with Opentracing
       - ``nginx:1.21.6``, which is based on ``debian:bullseye-slim``
       - NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog
@@ -40,7 +40,7 @@ The supported architecture is x86-64.
     * - Ubi-based image
       - ``redhat/ubi8``
       -
-      - ``nginx/nginx-ingress:1.12.3-ubi``
+      - ``nginx/nginx-ingress:1.12.4-ubi``
 ```
 
 ### Images with NGINX Plus
