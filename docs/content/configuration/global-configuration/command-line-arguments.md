@@ -338,6 +338,17 @@ Requires [-nginx-plus](#cmdoption-nginx-plus).
 * If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.  
 
 &nbsp;  
+<a name="cmdoption-app-protect-log-level"></a.> 
+
+### -app-protect-log-level `<string>`
+
+Sets log level for App Protect. Allowed values: fatal, error, warn, info, debug, trace.
+
+Requires [-nginx-plus](#cmdoption-nginx-plus) and [-enable-app-protect](#cmdoption-enable-app-protect).
+
+* If the argument is set, but `nginx-plus` and `enable-app-protect` are set to false, the Ingress Controller will fail to start.  
+
+&nbsp;  
 <a name="cmdoption-enable-app-protect-dos"></a> 
 
 ### -enable-app-protect-dos

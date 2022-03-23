@@ -8,6 +8,7 @@ import (
 )
 
 func TestValidateJWKSecret(t *testing.T) {
+	t.Parallel()
 	secret := &v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "jwk-secret",
@@ -26,6 +27,7 @@ func TestValidateJWKSecret(t *testing.T) {
 }
 
 func TestValidateJWKSecretFails(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		secret *v1.Secret
 		msg    string
@@ -64,6 +66,7 @@ func TestValidateJWKSecretFails(t *testing.T) {
 }
 
 func TestValidateCASecret(t *testing.T) {
+	t.Parallel()
 	secret := &v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ingress-mtls-secret",
@@ -82,6 +85,7 @@ func TestValidateCASecret(t *testing.T) {
 }
 
 func TestValidateCASecretFails(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		secret *v1.Secret
 		msg    string
@@ -159,6 +163,7 @@ func TestValidateCASecretFails(t *testing.T) {
 }
 
 func TestValidateTLSSecret(t *testing.T) {
+	t.Parallel()
 	secret := &v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "tls-secret",
@@ -178,6 +183,7 @@ func TestValidateTLSSecret(t *testing.T) {
 }
 
 func TestValidateTLSSecretFails(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		secret *v1.Secret
 		msg    string
@@ -231,6 +237,7 @@ func TestValidateTLSSecretFails(t *testing.T) {
 }
 
 func TestValidateOIDCSecret(t *testing.T) {
+	t.Parallel()
 	secret := &v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "oidc-secret",
@@ -249,6 +256,7 @@ func TestValidateOIDCSecret(t *testing.T) {
 }
 
 func TestValidateOIDCSecretFails(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		secret *v1.Secret
 		msg    string
@@ -313,6 +321,7 @@ func TestValidateOIDCSecretFails(t *testing.T) {
 }
 
 func TestValidateSecret(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		secret *v1.Secret
 		msg    string
@@ -381,6 +390,7 @@ func TestValidateSecret(t *testing.T) {
 }
 
 func TestValidateSecretFails(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		secret *v1.Secret
 		msg    string
@@ -429,6 +439,7 @@ func TestValidateSecretFails(t *testing.T) {
 }
 
 func TestHasCorrectSecretType(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		secretType v1.SecretType
 		expected   bool

@@ -13,6 +13,7 @@ func createTransportServerValidator() *TransportServerValidator {
 }
 
 func TestValidateTransportServer(t *testing.T) {
+	t.Parallel()
 	ts := v1alpha1.TransportServer{
 		Spec: v1alpha1.TransportServerSpec{
 			Listener: v1alpha1.TransportServerListener{
@@ -41,6 +42,7 @@ func TestValidateTransportServer(t *testing.T) {
 }
 
 func TestValidateTransportServerFails(t *testing.T) {
+	t.Parallel()
 	ts := v1alpha1.TransportServer{
 		Spec: v1alpha1.TransportServerSpec{
 			Listener: v1alpha1.TransportServerListener{

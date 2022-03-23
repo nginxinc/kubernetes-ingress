@@ -206,6 +206,7 @@ type MainConfig struct {
 	AppProtectCookieSeed               string
 	AppProtectCPUThresholds            string
 	AppProtectPhysicalMemoryThresholds string
+	AppProtectReconnectPeriod          string
 	AppProtectDosLoadModule            bool
 	AppProtectDosLogFormat             []string
 	AppProtectDosLogFormatEscaping     string

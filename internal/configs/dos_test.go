@@ -10,6 +10,7 @@ import (
 )
 
 func TestUpdateApDosResource(t *testing.T) {
+	t.Parallel()
 	appProtectDosPolicy := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{

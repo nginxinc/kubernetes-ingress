@@ -23,12 +23,13 @@ This step is required if you're installing the chart using its sources. Addition
 
 1. Clone the Ingress controller repo:
     ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    $ git clone https://github.com/nginxinc/kubernetes-ingress --branch v2.1.1
     ```
+    **Note**: If you want to use the experimental repository (`edge`), remove the `--branch` flag and value.
+
 2. Change your working directory to /deployments/helm-chart:
     ```console
     $ cd kubernetes-ingress/deployments/helm-chart
-    $ git checkout v2.1.1
     ```
 
 ## Adding the Helm Repository
@@ -39,6 +40,8 @@ This step is required if you're installing the chart via the helm repository.
 $ helm repo add nginx-stable https://helm.nginx.com/stable
 $ helm repo update
 ```
+
+**Note**: If you want to use the experimental repository, replace `stable` with `edge`.
 
 ## Installing the Chart
 
@@ -62,7 +65,7 @@ For NGINX Plus: (assuming you have pushed the Ingress controller image `nginx-pl
 $ helm install my-release nginx-stable/nginx-ingress --set controller.image.repository=myregistry.example.com/nginx-plus-ingress --set controller.nginxplus=true
 ```
 
-**Note**: If you wish to use the experimental repository, replace `stable` with `edge` and add the `--devel` flag.
+**Note**: If you want to use the experimental repository, replace `stable` with `edge` and add the `--devel` flag.
 
 ### Installing Using Chart Sources
 
@@ -78,7 +81,7 @@ For NGINX Plus:
 $ helm install my-release -f values-plus.yaml .
 ```
 
-**Note**: If you wish to use the experimental repository, replace the value in the `tag` field inside the yaml files with `edge`.
+**Note**: If you want to use the experimental repository, replace the value in the `tag` field inside the yaml files with `edge`.
 
 The command deploys the Ingress controller in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
 

@@ -25,6 +25,7 @@ func createPointerFromInt(n int) *int {
 }
 
 func TestVirtualServerExString(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		input    *VirtualServerEx
 		expected string
@@ -59,6 +60,7 @@ func TestVirtualServerExString(t *testing.T) {
 }
 
 func TestGenerateEndpointsKey(t *testing.T) {
+	t.Parallel()
 	serviceNamespace := "default"
 	serviceName := "test"
 	var port uint16 = 80
@@ -87,6 +89,7 @@ func TestGenerateEndpointsKey(t *testing.T) {
 }
 
 func TestUpstreamNamerForVirtualServer(t *testing.T) {
+	t.Parallel()
 	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -105,6 +108,7 @@ func TestUpstreamNamerForVirtualServer(t *testing.T) {
 }
 
 func TestUpstreamNamerForVirtualServerRoute(t *testing.T) {
+	t.Parallel()
 	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -129,6 +133,7 @@ func TestUpstreamNamerForVirtualServerRoute(t *testing.T) {
 }
 
 func TestVariableNamerSafeNsName(t *testing.T) {
+	t.Parallel()
 	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe-test",
@@ -150,6 +155,7 @@ func TestVariableNamerSafeNsName(t *testing.T) {
 }
 
 func TestVariableNamer(t *testing.T) {
+	t.Parallel()
 	virtualServer := conf_v1.VirtualServer{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "cafe",
@@ -192,6 +198,7 @@ func TestVariableNamer(t *testing.T) {
 }
 
 func TestGenerateVirtualServerConfig(t *testing.T) {
+	t.Parallel()
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -658,6 +665,7 @@ func TestGenerateVirtualServerConfig(t *testing.T) {
 }
 
 func TestGenerateVirtualServerConfigGrpcErrorPageWarning(t *testing.T) {
+	t.Parallel()
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -1023,6 +1031,7 @@ func TestGenerateVirtualServerConfigGrpcErrorPageWarning(t *testing.T) {
 }
 
 func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
+	t.Parallel()
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -1132,6 +1141,7 @@ func TestGenerateVirtualServerConfigWithSpiffeCerts(t *testing.T) {
 }
 
 func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
+	t.Parallel()
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -1418,6 +1428,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithSplits(t *testing.T) {
 }
 
 func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
+	t.Parallel()
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -1736,6 +1747,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithMatches(t *testing.T) {
 }
 
 func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) {
+	t.Parallel()
 	dosResources := map[string]*appProtectDosResource{
 		"/coffee": {
 			AppProtectDosEnable:          "on",
@@ -2062,6 +2074,7 @@ func TestGenerateVirtualServerConfigForVirtualServerRoutesWithDos(t *testing.T) 
 }
 
 func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
+	t.Parallel()
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -2536,6 +2549,7 @@ func TestGenerateVirtualServerConfigForVirtualServerWithReturns(t *testing.T) {
 }
 
 func TestGeneratePolicies(t *testing.T) {
+	t.Parallel()
 	ownerDetails := policyOwnerDetails{
 		owner:          nil, // nil is OK for the unit test
 		ownerNamespace: "default",
@@ -2945,6 +2959,7 @@ func TestGeneratePolicies(t *testing.T) {
 }
 
 func TestGeneratePoliciesFails(t *testing.T) {
+	t.Parallel()
 	ownerDetails := policyOwnerDetails{
 		owner:          nil, // nil is OK for the unit test
 		ownerNamespace: "default",
@@ -4081,6 +4096,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 }
 
 func TestRemoveDuplicates(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		rlz      []version2.LimitReqZone
 		expected []version2.LimitReqZone
@@ -4122,6 +4138,7 @@ func TestRemoveDuplicates(t *testing.T) {
 }
 
 func TestAddPoliciesCfgToLocations(t *testing.T) {
+	t.Parallel()
 	cfg := policiesCfg{
 		Allow: []string{"127.0.0.1"},
 		Deny:  []string{"127.0.0.2"},
@@ -4154,6 +4171,7 @@ func TestAddPoliciesCfgToLocations(t *testing.T) {
 }
 
 func TestGenerateUpstream(t *testing.T) {
+	t.Parallel()
 	name := "test-upstream"
 	upstream := conf_v1.Upstream{Service: name, Port: 80}
 	endpoints := []string{
@@ -4198,6 +4216,7 @@ func TestGenerateUpstream(t *testing.T) {
 }
 
 func TestGenerateUpstreamWithKeepalive(t *testing.T) {
+	t.Parallel()
 	name := "test-upstream"
 	noKeepalive := 0
 	keepalive := 32
@@ -4277,6 +4296,7 @@ func TestGenerateUpstreamWithKeepalive(t *testing.T) {
 }
 
 func TestGenerateUpstreamForExternalNameService(t *testing.T) {
+	t.Parallel()
 	name := "test-upstream"
 	endpoints := []string{"example.com"}
 	upstream := conf_v1.Upstream{Service: name}
@@ -4307,6 +4327,7 @@ func TestGenerateUpstreamForExternalNameService(t *testing.T) {
 }
 
 func TestGenerateUpstreamWithNTLM(t *testing.T) {
+	t.Parallel()
 	name := "test-upstream"
 	upstream := conf_v1.Upstream{Service: name, Port: 80, NTLM: true}
 	endpoints := []string{
@@ -4352,6 +4373,7 @@ func TestGenerateUpstreamWithNTLM(t *testing.T) {
 }
 
 func TestGenerateProxyPass(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		tlsEnabled   bool
 		upstreamName string
@@ -4393,6 +4415,7 @@ func TestGenerateProxyPass(t *testing.T) {
 }
 
 func TestGenerateProxyPassProtocol(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		upstream conf_v1.Upstream
 		expected string
@@ -4420,6 +4443,7 @@ func TestGenerateProxyPassProtocol(t *testing.T) {
 }
 
 func TestGenerateGRPCPass(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		grpcEnabled  bool
 		tlsEnabled   bool
@@ -4455,6 +4479,7 @@ func TestGenerateGRPCPass(t *testing.T) {
 }
 
 func TestGenerateGRPCPassProtocol(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		upstream conf_v1.Upstream
 		expected string
@@ -4482,6 +4507,7 @@ func TestGenerateGRPCPassProtocol(t *testing.T) {
 }
 
 func TestGenerateString(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		inputS   string
 		expected string
@@ -4505,6 +4531,7 @@ func TestGenerateString(t *testing.T) {
 }
 
 func TestGenerateSnippets(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		enableSnippets bool
 		s              string
@@ -4545,6 +4572,7 @@ func TestGenerateSnippets(t *testing.T) {
 }
 
 func TestGenerateBuffer(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		inputS   *conf_v1.UpstreamBuffers
 		expected string
@@ -4568,6 +4596,7 @@ func TestGenerateBuffer(t *testing.T) {
 }
 
 func TestGenerateLocationForProxying(t *testing.T) {
+	t.Parallel()
 	cfgParams := ConfigParams{
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
@@ -4613,6 +4642,7 @@ func TestGenerateLocationForProxying(t *testing.T) {
 }
 
 func TestGenerateLocationForGrpcProxying(t *testing.T) {
+	t.Parallel()
 	cfgParams := ConfigParams{
 		ProxyConnectTimeout:  "30s",
 		ProxyReadTimeout:     "31s",
@@ -4656,6 +4686,7 @@ func TestGenerateLocationForGrpcProxying(t *testing.T) {
 }
 
 func TestGenerateReturnBlock(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		text        string
 		code        int
@@ -4691,6 +4722,7 @@ func TestGenerateReturnBlock(t *testing.T) {
 }
 
 func TestGenerateLocationForReturn(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		actionReturn           *conf_v1.ActionReturn
 		expectedLocation       version2.Location
@@ -4774,6 +4806,7 @@ func TestGenerateLocationForReturn(t *testing.T) {
 }
 
 func TestGenerateLocationForRedirect(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		redirect *conf_v1.ActionRedirect
 		expected version2.Location
@@ -4832,6 +4865,7 @@ func TestGenerateLocationForRedirect(t *testing.T) {
 }
 
 func TestGenerateSSLConfig(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		inputTLS         *conf_v1.TLS
 		inputSecretRefs  map[string]*secrets.SecretReference
@@ -4961,6 +4995,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 }
 
 func TestGenerateRedirectConfig(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		inputTLS *conf_v1.TLS
 		expected *version2.TLSRedirect
@@ -5025,6 +5060,7 @@ func TestGenerateRedirectConfig(t *testing.T) {
 }
 
 func TestGenerateTLSRedirectBasedOn(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		basedOn  string
 		expected string
@@ -5051,6 +5087,7 @@ func TestGenerateTLSRedirectBasedOn(t *testing.T) {
 }
 
 func TestCreateUpstreamsForPlus(t *testing.T) {
+	t.Parallel()
 	virtualServerEx := VirtualServerEx{
 		VirtualServer: &conf_v1.VirtualServer{
 			ObjectMeta: meta_v1.ObjectMeta{
@@ -5239,6 +5276,7 @@ func TestCreateUpstreamsForPlus(t *testing.T) {
 }
 
 func TestCreateUpstreamServersConfigForPlus(t *testing.T) {
+	t.Parallel()
 	upstream := version2.Upstream{
 		Servers: []version2.UpstreamServer{
 			{
@@ -5265,6 +5303,7 @@ func TestCreateUpstreamServersConfigForPlus(t *testing.T) {
 }
 
 func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
+	t.Parallel()
 	noUpstream := version2.Upstream{}
 	expected := nginx.ServerConfig{}
 
@@ -5275,6 +5314,7 @@ func TestCreateUpstreamServersConfigForPlusNoUpstreams(t *testing.T) {
 }
 
 func TestGenerateSplits(t *testing.T) {
+	t.Parallel()
 	originalPath := "/path"
 	splits := []conf_v1.Split{
 		{
@@ -5495,6 +5535,7 @@ func TestGenerateSplits(t *testing.T) {
 }
 
 func TestGenerateDefaultSplitsConfig(t *testing.T) {
+	t.Parallel()
 	route := conf_v1.Route{
 		Path: "/",
 		Splits: []conf_v1.Split{
@@ -5603,6 +5644,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 }
 
 func TestGenerateMatchesConfig(t *testing.T) {
+	t.Parallel()
 	route := conf_v1.Route{
 		Path: "/",
 		Matches: []conf_v1.Match{
@@ -6015,6 +6057,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 }
 
 func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
+	t.Parallel()
 	route := conf_v1.Route{
 		Path: "/",
 		Matches: []conf_v1.Match{
@@ -6424,6 +6467,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 }
 
 func TestGenerateValueForMatchesRouteMap(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		input              string
 		expectedValue      string
@@ -6488,6 +6532,7 @@ func TestGenerateValueForMatchesRouteMap(t *testing.T) {
 }
 
 func TestGenerateParametersForMatchesRouteMap(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		inputMatchedValue     string
 		inputSuccessfulResult string
@@ -6532,6 +6577,7 @@ func TestGenerateParametersForMatchesRouteMap(t *testing.T) {
 }
 
 func TestGetNameForSourceForMatchesRouteMapFromCondition(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		input    conf_v1.Condition
 		expected string
@@ -6571,6 +6617,7 @@ func TestGetNameForSourceForMatchesRouteMapFromCondition(t *testing.T) {
 }
 
 func TestGenerateLBMethod(t *testing.T) {
+	t.Parallel()
 	defaultMethod := "random two least_conn"
 
 	tests := []struct {
@@ -6599,6 +6646,7 @@ func TestGenerateLBMethod(t *testing.T) {
 }
 
 func TestUpstreamHasKeepalive(t *testing.T) {
+	t.Parallel()
 	noKeepalive := 0
 	keepalive := 32
 
@@ -6637,6 +6685,7 @@ func TestUpstreamHasKeepalive(t *testing.T) {
 }
 
 func TestNewHealthCheckWithDefaults(t *testing.T) {
+	t.Parallel()
 	upstreamName := "test-upstream"
 	baseCfgParams := &ConfigParams{
 		ProxySendTimeout:    "5s",
@@ -6665,6 +6714,7 @@ func TestNewHealthCheckWithDefaults(t *testing.T) {
 }
 
 func TestGenerateHealthCheck(t *testing.T) {
+	t.Parallel()
 	upstreamName := "test-upstream"
 	tests := []struct {
 		upstream     conf_v1.Upstream
@@ -6846,6 +6896,7 @@ func TestGenerateHealthCheck(t *testing.T) {
 }
 
 func TestGenerateGrpcHealthCheck(t *testing.T) {
+	t.Parallel()
 	upstreamName := "test-upstream"
 	tests := []struct {
 		upstream     conf_v1.Upstream
@@ -6946,6 +6997,7 @@ func TestGenerateGrpcHealthCheck(t *testing.T) {
 }
 
 func TestGenerateEndpointsForUpstream(t *testing.T) {
+	t.Parallel()
 	name := "test"
 	namespace := "test-namespace"
 
@@ -7144,6 +7196,7 @@ func TestGenerateEndpointsForUpstream(t *testing.T) {
 }
 
 func TestGenerateSlowStartForPlusWithInCompatibleLBMethods(t *testing.T) {
+	t.Parallel()
 	serviceName := "test-slowstart-with-incompatible-LBMethods"
 	upstream := conf_v1.Upstream{Service: serviceName, Port: 80, SlowStart: "10s"}
 	expected := ""
@@ -7206,6 +7259,7 @@ func TestGenerateSlowStartForPlus(t *testing.T) {
 }
 
 func TestCreateEndpointsFromUpstream(t *testing.T) {
+	t.Parallel()
 	ups := version2.Upstream{
 		Servers: []version2.UpstreamServer{
 			{
@@ -7229,6 +7283,7 @@ func TestCreateEndpointsFromUpstream(t *testing.T) {
 }
 
 func TestGenerateUpstreamWithQueue(t *testing.T) {
+	t.Parallel()
 	serviceName := "test-queue"
 
 	tests := []struct {
@@ -7301,6 +7356,7 @@ func TestGenerateUpstreamWithQueue(t *testing.T) {
 }
 
 func TestGenerateQueueForPlus(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		upstreamQueue *conf_v1.UpstreamQueue
 		expected      *version2.Queue
@@ -7332,6 +7388,7 @@ func TestGenerateQueueForPlus(t *testing.T) {
 }
 
 func TestGenerateSessionCookie(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		sc       *conf_v1.SessionCookie
 		expected *version2.SessionCookie
@@ -7362,6 +7419,7 @@ func TestGenerateSessionCookie(t *testing.T) {
 }
 
 func TestGeneratePath(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		path     string
 		expected string
@@ -7393,6 +7451,7 @@ func TestGeneratePath(t *testing.T) {
 }
 
 func TestGenerateErrorPageName(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		routeIndex int
 		index      int
@@ -7424,6 +7483,7 @@ func TestGenerateErrorPageName(t *testing.T) {
 }
 
 func TestGenerateErrorPageCodes(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		codes    []int
 		expected string
@@ -7447,6 +7507,7 @@ func TestGenerateErrorPageCodes(t *testing.T) {
 }
 
 func TestGenerateErrorPages(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		upstreamName string
 		errorPages   []conf_v1.ErrorPage
@@ -7508,6 +7569,7 @@ func TestGenerateErrorPages(t *testing.T) {
 }
 
 func TestGenerateErrorPageLocations(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		upstreamName string
 		errorPages   []conf_v1.ErrorPage
@@ -7579,6 +7641,7 @@ func TestGenerateErrorPageLocations(t *testing.T) {
 }
 
 func TestGenerateProxySSLName(t *testing.T) {
+	t.Parallel()
 	result := generateProxySSLName("coffee-v1", "default")
 	if result != "coffee-v1.default.svc" {
 		t.Errorf("generateProxySSLName(coffee-v1, default) returned %v but expected coffee-v1.default.svc", result)
@@ -7586,6 +7649,7 @@ func TestGenerateProxySSLName(t *testing.T) {
 }
 
 func TestIsTLSEnabled(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		upstream   conf_v1.Upstream
 		spiffeCert bool
@@ -7638,6 +7702,7 @@ func TestIsTLSEnabled(t *testing.T) {
 }
 
 func TestGenerateRewrites(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		path         string
 		proxy        *conf_v1.ActionProxy
@@ -7726,6 +7791,7 @@ func TestGenerateRewrites(t *testing.T) {
 }
 
 func TestGenerateProxyPassRewrite(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		path     string
 		proxy    *conf_v1.ActionProxy
@@ -7775,6 +7841,7 @@ func TestGenerateProxyPassRewrite(t *testing.T) {
 }
 
 func TestGenerateProxySetHeaders(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		proxy    *conf_v1.ActionProxy
 		expected []version2.Header
@@ -7913,6 +7980,7 @@ func TestGenerateProxySetHeaders(t *testing.T) {
 }
 
 func TestGenerateProxyPassRequestHeaders(t *testing.T) {
+	t.Parallel()
 	passTrue := true
 	passFalse := false
 	tests := []struct {
@@ -7962,6 +8030,7 @@ func TestGenerateProxyPassRequestHeaders(t *testing.T) {
 }
 
 func TestGenerateProxyHideHeaders(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		proxy    *conf_v1.ActionProxy
 		expected []string
@@ -7994,6 +8063,7 @@ func TestGenerateProxyHideHeaders(t *testing.T) {
 }
 
 func TestGenerateProxyPassHeaders(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		proxy    *conf_v1.ActionProxy
 		expected []string
@@ -8026,6 +8096,7 @@ func TestGenerateProxyPassHeaders(t *testing.T) {
 }
 
 func TestGenerateProxyIgnoreHeaders(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		proxy    *conf_v1.ActionProxy
 		expected string
@@ -8059,6 +8130,7 @@ func TestGenerateProxyIgnoreHeaders(t *testing.T) {
 }
 
 func TestGenerateProxyAddHeaders(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		proxy    *conf_v1.ActionProxy
 		expected []version2.AddHeader
@@ -8120,6 +8192,7 @@ func TestGenerateProxyAddHeaders(t *testing.T) {
 }
 
 func TestGetUpstreamResourceLabels(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		owner    runtime.Object
 		expected version2.UpstreamLabels
@@ -8164,6 +8237,7 @@ func TestGetUpstreamResourceLabels(t *testing.T) {
 }
 
 func TestAddWafConfig(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		wafInput     *conf_v1.WAF
 		polKey       string
@@ -8346,6 +8420,7 @@ func TestAddWafConfig(t *testing.T) {
 }
 
 func TestGenerateTime(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		value, expected string
 	}{
@@ -8376,6 +8451,7 @@ func TestGenerateTime(t *testing.T) {
 }
 
 func TestGenerateTimeWithDefault(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		value, defaultValue, expected string
 	}{

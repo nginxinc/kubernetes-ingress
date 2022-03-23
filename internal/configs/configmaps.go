@@ -499,6 +499,14 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 				glog.Error("ConfigMap Key 'app-protect-physical-memory-thresholds' must follow pattern: 'high=<0 - 100> low=<0 - 100>'. Ignoring.")
 			}
 		}
+		if appProtectReconnectPeriod, exists := cfgm.Data["app-protect-reconnect-period-seconds"]; exists {
+			period, err := ParseFloat64(appProtectReconnectPeriod)
+			if err == nil && period > 0 && period <= 60 {
+				cfgParams.MainAppProtectReconnectPeriod = appProtectReconnectPeriod
+			} else {
+				glog.Error("ConfigMap Key 'app-protect-reconnect-period-second' must have value between '0' and '60'. '0' is illegal. Ignoring.")
+			}
+		}
 	}
 
 	if hasAppProtectDos {
@@ -579,6 +587,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		AppProtectCookieSeed:               config.MainAppProtectCookieSeed,
 		AppProtectCPUThresholds:            config.MainAppProtectCPUThresholds,
 		AppProtectPhysicalMemoryThresholds: config.MainAppProtectPhysicalMemoryThresholds,
+		AppProtectReconnectPeriod:          config.MainAppProtectReconnectPeriod,
 		AppProtectDosLogFormat:             config.MainAppProtectDosLogFormat,
 		AppProtectDosLogFormatEscaping:     config.MainAppProtectDosLogFormatEscaping,
 		InternalRouteServer:                staticCfgParams.EnableInternalRoutes,

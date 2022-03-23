@@ -43,9 +43,9 @@ Read [this doc](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-plus
 
 1. Install the NGINX Ingress controller using the Kubernetes [manifests](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) or the [helm chart](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/).
 1. Configure load balancing for a simple web application:
-    * Use the Ingress resource. See the [Cafe example](examples/complete-example).
-    * Or the VirtualServer resource. See the [Basic configuration](examples/custom-resources/basic-configuration) example.
-1. See additional configuration [examples](examples).
+    * Use the Ingress resource. See the [Cafe example](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/complete-example).
+    * Or the VirtualServer resource. See the [Basic configuration](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples/custom-resources/basic-configuration) example.
+1. See additional configuration [examples](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples).
 1. Learn more about all available configuration and customization in the [docs](https://docs.nginx.com/nginx-ingress-controller/).
 
 

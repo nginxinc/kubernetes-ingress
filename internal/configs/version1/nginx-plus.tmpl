@@ -90,6 +90,7 @@ http {
     {{if .AppProtectCookieSeed}}app_protect_cookie_seed {{.AppProtectCookieSeed}};{{end}}
     {{if .AppProtectCPUThresholds}}app_protect_cpu_thresholds {{.AppProtectCPUThresholds}};{{end}}
     {{if .AppProtectPhysicalMemoryThresholds}}app_protect_physical_memory_util_thresholds {{.AppProtectPhysicalMemoryThresholds}};{{end}}
+    {{if .AppProtectReconnectPeriod}}app_protect_reconnect_period_seconds {{.AppProtectReconnectPeriod}};{{end}}
     include /etc/nginx/waf/nac-usersigs/index.conf;
     {{- end}}
 

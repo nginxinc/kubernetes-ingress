@@ -71,6 +71,9 @@ var (
 
 	appProtect = flag.Bool("enable-app-protect", false, "Enable support for NGINX App Protect. Requires -nginx-plus.")
 
+	appProtectLogLevel = flag.String("app-protect-log-level", appProtectLogLevelDefault,
+		`Sets log level for App Protect. Allowed values: fatal, error, warn, info, debug, trace. Requires -nginx-plus and -enable-app-protect.`)
+
 	appProtectDos = flag.Bool("enable-app-protect-dos", false, "Enable support for NGINX App Protect dos. Requires -nginx-plus.")
 
 	appProtectDosDebug = flag.Bool("app-protect-dos-debug", false, "Enable debugging for App Protect Dos. Requires -nginx-plus and -enable-app-protect-dos.")
@@ -246,6 +249,17 @@ func main() {
 
 	if *appProtect && !*nginxPlus {
 		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
+	}
+
+	if *appProtectLogLevel != appProtectLogLevelDefault && !*appProtect && !*nginxPlus {
+		glog.Fatal("app-protect-log-level support is for NGINX Plus only and App Protect is enable")
+	}
+
+	if *appProtectLogLevel != appProtectLogLevelDefault && *appProtect && *nginxPlus {
+		logLevelValidationError := validateAppProtectLogLevel(*appProtectLogLevel)
+		if logLevelValidationError != nil {
+			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
+		}
 	}
 
 	if *appProtectDos && !*nginxPlus {
@@ -449,7 +463,7 @@ func main() {
 		aPPluginDone = make(chan error, 1)
 		aPAgentDone = make(chan error, 1)
 
-		nginxManager.AppProtectAgentStart(aPAgentDone, *nginxDebug)
+		nginxManager.AppProtectAgentStart(aPAgentDone, *appProtectLogLevel)
 		nginxManager.AppProtectPluginStart(aPPluginDone)
 	}
 
@@ -781,6 +795,23 @@ func validatePort(port int) error {
 		return fmt.Errorf("port outside of valid port range [1024 - 65535]: %v", port)
 	}
 	return nil
+}
+
+const appProtectLogLevelDefault = "fatal"
+
+// validateAppProtectLogLevel makes sure a given logLevel is one of the allowed values
+func validateAppProtectLogLevel(logLevel string) error {
+	switch strings.ToLower(logLevel) {
+	case
+		"fatal",
+		"error",
+		"warn",
+		"info",
+		"debug",
+		"trace":
+		return nil
+	}
+	return fmt.Errorf("invalid App Protect log level: %v", logLevel)
 }
 
 // parseNginxStatusAllowCIDRs converts a comma separated CIDR/IP address string into an array of CIDR/IP addresses.

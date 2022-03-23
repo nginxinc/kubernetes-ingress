@@ -16,6 +16,7 @@ func newTestLatencyMetricsCollector() *LatencyMetricsCollector {
 }
 
 func TestParseMessageWithValidInputs(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		msg         string
 		expectedErr bool
@@ -80,6 +81,7 @@ func TestParseMessageWithValidInputs(t *testing.T) {
 }
 
 func TestCreateLatencyLabelNames(t *testing.T) {
+	t.Parallel()
 	expected := []string{"upstream", "server", "code", "one", "two", "three", "four", "five"}
 	actual := createLatencyLabelNames([]string{"one", "two", "three"}, []string{"four", "five"})
 	if !reflect.DeepEqual(expected, actual) {
@@ -88,6 +90,7 @@ func TestCreateLatencyLabelNames(t *testing.T) {
 }
 
 func TestCreateLatencyLabelNamesWithNilInputs(t *testing.T) {
+	t.Parallel()
 	expected := []string{"upstream", "server", "code"}
 	actual := createLatencyLabelNames(nil, nil)
 	if !reflect.DeepEqual(expected, actual) {
@@ -96,6 +99,7 @@ func TestCreateLatencyLabelNamesWithNilInputs(t *testing.T) {
 }
 
 func TestCreateLatencyLabelValuesWithCorrectNumberOfLabels(t *testing.T) {
+	t.Parallel()
 	collector := newTestLatencyMetricsCollector()
 	collector.upstreamServerLabels["upstream-1"] = []string{"service-1", "ingress", "ingress-1", "default"}
 	collector.upstreamServerPeerLabels["upstream-1/10.0.0.1"] = []string{"pod-1"}
@@ -116,6 +120,7 @@ func TestCreateLatencyLabelValuesWithCorrectNumberOfLabels(t *testing.T) {
 }
 
 func TestCreateLatencyLabelValuesWithNoUpstreamServerLabels(t *testing.T) {
+	t.Parallel()
 	collector := newTestLatencyMetricsCollector()
 	collector.upstreamServerPeerLabels["upstream-1/10.0.0.1"] = []string{"pod-1"}
 	lm := latencyMetric{
@@ -130,6 +135,7 @@ func TestCreateLatencyLabelValuesWithNoUpstreamServerLabels(t *testing.T) {
 }
 
 func TestCreateLatencyLabelValuesWithNoUpstreamPeerServerLabels(t *testing.T) {
+	t.Parallel()
 	collector := newTestLatencyMetricsCollector()
 	collector.upstreamServerLabels["upstream-1"] = []string{"service-1", "ingress", "ingress-1", "default"}
 	lm := latencyMetric{
@@ -144,6 +150,7 @@ func TestCreateLatencyLabelValuesWithNoUpstreamPeerServerLabels(t *testing.T) {
 }
 
 func TestCreateLatencyLabelValuesWithNoLabels(t *testing.T) {
+	t.Parallel()
 	collector := newTestLatencyMetricsCollector()
 	lm := latencyMetric{
 		Upstream: "upstream-1",
@@ -157,6 +164,7 @@ func TestCreateLatencyLabelValuesWithNoLabels(t *testing.T) {
 }
 
 func TestMetricsPublished(t *testing.T) {
+	t.Parallel()
 	collector := newTestLatencyMetricsCollector()
 	labelValueList1 := []string{"label-value-1", "label-value-2", "label-value-3"}
 	labelValueList2 := []string{"new-label-value-1", "new-label-value-2", "new-label-value-3"}

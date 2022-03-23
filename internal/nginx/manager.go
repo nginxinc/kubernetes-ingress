@@ -32,15 +32,10 @@ const (
 
 	appProtectPluginStartCmd = "/usr/share/ts/bin/bd-socket-plugin"
 	appProtectAgentStartCmd  = "/opt/app_protect/bin/bd_agent"
+	appProtectLogLevelCmd    = "/opt/app_protect/bin/set_log_level"
 
 	// appPluginParams is the configuration of App-Protect plugin
 	appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 307200000 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
-
-	// appProtectDebugLogConfigFileContent holds the content of the file to be written when nginx debug is enabled. It will enable NGINX App Protect debug logs
-	appProtectDebugLogConfigFileContent = "MODULE = IO_PLUGIN;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\nMODULE = ECARD_POLICY;\nLOG_LEVEL = TS_INFO | TS_DEBUG;\nFILE = 2;\n"
-
-	// appProtectLogConfigFileName is the location of the NGINX App Protect logging configuration file
-	appProtectLogConfigFileName = "/etc/app_protect/bd/logger.cfg"
 
 	appProtectDosAgentInstallCmd    = "/usr/bin/adminstall"
 	appProtectDosAgentStartCmd      = "/usr/bin/admd -d --standalone"
@@ -81,7 +76,7 @@ type Manager interface {
 	UpdateServersInPlus(upstream string, servers []string, config ServerConfig) error
 	UpdateStreamServersInPlus(upstream string, servers []string) error
 	SetOpenTracing(openTracing bool)
-	AppProtectAgentStart(apaDone chan error, debug bool)
+	AppProtectAgentStart(apaDone chan error, logLevel string)
 	AppProtectAgentQuit()
 	AppProtectPluginStart(appDone chan error)
 	AppProtectPluginQuit()
@@ -461,20 +456,15 @@ func (lm *LocalManager) SetOpenTracing(openTracing bool) {
 }
 
 // AppProtectAgentStart starts the AppProtect agent
-func (lm *LocalManager) AppProtectAgentStart(apaDone chan error, debug bool) {
-	if debug {
-		glog.V(3).Info("Starting AppProtect Agent in debug mode")
-		err := os.Remove(appProtectLogConfigFileName)
-		if err != nil {
-			glog.Fatalf("Failed removing App Protect Log configuration file")
-		}
-		err = createFileAndWrite(appProtectLogConfigFileName, []byte(appProtectDebugLogConfigFileContent))
-		if err != nil {
-			glog.Fatalf("Failed Writing App Protect Log configuration file")
-		}
+func (lm *LocalManager) AppProtectAgentStart(apaDone chan error, logLevel string) {
+	glog.V(3).Info("Setting log level for App Protect - ", logLevel)
+	appProtectLogLevelCmdfull := fmt.Sprintf("%v %v", appProtectLogLevelCmd, logLevel)
+	logLevelCmd := exec.Command("sh", "-c", appProtectLogLevelCmdfull) // #nosec G204
+	if err := logLevelCmd.Run(); err != nil {
+		glog.Fatalf("Failed to set log level for AppProtect: %v", err)
 	}
-	glog.V(3).Info("Starting AppProtect Agent")
 
+	glog.V(3).Info("Starting AppProtect Agent")
 	cmd := exec.Command(appProtectAgentStartCmd)
 	if err := cmd.Start(); err != nil {
 		glog.Fatalf("Failed to start AppProtect Agent: %v", err)

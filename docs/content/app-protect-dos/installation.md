@@ -19,9 +19,8 @@ This document provides an overview of the steps required to use NGINX App Protec
     * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
 2. Clone the Ingress controller repo:
     ```
-    $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.1.1
     $ cd kubernetes-ingress
-    $ git checkout v2.1.1
     ```
 
 ## Create the namespace and service account
