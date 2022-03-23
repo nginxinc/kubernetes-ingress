@@ -22,9 +22,9 @@ Take the steps below to either configure a Docker Registry secret in your Kubern
 
     For NGINX Plus Ingress Controller with App Protect, pull from `private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress`:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.0.3
+   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.1.1
    ```
-    `2.0.3` will pull down the Debian based image. The other available image tag is `2.0.3-ubi` for the UBI based image.
+    `2.1.1` will pull down the Debian based image. The other available image tag is `2.1.1-ubi` for the UBI based image.
 
 - Use the docker registry API to list the available image tags for the repository.
 
@@ -34,8 +34,8 @@ Take the steps below to either configure a Docker Registry secret in your Kubern
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "2.0.3-ubi",
-        "2.0.3"
+        "2.1.1-ubi",
+        "2.1.1"
     ]
     }
    ```
