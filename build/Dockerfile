@@ -1,7 +1,6 @@
 # syntax=docker/dockerfile:1.3
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=r26
-ARG UBI_VERSION=8
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_VERSION=bullseye-slim
 
@@ -115,24 +114,9 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect-dos.list
 
-############################################# Base image for UBI 8 #############################################
-FROM redhat/ubi8-minimal AS ubi-base-8
-
-# temporary fix for CVE-2021-42574
-RUN microdnf upgrade -y libgcc libstdc++
-
-
-############################################# Base image for UBI 7 #############################################
-FROM registry.access.redhat.com/ubi7/ubi AS ubi-base-7
-
-RUN yum install -y microdnf
-
-# temporary fix for CVE-2021-42574
-RUN yum upgrade -y binutils
-
 
 ############################################# Base image for UBI #############################################
-FROM ubi-base-${UBI_VERSION} AS ubi-base
+FROM redhat/ubi8 AS ubi-base
 ARG IC_VERSION
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -146,7 +130,7 @@ LABEL name="NGINX Ingress Controller" \
 	io.k8s.description="The NGINX Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
-RUN microdnf --nodocs install -y shadow-utils ca-certificates \
+RUN dnf --nodocs install -y shadow-utils ca-certificates \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
@@ -163,7 +147,7 @@ RUN --mount=type=bind,from=debian,source=/nginx_version,target=/tmp/nginx_versio
 	&& printf "%s\n" "[nginx]" "name=nginx repo" \
 	"baseurl=https://nginx.org/packages/mainline/centos/${version}/\$basearch/" \
 	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
-	&& microdnf --nodocs install -y nginx-${NGINX_VERSION} \
+	&& dnf --nodocs install -y nginx-${NGINX_VERSION} \
 	&& rm /etc/yum.repos.d/nginx.repo
 
 
@@ -175,7 +159,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
 	&& curl -fsSL "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
-	&& microdnf --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION}
+	&& dnf --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION}
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF #############################################
@@ -188,14 +172,13 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	source /tmp/rhel_license \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
-	&& subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
-	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-7.repo > /etc/yum.repos.d/app-protect-7.repo \
-	&& yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-	&& yum install -y app-protect-${NGINX_PLUS_VERSION#r}* app-protect-attack-signatures app-protect-threat-campaigns \
-	&& rm /etc/yum.repos.d/app-protect-7.repo \
+	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
+	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
+	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-8.repo > /etc/yum.repos.d/app-protect-8.repo \
+	&& dnf --nodocs install -y app-protect-${NGINX_PLUS_VERSION#r}* app-protect-attack-signatures app-protect-threat-campaigns \
+	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \
-	&& yum clean all && rm -rf /var/cache/yum
-
+	&& dnf clean all && rm -rf /var/cache/dnf
 # Uncomment the lines below if you want to install a custom CA certificate
 # COPY build/*.crt  /etc/pki/ca-trust/source/anchors/
 # RUN update-ca-trust extract
@@ -211,14 +194,13 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	source /tmp/rhel_license \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
-	&& subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
-	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
-	&& yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-	&& yum install -y app-protect-dos-${NGINX_PLUS_VERSION#r}* \
-	&& rm /etc/yum.repos.d/app-protect-dos-7.repo \
+	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
+	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
+	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-8.repo > /etc/yum.repos.d/app-protect-dos-8.repo \
+	&& dnf --nodocs install -y app-protect-dos-${NGINX_PLUS_VERSION#r}* \
+	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \
-	&& yum clean all && rm -rf /var/cache/yum
-
+	&& dnf clean all && rm -rf /var/cache/dnf
 
 ############################################# Base image for UBI with NGINX Plus, App Protect WAF and App Protect Dos #############################################
 FROM ubi-plus-nap as ubi-plus-nap-dos
@@ -230,12 +212,12 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	source /tmp/rhel_license \
 	&& subscription-manager register --org=${RHEL_ORGANIZATION} --activationkey=${RHEL_ACTIVATION_KEY} || true \
 	&& subscription-manager attach \
-	&& subscription-manager repos --enable rhel-7-server-optional-rpms --enable rhel-7-server-extras-rpms \
-	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-7.repo > /etc/yum.repos.d/app-protect-dos-7.repo \
-	&& yum install -y app-protect-dos-${NGINX_PLUS_VERSION#r}* \
-	&& rm /etc/yum.repos.d/app-protect-dos-7.repo \
+	&& dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms \
+	&& curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-8.repo > /etc/yum.repos.d/app-protect-dos-8.repo \
+	&& dnf --nodocs install -y app-protect-dos-${NGINX_PLUS_VERSION#r}* \
+	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \
-	&& yum clean all && rm -rf /var/cache/yum
+	&& dnf clean all && rm -rf /var/cache/dnf
 
 
 ############################################# Base images containing libs for Opentracing #############################################
