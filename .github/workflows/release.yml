@@ -118,7 +118,7 @@ jobs:
           push: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
-            IC_VERSION=${{ GITHUB_REF#refs/tags/ }}
+            IC_VERSION=v${{ needs.binary.outputs.version }}
             NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
             DATE=${{ steps.commit.outputs.date }}
             GIT_COMMIT=${{ github.sha }}
