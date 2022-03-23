@@ -14,7 +14,7 @@ The following is a set of guidelines for contributing to the NGINX Ingress Contr
   * [Git Style Guide](#git-style-guide)
   * [Go Style Guide](#go-style-guide)
 
-[Code of Conduct](https://github.com/nginxinc/kubernetes-ingress/blob/master/CODE_OF_CONDUCT.md)
+[Code of Conduct](https://github.com/nginxinc/kubernetes-ingress/blob/main/CODE_OF_CONDUCT.md)
 
 ## Ask a Question
 
@@ -23,9 +23,9 @@ We will have a public forum soon where you can come and ask questions and have a
 
 ## Getting Started
 
-Follow our [Installation Guide](https://github.com/nginxinc/kubernetes-ingress/blob/master/docs/content/installation) to get the NGINX Ingress Controller up and running.
+Follow our [Installation Guide](https://github.com/nginxinc/kubernetes-ingress/blob/main/docs/content/installation) to get the NGINX Ingress Controller up and running.
 
-Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/master/docs) and [configuration](https://github.com/nginxinc/kubernetes-ingress/tree/master/examples) examples
+Read the [documentation](https://github.com/nginxinc/kubernetes-ingress/tree/main/docs) and [configuration](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples) examples
 
 ### Project Structure
 
@@ -50,7 +50,7 @@ To suggest an enhancement, please create an issue on GitHub with the label `enha
 ### Open a Pull Request
 
 * Fork the repo, create a branch, submit a PR when your changes are tested and ready for review
-* Fill in [our pull request template](https://github.com/nginxinc/kubernetes-ingress/blob/master/.github/PULL_REQUEST_TEMPLATE.md)
+* Fill in [our pull request template](https://github.com/nginxinc/kubernetes-ingress/blob/main/.github/PULL_REQUEST_TEMPLATE.md)
 
 Note: if you’d like to implement a new feature, please consider creating a feature request issue first to start a discussion about the feature.
 
