@@ -68,7 +68,7 @@ Before you can pull the image, make sure that the following software is installe
 
 3. Tag and push the image to your private registry.
 
-   - Make sure to run the `docker login` command first to log in to the registry.
+   - Make sure to run the `docker login <my-docker-registry>` command first to log in to the registry.
    - Replace `<my-docker-registry>` in the examples below with the correct path to your private Docker registry.
 
    ```
