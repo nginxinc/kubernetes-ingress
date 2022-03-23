@@ -85,78 +85,6 @@ func TestValidatePolicy(t *testing.T) {
 			enableAppProtect:      true,
 			msg:                   "WAF policy with preview policies disabled",
 		},
-	}
-	for _, test := range tests {
-		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect)
-		if err != nil {
-			t.Errorf("ValidatePolicy() returned error %v for valid input for the case of %v", err, test.msg)
-		}
-	}
-}
-
-func TestValidatePolicyFails(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		policy                *v1.Policy
-		isPlus                bool
-		enablePreviewPolicies bool
-		enableAppProtect      bool
-		msg                   string
-	}{
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{},
-			},
-			isPlus:                false,
-			enablePreviewPolicies: false,
-			enableAppProtect:      false,
-			msg:                   "empty policy spec",
-		},
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{
-					AccessControl: &v1.AccessControl{
-						Allow: []string{"127.0.0.1"},
-					},
-					RateLimit: &v1.RateLimit{
-						Key:      "${uri}",
-						ZoneSize: "10M",
-						Rate:     "10r/s",
-					},
-				},
-			},
-			isPlus:                true,
-			enablePreviewPolicies: true,
-			enableAppProtect:      false,
-			msg:                   "multiple policies in spec",
-		},
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{
-					JWTAuth: &v1.JWTAuth{
-						Realm:  "My Product API",
-						Secret: "my-jwk",
-					},
-				},
-			},
-			isPlus:                false,
-			enablePreviewPolicies: true,
-			enableAppProtect:      false,
-			msg:                   "jwt(plus only) policy on OSS",
-		},
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{
-					WAF: &v1.WAF{
-						Enable: true,
-					},
-				},
-			},
-			isPlus:                false,
-			enablePreviewPolicies: true,
-			enableAppProtect:      false,
-			msg:                   "WAF(plus only) policy on OSS",
-		},
 		{
 			policy: &v1.Policy{
 				Spec: v1.PolicySpec{
@@ -228,6 +156,78 @@ func TestValidatePolicyFails(t *testing.T) {
 			isPlus:                true,
 			enablePreviewPolicies: false,
 			msg:                   "OIDC policy with preview policies disabled",
+		},
+	}
+	for _, test := range tests {
+		err := ValidatePolicy(test.policy, test.isPlus, test.enablePreviewPolicies, test.enableAppProtect)
+		if err != nil {
+			t.Errorf("ValidatePolicy() returned error %v for valid input for the case of %v", err, test.msg)
+		}
+	}
+}
+
+func TestValidatePolicyFails(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		policy                *v1.Policy
+		isPlus                bool
+		enablePreviewPolicies bool
+		enableAppProtect      bool
+		msg                   string
+	}{
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: false,
+			enableAppProtect:      false,
+			msg:                   "empty policy spec",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					AccessControl: &v1.AccessControl{
+						Allow: []string{"127.0.0.1"},
+					},
+					RateLimit: &v1.RateLimit{
+						Key:      "${uri}",
+						ZoneSize: "10M",
+						Rate:     "10r/s",
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: true,
+			enableAppProtect:      false,
+			msg:                   "multiple policies in spec",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					JWTAuth: &v1.JWTAuth{
+						Realm:  "My Product API",
+						Secret: "my-jwk",
+					},
+				},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: true,
+			enableAppProtect:      false,
+			msg:                   "jwt(plus only) policy on OSS",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					WAF: &v1.WAF{
+						Enable: true,
+					},
+				},
+			},
+			isPlus:                false,
+			enablePreviewPolicies: true,
+			enableAppProtect:      false,
+			msg:                   "WAF(plus only) policy on OSS",
 		},
 		{
 			policy: &v1.Policy{
