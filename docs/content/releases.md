@@ -6,6 +6,29 @@ doctypes: ["concept"]
 toc: true
 ---
 
+## NGINX Ingress Controller 1.12.4
+
+23 March 2022
+
+CHANGES:
+* Update NGINX version to 1.21.6.
+* Update NGINX Plus version to R26.
+* Update Debian to Bullseye.
+* Update Alpine to 3.15.
+* Update UBI to 8.
+* Update Go to 1.17 and Go dependencies.
+
+FIXES:
+* Fix OpenTracing not working with NGINX Plus.
+
+HELM CHART:
+* The version of the Helm chart is now 0.10.4.
+
+UPGRADE:
+* For NGINX, use the 1.12.4 image from our DockerHub: `nginx/nginx-ingress:1.12.4`, `nginx/nginx-ingress:1.12.4-alpine` or `nginx/nginx-ingress:1.12.4-ubi`
+* For NGINX Plus, please build your own image using the 1.12.4 source code.
+* For Helm, use version 0.10.4 of the chart.
+
 ## NGINX Ingress Controller 2.1.1
 
 17 Feb 2022
@@ -660,8 +683,6 @@ UPGRADE:
 
 
 ## NGINX Ingress Controller 1.8.0
-
-### 1.8.0
 
 22 July 2020
 
