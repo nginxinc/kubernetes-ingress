@@ -18,8 +18,7 @@ var testUps = Upstream{
 	UpstreamZoneSize: "256k",
 	UpstreamServers: []UpstreamServer{
 		{
-			Address:     "127.0.0.1",
-			Port:        "8181",
+			Address:     "127.0.0.1:8181",
 			MaxFails:    0,
 			MaxConns:    0,
 			FailTimeout: "1s",

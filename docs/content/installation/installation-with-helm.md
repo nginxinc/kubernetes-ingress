@@ -194,7 +194,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
 |``controller.healthStatusURI`` | Sets the URI of health status location in the default server. Requires ``controller.healthStatus``. | "/nginx-health" |
 |``controller.nginxStatus.enable`` | Enable the NGINX stub_status, or the NGINX Plus API. | true |
 |``controller.nginxStatus.port`` | Set the port where the NGINX stub_status or the NGINX Plus API is exposed. | 8080 |
-|``controller.nginxStatus.allowCidrs`` | Add IPv4 IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas. | 127.0.0.1 |
+|``controller.nginxStatus.allowCidrs`` | Add IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas. | 127.0.0.1,::1 |
 |``controller.service.create`` | Creates a service to expose the Ingress controller pods. | true |
 |``controller.service.type`` | The type of service to create for the Ingress controller. | LoadBalancer |
 |``controller.service.externalTrafficPolicy`` | The externalTrafficPolicy of the service. The value Local preserves the client source IP. | Local |

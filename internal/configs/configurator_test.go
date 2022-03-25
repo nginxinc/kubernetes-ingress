@@ -580,8 +580,7 @@ func TestUpdateIngressMetricsLabels(t *testing.T) {
 			Name: "upstream-1",
 			UpstreamServers: []version1.UpstreamServer{
 				{
-					Address: "10.0.0.1",
-					Port:    "80",
+					Address: "10.0.0.1:80",
 				},
 			},
 			UpstreamLabels: version1.UpstreamLabels{
@@ -595,8 +594,7 @@ func TestUpdateIngressMetricsLabels(t *testing.T) {
 			Name: "upstream-2",
 			UpstreamServers: []version1.UpstreamServer{
 				{
-					Address: "10.0.0.2",
-					Port:    "80",
+					Address: "10.0.0.2:80",
 				},
 			},
 			UpstreamLabels: version1.UpstreamLabels{
@@ -644,8 +642,7 @@ func TestUpdateIngressMetricsLabels(t *testing.T) {
 			Name: "upstream-1",
 			UpstreamServers: []version1.UpstreamServer{
 				{
-					Address: "10.0.0.1",
-					Port:    "80",
+					Address: "10.0.0.1:80",
 				},
 			},
 			UpstreamLabels: version1.UpstreamLabels{

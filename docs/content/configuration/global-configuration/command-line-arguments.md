@@ -201,9 +201,9 @@ Default `true`.
 
 ### -nginx-status-allow-cidrs `<string>`
 
-Add IPv4 IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API.
+Add IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API.
 
-Separate multiple IP/CIDR by commas. (default `127.0.0.1`)
+Separate multiple IP/CIDR by commas. (default `127.0.0.1,::1`)
 &nbsp;
 <a name="cmdoption-nginx-status-port"></a>
 

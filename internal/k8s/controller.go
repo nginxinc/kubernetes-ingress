@@ -2447,7 +2447,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 			if err != nil {
 				glog.Warningf("Error getting Service for Upstream %v: %v", u.Service, err)
 			} else {
-				endps = append(endps, fmt.Sprintf("%s:%d", s.Spec.ClusterIP, u.Port))
+				endps = append(endps, ipv6SafeAddrPort(s.Spec.ClusterIP, int32(u.Port)))
 			}
 
 		} else {

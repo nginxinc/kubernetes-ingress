@@ -87,7 +87,7 @@ The numbered list that follows describes each connection with its type in curly 
 18. (UDP) An *NGINX worker* sends the HTTP upstream server response latency logs via the Syslog protocol over the UNIX socket `/var/lib/nginx/nginx-syslog.sock` to the *IC*. In turn, the *IC* analyzes and transforms the logs into Prometheus metrics.
 19. (HTTP,HTTPS,TCP,UDP) A *client* sends traffic to and receives traffic from any of the *NGINX workers* on ports 80 and 443 and any additional ports exposed by the [GlobalConfiguration resource](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource).
 20. (HTTP,HTTPS,TCP,UDP) An *NGINX worker* sends traffic to and receives traffic from the *backends*.
-21. (HTTP) *Admin* can connect to the [NGINX stub_status](http://nginx.org/en/docs/http/ngx_http_stub_status_module.html#stub_status) using port 8080 via an *NGINX worker*. **Note**: By default, NGINX only allows connections from `127.0.0.1`.
+21. (HTTP) *Admin* can connect to the [NGINX stub_status](http://nginx.org/en/docs/http/ngx_http_stub_status_module.html#stub_status) using port 8080 via an *NGINX worker*. **Note**: By default, NGINX only allows connections from `localhost`.
 
 ### Differences for NGINX Plus
 

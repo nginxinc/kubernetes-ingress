@@ -189,8 +189,7 @@ func createExpectedConfigForCafeIngressEx(isPlus bool) version1.IngressNginxConf
 		UpstreamZoneSize: upstreamZoneSize,
 		UpstreamServers: []version1.UpstreamServer{
 			{
-				Address:     "10.0.0.1",
-				Port:        "80",
+				Address:     "10.0.0.1:80",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",
@@ -212,8 +211,7 @@ func createExpectedConfigForCafeIngressEx(isPlus bool) version1.IngressNginxConf
 		UpstreamZoneSize: upstreamZoneSize,
 		UpstreamServers: []version1.UpstreamServer{
 			{
-				Address:     "10.0.0.2",
-				Port:        "80",
+				Address:     "10.0.0.2:80",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",
@@ -637,8 +635,7 @@ func createExpectedConfigForMergeableCafeIngress(isPlus bool) version1.IngressNg
 		UpstreamZoneSize: upstreamZoneSize,
 		UpstreamServers: []version1.UpstreamServer{
 			{
-				Address:     "10.0.0.1",
-				Port:        "80",
+				Address:     "10.0.0.1:80",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",
@@ -660,8 +657,7 @@ func createExpectedConfigForMergeableCafeIngress(isPlus bool) version1.IngressNg
 		UpstreamZoneSize: upstreamZoneSize,
 		UpstreamServers: []version1.UpstreamServer{
 			{
-				Address:     "10.0.0.2",
-				Port:        "80",
+				Address:     "10.0.0.2:80",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",
@@ -757,8 +753,7 @@ func createExpectedConfigForCrossNamespaceMergeableCafeIngress() version1.Ingres
 		UpstreamZoneSize: "256k",
 		UpstreamServers: []version1.UpstreamServer{
 			{
-				Address:     "10.0.0.1",
-				Port:        "80",
+				Address:     "10.0.0.1:80",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",
@@ -771,8 +766,7 @@ func createExpectedConfigForCrossNamespaceMergeableCafeIngress() version1.Ingres
 		UpstreamZoneSize: "256k",
 		UpstreamServers: []version1.UpstreamServer{
 			{
-				Address:     "10.0.0.2",
-				Port:        "80",
+				Address:     "10.0.0.2:80",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",

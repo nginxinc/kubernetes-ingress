@@ -4,7 +4,7 @@ upstream {{$upstream.Name}} {
 	{{if ne $upstream.UpstreamZoneSize "0"}}zone {{$upstream.Name}} {{$upstream.UpstreamZoneSize}};{{end}}
 	{{if $upstream.LBMethod }}{{$upstream.LBMethod}};{{end}}
 	{{range $server := $upstream.UpstreamServers}}
-	server {{$server.Address}}:{{$server.Port}} max_fails={{$server.MaxFails}} fail_timeout={{$server.FailTimeout}} max_conns={{$server.MaxConns}};{{end}}
+	server {{$server.Address}} max_fails={{$server.MaxFails}} fail_timeout={{$server.FailTimeout}} max_conns={{$server.MaxConns}};{{end}}
 	{{if $.Keepalive}}keepalive {{$.Keepalive}};{{end}}
 }{{end}}
 

@@ -2,6 +2,8 @@
 
 In this example, we deploy a web application, configure load balancing for it via a VirtualServer, and protect the application using an OpenID Connect policy and [Keycloak](https://www.keycloak.org/).
 
+**Note**: The example doesn’t work in clusters with IPv6 networking.
+
 ## Prerequisites
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller. This example requires that the HTTPS port of the Ingress Controller is `443`.

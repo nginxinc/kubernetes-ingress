@@ -2,7 +2,6 @@ package configs
 
 import (
 	"fmt"
-	"net"
 	"sort"
 	"strconv"
 	"strings"
@@ -457,16 +456,8 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 		}
 
 		for _, endp := range endps {
-			addr, port, err := net.SplitHostPort(endp)
-
-			if err != nil {
-				glog.Warningf("invalid endpoint address: %s", err.Error())
-				continue
-			}
-
 			upsServers = append(upsServers, version1.UpstreamServer{
-				Address:     addr,
-				Port:        port,
+				Address:     endp,
 				MaxFails:    cfg.MaxFails,
 				MaxConns:    cfg.MaxConns,
 				FailTimeout: cfg.FailTimeout,

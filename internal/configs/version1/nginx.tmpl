@@ -156,8 +156,11 @@ http {
     # stub_status
     server {
         listen {{.NginxStatusPort}};
+        listen [::]:{{.NginxStatusPort}};
+
         {{range $value := .NginxStatusAllowCIDRs}}
         allow {{$value}};{{end}}
+
         deny all;
         {{if .OpenTracingEnabled}}
         opentracing off;
@@ -234,6 +237,7 @@ stream {
 
     server {
         listen 443;
+        listen [::]:443;
 
         ssl_preread on;
 
