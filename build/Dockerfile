@@ -9,6 +9,8 @@ FROM nginx:1.21.6 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	# temp fix for CVE-2022-0891
+	&& apt-get install -y libtiff5 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& echo $NGINX_VERSION > nginx_version
 
@@ -30,9 +32,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r} \
-	# Temp fix for CVE-2022-0778
-	&& apk upgrade --no-cache libretls
+	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r}
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
@@ -105,8 +105,6 @@ LABEL name="NGINX Ingress Controller" \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 RUN dnf --nodocs install -y shadow-utils ca-certificates \
-	# temporary fix for CVE-2022-24407, CVE-2022-25315 and CVE-2022-23308
-	&& dnf --nodocs upgrade -y cyrus-sasl-lib expat libxml2 \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
