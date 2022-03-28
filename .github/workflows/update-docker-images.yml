@@ -56,7 +56,7 @@ jobs:
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
           echo "::set-output name=sha_long::$(git rev-parse HEAD)"
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
-          echo "::set-output name=k8s_version::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
+          echo "::set-output name=k8s_version::$(grep "K8S_VERSION:" .github/workflows/ci.yml | awk -F" " '{print $2}')"
 
   check:
     name: Check if updates are needed
