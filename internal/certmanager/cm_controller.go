@@ -62,7 +62,6 @@ type CmController struct {
 	vsSharedInformerFactory   vsinformers.SharedInformerFactory
 	cmSharedInformerFactory   cm_informers.SharedInformerFactory
 	kubeSharedInformerFactory kubeinformers.SharedInformerFactory
-	restConfig                *rest.Config
 	recorder                  record.EventRecorder
 	cmClient                  *cm_clientset.Clientset
 }
@@ -76,16 +75,11 @@ type CmOpts struct {
 	eventRecorder record.EventRecorder
 }
 
-func (c *CmController) register() {
-	confClient, _ := k8s_nginx.NewForConfig(c.restConfig)
-	vsSharedInformerFactory := vsinformers.NewSharedInformerFactoryWithOptions(confClient, resyncPeriod)
-
-	c.vsLister = vsSharedInformerFactory.K8s().V1().VirtualServers().Lister()
-	vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(&controllerpkg.QueuingEventHandler{
+func (c *CmController) register() workqueue.RateLimitingInterface {
+	c.vsLister = c.vsSharedInformerFactory.K8s().V1().VirtualServers().Lister()
+	c.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(&controllerpkg.QueuingEventHandler{
 		Queue: c.queue,
 	})
-
-	c.vsSharedInformerFactory = vsSharedInformerFactory
 
 	c.sync = SyncFnFor(c.recorder, c.cmClient, c.cmSharedInformerFactory.Certmanager().V1().Certificates().Lister())
 
@@ -94,9 +88,10 @@ func (c *CmController) register() {
 	})
 
 	c.mustSync = []cache.InformerSynced{
-		vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().HasSynced,
+		c.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().HasSynced,
 		c.cmSharedInformerFactory.Certmanager().V1().Certificates().Informer().HasSynced,
 	}
+	return c.queue
 }
 
 func (c *CmController) processItem(ctx context.Context, key string) error {
@@ -162,6 +157,8 @@ func NewCmController(opts *CmOpts) *CmController {
 
 	cmSharedInformerFactory := cm_informers.NewSharedInformerFactoryWithOptions(intcl, resyncPeriod, cm_informers.WithNamespace(opts.namespace))
 	kubeSharedInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(opts.kubeClient, resyncPeriod, kubeinformers.WithNamespace(opts.namespace))
+	vsClient, _ := k8s_nginx.NewForConfig(opts.kubeConfig)
+	vsSharedInformerFactory := vsinformers.NewSharedInformerFactoryWithOptions(vsClient, resyncPeriod, vsinformers.WithNamespace(opts.namespace))
 
 	cm := &CmController{
 		ctx:                       opts.context,
@@ -169,8 +166,8 @@ func NewCmController(opts *CmOpts) *CmController {
 		cmSharedInformerFactory:   cmSharedInformerFactory,
 		kubeSharedInformerFactory: kubeSharedInformerFactory,
 		recorder:                  opts.eventRecorder,
-		restConfig:                opts.kubeConfig,
 		cmClient:                  intcl,
+		vsSharedInformerFactory:   vsSharedInformerFactory,
 	}
 	cm.register()
 	return cm

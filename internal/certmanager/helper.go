@@ -73,6 +73,10 @@ func translateVsSpec(crt *cmapi.Certificate, vsCmSpec *vsapi.CertManager) error 
 		return errNilCertificate
 	}
 
+	if vsCmSpec == nil {
+		return nil
+	}
+
 	if vsCmSpec.CommonName != "" {
 		crt.Spec.CommonName = vsCmSpec.CommonName
 	}

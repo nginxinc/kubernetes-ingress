@@ -70,7 +70,7 @@ func SyncFnFor(
 		issuerName, issuerKind, issuerGroup, err := issuerForVirtualServer(vs)
 		if err != nil {
 			glog.Error(err, "failed to determine issuer to be used for ingress resource")
-			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Could not determine issuer for ingress due to bad annotations: %s",
+			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Could not determine issuer for virtual server due to bad config: %s",
 				err)
 			return nil
 		}
@@ -164,14 +164,17 @@ func buildCertificates(
 
 		if metav1.GetControllerOf(existingCrt) == nil {
 			glog.Info("certificate resource has no owner. refusing to update non-owned certificate resource for object")
+			return nil, nil, nil
 		}
 
 		if !metav1.IsControlledBy(existingCrt, vs) {
 			glog.Info("certificate resource is not owned by this object. refusing to update non-owned certificate resource for object")
+			return nil, nil, nil
 		}
 
 		if !certNeedsUpdate(existingCrt, crt) {
 			glog.Info("certificate resource is already up to date for object")
+			return nil, nil, nil
 		}
 
 		updateCrt := existingCrt.DeepCopy()
