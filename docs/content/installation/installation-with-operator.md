@@ -16,7 +16,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     * For NGINX Plus Ingress controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
     * To pull from the F5 Container registry, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
     * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
-1. Install the NGINX Ingress Operator following the [instructions](https://github.com/nginxinc/nginx-ingress-operator/blob/master/docs/installation.md).
+1. Install the NGINX Ingress Operator following the [instructions](https://github.com/nginxinc/nginx-ingress-operator/blob/main/docs/installation.md).
 
 ## 1. Create the NginxIngressController manifest
 
@@ -48,4 +48,4 @@ $ kubectl apply -f nginx-ingress-controller.yaml
 
 A new instance of the NGINX Ingress Controller will be deployed by the NGINX Ingress Operator in the `default` namespace with default parameters.
 
-To configure other parameters of the NginxIngressController resource, check the [documentation](https://github.com/nginxinc/nginx-ingress-operator/blob/master/docs/nginx-ingress-controller.md).
+To configure other parameters of the NginxIngressController resource, check the [documentation](https://github.com/nginxinc/nginx-ingress-operator/blob/main/docs/nginx-ingress-controller.md).
