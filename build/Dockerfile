@@ -20,8 +20,8 @@ RUN apt-get update \
 FROM docker.io/library/nginx:1.21.6-alpine AS alpine
 
 RUN apk add --no-cache libcap \
-	# Temp fix for CVE-2022-0778
-	&& apk upgrade --no-cache libretls
+	# Temp fix for CVE-2022-0778 and CVE-2018-25032
+	&& apk upgrade --no-cache libretls zlib
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
