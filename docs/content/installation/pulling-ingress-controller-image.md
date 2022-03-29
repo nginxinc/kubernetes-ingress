@@ -34,12 +34,12 @@ Before you can pull the image, make sure that the following software is installe
 2. Use Docker to pull the required image from `private-registry.nginx.com`. Choose the image from the available images listed in the [tech specs guide]({{< relref "technical-specifications#images-with-nginx-plus" >}}).
    For NGINX Plus Ingress Controller, pull from `private-registry.nginx.com/nginx-ic/nginx-plus-ingress`. For example:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.1.1
+   $ docker pull private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.1.2
    ```
 
    For NGINX Plus Ingress Controller with App Protect, pull from `private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress`. For example:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.1.1
+   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.1.2
    ```
 
    To list the available image tags for the repositories, you can also use the Docker registry API. For example:
@@ -48,10 +48,10 @@ Before you can pull the image, make sure that the following software is installe
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "2.1.1-alpine",
-        "2.1.1-ot",
-        "2.1.1-ubi",
-        "2.1.1"
+        "2.1.2-alpine",
+        "2.1.2-ot",
+        "2.1.2-ubi",
+        "2.1.2"
     ]
     }
 
@@ -59,8 +59,8 @@ Before you can pull the image, make sure that the following software is installe
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "2.1.1-ubi",
-        "2.1.1"
+        "2.1.2-ubi",
+        "2.1.2"
     ]
     }
    ```
@@ -71,12 +71,12 @@ Before you can pull the image, make sure that the following software is installe
    - Replace `<my-docker-registry>` in the examples below with the correct path to your private Docker registry.
 
    ```
-   $ docker tag private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.1.1 <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.1.1
-   $ docker push <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.1.1
+   $ docker tag private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.1.2 <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.1.2
+   $ docker push <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.1.2
    ```
 
    or for NGINX App Protect enabled image
    ```
-   $ docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.1.1 <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.1.1
-   $ docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.1.1
+   $ docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.1.2 <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.1.2
+   $ docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.1.2
    ```

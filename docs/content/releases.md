@@ -6,6 +6,21 @@ doctypes: ["concept"]
 toc: true
 ---
 
+## NGINX Ingress Controller 2.1.2
+
+29 Mar 2022
+
+CHANGES:
+* Update UBI based images to 8.
+
+HELM CHART:
+* The version of the Helm chart is now 0.12.2.
+
+UPGRADE:
+* For NGINX, use the 2.1.2 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.1.2), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
+* For NGINX Plus, use the 2.1.2 images from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the 2.1.2 source code.
+* For Helm, use version 0.12.2 of the chart.
+
 ## NGINX Ingress Controller 1.12.4
 
 23 March 2022
@@ -51,9 +66,9 @@ UPGRADE:
 
 OVERVIEW:
 
-* Support for NGINX App Protect Denial of Service protection with NGINX Ingress Controller. More information about [NGINX App Protect DoS](https://www.nginx.com/products/nginx-app-protect/denial-of-service/). Examples for configuring NGINX App Protect DoS with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.1/examples/appprotect-dos).
+* Support for NGINX App Protect Denial of Service protection with NGINX Ingress Controller. More information about [NGINX App Protect DoS](https://www.nginx.com/products/nginx-app-protect/denial-of-service/). Examples for configuring NGINX App Protect DoS with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.0/examples/appprotect-dos).
 
-* Full support for gRPC services using the NGINX Ingress Controller [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) custom resource definitions.  This makes configuring and supporting gRPC services much easier, giving a simple YAML configuration and removing the need for snippets. Resource definition examples for gRPC can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.1/examples/custom-resources/grpc-upstreams).
+* Full support for gRPC services using the NGINX Ingress Controller [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) custom resource definitions.  This makes configuring and supporting gRPC services much easier, giving a simple YAML configuration and removing the need for snippets. Resource definition examples for gRPC can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.0/examples/custom-resources/grpc-upstreams).
 
 * Implementation of NGINX mandatory and persistent health checks in VirtualServer and VirtualServerRoute to further reduce interruptions to your service traffic as configuration changes continuously happen in your dynamic Kubernetes environment(s). Health checks have been extended to include `mandatory` and `persistent` fields. Mandatory health checks ensures that a new upstream server starts receiving traffic only after the health check passes. Mandatory health checks can be marked as persistent, so that the previous state is remembered when the Ingress Controller reloads NGINX Plus configuration. When combined with the slow-start parameter, the mandatory health check give a new upstream server more time to connect to databases and “warm up” before being asked to handle their full share of traffic. See the settings [here](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstreamhealthcheck). More about the [NGINX Plus mandatory and persistent health check features](https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/#mandatory-health-checks).
 Mandatory health checks can be marked as persistent, so that the previous state is remembered when reloading configuration. When combined with the slow-start parameter, it gives a new service pod more time to connect to databases and “warm up” before being asked to handle their full share of traffic.

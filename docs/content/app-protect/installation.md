@@ -22,9 +22,9 @@ Take the steps below to either configure a Docker Registry secret in your Kubern
 
     For NGINX Plus Ingress Controller with App Protect, pull from `private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress`:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.1.1
+   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.1.2
    ```
-    `2.1.1` will pull down the Debian based image. The other available image tag is `2.1.1-ubi` for the UBI based image.
+    `2.1.2` will pull down the Debian based image. The other available image tag is `2.1.2-ubi` for the UBI based image.
 
 - Use the docker registry API to list the available image tags for the repository.
 
@@ -34,8 +34,8 @@ Take the steps below to either configure a Docker Registry secret in your Kubern
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "2.1.1-ubi",
-        "2.1.1"
+        "2.1.2-ubi",
+        "2.1.2"
     ]
     }
    ```
@@ -73,4 +73,4 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
 3. Enable the App Protect module by adding the `enable-app-protect` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect) to your Deployment or DaemonSet file.
 4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
 
-For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the [NGINX Ingress Controller with App Protect examples on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.1/examples/appprotect).
+For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the [NGINX Ingress Controller with App Protect examples on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.2/examples/appprotect).

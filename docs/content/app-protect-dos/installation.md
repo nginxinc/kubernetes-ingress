@@ -1,5 +1,5 @@
 ---
-title: Installation with NGINX App Protect Dos
+title: Installation with NGINX App Protect DoS
 description:
 weight: 1800
 doctypes: [""]
@@ -8,7 +8,7 @@ toc: true
 
 > **Note**: The NGINX Kubernetes Ingress Controller integration with NGINX App Protect requires the use of NGINX Plus.
 
-This document provides an overview of the steps required to use NGINX App Protect Dos with your NGINX Ingress Controller deployment. You can visit the linked documents to find additional information and instructions.
+This document provides an overview of the steps required to use NGINX App Protect DoS with your NGINX Ingress Controller deployment. You can visit the linked documents to find additional information and instructions.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ This document provides an overview of the steps required to use NGINX App Protec
     ```
     $ git clone https://github.com/nginxinc/kubernetes-ingress/
     $ cd kubernetes-ingress
-    $ git checkout v2.1.1
+    $ git checkout v2.1.2
     ```
 
 ## Create the namespace and service account
@@ -29,7 +29,7 @@ This document provides an overview of the steps required to use NGINX App Protec
   kubectl apply -f common/ns-and-sa.yaml
 ```
 
-## Install the App Protect Dos Arbitrator
+## Install the App Protect DoS Arbitrator
 
 - Deploy the app protect dos arbitrator
     ```bash
@@ -39,7 +39,7 @@ This document provides an overview of the steps required to use NGINX App Protec
 
 ## Build the Docker Image
 
-Take the steps below to create the Docker image that you'll use to deploy NGINX Ingress Controller with App Protect Dos in Kubernetes.
+Take the steps below to create the Docker image that you'll use to deploy NGINX Ingress Controller with App Protect DoS in Kubernetes.
 
 - [Build the NGINX Ingress Controller image](/nginx-ingress-controller/installation/building-ingress-controller-image).
 
@@ -53,14 +53,14 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
 
 ## Install the Ingress Controller
 
-Take the steps below to set up and deploy the NGINX Ingress Controller and App Protect Dos module in your Kubernetes cluster.
+Take the steps below to set up and deploy the NGINX Ingress Controller and App Protect DoS module in your Kubernetes cluster.
 
 1. [Configure role-based access control (RBAC)](/nginx-ingress-controller/installation/installation-with-manifests.md#1-configure-rbac).
 
    > **Important**: You must have an admin role to configure RBAC in your Kubernetes cluster.
 
 3. [Create the common Kubernetes resources](/nginx-ingress-controller/installation/installation-with-manifests.md#create-common-resources).
-4. Enable the App Protect Dos module by adding the `enable-app-protect-dos` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments.md#cmdoption-enable-app-protect-dos) to your Deployment or DaemonSet file.
+4. Enable the App Protect DoS module by adding the `enable-app-protect-dos` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments.md#cmdoption-enable-app-protect-dos) to your Deployment or DaemonSet file.
 5. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests.md#3-deploy-the-ingress-controller).
 
-For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect-dos/configuration),the [NGINX Ingress Controller with App Protect Dos example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.1/examples/appprotect-dos) and the [NGINX Ingress Controller with App Protect Dos example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.1/examples/custom-resources/dos).
+For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect-dos/configuration),the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.2/examples/appprotect-dos) and the [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.2/examples/custom-resources/dos).
