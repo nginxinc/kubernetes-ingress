@@ -9,8 +9,8 @@ FROM nginx:1.21.6 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temporary fix for CVE-2022-22822
-	&& apt-get install -y libexpat1 \
+	# temp fix for CVE-2022-0891, CVE-2021-33574, CVE-2021-3997 and CVE-2022-23308
+	&& apt-get install -y libtiff5 libc6 libc-bin libxml2 libsystemd0 libudev1 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& echo $NGINX_VERSION > nginx_version
 
@@ -20,8 +20,8 @@ RUN apt-get update \
 FROM docker.io/library/nginx:1.21.6-alpine AS alpine
 
 RUN apk add --no-cache libcap \
-	# temporary fix for CVE-2021-42374
-	&& apk upgrade --no-cache busybox
+	# temporary fix for CVE-2022-0778 and CVE-2018-25032
+	&& apk upgrade --no-cache libretls zlib
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
@@ -74,6 +74,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y \
 	nginx-plus-module-appprotect app-protect app-protect-attack-signatures app-protect-threat-campaigns \
+	# temp fix for CVE-2021-43618
+	&& apt-get install -y libgmp10 \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect.list
@@ -95,6 +97,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
 	&& apt-get update \
 	&& apt-get -y install app-protect-dos \
+	# temp fix for CVE-2021-43618
+	&& apt-get install -y libgmp10 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect-dos.list
 
@@ -131,6 +135,8 @@ LABEL name="NGINX Ingress Controller" \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 RUN dnf --nodocs install -y shadow-utils ca-certificates \
+	# temp fix for CVE-2022-0778
+	&& dnf --nodocs upgrade -y openssl-libs \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
