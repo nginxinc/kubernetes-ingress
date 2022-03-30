@@ -1,8 +1,8 @@
-# NGINX App Protect Dos Arbitrator Helm Chart
+# NGINX App Protect DoS Arbitrator Helm Chart
 
 ## Introduction
 
-This chart deploys the NGINX App Protect Dos Arbitrator in your Kubernetes cluster.
+This chart deploys the NGINX App Protect DoS Arbitrator in your Kubernetes cluster.
 
 ## Prerequisites
 
@@ -51,7 +51,7 @@ To install the chart with the release name my-release-dos (my-release-dos is the
 $ helm install my-release-dos .
 ```
 
-The command deploys the App Protect Dos Arbitrator in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
+The command deploys the App Protect DoS Arbitrator in your Kubernetes cluster in the default configuration. The configuration section lists the parameters that can be configured during installation.
 
 ## Upgrading the Chart
 
@@ -85,7 +85,7 @@ The command removes all the Kubernetes components associated with the release an
 
 ## Configuration
 
-The following tables lists the configurable parameters of the NGINX App Protect Dos Arbitrator chart and their default values.
+The following tables lists the configurable parameters of the NGINX App Protect DoS Arbitrator chart and their default values.
 
 Parameter | Description | Default
 --- | --- | ---

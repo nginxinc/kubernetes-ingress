@@ -81,7 +81,7 @@ template: |
   ## Upgrade
 
   - For NGINX, use the v$RESOLVED_VERSION image from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=$RESOLVED_VERSION), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
-  - For NGINX Plus, use the v$RESOLVED_VERSION image from the F5 Container registry or build your own image using the v$RESOLVED_VERSION source code.
+  - For NGINX Plus, use the v$RESOLVED_VERSION image from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the v$RESOLVED_VERSION source code.
   - For Helm, use version HELM_VERSION_REPLACE_ME! of the chart.
 
   ## Resources
