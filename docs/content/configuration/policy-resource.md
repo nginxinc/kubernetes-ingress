@@ -94,7 +94,7 @@ policies:
 
 ### RateLimit
 
-> **Feature Status**: Rate-Limiting is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+> **Feature Status**: Rate-Limiting is in preview status until release 2.1.2.[^1]
 
 The rate limit policy configures NGINX to limit the processing rate of requests.
 
@@ -136,7 +136,7 @@ When you reference more than one rate limit policy, the Ingress Controller will 
 
 ### JWT
 
-> **Feature Status**: JWT is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+> **Feature Status**: JWT is in preview status until release 2.1.2.[^1]
 
 > Note: This feature is only available in NGINX Plus.
 
@@ -189,7 +189,7 @@ In this example the Ingress Controller will use the configuration from the first
 
 ### IngressMTLS
 
-> **Feature Status**: IngressMTLS is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+> **Feature Status**: IngressMTLS is in preview status until release 2.1.2.[^1]
 
 The IngressMTLS policy configures client certificate verification.
 
@@ -243,7 +243,7 @@ In this example the Ingress Controller will use the configuration from the first
 
 ### EgressMTLS
 
-> **Feature Status**: EgressMTLS is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+> **Feature Status**: EgressMTLS is in preview status until release 2.1.2.[^1]
 
 The EgressMTLS policy configures upstreams authentication and certificate verification.
 
@@ -284,7 +284,7 @@ In this example the Ingress Controller will use the configuration from the first
 
 ### OIDC
 
-> **Feature Status**: OIDC is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+> **Feature Status**: OIDC is in preview status until release 2.1.2.[^1]
 
 The OIDC policy configures NGINX Plus as a relying party for OpenID Connect authentication.
 
@@ -543,4 +543,5 @@ Status:
 
 ## Footnotes
 
-[^1]: Capabilities labeled in preview status are fully supported.
+[^1]: Capabilities labeled in preview status are fully supported. The preview status is used in releases up to 2.1.2 and is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller. From release 2.2.0, the capabilities are no longer in preview status and do not require the command-line argument.
+

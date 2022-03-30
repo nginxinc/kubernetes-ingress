@@ -374,7 +374,6 @@ type PolicyList struct {
 }
 
 // AccessControl defines an access policy based on the source IP of a request.
-// policy status: production-ready
 type AccessControl struct {
 	Allow []string `json:"allow"`
 	Deny  []string `json:"deny"`
@@ -432,7 +431,6 @@ type OIDC struct {
 }
 
 // WAF defines an WAF policy.
-// policy status: preview
 type WAF struct {
 	Enable      bool         `json:"enable"`
 	ApPolicy    string       `json:"apPolicy"`
