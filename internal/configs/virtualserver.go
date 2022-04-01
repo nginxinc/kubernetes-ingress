@@ -2124,7 +2124,6 @@ func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tl
 	if secretRef.Secret != nil {
 		secretType = secretRef.Secret.Type
 	}
-
 	var name string
 	var rejectHandshake bool
 	if secretType != "" && secretType != api_v1.SecretTypeTLS {

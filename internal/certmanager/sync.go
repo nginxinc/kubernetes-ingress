@@ -49,17 +49,14 @@ const (
 
 var vsGVK = vsapi.SchemeGroupVersion.WithKind("VirtualServer")
 
-// SyncFn is the reconciliation function passed to a certificate-shim's
-// controller.
+// SyncFn is the reconciliation function passed to cert manager VS controller.
 type SyncFn func(context.Context, *vsapi.VirtualServer) error
 
-// SyncFnFor contains logic to reconcile any "Ingress-like" object.
+// SyncFnFor contains logic to reconcile VirtualServer objects.
 //
-// An "Ingress-like" object is a resource such as an Ingress, a Gateway or an
-// HTTPRoute. Due to their similarity, the reconciliation function for them is
-// common. Reconciling an Ingress-like object means looking at its annotations
+// Reconciling a VirtualServer object with respect to Certificates means looking at its annotations
 // and creating a Certificate with matching DNS names and secretNames from the
-// TLS configuration of the Ingress-like object.
+// TLS configuration of the VirtualServer object.
 func SyncFnFor(
 	rec record.EventRecorder,
 	cmClient clientset.Interface,
@@ -69,7 +66,7 @@ func SyncFnFor(
 		var err error
 		issuerName, issuerKind, issuerGroup, err := issuerForVirtualServer(vs)
 		if err != nil {
-			glog.Error(err, "failed to determine issuer to be used for ingress resource")
+			glog.Error(err, "failed to determine issuer to be used for VirtualServer resource")
 			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Could not determine issuer for virtual server due to bad config: %s",
 				err)
 			return nil
