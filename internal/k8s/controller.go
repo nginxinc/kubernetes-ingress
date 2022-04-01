@@ -2400,7 +2400,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 		DosProtectedEx: make(map[string]*configs.DosEx),
 	}
 
-	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" && virtualServer.Spec.TLS.CertManager == nil {
+	if virtualServer.Spec.TLS != nil && virtualServer.Spec.TLS.Secret != "" {
 		secretKey := virtualServer.Namespace + "/" + virtualServer.Spec.TLS.Secret
 
 		secretRef := lbc.secretStore.GetSecret(secretKey)

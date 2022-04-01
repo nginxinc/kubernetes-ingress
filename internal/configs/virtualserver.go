@@ -2119,17 +2119,6 @@ func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tl
 		return nil
 	}
 
-	// if cert manager is configured, secrets will be created/ updated/ verified there
-	if tls.CertManager != nil {
-		ssl := version2.SSL{
-			HTTP2:           cfgParams.HTTP2,
-			Certificate:     fmt.Sprintf("%s/%s", namespace, tls.Secret),
-			CertificateKey:  fmt.Sprintf("%s/%s", namespace, tls.Secret),
-			RejectHandshake: false,
-		}
-		return &ssl
-	}
-
 	secretRef := secretRefs[fmt.Sprintf("%s/%s", namespace, tls.Secret)]
 	var secretType api_v1.SecretType
 	if secretRef.Secret != nil {
