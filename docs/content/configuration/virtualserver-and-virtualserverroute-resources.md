@@ -76,6 +76,7 @@ redirect:
 | ---| ---| ---| --- |
 |``secret`` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). If the secret doesn't exist or is invalid, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer. If the secret is not specified but [wildcard TLS secret](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-wildcard-tls-secret) is configured, NGINX will use the wildcard secret for TLS termination. | ``string`` | No |
 |``redirect`` | The redirect configuration of the TLS for a VirtualServer. | [tls.redirect](#virtualservertlsredirect) | No | ### VirtualServer.TLS.Redirect |
+|``certmanager`` | The certmanager configuration of the TLS for a VirtualServer. | [tls.certmanager](#virtualservertlscertmanager) | No | ### VirtualServer.TLS.CertManager |
 {{% /table %}}
 
 ### VirtualServer.TLS.Redirect
@@ -93,6 +94,28 @@ basedOn: scheme
 |``enable`` | Enables a TLS redirect for a VirtualServer. The default is ``False``. | ``boolean`` | No |
 |``code`` | The status code of a redirect. The allowed values are: ``301`` , ``302`` , ``307`` , ``308``.  The default is ``301``. | ``int`` | No |
 |``basedOn`` | The attribute of a request that NGINX will evaluate to send a redirect. The allowed values are ``scheme`` (the scheme of the request) or ``x-forwarded-proto`` (the ``X-Forwarded-Proto`` header of the request). The default is ``scheme``. | ``string`` | No | ### VirtualServer.Policy |
+{{% /table %}}
+
+### VirtualServer.TLS.CertManager
+
+The certmanager field configures the provisioning of automated certificate resources using certmanager for a VirtualServer (Please note that ACME Issuers are not yet supported):
+```yaml
+enable: true
+code: 301
+basedOn: scheme
+```
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``issuer`` |  the name of an Issuer to acquire the certificate required for this VirtualServer. The Issuer must be in the same namespace as the VirtualServer resource. | ``string`` | No |
+|``cluster-issuer`` | The name of a ClusterIssuer to acquire the Certificate required for this VirtualServer. It does not matter which namespace your VirtualServer resides, as ClusterIssuers are non-namespaced resources. | ``string`` | No |
+|``issuer-kind`` | The kind of the external issuer resource, for example AWSPCACIssuer. This is only necessary for out-of-tree issuers. | ``string`` | No |
+|``issuer-group`` | The API group of the external issuer controller, for example awspca.cert-manager.io. This is only necessary for out-of-tree issuers. | ``string`` | No |
+|``common-name`` | This field allows you to configure spec.commonName for the Certificate to be generated. | ``string`` | No |
+|``duration`` | This field allows you to configure spec.duration field for the Certificate to be generated. | ``string`` | No |
+|``renew-before`` |  this annotation allows you to configure spec.renewBefore field for the Certificate to be generated. | ``string`` | No |
+|``usages`` |  This field allows you to configure spec.usages field for the Certificate to be generated. Pass a string with comma-separated values i.e ``key agreement,digital signature, server auth``. | ``string`` | No |
 {{% /table %}}
 
 ### VirtualServer.Policy
