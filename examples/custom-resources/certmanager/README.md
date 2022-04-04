@@ -1,16 +1,16 @@
 # Example
 
-In this example, we deploy [cert-manager](https://cert-manager.io/docs/installation/#default-static-install) and a [self signed certificate issuer](https://cert-manager.io/docs/configuration/selfsigned/#bootstrapping-ca-issuers).
+In this example, we deploy [cert-manager](https://cert-manager.io/docs/installation/#default-static-install) and a [self-signed certificate issuer](https://cert-manager.io/docs/configuration/selfsigned/#bootstrapping-ca-issuers).
 Then, we deploy the NGINX or NGINX Plus Ingress controller, a simple web application and then configure load balancing for that application using the VirtualServer resource.
 
-## Deploying the Certmanager and the self signed authority
+## Deploying the Certmanager and the self-signed authority
 
 1. Deploy cert manager and all dependent resources:
 
     ```
     kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.2/cert-manager.yaml
     ```
-2. Deploy a self signed certificate issuer:
+2. Deploy a self-signed certificate issuer:
 
     ```
     kubectl apply -f self-signed.yaml
