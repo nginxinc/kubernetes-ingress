@@ -1,12 +1,12 @@
-# NGINX App Protect Dos Support
+# NGINX App Protect DoS Support
 
-In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect Dos](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and DOS protection for that application using the Ingress resource.
+In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect DoS](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and DOS protection for that application using the Ingress resource.
 
 ## Running the Example
 
 ## 1. Deploy the Ingress Controller
 
-1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress controller with NGINX App Protect Dos.
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress controller with NGINX App Protect DoS.
 
 2. Save the public IP address of the Ingress controller into a shell variable:
     ```
@@ -25,7 +25,7 @@ $ kubectl create -f webapp.yaml
 ```
 
 ## 3. Configure Load Balancing
-1. Create the syslog services and pod for the App Protect Dos security and access logs:
+1. Create the syslog services and pod for the App Protect DoS security and access logs:
     ```
     $ kubectl create -f syslog.yaml
     $ kubectl create -f syslog2.yaml
@@ -34,11 +34,11 @@ $ kubectl create -f webapp.yaml
     ```
     $ kubectl create -f webapp-secret.yaml
     ```
-3. Create the App Protect Dos Protected Resource:
+3. Create the App Protect DoS Protected Resource:
     ```
     $ kubectl create -f apdos-protected.yaml
     ```
-4. Create the App Protect Dos policy and log configuration:
+4. Create the App Protect DoS policy and log configuration:
     ```
     $ kubectl create -f apdos-policy.yaml
     $ kubectl create -f apdos-logconf.yaml
@@ -48,7 +48,7 @@ $ kubectl create -f webapp.yaml
     ```
     $ kubectl create -f webapp-ingress.yaml
     ```
-    Note the App Protect Dos annotation in the Ingress resource. This enables DOS protection by specifying the DOS protected resource configuration that applies to this Ingress.
+    Note the App Protect DoS annotation in the Ingress resource. This enables DOS protection by specifying the DOS protected resource configuration that applies to this Ingress.
 
 ## 4. Test the Application
 

@@ -1,0 +1,9 @@
+controller:
+  nginxplus: true
+  image:
+    repository: nginx-plus-ingress
+    tag: "2.1.1"
+  enableLatencyMetrics: true
+nginxServiceMesh:
+  enable: true
+  enableEgress: true

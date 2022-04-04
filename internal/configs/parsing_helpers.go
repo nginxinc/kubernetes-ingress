@@ -182,6 +182,11 @@ func ParseUint64(s string) (uint64, error) {
 	return strconv.ParseUint(s, 10, 64)
 }
 
+// ParseFloat64 ensures that the string value is a valid float64
+func ParseFloat64(s string) (float64, error) {
+	return strconv.ParseFloat(s, 64)
+}
+
 // timeRegexp http://nginx.org/en/docs/syntax.html
 var timeRegexp = regexp.MustCompile(`^(\d+y)??\s*(\d+M)??\s*(\d+w)??\s*(\d+d)??\s*(\d+h)??\s*(\d+m)??\s*(\d+s?)??\s*(\d+ms)??$`)
 

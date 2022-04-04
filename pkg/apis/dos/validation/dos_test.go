@@ -11,6 +11,7 @@ import (
 )
 
 func TestValidateDosProtectedResource(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		protected *v1beta1.DosProtectedResource
 		expectErr string
@@ -199,6 +200,7 @@ func TestValidateDosProtectedResource(t *testing.T) {
 }
 
 func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
+	t.Parallel()
 	// Positive test cases
 	posDstAntns := []string{
 		"10.10.1.1:514",
@@ -236,6 +238,7 @@ func TestValidateAppProtectDosAccessLogDest(t *testing.T) {
 }
 
 func TestValidateAppProtectDosLogConf(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		logConf   *unstructured.Unstructured
 		expectErr bool
@@ -301,6 +304,7 @@ func TestValidateAppProtectDosLogConf(t *testing.T) {
 }
 
 func TestValidateAppProtectDosPolicy(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		policy    *unstructured.Unstructured
 		expectErr bool
@@ -338,6 +342,7 @@ func TestValidateAppProtectDosPolicy(t *testing.T) {
 }
 
 func TestValidateAppProtectDosName(t *testing.T) {
+	t.Parallel()
 	// Positive test cases
 	posDstAntns := []string{"example.com", "\\\"example.com\\\""}
 
@@ -368,6 +373,7 @@ func TestValidateAppProtectDosName(t *testing.T) {
 }
 
 func TestValidateAppProtectDosMonitor(t *testing.T) {
+	t.Parallel()
 	// Positive test cases
 	posDstAntns := []v1beta1.ApDosMonitor{
 		{

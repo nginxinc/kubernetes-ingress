@@ -53,6 +53,7 @@ type ConfigParams struct {
 	MainAppProtectCookieSeed               string
 	MainAppProtectCPUThresholds            string
 	MainAppProtectPhysicalMemoryThresholds string
+	MainAppProtectReconnectPeriod          string
 	AppProtectDosResource                  string
 	MainAppProtectDosLogFormat             []string
 	MainAppProtectDosLogFormatEscaping     string

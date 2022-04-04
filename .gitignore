@@ -28,6 +28,7 @@ nginx-ingress
 osx-nginx-plus-ingress
 nginx-plus-ingress
 cmd/nginx-ingress/nginx-ingress
+dist/
 
 # NGINX Plus license files
 *.crt
@@ -53,11 +54,12 @@ site/
 venv/
 docs/public
 docs/themes/f5-hugo
-dist/
 .netlify/
 docs/.netlify
 
 # trivy container scanning cache
 .trivycache/
 
+# coverage files
 coverage.txt
+coverage.out

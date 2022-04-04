@@ -3,7 +3,7 @@ name: Continuous Integration
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
     paths-ignore:
       - 'docs/**'
@@ -13,7 +13,7 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches:
-      - master
+      - main
       - release-*
     paths-ignore:
       - 'docs/**'
@@ -31,8 +31,6 @@ defaults:
     shell: bash
 
 env:
-  K8S_VERSION: 1.23.3
-  K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   GIT_NAME: NGINX Kubernetes Team
   GIT_MAIL: kubernetes@nginx.com
@@ -49,11 +47,12 @@ jobs:
     outputs:
       go_version: ${{ steps.vars.outputs.go_version }}
       go_path: ${{ steps.go.outputs.go_path }}
+      k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache Go controller tools
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
@@ -65,6 +64,7 @@ jobs:
         id: vars
         run: |
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
+          echo "::set-output name=k8s_latest::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
       - name: Setup Golang Environment
         uses: actions/setup-go@v2
         with:
@@ -87,11 +87,11 @@ jobs:
     needs: checks
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Cache Go build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
@@ -107,12 +107,14 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: build --snapshot --rm-dist --id kubernetes-ingress --single-target
+          args: build --snapshot --rm-dist --single-target
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: ${{ needs.check.outputs.go_path }}
+          GOPATH: ${{ needs.checks.outputs.go_path }}
+          AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
+          AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
@@ -123,9 +125,9 @@ jobs:
     needs: checks
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Cache Go tests
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
@@ -147,7 +149,7 @@ jobs:
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-20.04
-    needs: [binary, unit-tests]
+    needs: [binary, unit-tests, checks]
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -164,9 +166,11 @@ jobs:
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"opentracing-plus\", \"marker\": \"vsr\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}]}"
+                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}], \
+                                              \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}"
           else
-            echo "::set-output name=matrix::{\"k8s\": [\"1.19.11\", \"1.20.7\", \"1.21.2\", \"1.22.5\", \"1.23.3\"]}"
+            echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.10\", \"1.22.7\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+                                             \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}"
           fi
 
   smoke-tests:
@@ -174,17 +178,18 @@ jobs:
     runs-on: ubuntu-20.04
     needs: setup-matrix
     strategy:
+      fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Run Smoke Tests
         id: smoke-tests
         uses: ./.github/actions/smoke-tests
         with:
           image: ${{ matrix.images.image != '' && matrix.images.image || 'debian' }}
           marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}
-          k8s-version: ${{ matrix.k8s != '' && matrix.k8s || env.K8S_VERSION }}
+          k8s-version: ${{ matrix.k8s }}
           nginx-crt: ${{ secrets.NGINX_CRT }}
           nginx-key: ${{ secrets.NGINX_KEY }}
       - name: Upload Test Results
@@ -197,7 +202,7 @@ jobs:
   helm-tests:
     name: Helm Tests
     runs-on: ubuntu-20.04
-    needs: [binary, unit-tests]
+    needs: [binary, unit-tests, checks]
     env:
       NGINX_HTTP_PORT: 8080
       NGINX_HTTPS_PORT: 8443
@@ -205,9 +210,9 @@ jobs:
       HELM_HTTP_POSTFIX: s
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
@@ -228,7 +233,7 @@ jobs:
       - name: Deploy Kubernetes
         id: k8s
         run: |
-          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ env.K8S_VERSION }} --wait ${{ env.K8S_TIMEOUT }}
+          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
           kind load docker-image nginx-ingress:${{ github.sha }} --name ${{ github.run_id }}
       - name: Install Chart
         run: >
@@ -258,11 +263,11 @@ jobs:
     needs: [checks, smoke-tests]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Cache Go build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
@@ -274,16 +279,25 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
+      - name: Publish Release Notes on new tag
+        uses: release-drafter/release-drafter@v5
+        with:
+            publish: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
       - name: Build binaries
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: build --rm-dist --id kubernetes-ingress ${{ github.event_name == 'pull_request' && '--single-target' || '' }} ${{ !startsWith(github.ref, 'refs/tags/') && '--snapshot' || '' }}
+          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: ${{ needs.check.outputs.go_path }}
+          GOPATH: ${{ needs.checks.outputs.go_path }}
+          AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
+          AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -294,6 +308,7 @@ jobs:
     needs: build-binaries
     if: ${{ !startsWith(github.ref, 'refs/heads/release') }}
     strategy:
+        fail-fast: false
         matrix:
           image: [debian, alpine, opentracing, alpine-opentracing]
           platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
@@ -302,11 +317,11 @@ jobs:
               platforms: "linux/arm64, linux/amd64, linux/s390x"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -356,6 +371,12 @@ jobs:
             org.opencontainers.image.description=NGINX Ingress Controller for Kubernetes
             org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
             org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/main/README.md
+            io.artifacthub.package.logo-url=https://docs.nginx.com/nginx-ingress-controller/images/icons/NGINX-Ingress-Controller-product-icon.svg
+            io.artifacthub.package.maintainers=[{"name":"NGINX Inc","email":"kubernetes@nginx.com"}]
+            io.artifacthub.package.license=Apache-2.0
+            io.artifacthub.package.keywords=kubernetes,ingress,nginx,controller
+
       - name: Output Variables
         id: var
         run: |
@@ -381,7 +402,7 @@ jobs:
           platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
-          pull: true
+          no-cache: ${{ github.event_name != 'pull_request' }}
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
@@ -390,8 +411,7 @@ jobs:
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
+          format: 'sarif'
           output: 'trivy-results-${{ matrix.image }}.sarif'
           ignore-unfixed: 'true'
       - name: Upload Trivy scan results to GitHub Security tab
@@ -412,6 +432,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: build-binaries
     strategy:
+        fail-fast: false
         matrix:
           image: [debian-plus, alpine-plus, opentracing-plus]
           platforms: ["linux/arm64, linux/amd64"]
@@ -420,11 +441,11 @@ jobs:
               platforms: "linux/arm64, linux/amd64, linux/s390x"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -488,7 +509,7 @@ jobs:
           platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
-          pull: true
+          no-cache: ${{ github.event_name != 'pull_request' }}
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.var.outputs.ic_version || 'CI' }}
@@ -515,8 +536,7 @@ jobs:
         continue-on-error: true
         with:
           image-ref: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
+          format: 'sarif'
           output: 'trivy-results-${{ matrix.image }}.sarif'
           ignore-unfixed: 'true'
       - name: Upload Trivy scan results to GitHub Security tab
@@ -542,7 +562,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/heads/release') }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Output Variables
         id: var
         run: |
@@ -572,7 +592,7 @@ jobs:
     if: ${{ github.event_name == 'push' && !startsWith(github.ref, 'refs/heads/release') }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: nginxinc/helm-charts
           fetch-depth: 1
@@ -591,16 +611,3 @@ jobs:
           git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' \
           commit -m "NGINX Ingress Controller - Release ${{ needs.package-helm.outputs.type }} ${{ needs.package-helm.outputs.version }}"
           git push -u origin master
-
-  publish-release-notes:
-    name: Publish Release Notes
-    runs-on: ubuntu-20.04
-    needs: release-helm
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    steps:
-      - name: Publish Release Notes
-        uses: release-drafter/release-drafter@v5
-        with:
-            publish: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

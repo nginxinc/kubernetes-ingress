@@ -12,6 +12,7 @@ import (
 )
 
 func TestCreateAppProtectDosPolicyEx(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		policy           *unstructured.Unstructured
 		expectedPolicyEx *DosPolicyEx
@@ -24,7 +25,7 @@ func TestCreateAppProtectDosPolicyEx(t *testing.T) {
 			},
 			expectedPolicyEx: &DosPolicyEx{
 				IsValid:  false,
-				ErrorMsg: "failed to store ApDosPolicy: error validating DosPolicy : Required field map[] not found",
+				ErrorMsg: "failed to store ApDosPolicy: error validating DosPolicy : required field map[] not found",
 			},
 			wantErr: true,
 			msg:     "dos policy no spec",
@@ -58,6 +59,7 @@ func TestCreateAppProtectDosPolicyEx(t *testing.T) {
 }
 
 func TestCreateAppProtectDosLogConfEx(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		logConf           *unstructured.Unstructured
 		expectedLogConfEx *DosLogConfEx
@@ -90,7 +92,7 @@ func TestCreateAppProtectDosLogConfEx(t *testing.T) {
 			},
 			expectedLogConfEx: &DosLogConfEx{
 				IsValid:  false,
-				ErrorMsg: "failed to store ApDosLogconf: error validating App Protect Dos Log Configuration : Required field map[] not found",
+				ErrorMsg: "failed to store ApDosLogconf: error validating App Protect Dos Log Configuration : required field map[] not found",
 			},
 			wantErr: true,
 			msg:     "Invalid DosLogConf",
@@ -111,6 +113,7 @@ func TestCreateAppProtectDosLogConfEx(t *testing.T) {
 }
 
 func TestAddOrUpdateDosProtected(t *testing.T) {
+	t.Parallel()
 	basicResource := &v1beta1.DosProtectedResource{
 		TypeMeta: v1.TypeMeta{},
 		ObjectMeta: v1.ObjectMeta{
@@ -192,6 +195,7 @@ func TestAddOrUpdateDosProtected(t *testing.T) {
 }
 
 func TestAddOrUpdateDosPolicy(t *testing.T) {
+	t.Parallel()
 	basicTestPolicy := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -259,7 +263,7 @@ func TestAddOrUpdateDosPolicy(t *testing.T) {
 					Resource: &DosPolicyEx{
 						Obj:      invalidTestPolicy,
 						IsValid:  false,
-						ErrorMsg: "failed to store ApDosPolicy: error validating DosPolicy : Required field map[] not found",
+						ErrorMsg: "failed to store ApDosPolicy: error validating DosPolicy : required field map[] not found",
 					},
 					Op: Delete,
 				},
@@ -268,7 +272,7 @@ func TestAddOrUpdateDosPolicy(t *testing.T) {
 				{
 					Object:  invalidTestPolicy,
 					Reason:  "Rejected",
-					Message: "error validating DosPolicy : Required field map[] not found",
+					Message: "error validating DosPolicy : required field map[] not found",
 				},
 			},
 			msg: "validation failed",
@@ -286,6 +290,7 @@ func TestAddOrUpdateDosPolicy(t *testing.T) {
 }
 
 func TestAddOrUpdateDosLogConf(t *testing.T) {
+	t.Parallel()
 	validLogConf := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -358,7 +363,7 @@ func TestAddOrUpdateDosLogConf(t *testing.T) {
 					Resource: &DosLogConfEx{
 						Obj:      invalidLogConf,
 						IsValid:  false,
-						ErrorMsg: "failed to store ApDosLogconf: error validating App Protect Dos Log Configuration invalid-logconf: Required field map[] not found",
+						ErrorMsg: "failed to store ApDosLogconf: error validating App Protect Dos Log Configuration invalid-logconf: required field map[] not found",
 					},
 					Op: Delete,
 				},
@@ -367,7 +372,7 @@ func TestAddOrUpdateDosLogConf(t *testing.T) {
 				{
 					Object:  invalidLogConf,
 					Reason:  "Rejected",
-					Message: "error validating App Protect Dos Log Configuration invalid-logconf: Required field map[] not found",
+					Message: "error validating App Protect Dos Log Configuration invalid-logconf: required field map[] not found",
 				},
 			},
 			msg: "validation failed",
@@ -385,6 +390,7 @@ func TestAddOrUpdateDosLogConf(t *testing.T) {
 }
 
 func TestDeletePolicy(t *testing.T) {
+	t.Parallel()
 	appProtectConfiguration := NewConfiguration(true)
 	appProtectConfiguration.dosPolicies["testing/test"] = &DosPolicyEx{}
 	tests := []struct {
@@ -423,6 +429,7 @@ func TestDeletePolicy(t *testing.T) {
 }
 
 func TestDeleteDosLogConf(t *testing.T) {
+	t.Parallel()
 	appProtectConfiguration := NewConfiguration(true)
 	appProtectConfiguration.dosLogConfs["testing/test"] = &DosLogConfEx{}
 	tests := []struct {
@@ -461,6 +468,7 @@ func TestDeleteDosLogConf(t *testing.T) {
 }
 
 func TestDeleteDosProtected(t *testing.T) {
+	t.Parallel()
 	appProtectConfiguration := NewConfiguration(true)
 	appProtectConfiguration.dosProtectedResource["testing/test"] = &DosProtectedResourceEx{}
 	tests := []struct {
@@ -499,6 +507,7 @@ func TestDeleteDosProtected(t *testing.T) {
 }
 
 func TestGetDosProtected(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		kind    string
 		key     string
@@ -545,6 +554,7 @@ func TestGetDosProtected(t *testing.T) {
 }
 
 func TestGetPolicy(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		kind    string
 		key     string
@@ -591,6 +601,7 @@ func TestGetPolicy(t *testing.T) {
 }
 
 func TestGetLogConf(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		kind    string
 		key     string
@@ -637,6 +648,7 @@ func TestGetLogConf(t *testing.T) {
 }
 
 func TestGetDosEx(t *testing.T) {
+	t.Parallel()
 	dosConf := NewConfiguration(true)
 	dosLogConf := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -834,6 +846,7 @@ func TestGetDosEx(t *testing.T) {
 }
 
 func TestGetDosExDosDisabled(t *testing.T) {
+	t.Parallel()
 	dosConf := NewConfiguration(false)
 	dosLogConf := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -1021,6 +1034,7 @@ func TestGetDosExDosDisabled(t *testing.T) {
 }
 
 func TestGetDosProtectedThatReferencedDosPolicy(t *testing.T) {
+	t.Parallel()
 	dosConf := NewConfiguration(true)
 	dosPolicy := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -1169,6 +1183,7 @@ func TestGetDosProtectedThatReferencedDosPolicy(t *testing.T) {
 }
 
 func TestGetDosProtectedThatReferencedDosLogConf(t *testing.T) {
+	t.Parallel()
 	dosConf := NewConfiguration(true)
 	dosLogConf := &unstructured.Unstructured{
 		Object: map[string]interface{}{

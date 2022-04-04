@@ -32,9 +32,8 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 
 1. Clone the Ingress Controller repo:
     ```
-    $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.1.2
     $ cd kubernetes-ingress
-    $ git checkout v2.1.0
     ```
 
 1. Build the image:
@@ -48,7 +47,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-ingress:2.1.0** is built. Note that the tag `2.1.0` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-ingress:2.1.2** is built. Note that the tag `2.1.2` comes from the `VERSION` variable, defined in the Makefile.
 
     * For **NGINX Plus**, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
       ```
@@ -61,7 +60,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-plus-ingress:2.1.0** is built. Note that the tag `2.1.0` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-plus-ingress:2.1.2** is built. Note that the tag `2.1.2` comes from the `VERSION` variable, defined in the Makefile.
 
       **Note**: In the event of a patch version of [NGINX Plus being released](/nginx/releases/), make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the `make` command.
 
@@ -111,4 +110,4 @@ The **Makefile** contains the following main variables for you to customize (eit
 * **PREFIX** -- the name of the image. The default is `nginx/nginx-ingress`.
 * **TAG** -- the tag added to the image. It's set to the version of the Ingress Controller by default.
 * **DOCKER_BUILD_OPTIONS** -- the [options](https://docs.docker.com/engine/reference/commandline/build/#options) for the `docker build` command. For example, `--pull`.
-* **TARGET** -- By default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the Ingress Controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`. If you checked out a tag or are on the latest commit on `master` you can specify `TARGET=download` to avoid compiling the binary.
+* **TARGET** -- By default, the Ingress Controller is compiled locally using a `local` golang environment. If you want to compile the Ingress Controller using your local golang environment, make sure that the Ingress Controller repo is in your `$GOPATH`. To compile the Ingress Controller using the Docker [golang](https://hub.docker.com/_/golang/) container, specify `TARGET=container`. If you checked out a tag or are on the latest commit on `main` you can specify `TARGET=download` to avoid compiling the binary.

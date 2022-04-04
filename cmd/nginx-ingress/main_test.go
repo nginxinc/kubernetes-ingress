@@ -123,3 +123,33 @@ func TestValidateLocation(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateAppProtectLogLevel(t *testing.T) {
+	badLogLevels := []string{
+		"",
+		"critical",
+		"none",
+		"info;",
+	}
+	for _, badLogLevel := range badLogLevels {
+		err := validateAppProtectLogLevel(badLogLevel)
+		if err == nil {
+			t.Errorf("validateAppProtectLogLevel(%v) returned no error when it should have returned an error", badLogLevel)
+		}
+	}
+
+	goodLogLevels := []string{
+		"fatal",
+		"Error",
+		"WARN",
+		"info",
+		"debug",
+		"trace",
+	}
+	for _, goodLogLevel := range goodLogLevels {
+		err := validateAppProtectLogLevel(goodLogLevel)
+		if err != nil {
+			t.Errorf("validateAppProtectLogLevel(%v) returned an error when it should have returned no error: %v", goodLogLevel, err)
+		}
+	}
+}

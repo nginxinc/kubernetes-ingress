@@ -9,8 +9,8 @@ FROM nginx:1.21.6 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temporary fix for CVE-2022-22822
-	&& apt-get install -y libexpat1 \
+	# temp fix for CVE-2018-25032
+	&& apt-get install -y zlib1g \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& echo $NGINX_VERSION > nginx_version
 
@@ -19,7 +19,9 @@ RUN apt-get update \
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
 FROM docker.io/library/nginx:1.21.6-alpine AS alpine
 
-RUN apk add --no-cache libcap
+RUN apk add --no-cache libcap \
+	# Temp fix for CVE-2022-0778 and CVE-2018-25032
+	&& apk upgrade --no-cache libretls zlib
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
@@ -44,6 +46,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
+	# temp fix for CVE-2018-25032
+	&& apt-get install -y zlib1g \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
@@ -78,6 +82,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect-dos; \
 	fi \
+	# temp fix for CVE-2021-43618
+	&& apt-get install -y libgmp10 \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect*.list
@@ -103,6 +109,8 @@ LABEL name="NGINX Ingress Controller" \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 RUN dnf --nodocs install -y shadow-utils ca-certificates \
+	# temp fix for CVE-2022-0778
+	&& dnf --nodocs upgrade -y openssl-libs \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
@@ -215,16 +223,6 @@ RUN --mount=target=/tmp [ -n "${BUILD_OS##*plus*}" ] && exit 0; mkdir -p etc/ngi
 RUN --mount=target=/tmp [ -n "${NAP_MODULES##*waf*}" ] && exit 0; mkdir -p /etc/nginx/waf/nac-policies /etc/nginx/waf/nac-logconfs /etc/nginx/waf/nac-usersigs /var/log/app_protect /opt/app_protect \
 	&& chown -R nginx:0 /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ /var/log/nginx/ \
 	&& touch /etc/nginx/waf/nac-usersigs/index.conf \
-	&& printf "%s\n" "MODULE = ALL;" "LOG_LEVEL = TS_CRIT;" "FILE = 2;" > /etc/app_protect/bd/logger.cfg \
-	&& printf "%s\n" "[config_set_compiler]" "log_level=fatal" >> /etc/app_protect/tools/asm_logging.conf \
-	&& for v in \
-	asm_config_server \
-	lock_factory \
-	bd_agent \
-	import_export_policy \
-	set_active \
-	; do sed -i "/\[$v/a log_level=fatal" "/etc/app_protect/tools/asm_logging.conf" \
-	; done \
 	&& cp -a /tmp/build/log-default.json /etc/nginx
 
 # run only on nap dos build
@@ -258,7 +256,7 @@ LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERS
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.17-alpine AS builder
+FROM golang:1.18-alpine AS builder
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE

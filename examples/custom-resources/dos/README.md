@@ -1,10 +1,10 @@
 # DOS
 
-In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect Dos](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and DOS protection for that application using the VirtualServer resource.
+In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect DoS](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and DOS protection for that application using the VirtualServer resource.
 
 ## Prerequisites
 
-1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress controller with NGINX App Protect Dos.
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress controller with NGINX App Protect DoS.
 1. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III
@@ -28,11 +28,11 @@ $ kubectl apply -f webapp.yaml
     $ kubectl apply -f syslog.yaml
     $ kubectl apply -f syslog2.yaml
     ```
-2. Create the Dos protected resource configuration:
+2. Create the DoS protected resource configuration:
     ```
     $ kubectl apply -f apdos-protected.yaml
     ```
-3. Create the App Protect Dos policy and log configuration:
+3. Create the App Protect DoS policy and log configuration:
     ```
     $ kubectl apply -f apdos-policy.yaml
     $ kubectl apply -f apdos-logconf.yaml

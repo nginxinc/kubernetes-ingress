@@ -151,7 +151,7 @@ func (*FakeManager) SetOpenTracing(_ bool) {
 }
 
 // AppProtectAgentStart is a fake implementation of AppProtectAgentStart
-func (*FakeManager) AppProtectAgentStart(_ chan error, _ bool) {
+func (*FakeManager) AppProtectAgentStart(_ chan error, _ string) {
 	glog.V(3).Infof("Starting FakeAppProtectAgent")
 }
 

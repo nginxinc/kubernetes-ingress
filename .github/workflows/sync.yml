@@ -2,7 +2,7 @@ name: Sync
 
 on:
   workflow_run:
-    branches: master
+    branches: main
     workflows:
       - "Continuous Integration"
     types:
@@ -21,9 +21,9 @@ jobs:
         uses: wei/git-sync@v3
         with:
           source_repo: "nginxinc/kubernetes-ingress"
-          source_branch: "master"
+          source_branch: "main"
           destination_repo: ${{ secrets.SYNC_DEST_REPO_URL }}
-          destination_branch: "master"
+          destination_branch: "main"
           ssh_private_key: ${{ secrets.SYNC_SSH_PRIVATE_KEY }}
 
   # This job open a PR to sync the generated CRD files across to nginx-ingress-operator
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Run CRD File Sync
         uses: BetaHuhn/repo-file-sync-action@v1
         with:
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Sync Labels
         uses: micnncim/action-label-syncer@v1
         with:

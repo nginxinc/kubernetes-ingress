@@ -15,10 +15,10 @@ func ValidateRequiredSlices(obj *unstructured.Unstructured, fieldsList [][]strin
 	for _, fields := range fieldsList {
 		field, found, err := unstructured.NestedSlice(obj.Object, fields...)
 		if err != nil {
-			return fmt.Errorf("Error checking for required field %v: %w", field, err)
+			return fmt.Errorf("error checking for required field %v: %w", field, err)
 		}
 		if !found {
-			return fmt.Errorf("Required field %v not found", field)
+			return fmt.Errorf("required field %v not found", field)
 		}
 	}
 	return nil
@@ -29,10 +29,10 @@ func ValidateRequiredFields(obj *unstructured.Unstructured, fieldsList [][]strin
 	for _, fields := range fieldsList {
 		field, found, err := unstructured.NestedMap(obj.Object, fields...)
 		if err != nil {
-			return fmt.Errorf("Error checking for required field %v: %w", field, err)
+			return fmt.Errorf("error checking for required field %v: %w", field, err)
 		}
 		if !found {
-			return fmt.Errorf("Required field %v not found", field)
+			return fmt.Errorf("required field %v not found", field)
 		}
 	}
 	return nil
@@ -46,7 +46,7 @@ var (
 
 // ValidateAppProtectLogDestination validates destination for log configuration
 func ValidateAppProtectLogDestination(dstAntn string) error {
-	errormsg := "Error parsing App Protect Log config: Destination must follow format: syslog:server=<ip-address | localhost>:<port> or fqdn or stderr or absolute path to file"
+	errormsg := "error parsing App Protect Log config: Destination must follow format: syslog:server=<ip-address | localhost>:<port> or fqdn or stderr or absolute path to file"
 	if !logDstEx.MatchString(dstAntn) {
 		return fmt.Errorf("%s Log Destination did not follow format", errormsg)
 	}
@@ -64,7 +64,7 @@ func ValidateAppProtectLogDestination(dstAntn string) error {
 	port, _ := strconv.Atoi(dstchunks[2])
 
 	if port > 65535 || port < 1 {
-		return fmt.Errorf("Error parsing port: %v not a valid port number", port)
+		return fmt.Errorf("error parsing port: %v not a valid port number", port)
 	}
 
 	ipstr := strings.Split(dstchunks[1], "=")[1]
@@ -77,7 +77,7 @@ func ValidateAppProtectLogDestination(dstAntn string) error {
 	}
 
 	if net.ParseIP(ipstr) == nil {
-		return fmt.Errorf("Error parsing host: %v is not a valid ip address or host name", ipstr)
+		return fmt.Errorf("error parsing host: %v is not a valid ip address or host name", ipstr)
 	}
 
 	return nil

@@ -1,9 +1,10 @@
-name: Release Drafter
+name: Release Drafter (branches)
 
 on:
   push:
     branches:
-      - master
+      - main
+      - release-*
 
 jobs:
   update_release_draft:

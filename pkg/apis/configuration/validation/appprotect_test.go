@@ -7,6 +7,7 @@ import (
 )
 
 func TestValidateAppProtectPolicy(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		policy    *unstructured.Unstructured
 		expectErr bool
@@ -59,6 +60,7 @@ func TestValidateAppProtectPolicy(t *testing.T) {
 }
 
 func TestValidateAppProtectLogConf(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		logConf   *unstructured.Unstructured
 		expectErr bool
@@ -124,6 +126,7 @@ func TestValidateAppProtectLogConf(t *testing.T) {
 }
 
 func TestValidateAppProtectUserSig(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		userSig   *unstructured.Unstructured
 		expectErr bool
@@ -171,6 +174,52 @@ func TestValidateAppProtectUserSig(t *testing.T) {
 		}
 		if !test.expectErr && err != nil {
 			t.Errorf("validateAppProtectUserSig() returned unexpected error %v for the case of %s", err, test.msg)
+		}
+	}
+}
+
+func TestCheckForExtRefs(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		policy      *unstructured.Unstructured
+		expectFound int
+		msg         string
+	}{
+		{
+			policy: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"spec": map[string]interface{}{
+						"policy": map[string]interface{}{
+							"signatures": []interface{}{},
+						},
+					},
+				},
+			},
+			expectFound: 0,
+			msg:         "Policy with no refs",
+		},
+		{
+			policy: &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"spec": map[string]interface{}{
+						"policy": map[string]interface{}{
+							"jsonProfileReference": []interface{}{},
+						},
+					},
+				},
+			},
+			expectFound: 1,
+			msg:         "Policy with refs",
+		},
+	}
+
+	for _, test := range tests {
+		refs, err := checkForExtRefs(test.policy)
+		if err != nil {
+			t.Errorf("Error in test case %s: function returned: %v", test.msg, err)
+		}
+		if len(refs) != test.expectFound {
+			t.Errorf("Error in test case %s: found %v expected: %v", test.msg, len(refs), test.expectFound)
 		}
 	}
 }

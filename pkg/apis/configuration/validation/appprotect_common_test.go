@@ -8,6 +8,7 @@ import (
 )
 
 func TestValidateRequiredFields(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		obj        *unstructured.Unstructured
 		fieldsList [][]string
@@ -102,6 +103,7 @@ func TestValidateRequiredFields(t *testing.T) {
 }
 
 func TestValidateRequiredSlices(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		obj        *unstructured.Unstructured
 		fieldsList [][]string
@@ -196,6 +198,7 @@ func TestValidateRequiredSlices(t *testing.T) {
 }
 
 func TestValidateAppProtectLogDestinationAnnotation(t *testing.T) {
+	t.Parallel()
 	// Positive test cases
 	posDstAntns := []string{"stderr", "syslog:server=localhost:9000", "syslog:server=10.1.1.2:9000", "/var/log/ap.log", "syslog:server=my-syslog-server.my-namespace:515"}
 

@@ -1,5 +1,5 @@
 ---
-title: Dos Protected Resource
+title: DoS Protected Resource
 
 description: "Dos Protected Resource Specification"
 weight: 1800
@@ -13,7 +13,7 @@ docs: "DOCS-581"
 > Note: The feature is implemented using the NGINX Plus [NGINX App Protect Dos Module](/nginx-app-protect-dos/deployment-guide/learn-about-deployment/).
 
 
-## Dos Protected Resource Specification
+## DoS Protected Resource Specification
 
 Below is an example of a dos protected resource.
 ```yaml
@@ -24,7 +24,7 @@ metadata:
 spec:
   enable: true
   name: "my-dos"
-  apDosMonitor: 
+  apDosMonitor:
     uri: "webapp.example.com"
 
 ```
@@ -32,14 +32,14 @@ spec:
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``enable`` | Enables NGINX App Protect Dos. | ``bool`` | No |
+|``enable`` | Enables NGINX App Protect DoS. | ``bool`` | No |
 |``name`` | Name of the protected object, max of 63 characters. | ``string`` | No |
-|``apDosMonitor.uri`` | The destination to the desired protected object. [App Protect Dos monitor](#dosprotectedresourceapdosmonitor) Default value: None, URL will be extracted from the first request which arrives and taken from "Host" header or from destination ip+port. | ``string`` | No |
-|``apDosMonitor.protocol`` | Determines if the server listens on http1 / http2 / grpc. [App Protect Dos monitor](#dosprotectedresourceapdosmonitor) Default value: http1. | ``enum`` | No |
-|``apDosMonitor.timeout`` | Determines how long (in seconds) should NGINX App Protect DoS wait for a response. [App Protect Dos monitor](#dosprotectedresourceapdosmonitor) Default value: 10 seconds for http1/http2 and 5 seconds for grpc. | ``int64`` | No |
-|``apDosPolicy`` | The [App Protect Dos policy](#dosprotectedresourceapdospolicy) of the dos. Accepts an optional namespace. | ``string`` | No |
+|``apDosMonitor.uri`` | The destination to the desired protected object. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: None, URL will be extracted from the first request which arrives and taken from "Host" header or from destination ip+port. | ``string`` | No |
+|``apDosMonitor.protocol`` | Determines if the server listens on http1 / http2 / grpc. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: http1. | ``enum`` | No |
+|``apDosMonitor.timeout`` | Determines how long (in seconds) should NGINX App Protect DoS wait for a response. [App Protect DoS monitor](#dosprotectedresourceapdosmonitor) Default value: 10 seconds for http1/http2 and 5 seconds for grpc. | ``int64`` | No |
+|``apDosPolicy`` | The [App Protect DoS policy](#dosprotectedresourceapdospolicy) of the dos. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.enable`` | Enables security log. | ``bool`` | No |
-|``dosSecurityLog.apDosLogConf`` | The [App Protect Dos log conf](/nginx-ingress-controller/app-protect-dos/configuration/#app-protect-dos-logs) resource. Accepts an optional namespace. | ``string`` | No |
+|``dosSecurityLog.apDosLogConf`` | The [App Protect DoS log conf](/nginx-ingress-controller/app-protect-dos/configuration/#app-protect-dos-logs) resource. Accepts an optional namespace. | ``string`` | No |
 |``dosSecurityLog.dosLogDest`` | The log destination for the security log. Accepted variables are ``syslog:server=<ip-address | localhost | dns-name>:<port>``, ``stderr``, ``<absolute path to file>``. Default is ``"syslog:server=127.0.0.1:514"``. | ``string`` | No |
 {{% /table %}}
 
@@ -51,7 +51,7 @@ The `apDosPolicy` is a reference (qualified identifier in the format `namespace/
 
 This is how NGINX App Protect DoS monitors the stress level of the protected object. The monitor requests are sent from localhost (127.0.0.1).
 
-### Invalid Dos Protected Resources
+### Invalid DoS Protected Resources
 
 NGINX will treat a dos protected resource as invalid if one of the following conditions is met:
 * The dos protected resource doesn't pass the [comprehensive validation](#comprehensive-validation).

@@ -25,6 +25,7 @@ builds:
       - linux
     goarch:
       - amd64
+      - arm64
     flags:
       - -trimpath
     gcflags:
@@ -32,12 +33,19 @@ builds:
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.productCode={{.Env.PRODUCT_CODE}} -X main.pubKeyString={{.Env.PUB_KEY}}
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.productCode={{.Env.AWS_PRODUCT_CODE}} -X main.pubKeyString={{.Env.AWS_PUB_KEY}}
     main: ./cmd/nginx-ingress/
     binary: nginx-ingress
     tags:
       - aws
 archives:
-- format: binary
+  - id: kubernetes-ingress
+    format: binary
+    builds: [kubernetes-ingress]
+  - id: aws
+    format: binary
+    builds: [aws]
 changelog:
   skip: true
+release:
+  ids: [kubernetes-ingress]
