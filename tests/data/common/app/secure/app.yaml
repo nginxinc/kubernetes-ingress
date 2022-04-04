@@ -85,6 +85,7 @@ data:
   app.conf: |-
     server {
       listen 443 ssl;
+      listen [::]:443 ssl;
 
       server_name app.example.com;
 

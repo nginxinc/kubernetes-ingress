@@ -20,6 +20,7 @@ def get_certificate(ip_address, host, port, timeout=10) -> str:
     context = ssl.create_default_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE
+    ip_address = ip_address.strip("[]")
     conn = socket.create_connection((ip_address, port))
     server_hostname = host if ssl.HAS_SNI else None
     sock = context.wrap_socket(conn, server_hostname=server_hostname)
