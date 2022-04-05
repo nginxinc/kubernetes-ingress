@@ -26,7 +26,9 @@ load_module modules/ngx_http_app_protect_dos_module.so;
 {{$value}}{{end}}
 {{- end}}
 
+{{if .PreviewPolicies}}
 load_module modules/ngx_http_js_module.so;
+{{- end}}
 
 events {
     worker_connections  {{.WorkerConnections}};
@@ -135,7 +137,9 @@ http {
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
     {{end}}
 
+    {{if .PreviewPolicies}}
     include oidc/oidc_common.conf;
+    {{- end}}
 
     server {
         # required to support the Websocket protocol in VirtualServer/VirtualServerRoutes

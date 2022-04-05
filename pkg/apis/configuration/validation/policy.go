@@ -15,11 +15,11 @@ import (
 
 // ValidatePolicy validates a Policy.
 func ValidatePolicy(policy *v1.Policy, isPlus, enablePreviewPolicies, enableAppProtect bool) error {
-	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enableAppProtect)
+	allErrs := validatePolicySpec(&policy.Spec, field.NewPath("spec"), isPlus, enablePreviewPolicies, enableAppProtect)
 	return allErrs.ToAggregate()
 }
 
-func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enableAppProtect bool) field.ErrorList {
+func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enablePreviewPolicies, enableAppProtect bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	fieldCount := 0
@@ -54,6 +54,10 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 	}
 
 	if spec.OIDC != nil {
+		if !enablePreviewPolicies {
+			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("oidc"),
+				"oidc is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+		}
 		if !isPlus {
 			return append(allErrs, field.Forbidden(fieldPath.Child("oidc"), "OIDC is only supported in NGINX Plus"))
 		}

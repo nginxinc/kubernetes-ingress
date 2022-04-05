@@ -38,7 +38,7 @@ func TestValidatePolicy(t *testing.T) {
 				},
 			},
 			isPlus:                true,
-			enablePreviewPolicies: true,
+			enablePreviewPolicies: false,
 			enableAppProtect:      false,
 			msg:                   "use jwt(plus only) policy",
 		},
@@ -68,7 +68,7 @@ func TestValidatePolicy(t *testing.T) {
 				},
 			},
 			isPlus:                true,
-			enablePreviewPolicies: true,
+			enablePreviewPolicies: false,
 			enableAppProtect:      true,
 			msg:                   "use WAF(plus only) policy",
 		},
@@ -100,6 +100,7 @@ func TestValidatePolicy(t *testing.T) {
 			enableAppProtect:      false,
 			msg:                   "rateLimit policy with preview policies disabled",
 		},
+
 		{
 			policy: &v1.Policy{
 				Spec: v1.PolicySpec{
@@ -139,23 +140,6 @@ func TestValidatePolicy(t *testing.T) {
 			enablePreviewPolicies: false,
 			enableAppProtect:      false,
 			msg:                   "egressMTLS policy with preview policies disabled",
-		},
-		{
-			policy: &v1.Policy{
-				Spec: v1.PolicySpec{
-					OIDC: &v1.OIDC{
-						AuthEndpoint:  "https://foo.bar/auth",
-						TokenEndpoint: "https://foo.bar/token",
-						JWKSURI:       "https://foo.bar/certs",
-						ClientID:      "random-string",
-						ClientSecret:  "random-secret",
-						Scope:         "openid",
-					},
-				},
-			},
-			isPlus:                true,
-			enablePreviewPolicies: false,
-			msg:                   "OIDC policy with preview policies disabled",
 		},
 	}
 	for _, test := range tests {
@@ -198,7 +182,7 @@ func TestValidatePolicyFails(t *testing.T) {
 				},
 			},
 			isPlus:                true,
-			enablePreviewPolicies: true,
+			enablePreviewPolicies: false,
 			enableAppProtect:      false,
 			msg:                   "multiple policies in spec",
 		},
@@ -212,7 +196,7 @@ func TestValidatePolicyFails(t *testing.T) {
 				},
 			},
 			isPlus:                false,
-			enablePreviewPolicies: true,
+			enablePreviewPolicies: false,
 			enableAppProtect:      false,
 			msg:                   "jwt(plus only) policy on OSS",
 		},
@@ -225,9 +209,26 @@ func TestValidatePolicyFails(t *testing.T) {
 				},
 			},
 			isPlus:                false,
-			enablePreviewPolicies: true,
+			enablePreviewPolicies: false,
 			enableAppProtect:      false,
 			msg:                   "WAF(plus only) policy on OSS",
+		},
+		{
+			policy: &v1.Policy{
+				Spec: v1.PolicySpec{
+					OIDC: &v1.OIDC{
+						AuthEndpoint:  "https://foo.bar/auth",
+						TokenEndpoint: "https://foo.bar/token",
+						JWKSURI:       "https://foo.bar/certs",
+						ClientID:      "random-string",
+						ClientSecret:  "random-secret",
+						Scope:         "openid",
+					},
+				},
+			},
+			isPlus:                true,
+			enablePreviewPolicies: false,
+			msg:                   "OIDC policy with preview policies disabled",
 		},
 		{
 			policy: &v1.Policy{
