@@ -90,7 +90,7 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
     $ kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
     ```
 
-> **Feature Status**: The Policy resources are in preview status until release 2.1.2.[^1]
+> **Feature Status**: The Policy resources are available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default.
 
 ### Resources for NGINX App Protect
 
@@ -260,4 +260,4 @@ $ kubectl get pods --namespace=nginx-ingress
 
 ## Footnotes
 
-[^1]: Capabilities labeled in preview status are fully supported. The preview status is used in releases up to 2.1.2 and is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller. From release 2.2.0, the capabilities are no longer in preview status and do not require the command-line argument.
+[^1]: Capabilities labeled in preview status are fully supported.
