@@ -100,7 +100,6 @@ func TestValidatePolicy(t *testing.T) {
 			enableAppProtect:      false,
 			msg:                   "rateLimit policy with preview policies disabled",
 		},
-
 		{
 			policy: &v1.Policy{
 				Spec: v1.PolicySpec{
