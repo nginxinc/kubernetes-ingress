@@ -59,7 +59,15 @@ Default `true`.
 
 ### -enable-preview-policies
 
-Enables preview policies.
+Enables preview policies. Deprecated in favour of [-enable-oidc](#cmdoption-enable-oidc).
+
+Default `false`.
+&nbsp;
+<a name="cmdoption-enable-oidc"></a>
+
+### -enable-oidc
+
+Enables OIDC policies. Requires [-enable-custom-resources](#cmdoption-enable-custom-resources)
 
 Default `false`.
 &nbsp;

@@ -276,7 +276,7 @@ In this example the Ingress Controller will use the configuration from the first
 
 ### OIDC
 
-> **Feature Status**: OIDC is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+> **Feature Status**: This feature is disabled by default. To enable it, set the [enable-oidc](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-oidc) command-line argument of the Ingress Controller.
 
 The OIDC policy configures NGINX Plus as a relying party for OpenID Connect authentication.
 
@@ -532,7 +532,3 @@ Status:
 ```
 
 **Note**: If you make an existing resource invalid, the Ingress Controller will reject it.
-
-## Footnotes
-
-[^1]: Capabilities labeled in preview status are fully supported.

@@ -165,6 +165,9 @@ controller:
   ## Enable preview policies.
   enablePreviewPolicies: false
 
+  ## Enable OIDC policies.
+  enableOIDC: false
+
   ## Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.
   enableTLSPassthrough: false
 

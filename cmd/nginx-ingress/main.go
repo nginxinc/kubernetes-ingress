@@ -163,7 +163,10 @@ var (
 		"Enable custom resources")
 
 	enablePreviewPolicies = flag.Bool("enable-preview-policies", false,
-		"Enable preview policies")
+		"Enable preview policies. This flag is deprecated in favour of enable-oidc.")
+	
+	enableOIDC = flag.Bool("enable-oidc", false,
+		"Enable OIDC Policies.")
 
 	enableSnippets = flag.Bool("enable-snippets", false,
 		"Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.")
@@ -248,6 +251,10 @@ func main() {
 
 	if *enableTLSPassthrough && !*enableCustomResources {
 		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
+	}
+
+	if *enableOIDC && !*enablePreviewPolicies {
+		enablePreviewPolicies = enableOIDC
 	}
 
 	if *appProtect && !*nginxPlus {
