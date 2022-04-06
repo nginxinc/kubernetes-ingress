@@ -164,7 +164,7 @@ var (
 
 	enablePreviewPolicies = flag.Bool("enable-preview-policies", false,
 		"Enable preview policies. This flag is deprecated in favour of enable-oidc.")
-	
+
 	enableOIDC = flag.Bool("enable-oidc", false,
 		"Enable OIDC Policies.")
 
@@ -253,9 +253,10 @@ func main() {
 		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
 	}
 
-	if *enableOIDC && !*enablePreviewPolicies {
-		enablePreviewPolicies = enableOIDC
+	if *enablePreviewPolicies {
+		glog.Warning("enable-preview-policies is deprecated. Please use -enable-oidc instead.")
 	}
+	*enablePreviewPolicies = *enablePreviewPolicies || *enableOIDC
 
 	if *appProtect && !*nginxPlus {
 		glog.Fatal("NGINX App Protect support is for NGINX Plus only")

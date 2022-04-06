@@ -56,7 +56,7 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 	if spec.OIDC != nil {
 		if !enablePreviewPolicies {
 			allErrs = append(allErrs, field.Forbidden(fieldPath.Child("oidc"),
-				"oidc is a preview policy. Preview policies must be enabled to use via cli argument -enable-preview-policies"))
+				"OIDC policy must be enabled to use via cli argument -enable-oidc"))
 		}
 		if !isPlus {
 			return append(allErrs, field.Forbidden(fieldPath.Child("oidc"), "OIDC is only supported in NGINX Plus"))
