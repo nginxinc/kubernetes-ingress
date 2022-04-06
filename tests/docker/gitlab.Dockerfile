@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.3
+# syntax=docker/dockerfile:1.4
 FROM python:3.9
 
 ARG GCLOUD_VERSION=364.0.0
@@ -17,11 +17,11 @@ RUN apt-get update && apt-get install -y curl git jq apache2-utils \
 
 WORKDIR /workspace/tests
 
-COPY tests/requirements.txt /workspace/tests/
+COPY --link tests/requirements.txt /workspace/tests/
 RUN pip install -r requirements.txt
 
-COPY tests /workspace/tests
-COPY deployments /workspace/deployments
+COPY --link tests /workspace/tests
+COPY --link deployments /workspace/deployments
 
 ENV PATH="/usr/lib/google-cloud-sdk/bin:${PATH}"
 

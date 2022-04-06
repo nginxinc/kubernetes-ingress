@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.3
+# syntax=docker/dockerfile:1.4
 # this is here so we can grab the latest version of kind and have dependabot keep it up to date
 FROM kindest/node:v1.23.5
 
@@ -10,15 +10,15 @@ RUN apt-get update \
 
 WORKDIR /workspace/tests
 
-COPY tests/requirements.txt /workspace/tests/
+COPY --link tests/requirements.txt /workspace/tests/
 RUN pip install -r requirements.txt
 
-COPY deployments /workspace/deployments
+COPY --link deployments /workspace/deployments
 
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
 	&& install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
 	&& apt-get update && apt-get install -y apache2-utils
 
-COPY tests /workspace/tests
+COPY --link tests /workspace/tests
 
 ENTRYPOINT ["python3", "-m", "pytest"]

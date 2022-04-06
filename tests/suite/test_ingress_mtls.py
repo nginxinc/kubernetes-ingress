@@ -69,7 +69,6 @@ def teardown_policy(kube_apis, test_namespace, tls_secret, pol_name, mtls_secret
                 "type": "complete",
                 "extra_args": [
                     f"-enable-leader-election=false",
-                    f"-enable-preview-policies",
                 ],
             },
             {
@@ -246,7 +245,6 @@ class TestIngressMtlsPolicyVS:
                 "type": "complete",
                 "extra_args": [
                     f"-enable-leader-election=false",
-                    f"-enable-preview-policies",
                 ],
             },
             {"example": "virtual-server-route"},

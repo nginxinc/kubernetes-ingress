@@ -36,7 +36,6 @@ policy_other_ingress_class_src = f"{TEST_DATA}/policy-ingress-class/policy-other
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-preview-policies",
                     f"-enable-leader-election=false",
                 ],
             },

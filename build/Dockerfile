@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.3
+# syntax=docker/dockerfile:1.4
 ARG BUILD_OS=debian
 ARG NGINX_PLUS_VERSION=r26
 ARG DOWNLOAD_TAG=edge
@@ -114,7 +114,7 @@ RUN dnf --nodocs install -y shadow-utils ca-certificates \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
-COPY --chown=nginx:0 LICENSE /licenses/
+COPY --link --chown=101:0 LICENSE /licenses/
 
 
 ############################################# Base image for UBI OSS #############################################
@@ -221,7 +221,7 @@ RUN --mount=target=/tmp [ -n "${BUILD_OS##*plus*}" ] && exit 0; mkdir -p etc/ngi
 
 # run only on nap waf build
 RUN --mount=target=/tmp [ -n "${NAP_MODULES##*waf*}" ] && exit 0; mkdir -p /etc/nginx/waf/nac-policies /etc/nginx/waf/nac-logconfs /etc/nginx/waf/nac-usersigs /var/log/app_protect /opt/app_protect \
-	&& chown -R nginx:0 /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ /var/log/nginx/ \
+	&& chown -R 101:0 /etc/app_protect /usr/share/ts /var/log/app_protect/ /opt/app_protect/ /var/log/nginx/ \
 	&& touch /etc/nginx/waf/nac-usersigs/index.conf \
 	&& cp -a /tmp/build/log-default.json /etc/nginx
 
@@ -234,7 +234,7 @@ RUN --mount=target=/tmp mkdir -p /var/lib/nginx /etc/nginx/secrets /etc/nginx/st
 	&& setcap -v 'cap_net_bind_service=+ep' /usr/sbin/nginx 'cap_net_bind_service=+ep' /usr/sbin/nginx-debug \
 	&& [ -z "${BUILD_OS##*plus*}" ] && PLUS=-plus; cp -a /tmp/internal/configs/version1/nginx$PLUS.ingress.tmpl /tmp/internal/configs/version1/nginx$PLUS.tmpl \
 	/tmp/internal/configs/version2/nginx$PLUS.virtualserver.tmpl /tmp/internal/configs/version2/nginx$PLUS.transportserver.tmpl / \
-	&& chown -R nginx:0 /etc/nginx /etc/nginx/secrets /var/cache/nginx /var/lib/nginx /*.tmpl \
+	&& chown -R 101:0 /etc/nginx /etc/nginx/secrets /var/cache/nginx /var/lib/nginx /*.tmpl \
 	&& rm -f /etc/nginx/conf.d/* /etc/apt/apt.conf.d/90pkgs-nginx /etc/apt/sources.list.d/nginx-plus.list
 
 # Uncomment the line below if you would like to add the default.pem to the image
@@ -245,7 +245,8 @@ EXPOSE 80 443
 
 STOPSIGNAL SIGTERM
 ENTRYPOINT ["/nginx-ingress"]
-USER nginx
+# 101 is nginx
+USER 101
 
 LABEL org.opencontainers.image.version="${IC_VERSION}"
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
@@ -263,10 +264,10 @@ ARG DATE
 ARG TARGETARCH
 
 WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/cmd/nginx-ingress
-COPY go.mod go.sum /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/
-RUN go mod download
-COPY . /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/
-RUN CGO_ENABLED=0 GO111MODULE=on GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION} -X main.commit=${GIT_COMMIT} -X main.date=${DATE}" -o /nginx-ingress
+RUN --mount=target=/go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+	go mod download
+RUN --mount=target=/go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+	CGO_ENABLED=0 GO111MODULE=on GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION} -X main.commit=${GIT_COMMIT} -X main.date=${DATE}" -o /nginx-ingress
 
 
 ############################################# Create image with nginx-ingress built in container #############################################
@@ -274,7 +275,7 @@ FROM common AS container
 
 LABEL org.nginx.kic.image.build.version="container"
 
-COPY --chown=nginx:0 --from=builder /nginx-ingress /
+COPY --link --from=builder --chown=101:0 /nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built locally #############################################
@@ -282,7 +283,7 @@ FROM common AS local
 
 LABEL org.nginx.kic.image.build.version="local"
 
-COPY --chown=nginx:0 ./nginx-ingress /
+COPY --link --chown=101:0 nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
@@ -292,7 +293,7 @@ ARG TARGETVARIANT
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
-COPY --chown=nginx:0 ./dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+COPY --link --chown=101:0 dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
@@ -301,7 +302,7 @@ ARG TARGETARCH
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --chown=nginx:0 ./dist/aws_linux_$TARGETARCH/nginx-ingress /
+COPY --link --chown=101:0 dist/aws_linux_$TARGETARCH/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
@@ -311,4 +312,4 @@ FROM common as download
 
 LABEL org.nginx.kic.image.build.version="binaries"
 
-COPY --from=kic /nginx-ingress /
+COPY --link --from=kic --chown=101:0 /nginx-ingress /

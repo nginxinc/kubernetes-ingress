@@ -35,7 +35,7 @@ const (
 	appProtectLogLevelCmd    = "/opt/app_protect/bin/set_log_level"
 
 	// appPluginParams is the configuration of App-Protect plugin
-	appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 307200000 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
+	appPluginParams = "tmm_count 4 proc_cpuinfo_cpu_mhz 2000000 total_xml_memory 471859200 total_umu_max_size 3129344 sys_max_account_id 1024 no_static_config"
 
 	appProtectDosAgentInstallCmd    = "/usr/bin/adminstall"
 	appProtectDosAgentStartCmd      = "/usr/bin/admd -d --standalone"
