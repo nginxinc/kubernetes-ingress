@@ -79,6 +79,14 @@ Enable TLS Passthrough on port 443.
 
 Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 &nbsp;
+<a name="cmdoption-enable-cert-manager"></a>
+
+### -enable-cert-manager
+
+Enable x509 automated certificate management for VirtualServer resources using cert-manager (cert-manager.io).
+
+Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
+&nbsp;
 <a name="cmdoption-external-service"></a>
 
 ### -external-service `<string>`

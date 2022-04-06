@@ -73,6 +73,7 @@ type CmOpts struct {
 	kubeClient    kubernetes.Interface
 	namespace     string
 	eventRecorder record.EventRecorder
+	vsClient      k8s_nginx.Interface
 }
 
 func (c *CmController) register() workqueue.RateLimitingInterface {
@@ -95,7 +96,7 @@ func (c *CmController) register() workqueue.RateLimitingInterface {
 }
 
 func (c *CmController) processItem(ctx context.Context, key string) error {
-	glog.Info("processing virtual server resource ")
+	glog.V(3).Infof("processing virtual server resource ")
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
@@ -157,8 +158,7 @@ func NewCmController(opts *CmOpts) *CmController {
 
 	cmSharedInformerFactory := cm_informers.NewSharedInformerFactoryWithOptions(intcl, resyncPeriod, cm_informers.WithNamespace(opts.namespace))
 	kubeSharedInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(opts.kubeClient, resyncPeriod, kubeinformers.WithNamespace(opts.namespace))
-	vsClient, _ := k8s_nginx.NewForConfig(opts.kubeConfig)
-	vsSharedInformerFactory := vsinformers.NewSharedInformerFactoryWithOptions(vsClient, resyncPeriod, vsinformers.WithNamespace(opts.namespace))
+	vsSharedInformerFactory := vsinformers.NewSharedInformerFactoryWithOptions(opts.vsClient, resyncPeriod, vsinformers.WithNamespace(opts.namespace))
 
 	cm := &CmController{
 		ctx:                       opts.context,
@@ -181,7 +181,7 @@ func (c *CmController) Run(stopCh <-chan struct{}) {
 	ctx, cancel := context.WithCancel(c.ctx)
 	defer cancel()
 
-	glog.Info("starting cert manager control loop")
+	glog.Infof("Starting cert-manager control loop")
 
 	go c.vsSharedInformerFactory.Start(c.ctx.Done())
 	go c.cmSharedInformerFactory.Start(c.ctx.Done())
@@ -197,7 +197,7 @@ func (c *CmController) Run(stopCh <-chan struct{}) {
 	go c.runWorker(ctx)
 
 	<-stopCh
-	glog.Info("shutting down queue as workqueue signaled shutdown")
+	glog.V(3).Infof("shutting down queue as workqueue signaled shutdown")
 	c.queue.ShutDown()
 }
 
@@ -205,7 +205,7 @@ func (c *CmController) Run(stopCh <-chan struct{}) {
 // processItem function in order to read and process a message on the
 // workqueue.
 func (c *CmController) runWorker(ctx context.Context) {
-	glog.Info("processing items on the workqueue")
+	glog.V(3).Infof("processing items on the workqueue")
 	for {
 		obj, shutdown := c.queue.Get()
 		if shutdown {
@@ -223,23 +223,24 @@ func (c *CmController) runWorker(ctx context.Context) {
 
 			err := c.processItem(ctx, key)
 			if err != nil {
-				glog.Error(err, " re-queuing item due to error processing")
+				glog.Errorf("Re-queuing item due to error processing: %v", err)
 				c.queue.AddRateLimited(obj)
 				return
 			}
-			glog.Info("finished processing work item")
+			glog.V(3).Infof("finished processing work item")
 			c.queue.Forget(obj)
 		}()
 	}
 }
 
 // BuildOpts builds a CmOpts from the given parameters
-func BuildOpts(ctx context.Context, kc *rest.Config, cl kubernetes.Interface, ns string, er record.EventRecorder) *CmOpts {
+func BuildOpts(ctx context.Context, kc *rest.Config, cl kubernetes.Interface, ns string, er record.EventRecorder, vsc k8s_nginx.Interface) *CmOpts {
 	return &CmOpts{
 		context:       ctx,
 		kubeClient:    cl,
 		kubeConfig:    kc,
 		namespace:     ns,
 		eventRecorder: er,
+		vsClient:      vsc,
 	}
 }

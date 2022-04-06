@@ -76,7 +76,7 @@ redirect:
 | ---| ---| ---| --- |
 |``secret`` | The name of a secret with a TLS certificate and key. The secret must belong to the same namespace as the VirtualServer. The secret must be of the type ``kubernetes.io/tls`` and contain keys named ``tls.crt`` and ``tls.key`` that contain the certificate and private key as described [here](https://kubernetes.io/docs/concepts/services-networking/ingress/#tls). If the secret doesn't exist or is invalid, NGINX will break any attempt to establish a TLS connection to the host of the VirtualServer. If the secret is not specified but [wildcard TLS secret](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-wildcard-tls-secret) is configured, NGINX will use the wildcard secret for TLS termination. | ``string`` | No |
 |``redirect`` | The redirect configuration of the TLS for a VirtualServer. | [tls.redirect](#virtualservertlsredirect) | No | ### VirtualServer.TLS.Redirect |
-|``certmanager`` | The certmanager configuration of the TLS for a VirtualServer. | [tls.certmanager](#virtualservertlscertmanager) | No | ### VirtualServer.TLS.CertManager |
+|``cert-manager`` | The cert-manager configuration of the TLS for a VirtualServer. | [tls.cert-manager](#virtualservertlscertmanager) | No | ### VirtualServer.TLS.CertManager |
 {{% /table %}}
 
 ### VirtualServer.TLS.Redirect
@@ -98,24 +98,23 @@ basedOn: scheme
 
 ### VirtualServer.TLS.CertManager
 
-The certmanager field configures the provisioning of automated certificate resources using certmanager for a VirtualServer (Please note that ACME Issuers are not yet supported):
+The cert-manager field configures x509 automated Certificate management for VirtualServer resources using cert-manager (cert-manager.io). Please see the [cert-manager configuration documentation](https://cert-manager.io/docs/configuration/) for more information on deploying and configuring Issuers (Please note that ACME Issuers are not yet supported). Example:
 ```yaml
-enable: true
-code: 301
-basedOn: scheme
+certmanager:
+  cluster-issuer: "my-issuer-name"
 ```
 
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``issuer`` |  the name of an Issuer to acquire the certificate required for this VirtualServer. The Issuer must be in the same namespace as the VirtualServer resource. | ``string`` | No |
-|``cluster-issuer`` | The name of a ClusterIssuer to acquire the Certificate required for this VirtualServer. It does not matter which namespace your VirtualServer resides, as ClusterIssuers are non-namespaced resources. | ``string`` | No |
-|``issuer-kind`` | The kind of the external issuer resource, for example AWSPCACIssuer. This is only necessary for out-of-tree issuers. | ``string`` | No |
-|``issuer-group`` | The API group of the external issuer controller, for example awspca.cert-manager.io. This is only necessary for out-of-tree issuers. | ``string`` | No |
-|``common-name`` | This field allows you to configure spec.commonName for the Certificate to be generated. | ``string`` | No |
+|``issuer`` |  the name of an Issuer. An Issuer is a cert-manager resource which describes the certificate authority capable of signing certificates. The Issuer must be in the same namespace as the VirtualServer resource. Please note that one of `issuer` and `cluster-issuer` are required, but they are mutually exclusive - one and only one must be defined. | ``string`` | No |
+|``cluster-issuer`` | the name of a ClusterIssuer. A ClusterIssuer is a cert-manager resource which describes the certificate authority capable of signing certificates. It does not matter which namespace your VirtualServer resides, as ClusterIssuers are non-namespaced resources. Please note that one of `issuer` and `cluster-issuer` are required, but they are mutually exclusive - one and only one must be defined. | ``string`` | No |
+|``issuer-kind`` | The kind of the external issuer resource, for example AWSPCAIssuer. This is only necessary for out-of-tree issuers. This cannot be defined if `cluster-issuer` is also defined. | ``string`` | No |
+|``issuer-group`` | The API group of the external issuer controller, for example awspca.cert-manager.io. This is only necessary for out-of-tree issuers. This cannot be defined if `cluster-issuer` is also defined. | ``string`` | No |
+|``common-name`` | This field allows you to configure spec.commonName for the Certificate to be generated. This configuration adds a CN to the x509 certificate. | ``string`` | No |
 |``duration`` | This field allows you to configure spec.duration field for the Certificate to be generated. | ``string`` | No |
 |``renew-before`` |  this annotation allows you to configure spec.renewBefore field for the Certificate to be generated. | ``string`` | No |
-|``usages`` |  This field allows you to configure spec.usages field for the Certificate to be generated. Pass a string with comma-separated values i.e ``key agreement,digital signature, server auth``. | ``string`` | No |
+|``usages`` |  This field allows you to configure spec.usages field for the Certificate to be generated. Pass a string with comma-separated values i.e. ``key agreement,digital signature, server auth``. | ``string`` | No |
 {{% /table %}}
 
 ### VirtualServer.Policy

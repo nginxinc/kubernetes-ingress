@@ -9,7 +9,6 @@ from suite.yaml_utils import get_secret_name_from_vs_yaml
 
 
 @pytest.mark.vs
-@pytest.mark.cm
 @pytest.mark.smoke
 @pytest.mark.parametrize('crd_ingress_controller, create_certmanager, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-cert-manager"]},
@@ -34,7 +33,6 @@ class TestCertManagerVirtualServer:
 
 @pytest.mark.vs
 @pytest.mark.smoke
-@pytest.mark.cm
 @pytest.mark.parametrize('crd_ingress_controller, create_certmanager, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-cert-manager"]},
                            {"issuer_name": "ca-issuer"},

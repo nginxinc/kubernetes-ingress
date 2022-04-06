@@ -516,7 +516,7 @@ func TestIssuerForVirtualServer(t *testing.T) {
 		},
 		{
 			VirtualServer: buildVirtualServer("name", "namespace", "secret-name", vsapi.CertManager{}),
-			ExpectedError: errors.New("failed to determine issuer name to be used for virtualserver resource"),
+			ExpectedError: errors.New("failed to determine Issuer name to be used for VirtualServer resource"),
 		},
 		{
 			VirtualServer: buildVirtualServer("name", "namespace", "secret-name", vsapi.CertManager{

@@ -66,7 +66,7 @@ func SyncFnFor(
 		var err error
 		issuerName, issuerKind, issuerGroup, err := issuerForVirtualServer(vs)
 		if err != nil {
-			glog.Error(err, "failed to determine issuer to be used for VirtualServer resource")
+			glog.Errorf("Failed to determine issuer to be used for VirtualServer resource: %v", err)
 			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Could not determine issuer for virtual server due to bad config: %s",
 				err)
 			return nil
@@ -157,20 +157,20 @@ func buildCertificates(
 	// check if a Certificate for this TLS entry already exists, and if it
 	// does then skip this entry
 	if existingCrt != nil {
-		glog.Info("certificate already exists for this object, ensuring it is up to date")
+		glog.V(3).Infof("certificate already exists for this object, ensuring it is up to date")
 
 		if metav1.GetControllerOf(existingCrt) == nil {
-			glog.Info("certificate resource has no owner. refusing to update non-owned certificate resource for object")
+			glog.V(3).Infof("certificate resource has no owner. refusing to update non-owned certificate resource for object")
 			return nil, nil, nil
 		}
 
 		if !metav1.IsControlledBy(existingCrt, vs) {
-			glog.Info("certificate resource is not owned by this object. refusing to update non-owned certificate resource for object")
+			glog.V(3).Infof("certificate resource is not owned by this object. refusing to update non-owned certificate resource for object")
 			return nil, nil, nil
 		}
 
 		if !certNeedsUpdate(existingCrt, crt) {
-			glog.Info("certificate resource is already up to date for object")
+			glog.V(3).Infof("certificate resource is already up to date for object")
 			return nil, nil, nil
 		}
 
@@ -278,7 +278,7 @@ func issuerForVirtualServer(vs *vsapi.VirtualServer) (name, kind, group string, 
 	}
 
 	if len(name) == 0 {
-		errs = append(errs, "failed to determine issuer name to be used for virtualserver resource")
+		errs = append(errs, "failed to determine Issuer name to be used for VirtualServer resource")
 	}
 
 	if issuerNameOK && clusterIssuerNameOK {
