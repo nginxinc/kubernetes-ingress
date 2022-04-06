@@ -100,7 +100,7 @@ basedOn: scheme
 
 The cert-manager field configures x509 automated Certificate management for VirtualServer resources using cert-manager (cert-manager.io). Please see the [cert-manager configuration documentation](https://cert-manager.io/docs/configuration/) for more information on deploying and configuring Issuers (Please note that ACME Issuers are not yet supported). Example:
 ```yaml
-certmanager:
+cert-manager:
   cluster-issuer: "my-issuer-name"
 ```
 
