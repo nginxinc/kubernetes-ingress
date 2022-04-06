@@ -1,3 +1,4 @@
+SHELL=/bin/bash
 CONTEXT =
 BUILD_IMAGE = nginx/nginx-ingress:edge
 PULL_POLICY = IfNotPresent
@@ -12,17 +13,8 @@ KIND_KUBE_CONFIG_FOLDER = $${HOME}/.kube/kind
 SHOW_IC_LOGS = no
 PYTEST_ARGS =
 DOCKERFILEPATH = docker/Dockerfile
-KIND_TEMPLATE_FILE_PATH=kind/kind-config-template.yaml
-IP_FAMILY ?= ipv4
-IP_ADDR_PROPERTY = .IPAddress
-IP_ADDR_FMT = "%s"
-API_SERVER_ADDR = 127.0.0.1
+IP_FAMILY=dual
 
-
-ifeq (${IP_FAMILY}, ipv6)
-IP_ADDR_PROPERTY = .GlobalIPv6Address
-IP_ADDR_FMT = "[%s]"
-endif
 
 define PRINT_HELP_PYSCRIPT
 import re, sys
@@ -52,15 +44,9 @@ run-tests: ## Run tests
 	docker run --rm -v $(KUBE_CONFIG_FOLDER):/root/.kube $(PREFIX):$(TAG) --context=$(CONTEXT) --image=$(BUILD_IMAGE) --image-pull-policy=$(PULL_POLICY) --deployment-type=$(DEPLOYMENT_TYPE) --ic-type=$(IC_TYPE) --service=$(SERVICE) --node-ip=$(NODE_IP) --show-ic-logs=$(SHOW_IC_LOGS) $(PYTEST_ARGS)
 
 
-.PHONY: get-kind-cluster-ip ## Get Kind cluster IP Address
-get-kind-cluster-ip:	
-	$(eval KIND_CLUSTER_IP=$(shell docker inspect -f '{{range .NetworkSettings.Networks}}{{${IP_ADDR_PROPERTY}}}{{end}}' kind-control-plane ))
-	$(eval KIND_CLUSTER_IP=$(shell printf ${IP_ADDR_FMT} "${KIND_CLUSTER_IP}"))
-
-
 .PHONY: update-test-kind-config ## Update Kind config
-update-test-kind-config: get-kind-cluster-ip
-	sed -ir "s|server:.*|server: https://${KIND_CLUSTER_IP}:6443|" $(KIND_KUBE_CONFIG_FOLDER)/config
+update-test-kind-config:
+	sed -ir "s|server:.*|server: https://kind-control-plane:6443|" $(KIND_KUBE_CONFIG_FOLDER)/config
 
 
 .PHONY: run-tests-in-kind
@@ -71,7 +57,7 @@ run-tests-in-kind: update-test-kind-config ## Run tests in Kind
  		--deployment-type=$(DEPLOYMENT_TYPE) \
  		--ic-type=$(IC_TYPE) \
  		--service=nodeport \
- 		--node-ip=$(KIND_CLUSTER_IP) \
+ 		--node-ip=kind-control-plane \
  		--show-ic-logs=$(SHOW_IC_LOGS) \
  		$(PYTEST_ARGS)
 
@@ -79,8 +65,7 @@ run-tests-in-kind: update-test-kind-config ## Run tests in Kind
 .PHONY: create-kind-cluster
 create-kind-cluster: ## Create Kind cluster
 	$(eval KIND_IMAGE=$(shell grep -m1 'FROM kindest/node' <docker/Dockerfile | awk -F'[ ]' '{print $$2}'))
-	cat ${KIND_TEMPLATE_FILE_PATH} | sed "s/{{.IPFamily}}/${IP_FAMILY}/" | sed "s/{{.APIServerAddress}}/${API_SERVER_ADDR}/"  > kind-config.yaml
-	kind create cluster --image $(KIND_IMAGE) --config kind-config.yaml
+	kind create cluster --image $(KIND_IMAGE) --config=<(sed 's/dual/${IP_FAMILY}/' ./ci-files/ci-kind-config.yaml)
 	kind export kubeconfig --kubeconfig $(KIND_KUBE_CONFIG_FOLDER)/config
 
 
