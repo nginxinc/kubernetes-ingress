@@ -10,4 +10,3 @@ data:
   worker-connections: "30000"
   worker-rlimit-nofile: "65535"
   worker-rlimit-core: "500M"
-
