@@ -46,7 +46,6 @@ rl_vsr_override_vs_route_src = (
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-preview-policies",
                     f"-enable-leader-election=false",
                 ],
             },

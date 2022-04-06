@@ -59,7 +59,6 @@ invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
                 "type": "complete",
                 "extra_args": [
                     f"-enable-custom-resources",
-                    f"-enable-preview-policies",
                     f"-enable-leader-election=false",
                 ],
             },

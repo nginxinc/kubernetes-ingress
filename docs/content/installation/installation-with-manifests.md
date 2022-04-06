@@ -90,7 +90,7 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
     $ kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
     ```
 
-> **Feature Status**: The TransportServer, GlobalConfiguration and Policy resources are available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default.
+> **Feature Status**: The Policy resources are available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default.
 
 ### Resources for NGINX App Protect
 

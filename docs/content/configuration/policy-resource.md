@@ -94,8 +94,6 @@ policies:
 
 ### RateLimit
 
-> **Feature Status**: Rate-Limiting is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
-
 The rate limit policy configures NGINX to limit the processing rate of requests.
 
 For example, the following policy will limit all subsequent requests coming from a single IP address once a rate of 10 requests per second is exceeded:
@@ -135,8 +133,6 @@ policies:
 When you reference more than one rate limit policy, the Ingress Controller will configure NGINX to use all referenced rate limits. When you define multiple policies, each additional policy inherits the `dryRun`, `logLevel`, and `rejectCode` parameters from the first policy referenced (`rate-limit-policy-one`, in the example above).
 
 ### JWT
-
-> **Feature Status**: JWT is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
 
 > Note: This feature is only available in NGINX Plus.
 
@@ -189,8 +185,6 @@ In this example the Ingress Controller will use the configuration from the first
 
 ### IngressMTLS
 
-> **Feature Status**: IngressMTLS is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
-
 The IngressMTLS policy configures client certificate verification.
 
 For example, the following policy will verify a client certificate using the CA certificate specified in the `ingress-mtls-secret`:
@@ -242,8 +236,6 @@ policies:
 In this example the Ingress Controller will use the configuration from the first policy reference `ingress-mtls-policy-one`, and ignores `ingress-mtls-policy-two`.
 
 ### EgressMTLS
-
-> **Feature Status**: EgressMTLS is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
 
 The EgressMTLS policy configures upstreams authentication and certificate verification.
 
