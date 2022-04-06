@@ -433,7 +433,6 @@ type EgressMTLS struct {
 }
 
 // OIDC defines an Open ID Connect policy.
-// policy status: preview
 type OIDC struct {
 	AuthEndpoint  string `json:"authEndpoint"`
 	TokenEndpoint string `json:"tokenEndpoint"`

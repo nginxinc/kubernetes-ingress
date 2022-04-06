@@ -99,7 +99,7 @@ spec:
                     token:
                       type: string
                 oidc:
-                  description: 'OIDC defines an Open ID Connect policy. policy status: preview'
+                  description: OIDC defines an Open ID Connect policy.
                   type: object
                   properties:
                     authEndpoint:
