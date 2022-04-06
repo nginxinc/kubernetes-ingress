@@ -163,7 +163,7 @@ var (
 		"Enable custom resources")
 
 	enablePreviewPolicies = flag.Bool("enable-preview-policies", false,
-		"Enable preview policies. This flag is deprecated in favour of enable-oidc.")
+		"Enable preview policies. This flag is deprecated in favor of enable-oidc.")
 
 	enableOIDC = flag.Bool("enable-oidc", false,
 		"Enable OIDC Policies.")

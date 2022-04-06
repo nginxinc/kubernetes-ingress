@@ -59,7 +59,7 @@ Default `true`.
 
 ### -enable-preview-policies
 
-Enables preview policies. Deprecated in favour of [-enable-oidc](#cmdoption-enable-oidc).
+Enables preview policies. Deprecated in favor of [-enable-oidc](#cmdoption-enable-oidc).
 
 Default `false`.
 &nbsp;
