@@ -5,4 +5,3 @@ metadata:
   namespace: nginx-ingress
 data:
   set-real-ip-from: "0.0.0.0/0,::/0"
-
