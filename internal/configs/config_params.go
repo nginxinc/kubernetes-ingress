@@ -121,7 +121,7 @@ type StaticConfigParams struct {
 	MainAppProtectDosLoadModule    bool
 	PodName                        string
 	EnableLatencyMetrics           bool
-	EnablePreviewPolicies          bool
+	EnableOIDC                     bool
 	SSLRejectHandshake             bool
 	EnableCertManager              bool
 }

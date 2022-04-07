@@ -256,7 +256,7 @@ func main() {
 	if *enablePreviewPolicies {
 		glog.Warning("enable-preview-policies is universally deprecated. To enable OIDC Policies please use -enable-oidc instead.")
 	}
-	*enablePreviewPolicies = *enablePreviewPolicies || *enableOIDC
+	*enableOIDC = *enablePreviewPolicies || *enableOIDC
 
 	if *appProtect && !*nginxPlus {
 		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
@@ -588,7 +588,7 @@ func main() {
 		MainAppProtectLoadModule:       *appProtect,
 		MainAppProtectDosLoadModule:    *appProtectDos,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
-		EnablePreviewPolicies:          *enablePreviewPolicies,
+		EnableOIDC:                     *enableOIDC,
 		SSLRejectHandshake:             sslRejectHandshake,
 		EnableCertManager:              *enableCertManager,
 	}
@@ -698,7 +698,7 @@ func main() {
 		ConfigMaps:                   *nginxConfigMaps,
 		GlobalConfiguration:          *globalConfiguration,
 		AreCustomResourcesEnabled:    *enableCustomResources,
-		EnablePreviewPolicies:        *enablePreviewPolicies,
+		EnableOIDC:                   *enableOIDC,
 		MetricsCollector:             controllerCollector,
 		GlobalConfigurationValidator: globalConfigurationValidator,
 		TransportServerValidator:     transportServerValidator,
