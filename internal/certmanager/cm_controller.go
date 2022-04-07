@@ -20,23 +20,23 @@ import (
 	"fmt"
 	"time"
 
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cm_clientset "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
+	cm_informers "github.com/cert-manager/cert-manager/pkg/client/informers/externalversions"
+	controllerpkg "github.com/cert-manager/cert-manager/pkg/controller"
 	"github.com/golang/glog"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
+	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	cm_clientset "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
-	cm_informers "github.com/jetstack/cert-manager/pkg/client/informers/externalversions"
-	controllerpkg "github.com/jetstack/cert-manager/pkg/controller"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	vsinformers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
 	listers_v1 "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/configuration/v1"
-	kubeinformers "k8s.io/client-go/informers"
 )
 
 const (
@@ -223,7 +223,7 @@ func (c *CmController) runWorker(ctx context.Context) {
 
 			err := c.processItem(ctx, key)
 			if err != nil {
-				glog.Errorf("Re-queuing item due to error processing: %v", err)
+				glog.V(3).Infof("Re-queuing item due to error processing: %v", err)
 				c.queue.AddRateLimited(obj)
 				return
 			}

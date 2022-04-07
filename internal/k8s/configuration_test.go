@@ -30,7 +30,7 @@ func createTestConfiguration() *Configuration {
 		appProtectEnabled,
 		appProtectDosEnabled,
 		internalRoutesEnabled,
-		validation.NewVirtualServerValidator(isTLSPassthroughEnabled, appProtectDosEnabled, certManagerEnabled),
+		validation.NewVirtualServerValidator(validation.IsPlus(isTLSPassthroughEnabled), validation.IsDosEnabled(appProtectDosEnabled), validation.IsCertManagerEnabled(certManagerEnabled)),
 		validation.NewGlobalConfigurationValidator(map[int]bool{
 			80:  true,
 			443: true,

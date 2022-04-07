@@ -25,6 +25,11 @@ import (
 	"reflect"
 	"strings"
 
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	clientset "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
+	cmlisters "github.com/cert-manager/cert-manager/pkg/client/listers/certmanager/v1"
+	"github.com/golang/glog"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -32,11 +37,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/golang/glog"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
-	clientset "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
-	cmlisters "github.com/jetstack/cert-manager/pkg/client/listers/certmanager/v1"
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
 
@@ -69,17 +69,23 @@ func SyncFnFor(
 			glog.Errorf("Failed to determine issuer to be used for VirtualServer resource: %v", err)
 			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Could not determine issuer for virtual server due to bad config: %s",
 				err)
-			return nil
+			return err
 		}
 
 		newCrts, updateCrts, err := buildCertificates(cmLister, vs, issuerName, issuerKind, issuerGroup)
 		if err != nil {
+			glog.Errorf("Incorrect cert-manager configuration for VirtualServer resource: %v", err)
+			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Incorrect cert-manager configuration for VirtualServer resource: %s",
+				err)
 			return err
 		}
 
 		for _, crt := range newCrts {
 			_, err := cmClient.CertmanagerV1().Certificates(crt.Namespace).Create(ctx, crt, metav1.CreateOptions{})
 			if err != nil {
+				glog.Errorf("Error issuing Certificate for VirtualServer resource: %v", err)
+				rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Error issuing Certificate for VirtualServer resource: %s",
+					err)
 				return err
 			}
 			rec.Eventf(vs, corev1.EventTypeNormal, reasonCreateCertificate, "Successfully created Certificate %q", crt.Name)
@@ -88,6 +94,9 @@ func SyncFnFor(
 		for _, crt := range updateCrts {
 			_, err := cmClient.CertmanagerV1().Certificates(crt.Namespace).Update(ctx, crt, metav1.UpdateOptions{})
 			if err != nil {
+				glog.Errorf("Error updating Certificate for VirtualServer resource: %v", err)
+				rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Error updating Certificate for VirtualServer resource: %s",
+					err)
 				return err
 			}
 			rec.Eventf(vs, corev1.EventTypeNormal, reasonUpdateCertificate, "Successfully updated Certificate %q", crt.Name)
@@ -102,6 +111,7 @@ func SyncFnFor(
 		for _, certName := range unrequiredCertNames {
 			err = cmClient.CertmanagerV1().Certificates(vs.GetNamespace()).Delete(ctx, certName, metav1.DeleteOptions{})
 			if err != nil {
+				glog.Errorf("Error deleting Certificate for VirtualServer resource: %v", err)
 				return err
 			}
 			rec.Eventf(vs, corev1.EventTypeNormal, reasonDeleteCertificate, "Successfully deleted unrequired Certificate %q", certName)

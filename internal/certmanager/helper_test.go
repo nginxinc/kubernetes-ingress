@@ -21,11 +21,11 @@ import (
 	"testing"
 	"time"
 
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	"github.com/cert-manager/cert-manager/test/unit/gen"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	"github.com/jetstack/cert-manager/test/unit/gen"
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
 
@@ -83,22 +83,22 @@ func Test_translateVsSpec(t *testing.T) {
 		"bad duration": {
 			crt:           gen.Certificate("example-cert"),
 			cmspec:        &invalidDuration,
-			expectedError: errInvalidCertManagerField,
+			expectedError: errors.New(`invalid cert manager field "tls.cert-manager.duration": time: invalid duration "un-parsable duration"`),
 		},
 		"bad renewBefore": {
 			crt:           gen.Certificate("example-cert"),
 			cmspec:        &invalidRenewBefore,
-			expectedError: errInvalidCertManagerField,
+			expectedError: errors.New(`invalid cert manager field "tls.cert-manager.renew-before": time: invalid duration "un-parsable duration"`),
 		},
 		"bad usages": {
 			crt:           gen.Certificate("example-cert"),
 			cmspec:        &invalidUsages,
-			expectedError: errInvalidCertManagerField,
+			expectedError: errors.New(`invalid cert manager field "tls.cert-manager.usages": "playing ping pong"`),
 		},
 		"bad usage list": {
 			crt:           gen.Certificate("example-cert"),
 			cmspec:        &invalidUsageList,
-			expectedError: errInvalidCertManagerField,
+			expectedError: errors.New(`invalid cert manager field "tls.cert-manager.usages": ""`),
 		},
 	}
 	for name, tc := range tests {
@@ -107,22 +107,16 @@ func Test_translateVsSpec(t *testing.T) {
 
 			err := translateVsSpec(crt, tc.cmspec)
 
-			if tc.expectedError != nil {
-				assertErrorIs(t, err, tc.expectedError)
-			} else {
-				assert.NoError(t, err)
+			if err != nil {
+				if tc.expectedError == nil || err.Error() != tc.expectedError.Error() {
+					t.Errorf("unexpected error, exp=%v got=%s", tc.expectedError, err)
+				}
+			} else if tc.expectedError != nil {
+				t.Errorf("expected error but got nil: %s", tc.expectedError)
 			}
 			if tc.check != nil {
 				tc.check(assert.New(t), crt)
 			}
 		})
-	}
-}
-
-// assertErrorIs checks that the supplied error has the target error in its chain.
-// TODO Upgrade to next release of testify package which has this built in.
-func assertErrorIs(t *testing.T, err, target error) {
-	if assert.Error(t, err) {
-		assert.Truef(t, errors.Is(err, target), "unexpected error type. err: %v, target: %v", err, target)
 	}
 }

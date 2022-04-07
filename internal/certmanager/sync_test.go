@@ -21,15 +21,15 @@ import (
 	"errors"
 	"testing"
 
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cmmeta "github.com/cert-manager/cert-manager/pkg/apis/meta/v1"
+	"github.com/cert-manager/cert-manager/test/unit/gen"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	coretesting "k8s.io/client-go/testing"
 
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
-	"github.com/jetstack/cert-manager/test/unit/gen"
 	testpkg "github.com/nginxinc/kubernetes-ingress/internal/certmanager/test_files"
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
@@ -381,7 +381,8 @@ func TestSync(t *testing.T) {
 			VirtualServer: *buildVirtualServer("vs-name", gen.DefaultTestNamespace, "failed-cert", vsapi.CertManager{
 				Issuer: "issuer-name", RenewBefore: "invalid renew before",
 			}),
-			Err: true,
+			Err:            true,
+			ExpectedEvents: []string{`Warning BadConfig Incorrect cert-manager configuration for VirtualServer resource: invalid cert manager field "tls.cert-manager.renew-before": time: invalid duration "invalid renew before"`},
 		},
 		{
 			Name:   "return a single Certificate for an ingress with a single valid TLS entry with common-name and keyusage annotation",

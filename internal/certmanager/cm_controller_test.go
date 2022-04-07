@@ -21,6 +21,9 @@ import (
 	"testing"
 	"time"
 
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
+	cmclient "github.com/cert-manager/cert-manager/pkg/client/clientset/versioned"
+	controllerpkg "github.com/cert-manager/cert-manager/pkg/controller"
 	testpkg "github.com/nginxinc/kubernetes-ingress/internal/certmanager/test_files"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,9 +31,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/util/workqueue"
 
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
-	cmclient "github.com/jetstack/cert-manager/pkg/client/clientset/versioned"
-	controllerpkg "github.com/jetstack/cert-manager/pkg/controller"
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 )

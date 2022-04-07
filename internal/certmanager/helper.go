@@ -24,10 +24,10 @@ import (
 	"strings"
 	"time"
 
+	apiutil "github.com/cert-manager/cert-manager/pkg/api/util"
+	cmapi "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	apiutil "github.com/jetstack/cert-manager/pkg/api/util"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 )
 
@@ -69,6 +69,7 @@ var (
 //       - digital signature
 //       - key encipherment
 func translateVsSpec(crt *cmapi.Certificate, vsCmSpec *vsapi.CertManager) error {
+	var errs []string
 	if crt == nil {
 		return errNilCertificate
 	}
@@ -84,7 +85,8 @@ func translateVsSpec(crt *cmapi.Certificate, vsCmSpec *vsapi.CertManager) error 
 	if vsCmSpec.Duration != "" {
 		duration, err := time.ParseDuration(vsCmSpec.Duration)
 		if err != nil {
-			return fmt.Errorf("%w %q: %v", errInvalidCertManagerField, durationCmField, err)
+			errs = append(errs,
+				fmt.Sprintf("%v %q: %v", errInvalidCertManagerField, durationCmField, err))
 		}
 		crt.Spec.Duration = &metav1.Duration{Duration: duration}
 	}
@@ -92,7 +94,8 @@ func translateVsSpec(crt *cmapi.Certificate, vsCmSpec *vsapi.CertManager) error 
 	if vsCmSpec.RenewBefore != "" {
 		duration, err := time.ParseDuration(vsCmSpec.RenewBefore)
 		if err != nil {
-			return fmt.Errorf("%w %q: %v", errInvalidCertManagerField, renewBeforeCmField, err)
+			errs = append(errs,
+				fmt.Sprintf("%v %q: %v", errInvalidCertManagerField, renewBeforeCmField, err))
 		}
 		crt.Spec.RenewBefore = &metav1.Duration{Duration: duration}
 	}
@@ -104,11 +107,15 @@ func translateVsSpec(crt *cmapi.Certificate, vsCmSpec *vsapi.CertManager) error 
 			_, isKU := apiutil.KeyUsageType(usage)
 			_, isEKU := apiutil.ExtKeyUsageType(usage)
 			if !isKU && !isEKU {
-				return fmt.Errorf("%w %q: invalid key usage name %q", errInvalidCertManagerField, usagesCmField, usageName)
+				errs = append(errs,
+					fmt.Sprintf("%v %q: %q", errInvalidCertManagerField, usagesCmField, usage))
 			}
 			newUsages = append(newUsages, usage)
 		}
 		crt.Spec.Usages = newUsages
+	}
+	if len(errs) > 0 {
+		return errors.New(strings.Join(errs, ", "))
 	}
 	return nil
 }
