@@ -39,6 +39,7 @@ spec:
         securityContext:
           allowPrivilegeEscalation: true
           runAsUser: 101 #nginx
+          runAsNonRoot: true
           capabilities:
             drop:
             - ALL
