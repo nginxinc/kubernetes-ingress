@@ -162,7 +162,7 @@ controller:
   ## Enable the custom resources.
   enableCustomResources: true
 
-  ## Enable preview policies.
+  ## Enable preview policies. This field is deprecated. To enable OIDC Policies please use controller.enableOIDC instead.
   enablePreviewPolicies: false
 
   ## Enable OIDC policies.

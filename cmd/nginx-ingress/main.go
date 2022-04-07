@@ -163,7 +163,7 @@ var (
 		"Enable custom resources")
 
 	enablePreviewPolicies = flag.Bool("enable-preview-policies", false,
-		"Enable preview policies. This flag is deprecated in favor of enable-oidc.")
+		"Enable preview policies. This flag is deprecated. To enable OIDC Policies please use -enable-oidc instead.")
 
 	enableOIDC = flag.Bool("enable-oidc", false,
 		"Enable OIDC Policies.")
@@ -254,7 +254,7 @@ func main() {
 	}
 
 	if *enablePreviewPolicies {
-		glog.Warning("enable-preview-policies is deprecated. Please use -enable-oidc instead.")
+		glog.Warning("enable-preview-policies is universally deprecated. To enable OIDC Policies please use -enable-oidc instead.")
 	}
 	*enablePreviewPolicies = *enablePreviewPolicies || *enableOIDC
 

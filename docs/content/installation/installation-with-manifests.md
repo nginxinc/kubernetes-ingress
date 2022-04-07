@@ -90,8 +90,6 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
     $ kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
     ```
 
-> **Feature Status**: The OIDC Policy is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default.
-
 ### Resources for NGINX App Protect
 
 If you would like to use the App Protect module, create the following additional resources:
@@ -257,7 +255,3 @@ $ kubectl get pods --namespace=nginx-ingress
     ```
     $ kubectl delete -f common/crds/
     ```
-
-## Footnotes
-
-[^1]: Capabilities labeled in preview status are fully supported.
