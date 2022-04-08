@@ -185,7 +185,7 @@ The following tables lists the configurable parameters of the NGINX Ingress cont
 |``controller.setAsDefaultIngress`` | New Ingresses without an ingressClassName field specified will be assigned the class specified in `controller.ingressClass`. | false |
 |``controller.watchNamespace`` | Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces. | "" |
 |``controller.enableCustomResources`` | Enable the custom resources. | true |
-|``controller.enablePreviewPolicies`` | Enable preview policies. This field is deprecated. To enable OIDC Policies please use ``controller.enableOIDC`` instead. | false |
+|``controller.enablePreviewPolicies`` | Enable preview policies. This parameter is deprecated. To enable OIDC Policies please use ``controller.enableOIDC`` instead. | false |
 |``controller.enableOIDC`` | Enable OIDC policies. | false |
 |``controller.enableTLSPassthrough`` | Enable TLS Passthrough on port 443. Requires ``controller.enableCustomResources``. | false |
 |``controller.globalConfiguration.create`` | Creates the GlobalConfiguration custom resource. Requires ``controller.enableCustomResources``. | false |
