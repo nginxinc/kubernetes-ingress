@@ -1,0 +1,117 @@
+name: Create Draft Release
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+
+jobs:
+
+  binary:
+    name: Create Draft Release
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-node@v2
+      - run: npm install semver
+      - uses: actions/github-script@v6
+        continue-on-error: true
+        id: data
+        with:
+          script: |
+            const semver = require('semver');
+            const ref = context.ref.split("/")[2]
+
+            const releases = (await github.rest.repos.listReleases({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              per_page: 100,
+            })).data
+
+            let latest_release
+            const latest_release_current_branch = releases.find(release => release.tag_name.includes(ref.split("-")[1]))
+
+            if (latest_release_current_branch === undefined){
+              latest_release = (await github.rest.repos.getLatestRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+              })).data.tag_name
+            } else {
+              latest_release = latest_release_current_branch.tag_name
+            }
+            console.log(`The latest release was ${latest_release}`)
+
+            let level = 'patch'
+            for await (const response of github.paginate.iterator(await github.rest.pulls.list({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              state: 'closed',
+              per_page: 100,
+              sort: 'updated',
+              direction: 'desc',
+            }))) {
+                 if (response.data.find((pulls) => pulls.labels.find((label) => label.name === 'change'))) {
+                    level = 'major'
+                    break;
+                  }
+                  if (response.data.find((pulls) => pulls.labels.find((label) => label.name === 'enhancement'))) {
+                    level = 'minor'
+                    break;
+                  }
+            }
+
+            const version = semver.inc(latest_release, level);
+            const draft = releases.find((r) => r.draft && r.tag_name === "v"+version)
+            const draft_found = !(draft === undefined)
+
+            console.log(`The level of the release is ${level} and the version is v${version}`)
+
+            const footer = `
+              ## Upgrade
+              - For NGINX, use the v${version} image from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=${version}), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
+              - For NGINX Plus, use the v${version} image from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the v${version} source code.
+              - For Helm, use version HELM_VERSION_REPLACE_ME! of the chart.
+
+              ## Resources
+              - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
+              - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v${version}/examples
+              - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/v${version}/deployments/helm-chart
+              - Operator -- https://github.com/nginxinc/nginx-ingress-operator/
+            `
+
+            const release_notes = (await github.rest.repos.generateReleaseNotes({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              tag_name: 'v' + version,
+              previous_tag_name: latest_release,
+              target_commitish: ref,
+            }))
+
+            let release
+            if (draft_found){
+              console.log("Draft found")
+              release = (await github.rest.repos.updateRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                release_id: draft.id,
+                tag_name: 'v' + version,
+                target_commitish: ref,
+                name: 'v' + version,
+                body: release_notes.data.body + footer,
+                draft: true,
+              }))
+            } else {
+              console.log("Draft not found")
+              release = (await github.rest.repos.createRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                tag_name: 'v' + version,
+                target_commitish: ref,
+                name: 'v' + version,
+                body: release_notes.data.body + footer,
+                draft: true,
+              }))
+            }
+
+            console.log(`Release created: ${release.data.html_url}`)
+            console.log(`Release notes: ${release_notes.data.body}`)
