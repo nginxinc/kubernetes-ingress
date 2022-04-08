@@ -66,7 +66,7 @@ jobs:
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
           echo "::set-output name=k8s_latest::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ steps.vars.outputs.go_version }}
       - name: Determine GOPATH
@@ -100,7 +100,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Build binary
@@ -136,7 +136,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-tests-
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Run Tests
@@ -276,7 +276,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Publish Release Notes on new tag
