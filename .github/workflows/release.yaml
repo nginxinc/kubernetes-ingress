@@ -3,8 +3,21 @@ name: Create Draft Release
 on:
   push:
     branches:
-      - main
       - release-*
+  workflow_dispatch:
+    inputs:
+      tagFrom:
+        description: The tag to create the release from.
+        required: true
+        type: string
+      tagTo:
+        description: The tag to create the release to.
+        required: true
+        type: string
+      branch:
+        description: The branch where the release will be created.
+        required: true
+        type: string
 
 jobs:
 
@@ -12,11 +25,10 @@ jobs:
     name: Create Draft Release
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v3
       - run: npm install semver
       - uses: actions/github-script@v6
         continue-on-error: true
-        id: data
         with:
           script: |
             const semver = require('semver');
@@ -39,32 +51,41 @@ jobs:
             } else {
               latest_release = latest_release_current_branch.tag_name
             }
-            console.log(`The latest release was ${latest_release}`)
 
-            let level = 'patch'
-            for await (const response of github.paginate.iterator(await github.rest.pulls.list({
-              owner: context.payload.repository.owner.login,
-              repo: context.payload.repository.name,
-              state: 'closed',
-              per_page: 100,
-              sort: 'updated',
-              direction: 'desc',
-            }))) {
-                 if (response.data.find((pulls) => pulls.labels.find((label) => label.name === 'change'))) {
-                    level = 'major'
-                    break;
-                  }
-                  if (response.data.find((pulls) => pulls.labels.find((label) => label.name === 'enhancement'))) {
-                    level = 'minor'
-                    break;
-                  }
+            let tagFrom, tagTo, branch
+            if (context.eventName === 'workflow_dispatch'){
+              console.log(`Dispatch run with inputs: ${JSON.stringify(context.payload.inputs)}`)
+              ;({ tagFrom, tagTo, branch } = context.payload.inputs)
+            } else {
+              ;({ tagFrom, tagTo, branch } = {
+                tagFrom: latest_release,
+                tagTo: 'next',
+                branch: ref,
+              })
+              console.log(`Push run with: { tagFrom: ${tagFrom}, tagTo: ${tagTo}, branch: ${branch} }`)
             }
+            console.log(`The latest release was ${tagFrom}`)
 
-            const version = semver.inc(latest_release, level);
+            let version = tagTo.replace('v', '')
+            if (version === 'next'){
+              const temp_notes = (await github.rest.repos.generateReleaseNotes({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                tag_name: tagTo,
+                previous_tag_name: tagFrom,
+                target_commitish: branch,
+              })).data.body
+
+              let level
+              temp_notes.includes("### 🚀 Features") ? level = 'minor' : level = 'patch'
+              temp_notes.includes("### 💣 Breaking Changes") ? level = 'major' : level = level
+              version = semver.inc(tagFrom, level)
+              console.log(`The level of the release is ${level}`)
+            }
             const draft = releases.find((r) => r.draft && r.tag_name === "v"+version)
             const draft_found = !(draft === undefined)
 
-            console.log(`The level of the release is ${level} and the version is v${version}`)
+            console.log(`The next version is v${version}`)
 
             const footer = `
               ## Upgrade
@@ -83,8 +104,8 @@ jobs:
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
               tag_name: 'v' + version,
-              previous_tag_name: latest_release,
-              target_commitish: ref,
+              previous_tag_name: tagFrom,
+              target_commitish: branch,
             }))
 
             let release
@@ -95,7 +116,7 @@ jobs:
                 repo: context.payload.repository.name,
                 release_id: draft.id,
                 tag_name: 'v' + version,
-                target_commitish: ref,
+                target_commitish: branch,
                 name: 'v' + version,
                 body: release_notes.data.body + footer,
                 draft: true,
