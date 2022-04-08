@@ -193,7 +193,7 @@ jobs:
           nginx-crt: ${{ secrets.NGINX_CRT }}
           nginx-key: ${{ secrets.NGINX_KEY }}
       - name: Upload Test Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
@@ -420,7 +420,7 @@ jobs:
         with:
           sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
       - name: Upload Scan Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         continue-on-error: true
         with:
           name: 'trivy-results-${{ matrix.image }}.sarif'
@@ -558,7 +558,7 @@ jobs:
         with:
           sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
       - name: Upload Scan Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         continue-on-error: true
         with:
           name: 'trivy-results-${{ matrix.image }}.sarif'
@@ -593,7 +593,7 @@ jobs:
       - name: Package
         run: helm package --version ${{ steps.var.outputs.helm_version }} ${{ env.HELM_CHART_DIR }}
       - name: Upload Chart
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: helm-chart
           path: ${{ github.workspace }}/nginx-ingress-${{ steps.var.outputs.helm_version }}.tgz
