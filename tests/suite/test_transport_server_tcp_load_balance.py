@@ -120,8 +120,8 @@ class TestTransportServerTcpLoadBalance:
         retry = 0
         while(len(endpoints) is not 3 and retry <= 30):
             for i in range(20):
-                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client.connect((host, port))
+                host = host.strip("[]")
+                client = socket.create_connection((host,port))
                 client.sendall(b'connect')
                 response = client.recv(4096)
                 endpoint = response.decode()
@@ -165,8 +165,8 @@ class TestTransportServerTcpLoadBalance:
 
         # Step 1, confirm load balancing is working.
         print(f"sending tcp requests to: {host}:{port}")
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((host, port))
+        host = host.strip("[]")
+        client = socket.create_connection((host,port))
         client.sendall(b'connect')
         response = client.recv(4096)
         endpoint = response.decode()
@@ -212,8 +212,8 @@ class TestTransportServerTcpLoadBalance:
 
         # Step 4, confirm load balancing is still working.
         print(f"sending tcp requests to: {host}:{port}")
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((host, port))
+        host = host.strip("[]")
+        client = socket.create_connection((host,port))
         client.sendall(b'connect')
         response = client.recv(4096)
         endpoint = response.decode()
@@ -252,8 +252,8 @@ class TestTransportServerTcpLoadBalance:
         print(f"sending tcp requests to: {host}:{port}")
         for i in range(3):
             try:
-                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client.connect((host, port))
+                host = host.strip("[]")
+                client = socket.create_connection((host,port))
                 client.sendall(b'connect')
             except ConnectionResetError as E:
                 print("The expected exception occurred:", E)
@@ -283,8 +283,8 @@ class TestTransportServerTcpLoadBalance:
         print(f"sending tcp requests to: {host}:{port}")
         for i in range(3):
             try:
-                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client.connect((host, port))
+                host = host.strip("[]")
+                client = socket.create_connection((host,port))
                 client.sendall(b'connect')
             except ConnectionResetError as E:
                 print("The expected exception occurred:", E)
@@ -293,8 +293,8 @@ class TestTransportServerTcpLoadBalance:
 
     def make_holding_connection(self, host, port):
         print(f"sending tcp requests to: {host}:{port}")
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((host, port))
+        host = host.strip("[]")
+        client = socket.create_connection((host,port))
         client.sendall(b'hold')
         response = client.recv(4096)
         endpoint = response.decode()
@@ -421,8 +421,8 @@ class TestTransportServerTcpLoadBalance:
         retry = 0
         while(len(endpoints) is not 1 and retry <= 30):
             for i in range(20):
-                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client.connect((host, port))
+                host = host.strip("[]")
+                client = socket.create_connection((host,port))
                 client.sendall(b'connect')
                 response = client.recv(4096)
                 endpoint = response.decode()
@@ -447,8 +447,8 @@ class TestTransportServerTcpLoadBalance:
         retry = 0
         while(len(endpoints) is not 3 and retry <= 30):
             for i in range(20):
-                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client.connect((host, port))
+                host = host.strip("[]")
+                client = socket.create_connection((host,port))
                 client.sendall(b'connect')
                 response = client.recv(4096)
                 endpoint = response.decode()
@@ -509,8 +509,8 @@ class TestTransportServerTcpLoadBalance:
         retry = 0
         while(len(endpoints) is not 3 and retry <= 30):
             for i in range(20):
-                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                client.connect((host, port))
+                host = host.strip("[]")
+                client = socket.create_connection((host,port))
                 client.sendall(b'connect')
                 response = client.recv(4096)
                 endpoint = response.decode()
@@ -570,8 +570,8 @@ class TestTransportServerTcpLoadBalance:
         port = transport_server_setup.public_endpoint.tcp_server_port
         host = transport_server_setup.public_endpoint.public_ip
 
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((host, port))
+        host = host.strip("[]")
+        client = socket.create_connection((host,port))
         client.sendall(b'connect')
 
         try:

@@ -21,9 +21,8 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
 2. Clone the Ingress controller repo and change into the deployments folder:
     ```
-    $ git clone https://github.com/nginxinc/kubernetes-ingress/
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.1.1
     $ cd kubernetes-ingress/deployments
-    $ git checkout v2.1.1
     ```
 
 ## 1. Configure RBAC
@@ -43,7 +42,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     $ kubectl apply -f rbac/ap-rbac.yaml
     ```
 
-4. (App Protect Dos only) Create the App Protect Dos role and role binding:
+4. (App Protect DoS only) Create the App Protect DoS role and role binding:
 
     ```
     $ kubectl apply -f rbac/apdos-rbac.yaml
@@ -91,8 +90,6 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
     $ kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
     ```
 
-> **Feature Status**: The TransportServer, GlobalConfiguration and Policy resources are available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default.
-
 ### Resources for NGINX App Protect
 
 If you would like to use the App Protect module, create the following additional resources:
@@ -105,9 +102,9 @@ If you would like to use the App Protect module, create the following additional
    $ kubectl apply -f common/crds/appprotect.f5.com_apusersigs.yaml
    ```
 
-### Resources for NGINX App Protect Dos
+### Resources for NGINX App Protect DoS
 
-If you would like to use the App Protect Dos module, create the following additional resources:
+If you would like to use the App Protect DoS module, create the following additional resources:
 
 1. Create a custom resource definition for `APDosPolicy`, `APDosLogConf` and `DosProtectedResource`:
 
@@ -125,8 +122,8 @@ We include two options for deploying the Ingress controller:
 
 > Before creating a Deployment or Daemonset resource, make sure to update the  [command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments) of the Ingress Controller container in the corresponding manifest file according to your requirements.
 
-### Deploy Arbitrator for NGINX App Protect Dos
-If you would like to use the App Protect Dos module, need to add arbitrator deployment.
+### Deploy Arbitrator for NGINX App Protect DoS
+If you would like to use the App Protect DoS module, need to add arbitrator deployment.
 
 * build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/app-protect-dos/installation#Build-the-app-protect-dos-arb-Docker-Image).
 
@@ -258,7 +255,3 @@ $ kubectl get pods --namespace=nginx-ingress
     ```
     $ kubectl delete -f common/crds/
     ```
-
-## Footnotes
-
-[^1]: Capabilities labeled in preview status are fully supported.

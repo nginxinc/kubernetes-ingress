@@ -11,6 +11,7 @@ data:
 
       server {
           listen 5353 udp;
+          listen [::]:5353 udp;
           proxy_pass coredns-udp;
           proxy_responses 1;
       }
@@ -21,5 +22,6 @@ data:
 
       server {
           listen 5353;
+          listen [::]:5353;
           proxy_pass coredns-tcp;
-      } 
+      }

@@ -6,7 +6,7 @@ metadata:
 data:
   real-ip-header: "X-Forwarded-For"
   real-ip-recursive: "True"
-  set-real-ip-from: "0.0.0.0/0"
+  set-real-ip-from: "0.0.0.0/0,::/0"
   worker-connections: "30000"
   worker-rlimit-nofile: "65535"
   worker-rlimit-core: "500M"

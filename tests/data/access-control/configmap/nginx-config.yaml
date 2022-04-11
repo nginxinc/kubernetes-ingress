@@ -4,4 +4,4 @@ metadata:
   name: nginx-config
   namespace: nginx-ingress
 data:
-  set-real-ip-from: "0.0.0.0/0"
+  set-real-ip-from: "0.0.0.0/0,::/0"

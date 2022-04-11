@@ -7,6 +7,7 @@ import (
 )
 
 func TestParseRewrites(t *testing.T) {
+	t.Parallel()
 	serviceName := "coffee-svc"
 	serviceNamePart := "serviceName=" + serviceName
 	rewritePath := "/beans/"
@@ -20,6 +21,7 @@ func TestParseRewrites(t *testing.T) {
 }
 
 func TestParseRewritesWithLeadingAndTrailingWhitespace(t *testing.T) {
+	t.Parallel()
 	serviceName := "coffee-svc"
 	serviceNamePart := "serviceName=" + serviceName
 	rewritePath := "/beans/"
@@ -33,6 +35,7 @@ func TestParseRewritesWithLeadingAndTrailingWhitespace(t *testing.T) {
 }
 
 func TestParseRewritesInvalidFormat(t *testing.T) {
+	t.Parallel()
 	rewriteService := "serviceNamecoffee-svc rewrite=/"
 
 	_, _, err := parseRewrites(rewriteService)
@@ -42,6 +45,7 @@ func TestParseRewritesInvalidFormat(t *testing.T) {
 }
 
 func TestParseStickyService(t *testing.T) {
+	t.Parallel()
 	serviceName := "coffee-svc"
 	serviceNamePart := "serviceName=" + serviceName
 	stickyCookie := "srv_id expires=1h domain=.example.com path=/"
@@ -54,6 +58,7 @@ func TestParseStickyService(t *testing.T) {
 }
 
 func TestParseStickyServiceInvalidFormat(t *testing.T) {
+	t.Parallel()
 	stickyService := "serviceNamecoffee-svc srv_id expires=1h domain=.example.com path=/"
 
 	_, _, err := parseStickyService(stickyService)
@@ -63,6 +68,7 @@ func TestParseStickyServiceInvalidFormat(t *testing.T) {
 }
 
 func TestFilterMasterAnnotations(t *testing.T) {
+	t.Parallel()
 	masterAnnotations := map[string]string{
 		"nginx.org/rewrites":                "serviceName=service1 rewrite=rewrite1",
 		"nginx.org/ssl-services":            "service1",
@@ -94,6 +100,7 @@ func TestFilterMasterAnnotations(t *testing.T) {
 }
 
 func TestFilterMinionAnnotations(t *testing.T) {
+	t.Parallel()
 	minionAnnotations := map[string]string{
 		"nginx.org/rewrites":                "serviceName=service1 rewrite=rewrite1",
 		"nginx.org/ssl-services":            "service1",
@@ -125,6 +132,7 @@ func TestFilterMinionAnnotations(t *testing.T) {
 }
 
 func TestMergeMasterAnnotationsIntoMinion(t *testing.T) {
+	t.Parallel()
 	masterAnnotations := map[string]string{
 		"nginx.org/proxy-buffering":       "True",
 		"nginx.org/proxy-buffers":         "2",

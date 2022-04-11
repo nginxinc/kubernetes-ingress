@@ -25,6 +25,7 @@ func sliceCmpFunc(x, y *unstructured.Unstructured) bool {
 var unstructuredSliceCmpOpts = cmpopts.SortSlices(sliceCmpFunc)
 
 func TestCreateAppProtectPolicyEx(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		policy           *unstructured.Unstructured
 		expectedPolicyEx *PolicyEx
@@ -189,6 +190,7 @@ func TestCreateAppProtectPolicyEx(t *testing.T) {
 }
 
 func TestCreateAppProtectLogConfEx(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		logConf           *unstructured.Unstructured
 		expectedLogConfEx *LogConfEx
@@ -242,6 +244,7 @@ func TestCreateAppProtectLogConfEx(t *testing.T) {
 }
 
 func TestCreateAppProtectUserSigEx(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		userSig           *unstructured.Unstructured
 		expectedUserSigEx *UserSigEx
@@ -324,6 +327,7 @@ func TestCreateAppProtectUserSigEx(t *testing.T) {
 }
 
 func TestIsReqSatisfiedByUserSig(t *testing.T) {
+	t.Parallel()
 	userSigEx := &UserSigEx{Tag: "test", RevTime: parseTime("2020-06-16T18:32:01Z")}
 	userSigExNoRevTime := &UserSigEx{Tag: "test"}
 	tests := []struct {
@@ -450,6 +454,7 @@ func TestIsReqSatisfiedByUserSig(t *testing.T) {
 }
 
 func TestAddOrUpdatePolicy(t *testing.T) {
+	t.Parallel()
 	basicTestPolicy := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -614,6 +619,7 @@ func TestAddOrUpdatePolicy(t *testing.T) {
 }
 
 func TestAddOrUpdateLogConf(t *testing.T) {
+	t.Parallel()
 	validLogConf := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -692,6 +698,7 @@ func TestAddOrUpdateLogConf(t *testing.T) {
 }
 
 func TestAddOrUpdateUserSig(t *testing.T) {
+	t.Parallel()
 	testUserSig1 := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -898,6 +905,7 @@ func TestAddOrUpdateUserSig(t *testing.T) {
 }
 
 func TestDeletePolicy(t *testing.T) {
+	t.Parallel()
 	appProtectConfiguration := newConfigurationImpl()
 	appProtectConfiguration.Policies["testing/test"] = &PolicyEx{}
 	tests := []struct {
@@ -936,6 +944,7 @@ func TestDeletePolicy(t *testing.T) {
 }
 
 func TestDeleteLogConf(t *testing.T) {
+	t.Parallel()
 	appProtectConfiguration := newConfigurationImpl()
 	appProtectConfiguration.LogConfs["testing/test"] = &LogConfEx{}
 	tests := []struct {
@@ -974,6 +983,7 @@ func TestDeleteLogConf(t *testing.T) {
 }
 
 func TestDeleteUserSig(t *testing.T) {
+	t.Parallel()
 	testUserSig1 := &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
@@ -1079,6 +1089,7 @@ func TestDeleteUserSig(t *testing.T) {
 }
 
 func TestGetAppProtectResource(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		kind    string
 		key     string

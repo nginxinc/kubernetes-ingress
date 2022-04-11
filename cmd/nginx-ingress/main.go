@@ -71,6 +71,9 @@ var (
 
 	appProtect = flag.Bool("enable-app-protect", false, "Enable support for NGINX App Protect. Requires -nginx-plus.")
 
+	appProtectLogLevel = flag.String("app-protect-log-level", appProtectLogLevelDefault,
+		`Sets log level for App Protect. Allowed values: fatal, error, warn, info, debug, trace. Requires -nginx-plus and -enable-app-protect.`)
+
 	appProtectDos = flag.Bool("enable-app-protect-dos", false, "Enable support for NGINX App Protect dos. Requires -nginx-plus.")
 
 	appProtectDosDebug = flag.Bool("app-protect-dos-debug", false, "Enable debugging for App Protect Dos. Requires -nginx-plus and -enable-app-protect-dos.")
@@ -128,7 +131,7 @@ var (
 	leaderElectionLockName = flag.String("leader-election-lock-name", "nginx-ingress-leader-election",
 		`Specifies the name of the ConfigMap, within the same namespace as the controller, used as the lock for leader election. Requires -enable-leader-election.`)
 
-	nginxStatusAllowCIDRs = flag.String("nginx-status-allow-cidrs", "127.0.0.1", `Add IPv4 IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas.`)
+	nginxStatusAllowCIDRs = flag.String("nginx-status-allow-cidrs", "127.0.0.1,::1", `Add IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas.`)
 
 	nginxStatusPort = flag.Int("nginx-status-port", 8080,
 		"Set the port where the NGINX stub_status or the NGINX Plus API is exposed. [1024 - 65535]")
@@ -160,7 +163,10 @@ var (
 		"Enable custom resources")
 
 	enablePreviewPolicies = flag.Bool("enable-preview-policies", false,
-		"Enable preview policies")
+		"Enable preview policies. This flag is deprecated. To enable OIDC Policies please use -enable-oidc instead.")
+
+	enableOIDC = flag.Bool("enable-oidc", false,
+		"Enable OIDC Policies.")
 
 	enableSnippets = flag.Bool("enable-snippets", false,
 		"Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.")
@@ -184,6 +190,9 @@ var (
 
 	enableLatencyMetrics = flag.Bool("enable-latency-metrics", false,
 		"Enable collection of latency metrics for upstreams. Requires -enable-prometheus-metrics")
+
+	enableCertManager = flag.Bool("enable-cert-manager", false,
+		"Enable cert-manager controller for VirtualServer resources. Requires -enable-custom-resources")
 
 	startupCheckFn func() error
 )
@@ -244,8 +253,24 @@ func main() {
 		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
 	}
 
+	if *enablePreviewPolicies {
+		glog.Warning("enable-preview-policies is universally deprecated. To enable OIDC Policies please use -enable-oidc instead.")
+	}
+	*enableOIDC = *enablePreviewPolicies || *enableOIDC
+
 	if *appProtect && !*nginxPlus {
 		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
+	}
+
+	if *appProtectLogLevel != appProtectLogLevelDefault && !*appProtect && !*nginxPlus {
+		glog.Fatal("app-protect-log-level support is for NGINX Plus only and App Protect is enable")
+	}
+
+	if *appProtectLogLevel != appProtectLogLevelDefault && *appProtect && *nginxPlus {
+		logLevelValidationError := validateAppProtectLogLevel(*appProtectLogLevel)
+		if logLevelValidationError != nil {
+			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
+		}
 	}
 
 	if *appProtectDos && !*nginxPlus {
@@ -279,6 +304,10 @@ func main() {
 	if *enableLatencyMetrics && !*enablePrometheusMetrics {
 		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
 		*enableLatencyMetrics = false
+	}
+
+	if *enableCertManager && !*enableCustomResources {
+		glog.Fatal("enable-cert-manager flag requires -enable-custom-resources")
 	}
 
 	if *ingressLink != "" && *externalService != "" {
@@ -449,7 +478,7 @@ func main() {
 		aPPluginDone = make(chan error, 1)
 		aPAgentDone = make(chan error, 1)
 
-		nginxManager.AppProtectAgentStart(aPAgentDone, *nginxDebug)
+		nginxManager.AppProtectAgentStart(aPAgentDone, *appProtectLogLevel)
 		nginxManager.AppProtectPluginStart(aPPluginDone)
 	}
 
@@ -559,8 +588,9 @@ func main() {
 		MainAppProtectLoadModule:       *appProtect,
 		MainAppProtectDosLoadModule:    *appProtectDos,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
-		EnablePreviewPolicies:          *enablePreviewPolicies,
+		EnableOIDC:                     *enableOIDC,
 		SSLRejectHandshake:             sslRejectHandshake,
+		EnableCertManager:              *enableCertManager,
 	}
 
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
@@ -643,12 +673,13 @@ func main() {
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
-	virtualServerValidator := cr_validation.NewVirtualServerValidator(*nginxPlus, *appProtectDos)
+	virtualServerValidator := cr_validation.NewVirtualServerValidator(cr_validation.IsPlus(*nginxPlus), cr_validation.IsDosEnabled(*appProtectDos), cr_validation.IsCertManagerEnabled(*enableCertManager))
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
 		ConfClient:                   confClient,
 		DynClient:                    dynClient,
+		RestConfig:                   config,
 		ResyncPeriod:                 30 * time.Second,
 		Namespace:                    *watchNamespace,
 		NginxConfigurator:            cnf,
@@ -667,7 +698,7 @@ func main() {
 		ConfigMaps:                   *nginxConfigMaps,
 		GlobalConfiguration:          *globalConfiguration,
 		AreCustomResourcesEnabled:    *enableCustomResources,
-		EnablePreviewPolicies:        *enablePreviewPolicies,
+		EnableOIDC:                   *enableOIDC,
 		MetricsCollector:             controllerCollector,
 		GlobalConfigurationValidator: globalConfigurationValidator,
 		TransportServerValidator:     transportServerValidator,
@@ -678,6 +709,7 @@ func main() {
 		IsLatencyMetricsEnabled:      *enableLatencyMetrics,
 		IsTLSPassthroughEnabled:      *enableTLSPassthrough,
 		SnippetsEnabled:              *enableSnippets,
+		CertManagerEnabled:           *enableCertManager,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
@@ -781,6 +813,23 @@ func validatePort(port int) error {
 		return fmt.Errorf("port outside of valid port range [1024 - 65535]: %v", port)
 	}
 	return nil
+}
+
+const appProtectLogLevelDefault = "fatal"
+
+// validateAppProtectLogLevel makes sure a given logLevel is one of the allowed values
+func validateAppProtectLogLevel(logLevel string) error {
+	switch strings.ToLower(logLevel) {
+	case
+		"fatal",
+		"error",
+		"warn",
+		"info",
+		"debug",
+		"trace":
+		return nil
+	}
+	return fmt.Errorf("invalid App Protect log level: %v", logLevel)
 }
 
 // parseNginxStatusAllowCIDRs converts a comma separated CIDR/IP address string into an array of CIDR/IP addresses.

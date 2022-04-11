@@ -35,6 +35,7 @@ server {
     set_real_ip_from unix:;
     {{ else }}
     listen {{ $s.Port }}{{ if $s.UDP }} udp{{ end }};
+    listen [::]:{{ $s.Port }}{{ if $s.UDP }} udp{{ end }};
     {{ end }}
 
     status_zone {{ $s.StatusZone }};

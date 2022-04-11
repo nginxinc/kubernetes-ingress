@@ -16,6 +16,8 @@ controller:
   appprotect:
     ## Enable the App Protect module in the Ingress Controller.
     enable: false
+    ## Sets log level for App Protect. Allowed values: fatal, error, warn, info, debug, trace
+    # logLevel: fatal
 
   ## Support for App Protect Dos
   appprotectdos:
@@ -47,7 +49,7 @@ controller:
     repository: nginx/nginx-ingress
 
     ## The tag of the Ingress controller image.
-    tag: "2.1.1"
+    tag: "2.1.2"
 
     ## The pull policy for the Ingress controller image.
     pullPolicy: IfNotPresent
@@ -160,11 +162,17 @@ controller:
   ## Enable the custom resources.
   enableCustomResources: true
 
-  ## Enable preview policies.
+  ## Enable preview policies. This parameter is deprecated. To enable OIDC Policies please use controller.enableOIDC instead.
   enablePreviewPolicies: false
+
+  ## Enable OIDC policies.
+  enableOIDC: false
 
   ## Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.
   enableTLSPassthrough: false
+
+  ## Enable cert manager for Virtual Server resources. Requires controller.enableCustomResources.
+  enableCertManager: false
 
   globalConfiguration:
     ## Creates the GlobalConfiguration custom resource. Requires controller.enableCustomResources.
@@ -331,3 +339,12 @@ prometheus:
 
   ## Configures the HTTP scheme used.
   scheme: http
+
+nginxServiceMesh:
+  ## Enables integration with NGINX Service Mesh.
+  ## Requires controller.nginxplus
+  enable: false
+
+  ## Enables NGINX Service Mesh workload to route egress traffic through the Ingress Controller.
+  ## Requires nginxServiceMesh.enable
+  enableEgress: false

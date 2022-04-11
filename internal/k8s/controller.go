@@ -19,6 +19,8 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +31,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectcommon"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/appprotectdos"
 	"k8s.io/client-go/informers"
+	"k8s.io/client-go/rest"
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
@@ -44,6 +47,7 @@ import (
 	"k8s.io/client-go/tools/leaderelection"
 	"k8s.io/client-go/tools/record"
 
+	cm_controller "github.com/nginxinc/kubernetes-ingress/internal/certmanager"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
@@ -95,6 +99,7 @@ type LoadBalancerController struct {
 	client                        kubernetes.Interface
 	confClient                    k8s_nginx.Interface
 	dynClient                     dynamic.Interface
+	restConfig                    *rest.Config
 	cacheSyncs                    []cache.InformerSynced
 	sharedInformerFactory         informers.SharedInformerFactory
 	confSharedInformerFactorry    k8s_nginx_informers.SharedInformerFactory
@@ -143,7 +148,7 @@ type LoadBalancerController struct {
 	controllerNamespace           string
 	wildcardTLSSecret             string
 	areCustomResourcesEnabled     bool
-	enablePreviewPolicies         bool
+	enableOIDC                    bool
 	metricsCollector              collectors.ControllerCollector
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
@@ -158,6 +163,7 @@ type LoadBalancerController struct {
 	appProtectConfiguration       appprotect.Configuration
 	dosConfiguration              *appprotectdos.Configuration
 	configMap                     *api_v1.ConfigMap
+	certManagerController         *cm_controller.CmController
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -167,6 +173,7 @@ type NewLoadBalancerControllerInput struct {
 	KubeClient                   kubernetes.Interface
 	ConfClient                   k8s_nginx.Interface
 	DynClient                    dynamic.Interface
+	RestConfig                   *rest.Config
 	ResyncPeriod                 time.Duration
 	Namespace                    string
 	NginxConfigurator            *configs.Configurator
@@ -185,7 +192,7 @@ type NewLoadBalancerControllerInput struct {
 	ConfigMaps                   string
 	GlobalConfiguration          string
 	AreCustomResourcesEnabled    bool
-	EnablePreviewPolicies        bool
+	EnableOIDC                   bool
 	MetricsCollector             collectors.ControllerCollector
 	GlobalConfigurationValidator *validation.GlobalConfigurationValidator
 	TransportServerValidator     *validation.TransportServerValidator
@@ -196,6 +203,7 @@ type NewLoadBalancerControllerInput struct {
 	IsLatencyMetricsEnabled      bool
 	IsTLSPassthroughEnabled      bool
 	SnippetsEnabled              bool
+	CertManagerEnabled           bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -204,6 +212,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		client:                       input.KubeClient,
 		confClient:                   input.ConfClient,
 		dynClient:                    input.DynClient,
+		restConfig:                   input.RestConfig,
 		configurator:                 input.NginxConfigurator,
 		defaultServerSecret:          input.DefaultServerSecret,
 		appProtectEnabled:            input.AppProtectEnabled,
@@ -218,7 +227,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		controllerNamespace:          input.ControllerNamespace,
 		wildcardTLSSecret:            input.WildcardTLSSecret,
 		areCustomResourcesEnabled:    input.AreCustomResourcesEnabled,
-		enablePreviewPolicies:        input.EnablePreviewPolicies,
+		enableOIDC:                   input.EnableOIDC,
 		metricsCollector:             input.MetricsCollector,
 		globalConfigurationValidator: input.GlobalConfigurationValidator,
 		transportServerValidator:     input.TransportServerValidator,
@@ -242,6 +251,10 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		if err != nil {
 			glog.Fatalf("failed to create Spiffe Controller: %v", err)
 		}
+	}
+
+	if input.CertManagerEnabled {
+		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespace, lbc.recorder, lbc.confClient))
 	}
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
@@ -536,6 +549,9 @@ func (lbc *LoadBalancerController) Run() {
 		if err != nil {
 			glog.Fatal(err)
 		}
+	}
+	if lbc.certManagerController != nil {
+		go lbc.certManagerController.Run(lbc.ctx.Done())
 	}
 	if lbc.leaderElector != nil {
 		go lbc.leaderElector.Run(lbc.ctx)
@@ -877,7 +893,7 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 
 	if polExists && lbc.HasCorrectIngressClass(obj) {
 		pol := obj.(*conf_v1.Policy)
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies, lbc.appProtectEnabled)
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
 		if err != nil {
 			msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
 			lbc.recorder.Eventf(pol, api_v1.EventTypeWarning, "Rejected", msg)
@@ -2077,7 +2093,7 @@ func (lbc *LoadBalancerController) updatePoliciesStatus() error {
 	for _, obj := range lbc.policyLister.List() {
 		pol := obj.(*conf_v1.Policy)
 
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies, lbc.appProtectEnabled)
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
 		if err != nil {
 			msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
 			err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
@@ -2445,7 +2461,7 @@ func (lbc *LoadBalancerController) createVirtualServerEx(virtualServer *conf_v1.
 			if err != nil {
 				glog.Warningf("Error getting Service for Upstream %v: %v", u.Service, err)
 			} else {
-				endps = append(endps, fmt.Sprintf("%s:%d", s.Spec.ClusterIP, u.Port))
+				endps = append(endps, ipv6SafeAddrPort(s.Spec.ClusterIP, int32(u.Port)))
 			}
 
 		} else {
@@ -2625,7 +2641,7 @@ func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1.Policy {
 	for _, obj := range lbc.policyLister.List() {
 		pol := obj.(*conf_v1.Policy)
 
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enablePreviewPolicies, lbc.appProtectEnabled)
+		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
 		if err != nil {
 			glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
 			continue
@@ -2667,7 +2683,7 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 			continue
 		}
 
-		err = validation.ValidatePolicy(policy, lbc.isNginxPlus, lbc.enablePreviewPolicies, lbc.appProtectEnabled)
+		err = validation.ValidatePolicy(policy, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Policy %s is invalid: %w", policyKey, err))
 			continue
@@ -2972,7 +2988,7 @@ func getEndpointsBySubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEps 
 				}
 				for _, address := range subset.Addresses {
 					if address.IP == pod.Status.PodIP {
-						addr := fmt.Sprintf("%v:%v", pod.Status.PodIP, targetPort)
+						addr := ipv6SafeAddrPort(pod.Status.PodIP, targetPort)
 						ownerType, ownerName := getPodOwnerTypeAndName(pod)
 						podEnd := podEndpoint{
 							Address: addr,
@@ -2989,6 +3005,10 @@ func getEndpointsBySubselectedPods(targetPort int32, pods []*api_v1.Pod, svcEps 
 		}
 	}
 	return endps
+}
+
+func ipv6SafeAddrPort(addr string, port int32) string {
+	return net.JoinHostPort(addr, strconv.Itoa(int(port)))
 }
 
 func getPodName(pod *api_v1.ObjectReference) string {
@@ -3103,7 +3123,7 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, b
 			if port.Port == targetPort {
 				var endpoints []podEndpoint
 				for _, address := range subset.Addresses {
-					addr := fmt.Sprintf("%v:%v", address.IP, port.Port)
+					addr := ipv6SafeAddrPort(address.IP, port.Port)
 					podEnd := podEndpoint{
 						Address: addr,
 					}

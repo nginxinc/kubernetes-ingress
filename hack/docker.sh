@@ -13,7 +13,7 @@ if [[ ${commit_tag} == ${git_tag} ]]; then
     exit 0
 
 else
-    # we're on master or a branch, try to download the latest edge and see if sha matches
+    # we're on main or a branch, try to download the latest edge and see if sha matches
     docker pull nginx/nginx-ingress:${docker_tag} >/dev/null 2>&1
     DOCKER_SHA=$(docker inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' nginx/nginx-ingress:${docker_tag})
     if [[ ${DOCKER_SHA} == ${git_commit} ]]; then

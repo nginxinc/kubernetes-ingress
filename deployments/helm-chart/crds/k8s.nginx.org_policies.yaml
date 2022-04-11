@@ -43,7 +43,7 @@ spec:
               type: object
               properties:
                 accessControl:
-                  description: 'AccessControl defines an access policy based on the source IP of a request. policy status: production-ready'
+                  description: AccessControl defines an access policy based on the source IP of a request.
                   type: object
                   properties:
                     allow:
@@ -55,7 +55,7 @@ spec:
                       items:
                         type: string
                 egressMTLS:
-                  description: 'EgressMTLS defines an Egress MTLS policy. policy status: preview'
+                  description: EgressMTLS defines an Egress MTLS policy.
                   type: object
                   properties:
                     ciphers:
@@ -79,7 +79,7 @@ spec:
                 ingressClassName:
                   type: string
                 ingressMTLS:
-                  description: 'IngressMTLS defines an Ingress MTLS policy. policy status: preview'
+                  description: IngressMTLS defines an Ingress MTLS policy.
                   type: object
                   properties:
                     clientCertSecret:
@@ -89,7 +89,7 @@ spec:
                     verifyDepth:
                       type: integer
                 jwt:
-                  description: 'JWTAuth holds JWT authentication configuration. policy status: preview'
+                  description: JWTAuth holds JWT authentication configuration.
                   type: object
                   properties:
                     realm:
@@ -117,7 +117,7 @@ spec:
                     tokenEndpoint:
                       type: string
                 rateLimit:
-                  description: 'RateLimit defines a rate limit policy. policy status: preview'
+                  description: RateLimit defines a rate limit policy.
                   type: object
                   properties:
                     burst:
@@ -139,7 +139,7 @@ spec:
                     zoneSize:
                       type: string
                 waf:
-                  description: 'WAF defines an WAF policy. policy status: preview'
+                  description: WAF defines an WAF policy.
                   type: object
                   properties:
                     apPolicy:

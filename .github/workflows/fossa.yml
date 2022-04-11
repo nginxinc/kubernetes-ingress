@@ -3,7 +3,7 @@ name: Fossa
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - 'docs/**'
       - 'examples/**'

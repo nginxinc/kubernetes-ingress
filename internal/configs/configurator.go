@@ -189,9 +189,8 @@ func (cnf *Configurator) updateIngressMetricsLabels(ingEx *IngressEx, upstreams 
 		newUpstreams[u.Name] = true
 		newUpstreamsNames = append(newUpstreamsNames, u.Name)
 		for _, server := range u.UpstreamServers {
-			s := fmt.Sprintf("%v:%v", server.Address, server.Port)
-			podInfo := ingEx.PodsByIP[s]
-			labelKey := fmt.Sprintf("%v/%v", u.Name, s)
+			podInfo := ingEx.PodsByIP[server.Address]
+			labelKey := fmt.Sprintf("%v/%v", u.Name, server.Address)
 			upstreamServerPeerLabels[labelKey] = []string{podInfo.Name}
 			if cnf.staticCfgParams.NginxServiceMesh {
 				ownerLabelVal := fmt.Sprintf("%s/%s", podInfo.OwnerType, podInfo.OwnerName)

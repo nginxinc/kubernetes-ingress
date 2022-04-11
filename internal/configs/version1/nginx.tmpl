@@ -107,6 +107,7 @@ http {
         set $service "";
 
         listen 80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
+        listen [::]:80 default_server{{if .ProxyProtocol}} proxy_protocol{{end}};
 
         {{if .TLSPassthrough}}
         listen unix:/var/lib/nginx/passthrough-https.sock ssl default_server{{if .HTTP2}} http2{{end}} proxy_protocol;
@@ -114,6 +115,7 @@ http {
         real_ip_header proxy_protocol;
         {{else}}
         listen 443 ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};
+        listen [::]:443 ssl default_server{{if .HTTP2}} http2{{end}}{{if .ProxyProtocol}} proxy_protocol{{end}};
         {{end}}
 
         {{if .SSLRejectHandshake}}
@@ -154,8 +156,11 @@ http {
     # stub_status
     server {
         listen {{.NginxStatusPort}};
+        listen [::]:{{.NginxStatusPort}};
+
         {{range $value := .NginxStatusAllowCIDRs}}
         allow {{$value}};{{end}}
+
         deny all;
         {{if .OpenTracingEnabled}}
         opentracing off;
@@ -232,6 +237,7 @@ stream {
 
     server {
         listen 443;
+        listen [::]:443;
 
         ssl_preread on;
 

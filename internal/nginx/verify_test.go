@@ -28,6 +28,7 @@ func getTestHTTPClient() *http.Client {
 }
 
 func TestVerifyClient(t *testing.T) {
+	t.Parallel()
 	c := verifyClient{
 		client:  getTestHTTPClient(),
 		timeout: 25 * time.Millisecond,
@@ -52,6 +53,7 @@ func TestVerifyClient(t *testing.T) {
 }
 
 func TestConfigWriter(t *testing.T) {
+	t.Parallel()
 	cw, err := newVerifyConfigGenerator()
 	if err != nil {
 		t.Fatalf("error instantiating ConfigWriter: %v", err)

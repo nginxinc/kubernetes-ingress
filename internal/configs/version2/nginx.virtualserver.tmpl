@@ -41,6 +41,7 @@ limit_req_zone {{ $z.Key }} zone={{ $z.ZoneName }}:{{ $z.ZoneSize }} rate={{ $z.
 {{ $s := .Server }}
 server {
     listen 80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+    listen [::]:80{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
 
     server_name {{ $s.ServerName }};
 
@@ -56,6 +57,7 @@ server {
     real_ip_header proxy_protocol;
         {{ else }}
     listen 443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
+    listen [::]:443 ssl{{ if $ssl.HTTP2 }} http2{{ end }}{{ if $s.ProxyProtocol }} proxy_protocol{{ end }};
         {{ end }}
 
         {{ if $ssl.RejectHandshake }}

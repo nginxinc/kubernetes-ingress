@@ -1,6 +1,7 @@
 import pytest
 import re
 import socket
+import ipaddress
 
 from suite.resources_utils import (
     wait_before_test,
@@ -17,6 +18,30 @@ from suite.custom_resources_utils import (
 )
 from settings import TEST_DATA
 
+# Helper functions
+def chk_endpoint(endp):
+    """
+    If an endpoint is IPv6, return a formatted [ip]:port
+    endpoint. Otherwise, return unmodified endpoint.
+    """
+    ip = endp[:endp.rfind(":")]
+    address = ipaddress.ip_address(ip)
+    if address.version == 6:
+        port = endp[endp.rfind(":"):]
+        return f"[{ip}]{port}"
+    else:
+        return endp
+
+def ipfamily_from_host(host):
+    """
+    Return socket type (AF_INET or AF_INET6) based on
+    IP address type from host
+    """
+    address = ipaddress.ip_address(host)
+    if address.version == 6:
+        return socket.AF_INET6
+    else:
+        return socket.AF_INET
 
 @pytest.mark.ts
 @pytest.mark.skip_for_loadbalancer
@@ -115,7 +140,8 @@ class TestTransportServerUdpLoadBalance:
         retry = 0
         while(len(endpoints) is not 3 and retry <= 30):
             for i in range(20):
-                client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+                host = host.strip("[]")
+                client = socket.socket(ipfamily_from_host(host), socket.SOCK_DGRAM, 0)
                 client.sendto("ping".encode('utf-8'), (host, port))
                 data, address = client.recvfrom(4096)
                 endpoint = data.decode()
@@ -144,7 +170,7 @@ class TestTransportServerUdpLoadBalance:
         for key in endpoints.keys():
             found = False
             for server in servers:
-                if key in server:
+                if chk_endpoint(key) in server:
                     found = True
             assert found
 
@@ -159,7 +185,8 @@ class TestTransportServerUdpLoadBalance:
 
         # Step 1, confirm load balancing is working.
         print(f"sending udp requests to: {host}:{port}")
-        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        host = host.strip("[]")
+        client = socket.socket(ipfamily_from_host(host), socket.SOCK_DGRAM, 0)
         client.sendto("ping".encode('utf-8'), (host, port))
         data, address = client.recvfrom(4096)
         endpoint = data.decode()
@@ -203,7 +230,7 @@ class TestTransportServerUdpLoadBalance:
         )
 
         # Step 4, confirm load balancing is still working.
-        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        client = socket.socket(ipfamily_from_host(host), socket.SOCK_DGRAM, 0)
         client.sendto("ping".encode('utf-8'), (host, port))
         data, address = client.recvfrom(4096)
         endpoint = data.decode()
@@ -239,7 +266,8 @@ class TestTransportServerUdpLoadBalance:
 
         print(f"sending udp requests to: {host}:{port}")
         for i in range(3):
-            client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+            host = host.strip("[]")
+            client = socket.socket(ipfamily_from_host(host), socket.SOCK_DGRAM, 0)
             client.settimeout(2)
             client.sendto("ping".encode('utf-8'), (host, port))
             try:
@@ -301,7 +329,8 @@ class TestTransportServerUdpLoadBalance:
         endpoints = {}
         while(len(endpoints) is not 3 and retry <= 30):
             for i in range(20):
-                client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+                host = host.strip("[]")
+                client = socket.socket(ipfamily_from_host(host), socket.SOCK_DGRAM, 0)
                 client.sendto("ping".encode('utf-8'), (host, port))
                 data, address = client.recvfrom(4096)
                 endpoint = data.decode()
@@ -361,7 +390,8 @@ class TestTransportServerUdpLoadBalance:
         port = transport_server_setup.public_endpoint.udp_server_port
         host = transport_server_setup.public_endpoint.public_ip
 
-        client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, 0)
+        host = host.strip("[]")
+        client = socket.socket(ipfamily_from_host(host), socket.SOCK_DGRAM, 0)
         client.settimeout(2)
         client.sendto("ping".encode('utf-8'), (host, port))
         try:

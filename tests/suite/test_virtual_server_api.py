@@ -12,7 +12,7 @@ from suite.resources_utils import scale_deployment
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
                          [({"type": "complete", "extra_args": ["-enable-custom-resources",
-                                                               "-nginx-status-allow-cidrs=0.0.0.0/0"]},
+                                                               "-nginx-status-allow-cidrs=0.0.0.0/0,::/0"]},
                            {"example": "virtual-server-dynamic-configuration", "app_type": "simple"})],
                          indirect=True)
 class TestVSNginxPlusApi:

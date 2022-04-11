@@ -46,6 +46,7 @@ data:
   app.conf: |-
     server {
     listen 8080;
+    listen [::]:8080;
 
     location / {
         default_type text/plain;

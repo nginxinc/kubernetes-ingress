@@ -2,7 +2,7 @@ name: Notification
 
 on:
   workflow_run:
-    branches: [master, release-*]
+    branches: [main, release-*]
     workflows:
       - "Continuous Integration"
       - "CodeQL"

@@ -479,6 +479,26 @@ spec:
                   description: TLS defines TLS configuration for a VirtualServer.
                   type: object
                   properties:
+                    cert-manager:
+                      description: CertManager defines a cert manager config for a TLS.
+                      type: object
+                      properties:
+                        cluster-issuer:
+                          type: string
+                        common-name:
+                          type: string
+                        duration:
+                          type: string
+                        issuer:
+                          type: string
+                        issuer-group:
+                          type: string
+                        issuer-kind:
+                          type: string
+                        renew-before:
+                          type: string
+                        usages:
+                          type: string
                     redirect:
                       description: TLSRedirect defines a redirect for a TLS.
                       type: object

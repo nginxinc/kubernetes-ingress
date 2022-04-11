@@ -236,8 +236,9 @@ type ErrorPageRedirect struct {
 
 // TLS defines TLS configuration for a VirtualServer.
 type TLS struct {
-	Secret   string       `json:"secret"`
-	Redirect *TLSRedirect `json:"redirect"`
+	Secret      string       `json:"secret"`
+	Redirect    *TLSRedirect `json:"redirect"`
+	CertManager *CertManager `json:"cert-manager"`
 }
 
 // TLSRedirect defines a redirect for a TLS.
@@ -245,6 +246,18 @@ type TLSRedirect struct {
 	Enable  bool   `json:"enable"`
 	Code    *int   `json:"code"`
 	BasedOn string `json:"basedOn"`
+}
+
+// CertManager defines a cert manager config for a TLS.
+type CertManager struct {
+	ClusterIssuer string `json:"cluster-issuer"`
+	Issuer        string `json:"issuer"`
+	IssuerKind    string `json:"issuer-kind"`
+	IssuerGroup   string `json:"issuer-group"`
+	CommonName    string `json:"common-name"`
+	Duration      string `json:"duration"`
+	RenewBefore   string `json:"renew-before"`
+	Usages        string `json:"usages"`
 }
 
 // VirtualServerStatus defines the status for the VirtualServer resource.
@@ -374,14 +387,12 @@ type PolicyList struct {
 }
 
 // AccessControl defines an access policy based on the source IP of a request.
-// policy status: production-ready
 type AccessControl struct {
 	Allow []string `json:"allow"`
 	Deny  []string `json:"deny"`
 }
 
 // RateLimit defines a rate limit policy.
-// policy status: preview
 type RateLimit struct {
 	Rate       string `json:"rate"`
 	Key        string `json:"key"`
@@ -395,7 +406,6 @@ type RateLimit struct {
 }
 
 // JWTAuth holds JWT authentication configuration.
-// policy status: preview
 type JWTAuth struct {
 	Realm  string `json:"realm"`
 	Secret string `json:"secret"`
@@ -403,7 +413,6 @@ type JWTAuth struct {
 }
 
 // IngressMTLS defines an Ingress MTLS policy.
-// policy status: preview
 type IngressMTLS struct {
 	ClientCertSecret string `json:"clientCertSecret"`
 	VerifyClient     string `json:"verifyClient"`
@@ -411,7 +420,6 @@ type IngressMTLS struct {
 }
 
 // EgressMTLS defines an Egress MTLS policy.
-// policy status: preview
 type EgressMTLS struct {
 	TLSSecret         string `json:"tlsSecret"`
 	VerifyServer      bool   `json:"verifyServer"`
@@ -436,7 +444,6 @@ type OIDC struct {
 }
 
 // WAF defines an WAF policy.
-// policy status: preview
 type WAF struct {
 	Enable      bool         `json:"enable"`
 	ApPolicy    string       `json:"apPolicy"`

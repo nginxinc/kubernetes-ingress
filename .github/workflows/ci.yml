@@ -3,7 +3,7 @@ name: Continuous Integration
 on:
   push:
     branches:
-      - master
+      - main
       - release-*
     paths-ignore:
       - 'docs/**'
@@ -13,7 +13,7 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches:
-      - master
+      - main
       - release-*
     paths-ignore:
       - 'docs/**'
@@ -31,8 +31,6 @@ defaults:
     shell: bash
 
 env:
-  K8S_VERSION: 1.23.4
-  K8S_TIMEOUT: 75s
   HELM_CHART_DIR: deployments/helm-chart
   GIT_NAME: NGINX Kubernetes Team
   GIT_MAIL: kubernetes@nginx.com
@@ -49,11 +47,12 @@ jobs:
     outputs:
       go_version: ${{ steps.vars.outputs.go_version }}
       go_path: ${{ steps.go.outputs.go_path }}
+      k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Cache Go controller tools
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
@@ -65,8 +64,9 @@ jobs:
         id: vars
         run: |
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
+          echo "::set-output name=k8s_latest::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ steps.vars.outputs.go_version }}
       - name: Determine GOPATH
@@ -91,7 +91,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Cache Go build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
@@ -100,19 +100,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Build binary
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: build --snapshot --rm-dist --id kubernetes-ingress --single-target
+          args: build --snapshot --rm-dist --single-target
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: ${{ needs.check.outputs.go_path }}
+          GOPATH: ${{ needs.checks.outputs.go_path }}
+          AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
+          AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
@@ -125,7 +127,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Cache Go tests
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
@@ -134,20 +136,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-tests-
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Run Tests
         run: make cover
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           files: ./coverage.txt
 
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-20.04
-    needs: [binary, unit-tests]
+    needs: [binary, unit-tests, checks]
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -164,9 +166,11 @@ jobs:
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"opentracing-plus\", \"marker\": \"vsr\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}]}"
+                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}], \
+                                              \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}"
           else
-            echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.10\", \"1.22.7\", \"1.23.4\"]}"
+            echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.10\", \"1.22.7\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+                                             \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}"
           fi
 
   smoke-tests:
@@ -174,6 +178,7 @@ jobs:
     runs-on: ubuntu-20.04
     needs: setup-matrix
     strategy:
+      fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
     steps:
       - name: Checkout Repository
@@ -184,11 +189,11 @@ jobs:
         with:
           image: ${{ matrix.images.image != '' && matrix.images.image || 'debian' }}
           marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}
-          k8s-version: ${{ matrix.k8s != '' && matrix.k8s || env.K8S_VERSION }}
+          k8s-version: ${{ matrix.k8s }}
           nginx-crt: ${{ secrets.NGINX_CRT }}
           nginx-key: ${{ secrets.NGINX_KEY }}
       - name: Upload Test Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
@@ -197,7 +202,7 @@ jobs:
   helm-tests:
     name: Helm Tests
     runs-on: ubuntu-20.04
-    needs: [binary, unit-tests]
+    needs: [binary, unit-tests, checks]
     env:
       NGINX_HTTP_PORT: 8080
       NGINX_HTTPS_PORT: 8443
@@ -207,7 +212,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
@@ -228,7 +233,7 @@ jobs:
       - name: Deploy Kubernetes
         id: k8s
         run: |
-          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ env.K8S_VERSION }} --wait ${{ env.K8S_TIMEOUT }}
+          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
           kind load docker-image nginx-ingress:${{ github.sha }} --name ${{ github.run_id }}
       - name: Install Chart
         run: >
@@ -262,7 +267,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Cache Go build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
@@ -271,19 +276,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
+      - name: Publish Release Notes on new tag
+        uses: release-drafter/release-drafter@v5
+        with:
+            publish: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
       - name: Build binaries
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: build --rm-dist --id kubernetes-ingress ${{ github.event_name == 'pull_request' && '--single-target' || '' }} ${{ !startsWith(github.ref, 'refs/tags/') && '--snapshot' || '' }}
+          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: ${{ needs.check.outputs.go_path }}
+          GOPATH: ${{ needs.checks.outputs.go_path }}
+          AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
+          AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -294,6 +308,7 @@ jobs:
     needs: build-binaries
     if: ${{ !startsWith(github.ref, 'refs/heads/release') }}
     strategy:
+        fail-fast: false
         matrix:
           image: [debian, alpine, opentracing, alpine-opentracing]
           platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
@@ -306,7 +321,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -356,6 +371,12 @@ jobs:
             org.opencontainers.image.description=NGINX Ingress Controller for Kubernetes
             org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
             org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/main/README.md
+            io.artifacthub.package.logo-url=https://docs.nginx.com/nginx-ingress-controller/images/icons/NGINX-Ingress-Controller-product-icon.svg
+            io.artifacthub.package.maintainers=[{"name":"NGINX Inc","email":"kubernetes@nginx.com"}]
+            io.artifacthub.package.license=Apache-2.0
+            io.artifacthub.package.keywords=kubernetes,ingress,nginx,controller
+
       - name: Output Variables
         id: var
         run: |
@@ -399,7 +420,7 @@ jobs:
         with:
           sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
       - name: Upload Scan Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         continue-on-error: true
         with:
           name: 'trivy-results-${{ matrix.image }}.sarif'
@@ -411,19 +432,25 @@ jobs:
     runs-on: ubuntu-20.04
     needs: build-binaries
     strategy:
+        fail-fast: false
         matrix:
           image: [debian-plus, alpine-plus, opentracing-plus]
           platforms: ["linux/arm64, linux/amd64"]
+          target: [goreleaser]
           include:
             - image: ubi-plus
               platforms: "linux/arm64, linux/amd64, linux/s390x"
+              target: goreleaser
+            - image: debian-plus
+              platforms: "linux/arm64, linux/amd64"
+              target: aws
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
@@ -441,6 +468,13 @@ jobs:
           username: _json_key
           password: ${{ secrets.GCR_JSON_KEY }}
         if: github.event_name != 'pull_request'
+      - name: Login to ECR
+        uses: docker/login-action@v1
+        with:
+          registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
+          username: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        if: startsWith(github.ref, 'refs/tags/')
 
       - name: Docker meta
         id: meta
@@ -449,8 +483,9 @@ jobs:
           images: |
             ${{ startsWith(github.ref, 'refs/tags/') && 'gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress' || '' }}
             ${{ startsWith(github.ref, 'refs/heads/release') && 'gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic/nginx-plus-ingress' || '' }}
+            ${{ startsWith(github.ref, 'refs/tags/') && contains(matrix.target, 'aws') && '709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress' || '' }}
             gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
-          flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
+          flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }},onlatest=true
           tags: |
             type=edge
             type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
@@ -481,7 +516,7 @@ jobs:
           context: '.'
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,scope=${{ matrix.image }},mode=max
-          target: goreleaser
+          target: ${{ matrix.target }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
@@ -500,7 +535,7 @@ jobs:
           file: build/Dockerfile
           context: '.'
           cache-from: type=gha,scope=${{ matrix.image }}
-          target: goreleaser
+          target: ${{ matrix.target }}
           tags: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}
           load: true
           build-args: |
@@ -523,7 +558,7 @@ jobs:
         with:
           sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
       - name: Upload Scan Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         continue-on-error: true
         with:
           name: 'trivy-results-${{ matrix.image }}.sarif'
@@ -558,7 +593,7 @@ jobs:
       - name: Package
         run: helm package --version ${{ steps.var.outputs.helm_version }} ${{ env.HELM_CHART_DIR }}
       - name: Upload Chart
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: helm-chart
           path: ${{ github.workspace }}/nginx-ingress-${{ steps.var.outputs.helm_version }}.tgz
@@ -578,7 +613,7 @@ jobs:
       - name: Remove previous Chart
         run: rm -f ${{ github.workspace }}/${{ needs.package-helm.outputs.type }}/nginx-ingress-${{ needs.package-helm.outputs.version }}.tgz
       - name: Retrieve latest Helm Chart
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: helm-chart
           path: ${{ github.workspace }}/${{ needs.package-helm.outputs.type }}
@@ -589,16 +624,3 @@ jobs:
           git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' \
           commit -m "NGINX Ingress Controller - Release ${{ needs.package-helm.outputs.type }} ${{ needs.package-helm.outputs.version }}"
           git push -u origin master
-
-  publish-release-notes:
-    name: Publish Release Notes
-    runs-on: ubuntu-20.04
-    needs: release-helm
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    steps:
-      - name: Publish Release Notes
-        uses: release-drafter/release-drafter@v5
-        with:
-            publish: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -102,3 +102,18 @@ def get_paths_from_vsr_yaml(file) -> []:
             for route in dep['spec']['subroutes']:
                 res.append(route['path'])
     return res
+
+
+def get_secret_name_from_vs_yaml(file) -> str:
+    """
+    Parse yaml file and return the tls secret name.
+
+    :param file: an absolute path to file
+    :return: str
+    """
+    res = ""
+    with open(file) as f:
+        docs = yaml.safe_load_all(f)
+        for dep in docs:
+            return dep['spec']['tls']['secret']
+    return res

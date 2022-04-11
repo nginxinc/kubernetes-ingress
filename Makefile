@@ -30,17 +30,17 @@ all: test lint verify-codegen update-crds debian-image
 .PHONY: lint
 lint: ## Run linter
 	@git fetch
-	docker run --pull always --rm -v $(shell pwd):/kubernetes-ingress -w /kubernetes-ingress -v $(shell go env GOCACHE):/cache/go -e GOCACHE=/cache/go -e GOLANGCI_LINT_CACHE=/cache/go -v $(shell go env GOPATH)/pkg:/go/pkg golangci/golangci-lint:latest git diff -p origin/master > /tmp/diff.patch && golangci-lint --color always run -v --new-from-patch=/tmp/diff.patch
+	docker run --pull always --rm -v $(shell pwd):/kubernetes-ingress -w /kubernetes-ingress -v $(shell go env GOCACHE):/cache/go -e GOCACHE=/cache/go -e GOLANGCI_LINT_CACHE=/cache/go -v $(shell go env GOPATH)/pkg:/go/pkg golangci/golangci-lint:latest git diff -p origin/main > /tmp/diff.patch && golangci-lint --color always run -v --new-from-patch=/tmp/diff.patch
 
 .PHONY: test
 test: ## Run tests
-	go test -shuffle=on -race ./...
+	go test -tags=aws -shuffle=on -race ./...
 
 cover: ## Generate coverage report
 	@./hack/test-cover.sh
 
 cover-html: ## Generate and show coverage report in HTML format
-	go test -shuffle=on -race ./... -count=1 -cover -covermode=atomic -coverprofile=coverage.out
+	go test -tags=aws -shuffle=on -race ./... -count=1 -cover -covermode=atomic -coverprofile=coverage.out
 	go tool cover -html coverage.out
 
 .PHONY: verify-codegen

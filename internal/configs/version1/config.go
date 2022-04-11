@@ -39,7 +39,6 @@ type Upstream struct {
 // UpstreamServer describes a server in an NGINX upstream.
 type UpstreamServer struct {
 	Address     string
-	Port        string
 	MaxFails    int
 	MaxConns    int
 	FailTimeout string
@@ -206,13 +205,14 @@ type MainConfig struct {
 	AppProtectCookieSeed               string
 	AppProtectCPUThresholds            string
 	AppProtectPhysicalMemoryThresholds string
+	AppProtectReconnectPeriod          string
 	AppProtectDosLoadModule            bool
 	AppProtectDosLogFormat             []string
 	AppProtectDosLogFormatEscaping     string
 	InternalRouteServer                bool
 	InternalRouteServerName            string
 	LatencyMetrics                     bool
-	PreviewPolicies                    bool
+	OIDC                               bool
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.
@@ -224,8 +224,7 @@ func NewUpstreamWithDefaultServer(name string) Upstream {
 		UpstreamZoneSize: "256k",
 		UpstreamServers: []UpstreamServer{
 			{
-				Address:     "127.0.0.1",
-				Port:        "8181",
+				Address:     "127.0.0.1:8181",
 				MaxFails:    1,
 				MaxConns:    0,
 				FailTimeout: "10s",

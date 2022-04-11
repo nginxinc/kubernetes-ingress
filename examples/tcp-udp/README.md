@@ -52,6 +52,7 @@ We use `stream-snippets` ConfigMap key to configure TCP and UDP load balancing f
 
         server {
             listen 5353 udp;
+            listen [::]:5353 udp;
             proxy_pass coredns-udp;
             proxy_responses 1;
         }
@@ -62,6 +63,7 @@ We use `stream-snippets` ConfigMap key to configure TCP and UDP load balancing f
 
         server {
             listen 5353;
+            listen [::]:5353;
             proxy_pass coredns-tcp;
         }
         ```
@@ -81,6 +83,7 @@ We use `stream-snippets` ConfigMap key to configure TCP and UDP load balancing f
 
         server {
             listen 5353 udp;
+            listen [::]:5353 udp;
             proxy_pass coredns-udp;
             proxy_responses 1;
             status_zone coredns-udp;
@@ -93,6 +96,7 @@ We use `stream-snippets` ConfigMap key to configure TCP and UDP load balancing f
 
         server {
             listen 5353;
+            listen [::]:5353;
             proxy_pass coredns-tcp;
             status_zone coredns-tcp;
         }

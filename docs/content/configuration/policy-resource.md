@@ -13,7 +13,7 @@ The Policy resource allows you to configure features like access control and rat
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.1/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.2/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -94,8 +94,6 @@ policies:
 
 ### RateLimit
 
-> **Feature Status**: Rate-Limiting is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
-
 The rate limit policy configures NGINX to limit the processing rate of requests.
 
 For example, the following policy will limit all subsequent requests coming from a single IP address once a rate of 10 requests per second is exceeded:
@@ -135,8 +133,6 @@ policies:
 When you reference more than one rate limit policy, the Ingress Controller will configure NGINX to use all referenced rate limits. When you define multiple policies, each additional policy inherits the `dryRun`, `logLevel`, and `rejectCode` parameters from the first policy referenced (`rate-limit-policy-one`, in the example above).
 
 ### JWT
-
-> **Feature Status**: JWT is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
 
 > Note: This feature is only available in NGINX Plus.
 
@@ -188,8 +184,6 @@ policies:
 In this example the Ingress Controller will use the configuration from the first policy reference `jwt-policy-one`, and ignores `jwt-policy-two`.
 
 ### IngressMTLS
-
-> **Feature Status**: IngressMTLS is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
 
 The IngressMTLS policy configures client certificate verification.
 
@@ -243,8 +237,6 @@ In this example the Ingress Controller will use the configuration from the first
 
 ### EgressMTLS
 
-> **Feature Status**: EgressMTLS is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
-
 The EgressMTLS policy configures upstreams authentication and certificate verification.
 
 For example, the following policy will use `egress-mtls-secret` to authenticate with the upstream application and `egress-trusted-ca-secret` to verify the certificate of the application:
@@ -284,7 +276,7 @@ In this example the Ingress Controller will use the configuration from the first
 
 ### OIDC
 
-> **Feature Status**: OIDC is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+> **Feature Status**: This feature is disabled by default. To enable it, set the [enable-oidc](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-oidc) command-line argument of the Ingress Controller.
 
 The OIDC policy configures NGINX Plus as a relying party for OpenID Connect authentication.
 
@@ -305,7 +297,7 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 
 #### Prerequisites
 
-For the OIDC feature to work, it is necessary to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/), otherwise NGINX Plus will fail to reload. Additionally, it is necessary to configure a resolver, so that NGINX Plus can resolve the IDP authorization endpoint. For an example of the necessary configuration see the documentation [here](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.1/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+For the OIDC feature to work, it is necessary to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/), otherwise NGINX Plus will fail to reload. Additionally, it is necessary to configure a resolver, so that NGINX Plus can resolve the IDP authorization endpoint. For an example of the necessary configuration see the documentation [here](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.2/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 
@@ -540,7 +532,3 @@ Status:
 ```
 
 **Note**: If you make an existing resource invalid, the Ingress Controller will reject it.
-
-## Footnotes
-
-[^1]: Capabilities labeled in preview status are fully supported.

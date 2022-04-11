@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Updates the files required for a new release. Run this script in the release branch. Use it from 
+# Updates the files required for a new release. Run this script in the release branch. Use it from
 # hack/prepare-major-release.sh or hack/prepare-minor-release.sh
 #
 # Usage:
@@ -21,9 +21,10 @@ FILES_TO_UPDATE_IC_VERSION=(
     deployments/helm-chart/values-icp.yaml
     deployments/helm-chart/values-plus.yaml
     deployments/helm-chart/values.yaml
+    deployments/helm-chart-dos-arbitrator/README.md
 )
 
-FILE_TO_UPDATE_HELM_CHART_VERSION=( deployments/helm-chart/Chart.yaml )
+FILE_TO_UPDATE_HELM_CHART_VERSION=(deployments/helm-chart/Chart.yaml)
 
 DOCS_TO_UPDATE_FOLDER=docs/content
 
@@ -42,6 +43,7 @@ sed -i "" -e "s/%%TITLE%%/### $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g"
 # update docs
 find $DOCS_TO_UPDATE_FOLDER -type f -name "*.md" -exec sed -i "" "s/v$prev_ic_version/v$ic_version/g" {} +
 find $DOCS_TO_UPDATE_FOLDER/installation -type f -name "*.md" -exec sed -i "" "s/$prev_ic_version/$ic_version/g" {} +
+find $DOCS_TO_UPDATE_FOLDER/app-protect -type f -name "*.md" -exec sed -i "" "s/$prev_ic_version/$ic_version/g" {} +
 
 # update IC version in the technical-specification doc
 sed -i "" "s/$prev_ic_version/$ic_version/g" $DOCS_TO_UPDATE_FOLDER/technical-specifications.md

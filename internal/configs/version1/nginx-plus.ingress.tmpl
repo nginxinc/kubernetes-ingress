@@ -4,7 +4,7 @@ upstream {{$upstream.Name}} {
 	zone {{$upstream.Name}} {{if ne $upstream.UpstreamZoneSize "0"}}{{$upstream.UpstreamZoneSize}}{{else}}512k{{end}};
 	{{if $upstream.LBMethod }}{{$upstream.LBMethod}};{{end}}
 	{{range $server := $upstream.UpstreamServers}}
-	server {{$server.Address}}:{{$server.Port}} max_fails={{$server.MaxFails}} fail_timeout={{$server.FailTimeout}} max_conns={{$server.MaxConns}}
+	server {{$server.Address}} max_fails={{$server.MaxFails}} fail_timeout={{$server.FailTimeout}} max_conns={{$server.MaxConns}}
 	    {{- if $server.SlowStart}} slow_start={{$server.SlowStart}}{{end}}{{if $server.Resolve}} resolve{{end}};{{end}}
 	{{if $upstream.StickyCookie}}
 	sticky cookie {{$upstream.StickyCookie}};
@@ -22,12 +22,14 @@ upstream {{$upstream.Name}} {
 server {
 	{{if $server.SpiffeCerts}}
 	listen 443 ssl;
+	listen [::]:443 ssl;
 	ssl_certificate /etc/nginx/secrets/spiffe_cert.pem;
 	ssl_certificate_key /etc/nginx/secrets/spiffe_key.pem;
 	{{else}}
 	{{if not $server.GRPCOnly}}
 	{{range $port := $server.Ports}}
 	listen {{$port}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
+	listen [::]:{{$port}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
 	{{- end}}
 	{{end}}
 
@@ -39,6 +41,7 @@ server {
 	{{else}}
 	{{- range $port := $server.SSLPorts}}
 	listen {{$port}} ssl{{if $server.HTTP2}} http2{{end}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
+	listen [::]:{{$port}} ssl{{if $server.HTTP2}} http2{{end}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
 	{{- end}}
 	{{end}}
 	{{if $server.SSLRejectHandshake}}

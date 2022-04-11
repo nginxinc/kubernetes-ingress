@@ -456,10 +456,8 @@ func createUpstream(ingEx *IngressEx, name string, backend *networking.IngressBa
 		}
 
 		for _, endp := range endps {
-			addressport := strings.Split(endp, ":")
 			upsServers = append(upsServers, version1.UpstreamServer{
-				Address:     addressport[0],
-				Port:        addressport[1],
+				Address:     endp,
 				MaxFails:    cfg.MaxFails,
 				MaxConns:    cfg.MaxConns,
 				FailTimeout: cfg.FailTimeout,
