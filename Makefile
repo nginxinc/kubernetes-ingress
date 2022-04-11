@@ -133,6 +133,11 @@ ubi-image-dos-plus: build ## Create Docker image for Ingress Controller (UBI wit
 ubi-image-nap-dos-plus: build ## Create Docker image for Ingress Controller (UBI with NGINX Plus, App Protect WAF and DoS)
 	$(DOCKER_CMD) $(PLUS_ARGS) --secret id=rhel_license,src=rhel_license --build-arg BUILD_OS=ubi-plus-nap --build-arg NAP_MODULES=waf,dos
 
+.PHONY: openshift-image openshift-image-plus openshift-image-nap-plus openshift-image-dos-plus openshift-image-nap-dos-plus
+openshift-image openshift-image-plus openshift-image-nap-plus openshift-image-dos-plus openshift-image-nap-dos-plus:
+	@printf "\033[0;31mWarning\033[0m: The target $(filter openshift-%,$(MAKECMDGOALS)) was renamed to $(subst openshift,ubi,$(filter openshift-%,$(MAKECMDGOALS))) and will be removed in a future release.\n"
+	@$(MAKE) $(subst openshift,ubi,$(MAKECMDGOALS)) $(MAKEFLAGS)
+
 .PHONY: alpine-image-opentracing
 alpine-image-opentracing: build ## Create Docker image for Ingress Controller (Alpine with OpenTracing)
 	$(DOCKER_CMD) --build-arg BUILD_OS=alpine-opentracing
