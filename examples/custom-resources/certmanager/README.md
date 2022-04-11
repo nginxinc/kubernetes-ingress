@@ -8,7 +8,7 @@ Then, we deploy the NGINX or NGINX Plus Ingress controller, a simple web applica
 1. Deploy cert manager and all dependent resources:
 
     ```
-    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.2/cert-manager.yaml
+    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
     ```
 2. Deploy a self-signed certificate issuer:
 
