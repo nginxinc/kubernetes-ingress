@@ -30,3 +30,4 @@ autolabeler:
       - 'vendor*'
     branch:
       - '/deps\/.+/'
+template: "not used, but required"
