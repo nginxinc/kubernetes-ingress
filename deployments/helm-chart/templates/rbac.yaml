@@ -129,6 +129,19 @@ rules:
   - watch
   - get
 {{- end }}
+{{- if .Values.controller.enableCertManager }}
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - certificates
+  verbs:
+  - list
+  - watch
+  - get
+  - update
+  - create
+  - delete
+{{- end }}
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
