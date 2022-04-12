@@ -11,6 +11,16 @@ docs: "DOCS-616"
 
 12 Apr 2022
 
+OVERVIEW:
+
+* Support for automatic provisioning and management of Certificate resources for VirtualServer resources using [cert-manager](https://cert-manager.io/docs/). Examples for configuring cert-manager with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/custom-resources/certmanager). Please note that ACME type Issuers are not yet supported for use with VirtualServer resources.
+
+* Full support for IPv6 using the NGINX Ingress Controller [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) custom resources, and Ingress resources. 
+
+* The [-enable-preview-policies](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-preview-policies) cli argument has been deprecated and is no longer required for the usage of any Policy resource type. This argument will be removed completely in v2.6.0.
+
+* A new [-enable-oidc](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-oidc) cli argument has been added to enable OIDC policies. Previously, this behaviour was achieved through the usage of the `-enable-preview-policies` cli argument. 
+
 FEATURES:
 * [2576](https://github.com/nginxinc/kubernetes-ingress/pull/2576) Add support for IPv6.
 * [2572](https://github.com/nginxinc/kubernetes-ingress/pull/2572) Automate provisioning of Certificate resources for VirtualServer resources using cert-manager.
