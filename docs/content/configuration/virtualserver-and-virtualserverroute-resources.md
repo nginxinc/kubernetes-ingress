@@ -552,7 +552,7 @@ proxy:
 |``upstream`` | The name of the upstream which the requests will be proxied to. The upstream with that name must be defined in the resource. | ``string`` | Yes |
 |``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#actionproxyrequestheaders) | No |
 |``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#actionproxyresponseheaders) | No |
-|``rewritePath`` | The rewritten URI. If the route path is a regular expression (starts with ~), the rewritePath can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/custom-resources/rewrites) example. | ``string`` | No |
+|``rewritePath`` | The rewritten URI. If the route path is a regular expression -- starts with `~` -- the `rewritePath` can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/custom-resources/rewrites) example. | ``string`` | No |
 {{% /table %}}
 
 ### Action.Proxy.RequestHeaders

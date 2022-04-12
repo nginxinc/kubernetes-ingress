@@ -8,7 +8,9 @@ toc: true
 docs: "DOCS-604"
 ---
 
-**Note: an NGINX Ingress Operator version compatible with the 2.2.0 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.**
+{{< note >}}
+An NGINX Ingress Operator version compatible with the 2.2.0 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.
+{{< /note >}}
 
 This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using the NGINX Ingress Operator.
 
