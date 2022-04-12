@@ -56,7 +56,7 @@ jobs:
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
           echo "::set-output name=sha_long::$(git rev-parse HEAD)"
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
-          echo "::set-output name=k8s_version::$(grep "K8S_VERSION:" .github/workflows/ci.yml | awk -F" " '{print $2}')"
+          echo "::set-output name=k8s_version::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
 
   check:
     name: Check if updates are needed
@@ -230,6 +230,11 @@ jobs:
             org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
             org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
             org.opencontainers.image.revision=${{ needs.variables.outputs.sha_long }}
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/main/README.md
+            io.artifacthub.package.logo-url=https://docs.nginx.com/nginx-ingress-controller/images/icons/NGINX-Ingress-Controller-product-icon.svg
+            io.artifacthub.package.maintainers=[{"name":"NGINX Inc","email":"kubernetes@nginx.com"}]
+            io.artifacthub.package.license=Apache-2.0
+            io.artifacthub.package.keywords=kubernetes,ingress,nginx,controller
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Push to Dockerhub
         id: push
