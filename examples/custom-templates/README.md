@@ -1,6 +1,6 @@
 # Custom Templates
 
-The Ingress controller allows you to customize your templates through a [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#snippets-and-custom-templates) via the following keys:
+The Ingress Controller allows you to customize your templates through a [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#snippets-and-custom-templates) via the following keys:
 * `main-template` - Sets the main NGINX configuration template.
 * `ingress-template` - Sets the Ingress NGINX configuration template for an Ingress resource.
 * `virtualserver-template` - Sets the NGINX configuration template for an VirtualServer resource.
@@ -38,14 +38,14 @@ data:
 * The templates for NGINX (the main `nginx.tmpl` and the Ingress `nginx.ingress.tmpl`) and NGINX Plus (the main `nginx-plus.tmpl` and the Ingress `nginx-plus.ingress.tmpl`) are located at [internal/configs/version1](../../internal/configs/version1/). The VirtualServer templates for NGINX (`nginx.virtualserver.tmpl`) and NGINX Plus (`nginx-plus.virtualserver.tmpl`) are located at [internal/configs/version2](../../internal/configs/version2/).
 
 ## Troubleshooting
-* If a custom template contained within the ConfigMap is invalid on startup, the Ingress controller will fail to start, the error will be reported in the Ingress controller logs.
+* If a custom template contained within the ConfigMap is invalid on startup, the Ingress Controller will fail to start, the error will be reported in the Ingress Controller logs.
 
     An example of an error from the logs:
     ```
     Error updating NGINX main template: template: nginxTemplate:98: unexpected EOF
     ```
 
-* If a custom template contained within the ConfigMap is invalid on update, the Ingress controller will not update the NGINX configuration, the error will be reported in the Ingress controller logs and an event with the error will be associated with the ConfigMap.
+* If a custom template contained within the ConfigMap is invalid on update, the Ingress Controller will not update the NGINX configuration, the error will be reported in the Ingress Controller logs and an event with the error will be associated with the ConfigMap.
 
     An example of an error from the logs:
     ```

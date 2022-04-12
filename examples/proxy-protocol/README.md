@@ -1,6 +1,6 @@
 # PROXY Protocol
 
-Proxies and load balancers, such as HAProxy or ELB, can pass the client's information (the IP address and the port) to the next proxy or load balancer via the PROXY Protocol. To enable NGINX Ingress controller to receive that information, use the `proxy-protocol` ConfigMaps configuration key as well as the `real-ip-header` and the `set-real-ip-from` keys. Once you enable the PROXY Protocol, it is enabled for every Ingress resource.
+Proxies and load balancers, such as HAProxy or ELB, can pass the client's information (the IP address and the port) to the next proxy or load balancer via the PROXY Protocol. To enable NGINX Ingress Controller to receive that information, use the `proxy-protocol` ConfigMaps configuration key as well as the `real-ip-header` and the `set-real-ip-from` keys. Once you enable the PROXY Protocol, it is enabled for every Ingress resource.
 
 ## Syntax
 
@@ -15,7 +15,7 @@ Additionally, you must configure the following keys:
 
 ## Example
 
-In the example below we configure the PROXY Protocol via a ConfigMaps resource. The IP address of the proxy which is in front of the Ingress controller is `192.168.192.168`.
+In the example below we configure the PROXY Protocol via a ConfigMaps resource. The IP address of the proxy which is in front of the Ingress Controller is `192.168.192.168`.
 
 ```yaml
 kind: ConfigMap
@@ -27,4 +27,4 @@ data:
   real-ip-header: "proxy_protocol"
   set-real-ip-from: "192.168.192.168"
 ```
-After we create the ConfigMaps resource, in the NGINX configuration the client's IP address is available via the `$remote_addr` variable. By default, NGINX Ingress controller logs the value of this variable and also passes the value to the backend service in the `X-Real-IP` header.
+After we create the ConfigMaps resource, in the NGINX configuration the client's IP address is available via the `$remote_addr` variable. By default, NGINX Ingress Controller logs the value of this variable and also passes the value to the backend service in the `X-Real-IP` header.

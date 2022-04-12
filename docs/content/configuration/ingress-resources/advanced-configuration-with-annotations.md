@@ -108,7 +108,7 @@ The table below summarizes the available annotations.
 {{% table %}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
-|``kubernetes.io/ingress.class`` | N/A | Specifies which Ingress controller must handle the Ingress resource. Set to ``nginx`` to make NGINX Ingress controller handle it. | N/A | [Multiple Ingress controllers](/nginx-ingress-controller/installation/running-multiple-ingress-controllers). |
+|``kubernetes.io/ingress.class`` | N/A | Specifies which Ingress Controller must handle the Ingress resource. Set to ``nginx`` to make NGINX Ingress Controller handle it. | N/A | [Multiple Ingress Controllers](/nginx-ingress-controller/installation/running-multiple-ingress-controllers). |
 {{% /table %}}
 
 ### General Customization
@@ -142,7 +142,7 @@ The table below summarizes the available annotations.
 {{% table %}}
 |Annotation | ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| ---| --- |
-|``nginx.org/redirect-to-https`` | ``redirect-to-https`` | Sets the 301 redirect rule based on the value of the ``http_x_forwarded_proto`` header on the server block to force incoming traffic to be over HTTPS. Useful when terminating SSL in a load balancer in front of the Ingress controller — see [115](https://github.com/nginxinc/kubernetes-ingress/issues/115) | ``False`` |  |
+|``nginx.org/redirect-to-https`` | ``redirect-to-https`` | Sets the 301 redirect rule based on the value of the ``http_x_forwarded_proto`` header on the server block to force incoming traffic to be over HTTPS. Useful when terminating SSL in a load balancer in front of the Ingress Controller — see [115](https://github.com/nginxinc/kubernetes-ingress/issues/115) | ``False`` |  |
 |``ingress.kubernetes.io/ssl-redirect`` | ``ssl-redirect`` | Sets an unconditional 301 redirect rule for all incoming HTTP traffic to force incoming traffic over HTTPS. | ``True`` |  |
 |``nginx.org/hsts`` | ``hsts`` | Enables [HTTP Strict Transport Security (HSTS)](https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/)\ : the HSTS header is added to the responses from backends. The ``preload`` directive is included in the header. | ``False`` |  |
 |``nginx.org/hsts-max-age`` | ``hsts-max-age`` | Sets the value of the ``max-age`` directive of the HSTS header. | ``2592000`` (1 month) |  |

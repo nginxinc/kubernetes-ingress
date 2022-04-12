@@ -1,6 +1,6 @@
 # Session Persistence
 
-It is often required that the requests from a client are always passed to the same backend container. You can enable such behavior with [Session Persistence](https://www.nginx.com/products/session-persistence/), available in the NGINX Plus Ingress controller.
+It is often required that the requests from a client are always passed to the same backend container. You can enable such behavior with [Session Persistence](https://www.nginx.com/products/session-persistence/), available in the NGINX Plus Ingress Controller.
 
 NGINX Plus supports *the sticky cookie* method. With this method, NGINX Plus adds a session cookie to the first response from the backend container, identifying the container that sent the response. When a client issues the next request, it will send the cookie value and NGINX Plus will route the request to the same container.
 
@@ -50,8 +50,8 @@ For both services, the sticky cookie has the same *srv_id* name. However, we spe
 
 ## Notes
 
-Session persistence **works** even in the case where you have more than one replicas of the NGINX Plus Ingress controller running.
+Session persistence **works** even in the case where you have more than one replicas of the NGINX Plus Ingress Controller running.
 
 ## Advanced Session Persistence
 
-The NGINX Plus Ingress controller supports only one of the three session persistence methods available in NGINX Plus. Visit [this page](https://www.nginx.com/products/session-persistence/) to learn about all of the methods. If your session persistence requirements are more complex than the ones in the example above, you will have to use a different approach to deploying and configuring NGINX Plus without the Ingress controller. You can read the [Load Balancing Kubernetes Services with NGINX Plus](https://www.nginx.com/blog/load-balancing-kubernetes-services-nginx-plus/) blog post to find out more.
+The NGINX Plus Ingress Controller supports only one of the three session persistence methods available in NGINX Plus. Visit [this page](https://www.nginx.com/products/session-persistence/) to learn about all of the methods. If your session persistence requirements are more complex than the ones in the example above, you will have to use a different approach to deploying and configuring NGINX Plus without the Ingress Controller. You can read the [Load Balancing Kubernetes Services with NGINX Plus](https://www.nginx.com/blog/load-balancing-kubernetes-services-nginx-plus/) blog post to find out more.

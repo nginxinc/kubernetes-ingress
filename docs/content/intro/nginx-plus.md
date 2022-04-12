@@ -1,6 +1,6 @@
 ---
 title: NGINX Ingress Controller with NGINX Plus
-description: "This document explains the key characteristics that NGINX Plus brings on top of NGINX into the NGINX Ingress controller."
+description: "This document explains the key characteristics that NGINX Plus brings on top of NGINX into the NGINX Ingress Controller."
 weight: 400
 doctypes: ["concept"]
 toc: true
@@ -10,9 +10,9 @@ aliases:
 ---
 
 
-NGINX Ingress controller works with both [NGINX](https://nginx.org/) and [NGINX Plus](https://www.nginx.com/products/nginx/) -- a commercial closed source version of NGINX that comes with additional features and support.
+NGINX Ingress Controller works with both [NGINX](https://nginx.org/) and [NGINX Plus](https://www.nginx.com/products/nginx/) -- a commercial closed source version of NGINX that comes with additional features and support.
 
-Below are the key characteristics that NGINX Plus brings on top of NGINX into the NGINX Ingress controller.
+Below are the key characteristics that NGINX Plus brings on top of NGINX into the NGINX Ingress Controller.
 
 ## Additional features
 
@@ -26,8 +26,8 @@ See [ConfigMap](https://docs.nginx.com/nginx-ingress-controller/configuration/gl
 
 ## Dynamic reconfiguration
 
-Every time the number of pods of services you expose via an Ingress resource changes, the Ingress controller updates the configuration of the load balancer to reflect those changes. For NGINX, the configuration file must be changed and the configuration subsequently reloaded. For NGINX Plus, the dynamic reconfiguration is utilized, which allows NGINX Plus to be updated on-the-fly without reloading the configuration. This prevents increase of memory usage during reloads, especially with a high volume of client requests, as well as increased memory usage when load balancing applications with long-lived connections (WebSocket, applications with file uploading/downloading or streaming).
+Every time the number of pods of services you expose via an Ingress resource changes, the Ingress Controller updates the configuration of the load balancer to reflect those changes. For NGINX, the configuration file must be changed and the configuration subsequently reloaded. For NGINX Plus, the dynamic reconfiguration is utilized, which allows NGINX Plus to be updated on-the-fly without reloading the configuration. This prevents increase of memory usage during reloads, especially with a high volume of client requests, as well as increased memory usage when load balancing applications with long-lived connections (WebSocket, applications with file uploading/downloading or streaming).
 
 ## Commercial support
 
-Support from NGINX Inc is available for NGINX Plus Ingress controller.
+Support from NGINX Inc is available for NGINX Plus Ingress Controller.

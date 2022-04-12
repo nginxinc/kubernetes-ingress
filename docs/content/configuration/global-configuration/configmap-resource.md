@@ -13,7 +13,7 @@ The ConfigMap resources allows you to customize or fine tune NGINX behavior. For
 
 ## Using ConfigMap
 
-1. Our [installation instructions](/nginx-ingress-controller/installation/installation-with-manifests) deploy an empty ConfigMap while the default installation manifests specify it in the command-line arguments of the Ingress controller. However, if you customized the manifests, to use ConfigMap, make sure to specify the ConfigMap resource to use through the [command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments) of the Ingress controller.
+1. Our [installation instructions](/nginx-ingress-controller/installation/installation-with-manifests) deploy an empty ConfigMap while the default installation manifests specify it in the command-line arguments of the Ingress Controller. However, if you customized the manifests, to use ConfigMap, make sure to specify the ConfigMap resource to use through the [command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments) of the Ingress Controller.
 
 1. Create a ConfigMap file with the name *nginx-config.yaml* and set the values
 that make sense for your setup:
@@ -124,7 +124,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
 {{% table %}}
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
-|``redirect-to-https`` | Sets the 301 redirect rule based on the value of the ``http_x_forwarded_proto`` header on the server block to force incoming traffic to be over HTTPS. Useful when terminating SSL in a load balancer in front of the Ingress controller — see [115](https://github.com/nginxinc/kubernetes-ingress/issues/115) | ``False`` |  |
+|``redirect-to-https`` | Sets the 301 redirect rule based on the value of the ``http_x_forwarded_proto`` header on the server block to force incoming traffic to be over HTTPS. Useful when terminating SSL in a load balancer in front of the Ingress Controller — see [115](https://github.com/nginxinc/kubernetes-ingress/issues/115) | ``False`` |  |
 |``ssl-redirect`` | Sets an unconditional 301 redirect rule for all incoming HTTP traffic to force incoming traffic over HTTPS. | ``True`` |  |
 |``hsts`` | Enables [HTTP Strict Transport Security (HSTS)](https://www.nginx.com/blog/http-strict-transport-security-hsts-and-nginx/) : the HSTS header is added to the responses from backends. The ``preload`` directive is included in the header. | ``False`` |  |
 |``hsts-max-age`` | Sets the value of the ``max-age`` directive of the HSTS header. | ``2592000`` (1 month) |  |
