@@ -15,17 +15,17 @@ OVERVIEW:
 
 * Support for automatic provisioning and management of Certificate resources for VirtualServer resources using [cert-manager](https://cert-manager.io/docs/). Examples for configuring cert-manager with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/custom-resources/certmanager). Please note that ACME type Issuers are not yet supported for use with VirtualServer resources.
 
-* Full support for IPv6 using the NGINX Ingress Controller [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) custom resources, and Ingress resources. 
+* Full support for IPv6 using the NGINX Ingress Controller [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) custom resources, and Ingress resources.
 
 * The [-enable-preview-policies](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-preview-policies) cli argument has been deprecated and is no longer required for the usage of any Policy resource type. This argument will be removed completely in v2.6.0.
 
-* A new [-enable-oidc](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-oidc) cli argument has been added to enable OIDC policies. Previously, this behaviour was achieved through the usage of the `-enable-preview-policies` cli argument. 
+* A new [-enable-oidc](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-enable-oidc) cli argument has been added to enable OIDC policies. Previously, this behaviour was achieved through the usage of the `-enable-preview-policies` cli argument.
 
 FEATURES:
 * [2576](https://github.com/nginxinc/kubernetes-ingress/pull/2576) Add support for IPv6.
 * [2572](https://github.com/nginxinc/kubernetes-ingress/pull/2572) Automate provisioning of Certificate resources for VirtualServer resources using cert-manager.
 
-ENHANCEMENTS:
+IMPROVEMENTS:
 * [2346](https://github.com/nginxinc/kubernetes-ingress/pull/2346) Use os.ReadDir for lightweight directory reading. Thanks to [Eng Zer Jun](https://github.com/Juneezee).
 * [2360](https://github.com/nginxinc/kubernetes-ingress/pull/2360) Add NGINX App Protect reconnect period directive.
 * [2479](https://github.com/nginxinc/kubernetes-ingress/pull/2479) Add cli argument to configure NGINX App Protect log level.
@@ -34,6 +34,7 @@ ENHANCEMENTS:
 CHANGES:
 * [2580](https://github.com/nginxinc/kubernetes-ingress/pull/2580) Create -enable-oidc command line argument for OIDC policy.
 * [2566](https://github.com/nginxinc/kubernetes-ingress/pull/2566) Unbind policy from preview policies.
+* [2582](https://github.com/nginxinc/kubernetes-ingress/pull/2582) Rename Make targets from `openshift` to `ubi`.
 
 FIXES:
 * [2378](https://github.com/nginxinc/kubernetes-ingress/pull/2378) Fix healthcheck ports.
