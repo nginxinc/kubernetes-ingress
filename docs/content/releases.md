@@ -7,6 +7,36 @@ toc: true
 docs: "DOCS-616"
 ---
 
+## NGINX Ingress Controller 2.2.0
+
+12 Apr 2022
+
+FEATURES:
+* [2576](https://github.com/nginxinc/kubernetes-ingress/pull/2576) Add support for IPv6.
+* [2572](https://github.com/nginxinc/kubernetes-ingress/pull/2572) Automate provisioning of Certificate resources for VirtualServer resources using cert-manager.
+
+ENHANCEMENTS:
+* [2346](https://github.com/nginxinc/kubernetes-ingress/pull/2346) Use os.ReadDir for lightweight directory reading. Thanks to [Eng Zer Jun](https://github.com/Juneezee).
+* [2360](https://github.com/nginxinc/kubernetes-ingress/pull/2360) Add NGINX App Protect reconnect period directive.
+* [2479](https://github.com/nginxinc/kubernetes-ingress/pull/2479) Add cli argument to configure NGINX App Protect log level.
+* [2455](https://github.com/nginxinc/kubernetes-ingress/pull/2455) Increase memory available for NGINX App Protect xml parser.
+
+CHANGES:
+* [2580](https://github.com/nginxinc/kubernetes-ingress/pull/2580) Create -enable-oidc command line argument for OIDC policy.
+* [2566](https://github.com/nginxinc/kubernetes-ingress/pull/2566) Unbind policy from preview policies.
+
+FIXES:
+* [2378](https://github.com/nginxinc/kubernetes-ingress/pull/2378) Fix healthcheck ports.
+* [2404](https://github.com/nginxinc/kubernetes-ingress/pull/2404) Start nginx with -e stderr parameter.
+* [2414](https://github.com/nginxinc/kubernetes-ingress/pull/2414) Fix in file nginx-plus.virtualserver.tmpl ApDosMonitor->ApDosMonitorURI.
+
+HELM CHART:
+* [2525](https://github.com/nginxinc/kubernetes-ingress/pull/2525) Extend helm chart to include NGINX Service Mesh fields.
+* [2294](https://github.com/nginxinc/kubernetes-ingress/pull/2294) Add extra containers to helm chart. Thanks to [Márk Sági-Kazár](https://github.com/sagikazarmark).
+
+
+For a complete list of changes, upgrade instructions and resources, see the [NGINX Ingress Controller Release Notes](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.0.0).
+
 ## NGINX Ingress Controller 2.1.2
 
 29 Mar 2022
