@@ -20,7 +20,7 @@ jobs:
 
       - name: Modify readme for DockerHub
         run: |
-          sed -i '1,5d' README.md
+          sed -i '3,4d' README.md
 
       - name: Docker Hub Description
         uses: peter-evans/dockerhub-description@v3

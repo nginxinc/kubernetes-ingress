@@ -1,7 +1,7 @@
 # Example
 
 In this example, we deploy [cert-manager](https://cert-manager.io/docs/installation/#default-static-install) and a [self-signed certificate issuer](https://cert-manager.io/docs/configuration/selfsigned/#bootstrapping-ca-issuers).
-Then, we deploy the NGINX or NGINX Plus Ingress controller, a simple web application and then configure load balancing for that application using the VirtualServer resource.
+Then, we deploy the NGINX or NGINX Plus Ingress Controller, a simple web application and then configure load balancing for that application using the VirtualServer resource.
 
 ## Deploying the Certmanager and the self-signed authority
 
@@ -20,14 +20,14 @@ Then, we deploy the NGINX or NGINX Plus Ingress controller, a simple web applica
 
 ## 1. Deploy the Ingress Controller
 
-1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress controller.
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller.
    * Set the [`-enable-custom-resources`](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-custom-resources) and [`-enable-cert-manager`](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-cert-manager) command-line arguments of the Ingress Controller to enable the cert-manager for Virtual Server resources feature.
 
-2. Save the public IP address of the Ingress controller into a shell variable:
+2. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III
     ```
-3. Save the HTTPS port of the Ingress controller into a shell variable:
+3. Save the HTTPS port of the Ingress Controller into a shell variable:
     ```
     $ IC_HTTPS_PORT=<port number>
     ```
@@ -50,7 +50,7 @@ $ kubectl create -f cafe.yaml
 
 1. To access the application, curl the coffee and the tea services. We'll use ```curl```'s --insecure option to turn off certificate verification of our self-signed
 certificate and the --resolve option to set the Host header of a request with ```cafe.example.com```
-    
+
     To get coffee:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure

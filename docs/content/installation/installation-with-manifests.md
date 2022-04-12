@@ -14,20 +14,20 @@ This document describes how to install the NGINX Ingress Controller in your Kube
 
 ## Prerequisites
 
-1. Make sure you have access to the Ingress controller image:
-    * For NGINX Ingress controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
-    * For NGINX Plus Ingress controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
+1. Make sure you have access to the Ingress Controller image:
+    * For NGINX Ingress Controller, use the image `nginx/nginx-ingress` from [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress).
+    * For NGINX Plus Ingress Controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
     * To pull from the F5 Container registry in your Kubernetes cluster, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
     * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
-2. Clone the Ingress controller repo and change into the deployments folder:
+2. Clone the Ingress Controller repo and change into the deployments folder:
     ```
-    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.1.1
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.2.0
     $ cd kubernetes-ingress/deployments
     ```
 
 ## 1. Configure RBAC
 
-1. Create a namespace and a service account for the Ingress controller:
+1. Create a namespace and a service account for the Ingress Controller:
     ```
     $ kubectl apply -f common/ns-and-sa.yaml
     ```
@@ -116,9 +116,9 @@ If you would like to use the App Protect DoS module, create the following additi
 
 ## 3. Deploy the Ingress Controller
 
-We include two options for deploying the Ingress controller:
-* *Deployment*. Use a Deployment if you plan to dynamically change the number of Ingress controller replicas.
-* *DaemonSet*. Use a DaemonSet for deploying the Ingress controller on every node or a subset of nodes.
+We include two options for deploying the Ingress Controller:
+* *Deployment*. Use a Deployment if you plan to dynamically change the number of Ingress Controller replicas.
+* *DaemonSet*. Use a DaemonSet for deploying the Ingress Controller on every node or a subset of nodes.
 
 > Before creating a Deployment or Daemonset resource, make sure to update the  [command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments) of the Ingress Controller container in the corresponding manifest file according to your requirements.
 
@@ -136,7 +136,7 @@ If you would like to use the App Protect DoS module, need to add arbitrator depl
 
 ### 3.1 Run the Ingress Controller
 * *Use a Deployment*.
-    When you run the Ingress Controller by using a Deployment, by default, Kubernetes will create one Ingress controller pod.
+    When you run the Ingress Controller by using a Deployment, by default, Kubernetes will create one Ingress Controller pod.
 
     For NGINX, run:
     ```
@@ -151,9 +151,9 @@ If you would like to use the App Protect DoS module, need to add arbitrator depl
     **Note**: Update the `nginx-plus-ingress.yaml` with the chosen image from the F5 Container registry; or the container image that you have built.
 
 * *Use a DaemonSet*:
-    When you run the Ingress Controller by using a DaemonSet, Kubernetes will create an Ingress controller pod on every node of the cluster.
+    When you run the Ingress Controller by using a DaemonSet, Kubernetes will create an Ingress Controller pod on every node of the cluster.
 
-    **See also:** See the Kubernetes [DaemonSet docs](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) to learn how to run the Ingress controller on a subset of nodes instead of on every node of the cluster.
+    **See also:** See the Kubernetes [DaemonSet docs](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/) to learn how to run the Ingress Controller on a subset of nodes instead of on every node of the cluster.
 
     For NGINX, run:
     ```
@@ -169,16 +169,16 @@ If you would like to use the App Protect DoS module, need to add arbitrator depl
 
 ### 3.2 Check that the Ingress Controller is Running
 
-Run the following command to make sure that the Ingress controller pods are running:
+Run the following command to make sure that the Ingress Controller pods are running:
 ```
 $ kubectl get pods --namespace=nginx-ingress
 ```
 
 ## 4. Get Access to the Ingress Controller
 
-**If you created a daemonset**, ports 80 and 443 of the Ingress controller container are mapped to the same ports of the node where the container is running. To access the Ingress controller, use those ports and an IP address of any node of the cluster where the Ingress controller is running.
+**If you created a daemonset**, ports 80 and 443 of the Ingress Controller container are mapped to the same ports of the node where the container is running. To access the Ingress Controller, use those ports and an IP address of any node of the cluster where the Ingress Controller is running.
 
-**If you created a deployment**, below are two options for accessing the Ingress controller pods.
+**If you created a deployment**, below are two options for accessing the Ingress Controller pods.
 
 ### 4.1 Create a Service for the Ingress Controller Pods
 
@@ -189,7 +189,7 @@ $ kubectl get pods --namespace=nginx-ingress
     $ kubectl create -f service/nodeport.yaml
     ```
 
-    Kubernetes will randomly allocate two ports on every node of the cluster. To access the Ingress controller, use an IP address of any node of the cluster along with the two allocated ports.
+    Kubernetes will randomly allocate two ports on every node of the cluster. To access the Ingress Controller, use an IP address of any node of the cluster along with the two allocated ports.
 
     > Read more about the type NodePort in the [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport).
 
@@ -218,8 +218,8 @@ $ kubectl get pods --namespace=nginx-ingress
                 ```
             **Note**: For AWS, additional options regarding an allocated load balancer are available, such as the type of a load balancer and SSL termination. Read the [Kubernetes documentation](https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer) to learn more.
 
-        Kubernetes will allocate and configure a cloud load balancer for load balancing the Ingress controller pods.
-    2. Use the public IP of the load balancer to access the Ingress controller. To get the public IP:
+        Kubernetes will allocate and configure a cloud load balancer for load balancing the Ingress Controller pods.
+    2. Use the public IP of the load balancer to access the Ingress Controller. To get the public IP:
         * For GCP or Azure, run:
             ```
             $ kubectl get svc nginx-ingress --namespace=nginx-ingress
@@ -239,7 +239,7 @@ $ kubectl get pods --namespace=nginx-ingress
 
 ## Uninstall the Ingress Controller
 
-1. Delete the `nginx-ingress` namespace to uninstall the Ingress controller along with all the auxiliary resources that were created:
+1. Delete the `nginx-ingress` namespace to uninstall the Ingress Controller along with all the auxiliary resources that were created:
     ```
     $ kubectl delete namespace nginx-ingress
     ```

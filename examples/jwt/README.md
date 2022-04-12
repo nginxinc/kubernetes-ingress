@@ -2,7 +2,7 @@
 
 NGINX Plus supports validating JWTs with [ngx_http_auth_jwt_module](https://nginx.org/en/docs/http/ngx_http_auth_jwt_module.html).
 
-The Ingress controller provides the following 4 annotations for configuring JWT validation:
+The Ingress Controller provides the following 4 annotations for configuring JWT validation:
 
 * Required: ```nginx.com/jwt-key: "secret"``` -- specifies a Secret resource with keys for validating JWTs. The keys must be stored in the `jwk` data field. The type of the secret must be `nginx.org/jwk`.
 * Optional: ```nginx.com/jwt-realm: "realm"``` -- specifies a realm.

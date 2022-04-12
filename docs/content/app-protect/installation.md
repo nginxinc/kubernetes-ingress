@@ -23,9 +23,9 @@ Take the steps below to either configure a Docker Registry secret in your Kubern
 
     For NGINX Plus Ingress Controller with App Protect, pull from `private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress`:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.1.2
+   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.2.0
    ```
-    `2.1.2` will pull down the Debian based image. The other available image tag is `2.1.2-ubi` for the UBI based image.
+    `2.2.0` will pull down the Debian based image. The other available image tag is `2.2.0-ubi` for the UBI based image.
 
 - Use the docker registry API to list the available image tags for the repository.
 
@@ -35,8 +35,8 @@ Take the steps below to either configure a Docker Registry secret in your Kubern
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "2.1.2-ubi",
-        "2.1.2"
+        "2.2.0-ubi",
+        "2.2.0"
     ]
     }
    ```
@@ -52,7 +52,7 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
     ```bash
     make debian-image-nap-plus PREFIX=<your Docker registry domain>/nginx-plus-ingress
     ```
-    Alternatively, if you want to run on an [OpenShift](https://www.openshift.com/) cluster, you can use the `openshift-image-nap-plus` target.
+    Alternatively, if you want to run on an [OpenShift](https://www.openshift.com/) cluster, you can use the `ubi-image-nap-plus` target.
 
     If you intend to use [external references](https://docs.nginx.com/nginx-app-protect/configuration/#external-references) in NGINX App Protect policies, you may want to provide a custom CA certificate to authenticate with the hosting server.
     In order to do so, place the `*.crt` file in the build folder and uncomment the lines that follow this comment:
@@ -74,4 +74,4 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
 3. Enable the App Protect module by adding the `enable-app-protect` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect) to your Deployment or DaemonSet file.
 4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
 
-For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the [NGINX Ingress Controller with App Protect examples on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.2/examples/appprotect).
+For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the [NGINX Ingress Controller with App Protect examples on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/appprotect).

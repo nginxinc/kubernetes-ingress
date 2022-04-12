@@ -9,10 +9,10 @@ docs: "DOCS-607"
 
 This document will walk you through the steps needed to use the NGINX Ingress Controller through the AWS Marketplace. There are additional steps that must be followed in order for the AWS Marketplace NGINX Ingress Controller to work properly.
 
-> **IMPORTANT**: This document uses EKS version 1.19. EKS versions < 1.19 require additional security settings within the NGINX Pod to work properly with marketplace images. 
+> **IMPORTANT**: This document uses EKS version 1.19. EKS versions < 1.19 require additional security settings within the NGINX Pod to work properly with marketplace images.
 > This document discusses using eksctl to perform necessary steps to enable the Kubernetes cluster access to deploy NGINX Ingress Controller from the Marketplace. Please make sure you are running a newer version of eksctl and AWS cli.
 
-> **NOTE**: NGINX Ingress controller from the Marketplace does NOT work in AWS Region US-West-1.
+> **NOTE**: NGINX Ingress Controller from the Marketplace does NOT work in AWS Region US-West-1.
 
 ## Instructions
 Instructions for using AWS Marketplace:
@@ -28,7 +28,7 @@ Instructions for using AWS Marketplace:
 
 ## Step by step instructions using eksctl utility.
 
-This assumes you have an existing EKS cluster up and running. If not, please create one before proceeding. This also assumes the namespace for the NGINX Ingress Controller already exists. 
+This assumes you have an existing EKS cluster up and running. If not, please create one before proceeding. This also assumes the namespace for the NGINX Ingress Controller already exists.
 
 1. Associate your EKS cluster with a “OIDC IAM provider” (replace `--cluster <name>` and `--region <region>` with the values of your environment).
 ```
@@ -79,6 +79,6 @@ kind: ClusterRoleBinding
 
 {{< img title="ECR Pull Instructions for the NGINX Ingress Controller" src="./img/ecr-pull-instructions.png" >}}
 
-**Note:** AWS Labs also provides a credential helper - see [their GitHub repo](https://github.com/awslabs/amazon-ecr-credential-helper) for instructions on how to setup and configure. 
+**Note:** AWS Labs also provides a credential helper - see [their GitHub repo](https://github.com/awslabs/amazon-ecr-credential-helper) for instructions on how to setup and configure.
 
 4. Update the image in the `nginx-plus-ingress.yaml` manifest.

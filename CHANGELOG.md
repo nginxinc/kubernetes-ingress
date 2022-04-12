@@ -1,5 +1,11 @@
 # Changelog
 
+### 2.2.0
+
+An automatically generated list of changes can be found on Github at: [2.2.0 Release](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.2.0)
+
+A curated list of changes can be found on the [Releases](http://docs.nginx.com/nginx-ingress-controller/releases/) page on the NGINX Documentation website.
+
 ### 2.1.2
 
 An automatically generated list of changes can be found on Github at: [2.1.2 Release](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.1.2)
@@ -931,7 +937,7 @@ UPGRADE:
 * [221](https://github.com/nginxinc/kubernetes-ingress/pull/221): Add git commit info to the IC log.
 * [220](https://github.com/nginxinc/kubernetes-ingress/pull/220): Update dependencies.
 * [213](https://github.com/nginxinc/kubernetes-ingress/pull/213): Add main snippets to allow Main context customization. Thanks to [Dewen Kong](https://github.com/kongdewen).
-* [211](https://github.com/nginxinc/kubernetes-ingress/pull/211): Minimize the number of configuration reloads when the Ingress controller starts; fix a problem with endpoints updates for Plus.
+* [211](https://github.com/nginxinc/kubernetes-ingress/pull/211): Minimize the number of configuration reloads when the Ingress Controller starts; fix a problem with endpoints updates for Plus.
 * [208](https://github.com/nginxinc/kubernetes-ingress/pull/208): Add worker-shutdown-timeout configmap key. Thanks to [Aleksandr Lysenko](https://github.com/Sarga).
 * [199](https://github.com/nginxinc/kubernetes-ingress/pull/199): Add support for Kubernetes ssl-redirect annotation. Thanks to [Luke Seelenbinder](https://github.com/lseelenbinder).
 * [194](https://github.com/nginxinc/kubernetes-ingress/pull/194) Add keepalive configmap key and annotation.
@@ -946,18 +952,18 @@ UPGRADE:
 
 * [175](https://github.com/nginxinc/kubernetes-ingress/pull/175): Add support for JWT for NGINX Plus.
 * [171](https://github.com/nginxinc/kubernetes-ingress/pull/171): Allow NGINX to listen on non-standard ports. Thanks to [Stanislav Seletskiy](https://github.com/seletskiy).
-* [170](https://github.com/nginxinc/kubernetes-ingress/pull/170): Add the default server. **Note**: The Ingress controller will fail to start if there are no cert and key for the default server. You can pass a TLS Secret for the default server as an argument to the Ingress controller or add a cert and a key to the Docker image.
+* [170](https://github.com/nginxinc/kubernetes-ingress/pull/170): Add the default server. **Note**: The Ingress Controller will fail to start if there are no cert and key for the default server. You can pass a TLS Secret for the default server as an argument to the Ingress Controller or add a cert and a key to the Docker image.
 * [169](https://github.com/nginxinc/kubernetes-ingress/pull/169): Ignore Ingress resources with empty hostnames.
 * [168](https://github.com/nginxinc/kubernetes-ingress/pull/168): Add the `nginx.org/lb-method` annotation. Thanks to [Sajal Kayan](https://github.com/sajal).
 * [166](https://github.com/nginxinc/kubernetes-ingress/pull/166): Watch Secret resources for updates. **Note**: If a Secret referenced by one or more Ingress resources becomes invalid or gets removed, the configuration for those Ingress resources will be disabled until there is a valid Secret.
 * [160](https://github.com/nginxinc/kubernetes-ingress/pull/160): Add support for events. See the details [here](https://github.com/nginxinc/kubernetes-ingress/pull/160).
-* [157](https://github.com/nginxinc/kubernetes-ingress/pull/157): Add graceful termination - when the Ingress controller receives `SIGTERM`, it shutdowns itself as well as NGINX, using `nginx -s quit`.
+* [157](https://github.com/nginxinc/kubernetes-ingress/pull/157): Add graceful termination - when the Ingress Controller receives `SIGTERM`, it shutdowns itself as well as NGINX, using `nginx -s quit`.
 
 ### 0.9.0
 
 * [156](https://github.com/nginxinc/kubernetes-ingress/pull/156): Write a pem file with an SSL certificate and key atomically.
 * [155](https://github.com/nginxinc/kubernetes-ingress/pull/155): Remove http2 annotation (http/2 can be enabled globally in the ConfigMap).
-* [154](https://github.com/nginxinc/kubernetes-ingress/pull/154): Merge NGINX and NGINX Plus Ingress controller implementations.
+* [154](https://github.com/nginxinc/kubernetes-ingress/pull/154): Merge NGINX and NGINX Plus Ingress Controller implementations.
 * [151](https://github.com/nginxinc/kubernetes-ingress/pull/151): Use k8s.io/client-go.
 * [146](https://github.com/nginxinc/kubernetes-ingress/pull/146): Fix health status.
 * [141](https://github.com/nginxinc/kubernetes-ingress/pull/141): Set `worker_processes` to `auto` in NGINX configuration. Thanks to [Andreas Krüger](https://github.com/woopstar).
@@ -989,7 +995,7 @@ Fix the issue with single service Ingress resources without any Ingress rules: t
 * [88](https://github.com/nginxinc/kubernetes-ingress/pull/88): Support for the `proxy_hide_header` and the `proxy_pass_header` directives via annotations and in the configmap. Thanks to [Nico Schieder](https://github.com/thetechnick).
 * [85](https://github.com/nginxinc/kubernetes-ingress/pull/85): Add the configmap settings to support perfect forward secrecy. Thanks to [Nico Schieder](https://github.com/thetechnick).
 * [84](https://github.com/nginxinc/kubernetes-ingress/pull/84): Secret retry: If a certificate Secret referenced in an Ingress object is not found,
-the Ingress controller will reject the Ingress object. but retries every 5s. Thanks to [Nico Schieder](https://github.com/thetechnick).
+the Ingress Controller will reject the Ingress object. but retries every 5s. Thanks to [Nico Schieder](https://github.com/thetechnick).
 * [81](https://github.com/nginxinc/kubernetes-ingress/pull/81): Add configmap options to turn on the PROXY protocol. Thanks to [Nico Schieder](https://github.com/thetechnick).
 * Update NGINX version to 1.11.8.
 * Documentation fixes: [104](https://github.com/nginxinc/kubernetes-ingress/pull/104/files) and [97](https://github.com/nginxinc/kubernetes-ingress/pull/97/files). Thanks to [Ruilin Huang](https://github.com/hrl) and [Justin Garrison](https://github.com/rothgar).
@@ -1021,4 +1027,4 @@ The previous version was 0.3
 
 ### Notes
 
-* Except when mentioned otherwise, the controller refers both to the NGINX and the NGINX Plus Ingress controllers.
+* Except when mentioned otherwise, the controller refers both to the NGINX and the NGINX Plus Ingress Controllers.
