@@ -43,8 +43,6 @@ FIXES:
 HELM CHART:
 * [2525](https://github.com/nginxinc/kubernetes-ingress/pull/2525) Extend helm chart to include NGINX Service Mesh fields.
 * [2294](https://github.com/nginxinc/kubernetes-ingress/pull/2294) Add extra containers to helm chart. Thanks to [Márk Sági-Kazár](https://github.com/sagikazarmark).
-
-
 UPGRADE:
 * For NGINX, use the 2.2.0 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.2.0), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
 * For NGINX Plus, use the 2.2.0 images from the F5 Container registry or build your own image using the 2.2.0 source code.
