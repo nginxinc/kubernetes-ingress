@@ -53,7 +53,9 @@ Read [this doc](https://docs.nginx.com/nginx-ingress-controller/intro/nginx-plus
 
 We publish Ingress controller releases on GitHub. See our [releases page](https://github.com/nginxinc/kubernetes-ingress/releases).
 
-The latest stable release is [2.2.0](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.2.0). For production use, we recommend that you choose the latest stable release.  As an alternative, you can choose the *edge* version built from the [latest commit](https://github.com/nginxinc/kubernetes-ingress/commits/main) from the main branch. The edge version is useful for experimenting with new features that are not yet published in a stable release.
+The latest stable release is [2.2.0](https://github.com/nginxinc/kubernetes-ingress/releases/tag/v2.2.0). For production use, we recommend that you choose the latest stable release. 
+
+The edge version is useful for experimenting with new features that are not yet published in a stable release. To use, choose the *edge* version built from the [latest commit](https://github.com/nginxinc/kubernetes-ingress/commits/main) from the main branch.
 
 To use the Ingress controller, you need to have access to:
 * An Ingress controller image.
