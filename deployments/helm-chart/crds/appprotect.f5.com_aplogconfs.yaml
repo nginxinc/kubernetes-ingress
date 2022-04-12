@@ -43,6 +43,21 @@ spec:
                       type: string
                     format_string:
                       type: string
+                    list_prefix:
+                      type: string
+                    list_delimiter:
+                      type: string
+                    list_suffix:
+                      type: string
+                    escaping_characters:
+                      items:
+                        properties:
+                          from:
+                            type: string
+                          to:
+                            type: string
+                        type: object
+                      type: array 
                     max_message_size:
                       pattern: ^([1-9]|[1-5][0-9]|6[0-4])k$
                       type: string
