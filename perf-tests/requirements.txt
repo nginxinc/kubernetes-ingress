@@ -8,4 +8,4 @@ certifi==2021.10.8
 urllib3==1.26.9
 pytest-html==3.1.1
 pytest-repeat==0.9.1
-locust==2.8.5
+locust==2.8.6

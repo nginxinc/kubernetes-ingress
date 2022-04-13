@@ -212,7 +212,7 @@ type MainConfig struct {
 	InternalRouteServer                bool
 	InternalRouteServerName            string
 	LatencyMetrics                     bool
-	PreviewPolicies                    bool
+	OIDC                               bool
 }
 
 // NewUpstreamWithDefaultServer creates an upstream with the default server.

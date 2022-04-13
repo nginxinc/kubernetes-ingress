@@ -1,8 +1,8 @@
 # Support for  TCP/UDP Load Balancing
 
-In this example we deploy the NGINX or NGINX Plus Ingress controller, a DNS server and then configure both TCP and UDP load balancing for the DNS server using the `stream-snippets` [ConfigMap key](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/).
+In this example we deploy the NGINX or NGINX Plus Ingress Controller, a DNS server and then configure both TCP and UDP load balancing for the DNS server using the `stream-snippets` [ConfigMap key](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/configmap-resource/).
 
-The standard Kubernetes Ingress resources assume that all traffic is HTTP-based; they do not cater for the case of basic TCP or UDP load balancing.  In this example, we use the `stream-snippets` ConfigMap key to embed the required TCP and UDP load-balancing configuration directly into the `stream{}` block of the NGINX configuration file. 
+The standard Kubernetes Ingress resources assume that all traffic is HTTP-based; they do not cater for the case of basic TCP or UDP load balancing.  In this example, we use the `stream-snippets` ConfigMap key to embed the required TCP and UDP load-balancing configuration directly into the `stream{}` block of the NGINX configuration file.
 
 With NGINX, we’ll use the DNS name or virtual IP address to identify the service, and rely on kube-proxy to perform the internal load-balancing across the pool of pods.  With NGINX Plus, we can use a [headless](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services) service and its DNS name to obtain the real IP addresses of the pods behind the service, and load-balance across these.  NGINX Plus re-resolves the DNS name frequently, so will update automatically when new pods are deployed or removed.
 
@@ -15,15 +15,15 @@ With NGINX, we’ll use the DNS name or virtual IP address to identify the servi
 
 ### 1. Deploy the Ingress Controller
 
-1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress controller. Make sure to expose port 5353 of the Ingress controller
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller. Make sure to expose port 5353 of the Ingress Controller
 both for TCP and UDP traffic.
 
-2. Save the public IP address of the Ingress controller into a shell variable:
+2. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III
     ```
-    **Note**: If you'd like to expose the Ingress controller via a service with the type LoadBalancer, it is not allowed to create a type LoadBalancer service for both TCP and UDP protocols. To overcome this limitation, create two separate services, one for TCP and the other for UDP.  In this case you will end up with two separate public IPs, one for TCP and the other for UDP. Use the former in Step 4.2 and the latter in Step 4.1.
-3. Save port 5353 of the Ingress controller into a shell variable:
+    **Note**: If you'd like to expose the Ingress Controller via a service with the type LoadBalancer, it is not allowed to create a type LoadBalancer service for both TCP and UDP protocols. To overcome this limitation, create two separate services, one for TCP and the other for UDP.  In this case you will end up with two separate public IPs, one for TCP and the other for UDP. Use the former in Step 4.2 and the latter in Step 4.1.
+3. Save port 5353 of the Ingress Controller into a shell variable:
     ```
     $ IC_5353_PORT=<port number>
     ```
@@ -69,7 +69,7 @@ We use `stream-snippets` ConfigMap key to configure TCP and UDP load balancing f
         ```
 
         We define upstream servers using a DNS name. When NGINX is reloaded, the DNS name will be resolved into the virtual IP of the `coredns` service.
-        
+
         **Note**: NGINX will fail to reload if the DNS name `coredns.default.svc.cluster.local` cannot be resolved. To avoid that, you can define the upstream servers using the virtual IP of the `coredns` service instead of the DNS name.
 
     * For NGINX Plus, we use a different configuration:
@@ -101,10 +101,10 @@ We use `stream-snippets` ConfigMap key to configure TCP and UDP load balancing f
             status_zone coredns-tcp;
         }
         ```
-        NGINX Plus supports re-resolving DNS names with the `resolve` parameter of the `upstream` directive, which we take an advantage of in our example. Additionally, when the `resolve` parameter is used, NGINX Plus will not fail to reload if the name of an upstream cannot be resolved, in contrast with NGINX. In addition to IP addresses, NGINX Plus will discover ports through DNS SRV records. 
-        
+        NGINX Plus supports re-resolving DNS names with the `resolve` parameter of the `upstream` directive, which we take an advantage of in our example. Additionally, when the `resolve` parameter is used, NGINX Plus will not fail to reload if the name of an upstream cannot be resolved, in contrast with NGINX. In addition to IP addresses, NGINX Plus will discover ports through DNS SRV records.
+
         To resolve IP addresses and ports, NGINX Plus uses the Kube-DNS, defined with the `resolver` directive. We also set the `valid` parameter to `5s` to make NGINX Plus re-resolve DNS names every 5s.
-        
+
         Instead of `coredns` service, we use `coredns-headless` service. This service is created as a [headless service](https://kubernetes.io/docs/concepts/services-networking/service/#headless-services), meaning that no virtual IP is allocated for that service and NGINX Plus will be able to resolve the IP addresses of all the CoreDNS pods.
 
         **Note**: NGINX Plus will fail to reload if the DNS name, specified in the `resolver` directive, cannot be resolved. To avoid that, you can define the resolver using the virtual IP of the `kube-dns` service instead of the DNS name.
@@ -157,7 +157,7 @@ To test that the configured TCP/UDP load balancing works, we resolve the name `k
     ;; WHEN: Fri Aug 17 12:49:54 BST 2018
     ;; MSG SIZE  rcvd: 71
     ```
-    
+
 1. Resolve `kubernetes.io` through TCP:
     ```
     $ dig @$IC_IP -p $IC_5353_PORT kubernetes.io +tcp
@@ -189,4 +189,3 @@ To test that the configured TCP/UDP load balancing works, we resolve the name `k
     <REDACTED> [17/Aug/2018:11:49:54 +0000] UDP 200 71 42 0.016
     <REDACTED> [17/Aug/2018:11:52:25 +0000] TCP 200 73 44 0.098
     ```
-

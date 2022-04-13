@@ -13,7 +13,7 @@ The Policy resource allows you to configure features like access control and rat
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.2/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.2.0/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -276,7 +276,7 @@ In this example the Ingress Controller will use the configuration from the first
 
 ### OIDC
 
-> **Feature Status**: OIDC is available as a preview feature[^1]: We might introduce some backward-incompatible changes to the resource definition. The feature is disabled by default. To enable it, set the [enable-preview-policies](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-preview-policies) command-line argument of the Ingress Controller.
+> **Feature Status**: This feature is disabled by default. To enable it, set the [enable-oidc](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-oidc) command-line argument of the Ingress Controller.
 
 The OIDC policy configures NGINX Plus as a relying party for OpenID Connect authentication.
 
@@ -297,7 +297,8 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 
 #### Prerequisites
 
-For the OIDC feature to work, it is necessary to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/), otherwise NGINX Plus will fail to reload. Additionally, it is necessary to configure a resolver, so that NGINX Plus can resolve the IDP authorization endpoint. For an example of the necessary configuration see the documentation [here](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.2/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload. 
+You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.2.0/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 
@@ -532,7 +533,3 @@ Status:
 ```
 
 **Note**: If you make an existing resource invalid, the Ingress Controller will reject it.
-
-## Footnotes
-
-[^1]: Capabilities labeled in preview status are fully supported.

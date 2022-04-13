@@ -121,8 +121,9 @@ type StaticConfigParams struct {
 	MainAppProtectDosLoadModule    bool
 	PodName                        string
 	EnableLatencyMetrics           bool
-	EnablePreviewPolicies          bool
+	EnableOIDC                     bool
 	SSLRejectHandshake             bool
+	EnableCertManager              bool
 }
 
 // GlobalConfigParams holds global configuration parameters. For now, it only holds listeners.

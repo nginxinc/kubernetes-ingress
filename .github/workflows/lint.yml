@@ -33,7 +33,7 @@ jobs:
         id: vars
         run: echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ steps.vars.outputs.go_version }}
       - name: Lint Code

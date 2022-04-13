@@ -1,18 +1,18 @@
 # Example
 
-In this example we deploy the NGINX or NGINX Plus Ingress controller, a simple web application and then configure load balancing for that application using the Ingress resource.
+In this example we deploy the NGINX or NGINX Plus Ingress Controller, a simple web application and then configure load balancing for that application using the Ingress resource.
 
 ## Running the Example
 
 ## 1. Deploy the Ingress Controller
 
-1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress controller.
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller.
 
-2. Save the public IP address of the Ingress controller into a shell variable:
+2. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III
     ```
-3. Save the HTTPS port of the Ingress controller into a shell variable:
+3. Save the HTTPS port of the Ingress Controller into a shell variable:
     ```
     $ IC_HTTPS_PORT=<port number>
     ```
@@ -40,7 +40,7 @@ $ kubectl create -f cafe.yaml
 
 1. To access the application, curl the coffee and the tea services. We'll use ```curl```'s --insecure option to turn off certificate verification of our self-signed
 certificate and the --resolve option to set the Host header of a request with ```cafe.example.com```
-    
+
     To get coffee:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure

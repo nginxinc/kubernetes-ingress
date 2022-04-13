@@ -1,0 +1,138 @@
+name: Create Draft Release
+
+on:
+  push:
+    branches:
+      - release-*
+  workflow_dispatch:
+    inputs:
+      tagFrom:
+        description: The tag to create the release from.
+        required: true
+        type: string
+      tagTo:
+        description: The tag to create the release to.
+        required: true
+        type: string
+      branch:
+        description: The branch where the release will be created.
+        required: true
+        type: string
+
+jobs:
+
+  binary:
+    name: Create Draft Release
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-node@v3
+      - run: npm install semver
+      - uses: actions/github-script@v6
+        continue-on-error: true
+        with:
+          script: |
+            const semver = require('semver');
+            const ref = context.ref.split("/")[2]
+
+            const releases = (await github.rest.repos.listReleases({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              per_page: 100,
+            })).data
+
+            let latest_release
+            const latest_release_current_branch = releases.find(release => !release.draft && release.tag_name.startsWith("v" + ref.split("-")[1]))
+
+            if (latest_release_current_branch === undefined){
+              latest_release = (await github.rest.repos.getLatestRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+              })).data.tag_name
+            } else {
+              latest_release = latest_release_current_branch.tag_name
+            }
+
+            let tagFrom, tagTo, branch
+            if (context.eventName === 'workflow_dispatch'){
+              console.log(`Dispatch run with inputs: ${JSON.stringify(context.payload.inputs)}`)
+              ;({ tagFrom, tagTo, branch } = context.payload.inputs)
+            } else {
+              ;({ tagFrom, tagTo, branch } = {
+                tagFrom: latest_release,
+                tagTo: 'next',
+                branch: ref,
+              })
+              console.log(`Push run with: { tagFrom: ${tagFrom}, tagTo: ${tagTo}, branch: ${branch} }`)
+            }
+            console.log(`The latest release was ${tagFrom}`)
+
+            let version = tagTo.replace('v', '')
+            if (version === 'next'){
+              const temp_notes = (await github.rest.repos.generateReleaseNotes({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                tag_name: tagTo,
+                previous_tag_name: tagFrom,
+                target_commitish: branch,
+              })).data.body
+
+              let level
+              temp_notes.includes("### 🚀 Features") ? level = 'minor' : level = 'patch'
+              temp_notes.includes("### 💣 Breaking Changes") ? level = 'major' : level = level
+              version = semver.inc(tagFrom, level)
+              console.log(`The level of the release is ${level}`)
+            }
+            const draft = releases.find((r) => r.draft && r.tag_name === "v"+version)
+            const draft_found = !(draft === undefined)
+
+            console.log(`The next version is v${version}`)
+
+            const footer = `
+              ## Upgrade
+              - For NGINX, use the v${version} image from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=${version}), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
+              - For NGINX Plus, use the v${version} image from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the v${version} source code.
+              - For Helm, use version %HELM_CHART_VERSION% of the chart.
+
+              ## Resources
+              - Documentation -- https://docs.nginx.com/nginx-ingress-controller/
+              - Configuration examples -- https://github.com/nginxinc/kubernetes-ingress/tree/v${version}/examples
+              - Helm Chart -- https://github.com/nginxinc/kubernetes-ingress/tree/v${version}/deployments/helm-chart
+              - Operator -- https://github.com/nginxinc/nginx-ingress-operator/
+            `
+
+            const release_notes = (await github.rest.repos.generateReleaseNotes({
+              owner: context.payload.repository.owner.login,
+              repo: context.payload.repository.name,
+              tag_name: 'v' + version,
+              previous_tag_name: tagFrom,
+              target_commitish: branch,
+            }))
+
+            let release
+            if (draft_found){
+              console.log("Draft found")
+              release = (await github.rest.repos.updateRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                release_id: draft.id,
+                tag_name: 'v' + version,
+                target_commitish: branch,
+                name: 'v' + version,
+                body: release_notes.data.body + footer,
+                draft: true,
+              }))
+            } else {
+              console.log("Draft not found")
+              release = (await github.rest.repos.createRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                tag_name: 'v' + version,
+                target_commitish: ref,
+                name: 'v' + version,
+                body: release_notes.data.body + footer,
+                draft: true,
+              }))
+            }
+
+            console.log(`Release created: ${release.data.html_url}`)
+            console.log(`Release notes: ${release_notes.data.body}`)

@@ -13,18 +13,48 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
+// VsvOption defines the signature of our VirtualServerValidator option functions.
+type VsvOption func(*VirtualServerValidator)
+
 // VirtualServerValidator validates a VirtualServer/VirtualServerRoute resource.
 type VirtualServerValidator struct {
-	isPlus       bool
-	isDosEnabled bool
+	isPlus               bool
+	isDosEnabled         bool
+	isCertManagerEnabled bool
+}
+
+// IsPlus modifies the VirtualServerValidator to set the isPlus option.
+func IsPlus(plus bool) VsvOption {
+	return func(v *VirtualServerValidator) {
+		v.isPlus = plus
+	}
+}
+
+// IsDosEnabled modifies the VirtualServerValidator to set the isDosEnabled option.
+func IsDosEnabled(dos bool) VsvOption {
+	return func(v *VirtualServerValidator) {
+		v.isDosEnabled = dos
+	}
+}
+
+// IsCertManagerEnabled modifies the VirtualServerValidator to set the isCertManagerEnabled option.
+func IsCertManagerEnabled(cm bool) VsvOption {
+	return func(v *VirtualServerValidator) {
+		v.isCertManagerEnabled = cm
+	}
 }
 
 // NewVirtualServerValidator creates a new VirtualServerValidator.
-func NewVirtualServerValidator(isPlus bool, isDosEnabled bool) *VirtualServerValidator {
-	return &VirtualServerValidator{
-		isPlus:       isPlus,
-		isDosEnabled: isDosEnabled,
+func NewVirtualServerValidator(opts ...VsvOption) *VirtualServerValidator {
+	vsv := VirtualServerValidator{
+		isPlus:               false,
+		isDosEnabled:         false,
+		isCertManagerEnabled: false,
 	}
+	for _, o := range opts {
+		o(&vsv)
+	}
+	return &vsv
 }
 
 // ValidateVirtualServer validates a VirtualServer.
@@ -38,7 +68,7 @@ func (vsv *VirtualServerValidator) validateVirtualServerSpec(spec *v1.VirtualSer
 	allErrs := field.ErrorList{}
 
 	allErrs = append(allErrs, validateHost(spec.Host, fieldPath.Child("host"))...)
-	allErrs = append(allErrs, validateTLS(spec.TLS, fieldPath.Child("tls"))...)
+	allErrs = append(allErrs, vsv.validateTLS(spec.TLS, fieldPath.Child("tls"))...)
 	allErrs = append(allErrs, validatePolicies(spec.Policies, fieldPath.Child("policies"), namespace)...)
 
 	upstreamErrs, upstreamNames := vsv.validateUpstreams(spec.Upstreams, fieldPath.Child("upstreams"))
@@ -103,7 +133,7 @@ func validatePolicies(policies []v1.PolicyReference, fieldPath *field.Path, name
 	return allErrs
 }
 
-func validateTLS(tls *v1.TLS, fieldPath *field.Path) field.ErrorList {
+func (vsv *VirtualServerValidator) validateTLS(tls *v1.TLS, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if tls == nil {
@@ -114,6 +144,28 @@ func validateTLS(tls *v1.TLS, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateSecretName(tls.Secret, fieldPath.Child("secret"))...)
 
 	allErrs = append(allErrs, validateTLSRedirect(tls.Redirect, fieldPath.Child("redirect"))...)
+
+	allErrs = append(allErrs, validateTLSCmFields(tls.CertManager, vsv.isCertManagerEnabled, tls.Secret, fieldPath.Child("cert-manager"))...)
+
+	return allErrs
+}
+
+func validateTLSCmFields(cm *v1.CertManager, isCertManagerEnabled bool, secret string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if cm == nil {
+		// valid, cert-manager is not required
+		return allErrs
+	}
+
+	if !isCertManagerEnabled {
+		allErrs = append(allErrs, field.Forbidden(fieldPath, "field requires cert-manager enablement"))
+	}
+
+	if secret == "" {
+		// invalid, secret name is required for cert-manager configuration
+		allErrs = append(allErrs, field.Forbidden(fieldPath, "field requires TLS.Secret to be specified"))
+	}
 
 	return allErrs
 }

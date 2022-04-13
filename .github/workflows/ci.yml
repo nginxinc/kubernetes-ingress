@@ -66,7 +66,7 @@ jobs:
           echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
           echo "::set-output name=k8s_latest::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ steps.vars.outputs.go_version }}
       - name: Determine GOPATH
@@ -100,7 +100,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Build binary
@@ -136,7 +136,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-tests-
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Run Tests
@@ -193,7 +193,7 @@ jobs:
           nginx-crt: ${{ secrets.NGINX_CRT }}
           nginx-key: ${{ secrets.NGINX_KEY }}
       - name: Upload Test Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
@@ -276,16 +276,53 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
-      - name: Publish Release Notes on new tag
-        uses: release-drafter/release-drafter@v5
+
+      - uses: actions/setup-node@v3
+      - run: npm install js-yaml
+        continue-on-error: true
+        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish release on tag
+        uses: actions/github-script@v6
+        continue-on-error: true
         with:
-            publish: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+              const ref = context.ref.split("/")[2]
+              const yaml = require('js-yaml');
+
+              const releases = (await github.rest.repos.listReleases({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                per_page: 100,
+              })).data
+
+              const draft_release = releases.find(release => release.draft && release.tag_name === ref)
+
+              const helm_file = (await github.rest.repos.getContent({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                path: "deployments/helm-chart/Chart.yaml",
+                ref: ref,
+              })).data.content
+
+              const helm_yaml = yaml.load(Buffer.from(helm_file, 'base64').toString())
+              const helm_version = helm_yaml.version
+              console.log(`Helm version: ${helm_version}`)
+
+              const update = await github.rest.repos.updateRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                release_id: draft_release.id,
+                body: draft_release.body.replace("%HELM_CHART_VERSION%", helm_version),
+                draft: false
+              });
+              console.log(`Release published: ${update.data.html_url}`)
+              console.log(`Release notes: ${update.data.body}`)
+        if: startsWith(github.ref, 'refs/tags/')
+
       - name: Build binaries
         uses: goreleaser/goreleaser-action@v2
         with:
@@ -402,12 +439,13 @@ jobs:
           platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
+          pull: true
           no-cache: ${{ github.event_name != 'pull_request' }}
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.2
+        uses: aquasecurity/trivy-action@0.2.3
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -420,7 +458,7 @@ jobs:
         with:
           sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
       - name: Upload Scan Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         continue-on-error: true
         with:
           name: 'trivy-results-${{ matrix.image }}.sarif'
@@ -522,6 +560,7 @@ jobs:
           platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
+          pull: true
           no-cache: ${{ github.event_name != 'pull_request' }}
           build-args: |
             BUILD_OS=${{ matrix.image }}
@@ -545,7 +584,7 @@ jobs:
             "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.NGINX_KEY }}"
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.2
+        uses: aquasecurity/trivy-action@0.2.3
         continue-on-error: true
         with:
           image-ref: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}
@@ -558,7 +597,7 @@ jobs:
         with:
           sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
       - name: Upload Scan Results
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         continue-on-error: true
         with:
           name: 'trivy-results-${{ matrix.image }}.sarif'
@@ -593,7 +632,7 @@ jobs:
       - name: Package
         run: helm package --version ${{ steps.var.outputs.helm_version }} ${{ env.HELM_CHART_DIR }}
       - name: Upload Chart
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: helm-chart
           path: ${{ github.workspace }}/nginx-ingress-${{ steps.var.outputs.helm_version }}.tgz
@@ -613,7 +652,7 @@ jobs:
       - name: Remove previous Chart
         run: rm -f ${{ github.workspace }}/${{ needs.package-helm.outputs.type }}/nginx-ingress-${{ needs.package-helm.outputs.version }}.tgz
       - name: Retrieve latest Helm Chart
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: helm-chart
           path: ${{ github.workspace }}/${{ needs.package-helm.outputs.type }}

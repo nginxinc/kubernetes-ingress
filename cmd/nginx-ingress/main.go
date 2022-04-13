@@ -50,21 +50,21 @@ var (
 
 	healthStatus = flag.Bool("health-status", false,
 		`Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
-	Useful for external health-checking of the Ingress controller`)
+	Useful for external health-checking of the Ingress Controller`)
 
 	healthStatusURI = flag.String("health-status-uri", "/nginx-health",
 		`Sets the URI of health status location in the default server. Requires -health-status`)
 
 	proxyURL = flag.String("proxy", "",
 		`Use a proxy server to connect to Kubernetes API started by "kubectl proxy" command. For testing purposes only.
-	The Ingress controller does not start NGINX and does not write any generated NGINX configuration files to disk`)
+	The Ingress Controller does not start NGINX and does not write any generated NGINX configuration files to disk`)
 
 	watchNamespace = flag.String("watch-namespace", api_v1.NamespaceAll,
-		`Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces`)
+		`Namespace to watch for Ingress resources. By default the Ingress Controller watches all namespaces`)
 
 	nginxConfigMaps = flag.String("nginx-configmaps", "",
 		`A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set,
-	but the Ingress controller is not able to fetch it from Kubernetes API, the Ingress controller will fail to start.
+	but the Ingress Controller is not able to fetch it from Kubernetes API, the Ingress Controller will fail to start.
 	Format: <namespace>/<name>`)
 
 	nginxPlus = flag.Bool("nginx-plus", false, "Enable support for NGINX Plus")
@@ -83,10 +83,10 @@ var (
 	appProtectDosMemory     = flag.Int("app-protect-dos-memory", 0, "RAM memory size to consume in MB. Requires -nginx-plus and -enable-app-protect-dos.")
 
 	ingressClass = flag.String("ingress-class", "nginx",
-		`A class of the Ingress controller.
+		`A class of the Ingress Controller.
 
 	An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start.
-	The Ingress controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
+	The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class.
 
 	The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of kubernetes.`)
 
@@ -94,8 +94,8 @@ var (
 		`A Secret with a TLS certificate and key for TLS termination of the default server. Format: <namespace>/<name>.
 	If not set, than the certificate and key in the file "/etc/nginx/secrets/default" are used.
 	If "/etc/nginx/secrets/default" doesn't exist, the Ingress Controller will configure NGINX to reject TLS connections to the default server.
-	If a secret is set, but the Ingress controller is not able to fetch it from Kubernetes API or it is not set and the Ingress Controller
-	fails to read the file "/etc/nginx/secrets/default", the Ingress controller will fail to start.`)
+	If a secret is set, but the Ingress Controller is not able to fetch it from Kubernetes API or it is not set and the Ingress Controller
+	fails to read the file "/etc/nginx/secrets/default", the Ingress Controller will fail to start.`)
 
 	versionFlag = flag.Bool("version", false, "Print the version, git-commit hash and build date and exit")
 
@@ -115,7 +115,7 @@ var (
 	(default for NGINX "nginx.transportserver.tmpl"; default for NGINX Plus "nginx-plus.transportserver.tmpl")`)
 
 	externalService = flag.String("external-service", "",
-		`Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally.
+		`Specifies the name of the service with the type LoadBalancer through which the Ingress Controller pods are exposed externally.
 	The external address of the service is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources. For Ingress resources only: Requires -report-ingress-status.`)
 
 	ingressLink = flag.String("ingresslink", "",
@@ -148,7 +148,7 @@ var (
 	wildcardTLSSecret = flag.String("wildcard-tls-secret", "",
 		`A Secret with a TLS certificate and key for TLS termination of every Ingress/VirtualServer host for which TLS termination is enabled but the Secret is not specified.
 		Format: <namespace>/<name>. If the argument is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection.
-		If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.`)
+		If the argument is set, but the Ingress Controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start.`)
 
 	enablePrometheusMetrics = flag.Bool("enable-prometheus-metrics", false,
 		"Enable exposing NGINX or NGINX Plus metrics in the Prometheus format")
@@ -163,7 +163,10 @@ var (
 		"Enable custom resources")
 
 	enablePreviewPolicies = flag.Bool("enable-preview-policies", false,
-		"Enable preview policies")
+		"Enable preview policies. This flag is deprecated. To enable OIDC Policies please use -enable-oidc instead.")
+
+	enableOIDC = flag.Bool("enable-oidc", false,
+		"Enable OIDC Policies.")
 
 	enableSnippets = flag.Bool("enable-snippets", false,
 		"Enable custom NGINX configuration snippets in Ingress, VirtualServer, VirtualServerRoute and TransportServer resources.")
@@ -188,6 +191,9 @@ var (
 	enableLatencyMetrics = flag.Bool("enable-latency-metrics", false,
 		"Enable collection of latency metrics for upstreams. Requires -enable-prometheus-metrics")
 
+	enableCertManager = flag.Bool("enable-cert-manager", false,
+		"Enable cert-manager controller for VirtualServer resources. Requires -enable-custom-resources")
+
 	startupCheckFn func() error
 )
 
@@ -204,7 +210,7 @@ func main() {
 		fmt.Println(versionInfo)
 		os.Exit(0)
 	}
-	glog.Infof("Starting NGINX Ingress controller %v PlusFlag=%v", versionInfo, *nginxPlus)
+	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 
 	if startupCheckFn != nil {
 		err := startupCheckFn()
@@ -246,6 +252,11 @@ func main() {
 	if *enableTLSPassthrough && !*enableCustomResources {
 		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
 	}
+
+	if *enablePreviewPolicies {
+		glog.Warning("enable-preview-policies is universally deprecated. To enable OIDC Policies please use -enable-oidc instead.")
+	}
+	*enableOIDC = *enablePreviewPolicies || *enableOIDC
 
 	if *appProtect && !*nginxPlus {
 		glog.Fatal("NGINX App Protect support is for NGINX Plus only")
@@ -293,6 +304,10 @@ func main() {
 	if *enableLatencyMetrics && !*enablePrometheusMetrics {
 		glog.Warning("enable-latency-metrics flag requires enable-prometheus-metrics, latency metrics will not be collected")
 		*enableLatencyMetrics = false
+	}
+
+	if *enableCertManager && !*enableCustomResources {
+		glog.Fatal("enable-cert-manager flag requires -enable-custom-resources")
 	}
 
 	if *ingressLink != "" && *externalService != "" {
@@ -573,8 +588,9 @@ func main() {
 		MainAppProtectLoadModule:       *appProtect,
 		MainAppProtectDosLoadModule:    *appProtectDos,
 		EnableLatencyMetrics:           *enableLatencyMetrics,
-		EnablePreviewPolicies:          *enablePreviewPolicies,
+		EnableOIDC:                     *enableOIDC,
 		SSLRejectHandshake:             sslRejectHandshake,
+		EnableCertManager:              *enableCertManager,
 	}
 
 	ngxConfig := configs.GenerateNginxMainConfig(staticCfgParams, cfgParams)
@@ -657,12 +673,13 @@ func main() {
 	controllerNamespace := os.Getenv("POD_NAMESPACE")
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
-	virtualServerValidator := cr_validation.NewVirtualServerValidator(*nginxPlus, *appProtectDos)
+	virtualServerValidator := cr_validation.NewVirtualServerValidator(cr_validation.IsPlus(*nginxPlus), cr_validation.IsDosEnabled(*appProtectDos), cr_validation.IsCertManagerEnabled(*enableCertManager))
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
 		ConfClient:                   confClient,
 		DynClient:                    dynClient,
+		RestConfig:                   config,
 		ResyncPeriod:                 30 * time.Second,
 		Namespace:                    *watchNamespace,
 		NginxConfigurator:            cnf,
@@ -681,7 +698,7 @@ func main() {
 		ConfigMaps:                   *nginxConfigMaps,
 		GlobalConfiguration:          *globalConfiguration,
 		AreCustomResourcesEnabled:    *enableCustomResources,
-		EnablePreviewPolicies:        *enablePreviewPolicies,
+		EnableOIDC:                   *enableOIDC,
 		MetricsCollector:             controllerCollector,
 		GlobalConfigurationValidator: globalConfigurationValidator,
 		TransportServerValidator:     transportServerValidator,
@@ -692,6 +709,7 @@ func main() {
 		IsLatencyMetricsEnabled:      *enableLatencyMetrics,
 		IsTLSPassthroughEnabled:      *enableTLSPassthrough,
 		SnippetsEnabled:              *enableSnippets,
+		CertManagerEnabled:           *enableCertManager,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

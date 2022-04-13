@@ -297,10 +297,18 @@ func TestValidateTLS(t *testing.T) {
 				Code:   createPointerFromInt(307),
 			},
 		},
+		{
+			Secret: "my-secret",
+			CertManager: &v1.CertManager{
+				Issuer: "my-issuer",
+			},
+		},
 	}
 
+	vsv := &VirtualServerValidator{isPlus: false, isCertManagerEnabled: true}
+
 	for _, tls := range validTLSes {
-		allErrs := validateTLS(tls, field.NewPath("tls"))
+		allErrs := vsv.validateTLS(tls, field.NewPath("tls"))
 		if len(allErrs) > 0 {
 			t.Errorf("validateTLS() returned errors %v for valid input %v", allErrs, tls)
 		}
@@ -329,13 +337,30 @@ func TestValidateTLS(t *testing.T) {
 				BasedOn: "invalidScheme",
 			},
 		},
+		{
+			CertManager: &v1.CertManager{
+				Issuer: "my-issuer",
+			},
+		},
 	}
 
 	for _, tls := range invalidTLSes {
-		allErrs := validateTLS(tls, field.NewPath("tls"))
+		allErrs := vsv.validateTLS(tls, field.NewPath("tls"))
 		if len(allErrs) == 0 {
 			t.Errorf("validateTLS() returned no errors for invalid input %v", tls)
 		}
+	}
+
+	vsv2 := &VirtualServerValidator{isPlus: false}
+	tls := v1.TLS{
+		Secret: "my-secret",
+		CertManager: &v1.CertManager{
+			Issuer: "my-issuer",
+		},
+	}
+	err := vsv2.validateTLS(&tls, field.NewPath("tls"))
+	if err == nil {
+		t.Errorf("validateTLS() returned no errors for invalid input %v", tls)
 	}
 }
 
@@ -826,7 +851,6 @@ func TestValidateRoute(t *testing.T) {
 	}{
 		{
 			route: v1.Route{
-
 				Path: "/",
 				Action: &v1.Action{
 					Pass: "test",
@@ -892,7 +916,6 @@ func TestValidateRoute(t *testing.T) {
 		},
 		{
 			route: v1.Route{
-
 				Path:  "/",
 				Route: "default/test",
 			},
@@ -1129,7 +1152,6 @@ func TestValidateActionFails(t *testing.T) {
 		action *v1.Action
 		msg    string
 	}{
-
 		{
 			action: &v1.Action{},
 			msg:    "empty action",
@@ -1261,7 +1283,6 @@ func TestValidateRedirectURLFails(t *testing.T) {
 		redirectURL string
 		msg         string
 	}{
-
 		{
 			redirectURL: "",
 			msg:         "url is blank",

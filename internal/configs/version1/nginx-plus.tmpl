@@ -26,7 +26,7 @@ load_module modules/ngx_http_app_protect_dos_module.so;
 {{$value}}{{end}}
 {{- end}}
 
-{{if .PreviewPolicies}}
+{{if .OIDC}}
 load_module modules/ngx_http_js_module.so;
 {{- end}}
 
@@ -137,7 +137,7 @@ http {
     {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
     {{end}}
 
-    {{if .PreviewPolicies}}
+    {{if .OIDC}}
     include oidc/oidc_common.conf;
     {{- end}}
 

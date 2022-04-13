@@ -50,6 +50,7 @@ from suite.resources_utils import (
     get_first_pod_name,
     create_dos_arbitrator,
     delete_dos_arbitrator,
+    wait_before_test,
 )
 from suite.resources_utils import (
     create_ingress_controller,
@@ -1122,5 +1123,51 @@ def restore_configmap(request, kube_apis, ingress_controller_prerequisites, test
             ingress_controller_prerequisites.namespace,
             f"{DEPLOYMENTS}/common/nginx-config.yaml",
         )
+
+    request.addfinalizer(fin)
+
+@pytest.fixture(scope="class")
+def create_certmanager(request):
+    """
+    Create Cert-manager.
+
+    :param kube_apis: client apis
+    :param request: pytest fixture
+    """
+    issuer_name = request.param.get("issuer_name")
+    cm_yaml = f"{TEST_DATA}/virtual-server-certmanager/certmanager.yaml"
+
+    create_generic_from_yaml(cm_yaml, request)
+    wait_before_test(120)
+    create_issuer(issuer_name, request)
+
+
+def create_issuer(issuer_name, request):
+    """
+    Create Cert-manager.
+
+    :param kube_apis: client apis
+    :param issuer_name: the name of the issuer
+    :param request: pytest fixture
+    """
+    issuer_yaml = f"{TEST_DATA}/virtual-server-certmanager/{issuer_name}.yaml"
+
+    print("------------------------- Deploy CertManager in the cluster -----------------------------------")
+    create_generic_from_yaml(issuer_yaml, request)
+
+
+def create_generic_from_yaml(file_path, request):
+    """
+    Create an object using a path to the yaml file.
+
+    :param kube_apis: client apis
+    :param request: pytest fixture
+    """
+
+    subprocess.run(["kubectl", "apply", "-f", f"{file_path}"])
+
+    def fin():
+        print("Clean up resources from {file_path}:")
+        subprocess.run(["kubectl", "delete", "-f", f"{file_path}"])
 
     request.addfinalizer(fin)

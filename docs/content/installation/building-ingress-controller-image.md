@@ -32,7 +32,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
 
 1. Clone the Ingress Controller repo:
     ```
-    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.1.2
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.2.0
     $ cd kubernetes-ingress
     ```
 
@@ -47,7 +47,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-ingress:2.1.2** is built. Note that the tag `2.1.2` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-ingress:2.2.0** is built. Note that the tag `2.2.0` comes from the `VERSION` variable, defined in the Makefile.
 
     * For **NGINX Plus**, first, make sure that the certificate (`nginx-repo.crt`) and the key (`nginx-repo.key`) of your license are located in the root of the project:
       ```
@@ -60,7 +60,7 @@ We build the image using the make utility and the provided `Makefile`. Let’s c
       ```
       `myregistry.example.com/nginx-plus-ingress` defines the repo in your private registry where the image will be pushed. Substitute that value with the repo in your private registry.
 
-      As a result, the image **myregistry.example.com/nginx-plus-ingress:2.1.2** is built. Note that the tag `2.1.2` comes from the `VERSION` variable, defined in the Makefile.
+      As a result, the image **myregistry.example.com/nginx-plus-ingress:2.2.0** is built. Note that the tag `2.2.0` comes from the `VERSION` variable, defined in the Makefile.
 
       **Note**: In the event of a patch version of [NGINX Plus being released](/nginx/releases/), make sure to rebuild your image to get the latest version. If your system is caching the Docker layers and not updating the packages, add `DOCKER_BUILD_OPTIONS="--pull --no-cache"` to the `make` command.
 
@@ -87,11 +87,11 @@ Below you can find some of the most useful targets in the **Makefile**:
 * **debian-image-nap-dos-plus**: for building a debian-based image with NGINX Plus appprotect and appprotect-dos modules.
 * **debian-image-opentracing**: for building a debian-based image with NGINX, [opentracing](https://github.com/opentracing-contrib/nginx-opentracing) module and the [Jaeger](https://www.jaegertracing.io/) tracer.
 * **debian-image-opentracing-plus**: for building a debian-based image with NGINX Plus, [opentracing](https://github.com/opentracing-contrib/nginx-opentracing) module and the [Jaeger](https://www.jaegertracing.io/) tracer.
-* **openshift-image**: for building an ubi-based image with NGINX for [Openshift](https://www.openshift.com/) clusters.
-* **openshift-image-plus**: for building an ubi-based image with NGINX Plus for [Openshift](https://www.openshift.com/) clusters.
-* **openshift-image-nap-plus**: for building an ubi-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module for [Openshift](https://www.openshift.com/) clusters.
-* **openshift-image-dos-plus**: for building an ubi-based image with NGINX Plus and the [appprotect_dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
-* **openshift-image-nap-dos-plus**: for building an ubi-based image with NGINX Plus, [appprotect](/nginx-app-protect/) and the [appprotect_dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
+* **ubi-image**: for building an ubi-based image with NGINX for [Openshift](https://www.openshift.com/) clusters.
+* **ubi-image-plus**: for building an ubi-based image with NGINX Plus for [Openshift](https://www.openshift.com/) clusters.
+* **ubi-image-nap-plus**: for building an ubi-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module for [Openshift](https://www.openshift.com/) clusters.
+* **ubi-image-dos-plus**: for building an ubi-based image with NGINX Plus and the [appprotect_dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
+* **ubi-image-nap-dos-plus**: for building an ubi-based image with NGINX Plus, [appprotect](/nginx-app-protect/) and the [appprotect_dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
 Note: You need to store your RHEL organization and activation keys in a file named `rhel_license` in the project root. Example:
   ```bash
   RHEL_ORGANIZATION=1111111

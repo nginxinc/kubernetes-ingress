@@ -18,7 +18,7 @@ Prerequisites:
 1. The stub status is available on port 8080 by default. It is customizable by the `nginx-status-port` command-line argument. If yours is not on 8080, modify the kubectl proxy command below.
 
 To access the status:
-1. Use the `kubectl port-forward` command to forward connections to port 8080 on your local machine to port 8080 of an NGINX Ingress controller pod (replace `<nginx-ingress-pod>` with the actual name of a pod):.
+1. Use the `kubectl port-forward` command to forward connections to port 8080 on your local machine to port 8080 of an NGINX Ingress Controller pod (replace `<nginx-ingress-pod>` with the actual name of a pod):.
     ```
     $ kubectl port-forward <nginx-ingress-pod> 8080:8080 --namespace=nginx-ingress
     ```
@@ -35,7 +35,7 @@ Prerequisites:
 1. The dashboard is available on port 8080 by default. It is customizable by the `nginx-status-port` command-line argument. If yours is not on 8080, modify the kubectl proxy command below.
 
 To access the dashboard:
-1. Use the `kubectl port-forward` command to forward connections to port 8080 on your local machine to port 8080 of an NGINX Plus Ingress controller pod (replace `<nginx-plus-ingress-pod>` with the actual name of a pod):
+1. Use the `kubectl port-forward` command to forward connections to port 8080 on your local machine to port 8080 of an NGINX Plus Ingress Controller pod (replace `<nginx-plus-ingress-pod>` with the actual name of a pod):
     ```
     $ kubectl port-forward <nginx-plus-ingress-pod> 8080:8080 --namespace=nginx-ingress
     ```
