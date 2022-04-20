@@ -285,11 +285,10 @@ COPY --link --chown=101:0 nginx-ingress /
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
 FROM common AS goreleaser
 ARG TARGETARCH
-ARG TARGETVARIANT
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
-COPY --link --chown=101:0 dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+COPY --link --chown=101:0 dist/kubernetes-ingress_linux_$TARGETARCH*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
@@ -298,7 +297,7 @@ ARG TARGETARCH
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --link --chown=101:0 dist/aws_linux_$TARGETARCH/nginx-ingress /
+COPY --link --chown=101:0 dist/aws_linux_$TARGETARCH*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
