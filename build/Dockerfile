@@ -9,8 +9,8 @@ FROM nginx:1.21.6 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temp fix for CVE-2018-25032
-	&& apt-get install -y zlib1g \
+	# temp fix for CVE-2022-1271
+	&& apt-get install -y gzip liblzma5 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& echo $NGINX_VERSION > nginx_version
 
@@ -19,7 +19,7 @@ RUN apt-get update \
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
 FROM docker.io/library/nginx:1.21.6-alpine AS alpine
 
-RUN apk add --no-cache libcap\
+RUN apk add --no-cache libcap \
 	# temp fix for CVE-2022-1271
 	&& apk upgrade --no-cache xz-libs
 
@@ -46,8 +46,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temp fix for CVE-2018-25032
-	&& apt-get install -y zlib1g \
+	# temp fix for CVE-2022-1271
+	&& apt-get install -y gzip liblzma5 \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
