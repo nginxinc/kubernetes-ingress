@@ -400,11 +400,14 @@ class TestAppProtectWAFPolicyVS:
         src_syslog_yaml = f"{TEST_DATA}/ap-waf/syslog.yaml"
         src_syslog_yaml_additional = f"{TEST_DATA}/ap-waf/syslog-1.yaml"
         log_loc = f"/var/log/messages"
+        src_log_yaml_escape = f"{TEST_DATA}/ap-waf/logconf-esc.yaml"
+        log_esc_name = create_ap_logconf_from_yaml(kube_apis.custom_objects, src_log_yaml_escape, test_namespace)
         create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         create_items_from_yaml(kube_apis, src_syslog_yaml_additional, test_namespace)
         syslog_dst1 = f"syslog-svc.{test_namespace}"
         syslog_dst2 = f"syslog-svc-1.{test_namespace}"
-        syslog_pods = kube_apis.v1.list_namespaced_pod(test_namespace, label_selector="app in (syslog, syslog-1)").items
+        syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace, label_selector="app=syslog").items
+        syslog_esc_pod = kube_apis.v1.list_namespaced_pod(test_namespace, label_selector="app=syslog-1").items
         print(f"Create waf policy")
         create_ap_multilog_waf_policy_from_yaml(
             kube_apis.custom_objects,
@@ -414,7 +417,7 @@ class TestAppProtectWAFPolicyVS:
             True,
             True,
             ap_pol_name,
-            [log_name, log_name],
+            [log_name, log_esc_name],
             [f"syslog:server={syslog_dst1}:514",f"syslog:server={syslog_dst2}:514"]
         )
         wait_before_test()
@@ -440,27 +443,38 @@ class TestAppProtectWAFPolicyVS:
             headers={"host": virtual_server_setup.vs_host},
         )
         print(response.text)
-        log_contents = ["",""]
+        log_contents = ""
         retry = 0
-        for i in range(2):    
-            while "ASM:attack_type" not in log_contents[i] and retry <= 30:
-                log_contents[i] = get_file_contents(
-                    kube_apis.v1, log_loc, syslog_pods[i].metadata.name, test_namespace
-                )
-                retry += 1
-                wait_before_test(1)
-                print(f"Security log not updated, retrying... #{retry}")
+        while "ASM:attack_type" not in log_contents and retry <= 30:
+            log_contents = get_file_contents(
+                kube_apis.v1, log_loc, syslog_pod[0].metadata.name, test_namespace
+            )
+            retry += 1
+            wait_before_test(1)
+            print(log_contents)
+            print(f"Security log not updated, retrying... #{retry}")
+
+        log_esc_contents = ""
+        retry = 0
+        while "attack_type" not in log_esc_contents and retry <= 30:
+            log_esc_contents = get_file_contents(
+                kube_apis.v1, log_loc, syslog_esc_pod[0].metadata.name, test_namespace
+            )
+            retry += 1
+            wait_before_test(1)
+            print(log_esc_contents)
+            print(f"Security log not updated, retrying... #{retry}")   
 
         delete_policy(kube_apis.custom_objects, "waf-policy", test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
 
         assert_invalid_responses(response)
 
-        for log_cont in log_contents:
-            assert f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"' in log_cont
-            assert f'severity="Critical"' in log_cont
-            assert f'request_status="blocked"' in log_cont
-            assert f'outcome="REJECTED"' in log_cont
+        assert f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"' in log_contents
+        assert f'severity="Critical"' in log_contents
+        assert f'request_status="blocked"' in log_contents
+        assert f'outcome="REJECTED"' in log_contents
+        assert f'"my_attack_type": "[Non-browser Client' in log_esc_contents
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect
