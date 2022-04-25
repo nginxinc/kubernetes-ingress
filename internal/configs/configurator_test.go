@@ -334,8 +334,13 @@ func TestAddInternalRouteConfig(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to create a test configurator: %v", err)
 	}
-	// set pod name in env
-	err = os.Setenv("POD_NAME", "nginx-ingress")
+	// set service account in env
+	err = os.Setenv("POD_SERVICEACCOUNT", "nginx-ingress")
+	if err != nil {
+		t.Errorf("Failed to set pod name in environment: %v", err)
+	}
+	// set namespace in env
+	err = os.Setenv("POD_NAMESPACE", "default")
 	if err != nil {
 		t.Errorf("Failed to set pod name in environment: %v", err)
 	}
@@ -347,8 +352,8 @@ func TestAddInternalRouteConfig(t *testing.T) {
 	if !cnf.staticCfgParams.EnableInternalRoutes {
 		t.Errorf("AddInternalRouteConfig failed to set EnableInteralRoutes field of staticCfgParams to true")
 	}
-	if cnf.staticCfgParams.PodName != "nginx-ingress" {
-		t.Errorf("AddInternalRouteConfig failed to set PodName field of staticCfgParams")
+	if cnf.staticCfgParams.InternalRouteServerName != "nginx-ingress.default.svc" {
+		t.Errorf("AddInternalRouteConfig failed to set InternalRouteServerName field of staticCfgParams")
 	}
 }
 

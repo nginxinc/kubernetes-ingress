@@ -125,7 +125,8 @@ type Configurator struct {
 // NewConfigurator creates a new Configurator.
 func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams,
 	templateExecutor *version1.TemplateExecutor, templateExecutorV2 *version2.TemplateExecutor, isPlus bool, isWildcardEnabled bool,
-	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool, latencyCollector latCollector.LatencyCollector, isLatencyMetricsEnabled bool) *Configurator {
+	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool, latencyCollector latCollector.LatencyCollector, isLatencyMetricsEnabled bool,
+) *Configurator {
 	metricLabelsIndex := &metricLabelsIndex{
 		ingressUpstreams:             make(map[string][]string),
 		virtualServerUpstreams:       make(map[string][]string),
@@ -1444,7 +1445,6 @@ func (cnf *Configurator) DeleteAppProtectLogConf(resource *unstructured.Unstruct
 func (cnf *Configurator) RefreshAppProtectUserSigs(
 	userSigs []*unstructured.Unstructured, delPols []string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx,
 ) (Warnings, error) {
-
 	allWarnings, err := cnf.addOrUpdateIngressesAndVirtualServers(ingExes, mergeableIngresses, vsExes)
 	if err != nil {
 		return allWarnings, err
@@ -1487,7 +1487,7 @@ func (cnf *Configurator) DeleteAppProtectDosLogConf(resource *unstructured.Unstr
 // AddInternalRouteConfig adds internal route server to NGINX Configuration and reloads NGINX
 func (cnf *Configurator) AddInternalRouteConfig() error {
 	cnf.staticCfgParams.EnableInternalRoutes = true
-	cnf.staticCfgParams.PodName = os.Getenv("POD_NAME")
+	cnf.staticCfgParams.InternalRouteServerName = fmt.Sprintf("%s.%s.svc", os.Getenv("POD_SERVICEACCOUNT"), os.Getenv("POD_NAMESPACE"))
 	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cnf.cfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
