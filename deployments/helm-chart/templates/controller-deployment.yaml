@@ -50,6 +50,10 @@ spec:
       affinity:
 {{ toYaml .Values.controller.affinity | indent 8 }}
 {{- end }}
+{{- if .Values.controller.topologySpreadConstraints }}
+      topologySpreadConstraints:
+{{ toYaml .Values.controller.topologySpreadConstraints | indent 8 }}
+{{- end }}
 {{- if or (.Values.controller.volumes) (.Values.nginxServiceMesh.enable) }}
       volumes:
 {{- end }}

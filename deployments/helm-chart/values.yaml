@@ -118,6 +118,9 @@ controller:
   ## The affinity of the Ingress Controller pods.
   affinity: {}
 
+  ## The topology spread constraints of the Ingress controller pods.
+  topologySpreadConstraints: {}
+
   ## The volumes of the Ingress Controller pods.
   volumes: []
   # - name: extra-conf
