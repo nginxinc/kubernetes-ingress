@@ -66,6 +66,7 @@ spec:
       priorityClassName: {{ .Values.controller.priorityClassName }}
 {{- end }}
       serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:
       - image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
