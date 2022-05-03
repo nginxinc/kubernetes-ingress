@@ -239,11 +239,17 @@ controller:
     # name: nginx-ingress
 
     ## Whether to automatically allocate NodePorts (only for LoadBalancers).
+    ## This is a beta-level feature as of Kubernetes version 1.22.
     # allocateLoadBalancerNodePorts: false
 
     ## Dual stack preference.
     ## Valid values: SingleStack, PreferDualStack, RequireDualStack
     # ipFamilyPolicy: SingleStack
+
+    ## List of IP families assigned to this service.
+    ## Valid values: IPv4, IPv6
+    # ipFamilies:
+    #   - IPv6
 
     httpPort:
       ## Enables the HTTP port for the Ingress Controller service.
