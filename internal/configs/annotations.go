@@ -252,7 +252,7 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 			}
 
 			if parsingErrors {
-				glog.Errorf("Ingress %s/%s: There are configuration issues with hsts annotations, skipping annotions for all hsts settings", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName())
+				glog.Errorf("Ingress %s/%s: There are configuration issues with hsts annotations, skipping annotations for all hsts settings", ingEx.Ingress.GetNamespace(), ingEx.Ingress.GetName())
 			} else {
 				cfgParams.HSTS = hsts
 				if existsMA {
