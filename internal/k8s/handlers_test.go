@@ -258,7 +258,7 @@ func TestAreResourcesDifferent(t *testing.T) {
 			},
 			expected:  true,
 			expectErr: nil,
-			msg:       "not equal resources with with first resource missing spec",
+			msg:       "not equal resources with first resource missing spec",
 		},
 	}
 
