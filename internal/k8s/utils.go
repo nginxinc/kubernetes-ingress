@@ -83,7 +83,7 @@ func (ipl indexerToPodLister) ListByNamespace(ns string, selector labels.Selecto
 	return pods, err
 }
 
-// storeToEndpointLister makes a Store that lists Endponts
+// storeToEndpointLister makes a Store that lists Endpoints
 type storeToEndpointLister struct {
 	cache.Store
 }
