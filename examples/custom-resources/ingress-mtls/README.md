@@ -21,7 +21,7 @@ Create the application deployment and service:
 $ kubectl apply -f webapp.yaml
 ```
 
-## Step 2 - Deploy the Ingress MLTS Secret
+## Step 2 - Deploy the Ingress MTLS Secret
 
 Create a secret with the name `ingress-mtls-secret` that will be used for Ingress MTLS validation:
 ```
