@@ -1162,7 +1162,7 @@ func TestGetAppProtectResource(t *testing.T) {
 			key:     "testing/test3",
 			wantErr: true,
 			errMsg:  "Unknown App Protect resource kind Notreal",
-			msg:     "Ivalid kind, Negative",
+			msg:     "Invalid kind, Negative",
 		},
 	}
 	appProtectConfiguration := newConfigurationImpl()
