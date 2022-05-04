@@ -3357,7 +3357,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 	}
 }
 
-func TestIsEqualForIngressConfigurationes(t *testing.T) {
+func TestIsEqualForIngressConfigurations(t *testing.T) {
 	regularIng := createTestIngress("regular-ingress", "foo.example.com")
 
 	ingConfigWithInvalidHost := NewRegularIngressConfiguration(regularIng)
