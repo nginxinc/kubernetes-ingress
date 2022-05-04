@@ -73,7 +73,7 @@ The table below summarizes the options regarding the images, manifests, helm cha
 
 ## Contacts
 
-We’d like to hear your feedback! If you have any suggestions or experience issues with our Ingress Controller, please create an issue or send a pull request on Github.
+We’d like to hear your feedback! If you have any suggestions or experience issues with our Ingress Controller, please create an issue or send a pull request on GitHub.
 You can contact us directly via [kubernetes@nginx.com](mailto:kubernetes@nginx.com) or on the [NGINX Community Slack](https://nginxcommunity.slack.com/channels/nginx-ingress-controller).
 
 ## Contributing
