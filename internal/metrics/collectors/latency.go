@@ -275,7 +275,7 @@ func parseMessage(msg string) (latencyMetric, error) {
 	return lm, nil
 }
 
-// parseMutlipartResponse checks if the input string contains commas.
+// parseMultipartResponse checks if the input string contains commas.
 // If it does it returns the last item of the list, otherwise it returns input.
 func parseMultipartResponse(input string) string {
 	parts := strings.Split(input, ",")
