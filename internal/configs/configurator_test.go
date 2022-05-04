@@ -345,7 +345,7 @@ func TestAddInternalRouteConfig(t *testing.T) {
 	}
 
 	if !cnf.staticCfgParams.EnableInternalRoutes {
-		t.Errorf("AddInternalRouteConfig failed to set EnableInteralRoutes field of staticCfgParams to true")
+		t.Errorf("AddInternalRouteConfig failed to set EnableInternalRoutes field of staticCfgParams to true")
 	}
 	if cnf.staticCfgParams.PodName != "nginx-ingress" {
 		t.Errorf("AddInternalRouteConfig failed to set PodName field of staticCfgParams")
