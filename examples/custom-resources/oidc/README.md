@@ -2,7 +2,7 @@
 
 In this example, we deploy a web application, configure load balancing for it via a VirtualServer, and protect the application using an OpenID Connect policy and [Keycloak](https://www.keycloak.org/).
 
-**Note**: The example doesn’t work in clusters with IPv6 networking.
+**Note**: The KeyCloak container supports only IPv4 out of the box, thus running this example in an IPv6 only environment won't work without additional effort.
 
 ## Prerequisites
 
