@@ -19,7 +19,7 @@ metadata:
 spec:
   host: grpc.example.com
   tls:
-    secret: gprc-secret
+    secret: grpc-secret
   upstreams:
   - name: grpc1
     service: grpc-svc
