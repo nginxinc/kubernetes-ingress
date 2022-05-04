@@ -49,7 +49,7 @@ var ingCfg = IngressNginxConfig{
 				Key:                  "/etc/nginx/secrets/key.jwk",
 				Realm:                "closed site",
 				Token:                "$cookie_auth_token",
-				RedirectLocationName: "@login_url-default-cafe-ingres",
+				RedirectLocationName: "@login_url-default-cafe-ingress",
 			},
 			SSL:               true,
 			SSLCertificate:    "secret.pem",
