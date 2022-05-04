@@ -331,7 +331,7 @@ def ingress_controller_prerequisites(
 @pytest.fixture(scope="session")
 def kube_apis(cli_arguments) -> KubeApis:
     """
-    Set up kubernets-client to operate in cluster.
+    Set up kubernetes-client to operate in cluster.
 
     :param cli_arguments: a set of command-line arguments
     :return: KubeApis
