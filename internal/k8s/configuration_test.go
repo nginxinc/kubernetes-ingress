@@ -3320,7 +3320,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 				TotalTCP:            1,
 				TotalUDP:            1,
 			},
-			msg: "TLSPasstrough, TCP and UDP TransportServers",
+			msg: "TLSPassthrough, TCP and UDP TransportServers",
 		},
 	}
 
