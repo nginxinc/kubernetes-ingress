@@ -4,6 +4,6 @@ metadata:
   name: ingress-mtls-policy
 spec:
   ingress_MTLS: # invalid/mis-spelled yaml keys
-    clientCertSecrettt: ingress-mtls-secret
+    clientCertSecret_: ingress-mtls-secret
     verifyadClient: "on"
     verifyDeaerpth: 1

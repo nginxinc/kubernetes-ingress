@@ -4913,13 +4913,13 @@ func TestGenerateSSLConfig(t *testing.T) {
 		},
 		{
 			inputTLS: &conf_v1.TLS{
-				Secret: "secret",
+				Secret: "missing",
 			},
 			inputCfgParams: &ConfigParams{},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
-				"default/secret": {
-					Error: errors.New("secret doesn't exist"),
+				"default/missing": {
+					Error: errors.New("missing doesn't exist"),
 				},
 			},
 			expectedSSL: &version2.SSL{
@@ -4927,18 +4927,18 @@ func TestGenerateSSLConfig(t *testing.T) {
 				RejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
-				nil: []string{"TLS secret secret is invalid: secret doesn't exist"},
+				nil: []string{"TLS secret missing is invalid: missing doesn't exist"},
 			},
-			msg: "secret doesn't exist in the cluster with HTTPS",
+			msg: "missing doesn't exist in the cluster with HTTPS",
 		},
 		{
 			inputTLS: &conf_v1.TLS{
-				Secret: "secret",
+				Secret: "mistyped",
 			},
 			inputCfgParams: &ConfigParams{},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
-				"default/secret": {
+				"default/mistyped": {
 					Secret: &api_v1.Secret{
 						Type: secrets.SecretTypeCA,
 					},
@@ -4949,7 +4949,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				RejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
-				nil: []string{"TLS secret secret is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'"},
+				nil: []string{"TLS secret mistyped is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'"},
 			},
 			msg: "wrong secret type",
 		},
