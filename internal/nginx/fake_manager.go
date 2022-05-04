@@ -16,7 +16,7 @@ type FakeManager struct {
 	dhparamFilename string
 }
 
-// NewFakeManager creates a FakeMananger.
+// NewFakeManager creates a FakeManager.
 func NewFakeManager(confPath string) *FakeManager {
 	return &FakeManager{
 		confdPath:       path.Join(confPath, "conf.d"),
