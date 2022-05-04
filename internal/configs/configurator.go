@@ -2,10 +2,7 @@ package configs
 
 import (
 	"bytes"
-	"crypto"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"os"
 	"strings"
@@ -14,7 +11,7 @@ import (
 
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/nginx-prometheus-exporter/collector"
-	"github.com/spiffe/go-spiffe/workload"
+	"github.com/spiffe/go-spiffe/v2/workloadapi"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
@@ -125,7 +122,8 @@ type Configurator struct {
 // NewConfigurator creates a new Configurator.
 func NewConfigurator(nginxManager nginx.Manager, staticCfgParams *StaticConfigParams, config *ConfigParams,
 	templateExecutor *version1.TemplateExecutor, templateExecutorV2 *version2.TemplateExecutor, isPlus bool, isWildcardEnabled bool,
-	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool, latencyCollector latCollector.LatencyCollector, isLatencyMetricsEnabled bool) *Configurator {
+	labelUpdater collector.LabelUpdater, isPrometheusEnabled bool, latencyCollector latCollector.LatencyCollector, isLatencyMetricsEnabled bool,
+) *Configurator {
 	metricLabelsIndex := &metricLabelsIndex{
 		ingressUpstreams:             make(map[string][]string),
 		virtualServerUpstreams:       make(map[string][]string),
@@ -1241,41 +1239,33 @@ func (cnf *Configurator) GetVirtualServerCounts() (vsCount int, vsrCount int) {
 }
 
 // AddOrUpdateSpiffeCerts writes Spiffe certs and keys to disk and reloads NGINX
-func (cnf *Configurator) AddOrUpdateSpiffeCerts(svidResponse *workload.X509SVIDs) error {
-	svid := svidResponse.Default()
-	privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(svid.PrivateKey.(crypto.PrivateKey))
+func (cnf *Configurator) AddOrUpdateSpiffeCerts(svidResponse *workloadapi.X509Context) error {
+	svid := svidResponse.DefaultSVID()
+	trustDomain := svid.ID.TrustDomain()
+	caBundle, err := svidResponse.Bundles.GetX509BundleForTrustDomain(trustDomain)
 	if err != nil {
-		return fmt.Errorf("error when marshaling private key: %w", err)
+		return fmt.Errorf("error parsing CA bundle from SPIFFE SVID response: %w", err)
 	}
 
-	cnf.nginxManager.CreateSecret(spiffeKeyFileName, createSpiffeKey(privateKeyBytes), spiffeKeyFileMode)
-	cnf.nginxManager.CreateSecret(spiffeCertFileName, createSpiffeCert(svid.Certificates), spiffeCertsFileMode)
-	cnf.nginxManager.CreateSecret(spiffeBundleFileName, createSpiffeCert(svid.TrustBundle), spiffeCertsFileMode)
+	pemBundle, err := caBundle.Marshal()
+	if err != nil {
+		return fmt.Errorf("unable to marshal X.509 SVID Bundle: %w", err)
+	}
+
+	pemCerts, pemKey, err := svid.Marshal()
+	if err != nil {
+		return fmt.Errorf("unable to marshal X.509 SVID: %w", err)
+	}
+
+	cnf.nginxManager.CreateSecret(spiffeKeyFileName, pemKey, spiffeKeyFileMode)
+	cnf.nginxManager.CreateSecret(spiffeCertFileName, pemCerts, spiffeCertsFileMode)
+	cnf.nginxManager.CreateSecret(spiffeBundleFileName, pemBundle, spiffeCertsFileMode)
 
 	err = cnf.reload(nginx.ReloadForOtherUpdate)
 	if err != nil {
 		return fmt.Errorf("error when reloading NGINX when updating the SPIFFE Certs: %w", err)
 	}
 	return nil
-}
-
-func createSpiffeKey(content []byte) []byte {
-	return pem.EncodeToMemory(&pem.Block{
-		Type:  "EC PRIVATE KEY",
-		Bytes: content,
-	})
-}
-
-func createSpiffeCert(certs []*x509.Certificate) []byte {
-	pemData := make([]byte, 0, len(certs))
-	for _, c := range certs {
-		b := &pem.Block{
-			Type:  "CERTIFICATE",
-			Bytes: c.Raw,
-		}
-		pemData = append(pemData, pem.EncodeToMemory(b)...)
-	}
-	return pemData
 }
 
 func (cnf *Configurator) updateApResources(ingEx *IngressEx) *AppProtectResources {
@@ -1444,7 +1434,6 @@ func (cnf *Configurator) DeleteAppProtectLogConf(resource *unstructured.Unstruct
 func (cnf *Configurator) RefreshAppProtectUserSigs(
 	userSigs []*unstructured.Unstructured, delPols []string, ingExes []*IngressEx, mergeableIngresses []*MergeableIngresses, vsExes []*VirtualServerEx,
 ) (Warnings, error) {
-
 	allWarnings, err := cnf.addOrUpdateIngressesAndVirtualServers(ingExes, mergeableIngresses, vsExes)
 	if err != nil {
 		return allWarnings, err
