@@ -71,6 +71,7 @@ server {
     include oidc/oidc.conf;
 
     set $oidc_pkce_enable 0;
+    set $zone_sync_leeway 0;
     set $oidc_logout_redirect "/_logout";
     set $oidc_hmac_key "{{ $s.VSName }}";
 
