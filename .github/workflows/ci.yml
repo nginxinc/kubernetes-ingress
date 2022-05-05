@@ -394,9 +394,9 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: |
-            nginx/nginx-ingress
-            ghcr.io/nginxinc/kubernetes-ingress
-            public.ecr.aws/nginx/nginx-ingress
+            name=nginx/nginx-ingress
+            name=ghcr.io/nginxinc/kubernetes-ingress
+            name=public.ecr.aws/nginx/nginx-ingress
           flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }},onlatest=true
           tags: |
             type=edge
@@ -519,10 +519,10 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: |
-            ${{ startsWith(github.ref, 'refs/tags/') && 'gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress' || '' }}
-            ${{ startsWith(github.ref, 'refs/heads/release') && 'gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic/nginx-plus-ingress' || '' }}
-            ${{ startsWith(github.ref, 'refs/tags/') && contains(matrix.target, 'aws') && '709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress' || '' }}
-            gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
+            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') && contains(matrix.target, 'aws') }}
           flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }},onlatest=true
           tags: |
             type=edge

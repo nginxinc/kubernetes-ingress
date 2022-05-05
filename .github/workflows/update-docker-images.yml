@@ -216,9 +216,9 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: |
-            nginx/nginx-ingress
-            ghcr.io/nginxinc/kubernetes-ingress
-            public.ecr.aws/nginx/nginx-ingress
+            name=nginx/nginx-ingress
+            name=ghcr.io/nginxinc/kubernetes-ingress
+            name=public.ecr.aws/nginx/nginx-ingress
           flavor: |
             latest=true
             suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
