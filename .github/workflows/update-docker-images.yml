@@ -180,7 +180,7 @@ jobs:
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
         if: always()
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
         with:
           platforms: arm,arm64,ppc64le,s390x
         if: ${{ matrix.needs-updating == 'true' }}
