@@ -119,7 +119,7 @@ type StaticConfigParams struct {
 	EnableInternalRoutes           bool
 	MainAppProtectLoadModule       bool
 	MainAppProtectDosLoadModule    bool
-	PodName                        string
+	InternalRouteServerName        string
 	EnableLatencyMetrics           bool
 	EnableOIDC                     bool
 	SSLRejectHandshake             bool
