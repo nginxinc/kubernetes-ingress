@@ -219,7 +219,7 @@ jobs:
       - name: Docker Buildx
         uses: docker/setup-buildx-action@v2
       - name: Build Docker Image nginx-ingress
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
@@ -427,7 +427,7 @@ jobs:
           fi
           echo "::set-output name=ic_version::$ic_version"
       - name: Build Docker image (and push if not a PR)
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
@@ -548,7 +548,7 @@ jobs:
           fi
           echo "::set-output name=ic_version::$ic_version"
       - name: Build Plus Docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
@@ -569,7 +569,7 @@ jobs:
             "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.NGINX_KEY }}"
       - name: Load image for Trivy
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
