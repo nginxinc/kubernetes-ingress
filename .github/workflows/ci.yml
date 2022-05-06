@@ -389,6 +389,14 @@ jobs:
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         if: github.event_name != 'pull_request'
+      - name: Login to Quay.io
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+        if: github.event_name != 'pull_request'
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
@@ -397,6 +405,7 @@ jobs:
             name=nginx/nginx-ingress
             name=ghcr.io/nginxinc/kubernetes-ingress
             name=public.ecr.aws/nginx/nginx-ingress
+            name=quay.io/nginx/nginx-ingress
           flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }},onlatest=true
           tags: |
             type=edge
