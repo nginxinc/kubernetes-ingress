@@ -214,7 +214,7 @@ func main() {
 
 	unparsed := flag.Args()
 	if unparsed != nil {
-		glog.Infof("Ignoring unhandled arguments: %v", unparsed)
+		glog.Warningf("Ignoring unhandled arguments: %v", unparsed)
 	}
 
 	if startupCheckFn != nil {
