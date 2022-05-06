@@ -13,7 +13,7 @@ docs: "DOCS-616"
 
 OVERVIEW:
 
-* Support for automatic provisioning and management of Certificate resources for VirtualServer resources using [cert-manager](https://cert-manager.io/docs/). Examples for configuring cert-manager with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/custom-resources/certmanager). Please note that ACME type Issuers are not yet supported for use with VirtualServer resources.
+* Support for automatic provisioning and management of Certificate resources for VirtualServer resources using [cert-manager](https://cert-manager.io/docs/). Examples for configuring cert-manager with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/custom-resources/certmanager). Please note that HTTP01 type ACME Issuers are not yet supported for use with VirtualServer resources.
 
 * Full support for IPv6 using the NGINX Ingress Controller [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) custom resources, and Ingress resources.
 
