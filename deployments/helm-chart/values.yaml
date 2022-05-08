@@ -239,7 +239,6 @@ controller:
     # name: nginx-ingress
 
     ## Whether to automatically allocate NodePorts (only for LoadBalancers).
-    ## This is a beta-level feature as of Kubernetes version 1.22.
     # allocateLoadBalancerNodePorts: false
 
     ## Dual stack preference.
