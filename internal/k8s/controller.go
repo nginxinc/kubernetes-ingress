@@ -35,7 +35,7 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
-	"github.com/spiffe/go-spiffe/workload"
+	"github.com/spiffe/go-spiffe/v2/workloadapi"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -152,7 +152,7 @@ type LoadBalancerController struct {
 	metricsCollector              collectors.ControllerCollector
 	globalConfigurationValidator  *validation.GlobalConfigurationValidator
 	transportServerValidator      *validation.TransportServerValidator
-	spiffeController              *SpiffeController
+	spiffeCertFetcher             *SpiffeCertFetcher
 	internalRoutesEnabled         bool
 	syncLock                      sync.Mutex
 	isNginxReady                  bool
@@ -247,7 +247,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.syncQueue = newTaskQueue(lbc.sync)
 	if input.SpireAgentAddress != "" {
 		var err error
-		lbc.spiffeController, err = NewSpiffeController(lbc.syncSVIDRotation, input.SpireAgentAddress)
+		lbc.spiffeCertFetcher, err = NewSpiffeCertFetcher(lbc.syncSVIDRotation, input.SpireAgentAddress)
 		if err != nil {
 			glog.Fatalf("failed to create Spiffe Controller: %v", err)
 		}
@@ -544,8 +544,8 @@ func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.Resource
 func (lbc *LoadBalancerController) Run() {
 	lbc.ctx, lbc.cancel = context.WithCancel(context.Background())
 
-	if lbc.spiffeController != nil {
-		err := lbc.spiffeController.Start(lbc.ctx.Done(), lbc.addInternalRouteServer)
+	if lbc.spiffeCertFetcher != nil {
+		err := lbc.spiffeCertFetcher.Start(lbc.ctx, lbc.addInternalRouteServer)
 		if err != nil {
 			glog.Fatal(err)
 		}
@@ -768,7 +768,7 @@ func (lbc *LoadBalancerController) preSyncSecrets() {
 
 func (lbc *LoadBalancerController) sync(task task) {
 	glog.V(3).Infof("Syncing %v", task.Key)
-	if lbc.spiffeController != nil {
+	if lbc.spiffeCertFetcher != nil {
 		lbc.syncLock.Lock()
 		defer lbc.syncLock.Unlock()
 	}
@@ -3279,7 +3279,7 @@ func formatWarningMessages(w []string) string {
 	return strings.Join(w, "; ")
 }
 
-func (lbc *LoadBalancerController) syncSVIDRotation(svidResponse *workload.X509SVIDs) {
+func (lbc *LoadBalancerController) syncSVIDRotation(svidResponse *workloadapi.X509Context) {
 	lbc.syncLock.Lock()
 	defer lbc.syncLock.Unlock()
 	glog.V(3).Info("Rotating SPIFFE Certificates")

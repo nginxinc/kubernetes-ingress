@@ -212,6 +212,11 @@ func main() {
 	}
 	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 
+	unparsed := flag.Args()
+	if unparsed != nil {
+		glog.Warningf("Ignoring unhandled arguments: %v", unparsed)
+	}
+
 	if startupCheckFn != nil {
 		err := startupCheckFn()
 		if err != nil {
@@ -358,7 +363,7 @@ func main() {
 	}
 
 	if ingressClassRes.Spec.Controller != k8s.IngressControllerName {
-		glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v", ingressClassRes.Name, ingressClassRes.Spec.Controller)
+		glog.Fatalf("IngressClass with name %v has an invalid Spec.Controller %v; expected %v", ingressClassRes.Name, ingressClassRes.Spec.Controller, k8s.IngressControllerName)
 	}
 
 	var dynClient dynamic.Interface

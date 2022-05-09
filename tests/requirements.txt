@@ -2,7 +2,7 @@ PyYAML==6.0
 requests==2.27.1
 forcediphttpsadapter==1.0.2
 kubernetes==23.3.0
-pytest==7.1.1
+pytest==7.1.2
 ipaddress==1.0.23 # >= 1.0.17
 cffi==1.15.0
 pyOpenSSL==22.0.0
@@ -10,8 +10,8 @@ certifi==2021.10.8
 urllib3==1.26.9
 pytest-html==3.1.1
 pytest-profiling==1.7.0
-more-itertools==8.12.0
+more-itertools==8.13.0
 mock==4.0.3
-grpcio==1.45.0
-grpcio-tools==1.45.0
+grpcio==1.46.0
+grpcio-tools==1.46.0
 flaky==3.7.0

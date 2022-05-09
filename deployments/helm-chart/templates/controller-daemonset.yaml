@@ -122,6 +122,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+{{- if .Values.nginxServiceMesh.enable }}
+        - name: POD_SERVICEACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+{{- end }}
         resources:
 {{ toYaml .Values.controller.resources | indent 10 }}
         args:
