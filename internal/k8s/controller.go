@@ -687,7 +687,10 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 	}
 	if configExists {
 		lbc.configMap = obj.(*api_v1.ConfigMap)
-		lbc.statusUpdater.SaveStatusFromExternalStatus(lbc.configMap.Data["external-status-address"])
+		externalStatusAddress, exists := lbc.configMap.Data["external-status-address"]
+		if exists {
+			lbc.statusUpdater.SaveStatusFromExternalStatus(externalStatusAddress)
+		}
 	} else {
 		lbc.configMap = nil
 	}
