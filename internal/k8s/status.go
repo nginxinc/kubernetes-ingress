@@ -37,6 +37,7 @@ type statusUpdater struct {
 	bigIPPorts               string
 	externalEndpoints        []v1.ExternalEndpoint
 	status                   []api_v1.LoadBalancerIngress
+	statusInitialized        bool
 	keyFunc                  func(obj interface{}) (string, error)
 	ingressLister            *storeToIngressLister
 	virtualServerLister      cache.Store
@@ -105,6 +106,9 @@ func (su *statusUpdater) ClearIngressStatus(ing networking.Ingress) error {
 
 // UpdateIngressStatus updates the status on the selected Ingress.
 func (su *statusUpdater) UpdateIngressStatus(ing networking.Ingress) error {
+	if !su.statusInitialized {
+		return nil
+	}
 	return su.updateIngressWithStatus(ing, su.status)
 }
 
@@ -199,6 +203,7 @@ func (su *statusUpdater) saveStatus(ips []string) {
 		}
 	}
 	su.status = statusIngs
+	su.statusInitialized = true
 }
 
 var (
