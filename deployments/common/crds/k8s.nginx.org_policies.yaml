@@ -116,6 +116,8 @@ spec:
                       type: string
                     tokenEndpoint:
                       type: string
+                    zoneSyncLeeway:
+                      type: integer
                 rateLimit:
                   description: RateLimit defines a rate limit policy.
                   type: object
