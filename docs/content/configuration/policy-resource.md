@@ -297,7 +297,7 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 
 #### Prerequisites
 
-In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admixn-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
+In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
 You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.2.0/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
@@ -316,7 +316,7 @@ The OIDC policy defines a few internal locations that can't be customized: `/_jw
 |``jwksURI`` | URL for the JSON Web Key Set (JWK) document provided by your OpenID Connect provider. | ``string`` | Yes |
 |``scope`` | List of OpenID Connect scopes. Possible values are ``openid``, ``profile``, ``email``, ``address`` and ``phone``. The scope ``openid`` always needs to be present and others can be added concatenating them with a ``+`` sign, for example ``openid+profile+email``. The default is ``openid``. | ``string`` | No |
 |``redirectURI`` | Allows overriding the default redirect URI. The default is ``/_codexch``. | ``string`` | No |
-|``zoneSyncLeeway`` | Specifies the maximum timeout for synchronizing ID tokens between multiple Ingress Controllers. The default is ``0s``. | ``string`` | No |
+|``zoneSyncLeeway`` | Specifies the maximum timeout in milliseconds for synchronizing ID tokens between multiple Ingress Controllers. The default is ``0``. | ``int`` | No |
 {{% /table %}}
 
 > **Note**: Only one OIDC policy can be referenced in a VirtualServer and its VirtualServerRoutes. However, the same policy can still be applied to different routes in the VirtualServer and VirtualServerRoutes.
