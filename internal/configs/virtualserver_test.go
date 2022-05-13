@@ -4000,7 +4000,7 @@ func TestGeneratePoliciesFails(t *testing.T) {
 					ClientSecret:   "super_secret_123",
 					RedirectURI:    "/_codexch",
 					Scope:          "openid",
-					ZoneSyncLeeway: 0,
+					ZoneSyncLeeway: 200,
 				},
 				"default/oidc-policy",
 			},

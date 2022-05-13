@@ -998,7 +998,7 @@ func (p *policiesCfg) addOIDCConfig(
 			ClientSecret:   string(clientSecret),
 			Scope:          scope,
 			RedirectURI:    redirectURI,
-			ZoneSyncLeeway: generateIntFromPointer(oidc.ZoneSyncLeeway, 0),
+			ZoneSyncLeeway: generateIntFromPointer(oidc.ZoneSyncLeeway, 200),
 		}
 		oidcPolCfg.key = polKey
 	}
