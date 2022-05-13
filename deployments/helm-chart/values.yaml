@@ -136,6 +136,12 @@ controller:
   #   image: busybox:1.34
   #   command: ['sh', '-c', 'echo this is initial setup!']
 
+  ## The minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing, for it to be considered available.
+  minReadySeconds: 0
+
+    ## Strategy used to replace old Pods by new ones. .spec.strategy.type can be "Recreate" or "RollingUpdate". "RollingUpdate" is the default value.
+  strategy: {}
+
   ## Extra containers for the Ingress Controller pods.
   extraContainers: []
   # - name: container
