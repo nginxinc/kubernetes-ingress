@@ -354,7 +354,7 @@ Requires [-nginx-plus](#cmdoption-nginx-plus).
 * If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.
 
 &nbsp;
-<a name="cmdoption-app-protect-log-level"></a.>
+<a name="cmdoption-app-protect-log-level"></a>
 
 ### -app-protect-log-level `<string>`
 
