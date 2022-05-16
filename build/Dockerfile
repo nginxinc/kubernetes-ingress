@@ -19,9 +19,9 @@ RUN apt-get update \
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
 FROM docker.io/library/nginx:1.21.6-alpine AS alpine
 
-RUN apk add --no-cache libcap\
-	# temp fix for CVE-2022-1271
-	&& apk upgrade --no-cache xz-libs
+RUN apk add --no-cache libcap \
+	# temp fix for CVE-2022-1271, CVE-2022-22576, CVE-2022-27404 and CVE-2022-29824
+	&& apk upgrade --no-cache xz-libs curl libcurl freetype libxml2
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
