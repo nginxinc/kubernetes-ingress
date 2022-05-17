@@ -8,7 +8,10 @@ docs: "DOCS-616"
 ---
 ## NGINX Ingress Controller 2.2.1
 
-16 May 2022
+17 May 2022
+
+CHANGES:
+* Update Go dependencies.
 
 FIXES:
 * [2654](https://github.com/nginxinc/kubernetes-ingress/pull/2654) Sync changes from [nginx-openid-connect](https://github.com/nginxinc/nginx-openid-connect) repo, add zoneSyncLeeway field in policy. For more information on the fixes, see [52](https://github.com/nginxinc/nginx-openid-connect/pull/52).
