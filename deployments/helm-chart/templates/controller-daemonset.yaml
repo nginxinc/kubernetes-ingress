@@ -209,7 +209,7 @@ spec:
 {{- end }}
 {{- end }}
 {{- if .Values.controller.strategy }}
-  strategy:
+  updateStrategy:
 {{ toYaml .Values.controller.strategy | indent 4 }}
 {{- end }}
 {{- if .Values.controller.minReadySeconds }}
