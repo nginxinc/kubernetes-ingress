@@ -6,6 +6,23 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## NGINX Ingress Controller 2.2.1
+
+17 May 2022
+
+CHANGES:
+* Update Go dependencies.
+
+FIXES:
+* [2654](https://github.com/nginxinc/kubernetes-ingress/pull/2654) Sync changes from [nginx-openid-connect](https://github.com/nginxinc/nginx-openid-connect) repo, add zoneSyncLeeway field in policy. For more information on the fixes, see [52](https://github.com/nginxinc/nginx-openid-connect/pull/52).
+
+HELM CHART:
+* The version of the Helm chart is now 0.13.1.
+
+UPGRADE:
+* For NGINX, use the 2.2.1 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.2.1), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
+* For NGINX Plus, use the 2.2.1 images from the F5 Container registry or build your own image using the 2.2.1 source code.
+* For Helm, use version 0.13.1 of the chart.
 
 ## NGINX Ingress Controller 2.2.0
 
@@ -13,7 +30,7 @@ docs: "DOCS-616"
 
 OVERVIEW:
 
-* Support for automatic provisioning and management of Certificate resources for VirtualServer resources using [cert-manager](https://cert-manager.io/docs/). Examples for configuring cert-manager with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.0/examples/custom-resources/certmanager). Please note that ACME type Issuers are not yet supported for use with VirtualServer resources.
+* Support for automatic provisioning and management of Certificate resources for VirtualServer resources using [cert-manager](https://cert-manager.io/docs/). Examples for configuring cert-manager with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.1/examples/custom-resources/certmanager). Please note that ACME type Issuers are not yet supported for use with VirtualServer resources.
 
 * Full support for IPv6 using the NGINX Ingress Controller [VirtualServer and VirtualServerRoute](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources) custom resources, and Ingress resources.
 
@@ -49,7 +66,7 @@ UPGRADE:
 * For NGINX, use the 2.2.0 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.2.0), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
 * For NGINX Plus, use the 2.2.0 images from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the 2.2.0 source code.
 * For Helm, use version 0.13.0 of the chart. If you're using custom resources like VirtualServer and TransportServer (`controller.enableCustomResources` is set to `true`), after you run the `helm upgrade` command, the CRDs will not be upgraded. After running the `helm upgrade` command, run `kubectl apply -f deployments/helm-chart/crds` to upgrade the CRDs.
-* When upgrading using the [manifests](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), make sure to update the [ClusterRole](https://github.com/nginxinc/kubernetes-ingress/blob/v2.2.0/deployments/rbac/rbac.yaml). This is required to enable the cert-manager for VirtualServer resources integration.
+* When upgrading using the [manifests](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), make sure to update the [ClusterRole](https://github.com/nginxinc/kubernetes-ingress/blob/v2.2.1/deployments/rbac/rbac.yaml). This is required to enable the cert-manager for VirtualServer resources integration.
 * The -enable-preview-policies cli argument has been deprecated, and is no longer required for any Policy resources.
 * Enabling OIDC Policies now requires the use of -enable-oidc cli argument instead of the -enable-preview-policies cli argument.
 
