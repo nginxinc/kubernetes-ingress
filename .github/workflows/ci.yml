@@ -104,7 +104,7 @@ jobs:
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Build binary
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: build --snapshot --rm-dist --single-target
@@ -324,7 +324,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist

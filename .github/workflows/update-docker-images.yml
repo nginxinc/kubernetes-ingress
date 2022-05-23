@@ -113,7 +113,7 @@ jobs:
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: build --rm-dist --id kubernetes-ingress
