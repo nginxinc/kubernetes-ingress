@@ -1375,7 +1375,7 @@ func TestValidateRouteField(t *testing.T) {
 	}
 }
 
-func TestValdateReferencedUpstream(t *testing.T) {
+func TestValidateReferencedUpstream(t *testing.T) {
 	t.Parallel()
 	upstream := "test"
 	upstreamNames := map[string]sets.Empty{
@@ -1388,7 +1388,7 @@ func TestValdateReferencedUpstream(t *testing.T) {
 	}
 }
 
-func TestValdateUpstreamFails(t *testing.T) {
+func TestValidateUpstreamFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		upstream      string

@@ -207,3 +207,10 @@ spec:
       initContainers: {{ toYaml .Values.controller.initContainers | nindent 8 }}
 {{- end }}
 {{- end }}
+{{- if .Values.controller.strategy }}
+  strategy:
+{{ toYaml .Values.controller.strategy | indent 4 }}
+{{- end }}
+{{- if .Values.controller.minReadySeconds }}
+  minReadySeconds: {{ .Values.controller.minReadySeconds }}
+{{- end }}

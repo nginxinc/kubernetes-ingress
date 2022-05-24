@@ -7,7 +7,30 @@ var newSession = false; // Used by oidcAuth() and validateIdToken()
 
 export default { auth, codeExchange, validateIdToken, logout };
 
-function auth(r) {
+function retryOriginalRequest(r) {
+    delete r.headersOut["WWW-Authenticate"]; // Remove evidence of original failed auth_jwt
+    r.internalRedirect(r.variables.uri + r.variables.is_args + (r.variables.args || ''));
+}
+
+// If the ID token has not been synced yet, poll the variable every 100ms until
+// get a value or after a timeout.
+function waitForSessionSync(r, timeLeft) {
+    if (r.variables.session_jwt) {
+        retryOriginalRequest(r);
+    } else if (timeLeft > 0) {
+        setTimeout(waitForSessionSync, 100, r, timeLeft - 100);
+    } else {
+        auth(r, true);
+    }
+}
+
+function auth(r, afterSyncCheck) {
+    // If a cookie was sent but the ID token is not in the key-value database, wait for the token to be in sync.
+    if (r.variables.cookie_auth_token && !r.variables.session_jwt && !afterSyncCheck && r.variables.zone_sync_leeway > 0) {
+        waitForSessionSync(r, r.variables.zone_sync_leeway);
+        return;
+    }
+
     if (!r.variables.refresh_token || r.variables.refresh_token == "-") {
         newSession = true;
 
@@ -83,14 +106,12 @@ function auth(r) {
                         r.variables.session_jwt = tokenset.id_token; // Update key-value store
 
                         // Update refresh token (if we got a new one)
-                        // 12.2021 - In rare cases the IdP does not include the refresh-token in the response. The rt will be undefined in this case.
-                        if (r.variables.refresh_token != tokenset.refresh_token && tokenset.refresh_token != undefined) {
+                        if (r.variables.refresh_token != tokenset.refresh_token) {
                             r.log("OIDC replacing previous refresh token (" + r.variables.refresh_token + ") with new value: " + tokenset.refresh_token);
                             r.variables.refresh_token = tokenset.refresh_token; // Update key-value store
                         }
 
-                        delete r.headersOut["WWW-Authenticate"]; // Remove evidence of original failed auth_jwt
-                        r.internalRedirect(r.variables.request_uri); // Continue processing original request
+                        retryOriginalRequest(r); // Continue processing original request
                     }
                 );
             } catch (e) {
@@ -104,7 +125,7 @@ function auth(r) {
 
 function codeExchange(r) {
     // First check that we received an authorization code from the IdP
-    if (r.variables.arg_code.length == 0) {
+    if (r.variables.arg_code == undefined || r.variables.arg_code.length == 0) {
         if (r.variables.arg_error) {
             r.error("OIDC error receiving authorization code from IdP: " + r.variables.arg_error_description);
         } else {

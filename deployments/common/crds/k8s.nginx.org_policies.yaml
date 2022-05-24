@@ -116,6 +116,8 @@ spec:
                       type: string
                     tokenEndpoint:
                       type: string
+                    zoneSyncLeeway:
+                      type: integer
                 rateLimit:
                   description: RateLimit defines a rate limit policy.
                   type: object
@@ -156,6 +158,18 @@ spec:
                           type: boolean
                         logDest:
                           type: string
+                    securityLogs:
+                      type: array
+                      items:
+                        description: SecurityLog defines the security log of a WAF policy.
+                        type: object
+                        properties:
+                          apLogConf:
+                            type: string
+                          enable:
+                            type: boolean
+                          logDest:
+                            type: string
             status:
               description: PolicyStatus is the status of the policy resource
               type: object

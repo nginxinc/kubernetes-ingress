@@ -3320,7 +3320,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 				TotalTCP:            1,
 				TotalUDP:            1,
 			},
-			msg: "TLSPasstrough, TCP and UDP TransportServers",
+			msg: "TLSPassthrough, TCP and UDP TransportServers",
 		},
 	}
 
@@ -3357,7 +3357,7 @@ func TestGetTransportServerMetrics(t *testing.T) {
 	}
 }
 
-func TestIsEqualForIngressConfigurationes(t *testing.T) {
+func TestIsEqualForIngressConfigurations(t *testing.T) {
 	regularIng := createTestIngress("regular-ingress", "foo.example.com")
 
 	ingConfigWithInvalidHost := NewRegularIngressConfiguration(regularIng)

@@ -6,7 +6,7 @@ spec:
   waf:
     enable: true
     apPolicy: "default/dataguard-alarm"
-    securityLog:
-      enable: true
+    securityLogs:
+    - enable: true
       apLogConf: "default/logconf"
       logDest: "syslog:server=syslog-svc.default:514"

@@ -89,7 +89,7 @@ You would create an `APDosPolicy` resource with the policy defined in the `spec`
       tls_fingerprint: "on"
   ```
 
-Then add a reference in the `DosProtectedResrouce` to the `ApDosPolicy`:
+Then add a reference in the `DosProtectedResource` to the `ApDosPolicy`:
   ```yaml
    apiVersion: appprotectdos.f5.com/v1beta1
    kind: DosProtectedResource

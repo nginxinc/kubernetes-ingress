@@ -212,6 +212,11 @@ func main() {
 	}
 	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 
+	unparsed := flag.Args()
+	if unparsed != nil {
+		glog.Warningf("Ignoring unhandled arguments: %v", unparsed)
+	}
+
 	if startupCheckFn != nil {
 		err := startupCheckFn()
 		if err != nil {

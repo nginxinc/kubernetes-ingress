@@ -3,6 +3,7 @@ import pytest, json
 
 from settings import TEST_DATA, DEPLOYMENTS
 from suite.resources_utils import (
+    delete_items_from_yaml,
     wait_before_test,
     create_items_from_yaml,
     wait_before_test,
@@ -36,6 +37,7 @@ from suite.ap_resources_utils import (
     delete_ap_policy,
     delete_ap_logconf,
     create_ap_waf_policy_from_yaml,
+    create_ap_multilog_waf_policy_from_yaml,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml, get_name_from_yaml
 
@@ -374,7 +376,7 @@ class TestAppProtectWAFPolicyVS:
 
         delete_policy(kube_apis.custom_objects, "waf-policy", test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
-
+        delete_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
         assert_invalid_responses(response)
         assert (
             f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"'
@@ -384,6 +386,81 @@ class TestAppProtectWAFPolicyVS:
         assert f'request_status="blocked"' in log_contents
         assert f'outcome="REJECTED"' in log_contents
 
+    def test_ap_waf_policy_multi_logs(
+        self,
+        kube_apis,
+        crd_ingress_controller_with_ap,
+        virtual_server_setup,
+        appprotect_setup,
+        test_namespace,
+    ):
+        """
+        Test waf policy logs
+        """
+        src_syslog_yaml = f"{TEST_DATA}/ap-waf/syslog.yaml"
+        src_syslog_yaml_additional = f"{TEST_DATA}/ap-waf/syslog-1.yaml"
+        log_loc = f"/var/log/messages"
+        create_items_from_yaml(kube_apis, src_syslog_yaml, test_namespace)
+        create_items_from_yaml(kube_apis, src_syslog_yaml_additional, test_namespace)
+        syslog_dst1 = f"syslog-svc.{test_namespace}"
+        syslog_dst2 = f"syslog-svc-1.{test_namespace}"
+        syslog_pods = kube_apis.v1.list_namespaced_pod(test_namespace, label_selector="app in (syslog, syslog-1)").items
+        print(f"Create waf policy")
+        create_ap_multilog_waf_policy_from_yaml(
+            kube_apis.custom_objects,
+            waf_pol_dataguard_src,
+            test_namespace,
+            test_namespace,
+            True,
+            True,
+            ap_pol_name,
+            [log_name, log_name],
+            [f"syslog:server={syslog_dst1}:514",f"syslog:server={syslog_dst2}:514"]
+        )
+        wait_before_test()
+        print(f"Patch vs with policy: {waf_spec_vs_src}")
+        patch_virtual_server_from_yaml(
+            kube_apis.custom_objects,
+            virtual_server_setup.vs_name,
+            waf_spec_vs_src,
+            virtual_server_setup.namespace,
+        )
+        wait_before_test()
+        ap_crd_info = read_ap_custom_resource(
+            kube_apis.custom_objects, test_namespace, "appolicies", ap_policy_uds
+        )
+        assert_ap_crd_info(ap_crd_info, ap_policy_uds)
+        wait_before_test(120)
+
+        print(
+            "----------------------- Send request with embedded malicious script----------------------"
+        )
+        response = requests.get(
+            virtual_server_setup.backend_1_url + "</script>",
+            headers={"host": virtual_server_setup.vs_host},
+        )
+        print(response.text)
+        log_contents = ["",""]
+        retry = 0
+        for i in range(2):    
+            while "ASM:attack_type" not in log_contents[i] and retry <= 30:
+                log_contents[i] = get_file_contents(
+                    kube_apis.v1, log_loc, syslog_pods[i].metadata.name, test_namespace
+                )
+                retry += 1
+                wait_before_test(1)
+                print(f"Security log not updated, retrying... #{retry}")
+
+        delete_policy(kube_apis.custom_objects, "waf-policy", test_namespace)
+        self.restore_default_vs(kube_apis, virtual_server_setup)
+
+        assert_invalid_responses(response)
+
+        for log_cont in log_contents:
+            assert f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"' in log_cont
+            assert f'severity="Critical"' in log_cont
+            assert f'request_status="blocked"' in log_cont
+            assert f'outcome="REJECTED"' in log_cont
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect

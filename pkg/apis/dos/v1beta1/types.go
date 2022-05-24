@@ -15,7 +15,7 @@ type DosProtectedResource struct {
 	Spec DosProtectedResourceSpec `json:"spec"`
 }
 
-// DosProtectedResourceSpec deines the properties and values a DosProtectedResource can have.
+// DosProtectedResourceSpec defines the properties and values a DosProtectedResource can have.
 type DosProtectedResourceSpec struct {
 	// Enable enables the DOS feature if set to true
 	Enable bool `json:"enable"`

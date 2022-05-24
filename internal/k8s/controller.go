@@ -102,7 +102,7 @@ type LoadBalancerController struct {
 	restConfig                    *rest.Config
 	cacheSyncs                    []cache.InformerSynced
 	sharedInformerFactory         informers.SharedInformerFactory
-	confSharedInformerFactorry    k8s_nginx_informers.SharedInformerFactory
+	confSharedInformerFactory     k8s_nginx_informers.SharedInformerFactory
 	configMapController           cache.Controller
 	dynInformerFactory            dynamicinformer.DynamicSharedInformerFactory
 	globalConfigurationController cache.Controller
@@ -269,7 +269,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.addPodHandler()
 
 	if lbc.areCustomResourcesEnabled {
-		lbc.confSharedInformerFactorry = k8s_nginx_informers.NewSharedInformerFactoryWithOptions(lbc.confClient, input.ResyncPeriod, k8s_nginx_informers.WithNamespace(lbc.namespace))
+		lbc.confSharedInformerFactory = k8s_nginx_informers.NewSharedInformerFactoryWithOptions(lbc.confClient, input.ResyncPeriod, k8s_nginx_informers.WithNamespace(lbc.namespace))
 
 		lbc.addVirtualServerHandler(createVirtualServerHandlers(lbc))
 		lbc.addVirtualServerRouteHandler(createVirtualServerRouteHandlers(lbc))
@@ -413,7 +413,7 @@ func (lbc *LoadBalancerController) addAppProtectDosLogConfHandler(handlers cache
 
 // addAppProtectDosLogConfHandler creates dynamic informer for custom appprotectdos logging config resource
 func (lbc *LoadBalancerController) addAppProtectDosProtectedResourceHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactorry.Appprotectdos().V1beta1().DosProtectedResources().Informer()
+	informer := lbc.confSharedInformerFactory.Appprotectdos().V1beta1().DosProtectedResources().Informer()
 	informer.AddEventHandler(handlers)
 	lbc.appProtectDosProtectedLister = informer.GetStore()
 
@@ -479,7 +479,7 @@ func (lbc *LoadBalancerController) addPodHandler() {
 }
 
 func (lbc *LoadBalancerController) addVirtualServerHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactorry.K8s().V1().VirtualServers().Informer()
+	informer := lbc.confSharedInformerFactory.K8s().V1().VirtualServers().Informer()
 	informer.AddEventHandler(handlers)
 	lbc.virtualServerLister = informer.GetStore()
 
@@ -487,7 +487,7 @@ func (lbc *LoadBalancerController) addVirtualServerHandler(handlers cache.Resour
 }
 
 func (lbc *LoadBalancerController) addVirtualServerRouteHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactorry.K8s().V1().VirtualServerRoutes().Informer()
+	informer := lbc.confSharedInformerFactory.K8s().V1().VirtualServerRoutes().Informer()
 	informer.AddEventHandler(handlers)
 	lbc.virtualServerRouteLister = informer.GetStore()
 
@@ -495,7 +495,7 @@ func (lbc *LoadBalancerController) addVirtualServerRouteHandler(handlers cache.R
 }
 
 func (lbc *LoadBalancerController) addPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactorry.K8s().V1().Policies().Informer()
+	informer := lbc.confSharedInformerFactory.K8s().V1().Policies().Informer()
 	informer.AddEventHandler(handlers)
 	lbc.policyLister = informer.GetStore()
 
@@ -517,7 +517,7 @@ func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.
 }
 
 func (lbc *LoadBalancerController) addTransportServerHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactorry.K8s().V1alpha1().TransportServers().Informer()
+	informer := lbc.confSharedInformerFactory.K8s().V1alpha1().TransportServers().Informer()
 	informer.AddEventHandler(handlers)
 	lbc.transportServerLister = informer.GetStore()
 
@@ -562,7 +562,7 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.configMapController.Run(lbc.ctx.Done())
 	}
 	if lbc.areCustomResourcesEnabled {
-		go lbc.confSharedInformerFactorry.Start(lbc.ctx.Done())
+		go lbc.confSharedInformerFactory.Start(lbc.ctx.Done())
 	}
 	if lbc.watchGlobalConfiguration {
 		go lbc.globalConfigurationController.Run(lbc.ctx.Done())
@@ -687,7 +687,10 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 	}
 	if configExists {
 		lbc.configMap = obj.(*api_v1.ConfigMap)
-		lbc.statusUpdater.SaveStatusFromExternalStatus(lbc.configMap.Data["external-status-address"])
+		externalStatusAddress, exists := lbc.configMap.Data["external-status-address"]
+		if exists {
+			lbc.statusUpdater.SaveStatusFromExternalStatus(externalStatusAddress)
+		}
 	} else {
 		lbc.configMap = nil
 	}
@@ -2802,19 +2805,37 @@ func (lbc *LoadBalancerController) addWAFPolicyRefs(
 			apPolRef[apPolKey] = apPolicy
 		}
 
-		if pol.Spec.WAF.SecurityLog != nil && pol.Spec.WAF.SecurityLog.ApLogConf != "" {
-			logConfKey := pol.Spec.WAF.SecurityLog.ApLogConf
-			if !strings.Contains(pol.Spec.WAF.SecurityLog.ApLogConf, "/") {
-				logConfKey = fmt.Sprintf("%v/%v", pol.Namespace, logConfKey)
-			}
+		if pol.Spec.WAF.SecurityLog != nil && pol.Spec.WAF.SecurityLogs == nil {
+			if pol.Spec.WAF.SecurityLog.ApLogConf != "" {
+				logConfKey := pol.Spec.WAF.SecurityLog.ApLogConf
+				if !strings.Contains(pol.Spec.WAF.SecurityLog.ApLogConf, "/") {
+					logConfKey = fmt.Sprintf("%v/%v", pol.Namespace, logConfKey)
+				}
 
-			logConf, err := lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfKey)
-			if err != nil {
-				return fmt.Errorf("WAF policy %q is invalid: %w", logConfKey, err)
+				logConf, err := lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfKey)
+				if err != nil {
+					return fmt.Errorf("WAF policy %q is invalid: %w", logConfKey, err)
+				}
+				logConfRef[logConfKey] = logConf
 			}
-			logConfRef[logConfKey] = logConf
 		}
 
+		if pol.Spec.WAF.SecurityLogs != nil {
+			for _, SecLog := range pol.Spec.WAF.SecurityLogs {
+				if SecLog.ApLogConf != "" {
+					logConfKey := SecLog.ApLogConf
+					if !strings.Contains(SecLog.ApLogConf, "/") {
+						logConfKey = fmt.Sprintf("%v/%v", pol.Namespace, logConfKey)
+					}
+
+					logConf, err := lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfKey)
+					if err != nil {
+						return fmt.Errorf("WAF policy %q is invalid: %w", logConfKey, err)
+					}
+					logConfRef[logConfKey] = logConf
+				}
+			}
+		}
 	}
 	return nil
 }
@@ -2861,6 +2882,13 @@ func getWAFPoliciesForAppProtectLogConf(pols []*conf_v1.Policy, key string) []*c
 	for _, pol := range pols {
 		if pol.Spec.WAF != nil && pol.Spec.WAF.SecurityLog != nil && isMatchingResourceRef(pol.Namespace, pol.Spec.WAF.SecurityLog.ApLogConf, key) {
 			policies = append(policies, pol)
+		}
+		if pol.Spec.WAF != nil && pol.Spec.WAF.SecurityLogs != nil {
+			for _, logConf := range pol.Spec.WAF.SecurityLogs {
+				if isMatchingResourceRef(pol.Namespace, logConf.ApLogConf, key) {
+					policies = append(policies, pol)
+				}
+			}
 		}
 	}
 

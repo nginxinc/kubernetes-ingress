@@ -319,7 +319,7 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 	}
 }
 
-func TestGenerateTransportServerConfigForTLSPasstrhough(t *testing.T) {
+func TestGenerateTransportServerConfigForTLSPassthrough(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{

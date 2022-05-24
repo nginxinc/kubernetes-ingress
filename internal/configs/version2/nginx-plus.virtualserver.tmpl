@@ -73,6 +73,7 @@ server {
     set $oidc_pkce_enable 0;
     set $oidc_logout_redirect "/_logout";
     set $oidc_hmac_key "{{ $s.VSName }}";
+    set $zone_sync_leeway {{ $oidc.ZoneSyncLeeway }};
 
     set $oidc_authz_endpoint "{{ $oidc.AuthEndpoint }}";
     set $oidc_token_endpoint "{{ $oidc.TokenEndpoint }}";
@@ -191,7 +192,9 @@ server {
 
         {{ if .ApSecurityLogEnable }}
     app_protect_security_log_enable on;
-    app_protect_security_log {{ .ApLogConf }};
+        {{ range $logconf := .ApLogConf }}
+    app_protect_security_log {{ $logconf }};
+        {{ end }}
         {{ end }}
     {{ end }}
 
@@ -370,7 +373,9 @@ server {
 
             {{ if .ApSecurityLogEnable }}
         app_protect_security_log_enable on;
-        app_protect_security_log {{ .ApLogConf }};
+            {{ range $logconf := .ApLogConf }}
+        app_protect_security_log {{ $logconf }};
+            {{ end }}
             {{ end }}
         {{ end }}
 

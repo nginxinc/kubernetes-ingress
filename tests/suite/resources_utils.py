@@ -1277,7 +1277,7 @@ def create_ingress_with_dos_annotations(
 ) -> None:
     """
     Create an ingress with AppProtect annotations
-    :param dos_protected: the namepsace/name of the dos protected resource
+    :param dos_protected: the namespace/name of the dos protected resource
     :param kube_apis: KubeApis
     :param yaml_manifest: an absolute path to ingress yaml
     :param namespace: namespace

@@ -416,7 +416,7 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-key"] = "coffee-jwk"
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-realm"] = "Coffee"
 	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-token"] = "$cookie_auth_token_coffee"
-	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.cofee.example.com"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.com/jwt-login-url"] = "https://login.coffee.example.com"
 	mergeableIngresses.Minions[0].SecretRefs["coffee-jwk"] = &secrets.SecretReference{
 		Secret: &v1.Secret{
 			Type: secrets.SecretTypeJWK,
@@ -446,7 +446,7 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 		},
 		{
 			Name:     "@login_url_default-cafe-ingress-coffee-minion",
-			LoginURL: "https://login.cofee.example.com",
+			LoginURL: "https://login.coffee.example.com",
 		},
 	}
 

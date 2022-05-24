@@ -34,13 +34,13 @@ func NewNginxProcessesMetricsCollector(constLabels map[string]string) *NginxProc
 
 // updateWorkerProcessCount sets the number of NGINX worker processes
 func (pc *NginxProcessesMetricsCollector) updateWorkerProcessCount() {
-	currWorkerProcesses, prevWorkerPrcesses, err := getWorkerProcesses()
+	currWorkerProcesses, prevWorkerProcesses, err := getWorkerProcesses()
 	if err != nil {
 		glog.Errorf("unable to collect process metrics : %v", err)
 		return
 	}
 	pc.workerProcessTotal.WithLabelValues("current").Set(float64(currWorkerProcesses))
-	pc.workerProcessTotal.WithLabelValues("old").Set(float64(prevWorkerPrcesses))
+	pc.workerProcessTotal.WithLabelValues("old").Set(float64(prevWorkerProcesses))
 }
 
 func getWorkerProcesses() (int, int, error) {

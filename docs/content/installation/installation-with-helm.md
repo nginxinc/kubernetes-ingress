@@ -198,6 +198,9 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.nginxStatus.allowCidrs`` | Add IP/CIDR blocks to the allow list for NGINX stub_status or the NGINX Plus API. Separate multiple IP/CIDR by commas. | 127.0.0.1,::1 |
 |``controller.service.create`` | Creates a service to expose the Ingress Controller pods. | true |
 |``controller.service.type`` | The type of service to create for the Ingress Controller. | LoadBalancer |
+|``controller.service.allocateLoadBalancerNodePorts`` | Whether to automatically allocate NodePorts for the service (bool, LoadBalancers only). | "" |
+|``controller.service.ipFamilyPolicy`` | Dual stack preference. Valid values: ``SingleStack``, ``PreferDualStack``, ``RequireDualStack``. | "" |
+|``controller.service.ipFamilies`` | List of IP families assigned to this service. Valid values: ``IPv4``, ``IPv6``. | "" |
 |``controller.service.externalTrafficPolicy`` | The externalTrafficPolicy of the service. The value Local preserves the client source IP. | Local |
 |``controller.service.annotations`` | The annotations of the Ingress Controller service. | {} |
 |``controller.service.extraLabels`` | The extra labels of the service. | {} |

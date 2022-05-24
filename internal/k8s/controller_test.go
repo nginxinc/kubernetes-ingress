@@ -1709,6 +1709,15 @@ func TestAddWAFPolicyRefs(t *testing.T) {
 		},
 	}
 
+	additionalLogConf := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "additional-log-conf",
+			},
+		},
+	}
+
 	tests := []struct {
 		policies            []*conf_v1.Policy
 		expectedApPolRefs   map[string]*unstructured.Unstructured
@@ -1790,6 +1799,102 @@ func TestAddWAFPolicyRefs(t *testing.T) {
 			expectedLogConfRefs: make(map[string]*unstructured.Unstructured),
 			msg:                 "logConf doesn't exist",
 		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-pol",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "ap-pol",
+							SecurityLogs: []*conf_v1.SecurityLog{
+								{
+									Enable:    true,
+									ApLogConf: "log-conf",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+			expectedApPolRefs: map[string]*unstructured.Unstructured{
+				"default/ap-pol": apPol,
+			},
+			expectedLogConfRefs: map[string]*unstructured.Unstructured{
+				"default/log-conf": logConf,
+			},
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-pol",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "ap-pol",
+							SecurityLogs: []*conf_v1.SecurityLog{
+								{
+									Enable:    true,
+									ApLogConf: "log-conf",
+								},
+								{
+									Enable:    true,
+									ApLogConf: "additional-log-conf",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+			expectedApPolRefs: map[string]*unstructured.Unstructured{
+				"default/ap-pol": apPol,
+			},
+			expectedLogConfRefs: map[string]*unstructured.Unstructured{
+				"default/log-conf":            logConf,
+				"default/additional-log-conf": additionalLogConf,
+			},
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-pol",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "ap-pol",
+							SecurityLog: &conf_v1.SecurityLog{
+								Enable:    true,
+								ApLogConf: "additional-log-conf",
+							},
+							SecurityLogs: []*conf_v1.SecurityLog{
+								{
+									Enable:    true,
+									ApLogConf: "log-conf",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+			expectedApPolRefs: map[string]*unstructured.Unstructured{
+				"default/ap-pol": apPol,
+			},
+			expectedLogConfRefs: map[string]*unstructured.Unstructured{
+				"default/log-conf": logConf,
+			},
+		},
 	}
 
 	lbc := LoadBalancerController{
@@ -1797,6 +1902,7 @@ func TestAddWAFPolicyRefs(t *testing.T) {
 	}
 	lbc.appProtectConfiguration.AddOrUpdatePolicy(apPol)
 	lbc.appProtectConfiguration.AddOrUpdateLogConf(logConf)
+	lbc.appProtectConfiguration.AddOrUpdateLogConf(additionalLogConf)
 
 	for _, test := range tests {
 		resApPolicy := make(map[string]*unstructured.Unstructured)
@@ -1904,6 +2010,20 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 		},
 	}
 
+	logConfs := &conf_v1.Policy{
+		Spec: conf_v1.PolicySpec{
+			WAF: &conf_v1.WAF{
+				Enable: true,
+				SecurityLogs: []*conf_v1.SecurityLog{
+					{
+						Enable:    true,
+						ApLogConf: "ns1/logConfs",
+					},
+				},
+			},
+		},
+	}
+
 	logConfNs2 := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Namespace: "ns1",
@@ -1935,7 +2055,7 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 	}
 
 	policies := []*conf_v1.Policy{
-		logConf, logConfNs2, logConfNoNs,
+		logConf, logConfs, logConfNs2, logConfNoNs,
 	}
 
 	tests := []struct {
@@ -1955,6 +2075,12 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 			key:  "default/logConf",
 			want: []*conf_v1.Policy{logConfNoNs},
 			msg:  "WAF pols that ref logConf which has no namespace",
+		},
+		{
+			pols: policies,
+			key:  "ns1/logConfs",
+			want: []*conf_v1.Policy{logConfs},
+			msg:  "WAF pols that ref logConf via logConfs field",
 		},
 		{
 			pols: policies,

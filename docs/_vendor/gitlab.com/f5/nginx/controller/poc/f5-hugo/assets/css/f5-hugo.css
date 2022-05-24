@@ -153,7 +153,7 @@ ol > li > ol {
 }
 
 .card-img, .card-img-top {
-    width: 40px;
+    width: auto;
     height: 40px;
     color: var(--nginx-green);
     margin-right: 5px;
@@ -635,10 +635,6 @@ div pre>code {
    white-space: pre;
 }
 
-pre::-webkit-scrollbar, pre code::-webkit-scrollbar {
-    display: none;
-}
-
 .content {
     background-color: #FFFFFF;
     padding-top: 32px;
@@ -914,6 +910,13 @@ main a:hover {
     letter-spacing: -0.11px;
 }
 
+.nginx-toc > .bd-links {
+    position: sticky;
+	top: 0rem;
+	align-self: start;
+    min-height: 100vh;
+}
+
 .l2, .l2 > a {
     padding-left: 14px;
     font-weight: normal;
@@ -933,6 +936,9 @@ main a:hover {
     background: #f8f9f9;
     padding-left: 24px;
     padding-top: 20px;
+    position: sticky;
+	top: 0rem;
+	align-self: start;
 }
 
 #sidebar {

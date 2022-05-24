@@ -78,7 +78,7 @@ jobs:
       - name: Check if Codegen changed
         run: |
           cd ../.. && mkdir -p github.com/nginxinc && mv kubernetes-ingress/kubernetes-ingress github.com/nginxinc/ && cd github.com/nginxinc/kubernetes-ingress
-          make update-codegen && git diff --name-only --exit-code pkg/**/zz_generated.deepcopy.go
+          make update-codegen && git diff --name-only --exit-code pkg/**
           cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
 
   binary:
@@ -104,7 +104,7 @@ jobs:
         with:
           go-version: ${{ needs.checks.outputs.go_version }}
       - name: Build binary
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: build --snapshot --rm-dist --single-target
@@ -324,7 +324,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist
@@ -389,6 +389,14 @@ jobs:
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         if: github.event_name != 'pull_request'
+      - name: Login to Quay.io
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+        if: github.event_name != 'pull_request'
+
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
@@ -397,6 +405,7 @@ jobs:
             name=nginx/nginx-ingress
             name=ghcr.io/nginxinc/kubernetes-ingress
             name=public.ecr.aws/nginx/nginx-ingress
+            name=quay.io/nginx/nginx-ingress
           flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }},onlatest=true
           tags: |
             type=edge
@@ -445,7 +454,7 @@ jobs:
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.5
+        uses: aquasecurity/trivy-action@0.3.0
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -584,7 +593,7 @@ jobs:
             "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.NGINX_KEY }}"
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.5
+        uses: aquasecurity/trivy-action@0.3.0
         continue-on-error: true
         with:
           image-ref: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}

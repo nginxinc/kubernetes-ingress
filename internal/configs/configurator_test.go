@@ -105,9 +105,9 @@ func TestAddOrUpdateMergeableIngress(t *testing.T) {
 		t.Errorf("Failed to create a test configurator: %v", err)
 	}
 
-	mergeableIngess := createMergeableCafeIngress()
+	mergeableIngress := createMergeableCafeIngress()
 
-	warnings, err := cnf.AddOrUpdateMergeableIngress(mergeableIngess)
+	warnings, err := cnf.AddOrUpdateMergeableIngress(mergeableIngress)
 	if err != nil {
 		t.Errorf("AddOrUpdateMergeableIngress returned \n%v, expected \n%v", err, nil)
 	}
@@ -115,7 +115,7 @@ func TestAddOrUpdateMergeableIngress(t *testing.T) {
 		t.Errorf("AddOrUpdateMergeableIngress returned warnings: %v", warnings)
 	}
 
-	cnfHasMergeableIngress := cnf.HasIngress(mergeableIngess.Master.Ingress)
+	cnfHasMergeableIngress := cnf.HasIngress(mergeableIngress.Master.Ingress)
 	if !cnfHasMergeableIngress {
 		t.Errorf("AddOrUpdateMergeableIngress didn't add mergeable ingress successfully. HasIngress returned %v, expected %v", cnfHasMergeableIngress, true)
 	}
@@ -146,9 +146,9 @@ func TestAddOrUpdateMergeableIngressFailsWithInvalidIngressTemplate(t *testing.T
 		t.Errorf("Failed to create a test configurator: %v", err)
 	}
 
-	mergeableIngess := createMergeableCafeIngress()
+	mergeableIngress := createMergeableCafeIngress()
 
-	warnings, err := cnf.AddOrUpdateMergeableIngress(mergeableIngess)
+	warnings, err := cnf.AddOrUpdateMergeableIngress(mergeableIngress)
 	if err == nil {
 		t.Errorf("AddOrUpdateMergeableIngress returned \n%v, but expected \n%v", nil, "template execution error")
 	}
@@ -350,7 +350,7 @@ func TestAddInternalRouteConfig(t *testing.T) {
 	}
 
 	if !cnf.staticCfgParams.EnableInternalRoutes {
-		t.Errorf("AddInternalRouteConfig failed to set EnableInteralRoutes field of staticCfgParams to true")
+		t.Errorf("AddInternalRouteConfig failed to set EnableInternalRoutes field of staticCfgParams to true")
 	}
 	if cnf.staticCfgParams.InternalRouteServerName != "nginx-ingress.default.svc" {
 		t.Errorf("AddInternalRouteConfig failed to set InternalRouteServerName field of staticCfgParams")
