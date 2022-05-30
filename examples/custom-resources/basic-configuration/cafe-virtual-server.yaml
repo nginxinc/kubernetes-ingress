@@ -9,6 +9,8 @@ spec:
   upstreams:
   - name: tea
     service: tea-svc
+    healthCheck:
+      enable: true
     port: 80
   - name: coffee
     service: coffee-svc

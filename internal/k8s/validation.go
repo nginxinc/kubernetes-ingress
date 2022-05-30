@@ -3,6 +3,7 @@ package k8s
 import (
 	"errors"
 	"fmt"
+	"github.com/golang/glog"
 	"sort"
 	"strings"
 
@@ -136,7 +137,9 @@ var (
 			validateTimeAnnotation,
 		},
 		proxyHideHeadersAnnotation: {},
-		proxyPassHeadersAnnotation: {},
+		proxyPassHeadersAnnotation: {
+			validateProxyPassHeadersAnnotation,
+		},
 		clientMaxBodySizeAnnotation: {
 			validateRequiredAnnotation,
 			validateOffsetAnnotation,
@@ -268,6 +271,19 @@ var (
 	}
 	annotationNames = sortedAnnotationNames(annotationValidations)
 )
+
+func validateProxyPassHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	headers := strings.Split(context.value, ",")
+
+	for _, header := range headers {
+		for _, msg := range validation.IsHTTPHeaderName(header) {
+			glog.Info(msg)
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, msg))
+		}
+	}
+	return allErrs
+}
 
 func sortedAnnotationNames(annotationValidations annotationValidationConfig) []string {
 	sortedNames := make([]string, 0)
