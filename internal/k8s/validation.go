@@ -3,7 +3,6 @@ package k8s
 import (
 	"errors"
 	"fmt"
-	"github.com/golang/glog"
 	"sort"
 	"strings"
 
@@ -60,6 +59,10 @@ const (
 	grpcServicesAnnotation                = "nginx.org/grpc-services"
 	rewritesAnnotation                    = "nginx.org/rewrites"
 	stickyCookieServicesAnnotation        = "nginx.com/sticky-cookie-services"
+)
+
+const (
+	commaDelimiter = ","
 )
 
 type annotationValidationContext struct {
@@ -136,9 +139,11 @@ var (
 			validateRequiredAnnotation,
 			validateTimeAnnotation,
 		},
-		proxyHideHeadersAnnotation: {},
+		proxyHideHeadersAnnotation: {
+			validateHttpHeadersAnnotation,
+		},
 		proxyPassHeadersAnnotation: {
-			validateProxyPassHeadersAnnotation,
+			validateHttpHeadersAnnotation,
 		},
 		clientMaxBodySizeAnnotation: {
 			validateRequiredAnnotation,
@@ -272,13 +277,12 @@ var (
 	annotationNames = sortedAnnotationNames(annotationValidations)
 )
 
-func validateProxyPassHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
+func validateHttpHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-	headers := strings.Split(context.value, ",")
+	headers := strings.Split(context.value, commaDelimiter)
 
 	for _, header := range headers {
 		for _, msg := range validation.IsHTTPHeaderName(header) {
-			glog.Info(msg)
 			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, msg))
 		}
 	}
@@ -556,7 +560,7 @@ func validateServiceListAnnotation(context *annotationValidationContext) field.E
 	if len(unknownServices) > 0 {
 		errorMsg := fmt.Sprintf(
 			"must be a comma-separated list of services. The following services were not found: %s",
-			strings.Join(unknownServices, ","),
+			strings.Join(unknownServices, commaDelimiter),
 		)
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
 	}
