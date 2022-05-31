@@ -282,6 +282,7 @@ func validateHttpHeadersAnnotation(context *annotationValidationContext) field.E
 	headers := strings.Split(context.value, commaDelimiter)
 
 	for _, header := range headers {
+		header = strings.TrimSpace(header)
 		for _, msg := range validation.IsHTTPHeaderName(header) {
 			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, msg))
 		}
