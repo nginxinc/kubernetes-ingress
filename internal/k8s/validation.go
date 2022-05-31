@@ -278,7 +278,7 @@ var (
 )
 
 func validateHttpHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
+	var allErrs field.ErrorList
 	headers := strings.Split(context.value, commaDelimiter)
 
 	for _, header := range headers {
