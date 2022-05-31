@@ -2,9 +2,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: cafe-ingress
-  annotations:
-#    nginx.org/proxy-pass-headers: "header{-1,header-2"
-    nginx.org/proxy-hide-headers: "header{-1,header-2"
 spec:
   ingressClassName: nginx
   tls:
