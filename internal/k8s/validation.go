@@ -140,10 +140,10 @@ var (
 			validateTimeAnnotation,
 		},
 		proxyHideHeadersAnnotation: {
-			validateHttpHeadersAnnotation,
+			validateHTTPHeadersAnnotation,
 		},
 		proxyPassHeadersAnnotation: {
-			validateHttpHeadersAnnotation,
+			validateHTTPHeadersAnnotation,
 		},
 		clientMaxBodySizeAnnotation: {
 			validateRequiredAnnotation,
@@ -277,7 +277,7 @@ var (
 	annotationNames = sortedAnnotationNames(annotationValidations)
 )
 
-func validateHttpHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
+func validateHTTPHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
 	var allErrs field.ErrorList
 	headers := strings.Split(context.value, commaDelimiter)
 
