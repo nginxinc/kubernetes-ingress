@@ -15,7 +15,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/spiffe/go-spiffe/v2 v2.1.0
 	github.com/stretchr/testify v1.7.1
-	google.golang.org/grpc v1.46.2
+	google.golang.org/grpc v1.47.0
 	k8s.io/api v0.23.6
 	k8s.io/apimachinery v0.23.6
 	k8s.io/client-go v0.23.6
