@@ -3,6 +3,7 @@ package k8s
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -62,7 +63,8 @@ const (
 )
 
 const (
-	commaDelimiter = ","
+	commaDelimiter     = ","
+	specialCharPattern = "[{}$;]"
 )
 
 type annotationValidationContext struct {
@@ -83,6 +85,8 @@ type (
 	annotationValidationConfig map[string][]annotationValidationFunc
 	validatorFunc              func(val string) error
 )
+
+var specialCharRegex = regexp.MustCompile(specialCharPattern)
 
 var (
 	// annotationValidations defines the various validations which will be applied in order to each ingress annotation.
@@ -434,6 +438,12 @@ func validateServerTokensAnnotation(context *annotationValidationContext) field.
 			return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a boolean"))
 		}
 	}
+
+	if specialCharRegex.MatchString(context.value) {
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value,
+			"cannot contain special characters"))
+	}
+
 	return allErrs
 }
 
