@@ -83,7 +83,6 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 The following Ingress annotations currently have limited or no validation:
 
-- `nginx.org/server-tokens`,
 - `nginx.org/rewrites`,
 - `nginx.com/jwt-key`,
 - `nginx.com/jwt-realm`,
