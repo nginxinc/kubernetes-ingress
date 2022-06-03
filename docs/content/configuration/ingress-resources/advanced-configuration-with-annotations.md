@@ -83,7 +83,6 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 The following Ingress annotations currently have limited or no validation:
 
-- `nginx.org/rewrites`,
 - `nginx.com/jwt-key`,
 - `nginx.com/jwt-realm`,
 - `nginx.com/jwt-token`,
@@ -131,7 +130,7 @@ The table below summarizes the available annotations.
 | ---| ---| ---| ---| --- |
 |``nginx.org/proxy-hide-headers`` | ``proxy-hide-headers`` | Sets the value of one or more  [proxy_hide_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header) directives. Example: ``"nginx.org/proxy-hide-headers": "header-a,header-b"`` | N/A |  |
 |``nginx.org/proxy-pass-headers`` | ``proxy-pass-headers`` | Sets the value of one or more   [proxy_pass_header](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header) directives. Example: ``"nginx.org/proxy-pass-headers": "header-a,header-b"`` | N/A |  |
-|``nginx.org/rewrites`` | N/A | Configures URI rewriting. | N/A | [Rewrites Support](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.2/examples/rewrites). |
+|``nginx.org/rewrites`` | N/A | Configures URI rewriting using [proxy_pass](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass) directive. | N/A | [Rewrites Support](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.2/examples/rewrites). |
 {{% /table %}}
 
 ### Auth and SSL/TLS

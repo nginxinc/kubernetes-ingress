@@ -589,8 +589,22 @@ func validateStickyServiceListAnnotation(context *annotationValidationContext) f
 
 func validateRewriteListAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if _, err := configs.ParseRewriteList(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a semicolon-separated list of rewrites"))
+	var unknownServices []string
+	rewrites, err := configs.ParseRewriteList(context.value)
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+	}
+	for rewrite := range rewrites {
+		if _, exists := context.specServices[rewrite]; !exists {
+			unknownServices = append(unknownServices, rewrite)
+		}
+	}
+	if len(unknownServices) > 0 {
+		errorMsg := fmt.Sprintf(
+			"The following services were not found: %s",
+			strings.Join(unknownServices, commaDelimiter),
+		)
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
 	}
 	return allErrs
 }
