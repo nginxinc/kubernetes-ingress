@@ -347,7 +347,7 @@ func parseRewrites(service string) (serviceName string, rewrite string, err erro
 	}
 
 	if !VerifyPath(rwPathParts[1]) {
-		return "", "", fmt.Errorf("path must start with '/', must not include any whitespace character, '{', '}' or '$': '%s'", rwPathParts[1])
+		return "", "", fmt.Errorf("path must start with '/' and must not include any whitespace character, '{', '}' or '$': '%s'", rwPathParts[1])
 	}
 
 	return svcNameParts[1], rwPathParts[1], nil

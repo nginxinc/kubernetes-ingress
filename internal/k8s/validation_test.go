@@ -2054,7 +2054,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=rewrite-1": must start with "/" and must not include any whitespace character, "{", "}" or ";": rewrite-1`,
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=rewrite-1": path must start with '/' and must not include any whitespace character, '{', '}' or '$': 'rewrite-1'`,
 			},
 			msg: "invalid nginx.org/rewrites annotation, single-value, no '/' in the beginning",
 		},
@@ -2070,9 +2070,41 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/rewrites: Invalid value: "service-1 rewrite=/rewrite-1": must be a valid serviceName format, e.g. "serviceName=tea-svc": service-1`,
+				`annotations.nginx.org/rewrites: Invalid value: "service-1 rewrite=/rewrite-1": 'service-1' is not a valid serviceName format, e.g. 'serviceName=tea-svc'`,
 			},
-			msg: "invalid nginx.org/rewrites annotation, single-value, invalid service name format",
+			msg: "invalid nginx.org/rewrites annotation, single-value, invalid service name format, 'serviceName' missing",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName1=service-1 rewrite=/rewrite-1",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName1=service-1 rewrite=/rewrite-1": 'serviceName1=service-1' is not a valid serviceName format, e.g. 'serviceName=tea-svc'`,
+			},
+			msg: "invalid nginx.org/rewrites annotation, single-value, invalid service name format, 'serviceName' typo",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrit=/rewrite-1",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrit=/rewrite-1": 'rewrit=/rewrite-1' is not a valid rewrite path format, e.g. 'rewrite=/tea'`,
+			},
+			msg: "invalid nginx.org/rewrites annotation, single-value, invalid service name format, 'rewrite' typo ",
 		},
 		{
 			annotations: map[string]string{
@@ -2100,7 +2132,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewrite-{1}": must start with "/" and must not include any whitespace character, "{", "}" or ";": /rewrite-{1}`,
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewrite-{1}": path must start with '/' and must not include any whitespace character, '{', '}' or '$': '/rewrite-{1}'`,
 			},
 			msg: "invalid nginx.org/rewrites annotation, single-value, path containing special characters",
 		},
@@ -2116,7 +2148,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewr ite": must start with "/" and must not include any whitespace character, "{", "}" or ";": /rewr ite`,
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewr ite": path must start with '/' and must not include any whitespace character, '{', '}' or '$': '/rewr ite'`,
 			},
 			msg: "invalid nginx.org/rewrites annotation, single-value, path containing white spaces",
 		},
@@ -2130,8 +2162,10 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "vaild nginx.org/rewrites annotation, single-value with path containing regex characters (supported in VirtualServer)",
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewrite/$1": path must start with '/' and must not include any whitespace character, '{', '}' or '$': '/rewrite/$1'`,
+			},
+			msg: "invaild nginx.org/rewrites annotation, single-value, path containing regex characters",
 		},
 		{
 			annotations: map[string]string{
@@ -2177,7 +2211,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=rewrite-1;serviceName=service-2 rewrite=/rewrite-2": must start with "/" and must not include any whitespace character, "{", "}" or ";": rewrite-1`,
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=rewrite-1;serviceName=service-2 rewrite=/rewrite-2": path must start with '/' and must not include any whitespace character, '{', '}' or '$': 'rewrite-1'`,
 			},
 			msg: "invalid nginx.org/rewrites annotation, multi-value without '/' in the beginning",
 		},
@@ -2191,7 +2225,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: true,
 			expectedErrors: []string{
-				`annotations.nginx.org/rewrites: Invalid value: "not_a_rewrite": must be a valid rewrite format, e.g. "serviceName=tea-svc rewrite=/": not_a_rewrite`,
+				`annotations.nginx.org/rewrites: Invalid value: "not_a_rewrite": 'not_a_rewrite' is not valid rewrite format, e.g. 'serviceName=tea-svc rewrite=/'`,
 			},
 			msg: "invalid nginx.org/rewrites annotation",
 		},
