@@ -254,6 +254,48 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
+				"nginx.org/lb-method": "least_time header;",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/lb-method: Invalid value: "least_time header;": Invalid load balancing method: "least_time header;"`,
+			},
+			msg: "invalid nginx.org/lb-method annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/lb-method": "{least_time header}",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/lb-method: Invalid value: "{least_time header}": Invalid load balancing method: "{least_time header}"`,
+			},
+			msg: "invalid nginx.org/lb-method annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/lb-method": "$least_time header",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/lb-method: Invalid value: "$least_time header": Invalid load balancing method: "$least_time header"`,
+			},
+			msg: "invalid nginx.org/lb-method annotation",
+		},
+		{
+			annotations: map[string]string{
 				"nginx.org/lb-method": "invalid_method",
 			},
 			specServices:          map[string]bool{},
