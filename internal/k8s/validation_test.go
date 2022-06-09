@@ -2225,7 +2225,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: true,
 			expectedErrors: []string{
-				`annotations.nginx.org/rewrites: Invalid value: "not_a_rewrite": 'not_a_rewrite' is not valid rewrite format, e.g. 'serviceName=tea-svc rewrite=/'`,
+				`annotations.nginx.org/rewrites: Invalid value: "not_a_rewrite": 'not_a_rewrite' is not a valid rewrite format, e.g. 'serviceName=tea-svc rewrite=/'`,
 			},
 			msg: "invalid nginx.org/rewrites annotation",
 		},

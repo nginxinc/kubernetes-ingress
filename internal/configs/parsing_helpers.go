@@ -333,7 +333,7 @@ func parseRewrites(service string) (serviceName string, rewrite string, err erro
 	parts := strings.SplitN(strings.TrimSpace(service), " ", 2)
 
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("'%s' is not valid rewrite format, e.g. 'serviceName=tea-svc rewrite=/'", service)
+		return "", "", fmt.Errorf("'%s' is not a valid rewrite format, e.g. 'serviceName=tea-svc rewrite=/'", service)
 	}
 
 	svcNameParts := strings.Split(parts[0], "=")
