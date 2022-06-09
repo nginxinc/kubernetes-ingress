@@ -63,8 +63,9 @@ const (
 )
 
 const (
-	commaDelimiter     = ","
-	specialCharPattern = "[{}$;]"
+	commaDelimiter       = ","
+	headerValueFmt       = `([^"$\\]|\\[^$])*`
+	headerValueFmtErrMsg = `a valid header must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
 )
 
 type annotationValidationContext struct {
@@ -86,7 +87,7 @@ type (
 	validatorFunc              func(val string) error
 )
 
-var specialCharRegex = regexp.MustCompile(specialCharPattern)
+var validHeaderValueRegex = regexp.MustCompile("^" + headerValueFmt + "$")
 
 var (
 	// annotationValidations defines the various validations which will be applied in order to each ingress annotation.
@@ -273,7 +274,7 @@ var (
 			validateRewriteListAnnotation,
 		},
 		stickyCookieServicesAnnotation: {
-			validatePlusOnlyAnnotation,
+			//validatePlusOnlyAnnotation,
 			validateRequiredAnnotation,
 			validateStickyServiceListAnnotation,
 		},
@@ -433,15 +434,15 @@ func validateLBMethodAnnotation(context *annotationValidationContext) field.Erro
 
 func validateServerTokensAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
+
 	if !context.isPlus {
 		if _, err := configs.ParseBool(context.value); err != nil {
 			return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a boolean"))
 		}
 	}
 
-	if specialCharRegex.MatchString(context.value) {
-		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value,
-			"cannot contain special characters"))
+	if !validHeaderValueRegex.MatchString(context.value) {
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, headerValueFmtErrMsg))
 	}
 
 	return allErrs

@@ -544,13 +544,13 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/server-tokens: Invalid value: "$custom_setting": cannot contain special characters`,
+				`annotations.nginx.org/server-tokens: Invalid value: "$custom_setting": ` + headerValueFmtErrMsg,
 			},
-			msg: "invalid nginx.org/server-tokens annotation, cannot contain special characters",
+			msg: "invalid nginx.org/server-tokens annotation, " + headerValueFmtErrMsg,
 		},
 		{
 			annotations: map[string]string{
-				"nginx.org/server-tokens": "{custom_setting}",
+				"nginx.org/server-tokens": `custom_setting\`,
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
@@ -558,23 +558,9 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/server-tokens: Invalid value: "{custom_setting}": cannot contain special characters`,
+				`annotations.nginx.org/server-tokens: Invalid value: "custom_setting\\": ` + headerValueFmtErrMsg,
 			},
-			msg: "invalid nginx.org/server-tokens annotation, cannot contain special characters",
-		},
-		{
-			annotations: map[string]string{
-				"nginx.org/server-tokens": "custom_setting;",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  false,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				`annotations.nginx.org/server-tokens: Invalid value: "custom_setting;": cannot contain special characters`,
-			},
-			msg: "invalid nginx.org/server-tokens annotation, cannot contain special characters",
+			msg: "invalid nginx.org/server-tokens annotation, " + headerValueFmtErrMsg,
 		},
 
 		{
