@@ -274,7 +274,7 @@ var (
 			validateRewriteListAnnotation,
 		},
 		stickyCookieServicesAnnotation: {
-			//validatePlusOnlyAnnotation,
+			validatePlusOnlyAnnotation,
 			validateRequiredAnnotation,
 			validateStickyServiceListAnnotation,
 		},
