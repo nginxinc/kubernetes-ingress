@@ -586,9 +586,9 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/server-tokens: Invalid value: "$custom_setting": ` + headerValueFmtErrMsg,
+				`annotations.nginx.org/server-tokens: Invalid value: "$custom_setting": ` + annotationValueFmtErrMsg,
 			},
-			msg: "invalid nginx.org/server-tokens annotation, " + headerValueFmtErrMsg,
+			msg: "invalid nginx.org/server-tokens annotation, " + annotationValueFmtErrMsg,
 		},
 		{
 			annotations: map[string]string{
@@ -600,9 +600,9 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/server-tokens: Invalid value: "custom_\"setting": ` + headerValueFmtErrMsg,
+				`annotations.nginx.org/server-tokens: Invalid value: "custom_\"setting": ` + annotationValueFmtErrMsg,
 			},
-			msg: "invalid nginx.org/server-tokens annotation, " + headerValueFmtErrMsg,
+			msg: "invalid nginx.org/server-tokens annotation, " + annotationValueFmtErrMsg,
 		},
 		{
 			annotations: map[string]string{
@@ -614,9 +614,9 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/server-tokens: Invalid value: "custom_setting\\": ` + headerValueFmtErrMsg,
+				`annotations.nginx.org/server-tokens: Invalid value: "custom_setting\\": ` + annotationValueFmtErrMsg,
 			},
-			msg: "invalid nginx.org/server-tokens annotation, " + headerValueFmtErrMsg,
+			msg: "invalid nginx.org/server-tokens annotation, " + annotationValueFmtErrMsg,
 		},
 
 		{

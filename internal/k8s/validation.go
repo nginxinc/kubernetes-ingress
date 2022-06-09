@@ -63,9 +63,9 @@ const (
 )
 
 const (
-	commaDelimiter       = ","
-	headerValueFmt       = `([^"$\\]|\\[^$])*`
-	headerValueFmtErrMsg = `a valid header must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
+	commaDelimiter           = ","
+	annotationValueFmt       = `([^"$\\]|\\[^$])*`
+	annotationValueFmtErrMsg = `a valid annotation value must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
 )
 
 type annotationValidationContext struct {
@@ -87,7 +87,7 @@ type (
 	validatorFunc              func(val string) error
 )
 
-var validHeaderValueRegex = regexp.MustCompile("^" + headerValueFmt + "$")
+var validAnnotationValueRegex = regexp.MustCompile("^" + annotationValueFmt + "$")
 
 var (
 	// annotationValidations defines the various validations which will be applied in order to each ingress annotation.
@@ -441,8 +441,8 @@ func validateServerTokensAnnotation(context *annotationValidationContext) field.
 		}
 	}
 
-	if !validHeaderValueRegex.MatchString(context.value) {
-		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, headerValueFmtErrMsg))
+	if !validAnnotationValueRegex.MatchString(context.value) {
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, annotationValueFmtErrMsg))
 	}
 
 	return allErrs
