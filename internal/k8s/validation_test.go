@@ -550,6 +550,20 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
+				"nginx.org/server-tokens": "custom_\"setting",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/server-tokens: Invalid value: "custom_\"setting": ` + headerValueFmtErrMsg,
+			},
+			msg: "invalid nginx.org/server-tokens annotation, " + headerValueFmtErrMsg,
+		},
+		{
+			annotations: map[string]string{
 				"nginx.org/server-tokens": `custom_setting\`,
 			},
 			specServices:          map[string]bool{},
