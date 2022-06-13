@@ -333,28 +333,38 @@ func parseRewrites(service string) (serviceName string, rewrite string, err erro
 	parts := strings.SplitN(strings.TrimSpace(service), " ", 2)
 
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("Invalid rewrite format: %s", service)
+		return "", "", fmt.Errorf("'%s' is not a valid rewrite format, e.g. 'serviceName=tea-svc rewrite=/'", service)
 	}
 
 	svcNameParts := strings.Split(parts[0], "=")
-	if len(svcNameParts) != 2 {
-		return "", "", fmt.Errorf("Invalid rewrite format: %s", svcNameParts)
+	if len(svcNameParts) != 2 || svcNameParts[0] != "serviceName" {
+		return "", "", fmt.Errorf("'%s' is not a valid serviceName format, e.g. 'serviceName=tea-svc'", parts[0])
 	}
 
 	rwPathParts := strings.Split(parts[1], "=")
-	if len(rwPathParts) != 2 {
-		return "", "", fmt.Errorf("Invalid rewrite format: %s", rwPathParts)
+	if len(rwPathParts) != 2 || rwPathParts[0] != "rewrite" {
+		return "", "", fmt.Errorf("'%s' is not a valid rewrite path format, e.g. 'rewrite=/tea'", parts[1])
+	}
+
+	if !VerifyPath(rwPathParts[1]) {
+		return "", "", fmt.Errorf("path must start with '/' and must not include any whitespace character, '{', '}' or '$': '%s'", rwPathParts[1])
 	}
 
 	return svcNameParts[1], rwPathParts[1], nil
 }
 
 var (
-	threshEx  = regexp.MustCompile(`high=([1-9]|[1-9][0-9]|100) low=([1-9]|[1-9][0-9]|100)\b`)
-	threshExR = regexp.MustCompile(`low=([1-9]|[1-9][0-9]|100) high=([1-9]|[1-9][0-9]|100)\b`)
+	threshEx   = regexp.MustCompile(`high=([1-9]|[1-9][0-9]|100) low=([1-9]|[1-9][0-9]|100)\b`)
+	threshExR  = regexp.MustCompile(`low=([1-9]|[1-9][0-9]|100) high=([1-9]|[1-9][0-9]|100)\b`)
+	pathRegexp = regexp.MustCompile("^" + `/[^\s{};$]*` + "$")
 )
 
 // VerifyAppProtectThresholds ensures that threshold values are set correctly
 func VerifyAppProtectThresholds(value string) bool {
 	return threshEx.MatchString(value) || threshExR.MatchString(value)
+}
+
+// VerifyPath ensures that rewrite paths are in the correct format
+func VerifyPath(s string) bool {
+	return pathRegexp.MatchString(s)
 }

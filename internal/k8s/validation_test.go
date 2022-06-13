@@ -576,6 +576,48 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid nginx.org/server-tokens annotation, must be a boolean",
 		},
+		{
+			annotations: map[string]string{
+				"nginx.org/server-tokens": "$custom_setting",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/server-tokens: Invalid value: "$custom_setting": ` + annotationValueFmtErrMsg,
+			},
+			msg: "invalid nginx.org/server-tokens annotation, " + annotationValueFmtErrMsg,
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/server-tokens": "custom_\"setting",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/server-tokens: Invalid value: "custom_\"setting": ` + annotationValueFmtErrMsg,
+			},
+			msg: "invalid nginx.org/server-tokens annotation, " + annotationValueFmtErrMsg,
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/server-tokens": `custom_setting\`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/server-tokens: Invalid value: "custom_setting\\": ` + annotationValueFmtErrMsg,
+			},
+			msg: "invalid nginx.org/server-tokens annotation, " + annotationValueFmtErrMsg,
+		},
 
 		{
 			annotations: map[string]string{
@@ -1961,9 +2003,11 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 
 		{
 			annotations: map[string]string{
-				"nginx.org/rewrites": "serviceName=service-1 rewrite=rewrite-1",
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=/rewrite-1",
 			},
-			specServices:          map[string]bool{},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  false,
@@ -1973,15 +2017,203 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
-				"nginx.org/rewrites": "serviceName=service-1 rewrite=rewrite-1;serviceName=service-2 rewrite=rewrite-2",
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=/rewrite-1/",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/rewrites annotation, single-value, trailing '/'",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=/rewrite-1/rewrite",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			}, isPlus: false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid nginx.org/rewrites annotation, single-value, uri levels",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=rewrite-1",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=rewrite-1": path must start with '/' and must not include any whitespace character, '{', '}' or '$': 'rewrite-1'`,
+			},
+			msg: "invalid nginx.org/rewrites annotation, single-value, no '/' in the beginning",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "service-1 rewrite=/rewrite-1",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "service-1 rewrite=/rewrite-1": 'service-1' is not a valid serviceName format, e.g. 'serviceName=tea-svc'`,
+			},
+			msg: "invalid nginx.org/rewrites annotation, single-value, invalid service name format, 'serviceName' missing",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName1=service-1 rewrite=/rewrite-1",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName1=service-1 rewrite=/rewrite-1": 'serviceName1=service-1' is not a valid serviceName format, e.g. 'serviceName=tea-svc'`,
+			},
+			msg: "invalid nginx.org/rewrites annotation, single-value, invalid service name format, 'serviceName' typo",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrit=/rewrite-1",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrit=/rewrite-1": 'rewrit=/rewrite-1' is not a valid rewrite path format, e.g. 'rewrite=/tea'`,
+			},
+			msg: "invalid nginx.org/rewrites annotation, single-value, invalid service name format, 'rewrite' typo ",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=/rewrite",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                false,
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewrite": The following services were not found: service-1`,
+			},
+			msg: "invaild nginx.org/rewrites annotation, single-value, service does not exist",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=/rewrite-{1}",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewrite-{1}": path must start with '/' and must not include any whitespace character, '{', '}' or '$': '/rewrite-{1}'`,
+			},
+			msg: "invalid nginx.org/rewrites annotation, single-value, path containing special characters",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=/rewr ite",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewr ite": path must start with '/' and must not include any whitespace character, '{', '}' or '$': '/rewr ite'`,
+			},
+			msg: "invalid nginx.org/rewrites annotation, single-value, path containing white spaces",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=/rewrite/$1",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			}, isPlus: false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewrite/$1": path must start with '/' and must not include any whitespace character, '{', '}' or '$': '/rewrite/$1'`,
+			},
+			msg: "invaild nginx.org/rewrites annotation, single-value, path containing regex characters",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=/rewrite-1;serviceName=service-2 rewrite=/rewrite-2",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+				"service-2": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.org/rewrites annotation, multi-value",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=/rewrite-1;serviceName=service-2 rewrite=/rewrite-2",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=/rewrite-1;serviceName=service-2 rewrite=/rewrite-2": The following services were not found: service-2`,
+			},
+			msg: "valid nginx.org/rewrites annotation, multi-value, service does not exist",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.org/rewrites": "serviceName=service-1 rewrite=rewrite-1;serviceName=service-2 rewrite=/rewrite-2",
+			},
+			specServices: map[string]bool{
+				"service-1": true,
+				"service-2": true,
+			},
+			isPlus:                false,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.org/rewrites: Invalid value: "serviceName=service-1 rewrite=rewrite-1;serviceName=service-2 rewrite=/rewrite-2": path must start with '/' and must not include any whitespace character, '{', '}' or '$': 'rewrite-1'`,
+			},
+			msg: "invalid nginx.org/rewrites annotation, multi-value without '/' in the beginning",
 		},
 		{
 			annotations: map[string]string{
@@ -1993,7 +2225,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: true,
 			expectedErrors: []string{
-				`annotations.nginx.org/rewrites: Invalid value: "not_a_rewrite": must be a semicolon-separated list of rewrites`,
+				`annotations.nginx.org/rewrites: Invalid value: "not_a_rewrite": 'not_a_rewrite' is not a valid rewrite format, e.g. 'serviceName=tea-svc rewrite=/'`,
 			},
 			msg: "invalid nginx.org/rewrites annotation",
 		},

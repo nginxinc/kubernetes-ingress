@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=r26
+ARG NGINX_PLUS_VERSION=R26
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_VERSION=bullseye-slim
 
@@ -46,8 +46,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
 	--mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
-	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r} nginx-plus-module-opentracing~${NGINX_PLUS_VERSION#r} libcurl \
+	&& printf "%s\n" "https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	&& apk add --no-cache libcap nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcurl \
 	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& ldconfig /usr/local/lib/
 
@@ -70,7 +70,7 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent \"k8s-ic-$IC_VERSION${BUILD_OS##debian-plus}-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
-	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
+	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcurl4 \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
@@ -91,14 +91,14 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& curl -fsSL https://cs.nginx.com/static/keys/app-protect-security-updates.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_app_signing.gpg \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	printf "%s\n" "deb https://pkgs.nginx.com/app-protect/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" \
+	printf "%s\n" "deb https://pkgs.nginx.com/app-protect/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" \
 	"deb https://pkgs.nginx.com/app-protect-security-updates/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect app-protect-attack-signatures app-protect-threat-campaigns \
 	&& apt-get purge --auto-remove -y curl; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
-	printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+	printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect-dos; \
 	fi \
@@ -155,7 +155,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
 	&& curl -fsSL "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
-	&& dnf --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION}
+	&& sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/nginx-plus.repo \
+	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF/DoS #############################################
@@ -173,11 +174,13 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	curl -fsSL https://cs.nginx.com/static/files/app-protect-8.repo > /etc/yum.repos.d/app-protect-8.repo; \
-	dnf --nodocs install -y app-protect-${NGINX_PLUS_VERSION#r}* app-protect-attack-signatures app-protect-threat-campaigns; \
+	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-8.repo; \
+	dnf --nodocs install -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-8.repo > /etc/yum.repos.d/app-protect-dos-8.repo; \
-	dnf --nodocs install -y app-protect-dos-${NGINX_PLUS_VERSION#r}*; \
+	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-dos-8.repo; \
+	dnf --nodocs install -y app-protect-dos; \
 	fi \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \

@@ -3,6 +3,7 @@ package k8s
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -62,7 +63,9 @@ const (
 )
 
 const (
-	commaDelimiter = ","
+	commaDelimiter           = ","
+	annotationValueFmt       = `([^"$\\]|\\[^$])*`
+	annotationValueFmtErrMsg = `a valid annotation value must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
 )
 
 type annotationValidationContext struct {
@@ -83,6 +86,8 @@ type (
 	annotationValidationConfig map[string][]annotationValidationFunc
 	validatorFunc              func(val string) error
 )
+
+var validAnnotationValueRegex = regexp.MustCompile("^" + annotationValueFmt + "$")
 
 var (
 	// annotationValidations defines the various validations which will be applied in order to each ingress annotation.
@@ -429,11 +434,17 @@ func validateLBMethodAnnotation(context *annotationValidationContext) field.Erro
 
 func validateServerTokensAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
+
 	if !context.isPlus {
 		if _, err := configs.ParseBool(context.value); err != nil {
 			return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a boolean"))
 		}
 	}
+
+	if !validAnnotationValueRegex.MatchString(context.value) {
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, annotationValueFmtErrMsg))
+	}
+
 	return allErrs
 }
 
@@ -578,8 +589,22 @@ func validateStickyServiceListAnnotation(context *annotationValidationContext) f
 
 func validateRewriteListAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if _, err := configs.ParseRewriteList(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a semicolon-separated list of rewrites"))
+	var unknownServices []string
+	rewrites, err := configs.ParseRewriteList(context.value)
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+	}
+	for rewrite := range rewrites {
+		if _, exists := context.specServices[rewrite]; !exists {
+			unknownServices = append(unknownServices, rewrite)
+		}
+	}
+	if len(unknownServices) > 0 {
+		errorMsg := fmt.Sprintf(
+			"The following services were not found: %s",
+			strings.Join(unknownServices, commaDelimiter),
+		)
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
 	}
 	return allErrs
 }
