@@ -582,7 +582,7 @@ func validateServiceListAnnotation(context *annotationValidationContext) field.E
 func validateStickyServiceListAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if _, err := configs.ParseStickyServiceList(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a semicolon-separated list of sticky services"))
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
 	}
 	return allErrs
 }

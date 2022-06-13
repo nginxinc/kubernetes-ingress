@@ -2270,6 +2270,76 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
+				"nginx.com/sticky-cookie-services": `serviceName=service-1 srv_id expires=1h path=/service-1\;serviceName=service-2 srv_id expires=2h path=/service-2`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.com/sticky-cookie-services: Invalid value: "serviceName=service-1 srv_id expires=1h path=/service-1\\;serviceName=service-2 srv_id expires=2h path=/service-2": invalid sticky-cookie parameters: srv_id expires=1h path=/service-1\`,
+			},
+			msg: `invalid sticky-cookie parameters: srv_id expires=1h path=/service-1\`,
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/sticky-cookie-services": `serviceName=service-1 srv_id expires=1h path=/service-1;serviceName=service-2 srv_id expires=2h path=/service-2\`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.com/sticky-cookie-services: Invalid value: "serviceName=service-1 srv_id expires=1h path=/service-1;serviceName=service-2 srv_id expires=2h path=/service-2\\": invalid sticky-cookie parameters: srv_id expires=2h path=/service-2\`,
+			},
+			msg: `invalid sticky-cookie parameters: srv_id expires=2h path=/service-2\`,
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/sticky-cookie-services": `serviceName=service-1 srv_id expires=1h path=/service-1\`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.com/sticky-cookie-services: Invalid value: "serviceName=service-1 srv_id expires=1h path=/service-1\\": invalid sticky-cookie parameters: srv_id expires=1h path=/service-1\`,
+			},
+			msg: `invalid sticky-cookie parameters: srv_id expires=1h path=/service-1\`,
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/sticky-cookie-services": `serviceName=service-1 srv_id expires=1h path=/service-1$`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.com/sticky-cookie-services: Invalid value: "serviceName=service-1 srv_id expires=1h path=/service-1$": invalid sticky-cookie parameters: srv_id expires=1h path=/service-1$`,
+			},
+			msg: `invalid sticky-cookie parameters: srv_id expires=1h path=/service-1$`,
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/sticky-cookie-services": `serviceName=service-1 srv_id expires=1h path=/service-1;serviceName=service-2 srv_id expires=2h path=/service-2$`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.com/sticky-cookie-services: Invalid value: "serviceName=service-1 srv_id expires=1h path=/service-1;serviceName=service-2 srv_id expires=2h path=/service-2$": invalid sticky-cookie parameters: srv_id expires=2h path=/service-2$`,
+			},
+			msg: `invalid sticky-cookie parameters: srv_id expires=2h path=/service-2$`,
+		},
+		{
+			annotations: map[string]string{
 				"nginx.com/sticky-cookie-services": "not_a_rewrite",
 			},
 			specServices:          map[string]bool{},
@@ -2278,7 +2348,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.com/sticky-cookie-services: Invalid value: "not_a_rewrite": must be a semicolon-separated list of sticky services`,
+				`annotations.nginx.com/sticky-cookie-services: Invalid value: "not_a_rewrite": invalid sticky-cookie service format: not_a_rewrite. Must be a semicolon-separated list of sticky services`,
 			},
 			msg: "invalid nginx.com/sticky-cookie-services annotation",
 		},

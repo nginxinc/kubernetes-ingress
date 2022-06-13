@@ -87,7 +87,6 @@ The following Ingress annotations currently have limited or no validation:
 - `nginx.com/jwt-realm`,
 - `nginx.com/jwt-token`,
 - `nginx.com/jwt-login-url`,
-- `nginx.com/sticky-cookie-services`,
 - `appprotect.f5.com/app-protect-policy`,
 - `appprotect.f5.com/app-protect-security-log`.
 
