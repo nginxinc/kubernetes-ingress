@@ -327,7 +327,7 @@ func parseStickyService(service string) (serviceName string, stickyCookie string
 	}
 
 	stickyCookieParameters := parts[1]
-	if !stickCookieRegex.MatchString(stickyCookieParameters) {
+	if !stickyCookieRegex.MatchString(stickyCookieParameters) {
 		return "", "", fmt.Errorf("invalid sticky-cookie parameters: %s", stickyCookieParameters)
 	}
 
@@ -359,10 +359,10 @@ func parseRewrites(service string) (serviceName string, rewrite string, err erro
 }
 
 var (
-	threshEx         = regexp.MustCompile(`high=([1-9]|[1-9][0-9]|100) low=([1-9]|[1-9][0-9]|100)\b`)
-	threshExR        = regexp.MustCompile(`low=([1-9]|[1-9][0-9]|100) high=([1-9]|[1-9][0-9]|100)\b`)
-	pathRegexp       = regexp.MustCompile("^" + `/[^\s{};$]*` + "$")
-	stickCookieRegex = regexp.MustCompile("^" + `([^"$\\]|\\[^$])*` + "$")
+	threshEx          = regexp.MustCompile(`high=([1-9]|[1-9][0-9]|100) low=([1-9]|[1-9][0-9]|100)\b`)
+	threshExR         = regexp.MustCompile(`low=([1-9]|[1-9][0-9]|100) high=([1-9]|[1-9][0-9]|100)\b`)
+	pathRegexp        = regexp.MustCompile("^" + `/[^\s{};$]*` + "$")
+	stickyCookieRegex = regexp.MustCompile("^" + `([^"$\\]|\\[^$])*` + "$")
 )
 
 // VerifyAppProtectThresholds ensures that threshold values are set correctly
