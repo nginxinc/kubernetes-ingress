@@ -1499,30 +1499,6 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/jwt-token annotation",
 		},
-		{
-			annotations: map[string]string{
-				"nginx.com/jwt-token": "true",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  false,
-			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "Invalid nginx.com/jwt-token annotation",
-		},
-		{
-			annotations: map[string]string{
-				"nginx.com/jwt-token": "true",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  false,
-			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "INvalid nginx.com/jwt-token annotation",
-		},
 
 		{
 			annotations: map[string]string{
@@ -1549,6 +1525,34 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			internalRoutesEnabled: false,
 			expectedErrors:        nil,
 			msg:                   "valid nginx.com/jwt-login-url annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-login-url": `https://login.example.com\`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.com/jwt-login-url: Invalid value: "https://login.example.com\\": parse "https://login.example.com\\": invalid character "\\" in host name`,
+			},
+			msg: "invalid nginx.com/jwt-login-url annotation, containing escape character at the end",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-login-url": `https://{login.example.com`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.nginx.com/jwt-login-url: Invalid value: "https://{login.example.com": parse "https://{login.example.com": invalid character "{" in host name`,
+			},
+			msg: "invalid nginx.com/jwt-login-url annotation, containing invalid character",
 		},
 		{
 			annotations: map[string]string{
