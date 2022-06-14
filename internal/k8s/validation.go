@@ -3,6 +3,7 @@ package k8s
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strings"
@@ -203,8 +204,9 @@ var (
 		},
 		jwtRealmAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
 			validateJWTRealm,
-			validateRelatedAnnotation(jwtKeyAnnotation, validateIsTrue),
+			//validateRelatedAnnotation(jwtKeyAnnotation, validateIsTrue),
 		},
 		jwtKeyAnnotation: {
 			validatePlusOnlyAnnotation,
@@ -212,11 +214,13 @@ var (
 		},
 		jwtTokenAnnotation: {
 			validatePlusOnlyAnnotation,
-			validateRelatedAnnotation(jwtKeyAnnotation, validateIsTrue),
+			//validateJWTToken,
+			//validateRelatedAnnotation(jwtKeyAnnotation, validateIsTrue),
 		},
 		jwtLoginURLAnnotation: {
 			validatePlusOnlyAnnotation,
-			validateRelatedAnnotation(jwtKeyAnnotation, validateIsTrue),
+			validateJWTLoginURLAnnotation,
+			//validateRelatedAnnotation(jwtKeyAnnotation, validateIsTrue),
 		},
 		listenPortsAnnotation: {
 			validateRequiredAnnotation,
@@ -287,6 +291,95 @@ var (
 	annotationNames = sortedAnnotationNames(annotationValidations)
 )
 
+func validateJWTLoginURLAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	name := context.value
+
+	u, err := url.Parse(name)
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, name, err.Error()))
+	}
+	var msg string
+	if u.Scheme == "" {
+		msg = "scheme required, please use the prefix http(s)://"
+		return append(allErrs, field.Invalid(context.fieldPath, name, msg))
+	}
+	if u.Host == "" {
+		msg = "hostname required"
+		return append(allErrs, field.Invalid(context.fieldPath, name, msg))
+	}
+
+	return allErrs
+}
+
+var jwtTokenSpecialVariables = []string{"arg_", "http_", "cookie_"}
+
+//func validateJWTToken(context *annotationValidationContext) field.ErrorList {
+//	allErrs := field.ErrorList{}
+//
+//	token := context.value
+//
+//	if token == "" {
+//		return allErrs
+//	}
+//
+//	nginxVars := strings.Split(token, "$")
+//	if len(nginxVars) != 2 {
+//		return append(allErrs, field.Invalid(context.fieldPath, token, "must have 1 var"))
+//	}
+//	nVar := token[1:]
+//
+//	special := false
+//	for _, specialVar := range jwtTokenSpecialVariables {
+//		if strings.HasPrefix(nVar, specialVar) {
+//			special = true
+//			break
+//		}
+//	}
+//
+//	if special {
+//		// validateJWTToken is called only when NGINX Plus is running
+//		allErrs = append(allErrs, validateSpecialVariable(nVar, context.fieldPath)...)
+//	} else {
+//		return append(allErrs, field.Invalid(context.fieldPath, token, "must only have special vars"))
+//	}
+//
+//	return allErrs
+//}
+
+//func validateSpecialVariable(nVar string, fieldPath *field.Path) field.ErrorList {
+//	name, value, allErrs := parseSpecialVariable(nVar, fieldPath)
+//	if len(allErrs) > 0 {
+//		return allErrs
+//	}
+//
+//	addErrors := func(errors []string) {
+//		for _, msg := range errors {
+//			allErrs = append(allErrs, field.Invalid(fieldPath, nVar, msg))
+//		}
+//	}
+//
+//	switch name {
+//	case "arg":
+//		addErrors(isArgumentName(value))
+//	case "http":
+//		addErrors(isValidSpecialHeaderLikeVariable(value))
+//	case "cookie":
+//		addErrors(isCookieName(value))
+//	case "jwt_header", "jwt_claim":
+//		if !isPlus {
+//			allErrs = append(allErrs, field.Forbidden(fieldPath, "is only supported in NGINX Plus"))
+//		} else {
+//			addErrors(isValidSpecialHeaderLikeVariable(value))
+//		}
+//	default:
+//		allErrs = append(allErrs, field.Invalid(fieldPath, nVar, "unknown special variable"))
+//	}
+//
+//	return allErrs
+//}
+
 func validateJWTKey(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -304,12 +397,6 @@ func validateJWTKey(context *annotationValidationContext) field.ErrorList {
 
 func validateJWTRealm(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-
-	//realm := context.value
-
-	if context.value == "" {
-		return append(allErrs, field.Required(context.fieldPath, ""))
-	}
 
 	if !validAnnotationValueRegex.MatchString(context.value) {
 		msg := validation.RegexError(annotationValueFmtErrMsg, annotationValueFmt, "My Realm", "Cafe App")
