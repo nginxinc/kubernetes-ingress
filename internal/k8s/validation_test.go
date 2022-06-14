@@ -2116,7 +2116,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			expectedErrors: []string{
 				`annotations.nginx.org/ssl-services: Invalid value: "service-1,service-2": must be a comma-separated list of services. The following services were not found: service-2`,
 			},
-			msg: "invalid nginx.org/ssl-se§rvices annotation, service does not exist",
+			msg: "invalid nginx.org/ssl-services annotation, service does not exist",
 		},
 
 		{
