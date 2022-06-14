@@ -318,7 +318,6 @@ func validateJWTKey(context *annotationValidationContext) field.ErrorList {
 	}
 
 	return allErrs
-
 }
 
 func validateJWTRealm(context *annotationValidationContext) field.ErrorList {
@@ -330,7 +329,6 @@ func validateJWTRealm(context *annotationValidationContext) field.ErrorList {
 	}
 
 	return allErrs
-
 }
 
 func validateHTTPHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
