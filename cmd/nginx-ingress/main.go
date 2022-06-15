@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"regexp"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -43,10 +44,13 @@ import (
 
 var (
 
-	// Set during build
+	// Injected during build
 	version string
-	commit  string
-	date    string
+
+	// Info read from the binary
+	commitHash = "unknown"
+	commitTime = "unknown"
+	dirtyBuild = true
 
 	healthStatus = flag.Bool("health-status", false,
 		`Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
@@ -205,12 +209,17 @@ func main() {
 		glog.Fatalf("Error setting logtostderr to true: %v", err)
 	}
 
-	versionInfo := fmt.Sprintf("Version=%v GitCommit=%v Date=%v Arch=%v/%v", version, commit, date, runtime.GOOS, runtime.GOARCH)
+	getBuildInfo()
+	binaryInfo := fmt.Sprintf("Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v", commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
+	versionInfo := fmt.Sprintf("Version=%v", version)
+
 	if *versionFlag {
 		fmt.Println(versionInfo)
+		fmt.Println(binaryInfo)
 		os.Exit(0)
 	}
 	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
+	glog.Info(binaryInfo)
 
 	unparsed := flag.Args()
 	if unparsed != nil {
@@ -946,5 +955,22 @@ func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
 		}
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "Ready")
+	}
+}
+
+func getBuildInfo() {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+	for _, kv := range info.Settings {
+		switch kv.Key {
+		case "vcs.revision":
+			commitHash = kv.Value
+		case "vcs.time":
+			commitTime = kv.Value
+		case "vcs.modified":
+			dirtyBuild = kv.Value == "true"
+		}
 	}
 }
