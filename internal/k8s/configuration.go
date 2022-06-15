@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -1296,7 +1295,9 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 
 		var resource *IngressConfiguration
 
-		if val, _ := c.isChallengeIngress(ing); val {
+		if val := c.isChallengeIngress(ing); val {
+			// if using cert-manager with Ingress, the challenge Ingress must be Minion
+			// and this code won't be reached. With VS, the challenge Ingress must not be Minion.
 			vsr := c.convertIngressToVSR(ing)
 			challengesVSR = append(challengesVSR, vsr)
 			continue
@@ -1335,7 +1336,7 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 		vs := c.virtualServers[key]
 
 		vsrs, warnings := c.buildVirtualServerRoutes(vs)
-		for _, vsr := range(challengesVSR) {
+		for _, vsr := range challengesVSR {
 			if vs.Spec.Host == vsr.Spec.Host {
 				vsrs = append(vsrs, vsr)
 			}
@@ -1393,32 +1394,28 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 	return newHosts, newResources
 }
 
-func (c *Configuration) isChallengeIngress(ing *networking.Ingress) (bool, error) {
+func (c *Configuration) isChallengeIngress(ing *networking.Ingress) bool {
 	if !c.isCertManagerEnabled {
-        return false, nil
+		return false
 	}
-	if val, ok := ing.Labels["acme.cert-manager.io/http01-solver"]; ok {
-		return strconv.ParseBool(val)
-	}
-	return false, nil
+	return ing.Labels["acme.cert-manager.io/http01-solver"] == "true"
 }
 
-func (c *Configuration) convertIngressToVSR(ing *networking.Ingress) (vs *conf_v1.VirtualServerRoute) {
+func (c *Configuration) convertIngressToVSR(ing *networking.Ingress) *conf_v1.VirtualServerRoute {
 	rule := ing.Spec.Rules[0]
 
-	// TODO: ensure lenth of rules and paths is exactly 1
-	vs = &conf_v1.VirtualServerRoute{
+	vs := &conf_v1.VirtualServerRoute{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ing.Namespace,
 			Name:      ing.Name,
 		},
 		Spec: conf_v1.VirtualServerRouteSpec{
-			Host:         rule.Host,
-			Upstreams:    []conf_v1.Upstream{
+			Host: rule.Host,
+			Upstreams: []conf_v1.Upstream{
 				{
-					Name: "challenge",
+					Name:    "challenge",
 					Service: rule.HTTP.Paths[0].Backend.Service.Name,
-					Port: uint16(rule.HTTP.Paths[0].Backend.Service.Port.Number),
+					Port:    uint16(rule.HTTP.Paths[0].Backend.Service.Port.Number),
 				},
 			},
 			Subroutes: []conf_v1.Route{
@@ -1426,11 +1423,11 @@ func (c *Configuration) convertIngressToVSR(ing *networking.Ingress) (vs *conf_v
 					Path: rule.HTTP.Paths[0].Path,
 					Action: &conf_v1.Action{
 						Pass: "challenge",
-						},
 					},
 				},
 			},
-		}
+		},
+	}
 
 	return vs
 }

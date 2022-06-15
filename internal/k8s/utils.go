@@ -132,6 +132,10 @@ func isMaster(ing *networking.Ingress) bool {
 	return ing.Annotations["nginx.org/mergeable-ingress-type"] == "master"
 }
 
+func isChallengeIngress(ing *networking.Ingress) bool {
+	return ing.Labels["acme.cert-manager.io/http01-solver"] == "true"
+}
+
 // hasChanges determines if current ingress has changes compared to old ingress
 func hasChanges(old *networking.Ingress, current *networking.Ingress) bool {
 	old.Status.LoadBalancer.Ingress = current.Status.LoadBalancer.Ingress

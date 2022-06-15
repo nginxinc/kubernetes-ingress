@@ -343,7 +343,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		input.TransportServerValidator,
 		input.IsTLSPassthroughEnabled,
 		input.SnippetsEnabled,
-	    input.CertManagerEnabled,
+		input.CertManagerEnabled,
 	)
 
 	lbc.appProtectConfiguration = appprotect.NewConfiguration()

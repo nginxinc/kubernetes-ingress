@@ -406,6 +406,35 @@ func validateIngress(
 		allErrs = append(allErrs, validateMinionSpec(&ing.Spec, field.NewPath("spec"))...)
 	}
 
+	if isChallengeIngress(ing) {
+		allErrs = append(allErrs, validateChallengeIngress(&ing.Spec, field.NewPath("spec"))...)
+	}
+
+	return allErrs
+}
+
+func validateChallengeIngress(spec *networking.IngressSpec, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if spec.Rules == nil || len(spec.Rules) != 1 {
+		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("rules"), "challenge Ingress must have exactly 1 rule defined"))
+		return allErrs
+	}
+	r := spec.Rules[0]
+
+	if r.HTTP == nil || r.HTTP.Paths == nil || len(r.HTTP.Paths) != 1 {
+		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("rules.HTTP.Paths"), "challenge Ingress must have exactly 1 path defined"))
+		return allErrs
+	}
+
+	p := r.HTTP.Paths[0]
+
+	if p.Backend.Service == nil {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("rules.HTTP.Paths[0].Backend.Service"), "challenge Ingress must have a Backend Service defined"))
+	}
+
+	if p.Backend.Service.Port.Name != "" {
+		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("rules.HTTP.Paths[0].Backend.Service.Port.Name"), "challenge Ingress must have a Backend Service Port Number defined, not Name"))
+	}
 	return allErrs
 }
 
