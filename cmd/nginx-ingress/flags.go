@@ -187,36 +187,7 @@ func parseFlags() {
 	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 	glog.Info(binaryInfo)
 
-	healthStatusURIValidationError := validateLocation(*healthStatusURI)
-	if healthStatusURIValidationError != nil {
-		glog.Fatalf("Invalid value for health-status-uri: %v", healthStatusURIValidationError)
-	}
-
-	statusLockNameValidationError := validateResourceName(*leaderElectionLockName)
-	if statusLockNameValidationError != nil {
-		glog.Fatalf("Invalid value for leader-election-lock-name: %v", statusLockNameValidationError)
-	}
-
-	statusPortValidationError := validatePort(*nginxStatusPort)
-	if statusPortValidationError != nil {
-		glog.Fatalf("Invalid value for nginx-status-port: %v", statusPortValidationError)
-	}
-
-	metricsPortValidationError := validatePort(*prometheusMetricsListenPort)
-	if metricsPortValidationError != nil {
-		glog.Fatalf("Invalid value for prometheus-metrics-listen-port: %v", metricsPortValidationError)
-	}
-
-	readyStatusPortValidationError := validatePort(*readyStatusPort)
-	if readyStatusPortValidationError != nil {
-		glog.Fatalf("Invalid value for ready-status-port: %v", readyStatusPortValidationError)
-	}
-
-	var err error
-	allowedCIDRs, err = parseNginxStatusAllowCIDRs(*nginxStatusAllowCIDRs)
-	if err != nil {
-		glog.Fatalf(`Invalid value for nginx-status-allow-cidrs: %v`, err)
-	}
+	validationChecks()
 
 	if *enableTLSPassthrough && !*enableCustomResources {
 		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
@@ -233,13 +204,6 @@ func parseFlags() {
 
 	if *appProtectLogLevel != appProtectLogLevelDefault && !*appProtect && !*nginxPlus {
 		glog.Fatal("app-protect-log-level support is for NGINX Plus only and App Protect is enable")
-	}
-
-	if *appProtectLogLevel != appProtectLogLevelDefault && *appProtect && *nginxPlus {
-		logLevelValidationError := validateAppProtectLogLevel(*appProtectLogLevel)
-		if logLevelValidationError != nil {
-			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
-		}
 	}
 
 	if *appProtectDos && !*nginxPlus {
@@ -300,6 +264,47 @@ func initialChecks() {
 	unparsed := flag.Args()
 	if unparsed != nil {
 		glog.Warningf("Ignoring unhandled arguments: %v", unparsed)
+	}
+}
+
+// validationChecks checks the values for various flags
+func validationChecks() {
+	healthStatusURIValidationError := validateLocation(*healthStatusURI)
+	if healthStatusURIValidationError != nil {
+		glog.Fatalf("Invalid value for health-status-uri: %v", healthStatusURIValidationError)
+	}
+
+	statusLockNameValidationError := validateResourceName(*leaderElectionLockName)
+	if statusLockNameValidationError != nil {
+		glog.Fatalf("Invalid value for leader-election-lock-name: %v", statusLockNameValidationError)
+	}
+
+	statusPortValidationError := validatePort(*nginxStatusPort)
+	if statusPortValidationError != nil {
+		glog.Fatalf("Invalid value for nginx-status-port: %v", statusPortValidationError)
+	}
+
+	metricsPortValidationError := validatePort(*prometheusMetricsListenPort)
+	if metricsPortValidationError != nil {
+		glog.Fatalf("Invalid value for prometheus-metrics-listen-port: %v", metricsPortValidationError)
+	}
+
+	readyStatusPortValidationError := validatePort(*readyStatusPort)
+	if readyStatusPortValidationError != nil {
+		glog.Fatalf("Invalid value for ready-status-port: %v", readyStatusPortValidationError)
+	}
+
+	var err error
+	allowedCIDRs, err = parseNginxStatusAllowCIDRs(*nginxStatusAllowCIDRs)
+	if err != nil {
+		glog.Fatalf(`Invalid value for nginx-status-allow-cidrs: %v`, err)
+	}
+
+	if *appProtectLogLevel != appProtectLogLevelDefault && *appProtect && *nginxPlus {
+		logLevelValidationError := validateAppProtectLogLevel(*appProtectLogLevel)
+		if logLevelValidationError != nil {
+			glog.Fatalf("Invalid value for app-protect-log-level: %v", *appProtectLogLevel)
+		}
 	}
 }
 
