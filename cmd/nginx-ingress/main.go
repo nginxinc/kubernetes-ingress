@@ -224,50 +224,11 @@ func main() {
 
 	globalConfigurationValidator := createGlobalConfigurationValidator()
 
-	if *globalConfiguration != "" {
-		_, _, err := k8s.ParseNamespaceName(*globalConfiguration)
-		if err != nil {
-			glog.Fatalf("Error parsing the global-configuration argument: %v", err)
-		}
-
-		if !*enableCustomResources {
-			glog.Fatal("global-configuration flag requires -enable-custom-resources")
-		}
-	}
+	processGlobalConfiguration()
 
 	cfgParams := configs.NewDefaultConfigParams(*nginxPlus)
+	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
 
-	if *nginxConfigMaps != "" {
-		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
-		if err != nil {
-			glog.Fatalf("Error parsing the nginx-configmaps argument: %v", err)
-		}
-		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
-		if err != nil {
-			glog.Fatalf("Error when getting %v: %v", *nginxConfigMaps, err)
-		}
-		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus, *appProtect, *appProtectDos)
-		if cfgParams.MainServerSSLDHParamFileContent != nil {
-			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
-			if err != nil {
-				glog.Fatalf("Configmap %s/%s: Could not update dhparams: %v", ns, name, err)
-			} else {
-				cfgParams.MainServerSSLDHParam = fileName
-			}
-		}
-		if cfgParams.MainTemplate != nil {
-			err = templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
-			if err != nil {
-				glog.Fatalf("Error updating NGINX main template: %v", err)
-			}
-		}
-		if cfgParams.IngressTemplate != nil {
-			err = templateExecutor.UpdateIngressTemplate(cfgParams.IngressTemplate)
-			if err != nil {
-				glog.Fatalf("Error updating ingress template: %v", err)
-			}
-		}
-	}
 	staticCfgParams := &configs.StaticConfigParams{
 		HealthStatus:                   *healthStatus,
 		HealthStatusURI:                *healthStatusURI,
@@ -615,4 +576,52 @@ func processPrometheusMetrics(
 	}
 
 	return plusCollector, syslogListener, lc
+}
+
+func processGlobalConfiguration() {
+	if *globalConfiguration != "" {
+		_, _, err := k8s.ParseNamespaceName(*globalConfiguration)
+			if err != nil {
+				glog.Fatalf("Error parsing the global-configuration argument: %v", err)
+			}
+
+			if !*enableCustomResources {
+				glog.Fatal("global-configuration flag requires -enable-custom-resources")
+			}
+	}
+}
+
+func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.ConfigParams, nginxManager nginx.Manager, templateExecutor *version1.TemplateExecutor) *configs.ConfigParams {
+	if *nginxConfigMaps != "" {
+		ns, name, err := k8s.ParseNamespaceName(*nginxConfigMaps)
+		if err != nil {
+			glog.Fatalf("Error parsing the nginx-configmaps argument: %v", err)
+		}
+		cfm, err := kubeClient.CoreV1().ConfigMaps(ns).Get(context.TODO(), name, meta_v1.GetOptions{})
+		if err != nil {
+			glog.Fatalf("Error when getting %v: %v", *nginxConfigMaps, err)
+		}
+		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus, *appProtect, *appProtectDos)
+		if cfgParams.MainServerSSLDHParamFileContent != nil {
+			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
+			if err != nil {
+				glog.Fatalf("Configmap %s/%s: Could not update dhparams: %v", ns, name, err)
+			} else {
+				cfgParams.MainServerSSLDHParam = fileName
+			}
+		}
+		if cfgParams.MainTemplate != nil {
+			err = templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
+			if err != nil {
+				glog.Fatalf("Error updating NGINX main template: %v", err)
+			}
+		}
+		if cfgParams.IngressTemplate != nil {
+			err = templateExecutor.UpdateIngressTemplate(cfgParams.IngressTemplate)
+			if err != nil {
+				glog.Fatalf("Error updating ingress template: %v", err)
+			}
+		}
+	}
+	return cfgParams
 }
