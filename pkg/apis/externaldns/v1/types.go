@@ -17,16 +17,19 @@ type DNSEndpoint struct {
 	Status DNSEndpointStatus `json:"status,omitempty"`
 }
 
+// DNSEndpointStatus represents generation observed by the external dns controller.
 type DNSEndpointStatus struct {
 	// The generation observed by by the external-dns controller.
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
+// DNSEndpointSpec holds information about endpoints.
 type DNSEndpointSpec struct {
 	Endpoints []*Endpoint `json:"endpoints,omitempty"`
 }
 
+// Endpoint describes DNS Endpoint.
 type Endpoint struct {
 	// The hostname for the DNS record
 	DNSName string `json:"dnsName,omitempty"`
@@ -49,8 +52,10 @@ type Endpoint struct {
 	ProviderSpecific ProviderSpecific `json:"providerSpecific,omitempty"`
 }
 
+// ProviderSpecific represents provider specific configuration.
 type ProviderSpecific []ProviderSpecificProperty
 
+// ProviderSpecificProperty represents provider specific config property.
 type ProviderSpecificProperty struct {
 	// Name of the property
 	Name string `json:"name,omitempty"`
@@ -58,10 +63,13 @@ type ProviderSpecificProperty struct {
 	Value string `json:"value,omitempty"`
 }
 
+// TTL represents TTL for DNS record.
 type TTL int64
 
+// Targets describe targets the DNS service points to.
 type Targets []string
 
+// Labels describe labels defined for the Endpoint.
 type Labels map[string]string
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

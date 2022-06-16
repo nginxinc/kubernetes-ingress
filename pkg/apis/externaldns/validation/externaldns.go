@@ -11,12 +11,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
-// ValidateDNSEnpoint validates if all DNSEndpoint fields are valid.
+// ValidateDNSEndpoint validates if all DNSEndpoint fields are valid.
 func ValidateDNSEndpoint(dnsendpoint *v1.DNSEndpoint) error {
-	if err := validateDNSEndpointSpec(&dnsendpoint.Spec); err != nil {
-		return err
-	}
-	return nil
+	return validateDNSEndpointSpec(&dnsendpoint.Spec)
 }
 
 func validateDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
@@ -41,10 +38,7 @@ func validateEndpoint(e *v1.Endpoint) error {
 	if err := validateDNSRecordType(e.RecordType); err != nil {
 		return err
 	}
-	if err := validateTTL(e.RecordTTL); err != nil {
-		return err
-	}
-	return nil
+	return validateTTL(e.RecordTTL)
 }
 
 func validateDNSName(name string) error {
@@ -64,12 +58,12 @@ func validateTargets(targets v1.Targets) error {
 }
 
 func isUnique(targets v1.Targets) error {
-	occured := make(map[string]bool)
+	occurred := make(map[string]bool)
 	for _, target := range targets {
-		if occured[target] {
+		if occurred[target] {
 			return fmt.Errorf("%w: target %s, expected unique targets", ErrTypeDuplicated, target)
 		}
-		occured[target] = true
+		occurred[target] = true
 	}
 	return nil
 }
@@ -114,10 +108,18 @@ var (
 	// a subset of DNS record types listed in the external-dns project.
 	validRecords = []string{"A", "CNAME"}
 
-	// validation error types based on k8s validators
+	// ErrTypeNotSupported indicates that provided value is not currently supported.
 	ErrTypeNotSupported = errors.New("type not supported")
-	ErrTypeInvalid      = errors.New("type invalid")
-	ErrTypeDuplicated   = errors.New("type duplicated")
-	ErrTypeRequired     = errors.New("type required")
-	ErrTypeNotInRange   = errors.New("type not in range")
+
+	// ErrTypeInvalid indicates that provided value is invalid.
+	ErrTypeInvalid = errors.New("type invalid")
+
+	// ErrTypeDuplicated indicates that provided values must be unique.
+	ErrTypeDuplicated = errors.New("type duplicated")
+
+	// ErrTypeRequired indicates that value is not provided but it's mandatory.
+	ErrTypeRequired = errors.New("type required")
+
+	// ErrTypeNotInRange indicates that provided value is outside of defined range.
+	ErrTypeNotInRange = errors.New("type not in range")
 )

@@ -15,7 +15,7 @@ func TestValidateDNSEndpoint(t *testing.T) {
 		endpoint v1.DNSEndpoint
 	}{
 		{
-			name: "with single valid endpoint",
+			name: "with a single valid endpoint",
 			endpoint: v1.DNSEndpoint{
 				Spec: v1.DNSEndpointSpec{
 					Endpoints: []*v1.Endpoint{
