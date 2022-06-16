@@ -176,37 +176,16 @@ var (
 	startupCheckFn func() error
 )
 
+//gocyclo:ignore
 func parseFlags() {
 	flag.Parse()
 
-	err := flag.Lookup("logtostderr").Value.Set("true")
-	if err != nil {
-		glog.Fatalf("Error setting logtostderr to true: %v", err)
-	}
+	initialChecks()
 
-	getBuildInfo()
-	binaryInfo := fmt.Sprintf("Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v", commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
-	versionInfo := fmt.Sprintf("Version=%v", version)
+	binaryInfo, versionInfo := getBuildInfo()
 
-	if *versionFlag {
-		fmt.Println(versionInfo)
-		fmt.Println(binaryInfo)
-		os.Exit(0)
-	}
 	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 	glog.Info(binaryInfo)
-
-	unparsed := flag.Args()
-	if unparsed != nil {
-		glog.Warningf("Ignoring unhandled arguments: %v", unparsed)
-	}
-
-	if startupCheckFn != nil {
-		err := startupCheckFn()
-		if err != nil {
-			glog.Fatalf("Failed startup check: %v", err)
-		}
-	}
 
 	healthStatusURIValidationError := validateLocation(*healthStatusURI)
 	if healthStatusURIValidationError != nil {
@@ -233,6 +212,7 @@ func parseFlags() {
 		glog.Fatalf("Invalid value for ready-status-port: %v", readyStatusPortValidationError)
 	}
 
+	var err error
 	allowedCIDRs, err = parseNginxStatusAllowCIDRs(*nginxStatusAllowCIDRs)
 	if err != nil {
 		glog.Fatalf(`Invalid value for nginx-status-allow-cidrs: %v`, err)
@@ -301,6 +281,25 @@ func parseFlags() {
 
 	if *ingressLink != "" && *externalService != "" {
 		glog.Fatal("ingresslink and external-service cannot both be set")
+	}
+}
+
+func initialChecks() {
+	err := flag.Lookup("logtostderr").Value.Set("true")
+	if err != nil {
+		glog.Fatalf("Error setting logtostderr to true: %v", err)
+	}
+
+	if startupCheckFn != nil {
+		err := startupCheckFn()
+		if err != nil {
+			glog.Fatalf("Failed startup check: %v", err)
+		}
+	}
+
+	unparsed := flag.Args()
+	if unparsed != nil {
+		glog.Warningf("Ignoring unhandled arguments: %v", unparsed)
 	}
 }
 
@@ -388,10 +387,10 @@ func validateLocation(location string) error {
 	return nil
 }
 
-func getBuildInfo() {
+func getBuildInfo() (string, string) {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
-		return
+		return "", ""
 	}
 	for _, kv := range info.Settings {
 		switch kv.Key {
@@ -403,4 +402,13 @@ func getBuildInfo() {
 			dirtyBuild = kv.Value == "true"
 		}
 	}
+	binaryInfo := fmt.Sprintf("Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v", commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
+	versionInfo := fmt.Sprintf("Version=%v", version)
+
+	if *versionFlag {
+		fmt.Println(versionInfo)
+		fmt.Println(binaryInfo)
+		os.Exit(0)
+	}
+	return versionInfo, binaryInfo
 }
