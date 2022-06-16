@@ -3,6 +3,7 @@ package k8s
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strings"
@@ -203,15 +204,20 @@ var (
 		},
 		jwtRealmAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateJWTRealm,
 		},
 		jwtKeyAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateJWTKey,
 		},
 		jwtTokenAnnotation: {
 			validatePlusOnlyAnnotation,
 		},
 		jwtLoginURLAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateJWTLoginURLAnnotation,
 		},
 		listenPortsAnnotation: {
 			validateRequiredAnnotation,
@@ -281,6 +287,49 @@ var (
 	}
 	annotationNames = sortedAnnotationNames(annotationValidations)
 )
+
+func validateJWTLoginURLAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	name := context.value
+
+	u, err := url.Parse(name)
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, name, err.Error()))
+	}
+	var msg string
+	if u.Scheme == "" {
+		msg = "scheme required, please use the prefix http(s)://"
+		return append(allErrs, field.Invalid(context.fieldPath, name, msg))
+	}
+	if u.Host == "" {
+		msg = "hostname required"
+		return append(allErrs, field.Invalid(context.fieldPath, name, msg))
+	}
+
+	return allErrs
+}
+
+func validateJWTKey(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	for _, msg := range validation.IsDNS1123Subdomain(context.value) {
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+	}
+
+	return allErrs
+}
+
+func validateJWTRealm(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !validAnnotationValueRegex.MatchString(context.value) {
+		msg := validation.RegexError(annotationValueFmtErrMsg, annotationValueFmt, "My Realm", "Cafe App")
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+	}
+
+	return allErrs
+}
 
 func validateHTTPHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
 	var allErrs field.ErrorList
