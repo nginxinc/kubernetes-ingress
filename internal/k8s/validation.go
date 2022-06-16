@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	configvalidation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -214,6 +215,7 @@ var (
 		},
 		jwtTokenAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateJWTTokenAnnotation,
 		},
 		jwtLoginURLAnnotation: {
 			validatePlusOnlyAnnotation,
@@ -287,6 +289,10 @@ var (
 	}
 	annotationNames = sortedAnnotationNames(annotationValidations)
 )
+
+func validateJWTTokenAnnotation(context *annotationValidationContext) field.ErrorList {
+	return configvalidation.ValidateJWTToken(context.value, context.fieldPath)
+}
 
 func validateJWTLoginURLAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}

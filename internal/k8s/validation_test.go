@@ -1515,27 +1515,45 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
-				"nginx.com/jwt-token": "true",
+				"nginx.com/jwt-token": "$cookie",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "Invalid nginx.com/jwt-token annotation",
+			expectedErrors: []string{
+				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie\": must only have special vars",
+			},
+			msg: "invalid nginx.com/jwt-token annotation",
 		},
 		{
 			annotations: map[string]string{
-				"nginx.com/jwt-token": "true",
+				"nginx.com/jwt-token": "$cookie_",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
-			expectedErrors:        nil,
-			msg:                   "INvalid nginx.com/jwt-token annotation",
+			expectedErrors: []string{
+				"annotations.nginx.com/jwt-token: Invalid value: \"cookie_\": a valid cookie name must consist of alphanumeric characters or '_' (e.g. 'my_cookie_123', regex used for validation is '[_A-Za-z0-9]+')",
+			},
+			msg: "invalid nginx.com/jwt-token annotation",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-token": "$cookie_{",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.nginx.com/jwt-token: Invalid value: \"cookie_{\": a valid cookie name must consist of alphanumeric characters or '_' (e.g. 'my_cookie_123', regex used for validation is '[_A-Za-z0-9]+')",
+			},
+			msg: "invalid nginx.com/jwt-token annotation",
 		},
 
 		{
