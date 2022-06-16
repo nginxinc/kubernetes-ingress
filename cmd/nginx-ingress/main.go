@@ -38,7 +38,6 @@ import (
 )
 
 func main() {
-
 	parseFlags()
 
 	var config *rest.Config
@@ -143,33 +142,7 @@ func main() {
 	controllerCollector = collectors.NewControllerFakeCollector()
 	latencyCollector = collectors.NewLatencyFakeCollector()
 
-	if *enablePrometheusMetrics {
-		registry = prometheus.NewRegistry()
-		managerCollector = collectors.NewLocalManagerMetricsCollector(constLabels)
-		controllerCollector = collectors.NewControllerMetricsCollector(*enableCustomResources, constLabels)
-		processCollector := collectors.NewNginxProcessesMetricsCollector(constLabels)
-		workQueueCollector := collectors.NewWorkQueueMetricsCollector(constLabels)
-
-		err = managerCollector.Register(registry)
-		if err != nil {
-			glog.Errorf("Error registering Manager Prometheus metrics: %v", err)
-		}
-
-		err = controllerCollector.Register(registry)
-		if err != nil {
-			glog.Errorf("Error registering Controller Prometheus metrics: %v", err)
-		}
-
-		err = processCollector.Register(registry)
-		if err != nil {
-			glog.Errorf("Error registering NginxProcess Prometheus metrics: %v", err)
-		}
-
-		err = workQueueCollector.Register(registry)
-		if err != nil {
-			glog.Errorf("Error registering WorkQueue Prometheus metrics: %v", err)
-		}
-	}
+	managerCollector, controllerCollector, registry = registerPrometheusMetrics(managerCollector, controllerCollector, constLabels)
 
 	useFakeNginxManager := *proxyURL != ""
 	var nginxManager nginx.Manager
@@ -247,14 +220,6 @@ func main() {
 
 		bytes := configs.GenerateCertAndKeyFileContent(secret)
 		nginxManager.CreateSecret(configs.WildcardSecretName, bytes, nginx.TLSSecretFileMode)
-	}
-
-	var prometheusSecret *api_v1.Secret
-	if *prometheusTLSSecretName != "" {
-		prometheusSecret, err = getAndValidateSecret(kubeClient, *prometheusTLSSecretName)
-		if err != nil {
-			glog.Fatalf("Error trying to get the prometheus TLS secret %v: %v", *prometheusTLSSecretName, err)
-		}
 	}
 
 	globalConfigurationValidator := createGlobalConfigurationValidator()
@@ -358,42 +323,10 @@ func main() {
 		nginxManager.SetPlusClients(plusClient, httpClient)
 	}
 
-	var plusCollector *nginxCollector.NginxPlusCollector
 	var syslogListener metrics.SyslogListener
 	syslogListener = metrics.NewSyslogFakeServer()
-	if *enablePrometheusMetrics {
-		upstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
-		upstreamServerPeerVariableLabelNames := []string{"pod_name"}
-		if staticCfgParams.NginxServiceMesh {
-			upstreamServerPeerVariableLabelNames = append(upstreamServerPeerVariableLabelNames, "pod_owner")
-		}
-		if *nginxPlus {
-			streamUpstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
-			streamUpstreamServerPeerVariableLabelNames := []string{"pod_name"}
-
-			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
-			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
-			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
-				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames)
-			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels)
-			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
-		} else {
-			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
-			client, err := metrics.NewNginxMetricsClient(httpClient)
-			if err != nil {
-				glog.Errorf("Error creating the Nginx client for Prometheus metrics: %v", err)
-			}
-			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, constLabels, prometheusSecret)
-		}
-		if *enableLatencyMetrics {
-			latencyCollector = collectors.NewLatencyMetricsCollector(constLabels, upstreamServerVariableLabels, upstreamServerPeerVariableLabelNames)
-			if err := latencyCollector.Register(registry); err != nil {
-				glog.Errorf("Error registering Latency Prometheus metrics: %v", err)
-			}
-			syslogListener = metrics.NewLatencyMetricsListener("/var/lib/nginx/nginx-syslog.sock", latencyCollector)
-			go syslogListener.Run()
-		}
-	}
+	plusCollector, syslogListener, latencyCollector := processPrometheusMetrics(managerCollector, controllerCollector,
+		latencyCollector, registry, syslogListener, constLabels, kubeClient, plusClient, staticCfgParams.NginxServiceMesh)
 
 	isWildcardEnabled := *wildcardTLSSecret != ""
 	cnf := configs.NewConfigurator(nginxManager, staticCfgParams, cfgParams, templateExecutor,
@@ -586,4 +519,100 @@ func ready(lbc *k8s.LoadBalancerController) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprintln(w, "Ready")
 	}
+}
+
+func registerPrometheusMetrics(
+	mc collectors.ManagerCollector,
+	cc collectors.ControllerCollector,
+	constLabels map[string]string,
+) (collectors.ManagerCollector, collectors.ControllerCollector, *prometheus.Registry) {
+	var registry *prometheus.Registry
+	var err error
+
+	if *enablePrometheusMetrics {
+		registry = prometheus.NewRegistry()
+		mc = collectors.NewLocalManagerMetricsCollector(constLabels)
+		cc = collectors.NewControllerMetricsCollector(*enableCustomResources, constLabels)
+		processCollector := collectors.NewNginxProcessesMetricsCollector(constLabels)
+		workQueueCollector := collectors.NewWorkQueueMetricsCollector(constLabels)
+
+		err = mc.Register(registry)
+		if err != nil {
+			glog.Errorf("Error registering Manager Prometheus metrics: %v", err)
+		}
+
+		err = cc.Register(registry)
+		if err != nil {
+			glog.Errorf("Error registering Controller Prometheus metrics: %v", err)
+		}
+
+		err = processCollector.Register(registry)
+		if err != nil {
+			glog.Errorf("Error registering NginxProcess Prometheus metrics: %v", err)
+		}
+
+		err = workQueueCollector.Register(registry)
+		if err != nil {
+			glog.Errorf("Error registering WorkQueue Prometheus metrics: %v", err)
+		}
+	}
+	return mc, cc, registry
+}
+
+func processPrometheusMetrics(
+	mc collectors.ManagerCollector,
+	cc collectors.ControllerCollector,
+	lc collectors.LatencyCollector,
+	registry *prometheus.Registry,
+	syslogListener metrics.SyslogListener,
+	constLabels map[string]string,
+	kubeClient *kubernetes.Clientset,
+	plusClient *client.NginxClient,
+	isMesh bool,
+) (*nginxCollector.NginxPlusCollector, metrics.SyslogListener, collectors.LatencyCollector) {
+	var prometheusSecret *api_v1.Secret
+	var err error
+	if *prometheusTLSSecretName != "" {
+		prometheusSecret, err = getAndValidateSecret(kubeClient, *prometheusTLSSecretName)
+		if err != nil {
+			glog.Fatalf("Error trying to get the prometheus TLS secret %v: %v", *prometheusTLSSecretName, err)
+		}
+	}
+
+	var plusCollector *nginxCollector.NginxPlusCollector
+	if *enablePrometheusMetrics {
+		upstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
+		upstreamServerPeerVariableLabelNames := []string{"pod_name"}
+		if isMesh {
+			upstreamServerPeerVariableLabelNames = append(upstreamServerPeerVariableLabelNames, "pod_owner")
+		}
+		if *nginxPlus {
+			streamUpstreamServerVariableLabels := []string{"service", "resource_type", "resource_name", "resource_namespace"}
+			streamUpstreamServerPeerVariableLabelNames := []string{"pod_name"}
+
+			serverZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			streamServerZoneVariableLabels := []string{"resource_type", "resource_name", "resource_namespace"}
+			variableLabelNames := nginxCollector.NewVariableLabelNames(upstreamServerVariableLabels, serverZoneVariableLabels, upstreamServerPeerVariableLabelNames,
+				streamUpstreamServerVariableLabels, streamServerZoneVariableLabels, streamUpstreamServerPeerVariableLabelNames)
+			plusCollector = nginxCollector.NewNginxPlusCollector(plusClient, "nginx_ingress_nginxplus", variableLabelNames, constLabels)
+			go metrics.RunPrometheusListenerForNginxPlus(*prometheusMetricsListenPort, plusCollector, registry, prometheusSecret)
+		} else {
+			httpClient := getSocketClient("/var/lib/nginx/nginx-status.sock")
+			client, err := metrics.NewNginxMetricsClient(httpClient)
+			if err != nil {
+				glog.Errorf("Error creating the Nginx client for Prometheus metrics: %v", err)
+			}
+			go metrics.RunPrometheusListenerForNginx(*prometheusMetricsListenPort, client, registry, constLabels, prometheusSecret)
+		}
+		if *enableLatencyMetrics {
+			lc = collectors.NewLatencyMetricsCollector(constLabels, upstreamServerVariableLabels, upstreamServerPeerVariableLabelNames)
+			if err := lc.Register(registry); err != nil {
+				glog.Errorf("Error registering Latency Prometheus metrics: %v", err)
+			}
+			syslogListener = metrics.NewLatencyMetricsListener("/var/lib/nginx/nginx-syslog.sock", lc)
+			go syslogListener.Run()
+		}
+	}
+
+	return plusCollector, syslogListener, lc
 }
