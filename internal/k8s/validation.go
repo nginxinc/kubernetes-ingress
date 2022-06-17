@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
-	configvalidation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -68,6 +67,7 @@ const (
 	commaDelimiter           = ","
 	annotationValueFmt       = `([^"$\\]|\\[^$])*`
 	annotationValueFmtErrMsg = `a valid annotation value must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
+	jwtTokenValueFmtErrMsg   = `a valid JWT token variable must have all '"' escaped and must not end with an unescaped '\'`
 )
 
 type annotationValidationContext struct {
@@ -291,7 +291,21 @@ var (
 )
 
 func validateJWTTokenAnnotation(context *annotationValidationContext) field.ErrorList {
-	return configvalidation.ValidateJWTToken(context.value, context.fieldPath)
+	allErrs := field.ErrorList{}
+
+	nginxVars := strings.Split(context.value, "$")
+	if len(nginxVars) != 2 {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must have 1 var"))
+	}
+	nVar := context.value[1:]
+
+	if !validAnnotationValueRegex.MatchString(nVar) {
+		msg := validation.RegexError(jwtTokenValueFmtErrMsg, annotationValueFmt, "$http_token", "$cookie_auth_token")
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+	}
+
+	return allErrs
+
 }
 
 func validateJWTLoginURLAnnotation(context *annotationValidationContext) field.ErrorList {

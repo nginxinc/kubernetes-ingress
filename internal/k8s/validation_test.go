@@ -1515,7 +1515,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
-				"nginx.com/jwt-token": "$cookie",
+				"nginx.com/jwt-token": "cookie_auth_token",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
@@ -1523,13 +1523,12 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie\": must only have special vars",
-			},
-			msg: "invalid nginx.com/jwt-token annotation",
+				"annotations.nginx.com/jwt-token: Invalid value: \"cookie_auth_token\": must have 1 var",
+			}, msg: "invalid nginx.com/jwt-token annotation, '$' missing",
 		},
 		{
 			annotations: map[string]string{
-				"nginx.com/jwt-token": "$cookie_",
+				"nginx.com/jwt-token": `$cookie_auth_token"`,
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
@@ -1537,13 +1536,13 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				"annotations.nginx.com/jwt-token: Invalid value: \"cookie_\": a valid cookie name must consist of alphanumeric characters or '_' (e.g. 'my_cookie_123', regex used for validation is '[_A-Za-z0-9]+')",
+				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie_auth_token\\\"\": a valid JWT token variable must have all '\"' escaped and must not end with an unescaped '\\' (e.g. '$http_token',  or '$cookie_auth_token', regex used for validation is '([^\"$\\\\]|\\\\[^$])*')",
 			},
-			msg: "invalid nginx.com/jwt-token annotation",
+			msg: "invalid nginx.com/jwt-token annotation, containing unescaped '\"'",
 		},
 		{
 			annotations: map[string]string{
-				"nginx.com/jwt-token": "$cookie_{",
+				"nginx.com/jwt-token": `$cookie_auth_token\`,
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
@@ -1551,9 +1550,23 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				"annotations.nginx.com/jwt-token: Invalid value: \"cookie_{\": a valid cookie name must consist of alphanumeric characters or '_' (e.g. 'my_cookie_123', regex used for validation is '[_A-Za-z0-9]+')",
+				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie_auth_token\\\\\": a valid JWT token variable must have all '\"' escaped and must not end with an unescaped '\\' (e.g. '$http_token',  or '$cookie_auth_token', regex used for validation is '([^\"$\\\\]|\\\\[^$])*')",
 			},
-			msg: "invalid nginx.com/jwt-token annotation",
+			msg: "invalid nginx.com/jwt-token annotation, containing escape characters",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-token": "$cookie_auth$token",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie_auth$token\": must have 1 var",
+			},
+			msg: "invalid nginx.com/jwt-token annotation, containing more than 1 variables",
 		},
 
 		{
