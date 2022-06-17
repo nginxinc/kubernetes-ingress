@@ -155,7 +155,7 @@ func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 	}
 	allErrs = append(allErrs, validateSecretName(jwt.Secret, fieldPath.Child("secret"))...)
 
-	allErrs = append(allErrs, ValidateJWTToken(jwt.Token, fieldPath.Child("token"))...)
+	allErrs = append(allErrs, validateJWTToken(jwt.Token, fieldPath.Child("token"))...)
 
 	return allErrs
 }
@@ -450,7 +450,7 @@ func validateRateLimitKey(key string, fieldPath *field.Path, isPlus bool) field.
 
 var jwtTokenSpecialVariables = []string{"arg_", "http_", "cookie_"}
 
-func ValidateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
+func validateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if token == "" {
@@ -472,7 +472,7 @@ func ValidateJWTToken(token string, fieldPath *field.Path) field.ErrorList {
 	}
 
 	if special {
-		// ValidateJWTToken is called only when NGINX Plus is running
+		// validateJWTToken is called only when NGINX Plus is running
 		isPlus := true
 		allErrs = append(allErrs, validateSpecialVariable(nVar, fieldPath, isPlus)...)
 	} else {

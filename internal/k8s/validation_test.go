@@ -1475,20 +1475,6 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 
 		{
 			annotations: map[string]string{
-				"nginx.com/jwt-key": "my_jwk",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  false,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				"annotations.nginx.com/jwt-key: Invalid value: \"my_jwk\": a lowercase RFC 1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')",
-			},
-			msg: "invalid nginx.com/jwt-key annotation, containing '_",
-		},
-		{
-			annotations: map[string]string{
 				"nginx.com/jwt-token": "true",
 			},
 			specServices:          map[string]bool{},
@@ -1636,34 +1622,6 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 				`annotations.nginx.com/jwt-login-url: Invalid value: "https://{login.example.com": parse "https://{login.example.com": invalid character "{" in host name`,
 			},
 			msg: "invalid nginx.com/jwt-login-url annotation, containing invalid character",
-		},
-		{
-			annotations: map[string]string{
-				"nginx.com/jwt-login-url": "login.example.com",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  false,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				"annotations.nginx.com/jwt-login-url: Invalid value: \"login.example.com\": scheme required, please use the prefix http(s)://",
-			},
-			msg: "invalid nginx.com/jwt-login-url annotation, scheme missing",
-		},
-		{
-			annotations: map[string]string{
-				"nginx.com/jwt-login-url": "http:",
-			},
-			specServices:          map[string]bool{},
-			isPlus:                true,
-			appProtectEnabled:     false,
-			appProtectDosEnabled:  false,
-			internalRoutesEnabled: false,
-			expectedErrors: []string{
-				"annotations.nginx.com/jwt-login-url: Invalid value: \"http:\": hostname required",
-			},
-			msg: "invalid nginx.com/jwt-login-url annotation, hostname missing",
 		},
 		{
 			annotations: map[string]string{

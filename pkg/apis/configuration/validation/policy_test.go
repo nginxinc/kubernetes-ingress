@@ -640,9 +640,9 @@ func TestValidateJWTToken(t *testing.T) {
 		},
 	}
 	for _, test := range validTests {
-		allErrs := ValidateJWTToken(test.token, field.NewPath("token"))
+		allErrs := validateJWTToken(test.token, field.NewPath("token"))
 		if len(allErrs) != 0 {
-			t.Errorf("ValidateJWTToken(%v) returned an error for valid input for the case of %v", test.token, test.msg)
+			t.Errorf("validateJWTToken(%v) returned an error for valid input for the case of %v", test.token, test.msg)
 		}
 	}
 
@@ -672,9 +672,9 @@ func TestValidateJWTToken(t *testing.T) {
 		},
 	}
 	for _, test := range invalidTests {
-		allErrs := ValidateJWTToken(test.token, field.NewPath("token"))
+		allErrs := validateJWTToken(test.token, field.NewPath("token"))
 		if len(allErrs) == 0 {
-			t.Errorf("ValidateJWTToken(%v) didn't return error for invalid input for the case of %v", test.token, test.msg)
+			t.Errorf("validateJWTToken(%v) didn't return error for invalid input for the case of %v", test.token, test.msg)
 		}
 	}
 }
