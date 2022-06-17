@@ -1523,7 +1523,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				"annotations.nginx.com/jwt-token: Invalid value: \"cookie_auth_token\": must have 1 var",
+				"annotations.nginx.com/jwt-token: Invalid value: \"cookie_auth_token\": a valid annotation value must start with '$', have all '\"' escaped, and must not contain any '$' or end with an unescaped '\\' (e.g. '$http_token',  or '$cookie_auth_token', regex used for validation is '\\$([^\"$\\\\]|\\\\[^$])*')",
 			}, msg: "invalid nginx.com/jwt-token annotation, '$' missing",
 		},
 		{
@@ -1536,7 +1536,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie_auth_token\\\"\": a valid JWT token variable must have all '\"' escaped and must not end with an unescaped '\\' (e.g. '$http_token',  or '$cookie_auth_token', regex used for validation is '([^\"$\\\\]|\\\\[^$])*')",
+				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie_auth_token\\\"\": a valid annotation value must start with '$', have all '\"' escaped, and must not contain any '$' or end with an unescaped '\\' (e.g. '$http_token',  or '$cookie_auth_token', regex used for validation is '\\$([^\"$\\\\]|\\\\[^$])*')",
 			},
 			msg: "invalid nginx.com/jwt-token annotation, containing unescaped '\"'",
 		},
@@ -1550,13 +1550,13 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie_auth_token\\\\\": a valid JWT token variable must have all '\"' escaped and must not end with an unescaped '\\' (e.g. '$http_token',  or '$cookie_auth_token', regex used for validation is '([^\"$\\\\]|\\\\[^$])*')",
+				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie_auth_token\\\\\": a valid annotation value must start with '$', have all '\"' escaped, and must not contain any '$' or end with an unescaped '\\' (e.g. '$http_token',  or '$cookie_auth_token', regex used for validation is '\\$([^\"$\\\\]|\\\\[^$])*')",
 			},
 			msg: "invalid nginx.com/jwt-token annotation, containing escape characters",
 		},
 		{
 			annotations: map[string]string{
-				"nginx.com/jwt-token": "$cookie_auth$token",
+				"nginx.com/jwt-token": "cookie_auth$token",
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,
@@ -1564,9 +1564,23 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie_auth$token\": must have 1 var",
+				"annotations.nginx.com/jwt-token: Invalid value: \"cookie_auth$token\": a valid annotation value must start with '$', have all '\"' escaped, and must not contain any '$' or end with an unescaped '\\' (e.g. '$http_token',  or '$cookie_auth_token', regex used for validation is '\\$([^\"$\\\\]|\\\\[^$])*')",
 			},
-			msg: "invalid nginx.com/jwt-token annotation, containing more than 1 variables",
+			msg: "invalid nginx.com/jwt-token annotation, containing incorrect variable",
+		},
+		{
+			annotations: map[string]string{
+				"nginx.com/jwt-token": "$cookie_auth_token$http_token",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.nginx.com/jwt-token: Invalid value: \"$cookie_auth_token$http_token\": a valid annotation value must start with '$', have all '\"' escaped, and must not contain any '$' or end with an unescaped '\\' (e.g. '$http_token',  or '$cookie_auth_token', regex used for validation is '\\$([^\"$\\\\]|\\\\[^$])*')",
+			},
+			msg: "invalid nginx.com/jwt-token annotation, containing more than 1 variable",
 		},
 
 		{

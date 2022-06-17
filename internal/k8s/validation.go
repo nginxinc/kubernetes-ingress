@@ -66,8 +66,9 @@ const (
 const (
 	commaDelimiter           = ","
 	annotationValueFmt       = `([^"$\\]|\\[^$])*`
+	jwtTokenValueFmt         = "\\$" + annotationValueFmt
 	annotationValueFmtErrMsg = `a valid annotation value must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
-	jwtTokenValueFmtErrMsg   = `a valid JWT token variable must have all '"' escaped and must not end with an unescaped '\'`
+	jwtTokenValueFmtErrMsg   = `a valid annotation value must start with '$', have all '"' escaped, and must not contain any '$' or end with an unescaped '\'`
 )
 
 type annotationValidationContext struct {
@@ -90,6 +91,7 @@ type (
 )
 
 var validAnnotationValueRegex = regexp.MustCompile("^" + annotationValueFmt + "$")
+var validJWTTokenAnnotationValueRegex = regexp.MustCompile("^" + jwtTokenValueFmt + "$")
 
 var (
 	// annotationValidations defines the various validations which will be applied in order to each ingress annotation.
@@ -290,24 +292,6 @@ var (
 	annotationNames = sortedAnnotationNames(annotationValidations)
 )
 
-func validateJWTTokenAnnotation(context *annotationValidationContext) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	nginxVars := strings.Split(context.value, "$")
-	if len(nginxVars) != 2 {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must have 1 var"))
-	}
-	nVar := context.value[1:]
-
-	if !validAnnotationValueRegex.MatchString(nVar) {
-		msg := validation.RegexError(jwtTokenValueFmtErrMsg, annotationValueFmt, "$http_token", "$cookie_auth_token")
-		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
-	}
-
-	return allErrs
-
-}
-
 func validateJWTLoginURLAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -345,6 +329,17 @@ func validateJWTRealm(context *annotationValidationContext) field.ErrorList {
 
 	if !validAnnotationValueRegex.MatchString(context.value) {
 		msg := validation.RegexError(annotationValueFmtErrMsg, annotationValueFmt, "My Realm", "Cafe App")
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+	}
+
+	return allErrs
+}
+
+func validateJWTTokenAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !validJWTTokenAnnotationValueRegex.MatchString(context.value) {
+		msg := validation.RegexError(jwtTokenValueFmtErrMsg, jwtTokenValueFmt, "$http_token", "$cookie_auth_token")
 		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
 	}
 
