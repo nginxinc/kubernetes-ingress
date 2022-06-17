@@ -64,9 +64,19 @@ const (
 )
 
 const (
-	commaDelimiter           = ","
-	annotationValueFmt       = `([^"$\\]|\\[^$])*`
+	commaDelimiter     = ","
+	annotationValueFmt = `([^"$\\]|\\[^$])*`
+	pathFmt            = `/[^\s{};]*`
+)
+
+const (
 	annotationValueFmtErrMsg = `a valid annotation value must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
+	pathErrMsg               = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
+)
+
+var (
+	validAnnotationValueRegex = regexp.MustCompile("^" + annotationValueFmt + "$")
+	pathRegexp                = regexp.MustCompile("^" + pathFmt + "$")
 )
 
 type annotationValidationContext struct {
@@ -87,8 +97,6 @@ type (
 	annotationValidationConfig map[string][]annotationValidationFunc
 	validatorFunc              func(val string) error
 )
-
-var validAnnotationValueRegex = regexp.MustCompile("^" + annotationValueFmt + "$")
 
 var (
 	// annotationValidations defines the various validations which will be applied in order to each ingress annotation.
@@ -714,6 +722,7 @@ func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) fi
 		for _, path := range r.HTTP.Paths {
 			idxPath := idxRule.Child("http").Child("path").Index(i)
 
+			allErrs = append(allErrs, validatePath(path.Path, fieldPath)...)
 			allErrs = append(allErrs, validateBackend(&path.Backend, idxPath.Child("backend"))...)
 		}
 	}
@@ -726,6 +735,21 @@ func validateBackend(backend *networking.IngressBackend, fieldPath *field.Path) 
 
 	if backend.Resource != nil {
 		return append(allErrs, field.Forbidden(fieldPath.Child("resource"), "resource backends are not supported"))
+	}
+
+	return allErrs
+}
+
+func validatePath(path string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if path == "" {
+		return append(allErrs, field.Required(fieldPath, ""))
+	}
+
+	if !pathRegexp.MatchString(path) {
+		msg := validation.RegexError(pathErrMsg, pathFmt, "/", "/path", "/path/subpath-123")
+		return append(allErrs, field.Invalid(fieldPath, path, msg))
 	}
 
 	return allErrs

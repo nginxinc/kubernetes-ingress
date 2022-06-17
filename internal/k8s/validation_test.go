@@ -2503,6 +2503,31 @@ func TestValidateIngressSpec(t *testing.T) {
 		},
 		{
 			spec: &networking.IngressSpec{
+				Rules: []networking.IngressRule{
+					{
+						Host: "foo.example.com",
+						IngressRuleValue: networking.IngressRuleValue{
+							HTTP: &networking.HTTPIngressRuleValue{
+								Paths: []networking.HTTPIngressPath{
+									{
+										Path: `/tea\{custom_value}`,
+										Backend: networking.IngressBackend{
+											Service: &networking.IngressServiceBackend{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrors: []string{
+				"spec: Invalid value: \"/tea\\\\{custom_value}\": must start with / and must not include any whitespace character, `{`, `}` or `;`",
+			},
+			msg: "test invalid characters in path",
+		},
+		{
+			spec: &networking.IngressSpec{
 				DefaultBackend: &networking.IngressBackend{
 					Service: &networking.IngressServiceBackend{},
 				},
