@@ -2133,7 +2133,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			specServices: map[string]bool{
 				"service-1": true,
-			}, isPlus:             false,
+			}, isPlus: false,
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
@@ -2256,7 +2256,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			specServices: map[string]bool{
 				"service-1": true,
-			}, isPlus:             false,
+			}, isPlus: false,
 			appProtectEnabled:     false,
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
@@ -2525,6 +2525,31 @@ func TestValidateIngressSpec(t *testing.T) {
 				field.ErrorTypeInvalid,
 			},
 			msg: "test invalid characters in path",
+		},
+		{
+			spec: &networking.IngressSpec{
+				Rules: []networking.IngressRule{
+					{
+						Host: "foo.example.com",
+						IngressRuleValue: networking.IngressRuleValue{
+							HTTP: &networking.HTTPIngressRuleValue{
+								Paths: []networking.HTTPIngressPath{
+									{
+										Path: "",
+										Backend: networking.IngressBackend{
+											Service: &networking.IngressServiceBackend{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrors: []field.ErrorType{
+				field.ErrorTypeRequired,
+			},
+			msg: "test empty in path",
 		},
 		{
 			spec: &networking.IngressSpec{
