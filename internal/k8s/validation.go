@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	ap_validation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -54,6 +55,9 @@ const (
 	failTimeoutAnnotation                 = "nginx.org/fail-timeout"
 	appProtectEnableAnnotation            = "appprotect.f5.com/app-protect-enable"
 	appProtectSecurityLogEnableAnnotation = "appprotect.f5.com/app-protect-security-log-enable"
+	appProtectPolicyAnnotation            = "appprotect.f5.com/app-protect-policy"
+	appProtectSecurityLogAnnotation       = "appprotect.f5.com/app-protect-security-log"
+    appProtectSecurityLogDestAnnotation   = "appprotect.f5.com/app-protect-security-log-destination"
 	appProtectDosProtectedAnnotation      = "appprotectdos.f5.com/app-protect-dos-resource"
 	internalRouteAnnotation               = "nsm.nginx.com/internal-route"
 	websocketServicesAnnotation           = "nginx.org/websocket-services"
@@ -257,13 +261,33 @@ var (
 		},
 		appProtectEnableAnnotation: {
 			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
 		appProtectSecurityLogEnableAnnotation: {
 			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
+		},
+		appProtectPolicyAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateQualifiedName,
+		},
+		appProtectSecurityLogAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateAppProtectSecurityLogAnnotation,
+		},
+		appProtectSecurityLogDestAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateAppProtectSecurityLogDestAnnotation,
 		},
 		appProtectDosProtectedAnnotation: {
 			validateAppProtectDosOnlyAnnotation,
@@ -706,6 +730,31 @@ func validateRewriteListAnnotation(context *annotationValidationContext) field.E
 			strings.Join(unknownServices, commaDelimiter),
 		)
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
+	}
+	return allErrs
+}
+
+func validateAppProtectSecurityLogAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	logConf := strings.Split(context.value, ",")
+	for _, logConf := range logConf {
+		err := validation.IsQualifiedName(logConf)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, "security log configuration resource name must be qualified name, e.g. namespace/name"))
+		}
+	}
+	return allErrs
+}
+
+func validateAppProtectSecurityLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	logDsts := strings.Split(context.value, ",")
+	for _, logDst := range logDsts {
+		err := ap_validation.ValidateAppProtectLogDestination(logDst)
+		if err != nil {
+			errorMsg := fmt.Sprintf("Error Validating App Protect Log Destination Config: %v", err)
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
+		}
 	}
 	return allErrs
 }
