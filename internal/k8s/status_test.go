@@ -390,22 +390,42 @@ func checkStatus(expected string, actual networking.Ingress) bool {
 }
 
 func TestGenerateExternalEndpointsFromStatus(t *testing.T) {
-	su := statusUpdater{
-		status: []v1.LoadBalancerIngress{
-			{
-				IP: "8.8.8.8",
+	tests := []struct {
+		su                statusUpdater
+		expectedEndpoints []conf_v1.ExternalEndpoint
+	}{
+		{
+			su: statusUpdater{
+				status: []v1.LoadBalancerIngress{
+					{
+						IP: "8.8.8.8",
+					},
+				},
+			},
+			expectedEndpoints: []conf_v1.ExternalEndpoint{
+				{IP: "8.8.8.8", Ports: ""},
+			},
+		},
+		{
+			su: statusUpdater{
+				status: []v1.LoadBalancerIngress{
+					{
+						Hostname: "my-loadbalancer.example.com",
+					},
+				},
+			},
+			expectedEndpoints: []conf_v1.ExternalEndpoint{
+				{Hostname: "my-loadbalancer.example.com", Ports: ""},
 			},
 		},
 	}
+	for _, test := range tests {
+		endpoints := test.su.generateExternalEndpointsFromStatus(test.su.status)
 
-	expectedEndpoints := []conf_v1.ExternalEndpoint{
-		{IP: "8.8.8.8", Ports: ""},
-	}
+		if !reflect.DeepEqual(endpoints, test.expectedEndpoints) {
+			t.Errorf("generateExternalEndpointsFromStatus(%v) returned %v but expected %v", test.su.status, endpoints, test.expectedEndpoints)
+		}
 
-	endpoints := su.generateExternalEndpointsFromStatus(su.status)
-
-	if !reflect.DeepEqual(endpoints, expectedEndpoints) {
-		t.Errorf("generateExternalEndpointsFromStatus(%v) returned %v but expected %v", su.status, endpoints, expectedEndpoints)
 	}
 }
 
