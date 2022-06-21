@@ -11,34 +11,8 @@ tags: [ "docs" ]
 personas: ["devops"]
 ---
 
-NGINX Ingress Controller can now be used as the ingress controller for applications that are running inside an Istio service mesh. This allows to continue using the advanced capabilities that NGINX IC provides on Istio-based environments without resorting to any workarounds. 
+NGINX Ingress Controller can be used as the Ingress gateway for Istio Service Mesh. This tutorial covers how to implement a topology that places the power and wide capabilities of the NGINX Ingress Controller in front of Istio Service Mesh.
 
-
-Prior to 1.11 release, a configuration below would send two host headers to the backend; 
-
-```
-apiVersion: k8s.nginx.org/v1
-kind: VirtualServer
-metadata:
-  name: foo 
-spec:
-  host: foo.example.com
-  upstreams:
-  - name: foo
-    port: 8080
-    service: backend-svc
-  routes:
-  - path: "/"
-    action:
-      proxy:
-        upstream: foo
-        requestHeaders:
-          set:
-          - name: Host
-            value: bar.example.com
-```
-
-In 1.11 release, NGINX Ingress controller will only send one host header, depending on how you configure Ingress. By default NGINX Ingress Controller will send `proxy_set_header $host`. If Ingress has been configured with `requestHeaders` per the above example, this ensures that only one set of headers will be sent to the upstream server. In short, by setting `action-proxy-requestHeaders` in the `VirtualServer` CRD, NGINX Ingress will only send the specified hears that have been defined.
 
 Here is a standard deployment of NGINX Ingress controller without any service mesh deployed:    
 
@@ -55,6 +29,7 @@ The image below is what NGINX Ingress and Istio deployment looks like:
 
 
 By default for NGINX Ingress Controller, we populate the upstream server addresses with the endpoint IPs of the pods. NGINX Ingress Controller 1.11 release now supports the ability to configure NGINX Ingress CRDs (virtualServer/virtualServerRoute)to use the `service/cluster IP`. Using this flag,  NGINX Ingress will generate the .conf with the `service/cluster IP` of the service in the `upstreams/servers` section, instead of pod endpoint IPs. To enable NGINX Ingress to route to the `Service IP`, we are going to use a new feature released in 1.11; [use-cluster-ip](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream).   
+
  Here is a simple example of what your `upstream` section will look like now in `virtualServer/virtualServerRoute`:
 
 ```
@@ -106,6 +81,7 @@ spec:
         traffic.sidecar.istio.io/excludeOutboundIPRanges: "10.90.0.0/16,10.45.0.0/16" 
         sidecar.istio.io/inject: 'true'
 ```
+Make sure you deploying your NGINX Ingress Controller AFTER you install istio service mesh, so the sidecar is deployed in your NGINX Ingress deployment.
 
 ## Install Istio
  
@@ -253,7 +229,7 @@ server {
     }   
 }
 ```
-Notice the abscence of `proxy_set_header $host`. This is because we are using `action-proxy-requestHeaders` option to specify what headers we want to pass to Istio sidecar. This is required by Istio.
+
 
 Now we can test our NGINX Ingress with Istio setup with a simple curl request to our application.
 
@@ -283,3 +259,32 @@ To remove label from the namespace:
 ```
 kubectl lable ns default istio-injection-
 ```
+
+## Technical Deep Dive Notes and additional information.
+
+Prior to 1.11 release, a configuration below would send two host headers to the backend; 
+
+```
+apiVersion: k8s.nginx.org/v1
+kind: VirtualServer
+metadata:
+  name: foo 
+spec:
+  host: foo.example.com
+  upstreams:
+  - name: foo
+    port: 8080
+    service: backend-svc
+  routes:
+  - path: "/"
+    action:
+      proxy:
+        upstream: foo
+        requestHeaders:
+          set:
+          - name: Host
+            value: bar.example.com
+```
+
+In 1.11 release, NGINX Ingress controller will only send one host header, depending on how you configure Ingress. By default NGINX Ingress Controller will send `proxy_set_header $host`. If Ingress has been configured with `requestHeaders` per the above example, this ensures that only one set of headers will be sent to the upstream server. In short, by setting `action-proxy-requestHeaders` in the `VirtualServer` custom resource definition, NGINX Ingress will only send the specified hears that have been defined.
+
