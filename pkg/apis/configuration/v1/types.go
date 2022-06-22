@@ -21,6 +21,7 @@ const (
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="Current state of the VirtualServer. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller."
 // +kubebuilder:printcolumn:name="Host",type=string,JSONPath=`.spec.host`
 // +kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.status.externalEndpoints[*].ip`
+// +kubebuilder:printcolumn:name="ExternalHostname",priority=1,type=string,JSONPath=`.status.externalEndpoints[*].hostname`
 // +kubebuilder:printcolumn:name="Ports",type=string,JSONPath=`.status.externalEndpoints[*].ports`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 
@@ -268,10 +269,11 @@ type VirtualServerStatus struct {
 	ExternalEndpoints []ExternalEndpoint `json:"externalEndpoints,omitempty"`
 }
 
-// ExternalEndpoint defines the IP and ports used to connect to this resource.
+// ExternalEndpoint defines the IP/ Hostname and ports used to connect to this resource.
 type ExternalEndpoint struct {
-	IP    string `json:"ip"`
-	Ports string `json:"ports"`
+	IP       string `json:"ip,omitempty"`
+	Hostname string `json:"hostname,omitempty"`
+	Ports    string `json:"ports"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -292,6 +294,7 @@ type VirtualServerList struct {
 // +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`,description="Current state of the VirtualServerRoute. If the resource has a valid status, it means it has been validated and accepted by the Ingress Controller."
 // +kubebuilder:printcolumn:name="Host",type=string,JSONPath=`.spec.host`
 // +kubebuilder:printcolumn:name="IP",type=string,JSONPath=`.status.externalEndpoints[*].ip`
+// +kubebuilder:printcolumn:name="ExternalHostname",type=string,priority=1,JSONPath=`.status.externalEndpoints[*].hostname`
 // +kubebuilder:printcolumn:name="Ports",type=string,JSONPath=`.status.externalEndpoints[*].ports`
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 

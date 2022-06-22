@@ -27,6 +27,10 @@ spec:
         - jsonPath: .status.externalEndpoints[*].ip
           name: IP
           type: string
+        - jsonPath: .status.externalEndpoints[*].hostname
+          name: ExternalHostname
+          priority: 1
+          type: string
         - jsonPath: .status.externalEndpoints[*].ports
           name: Ports
           type: string
@@ -608,9 +612,11 @@ spec:
                 externalEndpoints:
                   type: array
                   items:
-                    description: ExternalEndpoint defines the IP and ports used to connect to this resource.
+                    description: ExternalEndpoint defines the IP/ Hostname and ports used to connect to this resource.
                     type: object
                     properties:
+                      hostname:
+                        type: string
                       ip:
                         type: string
                       ports:
