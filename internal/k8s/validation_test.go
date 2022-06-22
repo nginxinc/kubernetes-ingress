@@ -2594,6 +2594,80 @@ func TestValidateIngressSpec(t *testing.T) {
 				field.ErrorTypeInvalid,
 			},
 			msg: "test invalid characters in path",
+		}, {
+			spec: &networking.IngressSpec{
+				Rules: []networking.IngressRule{
+					{
+						Host: "foo.example.com",
+						IngressRuleValue: networking.IngressRuleValue{
+							HTTP: &networking.HTTPIngressRuleValue{
+								Paths: []networking.HTTPIngressPath{
+									{
+										Path: `/tea\{custom_value}`,
+										Backend: networking.IngressBackend{
+											Service: &networking.IngressServiceBackend{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrors: []field.ErrorType{
+				field.ErrorTypeInvalid,
+			},
+			msg: "test invalid characters in path",
+		},
+		{
+			spec: &networking.IngressSpec{
+				Rules: []networking.IngressRule{
+					{
+						Host: "foo.example.com",
+						IngressRuleValue: networking.IngressRuleValue{
+							HTTP: &networking.HTTPIngressRuleValue{
+								Paths: []networking.HTTPIngressPath{
+									{
+										Path: `/tea\`,
+										Backend: networking.IngressBackend{
+											Service: &networking.IngressServiceBackend{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrors: []field.ErrorType{
+				field.ErrorTypeInvalid,
+			},
+			msg: "test invalid characters in path",
+		},
+		{
+			spec: &networking.IngressSpec{
+				Rules: []networking.IngressRule{
+					{
+						Host: "foo.example.com",
+						IngressRuleValue: networking.IngressRuleValue{
+							HTTP: &networking.HTTPIngressRuleValue{
+								Paths: []networking.HTTPIngressPath{
+									{
+										Path: `/tea\n`,
+										Backend: networking.IngressBackend{
+											Service: &networking.IngressServiceBackend{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrors: []field.ErrorType{
+				field.ErrorTypeInvalid,
+			},
+			msg: "test invalid characters in path",
 		},
 		{
 			spec: &networking.IngressSpec{

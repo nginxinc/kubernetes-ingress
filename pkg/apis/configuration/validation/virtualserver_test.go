@@ -1531,6 +1531,8 @@ func TestValidatePath(t *testing.T) {
 		"/{",
 		"/}",
 		"/abc;",
+		`/path\`,
+		`/path\n`,
 	}
 
 	for _, path := range invalidPaths {
