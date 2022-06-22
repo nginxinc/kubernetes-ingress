@@ -1,6 +1,6 @@
 Step 1: Register the external-crd with the k8s api (run from the root of this repo):
 
-    ```k apply -f deployments/common/crd/externaldns.nginx.org_dnsendpoints.yaml```
+    ```k apply -f deployments/common/crds/externaldns.nginx.org_dnsendpoints.yaml```
 
 Step 2: Deploy external-dns
 
