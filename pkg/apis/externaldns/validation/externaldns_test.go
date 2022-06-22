@@ -30,6 +30,21 @@ func TestValidateDNSEndpoint(t *testing.T) {
 			},
 		},
 		{
+			name: "with a single IPv6 target",
+			endpoint: v1.DNSEndpoint{
+				Spec: v1.DNSEndpointSpec{
+					Endpoints: []*v1.Endpoint{
+						{
+							DNSName:    "example.com",
+							Targets:    v1.Targets{"2001:db8:0:0:0:0:2:1"},
+							RecordType: "A",
+							RecordTTL:  600,
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "with multiple valid endpoints",
 			endpoint: v1.DNSEndpoint{
 				Spec: v1.DNSEndpointSpec{
@@ -44,6 +59,12 @@ func TestValidateDNSEndpoint(t *testing.T) {
 							DNSName:    "example.co.uk",
 							Targets:    v1.Targets{"10.2.2.3"},
 							RecordType: "CNAME",
+							RecordTTL:  900,
+						},
+						{
+							DNSName:    "example.ie",
+							Targets:    v1.Targets{"2001:db8:0:0:0:0:2:1"},
+							RecordType: "AAAA",
 							RecordTTL:  900,
 						},
 					},
@@ -114,6 +135,22 @@ func TestValidateDNSEndpoint_ReturnsErrorOn(t *testing.T) {
 						{
 							DNSName:    "example.com",
 							Targets:    v1.Targets{"bogusTargetName"},
+							RecordType: "A",
+							RecordTTL:  600,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "bogus target IPv6 address",
+			want: validation.ErrTypeInvalid,
+			endpoint: v1.DNSEndpoint{
+				Spec: v1.DNSEndpointSpec{
+					Endpoints: []*v1.Endpoint{
+						{
+							DNSName:    "example.com",
+							Targets:    v1.Targets{"2001:::0:0:0:0:2:1"},
 							RecordType: "A",
 							RecordTTL:  600,
 						},

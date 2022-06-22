@@ -50,8 +50,15 @@ func validateDNSName(name string) error {
 
 func validateTargets(targets v1.Targets) error {
 	for _, target := range targets {
-		if err := isFullyQualifiedDomainName(target); err != nil {
-			return fmt.Errorf("%w: target %q is invalid, it should be a valid IP address or hostname", ErrTypeInvalid, target)
+		switch {
+		case strings.Contains(target, ":"):
+			if errMsg := validation.IsValidIP(target); len(errMsg) > 0 {
+				return fmt.Errorf("%w: target %q is invalid: %s", ErrTypeInvalid, target, errMsg[0])
+			}
+		default:
+			if err := isFullyQualifiedDomainName(target); err != nil {
+				return fmt.Errorf("%w: target %q is invalid, it should be a valid IP address or hostname", ErrTypeInvalid, target)
+			}
 		}
 	}
 	return isUnique(targets)
@@ -106,7 +113,7 @@ var (
 	//
 	// NGINX ingress controller at the moment supports
 	// a subset of DNS record types listed in the external-dns project.
-	validRecords = []string{"A", "CNAME"}
+	validRecords = []string{"A", "CNAME", "AAAA"}
 
 	// ErrTypeNotSupported indicates that provided value is not currently supported.
 	ErrTypeNotSupported = errors.New("type not supported")
