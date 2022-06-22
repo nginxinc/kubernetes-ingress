@@ -66,7 +66,7 @@ const (
 const (
 	commaDelimiter     = ","
 	annotationValueFmt = `([^"$\\]|\\[^$])*`
-	pathFmt            = `/[^\s{};\\$]*`
+	pathFmt            = `/[^\s{};\\]*`
 	jwtTokenValueFmt   = "\\$" + annotationValueFmt
 )
 
