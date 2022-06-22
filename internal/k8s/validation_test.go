@@ -2594,7 +2594,8 @@ func TestValidateIngressSpec(t *testing.T) {
 				field.ErrorTypeInvalid,
 			},
 			msg: "test invalid characters in path",
-		}, {
+		},
+		{
 			spec: &networking.IngressSpec{
 				Rules: []networking.IngressRule{
 					{
