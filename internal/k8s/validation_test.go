@@ -2114,7 +2114,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 		},
 		{
 			annotations: map[string]string{
-				"appprotect.f5.com/app-protect-security-log-destination": `syslog:server=localhost:514,syslog:server=localhost:515`,
+				"appprotect.f5.com/app-protect-security-log-destination": `syslog:server=localhost:514,syslog:server=syslog-svc.default:514`,
 			},
 			specServices:          map[string]bool{},
 			isPlus:                true,

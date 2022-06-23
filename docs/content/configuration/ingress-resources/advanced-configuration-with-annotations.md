@@ -83,12 +83,7 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 The following Ingress annotations currently have limited or no validation:
 
-- `nginx.com/jwt-key`,
-- `nginx.com/jwt-realm`,
-- `nginx.com/jwt-token`,
-- `nginx.com/jwt-login-url`,
-- `appprotect.f5.com/app-protect-policy`,
-- `appprotect.f5.com/app-protect-security-log`.
+- `nginx.com/jwt-token`.
 
 Validation of these annotations will be addressed in the future.
 
