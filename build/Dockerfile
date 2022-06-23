@@ -7,7 +7,7 @@ ARG DEBIAN_VERSION=bullseye-slim
 
 ############################################# Base images containing libs for Opentracing #############################################
 FROM opentracing/nginx-opentracing:nginx-1.23.0 as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.23.0 as alpine-opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.23.0-alpine as alpine-opentracing-lib
 
 
 ############################################# Base image for Debian #############################################
