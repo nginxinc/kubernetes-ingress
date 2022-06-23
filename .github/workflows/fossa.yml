@@ -18,6 +18,7 @@ jobs:
   scan:
     name: Fossa
     runs-on: ubuntu-20.04
+    if: ${{ github.event.repository.fork == false }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3

@@ -385,6 +385,37 @@ func TestSync(t *testing.T) {
 			ExpectedEvents: []string{`Warning BadConfig Incorrect cert-manager configuration for VirtualServer resource: invalid cert manager field "tls.cert-manager.renew-before": time: invalid duration "invalid renew before"`},
 		},
 		{
+			Name:   "No TLS block specified",
+			Issuer: issuer,
+			VirtualServer: vsapi.VirtualServer{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vs-name",
+					Namespace: gen.DefaultTestNamespace,
+					UID:       types.UID("vs-name"),
+				},
+				Spec: vsapi.VirtualServerSpec{
+					Host: "cafe.example.com",
+				},
+			},
+		},
+		{
+			Name:   "No CM block specified",
+			Issuer: issuer,
+			VirtualServer: vsapi.VirtualServer{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vs-name",
+					Namespace: gen.DefaultTestNamespace,
+					UID:       types.UID("vs-name"),
+				},
+				Spec: vsapi.VirtualServerSpec{
+					Host: "cafe.example.com",
+					TLS: &vsapi.TLS{
+						Secret: "secret-name",
+					},
+				},
+			},
+		},
+		{
 			Name:   "return a single Certificate for an ingress with a single valid TLS entry with common-name and keyusage annotation",
 			Issuer: clusterIssuer,
 			VirtualServer: *buildVirtualServer("vs-name", gen.DefaultTestNamespace, "my-cert", vsapi.CertManager{

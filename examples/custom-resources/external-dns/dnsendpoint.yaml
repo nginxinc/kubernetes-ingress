@@ -1,0 +1,12 @@
+apiVersion: externaldns.nginx.org/v1
+kind: DNSEndpoint
+metadata:
+  name: examplednsrecord
+spec:
+  endpoints:
+  - dnsName: <DNS_NAME>
+    recordTTL: 180
+    recordType: A
+    targets:
+    - <IP_1>
+    - <IP_2>

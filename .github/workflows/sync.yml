@@ -16,6 +16,7 @@ jobs:
   # This job sync this repo to our internal repo
   repo-sync:
     runs-on: ubuntu-20.04
+    if: ${{ github.event.repository.fork == false }}
     steps:
       - name: Repo Sync
         uses: wei/git-sync@v3
@@ -25,21 +26,6 @@ jobs:
           destination_repo: ${{ secrets.SYNC_DEST_REPO_URL }}
           destination_branch: "main"
           ssh_private_key: ${{ secrets.SYNC_SSH_PRIVATE_KEY }}
-
-  # This job open a PR to sync the generated CRD files across to nginx-ingress-operator
-  # (see .github/sync.yml for config details)
-  crds-sync:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-      - name: Run CRD File Sync
-        uses: BetaHuhn/repo-file-sync-action@v1
-        with:
-          GH_PAT: ${{ secrets.NGINX_PAT }}
-          ASSIGNEES: "nginxinc/kic"
-          PR_LABELS: chore
-          COMMIT_EACH_FILE: false
 
   # This job sync the labels across the various repos
   labels-sync:
@@ -55,6 +41,7 @@ jobs:
           - nginxinc/nginx-asg-sync
           - nginxinc/nginx-ns1-gslb
     runs-on: ubuntu-20.04
+    if: ${{ github.event.repository.fork == false }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
