@@ -1882,6 +1882,20 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid appprotect.f5.com/app-protect-enable annotation",
 		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-enable": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.appprotect.f5.com/app-protect-enable: Forbidden: annotation requires NGINX Plus`,
+			},
+			msg: "invalid appprotect.f5.com/app-protect-enable annotation, requires NGINX Plus",
+		},
 
 		{
 			annotations: map[string]string{
@@ -1923,6 +1937,249 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid appprotect.f5.com/app-protect-security-log-enable annotation",
 		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log-enable": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				`annotations.appprotect.f5.com/app-protect-security-log-enable: Forbidden: annotation requires NGINX Plus`,
+			},
+			msg: "invalid appprotect.f5.com/app-protect-security-log-enable annotation, requires NGINX Plus",
+		},
+
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-policy": "default/dataguard-alarm",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid appprotect.f5.com/app-protect-policy annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-policy": `default/dataguard\alarm`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-policy: Invalid value: \"default/dataguard\\\\alarm\": must be a qualified name",
+			}, msg: "invalid appprotect.f5.com/app-protect-policy annotation, not a qualified name",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-policy": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-policy: Forbidden: annotation requires AppProtect",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-policy annotation, requires AppProtect",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-policy": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-policy: Forbidden: annotation requires NGINX Plus",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-policy annotation, requires NGINX Plus",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-policy": "",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-policy: Required value",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-policy annotation, requires value",
+		},
+
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log": "default/logconf",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid appprotect.f5.com/app-protect-security-log annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log": `default/logconf,default/logconf2`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid appprotect.f5.com/app-protect-security-log annotation, multiple values",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log": `default/logconf\`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-security-log: Invalid value: \"default/logconf\\\\\": security log configuration resource name must be qualified name, e.g. namespace/name",
+			}, msg: "invalid appprotect.f5.com/app-protect-security-log annotation, not a qualified name",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-security-log: Forbidden: annotation requires AppProtect",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-security-log annotation, requires AppProtect",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-security-log: Forbidden: annotation requires NGINX Plus",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-security-log annotation, requires NGINX Plus",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log": "",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-security-log: Required value",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-security-log annotation, requires value",
+		},
+
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log-destination": "syslog:server=localhost:514",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid appprotect.f5.com/app-protect-security-log-destination annotation",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log-destination": `syslog:server=localhost:514,syslog:server=localhost:515`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors:        nil,
+			msg:                   "valid appprotect.f5.com/app-protect-security-log-destination annotation, multiple values",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log-destination": `syslog:server=localhost\:514`,
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-security-log-destination: Invalid value: \"syslog:server=localhost\\\\:514\": Error Validating App Protect Log Destination Config: error parsing App Protect Log config: Destination must follow format: syslog:server=<ip-address | localhost>:<port> or fqdn or stderr or absolute path to file Log Destination did not follow format",
+			}, msg: "invalid appprotect.f5.com/app-protect-security-log-destination, invalid value",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log-destination": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     false,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-security-log-destination: Forbidden: annotation requires AppProtect",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-security-log-destination annotation, requires AppProtect",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log-destination": "true",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                false,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-security-log-destination: Forbidden: annotation requires NGINX Plus",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-security-log-destination annotation, requires NGINX Plus",
+		},
+		{
+			annotations: map[string]string{
+				"appprotect.f5.com/app-protect-security-log-destination": "",
+			},
+			specServices:          map[string]bool{},
+			isPlus:                true,
+			appProtectEnabled:     true,
+			appProtectDosEnabled:  false,
+			internalRoutesEnabled: false,
+			expectedErrors: []string{
+				"annotations.appprotect.f5.com/app-protect-security-log-destination: Required value",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-security-log-destination, requires value",
+		},
+
 		{
 			annotations: map[string]string{
 				"appprotectdos.f5.com/app-protect-dos-resource": "dos-resource-name",
@@ -1989,6 +2246,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			},
 			msg: "invalid appprotectdos.f5.com/app-protect-dos-enable annotation with incorrectly qualified identifier",
 		},
+
 		{
 			annotations: map[string]string{
 				"nsm.nginx.com/internal-route": "true",
