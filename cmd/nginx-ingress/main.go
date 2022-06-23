@@ -38,7 +38,8 @@ import (
 )
 
 func main() {
-	parseFlags()
+	binaryInfo, versionInfo := getBuildInfo()
+	parseFlags(binaryInfo, versionInfo)
 
 	config, kubeClient := createConfigAndKubeClient()
 

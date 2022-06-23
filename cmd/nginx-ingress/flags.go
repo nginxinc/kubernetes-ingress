@@ -6,8 +6,6 @@ import (
 	"net"
 	"os"
 	"regexp"
-	"runtime"
-	"runtime/debug"
 	"strings"
 
 	"github.com/golang/glog"
@@ -177,12 +175,12 @@ var (
 )
 
 //gocyclo:ignore
-func parseFlags() {
+func parseFlags(versionInfo string, binaryInfo string) {
 	flag.Parse()
 
 	initialChecks()
 
-	binaryInfo, versionInfo := getBuildInfo()
+	printVersionInfo(versionInfo, binaryInfo)
 
 	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 	glog.Info(binaryInfo)
@@ -264,6 +262,15 @@ func initialChecks() {
 	unparsed := flag.Args()
 	if unparsed != nil {
 		glog.Warningf("Ignoring unhandled arguments: %v", unparsed)
+	}
+}
+
+// printVersionInfo prints the the version and binary info before exiting if the flag is set
+func printVersionInfo(versionInfo string, binaryInfo string) {
+	if *versionFlag {
+		fmt.Println(versionInfo)
+		fmt.Println(binaryInfo)
+		os.Exit(0)
 	}
 }
 
@@ -390,30 +397,4 @@ func validateLocation(location string) error {
 		return fmt.Errorf("invalid location format: %v", msg)
 	}
 	return nil
-}
-
-func getBuildInfo() (string, string) {
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
-		return "", ""
-	}
-	for _, kv := range info.Settings {
-		switch kv.Key {
-		case "vcs.revision":
-			commitHash = kv.Value
-		case "vcs.time":
-			commitTime = kv.Value
-		case "vcs.modified":
-			dirtyBuild = kv.Value == "true"
-		}
-	}
-	binaryInfo := fmt.Sprintf("Commit=%v Date=%v DirtyState=%v Arch=%v/%v Go=%v", commitHash, commitTime, dirtyBuild, runtime.GOOS, runtime.GOARCH, runtime.Version())
-	versionInfo := fmt.Sprintf("Version=%v", version)
-
-	if *versionFlag {
-		fmt.Println(versionInfo)
-		fmt.Println(binaryInfo)
-		os.Exit(0)
-	}
-	return versionInfo, binaryInfo
 }
