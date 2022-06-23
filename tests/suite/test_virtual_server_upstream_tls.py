@@ -51,7 +51,7 @@ class TestVirtualServerUpstreamTls:
                                            f"{TEST_DATA}/virtual-server-upstream-tls/virtual-server-invalid.yaml",
                                            virtual_server_setup.namespace)
         except ApiException as ex:
-            assert ex.status == 422 and "spec.upstreams.tls.enable" in ex.body
+            assert ex.status == 422 and "tls.enable" in ex.body
         except Exception as ex:
             pytest.fail(f"An unexpected exception is raised: {ex}")
         else:
