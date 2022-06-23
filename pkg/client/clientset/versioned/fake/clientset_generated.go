@@ -10,6 +10,8 @@ import (
 	fakek8sv1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/configuration/v1alpha1/fake"
 	appprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1"
 	fakeappprotectdosv1beta1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/dos/v1beta1/fake"
+	externaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1"
+	fakeexternaldnsv1 "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned/typed/externaldns/v1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -80,4 +82,9 @@ func (c *Clientset) K8sV1() k8sv1.K8sV1Interface {
 // AppprotectdosV1beta1 retrieves the AppprotectdosV1beta1Client
 func (c *Clientset) AppprotectdosV1beta1() appprotectdosv1beta1.AppprotectdosV1beta1Interface {
 	return &fakeappprotectdosv1beta1.FakeAppprotectdosV1beta1{Fake: &c.Fake}
+}
+
+// ExternaldnsV1 retrieves the ExternaldnsV1Client
+func (c *Clientset) ExternaldnsV1() externaldnsv1.ExternaldnsV1Interface {
+	return &fakeexternaldnsv1.FakeExternaldnsV1{Fake: &c.Fake}
 }
