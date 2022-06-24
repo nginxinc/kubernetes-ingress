@@ -57,6 +57,36 @@ spec:
               properties:
                 dos:
                   type: string
+                externalDNS:
+                  description: ExternalDNS defines externaldns sub-resource of a virtual server.
+                  type: object
+                  properties:
+                    enable:
+                      type: boolean
+                    labels:
+                      description: Labels stores labels defined for the Endpoint
+                      type: object
+                      additionalProperties:
+                        type: string
+                    providerSpecific:
+                      description: ProviderSpecific stores provider specific config
+                      type: array
+                      items:
+                        description: ProviderSpecificProperty defines specific property for using with ExternalDNS sub-resource.
+                        type: object
+                        properties:
+                          name:
+                            description: Name of the property
+                            type: string
+                          value:
+                            description: Value of the property
+                            type: string
+                    recordTTL:
+                      description: TTL for the record
+                      type: integer
+                      format: int64
+                    recordType:
+                      type: string
                 host:
                   type: string
                 http-snippets:

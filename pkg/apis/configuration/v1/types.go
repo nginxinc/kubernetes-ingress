@@ -45,6 +45,33 @@ type VirtualServerSpec struct {
 	HTTPSnippets   string            `json:"http-snippets"`
 	ServerSnippets string            `json:"server-snippets"`
 	Dos            string            `json:"dos"`
+	ExternalDNS    ExternalDNS       `json:"externalDNS"`
+}
+
+// ExternalDNS defines externaldns sub-resource of a virtual server.
+type ExternalDNS struct {
+	Enable     bool   `json:"enable"`
+	RecordType string `json:"recordType,omitempty"`
+	// TTL for the record
+	RecordTTL int64 `json:"recordTTL,omitempty"`
+	// Labels stores labels defined for the Endpoint
+	// +optional
+	Labels map[string]string `json:"labels,omitempty"`
+	// ProviderSpecific stores provider specific config
+	// +optional
+	ProviderSpecific ProviderSpecific `json:"providerSpecific,omitempty"`
+}
+
+// ProviderSpecific is a list of properties.
+type ProviderSpecific []ProviderSpecificProperty
+
+// ProviderSpecificProperty defines specific property
+// for using with ExternalDNS sub-resource.
+type ProviderSpecificProperty struct {
+	// Name of the property
+	Name string `json:"name,omitempty"`
+	// Value of the property
+	Value string `json:"value,omitempty"`
 }
 
 // PolicyReference references a policy by name and an optional namespace.
