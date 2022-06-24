@@ -8,7 +8,6 @@ import (
 	"github.com/golang/glog"
 	extdns_clientset "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
-	extdns_informers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
 	listersV1 "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/configuration/v1"
 
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -18,8 +17,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	vsinformers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
-	kubeinformers "k8s.io/client-go/informers"
+	k8s_nginx_informers "github.com/nginxinc/kubernetes-ingress/pkg/client/informers/externalversions"
 )
 
 const (
@@ -33,16 +31,14 @@ const (
 
 // ExtDNSController represents ExternalDNS controller.
 type ExtDNSController struct {
-	vsLister                    listersV1.VirtualServerLister
-	sync                        SyncFn
-	ctx                         context.Context
-	mustSync                    []cache.InformerSynced
-	queue                       workqueue.Interface
-	extDNSSharedInformerFactory extdns_informers.SharedInformerFactory
-	vsSharedInformerFactory     vsinformers.SharedInformerFactory
-	kubeSharedInformerFactory   kubeinformers.SharedInformerFactory
-	recorder                    record.EventRecorder
-	extDNSClient                *extdns_clientset.Clientset
+	vsLister              listersV1.VirtualServerLister
+	sync                  SyncFn
+	ctx                   context.Context
+	mustSync              []cache.InformerSynced
+	queue                 workqueue.Interface
+	sharedInformerFactory k8s_nginx_informers.SharedInformerFactory
+	recorder              record.EventRecorder
+	extDNSClient          *extdns_clientset.Clientset
 }
 
 // ExtDNSOpts represents config required for building the External DNS Controller.
@@ -62,25 +58,23 @@ func NewController(opts *ExtDNSOpts) (*ExtDNSController, error) {
 		return nil, fmt.Errorf("%w, creating new externaldns controller", err)
 	}
 
-	extDNSSharedInformerFactory := extdns_informers.NewSharedInformerFactoryWithOptions(client, resyncPeriod, extdns_informers.WithNamespace(opts.namespace))
-	vsSharedInformerFactory := vsinformers.NewSharedInformerFactoryWithOptions(opts.vsClient, resyncPeriod, vsinformers.WithNamespace(opts.namespace))
-	kubeSharedInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(opts.kubeClient, resyncPeriod, kubeinformers.WithNamespace(opts.namespace))
+	sharedInformerFactory := k8s_nginx_informers.NewSharedInformerFactoryWithOptions(opts.vsClient, resyncPeriod, k8s_nginx_informers.WithNamespace(opts.namespace))
 
 	c := &ExtDNSController{
-		ctx:                         opts.context,
-		queue:                       workqueue.NewNamed(ControllerName),
-		extDNSSharedInformerFactory: extDNSSharedInformerFactory,
-		vsSharedInformerFactory:     vsSharedInformerFactory,
-		kubeSharedInformerFactory:   kubeSharedInformerFactory,
-		recorder:                    opts.eventRecorder,
-		extDNSClient:                client,
+		ctx:                   opts.context,
+		queue:                 workqueue.NewNamed(ControllerName),
+		sharedInformerFactory: sharedInformerFactory,
+		recorder:              opts.eventRecorder,
+		extDNSClient:          client,
 	}
 	c.register()
 	return c, nil
 }
 
 func (c *ExtDNSController) register() workqueue.Interface {
-	c.vsLister = c.vsSharedInformerFactory.K8s().V1().VirtualServers().Lister()
+	c.vsLister = c.sharedInformerFactory.K8s().V1().VirtualServers().Lister()
+	//c.sharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler()
+	// todo
 
 	// TODO: ?
 	/*
@@ -92,11 +86,11 @@ func (c *ExtDNSController) register() workqueue.Interface {
 	*/
 
 	// c.sync = SyncFnFor()
-	c.sync = SyncFnFor(c.recorder, c.extDNSClient, c.vsSharedInformerFactory.Externaldns().V1().DNSEndpoints().Lister())
+	c.sync = SyncFnFor(c.recorder, c.extDNSClient, c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Lister())
 
 	c.mustSync = []cache.InformerSynced{
-		c.vsSharedInformerFactory.K8s().V1().Policies().Informer().HasSynced,
-		c.extDNSSharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().HasSynced,
+		c.sharedInformerFactory.K8s().V1().Policies().Informer().HasSynced,
+		c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().HasSynced,
 	}
 	return c.queue
 }
@@ -111,9 +105,7 @@ func (c *ExtDNSController) Run(stopCh <-chan struct{}) {
 
 	glog.Infof("Starting external-dns control loop")
 
-	go c.vsSharedInformerFactory.Start(c.ctx.Done())
-	go c.extDNSSharedInformerFactory.Start(c.ctx.Done())
-	go c.kubeSharedInformerFactory.Start(c.ctx.Done())
+	go c.sharedInformerFactory.Start(c.ctx.Done())
 
 	// wait for all informer caches to be synced
 	glog.V(3).Infof("Waiting for %d caches to sync", len(c.mustSync))
@@ -132,6 +124,8 @@ func (c *ExtDNSController) Run(stopCh <-chan struct{}) {
 
 // runWorker is a long-running function that will continually call the processItem
 // function in order to read and process a message on the workqueue.
+//
+//
 func (c *ExtDNSController) runWorker(ctx context.Context) {
 	glog.V(3).Infof("processing items on the workqueue")
 	for {
@@ -157,6 +151,12 @@ func (c *ExtDNSController) runWorker(ctx context.Context) {
 	}
 }
 
+//
+// need to process VS and External DNS
+//
+// 1) if Kind VS -> call sync func on this kind
+// 2) if the kind is ExternalDNS Endpoint -> run the func sth like reconcile - this can happen when
+// etrnaldns endpoint is manipulated not from VS
 func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
 	glog.V(3).Infof("processing external dns resource")
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
