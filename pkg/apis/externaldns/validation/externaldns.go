@@ -83,7 +83,7 @@ func validateDNSRecordType(record string) error {
 }
 
 func validateTTL(ttl v1.TTL) error {
-	if ttl <= 0 {
+	if ttl < 0 {
 		return fmt.Errorf("%w: ttl %d, ttl value should be > 0", ErrTypeNotInRange, ttl)
 	}
 	return nil

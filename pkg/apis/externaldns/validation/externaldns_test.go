@@ -184,7 +184,7 @@ func TestValidateDNSEndpoint_ReturnsErrorOn(t *testing.T) {
 							DNSName:    "example.com",
 							Targets:    v1.Targets{"10.2.2.3", "acme.com"},
 							RecordType: "A",
-							RecordTTL:  0,
+							RecordTTL:  -1,
 						},
 					},
 				},
