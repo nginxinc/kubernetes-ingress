@@ -85,7 +85,6 @@ The following Ingress annotation currently has limited validation:
 
 - `nginx.com/jwt-token`.
 
-
 ## Summary of Annotations
 
 The table below summarizes the available annotations.

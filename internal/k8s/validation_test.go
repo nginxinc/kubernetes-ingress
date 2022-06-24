@@ -2135,7 +2135,8 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
 				"annotations.appprotect.f5.com/app-protect-security-log-destination: Invalid value: \"syslog:server=localhost\\\\:514\": Error Validating App Protect Log Destination Config: error parsing App Protect Log config: Destination must follow format: syslog:server=<ip-address | localhost>:<port> or fqdn or stderr or absolute path to file Log Destination did not follow format",
-			}, msg: "invalid appprotect.f5.com/app-protect-security-log-destination, invalid value",
+			},
+			msg: "invalid appprotect.f5.com/app-protect-security-log-destination, invalid value",
 		},
 		{
 			annotations: map[string]string{
