@@ -198,6 +198,9 @@ func buildRecordType(vs *vsapi.VirtualServer) string {
 }
 
 func buildLabels(vs *vsapi.VirtualServer) extdnsapi.Labels {
+	if vs.Spec.ExternalDNS.Labels == nil {
+		return nil
+	}
 	labels := make(extdnsapi.Labels)
 	for k, v := range vs.Spec.ExternalDNS.Labels {
 		labels[k] = v
@@ -206,6 +209,9 @@ func buildLabels(vs *vsapi.VirtualServer) extdnsapi.Labels {
 }
 
 func buildProviderSpecificProperties(vs *vsapi.VirtualServer) extdnsapi.ProviderSpecific {
+	if vs.Spec.ExternalDNS.ProviderSpecific == nil {
+		return nil
+	}
 	var providerSpecific extdnsapi.ProviderSpecific
 	for _, pspecific := range vs.Spec.ExternalDNS.ProviderSpecific {
 		p := extdnsapi.ProviderSpecificProperty{
