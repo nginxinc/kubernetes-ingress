@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation"
 	validators "k8s.io/apimachinery/pkg/util/validation"
-	"k8s.io/utils/net"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,38 +49,14 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, extdnsListe
 			return fmt.Errorf("failed to determine external endpoints")
 		}
 
-		// verify if external endpoints are valid IP addresses here
-		if err := validateExternalEndpoints(vs); err != nil {
+		targets, err := getValidTargets(vs.Status.ExternalEndpoints)
+		if err != nil {
 			glog.Error("Invalid external enpoint")
 			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Invalid external endpoint")
 			return err
 		}
 
-		// check if it is IP or hostname or both
-
-		// External IP or Hostname (LoadBalancer!!!)
-		// implement validation for IP v4, v6, and hostname
-		// if neither return error
-
-		endpoints := vs.Status.ExternalEndpoints
-
-		/*
-			1) retrieve hostname from VS
-			2) retrieve external IP of the VS (enable VS status should be done at the moment of the start ingress) - check it and bail if not enabled
-
-			3) ret. ExternalDNS data (record)
-
-		*/
-
-		// Step 1
-		// get info about configured externaldns from the VS (?)
-
-		// (validation needed at this point?) vsHost := vs.Spec.Host
-		vs.Status.ExternalEndpoints
-		// Step 2
-		// build dnsendpoint top level struct from data retrieved from VS
-
-		newDNSEndpoint, updateDNSEndpoint, err := buildDNSEndpoint(extdnsLister, vs)
+		newDNSEndpoint, updateDNSEndpoint, err := buildDNSEndpoint(extdnsLister, vs, targets)
 		if err != nil {
 			glog.Errorf("error message here %s", err)
 			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Incorrect DNSEndpoint config for VirtualServer resource: %s", err)
@@ -98,7 +73,7 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, extdnsListe
 			}
 			rec.Eventf(vs, corev1.EventTypeNormal, reasonCreateExternalDNS, "Successfully created ExternalDNS %s", newDNSEndpoint.Name)
 		}
-		// Step 3
+
 		// Update existing ExternalDNS endpoints
 		if updateDNSEndpoint != nil {
 			_, err = client.ExternaldnsV1().DNSEndpoints(updateDNSEndpoint.Namespace).Update(ctx, updateDNSEndpoint, metav1.UpdateOptions{})
@@ -116,6 +91,7 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, extdnsListe
 		if err != nil {
 			return err
 		}
+
 		// think where to put the logic of listing and deleteing dnsendpoints
 		unrequiredExtDNSNames := findDNSExternalEndpointsToBeRemoved(extdnsentries)
 
@@ -127,110 +103,40 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, extdnsListe
 			}
 			rec.Eventf(vs, corev1.EventTypeNormal, reasonDeleteExternalDNS, "Successfully deleted unrequired ExternalDNS endpoint %q", name)
 		}
-
 		return nil
 	}
 }
 
-// GetEndpointAndRecordType takes an ExternalEndpoint and returns a string
-// representing IP or Hostname, and a corresponding DNS record type.
-// It returns an error if either IP or Hostname are invalid.
-//
-// NOTE: Check what validation we need to perform inside the func.
-// And what should the func return if both IP and Hostname are present
-// and valid (in vsapi.ExternalEndpoint). Current draft assumes that
-// we pass vsapi.ExternalEndpoint with either IP or Hostname.
-// Also, possible this func will be unexported when used as a part of
-// larger func with comprehensive test coverage. As of now is exported
-// to be possible to import it for testing.
-func GetEndpointAndRecordType(vs vsapi.ExternalEndpoint) (string, string, error) {
-	if vs.IP == "" && vs.Hostname == "" {
-		return "", "", errors.New("ip and hostname not provided")
-	}
-	var endpoint, record string
-	// ExternalEndpoint has an IP address
-	if vs.IP != "" {
-		if errMsg := validation.IsValidIP(vs.IP); len(errMsg) > 0 {
-			return "", "", fmt.Errorf("invalid IP address %s, %s", vs.IP, strings.Join(errMsg, ", "))
-		}
-		if net.IsIPv6String(vs.IP) {
-			endpoint, record = vs.IP, "AAAA"
-		} else {
-			endpoint, record = vs.IP, "A"
-		}
-		return endpoint, record, nil
-	}
-
-	// ExternalEnpoint has a hostname
-	if vs.Hostname != "" {
-		if errMsg := validation.IsQualifiedName(vs.Hostname); len(errMsg) > 0 {
-			return "", "", fmt.Errorf("invalid hostname %s, %s", vs.Hostname, strings.Join(errMsg, ", "))
-		}
-		endpoint, record = vs.Hostname, "CNAME"
-	}
-
-	return endpoint, record, nil
-}
-
-// DNS endpoint reconciler
-
-func findDNSExternalEndpointsToBeRemoved(endpoints []*extdnsapi.DNSEndpoint) []string {
-	var toBeRemoved []string
+func getValidTargets(endpoints []vsapi.ExternalEndpoint) (extdnsapi.Targets, error) {
+	var targets extdnsapi.Targets
 	for _, e := range endpoints {
-		owner := metav1.GetControllerOf(e)
-		if owner == nil {
-			continue
-		}
-		if owner.Kind != vsGVK.Kind {
-			continue
-		}
-
-		// owner name to get
-		vsThatOwnsEnpoint, err := vsLister.VirtualServers(e.Namespace).Get(owner.Name)
-		if err != nil {
-			// delete endpoint
-			// add to the slist to be removed
-		}
-	}
-	return toBeRemoved
-}
-
-func validateExternalEndpoints(vs *vsapi.VirtualServer) error {
-	for _, e := range vs.Status.ExternalEndpoints {
-		if e.IP == "" && e.Hostname == "" {
-			return fmt.Error("missing hostname and IP address")
-		}
 		if e.IP != "" {
 			if errMsg := validators.IsValidIP(e.IP); len(errMsg) > 0 {
-				return fmt.Errorf("invalid external endpoint IP address %s, %s", e.IP, strings.Join(errMsg, ", "))
+				continue
+			}
+			targets = append(targets, e.IP)
 		}
 		if e.Hostname != "" {
 			if errMsg := validation.IsQualifiedName(e.Hostname); len(errMsg) > 0 {
-				return fmt.Errorf("invalid external endpoint hostname %s, %s", e.Hostname, strings.Join(errMsg, ", "))
+				continue
 			}
+			targets = append(targets, e.Hostname)
 		}
 	}
-	return nil
+	if len(targets) == 0 {
+		return targets, errors.New("valid targets not defined")
+	}
+	return targets, nil
 }
 
-func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.VirtualServer) (newDNSEndpoint, updateDNSEndpoint *extdnsapi.DNSEndpoint, _ error) {
-	// Get existing DNSEndpoint
+func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.VirtualServer, targets extdnsapi.Targets) (newDNSEndpoint, updateDNSEndpoint *extdnsapi.DNSEndpoint, _ error) {
 	existingDNSEndpoint, err := extdnsLister.DNSEndpoints(vs.Namespace).Get(vs.Spec.Host)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
 			return nil, nil, err
 		}
 	}
-
 	var controllerGVK schema.GroupVersionKind = vsGVK
-
-	targets, err := buildTargets(vs)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	labels := buildLabels(vs)
-	providerSpecific := buildProviderSpecificProperties(vs)
 
 	dnsEndpoint := &extdnsapi.DNSEndpoint{
 		ObjectMeta: metav1.ObjectMeta{
@@ -242,18 +148,12 @@ func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.Vi
 		Spec: extdnsapi.DNSEndpointSpec{
 			Endpoints: []*extdnsapi.Endpoint{
 				{
-					DNSName: vs.Spec.Host,
-					Targets: targets,
-
-					// RecordType to be computed based on hostname or IP ONLY
-					//  if user did not specify it!!!
-					RecordType: vs.Spec.ExternalDNS.RecordType,
-
-					// Update unit tests for TTL
-					// do not add this if recordttl is not provided (check for nil)
-					RecordTTL:        extdnsapi.TTL(vs.Spec.ExternalDNS.RecordTTL),
-					Labels:           labels,
-					ProviderSpecific: providerSpecific,
+					DNSName:          vs.Spec.Host,
+					Targets:          targets,
+					RecordType:       buildRecordType(vs),
+					RecordTTL:        buildTTL(vs),
+					Labels:           buildLabels(vs),
+					ProviderSpecific: buildProviderSpecificProperties(vs),
 				},
 			},
 		},
@@ -286,15 +186,15 @@ func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.Vi
 	return newDNSEndpoint, updateDNSEndpoint, nil
 }
 
-func buildTargets(vs *vsapi.VirtualServer) (extdnsapi.Targets, error) {
-	var targets extdnsapi.Targets
-	for _, target := range vs.Status.ExternalEndpoints {
-		if errMsg := validators.IsValidIP(target.IP); len(errMsg) > 0 {
-			return nil, fmt.Errorf("%s", strings.Join(errMsg, ", "))
-		}
-		targets = append(targets, target.IP)
+func buildTTL(vs *vsapi.VirtualServer) extdnsapi.TTL {
+	return extdnsapi.TTL(vs.Spec.ExternalDNS.RecordTTL)
+}
+
+func buildRecordType(vs *vsapi.VirtualServer) string {
+	if vs.Spec.ExternalDNS.RecordType == "" {
+		return "A"
 	}
-	return targets, nil
+	return vs.Spec.ExternalDNS.RecordType
 }
 
 func buildLabels(vs *vsapi.VirtualServer) extdnsapi.Labels {

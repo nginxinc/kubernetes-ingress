@@ -75,6 +75,8 @@ func (c *ExtDNSController) register() workqueue.Interface {
 	c.vsLister = c.sharedInformerFactory.K8s().V1().VirtualServers().Lister()
 	//c.sharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler()
 	// todo
+	//
+	// We need to write an event handler!
 
 	// TODO: ?
 	/*
@@ -85,7 +87,6 @@ func (c *ExtDNSController) register() workqueue.Interface {
 		)
 	*/
 
-	// c.sync = SyncFnFor()
 	c.sync = SyncFnFor(c.recorder, c.extDNSClient, c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Lister())
 
 	c.mustSync = []cache.InformerSynced{
@@ -124,8 +125,6 @@ func (c *ExtDNSController) Run(stopCh <-chan struct{}) {
 
 // runWorker is a long-running function that will continually call the processItem
 // function in order to read and process a message on the workqueue.
-//
-//
 func (c *ExtDNSController) runWorker(ctx context.Context) {
 	glog.V(3).Infof("processing items on the workqueue")
 	for {
@@ -156,7 +155,7 @@ func (c *ExtDNSController) runWorker(ctx context.Context) {
 //
 // 1) if Kind VS -> call sync func on this kind
 // 2) if the kind is ExternalDNS Endpoint -> run the func sth like reconcile - this can happen when
-// etrnaldns endpoint is manipulated not from VS
+// extrnaldns endpoint is manipulated not from VS
 func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
 	glog.V(3).Infof("processing external dns resource")
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
