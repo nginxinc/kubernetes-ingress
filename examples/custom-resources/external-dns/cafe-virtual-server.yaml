@@ -3,11 +3,16 @@ kind: VirtualServer
 metadata:
   name: cafe
 spec:
-  host: cafe.<YOUR_DOMAIN_NAME>
+  host: cafe.example.com
   tls:
     secret: cafe-secret
   externalDNS:
     enable: true
+    providerSpecific:
+      - name: jy
+        value: khg
+      - name: hh
+        value: jj
   upstreams:
   - name: tea
     service: tea-svc

@@ -52,7 +52,8 @@ spec:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
-|``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No |
+|``tls`` | The TLS termination configuration. | [externalDNS](#virtualserverexternalDNS) | No |
+|``externalDNS`` | The externalDNS configuration for a VirtualServer. | [tls](#virtualservertls) | No | ### VirtualServer.ExternalDNS |
 |``dos`` | A reference to a DosProtectedResource, setting this enables DOS protection of the VirtualServer. | ``string`` | No |
 |``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
@@ -115,6 +116,42 @@ cert-manager:
 |``duration`` | This field allows you to configure spec.duration field for the Certificate to be generated. Must be specified using a [Go time.Duration](https://pkg.go.dev/time#ParseDuration) string format, which does not allow the d (days) suffix. You must specify these values using s, m, and h suffixes instead. | ``string`` | No |
 |``renew-before`` |  this annotation allows you to configure spec.renewBefore field for the Certificate to be generated. Must be specified using a [Go time.Duration](https://pkg.go.dev/time#ParseDuration) string format, which does not allow the d (days) suffix. You must specify these values using s, m, and h suffixes instead. | ``string`` | No |
 |``usages`` |  This field allows you to configure spec.usages field for the Certificate to be generated. Pass a string with comma-separated values i.e. ``key agreement,digital signature, server auth``. An exhaustive list of supported key usages can be found in the [the cert-manager api documentation](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.KeyUsage). | ``string`` | No |
+{{% /table %}}
+
+### VirtualServer.ExternalDNS
+
+The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using ExternalDNS (https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/v0.12.0/) for more information on deploying and configuring ExternalDNS and Providers. Example:
+```yaml
+externalDNS:
+  enable: true
+```
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``enable`` | Enables ExternalDNS integration for a VirtualServer resource. The default is ``false``. | ``string`` | No |
+|``labels`` | Configure labels to be applied to the Endpoint resources that will be consumed by ExternalDNS. | ``map[string]string`` | No |
+|``providerSpecific`` | Configure provider specific properties which holds the name and value of a configuration which is specific to individual DNS providers. | [externaldns.ProviderSpecific](#virtualserverexternaldnsProviderSpecific) | No |
+|``recordTTL`` | TTL for the DNS record. This defaults to 0 if not defined. | ``int64`` | No |
+|``recordType`` | The record Type that should be created, e.g. "A", "AAAA", "CNAME". This is automatically comuted based on the external endpoints of not defined. | ``string`` | No |
+{{% /table %}}
+
+### VirtualServer.ExternalDNS.ProviderSpecific
+
+The provideSpecfic field of the externalDNS block allows the specification of provider specific properties which is a list of key value pairs of configurations which are specific to individual DNS providers. Example:
+```yaml
+providerSpecific:
+  - name: my-name
+    value: my-value
+  - name: my-name2
+    value: my-value2
+```
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``name`` | The name of the key value pair. | ``string`` | No |
+|``value`` | The value of the key value pair. | ``string`` | No |
 {{% /table %}}
 
 ### VirtualServer.Policy

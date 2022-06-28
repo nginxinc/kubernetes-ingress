@@ -44,6 +44,14 @@ $ kubectl get virtualservers
   cafe   Valid   cafe.example.com       12.13.23.123  [80,443]   34s
 ```
 
+To see an external hostname address associated with a VirtualServer resource, use the `-o wide` option:
+
+```
+$ kubectl get virtualservers -o wide 
+  NAME   STATE   HOST               IP    EXTERNALHOSTNAME                                                         PORTS      AGE
+  cafe   Valid   cafe.example.com         ae430f41a1a0042908655abcdefghijkl-12345678.eu-west-2.elb.amazonaws.com   [80,443]   106s
+```
+
 > Note: If there are multiple addresses, only the first one is shown.
 
 In order to see additional addresses or extra information about the `Status` of the resource, use the following command:
@@ -84,6 +92,7 @@ The following field is reported in the VirtualServerRoute status only:
 |Field | Description | Type |
 | ---| ---| --- |
 |``IP`` | The external IP address. | ``string`` |
+|``Hostname`` | The external LoadBalancer Hostname address. | ``string`` |
 |``Ports`` | A list of external ports. | ``string`` |
 {{% /table %}}
 
