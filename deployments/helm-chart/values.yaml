@@ -184,6 +184,9 @@ controller:
   ## Enable cert manager for Virtual Server resources. Requires controller.enableCustomResources.
   enableCertManager: false
 
+  ## Enable external DNS for Virtual Server resources. Requires controller.enableCustomResources.
+  enableExternalDNS: false
+
   globalConfiguration:
     ## Creates the GlobalConfiguration custom resource. Requires controller.enableCustomResources.
     create: false

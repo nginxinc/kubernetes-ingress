@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/golang/glog"
 	"github.com/google/go-cmp/cmp"
@@ -13,21 +12,22 @@ import (
 	clientset "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	extdnslisters "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/externaldns/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/validation"
 	validators "k8s.io/apimachinery/pkg/util/validation"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
+	netutils "k8s.io/utils/net"
 )
 
 const (
 	reasonBadConfig         = "BadConfig"
 	reasonCreateExternalDNS = "CreateExternalDNS"
 	reasonUpdateExternalDNS = "UpdateExternalDNS"
-	reasonDeleteExternalDNS = "DeleteExternalDNS"
+	recordTypeA             = "A"
+	recordTypeAAAA          = "AAAA"
+	recordTypeCNAME         = "CNAME"
 )
 
 var vsGVK = vsapi.SchemeGroupVersion.WithKind("VirtualServer")
@@ -49,21 +49,21 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, extdnsListe
 			return fmt.Errorf("failed to determine external endpoints")
 		}
 
-		targets, err := getValidTargets(vs.Status.ExternalEndpoints)
+		targets, recordType, err := getValidTargets(vs.Status.ExternalEndpoints)
 		if err != nil {
 			glog.Error("Invalid external enpoint")
 			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Invalid external endpoint")
 			return err
 		}
 
-		newDNSEndpoint, updateDNSEndpoint, err := buildDNSEndpoint(extdnsLister, vs, targets)
+		newDNSEndpoint, updateDNSEndpoint, err := buildDNSEndpoint(extdnsLister, vs, targets, recordType)
 		if err != nil {
 			glog.Errorf("error message here %s", err)
 			rec.Eventf(vs, corev1.EventTypeWarning, reasonBadConfig, "Incorrect DNSEndpoint config for VirtualServer resource: %s", err)
 			return err
 		}
 
-		// Create new ExternaDNS endpoint
+		// Create new ExternalDNS endpoint
 		if newDNSEndpoint != nil {
 			_, err = client.ExternaldnsV1().DNSEndpoints(newDNSEndpoint.Namespace).Create(ctx, newDNSEndpoint, metav1.CreateOptions{})
 			if err != nil {
@@ -84,52 +84,53 @@ func SyncFnFor(rec record.EventRecorder, client clientset.Interface, extdnsListe
 			}
 			rec.Eventf(vs, corev1.EventTypeNormal, reasonUpdateExternalDNS, "Successfully updated ExternalDNS %q", updateDNSEndpoint.Name)
 		}
-
-		// Step 4
-		// list dns entries
-		extdnsentries, err := extdnsLister.DNSEndpoints(vs.GetNamespace()).List(labels.Everything())
-		if err != nil {
-			return err
-		}
-
-		// think where to put the logic of listing and deleteing dnsendpoints
-		unrequiredExtDNSNames := findDNSExternalEndpointsToBeRemoved(extdnsentries)
-
-		for _, name := range unrequiredExtDNSNames {
-			err := client.ExternaldnsV1().DNSEndpoints(vs.GetNamespace()).Delete(ctx, name, metav1.DeleteOptions{})
-			if err != nil {
-				glog.Errorf("Error deleting ExternalDNS for VirtualServer resource: %v", err)
-				return err
-			}
-			rec.Eventf(vs, corev1.EventTypeNormal, reasonDeleteExternalDNS, "Successfully deleted unrequired ExternalDNS endpoint %q", name)
-		}
 		return nil
 	}
 }
 
-func getValidTargets(endpoints []vsapi.ExternalEndpoint) (extdnsapi.Targets, error) {
+func getValidTargets(endpoints []vsapi.ExternalEndpoint) (extdnsapi.Targets, string, error) {
 	var targets extdnsapi.Targets
+	var recordType string
+	var recordA bool
+	var recordCNAME bool
+	var recordAAAA bool
+	var err error
+	glog.Infof("Going through endpoints %v", endpoints)
 	for _, e := range endpoints {
 		if e.IP != "" {
+			glog.V(3).Infof("IP is defined: %v", e.IP)
 			if errMsg := validators.IsValidIP(e.IP); len(errMsg) > 0 {
 				continue
 			}
-			targets = append(targets, e.IP)
-		}
-		if e.Hostname != "" {
-			if errMsg := validation.IsQualifiedName(e.Hostname); len(errMsg) > 0 {
-				continue
+			ip := netutils.ParseIPSloppy(e.IP)
+			if ip.To4() != nil {
+				recordA = true
+			} else {
+				recordAAAA = true
 			}
+			targets = append(targets, e.IP)
+		} else if e.Hostname != "" {
+			glog.V(3).Infof("Hostname is defined: %v", e.Hostname)
 			targets = append(targets, e.Hostname)
+			recordCNAME = true
 		}
 	}
 	if len(targets) == 0 {
-		return targets, errors.New("valid targets not defined")
+		return targets, recordType, errors.New("valid targets not defined")
 	}
-	return targets, nil
+	if recordA {
+		recordType = recordTypeA
+	} else if recordAAAA {
+		recordType = recordTypeAAAA
+	} else if recordCNAME {
+		recordType = recordTypeCNAME
+	} else {
+		err = errors.New("recordType could not be determined")
+	}
+	return targets, recordType, err
 }
 
-func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.VirtualServer, targets extdnsapi.Targets) (newDNSEndpoint, updateDNSEndpoint *extdnsapi.DNSEndpoint, _ error) {
+func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.VirtualServer, targets extdnsapi.Targets, recordType string) (newDNSEndpoint, updateDNSEndpoint *extdnsapi.DNSEndpoint, _ error) {
 	existingDNSEndpoint, err := extdnsLister.DNSEndpoints(vs.Namespace).Get(vs.Spec.Host)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -150,7 +151,7 @@ func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.Vi
 				{
 					DNSName:          vs.Spec.Host,
 					Targets:          targets,
-					RecordType:       buildRecordType(vs),
+					RecordType:       buildRecordType(vs, recordType),
 					RecordTTL:        buildTTL(vs),
 					Labels:           buildLabels(vs),
 					ProviderSpecific: buildProviderSpecificProperties(vs),
@@ -190,9 +191,9 @@ func buildTTL(vs *vsapi.VirtualServer) extdnsapi.TTL {
 	return extdnsapi.TTL(vs.Spec.ExternalDNS.RecordTTL)
 }
 
-func buildRecordType(vs *vsapi.VirtualServer) string {
+func buildRecordType(vs *vsapi.VirtualServer, recordType string) string {
 	if vs.Spec.ExternalDNS.RecordType == "" {
-		return "A"
+		return recordType
 	}
 	return vs.Spec.ExternalDNS.RecordType
 }
@@ -234,25 +235,4 @@ func extdnsendpointNeedsUpdate(dnsA, dnsB *extdnsapi.DNSEndpoint) bool {
 		return true
 	}
 	return false
-}
-
-// isFullyQualifiedDomainName checks if the domain name is fully qualified.
-// It requires a minimum of 2 segments and accepts a trailing . as valid.
-func isFullyQualifiedDomainName(name string) error {
-	if len(name) == 0 {
-		return fmt.Errorf("name not provided")
-	}
-	name = strings.TrimSuffix(name, ".")
-	if issues := validation.IsDNS1123Subdomain(name); len(issues) > 0 {
-		return fmt.Errorf("name %s is not valid subdomain, %s", name, strings.Join(issues, ", "))
-	}
-	if len(strings.Split(name, ".")) < 2 {
-		return fmt.Errorf("name %s should be a domain with at least two segments separated by dots", name)
-	}
-	for _, label := range strings.Split(name, ".") {
-		if issues := validation.IsDNS1123Label(label); len(issues) > 0 {
-			return fmt.Errorf("label %s should conform to the definition of label in DNS (RFC1123), %s", label, strings.Join(issues, ", "))
-		}
-	}
-	return nil
 }

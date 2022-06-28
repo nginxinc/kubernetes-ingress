@@ -146,6 +146,7 @@ func main() {
 		IsTLSPassthroughEnabled:      *enableTLSPassthrough,
 		SnippetsEnabled:              *enableSnippets,
 		CertManagerEnabled:           *enableCertManager,
+		ExternalDNSEnabled:           *enableExternalDNS,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

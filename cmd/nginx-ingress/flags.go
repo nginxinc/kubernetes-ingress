@@ -170,6 +170,9 @@ var (
 
 	enableCertManager = flag.Bool("enable-cert-manager", false,
 		"Enable cert-manager controller for VirtualServer resources. Requires -enable-custom-resources")
+	
+	enableExternalDNS = flag.Bool("enable-external-dns", false,
+		"Enable external-dns controller for VirtualServer resources. Requires -enable-custom-resources")
 
 	startupCheckFn func() error
 )
@@ -241,6 +244,10 @@ func parseFlags(versionInfo string, binaryInfo string) {
 
 	if *enableCertManager && !*enableCustomResources {
 		glog.Fatal("enable-cert-manager flag requires -enable-custom-resources")
+	}
+
+	if *enableExternalDNS && !*enableCustomResources {
+		glog.Fatal("enable-external-dns flag requires -enable-custom-resources")
 	}
 
 	if *ingressLink != "" && *externalService != "" {

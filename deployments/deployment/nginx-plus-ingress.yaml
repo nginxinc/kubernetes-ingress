@@ -66,6 +66,7 @@ spec:
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
           - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
          #- -enable-cert-manager
+         #- -enable-external-dns
          #- -enable-app-protect
          #- -enable-app-protect-dos
          #- -v=3 # Enables extensive logging. Useful for troubleshooting.

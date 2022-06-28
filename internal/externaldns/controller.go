@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	extdns_clientset "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
+	extdns_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	listersV1 "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/configuration/v1"
+	extdnslisters "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/externaldns/v1"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
@@ -23,10 +23,6 @@ import (
 const (
 	// ControllerName is the name of the externaldns controler.
 	ControllerName = "externaldns"
-
-	// resyncPeriod is set to 10 hours
-	// TODO: check with Ciara
-	resyncPeriod = 10 * time.Hour
 )
 
 // ExtDNSController represents ExternalDNS controller.
@@ -35,62 +31,56 @@ type ExtDNSController struct {
 	sync                  SyncFn
 	ctx                   context.Context
 	mustSync              []cache.InformerSynced
-	queue                 workqueue.Interface
+	queue                 workqueue.RateLimitingInterface
 	sharedInformerFactory k8s_nginx_informers.SharedInformerFactory
 	recorder              record.EventRecorder
-	extDNSClient          *extdns_clientset.Clientset
+	client                k8s_nginx.Interface
+	extdnslister          extdnslisters.DNSEndpointLister
 }
 
 // ExtDNSOpts represents config required for building the External DNS Controller.
 type ExtDNSOpts struct {
 	context       context.Context
-	kubeConfig    *rest.Config
-	kubeClient    kubernetes.Interface
 	namespace     string
 	eventRecorder record.EventRecorder
-	vsClient      k8s_nginx.Interface
+	client        k8s_nginx.Interface
+	resyncPeriod  time.Duration
 }
 
 // NewController takes external dns config and return a new External DNS Controller.
-func NewController(opts *ExtDNSOpts) (*ExtDNSController, error) {
-	client, err := extdns_clientset.NewForConfig(opts.kubeConfig)
-	if err != nil {
-		return nil, fmt.Errorf("%w, creating new externaldns controller", err)
-	}
-
-	sharedInformerFactory := k8s_nginx_informers.NewSharedInformerFactoryWithOptions(opts.vsClient, resyncPeriod, k8s_nginx_informers.WithNamespace(opts.namespace))
+func NewController(opts *ExtDNSOpts) *ExtDNSController {
+	sharedInformerFactory := k8s_nginx_informers.NewSharedInformerFactoryWithOptions(opts.client, opts.resyncPeriod, k8s_nginx_informers.WithNamespace(opts.namespace))
 
 	c := &ExtDNSController{
 		ctx:                   opts.context,
-		queue:                 workqueue.NewNamed(ControllerName),
+		queue:                 workqueue.NewNamedRateLimitingQueue(workqueue.DefaultControllerRateLimiter(), ControllerName),
 		sharedInformerFactory: sharedInformerFactory,
 		recorder:              opts.eventRecorder,
-		extDNSClient:          client,
+		client:                opts.client,
 	}
 	c.register()
-	return c, nil
+	return c
 }
 
 func (c *ExtDNSController) register() workqueue.Interface {
 	c.vsLister = c.sharedInformerFactory.K8s().V1().VirtualServers().Lister()
-	//c.sharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler()
-	// todo
-	//
-	// We need to write an event handler!
+	c.extdnslister = c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Lister()
 
-	// TODO: ?
-	/*
-		c.vsSharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(
-			&controllerpkg.QueuingEventHandler{
-				Queue: c.queue,
-			},
-		)
-	*/
+	c.sharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(
+		&QueuingEventHandler{
+			Queue: c.queue,
+		},
+	)
 
-	c.sync = SyncFnFor(c.recorder, c.extDNSClient, c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Lister())
+	c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().AddEventHandler(&BlockingEventHandler{
+		WorkFunc: externalDNSHandler(c.queue),
+	})
+
+	// c.sync = SyncFnFor()
+	c.sync = SyncFnFor(c.recorder, c.client, c.extdnslister)
 
 	c.mustSync = []cache.InformerSynced{
-		c.sharedInformerFactory.K8s().V1().Policies().Informer().HasSynced,
+		c.sharedInformerFactory.K8s().V1().VirtualServers().Informer().HasSynced,
 		c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().HasSynced,
 	}
 	return c.queue
@@ -150,14 +140,7 @@ func (c *ExtDNSController) runWorker(ctx context.Context) {
 	}
 }
 
-//
-// need to process VS and External DNS
-//
-// 1) if Kind VS -> call sync func on this kind
-// 2) if the kind is ExternalDNS Endpoint -> run the func sth like reconcile - this can happen when
-// extrnaldns endpoint is manipulated not from VS
 func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
-	glog.V(3).Infof("processing external dns resource")
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
@@ -167,5 +150,49 @@ func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
 	if err != nil {
 		return err
 	}
+	glog.V(3).Infof("processing virtual server resource")
 	return c.sync(ctx, vs)
+}
+
+func externalDNSHandler(queue workqueue.RateLimitingInterface) func(obj interface{}) {
+	return func(obj interface{}) {
+		ep, ok := obj.(*extdns_v1.DNSEndpoint)
+		if !ok {
+			runtime.HandleError(fmt.Errorf("not a DNSEndpoint object: %#v", obj))
+			return
+		}
+
+		ref := metav1.GetControllerOf(ep)
+		if ref == nil {
+			// No controller should care about orphans being deleted or
+			// updated.
+			return
+		}
+
+		// We don't check the apiVersion
+		// because there is no chance that another object called "VirtualServer" be
+		// the controller of a DNSEndpoint.
+		if ref.Kind != "VirtualServer" {
+			return
+		}
+
+		queue.Add(ep.Namespace + "/" + ref.Name)
+	}
+}
+
+// BuildOpts build the external-dns controller options
+func BuildOpts(
+	ctx context.Context,
+	namespace string,
+	recorder record.EventRecorder,
+	k8sNginxClient k8s_nginx.Interface,
+	resync time.Duration,
+) *ExtDNSOpts {
+	return &ExtDNSOpts{
+		context:       ctx,
+		namespace:     namespace,
+		eventRecorder: recorder,
+		client:        k8sNginxClient,
+		resyncPeriod:  resync,
+	}
 }

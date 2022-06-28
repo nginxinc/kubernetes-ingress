@@ -49,6 +49,7 @@ import (
 
 	cm_controller "github.com/nginxinc/kubernetes-ingress/internal/certmanager"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	ed_controller "github.com/nginxinc/kubernetes-ingress/internal/externaldns"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics/collectors"
 
 	api_v1 "k8s.io/api/core/v1"
@@ -164,6 +165,7 @@ type LoadBalancerController struct {
 	dosConfiguration              *appprotectdos.Configuration
 	configMap                     *api_v1.ConfigMap
 	certManagerController         *cm_controller.CmController
+	externalDNSController         *ed_controller.ExtDNSController
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -204,6 +206,7 @@ type NewLoadBalancerControllerInput struct {
 	IsTLSPassthroughEnabled      bool
 	SnippetsEnabled              bool
 	CertManagerEnabled           bool
+	ExternalDNSEnabled           bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -255,6 +258,10 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 
 	if input.CertManagerEnabled {
 		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespace, lbc.recorder, lbc.confClient))
+	}
+
+	if input.ExternalDNSEnabled {
+		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespace, lbc.recorder, lbc.confClient, input.ResyncPeriod))
 	}
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
@@ -554,6 +561,9 @@ func (lbc *LoadBalancerController) Run() {
 	}
 	if lbc.certManagerController != nil {
 		go lbc.certManagerController.Run(lbc.ctx.Done())
+	}
+	if lbc.externalDNSController != nil {
+		go lbc.externalDNSController.Run(lbc.ctx.Done())
 	}
 	if lbc.leaderElector != nil {
 		go lbc.leaderElector.Run(lbc.ctx)
