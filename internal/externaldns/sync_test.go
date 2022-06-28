@@ -32,7 +32,7 @@ func TestGetValidTargets(t *testing.T) {
 		endpoints   []vsapi.ExternalEndpoint
 	}{
 		{
-			name:        "from external endpoint with ipv4",
+			name:        "from external endpoint with IPv4",
 			wantTargets: extdnsapi.Targets{"10.23.4.5"},
 			wantRecord:  "A",
 			endpoints: []vsapi.ExternalEndpoint{
@@ -42,7 +42,7 @@ func TestGetValidTargets(t *testing.T) {
 			},
 		},
 		{
-			name:        "from external endpoint with ipv6",
+			name:        "from external endpoint with IPv6",
 			wantTargets: extdnsapi.Targets{"2001:db8:0:0:0:0:2:1"},
 			wantRecord:  "AAAA",
 			endpoints: []vsapi.ExternalEndpoint{

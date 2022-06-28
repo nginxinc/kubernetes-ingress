@@ -174,6 +174,9 @@ var (
 	enableExternalDNS = flag.Bool("enable-external-dns", false,
 		"Enable external-dns controller for VirtualServer resources. Requires -enable-custom-resources")
 
+	enableExternalDNS = flag.Bool("enable-external-dns", false,
+		"Enable external-dns controller for VirtualServer resources. Requires -enable-custom-resources")
+
 	startupCheckFn func() error
 )
 
