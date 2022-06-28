@@ -3,7 +3,7 @@ kind: VirtualServer
 metadata:
   name: cafe
 spec:
-  host: cafe.example.com
+  host: cafe.<YOUR_DOMAIN_NAME>
   tls:
     secret: cafe-secret
   externalDNS:
