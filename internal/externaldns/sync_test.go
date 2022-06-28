@@ -75,3 +75,61 @@ func TestGetValidTargets(t *testing.T) {
 		})
 	}
 }
+
+func TestGetTargets(t *testing.T) {
+	t.Parallel()
+	tt := []struct {
+		name      string
+		endpoints []vsapi.ExternalEndpoint
+	}{
+		{
+			name: "errors on empty IPv4",
+			endpoints: []vsapi.ExternalEndpoint{
+				{
+					IP: "",
+				},
+			},
+		},
+		{
+			name: "errors on invalid IPv6",
+			endpoints: []vsapi.ExternalEndpoint{
+				{
+					IP: "2001:::db8:0:0:0:0:2:1",
+				},
+			},
+		},
+		{
+			name: "errors on invalid IPv4",
+			endpoints: []vsapi.ExternalEndpoint{
+				{
+					IP: "10.23.23..1",
+				},
+			},
+		},
+		{
+			name: "errors on empty hostname",
+			endpoints: []vsapi.ExternalEndpoint{
+				{
+					Hostname: "",
+				},
+			},
+		},
+		{
+			name: "errors on empty IP and Hostname",
+			endpoints: []vsapi.ExternalEndpoint{
+				{
+					IP:       "",
+					Hostname: "",
+				},
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			_, _, err := getValidTargets(tc.endpoints)
+			if err == nil {
+				t.Fatalf("want error on input endpoint: %v, got nil", tc.endpoints)
+			}
+		})
+	}
+}
