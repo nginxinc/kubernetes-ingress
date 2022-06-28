@@ -102,11 +102,11 @@ func (q *QueuingEventHandler) OnAdd(obj interface{}) {
 }
 
 // OnUpdate adds an updated object to the workqueue.
-func (q *QueuingEventHandler) OnUpdate(old, new interface{}) {
-	if reflect.DeepEqual(old, new) {
+func (q *QueuingEventHandler) OnUpdate(old, newObj interface{}) {
+	if reflect.DeepEqual(old, newObj) {
 		return
 	}
-	q.Enqueue(new)
+	q.Enqueue(newObj)
 }
 
 // OnDelete adds a deleted object to the workqueue for processing.
@@ -136,11 +136,11 @@ func (b *BlockingEventHandler) OnAdd(obj interface{}) {
 }
 
 // OnUpdate synchronously adds an updated object to the workqueue.
-func (b *BlockingEventHandler) OnUpdate(old, new interface{}) {
-	if reflect.DeepEqual(old, new) {
+func (b *BlockingEventHandler) OnUpdate(old, newObj interface{}) {
+	if reflect.DeepEqual(old, newObj) {
 		return
 	}
-	b.WorkFunc(new)
+	b.WorkFunc(newObj)
 }
 
 // OnDelete synchronously adds a deleted object to the workqueue.
