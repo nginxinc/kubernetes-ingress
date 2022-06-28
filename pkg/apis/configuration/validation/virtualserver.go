@@ -1296,7 +1296,7 @@ func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
 }
 
 const (
-	pathFmt    = `/[^\s{};]*`
+	pathFmt    = `/[^\s{};\\]*`
 	pathErrMsg = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
 )
 

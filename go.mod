@@ -6,7 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.15.11
 	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.13.6
 	github.com/cert-manager/cert-manager v1.8.1-0.20220505101928-4ec33298a243
-	github.com/golang-jwt/jwt/v4 v4.4.1
+	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.8
 	github.com/kr/pretty v0.3.0
@@ -14,7 +14,7 @@ require (
 	github.com/nginxinc/nginx-prometheus-exporter v0.10.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/spiffe/go-spiffe/v2 v2.1.0
-	github.com/stretchr/testify v1.7.4
+	github.com/stretchr/testify v1.7.5
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	google.golang.org/grpc v1.47.0
 	k8s.io/api v0.23.6

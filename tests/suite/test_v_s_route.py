@@ -333,7 +333,6 @@ class TestVirtualServerRouteValidation:
                                    1,
                                    new_vsr_events)
 
-
     def test_openapi_validation_flow(self, kube_apis, ingress_controller_prerequisites,
                                      crd_ingress_controller, v_s_route_setup):
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
@@ -349,7 +348,7 @@ class TestVirtualServerRouteValidation:
                                       route_yaml,
                                       v_s_route_setup.route_s.namespace)
         except ApiException as ex:
-            assert ex.status == 422 and "spec.subroutes.action.pass" in ex.body
+            assert ex.status == 422 and "action.pass in body must be of type" in ex.body
         except Exception as ex:
             pytest.fail(f"An unexpected exception is raised: {ex}")
         else:

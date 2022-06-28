@@ -2364,13 +2364,6 @@ func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.In
 		return apLogs, fmt.Errorf("Error Validating App Protect Destination and Config for Ingress %v: LogConf and LogDestination must have equal number of items", ing.Name)
 	}
 
-	for _, logDst := range logDsts {
-		err := validation.ValidateAppProtectLogDestination(logDst)
-		if err != nil {
-			return apLogs, fmt.Errorf("Error Validating App Protect Destination Config for Ingress %v: %w", ing.Name, err)
-		}
-	}
-
 	for i, logConfNsN := range logConfNsNs {
 		logConf, err := lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfNsN)
 		if err != nil {

@@ -81,16 +81,9 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 **Note**: If you make an existing Ingress invalid, the Ingress Controller will reject it and remove the corresponding configuration from NGINX.
 
-The following Ingress annotations currently have limited or no validation:
+The following Ingress annotation currently has limited validation:
 
-- `nginx.com/jwt-key`,
-- `nginx.com/jwt-realm`,
-- `nginx.com/jwt-token`,
-- `nginx.com/jwt-login-url`,
-- `appprotect.f5.com/app-protect-policy`,
-- `appprotect.f5.com/app-protect-security-log`.
-
-Validation of these annotations will be addressed in the future.
+- `nginx.com/jwt-token`.
 
 ## Summary of Annotations
 
