@@ -1,11 +1,15 @@
 package externaldns
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	extdnsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
+	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestGetValidTargets(t *testing.T) {
@@ -76,59 +80,162 @@ func TestGetValidTargets(t *testing.T) {
 	}
 }
 
-func TestGetTargets(t *testing.T) {
+// Implementation of interfaces for testing purposes
+
+type DNSEndpointListerExpansion interface{}
+
+type EPNamespaceLister interface {
+	List(selector labels.Selector)
+	Get(name string) (*v1.DNSEndpoint, error)
+	DNSEndpointListerExpansion
+}
+
+type DNSEndpointLister interface {
+	List(selector labels.Selector) ([]*v1.DNSEndpoint, error)
+	DNSEndpoints(namespace string) EPNamespaceLister
+	DNSEndpointListerExpansion
+}
+
+type EPLister struct{}
+
+func (EPLister) List(labels.Selector) ([]*v1.DNSEndpoint, error) {
+	return nil, nil
+}
+
+func (EPLister) DNSEndpoints(namespace string) EPNamespaceLister {
+	return nil
+}
+
+func TestSync_NotRunningOnExternalDNSDisabled(t *testing.T) {
+	t.Parallel()
+	vs := &vsapi.VirtualServer{
+		Spec: vsapi.VirtualServerSpec{
+			ExternalDNS: vsapi.ExternalDNS{
+				Enable: false,
+			},
+		},
+	}
+	fn := SyncFnFor(nil, nil, nil)
+	err := fn(context.TODO(), vs)
+	if err != nil {
+		t.Errorf("want nil got %v", err)
+	}
+}
+
+// EventRecorder implements EventRecorder interface.
+// It's dummy implementation purpose is for testing only.
+type EventRecorder struct{}
+
+func (EventRecorder) Event(runtime.Object, string, string, string)                  {}
+func (EventRecorder) Eventf(runtime.Object, string, string, string, ...interface{}) {}
+func (EventRecorder) AnnotatedEventf(runtime.Object, map[string]string, string, string, string, ...interface{}) {
+}
+
+func TestSync_ReturnsErrorOnNilExternalEndpoints(t *testing.T) {
+	t.Parallel()
+	vs := &vsapi.VirtualServer{
+		Spec: vsapi.VirtualServerSpec{
+			ExternalDNS: vsapi.ExternalDNS{
+				Enable: true,
+			},
+		},
+		Status: vsapi.VirtualServerStatus{},
+	}
+
+	rec := EventRecorder{}
+	fn := SyncFnFor(rec, nil, nil)
+	err := fn(context.TODO(), vs)
+	if err == nil {
+		t.Errorf("want error got nil")
+	}
+}
+
+func TestSync_ReturnsErrorOnInvalidTargetsInExternalEndpoints(t *testing.T) {
 	t.Parallel()
 	tt := []struct {
-		name      string
-		endpoints []vsapi.ExternalEndpoint
+		name  string
+		input *vsapi.VirtualServer
 	}{
 		{
-			name: "errors on empty IPv4",
-			endpoints: []vsapi.ExternalEndpoint{
-				{
-					IP: "",
+			name: "missing IP and Hostname",
+			input: &vsapi.VirtualServer{
+				Spec: vsapi.VirtualServerSpec{
+					ExternalDNS: vsapi.ExternalDNS{
+						Enable: true,
+					},
+				},
+				Status: vsapi.VirtualServerStatus{
+					ExternalEndpoints: []vsapi.ExternalEndpoint{
+						{
+							IP:       "",
+							Hostname: "",
+						},
+					},
 				},
 			},
 		},
 		{
-			name: "errors on invalid IPv6",
-			endpoints: []vsapi.ExternalEndpoint{
-				{
-					IP: "2001:::db8:0:0:0:0:2:1",
+			name: "missing Hostname",
+			input: &vsapi.VirtualServer{
+				Spec: vsapi.VirtualServerSpec{
+					ExternalDNS: vsapi.ExternalDNS{
+						Enable: true,
+					},
+				},
+				Status: vsapi.VirtualServerStatus{
+					ExternalEndpoints: []vsapi.ExternalEndpoint{
+						{
+							Hostname: "",
+						},
+					},
 				},
 			},
 		},
 		{
-			name: "errors on invalid IPv4",
-			endpoints: []vsapi.ExternalEndpoint{
-				{
-					IP: "10.23.23..1",
+			name: "invalid IPv4 address",
+			input: &vsapi.VirtualServer{
+				Spec: vsapi.VirtualServerSpec{
+					ExternalDNS: vsapi.ExternalDNS{
+						Enable: true,
+					},
+				},
+				Status: vsapi.VirtualServerStatus{
+					ExternalEndpoints: []vsapi.ExternalEndpoint{
+						{
+							IP:       "10.23.23..3",
+							Hostname: "",
+						},
+					},
 				},
 			},
 		},
 		{
-			name: "errors on empty hostname",
-			endpoints: []vsapi.ExternalEndpoint{
-				{
-					Hostname: "",
+			name: "invalid IPv6 address",
+			input: &vsapi.VirtualServer{
+				Spec: vsapi.VirtualServerSpec{
+					ExternalDNS: vsapi.ExternalDNS{
+						Enable: true,
+					},
 				},
-			},
-		},
-		{
-			name: "errors on empty IP and Hostname",
-			endpoints: []vsapi.ExternalEndpoint{
-				{
-					IP:       "",
-					Hostname: "",
+				Status: vsapi.VirtualServerStatus{
+					ExternalEndpoints: []vsapi.ExternalEndpoint{
+						{
+							IP:       "2001:::db8:0:0:0:0:2:1",
+							Hostname: "",
+						},
+					},
 				},
 			},
 		},
 	}
+
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _, err := getValidTargets(tc.endpoints)
+			rec := EventRecorder{}
+			fn := SyncFnFor(rec, nil, nil)
+			err := fn(context.TODO(), tc.input)
 			if err == nil {
-				t.Fatalf("want error on input endpoint: %v, got nil", tc.endpoints)
+				t.Error("want error, got nil")
 			}
 		})
 	}
