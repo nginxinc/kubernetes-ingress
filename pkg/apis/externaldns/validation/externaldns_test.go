@@ -97,7 +97,7 @@ func TestValidateDNSEndpoint(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			if err := validation.ValidateDNSEndpoint(&tc.endpoint); err != nil {
-				t.Fatalf("want no error on %v, got %v", tc.endpoint, err)
+				t.Errorf("want no error on %v, got %v", tc.endpoint, err)
 			}
 		})
 	}
