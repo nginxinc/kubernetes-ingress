@@ -53,7 +53,7 @@ spec:
 | ---| ---| ---| --- |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
 |``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No |
-|``externalDNS`` | The externalDNS configuration for a VirtualServer. | [externalDNS](#virtualserverexternalDNS) | No | ### VirtualServer.ExternalDNS |
+|``externalDNS`` | The externalDNS configuration for a VirtualServer. | [externalDNS](#virtualserverexternaldns) | No |
 |``dos`` | A reference to a DosProtectedResource, setting this enables DOS protection of the VirtualServer. | ``string`` | No |
 |``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
@@ -122,8 +122,7 @@ cert-manager:
 
 The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using ExternalDNS (https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/v0.12.0/) for more information on deploying and configuring ExternalDNS and Providers. Example:
 ```yaml
-externalDNS:
-  enable: true
+enable: true
 ```
 
 {{% table %}}
@@ -131,7 +130,7 @@ externalDNS:
 | ---| ---| ---| --- |
 |``enable`` | Enables ExternalDNS integration for a VirtualServer resource. The default is ``false``. | ``string`` | No |
 |``labels`` | Configure labels to be applied to the Endpoint resources that will be consumed by ExternalDNS. | ``map[string]string`` | No |
-|``providerSpecific`` | Configure provider specific properties which holds the name and value of a configuration which is specific to individual DNS providers. | [externaldns.ProviderSpecific](#virtualserverexternaldnsProviderSpecific) | No |
+|``providerSpecific`` | Configure provider specific properties which holds the name and value of a configuration which is specific to individual DNS providers. | [[]ProviderSpecific](#virtualserverexternaldnsproviderspecific) | No |
 |``recordTTL`` | TTL for the DNS record. This defaults to 0 if not defined. | ``int64`` | No |
 |``recordType`` | The record Type that should be created, e.g. "A", "AAAA", "CNAME". This is automatically computed based on the external endpoints if not defined. | ``string`` | No |
 {{% /table %}}
@@ -140,18 +139,17 @@ externalDNS:
 
 The providerSpecific field of the externalDNS block allows the specification of provider specific properties which is a list of key value pairs of configurations which are specific to individual DNS providers. Example:
 ```yaml
-providerSpecific:
-  - name: my-name
-    value: my-value
-  - name: my-name2
-    value: my-value2
+- name: my-name
+  value: my-value
+- name: my-name2
+  value: my-value2
 ```
 
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``name`` | The name of the key value pair. | ``string`` | No |
-|``value`` | The value of the key value pair. | ``string`` | No |
+|``name`` | The name of the key value pair. | ``string`` | Yes |
+|``value`` | The value of the key value pair. | ``string`` | Yes |
 {{% /table %}}
 
 ### VirtualServer.Policy
