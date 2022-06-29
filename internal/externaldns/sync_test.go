@@ -21,7 +21,7 @@ func TestGetValidTargets(t *testing.T) {
 		endpoints   []vsapi.ExternalEndpoint
 	}{
 		{
-			name:        "from external endpoint with IPv4",
+			name:        "from external endpoint with ipv4",
 			wantTargets: extdnsapi.Targets{"10.23.4.5"},
 			wantRecord:  "A",
 			endpoints: []vsapi.ExternalEndpoint{
@@ -31,7 +31,7 @@ func TestGetValidTargets(t *testing.T) {
 			},
 		},
 		{
-			name:        "from external endpoint with IPv6",
+			name:        "from external endpoint with ipv6",
 			wantTargets: extdnsapi.Targets{"2001:db8:0:0:0:0:2:1"},
 			wantRecord:  "AAAA",
 			endpoints: []vsapi.ExternalEndpoint{
@@ -157,7 +157,7 @@ func TestSync_ReturnsErrorOnInvalidTargetsInExternalEndpoints(t *testing.T) {
 		input *vsapi.VirtualServer
 	}{
 		{
-			name: "missing IP and Hostname",
+			name: "when missing ip and Hostname",
 			input: &vsapi.VirtualServer{
 				Spec: vsapi.VirtualServerSpec{
 					ExternalDNS: vsapi.ExternalDNS{
@@ -175,7 +175,7 @@ func TestSync_ReturnsErrorOnInvalidTargetsInExternalEndpoints(t *testing.T) {
 			},
 		},
 		{
-			name: "missing Hostname",
+			name: "when missing hostname",
 			input: &vsapi.VirtualServer{
 				Spec: vsapi.VirtualServerSpec{
 					ExternalDNS: vsapi.ExternalDNS{
@@ -192,7 +192,7 @@ func TestSync_ReturnsErrorOnInvalidTargetsInExternalEndpoints(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid IPv4 address",
+			name: "when invalid ipv4 address",
 			input: &vsapi.VirtualServer{
 				Spec: vsapi.VirtualServerSpec{
 					ExternalDNS: vsapi.ExternalDNS{
@@ -210,7 +210,7 @@ func TestSync_ReturnsErrorOnInvalidTargetsInExternalEndpoints(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid IPv6 address",
+			name: "when invalid ipv6 address",
 			input: &vsapi.VirtualServer{
 				Spec: vsapi.VirtualServerSpec{
 					ExternalDNS: vsapi.ExternalDNS{
