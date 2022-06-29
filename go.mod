@@ -13,7 +13,7 @@ require (
 	github.com/nginxinc/nginx-plus-go-client v0.9.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.10.0
 	github.com/prometheus/client_golang v1.12.2
-	github.com/spiffe/go-spiffe/v2 v2.1.0
+	github.com/spiffe/go-spiffe/v2 v2.1.1
 	github.com/stretchr/testify v1.7.5
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	google.golang.org/grpc v1.47.0
