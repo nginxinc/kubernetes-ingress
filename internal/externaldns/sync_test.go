@@ -2,15 +2,26 @@ package externaldns
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	vsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	extdnsapi "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
+	extdnsclient "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/externaldns/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 )
+
+// EventRecorder implements EventRecorder interface.
+// It's dummy implementation purpose is for testing only.
+type EventRecorder struct{}
+
+func (EventRecorder) Event(runtime.Object, string, string, string)                  {}
+func (EventRecorder) Eventf(runtime.Object, string, string, string, ...interface{}) {}
+func (EventRecorder) AnnotatedEventf(runtime.Object, map[string]string, string, string, string, ...interface{}) {
+}
 
 func TestGetValidTargets(t *testing.T) {
 	t.Parallel()
@@ -80,32 +91,6 @@ func TestGetValidTargets(t *testing.T) {
 	}
 }
 
-// Implementation of interfaces for testing purposes
-
-type DNSEndpointListerExpansion interface{}
-
-type EPNamespaceLister interface {
-	List(selector labels.Selector)
-	Get(name string) (*v1.DNSEndpoint, error)
-	DNSEndpointListerExpansion
-}
-
-type DNSEndpointLister interface {
-	List(selector labels.Selector) ([]*v1.DNSEndpoint, error)
-	DNSEndpoints(namespace string) EPNamespaceLister
-	DNSEndpointListerExpansion
-}
-
-type EPLister struct{}
-
-func (EPLister) List(labels.Selector) ([]*v1.DNSEndpoint, error) {
-	return nil, nil
-}
-
-func (EPLister) DNSEndpoints(namespace string) EPNamespaceLister {
-	return nil
-}
-
 func TestSync_NotRunningOnExternalDNSDisabled(t *testing.T) {
 	t.Parallel()
 	vs := &vsapi.VirtualServer{
@@ -120,15 +105,6 @@ func TestSync_NotRunningOnExternalDNSDisabled(t *testing.T) {
 	if err != nil {
 		t.Errorf("want nil got %v", err)
 	}
-}
-
-// EventRecorder implements EventRecorder interface.
-// It's dummy implementation purpose is for testing only.
-type EventRecorder struct{}
-
-func (EventRecorder) Event(runtime.Object, string, string, string)                  {}
-func (EventRecorder) Eventf(runtime.Object, string, string, string, ...interface{}) {}
-func (EventRecorder) AnnotatedEventf(runtime.Object, map[string]string, string, string, string, ...interface{}) {
 }
 
 func TestSync_ReturnsErrorOnNilExternalEndpoints(t *testing.T) {
@@ -228,7 +204,6 @@ func TestSync_ReturnsErrorOnInvalidTargetsInExternalEndpoints(t *testing.T) {
 			},
 		},
 	}
-
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := EventRecorder{}
@@ -239,4 +214,75 @@ func TestSync_ReturnsErrorOnInvalidTargetsInExternalEndpoints(t *testing.T) {
 			}
 		})
 	}
+}
+
+type DNSEPListerExpansion struct{}
+
+// EPNamespaceLister implements DNSEndpointNamespaceLister interface.
+// It's dummy implementation of the interface to sotisfy dependencies in tests.
+type DNSEPNamespaceLister struct{}
+
+func (DNSEPNamespaceLister) List(selector labels.Selector) (ret []*extdnsapi.DNSEndpoint, err error) {
+	return nil, nil
+}
+
+func (DNSEPNamespaceLister) Get(name string) (*extdnsapi.DNSEndpoint, error) {
+	return nil, errors.New("test error")
+}
+
+// EPLister implements DNSEndpointLister interface. It's dummy
+// implementation of the interface to satisfy dependencies in tests.
+type DNSEPLister struct {
+	DNSEPListerExpansion
+}
+
+func (DNSEPLister) List(selector labels.Selector) (ret []*extdnsapi.DNSEndpoint, err error) {
+	return nil, nil
+}
+
+func (DNSEPLister) DNSEndpoints(namespace string) extdnsclient.DNSEndpointNamespaceLister {
+	e := DNSEPNamespaceLister{}
+	return e
+}
+
+func TestSync_ReturnsErrorOnFailure(t *testing.T) {
+	t.Parallel()
+
+	tt := []struct {
+		name  string
+		input *vsapi.VirtualServer
+	}{
+		{
+			name: "to retrieve host from namespace",
+			input: &vsapi.VirtualServer{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "",
+				},
+				Spec: vsapi.VirtualServerSpec{
+					ExternalDNS: vsapi.ExternalDNS{
+						Enable: true,
+					},
+				},
+				Status: vsapi.VirtualServerStatus{
+					ExternalEndpoints: []vsapi.ExternalEndpoint{
+						{
+							IP: "10.10.10.20",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := EventRecorder{}
+			eplister := DNSEPLister{}
+			fn := SyncFnFor(rec, nil, eplister)
+			err := fn(context.TODO(), tc.input)
+			if err == nil {
+				t.Error("want error, got nil")
+			}
+		})
+	}
+
 }
