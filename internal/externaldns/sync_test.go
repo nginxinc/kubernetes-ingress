@@ -219,7 +219,7 @@ func TestSync_ReturnsErrorOnInvalidTargetsInExternalEndpoints(t *testing.T) {
 type DNSEPListerExpansion struct{}
 
 // EPNamespaceLister implements DNSEndpointNamespaceLister interface.
-// It's dummy implementation of the interface to sotisfy dependencies in tests.
+// It's dummy implementation of the interface to satisfy dependencies in tests.
 type DNSEPNamespaceLister struct{}
 
 func (DNSEPNamespaceLister) List(_ labels.Selector) (ret []*extdnsapi.DNSEndpoint, err error) {
