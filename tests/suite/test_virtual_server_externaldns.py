@@ -1,60 +1,29 @@
-import requests
 import pytest
 
-from settings import TEST_DATA, DEPLOYMENTS
+from settings import TEST_DATA
 from suite.custom_resources_utils import is_dnsendpoint_present
-from suite.resources_utils import wait_before_test, replace_configmap_from_yaml
+from suite.resources_utils import wait_before_test
 from suite.vs_vsr_resources_utils import patch_virtual_server_from_yaml
 from suite.yaml_utils import get_first_host_from_yaml, get_namespace_from_yaml
 
 
-@pytest.fixture(scope="class")
-def backend_setup(request, kube_apis, ingress_controller_prerequisites, test_namespace):
-    """
-    Replace the ConfigMap and deploy the secret.
-
-    :param request: pytest fixture
-    :param kube_apis: client apis
-    :param test_namespace:
-    """
-    try:
-        print("------------------------- Replace ConfigMap with external-status-address -------------------------")
-        cm_source = f"{TEST_DATA}/virtual-server-external-dns/nginx-config.yaml"
-        replace_configmap_from_yaml(kube_apis.v1, 
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    cm_source)
-        print("------------------------- Replaced ConfigMap with external-status-address -------------------------")
-    except Exception as ex:
-        print("Failed to complete setup, cleaning up..")
-        replace_configmap_from_yaml(kube_apis.v1,
-                        ingress_controller_prerequisites.config_map['metadata']['name'],
-                        ingress_controller_prerequisites.namespace,
-                        f"{DEPLOYMENTS}/common/nginx-config.yaml")
-        pytest.fail(f"ExternalDNS setup failed")
-
-    def fin():
-        print("Clean up:")
-        replace_configmap_from_yaml(kube_apis.v1,
-                        ingress_controller_prerequisites.config_map['metadata']['name'],
-                        ingress_controller_prerequisites.namespace,
-                        f"{DEPLOYMENTS}/common/nginx-config.yaml")
-
-    request.addfinalizer(fin)
-
 @pytest.mark.vs
 @pytest.mark.smoke
-@pytest.mark.parametrize('crd_ingress_controller_with_ed, create_externaldns, backend_setup, virtual_server_setup',
+@pytest.mark.parametrize('crd_ingress_controller_with_ed, create_externaldns, virtual_server_setup',
                          [({"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-external-dns"]},
-                           {}, {}, {"example": "virtual-server-external-dns", "app_type": "simple"})],
+                           {}, {"example": "virtual-server-external-dns", "app_type": "simple"})],
                          indirect=True)
 class TestExternalDNSVirtualServer:
-    def test_responses_after_setup(self, kube_apis, crd_ingress_controller_with_ed, backend_setup, create_externaldns, virtual_server_setup):
-        print("\nStep 1: Verify dnsendpoint exists")
-        wait_before_test(10)
+    def test_responses_after_setup(self, kube_apis, crd_ingress_controller_with_ed, create_externaldns, virtual_server_setup):
+        print("\nStep 1: Verify DNSEndpoint exists")
         dns_name = get_first_host_from_yaml(f"{TEST_DATA}/virtual-server-external-dns/standard/virtual-server.yaml")
-        dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_name, virtual_server_setup.namespace)
-        assert dep is True
+        retry = 0
+        dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_name, virtual_server_setup.namespace) 
+        while dep == False and retry <= 60:
+            dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_name, virtual_server_setup.namespace)
+            retry += 1
+            wait_before_test(1)
+            print(f"DNSEndpoint not created, retrying... #{retry}")
         print("\nStep 2: Verify external-dns picked up the record")
         pod_ns = get_namespace_from_yaml(f"{TEST_DATA}/virtual-server-external-dns/external-dns.yaml")
         print(f"\nPod namespace: {pod_ns}")
@@ -70,8 +39,8 @@ class TestExternalDNSVirtualServer:
             wait_before_test(1)
             print(f"External DNS not updated, retrying... #{retry}")
 
-    def test_update_to_ed_in_vs(self, kube_apis, crd_ingress_controller_with_ed, backend_setup, create_externaldns, virtual_server_setup):
-        print("\nStep 1: Update VirtaulServer")
+    def test_update_to_ed_in_vs(self, kube_apis, crd_ingress_controller_with_ed, create_externaldns, virtual_server_setup):
+        print("\nStep 1: Update VirtualServer")
         dns_name = get_first_host_from_yaml(f"{TEST_DATA}/virtual-server-external-dns/virtual-server-updated.yaml")
         patch_src = f"{TEST_DATA}/virtual-server-external-dns/virtual-server-updated.yaml"
         patch_virtual_server_from_yaml(
@@ -80,9 +49,13 @@ class TestExternalDNSVirtualServer:
             patch_src,
             virtual_server_setup.namespace,
         )
-        wait_before_test(20)
-        dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_name, virtual_server_setup.namespace)
-        assert dep is True
+        retry = 0
+        dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_name, virtual_server_setup.namespace) 
+        while dep == False and retry <= 60:
+            dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_name, virtual_server_setup.namespace)
+            retry += 1
+            wait_before_test(1)
+            print(f"DNSEndpoint not created, retrying... #{retry}")
         print("\nStep 2: Verify external-dns picked up the update")
         pod_ns = get_namespace_from_yaml(f"{TEST_DATA}/virtual-server-external-dns/external-dns.yaml")
         pod_name = kube_apis.v1.list_namespaced_pod(pod_ns).items[0].metadata.name

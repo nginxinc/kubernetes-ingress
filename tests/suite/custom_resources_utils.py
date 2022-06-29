@@ -78,7 +78,6 @@ def read_custom_resource(custom_objects: CustomObjectsApi, namespace, plural, na
         response = custom_objects.get_namespaced_custom_object(
             api_group, "v1", namespace, plural, name
         )
-        pprint(response)
         return response
 
     except ApiException:

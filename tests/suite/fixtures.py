@@ -826,6 +826,12 @@ def crd_ingress_controller_with_ed(
             ingress_controller_endpoint.port,
             ingress_controller_endpoint.port_ssl,
         )
+        print("---------------- Replace ConfigMap with external-status-address --------------------")
+        cm_source = f"{TEST_DATA}/virtual-server-external-dns/nginx-config.yaml"
+        replace_configmap_from_yaml(kube_apis.v1, 
+                                    ingress_controller_prerequisites.config_map['metadata']['name'],
+                                    ingress_controller_prerequisites.namespace,
+                                    cm_source)
     except ApiException as ex:
         # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
         print("Restore the ClusterRole:")
@@ -838,6 +844,12 @@ def crd_ingress_controller_with_ed(
         print("Remove the IC:")
         delete_ingress_controller(
             kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
+        )
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{DEPLOYMENTS}/common/nginx-config.yaml",
         )
         pytest.fail("IC setup failed")
 
@@ -852,6 +864,12 @@ def crd_ingress_controller_with_ed(
         print("Remove the IC:")
         delete_ingress_controller(
             kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
+        )
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{DEPLOYMENTS}/common/nginx-config.yaml",
         )
 
     request.addfinalizer(fin)

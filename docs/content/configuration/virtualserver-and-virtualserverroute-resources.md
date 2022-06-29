@@ -52,8 +52,8 @@ spec:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
-|``tls`` | The TLS termination configuration. | [externalDNS](#virtualserverexternalDNS) | No |
-|``externalDNS`` | The externalDNS configuration for a VirtualServer. | [tls](#virtualservertls) | No | ### VirtualServer.ExternalDNS |
+|``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No |
+|``externalDNS`` | The externalDNS configuration for a VirtualServer. | [externalDNS](#virtualserverexternalDNS) | No | ### VirtualServer.ExternalDNS |
 |``dos`` | A reference to a DosProtectedResource, setting this enables DOS protection of the VirtualServer. | ``string`` | No |
 |``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
@@ -133,12 +133,12 @@ externalDNS:
 |``labels`` | Configure labels to be applied to the Endpoint resources that will be consumed by ExternalDNS. | ``map[string]string`` | No |
 |``providerSpecific`` | Configure provider specific properties which holds the name and value of a configuration which is specific to individual DNS providers. | [externaldns.ProviderSpecific](#virtualserverexternaldnsProviderSpecific) | No |
 |``recordTTL`` | TTL for the DNS record. This defaults to 0 if not defined. | ``int64`` | No |
-|``recordType`` | The record Type that should be created, e.g. "A", "AAAA", "CNAME". This is automatically comuted based on the external endpoints of not defined. | ``string`` | No |
+|``recordType`` | The record Type that should be created, e.g. "A", "AAAA", "CNAME". This is automatically computed based on the external endpoints if not defined. | ``string`` | No |
 {{% /table %}}
 
 ### VirtualServer.ExternalDNS.ProviderSpecific
 
-The provideSpecfic field of the externalDNS block allows the specification of provider specific properties which is a list of key value pairs of configurations which are specific to individual DNS providers. Example:
+The providerSpecific field of the externalDNS block allows the specification of provider specific properties which is a list of key value pairs of configurations which are specific to individual DNS providers. Example:
 ```yaml
 providerSpecific:
   - name: my-name

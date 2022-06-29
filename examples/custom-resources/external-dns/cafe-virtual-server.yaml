@@ -8,11 +8,6 @@ spec:
     secret: cafe-secret
   externalDNS:
     enable: true
-    providerSpecific:
-      - name: jy
-        value: khg
-      - name: hh
-        value: jj
   upstreams:
   - name: tea
     service: tea-svc

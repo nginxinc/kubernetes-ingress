@@ -222,11 +222,11 @@ type DNSEPListerExpansion struct{}
 // It's dummy implementation of the interface to sotisfy dependencies in tests.
 type DNSEPNamespaceLister struct{}
 
-func (DNSEPNamespaceLister) List(selector labels.Selector) (ret []*extdnsapi.DNSEndpoint, err error) {
+func (DNSEPNamespaceLister) List(_ labels.Selector) (ret []*extdnsapi.DNSEndpoint, err error) {
 	return nil, nil
 }
 
-func (DNSEPNamespaceLister) Get(name string) (*extdnsapi.DNSEndpoint, error) {
+func (DNSEPNamespaceLister) Get(_ string) (*extdnsapi.DNSEndpoint, error) {
 	return nil, errors.New("test error")
 }
 
@@ -236,11 +236,11 @@ type DNSEPLister struct {
 	DNSEPListerExpansion
 }
 
-func (DNSEPLister) List(selector labels.Selector) (ret []*extdnsapi.DNSEndpoint, err error) {
+func (DNSEPLister) List(_ labels.Selector) (ret []*extdnsapi.DNSEndpoint, err error) {
 	return nil, nil
 }
 
-func (DNSEPLister) DNSEndpoints(namespace string) extdnsclient.DNSEndpointNamespaceLister {
+func (DNSEPLister) DNSEndpoints(_ string) extdnsclient.DNSEndpointNamespaceLister {
 	e := DNSEPNamespaceLister{}
 	return e
 }
@@ -284,5 +284,4 @@ func TestSync_ReturnsErrorOnFailure(t *testing.T) {
 			}
 		})
 	}
-
 }

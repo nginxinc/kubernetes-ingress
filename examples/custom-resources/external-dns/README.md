@@ -4,7 +4,7 @@ In this example we configure a VirtualServer resource to integrate with [Externa
 
 ## Prerequisites  
 
-1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller with custom resources enabled. Additionally, the Ingress COntroller must be configured to report the VirtualServer status by setting either the `external-service` command line argument, or setting the `external-status-address` key in the ConfigMap resource (see the [Reporting Resources Status docs](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status#virtualserver-and-virtualserverroute-resources) for more details).
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller with custom resources enabled. Additionally, the Ingress Controller must be configured to report the VirtualServer status by setting either the `external-service` command line argument, or setting the `external-status-address` key in the ConfigMap resource (see the [Reporting Resources Status docs](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status#virtualserver-and-virtualserverroute-resources) for more details).
 
 ## Step 1: Register the external-crd with the k8s api (run from the root of this repo):
 
@@ -30,7 +30,7 @@ $ kubectl create -f cafe.yaml
     $ kubectl create -f cafe-secret.yaml
     ```
 
-2. Update the `spec.host` field in the `cafe-virtual-server.yaml` to correspond to Domain Name and create the VirtualServer resource:
+2. Update the `spec.host` field in the `cafe-virtual-server.yaml` to correspond to your Domain Name and create the VirtualServer resource:
     ```
     $ kubectl create -f cafe-virtual-server.yaml
     ```

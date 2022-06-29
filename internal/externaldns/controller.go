@@ -76,7 +76,6 @@ func (c *ExtDNSController) register() workqueue.Interface {
 		WorkFunc: externalDNSHandler(c.queue),
 	})
 
-	// c.sync = SyncFnFor()
 	c.sync = SyncFnFor(c.recorder, c.client, c.extdnslister)
 
 	c.mustSync = []cache.InformerSynced{
@@ -180,7 +179,7 @@ func externalDNSHandler(queue workqueue.RateLimitingInterface) func(obj interfac
 	}
 }
 
-// BuildOpts build the external-dns controller options
+// BuildOpts builds the externalDNS controller options
 func BuildOpts(
 	ctx context.Context,
 	namespace string,
