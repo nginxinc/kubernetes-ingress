@@ -1,5 +1,6 @@
 env:
   - CGO_ENABLED=0
+
 builds:
   - id: kubernetes-ingress
     goos:
@@ -40,14 +41,23 @@ builds:
     binary: nginx-ingress
     tags:
       - aws
+
 archives:
   - id: kubernetes-ingress
     format: binary
     builds: [kubernetes-ingress]
-  - id: aws
-    format: binary
-    builds: [aws]
+
 changelog:
   skip: true
+
+checksum:
+  name_template: 'checksums.txt'
+
+sboms:
+  - artifacts: binary
+    ids: [kubernetes-ingress]
+
 release:
   ids: [kubernetes-ingress]
+  extra_files:
+    - glob: ./dist/**.sbom
