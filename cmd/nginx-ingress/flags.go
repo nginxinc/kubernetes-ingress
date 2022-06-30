@@ -170,9 +170,6 @@ var (
 
 	enableCertManager = flag.Bool("enable-cert-manager", false,
 		"Enable cert-manager controller for VirtualServer resources. Requires -enable-custom-resources")
-	
-	enableExternalDNS = flag.Bool("enable-external-dns", false,
-		"Enable external-dns controller for VirtualServer resources. Requires -enable-custom-resources")
 
 	enableExternalDNS = flag.Bool("enable-external-dns", false,
 		"Enable external-dns controller for VirtualServer resources. Requires -enable-custom-resources")
