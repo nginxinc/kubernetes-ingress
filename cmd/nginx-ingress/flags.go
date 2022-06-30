@@ -180,7 +180,9 @@ func parseFlags(versionInfo string, binaryInfo string) {
 
 	initialChecks()
 
-	printVersionInfo(versionInfo, binaryInfo)
+	if *versionFlag {
+		printVersionInfo(versionInfo, binaryInfo)
+	}
 
 	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 	glog.Info(binaryInfo)
@@ -267,11 +269,9 @@ func initialChecks() {
 
 // printVersionInfo prints the the version and binary info before exiting if the flag is set
 func printVersionInfo(versionInfo string, binaryInfo string) {
-	if *versionFlag {
-		fmt.Println(versionInfo)
-		fmt.Println(binaryInfo)
-		os.Exit(0)
-	}
+	fmt.Println(versionInfo)
+	fmt.Println(binaryInfo)
+	os.Exit(0)
 }
 
 // validationChecks checks the values for various flags
