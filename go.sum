@@ -125,8 +125,8 @@ github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdn
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/census-instrumentation/opencensus-proto v0.3.0/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
-github.com/cert-manager/cert-manager v1.8.1-0.20220505101928-4ec33298a243 h1:h500MmRynT2Nr2TbP+nO4gyccebh/5a2JWteRLHfWm8=
-github.com/cert-manager/cert-manager v1.8.1-0.20220505101928-4ec33298a243/go.mod h1:kQwqiEo4H1RFNiXvsR2ntZKFslI32V2z3Tptk3bg56U=
+github.com/cert-manager/cert-manager v1.8.2 h1:cqPar+74IDp5dQxT9Icp1eThfca19Ml3RfNh8pDY7dI=
+github.com/cert-manager/cert-manager v1.8.2/go.mod h1:95Ds29nFWH6YqEgLiQ9WTtsDnTcxrkUPRNfYaKVOzeM=
 github.com/certifi/gocertifi v0.0.0-20191021191039-0944d244cd40/go.mod h1:sGbDF6GwGcLpkNXPUTkMRoywsNa/ol15pxFe6ERfguA=
 github.com/certifi/gocertifi v0.0.0-20200922220541-2c3bb06c6054/go.mod h1:sGbDF6GwGcLpkNXPUTkMRoywsNa/ol15pxFe6ERfguA=
 github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghfAqPWnc=
