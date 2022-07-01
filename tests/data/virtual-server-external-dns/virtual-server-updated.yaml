@@ -7,6 +7,11 @@ spec:
   externalDNS:
     enable: true
     recordTTL: 180
+    providerSpecific:
+      - name: thing
+        value: thing2
+    labels:
+      label1: value1
   upstreams:
   - name: backend2
     service: backend2-svc
