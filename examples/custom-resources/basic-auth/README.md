@@ -1,5 +1,6 @@
 # Basic Authentication
 
+NGINX supports authenticating requests with [ngx_http_auth_basic_module](https://nginx.org/en/docs/http/ngx_http_auth_basic_module.html).
 In this example, we deploy a web application, configure load balancing for it via a VirtualServer, and apply a Basic Auth policy.
 
 ## Prerequisites
@@ -23,7 +24,7 @@ $ kubectl apply -f cafe.yaml
 
 ## Step 2 - Deploy the Basic Auth Secret
 
-Create a secret with the name `cafe-passwd` that will be used for Basic Auth validation. It contains a list of user and base64 encoded password pairs:
+Create a secret of type `nginx.org/htpasswd` with the name `cafe-passwd` that will be used for Basic Auth validation. It contains a list of user and base64 encoded password pairs:
 ```
 $ kubectl apply -f cafe-passwd.yaml
 ```
