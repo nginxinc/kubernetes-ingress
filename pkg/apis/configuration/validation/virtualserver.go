@@ -21,6 +21,7 @@ type VirtualServerValidator struct {
 	isPlus               bool
 	isDosEnabled         bool
 	isCertManagerEnabled bool
+	isExternalDNSEnabled bool
 }
 
 // IsPlus modifies the VirtualServerValidator to set the isPlus option.
@@ -44,12 +45,20 @@ func IsCertManagerEnabled(cm bool) VsvOption {
 	}
 }
 
+// IsExternalDNSEnabled modifies the VirtualServerValidator to set the isExternalDNSEnabled option.
+func IsExternalDNSEnabled(ed bool) VsvOption {
+	return func(v *VirtualServerValidator) {
+		v.isExternalDNSEnabled = ed
+	}
+}
+
 // NewVirtualServerValidator creates a new VirtualServerValidator.
 func NewVirtualServerValidator(opts ...VsvOption) *VirtualServerValidator {
 	vsv := VirtualServerValidator{
 		isPlus:               false,
 		isDosEnabled:         false,
 		isCertManagerEnabled: false,
+		isExternalDNSEnabled: false,
 	}
 	for _, o := range opts {
 		o(&vsv)
@@ -77,6 +86,8 @@ func (vsv *VirtualServerValidator) validateVirtualServerSpec(spec *v1.VirtualSer
 	allErrs = append(allErrs, vsv.validateVirtualServerRoutes(spec.Routes, fieldPath.Child("routes"), upstreamNames, namespace)...)
 
 	allErrs = append(allErrs, validateDos(vsv.isDosEnabled, spec.Dos, fieldPath.Child("dos"))...)
+
+	allErrs = append(allErrs, vsv.validateExternalDNS(&spec.ExternalDNS, fieldPath.Child("externalDNS"))...)
 
 	return allErrs
 }
@@ -184,6 +195,21 @@ func validateDos(isDosEnabled bool, dos string, fieldPath *field.Path) field.Err
 
 	for _, msg := range validation.IsQualifiedName(dos) {
 		allErrs = append(allErrs, field.Invalid(fieldPath, dos, msg))
+	}
+
+	return allErrs
+}
+
+func (vsv *VirtualServerValidator) validateExternalDNS(ed *v1.ExternalDNS, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ed == nil || !ed.Enable {
+		// valid, externalDNS is not required
+		return allErrs
+	}
+
+	if !vsv.isExternalDNSEnabled {
+		allErrs = append(allErrs, field.Forbidden(fieldPath, "field requires externalDNS enablement"))
 	}
 
 	return allErrs
