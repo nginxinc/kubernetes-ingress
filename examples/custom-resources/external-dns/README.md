@@ -7,32 +7,31 @@ In this example we configure a VirtualServer resource to integrate with [Externa
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller with custom resources enabled. Additionally, the Ingress Controller must be configured to report the VirtualServer status by setting either the `external-service` command line argument, or setting the `external-status-address` key in the ConfigMap resource (see the [Reporting Resources Status docs](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/reporting-resources-status#virtualserver-and-virtualserverroute-resources) for more details).
 
 ## Step 1: Register the external-crd with the k8s api (run from the root of this repo):
-
-    ```k apply -f deployments/common/crds/externaldns.nginx.org_dnsendpoints.yaml```
-
+```
+kubectl apply -f deployments/common/crds/externaldns.nginx.org_dnsendpoints.yaml
+```
 ## Step 2: Deploy external-dns
-
-    Update `external-dns-route53.yaml` with your Domain Name and Hosted Zone ID, and apply the file.
-
-    ```k apply -f external-dns-route53.yaml```
-
+Update `external-dns-route53.yaml` with your Domain Name and Hosted Zone ID, and apply the file.
+```
+kubectl apply -f external-dns-route53.yaml
+```
 ## Step 3 - Deploy the Cafe Application
 
 Create the coffee and the tea deployments and services:
 ```
-$ kubectl create -f cafe.yaml
+kubectl create -f cafe.yaml
 ```
 
 ## Step 4 - Configure Load Balancing and TLS Termination
 
 1. Create the secret with the TLS certificate and key:
     ```
-    $ kubectl create -f cafe-secret.yaml
+    kubectl create -f cafe-secret.yaml
     ```
 
 2. Update the `spec.host` field in the `cafe-virtual-server.yaml` to correspond to your Domain Name and create the VirtualServer resource:
     ```
-    $ kubectl create -f cafe-virtual-server.yaml
+    kubectl create -f cafe-virtual-server.yaml
     ```
 
 ## Step 5 - Test the Configuration
