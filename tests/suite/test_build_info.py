@@ -18,17 +18,6 @@ class TestBuildVersion:
         logging.info(_version)
         assert _version != " "
 
-    def test_build_gitcommit(
-        self, ingress_controller, kube_apis, ingress_controller_prerequisites
-    ):
-        """
-        Test Git Commit tag of build i.e. 'GitCommit=<GITCOMMIT>'
-        """
-        _info = self.send_build_info(kube_apis, ingress_controller_prerequisites)
-        _commit = _info[_info.find("GitCommit=") :].lstrip().replace("GitCommit=", "")
-        logging.info(_commit)
-        assert _commit != ""
-
     def send_build_info(self, kube_apis, ingress_controller_prerequisites) -> str:
         """
         Helper function to get pod logs

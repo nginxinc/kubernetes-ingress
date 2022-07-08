@@ -68,6 +68,7 @@ type Server struct {
 	LimitReqOptions           LimitReqOptions
 	LimitReqs                 []LimitReq
 	JWTAuth                   *JWTAuth
+	BasicAuth                 *BasicAuth
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
 	OIDC                      *OIDC
@@ -175,6 +176,7 @@ type Location struct {
 	LimitReqOptions          LimitReqOptions
 	LimitReqs                []LimitReq
 	JWTAuth                  *JWTAuth
+	BasicAuth                *BasicAuth
 	EgressMTLS               *EgressMTLS
 	OIDC                     bool
 	WAF                      *WAF
@@ -350,4 +352,10 @@ type JWTAuth struct {
 	Secret string
 	Realm  string
 	Token  string
+}
+
+// BasicAuth refers to basic HTTP authentication mechanism options
+type BasicAuth struct {
+	Secret string
+	Realm  string
 }

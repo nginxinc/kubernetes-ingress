@@ -682,7 +682,7 @@ func TestGetPolicies(t *testing.T) {
 
 	expectedPolicies := []*conf_v1.Policy{validPolicy}
 	expectedErrors := []error{
-		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `jwt`, `oidc`, `waf`"),
+		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`, `jwt`, `oidc`, `waf`"),
 		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
 		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
 		errors.New("referenced policy default/valid-policy-ingress-class has incorrect ingress class: test-class (controller ingress class: )"),
@@ -958,6 +958,30 @@ func TestFindPoliciesForSecret(t *testing.T) {
 		},
 	}
 
+	basicPol1 := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "basic-auth-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			BasicAuth: &conf_v1.BasicAuth{
+				Secret: "basic-auth-secret",
+			},
+		},
+	}
+
+	basicPol2 := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "basic-auth-policy",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.PolicySpec{
+			BasicAuth: &conf_v1.BasicAuth{
+				Secret: "basic-auth-secret",
+			},
+		},
+	}
+
 	ingTLSPol := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ingress-mtls-policy",
@@ -1029,6 +1053,27 @@ func TestFindPoliciesForSecret(t *testing.T) {
 			secretNamespace: "default",
 			secretName:      "jwk-secret",
 			expected:        []*conf_v1.Policy{jwtPol1},
+			msg:             "Find policy in default ns, ignore other",
+		},
+		{
+			policies:        []*conf_v1.Policy{basicPol1},
+			secretNamespace: "default",
+			secretName:      "basic-auth-secret",
+			expected:        []*conf_v1.Policy{basicPol1},
+			msg:             "Find policy in default ns",
+		},
+		{
+			policies:        []*conf_v1.Policy{basicPol2},
+			secretNamespace: "default",
+			secretName:      "basic-auth-secret",
+			expected:        nil,
+			msg:             "Ignore policies in other namespaces",
+		},
+		{
+			policies:        []*conf_v1.Policy{basicPol1, basicPol2},
+			secretNamespace: "default",
+			secretName:      "basic-auth-secret",
+			expected:        []*conf_v1.Policy{basicPol1},
 			msg:             "Find policy in default ns, ignore other",
 		},
 		{
@@ -1224,6 +1269,130 @@ func TestAddJWTSecrets(t *testing.T) {
 
 		if diff := cmp.Diff(test.expectedSecretRefs, result, cmp.Comparer(errorComparer)); diff != "" {
 			t.Errorf("addJWTSecretRefs() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		}
+	}
+}
+
+func TestAddBasicSecrets(t *testing.T) {
+	invalidErr := errors.New("invalid")
+	validBasicSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-basic-auth-secret",
+			Namespace: "default",
+		},
+		Type: secrets.SecretTypeJWK,
+	}
+	invalidBasicSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "invalid-basic-auth-secret",
+			Namespace: "default",
+		},
+		Type: secrets.SecretTypeJWK,
+	}
+
+	tests := []struct {
+		policies           []*conf_v1.Policy
+		expectedSecretRefs map[string]*secrets.SecretReference
+		wantErr            bool
+		msg                string
+	}{
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Secret: "valid-basic-auth-secret",
+							Realm:  "My API",
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{
+				"default/valid-basic-auth-secret": {
+					Secret: validBasicSecret,
+					Path:   "/etc/nginx/secrets/default-valid-basic-auth-secret",
+				},
+			},
+			wantErr: false,
+			msg:     "test getting valid secret",
+		},
+		{
+			policies:           []*conf_v1.Policy{},
+			expectedSecretRefs: map[string]*secrets.SecretReference{},
+			wantErr:            false,
+			msg:                "test getting valid secret with no policy",
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
+							Allow: []string{"127.0.0.1"},
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{},
+			wantErr:            false,
+			msg:                "test getting invalid secret with wrong policy",
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Secret: "invalid-basic-auth-secret",
+							Realm:  "My API",
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{
+				"default/invalid-basic-auth-secret": {
+					Secret: invalidBasicSecret,
+					Error:  invalidErr,
+				},
+			},
+			wantErr: true,
+			msg:     "test getting invalid secret",
+		},
+	}
+
+	lbc := LoadBalancerController{
+		secretStore: secrets.NewFakeSecretsStore(map[string]*secrets.SecretReference{
+			"default/valid-basic-auth-secret": {
+				Secret: validBasicSecret,
+				Path:   "/etc/nginx/secrets/default-valid-basic-auth-secret",
+			},
+			"default/invalid-basic-auth-secret": {
+				Secret: invalidBasicSecret,
+				Error:  invalidErr,
+			},
+		}),
+	}
+
+	for _, test := range tests {
+		result := make(map[string]*secrets.SecretReference)
+
+		err := lbc.addBasicSecretRefs(result, test.policies)
+		if (err != nil) != test.wantErr {
+			t.Errorf("addBasicSecretRefs() returned %v, for the case of %v", err, test.msg)
+		}
+
+		if diff := cmp.Diff(test.expectedSecretRefs, result, cmp.Comparer(errorComparer)); diff != "" {
+			t.Errorf("addBasicSecretRefs() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }

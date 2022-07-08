@@ -90,6 +90,7 @@ type Server struct {
 	RealIPRecursive bool
 
 	JWTAuth              *JWTAuth
+	BasicAuth            *BasicAuth
 	JWTRedirectLocations []JWTRedirectLocation
 
 	Ports                        []int
@@ -115,6 +116,12 @@ type Server struct {
 type JWTRedirectLocation struct {
 	Name     string
 	LoginURL string
+}
+
+// BasicAuth holds HTTP Basic authentication parameters
+type BasicAuth struct {
+	Realm  string
+	Secret string
 }
 
 // JWTAuth holds JWT authentication configuration.
@@ -144,6 +151,7 @@ type Location struct {
 	ProxyMaxTempFileSize string
 	ProxySSLName         string
 	JWTAuth              *JWTAuth
+	BasicAuth            *BasicAuth
 	ServiceName          string
 
 	MinionIngress *Ingress

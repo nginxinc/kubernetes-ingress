@@ -19,6 +19,9 @@ const CAKey = "ca.crt"
 // ClientSecretKey is the key of the data field of a Secret where the OIDC client secret must be stored.
 const ClientSecretKey = "client-secret"
 
+// HtpasswdFileKey is the key of the data field of a Secret where the HTTP basic authorization list must be stored
+const HtpasswdFileKey = "htpasswd"
+
 // SecretTypeCA contains a certificate authority for TLS certificate verification. #nosec G101
 const SecretTypeCA api_v1.SecretType = "nginx.org/ca"
 
@@ -27,6 +30,9 @@ const SecretTypeJWK api_v1.SecretType = "nginx.org/jwk"
 
 // SecretTypeOIDC contains an OIDC client secret for use in oauth flows. #nosec G101
 const SecretTypeOIDC api_v1.SecretType = "nginx.org/oidc"
+
+// SecretTypeHtpasswd contains an htpasswd file for use in HTTP Basic authorization.. #nosec G101
+const SecretTypeHtpasswd api_v1.SecretType = "nginx.org/htpasswd" // #nosec G101
 
 // ValidateTLSSecret validates the secret. If it is valid, the function returns nil.
 func ValidateTLSSecret(secret *api_v1.Secret) error {
@@ -103,12 +109,29 @@ func ValidateOIDCSecret(secret *api_v1.Secret) error {
 	return nil
 }
 
+// ValidateHtpasswdSecret validates the secret. If it is valid, the function returns nil.
+func ValidateHtpasswdSecret(secret *api_v1.Secret) error {
+	if secret.Type != SecretTypeHtpasswd {
+		return fmt.Errorf("Htpasswd secret must be of the type %v", SecretTypeHtpasswd)
+	}
+
+	if _, exists := secret.Data[HtpasswdFileKey]; !exists {
+		return fmt.Errorf("Htpasswd secret must have the data field %v", HtpasswdFileKey)
+	}
+
+	// we don't validate the contents of secret.Data[HtpasswdFileKey], because invalid contents will not make NGINX
+	// fail to reload: NGINX will return 403 responses for the affected URLs.
+
+	return nil
+}
+
 // IsSupportedSecretType checks if the secret type is supported.
 func IsSupportedSecretType(secretType api_v1.SecretType) bool {
 	return secretType == api_v1.SecretTypeTLS ||
 		secretType == SecretTypeCA ||
 		secretType == SecretTypeJWK ||
-		secretType == SecretTypeOIDC
+		secretType == SecretTypeOIDC ||
+		secretType == SecretTypeHtpasswd
 }
 
 // ValidateSecret validates the secret. If it is valid, the function returns nil.
@@ -122,6 +145,8 @@ func ValidateSecret(secret *api_v1.Secret) error {
 		return ValidateCASecret(secret)
 	case SecretTypeOIDC:
 		return ValidateOIDCSecret(secret)
+	case SecretTypeHtpasswd:
+		return ValidateHtpasswdSecret(secret)
 	}
 
 	return fmt.Errorf("Secret is of the unsupported type %v", secret.Type)

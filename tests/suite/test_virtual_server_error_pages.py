@@ -87,14 +87,14 @@ class TestVSErrorPages:
                                            virtual_server_setup.namespace)
         except ApiException as ex:
             assert ex.status == 422 \
-                   and "spec.routes.errorPages.codes" in ex.body \
-                   and "spec.routes.errorPages.redirect.code" in ex.body \
-                   and "spec.routes.errorPages.redirect.url" in ex.body \
-                   and "spec.routes.errorPages.return.code" in ex.body \
-                   and "spec.routes.errorPages.return.type" in ex.body \
-                   and "spec.routes.errorPages.return.body" in ex.body \
-                   and "spec.routes.errorPages.return.headers.name" in ex.body \
-                   and "spec.routes.errorPages.return.headers.value" in ex.body
+                   and "codes in body must be of type" in ex.body \
+                   and "redirect.code in body must be of type" in ex.body \
+                   and "redirect.url in body must be of type" in ex.body \
+                   and "return.code in body must be of type" in ex.body \
+                   and "return.type in body must be of type" in ex.body \
+                   and "return.body in body must be of type" in ex.body \
+                   and "name in body must be of type" in ex.body \
+                   and "value in body must be of type" in ex.body
         except Exception as ex:
             pytest.fail(f"An unexpected exception is raised: {ex}")
         else:

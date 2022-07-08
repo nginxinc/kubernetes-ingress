@@ -136,6 +136,11 @@ server {
 	}
 	{{- end}}
 
+	{{- with $server.BasicAuth }}
+    auth_basic {{ printf "%q" .Realm }};
+    auth_basic_user_file {{ .Secret }};
+	{{- end }}
+
 	{{with $jwt := $server.JWTAuth}}
 	auth_jwt_key_file {{$jwt.Key}};
 	auth_jwt "{{.Realm}}"{{if $jwt.Token}} token={{$jwt.Token}}{{end}};
@@ -206,6 +211,11 @@ server {
 		auth_jwt "{{.Realm}}"{{if $jwt.Token}} token={{$jwt.Token}}{{end}};
 		{{end}}
 
+		{{- with $location.BasicAuth }}
+		auth_basic {{ printf "%q" .Realm }};
+		auth_basic_user_file {{ .Secret }};
+		{{- end }}
+
 		grpc_connect_timeout {{$location.ProxyConnectTimeout}};
 		grpc_read_timeout {{$location.ProxyReadTimeout}};
 		grpc_send_timeout {{$location.ProxySendTimeout}};
@@ -254,6 +264,11 @@ server {
 		error_page 401 {{$jwt.RedirectLocationName}};
 		{{end}}
 		{{end}}
+
+		{{- with $location.BasicAuth }}
+		auth_basic {{ printf "%q" .Realm }};
+		auth_basic_user_file {{ .Secret }};
+		{{- end }}
 
 		proxy_connect_timeout {{$location.ProxyConnectTimeout}};
 		proxy_read_timeout {{$location.ProxyReadTimeout}};

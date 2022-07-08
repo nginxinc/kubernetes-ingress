@@ -7,6 +7,9 @@ import (
 // JWTKeyAnnotation is the annotation where the Secret with a JWK is specified.
 const JWTKeyAnnotation = "nginx.com/jwt-key"
 
+// BasicAuthSecretAnnotation is the annotation where the Secret with the HTTP basic user list
+const BasicAuthSecretAnnotation = "nginx.org/basic-auth-secret" // #nosec G101
+
 // AppProtectPolicyAnnotation is where the NGINX App Protect policy is specified
 const AppProtectPolicyAnnotation = "appprotect.f5.com/app-protect-policy"
 
@@ -297,6 +300,13 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		if jwtLoginURL, exists := ingEx.Ingress.Annotations["nginx.com/jwt-login-url"]; exists {
 			cfgParams.JWTLoginURL = jwtLoginURL
 		}
+	}
+
+	if basicSecret, exists := ingEx.Ingress.Annotations[BasicAuthSecretAnnotation]; exists {
+		cfgParams.BasicAuthSecret = basicSecret
+	}
+	if basicRealm, exists := ingEx.Ingress.Annotations["nginx.org/basic-auth-realm"]; exists {
+		cfgParams.BasicAuthRealm = basicRealm
 	}
 
 	if values, exists := ingEx.Ingress.Annotations["nginx.org/listen-ports"]; exists {

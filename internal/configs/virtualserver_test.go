@@ -2584,6 +2584,12 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 				Path: "/etc/nginx/secrets/default-jwt-secret",
 			},
+			"default/htpasswd-secret": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeHtpasswd,
+				},
+				Path: "/etc/nginx/secrets/default-htpasswd-secret",
+			},
 			"default/oidc-secret": {
 				Secret: &api_v1.Secret{
 					Type: secrets.SecretTypeOIDC,
@@ -2811,6 +2817,35 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 			},
 			msg: "jwt reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "basic-auth-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/basic-auth-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "My Test API",
+							Secret: "htpasswd-secret",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				BasicAuth: &version2.BasicAuth{
+					Secret: "/etc/nginx/secrets/default-htpasswd-secret",
+					Realm:  "My Test API",
+				},
+			},
+			msg: "basic auth reference",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -3269,6 +3304,160 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedOidc: &oidcPolicyCfg{},
 			msg:          "multi jwt reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "basic-auth-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/basic-auth-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "test",
+							Secret: "htpasswd-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/htpasswd-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeHtpasswd,
+						},
+						Error: errors.New("secret is invalid"),
+					},
+				},
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Basic Auth policy default/basic-auth-policy references an invalid secret default/htpasswd-secret: secret is invalid`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "basic auth reference missing secret",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "basic-auth-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/basic-auth-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "test",
+							Secret: "htpasswd-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/htpasswd-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Basic Auth policy default/basic-auth-policy references a secret default/htpasswd-secret of a wrong type 'nginx.org/ca', must be 'nginx.org/htpasswd'`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "basic auth references wrong secret type",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "basic-auth-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "basic-auth-policy2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/basic-auth-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "test",
+							Secret: "htpasswd-secret",
+						},
+					},
+				},
+				"default/basic-auth-policy2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "test",
+							Secret: "htpasswd-secret2",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/htpasswd-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeHtpasswd,
+						},
+						Path: "/etc/nginx/secrets/default-htpasswd-secret",
+					},
+					"default/htpasswd-secret2": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeHtpasswd,
+						},
+						Path: "/etc/nginx/secrets/default-htpasswd-secret2",
+					},
+				},
+			},
+			expected: policiesCfg{
+				BasicAuth: &version2.BasicAuth{
+					Secret: "/etc/nginx/secrets/default-htpasswd-secret",
+					Realm:  "test",
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Multiple basic auth policies in the same context is not valid. Basic auth policy default/basic-auth-policy2 will be ignored`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "multi basic auth reference",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{

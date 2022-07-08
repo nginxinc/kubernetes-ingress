@@ -78,6 +78,7 @@ from suite.yaml_utils import (
     get_paths_from_vsr_yaml,
     get_route_namespace_from_vs_yaml,
     get_name_from_yaml,
+    get_namespace_from_yaml,
 )
 
 from settings import (
@@ -780,6 +781,98 @@ def crd_ingress_controller_with_dos(
 
     request.addfinalizer(fin)
 
+@pytest.fixture(scope="class")
+def crd_ingress_controller_with_ed(
+    cli_arguments, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, request, crds
+) -> None:
+    """
+    Create an Ingress Controller with CRD enabled.
+
+    :param crds: the common ingress controller crds.
+    :param cli_arguments: pytest context
+    :param kube_apis: client apis
+    :param ingress_controller_prerequisites
+    :param ingress_controller_endpoint:
+    :param request: pytest fixture to parametrize this method
+        {type: complete|rbac-without-vs, extra_args: }
+        'type' type of test pre-configuration
+        'extra_args' list of IC cli arguments
+    :return:
+    """
+    namespace = ingress_controller_prerequisites.namespace
+    name = "nginx-ingress"
+
+    print("---------------------- Register DNSEndpoint CRD ------------------------------")
+    external_dns_crd_name = get_name_from_yaml(
+        f"{DEPLOYMENTS}/common/crds/externaldns.nginx.org_dnsendpoints.yaml"
+    )
+    create_crd_from_yaml(
+        kube_apis.api_extensions_v1,
+        external_dns_crd_name,
+        f"{DEPLOYMENTS}/common/crds/externaldns.nginx.org_dnsendpoints.yaml",
+    )
+
+    try:
+        print("------------------------- Create IC -----------------------------------")
+        name = create_ingress_controller(
+            kube_apis.v1,
+            kube_apis.apps_v1_api,
+            cli_arguments,
+            namespace,
+            request.param.get("extra_args", None),
+        )
+        ensure_connection_to_public_endpoint(
+            ingress_controller_endpoint.public_ip,
+            ingress_controller_endpoint.port,
+            ingress_controller_endpoint.port_ssl,
+        )
+        print("---------------- Replace ConfigMap with external-status-address --------------------")
+        cm_source = f"{TEST_DATA}/virtual-server-external-dns/nginx-config.yaml"
+        replace_configmap_from_yaml(kube_apis.v1, 
+                                    ingress_controller_prerequisites.config_map['metadata']['name'],
+                                    ingress_controller_prerequisites.namespace,
+                                    cm_source)
+    except ApiException as ex:
+        # Finalizer method doesn't start if fixture creation was incomplete, ensure clean up here
+        print("Restore the ClusterRole:")
+        patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
+        print("Remove the DNSEndpoint CRD:")
+        delete_crd(
+            kube_apis.api_extensions_v1,
+            external_dns_crd_name,
+        )
+        print("Remove the IC:")
+        delete_ingress_controller(
+            kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
+        )
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{DEPLOYMENTS}/common/nginx-config.yaml",
+        )
+        pytest.fail("IC setup failed")
+
+    def fin():
+        print("Restore the ClusterRole:")
+        patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
+        print("Remove the DNSEndpoint CRD:")
+        delete_crd(
+            kube_apis.api_extensions_v1,
+            external_dns_crd_name,
+        )
+        print("Remove the IC:")
+        delete_ingress_controller(
+            kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
+        )
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{DEPLOYMENTS}/common/nginx-config.yaml",
+        )
+
+    request.addfinalizer(fin)
 
 class VirtualServerSetup:
     """
@@ -1171,3 +1264,16 @@ def create_generic_from_yaml(file_path, request):
         subprocess.run(["kubectl", "delete", "-f", f"{file_path}"])
 
     request.addfinalizer(fin)
+
+@pytest.fixture(scope="class")
+def create_externaldns(request):
+    """
+    Create externalDNS deployment.
+
+    :param kube_apis: client apis
+    :param request: pytest fixture
+    """
+    ed_yaml = f"{TEST_DATA}/virtual-server-external-dns/external-dns.yaml"
+
+    print("------------------------- Deploy ExternalDNS in the cluster -----------------------------------")
+    create_generic_from_yaml(ed_yaml, request)

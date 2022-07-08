@@ -81,16 +81,9 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 **Note**: If you make an existing Ingress invalid, the Ingress Controller will reject it and remove the corresponding configuration from NGINX.
 
-The following Ingress annotations currently have limited or no validation:
+The following Ingress annotation currently has limited validation:
 
-- `nginx.com/jwt-key`,
-- `nginx.com/jwt-realm`,
-- `nginx.com/jwt-token`,
-- `nginx.com/jwt-login-url`,
-- `appprotect.f5.com/app-protect-policy`,
-- `appprotect.f5.com/app-protect-security-log`.
-
-Validation of these annotations will be addressed in the future.
+- `nginx.com/jwt-token`.
 
 ## Summary of Annotations
 
@@ -143,6 +136,8 @@ The table below summarizes the available annotations.
 |``nginx.org/hsts-max-age`` | ``hsts-max-age`` | Sets the value of the ``max-age`` directive of the HSTS header. | ``2592000`` (1 month) |  |
 |``nginx.org/hsts-include-subdomains`` | ``hsts-include-subdomains`` | Adds the ``includeSubDomains`` directive to the HSTS header. | ``False`` |  |
 |``nginx.org/hsts-behind-proxy`` | ``hsts-behind-proxy`` | Enables HSTS based on the value of the ``http_x_forwarded_proto`` request header. Should only be used when TLS termination is configured in a load balancer (proxy) in front of the Ingress Controller. Note: to control redirection from HTTP to HTTPS configure the ``nginx.org/redirect-to-https`` annotation. | ``False`` |  |
+|``nginx.org/basic-auth-secret`` | N/A | Specifies a Secret resource with a user list for HTTP Basic authentication. | N/A | |
+|``nginx.org/basic-auth-realm`` | N/A | Specifies a realm. | N/A | |
 |``nginx.com/jwt-key`` | N/A | Specifies a Secret resource with keys for validating JSON Web Tokens (JWTs). | N/A | [Support for JSON Web Tokens (JWTs)](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.2/examples/jwt). |
 |``nginx.com/jwt-realm`` | N/A | Specifies a realm. | N/A | [Support for JSON Web Tokens (JWTs)](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.2/examples/jwt). |
 |``nginx.com/jwt-token`` | N/A | Specifies a variable that contains a JSON Web Token. | By default, a JWT is expected in the ``Authorization`` header as a Bearer Token. | [Support for JSON Web Tokens (JWTs)](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.2/examples/jwt). |

@@ -38,6 +38,7 @@ func createTestConfiguration() *Configuration {
 		validation.NewTransportServerValidator(isTLSPassthroughEnabled, snippetsEnabled, isPlus),
 		isTLSPassthroughEnabled,
 		snippetsEnabled,
+		certManagerEnabled,
 	)
 }
 
@@ -2676,6 +2677,88 @@ func TestPortCollisions(t *testing.T) {
 	}
 }
 
+func TestChallengeIngressToVSR(t *testing.T) {
+	configuration := createTestConfiguration()
+
+	var expectedProblems []ConfigurationProblem
+
+	// Add a new Ingress
+
+	vs := createTestVirtualServer("virtualserver", "foo.example.com")
+	vsr1 := createTestChallengeVirtualServerRoute("challenge", "foo.example.com", "/.well-known/acme-challenge/test")
+
+	ing := createTestChallengeIngress("challenge", "foo.example.com", "/.well-known/acme-challenge/test", "cm-acme-http-solver-test")
+
+	expectedChanges := []ResourceChange{
+		{
+			Op: AddOrUpdate,
+			Resource: &VirtualServerConfiguration{
+				VirtualServer:       vs,
+				VirtualServerRoutes: []*conf_v1.VirtualServerRoute{vsr1},
+				Warnings:            nil,
+			},
+		},
+	}
+
+	configuration.AddOrUpdateVirtualServer(vs)
+	changes, problems := configuration.AddOrUpdateIngress(ing)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	expectedChanges = nil
+
+	changes, problems = configuration.DeleteIngress(ing.Name)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("DeleteIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("DeleteIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	expectedChanges = nil
+	ing = createTestIngress("wrong-challenge", "foo.example.com", "bar.example.com")
+	ing.Labels = map[string]string{"acme.cert-manager.io/http01-solver": "true"}
+	expectedProblems = []ConfigurationProblem{
+		{
+			Object:  ing,
+			IsError: true,
+			Reason:  "Rejected",
+			Message: "spec.rules: Forbidden: challenge Ingress must have exactly 1 rule defined",
+		},
+	}
+
+	changes, problems = configuration.AddOrUpdateIngress(ing)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+
+	ing = createTestIngress("wrong-challenge", "foo.example.com")
+	ing.Labels = map[string]string{"acme.cert-manager.io/http01-solver": "true"}
+	expectedProblems = []ConfigurationProblem{
+		{
+			Object:  ing,
+			IsError: true,
+			Reason:  "Rejected",
+			Message: "spec.rules.HTTP.Paths: Forbidden: challenge Ingress must have exactly 1 path defined",
+		},
+	}
+
+	changes, problems = configuration.AddOrUpdateIngress(ing)
+	if diff := cmp.Diff(expectedChanges, changes); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+	if diff := cmp.Diff(expectedProblems, problems); diff != "" {
+		t.Errorf("AddOrUpdateIngress() returned unexpected result (-want +got):\n%s", diff)
+	}
+}
+
 func mustInitGlobalConfiguration(c *Configuration, gc *conf_v1alpha1.GlobalConfiguration) {
 	changes, problems, err := c.AddOrUpdateGlobalConfiguration(gc)
 
@@ -2740,6 +2823,50 @@ func createTestIngress(name string, hosts ...string) *networking.Ingress {
 	}
 }
 
+func createTestChallengeIngress(name string, host string, path string, serviceName string) *networking.Ingress {
+	var rules []networking.IngressRule
+	backend := networking.IngressBackend{
+		Service: &networking.IngressServiceBackend{
+			Name: serviceName,
+			Port: networking.ServiceBackendPort{
+				Number: 8089,
+			},
+		},
+	}
+
+	rules = append(rules, networking.IngressRule{
+		Host: host,
+		IngressRuleValue: networking.IngressRuleValue{
+			HTTP: &networking.HTTPIngressRuleValue{
+				Paths: []networking.HTTPIngressPath{
+					{
+						Path:    path,
+						Backend: backend,
+					},
+				},
+			},
+		},
+	},
+	)
+
+	return &networking.Ingress{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              name,
+			Namespace:         "default",
+			CreationTimestamp: metav1.Now(),
+			Annotations: map[string]string{
+				"kubernetes.io/ingress.class": "nginx",
+			},
+			Labels: map[string]string{
+				"acme.cert-manager.io/http01-solver": "true",
+			},
+		},
+		Spec: networking.IngressSpec{
+			Rules: rules,
+		},
+	}
+}
+
 func createTestVirtualServer(name string, host string) *conf_v1.VirtualServer {
 	return &conf_v1.VirtualServer{
 		ObjectMeta: metav1.ObjectMeta{
@@ -2776,6 +2903,33 @@ func createTestVirtualServerRoute(name string, host string, path string) *conf_v
 						Return: &conf_v1.ActionReturn{
 							Body: "vsr",
 						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func createTestChallengeVirtualServerRoute(name string, host string, path string) *conf_v1.VirtualServerRoute {
+	return &conf_v1.VirtualServerRoute{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "default",
+			Name:      name,
+		},
+		Spec: conf_v1.VirtualServerRouteSpec{
+			Host: host,
+			Upstreams: []conf_v1.Upstream{
+				{
+					Name:    "challenge",
+					Service: "cm-acme-http-solver-test",
+					Port:    8089,
+				},
+			},
+			Subroutes: []conf_v1.Route{
+				{
+					Path: path,
+					Action: &conf_v1.Action{
+						Pass: "challenge",
 					},
 				},
 			},

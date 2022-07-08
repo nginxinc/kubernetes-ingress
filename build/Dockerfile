@@ -1,21 +1,23 @@
 # syntax=docker/dockerfile:1.4
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=R26
+ARG NGINX_PLUS_VERSION=R27
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_VERSION=bullseye-slim
 
 
 ############################################# Base images containing libs for Opentracing #############################################
-FROM opentracing/nginx-opentracing:nginx-1.21.6 as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.21.6-alpine as alpine-opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.23.0 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.23.0-alpine as alpine-opentracing-lib
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.21.6 AS debian
+FROM nginx:1.23.0 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	# temp fix for  CVE-2022-2068
+	&& apt-get install --no-install-recommends --no-install-suggests -y libssl1.1 openssl \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
@@ -25,7 +27,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 
 ############################################# Base image for Alpine #############################################
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
-FROM docker.io/library/nginx:1.21.6-alpine AS alpine
+FROM docker.io/library/nginx:1.23.0-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -37,7 +39,7 @@ RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.15 as alpine-plus
+FROM alpine:3.16 as alpine-plus
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
@@ -62,6 +64,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
+	# temp fix for  CVE-2022-2068
+	&& apt-get install --no-install-recommends --no-install-suggests -y libssl1.1 openssl \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \

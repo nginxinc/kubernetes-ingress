@@ -99,6 +99,9 @@ type ConfigParams struct {
 	JWTRealm    string
 	JWTToken    string
 
+	BasicAuthSecret string
+	BasicAuthRealm  string
+
 	Ports    []int
 	SSLPorts []int
 

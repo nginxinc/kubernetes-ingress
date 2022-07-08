@@ -24,7 +24,10 @@ const (
 	// TLSSecretFileMode defines the default filemode for files with TLS Secrets.
 	TLSSecretFileMode = 0o600
 	// JWKSecretFileMode defines the default filemode for files with JWK Secrets.
-	JWKSecretFileMode            = 0o644
+	JWKSecretFileMode = 0o644
+	// HtpasswdSecretFileMode defines the default filemode for HTTP basic auth user files.
+	HtpasswdSecretFileMode = 0o644
+
 	configFileMode               = 0o644
 	jsonFileForOpenTracingTracer = "/var/lib/nginx/tracer-config.json"
 	nginxBinaryPath              = "/usr/sbin/nginx"

@@ -54,6 +54,14 @@ spec:
                       type: array
                       items:
                         type: string
+                basicAuth:
+                  description: 'BasicAuth holds HTTP Basic authentication configuration policy status: preview'
+                  type: object
+                  properties:
+                    realm:
+                      type: string
+                    secret:
+                      type: string
                 egressMTLS:
                   description: EgressMTLS defines an Egress MTLS policy.
                   type: object

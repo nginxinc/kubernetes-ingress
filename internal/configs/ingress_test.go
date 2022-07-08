@@ -77,6 +77,37 @@ func TestGenerateNginxCfgForJWT(t *testing.T) {
 	}
 }
 
+func TestGenerateNginxCfgForBasicAuth(t *testing.T) {
+	t.Parallel()
+	cafeIngressEx := createCafeIngressEx()
+	cafeIngressEx.Ingress.Annotations["nginx.org/basic-auth-secret"] = "cafe-htpasswd"
+	cafeIngressEx.Ingress.Annotations["nginx.org/basic-auth-realm"] = "Cafe App"
+	cafeIngressEx.SecretRefs["cafe-htpasswd"] = &secrets.SecretReference{
+		Secret: &v1.Secret{
+			Type: secrets.SecretTypeHtpasswd,
+		},
+		Path: "/etc/nginx/secrets/default-cafe-htpasswd",
+	}
+
+	isPlus := false
+	configParams := NewDefaultConfigParams(isPlus)
+
+	expected := createExpectedConfigForCafeIngressEx(isPlus)
+	expected.Servers[0].BasicAuth = &version1.BasicAuth{
+		Secret: "/etc/nginx/secrets/default-cafe-htpasswd",
+		Realm:  "Cafe App",
+	}
+
+	result, warnings := generateNginxCfg(&cafeIngressEx, nil, nil, false, configParams, true, false, &StaticConfigParams{}, false)
+
+	if !reflect.DeepEqual(result.Servers[0].BasicAuth, expected.Servers[0].BasicAuth) {
+		t.Errorf("generateNginxCfg returned \n%v,  but expected \n%v", result.Servers[0].BasicAuth, expected.Servers[0].BasicAuth)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg returned warnings: %v", warnings)
+	}
+}
+
 func TestGenerateNginxCfgWithMissingTLSSecret(t *testing.T) {
 	t.Parallel()
 	cafeIngressEx := createCafeIngressEx()
@@ -464,6 +495,54 @@ func TestGenerateNginxCfgForMergeableIngressesForJWT(t *testing.T) {
 	}
 	if !reflect.DeepEqual(result.Servers[0].JWTRedirectLocations, expected.Servers[0].JWTRedirectLocations) {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].JWTRedirectLocations, expected.Servers[0].JWTRedirectLocations)
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfgForMergeableIngresses returned warnings: %v", warnings)
+	}
+}
+
+func TestGenerateNginxCfgForMergeableIngressesForBasicAuth(t *testing.T) {
+	t.Parallel()
+	mergeableIngresses := createMergeableCafeIngress()
+	mergeableIngresses.Master.Ingress.Annotations["nginx.org/basic-auth-secret"] = "cafe-htpasswd"
+	mergeableIngresses.Master.Ingress.Annotations["nginx.org/basic-auth-realm"] = "Cafe"
+	mergeableIngresses.Master.SecretRefs["cafe-htpasswd"] = &secrets.SecretReference{
+		Secret: &v1.Secret{
+			Type: secrets.SecretTypeHtpasswd,
+		},
+		Path: "/etc/nginx/secrets/default-cafe-htpasswd",
+	}
+
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/basic-auth-secret"] = "coffee-htpasswd"
+	mergeableIngresses.Minions[0].Ingress.Annotations["nginx.org/basic-auth-realm"] = "Coffee"
+	mergeableIngresses.Minions[0].SecretRefs["coffee-htpasswd"] = &secrets.SecretReference{
+		Secret: &v1.Secret{
+			Type: secrets.SecretTypeHtpasswd,
+		},
+		Path: "/etc/nginx/secrets/default-coffee-htpasswd",
+	}
+
+	isPlus := false
+
+	expected := createExpectedConfigForMergeableCafeIngress(isPlus)
+	expected.Servers[0].BasicAuth = &version1.BasicAuth{
+		Secret: "/etc/nginx/secrets/default-cafe-htpasswd",
+		Realm:  "Cafe",
+	}
+	expected.Servers[0].Locations[0].BasicAuth = &version1.BasicAuth{
+		Secret: "/etc/nginx/secrets/default-coffee-htpasswd",
+		Realm:  "Coffee",
+	}
+
+	configParams := NewDefaultConfigParams(isPlus)
+
+	result, warnings := generateNginxCfgForMergeableIngresses(mergeableIngresses, nil, nil, configParams, isPlus, false, &StaticConfigParams{}, false)
+
+	if !reflect.DeepEqual(result.Servers[0].BasicAuth, expected.Servers[0].BasicAuth) {
+		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].BasicAuth, expected.Servers[0].BasicAuth)
+	}
+	if !reflect.DeepEqual(result.Servers[0].Locations[0].BasicAuth, expected.Servers[0].Locations[0].BasicAuth) {
+		t.Errorf("generateNginxCfgForMergeableIngresses returned \n%v,  but expected \n%v", result.Servers[0].Locations[0].BasicAuth, expected.Servers[0].Locations[0].BasicAuth)
 	}
 	if len(warnings) != 0 {
 		t.Errorf("generateNginxCfgForMergeableIngresses returned warnings: %v", warnings)

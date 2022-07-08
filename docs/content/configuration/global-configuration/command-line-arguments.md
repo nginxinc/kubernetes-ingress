@@ -72,6 +72,7 @@ Enables OIDC policies.
 Default `false`.
 &nbsp;
 <a name="cmdoption-enable-leader-election"></a>
+
 ### -enable-leader-election
 
 Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status.
@@ -95,6 +96,13 @@ Enable x509 automated certificate management for VirtualServer resources using c
 
 Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 &nbsp;
+<a name="cmdoption-enable-external-dns"></a>
+
+### -enable-external-dns
+
+Enable integration with ExternalDNS for configuring public DNS entries for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns).
+
+Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 <a name="cmdoption-external-service"></a>
 
 ### -external-service `<string>`

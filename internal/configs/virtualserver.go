@@ -666,6 +666,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			LimitReqOptions:           policiesCfg.LimitReqOptions,
 			LimitReqs:                 policiesCfg.LimitReqs,
 			JWTAuth:                   policiesCfg.JWTAuth,
+			BasicAuth:                 policiesCfg.BasicAuth,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			OIDC:                      vsc.oidcPolCfg.oidc,
@@ -688,6 +689,7 @@ type policiesCfg struct {
 	LimitReqZones   []version2.LimitReqZone
 	LimitReqs       []version2.LimitReq
 	JWTAuth         *version2.JWTAuth
+	BasicAuth       *version2.BasicAuth
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
 	OIDC            bool
@@ -762,6 +764,41 @@ func (p *policiesCfg) addRateLimitConfig(
 		if curOptions.RejectCode != p.LimitReqOptions.RejectCode {
 			res.addWarningf("RateLimit policy %s with limit request option rejectCode='%v' is overridden to rejectCode='%v' by the first policy reference in this context", polKey, curOptions.RejectCode, p.LimitReqOptions.RejectCode)
 		}
+	}
+	return res
+}
+
+func (p *policiesCfg) addBasicAuthConfig(
+	basicAuth *conf_v1.BasicAuth,
+	polKey string,
+	polNamespace string,
+	secretRefs map[string]*secrets.SecretReference,
+) *validationResults {
+	res := newValidationResults()
+	if p.BasicAuth != nil {
+		res.addWarningf("Multiple basic auth policies in the same context is not valid. Basic auth policy %s will be ignored", polKey)
+		return res
+	}
+
+	basicSecretKey := fmt.Sprintf("%v/%v", polNamespace, basicAuth.Secret)
+	secretRef := secretRefs[basicSecretKey]
+	var secretType api_v1.SecretType
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
+	}
+	if secretType != "" && secretType != secrets.SecretTypeHtpasswd {
+		res.addWarningf("Basic Auth policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, basicSecretKey, secretType, secrets.SecretTypeHtpasswd)
+		res.isError = true
+		return res
+	} else if secretRef.Error != nil {
+		res.addWarningf("Basic Auth policy %s references an invalid secret %s: %v", polKey, basicSecretKey, secretRef.Error)
+		res.isError = true
+		return res
+	}
+
+	p.BasicAuth = &version2.BasicAuth{
+		Secret: secretRef.Path,
+		Realm:  basicAuth.Realm,
 	}
 	return res
 }
@@ -1115,6 +1152,8 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 				)
 			case pol.Spec.JWTAuth != nil:
 				res = config.addJWTAuthConfig(pol.Spec.JWTAuth, key, polNamespace, policyOpts.secretRefs)
+			case pol.Spec.BasicAuth != nil:
+				res = config.addBasicAuthConfig(pol.Spec.BasicAuth, key, polNamespace, policyOpts.secretRefs)
 			case pol.Spec.IngressMTLS != nil:
 				res = config.addIngressMTLSConfig(
 					pol.Spec.IngressMTLS,
@@ -1207,6 +1246,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.LimitReqOptions = cfg.LimitReqOptions
 	location.LimitReqs = cfg.LimitReqs
 	location.JWTAuth = cfg.JWTAuth
+	location.BasicAuth = cfg.BasicAuth
 	location.EgressMTLS = cfg.EgressMTLS
 	location.OIDC = cfg.OIDC
 	location.WAF = cfg.WAF

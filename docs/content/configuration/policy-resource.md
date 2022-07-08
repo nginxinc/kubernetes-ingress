@@ -39,6 +39,7 @@ spec:
 |``accessControl`` | The access control policy based on the client IP address. | [accessControl](#accesscontrol) | No |
 |``ingressClassName`` | Specifies which Ingress Controller must handle the Policy resource. | ``string`` | No |
 |``rateLimit`` | The rate limit policy controls the rate of processing requests per a defined key. | [rateLimit](#ratelimit) | No |
+|``basicAuth`` | The basic auth policy configures NGINX to authenticate client requests using HTTP Basic authentication credentials. | [basicAuth](#basic-auth) | No |
 |``jwt`` | The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens. | [jwt](#jwt) | No |
 |``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | [ingressMTLS](#ingressmtls) | No |
 |``egressMTLS`` | The EgressMTLS policy configures upstreams authentication and certificate verification. | [egressMTLS](#egressmtls) | No |
@@ -131,6 +132,36 @@ policies:
 ```
 
 When you reference more than one rate limit policy, the Ingress Controller will configure NGINX to use all referenced rate limits. When you define multiple policies, each additional policy inherits the `dryRun`, `logLevel`, and `rejectCode` parameters from the first policy referenced (`rate-limit-policy-one`, in the example above).
+
+### BasicAuth
+
+The basic auth policy configures NGINX to authenticate cllient requests using the [HTTP Basic authentication scheme](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+
+For example, the following policy will reject all requests that do not include a valid username/password combination in the HTTP header `Authentication`
+```yaml
+basicAuth:
+  secret: htpasswd-secret
+  realm: "My API"
+```
+
+> Note: The feature is implemented using the NGINX [ngx_http_auth_basic_module](https://nginx.org/en/docs/http/ngx_http_auth_basic_module.html).
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``secret`` | The name of the Kubernetes secret that stores the Htpasswd configuration. It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/htpasswd``, and the config must be stored in the secret under the key ``htpasswd``, otherwise the secret will be rejected as invalid. | ``string`` | Yes |
+|``realm`` | The realm for the basic authentication. | ``string`` | No |
+{{% /table %}}
+
+#### BasicAuth Merging Behavior
+
+A VirtualServer/VirtualServerRoute can reference multiple basic auth policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+```yaml
+policies:
+- name: basic-auth-policy-one
+- name: basic-auth-policy-two
+```
+In this example the Ingress Controller will use the configuration from the first policy reference `basic-auth-policy-one`, and ignores `basic-auth-policy-two`.
 
 ### JWT
 
