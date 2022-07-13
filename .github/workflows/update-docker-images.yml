@@ -138,19 +138,11 @@ jobs:
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
           - image: alpine
-            marker: vsr
+            marker: "vs or vsr"
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
-          - image: alpine-opentracing
-            marker: policies
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-            needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
-          - image: opentracing
-            marker: vs
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-            needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
           - image: ubi
-            marker: ts
+            marker: "policies or ts"
             platforms: linux/arm64,linux/amd64,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
     steps:
@@ -221,7 +213,7 @@ jobs:
             name=public.ecr.aws/nginx/nginx-ingress
           flavor: |
             latest=true
-            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
+            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }},onlatest=true
           tags: |
             type=raw,value=${{ needs.variables.outputs.kic-tag }}
             type=raw,value=${{ steps.tag.outputs.short }}
