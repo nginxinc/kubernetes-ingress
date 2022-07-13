@@ -50,6 +50,13 @@ Expand service name.
 {{- end -}}
 
 {{/*
+Expand serviceMonitor name.
+*/}}
+{{- define "nginx-ingress.serviceMonitorName" -}}
+{{- default (include "nginx-ingress.name" .) .Values.controller.serviceMonitor.name }}
+{{- end -}}
+
+{{/*
 Expand default TLS name.
 */}}
 {{- define "nginx-ingress.defaultTLSName" -}}
