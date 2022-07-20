@@ -643,10 +643,10 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	return vsCfg, vsc.warnings
 }
 
-func (vsc *virtualServerConfigurator)generateUpstreamsForVirtualServer(sslConfig *version2.SSL, vsEx *VirtualServerEx, virtualServerUpstreamNamer *upstreamNamer, u conf_v1.Upstream, owner runtime.Object, upstreamNamespace string) (version2.Upstream, string, *version2.HealthCheck, version2.StatusMatch) {
+func (vsc *virtualServerConfigurator) generateUpstreamsForVirtualServer(sslConfig *version2.SSL, vsEx *VirtualServerEx, virtualServerUpstreamNamer *upstreamNamer, u conf_v1.Upstream, owner runtime.Object, upstreamNamespace string) (version2.Upstream, string, *version2.HealthCheck, version2.StatusMatch) {
 	var hc *version2.HealthCheck
 	var sm version2.StatusMatch
-	
+
 	if (sslConfig == nil || !vsc.cfgParams.HTTP2) && isGRPC(u.Type) {
 		vsc.addWarningf(vsEx.VirtualServer, "gRPC cannot be configured for upstream %s. gRPC requires enabled HTTP/2 and TLS termination.", u.Name)
 	}

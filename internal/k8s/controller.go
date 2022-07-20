@@ -2219,59 +2219,19 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 	ingEx.SecretRefs = make(map[string]*secrets.SecretReference)
 
 	for _, tls := range ing.Spec.TLS {
-		secretName := tls.SecretName
-		secretKey := ing.Namespace + "/" + secretName
-
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-		if secretRef.Error != nil {
-			glog.Warningf("Error trying to get the secret %v for Ingress %v: %v", secretName, ing.Name, secretRef.Error)
-		}
-
-		ingEx.SecretRefs[secretName] = secretRef
+		lbc.processSecretRef(tls.SecretName, ing.Name, ing.Namespace, ingEx.SecretRefs)
 	}
 
 	if basicAuth, exists := ingEx.Ingress.Annotations[configs.BasicAuthSecretAnnotation]; exists {
-		secretName := basicAuth
-		secretKey := ing.Namespace + "/" + secretName
-
-		secretRef := lbc.secretStore.GetSecret(secretKey)
-		if secretRef.Error != nil {
-			glog.Warningf("Error trying to get the secret %v for Ingress %v/%v: %v", secretName, ing.Namespace, ing.Name, secretRef.Error)
-		}
-
-		ingEx.SecretRefs[secretName] = secretRef
+		lbc.processSecretRef(basicAuth, ing.Name, ing.Namespace, ingEx.SecretRefs)
 	}
 
 	if lbc.isNginxPlus {
 		if jwtKey, exists := ingEx.Ingress.Annotations[configs.JWTKeyAnnotation]; exists {
-			secretName := jwtKey
-			secretKey := ing.Namespace + "/" + secretName
-
-			secretRef := lbc.secretStore.GetSecret(secretKey)
-			if secretRef.Error != nil {
-				glog.Warningf("Error trying to get the secret %v for Ingress %v/%v: %v", secretName, ing.Namespace, ing.Name, secretRef.Error)
-			}
-
-			ingEx.SecretRefs[secretName] = secretRef
+			lbc.processSecretRef(jwtKey, ing.Name, ing.Namespace, ingEx.SecretRefs)
 		}
 		if lbc.appProtectEnabled {
-			if apPolicyAntn, exists := ingEx.Ingress.Annotations[configs.AppProtectPolicyAnnotation]; exists {
-				policy, err := lbc.getAppProtectPolicy(ing)
-				if err != nil {
-					glog.Warningf("Error Getting App Protect policy %v for Ingress %v/%v: %v", apPolicyAntn, ing.Namespace, ing.Name, err)
-				} else {
-					ingEx.AppProtectPolicy = policy
-				}
-			}
-
-			if apLogConfAntn, exists := ingEx.Ingress.Annotations[configs.AppProtectLogConfAnnotation]; exists {
-				logConf, err := lbc.getAppProtectLogConfAndDst(ing)
-				if err != nil {
-					glog.Warningf("Error Getting App Protect Log Config %v for Ingress %v/%v: %v", apLogConfAntn, ing.Namespace, ing.Name, err)
-				} else {
-					ingEx.AppProtectLogs = logConf
-				}
-			}
+			lbc.processAppProtectIngressConfig(ingEx, ing)
 		}
 
 		if lbc.appProtectDosEnabled {
@@ -2293,42 +2253,7 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 	ingEx.PodsByIP = make(map[string]configs.PodInfo)
 
 	if ing.Spec.DefaultBackend != nil {
-		podEndps := []podEndpoint{}
-		var external bool
-		svc, err := lbc.getServiceForIngressBackend(ing.Spec.DefaultBackend, ing.Namespace)
-		if err != nil {
-			glog.V(3).Infof("Error getting service %v: %v", ing.Spec.DefaultBackend.Service.Name, err)
-		} else {
-			podEndps, external, err = lbc.getEndpointsForIngressBackend(ing.Spec.DefaultBackend, svc)
-			if err == nil && external && lbc.isNginxPlus {
-				ingEx.ExternalNameSvcs[svc.Name] = true
-			}
-		}
-
-		if err != nil {
-			glog.Warningf("Error retrieving endpoints for the service %v: %v", ing.Spec.DefaultBackend.Service.Name, err)
-		}
-
-		endps := getIPAddressesFromEndpoints(podEndps)
-
-		// endps is empty if there was any error before this point
-		ingEx.Endpoints[ing.Spec.DefaultBackend.Service.Name+configs.GetBackendPortAsString(ing.Spec.DefaultBackend.Service.Port)] = endps
-
-		if lbc.isNginxPlus && lbc.isHealthCheckEnabled(ing) {
-			healthCheck := lbc.getHealthChecksForIngressBackend(ing.Spec.DefaultBackend, ing.Namespace)
-			if healthCheck != nil {
-				ingEx.HealthChecks[ing.Spec.DefaultBackend.Service.Name+configs.GetBackendPortAsString(ing.Spec.DefaultBackend.Service.Port)] = healthCheck
-			}
-		}
-
-		if (lbc.isNginxPlus && lbc.isPrometheusEnabled) || lbc.isLatencyMetricsEnabled {
-			for _, endpoint := range podEndps {
-				ingEx.PodsByIP[endpoint.Address] = configs.PodInfo{
-					Name:         endpoint.PodName,
-					MeshPodOwner: endpoint.MeshPodOwner,
-				}
-			}
-		}
+		lbc.processIngressDefaultBackendConfig(ingEx, ing)
 	}
 
 	for _, rule := range ing.Spec.Rules {
@@ -2343,52 +2268,126 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 		}
 
 		for _, path := range rule.HTTP.Paths {
-			podEndps := []podEndpoint{}
-			if validMinionPaths != nil && !validMinionPaths[path.Path] {
-				glog.V(3).Infof("Skipping path %s for minion Ingress %s", path.Path, ing.Name)
-				continue
-			}
-
-			var external bool
-			svc, err := lbc.getServiceForIngressBackend(&path.Backend, ing.Namespace)
-			if err != nil {
-				glog.V(3).Infof("Error getting service %v: %v", &path.Backend.Service.Name, err)
-			} else {
-				podEndps, external, err = lbc.getEndpointsForIngressBackend(&path.Backend, svc)
-				if err == nil && external && lbc.isNginxPlus {
-					ingEx.ExternalNameSvcs[svc.Name] = true
-				}
-			}
-
-			if err != nil {
-				glog.Warningf("Error retrieving endpoints for the service %v: %v", path.Backend.Service.Name, err)
-			}
-
-			endps := getIPAddressesFromEndpoints(podEndps)
-
-			// endps is empty if there was any error before this point
-			ingEx.Endpoints[path.Backend.Service.Name+configs.GetBackendPortAsString(path.Backend.Service.Port)] = endps
-
-			// Pull active health checks from k8 api
-			if lbc.isNginxPlus && lbc.isHealthCheckEnabled(ing) {
-				healthCheck := lbc.getHealthChecksForIngressBackend(&path.Backend, ing.Namespace)
-				if healthCheck != nil {
-					ingEx.HealthChecks[path.Backend.Service.Name+configs.GetBackendPortAsString(path.Backend.Service.Port)] = healthCheck
-				}
-			}
-
-			if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
-				for _, endpoint := range podEndps {
-					ingEx.PodsByIP[endpoint.Address] = configs.PodInfo{
-						Name:         endpoint.PodName,
-						MeshPodOwner: endpoint.MeshPodOwner,
-					}
-				}
-			}
+			lbc.processIngressPaths(ing, ingEx, validMinionPaths, path)
 		}
 	}
 
 	return ingEx
+}
+
+func (lbc *LoadBalancerController) processSecretRef(secretName string, ingName string, ingNamespace string, SecretRefs map[string]*secrets.SecretReference) {
+	secretKey := ingNamespace + "/" + secretName
+
+	secretRef := lbc.secretStore.GetSecret(secretKey)
+	if secretRef.Error != nil {
+		glog.Warningf("Error trying to get the secret %v for Ingress %v/%v: %v", secretName, ingNamespace, ingName, secretRef.Error)
+	}
+
+	SecretRefs[secretName] = secretRef
+}
+
+func (lbc *LoadBalancerController) processAppProtectIngressConfig(ingEx *configs.IngressEx, ing *networking.Ingress) {
+	if apPolicyAntn, exists := ingEx.Ingress.Annotations[configs.AppProtectPolicyAnnotation]; exists {
+		policy, err := lbc.getAppProtectPolicy(ing)
+		if err != nil {
+			glog.Warningf("Error Getting App Protect policy %v for Ingress %v/%v: %v", apPolicyAntn, ing.Namespace, ing.Name, err)
+		} else {
+			ingEx.AppProtectPolicy = policy
+		}
+	}
+
+	if apLogConfAntn, exists := ingEx.Ingress.Annotations[configs.AppProtectLogConfAnnotation]; exists {
+		logConf, err := lbc.getAppProtectLogConfAndDst(ing)
+		if err != nil {
+			glog.Warningf("Error Getting App Protect Log Config %v for Ingress %v/%v: %v", apLogConfAntn, ing.Namespace, ing.Name, err)
+		} else {
+			ingEx.AppProtectLogs = logConf
+		}
+	}
+}
+
+func (lbc *LoadBalancerController) processIngressDefaultBackendConfig(ingEx *configs.IngressEx, ing *networking.Ingress) {
+	podEndps := []podEndpoint{}
+	var external bool
+	svc, err := lbc.getServiceForIngressBackend(ing.Spec.DefaultBackend, ing.Namespace)
+	if err != nil {
+		glog.V(3).Infof("Error getting service %v: %v", ing.Spec.DefaultBackend.Service.Name, err)
+	} else {
+		podEndps, external, err = lbc.getEndpointsForIngressBackend(ing.Spec.DefaultBackend, svc)
+		if err == nil && external && lbc.isNginxPlus {
+			ingEx.ExternalNameSvcs[svc.Name] = true
+		}
+	}
+
+	if err != nil {
+		glog.Warningf("Error retrieving endpoints for the service %v: %v", ing.Spec.DefaultBackend.Service.Name, err)
+	}
+
+	endps := getIPAddressesFromEndpoints(podEndps)
+
+	// endps is empty if there was any error before this point
+	ingEx.Endpoints[ing.Spec.DefaultBackend.Service.Name+configs.GetBackendPortAsString(ing.Spec.DefaultBackend.Service.Port)] = endps
+
+	if lbc.isNginxPlus && lbc.isHealthCheckEnabled(ing) {
+		healthCheck := lbc.getHealthChecksForIngressBackend(ing.Spec.DefaultBackend, ing.Namespace)
+		if healthCheck != nil {
+			ingEx.HealthChecks[ing.Spec.DefaultBackend.Service.Name+configs.GetBackendPortAsString(ing.Spec.DefaultBackend.Service.Port)] = healthCheck
+		}
+	}
+
+	if (lbc.isNginxPlus && lbc.isPrometheusEnabled) || lbc.isLatencyMetricsEnabled {
+		for _, endpoint := range podEndps {
+			ingEx.PodsByIP[endpoint.Address] = configs.PodInfo{
+				Name:         endpoint.PodName,
+				MeshPodOwner: endpoint.MeshPodOwner,
+			}
+		}
+	}
+}
+
+func (lbc *LoadBalancerController) processIngressPaths(ing *networking.Ingress, ingEx *configs.IngressEx, validMinionPaths map[string]bool, path networking.HTTPIngressPath) {
+	podEndps := []podEndpoint{}
+	if validMinionPaths != nil && !validMinionPaths[path.Path] {
+		glog.V(3).Infof("Skipping path %s for minion Ingress %s", path.Path, ing.Name)
+		return
+	}
+
+	var external bool
+	svc, err := lbc.getServiceForIngressBackend(&path.Backend, ing.Namespace)
+	if err != nil {
+		glog.V(3).Infof("Error getting service %v: %v", &path.Backend.Service.Name, err)
+	} else {
+		podEndps, external, err = lbc.getEndpointsForIngressBackend(&path.Backend, svc)
+		if err == nil && external && lbc.isNginxPlus {
+			ingEx.ExternalNameSvcs[svc.Name] = true
+		}
+	}
+
+	if err != nil {
+		glog.Warningf("Error retrieving endpoints for the service %v: %v", path.Backend.Service.Name, err)
+	}
+
+	endps := getIPAddressesFromEndpoints(podEndps)
+
+	// endps is empty if there was any error before this point
+	ingEx.Endpoints[path.Backend.Service.Name+configs.GetBackendPortAsString(path.Backend.Service.Port)] = endps
+
+	// Pull active health checks from k8 api
+	if lbc.isNginxPlus && lbc.isHealthCheckEnabled(ing) {
+		healthCheck := lbc.getHealthChecksForIngressBackend(&path.Backend, ing.Namespace)
+		if healthCheck != nil {
+			ingEx.HealthChecks[path.Backend.Service.Name+configs.GetBackendPortAsString(path.Backend.Service.Port)] = healthCheck
+		}
+	}
+
+	if lbc.isNginxPlus || lbc.isLatencyMetricsEnabled {
+		for _, endpoint := range podEndps {
+			ingEx.PodsByIP[endpoint.Address] = configs.PodInfo{
+				Name:         endpoint.PodName,
+				MeshPodOwner: endpoint.MeshPodOwner,
+			}
+		}
+	}
 }
 
 func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.Ingress) ([]configs.AppProtectLog, error) {
