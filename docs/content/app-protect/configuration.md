@@ -8,13 +8,14 @@ toc: true
 docs: "DOCS-578"
 ---
 
-> Check out the complete NGINX Ingress Controller with App Protect example resources on GitHub for [VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/waf) and for [Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/appprotect).
+This document describes how to configure the NGINX App Protect module
+> Check out the complete NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/ingress-resources/appprotect).
 
 ## Global Configuration
 
 The NGINX Ingress Controller has a set of global configuration parameters that align with those available in the NGINX App Protect module. See [ConfigMap keys](/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#modules) for the complete list. The App Protect parameters use the `app-protect*` prefix.
 
-> Check out the complete [NGINX Ingress Controller with App Protect example resources on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/appprotect).
+> Check out the complete NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/ingress-resources/appprotect).
 
 ## Enabling App Protect
 
