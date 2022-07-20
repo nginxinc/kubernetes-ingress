@@ -173,10 +173,10 @@ func newTask(key string, obj interface{}) (task, error) {
 		} else if objectKind == appprotectdos.DosLogConfGVK.Kind {
 			k = appProtectDosLogConf
 		} else {
-			return task{}, fmt.Errorf("Unknown unstructured kind: %v", objectKind)
+			return task{}, fmt.Errorf("unknown unstructured kind: %v", objectKind)
 		}
 	default:
-		return task{}, fmt.Errorf("Unknown type: %v", t)
+		return task{}, fmt.Errorf("unknown type: %v", t)
 	}
 
 	return task{k, key}, nil

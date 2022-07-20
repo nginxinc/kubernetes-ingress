@@ -63,7 +63,6 @@ func (sc *SpiffeCertFetcher) Start(ctx context.Context, onStart func()) error {
 
 	stopCh := ctx.Done()
 	timeout := time.After(30 * time.Second)
-	duration := 100 * time.Millisecond
 	for {
 		if sc.watcher.synced {
 			glog.V(3).Info("initial SPIFFE trust bundle written to disk")
@@ -76,10 +75,7 @@ func (sc *SpiffeCertFetcher) Start(ctx context.Context, onStart func()) error {
 			return fmt.Errorf("error waiting for initial trust bundle: %w", err)
 		case <-stopCh:
 			return sc.client.Close()
-		default:
-			break
 		}
-		time.Sleep(duration)
 	}
 	onStart()
 	go sc.Run(stopCh)

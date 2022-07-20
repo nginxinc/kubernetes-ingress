@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
-	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
@@ -357,7 +356,7 @@ func (su *statusUpdater) retryUpdateTransportServerStatus(tsCopy *conf_v1alpha1.
 	return nil
 }
 
-func (su *statusUpdater) retryUpdateVirtualServerStatus(vsCopy *conf_v1.VirtualServer) error {
+func (su *statusUpdater) retryUpdateVirtualServerStatus(vsCopy *v1.VirtualServer) error {
 	vs, err := su.confClient.K8sV1().VirtualServers(vsCopy.Namespace).Get(context.TODO(), vsCopy.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -372,7 +371,7 @@ func (su *statusUpdater) retryUpdateVirtualServerStatus(vsCopy *conf_v1.VirtualS
 	return nil
 }
 
-func (su *statusUpdater) retryUpdateVirtualServerRouteStatus(vsrCopy *conf_v1.VirtualServerRoute) error {
+func (su *statusUpdater) retryUpdateVirtualServerRouteStatus(vsrCopy *v1.VirtualServerRoute) error {
 	vsr, err := su.confClient.K8sV1().VirtualServerRoutes(vsrCopy.Namespace).Get(context.TODO(), vsrCopy.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
@@ -387,7 +386,7 @@ func (su *statusUpdater) retryUpdateVirtualServerRouteStatus(vsrCopy *conf_v1.Vi
 	return nil
 }
 
-func hasVsStatusChanged(vs *conf_v1.VirtualServer, state string, reason string, message string) bool {
+func hasVsStatusChanged(vs *v1.VirtualServer, state string, reason string, message string) bool {
 	if vs.Status.State != state {
 		return true
 	}
@@ -446,7 +445,7 @@ func hasTsStatusChanged(ts *conf_v1alpha1.TransportServer, state string, reason 
 }
 
 // UpdateVirtualServerStatus updates the status of a VirtualServer.
-func (su *statusUpdater) UpdateVirtualServerStatus(vs *conf_v1.VirtualServer, state string, reason string, message string) error {
+func (su *statusUpdater) UpdateVirtualServerStatus(vs *v1.VirtualServer, state string, reason string, message string) error {
 	// Get an up-to-date VirtualServer from the Store
 	vsLatest, exists, err := su.virtualServerLister.Get(vs)
 	if err != nil {
@@ -458,7 +457,7 @@ func (su *statusUpdater) UpdateVirtualServerStatus(vs *conf_v1.VirtualServer, st
 		return nil
 	}
 
-	vsCopy := vsLatest.(*conf_v1.VirtualServer).DeepCopy()
+	vsCopy := vsLatest.(*v1.VirtualServer).DeepCopy()
 
 	if !hasVsStatusChanged(vsCopy, state, reason, message) {
 		return nil
@@ -477,7 +476,7 @@ func (su *statusUpdater) UpdateVirtualServerStatus(vs *conf_v1.VirtualServer, st
 	return err
 }
 
-func hasVsrStatusChanged(vsr *conf_v1.VirtualServerRoute, state string, reason string, message string, referencedByString string) bool {
+func hasVsrStatusChanged(vsr *v1.VirtualServerRoute, state string, reason string, message string, referencedByString string) bool {
 	if vsr.Status.State != state {
 		return true
 	}
@@ -498,7 +497,7 @@ func hasVsrStatusChanged(vsr *conf_v1.VirtualServerRoute, state string, reason s
 }
 
 // UpdateVirtualServerRouteStatusWithReferencedBy updates the status of a VirtualServerRoute, including the referencedBy field.
-func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *conf_v1.VirtualServerRoute, state string, reason string, message string, referencedBy []*v1.VirtualServer) error {
+func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *v1.VirtualServerRoute, state string, reason string, message string, referencedBy []*v1.VirtualServer) error {
 	var referencedByString string
 	if len(referencedBy) != 0 {
 		vs := referencedBy[0]
@@ -516,7 +515,7 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *con
 		return nil
 	}
 
-	vsrCopy := vsrLatest.(*conf_v1.VirtualServerRoute).DeepCopy()
+	vsrCopy := vsrLatest.(*v1.VirtualServerRoute).DeepCopy()
 
 	if !hasVsrStatusChanged(vsrCopy, state, reason, message, referencedByString) {
 		return nil
@@ -539,7 +538,7 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *con
 // UpdateVirtualServerRouteStatus updates the status of a VirtualServerRoute.
 // This method does not clear or update the referencedBy field of the status.
 // If you need to update the referencedBy field, use UpdateVirtualServerRouteStatusWithReferencedBy instead.
-func (su *statusUpdater) UpdateVirtualServerRouteStatus(vsr *conf_v1.VirtualServerRoute, state string, reason string, message string) error {
+func (su *statusUpdater) UpdateVirtualServerRouteStatus(vsr *v1.VirtualServerRoute, state string, reason string, message string) error {
 	// Get an up-to-date VirtualServerRoute from the Store
 	vsrLatest, exists, err := su.virtualServerRouteLister.Get(vsr)
 	if err != nil {
@@ -551,7 +550,7 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatus(vsr *conf_v1.VirtualServ
 		return nil
 	}
 
-	vsrCopy := vsrLatest.(*conf_v1.VirtualServerRoute).DeepCopy()
+	vsrCopy := vsrLatest.(*v1.VirtualServerRoute).DeepCopy()
 
 	if !hasVsrStatusChanged(vsrCopy, state, reason, message, "") {
 		return nil
@@ -570,7 +569,7 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatus(vsr *conf_v1.VirtualServ
 	return err
 }
 
-func (su *statusUpdater) updateVirtualServerExternalEndpoints(vs *conf_v1.VirtualServer) error {
+func (su *statusUpdater) updateVirtualServerExternalEndpoints(vs *v1.VirtualServer) error {
 	// Get a pristine VirtualServer from the Store
 	vsLatest, exists, err := su.virtualServerLister.Get(vs)
 	if err != nil {
@@ -582,7 +581,7 @@ func (su *statusUpdater) updateVirtualServerExternalEndpoints(vs *conf_v1.Virtua
 		return nil
 	}
 
-	vsCopy := vsLatest.(*conf_v1.VirtualServer).DeepCopy()
+	vsCopy := vsLatest.(*v1.VirtualServer).DeepCopy()
 	vsCopy.Status.ExternalEndpoints = su.externalEndpoints
 
 	_, err = su.confClient.K8sV1().VirtualServers(vsCopy.Namespace).UpdateStatus(context.TODO(), vsCopy, metav1.UpdateOptions{})
@@ -593,7 +592,7 @@ func (su *statusUpdater) updateVirtualServerExternalEndpoints(vs *conf_v1.Virtua
 	return err
 }
 
-func (su *statusUpdater) updateVirtualServerRouteExternalEndpoints(vsr *conf_v1.VirtualServerRoute) error {
+func (su *statusUpdater) updateVirtualServerRouteExternalEndpoints(vsr *v1.VirtualServerRoute) error {
 	// Get an up-to-date VirtualServerRoute from the Store
 	vsrLatest, exists, err := su.virtualServerRouteLister.Get(vsr)
 	if err != nil {
@@ -605,7 +604,7 @@ func (su *statusUpdater) updateVirtualServerRouteExternalEndpoints(vsr *conf_v1.
 		return nil
 	}
 
-	vsrCopy := vsrLatest.(*conf_v1.VirtualServerRoute).DeepCopy()
+	vsrCopy := vsrLatest.(*v1.VirtualServerRoute).DeepCopy()
 	vsrCopy.Status.ExternalEndpoints = su.externalEndpoints
 
 	_, err = su.confClient.K8sV1().VirtualServerRoutes(vsrCopy.Namespace).UpdateStatus(context.TODO(), vsrCopy, metav1.UpdateOptions{})
@@ -616,15 +615,15 @@ func (su *statusUpdater) updateVirtualServerRouteExternalEndpoints(vsr *conf_v1.
 	return err
 }
 
-func (su *statusUpdater) generateExternalEndpointsFromStatus(status []api_v1.LoadBalancerIngress) []conf_v1.ExternalEndpoint {
-	var externalEndpoints []conf_v1.ExternalEndpoint
+func (su *statusUpdater) generateExternalEndpointsFromStatus(status []api_v1.LoadBalancerIngress) []v1.ExternalEndpoint {
+	var externalEndpoints []v1.ExternalEndpoint
 	for _, lb := range status {
 		ports := su.externalServicePorts
 		if su.bigIPPorts != "" {
 			ports = su.bigIPPorts
 		}
 
-		endpoint := conf_v1.ExternalEndpoint{IP: lb.IP, Hostname: lb.Hostname, Ports: ports}
+		endpoint := v1.ExternalEndpoint{IP: lb.IP, Hostname: lb.Hostname, Ports: ports}
 		externalEndpoints = append(externalEndpoints, endpoint)
 	}
 

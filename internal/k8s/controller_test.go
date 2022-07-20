@@ -18,7 +18,6 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/nginx"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
-	api_v1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1526,7 +1525,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			Name:      "valid-egress-mtls-secret",
 			Namespace: "default",
 		},
-		Type: api_v1.SecretTypeTLS,
+		Type: v1.SecretTypeTLS,
 	}
 	validTrustedSecret := &v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -1540,7 +1539,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 			Name:      "invalid-egress-mtls-secret",
 			Namespace: "default",
 		},
-		Type: api_v1.SecretTypeTLS,
+		Type: v1.SecretTypeTLS,
 	}
 	invalidTrustedSecret := &v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -2279,19 +2278,19 @@ func TestPreSyncSecrets(t *testing.T) {
 		secretLister: &cache.FakeCustomStore{
 			ListFunc: func() []interface{} {
 				return []interface{}{
-					&api_v1.Secret{
+					&v1.Secret{
 						ObjectMeta: meta_v1.ObjectMeta{
 							Name:      "supported-secret",
 							Namespace: "default",
 						},
-						Type: api_v1.SecretTypeTLS,
+						Type: v1.SecretTypeTLS,
 					},
-					&api_v1.Secret{
+					&v1.Secret{
 						ObjectMeta: meta_v1.ObjectMeta{
 							Name:      "unsupported-secret",
 							Namespace: "default",
 						},
-						Type: api_v1.SecretTypeOpaque,
+						Type: v1.SecretTypeOpaque,
 					},
 				}
 			},
