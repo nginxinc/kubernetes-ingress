@@ -221,14 +221,6 @@ x-envoy-decorator-operation: coffee-svc.nginx-ingress.svc.cluster.local:80/*
 We can see in the above output that our curl request is sent and received by NGINX Ingress Controller. We can see that the envoy sidecar proxy sends the request to the service IP to the application (coffee). The full request is complete and correct. Now we have a full working NGINX+ Ingress with Istio as the sidecar proxies are deployed.
 
 
-For disabling/removing sidecar proxies and autoinjection:
- 
-
-To remove label from the namespace:
-
-```bash
-kubectl lable ns default istio-injection-
-```
 
 ## Additional Technical information details
 
