@@ -11,7 +11,7 @@ FROM opentracing/nginx-opentracing:nginx-1.23.0-alpine as alpine-opentracing-lib
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.23.0 AS debian
+FROM nginx:1.23.1 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
