@@ -243,6 +243,7 @@ In the 1.11 release, NGINX Ingress controller will only send one host header, de
 Here is the output of `nginx -T` to show our upstreams and proxy_set_header values.    
 The server IP address the upstream is the IP address of the service for that given application.   
 
+
 ```bash
 upstream vs_nginx-ingress_cafe_tea {
     zone vs_nginx-ingress_cafe_tea 256k;
