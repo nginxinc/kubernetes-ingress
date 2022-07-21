@@ -129,3 +129,6 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+// temprary fix for CVE-2022-29526 in github.com/prometheus/client_golang v1.12.2
+replace golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 => golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
