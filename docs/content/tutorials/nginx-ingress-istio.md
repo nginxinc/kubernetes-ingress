@@ -80,7 +80,8 @@ The image below shows how an NGINX Ingress Controller and Istio deployment looks
 
 ## Install NGINX Ingress Controller  
 
-Once Istio is installed, can install NGINX Ingress Controller.
+Once Istio is installed, you can install NGINX Ingress Controller.
+
 
 ## Setting up NGINX Plus Ingress controller deployment for Istio.
 
