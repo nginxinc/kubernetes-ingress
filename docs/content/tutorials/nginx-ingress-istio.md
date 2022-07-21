@@ -47,7 +47,8 @@ kubectl label ns <namespace_specified> istio-injection=enabled
 ```
 Before proceeding, and before installing NGINX Ingress Controller you need to tell Istio that it will be injecting sidecars with the NGINX Ingress controller pods as they are deployed.   
 
-```
+```bash
+
 kubectl label namespace nginx-ingress istio-injection=enabled
 ```
  
