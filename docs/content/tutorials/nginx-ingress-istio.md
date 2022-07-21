@@ -198,7 +198,8 @@ upstreams:
     use-cluster-ip: true
 ```
 
-Now NGINX Ingress `upstreams` will be populated with the `Service/cluster IP`. In the example above, the service/cluster IPs for `tea-svc` and `coffee-svc` will be added to the `upstream` configuration as the `server` addresses.
+NGINX Ingress `upstreams` will be populated with the `Service/cluster IP`. In the example above, the service/cluster IPs for `tea-svc` and `coffee-svc` will be added to the `upstream` configuration as the `server` addresses.
+
 
 Now we can test our NGINX Ingress with Istio setup with a simple curl request to our application.    
 
