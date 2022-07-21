@@ -55,7 +55,8 @@ kubectl label namespace nginx-ingress istio-injection=enabled
 
 Using `kubectl`, we can see that the namespace for our demo (nginx-ingress) now has `istio-injection=enabled` specified:
 
-```
+```bash
+
 kubectl get namespacess -A --show-labels
 
 
