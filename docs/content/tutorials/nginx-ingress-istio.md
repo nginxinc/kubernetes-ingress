@@ -40,7 +40,9 @@ istioctl install --set profile=minimal
 ```
 
 We need to ensure that Istio injects sidecar proxies into our namespace for testing. To do so, we need to tell Istio what namespaces to inject sidecars into. We can do that with the following command:
-```
+
+```bash
+
 kubectl label ns <namespace_specified> istio-injection=enabled
 ```
 Before proceeding, and before installing NGINX Ingress Controller you need to tell Istio that it will be injecting sidecars with the NGINX Ingress controller pods as they are deployed.   
