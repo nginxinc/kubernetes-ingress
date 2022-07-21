@@ -21,7 +21,8 @@ Here is a standard deployment of NGINX Ingress Controller without a sidecar prox
 Notice that NGINX Ingress Controller enumerates the pods of the backend service and balances traffic directly to them, granting full control of the backend load balancer and stickiness behavior. 
 If your service pods support TLS, then NIC can re-encrypt the traffic to them and provide end-to-end encryption.   
 
-But then if your services could do that, you might no be implementing a Service Mesh.   
+But then, if your services could do that, you might not be implementing a Service Mesh.   
+
 
 To begin, Istio needs to be installed into your cluster.   
 
