@@ -204,7 +204,7 @@ func TestAreResourcesDifferent(t *testing.T) {
 				Object: map[string]interface{}{},
 			},
 			expected:  false,
-			expectErr: errors.New(`Error, spec has unexpected format`),
+			expectErr: errors.New(`error, spec has unexpected format`),
 			msg:       "new resource with missing spec",
 		},
 		{
