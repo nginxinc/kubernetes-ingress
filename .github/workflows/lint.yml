@@ -29,13 +29,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Output Variables
-        id: vars
-        run: echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ steps.vars.outputs.go_version }}
+          go-version-file: go.mod
       - name: Lint Code
         uses: golangci/golangci-lint-action@v3
         with:
