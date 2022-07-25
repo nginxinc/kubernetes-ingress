@@ -342,7 +342,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 
 	// generate upstreams for VirtualServer
 	for _, u := range vsEx.VirtualServer.Spec.Upstreams {
-
+		u := u
 		ups, upstreamName, hc, sm := vsc.generateUpstreamsForVirtualServer(sslConfig, vsEx, virtualServerUpstreamNamer, &u, vsEx.VirtualServer, vsEx.VirtualServer.Namespace)
 		upstreams = append(upstreams, ups)
 		crUpstreams[upstreamName] = u
@@ -357,6 +357,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	for _, vsr := range vsEx.VirtualServerRoutes {
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(vsEx.VirtualServer, vsr)
 		for _, u := range vsr.Spec.Upstreams {
+			u := u
 			ups, upstreamName, hc, sm := vsc.generateUpstreamsForVirtualServer(sslConfig, vsEx, upstreamNamer, &u, vsr, vsr.Namespace)
 			upstreams = append(upstreams, ups)
 			crUpstreams[upstreamName] = u
@@ -668,7 +669,7 @@ func (vsc *virtualServerConfigurator) generateUpstreamsForVirtualServer(sslConfi
 
 	u.TLS.Enable = isTLSEnabled(*u, vsc.spiffeCerts)
 
-	if hc := generateHealthCheck(*u, upstreamName, vsc.cfgParams); hc != nil {
+	if hc = generateHealthCheck(*u, upstreamName, vsc.cfgParams); hc != nil {
 		if u.HealthCheck.StatusMatch != "" {
 			sms := generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch)
 			sm = &sms
