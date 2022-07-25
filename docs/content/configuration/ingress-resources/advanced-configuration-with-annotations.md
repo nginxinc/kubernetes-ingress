@@ -185,7 +185,7 @@ The table below summarizes the available annotations.
 
 ### App Protect
 
-**Note**: The App Protect annotations only work if App Protect module is [installed](/nginx-ingress-controller/app-protect/installation/).
+**Note**: The App Protect annotations only work if App Protect WAF module is [installed](/nginx-ingress-controller/app-protect/installation/).
 
 {{% table %}}
 |Annotation | ConfigMap Key | Description | Default | Example |

@@ -230,7 +230,7 @@ Parameter | Description | Default
 `controller.reportIngressStatus.annotations` | The annotations of the leader election configmap. | {}
 `controller.pod.annotations` | The annotations of the Ingress Controller pod. | {}
 `controller.pod.extraLabels` | The additional extra labels of the Ingress Controller pod. | {}
-`controller.appprotect.enable` | Enables the App Protect module in the Ingress Controller. | false
+`controller.appprotect.enable` | Enables the App Protect WAF module in the Ingress Controller. | false
 `controller.appprotectdos.enable` | Enables the App Protect DoS module in the Ingress Controller. | false
 `controller.appprotectdos.debug` | Enable debugging for App Protect DoS. | false
 `controller.appprotectdos.maxDaemons` | Max number of ADMD instances. | 1

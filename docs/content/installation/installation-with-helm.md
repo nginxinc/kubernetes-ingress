@@ -150,7 +150,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.kind`` | The kind of the Ingress Controller installation - deployment or daemonset. | deployment |
 |``controller.nginxplus`` | Deploys the Ingress Controller for NGINX Plus. | false |
 |``controller.nginxReloadTimeout`` | The timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start. | 60000 |
-|``controller.appprotect.enable`` | Enables the App Protect module in the Ingress Controller. | false |
+|``controller.appprotect.enable`` | Enables the App Protect WAF module in the Ingress Controller. | false |
 |``controller.appprotectdos.enable`` | Enables the App Protect DoS module in the Ingress Controller. | false |
 |``controller.appprotectdos.debug`` | Enables App Protect DoS debug logs. | false |
 |``controller.appprotectdos.maxWorkers`` | Max number of nginx processes to support. | Number of CPU cores in the machine

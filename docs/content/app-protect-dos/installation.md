@@ -7,7 +7,7 @@ toc: true
 docs: "DOCS-583"
 ---
 
-> **Note**: The NGINX Kubernetes Ingress Controller integration with NGINX App Protect requires the use of NGINX Plus.
+> **Note**: The NGINX Kubernetes Ingress Controller integration with NGINX App Protect DoS requires the use of NGINX Plus.
 
 This document provides an overview of the steps required to use NGINX App Protect DoS with your NGINX Ingress Controller deployment. You can visit the linked documents to find additional information and instructions.
 
