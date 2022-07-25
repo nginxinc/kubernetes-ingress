@@ -178,6 +178,9 @@ controller:
   ## Enable OIDC policies.
   enableOIDC: false
 
+  ## Include year in log header. This parameter will be removed in release 2.7 and the year will be included by default.
+  includeYear: false
+
   ## Enable TLS Passthrough on port 443. Requires controller.enableCustomResources.
   enableTLSPassthrough: false
 

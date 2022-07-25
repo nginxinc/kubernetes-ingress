@@ -73,6 +73,13 @@ Default `false`.
 &nbsp;
 <a name="cmdoption-enable-leader-election"></a>
 
+### -inlcude-year
+Adds year to log headers.
+
+Default `false`.
+
+**NOTE**: This flag will be removed in release 2.7 and the year will be included by default.
+
 ### -enable-leader-election
 
 Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status.
