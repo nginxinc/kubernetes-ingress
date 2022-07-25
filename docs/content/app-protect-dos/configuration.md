@@ -9,7 +9,7 @@ docs: "DOCS-580"
 ---
 
 This document describes how to configure the NGINX App Protect DoS module
-> Check out the complete [NGINX Ingress Controller with App Protect DoS example resources on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.2.2/examples/appprotect-dos).
+> Check out the complete [NGINX Ingress Controller with App Protect DoS example resources on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/appprotect-dos).
 
 ## App Protect DoS Configuration
 
@@ -105,7 +105,7 @@ Then add a reference in the `DosProtectedResource` to the `ApDosPolicy`:
 
 ## App Protect DoS Logs
 
-You can set the [App Protect DoS Log configuration](/nginx-app-protect-dos/logs-overview/types-of-logs/) by creating an `APDosLogConf` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and specifying the qualified identifier(`namespace/name`) of the `ApDosLogConf` in the `DosProtectedResource`.
+You can set the [App Protect DoS Log configuration](/nginx-app-protect-dos/monitoring/types-of-logs/) by creating an `APDosLogConf` [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/) and specifying the qualified identifier(`namespace/name`) of the `ApDosLogConf` in the `DosProtectedResource`.
 
 For example, say you want to log state changing requests for your Ingress resources using App Protect DoS. The App Protect DoS log configuration looks like this:
 

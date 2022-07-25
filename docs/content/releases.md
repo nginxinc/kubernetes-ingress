@@ -6,6 +6,69 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## NGINX Ingress Controller 2.3.0
+
+12 July 2022
+
+OVERVIEW:
+
+* Support making VirtualServer resources discoverable via public DNS servers using [external-dns](https://kubernetes-sigs.github.io/external-dns). Examples for configuring external-dns with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/external-dns).
+* Improved annotation validation.
+* Support using HTTP basic authentication with [VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/basic-auth) and [Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/basic-auth) resources. Special thanks to [Simon Wachter](https://github.com/svvac).
+* Support HTTP01 type ACME Issuers for use with VirtualServer resources with [cert-manager](https://cert-manager.io/docs/).
+
+FEATURES:
+
+* [2581](https://github.com/nginxinc/kubernetes-ingress/pull/2581) Add OpenTracing to all Debian and Alpine based images.
+* [2328](https://github.com/nginxinc/kubernetes-ingress/pull/2328) Add handling of multiple log destinations.
+* [2691](https://github.com/nginxinc/kubernetes-ingress/pull/2691) AP: log-conf escaping chars.
+* [2759](https://github.com/nginxinc/kubernetes-ingress/pull/2759) Add support for HTTP01 Challenges on VirtualServer resources.
+* [2762](https://github.com/nginxinc/kubernetes-ingress/pull/2762) Add DNSEndpoint CRD for integration with ExternalDNS.
+* [2801](https://github.com/nginxinc/kubernetes-ingress/pull/2801) Add SBOMs to release.
+* [2269](https://github.com/nginxinc/kubernetes-ingress/pull/2269) HTTP basic auth support. Thanks to [Simon Wachter](https://github.com/svvac).
+* [2800](https://github.com/nginxinc/kubernetes-ingress/pull/2800) Integrate external-dns with VirtualServer resources.
+
+IMPROVEMENTS:
+
+* [2583](https://github.com/nginxinc/kubernetes-ingress/pull/2583) Add runAsNonRoot in deployments.
+* [2484](https://github.com/nginxinc/kubernetes-ingress/pull/2484) Add container resource requests.
+* [2627](https://github.com/nginxinc/kubernetes-ingress/pull/2627) Update InternalRoute server_name.
+* [2742](https://github.com/nginxinc/kubernetes-ingress/pull/2742) Add additional unit tests to confirm special characters can't be used in the lb-method annotation.
+* [2730](https://github.com/nginxinc/kubernetes-ingress/pull/2730) Add string sanitisation for proxy-pass-headers & proxy-hide-headers.
+* [2733](https://github.com/nginxinc/kubernetes-ingress/pull/2733) Add string validation to server-tokens annotation.
+* [2734](https://github.com/nginxinc/kubernetes-ingress/pull/2734) Validate rewrite annotation.
+* [2754](https://github.com/nginxinc/kubernetes-ingress/pull/2754) Validate JWT key, realm and login url for ingress resources annotations.
+* [2751](https://github.com/nginxinc/kubernetes-ingress/pull/2751) Add string validation to sticky-cookie-services annotation.
+* [2775](https://github.com/nginxinc/kubernetes-ingress/pull/2775) Add validation to Ingress path.
+* [2774](https://github.com/nginxinc/kubernetes-ingress/pull/2774) Sanitize nginx.com/jwt-token.
+* [2783](https://github.com/nginxinc/kubernetes-ingress/pull/2783) Update validation regex for path spec.
+* [2781](https://github.com/nginxinc/kubernetes-ingress/pull/2781) Report Hostname in ExternalEndpoint for VS and VSR resources.
+
+FIXES:
+
+* [2617](https://github.com/nginxinc/kubernetes-ingress/pull/2617) Fix Dockerfile for amd64 microarchitectures.
+* [2637](https://github.com/nginxinc/kubernetes-ingress/pull/2637) Add terminationGracePeriodSeconds to deployment. Thanks to [Maksym Iv](https://github.com/maksym-iv).
+* [2654](https://github.com/nginxinc/kubernetes-ingress/pull/2654) Sync changes from OIDC repo, add field in policy.
+* [2673](https://github.com/nginxinc/kubernetes-ingress/pull/2673) Fix status.loadbalancer.hostname deletion on OOMKill. Thanks to [Heiko Voigt](https://github.com/hvoigt).
+* [2718](https://github.com/nginxinc/kubernetes-ingress/pull/2718) Fix cases where CM enabled but no TLS block specified in VS.
+
+HELM CHART:
+
+* [2418](https://github.com/nginxinc/kubernetes-ingress/pull/2418) Add support for allocateLoadBalancerNodePorts, ipFamilyPolicy and ipFamilies. Thanks to [centromere](https://github.com/centromere).
+* [2672](https://github.com/nginxinc/kubernetes-ingress/pull/2672) Add minReadySeconds & strategy support. Thanks to [Ciaran](https://github.com/cmk-pcs).
+* [2625](https://github.com/nginxinc/kubernetes-ingress/pull/2625) allow configuring topologySpreadConstraints in Helm chart. Thanks to [Kamil Domański](https://github.com/kdomanski).
+
+
+UPGRADE:
+* For NGINX, use the 2.3.0 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.3.0), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress) or [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress).
+* For NGINX Plus, use the 2.3.0 images from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the 2.3.0 source code.
+* For Helm, use version 0.14.0 of the chart. If you're using custom resources like VirtualServer and TransportServer (`controller.enableCustomResources` is set to `true`), after you run the `helm upgrade` command, the CRDs will not be upgraded. After running the `helm upgrade` command, run `kubectl apply -f deployments/helm-chart/crds` to upgrade the CRDs.
+* When upgrading using the [manifests](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/), make sure to update the [ClusterRole](https://github.com/nginxinc/kubernetes-ingress/blob/v2.3.0/deployments/rbac/rbac.yaml). This is required to enable the ExternalDNS for VirtualServer resources integration.
+
+SUPPORTED PLATFORMS:
+
+We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.24.
+
 ## NGINX Ingress Controller 2.2.2
 
 23 May 2022
