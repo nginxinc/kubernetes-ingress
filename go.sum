@@ -510,8 +510,8 @@ github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f/go.mod h1:qRW
 github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+o7JKHSa8/e818NopupXU1YMK5fe1lsApnBw=
 github.com/nginxinc/glog v1.1.1 h1:+NI8YAEa0pkR4lyfK0Fp+rCwpD7VIQAinq3NwK3TQzs=
 github.com/nginxinc/glog v1.1.1/go.mod h1:Q2FpGp/qFhJEVnuC88BVfbLDPmio9aHYUj4al6w0138=
-github.com/nginxinc/nginx-plus-go-client v0.9.0 h1:vHmdSaJ7rjXbU0kMFUGwVu9QLLVJbk+lQo+WDLCm8P0=
-github.com/nginxinc/nginx-plus-go-client v0.9.0/go.mod h1:FTxOV1t0yFEP/E5gXlI2QyWTOfMZCGObFKhdfHYxBm8=
+github.com/nginxinc/nginx-plus-go-client v0.10.0 h1:3zsMMkPvRDo8D7ZSprXtbAEW/SDmezZWzxdyS+6oAlc=
+github.com/nginxinc/nginx-plus-go-client v0.10.0/go.mod h1:0v3RsQCvRn/IyrMtW+DK6CNkz+PxEsXDJPjQ3yUMBF0=
 github.com/nginxinc/nginx-prometheus-exporter v0.10.0 h1:wFP8mYMtmn8uK1I5tzXb3s4CQq+r3h6Y0Qdc7d+QpyM=
 github.com/nginxinc/nginx-prometheus-exporter v0.10.0/go.mod h1:U3BudpuBp/uO++yvnaaI4Dz7oOFJPdM726WEv70k3O4=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e h1:fD57ERR4JtEqsWbfPhv4DMiApHyliiK5xCTNVSPiaAs=
