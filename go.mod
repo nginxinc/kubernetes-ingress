@@ -130,5 +130,6 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
+replace github.com/golang/glog v1.0.0 => github.com/nginxinc/glog v1.1.1
 // temprary fix for CVE-2022-29526 in github.com/prometheus/client_golang v1.12.2
 replace golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 => golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
