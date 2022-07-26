@@ -139,7 +139,8 @@ istio-system    istiod-7c9c9d46d4-qpgff                   1/1     Running   0   
 nginx-ingress   nginx-ingress-5898f94c49-v4jrf            2/2     Running   1          41s
 ```
  
-Here is our VirtualServer configuration for Istio service mesh: (note `use-cluster-ip` and `requestHeaders`). These settings are required when using Istio service mesh.
+Here is our VirtualServer configuration for Istio service mesh (note `use-cluster-ip` and `requestHeaders`). These settings are required when using Istio service mesh:
+
 
 ```yaml
 apiVersion: k8s.nginx.org/v1    
