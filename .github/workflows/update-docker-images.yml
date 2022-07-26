@@ -27,7 +27,6 @@ jobs:
       versions: ${{ steps.versions.outputs.matrix }}
       sha_short: ${{ steps.vars.outputs.sha_short }}
       sha_long: ${{ steps.vars.outputs.sha_long }}
-      go_version: ${{ steps.vars.outputs.go_version }}
       k8s_version: ${{ steps.vars.outputs.k8s_version }}
     steps:
       - name: Checkout Repository
@@ -55,7 +54,6 @@ jobs:
         run: |
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
           echo "::set-output name=sha_long::$(git rev-parse HEAD)"
-          echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
           echo "::set-output name=k8s_version::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
 
   check:
@@ -108,7 +106,7 @@ jobs:
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.variables.outputs.go_version }}
+          go-version-file: go.mod
       - name: Determine GOPATH
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"

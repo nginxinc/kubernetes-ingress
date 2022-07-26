@@ -1,0 +1,15 @@
+{{- if .Values.controller.serviceMonitor.create }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "nginx-ingress.serviceMonitorName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- toYaml .Values.controller.serviceMonitor.labels | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+  {{- toYaml .Values.controller.serviceMonitor.selectorMatchLabels | nindent 6 }}
+  endpoints:
+  {{- toYaml .Values.controller.serviceMonitor.endpoints | nindent 4 }}
+{{- end }}

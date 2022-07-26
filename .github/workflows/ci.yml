@@ -45,7 +45,6 @@ jobs:
     name: Checks and variables
     runs-on: ubuntu-20.04
     outputs:
-      go_version: ${{ steps.vars.outputs.go_version }}
       go_path: ${{ steps.go.outputs.go_path }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
     steps:
@@ -63,12 +62,11 @@ jobs:
       - name: Output Variables
         id: vars
         run: |
-          echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
           echo "::set-output name=k8s_latest::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ steps.vars.outputs.go_version }}
+          go-version-file: go.mod
       - name: Determine GOPATH
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"
@@ -102,7 +100,7 @@ jobs:
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.checks.outputs.go_version }}
+          go-version-file: go.mod
       - name: Build binary
         uses: goreleaser/goreleaser-action@v3
         with:
@@ -138,7 +136,7 @@ jobs:
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.checks.outputs.go_version }}
+          go-version-file: go.mod
       - name: Run Tests
         run: make cover
       - name: Upload coverage to Codecov
@@ -278,7 +276,7 @@ jobs:
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.checks.outputs.go_version }}
+          go-version-file: go.mod
 
       - uses: actions/setup-node@v3
       - run: npm install js-yaml
