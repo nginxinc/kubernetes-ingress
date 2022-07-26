@@ -180,7 +180,8 @@ spec:
 ```
 
 With our new Host header control in v1.11, when VirtualServer is configured with `requestHeaders`, the value specified will be used and `proxy_set_header $host` will NOT be used.    
-The value of `requestHeaders` should be: `<service.namespace.svc.cluster.local>`. Adjust the value for your specific enviornment.   
+The value of `requestHeaders` should be: `<service.namespace.svc.cluster.local>`. Adjust the value for your specific environment.   
+
 
 When `use-cluster-ip` is set to `true`, NGINX forwards requests to the service IP. In our example above, that would be `tea-svc` and `coffee-svc`.
 
