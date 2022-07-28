@@ -187,6 +187,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.enableCustomResources`` | Enable the custom resources. | true |
 |``controller.enablePreviewPolicies`` | Enable preview policies. This parameter is deprecated. To enable OIDC Policies please use ``controller.enableOIDC`` instead. | false |
 |``controller.enableOIDC`` | Enable OIDC policies. | false |
+|``controller.includeYear`` | Include year in log header. This parameter will be removed in release 2.7 and the year will be included by default. | false |
 |``controller.enableTLSPassthrough`` | Enable TLS Passthrough on port 443. Requires ``controller.enableCustomResources``. | false |
 `controller.enableCertManager` | Enable x509 automated certificate management for VirtualServer resources using cert-manager (cert-manager.io). Requires `controller.enableCustomResources`. | false
 `controller.enableExternalDNS` | Enable integration with ExternalDNS for configuring public DNS entries for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Requires `controller.enableCustomResources`. | false
