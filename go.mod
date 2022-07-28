@@ -10,7 +10,7 @@ require (
 	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.8
 	github.com/kr/pretty v0.3.0
-	github.com/nginxinc/nginx-plus-go-client v0.9.0
+	github.com/nginxinc/nginx-plus-go-client v0.10.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.10.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/spiffe/go-spiffe/v2 v2.1.1
@@ -129,3 +129,7 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
+
+replace github.com/golang/glog v1.0.0 => github.com/nginxinc/glog v1.1.2
+// temprary fix for CVE-2022-29526 in github.com/prometheus/client_golang v1.12.2
+replace golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 => golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8

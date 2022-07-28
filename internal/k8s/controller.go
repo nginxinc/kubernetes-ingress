@@ -1509,53 +1509,70 @@ func (lbc *LoadBalancerController) updateMergeableIngressStatusAndEvents(ingConf
 	eventType := api_v1.EventTypeNormal
 	eventTitle := "AddedOrUpdated"
 	eventWarningMessage := ""
+	eventWarningSuffix := ""
 
 	if len(ingConfig.Warnings) > 0 {
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
 		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(ingConfig.Warnings))
+		eventWarningSuffix = "; "
 	}
 
 	if messages, ok := warnings[ingConfig.Ingress]; ok {
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
-		eventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", eventWarningMessage, formatWarningMessages(messages))
+		eventWarningMessage = fmt.Sprintf("%s%swith warning(s): %v", eventWarningMessage, eventWarningSuffix, formatWarningMessages(messages))
+		eventWarningSuffix = "; "
 	}
 
 	if operationErr != nil {
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithError"
-		eventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", eventWarningMessage, operationErr)
+		eventWarningMessage = fmt.Sprintf("%s%sbut was not applied: %v", eventWarningMessage, eventWarningSuffix, operationErr)
 	}
 
-	msg := fmt.Sprintf("Configuration for %v was added or updated %s", getResourceKey(&ingConfig.Ingress.ObjectMeta), eventWarningMessage)
+	eventWarningPrefixed := ""
+	if eventWarningMessage != "" {
+		eventWarningPrefixed = fmt.Sprintf(" %s", eventWarningMessage)
+	}
+
+	msg := fmt.Sprintf("Configuration for %v was added or updated%s", getResourceKey(&ingConfig.Ingress.ObjectMeta), eventWarningPrefixed)
 	lbc.recorder.Eventf(ingConfig.Ingress, eventType, eventTitle, msg)
 
 	for _, fm := range ingConfig.Minions {
 		minionEventType := api_v1.EventTypeNormal
 		minionEventTitle := "AddedOrUpdated"
 		minionEventWarningMessage := ""
+		minionEventWarningSuffix := ""
 
 		minionChangeWarnings := ingConfig.ChildWarnings[getResourceKey(&fm.Ingress.ObjectMeta)]
+
 		if len(minionChangeWarnings) > 0 {
 			minionEventType = api_v1.EventTypeWarning
 			minionEventTitle = "AddedOrUpdatedWithWarning"
 			minionEventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(minionChangeWarnings))
+			minionEventWarningSuffix = "; "
 		}
 
 		if messages, ok := warnings[fm.Ingress]; ok {
 			minionEventType = api_v1.EventTypeWarning
 			minionEventTitle = "AddedOrUpdatedWithWarning"
-			minionEventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", minionEventWarningMessage, formatWarningMessages(messages))
+			minionEventWarningMessage = fmt.Sprintf("%s%swith warning(s): %v", minionEventWarningMessage, minionEventWarningSuffix, formatWarningMessages(messages))
+			minionEventWarningSuffix = "; "
 		}
 
 		if operationErr != nil {
 			minionEventType = api_v1.EventTypeWarning
 			minionEventTitle = "AddedOrUpdatedWithError"
-			minionEventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", minionEventWarningMessage, operationErr)
+			minionEventWarningMessage = fmt.Sprintf("%s%s; but was not applied: %v", minionEventWarningMessage, minionEventWarningSuffix, operationErr)
+			minionEventWarningSuffix = "; "
 		}
 
-		minionMsg := fmt.Sprintf("Configuration for %v/%v was added or updated %s", fm.Ingress.Namespace, fm.Ingress.Name, minionEventWarningMessage)
+		minionEventWarningPrefixed := ""
+		if minionEventWarningMessage != "" {
+			minionEventWarningPrefixed = fmt.Sprintf(" %s", minionEventWarningMessage)
+		}
+		minionMsg := fmt.Sprintf("Configuration for %v/%v was added or updated%s", fm.Ingress.Namespace, fm.Ingress.Name, minionEventWarningPrefixed)
 		lbc.recorder.Eventf(fm.Ingress, minionEventType, minionEventTitle, minionMsg)
 	}
 
@@ -1684,18 +1701,18 @@ func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(vsConfig *
 		if messages, ok := warnings[vsr]; ok {
 			vsrEventType = api_v1.EventTypeWarning
 			vsrEventTitle = "AddedOrUpdatedWithWarning"
-			vsrEventWarningMessage = fmt.Sprintf("with warning(s): %v", formatWarningMessages(messages))
+			vsrEventWarningMessage = fmt.Sprintf(" with warning(s): %v", formatWarningMessages(messages))
 			vsrState = conf_v1.StateWarning
 		}
 
 		if operationErr != nil {
 			vsrEventType = api_v1.EventTypeWarning
 			vsrEventTitle = "AddedOrUpdatedWithError"
-			vsrEventWarningMessage = fmt.Sprintf("%s; but was not applied: %v", vsrEventWarningMessage, operationErr)
+			vsrEventWarningMessage = fmt.Sprintf(" %s; but was not applied:%v", vsrEventWarningMessage, operationErr)
 			vsrState = conf_v1.StateInvalid
 		}
 
-		msg := fmt.Sprintf("Configuration for %v/%v was added or updated %s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
+		msg := fmt.Sprintf("Configuration for %v/%v was added or updated%s", vsr.Namespace, vsr.Name, vsrEventWarningMessage)
 		lbc.recorder.Eventf(vsr, vsrEventType, vsrEventTitle, msg)
 
 		if lbc.reportCustomResourceStatusEnabled() {

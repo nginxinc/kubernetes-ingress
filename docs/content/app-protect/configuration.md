@@ -32,7 +32,7 @@ You can define App Protect policies for your Ingress resources by creating an `A
 
  > **Note**: [External References](/nginx-app-protect/configuration-guide/configuration/#external-references) in the Ingress Controller are deprecated and will not be supported in future releases.
 
-To add any [App Protect policy](/nginx-app-protect/policy/#policy) to an Ingress resource:
+To add any [App Protect policy](/nginx-app-protect/declarative-policy/policy/) to an Ingress resource:
 
 1. Create an `APPolicy` Custom resource manifest.
 2. Add the desired policy to the `spec` field in the `APPolicy` resource.
