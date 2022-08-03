@@ -70,6 +70,9 @@ jobs:
       - name: Determine GOPATH
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"
+      - name: Check if go.mod and go.sum are up to date
+        run: |
+          go mod tidy && git diff --exit-code -- go.mod go.sum
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
