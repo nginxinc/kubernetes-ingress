@@ -65,6 +65,64 @@ func TestValidateJWKSecretFails(t *testing.T) {
 	}
 }
 
+func TestValidateHtpasswdSecret(t *testing.T) {
+	t.Parallel()
+	secret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "htpasswd-secret",
+			Namespace: "default",
+		},
+		Type: SecretTypeHtpasswd,
+		Data: map[string][]byte{
+			"htpasswd": nil,
+		},
+	}
+
+	err := ValidateHtpasswdSecret(secret)
+	if err != nil {
+		t.Errorf("ValidateHtpasswdSecret() returned error %v", err)
+	}
+}
+
+func TestValidateHtpasswdSecretFails(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		secret *v1.Secret
+		msg    string
+	}{
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "htpasswd-secret",
+					Namespace: "default",
+				},
+				Type: "some-type",
+				Data: map[string][]byte{
+					"htpasswd": nil,
+				},
+			},
+			msg: "Incorrect type for Htpasswd secret",
+		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "htpasswd-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeHtpasswd,
+			},
+			msg: "Missing htpasswd for Htpasswd secret",
+		},
+	}
+
+	for _, test := range tests {
+		err := ValidateHtpasswdSecret(test.secret)
+		if err == nil {
+			t.Errorf("ValidateHtpasswdSecret() returned no error for the case of %s", test.msg)
+		}
+	}
+}
+
 func TestValidateCASecret(t *testing.T) {
 	t.Parallel()
 	secret := &v1.Secret{
@@ -369,6 +427,19 @@ func TestValidateSecret(t *testing.T) {
 		{
 			secret: &v1.Secret{
 				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "htpasswd-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeHtpasswd,
+				Data: map[string][]byte{
+					"htpasswd": nil,
+				},
+			},
+			msg: "Valid Htpasswd secret",
+		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
 					Name:      "oidc-secret",
 					Namespace: "default",
 				},
@@ -428,6 +499,16 @@ func TestValidateSecretFails(t *testing.T) {
 			},
 			msg: "Missing jwk for JWK secret",
 		},
+		{
+			secret: &v1.Secret{
+				ObjectMeta: meta_v1.ObjectMeta{
+					Name:      "htpasswd-secret",
+					Namespace: "default",
+				},
+				Type: SecretTypeHtpasswd,
+			},
+			msg: "Missing htpasswd for Htpasswd secret",
+		},
 	}
 
 	for _, test := range tests {
@@ -458,6 +539,10 @@ func TestHasCorrectSecretType(t *testing.T) {
 		},
 		{
 			secretType: SecretTypeOIDC,
+			expected:   true,
+		},
+		{
+			secretType: SecretTypeHtpasswd,
 			expected:   true,
 		},
 		{

@@ -44,6 +44,12 @@ func (rc *secretReferenceChecker) IsReferencedByIngress(secretNamespace string, 
 		}
 	}
 
+	if basicAuth, exists := ing.Annotations[configs.BasicAuthSecretAnnotation]; exists {
+		if basicAuth == secretName {
+			return true
+		}
+	}
+
 	return false
 }
 
@@ -57,6 +63,12 @@ func (rc *secretReferenceChecker) IsReferencedByMinion(secretNamespace string, s
 			if jwtKey == secretName {
 				return true
 			}
+		}
+	}
+
+	if basicAuth, exists := ing.Annotations[configs.BasicAuthSecretAnnotation]; exists {
+		if basicAuth == secretName {
+			return true
 		}
 	}
 

@@ -166,6 +166,11 @@ server {
     auth_jwt_key_file {{ .Secret }};
     {{ end }}
 
+    {{ with $s.BasicAuth }}
+    auth_basic {{ printf "%q" .Realm }};
+    auth_basic_user_file {{ .Secret }};
+    {{ end }}
+
     {{ with $s.EgressMTLS }}
         {{ if .Certificate }}
     proxy_ssl_certificate {{ .Certificate }};
@@ -336,6 +341,11 @@ server {
         {{ with $l.JWTAuth }}
         auth_jwt "{{ .Realm }}"{{ if .Token }} token={{ .Token }}{{ end }};
         auth_jwt_key_file {{ .Secret }};
+        {{ end }}
+
+        {{ with $l.BasicAuth }}
+        auth_basic {{ printf "%q" .Realm }};
+        auth_basic_user_file {{ .Secret }};
         {{ end }}
 
         {{ $proxyOrGRPC := "proxy" }}{{ if $l.GRPCPass }}{{ $proxyOrGRPC = "grpc" }}{{ end }}

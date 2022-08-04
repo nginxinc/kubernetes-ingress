@@ -43,6 +43,11 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 		fieldCount++
 	}
 
+	if spec.BasicAuth != nil {
+		allErrs = append(allErrs, validateBasic(spec.BasicAuth, fieldPath.Child("basicAuth"))...)
+		fieldCount++
+	}
+
 	if spec.IngressMTLS != nil {
 		allErrs = append(allErrs, validateIngressMTLS(spec.IngressMTLS, fieldPath.Child("ingressMTLS"))...)
 		fieldCount++
@@ -80,7 +85,7 @@ func validatePolicySpec(spec *v1.PolicySpec, fieldPath *field.Path, isPlus, enab
 	}
 
 	if fieldCount != 1 {
-		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`"
+		msg := "must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`"
 		if isPlus {
 			msg = fmt.Sprint(msg, ", `jwt`, `oidc`, `waf`")
 		}
@@ -148,7 +153,11 @@ func validateRateLimit(rateLimit *v1.RateLimit, fieldPath *field.Path, isPlus bo
 func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	allErrs = append(allErrs, validateJWTRealm(jwt.Realm, fieldPath.Child("realm"))...)
+	if jwt.Realm == "" {
+		allErrs = append(allErrs, field.Required(fieldPath, ""))
+	} else {
+		allErrs = append(allErrs, validateRealm(jwt.Realm, fieldPath.Child("realm"))...)
+	}
 
 	if jwt.Secret == "" {
 		return append(allErrs, field.Required(fieldPath.Child("secret"), ""))
@@ -156,6 +165,21 @@ func validateJWT(jwt *v1.JWTAuth, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateSecretName(jwt.Secret, fieldPath.Child("secret"))...)
 
 	allErrs = append(allErrs, validateJWTToken(jwt.Token, fieldPath.Child("token"))...)
+
+	return allErrs
+}
+
+func validateBasic(basic *v1.BasicAuth, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if basic.Realm != "" {
+		allErrs = append(allErrs, validateRealm(basic.Realm, fieldPath.Child("realm"))...)
+	}
+
+	if basic.Secret == "" {
+		return append(allErrs, field.Required(fieldPath.Child("secret"), ""))
+	}
+	allErrs = append(allErrs, validateSecretName(basic.Secret, fieldPath.Child("secret"))...)
 
 	return allErrs
 }
@@ -501,21 +525,17 @@ func validateRateLimitLogLevel(logLevel string, fieldPath *field.Path) field.Err
 }
 
 const (
-	jwtRealmFmt              = `([^"$\\]|\\[^$])*`
-	jwtRealmFmtErrMsg string = `a valid realm must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
+	realmFmt              = `([^"$\\]|\\[^$])*`
+	realmFmtErrMsg string = `a valid realm must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
 )
 
-var jwtRealmFmtRegexp = regexp.MustCompile("^" + jwtRealmFmt + "$")
+var realmFmtRegexp = regexp.MustCompile("^" + realmFmt + "$")
 
-func validateJWTRealm(realm string, fieldPath *field.Path) field.ErrorList {
+func validateRealm(realm string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if realm == "" {
-		return append(allErrs, field.Required(fieldPath, ""))
-	}
-
-	if !jwtRealmFmtRegexp.MatchString(realm) {
-		msg := validation.RegexError(jwtRealmFmtErrMsg, jwtRealmFmt, "MyAPI", "My Product API")
+	if !realmFmtRegexp.MatchString(realm) {
+		msg := validation.RegexError(realmFmtErrMsg, realmFmt, "MyAPI", "My Product API")
 		allErrs = append(allErrs, field.Invalid(fieldPath, realm, msg))
 	}
 

@@ -72,6 +72,14 @@ Enables OIDC policies.
 Default `false`.
 &nbsp;
 <a name="cmdoption-enable-leader-election"></a>
+
+### -inlcude-year
+Adds year to log headers.
+
+Default `false`.
+
+**NOTE**: This flag will be removed in release 2.7 and the year will be included by default.
+
 ### -enable-leader-election
 
 Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status.
@@ -95,6 +103,13 @@ Enable x509 automated certificate management for VirtualServer resources using c
 
 Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 &nbsp;
+<a name="cmdoption-enable-external-dns"></a>
+
+### -enable-external-dns
+
+Enable integration with ExternalDNS for configuring public DNS entries for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns).
+
+Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 <a name="cmdoption-external-service"></a>
 
 ### -external-service `<string>`
@@ -203,7 +218,7 @@ Enable support for NGINX Plus.
 
 Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
 
-Default is 4000. Default is 20000 instead if `enable-app-protect` is true.
+Default is 60000.
 &nbsp;
 <a name="cmdoption-nginx-status"></a>
 

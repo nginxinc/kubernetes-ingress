@@ -1,0 +1,8 @@
+apiVersion: k8s.nginx.org/v1
+kind: Policy
+metadata:
+  name: auth-basic-policy-invalid
+spec:
+  basicAuth:
+    realm: MyProductAPI
+    secret: $$htpasswd-secret-valid

@@ -97,8 +97,8 @@ class TestVSRRedirects:
                                       v_s_route_setup.route_m.name, vsr_src, v_s_route_setup.namespace)
         except ApiException as ex:
             assert ex.status == 422 \
-                   and "spec.subroutes.action.redirect.url" in ex.body \
-                   and "spec.subroutes.action.redirect.code" in ex.body
+                   and "action.redirect.url in body must be of type" in ex.body \
+                   and "action.redirect.code in body must be of type" in ex.body
         except Exception as ex:
             pytest.fail(f"An unexpected exception is raised: {ex}")
         else:

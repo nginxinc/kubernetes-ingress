@@ -624,7 +624,7 @@ func (su *statusUpdater) generateExternalEndpointsFromStatus(status []api_v1.Loa
 			ports = su.bigIPPorts
 		}
 
-		endpoint := conf_v1.ExternalEndpoint{IP: lb.IP, Ports: ports}
+		endpoint := conf_v1.ExternalEndpoint{IP: lb.IP, Hostname: lb.Hostname, Ports: ports}
 		externalEndpoints = append(externalEndpoints, endpoint)
 	}
 

@@ -318,12 +318,17 @@ func parseStickyService(service string) (serviceName string, stickyCookie string
 	parts := strings.SplitN(service, " ", 2)
 
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("Invalid sticky-cookie service format: %s", service)
+		return "", "", fmt.Errorf("invalid sticky-cookie service format: %s. Must be a semicolon-separated list of sticky services", service)
 	}
 
 	svcNameParts := strings.Split(parts[0], "=")
 	if len(svcNameParts) != 2 {
-		return "", "", fmt.Errorf("Invalid sticky-cookie service format: %s", svcNameParts)
+		return "", "", fmt.Errorf("invalid sticky-cookie service format: %s", svcNameParts)
+	}
+
+	stickyCookieParameters := parts[1]
+	if !stickyCookieRegex.MatchString(stickyCookieParameters) {
+		return "", "", fmt.Errorf("invalid sticky-cookie parameters: %s", stickyCookieParameters)
 	}
 
 	return svcNameParts[1], parts[1], nil
@@ -354,9 +359,10 @@ func parseRewrites(service string) (serviceName string, rewrite string, err erro
 }
 
 var (
-	threshEx   = regexp.MustCompile(`high=([1-9]|[1-9][0-9]|100) low=([1-9]|[1-9][0-9]|100)\b`)
-	threshExR  = regexp.MustCompile(`low=([1-9]|[1-9][0-9]|100) high=([1-9]|[1-9][0-9]|100)\b`)
-	pathRegexp = regexp.MustCompile("^" + `/[^\s{};$]*` + "$")
+	threshEx          = regexp.MustCompile(`high=([1-9]|[1-9][0-9]|100) low=([1-9]|[1-9][0-9]|100)\b`)
+	threshExR         = regexp.MustCompile(`low=([1-9]|[1-9][0-9]|100) high=([1-9]|[1-9][0-9]|100)\b`)
+	pathRegexp        = regexp.MustCompile("^" + `/[^\s{};$]*` + "$")
+	stickyCookieRegex = regexp.MustCompile("^" + `([^"$\\]|\\[^$])*` + "$")
 )
 
 // VerifyAppProtectThresholds ensures that threshold values are set correctly

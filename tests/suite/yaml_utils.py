@@ -30,6 +30,23 @@ def get_name_from_yaml(file) -> str:
             return dep['metadata']['name']
     return res
 
+def get_namespace_from_yaml(file) -> str:
+    """
+    Parse yaml file and return first metadata.name appeared.
+
+    :param file: an absolute path to file
+    :return: str
+    """
+    res = ""
+    with open(file) as f:
+        docs = yaml.safe_load_all(f)
+        for dep in docs:
+            try:
+                res = dep['metadata']['namespace']
+                break
+            except KeyError:
+                continue
+    return res
 
 def get_paths_from_vs_yaml(file) -> []:
     """

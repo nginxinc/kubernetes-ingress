@@ -27,7 +27,6 @@ jobs:
       versions: ${{ steps.versions.outputs.matrix }}
       sha_short: ${{ steps.vars.outputs.sha_short }}
       sha_long: ${{ steps.vars.outputs.sha_long }}
-      go_version: ${{ steps.vars.outputs.go_version }}
       k8s_version: ${{ steps.vars.outputs.k8s_version }}
     steps:
       - name: Checkout Repository
@@ -47,7 +46,7 @@ jobs:
         id: versions
         run: |
           nginx=library/$(grep -m1 "FROM nginx:" < build/Dockerfile | awk -F" " '{print $2}')
-          nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
+          nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx:.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
           nginx_ubi=$(grep "FROM redhat" < build/Dockerfile | awk -F" " '{print $2}')
           echo "::set-output name=matrix::[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]"
       - name: Set other variables
@@ -55,7 +54,6 @@ jobs:
         run: |
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
           echo "::set-output name=sha_long::$(git rev-parse HEAD)"
-          echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
           echo "::set-output name=k8s_version::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
 
   check:
@@ -108,7 +106,7 @@ jobs:
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.variables.outputs.go_version }}
+          go-version-file: go.mod
       - name: Determine GOPATH
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"
@@ -138,19 +136,11 @@ jobs:
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
           - image: alpine
-            marker: vsr
+            marker: "vs" # add vsr after 2.3.1/2.4 release
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
-          - image: alpine-opentracing
-            marker: policies
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-            needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
-          - image: opentracing
-            marker: vs
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-            needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
           - image: ubi
-            marker: ts
+            marker: "policies" # add ts after 2.3.1/2.4 release
             platforms: linux/arm64,linux/amd64,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
     steps:
@@ -221,7 +211,7 @@ jobs:
             name=public.ecr.aws/nginx/nginx-ingress
           flavor: |
             latest=true
-            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
+            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }},onlatest=true
           tags: |
             type=raw,value=${{ needs.variables.outputs.kic-tag }}
             type=raw,value=${{ steps.tag.outputs.short }}
@@ -256,7 +246,7 @@ jobs:
             IC_VERSION=v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.3.0
+        uses: aquasecurity/trivy-action@0.6.1
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}

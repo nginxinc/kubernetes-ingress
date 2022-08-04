@@ -113,9 +113,9 @@ class TestVSCannedResponse:
                                            virtual_server_setup.namespace)
         except ApiException as ex:
             assert ex.status == 422 \
-                   and "spec.routes.action.return.type" in ex.body \
-                   and "spec.routes.action.return.body" in ex.body \
-                   and "spec.routes.action.return.code" in ex.body
+                   and "action.return.type in body must be of type" in ex.body \
+                   and "action.return.body in body must be of type" in ex.body \
+                   and "action.return.code in body must be of type" in ex.body
         except Exception as ex:
             pytest.fail(f"An unexpected exception is raised: {ex}")
         else:
