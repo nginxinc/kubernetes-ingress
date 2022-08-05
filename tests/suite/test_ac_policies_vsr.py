@@ -341,7 +341,7 @@ class TestAccessControlPoliciesVsr:
         )
 
     @pytest.mark.parametrize("src", [vs_spec_vsr_override_src, vs_route_vsr_override_src])
-    def test_overide_vs_vsr(
+    def test_override_vs_vsr(
         self,
         kube_apis,
         crd_ingress_controller,

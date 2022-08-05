@@ -16,7 +16,7 @@ The Ingress Controller exposes a number of metrics in the [Prometheus](https://p
 ## Enabling Metrics
 
 If you're using *Kubernetes manifests* (Deployment or DaemonSet) to install the Ingress Controller, to enable Prometheus metrics:
-1. Run the Ingress controller with the `-enable-prometheus-metrics` [command-line argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments). As a result, the Ingress Controller will expose NGINX or NGINX Plus metrics in the Prometheus format via the path `/metrics` on port `9113` (customizable via the `-prometheus-metrics-listen-port` command-line argument).
+1. Run the Ingress Controller with the `-enable-prometheus-metrics` [command-line argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments). As a result, the Ingress Controller will expose NGINX or NGINX Plus metrics in the Prometheus format via the path `/metrics` on port `9113` (customizable via the `-prometheus-metrics-listen-port` command-line argument).
 1. To enable TLS for the Prometheus endpoint, configure the `-prometheus-tls-secret` cli argument with the namespace and name of a TLS Secret.
 1. Add the Prometheus port to the list of the ports of the Ingress Controller container in the template of the Ingress Controller pod:
     ```yaml

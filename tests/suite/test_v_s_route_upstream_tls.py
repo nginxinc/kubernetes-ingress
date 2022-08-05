@@ -97,7 +97,7 @@ class TestVSRouteUpstreamTls:
                                       f"{TEST_DATA}/virtual-server-route-upstream-tls/route-single-invalid.yaml",
                                       v_s_route_setup.route_s.namespace)
         except ApiException as ex:
-            assert ex.status == 422 and "spec.upstreams.tls.enable" in ex.body
+            assert ex.status == 422 and "tls.enable" in ex.body
         except Exception as ex:
             pytest.fail(f"An unexpected exception is raised: {ex}")
         else:

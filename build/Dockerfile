@@ -1,38 +1,57 @@
 # syntax=docker/dockerfile:1.4
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=r26
+ARG NGINX_PLUS_VERSION=R27
 ARG DOWNLOAD_TAG=edge
 ARG DEBIAN_VERSION=bullseye-slim
 
-############################################# Base image for Debian #############################################
-FROM nginx:1.21.6 AS debian
 
-RUN apt-get update \
+############################################# Base images containing libs for Opentracing #############################################
+FROM opentracing/nginx-opentracing:nginx-1.23.1 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.23.1-alpine as alpine-opentracing-lib
+
+
+############################################# Base image for Debian #############################################
+FROM nginx:1.23.1 AS debian
+
+RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
+	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temp fix for CVE-2018-25032
-	&& apt-get install -y zlib1g \
+	# temp fix for CVE-2022-2068, CVE-2021-4209, CVE-2022-34903, CVE-2022-27404
+	&& apt-get install --no-install-recommends --no-install-suggests -y libssl1.1 openssl libgnutls30 gpgv libfreetype6 \
 	&& rm -rf /var/lib/apt/lists/* \
+	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
+	&& ldconfig \
 	&& echo $NGINX_VERSION > nginx_version
 
 
 ############################################# Base image for Alpine #############################################
 # docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
-FROM docker.io/library/nginx:1.21.6-alpine AS alpine
+FROM docker.io/library/nginx:1.23.1-alpine AS alpine
 
-RUN apk add --no-cache libcap \
-	# Temp fix for CVE-2022-0778 and CVE-2018-25032
-	&& apk upgrade --no-cache libretls zlib
+RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
+	apk add --no-cache libcap libstdc++ \
+	# temp fix for CVE-2022-27405, CVE-2022-1586, CVE-2022-32205, CVE-2022-2097, CVE-2022-32205, CVE-2022-2097
+	&& apk upgrade --no-cache freetype pcre2 curl libcrypto1.1 libcurl libssl1.1 \
+	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
+	&& ldconfig /usr/local/lib/
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.15 as alpine-plus
+FROM alpine:3.16 as alpine-plus
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
-	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
-	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r}
+	--mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
+	# temp fix for CVE-2022-2097
+	apk upgrade --no-cache libcrypto1.1 libssl1.1 \
+	&& wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
+	&& printf "%s\n" "https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
+	&& apk add --no-cache libcap nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcurl \
+	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	&& ldconfig /usr/local/lib/
 
 
 ############################################# Base image for Debian with NGINX Plus #############################################
@@ -44,18 +63,21 @@ ARG BUILD_OS
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
+	--mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temp fix for CVE-2018-25032
-	&& apt-get install -y zlib1g \
+	# temp fix for  CVE-2022-2068, CVE-2021-4209
+	&& apt-get install --no-install-recommends --no-install-suggests -y libssl1.1 openssl libgnutls30 \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
 	&& printf "%s\n" "Acquire::https::pkgs.nginx.com::User-Agent \"k8s-ic-$IC_VERSION${BUILD_OS##debian-plus}-apt\";" >> /etc/apt/apt.conf.d/90pkgs-nginx \
-	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
+	&& printf "%s\n" "deb https://pkgs.nginx.com/plus/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-plus.list \
 	&& apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs \
+	&& apt-get install --no-install-recommends --no-install-suggests -y nginx-plus nginx-plus-module-njs nginx-plus-module-opentracing libcurl4 \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
+	&& cp -av /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
+	&& ldconfig \
 	&& rm -rf /var/lib/apt/lists/*
 
 
@@ -71,19 +93,17 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& curl -fsSL https://cs.nginx.com/static/keys/app-protect-security-updates.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_app_signing.gpg \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
-	printf "%s\n" "deb https://pkgs.nginx.com/app-protect/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" \
+	printf "%s\n" "deb https://pkgs.nginx.com/app-protect/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" \
 	"deb https://pkgs.nginx.com/app-protect-security-updates/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect app-protect-attack-signatures app-protect-threat-campaigns \
 	&& apt-get purge --auto-remove -y curl; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
-	printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION^^}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
+	printf "%s\n" "deb https://pkgs.nginx.com/app-protect-dos/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect-dos.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect-dos; \
 	fi \
-	# temp fix for CVE-2021-43618
-	&& apt-get install -y libgmp10 \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect*.list
@@ -103,14 +123,14 @@ LABEL name="NGINX Ingress Controller" \
 	vendor="NGINX Inc" \
 	version="${IC_VERSION}" \
 	release="1" \
-	summary="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-	description="The Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
-	io.k8s.description="The NGINX Ingress controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	summary="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	description="The Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
+	io.k8s.description="The NGINX Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 RUN dnf --nodocs install -y shadow-utils ca-certificates \
-	# temp fix for CVE-2022-0778
-	&& dnf --nodocs upgrade -y openssl-libs \
+	# temp fix for CVE-2022-1271, CVE-2022-22576, CVE-2022-25313, CVE-2022-22576, CVE-2021-40528, CVE-2021-3634, CVE-2022-29824, CVE-2021-4189, CVE-2021-4189, CVE-2022-29824, CVE-2022-1621
+	&& dnf --nodocs upgrade -y xz-libs curl expat libcurl libgcrypt libssh libssh-config libxml2 platform-python python3-libs python3-libxml2 vim-minimal \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
@@ -139,7 +159,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
 	rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
 	&& curl -fsSL "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
-	&& dnf --nodocs install -y nginx-plus-${NGINX_PLUS_VERSION} nginx-plus-module-njs-${NGINX_PLUS_VERSION}
+	&& sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/nginx-plus.repo \
+	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs
 
 
 ############################################# Base image for UBI with NGINX Plus and App Protect WAF/DoS #############################################
@@ -157,11 +178,13 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& dnf --nodocs install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm \
 	&& if [ -z "${NAP_MODULES##*waf*}" ]; then \
 	curl -fsSL https://cs.nginx.com/static/files/app-protect-8.repo > /etc/yum.repos.d/app-protect-8.repo; \
-	dnf --nodocs install -y app-protect-${NGINX_PLUS_VERSION#r}* app-protect-attack-signatures app-protect-threat-campaigns; \
+	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-8.repo; \
+	dnf --nodocs install -y app-protect app-protect-attack-signatures app-protect-threat-campaigns; \
 	fi \
 	&& if [ -z "${NAP_MODULES##*dos*}" ]; then \
 	curl -fsSL https://cs.nginx.com/static/files/app-protect-dos-8.repo > /etc/yum.repos.d/app-protect-dos-8.repo; \
-	dnf --nodocs install -y app-protect-dos-${NGINX_PLUS_VERSION#r}*; \
+	sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/app-protect-dos-8.repo; \
+	dnf --nodocs install -y app-protect-dos; \
 	fi \
 	&& rm /etc/yum.repos.d/app-protect*.repo \
 	&& subscription-manager unregister \
@@ -172,47 +195,12 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 # RUN update-ca-trust extract
 
 
-############################################# Base images containing libs for Opentracing #############################################
-FROM opentracing/nginx-opentracing:nginx-1.21.6 as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.21.6-alpine as alpine-opentracing-lib
-
-
-############################################# Build image for Alpine with Opentracing #############################################
-FROM alpine as alpine-opentracing
-
-RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libopentracing.so* /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
-	&& cp -av /tmp/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
-	&& ldconfig /usr/local/lib/
-
-
-############################################# Build image for Debian with Opentracing #############################################
-FROM debian as opentracing
-
-RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libopentracing.so* /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
-	&& cp -av /tmp/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
-	&& ldconfig
-
-
-############################################# Build image for Opentracing with NGINX Plus #############################################
-FROM debian-plus as opentracing-plus
-
-RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
-	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-	apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y libcurl4 nginx-plus-module-opentracing \
-	&& rm -rf /var/lib/apt/lists/*
-
-RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ cp -av /tmp/usr/local/lib/libjaegertracing*so* /tmp/usr/local/lib/libzipkin*so* /tmp/usr/local/lib/libdd*so* /tmp/usr/local/lib/libyaml*so* /usr/local/lib/ \
-	&& ldconfig
-
-
 ############################################# Create common files, permissions and setcap #############################################
 FROM ${BUILD_OS} as common
 
 ARG BUILD_OS
 ARG IC_VERSION
 ARG GIT_COMMIT
-ARG DATE
 ARG TARGETPLATFORM
 ARG NAP_MODULES=none
 
@@ -250,24 +238,21 @@ USER 101
 
 LABEL org.opencontainers.image.version="${IC_VERSION}"
 LABEL org.opencontainers.image.revision="${GIT_COMMIT}"
-LABEL org.opencontainers.image.created="${DATE}"
 LABEL org.nginx.kic.image.build.target="${TARGETPLATFORM}"
 LABEL org.nginx.kic.image.build.os="${BUILD_OS}"
 LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERSION}"
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.18-alpine AS builder
+FROM golang:1.19-alpine AS builder
 ARG IC_VERSION
-ARG GIT_COMMIT
-ARG DATE
 ARG TARGETARCH
 
 WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/cmd/nginx-ingress
 RUN --mount=target=/go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/ --mount=type=cache,target=/root/.cache/go-build \
 	go mod download
 RUN --mount=target=/go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/ --mount=type=cache,target=/root/.cache/go-build \
-	CGO_ENABLED=0 GO111MODULE=on GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION} -X main.commit=${GIT_COMMIT} -X main.date=${DATE}" -o /nginx-ingress
+	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION}" -o /nginx-ingress
 
 
 ############################################# Create image with nginx-ingress built in container #############################################
@@ -289,11 +274,10 @@ COPY --link --chown=101:0 nginx-ingress /
 ############################################# Create image with nginx-ingress built by GoReleaser #############################################
 FROM common AS goreleaser
 ARG TARGETARCH
-ARG TARGETVARIANT
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
-COPY --link --chown=101:0 dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+COPY --link --chown=101:0 dist/kubernetes-ingress_linux_$TARGETARCH*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
@@ -302,7 +286,7 @@ ARG TARGETARCH
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --link --chown=101:0 dist/aws_linux_$TARGETARCH/nginx-ingress /
+COPY --link --chown=101:0 dist/aws_linux_$TARGETARCH*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################

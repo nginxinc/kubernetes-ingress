@@ -78,6 +78,7 @@ rules:
   - virtualserverroutes/status
   - policies/status
   - transportservers/status
+  - dnsendpoints/status
   verbs:
   - update
 - apiGroups:
@@ -105,6 +106,23 @@ rules:
     - update
     - create
     - delete
+- apiGroups:
+    - externaldns.nginx.org
+  resources:
+    - dnsendpoints
+  verbs:
+    - list
+    - watch
+    - get
+    - update
+    - create
+    - delete
+- apiGroups:
+  - externaldns.nginx.org
+  resources:
+  - dnsendpoints/status
+  verbs:
+  - update
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

@@ -16,7 +16,7 @@ type FakeManager struct {
 	dhparamFilename string
 }
 
-// NewFakeManager creates a FakeMananger.
+// NewFakeManager creates a FakeManager.
 func NewFakeManager(confPath string) *FakeManager {
 	return &FakeManager{
 		confdPath:       path.Join(confPath, "conf.d"),
@@ -155,22 +155,22 @@ func (*FakeManager) AppProtectAgentStart(_ chan error, _ string) {
 	glog.V(3).Infof("Starting FakeAppProtectAgent")
 }
 
-// AppProtectAgentQuit is a fake implementtion AppProtectAgentQuit
+// AppProtectAgentQuit is a fake implementation AppProtectAgentQuit
 func (*FakeManager) AppProtectAgentQuit() {
 	glog.V(3).Infof("Quitting FakeAppProtectAgent")
 }
 
-// AppProtectPluginStart is a fake implementtion AppProtectPluginStart
+// AppProtectPluginStart is a fake implementation AppProtectPluginStart
 func (*FakeManager) AppProtectPluginStart(_ chan error) {
 	glog.V(3).Infof("Starting FakeAppProtectPlugin")
 }
 
-// AppProtectPluginQuit is a fake implementtion AppProtectPluginQuit
+// AppProtectPluginQuit is a fake implementation AppProtectPluginQuit
 func (*FakeManager) AppProtectPluginQuit() {
 	glog.V(3).Infof("Quitting FakeAppProtectPlugin")
 }
 
-// AppProtectDosAgentQuit is a fake implementtion AppProtectAgentQuit
+// AppProtectDosAgentQuit is a fake implementation AppProtectAgentQuit
 func (*FakeManager) AppProtectDosAgentQuit() {
 	glog.V(3).Infof("Quitting FakeAppProtectDosAgent")
 }

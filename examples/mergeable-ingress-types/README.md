@@ -56,20 +56,20 @@ Note: Ingress Resources with more than one host cannot be used.
 
 ## Example
 
-In this example we deploy the NGINX Ingress controller, a simple web application and then configure
+In this example we deploy the NGINX Ingress Controller, a simple web application and then configure
 load balancing for that application using Ingress resources with the `nginx.org/mergeable-ingress-type` annotations.
 
 ## Running the Example
 
 ## 1. Deploy the Ingress Controller
 
-1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress controller.
+1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller.
 
-2. Save the public IP address of the Ingress controller into a shell variable:
+2. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III
     ```
-3. Save the HTTPS port of the Ingress controller into a shell variable:
+3. Save the HTTPS port of the Ingress Controller into a shell variable:
     ```
     $ IC_HTTPS_PORT=<port number>
     ```
@@ -92,7 +92,7 @@ $ kubectl create -f cafe.yaml
     ```
     $ kubectl create -f cafe-master.yaml
     ```
-    
+
 3. Create the Minion Ingress resource for the Coffee Service:
     ```
     $ kubectl create -f coffee-minion.yaml
@@ -107,7 +107,7 @@ $ kubectl create -f cafe.yaml
 
 1. To access the application, curl the coffee and the tea services. We'll use ```curl```'s --insecure option to turn off certificate verification of our self-signed
 certificate and the --resolve option to set the Host header of a request with ```cafe.example.com```
-    
+
     To get coffee:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTPS_PORT:$IC_IP https://cafe.example.com:$IC_HTTPS_PORT/coffee --insecure
@@ -122,7 +122,7 @@ certificate and the --resolve option to set the Host header of a request with ``
     Server name: tea-7cd44fcb4d-xfw2x
     ...
     ```
-    
+
 ## 5. Examine the Configuration
 
 1. Access the NGINX Pod.
@@ -143,7 +143,7 @@ upstream default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc {
 upstream default-cafe-ingress-tea-minion-cafe.example.com-tea-svc {
 	server 172.17.0.7:80;
 	server 172.17.0.8:80;
-	server 172.17.0.9:80;	
+	server 172.17.0.9:80;
 }
  # *Master*, configured in Ingress Resource: default-cafe-ingress-master
 server {
@@ -169,7 +169,7 @@ server {
 		proxy_set_header X-Forwarded-Port $server_port;
 		proxy_set_header X-Forwarded-Proto $scheme;
 		proxy_buffering on;
-		proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc;	
+		proxy_pass http://default-cafe-ingress-coffee-minion-cafe.example.com-coffee-svc;
 	}
 	 # *Minion*, configured in Ingress Resource: default-cafe-ingress-tea-minion
 	location /tea {

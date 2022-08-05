@@ -9,7 +9,7 @@ The wildcard TLS certificate simplifies the configuration of TLS termination if 
 Start the Ingress Controller with the `-wildcard-tls-secret` [command-line argument](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-wildcard-tls-secret) set to a TLS secret with a wildcard cert/key. For example:
 
 ```yaml
--wildcard-tls-secret=nginx-ingress/wildlcard-tls-secret
+-wildcard-tls-secret=nginx-ingress/wildcard-tls-secret
 ```
 
 **Note**: the Ingress Controller supports only one wildcard TLS secret.

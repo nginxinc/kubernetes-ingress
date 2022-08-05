@@ -22,6 +22,9 @@ func TestValidateVirtualServer(t *testing.T) {
 			TLS: &v1.TLS{
 				Secret: "abc",
 			},
+			ExternalDNS: v1.ExternalDNS{
+				Enable: false,
+			},
 			Upstreams: []v1.Upstream{
 				{
 					Name:      "first",
@@ -361,6 +364,28 @@ func TestValidateTLS(t *testing.T) {
 	err := vsv2.validateTLS(&tls, field.NewPath("tls"))
 	if err == nil {
 		t.Errorf("validateTLS() returned no errors for invalid input %v", tls)
+	}
+}
+
+func TestValidateExternalDNSEnabled(t *testing.T) {
+	vsv := &VirtualServerValidator{isPlus: false, isExternalDNSEnabled: true}
+
+	extDNS := &v1.ExternalDNS{
+		Enable: true,
+	}
+	allErrs := vsv.validateExternalDNS(extDNS, field.NewPath("externalDNS"))
+	if len(allErrs) > 0 {
+		t.Errorf("validateExternalDNS() returned errors %v for valid input %v", allErrs, extDNS)
+	}
+
+	vsv = &VirtualServerValidator{isPlus: false, isExternalDNSEnabled: false}
+
+	extDNS = &v1.ExternalDNS{
+		Enable: true,
+	}
+	allErrs = vsv.validateExternalDNS(extDNS, field.NewPath("externalDNS"))
+	if len(allErrs) == 0 {
+		t.Errorf("validateExternalDNS() returned no errors for invalid input %v", extDNS)
 	}
 }
 
@@ -1375,7 +1400,7 @@ func TestValidateRouteField(t *testing.T) {
 	}
 }
 
-func TestValdateReferencedUpstream(t *testing.T) {
+func TestValidateReferencedUpstream(t *testing.T) {
 	t.Parallel()
 	upstream := "test"
 	upstreamNames := map[string]sets.Empty{
@@ -1388,7 +1413,7 @@ func TestValdateReferencedUpstream(t *testing.T) {
 	}
 }
 
-func TestValdateUpstreamFails(t *testing.T) {
+func TestValidateUpstreamFails(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		upstream      string
@@ -1531,6 +1556,8 @@ func TestValidatePath(t *testing.T) {
 		"/{",
 		"/}",
 		"/abc;",
+		`/path\`,
+		`/path\n`,
 	}
 
 	for _, path := range invalidPaths {

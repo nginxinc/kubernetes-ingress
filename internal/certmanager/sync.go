@@ -64,6 +64,9 @@ func SyncFnFor(
 ) SyncFn {
 	return func(ctx context.Context, vs *vsapi.VirtualServer) error {
 		var err error
+		if vs.Spec.TLS == nil || vs.Spec.TLS.CertManager == nil {
+			return nil
+		}
 		issuerName, issuerKind, issuerGroup, err := issuerForVirtualServer(vs)
 		if err != nil {
 			glog.Errorf("Failed to determine issuer to be used for VirtualServer resource: %v", err)

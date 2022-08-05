@@ -1,6 +1,6 @@
 # gRPC support
 
-To support a gRPC application with NGINX Ingress controllers, you need to add the **nginx.org/grpc-services** annotation to your Ingress resource definition.
+To support a gRPC application with NGINX Ingress Controllers, you need to add the **nginx.org/grpc-services** annotation to your Ingress resource definition.
 
 ## Prerequisites
 

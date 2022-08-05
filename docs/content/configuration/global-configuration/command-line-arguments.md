@@ -31,7 +31,7 @@ Secret with a TLS certificate and key for TLS termination of the default server.
 
 * If not set, certificate and key in the file `/etc/nginx/secrets/default` are used.
 * If `/etc/nginx/secrets/default` doesn't exist, the Ingress Controller will configure NGINX to reject TLS connections to the default server.
-* If a secret is set, but the Ingress controller is not able to fetch it from Kubernetes API, or it is not set and the Ingress Controller fails to read the file "/etc/nginx/secrets/default", the Ingress controller will fail to start.
+* If a secret is set, but the Ingress Controller is not able to fetch it from Kubernetes API, or it is not set and the Ingress Controller fails to read the file "/etc/nginx/secrets/default", the Ingress Controller will fail to start.
 
 Format: `<namespace>/<name>`
 &nbsp;
@@ -43,7 +43,7 @@ A Secret with a TLS certificate and key for TLS termination of every Ingress/Vir
 
 * If the argument is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection.
 
-* If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.
+* If the argument is set, but the Ingress Controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start.
 
 Format: `<namespace>/<name>`
 &nbsp;
@@ -59,7 +59,7 @@ Default `true`.
 
 ### -enable-preview-policies
 
-Enables preview policies. This flag is deprecated. To enable OIDC Policies please[-enable-oidc](#cmdoption-enable-oidc) instead.
+Enables preview policies. This flag is deprecated. To enable OIDC Policies please use [-enable-oidc](#cmdoption-enable-oidc) instead.
 
 Default `false`.
 &nbsp;
@@ -72,6 +72,14 @@ Enables OIDC policies.
 Default `false`.
 &nbsp;
 <a name="cmdoption-enable-leader-election"></a>
+
+### -inlcude-year
+Adds year to log headers.
+
+Default `false`.
+
+**NOTE**: This flag will be removed in release 2.7 and the year will be included by default.
+
 ### -enable-leader-election
 
 Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status.
@@ -95,11 +103,18 @@ Enable x509 automated certificate management for VirtualServer resources using c
 
 Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 &nbsp;
+<a name="cmdoption-enable-external-dns"></a>
+
+### -enable-external-dns
+
+Enable integration with ExternalDNS for configuring public DNS entries for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns).
+
+Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 <a name="cmdoption-external-service"></a>
 
 ### -external-service `<string>`
 
-Specifies the name of the service with the type LoadBalancer through which the Ingress controller pods are exposed externally. The external address of the service is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources.
+Specifies the name of the service with the type LoadBalancer through which the Ingress Controller pods are exposed externally. The external address of the service is used when reporting the status of Ingress, VirtualServer and VirtualServerRoute resources.
 
 For Ingress resources only: Requires [-report-ingress-status](#cmdoption-report-ingress-status).
 &nbsp;
@@ -127,7 +142,7 @@ Requires [-enable-custom-resources](#cmdoption-enable-custom-resources).
 
 Adds a location "/nginx-health" to the default server. The location responds with the 200 status code for any request.
 
-Useful for external health-checking of the Ingress controller.
+Useful for external health-checking of the Ingress Controller.
 &nbsp;
 <a name="cmdoption-health-status-uri"></a>
 
@@ -139,10 +154,10 @@ Sets the URI of health status location in the default server. Requires [-health-
 
 ### -ingress-class `<string>`
 
-A class of the Ingress controller.
+A class of the Ingress Controller.
 
 A corresponding IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start.
-The Ingress controller only processes resources that belong to its class - i.e. have the `ingressClassName` field resource equal to the class.
+The Ingress Controller only processes resources that belong to its class - i.e. have the `ingressClassName` field resource equal to the class.
 
 The Ingress Controller processes all the resources that do not have the `ingressClassName` field.
 
@@ -181,7 +196,7 @@ Path to the main NGINX configuration template.
 
 ### -nginx-configmaps `<string>`
 
-A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set, but the Ingress controller is not able to fetch it from Kubernetes API, the Ingress controller will fail to start.
+A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set, but the Ingress Controller is not able to fetch it from Kubernetes API, the Ingress Controller will fail to start.
 
 Format: `<namespace>/<name>`
 &nbsp;
@@ -203,7 +218,7 @@ Enable support for NGINX Plus.
 
 Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
 
-Default is 4000. Default is 20000 instead if `enable-app-protect` is true.
+Default is 60000.
 &nbsp;
 <a name="cmdoption-nginx-status"></a>
 
@@ -235,7 +250,7 @@ Format: `[1024 - 65535]` (default `8080`)
 
 Use a proxy server to connect to Kubernetes API started by "kubectl proxy" command. **For testing purposes only**.
 
-The Ingress controller does not start NGINX and does not write any generated NGINX configuration files to disk.
+The Ingress Controller does not start NGINX and does not write any generated NGINX configuration files to disk.
 &nbsp;
 <a name="cmdoption-report-ingress-status"></a>
 
@@ -287,7 +302,7 @@ A comma-separated list of pattern=N settings for file-filtered logging.
 
 ### -watch-namespace `<string>`
 
-Namespace to watch for Ingress resources. By default the Ingress controller watches all namespaces.
+Namespace to watch for Ingress resources. By default the Ingress Controller watches all namespaces.
 &nbsp;
 <a name="cmdoption-enable-prometheus-metrics"></a>
 
@@ -310,7 +325,7 @@ Format: `[1024 - 65535]` (default `9113`)
 A Secret with a TLS certificate and key for TLS termination of the Prometheus metrics endpoint.
 
 * If the argument is not set, the prometheus endpoint will not use a TLS connection.
-* If the argument is set, but the Ingress controller is not able to fetch the Secret from Kubernetes API, the Ingress controller will fail to start.
+* If the argument is set, but the Ingress Controller is not able to fetch the Secret from Kubernetes API, the Ingress Controller will fail to start.
 
 Format: `<namespace>/<name>`
 &nbsp;
@@ -354,7 +369,7 @@ Requires [-nginx-plus](#cmdoption-nginx-plus).
 * If the argument is set, but `nginx-plus` is set to false, the Ingress Controller will fail to start.
 
 &nbsp;
-<a name="cmdoption-app-protect-log-level"></a.>
+<a name="cmdoption-app-protect-log-level"></a>
 
 ### -app-protect-log-level `<string>`
 

@@ -1,0 +1,19 @@
+apiVersion: appprotect.f5.com/v1beta1
+kind: APLogConf
+metadata:
+  name: logconf-esc
+spec:
+  content:
+    format: user-defined
+    max_message_size: 64k
+    max_request_size: any
+    format_string: "{\"my_attack_type\": \"%attack_type%\"}"
+    escaping_characters:
+      - from: '"'
+        to: '\"'
+    list_prefix: "["
+    list_delimiter: ","
+    list_suffix: "]" 
+  
+  filter:
+    request_type: all

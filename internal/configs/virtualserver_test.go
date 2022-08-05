@@ -2584,6 +2584,12 @@ func TestGeneratePolicies(t *testing.T) {
 				},
 				Path: "/etc/nginx/secrets/default-jwt-secret",
 			},
+			"default/htpasswd-secret": {
+				Secret: &api_v1.Secret{
+					Type: secrets.SecretTypeHtpasswd,
+				},
+				Path: "/etc/nginx/secrets/default-htpasswd-secret",
+			},
 			"default/oidc-secret": {
 				Secret: &api_v1.Secret{
 					Type: secrets.SecretTypeOIDC,
@@ -2815,6 +2821,35 @@ func TestGeneratePolicies(t *testing.T) {
 		{
 			policyRefs: []conf_v1.PolicyReference{
 				{
+					Name:      "basic-auth-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/basic-auth-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "My Test API",
+							Secret: "htpasswd-secret",
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				BasicAuth: &version2.BasicAuth{
+					Secret: "/etc/nginx/secrets/default-htpasswd-secret",
+					Realm:  "My Test API",
+				},
+			},
+			msg: "basic auth reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
 					Name:      "ingress-mtls-policy",
 					Namespace: "default",
 				},
@@ -2894,13 +2929,14 @@ func TestGeneratePolicies(t *testing.T) {
 					},
 					Spec: conf_v1.PolicySpec{
 						OIDC: &conf_v1.OIDC{
-							AuthEndpoint:  "http://example.com/auth",
-							TokenEndpoint: "http://example.com/token",
-							JWKSURI:       "http://example.com/jwks",
-							ClientID:      "client-id",
-							ClientSecret:  "oidc-secret",
-							Scope:         "scope",
-							RedirectURI:   "/redirect",
+							AuthEndpoint:   "http://example.com/auth",
+							TokenEndpoint:  "http://example.com/token",
+							JWKSURI:        "http://example.com/jwks",
+							ClientID:       "client-id",
+							ClientSecret:   "oidc-secret",
+							Scope:          "scope",
+							RedirectURI:    "/redirect",
+							ZoneSyncLeeway: createPointerFromInt(20),
 						},
 					},
 				},
@@ -2938,7 +2974,7 @@ func TestGeneratePolicies(t *testing.T) {
 					Enable:              "on",
 					ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 					ApSecurityLogEnable: true,
-					ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf syslog:server=127.0.0.1:514",
+					ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf syslog:server=127.0.0.1:514"},
 				},
 			},
 			msg: "WAF reference",
@@ -3268,6 +3304,160 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedOidc: &oidcPolicyCfg{},
 			msg:          "multi jwt reference",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "basic-auth-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/basic-auth-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "test",
+							Secret: "htpasswd-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/htpasswd-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeHtpasswd,
+						},
+						Error: errors.New("secret is invalid"),
+					},
+				},
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Basic Auth policy default/basic-auth-policy references an invalid secret default/htpasswd-secret: secret is invalid`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "basic auth reference missing secret",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "basic-auth-policy",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/basic-auth-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "test",
+							Secret: "htpasswd-secret",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/htpasswd-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeCA,
+						},
+					},
+				},
+			},
+			expected: policiesCfg{
+				ErrorReturn: &version2.Return{
+					Code: 500,
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Basic Auth policy default/basic-auth-policy references a secret default/htpasswd-secret of a wrong type 'nginx.org/ca', must be 'nginx.org/htpasswd'`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "basic auth references wrong secret type",
+		},
+		{
+			policyRefs: []conf_v1.PolicyReference{
+				{
+					Name:      "basic-auth-policy",
+					Namespace: "default",
+				},
+				{
+					Name:      "basic-auth-policy2",
+					Namespace: "default",
+				},
+			},
+			policies: map[string]*conf_v1.Policy{
+				"default/basic-auth-policy": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "test",
+							Secret: "htpasswd-secret",
+						},
+					},
+				},
+				"default/basic-auth-policy2": {
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy2",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Realm:  "test",
+							Secret: "htpasswd-secret2",
+						},
+					},
+				},
+			},
+			policyOpts: policyOptions{
+				secretRefs: map[string]*secrets.SecretReference{
+					"default/htpasswd-secret": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeHtpasswd,
+						},
+						Path: "/etc/nginx/secrets/default-htpasswd-secret",
+					},
+					"default/htpasswd-secret2": {
+						Secret: &api_v1.Secret{
+							Type: secrets.SecretTypeHtpasswd,
+						},
+						Path: "/etc/nginx/secrets/default-htpasswd-secret2",
+					},
+				},
+			},
+			expected: policiesCfg{
+				BasicAuth: &version2.BasicAuth{
+					Secret: "/etc/nginx/secrets/default-htpasswd-secret",
+					Realm:  "test",
+				},
+			},
+			expectedWarnings: Warnings{
+				nil: {
+					`Multiple basic auth policies in the same context is not valid. Basic auth policy default/basic-auth-policy2 will be ignored`,
+				},
+			},
+			expectedOidc: &oidcPolicyCfg{},
+			msg:          "multi basic auth reference",
 		},
 		{
 			policyRefs: []conf_v1.PolicyReference{
@@ -3891,13 +4081,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			context: "route",
 			oidcPolCfg: &oidcPolicyCfg{
 				oidc: &version2.OIDC{
-					AuthEndpoint:  "https://foo.com/auth",
-					TokenEndpoint: "https://foo.com/token",
-					JwksURI:       "https://foo.com/certs",
-					ClientID:      "foo",
-					ClientSecret:  "super_secret_123",
-					RedirectURI:   "/_codexch",
-					Scope:         "openid",
+					AuthEndpoint:   "https://foo.com/auth",
+					TokenEndpoint:  "https://foo.com/token",
+					JwksURI:        "https://foo.com/certs",
+					ClientID:       "foo",
+					ClientSecret:   "super_secret_123",
+					RedirectURI:    "/_codexch",
+					Scope:          "openid",
+					ZoneSyncLeeway: 0,
 				},
 				key: "default/oidc-policy-1",
 			},
@@ -3991,13 +4182,14 @@ func TestGeneratePoliciesFails(t *testing.T) {
 			},
 			expectedOidc: &oidcPolicyCfg{
 				&version2.OIDC{
-					AuthEndpoint:  "https://foo.com/auth",
-					TokenEndpoint: "https://foo.com/token",
-					JwksURI:       "https://foo.com/certs",
-					ClientID:      "foo",
-					ClientSecret:  "super_secret_123",
-					RedirectURI:   "/_codexch",
-					Scope:         "openid",
+					AuthEndpoint:   "https://foo.com/auth",
+					TokenEndpoint:  "https://foo.com/token",
+					JwksURI:        "https://foo.com/certs",
+					ClientID:       "foo",
+					ClientSecret:   "super_secret_123",
+					RedirectURI:    "/_codexch",
+					Scope:          "openid",
+					ZoneSyncLeeway: 200,
 				},
 				"default/oidc-policy",
 			},
@@ -4913,13 +5105,13 @@ func TestGenerateSSLConfig(t *testing.T) {
 		},
 		{
 			inputTLS: &conf_v1.TLS{
-				Secret: "secret",
+				Secret: "missing",
 			},
 			inputCfgParams: &ConfigParams{},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
-				"default/secret": {
-					Error: errors.New("secret doesn't exist"),
+				"default/missing": {
+					Error: errors.New("missing doesn't exist"),
 				},
 			},
 			expectedSSL: &version2.SSL{
@@ -4927,18 +5119,18 @@ func TestGenerateSSLConfig(t *testing.T) {
 				RejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
-				nil: []string{"TLS secret secret is invalid: secret doesn't exist"},
+				nil: []string{"TLS secret missing is invalid: missing doesn't exist"},
 			},
-			msg: "secret doesn't exist in the cluster with HTTPS",
+			msg: "missing doesn't exist in the cluster with HTTPS",
 		},
 		{
 			inputTLS: &conf_v1.TLS{
-				Secret: "secret",
+				Secret: "mistyped",
 			},
 			inputCfgParams: &ConfigParams{},
 			wildcard:       false,
 			inputSecretRefs: map[string]*secrets.SecretReference{
-				"default/secret": {
+				"default/mistyped": {
 					Secret: &api_v1.Secret{
 						Type: secrets.SecretTypeCA,
 					},
@@ -4949,7 +5141,7 @@ func TestGenerateSSLConfig(t *testing.T) {
 				RejectHandshake: true,
 			},
 			expectedWarnings: Warnings{
-				nil: []string{"TLS secret secret is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'"},
+				nil: []string{"TLS secret mistyped is of a wrong type 'nginx.org/ca', must be 'kubernetes.io/tls'"},
 			},
 			msg: "wrong secret type",
 		},
@@ -6723,7 +6915,6 @@ func TestGenerateHealthCheck(t *testing.T) {
 		msg          string
 	}{
 		{
-
 			upstream: conf_v1.Upstream{
 				HealthCheck: &conf_v1.HealthCheck{
 					Enable:         true,
@@ -6905,7 +7096,6 @@ func TestGenerateGrpcHealthCheck(t *testing.T) {
 		msg          string
 	}{
 		{
-
 			upstream: conf_v1.Upstream{
 				HealthCheck: &conf_v1.HealthCheck{
 					Enable:         true,
@@ -8248,7 +8438,6 @@ func TestAddWafConfig(t *testing.T) {
 		msg          string
 	}{
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable: true,
 			},
@@ -8265,7 +8454,6 @@ func TestAddWafConfig(t *testing.T) {
 			msg:      "valid waf config, default App Protect config",
 		},
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable:   true,
 				ApPolicy: "dataguard-alarm",
@@ -8288,13 +8476,42 @@ func TestAddWafConfig(t *testing.T) {
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
-				ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			expected: &validationResults{isError: false},
 			msg:      "valid waf config",
 		},
 		{
-
+			wafInput: &conf_v1.WAF{
+				Enable:   true,
+				ApPolicy: "dataguard-alarm",
+				SecurityLogs: []*conf_v1.SecurityLog{
+					{
+						Enable:    true,
+						ApLogConf: "logconf",
+						LogDest:   "syslog:server=127.0.0.1:514",
+					},
+				},
+			},
+			polKey:       "default/waf-policy",
+			polNamespace: "default",
+			apResources: &appProtectResourcesForVS{
+				Policies: map[string]string{
+					"default/dataguard-alarm": "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				},
+				LogConfs: map[string]string{
+					"default/logconf": "/etc/nginx/waf/nac-logconfs/default-logconf",
+				},
+			},
+			wafConfig: &version2.WAF{
+				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
+				ApSecurityLogEnable: true,
+				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
+			},
+			expected: &validationResults{isError: false},
+			msg:      "valid waf config",
+		},
+		{
 			wafInput: &conf_v1.WAF{
 				Enable:   true,
 				ApPolicy: "default/dataguard-alarm",
@@ -8315,7 +8532,7 @@ func TestAddWafConfig(t *testing.T) {
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
-				ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			expected: &validationResults{
 				isError: true,
@@ -8326,7 +8543,6 @@ func TestAddWafConfig(t *testing.T) {
 			msg: "invalid waf config, apLogConf references non-existing log conf",
 		},
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable:   true,
 				ApPolicy: "default/dataguard-alarm",
@@ -8346,7 +8562,7 @@ func TestAddWafConfig(t *testing.T) {
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/default-dataguard-alarm",
 				ApSecurityLogEnable: true,
-				ApLogConf:           "/etc/nginx/waf/nac-logconfs/default-logconf",
+				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/default-logconf"},
 			},
 			expected: &validationResults{
 				isError: true,
@@ -8357,7 +8573,6 @@ func TestAddWafConfig(t *testing.T) {
 			msg: "invalid waf config, apLogConf references non-existing ap conf",
 		},
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable:   true,
 				ApPolicy: "ns1/dataguard-alarm",
@@ -8380,13 +8595,12 @@ func TestAddWafConfig(t *testing.T) {
 			wafConfig: &version2.WAF{
 				ApPolicy:            "/etc/nginx/waf/nac-policies/ns1-dataguard-alarm",
 				ApSecurityLogEnable: true,
-				ApLogConf:           "/etc/nginx/waf/nac-logconfs/ns2-logconf",
+				ApLogConf:           []string{"/etc/nginx/waf/nac-logconfs/ns2-logconf"},
 			},
 			expected: &validationResults{},
 			msg:      "valid waf config, cross ns reference",
 		},
 		{
-
 			wafInput: &conf_v1.WAF{
 				Enable:   false,
 				ApPolicy: "dataguard-alarm",

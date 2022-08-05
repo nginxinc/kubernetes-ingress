@@ -3,10 +3,13 @@ package k8s
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
+	ap_validation "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/validation"
 	networking "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -40,6 +43,8 @@ const (
 	proxyBufferSizeAnnotation             = "nginx.org/proxy-buffer-size"
 	proxyMaxTempFileSizeAnnotation        = "nginx.org/proxy-max-temp-file-size"
 	upstreamZoneSizeAnnotation            = "nginx.org/upstream-zone-size"
+	basicAuthSecretAnnotation             = "nginx.org/basic-auth-secret" // #nosec G101
+	basicAuthRealmAnnotation              = "nginx.org/basic-auth-realm"
 	jwtRealmAnnotation                    = "nginx.com/jwt-realm"
 	jwtKeyAnnotation                      = "nginx.com/jwt-key"
 	jwtTokenAnnotation                    = "nginx.com/jwt-token" // #nosec G101
@@ -52,6 +57,9 @@ const (
 	failTimeoutAnnotation                 = "nginx.org/fail-timeout"
 	appProtectEnableAnnotation            = "appprotect.f5.com/app-protect-enable"
 	appProtectSecurityLogEnableAnnotation = "appprotect.f5.com/app-protect-security-log-enable"
+	appProtectPolicyAnnotation            = "appprotect.f5.com/app-protect-policy"
+	appProtectSecurityLogAnnotation       = "appprotect.f5.com/app-protect-security-log"
+	appProtectSecurityLogDestAnnotation   = "appprotect.f5.com/app-protect-security-log-destination"
 	appProtectDosProtectedAnnotation      = "appprotectdos.f5.com/app-protect-dos-resource"
 	internalRouteAnnotation               = "nsm.nginx.com/internal-route"
 	websocketServicesAnnotation           = "nginx.org/websocket-services"
@@ -59,6 +67,25 @@ const (
 	grpcServicesAnnotation                = "nginx.org/grpc-services"
 	rewritesAnnotation                    = "nginx.org/rewrites"
 	stickyCookieServicesAnnotation        = "nginx.com/sticky-cookie-services"
+)
+
+const (
+	commaDelimiter     = ","
+	annotationValueFmt = `([^"$\\]|\\[^$])*`
+	pathFmt            = `/[^\s{};\\]*`
+	jwtTokenValueFmt   = "\\$" + annotationValueFmt
+)
+
+const (
+	annotationValueFmtErrMsg = `a valid annotation value must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
+	pathErrMsg               = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
+	jwtTokenValueFmtErrMsg   = `a valid annotation value must start with '$', have all '"' escaped, and must not contain any '$' or end with an unescaped '\'`
+)
+
+var (
+	pathRegexp                        = regexp.MustCompile("^" + pathFmt + "$")
+	validAnnotationValueRegex         = regexp.MustCompile("^" + annotationValueFmt + "$")
+	validJWTTokenAnnotationValueRegex = regexp.MustCompile("^" + jwtTokenValueFmt + "$")
 )
 
 type annotationValidationContext struct {
@@ -135,8 +162,12 @@ var (
 			validateRequiredAnnotation,
 			validateTimeAnnotation,
 		},
-		proxyHideHeadersAnnotation: {},
-		proxyPassHeadersAnnotation: {},
+		proxyHideHeadersAnnotation: {
+			validateHTTPHeadersAnnotation,
+		},
+		proxyPassHeadersAnnotation: {
+			validateHTTPHeadersAnnotation,
+		},
 		clientMaxBodySizeAnnotation: {
 			validateRequiredAnnotation,
 			validateOffsetAnnotation,
@@ -188,17 +219,31 @@ var (
 			validateRequiredAnnotation,
 			validateSizeAnnotation,
 		},
+		basicAuthSecretAnnotation: {
+			validateRequiredAnnotation,
+			validateSecretNameAnnotation,
+		},
+		basicAuthRealmAnnotation: {
+			validateRelatedAnnotation(basicAuthSecretAnnotation, validateNoop),
+			validateRealmAnnotation,
+		},
 		jwtRealmAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateJWTRealm,
 		},
 		jwtKeyAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateJWTKey,
 		},
 		jwtTokenAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateJWTTokenAnnotation,
 		},
 		jwtLoginURLAnnotation: {
 			validatePlusOnlyAnnotation,
+			validateJWTLoginURLAnnotation,
 		},
 		listenPortsAnnotation: {
 			validateRequiredAnnotation,
@@ -226,13 +271,33 @@ var (
 		},
 		appProtectEnableAnnotation: {
 			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
 		},
 		appProtectSecurityLogEnableAnnotation: {
 			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
 			validateRequiredAnnotation,
 			validateBoolAnnotation,
+		},
+		appProtectPolicyAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateQualifiedName,
+		},
+		appProtectSecurityLogAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateAppProtectSecurityLogAnnotation,
+		},
+		appProtectSecurityLogDestAnnotation: {
+			validateAppProtectOnlyAnnotation,
+			validatePlusOnlyAnnotation,
+			validateRequiredAnnotation,
+			validateAppProtectSecurityLogDestAnnotation,
 		},
 		appProtectDosProtectedAnnotation: {
 			validateAppProtectDosOnlyAnnotation,
@@ -268,6 +333,73 @@ var (
 	}
 	annotationNames = sortedAnnotationNames(annotationValidations)
 )
+
+func validateJWTLoginURLAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	name := context.value
+
+	u, err := url.Parse(name)
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, name, err.Error()))
+	}
+	var msg string
+	if u.Scheme == "" {
+		msg = "scheme required, please use the prefix http(s)://"
+		return append(allErrs, field.Invalid(context.fieldPath, name, msg))
+	}
+	if u.Host == "" {
+		msg = "hostname required"
+		return append(allErrs, field.Invalid(context.fieldPath, name, msg))
+	}
+
+	return allErrs
+}
+
+func validateJWTKey(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	for _, msg := range validation.IsDNS1123Subdomain(context.value) {
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+	}
+
+	return allErrs
+}
+
+func validateJWTRealm(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !validAnnotationValueRegex.MatchString(context.value) {
+		msg := validation.RegexError(annotationValueFmtErrMsg, annotationValueFmt, "My Realm", "Cafe App")
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+	}
+
+	return allErrs
+}
+
+func validateJWTTokenAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if !validJWTTokenAnnotationValueRegex.MatchString(context.value) {
+		msg := validation.RegexError(jwtTokenValueFmtErrMsg, jwtTokenValueFmt, "$http_token", "$cookie_auth_token")
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+	}
+
+	return allErrs
+}
+
+func validateHTTPHeadersAnnotation(context *annotationValidationContext) field.ErrorList {
+	var allErrs field.ErrorList
+	headers := strings.Split(context.value, commaDelimiter)
+
+	for _, header := range headers {
+		header = strings.TrimSpace(header)
+		for _, msg := range validation.IsHTTPHeaderName(header) {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, header, msg))
+		}
+	}
+	return allErrs
+}
 
 func sortedAnnotationNames(annotationValidations annotationValidationConfig) []string {
 	sortedNames := make([]string, 0)
@@ -308,6 +440,35 @@ func validateIngress(
 		allErrs = append(allErrs, validateMinionSpec(&ing.Spec, field.NewPath("spec"))...)
 	}
 
+	if isChallengeIngress(ing) {
+		allErrs = append(allErrs, validateChallengeIngress(&ing.Spec, field.NewPath("spec"))...)
+	}
+
+	return allErrs
+}
+
+func validateChallengeIngress(spec *networking.IngressSpec, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if spec.Rules == nil || len(spec.Rules) != 1 {
+		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("rules"), "challenge Ingress must have exactly 1 rule defined"))
+		return allErrs
+	}
+	r := spec.Rules[0]
+
+	if r.HTTP == nil || r.HTTP.Paths == nil || len(r.HTTP.Paths) != 1 {
+		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("rules.HTTP.Paths"), "challenge Ingress must have exactly 1 path defined"))
+		return allErrs
+	}
+
+	p := r.HTTP.Paths[0]
+
+	if p.Backend.Service == nil {
+		allErrs = append(allErrs, field.Required(fieldPath.Child("rules.HTTP.Paths[0].Backend.Service"), "challenge Ingress must have a Backend Service defined"))
+	}
+
+	if p.Backend.Service.Port.Name != "" {
+		allErrs = append(allErrs, field.Forbidden(fieldPath.Child("rules.HTTP.Paths[0].Backend.Service.Port.Name"), "challenge Ingress must have a Backend Service Port Number defined, not Name"))
+	}
 	return allErrs
 }
 
@@ -408,11 +569,17 @@ func validateLBMethodAnnotation(context *annotationValidationContext) field.Erro
 
 func validateServerTokensAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
+
 	if !context.isPlus {
 		if _, err := configs.ParseBool(context.value); err != nil {
 			return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a boolean"))
 		}
 	}
+
+	if !validAnnotationValueRegex.MatchString(context.value) {
+		allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, annotationValueFmtErrMsg))
+	}
+
 	return allErrs
 }
 
@@ -540,7 +707,7 @@ func validateServiceListAnnotation(context *annotationValidationContext) field.E
 	if len(unknownServices) > 0 {
 		errorMsg := fmt.Sprintf(
 			"must be a comma-separated list of services. The following services were not found: %s",
-			strings.Join(unknownServices, ","),
+			strings.Join(unknownServices, commaDelimiter),
 		)
 		return append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
 	}
@@ -550,15 +717,54 @@ func validateServiceListAnnotation(context *annotationValidationContext) field.E
 func validateStickyServiceListAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if _, err := configs.ParseStickyServiceList(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a semicolon-separated list of sticky services"))
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
 	}
 	return allErrs
 }
 
 func validateRewriteListAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if _, err := configs.ParseRewriteList(context.value); err != nil {
-		return append(allErrs, field.Invalid(context.fieldPath, context.value, "must be a semicolon-separated list of rewrites"))
+	var unknownServices []string
+	rewrites, err := configs.ParseRewriteList(context.value)
+	if err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
+	}
+	for rewrite := range rewrites {
+		if _, exists := context.specServices[rewrite]; !exists {
+			unknownServices = append(unknownServices, rewrite)
+		}
+	}
+	if len(unknownServices) > 0 {
+		errorMsg := fmt.Sprintf(
+			"The following services were not found: %s",
+			strings.Join(unknownServices, commaDelimiter),
+		)
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
+	}
+	return allErrs
+}
+
+func validateAppProtectSecurityLogAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	logConf := strings.Split(context.value, ",")
+	for _, logConf := range logConf {
+		err := validation.IsQualifiedName(logConf)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, "security log configuration resource name must be qualified name, e.g. namespace/name"))
+		}
+	}
+	return allErrs
+}
+
+func validateAppProtectSecurityLogDestAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	logDsts := strings.Split(context.value, ",")
+	for _, logDst := range logDsts {
+		err := ap_validation.ValidateAppProtectLogDestination(logDst)
+		if err != nil {
+			errorMsg := fmt.Sprintf("Error Validating App Protect Log Destination Config: %v", err)
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, errorMsg))
+		}
 	}
 	return allErrs
 }
@@ -568,6 +774,25 @@ func validateSnippetsAnnotation(context *annotationValidationContext) field.Erro
 
 	if !context.snippetsEnabled {
 		return append(allErrs, field.Forbidden(context.fieldPath, "snippet specified but snippets feature is not enabled"))
+	}
+	return allErrs
+}
+
+func validateSecretNameAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if msgs := validation.IsDNS1123Subdomain(context.value); msgs != nil {
+		for _, msg := range msgs {
+			allErrs = append(allErrs, field.Invalid(context.fieldPath, context.value, msg))
+		}
+		return allErrs
+	}
+	return allErrs
+}
+
+func validateRealmAnnotation(context *annotationValidationContext) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if err := validateIsValidRealm(context.value); err != nil {
+		return append(allErrs, field.Invalid(context.fieldPath, context.value, err.Error()))
 	}
 	return allErrs
 }
@@ -584,6 +809,19 @@ func validateIsTrue(v string) error {
 	}
 	if !b {
 		return errors.New("must be true")
+	}
+	return nil
+}
+
+func validateNoop(_ string) error {
+	return nil
+}
+
+var realmFmtRegexp = regexp.MustCompile(`^([^"$\\]|\\[^$])*$`)
+
+func validateIsValidRealm(v string) error {
+	if !realmFmtRegexp.MatchString(v) {
+		return errors.New(`a valid realm must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`)
 	}
 	return nil
 }
@@ -619,6 +857,7 @@ func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) fi
 		for _, path := range r.HTTP.Paths {
 			idxPath := idxRule.Child("http").Child("path").Index(i)
 
+			allErrs = append(allErrs, validatePath(path.Path, fieldPath)...)
 			allErrs = append(allErrs, validateBackend(&path.Backend, idxPath.Child("backend"))...)
 		}
 	}
@@ -631,6 +870,21 @@ func validateBackend(backend *networking.IngressBackend, fieldPath *field.Path) 
 
 	if backend.Resource != nil {
 		return append(allErrs, field.Forbidden(fieldPath.Child("resource"), "resource backends are not supported"))
+	}
+
+	return allErrs
+}
+
+func validatePath(path string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if path == "" {
+		return append(allErrs, field.Required(fieldPath, ""))
+	}
+
+	if !pathRegexp.MatchString(path) {
+		msg := validation.RegexError(pathErrMsg, pathFmt, "/", "/path", "/path/subpath-123")
+		return append(allErrs, field.Invalid(fieldPath, path, msg))
 	}
 
 	return allErrs

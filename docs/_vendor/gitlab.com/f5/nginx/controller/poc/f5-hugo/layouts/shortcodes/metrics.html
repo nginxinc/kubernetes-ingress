@@ -61,7 +61,7 @@
     {{ end }}
   </div>
 
-    <div class="col-md-5 d-none d-xl-block d-print-none nginx-toc align-top">
+    <div class="col-md-5 d-none d-xl-block d-print-none nginx-toc align-top"  style="position: sticky; top: 0rem; align-self: start;">
       <ul style="margin-bottom: 4px;">
         {{ range where $metricsRef "visible" true}}
         {{ $p := . }}

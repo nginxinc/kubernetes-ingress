@@ -50,6 +50,10 @@ spec:
       affinity:
 {{ toYaml .Values.controller.affinity | indent 8 }}
 {{- end }}
+{{- if .Values.controller.topologySpreadConstraints }}
+      topologySpreadConstraints:
+{{ toYaml .Values.controller.topologySpreadConstraints | indent 8 }}
+{{- end }}
 {{- if or (.Values.controller.volumes) (.Values.nginxServiceMesh.enable) }}
       volumes:
 {{- end }}
@@ -66,6 +70,7 @@ spec:
       priorityClassName: {{ .Values.controller.priorityClassName }}
 {{- end }}
       serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:
       - image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
@@ -97,6 +102,7 @@ spec:
         securityContext:
           allowPrivilegeEscalation: true
           runAsUser: 101 #nginx
+          runAsNonRoot: true
           capabilities:
             drop:
             - ALL
@@ -121,6 +127,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+{{- if .Values.nginxServiceMesh.enable }}
+        - name: POD_SERVICEACCOUNT
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.serviceAccountName
+{{- end }}
         args:
           - -nginx-plus={{ .Values.controller.nginxplus }}
           - -nginx-reload-timeout={{ .Values.controller.nginxReloadTimeout }}
@@ -176,11 +188,13 @@ spec:
           - -prometheus-tls-secret={{ .Values.prometheus.secret }}
           - -enable-custom-resources={{ .Values.controller.enableCustomResources }}
           - -enable-snippets={{ .Values.controller.enableSnippets }}
+          - -include-year={{ .Values.controller.includeYear }}
 {{- if .Values.controller.enableCustomResources }}
           - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}
           - -enable-preview-policies={{ .Values.controller.enablePreviewPolicies }}
           - -enable-cert-manager={{ .Values.controller.enableCertManager }}
           - -enable-oidc={{ .Values.controller.enableOIDC }}
+          - -enable-external-dns={{ .Values.controller.enableExternalDNS }}
 {{- if .Values.controller.globalConfiguration.create }}
           - -global-configuration=$(POD_NAMESPACE)/{{ include "nginx-ingress.name" . }}
 {{- end }}
@@ -198,4 +212,11 @@ spec:
 {{- if .Values.controller.initContainers }}
       initContainers: {{ toYaml .Values.controller.initContainers | nindent 8 }}
 {{- end }}
+{{- end }}
+{{- if .Values.controller.strategy }}
+  strategy:
+{{ toYaml .Values.controller.strategy | indent 4 }}
+{{- end }}
+{{- if .Values.controller.minReadySeconds }}
+  minReadySeconds: {{ .Values.controller.minReadySeconds }}
 {{- end }}

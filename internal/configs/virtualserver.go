@@ -666,6 +666,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			LimitReqOptions:           policiesCfg.LimitReqOptions,
 			LimitReqs:                 policiesCfg.LimitReqs,
 			JWTAuth:                   policiesCfg.JWTAuth,
+			BasicAuth:                 policiesCfg.BasicAuth,
 			IngressMTLS:               policiesCfg.IngressMTLS,
 			EgressMTLS:                policiesCfg.EgressMTLS,
 			OIDC:                      vsc.oidcPolCfg.oidc,
@@ -688,6 +689,7 @@ type policiesCfg struct {
 	LimitReqZones   []version2.LimitReqZone
 	LimitReqs       []version2.LimitReq
 	JWTAuth         *version2.JWTAuth
+	BasicAuth       *version2.BasicAuth
 	IngressMTLS     *version2.IngressMTLS
 	EgressMTLS      *version2.EgressMTLS
 	OIDC            bool
@@ -762,6 +764,41 @@ func (p *policiesCfg) addRateLimitConfig(
 		if curOptions.RejectCode != p.LimitReqOptions.RejectCode {
 			res.addWarningf("RateLimit policy %s with limit request option rejectCode='%v' is overridden to rejectCode='%v' by the first policy reference in this context", polKey, curOptions.RejectCode, p.LimitReqOptions.RejectCode)
 		}
+	}
+	return res
+}
+
+func (p *policiesCfg) addBasicAuthConfig(
+	basicAuth *conf_v1.BasicAuth,
+	polKey string,
+	polNamespace string,
+	secretRefs map[string]*secrets.SecretReference,
+) *validationResults {
+	res := newValidationResults()
+	if p.BasicAuth != nil {
+		res.addWarningf("Multiple basic auth policies in the same context is not valid. Basic auth policy %s will be ignored", polKey)
+		return res
+	}
+
+	basicSecretKey := fmt.Sprintf("%v/%v", polNamespace, basicAuth.Secret)
+	secretRef := secretRefs[basicSecretKey]
+	var secretType api_v1.SecretType
+	if secretRef.Secret != nil {
+		secretType = secretRef.Secret.Type
+	}
+	if secretType != "" && secretType != secrets.SecretTypeHtpasswd {
+		res.addWarningf("Basic Auth policy %s references a secret %s of a wrong type '%s', must be '%s'", polKey, basicSecretKey, secretType, secrets.SecretTypeHtpasswd)
+		res.isError = true
+		return res
+	} else if secretRef.Error != nil {
+		res.addWarningf("Basic Auth policy %s references an invalid secret %s: %v", polKey, basicSecretKey, secretRef.Error)
+		res.isError = true
+		return res
+	}
+
+	p.BasicAuth = &version2.BasicAuth{
+		Secret: secretRef.Path,
+		Realm:  basicAuth.Realm,
 	}
 	return res
 }
@@ -991,13 +1028,14 @@ func (p *policiesCfg) addOIDCConfig(
 		}
 
 		oidcPolCfg.oidc = &version2.OIDC{
-			AuthEndpoint:  oidc.AuthEndpoint,
-			TokenEndpoint: oidc.TokenEndpoint,
-			JwksURI:       oidc.JWKSURI,
-			ClientID:      oidc.ClientID,
-			ClientSecret:  string(clientSecret),
-			Scope:         scope,
-			RedirectURI:   redirectURI,
+			AuthEndpoint:   oidc.AuthEndpoint,
+			TokenEndpoint:  oidc.TokenEndpoint,
+			JwksURI:        oidc.JWKSURI,
+			ClientID:       oidc.ClientID,
+			ClientSecret:   string(clientSecret),
+			Scope:          scope,
+			RedirectURI:    redirectURI,
+			ZoneSyncLeeway: generateIntFromPointer(oidc.ZoneSyncLeeway, 200),
 		}
 		oidcPolCfg.key = polKey
 	}
@@ -1027,8 +1065,8 @@ func (p *policiesCfg) addWAFConfig(
 
 	if waf.ApPolicy != "" {
 		apPolKey := waf.ApPolicy
-		hasNamepace := strings.Contains(apPolKey, "/")
-		if !hasNamepace {
+		hasNamespace := strings.Contains(apPolKey, "/")
+		if !hasNamespace {
 			apPolKey = fmt.Sprintf("%v/%v", polNamespace, apPolKey)
 		}
 
@@ -1041,24 +1079,43 @@ func (p *policiesCfg) addWAFConfig(
 		}
 	}
 
-	if waf.SecurityLog != nil {
+	if waf.SecurityLog != nil && waf.SecurityLogs == nil {
+		glog.V(2).Info("the field securityLog is deprecated nad will be removed in future releases. Use field securityLogs instead")
 		p.WAF.ApSecurityLogEnable = true
 
 		logConfKey := waf.SecurityLog.ApLogConf
-		hasNamepace := strings.Contains(logConfKey, "/")
-		if !hasNamepace {
+		hasNamespace := strings.Contains(logConfKey, "/")
+		if !hasNamespace {
 			logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
 		}
 
 		if logConfPath, ok := apResources.LogConfs[logConfKey]; ok {
 			logDest := generateString(waf.SecurityLog.LogDest, "syslog:server=localhost:514")
-			p.WAF.ApLogConf = fmt.Sprintf("%s %s", logConfPath, logDest)
+			p.WAF.ApLogConf = []string{fmt.Sprintf("%s %s", logConfPath, logDest)}
 		} else {
 			res.addWarningf("WAF policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
 			res.isError = true
 		}
 	}
 
+	if waf.SecurityLogs != nil {
+		p.WAF.ApSecurityLogEnable = true
+		p.WAF.ApLogConf = []string{}
+		for _, loco := range waf.SecurityLogs {
+			logConfKey := loco.ApLogConf
+			hasNamepace := strings.Contains(logConfKey, "/")
+			if !hasNamepace {
+				logConfKey = fmt.Sprintf("%v/%v", polNamespace, logConfKey)
+			}
+			if logConfPath, ok := apResources.LogConfs[logConfKey]; ok {
+				logDest := generateString(loco.LogDest, "syslog:server=localhost:514")
+				p.WAF.ApLogConf = append(p.WAF.ApLogConf, fmt.Sprintf("%s %s", logConfPath, logDest))
+			} else {
+				res.addWarningf("WAF policy %s references an invalid or non-existing log config %s", polKey, logConfKey)
+				res.isError = true
+			}
+		}
+	}
 	return res
 }
 
@@ -1095,6 +1152,8 @@ func (vsc *virtualServerConfigurator) generatePolicies(
 				)
 			case pol.Spec.JWTAuth != nil:
 				res = config.addJWTAuthConfig(pol.Spec.JWTAuth, key, polNamespace, policyOpts.secretRefs)
+			case pol.Spec.BasicAuth != nil:
+				res = config.addBasicAuthConfig(pol.Spec.BasicAuth, key, polNamespace, policyOpts.secretRefs)
 			case pol.Spec.IngressMTLS != nil:
 				res = config.addIngressMTLSConfig(
 					pol.Spec.IngressMTLS,
@@ -1187,6 +1246,7 @@ func addPoliciesCfgToLocation(cfg policiesCfg, location *version2.Location) {
 	location.LimitReqOptions = cfg.LimitReqOptions
 	location.LimitReqs = cfg.LimitReqs
 	location.JWTAuth = cfg.JWTAuth
+	location.BasicAuth = cfg.BasicAuth
 	location.EgressMTLS = cfg.EgressMTLS
 	location.OIDC = cfg.OIDC
 	location.WAF = cfg.WAF
@@ -1575,7 +1635,8 @@ type errorPageDetails struct {
 func generateLocation(path string, upstreamName string, upstream conf_v1.Upstream, action *conf_v1.Action,
 	cfgParams *ConfigParams, errorPages errorPageDetails, internal bool, proxySSLName string,
 	originalPath string, locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string,
-	vsrNamespace string, vscWarnings Warnings) (version2.Location, *version2.ReturnLocation) {
+	vsrNamespace string, vscWarnings Warnings,
+) (version2.Location, *version2.ReturnLocation) {
 	locationSnippets := generateSnippets(enableSnippets, locSnippets, cfgParams.LocationSnippets)
 
 	if action.Redirect != nil {
@@ -1674,7 +1735,8 @@ func generateProxyAddHeaders(proxy *conf_v1.ActionProxy) []version2.AddHeader {
 
 func generateLocationForProxying(path string, upstreamName string, upstream conf_v1.Upstream,
 	cfgParams *ConfigParams, errorPages []conf_v1.ErrorPage, internal bool, errPageIndex int,
-	proxySSLName string, proxy *conf_v1.ActionProxy, originalPath string, locationSnippets []string, isVSR bool, vsrName string, vsrNamespace string) version2.Location {
+	proxySSLName string, proxy *conf_v1.ActionProxy, originalPath string, locationSnippets []string, isVSR bool, vsrName string, vsrNamespace string,
+) version2.Location {
 	return version2.Location{
 		Path:                     generatePath(path),
 		Internal:                 internal,
@@ -1741,7 +1803,8 @@ func generateLocationForRedirect(
 }
 
 func generateLocationForReturn(path string, locationSnippets []string, actionReturn *conf_v1.ActionReturn,
-	retLocIndex int) (version2.Location, *version2.ReturnLocation) {
+	retLocIndex int,
+) (version2.Location, *version2.ReturnLocation) {
 	defaultType := actionReturn.Type
 	if defaultType == "" {
 		defaultType = "text/plain"
@@ -1873,7 +1936,8 @@ func generateDefaultSplitsConfig(
 
 func generateMatchesConfig(route conf_v1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream,
 	variableNamer *variableNamer, index int, scIndex int, cfgParams *ConfigParams, errorPages errorPageDetails,
-	locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string, vscWarnings Warnings) routingCfg {
+	locSnippets string, enableSnippets bool, retLocIndex int, isVSR bool, vsrName string, vsrNamespace string, vscWarnings Warnings,
+) routingCfg {
 	// Generate maps
 	var maps []version2.Map
 
@@ -2101,7 +2165,8 @@ func getNameForSourceForMatchesRouteMapFromCondition(condition conf_v1.Condition
 }
 
 func (vsc *virtualServerConfigurator) generateSSLConfig(owner runtime.Object, tls *conf_v1.TLS, namespace string,
-	secretRefs map[string]*secrets.SecretReference, cfgParams *ConfigParams) *version2.SSL {
+	secretRefs map[string]*secrets.SecretReference, cfgParams *ConfigParams,
+) *version2.SSL {
 	if tls == nil {
 		return nil
 	}

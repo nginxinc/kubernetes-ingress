@@ -417,7 +417,7 @@ func TestValidateTransportListener(t *testing.T) {
 
 		allErrs := tsv.validateTransportListener(test.listener, field.NewPath("listener"))
 		if len(allErrs) > 0 {
-			t.Errorf("validateTransportListener() returned errors %v for valid input %+v when tlsPassithrough is %v", allErrs, test.listener, test.tlsPassthrough)
+			t.Errorf("validateTransportListener() returned errors %v for valid input %+v when tlsPassthrough is %v", allErrs, test.listener, test.tlsPassthrough)
 		}
 	}
 }

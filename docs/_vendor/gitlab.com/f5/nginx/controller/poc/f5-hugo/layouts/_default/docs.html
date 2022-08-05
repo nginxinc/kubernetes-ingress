@@ -4,7 +4,13 @@
     {{ partial "sidebar.html" . }}
   </nav>
   
+  {{if (.Params.catalog) }}
   <main class="content col-xl-6 d-block align-top" role="main">
+  {{ else if and (gt .WordCount 200 ) (.Params.toc) }}
+  <main class="content col-xl-6 d-block align-top" role="main">
+  {{ else }}
+  <main class="content col-xl-9 d-block align-top" role="main">
+  {{ end }}
     
     <h1>{{ .Title }}</h1>
 

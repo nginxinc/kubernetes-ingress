@@ -22,7 +22,7 @@ Create the application deployment, service and secret:
 $ kubectl apply -f secure-app.yaml
 ```
 
-## Step 2 - Deploy the Egress MLTS Secret
+## Step 2 - Deploy the Egress MTLS Secret
 
 Create a secret with the name `egress-mtls-secret` that will be used for authentication to application:
 ```

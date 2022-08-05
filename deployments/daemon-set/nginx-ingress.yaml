@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       containers:
-      - image: nginx/nginx-ingress:2.1.2
+      - image: nginx/nginx-ingress:2.3.0
         imagePullPolicy: IfNotPresent
         name: nginx-ingress
         ports:
@@ -37,6 +37,13 @@ spec:
            path: /nginx-ready
            port: readiness-port
          periodSeconds: 1
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+         #limits:
+         #  cpu: "1"
+         #  memory: "1Gi"
         securityContext:
           allowPrivilegeEscalation: true
           runAsUser: 101 #nginx
@@ -57,6 +64,7 @@ spec:
         args:
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
           - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
+         #- -include-year
          #- -v=3 # Enables extensive logging. Useful for troubleshooting.
          #- -report-ingress-status
          #- -external-service=nginx-ingress

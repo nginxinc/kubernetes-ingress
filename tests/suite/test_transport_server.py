@@ -66,7 +66,7 @@ class TestTransportServer:
             and "limit_conn addr 1;" in conf # server-snippets
         )
 
-    def test_configurble_timeout_directives(
+    def test_configurable_timeout_directives(
         self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
         """

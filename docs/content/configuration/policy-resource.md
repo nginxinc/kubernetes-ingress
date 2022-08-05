@@ -13,7 +13,7 @@ The Policy resource allows you to configure features like access control and rat
 
 The resource is implemented as a [Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.2/examples/custom-resources/access-control).
+This document is the reference documentation for the Policy resource. An example of a Policy for access control is available in our [GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.3.0/examples/custom-resources/access-control).
 
 ## Prerequisites
 
@@ -39,6 +39,7 @@ spec:
 |``accessControl`` | The access control policy based on the client IP address. | [accessControl](#accesscontrol) | No |
 |``ingressClassName`` | Specifies which Ingress Controller must handle the Policy resource. | ``string`` | No |
 |``rateLimit`` | The rate limit policy controls the rate of processing requests per a defined key. | [rateLimit](#ratelimit) | No |
+|``basicAuth`` | The basic auth policy configures NGINX to authenticate client requests using HTTP Basic authentication credentials. | [basicAuth](#basic-auth) | No |
 |``jwt`` | The JWT policy configures NGINX Plus to authenticate client requests using JSON Web Tokens. | [jwt](#jwt) | No |
 |``ingressMTLS`` | The IngressMTLS policy configures client certificate verification. | [ingressMTLS](#ingressmtls) | No |
 |``egressMTLS`` | The EgressMTLS policy configures upstreams authentication and certificate verification. | [egressMTLS](#egressmtls) | No |
@@ -115,7 +116,7 @@ rateLimit:
 |``delay`` | The delay parameter specifies a limit at which excessive requests become delayed. If not set all excessive requests are delayed. | ``int`` | No |
 |``noDelay`` | Disables the delaying of excessive requests while requests are being limited. Overrides ``delay`` if both are set. | ``bool`` | No |
 |``burst`` | Excessive requests are delayed until their number exceeds the ``burst`` size, in which case the request is terminated with an error. | ``int`` | No |
-|``dryRun`` | Enables the dry run mode. In this mode, the rate limit is not actually applied, but the the number of excessive requests is accounted as usual in the shared memory zone. | ``bool`` | No |
+|``dryRun`` | Enables the dry run mode. In this mode, the rate limit is not actually applied, but the number of excessive requests is accounted as usual in the shared memory zone. | ``bool`` | No |
 |``logLevel`` | Sets the desired logging level for cases when the server refuses to process requests due to rate exceeding, or delays request processing. Allowed values are ``info``, ``notice``, ``warn`` or ``error``. Default is ``error``. | ``string`` | No |
 |``rejectCode`` | Sets the status code to return in response to rejected requests. Must fall into the range ``400..599``. Default is ``503``. | ``string`` | No |
 {{% /table %}}
@@ -131,6 +132,36 @@ policies:
 ```
 
 When you reference more than one rate limit policy, the Ingress Controller will configure NGINX to use all referenced rate limits. When you define multiple policies, each additional policy inherits the `dryRun`, `logLevel`, and `rejectCode` parameters from the first policy referenced (`rate-limit-policy-one`, in the example above).
+
+### BasicAuth
+
+The basic auth policy configures NGINX to authenticate cllient requests using the [HTTP Basic authentication scheme](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
+
+For example, the following policy will reject all requests that do not include a valid username/password combination in the HTTP header `Authentication`
+```yaml
+basicAuth:
+  secret: htpasswd-secret
+  realm: "My API"
+```
+
+> Note: The feature is implemented using the NGINX [ngx_http_auth_basic_module](https://nginx.org/en/docs/http/ngx_http_auth_basic_module.html).
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``secret`` | The name of the Kubernetes secret that stores the Htpasswd configuration. It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/htpasswd``, and the config must be stored in the secret under the key ``htpasswd``, otherwise the secret will be rejected as invalid. | ``string`` | Yes |
+|``realm`` | The realm for the basic authentication. | ``string`` | No |
+{{% /table %}}
+
+#### BasicAuth Merging Behavior
+
+A VirtualServer/VirtualServerRoute can reference multiple basic auth policies. However, only one can be applied. Every subsequent reference will be ignored. For example, here we reference two policies:
+```yaml
+policies:
+- name: basic-auth-policy-one
+- name: basic-auth-policy-two
+```
+In this example the Ingress Controller will use the configuration from the first policy reference `basic-auth-policy-one`, and ignores `basic-auth-policy-two`.
 
 ### JWT
 
@@ -297,7 +328,8 @@ NGINX Plus will pass the ID of an authenticated user to the backend in the HTTP 
 
 #### Prerequisites
 
-For the OIDC feature to work, it is necessary to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/), otherwise NGINX Plus will fail to reload. Additionally, it is necessary to configure a resolver, so that NGINX Plus can resolve the IDP authorization endpoint. For an example of the necessary configuration see the documentation [here](https://github.com/nginxinc/kubernetes-ingress/blob/v2.1.2/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
+In order to use OIDC, you need to enable [zone synchronization](https://docs.nginx.com/nginx/admin-guide/high-availability/zone_sync/). If you don't set up zone synchronization, NGINX Plus will fail to reload.
+You also need to configure a resolver, which NGINX Plus will use to resolve the IDP authorization endpoint. You can find an example configuration [in our GitHub repo](https://github.com/nginxinc/kubernetes-ingress/blob/v2.3.0/examples/custom-resources/oidc#step-7---configure-nginx-plus-zone-synchronization-and-resolver).
 
 > **Note**: The configuration in the example doesn't enable TLS and the synchronization between the replica happens in clear text. This could lead to the exposure of tokens.
 
@@ -313,8 +345,9 @@ The OIDC policy defines a few internal locations that can't be customized: `/_jw
 |``authEndpoint`` | URL for the authorization endpoint provided by your OpenID Connect provider. | ``string`` | Yes |
 |``tokenEndpoint`` | URL for the token endpoint provided by your OpenID Connect provider. | ``string`` | Yes |
 |``jwksURI`` | URL for the JSON Web Key Set (JWK) document provided by your OpenID Connect provider. | ``string`` | Yes |
-|``scope`` | List of OpenID Connect scopes. Possible values are ``openid``, ``profile``, ``email``, ``address` and ``phone``. The scope ``openid`` always needs to be present and others can be added concatenating them with a ``+`` sign, for example ``openid+profile+email``. The default is ``openid``. | ``string`` | No |
+|``scope`` | List of OpenID Connect scopes. Possible values are ``openid``, ``profile``, ``email``, ``address`` and ``phone``. The scope ``openid`` always needs to be present and others can be added concatenating them with a ``+`` sign, for example ``openid+profile+email``. The default is ``openid``. | ``string`` | No |
 |``redirectURI`` | Allows overriding the default redirect URI. The default is ``/_codexch``. | ``string`` | No |
+|``zoneSyncLeeway`` | Specifies the maximum timeout in milliseconds for synchronizing ID tokens and shared values between Ingress Controller pods. The default is ``200``. | ``int`` | No |
 {{% /table %}}
 
 > **Note**: Only one OIDC policy can be referenced in a VirtualServer and its VirtualServerRoutes. However, the same policy can still be applied to different routes in the VirtualServer and VirtualServerRoutes.
@@ -354,17 +387,20 @@ For `kubectl get` and similar commands, you can also use the short name `pol` in
 
 The WAF policy configures NGINX Plus to secure client requests using App Protect policies.
 
-For example, the following policy will enable the referenced APPolicy and APLogConf with the configured log destination:
+For example, the following policy will enable the referenced APPolicy. You can configure multiple APLogConfs with log destinations:
 ```yaml
 waf:
   enable: true
   apPolicy: "default/dataguard-alarm"
-  securityLog:
-    enable: true
+  securityLogs:
+  - enable: true
     apLogConf: "default/logconf"
     logDest: "syslog:server=syslog-svc.default:514"
+  - enable: true
+    apLogConf: "default/logconf"
+    logDest: "syslog:server=syslog-svc-secondary.default:514"
 ```
-
+> Note: The field `waf.securityLog` is deprecated and will be removed in future releases.It will be ignored if `waf.securityLogs` is populated.
 > Note: The feature is implemented using the NGINX Plus [NGINX App Protect Module](https://docs.nginx.com/nginx-app-protect/configuration/).
 
 {{% table %}}
@@ -402,7 +438,7 @@ You can apply policies to both VirtualServer and VirtualServerRoute resources. F
       tls:
         secret: cafe-secret
       policies: # spec policies
-      - policy1
+      - name: policy1
       upstreams:
       - name: coffee
         service: coffee-svc

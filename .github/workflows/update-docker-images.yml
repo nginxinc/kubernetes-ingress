@@ -27,7 +27,6 @@ jobs:
       versions: ${{ steps.versions.outputs.matrix }}
       sha_short: ${{ steps.vars.outputs.sha_short }}
       sha_long: ${{ steps.vars.outputs.sha_long }}
-      go_version: ${{ steps.vars.outputs.go_version }}
       k8s_version: ${{ steps.vars.outputs.k8s_version }}
     steps:
       - name: Checkout Repository
@@ -47,7 +46,7 @@ jobs:
         id: versions
         run: |
           nginx=library/$(grep -m1 "FROM nginx:" < build/Dockerfile | awk -F" " '{print $2}')
-          nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
+          nginx_alpine=library/nginx:$(grep -m1 "FROM.*nginx:.*alpine" < build/Dockerfile | awk -F"[ :]" '{print $3}')
           nginx_ubi=$(grep "FROM redhat" < build/Dockerfile | awk -F" " '{print $2}')
           echo "::set-output name=matrix::[{\"version\": \"${nginx}\", \"distro\": \"debian\"}, {\"version\": \"${nginx_alpine}\", \"distro\": \"alpine\"}, {\"version\": \"${nginx_ubi}\", \"distro\": \"ubi\"}]"
       - name: Set other variables
@@ -55,8 +54,7 @@ jobs:
         run: |
           echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
           echo "::set-output name=sha_long::$(git rev-parse HEAD)"
-          echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
-          echo "::set-output name=k8s_version::$(grep "K8S_VERSION:" .github/workflows/ci.yml | awk -F" " '{print $2}')"
+          echo "::set-output name=k8s_version::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
 
   check:
     name: Check if updates are needed
@@ -96,24 +94,16 @@ jobs:
         with:
           fetch-depth: 0
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
-      - name: Cache Go build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.variables.outputs.go_version }}
+          go-version-file: go.mod
+          cache: true
       - name: Determine GOPATH
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: build --rm-dist --id kubernetes-ingress
@@ -138,19 +128,11 @@ jobs:
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
           - image: alpine
-            marker: vsr
+            marker: "vs" # add vsr after 2.3.1/2.4 release
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
-          - image: alpine-opentracing
-            marker: policies
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-            needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
-          - image: opentracing
-            marker: vs
-            platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
-            needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
           - image: ubi
-            marker: ts
+            marker: "policies" # add ts after 2.3.1/2.4 release
             platforms: linux/arm64,linux/amd64,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
     steps:
@@ -180,25 +162,25 @@ jobs:
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
         if: always()
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
         with:
           platforms: arm,arm64,ppc64le,s390x
         if: ${{ matrix.needs-updating == 'true' }}
       - name: DockerHub Login
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Login to Public ECR
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: public.ecr.aws
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -213,15 +195,15 @@ jobs:
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: |
-            nginx/nginx-ingress
-            ghcr.io/nginxinc/kubernetes-ingress
-            public.ecr.aws/nginx/nginx-ingress
+            name=nginx/nginx-ingress
+            name=ghcr.io/nginxinc/kubernetes-ingress
+            name=public.ecr.aws/nginx/nginx-ingress
           flavor: |
             latest=true
-            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
+            suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }},onlatest=true
           tags: |
             type=raw,value=${{ needs.variables.outputs.kic-tag }}
             type=raw,value=${{ steps.tag.outputs.short }}
@@ -230,10 +212,15 @@ jobs:
             org.opencontainers.image.documentation=https://docs.nginx.com/nginx-ingress-controller
             org.opencontainers.image.vendor=NGINX Inc <kubernetes@nginx.com>
             org.opencontainers.image.revision=${{ needs.variables.outputs.sha_long }}
+            io.artifacthub.package.readme-url=https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/main/README.md
+            io.artifacthub.package.logo-url=https://docs.nginx.com/nginx-ingress-controller/images/icons/NGINX-Ingress-Controller-product-icon.svg
+            io.artifacthub.package.maintainers=[{"name":"NGINX Inc","email":"kubernetes@nginx.com"}]
+            io.artifacthub.package.license=Apache-2.0
+            io.artifacthub.package.keywords=kubernetes,ingress,nginx,controller
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Push to Dockerhub
         id: push
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
@@ -245,12 +232,13 @@ jobs:
           platforms: ${{ matrix.platforms }}
           push: true
           no-cache: true
+          pull: true
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.2
+        uses: aquasecurity/trivy-action@0.6.2
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -259,7 +247,7 @@ jobs:
           ignore-unfixed: 'true'
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v2
         continue-on-error: true
         with:
           sarif_file: 'trivy-results-${{ matrix.image }}.sarif'

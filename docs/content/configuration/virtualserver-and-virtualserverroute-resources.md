@@ -12,7 +12,7 @@ docs: "DOCS-599"
 
 The VirtualServer and VirtualServerRoute resources are new load balancing configuration, introduced in release 1.5 as an alternative to the Ingress resource. The resources enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
-This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.2/examples/custom-resources) folder in our GitHub repo.
+This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources) folder in our GitHub repo.
 
 ## VirtualServer Specification
 
@@ -53,11 +53,12 @@ spec:
 | ---| ---| ---| --- |
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
 |``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No |
+|``externalDNS`` | The externalDNS configuration for a VirtualServer. | [externalDNS](#virtualserverexternaldns) | No |
 |``dos`` | A reference to a DosProtectedResource, setting this enables DOS protection of the VirtualServer. | ``string`` | No |
 |``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
 |``routes`` | A list of routes. | [[]route](#virtualserver-route) | No |
-|``ingressClassName`` | Specifies which Ingress controller must handle the VirtualServer resource. | ``string`` | No |
+|``ingressClassName`` | Specifies which Ingress Controller must handle the VirtualServer resource. | ``string`` | No |
 |``http-snippets`` | Sets a custom snippet in the http context. | ``string`` | No |
 |``server-snippets`` | Sets a custom snippet in server context. Overrides the ``server-snippets`` ConfigMap key. | ``string`` | No |
 {{% /table %}}
@@ -98,7 +99,7 @@ basedOn: scheme
 
 ### VirtualServer.TLS.CertManager
 
-The cert-manager field configures x509 automated Certificate management for VirtualServer resources using cert-manager (cert-manager.io). Please see the [cert-manager configuration documentation](https://cert-manager.io/docs/configuration/) for more information on deploying and configuring Issuers (Please note that ACME Issuers are not yet supported). Example:
+The cert-manager field configures x509 automated Certificate management for VirtualServer resources using cert-manager (cert-manager.io). Please see the [cert-manager configuration documentation](https://cert-manager.io/docs/configuration/) for more information on deploying and configuring Issuers. Example:
 ```yaml
 cert-manager:
   cluster-issuer: "my-issuer-name"
@@ -115,6 +116,40 @@ cert-manager:
 |``duration`` | This field allows you to configure spec.duration field for the Certificate to be generated. Must be specified using a [Go time.Duration](https://pkg.go.dev/time#ParseDuration) string format, which does not allow the d (days) suffix. You must specify these values using s, m, and h suffixes instead. | ``string`` | No |
 |``renew-before`` |  this annotation allows you to configure spec.renewBefore field for the Certificate to be generated. Must be specified using a [Go time.Duration](https://pkg.go.dev/time#ParseDuration) string format, which does not allow the d (days) suffix. You must specify these values using s, m, and h suffixes instead. | ``string`` | No |
 |``usages`` |  This field allows you to configure spec.usages field for the Certificate to be generated. Pass a string with comma-separated values i.e. ``key agreement,digital signature, server auth``. An exhaustive list of supported key usages can be found in the [the cert-manager api documentation](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.KeyUsage). | ``string`` | No |
+{{% /table %}}
+
+### VirtualServer.ExternalDNS
+
+The externalDNS field configures controlling DNS records dynamically for VirtualServer resources using [ExternalDNS](https://github.com/kubernetes-sigs/external-dns). Please see the [ExternalDNS configuration documentation](https://kubernetes-sigs.github.io/external-dns/v0.12.0/) for more information on deploying and configuring ExternalDNS and Providers. Example:
+```yaml
+enable: true
+```
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``enable`` | Enables ExternalDNS integration for a VirtualServer resource. The default is ``false``. | ``string`` | No |
+|``labels`` | Configure labels to be applied to the Endpoint resources that will be consumed by ExternalDNS. | ``map[string]string`` | No |
+|``providerSpecific`` | Configure provider specific properties which holds the name and value of a configuration which is specific to individual DNS providers. | [[]ProviderSpecific](#virtualserverexternaldnsproviderspecific) | No |
+|``recordTTL`` | TTL for the DNS record. This defaults to 0 if not defined. See [the ExternalDNS TTL documentation for provider-specific defaults](https://kubernetes-sigs.github.io/external-dns/v0.12.0/ttl/#providers) | ``int64`` | No |
+|``recordType`` | The record Type that should be created, e.g. "A", "AAAA", "CNAME". This is automatically computed based on the external endpoints if not defined. | ``string`` | No |
+{{% /table %}}
+
+### VirtualServer.ExternalDNS.ProviderSpecific
+
+The providerSpecific field of the externalDNS block allows the specification of provider specific properties which is a list of key value pairs of configurations which are specific to individual DNS providers. Example:
+```yaml
+- name: my-name
+  value: my-value
+- name: my-name2
+  value: my-value2
+```
+
+{{% table %}}
+|Field | Description | Type | Required |
+| ---| ---| ---| --- |
+|``name`` | The name of the key value pair. | ``string`` | Yes |
+|``value`` | The value of the key value pair. | ``string`` | Yes |
 {{% /table %}}
 
 ### VirtualServer.Policy
@@ -217,7 +252,7 @@ Note that each subroute must have a `path` that starts with the same prefix (her
 |``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed. Must be the same as the ``host`` of the VirtualServer that references this resource. | ``string`` | Yes |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
 |``subroutes`` | A list of subroutes. | [[]subroute](#virtualserverroutesubroute) | No |
-|``ingressClassName`` | Specifies which Ingress controller must handle the VirtualServerRoute resource. Must be the same as the ``ingressClassName`` of the VirtualServer that references this resource. | ``string``_ | No |
+|``ingressClassName`` | Specifies which Ingress Controller must handle the VirtualServerRoute resource. Must be the same as the ``ingressClassName`` of the VirtualServer that references this resource. | ``string``_ | No |
 {{% /table %}}
 
 ### VirtualServerRoute.Subroute
@@ -277,7 +312,7 @@ tls:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``upstream-123`` are valid. The name must be unique among all upstreams of the resource. | ``string`` | Yes |
-|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.2/examples/externalname-services#prerequisites) ). | ``string`` | Yes |
+|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/externalname-services#prerequisites) ). | ``string`` | Yes |
 |``subselector`` | Selects the pods within the service using label keys and values. By default, all pods of the service are selected. Note: the specified labels are expected to be present in the pods when they are created. If the pod labels are updated, the Ingress Controller will not see that change until the number of the pods is changed. | ``map[string]string`` | No |
 |``use-cluster-ip`` | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as the Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP. | ``boolean`` | No |
 |``port`` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65535``. | ``uint16`` | Yes |
@@ -552,7 +587,7 @@ proxy:
 |``upstream`` | The name of the upstream which the requests will be proxied to. The upstream with that name must be defined in the resource. | ``string`` | Yes |
 |``requestHeaders`` | The request headers modifications. | [action.Proxy.RequestHeaders](#actionproxyrequestheaders) | No |
 |``responseHeaders`` | The response headers modifications. | [action.Proxy.ResponseHeaders](#actionproxyresponseheaders) | No |
-|``rewritePath`` | The rewritten URI. If the route path is a regular expression (starts with ~), the rewritePath can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v2.1.2/examples/custom-resources/rewrites) example. | ``string`` | No |
+|``rewritePath`` | The rewritten URI. If the route path is a regular expression -- starts with `~` -- the `rewritePath` can include capture groups with ``$1-9``. For example `$1` for the first group, and so on. For more information, check the [rewrite](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/rewrites) example. | ``string`` | No |
 {{% /table %}}
 
 ### Action.Proxy.RequestHeaders

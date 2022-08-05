@@ -68,6 +68,7 @@ type Server struct {
 	LimitReqOptions           LimitReqOptions
 	LimitReqs                 []LimitReq
 	JWTAuth                   *JWTAuth
+	BasicAuth                 *BasicAuth
 	IngressMTLS               *IngressMTLS
 	EgressMTLS                *EgressMTLS
 	OIDC                      *OIDC
@@ -109,13 +110,14 @@ type EgressMTLS struct {
 
 // OIDC holds OIDC configuration data.
 type OIDC struct {
-	AuthEndpoint  string
-	ClientID      string
-	ClientSecret  string
-	JwksURI       string
-	Scope         string
-	TokenEndpoint string
-	RedirectURI   string
+	AuthEndpoint   string
+	ClientID       string
+	ClientSecret   string
+	JwksURI        string
+	Scope          string
+	TokenEndpoint  string
+	RedirectURI    string
+	ZoneSyncLeeway int
 }
 
 // WAF defines WAF configuration.
@@ -123,7 +125,7 @@ type WAF struct {
 	Enable              string
 	ApPolicy            string
 	ApSecurityLogEnable bool
-	ApLogConf           string
+	ApLogConf           []string
 }
 
 // Dos defines Dos configuration.
@@ -174,6 +176,7 @@ type Location struct {
 	LimitReqOptions          LimitReqOptions
 	LimitReqs                []LimitReq
 	JWTAuth                  *JWTAuth
+	BasicAuth                *BasicAuth
 	EgressMTLS               *EgressMTLS
 	OIDC                     bool
 	WAF                      *WAF
@@ -349,4 +352,10 @@ type JWTAuth struct {
 	Secret string
 	Realm  string
 	Token  string
+}
+
+// BasicAuth refers to basic HTTP authentication mechanism options
+type BasicAuth struct {
+	Secret string
+	Realm  string
 }

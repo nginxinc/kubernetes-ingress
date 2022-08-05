@@ -73,6 +73,7 @@ server {
     set $oidc_pkce_enable 0;
     set $oidc_logout_redirect "/_logout";
     set $oidc_hmac_key "{{ $s.VSName }}";
+    set $zone_sync_leeway {{ $oidc.ZoneSyncLeeway }};
 
     set $oidc_authz_endpoint "{{ $oidc.AuthEndpoint }}";
     set $oidc_token_endpoint "{{ $oidc.TokenEndpoint }}";
@@ -165,6 +166,11 @@ server {
     auth_jwt_key_file {{ .Secret }};
     {{ end }}
 
+    {{ with $s.BasicAuth }}
+    auth_basic {{ printf "%q" .Realm }};
+    auth_basic_user_file {{ .Secret }};
+    {{ end }}
+
     {{ with $s.EgressMTLS }}
         {{ if .Certificate }}
     proxy_ssl_certificate {{ .Certificate }};
@@ -191,7 +197,9 @@ server {
 
         {{ if .ApSecurityLogEnable }}
     app_protect_security_log_enable on;
-    app_protect_security_log {{ .ApLogConf }};
+        {{ range $logconf := .ApLogConf }}
+    app_protect_security_log {{ $logconf }};
+        {{ end }}
         {{ end }}
     {{ end }}
 
@@ -335,6 +343,11 @@ server {
         auth_jwt_key_file {{ .Secret }};
         {{ end }}
 
+        {{ with $l.BasicAuth }}
+        auth_basic {{ printf "%q" .Realm }};
+        auth_basic_user_file {{ .Secret }};
+        {{ end }}
+
         {{ $proxyOrGRPC := "proxy" }}{{ if $l.GRPCPass }}{{ $proxyOrGRPC = "grpc" }}{{ end }}
 
         {{ with $l.EgressMTLS }}
@@ -370,7 +383,9 @@ server {
 
             {{ if .ApSecurityLogEnable }}
         app_protect_security_log_enable on;
-        app_protect_security_log {{ .ApLogConf }};
+            {{ range $logconf := .ApLogConf }}
+        app_protect_security_log {{ $logconf }};
+            {{ end }}
             {{ end }}
         {{ end }}
 

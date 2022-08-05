@@ -1,5 +1,6 @@
 env:
   - CGO_ENABLED=0
+
 builds:
   - id: kubernetes-ingress
     goos:
@@ -18,7 +19,9 @@ builds:
       - all=-trimpath={{.Env.GOPATH}}
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
-    main: ./cmd/nginx-ingress/main.go
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+    main: ./cmd/nginx-ingress/
     binary: nginx-ingress
   - id: aws
     goos:
@@ -33,19 +36,31 @@ builds:
     asmflags:
       - all=-trimpath={{.Env.GOPATH}}
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}} -X main.productCode={{.Env.AWS_PRODUCT_CODE}} -X main.pubKeyString={{.Env.AWS_PUB_KEY}}
+      - -s -w -X main.version={{.Version}} -X main.productCode={{.Env.AWS_PRODUCT_CODE}} -X main.pubKeyString={{.Env.AWS_PUB_KEY}}
     main: ./cmd/nginx-ingress/
     binary: nginx-ingress
     tags:
       - aws
+
 archives:
   - id: kubernetes-ingress
     format: binary
     builds: [kubernetes-ingress]
-  - id: aws
-    format: binary
-    builds: [aws]
+
 changelog:
   skip: true
+
+checksum:
+  name_template: 'checksums.txt'
+
+sboms:
+  - artifacts: binary
+    ids: [kubernetes-ingress]
+
 release:
   ids: [kubernetes-ingress]
+  extra_files:
+    - glob: ./dist/**.sbom
+
+milestones:
+  - close: true

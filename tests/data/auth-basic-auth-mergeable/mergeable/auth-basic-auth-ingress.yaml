@@ -1,0 +1,55 @@
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: auth-basic-auth-ingress-master
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.org/mergeable-ingress-type: "master"
+    nginx.org/basic-auth-secret: "auth-basic-master-htpasswd"
+    nginx.org/basic-auth-realm: "AuthBasic Auth Mergeable App"
+spec:
+  rules:
+  - host: auth-basic-auth-mergeable.example.com
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: auth-basic-auth-ingress-backend1-minion
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.org/mergeable-ingress-type: "minion"
+    nginx.org/basic-auth-secret: "auth-basic-minion-htpasswd"
+    nginx.org/basic-auth-realm: "Backend1"
+spec:
+  rules:
+  - host: auth-basic-auth-mergeable.example.com
+    http:
+      paths:
+      - path: /backend1
+        pathType: Prefix
+        backend:
+          service:
+            name: backend1-svc
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: auth-basic-auth-ingress-backend2-minion
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.org/mergeable-ingress-type: "minion"
+spec:
+  rules:
+  - host: auth-basic-auth-mergeable.example.com
+    http:
+      paths:
+      - path: /backend2
+        pathType: Prefix
+        backend:
+          service:
+            name: backend2-svc
+            port:
+              number: 80

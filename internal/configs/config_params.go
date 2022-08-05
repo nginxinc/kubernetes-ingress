@@ -99,6 +99,9 @@ type ConfigParams struct {
 	JWTRealm    string
 	JWTToken    string
 
+	BasicAuthSecret string
+	BasicAuthRealm  string
+
 	Ports    []int
 	SSLPorts []int
 
@@ -119,7 +122,7 @@ type StaticConfigParams struct {
 	EnableInternalRoutes           bool
 	MainAppProtectLoadModule       bool
 	MainAppProtectDosLoadModule    bool
-	PodName                        string
+	InternalRouteServerName        string
 	EnableLatencyMetrics           bool
 	EnableOIDC                     bool
 	SSLRejectHandshake             bool

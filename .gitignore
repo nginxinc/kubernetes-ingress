@@ -63,3 +63,7 @@ docs/.netlify
 # coverage files
 coverage.txt
 coverage.out
+
+node_modules
+package-lock.json
+package.json

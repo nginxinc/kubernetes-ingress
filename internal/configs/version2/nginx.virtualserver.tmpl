@@ -127,6 +127,11 @@ server {
         {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
     {{ end }}
 
+    {{ with $s.BasicAuth }}
+    auth_basic {{ printf "%q" .Realm }};
+    auth_basic_user_file {{ .Secret }};
+    {{ end }}
+
     {{ with $s.EgressMTLS }}
         {{ if .Certificate }}
     proxy_ssl_certificate {{ .Certificate }};
@@ -224,6 +229,11 @@ server {
         {{ range $rl := $l.LimitReqs }}
         limit_req zone={{ $rl.ZoneName }}{{ if $rl.Burst }} burst={{ $rl.Burst }}{{ end }}
             {{ if $rl.Delay }} delay={{ $rl.Delay }}{{ end }}{{ if $rl.NoDelay }} nodelay{{ end }};
+        {{ end }}
+
+        {{ with $l.BasicAuth }}
+        auth_basic {{ printf "%q" .Realm }};
+        auth_basic_user_file {{ .Secret }};
         {{ end }}
 
         {{ $proxyOrGRPC := "proxy" }}{{ if $l.GRPCPass }}{{ $proxyOrGRPC = "grpc" }}{{ end }}

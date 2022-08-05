@@ -83,7 +83,7 @@ func (ipl indexerToPodLister) ListByNamespace(ns string, selector labels.Selecto
 	return pods, err
 }
 
-// storeToEndpointLister makes a Store that lists Endponts
+// storeToEndpointLister makes a Store that lists Endpoints
 type storeToEndpointLister struct {
 	cache.Store
 }
@@ -130,6 +130,10 @@ func isMinion(ing *networking.Ingress) bool {
 // isMaster determines is an ingress is a master or not
 func isMaster(ing *networking.Ingress) bool {
 	return ing.Annotations["nginx.org/mergeable-ingress-type"] == "master"
+}
+
+func isChallengeIngress(ing *networking.Ingress) bool {
+	return ing.Labels["acme.cert-manager.io/http01-solver"] == "true"
 }
 
 // hasChanges determines if current ingress has changes compared to old ingress

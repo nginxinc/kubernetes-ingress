@@ -20,6 +20,9 @@ spec:
   {{- end }}
 {{- end }}
 {{- if eq .Values.controller.service.type "LoadBalancer" }}
+  {{- if and (semverCompare ">=1.22.0-0" .Capabilities.KubeVersion.Version) (.Values.controller.service.allocateLoadBalancerNodePorts) }}
+  allocateLoadBalancerNodePorts: {{ .Values.controller.service.allocateLoadBalancerNodePorts }}
+  {{- end }}
   {{- if .Values.controller.service.loadBalancerIP }}
   loadBalancerIP: {{ .Values.controller.service.loadBalancerIP }}
   {{- end }}
@@ -29,6 +32,14 @@ spec:
   {{- end }}
 {{- end }}
   type: {{ .Values.controller.service.type }}
+  {{- if semverCompare ">=1.21.0-0" .Capabilities.KubeVersion.Version }}
+  {{- if .Values.controller.service.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ .Values.controller.service.ipFamilyPolicy }}
+  {{- end }}
+  {{- if .Values.controller.service.ipFamilies }}
+  ipFamilies: {{ .Values.controller.service.ipFamilies }}
+  {{- end }}
+  {{- end }}
   ports:
 {{- if .Values.controller.service.customPorts }}
 {{ toYaml .Values.controller.service.customPorts | indent 2 }}
@@ -52,7 +63,7 @@ spec:
   {{- end }}
 {{- end }}
   selector:
-    app:  {{ include "nginx-ingress.appName" . }}
+    app: {{ include "nginx-ingress.appName" . }}
   {{- if .Values.controller.service.externalIPs }}
   externalIPs:
 {{ toYaml .Values.controller.service.externalIPs | indent 4 }}

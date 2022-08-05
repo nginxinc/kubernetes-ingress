@@ -45,40 +45,33 @@ jobs:
     name: Checks and variables
     runs-on: ubuntu-20.04
     outputs:
-      go_version: ${{ steps.vars.outputs.go_version }}
       go_path: ${{ steps.go.outputs.go_path }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Cache Go controller tools
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-tools-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-tools-
       - name: Output Variables
         id: vars
         run: |
-          echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
           echo "::set-output name=k8s_latest::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ steps.vars.outputs.go_version }}
+          go-version-file: go.mod
+          cache: true
       - name: Determine GOPATH
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"
+      - name: Check if go.mod and go.sum are up to date
+        run: |
+          go mod tidy && git diff --exit-code -- go.mod go.sum
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
       - name: Check if Codegen changed
         run: |
           cd ../.. && mkdir -p github.com/nginxinc && mv kubernetes-ingress/kubernetes-ingress github.com/nginxinc/ && cd github.com/nginxinc/kubernetes-ingress
-          make update-codegen && git diff --name-only --exit-code pkg/**/zz_generated.deepcopy.go
+          make update-codegen && git diff --name-only --exit-code pkg/**
           cd ../../.. && mv github.com/nginxinc/kubernetes-ingress kubernetes-ingress/kubernetes-ingress
 
   binary:
@@ -90,21 +83,13 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Cache Go build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.checks.outputs.go_version }}
+          go-version-file: go.mod
+          cache: true
       - name: Build binary
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: build --snapshot --rm-dist --single-target
@@ -126,19 +111,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Cache Go tests
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-tests-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-tests-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.checks.outputs.go_version }}
+          go-version-file: go.mod
+          cache: true
       - name: Run Tests
         run: make cover
       - name: Upload coverage to Codecov
@@ -159,17 +136,17 @@ jobs:
             echo "::set-output name=matrix::{\"images\": \
                                                 [{\"image\": \"debian\", \"marker\": \"ingresses\"}, \
                                                 {\"image\": \"alpine\", \"marker\":\"vsr\"}, \
-                                                {\"image\": \"alpine-opentracing\", \"marker\":\"policies\"}, \
-                                                {\"image\": \"opentracing\", \"marker\": \"vs\"}, \
+                                                {\"image\": \"alpine\", \"marker\":\"policies\"}, \
+                                                {\"image\": \"debian\", \"marker\": \"vs\"}, \
                                                 {\"image\": \"ubi\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"vs\"}, \
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
-                                                {\"image\": \"opentracing-plus\", \"marker\": \"vsr\"}, \
+                                                {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
                                                 {\"image\": \"ubi-plus\", \"marker\": \"policies\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}"
           else
-            echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.10\", \"1.22.7\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+            echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.12\", \"1.22.9\", \"1.23.6\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
                                              \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}"
           fi
 
@@ -217,9 +194,9 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
       - name: Build Docker Image nginx-ingress
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
@@ -266,28 +243,60 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Cache Go build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.checks.outputs.go_version }}
-      - name: Publish Release Notes on new tag
-        uses: release-drafter/release-drafter@v5
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/setup-node@v3
+      - run: npm install js-yaml
+        continue-on-error: true
+        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish release on tag
+        uses: actions/github-script@v6
+        continue-on-error: true
         with:
-            publish: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+              const ref = context.ref.split("/")[2]
+              const yaml = require('js-yaml');
+
+              const releases = (await github.rest.repos.listReleases({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                per_page: 100,
+              })).data
+
+              const draft_release = releases.find(release => release.draft && release.tag_name === ref)
+
+              const helm_file = (await github.rest.repos.getContent({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                path: "deployments/helm-chart/Chart.yaml",
+                ref: ref,
+              })).data.content
+
+              const helm_yaml = yaml.load(Buffer.from(helm_file, 'base64').toString())
+              const helm_version = helm_yaml.version
+              console.log(`Helm version: ${helm_version}`)
+
+              const update = await github.rest.repos.updateRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                release_id: draft_release.id,
+                body: draft_release.body.replace("%HELM_CHART_VERSION%", helm_version),
+                draft: false
+              });
+              console.log(`Release published: ${update.data.html_url}`)
+              console.log(`Release notes: ${update.data.body}`)
+        if: startsWith(github.ref, 'refs/tags/')
+
+      - name: Download Syft
+        uses: anchore/sbom-action/download-syft@v0.11.0
+
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
           args: ${{ startsWith(github.ref, 'refs/tags/') && 'release' || 'build --snapshot' }} ${{ github.event_name == 'pull_request' && '--single-target' || '' }} --rm-dist
@@ -310,7 +319,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          image: [debian, alpine, opentracing, alpine-opentracing]
+          image: [debian, alpine]
           platforms: ["linux/arm, linux/arm64, linux/amd64, linux/ppc64le, linux/s390x"]
           include:
             - image: ubi
@@ -326,41 +335,50 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
         with:
           platforms: arm,arm64,ppc64le,s390x
         if: github.event_name != 'pull_request'
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
       - name: DockerHub Login
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
         if: github.event_name != 'pull_request'
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
         if: github.event_name != 'pull_request'
       - name: Login to Public ECR
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: public.ecr.aws
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
           password: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         if: github.event_name != 'pull_request'
+      - name: Login to Quay.io
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USERNAME }}
+          password: ${{ secrets.QUAY_ROBOT_TOKEN }}
+        if: github.event_name != 'pull_request'
+
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: |
-            nginx/nginx-ingress
-            ghcr.io/nginxinc/kubernetes-ingress
-            public.ecr.aws/nginx/nginx-ingress
-          flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }},onlatest=true
+            name=nginx/nginx-ingress
+            name=ghcr.io/nginxinc/kubernetes-ingress
+            name=public.ecr.aws/nginx/nginx-ingress
+            name=quay.io/nginx/nginx-ingress
+          flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }},onlatest=true
           tags: |
             type=edge
             type=ref,event=pr
@@ -390,7 +408,7 @@ jobs:
           fi
           echo "::set-output name=ic_version::$ic_version"
       - name: Build Docker image (and push if not a PR)
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
@@ -402,12 +420,13 @@ jobs:
           platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
+          pull: true
           no-cache: ${{ github.event_name != 'pull_request' }}
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.2
+        uses: aquasecurity/trivy-action@0.6.2
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -415,7 +434,7 @@ jobs:
           output: 'trivy-results-${{ matrix.image }}.sarif'
           ignore-unfixed: 'true'
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v2
         continue-on-error: true
         with:
           sarif_file: 'trivy-results-${{ matrix.image }}.sarif'
@@ -434,7 +453,7 @@ jobs:
     strategy:
         fail-fast: false
         matrix:
-          image: [debian-plus, alpine-plus, opentracing-plus]
+          image: [debian-plus, alpine-plus]
           platforms: ["linux/arm64, linux/amd64"]
           target: [goreleaser]
           include:
@@ -455,21 +474,21 @@ jobs:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-multi
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
         if: github.event_name != 'pull_request'
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
       - name: GCR Login
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: gcr.io
           username: _json_key
           password: ${{ secrets.GCR_JSON_KEY }}
         if: github.event_name != 'pull_request'
       - name: Login to ECR
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
           username: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -478,14 +497,14 @@ jobs:
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ startsWith(github.ref, 'refs/tags/') && 'gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress' || '' }}
-            ${{ startsWith(github.ref, 'refs/heads/release') && 'gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic/nginx-plus-ingress' || '' }}
-            ${{ startsWith(github.ref, 'refs/tags/') && contains(matrix.target, 'aws') && '709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress' || '' }}
-            gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
-          flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.image, 'opentracing') && '-ot' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }},onlatest=true
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
+            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') && contains(matrix.target, 'aws') }}
+          flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }},onlatest=true
           tags: |
             type=edge
             type=ref,event=branch,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
@@ -510,7 +529,7 @@ jobs:
           fi
           echo "::set-output name=ic_version::$ic_version"
       - name: Build Plus Docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
@@ -522,6 +541,7 @@ jobs:
           platforms: ${{ github.event_name != 'pull_request' && matrix.platforms || '' }}
           load: ${{ github.event_name == 'pull_request' }}
           push: ${{ github.event_name != 'pull_request' }}
+          pull: true
           no-cache: ${{ github.event_name != 'pull_request' }}
           build-args: |
             BUILD_OS=${{ matrix.image }}
@@ -530,7 +550,7 @@ jobs:
             "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.NGINX_KEY }}"
       - name: Load image for Trivy
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
@@ -545,7 +565,7 @@ jobs:
             "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.NGINX_KEY }}"
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.2.2
+        uses: aquasecurity/trivy-action@0.6.2
         continue-on-error: true
         with:
           image-ref: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}
@@ -553,7 +573,7 @@ jobs:
           output: 'trivy-results-${{ matrix.image }}.sarif'
           ignore-unfixed: 'true'
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
+        uses: github/codeql-action/upload-sarif@v2
         continue-on-error: true
         with:
           sarif_file: 'trivy-results-${{ matrix.image }}.sarif'

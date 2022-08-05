@@ -1,10 +1,10 @@
 # WAF
 
-In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect](https://www.nginx.com/products/nginx-app-protect/), a simple web application and then configure load balancing and WAF protection for that application using the VirtualServer resource.
+In this example we deploy the NGINX Plus Ingress Controller with [NGINX App Protect](https://www.nginx.com/products/nginx-app-protect/), a simple web application and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
 ## Prerequisites
 
-1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress controller with NGINX App Protect.
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress Controller with NGINX App Protect.
 1. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III

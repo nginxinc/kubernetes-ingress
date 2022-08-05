@@ -1,2 +1,4 @@
 
-**Note: an NGINX Ingress Operator version compatible with the %%IC_VERSION%% NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.**
+{{< note >}}
+An NGINX Ingress Operator version compatible with the %%IC_VERSION%% NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.
+{{< /note >}}

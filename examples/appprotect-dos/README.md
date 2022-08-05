@@ -1,18 +1,18 @@
 # NGINX App Protect DoS Support
 
-In this example we deploy the NGINX Plus Ingress controller with [NGINX App Protect DoS](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and DOS protection for that application using the Ingress resource.
+In this example we deploy the NGINX Plus Ingress Controller with [NGINX App Protect DoS](https://www.nginx.com/products/nginx-app-protect-dos/), a simple web application and then configure load balancing and DOS protection for that application using the Ingress resource.
 
 ## Running the Example
 
 ## 1. Deploy the Ingress Controller
 
-1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress controller with NGINX App Protect DoS.
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress Controller with NGINX App Protect DoS.
 
-2. Save the public IP address of the Ingress controller into a shell variable:
+2. Save the public IP address of the Ingress Controller into a shell variable:
     ```
     $ IC_IP=XXX.YYY.ZZZ.III
     ```
-3. Save the HTTPS port of the Ingress controller into a shell variable:
+3. Save the HTTPS port of the Ingress Controller into a shell variable:
     ```
     $ IC_HTTPS_PORT=<port number>
     ```

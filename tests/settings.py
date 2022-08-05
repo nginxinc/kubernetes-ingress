@@ -16,7 +16,7 @@ ALLOWED_SERVICE_TYPES = ["nodeport", "loadbalancer"]
 DEFAULT_DEPLOYMENT_TYPE = "deployment"
 ALLOWED_DEPLOYMENT_TYPES = ["deployment", "daemon-set"]
 BATCH_START = "False"
-# Number of Ingress/VS resources to deploy based on BATCH_START value, ref. line #264 in rresource_utils.py
+# Number of Ingress/VS resources to deploy based on BATCH_START value, ref. line #264 in resource_utils.py
 BATCH_RESOURCES = 1
 # Time in seconds to ensure reconfiguration changes in cluster
 RECONFIGURATION_DELAY = 3

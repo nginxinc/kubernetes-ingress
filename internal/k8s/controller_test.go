@@ -682,7 +682,7 @@ func TestGetPolicies(t *testing.T) {
 
 	expectedPolicies := []*conf_v1.Policy{validPolicy}
 	expectedErrors := []error{
-		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `jwt`, `oidc`, `waf`"),
+		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`, `jwt`, `oidc`, `waf`"),
 		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
 		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
 		errors.New("referenced policy default/valid-policy-ingress-class has incorrect ingress class: test-class (controller ingress class: )"),
@@ -958,6 +958,30 @@ func TestFindPoliciesForSecret(t *testing.T) {
 		},
 	}
 
+	basicPol1 := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "basic-auth-policy",
+			Namespace: "default",
+		},
+		Spec: conf_v1.PolicySpec{
+			BasicAuth: &conf_v1.BasicAuth{
+				Secret: "basic-auth-secret",
+			},
+		},
+	}
+
+	basicPol2 := &conf_v1.Policy{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "basic-auth-policy",
+			Namespace: "ns-1",
+		},
+		Spec: conf_v1.PolicySpec{
+			BasicAuth: &conf_v1.BasicAuth{
+				Secret: "basic-auth-secret",
+			},
+		},
+	}
+
 	ingTLSPol := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "ingress-mtls-policy",
@@ -1029,6 +1053,27 @@ func TestFindPoliciesForSecret(t *testing.T) {
 			secretNamespace: "default",
 			secretName:      "jwk-secret",
 			expected:        []*conf_v1.Policy{jwtPol1},
+			msg:             "Find policy in default ns, ignore other",
+		},
+		{
+			policies:        []*conf_v1.Policy{basicPol1},
+			secretNamespace: "default",
+			secretName:      "basic-auth-secret",
+			expected:        []*conf_v1.Policy{basicPol1},
+			msg:             "Find policy in default ns",
+		},
+		{
+			policies:        []*conf_v1.Policy{basicPol2},
+			secretNamespace: "default",
+			secretName:      "basic-auth-secret",
+			expected:        nil,
+			msg:             "Ignore policies in other namespaces",
+		},
+		{
+			policies:        []*conf_v1.Policy{basicPol1, basicPol2},
+			secretNamespace: "default",
+			secretName:      "basic-auth-secret",
+			expected:        []*conf_v1.Policy{basicPol1},
 			msg:             "Find policy in default ns, ignore other",
 		},
 		{
@@ -1224,6 +1269,130 @@ func TestAddJWTSecrets(t *testing.T) {
 
 		if diff := cmp.Diff(test.expectedSecretRefs, result, cmp.Comparer(errorComparer)); diff != "" {
 			t.Errorf("addJWTSecretRefs() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		}
+	}
+}
+
+func TestAddBasicSecrets(t *testing.T) {
+	invalidErr := errors.New("invalid")
+	validBasicSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "valid-basic-auth-secret",
+			Namespace: "default",
+		},
+		Type: secrets.SecretTypeJWK,
+	}
+	invalidBasicSecret := &v1.Secret{
+		ObjectMeta: meta_v1.ObjectMeta{
+			Name:      "invalid-basic-auth-secret",
+			Namespace: "default",
+		},
+		Type: secrets.SecretTypeJWK,
+	}
+
+	tests := []struct {
+		policies           []*conf_v1.Policy
+		expectedSecretRefs map[string]*secrets.SecretReference
+		wantErr            bool
+		msg                string
+	}{
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Secret: "valid-basic-auth-secret",
+							Realm:  "My API",
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{
+				"default/valid-basic-auth-secret": {
+					Secret: validBasicSecret,
+					Path:   "/etc/nginx/secrets/default-valid-basic-auth-secret",
+				},
+			},
+			wantErr: false,
+			msg:     "test getting valid secret",
+		},
+		{
+			policies:           []*conf_v1.Policy{},
+			expectedSecretRefs: map[string]*secrets.SecretReference{},
+			wantErr:            false,
+			msg:                "test getting valid secret with no policy",
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						AccessControl: &conf_v1.AccessControl{
+							Allow: []string{"127.0.0.1"},
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{},
+			wantErr:            false,
+			msg:                "test getting invalid secret with wrong policy",
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "basic-auth-policy",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						BasicAuth: &conf_v1.BasicAuth{
+							Secret: "invalid-basic-auth-secret",
+							Realm:  "My API",
+						},
+					},
+				},
+			},
+			expectedSecretRefs: map[string]*secrets.SecretReference{
+				"default/invalid-basic-auth-secret": {
+					Secret: invalidBasicSecret,
+					Error:  invalidErr,
+				},
+			},
+			wantErr: true,
+			msg:     "test getting invalid secret",
+		},
+	}
+
+	lbc := LoadBalancerController{
+		secretStore: secrets.NewFakeSecretsStore(map[string]*secrets.SecretReference{
+			"default/valid-basic-auth-secret": {
+				Secret: validBasicSecret,
+				Path:   "/etc/nginx/secrets/default-valid-basic-auth-secret",
+			},
+			"default/invalid-basic-auth-secret": {
+				Secret: invalidBasicSecret,
+				Error:  invalidErr,
+			},
+		}),
+	}
+
+	for _, test := range tests {
+		result := make(map[string]*secrets.SecretReference)
+
+		err := lbc.addBasicSecretRefs(result, test.policies)
+		if (err != nil) != test.wantErr {
+			t.Errorf("addBasicSecretRefs() returned %v, for the case of %v", err, test.msg)
+		}
+
+		if diff := cmp.Diff(test.expectedSecretRefs, result, cmp.Comparer(errorComparer)); diff != "" {
+			t.Errorf("addBasicSecretRefs() '%v' mismatch (-want +got):\n%s", test.msg, diff)
 		}
 	}
 }
@@ -1709,6 +1878,15 @@ func TestAddWAFPolicyRefs(t *testing.T) {
 		},
 	}
 
+	additionalLogConf := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"namespace": "default",
+				"name":      "additional-log-conf",
+			},
+		},
+	}
+
 	tests := []struct {
 		policies            []*conf_v1.Policy
 		expectedApPolRefs   map[string]*unstructured.Unstructured
@@ -1790,6 +1968,102 @@ func TestAddWAFPolicyRefs(t *testing.T) {
 			expectedLogConfRefs: make(map[string]*unstructured.Unstructured),
 			msg:                 "logConf doesn't exist",
 		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-pol",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "ap-pol",
+							SecurityLogs: []*conf_v1.SecurityLog{
+								{
+									Enable:    true,
+									ApLogConf: "log-conf",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+			expectedApPolRefs: map[string]*unstructured.Unstructured{
+				"default/ap-pol": apPol,
+			},
+			expectedLogConfRefs: map[string]*unstructured.Unstructured{
+				"default/log-conf": logConf,
+			},
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-pol",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "ap-pol",
+							SecurityLogs: []*conf_v1.SecurityLog{
+								{
+									Enable:    true,
+									ApLogConf: "log-conf",
+								},
+								{
+									Enable:    true,
+									ApLogConf: "additional-log-conf",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+			expectedApPolRefs: map[string]*unstructured.Unstructured{
+				"default/ap-pol": apPol,
+			},
+			expectedLogConfRefs: map[string]*unstructured.Unstructured{
+				"default/log-conf":            logConf,
+				"default/additional-log-conf": additionalLogConf,
+			},
+		},
+		{
+			policies: []*conf_v1.Policy{
+				{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "waf-pol",
+						Namespace: "default",
+					},
+					Spec: conf_v1.PolicySpec{
+						WAF: &conf_v1.WAF{
+							Enable:   true,
+							ApPolicy: "ap-pol",
+							SecurityLog: &conf_v1.SecurityLog{
+								Enable:    true,
+								ApLogConf: "additional-log-conf",
+							},
+							SecurityLogs: []*conf_v1.SecurityLog{
+								{
+									Enable:    true,
+									ApLogConf: "log-conf",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+			expectedApPolRefs: map[string]*unstructured.Unstructured{
+				"default/ap-pol": apPol,
+			},
+			expectedLogConfRefs: map[string]*unstructured.Unstructured{
+				"default/log-conf": logConf,
+			},
+		},
 	}
 
 	lbc := LoadBalancerController{
@@ -1797,6 +2071,7 @@ func TestAddWAFPolicyRefs(t *testing.T) {
 	}
 	lbc.appProtectConfiguration.AddOrUpdatePolicy(apPol)
 	lbc.appProtectConfiguration.AddOrUpdateLogConf(logConf)
+	lbc.appProtectConfiguration.AddOrUpdateLogConf(additionalLogConf)
 
 	for _, test := range tests {
 		resApPolicy := make(map[string]*unstructured.Unstructured)
@@ -1904,6 +2179,20 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 		},
 	}
 
+	logConfs := &conf_v1.Policy{
+		Spec: conf_v1.PolicySpec{
+			WAF: &conf_v1.WAF{
+				Enable: true,
+				SecurityLogs: []*conf_v1.SecurityLog{
+					{
+						Enable:    true,
+						ApLogConf: "ns1/logConfs",
+					},
+				},
+			},
+		},
+	}
+
 	logConfNs2 := &conf_v1.Policy{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Namespace: "ns1",
@@ -1935,7 +2224,7 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 	}
 
 	policies := []*conf_v1.Policy{
-		logConf, logConfNs2, logConfNoNs,
+		logConf, logConfs, logConfNs2, logConfNoNs,
 	}
 
 	tests := []struct {
@@ -1955,6 +2244,12 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 			key:  "default/logConf",
 			want: []*conf_v1.Policy{logConfNoNs},
 			msg:  "WAF pols that ref logConf which has no namespace",
+		},
+		{
+			pols: policies,
+			key:  "ns1/logConfs",
+			want: []*conf_v1.Policy{logConfs},
+			msg:  "WAF pols that ref logConf via logConfs field",
 		},
 		{
 			pols: policies,
