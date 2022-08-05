@@ -5,7 +5,8 @@ from suite.custom_assertions import assert_event_and_count, assert_event_and_get
     wait_for_event_count_increases
 from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, \
     create_v_s_route_from_yaml, get_vs_nginx_template_conf
-from suite.fixtures import VirtualServerRoute, PublicEndpoint
+from suite.fixtures import PublicEndpoint
+from suite.custom_resource_fixtures import VirtualServerRoute
 from suite.resources_utils import get_first_pod_name, get_events, \
     wait_before_test, replace_configmap_from_yaml, create_service_from_yaml, \
     delete_namespace, create_namespace_with_name_from_yaml, read_service, replace_service, replace_configmap, \

@@ -1,7 +1,7 @@
 import grpc
 import pytest
 from settings import TEST_DATA, DEPLOYMENTS
-from suite.fixtures import (
+from suite.custom_resource_fixtures import (
     VirtualServerRoute,
     VirtualServerSetup,
     VirtualServerRouteSetup

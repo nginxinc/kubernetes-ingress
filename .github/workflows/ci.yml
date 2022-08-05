@@ -50,15 +50,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Cache Go controller tools
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-tools-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-tools-
       - name: Output Variables
         id: vars
         run: |
@@ -67,9 +58,13 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
+          cache: true
       - name: Determine GOPATH
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"
+      - name: Check if go.mod and go.sum are up to date
+        run: |
+          go mod tidy && git diff --exit-code -- go.mod go.sum
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
@@ -88,19 +83,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Cache Go build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
+          cache: true
       - name: Build binary
         uses: goreleaser/goreleaser-action@v3
         with:
@@ -124,19 +111,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Cache Go tests
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-tests-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-tests-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
+          cache: true
       - name: Run Tests
         run: make cover
       - name: Upload coverage to Codecov
@@ -264,19 +243,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Cache Go build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
+          cache: true
 
       - uses: actions/setup-node@v3
       - run: npm install js-yaml
@@ -455,7 +426,7 @@ jobs:
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.6.1
+        uses: aquasecurity/trivy-action@0.6.2
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -594,7 +565,7 @@ jobs:
             "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
             "nginx-repo.key=${{ secrets.NGINX_KEY }}"
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.6.1
+        uses: aquasecurity/trivy-action@0.6.2
         continue-on-error: true
         with:
           image-ref: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}
