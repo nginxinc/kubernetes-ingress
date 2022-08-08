@@ -36,7 +36,9 @@ var (
 	The Ingress Controller does not start NGINX and does not write any generated NGINX configuration files to disk`)
 
 	watchNamespace = flag.String("watch-namespace", api_v1.NamespaceAll,
-		`Namespace to watch for Ingress resources. By default the Ingress Controller watches all namespaces`)
+		`Comma separated list of namespaces to watch for Ingress resources. By default the Ingress Controller watches all namespaces`)
+
+	watchNamespaces []string
 
 	nginxConfigMaps = flag.String("nginx-configmaps", "",
 		`A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set,
@@ -195,6 +197,8 @@ func parseFlags(versionInfo string, binaryInfo string) {
 	glog.Info(binaryInfo)
 
 	validationChecks()
+
+	watchNamespaces = strings.Split(*watchNamespace, ",")
 
 	if *enableTLSPassthrough && !*enableCustomResources {
 		glog.Fatal("enable-tls-passthrough flag requires -enable-custom-resources")
