@@ -149,6 +149,4 @@ replace (
 	go.opentelemetry.io/otel/sdk/metric => go.opentelemetry.io/otel/sdk/metric v0.20.0
 	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v0.20.0
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v0.7.0
-	// temprary fix for CVE-2022-29526 in github.com/prometheus/client_golang v1.12.2
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 => golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
 )
