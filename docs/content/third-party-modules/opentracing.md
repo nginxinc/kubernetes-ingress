@@ -20,7 +20,7 @@ This document explains how to use OpenTracing with the Ingress Controller.
 1. **Use an Ingress Controller image that contains OpenTracing.** 
    - You can find the images that include OpenTracing listed [in the technical specs doc]({{< relref "technical-specifications.md#supported-docker-images" >}}). 
    - Alternatively, you can [build your own image]({{< relref "installation/building-ingress-controller-image.md" >}}) using `debian-image` (or `alpine-image`) for NGINX or `debian-image-plus` (or `alpine-image-plus`) for NGINX Plus.
-[Jaeger](https://github.com/jaegertracing/jaeger-client-cpp), [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing) and [Datadog](https://github.com/DataDog/dd-opentracing-cpp/) tracers are installed by default.
+[Jaeger](https://github.com/jaegertracing/jaeger-client-cpp),[New Relic](https://github.com/newrelic/nri-nginx), [Zipkin](https://github.com/rnburn/zipkin-cpp-opentracing) and [Datadog](https://github.com/DataDog/dd-opentracing-cpp/) tracers are installed by default.
 
 2. **Load the OpenTracing module.** You need to load the module with the configuration for the chosen tracer using the following ConfigMap keys:
    * `opentracing-tracer`: sets the path to the vendor tracer binary plugin. This is the path you used in the COPY line of step *ii* above.
