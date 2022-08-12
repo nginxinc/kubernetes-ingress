@@ -25,7 +25,10 @@ def chk_endpoint(endp):
     endpoint. Otherwise, return unmodified endpoint.
     """
     ip = endp[:endp.rfind(":")]
-    address = ipaddress.ip_address(ip)
+    try:
+        address = ipaddress.ip_address(ip)
+    except ValueError:
+        return endp
     if address.version == 6:
         port = endp[endp.rfind(":"):]
         return f"[{ip}]{port}"
@@ -37,11 +40,14 @@ def ipfamily_from_host(host):
     Return socket type (AF_INET or AF_INET6) based on
     IP address type from host
     """
-    address = ipaddress.ip_address(host)
-    if address.version == 6:
-        return socket.AF_INET6
-    else:
-        return socket.AF_INET
+    sock = socket.AF_INET
+    try:
+        address = ipaddress.ip_address(host)
+        if address.version == 6:
+            sock = socket.AF_INET6
+    except ValueError:
+        pass
+    return sock
 
 @pytest.mark.ts
 @pytest.mark.skip_for_loadbalancer
