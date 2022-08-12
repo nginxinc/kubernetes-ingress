@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.15.17
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.13.11
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.13.12
 	github.com/cert-manager/cert-manager v1.9.1
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang/glog v1.0.0
@@ -30,11 +30,11 @@ require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.16.10 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.16.11 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.12.12 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.11 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.17 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.11 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.18 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.15 // indirect
