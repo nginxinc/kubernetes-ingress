@@ -90,7 +90,7 @@ def pytest_addoption(parser) -> None:
 
 
 # import fixtures into pytest global namespace
-pytest_plugins = ["suite.fixtures"]
+pytest_plugins = ["suite.fixtures", "suite.ic_fixtures", "suite.custom_resource_fixtures"]
 
 
 def pytest_collection_modifyitems(config, items) -> None:

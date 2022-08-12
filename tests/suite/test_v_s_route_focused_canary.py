@@ -5,7 +5,7 @@ import yaml
 from yaml.loader import Loader
 from settings import TEST_DATA
 from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, create_v_s_route_from_yaml
-from suite.fixtures import VirtualServerRoute
+from suite.custom_resource_fixtures import VirtualServerRoute
 from suite.resources_utils import ensure_response_from_backend, create_example_app, \
     wait_until_all_pods_are_ready, create_namespace_with_name_from_yaml, delete_namespace
 from suite.yaml_utils import get_paths_from_vsr_yaml, get_first_host_from_yaml, get_route_namespace_from_vs_yaml
