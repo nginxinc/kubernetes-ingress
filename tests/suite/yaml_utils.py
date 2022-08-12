@@ -136,3 +136,14 @@ def get_secret_name_from_vs_yaml(file) -> str:
         for dep in docs:
             return dep["spec"]["tls"]["secret"]
     return res
+
+def get_num_resources_from_yaml(file) -> int:
+    """
+    Parse yaml file and count the number of discrete resources it defines
+
+    :param file: an absolute path to file
+    :return: int
+    """
+    with open(file) as f:
+        docs = yaml.safe_load_all(f)
+        return len(list(docs))

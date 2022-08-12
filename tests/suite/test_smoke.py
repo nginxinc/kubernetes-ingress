@@ -22,7 +22,7 @@ from suite.resources_utils import (
     wait_until_all_pods_are_ready,
     write_to_json,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.yaml_utils import get_first_ingress_host_from_yaml, get_num_resources_from_yaml
 
 paths = ["backend1", "backend2"]
 reload_times = {}
@@ -119,3 +119,29 @@ class TestSmoke:
         count = get_reload_count(metrics_url)
 
         assert count == 1
+
+    @pytest.mark.parametrize(
+        "ingress_controller",
+        [
+            pytest.param({"extra_args": ["-enable-prometheus-metrics"]}),
+        ],
+        indirect=True,
+    )
+    def test_batch_create_reload_count(
+            self, kube_apis, smoke_setup, ingress_controller_prerequisites, test_namespace
+    ):
+        metrics_url = f"http://{smoke_setup.public_endpoint.public_ip}:{smoke_setup.public_endpoint.metrics_port}/metrics"
+        count_before = get_reload_count(metrics_url)
+
+        create_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/smoke-batch-ingress.yaml", test_namespace)
+        wait_before_test(5)
+        num_res = get_num_resources_from_yaml(f"{TEST_DATA}/smoke/smoke-batch-ingress.yaml")
+
+        count_after = get_reload_count(metrics_url)
+        new_reloads = count_after - count_before
+
+        print(f"Counted {new_reloads} reloads for {num_res} new config objects")
+
+        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/smoke-batch-ingress.yaml", test_namespace)
+
+        assert new_reloads == 2
