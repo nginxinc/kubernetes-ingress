@@ -1,13 +1,21 @@
-import requests
 import pytest
-
-from suite.fixtures import PublicEndpoint
-from suite.resources_utils import create_secret_from_yaml, delete_secret, replace_secret,\
-    ensure_connection_to_public_endpoint, wait_before_test
-from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml, create_example_app, delete_common_app
-from suite.resources_utils import wait_until_all_pods_are_ready, is_secret_present
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+import requests
 from settings import TEST_DATA
+from suite.fixtures import PublicEndpoint
+from suite.resources_utils import (
+    create_example_app,
+    create_items_from_yaml,
+    create_secret_from_yaml,
+    delete_common_app,
+    delete_items_from_yaml,
+    delete_secret,
+    ensure_connection_to_public_endpoint,
+    is_secret_present,
+    replace_secret,
+    wait_before_test,
+    wait_until_all_pods_are_ready,
+)
+from suite.yaml_utils import get_first_ingress_host_from_yaml
 
 
 class JWTAuthMergeableSetup:
@@ -21,6 +29,7 @@ class JWTAuthMergeableSetup:
         minion_secret_name (str):
         tokens ([]): a list of tokens for testing
     """
+
     def __init__(self, public_endpoint: PublicEndpoint, ingress_host, master_secret_name, minion_secret_name, tokens):
         self.public_endpoint = public_endpoint
         self.ingress_host = ingress_host
@@ -30,20 +39,24 @@ class JWTAuthMergeableSetup:
 
 
 @pytest.fixture(scope="class")
-def jwt_auth_setup(request, kube_apis, ingress_controller_endpoint, ingress_controller, test_namespace) -> JWTAuthMergeableSetup:
+def jwt_auth_setup(
+    request, kube_apis, ingress_controller_endpoint, ingress_controller, test_namespace
+) -> JWTAuthMergeableSetup:
     tokens = {"master": get_token_from_file("master"), "minion": get_token_from_file("minion")}
-    master_secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace,
-                                                 f"{TEST_DATA}/jwt-auth-mergeable/jwt-master-secret.yaml")
-    minion_secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace,
-                                                 f"{TEST_DATA}/jwt-auth-mergeable/jwt-minion-secret.yaml")
+    master_secret_name = create_secret_from_yaml(
+        kube_apis.v1, test_namespace, f"{TEST_DATA}/jwt-auth-mergeable/jwt-master-secret.yaml"
+    )
+    minion_secret_name = create_secret_from_yaml(
+        kube_apis.v1, test_namespace, f"{TEST_DATA}/jwt-auth-mergeable/jwt-minion-secret.yaml"
+    )
     print("------------------------- Deploy JWT Auth Mergeable Minions Example -----------------------------------")
     create_items_from_yaml(kube_apis, f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml", test_namespace)
     ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml")
     create_example_app(kube_apis, "simple", test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
-    ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
-                                         ingress_controller_endpoint.port,
-                                         ingress_controller_endpoint.port_ssl)
+    ensure_connection_to_public_endpoint(
+        ingress_controller_endpoint.public_ip, ingress_controller_endpoint.port, ingress_controller_endpoint.port_ssl
+    )
     wait_before_test(2)
 
     def fin():
@@ -57,12 +70,15 @@ def jwt_auth_setup(request, kube_apis, ingress_controller_endpoint, ingress_cont
 
         print("Clean up the JWT Auth Mergeable Minions Application:")
         delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml",
-                               test_namespace)
+        delete_items_from_yaml(
+            kube_apis, f"{TEST_DATA}/jwt-auth-mergeable/mergeable/jwt-auth-ingress.yaml", test_namespace
+        )
 
     request.addfinalizer(fin)
 
-    return JWTAuthMergeableSetup(ingress_controller_endpoint, ingress_host, master_secret_name, minion_secret_name, tokens)
+    return JWTAuthMergeableSetup(
+        ingress_controller_endpoint, ingress_host, master_secret_name, minion_secret_name, tokens
+    )
 
 
 def get_token_from_file(token_type) -> str:
@@ -73,43 +89,108 @@ def get_token_from_file(token_type) -> str:
     :return: str
     """
     with open(f"{TEST_DATA}/jwt-auth-mergeable/tokens/jwt-auth-{token_type}-token.jwt", "r") as token_file:
-        return token_file.read().replace('\n', '')
+        return token_file.read().replace("\n", "")
 
 
-step_1_expected_results = [{"token_type": "master", "path": "", "response_code": 404},
-                           {"token_type": "master", "path": "backend1", "response_code": 302, "location": "https://login-backend1.jwt-auth-mergeable.example.com"},
-                           {"token_type": "master", "path": "backend2", "response_code": 200},
-                           {"token_type": "minion", "path": "", "response_code": 302, "location": "https://login.jwt-auth-mergeable.example.com"},
-                           {"token_type": "minion", "path": "backend1", "response_code": 200},
-                           {"token_type": "minion", "path": "backend2", "response_code": 302, "location": "https://login.jwt-auth-mergeable.example.com"}]
+step_1_expected_results = [
+    {"token_type": "master", "path": "", "response_code": 404},
+    {
+        "token_type": "master",
+        "path": "backend1",
+        "response_code": 302,
+        "location": "https://login-backend1.jwt-auth-mergeable.example.com",
+    },
+    {"token_type": "master", "path": "backend2", "response_code": 200},
+    {
+        "token_type": "minion",
+        "path": "",
+        "response_code": 302,
+        "location": "https://login.jwt-auth-mergeable.example.com",
+    },
+    {"token_type": "minion", "path": "backend1", "response_code": 200},
+    {
+        "token_type": "minion",
+        "path": "backend2",
+        "response_code": 302,
+        "location": "https://login.jwt-auth-mergeable.example.com",
+    },
+]
 
-step_2_expected_results = [{"token_type": "master", "path": "", "response_code": 302, "location": "https://login.jwt-auth-mergeable.example.com"},
-                           {"token_type": "master", "path": "backend1", "response_code": 302, "location": "https://login-backend1.jwt-auth-mergeable.example.com"},
-                           {"token_type": "master", "path": "backend2", "response_code": 302, "location": "https://login.jwt-auth-mergeable.example.com"},
-                           {"token_type": "minion", "path": "", "response_code": 404},
-                           {"token_type": "minion", "path": "backend1", "response_code": 200},
-                           {"token_type": "minion", "path": "backend2", "response_code": 200}]
+step_2_expected_results = [
+    {
+        "token_type": "master",
+        "path": "",
+        "response_code": 302,
+        "location": "https://login.jwt-auth-mergeable.example.com",
+    },
+    {
+        "token_type": "master",
+        "path": "backend1",
+        "response_code": 302,
+        "location": "https://login-backend1.jwt-auth-mergeable.example.com",
+    },
+    {
+        "token_type": "master",
+        "path": "backend2",
+        "response_code": 302,
+        "location": "https://login.jwt-auth-mergeable.example.com",
+    },
+    {"token_type": "minion", "path": "", "response_code": 404},
+    {"token_type": "minion", "path": "backend1", "response_code": 200},
+    {"token_type": "minion", "path": "backend2", "response_code": 200},
+]
 
-step_3_expected_results = [{"token_type": "master", "path": "", "response_code": 302, "location": "https://login.jwt-auth-mergeable.example.com"},
-                           {"token_type": "master", "path": "backend1", "response_code": 200},
-                           {"token_type": "master", "path": "backend2", "response_code": 302, "location": "https://login.jwt-auth-mergeable.example.com"},
-                           {"token_type": "minion", "path": "", "response_code": 404},
-                           {"token_type": "minion", "path": "backend1", "response_code": 302, "location": "https://login-backend1.jwt-auth-mergeable.example.com"},
-                           {"token_type": "minion", "path": "backend2", "response_code": 200}]
+step_3_expected_results = [
+    {
+        "token_type": "master",
+        "path": "",
+        "response_code": 302,
+        "location": "https://login.jwt-auth-mergeable.example.com",
+    },
+    {"token_type": "master", "path": "backend1", "response_code": 200},
+    {
+        "token_type": "master",
+        "path": "backend2",
+        "response_code": 302,
+        "location": "https://login.jwt-auth-mergeable.example.com",
+    },
+    {"token_type": "minion", "path": "", "response_code": 404},
+    {
+        "token_type": "minion",
+        "path": "backend1",
+        "response_code": 302,
+        "location": "https://login-backend1.jwt-auth-mergeable.example.com",
+    },
+    {"token_type": "minion", "path": "backend2", "response_code": 200},
+]
 
-step_4_expected_results = [{"token_type": "master", "path": "", "response_code": 302, "location": "https://login.jwt-auth-mergeable.example.com"},
-                           {"token_type": "master", "path": "backend1", "response_code": 500},
-                           {"token_type": "master", "path": "backend2", "response_code": 302, "location": "https://login.jwt-auth-mergeable.example.com"},
-                           {"token_type": "minion", "path": "", "response_code": 404},
-                           {"token_type": "minion", "path": "backend1", "response_code": 500},
-                           {"token_type": "minion", "path": "backend2", "response_code": 200}]
+step_4_expected_results = [
+    {
+        "token_type": "master",
+        "path": "",
+        "response_code": 302,
+        "location": "https://login.jwt-auth-mergeable.example.com",
+    },
+    {"token_type": "master", "path": "backend1", "response_code": 500},
+    {
+        "token_type": "master",
+        "path": "backend2",
+        "response_code": 302,
+        "location": "https://login.jwt-auth-mergeable.example.com",
+    },
+    {"token_type": "minion", "path": "", "response_code": 404},
+    {"token_type": "minion", "path": "backend1", "response_code": 500},
+    {"token_type": "minion", "path": "backend2", "response_code": 200},
+]
 
-step_5_expected_results = [{"token_type": "master", "path": "", "response_code": 500},
-                           {"token_type": "master", "path": "backend1", "response_code": 500},
-                           {"token_type": "master", "path": "backend2", "response_code": 500},
-                           {"token_type": "minion", "path": "", "response_code": 500},
-                           {"token_type": "minion", "path": "backend1", "response_code": 500},
-                           {"token_type": "minion", "path": "backend2", "response_code": 500}]
+step_5_expected_results = [
+    {"token_type": "master", "path": "", "response_code": 500},
+    {"token_type": "master", "path": "backend1", "response_code": 500},
+    {"token_type": "master", "path": "backend2", "response_code": 500},
+    {"token_type": "minion", "path": "", "response_code": 500},
+    {"token_type": "minion", "path": "backend1", "response_code": 500},
+    {"token_type": "minion", "path": "backend2", "response_code": 500},
+]
 
 
 @pytest.mark.ingresses
@@ -120,14 +201,22 @@ class TestJWTAuthMergeableMinions:
         execute_checks(jwt_auth_setup, step_1_expected_results)
 
         print("Step 2: replace master secret")
-        replace_secret(kube_apis.v1, jwt_auth_setup.master_secret_name, test_namespace,
-                       f"{TEST_DATA}/jwt-auth-mergeable/jwt-master-secret-updated.yaml")
+        replace_secret(
+            kube_apis.v1,
+            jwt_auth_setup.master_secret_name,
+            test_namespace,
+            f"{TEST_DATA}/jwt-auth-mergeable/jwt-master-secret-updated.yaml",
+        )
         wait_before_test(1)
         execute_checks(jwt_auth_setup, step_2_expected_results)
 
         print("Step 3: now replace minion secret as well")
-        replace_secret(kube_apis.v1, jwt_auth_setup.minion_secret_name, test_namespace,
-                       f"{TEST_DATA}/jwt-auth-mergeable/jwt-minion-secret-updated.yaml")
+        replace_secret(
+            kube_apis.v1,
+            jwt_auth_setup.minion_secret_name,
+            test_namespace,
+            f"{TEST_DATA}/jwt-auth-mergeable/jwt-minion-secret-updated.yaml",
+        )
         wait_before_test(1)
         execute_checks(jwt_auth_setup, step_3_expected_results)
 
@@ -152,9 +241,12 @@ def execute_checks(jwt_auth_setup, expected_results) -> None:
     """
     for expected in expected_results:
         req_url = f"http://{jwt_auth_setup.public_endpoint.public_ip}:{jwt_auth_setup.public_endpoint.port}/{expected['path']}"
-        resp = requests.get(req_url, headers={"host": jwt_auth_setup.ingress_host},
-                            cookies={"auth_token": jwt_auth_setup.tokens[expected['token_type']]},
-                            allow_redirects=False)
-        assert resp.status_code == expected['response_code']
-        if expected.get('location', None):
-            assert resp.headers['Location'] == expected['location']
+        resp = requests.get(
+            req_url,
+            headers={"host": jwt_auth_setup.ingress_host},
+            cookies={"auth_token": jwt_auth_setup.tokens[expected["token_type"]]},
+            allow_redirects=False,
+        )
+        assert resp.status_code == expected["response_code"]
+        if expected.get("location", None):
+            assert resp.headers["Location"] == expected["location"]

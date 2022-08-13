@@ -4,9 +4,16 @@ import os
 
 import pytest
 from kubernetes.config.kube_config import KUBE_CONFIG_DEFAULT_LOCATION
-from settings import (BATCH_RESOURCES, BATCH_START, DEFAULT_DEPLOYMENT_TYPE,
-                      DEFAULT_IC_TYPE, DEFAULT_IMAGE, DEFAULT_PULL_POLICY,
-                      DEFAULT_SERVICE, NUM_REPLICAS)
+from settings import (
+    BATCH_RESOURCES,
+    BATCH_START,
+    DEFAULT_DEPLOYMENT_TYPE,
+    DEFAULT_IC_TYPE,
+    DEFAULT_IMAGE,
+    DEFAULT_PULL_POLICY,
+    DEFAULT_SERVICE,
+    NUM_REPLICAS,
+)
 from suite.resources_utils import get_first_pod_name
 
 
@@ -127,7 +134,7 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "dos" in item.keywords:
                 item.add_marker(dos)
-    if  str(config.getoption("--batch-start")) != "True":
+    if str(config.getoption("--batch-start")) != "True":
         batch_start = pytest.mark.skip(reason="Skipping pod restart test with multiple resources")
         for item in items:
             if "batch_start" in item.keywords:
@@ -150,17 +157,9 @@ def pytest_runtest_makereport(item) -> None:
     rep = outcome.get_result()
 
     # we only look at actual failing test calls, not setup/teardown
-    if (
-        rep.when == "call"
-        and rep.failed
-        and item.config.getoption("--show-ic-logs") == "yes"
-    ):
+    if rep.when == "call" and rep.failed and item.config.getoption("--show-ic-logs") == "yes":
         pod_namespace = item.funcargs["ingress_controller_prerequisites"].namespace
         pod_name = get_first_pod_name(item.funcargs["kube_apis"].v1, pod_namespace)
         print("\n===================== IC Logs Start =====================")
-        print(
-            item.funcargs["kube_apis"].v1.read_namespaced_pod_log(
-                pod_name, pod_namespace
-            )
-        )
+        print(item.funcargs["kube_apis"].v1.read_namespaced_pod_log(pod_name, pod_namespace))
         print("\n===================== IC Logs End =====================")

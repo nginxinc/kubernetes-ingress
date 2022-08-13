@@ -38,3 +38,10 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           only-new-issues: true
+
+  lint-python:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: isort/isort-action@v1.0.0
+      - uses: psf/black@stable

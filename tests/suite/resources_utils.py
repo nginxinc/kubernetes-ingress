@@ -7,13 +7,11 @@ import time
 import pytest
 import requests
 import yaml
-from kubernetes.client import (AppsV1Api, CoreV1Api, NetworkingV1Api,
-                               RbacAuthorizationV1Api, V1Service)
+from kubernetes.client import AppsV1Api, CoreV1Api, NetworkingV1Api, RbacAuthorizationV1Api, V1Service
 from kubernetes.client.rest import ApiException
 from kubernetes.stream import stream
 from more_itertools import first
-from settings import (DEPLOYMENTS, PROJECT_ROOT, RECONFIGURATION_DELAY,
-                      TEST_DATA)
+from settings import DEPLOYMENTS, PROJECT_ROOT, RECONFIGURATION_DELAY, TEST_DATA
 
 
 class RBACAuthorization:
@@ -245,9 +243,8 @@ def scale_deployment(v1: CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, val
 
     elif value == 0:
         replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
-        while(replica_num is not None):
-            replica_num = (apps_v1_api.read_namespaced_deployment_scale(
-                name, namespace)).spec.replicas
+        while replica_num is not None:
+            replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
             time.sleep(1)
             print("Number of replicas is not 0, retrying...")
 
@@ -344,6 +341,7 @@ def get_pods_amount(v1: CoreV1Api, namespace) -> int:
     pods = v1.list_namespaced_pod(namespace)
     return 0 if not pods.items else len(pods.items)
 
+
 def get_pods_amount_with_name(v1: CoreV1Api, namespace, name) -> int:
     """
     Get an amount of pods.
@@ -361,6 +359,7 @@ def get_pods_amount_with_name(v1: CoreV1Api, namespace, name) -> int:
                 count += 1
     return count
 
+
 def get_pod_name_that_contains(v1: CoreV1Api, namespace, contains_string) -> str:
     """
     Get an amount of pods.
@@ -374,6 +373,7 @@ def get_pod_name_that_contains(v1: CoreV1Api, namespace, contains_string) -> str
         if contains_string in item.metadata.name:
             return item.metadata.name
     return ""
+
 
 def create_service_from_yaml(v1: CoreV1Api, namespace, yaml_manifest) -> str:
     """
@@ -571,9 +571,7 @@ def ensure_item_removal(get_item, *args, **kwargs) -> None:
         if counter >= 120:
             # Due to k8s issue with namespaces, they sometimes get stuck in Terminating state, skip such cases
             if "_namespace " in str(get_item):
-                print(
-                    f"Failed to remove namespace '{args}' after 120 seconds, skip removal. Remove manually."
-                )
+                print(f"Failed to remove namespace '{args}' after 120 seconds, skip removal. Remove manually.")
             else:
                 pytest.fail("Failed to remove the item after 120 seconds")
     except ApiException as ex:
@@ -830,9 +828,7 @@ def delete_testing_namespaces(v1: CoreV1Api) -> []:
     :return:
     """
     namespaces_list = v1.list_namespace()
-    for namespace in list(
-        filter(lambda ns: ns.metadata.name.startswith("test-namespace-"), namespaces_list.items)
-    ):
+    for namespace in list(filter(lambda ns: ns.metadata.name.startswith("test-namespace-"), namespaces_list.items)):
         delete_namespace(v1, namespace.metadata.name)
 
 
@@ -863,6 +859,7 @@ def get_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace, print_l
         print("\nFile contents:\n" + result_conf)
     return result_conf
 
+
 def clear_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> str:
     """
     Execute 'truncate -s 0 file_path' command in a pod.
@@ -887,6 +884,7 @@ def clear_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace) -> st
     result_conf = str(resp)
 
     return result_conf
+
 
 def nginx_reload(v1: CoreV1Api, pod_name, pod_namespace) -> str:
     """
@@ -935,9 +933,7 @@ def clear_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace):
     )
 
 
-def get_ingress_nginx_template_conf(
-    v1: CoreV1Api, ingress_namespace, ingress_name, pod_name, pod_namespace
-) -> str:
+def get_ingress_nginx_template_conf(v1: CoreV1Api, ingress_namespace, ingress_name, pod_name, pod_namespace) -> str:
     """
     Get contents of /etc/nginx/conf.d/{namespace}-{ingress_name}.conf in the pod.
 
@@ -952,9 +948,7 @@ def get_ingress_nginx_template_conf(
     return get_file_contents(v1, file_path, pod_name, pod_namespace)
 
 
-def get_ts_nginx_template_conf(
-    v1: CoreV1Api, resource_namespace, resource_name, pod_name, pod_namespace
-) -> str:
+def get_ts_nginx_template_conf(v1: CoreV1Api, resource_namespace, resource_name, pod_name, pod_namespace) -> str:
     """
     Get contents of /etc/nginx/stream-conf.d/ts_{namespace}-{resource_name}.conf in the pod.
 
@@ -1084,9 +1078,7 @@ def wait_for_event_increment(kube_apis, namespace, event_count, offset) -> bool:
         return False
 
 
-def create_ingress_controller(
-    v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments, namespace, args=None
-) -> str:
+def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_arguments, namespace, args=None) -> str:
     """
     Create an Ingress Controller according to the params.
 
@@ -1098,16 +1090,12 @@ def create_ingress_controller(
     :return: str
     """
     print(f"Create an Ingress Controller as {cli_arguments['ic-type']}")
-    yaml_manifest = (
-        f"{DEPLOYMENTS}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
-    )
+    yaml_manifest = f"{DEPLOYMENTS}/{cli_arguments['deployment-type']}/{cli_arguments['ic-type']}.yaml"
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
     dep["spec"]["replicas"] = int(cli_arguments["replicas"])
     dep["spec"]["template"]["spec"]["containers"][0]["image"] = cli_arguments["image"]
-    dep["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = cli_arguments[
-        "image-pull-policy"
-    ]
+    dep["spec"]["template"]["spec"]["containers"][0]["imagePullPolicy"] = cli_arguments["image-pull-policy"]
     if args is not None:
         dep["spec"]["template"]["spec"]["containers"][0]["args"].extend(args)
     if cli_arguments["deployment-type"] == "deployment":
@@ -1138,9 +1126,7 @@ def delete_ingress_controller(apps_v1_api: AppsV1Api, name, dep_type, namespace)
         delete_daemon_set(apps_v1_api, name, namespace)
 
 
-def create_dos_arbitrator(
-    v1: CoreV1Api, apps_v1_api: AppsV1Api, namespace
-) -> str:
+def create_dos_arbitrator(v1: CoreV1Api, apps_v1_api: AppsV1Api, namespace) -> str:
     """
     Create dos arbitrator according to the params.
 
@@ -1149,9 +1135,7 @@ def create_dos_arbitrator(
     :param namespace: namespace name
     :return: str
     """
-    yaml_manifest = (
-        f"{DEPLOYMENTS}/deployment/appprotect-dos-arb.yaml"
-    )
+    yaml_manifest = f"{DEPLOYMENTS}/deployment/appprotect-dos-arb.yaml"
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
 
@@ -1186,6 +1170,7 @@ def delete_dos_arbitrator(v1: CoreV1Api, apps_v1_api: AppsV1Api, name, namespace
     delete_deployment(apps_v1_api, name, namespace)
     delete_service(v1, "svc-appprotect-dos-arb", namespace)
 
+
 def create_ns_and_sa_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
     """
     Create a namespace and a service account in that namespace.
@@ -1202,9 +1187,7 @@ def create_ns_and_sa_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
             if doc["kind"] == "Namespace":
                 res["namespace"] = create_namespace(v1, doc)
             elif doc["kind"] == "ServiceAccount":
-                assert (
-                    res["namespace"] is not None
-                ), "Ensure 'Namespace' is above 'SA' in the yaml manifest"
+                assert res["namespace"] is not None, "Ensure 'Namespace' is above 'SA' in the yaml manifest"
                 create_service_account(v1, res["namespace"], doc)
     return res["namespace"]
 
@@ -1262,9 +1245,7 @@ def create_ingress_with_ap_annotations(
 
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-policy"] = policy
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-enable"] = ap_pol_st
-        doc["metadata"]["annotations"][
-            "appprotect.f5.com/app-protect-security-log-enable"
-        ] = ap_log_st
+        doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log-enable"] = ap_log_st
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log"] = logconf
         doc["metadata"]["annotations"][
             "appprotect.f5.com/app-protect-security-log-destination"
@@ -1272,9 +1253,7 @@ def create_ingress_with_ap_annotations(
         create_ingress(kube_apis.networking_v1, namespace, doc)
 
 
-def create_ingress_with_dos_annotations(
-        kube_apis, yaml_manifest, namespace, dos_protected
-) -> None:
+def create_ingress_with_dos_annotations(kube_apis, yaml_manifest, namespace, dos_protected) -> None:
     """
     Create an ingress with AppProtect annotations
     :param dos_protected: the namespace/name of the dos protected resource
@@ -1314,9 +1293,7 @@ def replace_ingress_with_ap_annotations(
 
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-policy"] = policy
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-enable"] = ap_pol_st
-        doc["metadata"]["annotations"][
-            "appprotect.f5.com/app-protect-security-log-enable"
-        ] = ap_log_st
+        doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log-enable"] = ap_log_st
         doc["metadata"]["annotations"]["appprotect.f5.com/app-protect-security-log"] = logconf
         doc["metadata"]["annotations"][
             "appprotect.f5.com/app-protect-security-log-destination"
@@ -1455,9 +1432,7 @@ def ensure_response_from_backend(req_url, host, additional_headers=None, check40
         for _ in range(30):
             resp = requests.get(req_url, headers=headers, verify=False)
             if resp.status_code != 502 and resp.status_code != 504:
-                print(
-                    f"After {_} retries at 1 second interval, got non 502|504 response. Continue with tests..."
-                )
+                print(f"After {_} retries at 1 second interval, got non 502|504 response. Continue with tests...")
                 return
             time.sleep(1)
         pytest.fail(f"Keep getting 502|504 from {req_url} after 60 seconds. Exiting...")
@@ -1477,12 +1452,7 @@ def get_service_endpoint(kube_apis, service_name, namespace) -> str:
     while not found and retry < 60:
         time.sleep(1)
         try:
-            ep = (
-                kube_apis.v1.read_namespaced_endpoints(service_name, namespace)
-                .subsets[0]
-                .addresses[0]
-                .ip
-            )
+            ep = kube_apis.v1.read_namespaced_endpoints(service_name, namespace).subsets[0].addresses[0].ip
             found = True
             print(f"Endpoint IP for {service_name} is {ep}")
         except TypeError as err:
@@ -1605,4 +1575,4 @@ def get_last_log_entry(kube_apis, pod_name, namespace) -> str:
     logs = kube_apis.read_namespaced_pod_log(pod_name, namespace)
     # Our log entries end in '\n' which means the final entry when we split on a new line
     # is an empty string. Return the second to last entry instead.
-    return logs.split('\n')[-2]
+    return logs.split("\n")[-2]

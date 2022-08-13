@@ -2,36 +2,29 @@
 
 import pytest
 import yaml
-
+from settings import TEST_DATA
+from suite.custom_resources_utils import create_gc_from_yaml, create_ts_from_yaml, delete_gc, delete_ts
 from suite.fixtures import PublicEndpoint
-
-from suite.custom_resources_utils import (
-    create_ts_from_yaml,
-    create_gc_from_yaml,
-    delete_ts,
-    delete_gc,
-)
-from suite.vs_vsr_resources_utils import (
-    create_virtual_server_from_yaml,
-    delete_virtual_server,
-    create_v_s_route_from_yaml,
-    delete_v_s_route,
-)
 from suite.resources_utils import (
-    create_namespace_with_name_from_yaml,
-    delete_namespace,
-    create_example_app,
-    wait_until_all_pods_are_ready,
-    delete_common_app,
-    create_service_with_name,
     create_deployment_with_name,
+    create_example_app,
+    create_items_from_yaml,
+    create_namespace_with_name_from_yaml,
+    create_service_with_name,
+    delete_common_app,
     delete_deployment,
+    delete_items_from_yaml,
+    delete_namespace,
     delete_service,
     get_first_pod_name,
-    create_items_from_yaml,
-    delete_items_from_yaml,
+    wait_until_all_pods_are_ready,
 )
-
+from suite.vs_vsr_resources_utils import (
+    create_v_s_route_from_yaml,
+    create_virtual_server_from_yaml,
+    delete_v_s_route,
+    delete_virtual_server,
+)
 from suite.yaml_utils import (
     get_first_host_from_yaml,
     get_paths_from_vs_yaml,
@@ -39,9 +32,6 @@ from suite.yaml_utils import (
     get_route_namespace_from_vs_yaml,
 )
 
-from settings import (
-    TEST_DATA,
-)
 
 class VirtualServerSetup:
     """
@@ -61,28 +51,15 @@ class VirtualServerSetup:
         self.namespace = namespace
         self.vs_host = vs_host
         self.vs_name = vs_name
-        self.backend_1_url = (
-            f"http://{public_endpoint.public_ip}:{public_endpoint.port}{vs_paths[0]}"
-        )
-        self.backend_2_url = (
-            f"http://{public_endpoint.public_ip}:{public_endpoint.port}{vs_paths[1]}"
-        )
-        self.backend_1_url_ssl = (
-            f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[0]}"
-        )
-        self.backend_2_url_ssl = (
-            f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[1]}"
-        )
-        self.metrics_url = (
-            f"http://{public_endpoint.public_ip}:{public_endpoint.metrics_port}/metrics"
-        )
-
+        self.backend_1_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}{vs_paths[0]}"
+        self.backend_2_url = f"http://{public_endpoint.public_ip}:{public_endpoint.port}{vs_paths[1]}"
+        self.backend_1_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[0]}"
+        self.backend_2_url_ssl = f"https://{public_endpoint.public_ip}:{public_endpoint.port_ssl}{vs_paths[1]}"
+        self.metrics_url = f"http://{public_endpoint.public_ip}:{public_endpoint.metrics_port}/metrics"
 
 
 @pytest.fixture(scope="class")
-def virtual_server_setup(
-    request, kube_apis, ingress_controller_endpoint, test_namespace
-) -> VirtualServerSetup:
+def virtual_server_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> VirtualServerSetup:
     """
     Prepare Virtual Server Example.
 
@@ -96,9 +73,7 @@ def virtual_server_setup(
     :param test_namespace:
     :return: VirtualServerSetup
     """
-    print(
-        "------------------------- Deploy Virtual Server Example -----------------------------------"
-    )
+    print("------------------------- Deploy Virtual Server Example -----------------------------------")
     vs_source = f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml"
     vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects, vs_source, test_namespace)
     vs_host = get_first_host_from_yaml(vs_source)
@@ -115,9 +90,7 @@ def virtual_server_setup(
 
     request.addfinalizer(fin)
 
-    return VirtualServerSetup(
-        ingress_controller_endpoint, test_namespace, vs_host, vs_name, vs_paths
-    )
+    return VirtualServerSetup(ingress_controller_endpoint, test_namespace, vs_host, vs_name, vs_paths)
 
 
 class TransportServerSetup:
@@ -140,7 +113,7 @@ class TransportServerSetup:
 
 @pytest.fixture(scope="class")
 def transport_server_setup(
-        request, kube_apis, ingress_controller_prerequisites, test_namespace, ingress_controller_endpoint
+    request, kube_apis, ingress_controller_prerequisites, test_namespace, ingress_controller_endpoint
 ) -> TransportServerSetup:
     """
     Prepare Transport Server Example.
@@ -152,14 +125,10 @@ def transport_server_setup(
     :param test_namespace:
     :return: TransportServerSetup
     """
-    print(
-        "------------------------- Deploy Transport Server Example -----------------------------------"
-    )
+    print("------------------------- Deploy Transport Server Example -----------------------------------")
 
     # deploy global config
-    global_config_file = (
-        f"{TEST_DATA}/{request.param['example']}/standard/global-configuration.yaml"
-    )
+    global_config_file = f"{TEST_DATA}/{request.param['example']}/standard/global-configuration.yaml"
     gc_resource = create_gc_from_yaml(kube_apis.custom_objects, global_config_file, "nginx-ingress")
 
     # deploy service_file
@@ -168,9 +137,7 @@ def transport_server_setup(
 
     # deploy transport server
     transport_server_file = f"{TEST_DATA}/{request.param['example']}/standard/transport-server.yaml"
-    ts_resource = create_ts_from_yaml(
-        kube_apis.custom_objects, transport_server_file, test_namespace
-    )
+    ts_resource = create_ts_from_yaml(kube_apis.custom_objects, transport_server_file, test_namespace)
 
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
@@ -186,7 +153,7 @@ def transport_server_setup(
     ic_namespace = ingress_controller_prerequisites.namespace
 
     return TransportServerSetup(
-        ts_resource['metadata']['name'],
+        ts_resource["metadata"]["name"],
         test_namespace,
         ic_pod_name,
         ic_namespace,
@@ -207,28 +174,14 @@ def v_s_route_app_setup(request, kube_apis, v_s_route_setup) -> None:
     :param v_s_route_setup:
     :return:
     """
-    print(
-        "---------------------- Deploy a VS Route Example Application ----------------------------"
-    )
-    svc_one = create_service_with_name(
-        kube_apis.v1, v_s_route_setup.route_m.namespace, "backend1-svc"
-    )
-    svc_three = create_service_with_name(
-        kube_apis.v1, v_s_route_setup.route_m.namespace, "backend3-svc"
-    )
-    deployment_one = create_deployment_with_name(
-        kube_apis.apps_v1_api, v_s_route_setup.route_m.namespace, "backend1"
-    )
-    deployment_three = create_deployment_with_name(
-        kube_apis.apps_v1_api, v_s_route_setup.route_m.namespace, "backend3"
-    )
+    print("---------------------- Deploy a VS Route Example Application ----------------------------")
+    svc_one = create_service_with_name(kube_apis.v1, v_s_route_setup.route_m.namespace, "backend1-svc")
+    svc_three = create_service_with_name(kube_apis.v1, v_s_route_setup.route_m.namespace, "backend3-svc")
+    deployment_one = create_deployment_with_name(kube_apis.apps_v1_api, v_s_route_setup.route_m.namespace, "backend1")
+    deployment_three = create_deployment_with_name(kube_apis.apps_v1_api, v_s_route_setup.route_m.namespace, "backend3")
 
-    svc_two = create_service_with_name(
-        kube_apis.v1, v_s_route_setup.route_s.namespace, "backend2-svc"
-    )
-    deployment_two = create_deployment_with_name(
-        kube_apis.apps_v1_api, v_s_route_setup.route_s.namespace, "backend2"
-    )
+    svc_two = create_service_with_name(kube_apis.v1, v_s_route_setup.route_s.namespace, "backend2-svc")
+    deployment_two = create_deployment_with_name(kube_apis.apps_v1_api, v_s_route_setup.route_s.namespace, "backend2")
 
     wait_until_all_pods_are_ready(kube_apis.v1, v_s_route_setup.route_m.namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, v_s_route_setup.route_s.namespace)
@@ -237,9 +190,7 @@ def v_s_route_app_setup(request, kube_apis, v_s_route_setup) -> None:
         print("Clean up the Application:")
         delete_deployment(kube_apis.apps_v1_api, deployment_one, v_s_route_setup.route_m.namespace)
         delete_service(kube_apis.v1, svc_one, v_s_route_setup.route_m.namespace)
-        delete_deployment(
-            kube_apis.apps_v1_api, deployment_three, v_s_route_setup.route_m.namespace
-        )
+        delete_deployment(kube_apis.apps_v1_api, deployment_three, v_s_route_setup.route_m.namespace)
         delete_service(kube_apis.v1, svc_three, v_s_route_setup.route_m.namespace)
         delete_deployment(kube_apis.apps_v1_api, deployment_two, v_s_route_setup.route_s.namespace)
         delete_service(kube_apis.v1, svc_two, v_s_route_setup.route_s.namespace)
@@ -312,41 +263,29 @@ def v_s_route_setup(request, kube_apis, ingress_controller_endpoint) -> VirtualS
     vs_routes_ns = get_route_namespace_from_vs_yaml(
         f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml"
     )
-    ns_1 = create_namespace_with_name_from_yaml(
-        kube_apis.v1, vs_routes_ns[0], f"{TEST_DATA}/common/ns.yaml"
-    )
-    ns_2 = create_namespace_with_name_from_yaml(
-        kube_apis.v1, vs_routes_ns[1], f"{TEST_DATA}/common/ns.yaml"
-    )
+    ns_1 = create_namespace_with_name_from_yaml(kube_apis.v1, vs_routes_ns[0], f"{TEST_DATA}/common/ns.yaml")
+    ns_2 = create_namespace_with_name_from_yaml(kube_apis.v1, vs_routes_ns[1], f"{TEST_DATA}/common/ns.yaml")
     print("------------------------- Deploy Virtual Server -----------------------------------")
     vs_name = create_virtual_server_from_yaml(
         kube_apis.custom_objects,
         f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml",
         ns_1,
     )
-    vs_host = get_first_host_from_yaml(
-        f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml"
-    )
+    vs_host = get_first_host_from_yaml(f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml")
 
-    print(
-        "------------------------- Deploy Virtual Server Routes -----------------------------------"
-    )
+    print("------------------------- Deploy Virtual Server Routes -----------------------------------")
     vsr_m_name = create_v_s_route_from_yaml(
         kube_apis.custom_objects,
         f"{TEST_DATA}/{request.param['example']}/route-multiple.yaml",
         ns_1,
     )
-    vsr_m_paths = get_paths_from_vsr_yaml(
-        f"{TEST_DATA}/{request.param['example']}/route-multiple.yaml"
-    )
+    vsr_m_paths = get_paths_from_vsr_yaml(f"{TEST_DATA}/{request.param['example']}/route-multiple.yaml")
     route_m = VirtualServerRoute(ns_1, vsr_m_name, vsr_m_paths)
 
     vsr_s_name = create_v_s_route_from_yaml(
         kube_apis.custom_objects, f"{TEST_DATA}/{request.param['example']}/route-single.yaml", ns_2
     )
-    vsr_s_paths = get_paths_from_vsr_yaml(
-        f"{TEST_DATA}/{request.param['example']}/route-single.yaml"
-    )
+    vsr_s_paths = get_paths_from_vsr_yaml(f"{TEST_DATA}/{request.param['example']}/route-single.yaml")
     route_s = VirtualServerRoute(ns_2, vsr_s_name, vsr_s_paths)
 
     def fin():
@@ -361,7 +300,4 @@ def v_s_route_setup(request, kube_apis, ingress_controller_endpoint) -> VirtualS
 
     request.addfinalizer(fin)
 
-    return VirtualServerRouteSetup(
-        ingress_controller_endpoint, ns_1, vs_host, vs_name, route_m, route_s
-    )
-
+    return VirtualServerRouteSetup(ingress_controller_endpoint, ns_1, vs_host, vs_name, route_m, route_s)
