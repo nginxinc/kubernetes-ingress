@@ -143,7 +143,8 @@ jobs:
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}], \
+                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}, \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}"
           else
             echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.12\", \"1.22.9\", \"1.23.6\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
@@ -167,8 +168,8 @@ jobs:
           image: ${{ matrix.images.image != '' && matrix.images.image || 'debian' }}
           marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}
           k8s-version: ${{ matrix.k8s }}
-          nginx-crt: ${{ secrets.NGINX_CRT }}
-          nginx-key: ${{ secrets.NGINX_KEY }}
+          nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
+          nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
       - name: Upload Test Results
         uses: actions/upload-artifact@v3
         with:
@@ -463,6 +464,10 @@ jobs:
             - image: debian-plus
               platforms: "linux/arm64, linux/amd64"
               target: aws
+            - image: debian-plus-nap
+              platforms: "linux/amd64"
+              target: goreleaser
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -500,9 +505,9 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(matrix.image, 'nap') && '-dos' || '' }}/nginx-plus-ingress
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic${{ contains(matrix.image, 'nap') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic${{ contains(matrix.image, 'nap') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
             name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') && contains(matrix.target, 'aws') }}
           flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }},onlatest=true
           tags: |
@@ -546,9 +551,10 @@ jobs:
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.var.outputs.ic_version || 'CI' }}
+            ${{ contains(matrix.image, 'nap') && 'NAP_MODULES=dos' || '' }}
           secrets: |
-            "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
-            "nginx-repo.key=${{ secrets.NGINX_KEY }}"
+            "nginx-repo.crt=${{ contains(matrix.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ contains(matrix.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
       - name: Load image for Trivy
         uses: docker/build-push-action@v3
         with:
@@ -561,9 +567,10 @@ jobs:
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=CI
+            ${{ contains(matrix.image, 'nap') && 'NAP_MODULES=dos' || '' }}
           secrets: |
-            "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
-            "nginx-repo.key=${{ secrets.NGINX_KEY }}"
+            "nginx-repo.crt=${{ contains(matrix.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ contains(matrix.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.6.2
         continue-on-error: true
