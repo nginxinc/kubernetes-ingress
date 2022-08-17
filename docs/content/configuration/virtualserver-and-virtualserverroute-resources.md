@@ -1,6 +1,6 @@
 ---
 title: VirtualServer and VirtualServerRoute Resources
-description: "The VirtualServer and VirtualServerRoute resources are load balancing configurations offered as a recommended alternative to the Ingress resource."
+description: "The VirtualServer and VirtualServerRoute resources are load balancing configurations recommended as an alternative to the Ingress resource."
 weight: 1600
 doctypes: [""]
 aliases:
