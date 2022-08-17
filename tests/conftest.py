@@ -6,7 +6,7 @@ import pytest
 from kubernetes.config.kube_config import KUBE_CONFIG_DEFAULT_LOCATION
 from settings import (BATCH_RESOURCES, BATCH_START, DEFAULT_DEPLOYMENT_TYPE,
                       DEFAULT_IC_TYPE, DEFAULT_IMAGE, DEFAULT_PULL_POLICY,
-                      DEFAULT_SERVICE, NUM_REPLICAS)
+                      DEFAULT_SERVICE, NUM_REPLICAS, NS_COUNT)
 from suite.resources_utils import get_first_pod_name
 
 
@@ -87,6 +87,12 @@ def pytest_addoption(parser) -> None:
         default=BATCH_RESOURCES,
         help="Number of VS/Ingress resources to deploy",
     )
+    parser.addoption(
+        "--ns-count",
+        action="store",
+        default=NS_COUNT,
+        help="Number for namespaces to deploy for use in test_multiple_ns_perf.py",
+    )
 
 
 # import fixtures into pytest global namespace
@@ -97,6 +103,7 @@ def pytest_collection_modifyitems(config, items) -> None:
     """
     Skip tests marked with '@pytest.mark.skip_for_nginx_oss' for Nginx OSS runs.
     Skip tests marked with '@pytest.mark.appprotect' for non AP images.
+    Skip tests marked with '@pytest.mark.dos' for non DOS images
 
     :param config: pytest config
     :param items: pytest collected test-items
@@ -132,7 +139,12 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "batch_start" in item.keywords:
                 item.add_marker(batch_start)
-
+                
+    if  int(config.getoption("--ns-count")) <=0:
+        multi_ns = pytest.mark.skip(reason="Skipping watch-namespaces perf. tests")
+        for item in items:
+            if "multi_ns" in item.keywords:
+                item.add_marker(multi_ns)
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item) -> None:

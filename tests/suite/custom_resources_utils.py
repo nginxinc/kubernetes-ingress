@@ -424,3 +424,14 @@ def generate_item_with_upstream_options(yaml_manifest, options) -> dict:
     for upstream in dep["spec"]["upstreams"]:
         upstream.update(options)
     return dep
+
+def get_pod_metrics(request, namespace) -> list:
+    retries=0
+    pod_count = int(request.config.getoption("--replicas"))
+    metrics=CustomObjectsApi().list_namespaced_custom_object('metrics.k8s.io', 'v1beta1', namespace, 'pods')
+    while (not (metrics["items"])) and retries < (pod_count*60):
+        metrics=CustomObjectsApi().list_namespaced_custom_object('metrics.k8s.io', 'v1beta1', namespace, 'pods')
+        time.sleep(1)
+        retries += 1
+        print(f"Retry #{retries}")
+    return metrics["items"]
