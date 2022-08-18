@@ -92,14 +92,16 @@ func (vsv *VirtualServerValidator) validateVirtualServerSpec(spec *v1.VirtualSer
 	return allErrs
 }
 
+const wildcardHost = "*."
+
 func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if host == "" {
 		return append(allErrs, field.Required(fieldPath, ""))
 	}
-	
-	if !strings.HasPrefix(host, "*.") {
+
+	if !strings.HasPrefix(host, wildcardHost) {
 		for _, msg := range validation.IsDNS1123Subdomain(host) {
 			allErrs = append(allErrs, field.Invalid(fieldPath, host, msg))
 		}
