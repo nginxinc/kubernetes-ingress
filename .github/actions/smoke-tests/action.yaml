@@ -41,11 +41,8 @@ runs:
     - name: Ingress type
       id: ingress-type
       run: |
-        plus=""
-        if [[ ${{ inputs.image }} == *plus* ]]; then
-          plus="-plus"
-        fi
-        echo ::set-output name=name::nginx$plus-ingress
+        echo ::set-output name=name::nginx${{ contains(inputs.image, 'plus') && '-plus' || '' }}-ingress
+        echo ::set-output name=tag::${{ inputs.image }}${{ contains(inputs.image, 'nap') && '-dos' || '' }}-${{ github.sha }}
       shell: bash
 
     - name: Docker Buildx
@@ -59,12 +56,13 @@ runs:
         cache-from: type=gha,scope=${{ inputs.image }}
         cache-to: type=gha,scope=${{ inputs.image }},mode=max
         target: goreleaser
-        tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }}'
+        tags: 'docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }}'
         load: true
         pull: true
         build-args: |
           BUILD_OS=${{ inputs.image }}
           IC_VERSION=CI
+          ${{ contains(inputs.image, 'nap') && 'NAP_MODULES=dos' || '' }}
         secrets: |
           "nginx-repo.crt=${{ inputs.nginx-crt }}"
           "nginx-repo.key=${{ inputs.nginx-key }}"
@@ -86,7 +84,7 @@ runs:
         # no support for dual stack in < 1.20, we need to use ipv4 only
         printf '%s\n' "1.20.0" "${{ inputs.k8s-version }}" | sort --version-sort --check=quiet || echo "Using ipv4" && sed -i 's/dual/ipv4/g' ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml
         kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ inputs.k8s-version }} --config ${{ github.workspace }}/tests/ci-files/ci-kind-config.yaml --kubeconfig kube-${{ github.run_id }} --wait ${{ inputs.k8s-timeout }}
-        kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }} --name ${{ github.run_id }}
+        kind load docker-image docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} --name ${{ github.run_id }}
         marker="${{ inputs.marker }}"
         sanitized_marker="${marker// /_}"
         name="${sanitized_marker:-${{ inputs.k8s-version }}}"
@@ -108,7 +106,7 @@ runs:
         -v ${{ github.workspace }}/tests/tests-${{ steps.k8s.outputs.cluster }}.html:/workspace/tests/tests-${{ steps.k8s.outputs.cluster }}.html \
         -v ${{ github.workspace }}/kube-${{ github.run_id }}:/root/.kube/config test-runner:${{ github.sha }} \
         --context=kind-${{ github.run_id }} \
-        --image=docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ inputs.image }}-${{ github.sha }} \
+        --image=docker.io/nginx/${{ steps.ingress-type.outputs.name }}:${{ steps.ingress-type.outputs.tag }} \
         --image-pull-policy=Never \
         --ic-type=${{ steps.ingress-type.outputs.name }} \
         --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
