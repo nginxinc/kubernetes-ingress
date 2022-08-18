@@ -505,15 +505,6 @@ func validateIngressAnnotations(
 	return allErrs
 }
 
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
 func validateIngressAnnotation(context *annotationValidationContext) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if validationFuncs, exists := annotationValidations[context.name]; exists {
