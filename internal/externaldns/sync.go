@@ -139,7 +139,7 @@ func getValidTargets(endpoints []vsapi.ExternalEndpoint) (extdnsapi.Targets, str
 func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.VirtualServer, targets extdnsapi.Targets, recordType string) (*extdnsapi.DNSEndpoint, *extdnsapi.DNSEndpoint, error) {
 	var updateDNSEndpoint *extdnsapi.DNSEndpoint
 	var newDNSEndpoint *extdnsapi.DNSEndpoint
-	existingDNSEndpoint, err := extdnsLister.DNSEndpoints(vs.Namespace).Get(vs.Spec.Host)
+	existingDNSEndpoint, err := extdnsLister.DNSEndpoints(vs.Namespace).Get(vs.ObjectMeta.Name)
 	if !apierrors.IsNotFound(err) && err != nil {
 		return nil, nil, err
 	}
@@ -147,7 +147,7 @@ func buildDNSEndpoint(extdnsLister extdnslisters.DNSEndpointLister, vs *vsapi.Vi
 
 	dnsEndpoint := &extdnsapi.DNSEndpoint{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            vs.Spec.Host,
+			Name:            vs.ObjectMeta.Name,
 			Namespace:       vs.Namespace,
 			Labels:          vs.Labels,
 			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(vs, controllerGVK)},
