@@ -98,8 +98,7 @@ func validateHost(host string, fieldPath *field.Path) field.ErrorList {
 	if host == "" {
 		return append(allErrs, field.Required(fieldPath, ""))
 	}
-
-	// Allow wildcard hosts e.g. *.example.com
+	
 	if !strings.HasPrefix(host, "*.") {
 		for _, msg := range validation.IsDNS1123Subdomain(host) {
 			allErrs = append(allErrs, field.Invalid(fieldPath, host, msg))
