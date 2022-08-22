@@ -60,7 +60,7 @@ type SyncFn func(context.Context, *vsapi.VirtualServer) error
 func SyncFnFor(
 	rec record.EventRecorder,
 	cmClient clientset.Interface,
-	cmLister cmlisters.CertificateLister,
+	cmLister []cmlisters.CertificateLister,
 ) SyncFn {
 	return func(ctx context.Context, vs *vsapi.VirtualServer) error {
 		var err error
@@ -104,8 +104,14 @@ func SyncFnFor(
 			}
 			rec.Eventf(vs, corev1.EventTypeNormal, reasonUpdateCertificate, "Successfully updated Certificate %q", crt.Name)
 		}
+		var certs []*cmapi.Certificate
 
-		certs, err := cmLister.Certificates(vs.GetNamespace()).List(labels.Everything())
+		for _, cl := range cmLister {
+			certs, err = cl.Certificates(vs.GetNamespace()).List(labels.Everything())
+			if len(certs) > 0 {
+				break
+			}
+		}
 		if err != nil {
 			return err
 		}
@@ -125,22 +131,27 @@ func SyncFnFor(
 }
 
 func buildCertificates(
-	cmLister cmlisters.CertificateLister,
+	cmLister []cmlisters.CertificateLister,
 	vs *vsapi.VirtualServer,
 	issuerName, issuerKind, issuerGroup string,
 ) (newCert, update []*cmapi.Certificate, _ error) {
 	var newCrts []*cmapi.Certificate
 	var updateCrts []*cmapi.Certificate
+	var existingCrt *cmapi.Certificate
+	var err error
 
-	var hosts []string
-	hosts = append(hosts, vs.Spec.Host)
-
-	existingCrt, err := cmLister.Certificates(vs.Namespace).Get(vs.Spec.TLS.Secret)
+	for _, cl := range cmLister {
+		existingCrt, err = cl.Certificates(vs.Namespace).Get(vs.Spec.TLS.Secret)
+		if err == nil {
+			break
+		}
+	}
 	if !apierrors.IsNotFound(err) && err != nil {
 		return nil, nil, err
 	}
 
 	var controllerGVK schema.GroupVersionKind = vsGVK
+	hosts := []string{vs.Spec.Host}
 
 	crt := &cmapi.Certificate{
 		ObjectMeta: metav1.ObjectMeta{

@@ -302,7 +302,7 @@ A comma-separated list of pattern=N settings for file-filtered logging.
 
 ### -watch-namespace `<string>`
 
-Namespace to watch for Ingress resources. By default the Ingress Controller watches all namespaces.
+Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces.
 &nbsp;
 <a name="cmdoption-enable-prometheus-metrics"></a>
 

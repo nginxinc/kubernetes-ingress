@@ -44,8 +44,9 @@ func TestUpdateTransportServerStatus(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error adding TransportServer to the transportserver lister: %v", err)
 	}
+	tsl := []cache.Store{tsLister}
 	su := statusUpdater{
-		transportServerLister: tsLister,
+		transportServerLister: tsl,
 		confClient:            fakeClient,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
@@ -103,8 +104,9 @@ func TestUpdateTransportServerStatusIgnoreNoChange(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error adding TransportServer to the transportserver lister: %v", err)
 	}
+	tsl := []cache.Store{tsLister}
 	su := statusUpdater{
-		transportServerLister: tsLister,
+		transportServerLister: tsl,
 		confClient:            fakeClient,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
@@ -156,8 +158,10 @@ func TestUpdateTransportServerStatusMissingTransportServer(t *testing.T) {
 		nil,
 	)
 
+	tsl := []cache.Store{tsLister}
+
 	su := statusUpdater{
-		transportServerLister: tsLister,
+		transportServerLister: tsl,
 		confClient:            fakeClient,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 		externalEndpoints: []conf_v1.ExternalEndpoint{
@@ -210,12 +214,14 @@ func TestStatusUpdateWithExternalStatusAndExternalService(t *testing.T) {
 		t.Errorf("Error adding Ingress to the ingress lister: %v", err)
 	}
 
+	isl := []storeToIngressLister{ingLister}
+
 	su := statusUpdater{
 		client:                fakeClient,
 		namespace:             "namespace",
 		externalServiceName:   "service-name",
 		externalStatusAddress: "123.123.123.123",
-		ingressLister:         &ingLister,
+		ingressLister:         isl,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 	err = su.ClearIngressStatus(ing)
@@ -313,11 +319,13 @@ func TestStatusUpdateWithExternalStatusAndIngressLink(t *testing.T) {
 		t.Errorf("Error adding Ingress to the ingress lister: %v", err)
 	}
 
+	isl := []storeToIngressLister{ingLister}
+
 	su := statusUpdater{
 		client:                fakeClient,
 		namespace:             "namespace",
 		externalStatusAddress: "",
-		ingressLister:         &ingLister,
+		ingressLister:         isl,
 		keyFunc:               cache.DeletionHandlingMetaNamespaceKeyFunc,
 	}
 
