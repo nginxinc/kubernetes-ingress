@@ -8,13 +8,11 @@ toc: true
 docs: "DOCS-578"
 ---
 
-> Check out the complete NGINX Ingress Controller with App Protect example resources on GitHub for [VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/waf) and for [Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/appprotect).
+> Check out the complete NGINX Ingress Controller with App Protect example resources on GitHub for [VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/waf) and for [Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/appprotect).
 
 ## Global Configuration
 
 The NGINX Ingress Controller has a set of global configuration parameters that align with those available in the NGINX App Protect module. See [ConfigMap keys](/nginx-ingress-controller/configuration/global-configuration/configmap-resource/#modules) for the complete list. The App Protect parameters use the `app-protect*` prefix.
-
-> Check out the complete [NGINX Ingress Controller with App Protect example resources on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/appprotect).
 
 ## Enabling App Protect
 
@@ -383,52 +381,50 @@ The `link` option is also available in the `openApiFileReference` property and i
 ## Configuration in NGINX Plus Ingress Controller using Virtual Server Resource
 In this example we deploy the NGINX Plus Ingress Controller with NGINX App Protect, a simple web application and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
-**Note:** This example, and the files referenced, can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/waf).
-
-You can find the [Virtual Server example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/webapp.yaml) here.
+**Note:** This example, and the files referenced, can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/waf).
 
 ## Prerequisites
 
 1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress Controller with NGINX App Protect.
 2. Save the public IP address of the Ingress Controller into a shell variable:
-   ```
+    ```
     $ IC_IP=XXX.YYY.ZZZ.III
-   ```
+    ```
 
 3. Save the HTTP port of the Ingress Controller into a shell variable:
-   ```
+    ```
     $ IC_HTTP_PORT=<port number>
     ```
 
 ### Step 1. Deploy a Web Application 
 
 Create the application deployment and service:
-  ```
-  $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/webapp.yaml
-  ```
+    ```
+    $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/webapp.yaml
+    ```
 
 ### Step 2. Deploy the AP Policy
 
 1. Create the syslog service and pod for the App Protect security logs:
     ```
-   $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/syslog.yaml
-   ```
+    $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/syslog.yaml
+    ```
 
 2. Create the User Defined Signature, App Protect policy and log configuration:
 
     ```
-      $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/ap-apple-uds.yaml
-      $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/ap-dataguard-alarm-policy.yaml
-     $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/ap-logconf.yaml
+    $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/ap-apple-uds.yaml
+    $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/ap-dataguard-alarm-policy.yaml
+    $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/ap-logconf.yaml
     ```
 
 ### Step 3 - Deploy the WAF Policy
 
 Create the WAF policy
- ``` 
-  $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/waf.yaml
-  ```
-  Note the App Protect configuration settings in the Policy resource. They enable WAF protection by configuring App Protect with the policy and log configuration created in the previous step.
+    ``` 
+    $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/waf.yaml
+    ```
+Note the App Protect configuration settings in the Policy resource. They enable WAF protection by configuring App Protect with the policy and log configuration created in the previous step.
 
 ### Step 4 - Configure Load Balancing
 
@@ -447,13 +443,13 @@ To access the application, curl the coffee and the tea services. We'll use the -
     $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP http://webapp.example.com:$IC_HTTP_PORT/
     Server address: 10.12.0.18:80
     Server name: webapp-7586895968-r26zn
-   ```
+    ```
 
 2. Now, let's try to send a request with a suspicious URL:
     ```
     $ curl --resolve webapp.example.com:$IC_HTTP_PORT:$IC_IP "http://webapp.example.com:$IC_HTTP_PORT/<script>"
     <html><head><title>Request Rejected</title></head><body>
-   ```
+    ```
 
 3. Lastly, let's try to send some suspicious data that matches the user defined signature.
     ```
