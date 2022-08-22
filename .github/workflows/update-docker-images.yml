@@ -238,7 +238,7 @@ jobs:
             IC_VERSION=v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.6.2
+        uses: aquasecurity/trivy-action@0.7.1
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
