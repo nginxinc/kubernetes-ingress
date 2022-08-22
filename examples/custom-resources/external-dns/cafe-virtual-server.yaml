@@ -3,7 +3,7 @@ kind: VirtualServer
 metadata:
   name: cafe
 spec:
-  host: cafe.kic.nginx.com
+  host: cafe.example.com
   tls:
     secret: cafe-secret
   externalDNS:
