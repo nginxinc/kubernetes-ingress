@@ -36,7 +36,7 @@ var (
 	The Ingress Controller does not start NGINX and does not write any generated NGINX configuration files to disk`)
 
 	watchNamespace = flag.String("watch-namespace", api_v1.NamespaceAll,
-		`Comma separated list of namespaces to watch for Ingress resources. By default the Ingress Controller watches all namespaces`)
+		`Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces`)
 
 	watchNamespaces []string
 
