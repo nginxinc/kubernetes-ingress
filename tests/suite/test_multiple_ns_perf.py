@@ -141,7 +141,7 @@ def vs_ns_setup(
     request.addfinalizer(fin)
 
 
-@pytest.mark.multi_ns_vs
+@pytest.mark.multi_ns
 class TestMultipleVS:
     """Test to output CPU/Memory perf metrics for pods with multiple namespaces (VirtualServers)"""
 
