@@ -1054,7 +1054,9 @@ func (c *Configuration) addProblemsForResourcesWithoutActiveHost(resources map[s
 				problems[r.GetKeyWithKind()] = p
 			}
 		case *VirtualServerConfiguration:
-			res := c.hosts[impl.VirtualServer.Spec.Host]
+			//res := c.hosts[impl.VirtualServer.Spec.Host]
+
+			res, _ := checkHostCollision(impl.VirtualServer.Spec.Host, c.hosts)
 
 			if res.GetKeyWithKind() != r.GetKeyWithKind() {
 				p := ConfigurationProblem{
@@ -1346,10 +1348,23 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 		newResources[resource.GetKeyWithKind()] = resource
 
 		holder, exists := newHosts[vs.Spec.Host]
-		if !exists {
+		var isHostCollision bool
+		if len(newHosts) > 0 {
+			if holder, isHostCollision = checkHostCollision(vs.Spec.Host, newHosts); !exists && !isHostCollision {
+				newHosts[vs.Spec.Host] = resource
+				continue
+			}
+		} else {
 			newHosts[vs.Spec.Host] = resource
 			continue
 		}
+
+		//holder, exists := newHosts[vs.Spec.Host]
+		//
+		//if !exists {
+		//	newHosts[vs.Spec.Host] = resource
+		//	continue
+		//}
 
 		warning := fmt.Sprintf("host %s is taken by another resource", vs.Spec.Host)
 
@@ -1392,6 +1407,31 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 	}
 
 	return newHosts, newResources
+}
+
+func checkHostCollision(newHost string, existingHosts map[string]Resource) (Resource, bool) {
+	wildcardPrefix := "*."
+	isHostCollision := false
+	var holder Resource
+	if strings.HasPrefix(newHost, wildcardPrefix) {
+		newHostSuffix := strings.TrimPrefix(newHost, wildcardPrefix)
+		for existingHost := range existingHosts {
+			if strings.HasSuffix(existingHost, newHostSuffix) {
+				isHostCollision = true
+				holder = existingHosts[existingHost]
+			}
+		}
+	} else {
+		for existingHost := range existingHosts {
+			existingHostSuffix := strings.TrimPrefix(existingHost, wildcardPrefix)
+			if strings.HasSuffix(newHost, existingHostSuffix) {
+				isHostCollision = true
+				holder = existingHosts[existingHost]
+			}
+		}
+	}
+	return holder, isHostCollision
+
 }
 
 func (c *Configuration) isChallengeIngress(ing *networking.Ingress) bool {

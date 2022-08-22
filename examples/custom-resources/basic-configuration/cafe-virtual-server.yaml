@@ -1,9 +1,9 @@
 apiVersion: k8s.nginx.org/v1
 kind: VirtualServer
 metadata:
-  name: cafe
+  name: cafe-1
 spec:
-  host: cafe.example.com
+  host: "*.example.com"
   tls:
     secret: cafe-secret
   upstreams:
