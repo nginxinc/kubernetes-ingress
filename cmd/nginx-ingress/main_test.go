@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -150,6 +151,24 @@ func TestValidateAppProtectLogLevel(t *testing.T) {
 		err := validateAppProtectLogLevel(goodLogLevel)
 		if err != nil {
 			t.Errorf("validateAppProtectLogLevel(%v) returned an error when it should have returned no error: %v", goodLogLevel, err)
+		}
+	}
+}
+
+func TestValidateNamespaces(t *testing.T) {
+	badNamespaces := []string{"watchns1, watchns2, watchns%$", "watchns1,watchns2,watchns%$"}
+	for _, badNs := range badNamespaces {
+		err := validateNamespaceNames(strings.Split(badNs, ","))
+		if err == nil {
+			t.Errorf("Expected error for invalid namespace %v\n", badNs)
+		}
+	}
+
+	goodNamespaces := []string{"watched-namespace", "watched-namespace,", "watched-namespace1,watched-namespace2", "watched-namespace1, watched-namespace2"}
+	for _, goodNs := range goodNamespaces {
+		err := validateNamespaceNames(strings.Split(goodNs, ","))
+		if err != nil {
+			t.Errorf("Error for valid namespace:  %v err: %v\n", goodNs, err)
 		}
 	}
 }

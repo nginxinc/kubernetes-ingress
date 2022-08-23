@@ -166,7 +166,7 @@ controller:
   ## New Ingresses without an ingressClassName field specified will be assigned the class specified in `controller.ingressClass`.
   setAsDefaultIngress: false
 
-  ## Namespace to watch for Ingress resources. By default the Ingress Controller watches all namespaces.
+  ## Comma separated list of namespaces to watch for Ingress resources. By default the Ingress Controller watches all namespaces.
   watchNamespace: ""
 
   ## Enable the custom resources.

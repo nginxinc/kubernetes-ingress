@@ -35,8 +35,10 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
                                                              f"watched-ns", f"{TEST_DATA}/common/ns.yaml")
     foreign_namespace = create_namespace_with_name_from_yaml(kube_apis.v1,
                                                              f"foreign-ns", f"{TEST_DATA}/common/ns.yaml")
+    watched_namespace2 = create_namespace_with_name_from_yaml(kube_apis.v1,
+                                                             f"watched-ns2", f"{TEST_DATA}/common/ns.yaml")                                                     
     ingress_hosts = {}
-    for ns in [watched_namespace, foreign_namespace]:
+    for ns in [watched_namespace, foreign_namespace, watched_namespace2]:
         print(f"------------------------- Deploy the backend in {ns} -----------------------------------")
         create_example_app(kube_apis, "simple", ns)
         src_ing_yaml = f"{TEST_DATA}/watch-namespace/{ns}-ingress.yaml"
@@ -53,6 +55,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
         print("Clean up:")
         delete_namespace(kube_apis.v1, watched_namespace)
         delete_namespace(kube_apis.v1, foreign_namespace)
+        delete_namespace(kube_apis.v1, watched_namespace2)
 
     request.addfinalizer(fin)
 
@@ -69,6 +72,21 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
 class TestWatchNamespace:
     def test_response_codes(self, ingress_controller, backend_setup, expected_responses):
         for ing in ["watched-ns-ingress", "foreign-ns-ingress"]:
+            ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_hosts[ing])
+            resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[ing]})
+            assert resp.status_code == expected_responses[ing],\
+                f"Expected: {expected_responses[ing]} response code for {backend_setup.ingress_hosts[ing]}"
+
+@pytest.mark.ingresses
+@pytest.mark.parametrize('ingress_controller, expected_responses',
+                         [
+                             pytest.param({"extra_args": ["-watch-namespace=watched-ns,watched-ns2"]},
+                                          {"watched-ns-ingress": 200, "watched-ns2-ingress": 200, "foreign-ns-ingress": 404})
+                          ],
+                         indirect=["ingress_controller"])
+class TestWatchMultipleNamespaces:
+    def test_response_codes(self, ingress_controller, backend_setup, expected_responses):
+        for ing in ["watched-ns-ingress", "watched-ns2-ingress", "foreign-ns-ingress"]:
             ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_hosts[ing])
             resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[ing]})
             assert resp.status_code == expected_responses[ing],\
