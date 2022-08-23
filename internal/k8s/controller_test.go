@@ -637,24 +637,29 @@ func TestGetPolicies(t *testing.T) {
 		Spec: conf_v1.PolicySpec{},
 	}
 
-	lbc := LoadBalancerController{
-		isNginxPlus: true,
-		policyLister: &cache.FakeCustomStore{
-			GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
-				switch key {
-				case "default/valid-policy":
-					return validPolicy, true, nil
-				case "default/valid-policy-ingress-class":
-					return validPolicyIngressClass, true, nil
-				case "default/invalid-policy":
-					return invalidPolicy, true, nil
-				case "nginx-ingress/valid-policy":
-					return nil, false, nil
-				default:
-					return nil, false, errors.New("GetByKey error")
-				}
-			},
+	policyLister := &cache.FakeCustomStore{
+		GetByKeyFunc: func(key string) (item interface{}, exists bool, err error) {
+			switch key {
+			case "default/valid-policy":
+				return validPolicy, true, nil
+			case "default/valid-policy-ingress-class":
+				return validPolicyIngressClass, true, nil
+			case "default/invalid-policy":
+				return invalidPolicy, true, nil
+			case "nginx-ingress/valid-policy":
+				return nil, false, nil
+			default:
+				return nil, false, errors.New("GetByKey error")
+			}
 		},
+	}
+
+	var pl []cache.Store
+	pl = append(pl, policyLister)
+
+	lbc := LoadBalancerController{
+		isNginxPlus:  true,
+		policyLister: pl,
 	}
 
 	policyRefs := []conf_v1.PolicyReference{
@@ -2273,29 +2278,33 @@ func TestGetWAFPoliciesForAppProtectLogConf(t *testing.T) {
 }
 
 func TestPreSyncSecrets(t *testing.T) {
-	lbc := LoadBalancerController{
-		isNginxPlus: true,
-		secretStore: secrets.NewEmptyFakeSecretsStore(),
-		secretLister: &cache.FakeCustomStore{
-			ListFunc: func() []interface{} {
-				return []interface{}{
-					&api_v1.Secret{
-						ObjectMeta: meta_v1.ObjectMeta{
-							Name:      "supported-secret",
-							Namespace: "default",
-						},
-						Type: api_v1.SecretTypeTLS,
+	secretLister := &cache.FakeCustomStore{
+		ListFunc: func() []interface{} {
+			return []interface{}{
+				&api_v1.Secret{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "supported-secret",
+						Namespace: "default",
 					},
-					&api_v1.Secret{
-						ObjectMeta: meta_v1.ObjectMeta{
-							Name:      "unsupported-secret",
-							Namespace: "default",
-						},
-						Type: api_v1.SecretTypeOpaque,
+					Type: api_v1.SecretTypeTLS,
+				},
+				&api_v1.Secret{
+					ObjectMeta: meta_v1.ObjectMeta{
+						Name:      "unsupported-secret",
+						Namespace: "default",
 					},
-				}
-			},
+					Type: api_v1.SecretTypeOpaque,
+				},
+			}
 		},
+	}
+	var sl []cache.Store
+	sl = append(sl, secretLister)
+
+	lbc := LoadBalancerController{
+		isNginxPlus:  true,
+		secretStore:  secrets.NewEmptyFakeSecretsStore(),
+		secretLister: sl,
 	}
 
 	lbc.preSyncSecrets()

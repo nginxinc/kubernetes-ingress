@@ -6,7 +6,7 @@ pytest==7.1.2
 cffi==1.15.1
 pyOpenSSL==22.0.0
 certifi==2022.6.15
-urllib3==1.26.11
+urllib3==1.26.12
 pytest-html==3.1.1
 pytest-profiling==1.7.0
 more-itertools==8.14.0

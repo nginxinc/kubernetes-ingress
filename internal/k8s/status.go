@@ -39,11 +39,11 @@ type statusUpdater struct {
 	status                   []api_v1.LoadBalancerIngress
 	statusInitialized        bool
 	keyFunc                  func(obj interface{}) (string, error)
-	ingressLister            *storeToIngressLister
-	virtualServerLister      cache.Store
-	virtualServerRouteLister cache.Store
-	transportServerLister    cache.Store
-	policyLister             cache.Store
+	ingressLister            []storeToIngressLister
+	virtualServerLister      []cache.Store
+	virtualServerRouteLister []cache.Store
+	transportServerLister    []cache.Store
+	policyLister             []cache.Store
 	confClient               k8s_nginx.Interface
 	hasCorrectIngressClass   func(interface{}) bool
 }
@@ -120,7 +120,15 @@ func (su *statusUpdater) updateIngressWithStatus(ing networking.Ingress, status 
 		glog.V(3).Infof("error getting key for ing: %v", err)
 		return err
 	}
-	ingCopy, exists, err := su.ingressLister.GetByKeySafe(key)
+
+	var ingCopy *networking.Ingress
+	var exists bool
+	for _, il := range su.ingressLister {
+		ingCopy, exists, err = il.GetByKeySafe(key)
+		if exists {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("error getting ing from Store by key: %v", err)
 		return err
@@ -405,7 +413,15 @@ func hasVsStatusChanged(vs *conf_v1.VirtualServer, state string, reason string, 
 
 // UpdateTransportServerStatus updates the status of a TransportServer.
 func (su *statusUpdater) UpdateTransportServerStatus(ts *conf_v1alpha1.TransportServer, state string, reason string, message string) error {
-	tsLatest, exists, err := su.transportServerLister.Get(ts)
+	var tsLatest interface{}
+	var exists bool
+	var err error
+	for _, tl := range su.transportServerLister {
+		tsLatest, exists, err = tl.Get(ts)
+		if exists {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("error getting TransportServer from Store: %v", err)
 		return err
@@ -448,7 +464,15 @@ func hasTsStatusChanged(ts *conf_v1alpha1.TransportServer, state string, reason 
 // UpdateVirtualServerStatus updates the status of a VirtualServer.
 func (su *statusUpdater) UpdateVirtualServerStatus(vs *conf_v1.VirtualServer, state string, reason string, message string) error {
 	// Get an up-to-date VirtualServer from the Store
-	vsLatest, exists, err := su.virtualServerLister.Get(vs)
+	var vsLatest interface{}
+	var exists bool
+	var err error
+	for _, vl := range su.virtualServerLister {
+		vsLatest, exists, err = vl.Get(vs)
+		if exists {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServer from Store: %v", err)
 		return err
@@ -506,7 +530,15 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *con
 	}
 
 	// Get an up-to-date VirtualServerRoute from the Store
-	vsrLatest, exists, err := su.virtualServerRouteLister.Get(vsr)
+	var vsrLatest interface{}
+	var exists bool
+	var err error
+	for _, vl := range su.virtualServerRouteLister {
+		vsrLatest, exists, err = vl.Get(vsr)
+		if exists {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServerRoute from Store: %v", err)
 		return err
@@ -541,7 +573,15 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *con
 // If you need to update the referencedBy field, use UpdateVirtualServerRouteStatusWithReferencedBy instead.
 func (su *statusUpdater) UpdateVirtualServerRouteStatus(vsr *conf_v1.VirtualServerRoute, state string, reason string, message string) error {
 	// Get an up-to-date VirtualServerRoute from the Store
-	vsrLatest, exists, err := su.virtualServerRouteLister.Get(vsr)
+	var vsrLatest interface{}
+	var exists bool
+	var err error
+	for _, vl := range su.virtualServerRouteLister {
+		vsrLatest, exists, err = vl.Get(vsr)
+		if exists {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServerRoute from Store: %v", err)
 		return err
@@ -572,7 +612,15 @@ func (su *statusUpdater) UpdateVirtualServerRouteStatus(vsr *conf_v1.VirtualServ
 
 func (su *statusUpdater) updateVirtualServerExternalEndpoints(vs *conf_v1.VirtualServer) error {
 	// Get a pristine VirtualServer from the Store
-	vsLatest, exists, err := su.virtualServerLister.Get(vs)
+	var vsLatest interface{}
+	var exists bool
+	var err error
+	for _, vl := range su.virtualServerLister {
+		vsLatest, exists, err = vl.Get(vs)
+		if exists {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServer from Store: %v", err)
 		return err
@@ -595,7 +643,15 @@ func (su *statusUpdater) updateVirtualServerExternalEndpoints(vs *conf_v1.Virtua
 
 func (su *statusUpdater) updateVirtualServerRouteExternalEndpoints(vsr *conf_v1.VirtualServerRoute) error {
 	// Get an up-to-date VirtualServerRoute from the Store
-	vsrLatest, exists, err := su.virtualServerRouteLister.Get(vsr)
+	var vsrLatest interface{}
+	var exists bool
+	var err error
+	for _, vl := range su.virtualServerRouteLister {
+		vsrLatest, exists, err = vl.Get(vsr)
+		if exists {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("error getting VirtualServerRoute from Store: %v", err)
 		return err
@@ -638,7 +694,15 @@ func hasPolicyStatusChanged(pol *v1.Policy, state string, reason string, message
 // UpdatePolicyStatus updates the status of a Policy.
 func (su *statusUpdater) UpdatePolicyStatus(pol *v1.Policy, state string, reason string, message string) error {
 	// Get an up-to-date Policy from the Store
-	polLatest, exists, err := su.policyLister.Get(pol)
+	var polLatest interface{}
+	var exists bool
+	var err error
+	for _, vl := range su.policyLister {
+		polLatest, exists, err = vl.Get(pol)
+		if exists {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("error getting policy from Store: %v", err)
 		return err
