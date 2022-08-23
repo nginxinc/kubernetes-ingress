@@ -1346,7 +1346,6 @@ func (c *Configuration) buildHostsAndResources() (newHosts map[string]Resource, 
 		newResources[resource.GetKeyWithKind()] = resource
 
 		holder, exists := newHosts[vs.Spec.Host]
-
 		if !exists {
 			newHosts[vs.Spec.Host] = resource
 			continue
