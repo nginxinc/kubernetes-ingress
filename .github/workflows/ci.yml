@@ -45,33 +45,26 @@ jobs:
     name: Checks and variables
     runs-on: ubuntu-20.04
     outputs:
-      go_version: ${{ steps.vars.outputs.go_version }}
       go_path: ${{ steps.go.outputs.go_path }}
       k8s_latest: ${{ steps.vars.outputs.k8s_latest }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Cache Go controller tools
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-tools-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-tools-
       - name: Output Variables
         id: vars
         run: |
-          echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
           echo "::set-output name=k8s_latest::$(grep -m1 'FROM kindest/node' <tests/docker/Dockerfile | awk -F'[:v]' '{print $3}')"
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ steps.vars.outputs.go_version }}
+          go-version-file: go.mod
+          cache: true
       - name: Determine GOPATH
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"
+      - name: Check if go.mod and go.sum are up to date
+        run: |
+          go mod tidy && git diff --exit-code -- go.mod go.sum
       - name: Check if CRDs changed
         run: |
           make update-crds && git diff --name-only --exit-code deployments/common/crds* deployments/helm-chart/crds*
@@ -90,19 +83,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Cache Go build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.checks.outputs.go_version }}
+          go-version-file: go.mod
+          cache: true
       - name: Build binary
         uses: goreleaser/goreleaser-action@v3
         with:
@@ -126,19 +111,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Cache Go tests
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-tests-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-tests-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.checks.outputs.go_version }}
+          go-version-file: go.mod
+          cache: true
       - name: Run Tests
         run: make cover
       - name: Upload coverage to Codecov
@@ -166,10 +143,11 @@ jobs:
                                                 {\"image\": \"debian-plus\", \"marker\": \"ts\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\":\"ingresses\"}, \
                                                 {\"image\": \"alpine-plus\", \"marker\": \"vsr\"}, \
-                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}], \
+                                                {\"image\": \"ubi-plus\", \"marker\": \"policies\"}, \
+                                                {\"image\": \"debian-plus-nap\", \"marker\": \"dos\"}], \
                                               \"k8s\": [\"${{ needs.checks.outputs.k8s_latest }}\"]}"
           else
-            echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.10\", \"1.22.7\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
+            echo "::set-output name=matrix::{\"k8s\": [\"1.19.16\", \"1.20.15\", \"1.21.12\", \"1.22.9\", \"1.23.6\", \"${{ needs.checks.outputs.k8s_latest }}\"], \
                                              \"images\": [{\"image\": \"debian\"}, {\"image\": \"debian-plus\"}]}"
           fi
 
@@ -190,8 +168,8 @@ jobs:
           image: ${{ matrix.images.image != '' && matrix.images.image || 'debian' }}
           marker: ${{ matrix.images.marker != '' && matrix.images.marker || '' }}
           k8s-version: ${{ matrix.k8s }}
-          nginx-crt: ${{ secrets.NGINX_CRT }}
-          nginx-key: ${{ secrets.NGINX_KEY }}
+          nginx-crt: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}
+          nginx-key: ${{ contains(matrix.images.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}
       - name: Upload Test Results
         uses: actions/upload-artifact@v3
         with:
@@ -266,19 +244,11 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Cache Go build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ needs.checks.outputs.go_version }}
+          go-version-file: go.mod
+          cache: true
 
       - uses: actions/setup-node@v3
       - run: npm install js-yaml
@@ -324,7 +294,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
 
       - name: Download Syft
-        uses: anchore/sbom-action/download-syft@v0.11.0
+        uses: anchore/sbom-action/download-syft@v0.12.0
 
       - name: Build binaries
         uses: goreleaser/goreleaser-action@v3
@@ -457,7 +427,7 @@ jobs:
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ steps.var.outputs.ic_version }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.5.1
+        uses: aquasecurity/trivy-action@0.7.1
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}
@@ -494,6 +464,10 @@ jobs:
             - image: debian-plus
               platforms: "linux/arm64, linux/amd64"
               target: aws
+            - image: debian-plus-nap
+              platforms: "linux/amd64"
+              target: goreleaser
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -531,9 +505,9 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic/nginx-plus-ingress
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(matrix.image, 'nap') && '-dos' || '' }}/nginx-plus-ingress
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic${{ contains(matrix.image, 'nap') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic${{ contains(matrix.image, 'nap') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
             name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') && contains(matrix.target, 'aws') }}
           flavor: suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }},onlatest=true
           tags: |
@@ -577,9 +551,10 @@ jobs:
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.var.outputs.ic_version || 'CI' }}
+            ${{ contains(matrix.image, 'nap') && 'NAP_MODULES=dos' || '' }}
           secrets: |
-            "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
-            "nginx-repo.key=${{ secrets.NGINX_KEY }}"
+            "nginx-repo.crt=${{ contains(matrix.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ contains(matrix.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
       - name: Load image for Trivy
         uses: docker/build-push-action@v3
         with:
@@ -592,11 +567,12 @@ jobs:
           build-args: |
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=CI
+            ${{ contains(matrix.image, 'nap') && 'NAP_MODULES=dos' || '' }}
           secrets: |
-            "nginx-repo.crt=${{ secrets.NGINX_CRT }}"
-            "nginx-repo.key=${{ secrets.NGINX_KEY }}"
+            "nginx-repo.crt=${{ contains(matrix.image, 'nap') && secrets.NGINX_AP_CRT || secrets.NGINX_CRT }}"
+            "nginx-repo.key=${{ contains(matrix.image, 'nap') && secrets.NGINX_AP_KEY || secrets.NGINX_KEY }}"
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.5.1
+        uses: aquasecurity/trivy-action@0.7.1
         continue-on-error: true
         with:
           image-ref: docker.io/${{ matrix.image }}:${{ steps.meta.outputs.version }}

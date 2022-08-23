@@ -2,7 +2,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.8.0
+    controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
   name: dnsendpoints.externaldns.nginx.org
 spec:
@@ -29,11 +29,13 @@ spec:
             metadata:
               type: object
             spec:
+              description: DNSEndpointSpec holds information about endpoints.
               type: object
               properties:
                 endpoints:
                   type: array
                   items:
+                    description: Endpoint describes DNS Endpoint.
                     type: object
                     properties:
                       dnsName:
@@ -48,6 +50,7 @@ spec:
                         description: ProviderSpecific stores provider specific config
                         type: array
                         items:
+                          description: ProviderSpecificProperty represents provider specific config property.
                           type: object
                           properties:
                             name:
@@ -69,6 +72,7 @@ spec:
                         items:
                           type: string
             status:
+              description: DNSEndpointStatus represents generation observed by the external dns controller.
               type: object
               properties:
                 observedGeneration:
@@ -79,9 +83,3 @@ spec:
       storage: true
       subresources:
         status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

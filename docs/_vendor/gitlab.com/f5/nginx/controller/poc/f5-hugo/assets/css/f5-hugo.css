@@ -59,6 +59,8 @@ ol > li > ol {
 
 .card-deck {
     padding-bottom: 2em;
+    width: -webkit-fill-available;
+    width: -moz-available
 }
 
 .card-holder {
@@ -91,6 +93,42 @@ ol > li > ol {
     height: 100%;
   }
   
+  .saas-card {
+    display: flex;
+}
+
+.saas-icon {
+    width: 46px;
+    margin-right: 5px;
+}
+
+.saas-description {
+    flex: 75%;
+
+}
+
+.saas-title {
+    overflow-wrap: normal;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+h3.saas-title a {
+    color: #000;
+}
+
+h3.saas-title a:hover {
+    color: var(--nginx-green);
+}
+
+h3.saas-title {
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 28px;
+}
+
+
   a.products-card {
     display: block;
     transition: transform 150ms ease-in-out;
@@ -160,7 +198,8 @@ ol > li > ol {
 }
 
 .card-img.list {
-    width: 40px;
+    width: auto;
+    height: 40px;
 }
 
 .img-large {
@@ -939,13 +978,13 @@ main a:hover {
     position: sticky;
 	top: 0rem;
 	align-self: start;
+    height: 100vh;
 }
 
 #sidebar {
     display: block;
     font-size: 1.2em;
     overflow: auto;
-    min-height: 100vh;
 } 
 
 #sidebar.content > h3 {

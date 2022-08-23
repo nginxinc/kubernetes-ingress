@@ -1,21 +1,18 @@
-import pytest, requests, time
+import time
+
+import pytest
+import requests
 from kubernetes.client.rest import ApiException
-from suite.resources_utils import wait_before_test, replace_configmap_from_yaml
-from suite.custom_resources_utils import (
-    read_custom_resource,
-)
+from settings import DEPLOYMENTS, TEST_DATA
+from suite.custom_resources_utils import read_custom_resource
+from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
+from suite.resources_utils import replace_configmap_from_yaml, wait_before_test
 from suite.vs_vsr_resources_utils import (
-    delete_virtual_server,
     create_virtual_server_from_yaml,
-    patch_virtual_server_from_yaml,
+    delete_virtual_server,
     patch_v_s_route_from_yaml,
+    patch_virtual_server_from_yaml,
 )
-from suite.policy_resources_utils import (
-    create_policy_from_yaml,
-    delete_policy,
-    read_policy,
-)
-from settings import TEST_DATA, DEPLOYMENTS
 
 std_vs_src = f"{TEST_DATA}/virtual-server-route/standard/virtual-server.yaml"
 rl_pol_pri_src = f"{TEST_DATA}/rate-limit/policies/rate-limit-primary.yaml"
@@ -23,18 +20,10 @@ rl_vsr_pri_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-pr
 rl_pol_sec_src = f"{TEST_DATA}/rate-limit/policies/rate-limit-secondary.yaml"
 rl_vsr_sec_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-sec-subroute.yaml"
 rl_pol_invalid_src = f"{TEST_DATA}/rate-limit/policies/rate-limit-invalid.yaml"
-rl_vsr_invalid_src = (
-    f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-invalid-subroute.yaml"
-)
-rl_vsr_override_src = (
-    f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-override-subroute.yaml"
-)
-rl_vsr_override_vs_spec_src = (
-    f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-vsr-spec-override.yaml"
-)
-rl_vsr_override_vs_route_src = (
-    f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-vsr-route-override.yaml"
-)
+rl_vsr_invalid_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-invalid-subroute.yaml"
+rl_vsr_override_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-route-override-subroute.yaml"
+rl_vsr_override_vs_spec_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-vsr-spec-override.yaml"
+rl_vsr_override_vs_route_src = f"{TEST_DATA}/rate-limit/route-subroute/virtual-server-vsr-route-override.yaml"
 
 
 @pytest.mark.policies
@@ -85,9 +74,7 @@ class TestRateLimitingPoliciesVsr:
 
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         print(f"Create rl policy")
-        pol_name = create_policy_from_yaml(
-            kube_apis.custom_objects, rl_pol_pri_src, v_s_route_setup.route_m.namespace
-        )
+        pol_name = create_policy_from_yaml(kube_apis.custom_objects, rl_pol_pri_src, v_s_route_setup.route_m.namespace)
         print(f"Patch vsr with policy: {src}")
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
@@ -139,9 +126,7 @@ class TestRateLimitingPoliciesVsr:
         rate_sec = 5
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         print(f"Create rl policy")
-        pol_name = create_policy_from_yaml(
-            kube_apis.custom_objects, rl_pol_sec_src, v_s_route_setup.route_m.namespace
-        )
+        pol_name = create_policy_from_yaml(kube_apis.custom_objects, rl_pol_sec_src, v_s_route_setup.route_m.namespace)
         print(f"Patch vsr with policy: {src}")
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
@@ -243,9 +228,7 @@ class TestRateLimitingPoliciesVsr:
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         print(f"Create rl policy")
-        pol_name = create_policy_from_yaml(
-            kube_apis.custom_objects, rl_pol_pri_src, v_s_route_setup.route_m.namespace
-        )
+        pol_name = create_policy_from_yaml(kube_apis.custom_objects, rl_pol_pri_src, v_s_route_setup.route_m.namespace)
         print(f"Patch vsr with policy: {src}")
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
@@ -326,7 +309,7 @@ class TestRateLimitingPoliciesVsr:
         src,
     ):
         """
-        Test if vsr subroute policy overrides vs spec policy 
+        Test if vsr subroute policy overrides vs spec policy
         And vsr subroute policy overrides vs route policy
         """
         rate_sec = 5

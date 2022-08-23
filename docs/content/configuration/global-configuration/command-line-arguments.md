@@ -73,6 +73,13 @@ Default `false`.
 &nbsp;
 <a name="cmdoption-enable-leader-election"></a>
 
+### -inlcude-year
+Adds year to log headers.
+
+Default `false`.
+
+**NOTE**: This flag will be removed in release 2.7 and the year will be included by default.
+
 ### -enable-leader-election
 
 Enables Leader election to avoid multiple replicas of the controller reporting the status of Ingress, VirtualServer and VirtualServerRoute resources -- only one replica will report status.
@@ -211,7 +218,7 @@ Enable support for NGINX Plus.
 
 Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
 
-Default is 4000. Default is 20000 instead if `enable-app-protect` is true.
+Default is 60000.
 &nbsp;
 <a name="cmdoption-nginx-status"></a>
 
@@ -295,7 +302,7 @@ A comma-separated list of pattern=N settings for file-filtered logging.
 
 ### -watch-namespace `<string>`
 
-Namespace to watch for Ingress resources. By default the Ingress Controller watches all namespaces.
+Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces.
 &nbsp;
 <a name="cmdoption-enable-prometheus-metrics"></a>
 

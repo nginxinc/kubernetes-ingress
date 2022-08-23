@@ -19,7 +19,7 @@ spec:
     spec:
       serviceAccountName: nginx-ingress
       containers:
-      - image: nginx-plus-ingress:2.2.2
+      - image: nginx-plus-ingress:2.3.0
         imagePullPolicy: IfNotPresent
         name: nginx-plus-ingress
         ports:
@@ -65,6 +65,7 @@ spec:
           - -nginx-plus
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
           - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
+         #- -include-year
          #- -enable-cert-manager
          #- -enable-external-dns
          #- -enable-app-protect

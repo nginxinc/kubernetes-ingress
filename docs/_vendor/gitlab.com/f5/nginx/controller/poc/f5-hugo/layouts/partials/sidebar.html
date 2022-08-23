@@ -17,11 +17,11 @@
             <div class="accordion-group">
                 <div class="accordion-heading">
                     <li class="nginx-toc-link l1">
-                        <a data-menu-id="{{.Title | urlize}}" class="accordion-toggle" aria-expanded="false"
+                        <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle" aria-expanded="false"
                             data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}-collapseOne"
                             aria-controls="{{.Section | urlize}}-collapseOne">
                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
-                                class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }} </a>
+                                class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }}</a>
                     </li>
                 </div>
                 <div id="{{.Section | urlize}}-collapseOne" class="accordion-body collapse">
@@ -33,24 +33,55 @@
                                     <div class="accordion-heading">
                                         <ul>
                                             <li class="nginx-toc-link l2">
-                                                <a data-menu-id="{{.Title | urlize}}" class="accordion-toggle"
+                                                <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle"
                                                     aria-expanded="false" data-toggle="collapse"
                                                     href="#{{.Title | urlize}}--collapseTwo">
                                                     <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
-                                                        class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }} </a>
+                                                        class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }}</a>
                                             </li>
-                                            <ul>
+                                        <ul>
                                     </div>
                                     <div id="{{.Title | urlize}}--collapseTwo" class="accordion-body collapse leaf">
                                         <div class="accordion-inner">
-                                            {{ range .Pages }}
+                                            {{ range .Sections }}
+                                            <div class="accordion" id="Accordion3">
+                                                <div class="sidebar-l2-padding">
+                                                    <div class="accordion-group sidebar-il-border">
+                                                        <div class="accordion-heading">
+                                                            <ul>
+                                                                <li class="nginx-toc-link l2">
+                                                                    <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle"
+                                                                        aria-expanded="false" data-toggle="collapse"
+                                                                        href="#{{.Title | urlize}}--collapseThree">
+                                                                        <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
+                                                                            class="fa fa-sm fa-fw fa-chevron-down"></i>{{ .Title }}</a>
+                                                                </li>
+                                                            <ul>
+                                                        </div>
+                                                        <div id="{{.Title | urlize}}--collapseThree" class="accordion-body collapse leaf">
+                                                            <div class="accordion-inner">
+                                                            {{ range .Pages }}
+                                                            <ul class="sidebar-l2-padding">
+                                                                <li class="nginx-toc-link l3 sidebar-il-border ">
+                                                                    <a data-menu-id="{{.RelPermalink}}"
+                                                                        href="{{ .Permalink }}">{{ .Title }}</a>
+                                                                </li>
+                                                            </ul>
+                                                            {{ end }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {{ end }}
+                                            {{ range .RegularPages }}
                                             <ul class="sidebar-l2-padding">
                                                 <li class="nginx-toc-link l3 sidebar-il-border ">
-                                                    <a data-menu-id="{{.Title | urlize}}"
+                                                    <a data-menu-id="{{.RelPermalink}}"
                                                         href="{{ .Permalink }}">{{ .Title }}</a>
                                                 </li>
                                             </ul>
-                                            {{ end }}
+                                            {{ end }}                                            
                                         </div>
                                     </div>
                                 </div>
@@ -64,7 +95,7 @@
                                     <div class="accordion-heading">
                                         <ul>
                                             <li class="nginx-toc-link l2">
-                                                <a data-menu-id="{{.Title | urlize}}"
+                                                <a data-menu-id="{{.RelPermalink}}"
                                                     href="{{ .Permalink }}">{{ .Title }}</a>
                                             </li>
                                         </ul>
@@ -82,7 +113,7 @@
     {{ range where .Site.RegularPages "Section" "=" "" }}
     <ul>
         <li class="nginx-toc-link l1">
-            <a data-menu-id="{{.Title | urlize}}" href="{{ .Permalink }}">{{ .Title }}</a>
+            <a data-menu-id="{{.RelPermalink}}" href="{{ .Permalink }}">{{ .Title }}</a>
         </li>
     </ul>
     {{ end }}
@@ -104,7 +135,7 @@
             <div class="accordion-group">
                 <div class="accordion-heading">
                     <li class="nginx-toc-link l1">
-                        <a data-menu-id="{{.Title | urlize}}" class="accordion-toggle" aria-expanded="false"
+                        <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle" aria-expanded="false"
                             data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}-collapseOne"
                             aria-controls="{{.Section | urlize}}-collapseOne">
                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
@@ -121,7 +152,7 @@
                                             <div class="accordion-heading">
                                                 <ul>
                                                     <li class="nginx-toc-link l2">
-                                                        <a data-menu-id="{{.Title | urlize}}"
+                                                        <a data-menu-id="{{.RelPermalink}}"
                                                             href="https://docs.nginx.com/nginx-controller/releases/adc/">{{ .Title }}</a>
                                                     </li>
                                                 </ul>
@@ -137,7 +168,7 @@
                                             <div class="accordion-heading">
                                                 <ul>
                                                     <li class="nginx-toc-link l2">                                             
-                                                        <a data-menu-id="{{.Title | urlize}}" class="accordion-toggle"
+                                                        <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle"
                                                             aria-expanded="false" data-toggle="collapse"
                                                             href="#{{.Title | urlize}}--collapseTwo">
                                                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
@@ -151,7 +182,7 @@
                                                     {{ range .Pages }}
                                                     <ul class="sidebar-l2-padding">
                                                         <li class="nginx-toc-link l3 sidebar-il-border ">
-                                                            <a data-menu-id="{{.Title | urlize}}"
+                                                            <a data-menu-id="{{.RelPermalink}}"
                                                                 href="{{ .Permalink }}">{{ .Title }}</a>
                                                         </li>
                                                     </ul>
@@ -171,7 +202,7 @@
                                         {{ if not (eq .Title "NGINX Controller v3.0 - 3.18.2") }}   
                                         <ul>
                                             <li class="nginx-toc-link l2">
-                                                    <a data-menu-id="{{.Title | urlize}}"
+                                                    <a data-menu-id="{{.RelPermalink}}"
                                                     href="{{ .Permalink }}">{{ .Title }}</a>
                                             </li>
                                         </ul>
@@ -190,7 +221,7 @@
     {{ range where .Site.RegularPages "Section" "=" "" }}
     <ul>
         <li class="nginx-toc-link l1">
-            <a data-menu-id="{{.Title | urlize}}" href="{{ .Permalink }}">{{ .Title }}</a>
+            <a data-menu-id="{{.RelPermalink}}" href="{{ .Permalink }}">{{ .Title }}</a>
         </li>
     </ul>
     {{ end }}
@@ -212,7 +243,7 @@
             <div class="accordion-group">
                 <div class="accordion-heading">
                     <li class="nginx-toc-link l1">
-                        <a data-menu-id="{{.Title | urlize}}" class="accordion-toggle" aria-expanded="false"
+                        <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle" aria-expanded="false"
                             data-toggle="collapse" href="#" data-target="#{{.Section | urlize}}-collapseOne"
                             aria-controls="{{.Section | urlize}}-collapseOne">
                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
@@ -229,7 +260,7 @@
                                             <div class="accordion-heading">
                                                 <ul>
                                                     <li class="nginx-toc-link l2">
-                                                        <a data-menu-id="{{.Title | urlize}}"
+                                                        <a data-menu-id="{{.RelPermalink}}"
                                                             href="https://docs.nginx.com/nginx-controller/releases/apim/">{{ .Title }}</a>
                                                     </li>
                                                 </ul>
@@ -244,7 +275,7 @@
                                             <div class="accordion-heading">
                                                 <ul>
                                                     <li class="nginx-toc-link l2">                                             
-                                                        <a data-menu-id="{{.Title | urlize}}" class="accordion-toggle"
+                                                        <a data-menu-id="{{.RelPermalink}}" class="accordion-toggle"
                                                             aria-expanded="false" data-toggle="collapse"
                                                             href="#{{.Title | urlize}}--collapseTwo">
                                                             <i class="fa fa-sm fa-fw fa-chevron-right"></i><i
@@ -258,7 +289,7 @@
                                                     {{ range .Pages }}
                                                     <ul class="sidebar-l2-padding">
                                                         <li class="nginx-toc-link l3 sidebar-il-border ">
-                                                            <a data-menu-id="{{.Title | urlize}}"
+                                                            <a data-menu-id="{{.RelPermalink}}"
                                                                 href="{{ .Permalink }}">{{ .Title }}</a>
                                                         </li>
                                                     </ul>
@@ -279,7 +310,7 @@
                                         <ul>
                                             <li class="nginx-toc-link l2">
                                                  
-                                                    <a data-menu-id="{{.Title | urlize}}"
+                                                    <a data-menu-id="{{.RelPermalink}}"
                                                     href="{{ .Permalink }}">{{ .Title }}</a>
                                             </li>
                                         </ul>
@@ -298,7 +329,7 @@
     {{ range where .Site.RegularPages "Section" "=" "" }}
     <ul>
         <li class="nginx-toc-link l1">
-            <a data-menu-id="{{.Title | urlize}}" href="{{ .Permalink }}">{{ .Title }}</a>
+            <a data-menu-id="{{.RelPermalink}}" href="{{ .Permalink }}">{{ .Title }}</a>
         </li>
     </ul>
     {{ end }}

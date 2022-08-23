@@ -1,27 +1,29 @@
 import pytest
 from kubernetes.client.rest import ApiException
-from suite.resources_utils import wait_before_test
-from suite.vs_vsr_resources_utils import (
-    patch_virtual_server_from_yaml,
-)
-from suite.custom_resources_utils import (
-    read_custom_resource,
-)
 from settings import TEST_DATA
+from suite.custom_resources_utils import read_custom_resource
+from suite.resources_utils import wait_before_test
+from suite.vs_vsr_resources_utils import patch_virtual_server_from_yaml
+
 
 @pytest.mark.vs
 @pytest.mark.parametrize(
     "crd_ingress_controller, virtual_server_setup",
     [
         (
-            {"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],},
-            {"example": "virtual-server-status", "app_type": "simple",},
+            {
+                "type": "complete",
+                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],
+            },
+            {
+                "example": "virtual-server-status",
+                "app_type": "simple",
+            },
         )
     ],
     indirect=True,
 )
 class TestVirtualServerStatus:
-
     def patch_valid_vs(self, kube_apis, virtual_server_setup) -> None:
         """
         Function to revert vs deployment to valid state
@@ -36,7 +38,10 @@ class TestVirtualServerStatus:
 
     @pytest.mark.smoke
     def test_status_valid(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
     ):
         """
         Test VirtualServer status with a valid fields in yaml
@@ -54,7 +59,10 @@ class TestVirtualServerStatus:
         )
 
     def test_status_invalid(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
     ):
         """
         Test VirtualServer status with a invalid path pattern
@@ -82,7 +90,10 @@ class TestVirtualServerStatus:
 
     @pytest.mark.skip_for_nginx_oss
     def test_status_warning(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
     ):
         """
         Test VirtualServer status with conflicting Upstream fields
