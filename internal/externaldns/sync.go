@@ -142,7 +142,7 @@ func buildDNSEndpoint(extdnsLister []extdnslisters.DNSEndpointLister, vs *vsapi.
 	var existingDNSEndpoint *extdnsapi.DNSEndpoint
 	var err error
 	for _, el := range extdnsLister {
-		existingDNSEndpoint, err = el.DNSEndpoints(vs.Namespace).Get(vs.ObjectMeta.Host)
+		existingDNSEndpoint, err = el.DNSEndpoints(vs.Namespace).Get(vs.ObjectMeta.Name)
 		if err == nil {
 			break
 		}
