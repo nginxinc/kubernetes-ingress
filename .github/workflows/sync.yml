@@ -4,7 +4,7 @@ on:
   workflow_run:
     branches: main
     workflows:
-      - "Continuous Integration"
+      - "CI"
     types:
       - completed
 
