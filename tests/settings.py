@@ -25,4 +25,4 @@ BATCH_START = "False"
 # Number of Ingress/VS resources to deploy based on BATCH_START value, used in test_batch_startup_times.py
 BATCH_RESOURCES = 1
 # Number of namespaces to deploy to measure Pod performance, used in test_multiple_ns_perf.py
-NS_COUNT=0
+NS_COUNT = 0

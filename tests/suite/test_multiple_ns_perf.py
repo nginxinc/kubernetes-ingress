@@ -1,35 +1,36 @@
 import time
 from typing import Dict
+
 import pytest
 import yaml
+from settings import TEST_DATA
+from suite.custom_resources_utils import get_pod_metrics
 from suite.resources_utils import (
-    create_namespace_with_name_from_yaml,
-    delete_namespace,
-    create_ingress_controller,
-    delete_ingress_controller,
     create_example_app,
-    wait_until_all_pods_are_ready,
-    create_secret_from_yaml,
     create_ingress,
+    create_ingress_controller,
+    create_namespace_with_name_from_yaml,
+    create_secret_from_yaml,
+    delete_ingress_controller,
+    delete_namespace,
     get_test_file_name,
+    wait_until_all_pods_are_ready,
     write_to_json,
 )
-from suite.custom_resources_utils import (
-    get_pod_metrics,
-)
 from suite.vs_vsr_resources_utils import create_virtual_server
-from settings import TEST_DATA
 
 watched_namespaces = ""
 
+
 def collect_metrics(request, namespace, metric_dict) -> Dict:
-    """ Get pod metrics and write them to a json"""
+    """Get pod metrics and write them to a json"""
 
     metrics = get_pod_metrics(request, namespace)
     metric_dict[f"{request.node.name}+{time.time()}"] = metrics
     write_to_json(f"pod-metrics-{get_test_file_name(request.node.fspath)}.json", metric_dict)
 
     return metrics
+
 
 @pytest.fixture(scope="class")
 def ingress_ns_setup(
@@ -47,14 +48,10 @@ def ingress_ns_setup(
     ns_count = int(request.config.getoption("--ns-count"))
     multi_ns = ""
     for i in range(1, ns_count + 1):
-        watched_namespace = create_namespace_with_name_from_yaml(
-            kube_apis.v1, f"ns-{i}", f"{TEST_DATA}/common/ns.yaml"
-        )
+        watched_namespace = create_namespace_with_name_from_yaml(kube_apis.v1, f"ns-{i}", f"{TEST_DATA}/common/ns.yaml")
         multi_ns = multi_ns + f"{watched_namespace},"
         create_example_app(kube_apis, "simple", watched_namespace)
-        secret_name = create_secret_from_yaml(
-            kube_apis.v1, watched_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml"
-        )
+        secret_name = create_secret_from_yaml(kube_apis.v1, watched_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml")
         with open(manifest) as f:
             doc = yaml.safe_load(f)
             doc["metadata"]["name"] = f"smoke-ingress-{i}"
@@ -87,13 +84,9 @@ class TestMultipleSimpleIngress:
         metric_dict = {}
         namespace = ingress_controller_prerequisites.namespace
         extra_args = ["-enable-custom-resources=false", f"-watch-namespace={watched_namespaces}"]
-        name = create_ingress_controller(
-            kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace, extra_args
-        )
+        name = create_ingress_controller(kube_apis.v1, kube_apis.apps_v1_api, cli_arguments, namespace, extra_args)
         metrics = collect_metrics(request, namespace, metric_dict)
-        delete_ingress_controller(
-            kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
-        )
+        delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace)
 
         assert metrics
 
@@ -119,9 +112,7 @@ def vs_ns_setup(
     ns_count = int(request.config.getoption("--ns-count"))
     multi_ns = ""
     for i in range(1, ns_count + 1):
-        watched_namespace = create_namespace_with_name_from_yaml(
-            kube_apis.v1, f"ns-{i}", f"{TEST_DATA}/common/ns.yaml"
-        )
+        watched_namespace = create_namespace_with_name_from_yaml(kube_apis.v1, f"ns-{i}", f"{TEST_DATA}/common/ns.yaml")
         multi_ns = multi_ns + f"{watched_namespace},"
         create_example_app(kube_apis, "simple", watched_namespace)
         with open(manifest) as f:
@@ -164,9 +155,6 @@ class TestMultipleVS:
             extra_args,
         )
         metrics = collect_metrics(request, namespace, metric_dict)
-        delete_ingress_controller(
-            kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace
-        )
+        delete_ingress_controller(kube_apis.apps_v1_api, name, cli_arguments["deployment-type"], namespace)
 
         assert metrics
-

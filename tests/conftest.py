@@ -12,8 +12,8 @@ from settings import (
     DEFAULT_IMAGE,
     DEFAULT_PULL_POLICY,
     DEFAULT_SERVICE,
-    NUM_REPLICAS,
     NS_COUNT,
+    NUM_REPLICAS,
 )
 from suite.resources_utils import get_first_pod_name
 
@@ -147,12 +147,13 @@ def pytest_collection_modifyitems(config, items) -> None:
         for item in items:
             if "batch_start" in item.keywords:
                 item.add_marker(batch_start)
-                
-    if  int(config.getoption("--ns-count")) <=0:
+
+    if int(config.getoption("--ns-count")) <= 0:
         multi_ns = pytest.mark.skip(reason="Skipping watch-namespaces perf. tests")
         for item in items:
             if "multi_ns" in item.keywords:
                 item.add_marker(multi_ns)
+
 
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item) -> None:
