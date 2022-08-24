@@ -82,14 +82,14 @@ Below you can find some of the most useful targets in the **Makefile**:
 * **alpine-image-plus**: for building an alpine-based image with NGINX Plus.
 * **debian-image**: for building a debian-based image with NGINX.
 * **debian-image-plus**: for building a debian-based image with NGINX Plus.
-* **debian-image-nap-plus**: for building a debian-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module.
-* **debian-image-dos-plus**: for building a debian-based image with NGINX Plus and the [appprotect-dos](/nginx-app-protect-dos/) module.
-* **debian-image-nap-dos-plus**: for building a debian-based image with NGINX Plus appprotect and appprotect-dos modules.
+* **debian-image-nap-plus**: for building a debian-based image with NGINX Plus and the [app-protect-waf](/nginx-app-protect/) module.
+* **debian-image-dos-plus**: for building a debian-based image with NGINX Plus and the [app-protect-dos](/nginx-app-protect-dos/) module.
+* **debian-image-nap-dos-plus**: for building a debian-based image with NGINX Plus app-protect-waf and app-protect-dos modules.
 * **ubi-image**: for building an ubi-based image with NGINX for [Openshift](https://www.openshift.com/) clusters.
 * **ubi-image-plus**: for building an ubi-based image with NGINX Plus for [Openshift](https://www.openshift.com/) clusters.
-* **ubi-image-nap-plus**: for building an ubi-based image with NGINX Plus and the [appprotect](/nginx-app-protect/) module for [Openshift](https://www.openshift.com/) clusters.
-* **ubi-image-dos-plus**: for building an ubi-based image with NGINX Plus and the [appprotect_dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
-* **ubi-image-nap-dos-plus**: for building an ubi-based image with NGINX Plus, [appprotect](/nginx-app-protect/) and the [appprotect_dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
+* **ubi-image-nap-plus**: for building an ubi-based image with NGINX Plus and the [app-protect-waf](/nginx-app-protect/) module for [Openshift](https://www.openshift.com/) clusters.
+* **ubi-image-dos-plus**: for building an ubi-based image with NGINX Plus and the [app-protect-dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
+* **ubi-image-nap-dos-plus**: for building an ubi-based image with NGINX Plus, [app-protect-waf](/nginx-app-protect/) and the [app-protect-dos](/nginx-app-protect-dos/) module for [Openshift](https://www.openshift.com/) clusters.
 Note: You need to store your RHEL organization and activation keys in a file named `rhel_license` in the project root. Example:
   ```bash
   RHEL_ORGANIZATION=1111111

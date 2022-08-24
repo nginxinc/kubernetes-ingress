@@ -6,9 +6,10 @@ weight: 1900
 doctypes: [""]
 toc: true
 docs: "DOCS-578"
+aliases: ["/app-protect/configuration/"]
 ---
 
-> Check out the complete NGINX Ingress Controller with App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/appprotect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/ingress-resources/appprotect).
+> Check out the complete NGINX Ingress Controller with App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/ingress-resources/app-protect-waf).
 
 ## Global Configuration
 
