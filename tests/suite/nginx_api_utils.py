@@ -1,10 +1,9 @@
 """Describe the methods to work with nginx api"""
-import pytest
-import requests
 import ast
 
+import pytest
+import requests
 from settings import NGINX_API_VERSION
-
 from suite.resources_utils import wait_before_test
 
 
@@ -16,7 +15,7 @@ def get_nginx_generation_value(host) -> int:
     :return: 'generation' value
     """
     resp = ast.literal_eval(requests.get(f"{host}/api/{NGINX_API_VERSION}/nginx").text)
-    return resp['generation']
+    return resp["generation"]
 
 
 def wait_for_empty_array(request_url) -> None:

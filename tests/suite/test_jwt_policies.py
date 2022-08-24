@@ -1,26 +1,23 @@
-import pytest, requests, time
+import time
+
+import pytest
+import requests
 from kubernetes.client.rest import ApiException
+from settings import DEPLOYMENTS, TEST_DATA
+from suite.custom_resources_utils import read_custom_resource
+from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
 from suite.resources_utils import (
-    wait_before_test,
-    replace_configmap_from_yaml,
     create_secret_from_yaml,
     delete_secret,
+    replace_configmap_from_yaml,
     replace_secret,
-)
-from suite.custom_resources_utils import (
-    read_custom_resource,
+    wait_before_test,
 )
 from suite.vs_vsr_resources_utils import (
-    delete_virtual_server,
     create_virtual_server_from_yaml,
     delete_and_create_vs_from_yaml,
+    delete_virtual_server,
 )
-from suite.policy_resources_utils import (
-    create_policy_from_yaml,
-    delete_policy,
-    read_policy,
-)
-from settings import TEST_DATA, DEPLOYMENTS
 
 std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
 jwk_sec_valid_src = f"{TEST_DATA}/jwt-policy/secret/jwk-secret-valid.yaml"
@@ -28,23 +25,15 @@ jwk_sec_invalid_src = f"{TEST_DATA}/jwt-policy/secret/jwk-secret-invalid.yaml"
 jwt_pol_valid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-valid.yaml"
 jwt_pol_multi_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-valid-multi.yaml"
 jwt_vs_single_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-single.yaml"
-jwt_vs_single_invalid_pol_src = (
-    f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-single-invalid-pol.yaml"
-)
+jwt_vs_single_invalid_pol_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-single-invalid-pol.yaml"
 jwt_vs_multi_1_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-multi-1.yaml"
 jwt_vs_multi_2_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-multi-2.yaml"
 jwt_pol_invalid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-invalid.yaml"
 jwt_pol_invalid_sec_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-invalid-secret.yaml"
-jwt_vs_single_invalid_sec_src = (
-    f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-single-invalid-secret.yaml"
-)
+jwt_vs_single_invalid_sec_src = f"{TEST_DATA}/jwt-policy/spec/virtual-server-policy-single-invalid-secret.yaml"
 jwt_vs_override_route = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-override-route.yaml"
-jwt_vs_override_spec_route_1 = (
-    f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-override-spec-route-1.yaml"
-)
-jwt_vs_override_spec_route_2 = (
-    f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-override-spec-route-2.yaml"
-)
+jwt_vs_override_spec_route_1 = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-override-spec-route-1.yaml"
+jwt_vs_override_spec_route_2 = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-override-spec-route-2.yaml"
 valid_token = f"{TEST_DATA}/jwt-policy/token.jwt"
 invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
 
@@ -62,7 +51,10 @@ invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
                     f"-enable-leader-election=false",
                 ],
             },
-            {"example": "virtual-server", "app_type": "simple",},
+            {
+                "example": "virtual-server",
+                "app_type": "simple",
+            },
         )
     ],
     indirect=True,
@@ -82,9 +74,7 @@ class TestJWTPolicies:
 
         return secret_name, pol_name, headers
 
-    def setup_multiple_policies(
-        self, kube_apis, test_namespace, token, secret, policy_1, policy_2, vs_host
-    ):
+    def setup_multiple_policies(self, kube_apis, test_namespace, token, secret, policy_1, policy_2, vs_host):
         print(f"Create jwk secret")
         secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, secret)
 
@@ -102,10 +92,15 @@ class TestJWTPolicies:
 
     @pytest.mark.parametrize("token", [valid_token, invalid_token])
     def test_jwt_policy_token(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, token,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        token,
     ):
         """
-            Test jwt-policy with no token, valid token and invalid token
+        Test jwt-policy with no token, valid token and invalid token
         """
         secret, pol_name, headers = self.setup_single_policy(
             kube_apis,
@@ -126,7 +121,8 @@ class TestJWTPolicies:
         wait_before_test()
 
         resp1 = requests.get(
-            virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host},
+            virtual_server_setup.backend_1_url,
+            headers={"host": virtual_server_setup.vs_host},
         )
         print(resp1.status_code)
 
@@ -155,10 +151,15 @@ class TestJWTPolicies:
 
     @pytest.mark.parametrize("jwk_secret", [jwk_sec_valid_src, jwk_sec_invalid_src])
     def test_jwt_policy_secret(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, jwk_secret,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        jwk_secret,
     ):
         """
-            Test jwt-policy with a valid and an invalid secret
+        Test jwt-policy with a valid and an invalid secret
         """
         if jwk_secret == jwk_sec_valid_src:
             pol = jwt_pol_valid_src
@@ -169,7 +170,12 @@ class TestJWTPolicies:
         else:
             pytest.fail("Invalid configuration")
         secret, pol_name, headers = self.setup_single_policy(
-            kube_apis, test_namespace, valid_token, jwk_secret, pol, virtual_server_setup.vs_host,
+            kube_apis,
+            test_namespace,
+            valid_token,
+            jwk_secret,
+            pol,
+            virtual_server_setup.vs_host,
         )
 
         print(f"Patch vs with policy: {jwt_vs_single_src}")
@@ -214,10 +220,15 @@ class TestJWTPolicies:
     @pytest.mark.smoke
     @pytest.mark.parametrize("policy", [jwt_pol_valid_src, jwt_pol_invalid_src])
     def test_jwt_policy(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, policy,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        policy,
     ):
         """
-            Test jwt-policy with a valid and an invalid policy
+        Test jwt-policy with a valid and an invalid policy
         """
         secret, pol_name, headers = self.setup_single_policy(
             kube_apis,
@@ -284,10 +295,14 @@ class TestJWTPolicies:
             pytest.fail(f"Not a valid case or parameter")
 
     def test_jwt_policy_delete_secret(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
     ):
         """
-            Test if requests result in 500 when secret is deleted
+        Test if requests result in 500 when secret is deleted
         """
         secret, pol_name, headers = self.setup_single_policy(
             kube_apis,
@@ -327,10 +342,14 @@ class TestJWTPolicies:
         assert resp2.status_code == 500
 
     def test_jwt_policy_delete_policy(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
     ):
         """
-            Test if requests result in 500 when policy is deleted
+        Test if requests result in 500 when policy is deleted
         """
         secret, pol_name, headers = self.setup_single_policy(
             kube_apis,
@@ -371,10 +390,14 @@ class TestJWTPolicies:
         assert resp2.status_code == 500
 
     def test_jwt_policy_override(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
     ):
         """
-            Test if first reference to a policy in the same context takes precedence
+        Test if first reference to a policy in the same context takes precedence
         """
         secret, pol_name_1, pol_name_2, headers = self.setup_multiple_policies(
             kube_apis,
@@ -432,19 +455,19 @@ class TestJWTPolicies:
             virtual_server_setup.namespace,
         )
 
-        assert (
-            resp1.status_code == 401
-        )  # 401 unauthorized, since no token is attached to policy in spec context
+        assert resp1.status_code == 401  # 401 unauthorized, since no token is attached to policy in spec context
         assert resp2.status_code == 200
-        assert (
-            resp3.status_code == 401
-        )  # 401 unauthorized, since no token is attached to policy in route context
+        assert resp3.status_code == 401  # 401 unauthorized, since no token is attached to policy in route context
 
     def test_jwt_policy_override_spec(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
     ):
         """
-            Test if policy reference in route takes precedence over policy in spec
+        Test if policy reference in route takes precedence over policy in spec
         """
         secret, pol_name_1, pol_name_2, headers = self.setup_multiple_policies(
             kube_apis,

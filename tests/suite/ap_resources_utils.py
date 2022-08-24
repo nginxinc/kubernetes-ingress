@@ -1,34 +1,34 @@
 """Describe methods to utilize the AppProtect resources."""
 
-from kubernetes.client import CustomObjectsApi, ApiextensionsV1Api, CoreV1Api
-from suite.resources_utils import ensure_item_removal, get_file_contents
-from kubernetes import client
-from kubernetes.client.rest import ApiException
-import pytest
-import time
-import yaml
 import logging
+import time
+
+import pytest
+import yaml
+from kubernetes import client
+from kubernetes.client import ApiextensionsV1Api, CoreV1Api, CustomObjectsApi
+from kubernetes.client.rest import ApiException
+from suite.resources_utils import ensure_item_removal, get_file_contents
 
 
 def read_ap_custom_resource(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
     """
     Get AppProtect CRD information (kubectl describe output)
     :param custom_objects: CustomObjectsApi
-    :param namespace: The custom resource's namespace	
+    :param namespace: The custom resource's namespace
     :param plural: the custom resource's plural name
     :param name: the custom object's name
     :return: object
     """
     print(f"Getting info for {name} in namespace {namespace}")
     try:
-        response = custom_objects.get_namespaced_custom_object(
-            "appprotect.f5.com", "v1beta1", namespace, plural, name
-        )
+        response = custom_objects.get_namespaced_custom_object("appprotect.f5.com", "v1beta1", namespace, plural, name)
         return response
 
     except ApiException:
         logging.exception(f"Exception occurred while reading CRD")
         raise
+
 
 def create_ap_waf_policy_from_yaml(
     custom_objects: CustomObjectsApi,
@@ -64,14 +64,13 @@ def create_ap_waf_policy_from_yaml(
         dep["spec"]["waf"]["securityLog"]["apLogConf"] = f"{ap_namespace}/{aplogconf}"
         dep["spec"]["waf"]["securityLog"]["logDest"] = f"{logdest}"
 
-        custom_objects.create_namespaced_custom_object(
-            "k8s.nginx.org", "v1", namespace, "policies", dep
-        )
+        custom_objects.create_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "policies", dep)
         print(f"Policy created: {dep}")
         return dep["metadata"]["name"]
     except ApiException:
         logging.exception(f"Exception occurred while creating Policy: {dep['metadata']['name']}")
         raise
+
 
 def create_ap_multilog_waf_policy_from_yaml(
     custom_objects: CustomObjectsApi,
@@ -105,22 +104,23 @@ def create_ap_multilog_waf_policy_from_yaml(
         dep["spec"]["waf"]["apPolicy"] = f"{ap_namespace}/{appolicy}"
         seclogs = []
         try:
-            for i in range(len(aplogconfs)): 
-                seclogs.append({"enable": True,"apLogConf": f"{ap_namespace}/{aplogconfs[i]}", "logDest": f"{logdests[i]}"})
+            for i in range(len(aplogconfs)):
+                seclogs.append(
+                    {"enable": True, "apLogConf": f"{ap_namespace}/{aplogconfs[i]}", "logDest": f"{logdests[i]}"}
+                )
             dep["spec"]["waf"]["securityLogs"] = seclogs
         except KeyError:
             logging.exception(f"Exception occurred while creating Policy: {dep['metadata']['name']}")
             raise
         del dep["spec"]["waf"]["securityLog"]
-        
-        custom_objects.create_namespaced_custom_object(
-            "k8s.nginx.org", "v1", namespace, "policies", dep
-        )
+
+        custom_objects.create_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "policies", dep)
         print(f"Policy created: {dep}")
         return dep["metadata"]["name"]
     except ApiException:
         logging.exception(f"Exception occurred while creating Policy: {dep['metadata']['name']}")
         raise
+
 
 def create_ap_logconf_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
     """
@@ -133,9 +133,7 @@ def create_ap_logconf_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest,
     print("Create Ap logconf:")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-    custom_objects.create_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "aplogconfs", dep
-    )
+    custom_objects.create_namespaced_custom_object("appprotect.f5.com", "v1beta1", namespace, "aplogconfs", dep)
     print(f"AP logconf created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
 
@@ -151,9 +149,7 @@ def create_ap_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, 
     print("Create AP Policy:")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-    custom_objects.create_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "appolicies", dep
-    )
+    custom_objects.create_namespaced_custom_object("appprotect.f5.com", "v1beta1", namespace, "appolicies", dep)
     print(f"AP Policy created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
 
@@ -169,16 +165,12 @@ def create_ap_usersig_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest,
     print("Create AP UserSig:")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-    custom_objects.create_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", dep
-    )
+    custom_objects.create_namespaced_custom_object("appprotect.f5.com", "v1beta1", namespace, "apusersigs", dep)
     print(f"AP UserSig created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
 
 
-def delete_and_create_ap_policy_from_yaml(
-    custom_objects: CustomObjectsApi, name, yaml_manifest, namespace
-) -> None:
+def delete_and_create_ap_policy_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manifest, namespace) -> None:
     """
     Patch a AP Policy based on yaml manifest
     :param custom_objects: CustomObjectsApi
@@ -206,9 +198,7 @@ def delete_ap_usersig(custom_objects: CustomObjectsApi, name, namespace) -> None
     :return:
     """
     print(f"Delete AP UserSig: {name}")
-    custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "apusersigs", name
-    )
+    custom_objects.delete_namespaced_custom_object("appprotect.f5.com", "v1beta1", namespace, "apusersigs", name)
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotect.f5.com",
@@ -229,9 +219,7 @@ def delete_ap_logconf(custom_objects: CustomObjectsApi, name, namespace) -> None
     :return:
     """
     print(f"Delete AP logconf: {name}")
-    custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "aplogconfs", name
-    )
+    custom_objects.delete_namespaced_custom_object("appprotect.f5.com", "v1beta1", namespace, "aplogconfs", name)
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotect.f5.com",
@@ -252,9 +240,7 @@ def delete_ap_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
     :return:
     """
     print(f"Delete a AP policy: {name}")
-    custom_objects.delete_namespaced_custom_object(
-        "appprotect.f5.com", "v1beta1", namespace, "appolicies", name
-    )
+    custom_objects.delete_namespaced_custom_object("appprotect.f5.com", "v1beta1", namespace, "appolicies", name)
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotect.f5.com",
@@ -265,4 +251,3 @@ def delete_ap_policy(custom_objects: CustomObjectsApi, name, namespace) -> None:
     )
     time.sleep(3)
     print(f"AP policy was removed with name: {name}")
-

@@ -4,7 +4,6 @@ from datetime import datetime
 
 import pytest
 import requests
-
 from settings import TEST_DATA
 from suite.custom_resources_utils import (
     create_dos_logconf_from_yaml,

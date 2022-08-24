@@ -1,27 +1,26 @@
-import requests
-import pytest
 import time
 
-from settings import TEST_DATA, DEPLOYMENTS
+import pytest
+import requests
+from settings import DEPLOYMENTS, TEST_DATA
 from suite.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
-    delete_ap_policy,
     delete_ap_logconf,
+    delete_ap_policy,
 )
 from suite.resources_utils import (
-    wait_before_test,
     create_example_app,
-    wait_until_all_pods_are_ready,
+    create_ingress_with_ap_annotations,
     create_items_from_yaml,
-    delete_items_from_yaml,
+    create_namespace_with_name_from_yaml,
     delete_common_app,
+    delete_items_from_yaml,
     delete_namespace,
     ensure_connection_to_public_endpoint,
-    create_ingress_with_ap_annotations,
-    create_namespace_with_name_from_yaml,
     ensure_response_from_backend,
     wait_before_test,
+    wait_until_all_pods_are_ready,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
 
@@ -63,10 +62,10 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
     :return: BackendSetup
     """
     policy = "file-block"
-    
+
     create_namespace_with_name_from_yaml(kube_apis.v1, test_namespace, f"{TEST_DATA}/common/ns.yaml")
     print("------------------------- Deploy backend application -------------------------")
-    
+
     create_example_app(kube_apis, "simple", test_namespace)
     req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
     req_url_2 = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend2"
@@ -118,86 +117,74 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint) -> BackendSet
 
     return BackendSetup(req_url, req_url_2, metrics_url, ingress_host)
 
-# the first case does not set "-watch-namespace" so the policy is configured on the ingress. 
+
+# the first case does not set "-watch-namespace" so the policy is configured on the ingress.
 # This causes the traffic to be blocked
+
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
-    [
-       {
-            "extra_args": [
-                f"-enable-custom-resources",
-                f"-enable-app-protect",
-                f"-enable-prometheus-metrics"
-            ]
-        }
-    ],
+    [{"extra_args": [f"-enable-custom-resources", f"-enable-app-protect", f"-enable-prometheus-metrics"]}],
     indirect=True,
 )
 class TestAppProtectWatchNamespaceDisabled:
-    def test_responses(
-        self, request, kube_apis, crd_ingress_controller_with_ap, backend_setup
-    ):
+    def test_responses(self, request, kube_apis, crd_ingress_controller_with_ap, backend_setup):
         """
         Test file_block AppProtect policy without -watch-namespace
         """
         print("------------- Run test for AP policy: file-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        ensure_response_from_backend(
-            backend_setup.req_url, backend_setup.ingress_host, check404=True
-        )
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send request ----------------------")
         resp = requests.get(
             f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False
         )
-        
+
         print(resp.text)
 
         assert invalid_resp_body in resp.text
         assert resp.status_code == 200
 
-# In this test case the "-watch-namespace" param is set so the policy in policy_namespace 
+
+# In this test case the "-watch-namespace" param is set so the policy in policy_namespace
 # Is not configured on the ingress -> NAP uses the default policy which will not block the same request.
+
 
 @pytest.mark.skip_for_nginx_oss
 @pytest.mark.appprotect
 @pytest.mark.parametrize(
     "crd_ingress_controller_with_ap",
     [
-       {
+        {
             "extra_args": [
                 f"-enable-custom-resources",
                 f"-enable-app-protect",
                 f"-enable-prometheus-metrics",
-                f"-watch-namespace={test_namespace}"
+                f"-watch-namespace={test_namespace}",
             ]
         }
     ],
     indirect=True,
 )
 class TestAppProtectWatchNamespaceEnabled:
-    def test_responses(
-        self, request, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace
-    ):
+    def test_responses(self, request, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace):
         """
         Test file-block AppProtect policy with -watch-namespace
         """
         print("------------- Run test for AP policy: file-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        ensure_response_from_backend(
-            backend_setup.req_url, backend_setup.ingress_host, check404=True
-        )
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send request ----------------------")
         resp = requests.get(
             f"{backend_setup.req_url}/test.bat", headers={"host": backend_setup.ingress_host}, verify=False
         )
-        
+
         print(resp.text)
 
         assert valid_resp_body in resp.text

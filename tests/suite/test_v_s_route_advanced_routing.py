@@ -1,13 +1,21 @@
 import pytest
 import requests
-
 from settings import TEST_DATA
-from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, create_v_s_route_from_yaml, \
-    patch_v_s_route_from_yaml
 from suite.custom_resource_fixtures import VirtualServerRoute
-from suite.resources_utils import wait_before_test, ensure_response_from_backend, create_example_app, \
-    wait_until_all_pods_are_ready, create_namespace_with_name_from_yaml, delete_namespace
-from suite.yaml_utils import get_paths_from_vsr_yaml, get_first_host_from_yaml, get_route_namespace_from_vs_yaml
+from suite.resources_utils import (
+    create_example_app,
+    create_namespace_with_name_from_yaml,
+    delete_namespace,
+    ensure_response_from_backend,
+    wait_before_test,
+    wait_until_all_pods_are_ready,
+)
+from suite.vs_vsr_resources_utils import (
+    create_v_s_route_from_yaml,
+    create_virtual_server_from_yaml,
+    patch_v_s_route_from_yaml,
+)
+from suite.yaml_utils import get_first_host_from_yaml, get_paths_from_vsr_yaml, get_route_namespace_from_vs_yaml
 
 
 def execute_assertions(resp_1, resp_2, resp_3):
@@ -46,8 +54,9 @@ class VSRAdvancedRoutingSetup:
 
 
 @pytest.fixture(scope="class")
-def vsr_adv_routing_setup(request, kube_apis,
-                          ingress_controller_prerequisites, ingress_controller_endpoint) -> VSRAdvancedRoutingSetup:
+def vsr_adv_routing_setup(
+    request, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint
+) -> VSRAdvancedRoutingSetup:
     """
     Prepare an example app for advanced routing VSR.
 
@@ -60,20 +69,19 @@ def vsr_adv_routing_setup(request, kube_apis,
     :return:
     """
     vs_routes_ns = get_route_namespace_from_vs_yaml(
-        f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml")
-    ns_1 = create_namespace_with_name_from_yaml(kube_apis.v1,
-                                                vs_routes_ns[0],
-                                                f"{TEST_DATA}/common/ns.yaml")
+        f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml"
+    )
+    ns_1 = create_namespace_with_name_from_yaml(kube_apis.v1, vs_routes_ns[0], f"{TEST_DATA}/common/ns.yaml")
     print("------------------------- Deploy Virtual Server -----------------------------------")
-    vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects,
-                                              f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml",
-                                              ns_1)
+    vs_name = create_virtual_server_from_yaml(
+        kube_apis.custom_objects, f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml", ns_1
+    )
     vs_host = get_first_host_from_yaml(f"{TEST_DATA}/{request.param['example']}/standard/virtual-server.yaml")
 
     print("------------------------- Deploy Virtual Server Route -----------------------------------")
-    vsr_name = create_v_s_route_from_yaml(kube_apis.custom_objects,
-                                          f"{TEST_DATA}/{request.param['example']}/virtual-server-route-header.yaml",
-                                          ns_1)
+    vsr_name = create_v_s_route_from_yaml(
+        kube_apis.custom_objects, f"{TEST_DATA}/{request.param['example']}/virtual-server-route-header.yaml", ns_1
+    )
     vsr_paths = get_paths_from_vsr_yaml(f"{TEST_DATA}/{request.param['example']}/virtual-server-route-header.yaml")
     route = VirtualServerRoute(ns_1, vsr_name, vsr_paths)
     backends_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port}{vsr_paths[0]}"
@@ -92,57 +100,84 @@ def vsr_adv_routing_setup(request, kube_apis,
 
 
 @pytest.mark.vsr
-@pytest.mark.parametrize('crd_ingress_controller, vsr_adv_routing_setup',
-                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
-                           {"example": "virtual-server-route-advanced-routing"})],
-                         indirect=True)
+@pytest.mark.parametrize(
+    "crd_ingress_controller, vsr_adv_routing_setup",
+    [
+        (
+            {"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+            {"example": "virtual-server-route-advanced-routing"},
+        )
+    ],
+    indirect=True,
+)
 class TestVSRAdvancedRouting:
     def test_flow_with_header(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
         ensure_responses_from_backends(vsr_adv_routing_setup.backends_url, vsr_adv_routing_setup.vs_host)
 
-        resp_1 = requests.get(vsr_adv_routing_setup.backends_url,
-                              headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "future"})
-        resp_2 = requests.get(vsr_adv_routing_setup.backends_url,
-                              headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"})
-        resp_3 = requests.get(vsr_adv_routing_setup.backends_url,
-                              headers={"host": vsr_adv_routing_setup.vs_host, "x-version-invalid": "deprecated"})
+        resp_1 = requests.get(
+            vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "future"}
+        )
+        resp_2 = requests.get(
+            vsr_adv_routing_setup.backends_url,
+            headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"},
+        )
+        resp_3 = requests.get(
+            vsr_adv_routing_setup.backends_url,
+            headers={"host": vsr_adv_routing_setup.vs_host, "x-version-invalid": "deprecated"},
+        )
         execute_assertions(resp_1, resp_2, resp_3)
 
     def test_flow_with_argument(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
-        patch_v_s_route_from_yaml(kube_apis.custom_objects,
-                                  vsr_adv_routing_setup.route.name,
-                                  f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-argument.yaml",
-                                  vsr_adv_routing_setup.namespace)
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            vsr_adv_routing_setup.route.name,
+            f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-argument.yaml",
+            vsr_adv_routing_setup.namespace,
+        )
         wait_before_test(1)
 
-        resp_1 = requests.get(vsr_adv_routing_setup.backends_url + "?arg1=v1",
-                              headers={"host": vsr_adv_routing_setup.vs_host})
-        resp_2 = requests.get(vsr_adv_routing_setup.backends_url + "?arg1=v2",
-                              headers={"host": vsr_adv_routing_setup.vs_host})
-        resp_3 = requests.get(vsr_adv_routing_setup.backends_url + "?argument1=v1",
-                              headers={"host": vsr_adv_routing_setup.vs_host})
+        resp_1 = requests.get(
+            vsr_adv_routing_setup.backends_url + "?arg1=v1", headers={"host": vsr_adv_routing_setup.vs_host}
+        )
+        resp_2 = requests.get(
+            vsr_adv_routing_setup.backends_url + "?arg1=v2", headers={"host": vsr_adv_routing_setup.vs_host}
+        )
+        resp_3 = requests.get(
+            vsr_adv_routing_setup.backends_url + "?argument1=v1", headers={"host": vsr_adv_routing_setup.vs_host}
+        )
         execute_assertions(resp_1, resp_2, resp_3)
 
     def test_flow_with_cookie(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
-        patch_v_s_route_from_yaml(kube_apis.custom_objects,
-                                  vsr_adv_routing_setup.route.name,
-                                  f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-cookie.yaml",
-                                  vsr_adv_routing_setup.namespace)
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            vsr_adv_routing_setup.route.name,
+            f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-cookie.yaml",
+            vsr_adv_routing_setup.namespace,
+        )
         wait_before_test(1)
 
-        resp_1 = requests.get(vsr_adv_routing_setup.backends_url,
-                              headers={"host": vsr_adv_routing_setup.vs_host}, cookies={"user": "some"})
-        resp_2 = requests.get(vsr_adv_routing_setup.backends_url,
-                              headers={"host": vsr_adv_routing_setup.vs_host}, cookies={"user": "bad"})
-        resp_3 = requests.get(vsr_adv_routing_setup.backends_url,
-                              headers={"host": vsr_adv_routing_setup.vs_host}, cookies={"user": "anonymous"})
+        resp_1 = requests.get(
+            vsr_adv_routing_setup.backends_url,
+            headers={"host": vsr_adv_routing_setup.vs_host},
+            cookies={"user": "some"},
+        )
+        resp_2 = requests.get(
+            vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host}, cookies={"user": "bad"}
+        )
+        resp_3 = requests.get(
+            vsr_adv_routing_setup.backends_url,
+            headers={"host": vsr_adv_routing_setup.vs_host},
+            cookies={"user": "anonymous"},
+        )
         execute_assertions(resp_1, resp_2, resp_3)
 
     def test_flow_with_variable(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
-        patch_v_s_route_from_yaml(kube_apis.custom_objects,
-                                  vsr_adv_routing_setup.route.name,
-                                  f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-variable.yaml",
-                                  vsr_adv_routing_setup.namespace)
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            vsr_adv_routing_setup.route.name,
+            f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-variable.yaml",
+            vsr_adv_routing_setup.namespace,
+        )
         wait_before_test(1)
 
         resp_1 = requests.get(vsr_adv_routing_setup.backends_url, headers={"host": vsr_adv_routing_setup.vs_host})
@@ -151,19 +186,27 @@ class TestVSRAdvancedRouting:
         execute_assertions(resp_1, resp_2, resp_3)
 
     def test_flow_with_complex_conditions(self, kube_apis, crd_ingress_controller, vsr_adv_routing_setup):
-        patch_v_s_route_from_yaml(kube_apis.custom_objects,
-                                  vsr_adv_routing_setup.route.name,
-                                  f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-complex.yaml",
-                                  vsr_adv_routing_setup.namespace)
+        patch_v_s_route_from_yaml(
+            kube_apis.custom_objects,
+            vsr_adv_routing_setup.route.name,
+            f"{TEST_DATA}/virtual-server-route-advanced-routing/virtual-server-route-complex.yaml",
+            vsr_adv_routing_setup.namespace,
+        )
         wait_before_test(1)
 
-        resp_1 = requests.get(vsr_adv_routing_setup.backends_url + "?arg1=v1",
-                              headers={"host": vsr_adv_routing_setup.vs_host,
-                                       "x-version": "future"}, cookies={"user": "some"})
-        resp_2 = requests.post(vsr_adv_routing_setup.backends_url + "?arg1=v2",
-                               headers={"host": vsr_adv_routing_setup.vs_host,
-                                        "x-version": "deprecated"}, cookies={"user": "bad"})
-        resp_3 = requests.get(vsr_adv_routing_setup.backends_url + "?arg1=v2",
-                              headers={"host": vsr_adv_routing_setup.vs_host,
-                                       "x-version": "deprecated"}, cookies={"user": "bad"})
+        resp_1 = requests.get(
+            vsr_adv_routing_setup.backends_url + "?arg1=v1",
+            headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "future"},
+            cookies={"user": "some"},
+        )
+        resp_2 = requests.post(
+            vsr_adv_routing_setup.backends_url + "?arg1=v2",
+            headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"},
+            cookies={"user": "bad"},
+        )
+        resp_3 = requests.get(
+            vsr_adv_routing_setup.backends_url + "?arg1=v2",
+            headers={"host": vsr_adv_routing_setup.vs_host, "x-version": "deprecated"},
+            cookies={"user": "bad"},
+        )
         execute_assertions(resp_1, resp_2, resp_3)
