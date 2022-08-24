@@ -1,3 +1,4 @@
+import time
 import pytest
 from settings import TEST_DATA
 from suite.custom_assertions import wait_and_assert_status_code
@@ -26,18 +27,17 @@ class TestVirtualServerWildcard:
         wait_and_assert_status_code(404, virtual_server_setup.backend_2_url, "test.example.com")
 
         # create virtual server with wildcard hostname
+        retry = 0
         manifest_vs_wc = f"{TEST_DATA}/virtual-server-wildcard/virtual-server-wildcard.yaml"
         vs_wc_name = create_virtual_server_from_yaml(
             kube_apis.custom_objects, manifest_vs_wc, virtual_server_setup.namespace
         )
         wait_before_test()
-        response = read_custom_resource(
-            kube_apis.custom_objects,
-            virtual_server_setup.namespace,
-            "virtualservers",
-            vs_wc_name,
-        )
-        while not response["status"]:
+        response = {}
+        while ("status" not in response) and (retry <= 30):
+            print("Waiting for VS status update...")
+            time.sleep(1)
+            retry += 1
             response = read_custom_resource(
                 kube_apis.custom_objects,
                 virtual_server_setup.namespace,
