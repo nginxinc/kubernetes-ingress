@@ -1,49 +1,38 @@
 import grpc
 import pytest
-from settings import TEST_DATA, DEPLOYMENTS
-from suite.custom_resource_fixtures import (
-    VirtualServerRoute,
-    VirtualServerSetup,
-    VirtualServerRouteSetup
-)
-from suite.grpc.helloworld_pb2 import HelloRequest
-from suite.grpc.helloworld_pb2_grpc import GreeterStub
-from suite.resources_utils import (
-    wait_before_test,
-    wait_before_test,
-    get_file_contents,
-    replace_configmap_from_yaml,
-    create_secret_from_yaml,
-    create_example_app,
-    wait_until_all_pods_are_ready,
-    delete_items_from_yaml,
-    delete_common_app,
-    create_items_from_yaml,
-    get_service_endpoint,
-    create_namespace_with_name_from_yaml,
-    delete_namespace,
-)
-from suite.vs_vsr_resources_utils import(
-    delete_virtual_server,
-    create_virtual_server_from_yaml,
-    create_v_s_route_from_yaml,
-)
-from suite.policy_resources_utils import(
-    delete_policy,
-)
+from settings import DEPLOYMENTS, TEST_DATA
 from suite.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
-    delete_ap_policy,
+    create_ap_waf_policy_from_yaml,
     delete_ap_logconf,
-    create_ap_waf_policy_from_yaml
+    delete_ap_policy,
+)
+from suite.custom_resource_fixtures import VirtualServerRoute, VirtualServerRouteSetup, VirtualServerSetup
+from suite.grpc.helloworld_pb2 import HelloRequest
+from suite.grpc.helloworld_pb2_grpc import GreeterStub
+from suite.policy_resources_utils import delete_policy
+from suite.resources_utils import (
+    create_example_app,
+    create_items_from_yaml,
+    create_namespace_with_name_from_yaml,
+    create_secret_from_yaml,
+    delete_common_app,
+    delete_items_from_yaml,
+    delete_namespace,
+    get_file_contents,
+    get_service_endpoint,
+    replace_configmap_from_yaml,
+    wait_before_test,
+    wait_until_all_pods_are_ready,
 )
 from suite.ssl_utils import get_certificate
-from suite.yaml_utils import (
-    get_first_host_from_yaml,
-    get_paths_from_vs_yaml,
-    get_paths_from_vsr_yaml
+from suite.vs_vsr_resources_utils import (
+    create_v_s_route_from_yaml,
+    create_virtual_server_from_yaml,
+    delete_virtual_server,
 )
+from suite.yaml_utils import get_first_host_from_yaml, get_paths_from_vs_yaml, get_paths_from_vsr_yaml
 
 log_loc = f"/var/log/messages"
 valid_resp_txt = "Hello"
@@ -61,14 +50,16 @@ vsr_vs_yaml = f"{TEST_DATA}/ap-waf-grpc/vsr-virtual-server-spec.yaml"
 
 
 @pytest.fixture(scope="class")
-def appprotect_setup(request, kube_apis, ingress_controller_endpoint, ingress_controller_prerequisites, test_namespace) -> None:
+def appprotect_setup(
+    request, kube_apis, ingress_controller_endpoint, ingress_controller_prerequisites, test_namespace
+) -> None:
     """
-    Replace the config map, create the TLS secret, deploy grpc application, and deploy 
+    Replace the config map, create the TLS secret, deploy grpc application, and deploy
     all the AppProtect(dataguard-alarm) resources under test in one namespace.
 
     :param request: pytest fixture
     :param kube_apis: client apis
-    :param ingress_controller_prerequisites: 
+    :param ingress_controller_prerequisites:
     :param test_namespace:
     """
     policy_method = request.param["policy"]
@@ -76,59 +67,51 @@ def appprotect_setup(request, kube_apis, ingress_controller_endpoint, ingress_co
     vsr = None
     try:
         print("------------------------- Replace ConfigMap with HTTP2 -------------------------")
-        replace_configmap_from_yaml(kube_apis.v1, 
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    cm_source)
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            cm_source,
+        )
         if vs_or_vsr == "vs":
-            (src_pol_name, vs_name, vs_host, vs_paths) = ap_vs_setup(
-                kube_apis, test_namespace, policy_method)
+            (src_pol_name, vs_name, vs_host, vs_paths) = ap_vs_setup(kube_apis, test_namespace, policy_method)
         elif vs_or_vsr == "vsr":
-            (src_pol_name, vsr_ns, vs_host, vs_name, vsr) = ap_vsr_setup(
-                kube_apis, test_namespace, policy_method)
+            (src_pol_name, vsr_ns, vs_host, vs_name, vsr) = ap_vsr_setup(kube_apis, test_namespace, policy_method)
         wait_before_test(120)
     except Exception as ex:
-        cleanup(
-            kube_apis, ingress_controller_prerequisites, src_pol_name, test_namespace, vs_or_vsr, vs_name, vsr)
+        cleanup(kube_apis, ingress_controller_prerequisites, src_pol_name, test_namespace, vs_or_vsr, vs_name, vsr)
+
     def fin():
         print("Clean up:")
-        cleanup(
-            kube_apis, ingress_controller_prerequisites, src_pol_name, test_namespace, vs_or_vsr, vs_name, vsr)
+        cleanup(kube_apis, ingress_controller_prerequisites, src_pol_name, test_namespace, vs_or_vsr, vs_name, vsr)
 
     request.addfinalizer(fin)
     if vs_or_vsr == "vs":
-        return VirtualServerSetup(
-            ingress_controller_endpoint, test_namespace, vs_host, vs_name, vs_paths
-        )
+        return VirtualServerSetup(ingress_controller_endpoint, test_namespace, vs_host, vs_name, vs_paths)
     elif vs_or_vsr == "vsr":
-        return VirtualServerRouteSetup(
-            ingress_controller_endpoint, vsr_ns, vs_host, vs_name, vsr, None
-        )
+        return VirtualServerRouteSetup(ingress_controller_endpoint, vsr_ns, vs_host, vs_name, vsr, None)
+
 
 def ap_vs_setup(kube_apis, test_namespace, policy_method) -> tuple:
-    src_pol_name, vs_name = ap_generic_setup(
-        kube_apis, test_namespace, test_namespace, 
-        policy_method, waf_spec_vs_src)
+    src_pol_name, vs_name = ap_generic_setup(kube_apis, test_namespace, test_namespace, policy_method, waf_spec_vs_src)
     vs_host = get_first_host_from_yaml(waf_spec_vs_src)
     vs_paths = get_paths_from_vs_yaml(waf_spec_vs_src)
     return (src_pol_name, vs_name, vs_host, vs_paths)
 
+
 def ap_vsr_setup(kube_apis, test_namespace, policy_method) -> tuple:
     print(f"------------------------- Deploy namespace ---------------------------")
     vs_routes_ns = "grpcs"
-    vsr_ns = create_namespace_with_name_from_yaml(
-        kube_apis.v1, vs_routes_ns, f"{TEST_DATA}/common/ns.yaml")
-    src_pol_name, vs_name = ap_generic_setup(
-        kube_apis, vsr_ns, test_namespace, policy_method, 
-        vsr_vs_yaml)
+    vsr_ns = create_namespace_with_name_from_yaml(kube_apis.v1, vs_routes_ns, f"{TEST_DATA}/common/ns.yaml")
+    src_pol_name, vs_name = ap_generic_setup(kube_apis, vsr_ns, test_namespace, policy_method, vsr_vs_yaml)
     vs_host = get_first_host_from_yaml(vsr_vs_yaml)
     print("------------------------- Deploy Virtual Server Route ----------------------------")
-    vsr_name = create_v_s_route_from_yaml(
-        kube_apis.custom_objects, waf_subroute_vsr_src, vsr_ns)
+    vsr_name = create_v_s_route_from_yaml(kube_apis.custom_objects, waf_subroute_vsr_src, vsr_ns)
     vsr_paths = get_paths_from_vsr_yaml(waf_subroute_vsr_src)
     vsr = VirtualServerRoute(vsr_ns, vsr_name, vsr_paths)
 
     return (src_pol_name, vsr_ns, vs_host, vs_name, vsr)
+
 
 def ap_generic_setup(kube_apis, vs_namespace, test_namespace, policy_method, vs_yaml):
     src_pol_yaml = f"{TEST_DATA}/ap-waf-grpc/policies/waf-block-{policy_method}.yaml"
@@ -150,21 +133,29 @@ def ap_generic_setup(kube_apis, vs_namespace, test_namespace, policy_method, vs_
     create_secret_from_yaml(kube_apis.v1, vs_namespace, src_vs_sec_yaml)
     print(f"------------------------- Deploy policy ---------------------------")
     src_pol_name = create_ap_waf_policy_from_yaml(
-            kube_apis.custom_objects, src_pol_yaml, vs_namespace, test_namespace,
-            True, True, ap_pol_name, log_name, f"syslog:server={syslog_ep}:514")
+        kube_apis.custom_objects,
+        src_pol_yaml,
+        vs_namespace,
+        test_namespace,
+        True,
+        True,
+        ap_pol_name,
+        log_name,
+        f"syslog:server={syslog_ep}:514",
+    )
     print("------------------------- Deploy Virtual Server -----------------------------------")
-    vs_name = create_virtual_server_from_yaml(
-        kube_apis.custom_objects, vs_yaml, vs_namespace)
+    vs_name = create_virtual_server_from_yaml(kube_apis.custom_objects, vs_yaml, vs_namespace)
     return (src_pol_name, vs_name)
 
-def cleanup(kube_apis, ingress_controller_prerequisites, src_pol_name, 
-            test_namespace, vs_or_vsr, vs_name, vsr) -> None:
+
+def cleanup(kube_apis, ingress_controller_prerequisites, src_pol_name, test_namespace, vs_or_vsr, vs_name, vsr) -> None:
     vsr_namespace = test_namespace if vs_or_vsr == "vs" else vsr.namespace
     replace_configmap_from_yaml(
         kube_apis.v1,
-        ingress_controller_prerequisites.config_map['metadata']['name'],
+        ingress_controller_prerequisites.config_map["metadata"]["name"],
         ingress_controller_prerequisites.namespace,
-        f"{DEPLOYMENTS}/common/nginx-config.yaml")
+        f"{DEPLOYMENTS}/common/nginx-config.yaml",
+    )
     delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
     delete_ap_policy(kube_apis.custom_objects, ap_pol_name, test_namespace)
     delete_policy(kube_apis.custom_objects, src_pol_name, vsr_namespace)
@@ -177,11 +168,12 @@ def cleanup(kube_apis, ingress_controller_prerequisites, src_pol_name,
         print("Delete test namespaces")
         delete_namespace(kube_apis.v1, vsr.namespace)
 
+
 def grpc_waf_block(kube_apis, test_namespace, public_ip, vs_host, port_ssl):
     cert = get_certificate(public_ip, vs_host, port_ssl)
-    target = f'{public_ip}:{port_ssl}'
+    target = f"{public_ip}:{port_ssl}"
     credentials = grpc.ssl_channel_credentials(root_certificates=cert.encode())
-    options = (('grpc.ssl_target_name_override', vs_host),)
+    options = (("grpc.ssl_target_name_override", vs_host),)
 
     with grpc.secure_channel(target, credentials, options) as channel:
         stub = GreeterStub(channel)
@@ -194,11 +186,12 @@ def grpc_waf_block(kube_apis, test_namespace, public_ip, vs_host, port_ssl):
             print(ex)
     assert invalid_resp_text in ex
 
+
 def grpc_waf_allow(kube_apis, test_namespace, public_ip, vs_host, port_ssl):
     cert = get_certificate(public_ip, vs_host, port_ssl)
-    target = f'{public_ip}:{port_ssl}'
+    target = f"{public_ip}:{port_ssl}"
     credentials = grpc.ssl_channel_credentials(root_certificates=cert.encode())
-    options = (('grpc.ssl_target_name_override', vs_host),)
+    options = (("grpc.ssl_target_name_override", vs_host),)
 
     with grpc.secure_channel(target, credentials, options) as channel:
         stub = GreeterStub(channel)
@@ -229,49 +222,80 @@ def grpc_waf_allow(kube_apis, test_namespace, public_ip, vs_host, port_ssl):
     indirect=True,
 )
 class TestAppProtectVSGrpc:
-    @pytest.mark.parametrize("appprotect_setup", [{"policy": "sayhello", "vs_or_vsr": "vs",}], indirect=True)
+    @pytest.mark.parametrize(
+        "appprotect_setup",
+        [
+            {
+                "policy": "sayhello",
+                "vs_or_vsr": "vs",
+            }
+        ],
+        indirect=True,
+    )
     def test_responses_grpc_block(
-        self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_ap, 
-        appprotect_setup, test_namespace):
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller_with_ap,
+        appprotect_setup,
+        test_namespace,
+    ):
         """
         Test grpc-block-hello AppProtect policy: Blocks /sayhello gRPC method only
         Client sends request to /sayhello
         """
-        grpc_waf_block(kube_apis,
-                       test_namespace,
-                       appprotect_setup.public_endpoint.public_ip,
-                       appprotect_setup.vs_host,
-                       appprotect_setup.public_endpoint.port_ssl)
+        grpc_waf_block(
+            kube_apis,
+            test_namespace,
+            appprotect_setup.public_endpoint.public_ip,
+            appprotect_setup.vs_host,
+            appprotect_setup.public_endpoint.port_ssl,
+        )
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
         assert (
-            'ASM:attack_type="Directory Indexing"' in log_contents and
-            'violations="Illegal gRPC method"' in log_contents and
-            'severity="Error"' in log_contents and
-            'outcome="REJECTED"' in log_contents
+            'ASM:attack_type="Directory Indexing"' in log_contents
+            and 'violations="Illegal gRPC method"' in log_contents
+            and 'severity="Error"' in log_contents
+            and 'outcome="REJECTED"' in log_contents
         )
 
-    @pytest.mark.parametrize("appprotect_setup", [{"policy": "saygoodbye", "vs_or_vsr": "vs",}], indirect=True)
+    @pytest.mark.parametrize(
+        "appprotect_setup",
+        [
+            {
+                "policy": "saygoodbye",
+                "vs_or_vsr": "vs",
+            }
+        ],
+        indirect=True,
+    )
     def test_responses_grpc_allow(
-        self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_ap, 
-        appprotect_setup, test_namespace
-        ):
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller_with_ap,
+        appprotect_setup,
+        test_namespace,
+    ):
         """
         Test grpc-block-goodbye AppProtect policy: Blocks /saygoodbye gRPC method only
         Client sends request to /sayhello thus should pass
         """
-        grpc_waf_allow(kube_apis,
-                       test_namespace,
-                       appprotect_setup.public_endpoint.public_ip,
-                       appprotect_setup.vs_host,
-                       appprotect_setup.public_endpoint.port_ssl)
+        grpc_waf_allow(
+            kube_apis,
+            test_namespace,
+            appprotect_setup.public_endpoint.public_ip,
+            appprotect_setup.vs_host,
+            appprotect_setup.public_endpoint.port_ssl,
+        )
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
         assert (
-            'ASM:attack_type="N/A"' in log_contents and
-            'violations="N/A"' in log_contents and
-            'severity="Informational"' in log_contents and
-            'outcome="PASSED"' in log_contents
+            'ASM:attack_type="N/A"' in log_contents
+            and 'violations="N/A"' in log_contents
+            and 'severity="Informational"' in log_contents
+            and 'outcome="PASSED"' in log_contents
         )
 
 
@@ -292,32 +316,53 @@ class TestAppProtectVSGrpc:
     indirect=True,
 )
 class TestAppProtectVSRGrpc:
-    @pytest.mark.parametrize("appprotect_setup", [{"policy": "sayhello", "vs_or_vsr": "vsr",}], indirect=True)
+    @pytest.mark.parametrize(
+        "appprotect_setup",
+        [
+            {
+                "policy": "sayhello",
+                "vs_or_vsr": "vsr",
+            }
+        ],
+        indirect=True,
+    )
     def test_responses_grpc_block(
-        self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_ap, 
-        appprotect_setup, test_namespace
-        ):
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller_with_ap,
+        appprotect_setup,
+        test_namespace,
+    ):
         """
         Test grpc-block-hello AppProtect policy: Blocks /sayhello gRPC method only
         Client sends request to /sayhello
         """
-        grpc_waf_block(kube_apis,
-                       appprotect_setup.namespace,
-                       appprotect_setup.public_endpoint.public_ip,
-                       appprotect_setup.vs_host,
-                       appprotect_setup.public_endpoint.port_ssl)
+        grpc_waf_block(
+            kube_apis,
+            appprotect_setup.namespace,
+            appprotect_setup.public_endpoint.public_ip,
+            appprotect_setup.vs_host,
+            appprotect_setup.public_endpoint.port_ssl,
+        )
 
     @pytest.mark.parametrize("appprotect_setup", [{"policy": "saygoodbye", "vs_or_vsr": "vsr"}], indirect=True)
     def test_responses_grpc_allow(
-        self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_ap, 
-        appprotect_setup, test_namespace
-        ):
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller_with_ap,
+        appprotect_setup,
+        test_namespace,
+    ):
         """
         Test grpc-block-goodbye AppProtect policy: Blocks /saygoodbye gRPC method only
         Client sends request to /sayhello thus should pass
         """
-        grpc_waf_allow(kube_apis,
-                       appprotect_setup.namespace,
-                       appprotect_setup.public_endpoint.public_ip,
-                       appprotect_setup.vs_host,
-                       appprotect_setup.public_endpoint.port_ssl)
+        grpc_waf_allow(
+            kube_apis,
+            appprotect_setup.namespace,
+            appprotect_setup.public_endpoint.public_ip,
+            appprotect_setup.vs_host,
+            appprotect_setup.public_endpoint.port_ssl,
+        )

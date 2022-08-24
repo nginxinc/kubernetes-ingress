@@ -1,18 +1,17 @@
-import requests
 import pytest
-
+import requests
+from settings import TEST_DATA
 from suite.resources_utils import (
-    ensure_connection_to_public_endpoint,
-    create_items_from_yaml,
     create_example_app,
+    create_items_from_yaml,
     delete_common_app,
     delete_items_from_yaml,
-    wait_until_all_pods_are_ready,
+    ensure_connection_to_public_endpoint,
     ensure_response_from_backend,
     wait_before_test,
+    wait_until_all_pods_are_ready,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
-from settings import TEST_DATA
 
 
 class BackendSetup:
@@ -52,9 +51,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
         ingress_controller_endpoint.port,
         ingress_controller_endpoint.port_ssl,
     )
-    print(
-        "------------------------- Deploy ingresses under test -----------------------------------"
-    )
+    print("------------------------- Deploy ingresses under test -----------------------------------")
     ingress_hosts = {}
     for item in ingresses_under_test:
         src_ing_yaml = f"{TEST_DATA}/ingress-class/{item}-ingress.yaml"
@@ -76,7 +73,6 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
 
 @pytest.mark.ingresses
 class TestIngressClassArgs:
-
     @pytest.mark.parametrize(
         "ingress_controller, expected_responses",
         [
@@ -111,12 +107,8 @@ class TestIngressClassArgs:
         )
 
         for item in ingresses_under_test:
-            ensure_response_from_backend(
-                backend_setup.req_url, backend_setup.ingress_hosts[item]
-            )
-            resp = requests.get(
-                backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[item]}
-            )
+            ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_hosts[item])
+            resp = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_hosts[item]})
             assert (
                 resp.status_code == expected_responses[item]
             ), f"Expected: {expected_responses[item]} response code for {backend_setup.ingress_hosts[item]}"

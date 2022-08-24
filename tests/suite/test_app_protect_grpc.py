@@ -1,27 +1,25 @@
 import grpc
 import pytest
-from settings import TEST_DATA, DEPLOYMENTS
+from settings import DEPLOYMENTS, TEST_DATA
 from suite.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
-    delete_ap_policy,
     delete_ap_logconf,
+    delete_ap_policy,
 )
 from suite.grpc.helloworld_pb2 import HelloRequest
 from suite.grpc.helloworld_pb2_grpc import GreeterStub
-
 from suite.resources_utils import (
-    wait_before_test,
     create_example_app,
-    wait_until_all_pods_are_ready,
-    create_items_from_yaml,
-    delete_items_from_yaml,
-    delete_common_app,
-    replace_configmap_from_yaml,
     create_ingress_with_ap_annotations,
-    wait_before_test,
+    create_items_from_yaml,
+    delete_common_app,
+    delete_items_from_yaml,
     get_file_contents,
     get_service_endpoint,
+    replace_configmap_from_yaml,
+    wait_before_test,
+    wait_until_all_pods_are_ready,
 )
 from suite.ssl_utils import get_certificate
 from suite.yaml_utils import get_first_ingress_host_from_yaml
@@ -29,6 +27,7 @@ from suite.yaml_utils import get_first_ingress_host_from_yaml
 log_loc = f"/var/log/messages"
 valid_resp_txt = "Hello"
 invalid_resp_text = "The request was rejected. Please consult with your administrator."
+
 
 class BackendSetup:
     """
@@ -45,7 +44,9 @@ class BackendSetup:
 
 
 @pytest.fixture(scope="function")
-def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_controller_prerequisites, test_namespace) -> BackendSetup:
+def backend_setup(
+    request, kube_apis, ingress_controller_endpoint, ingress_controller_prerequisites, test_namespace
+) -> BackendSetup:
     """
     Deploy a simple application and AppProtect manifests.
 
@@ -57,10 +58,12 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
     """
     try:
         print("------------------------- Replace ConfigMap with HTTP2 -------------------------")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                ingress_controller_prerequisites.config_map['metadata']['name'],
-                                ingress_controller_prerequisites.namespace,
-                                f"{TEST_DATA}/appprotect/grpc/nginx-config.yaml")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/appprotect/grpc/nginx-config.yaml",
+        )
 
         policy = request.param["policy"]
         print("------------------------- Deploy backend application -------------------------")
@@ -86,7 +89,9 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
         print(syslog_dst)
         print("------------------------- Deploy ingress -----------------------------")
         src_ing_yaml = f"{TEST_DATA}/appprotect/grpc/ingress.yaml"
-        create_ingress_with_ap_annotations(kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", f"{syslog_dst}:514")
+        create_ingress_with_ap_annotations(
+            kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", f"{syslog_dst}:514"
+        )
         ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
         wait_before_test(40)
     except Exception as ex:
@@ -97,10 +102,12 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
         delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
         delete_common_app(kube_apis, "grpc", test_namespace)
         delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
-        replace_configmap_from_yaml(kube_apis.v1,
-                        ingress_controller_prerequisites.config_map['metadata']['name'],
-                        ingress_controller_prerequisites.namespace,
-                        f"{DEPLOYMENTS}/common/nginx-config.yaml")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{DEPLOYMENTS}/common/nginx-config.yaml",
+        )
         pytest.fail(f"AP GRPC setup failed")
 
     def fin():
@@ -111,10 +118,12 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
         delete_ap_logconf(kube_apis.custom_objects, log_name, test_namespace)
         delete_common_app(kube_apis, "grpc", test_namespace)
         delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
-        replace_configmap_from_yaml(kube_apis.v1,
-                        ingress_controller_prerequisites.config_map['metadata']['name'],
-                        ingress_controller_prerequisites.namespace,
-                        f"{DEPLOYMENTS}/common/nginx-config.yaml")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{DEPLOYMENTS}/common/nginx-config.yaml",
+        )
 
     request.addfinalizer(fin)
 
@@ -132,9 +141,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, ingress_contr
 class TestAppProtect:
     @pytest.mark.smoke
     @pytest.mark.parametrize("backend_setup", [{"policy": "grpc-block-sayhello"}], indirect=True)
-    def test_responses_grpc_block(
-        self, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace
-    ):
+    def test_responses_grpc_block(self, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace):
         """
         Test grpc-block-hello AppProtect policy: Blocks /sayhello gRPC method only
         Client sends request to /sayhello
@@ -145,12 +152,12 @@ class TestAppProtect:
         # without verification, we will not be able to use the channel
         cert = get_certificate(backend_setup.ip, backend_setup.ingress_host, backend_setup.port_ssl)
 
-        target = f'{backend_setup.ip}:{backend_setup.port_ssl}'
+        target = f"{backend_setup.ip}:{backend_setup.port_ssl}"
         credentials = grpc.ssl_channel_credentials(root_certificates=cert.encode())
 
         # this option is necessary to set the SNI of a gRPC connection and it only works with grpc.secure_channel.
         # also, the TLS cert for the Ingress must have the CN equal to backend_setup.ingress_host
-        options = (('grpc.ssl_target_name_override', backend_setup.ingress_host),)
+        options = (("grpc.ssl_target_name_override", backend_setup.ingress_host),)
 
         with grpc.secure_channel(target, credentials, options) as channel:
             stub = GreeterStub(channel)
@@ -162,22 +169,21 @@ class TestAppProtect:
                 # grpc.RpcError is also grpc.Call https://grpc.github.io/grpc/python/grpc.html#client-side-context
                 ex = e.details()
                 print(ex)
-        
+
         log_contents = ""
         retry = 0
         while "ASM:attack_type" not in log_contents and retry <= 30:
-            log_contents = get_file_contents(
-                kube_apis.v1, log_loc, syslog_pod, test_namespace)
+            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
             retry += 1
             wait_before_test(1)
             print(f"Security log not updated, retrying... #{retry}")
 
         assert (
-            invalid_resp_text in ex and
-            'ASM:attack_type="Directory Indexing"' in log_contents and
-            'violations="Illegal gRPC method"' in log_contents and
-            'severity="Error"' in log_contents and
-            'outcome="REJECTED"' in log_contents
+            invalid_resp_text in ex
+            and 'ASM:attack_type="Directory Indexing"' in log_contents
+            and 'violations="Illegal gRPC method"' in log_contents
+            and 'severity="Error"' in log_contents
+            and 'outcome="REJECTED"' in log_contents
         )
 
     @pytest.mark.parametrize("backend_setup", [{"policy": "grpc-block-saygoodbye"}], indirect=True)
@@ -191,9 +197,9 @@ class TestAppProtect:
         syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace).items[-1].metadata.name
         cert = get_certificate(backend_setup.ip, backend_setup.ingress_host, backend_setup.port_ssl)
 
-        target = f'{backend_setup.ip}:{backend_setup.port_ssl}'
+        target = f"{backend_setup.ip}:{backend_setup.port_ssl}"
         credentials = grpc.ssl_channel_credentials(root_certificates=cert.encode())
-        options = (('grpc.ssl_target_name_override', backend_setup.ingress_host),)
+        options = (("grpc.ssl_target_name_override", backend_setup.ingress_host),)
 
         with grpc.secure_channel(target, credentials, options) as channel:
             stub = GreeterStub(channel)
@@ -208,16 +214,15 @@ class TestAppProtect:
         log_contents = ""
         retry = 0
         while "ASM:attack_type" not in log_contents and retry <= 30:
-            log_contents = get_file_contents(
-                kube_apis.v1, log_loc, syslog_pod, test_namespace)
+            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
             retry += 1
             wait_before_test(1)
             print(f"Security log not updated, retrying... #{retry}")
 
         assert (
-            valid_resp_txt in response.message and
-            'ASM:attack_type="N/A"' in log_contents and
-            'violations="N/A"' in log_contents and
-            'severity="Informational"' in log_contents and
-            'outcome="PASSED"' in log_contents
+            valid_resp_txt in response.message
+            and 'ASM:attack_type="N/A"' in log_contents
+            and 'violations="N/A"' in log_contents
+            and 'severity="Informational"' in log_contents
+            and 'outcome="PASSED"' in log_contents
         )
