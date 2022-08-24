@@ -1,4 +1,5 @@
 import time
+
 import pytest
 from settings import TEST_DATA
 from suite.custom_assertions import wait_and_assert_status_code
