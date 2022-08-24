@@ -275,6 +275,8 @@ def crd_ingress_controller_with_dos(
             kube_apis.v1,
             kube_apis.apps_v1_api,
             namespace,
+            f"{DEPLOYMENTS}/deployment/appprotect-dos-arb.yaml",
+            f"{DEPLOYMENTS}/service/appprotect-dos-arb-svc.yaml",
         )
 
         print("------------------------- Create IC -----------------------------------")

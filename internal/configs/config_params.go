@@ -57,6 +57,7 @@ type ConfigParams struct {
 	AppProtectDosResource                  string
 	MainAppProtectDosLogFormat             []string
 	MainAppProtectDosLogFormatEscaping     string
+	MainAppProtectDosArbFqdn               string
 	ProxyBuffering                         bool
 	ProxyBuffers                           string
 	ProxyBufferSize                        string

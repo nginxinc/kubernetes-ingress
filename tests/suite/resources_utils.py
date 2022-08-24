@@ -1126,17 +1126,21 @@ def delete_ingress_controller(apps_v1_api: AppsV1Api, name, dep_type, namespace)
         delete_daemon_set(apps_v1_api, name, namespace)
 
 
-def create_dos_arbitrator(v1: CoreV1Api, apps_v1_api: AppsV1Api, namespace) -> str:
+def create_dos_arbitrator(
+    v1: CoreV1Api, apps_v1_api: AppsV1Api, namespace, deployment_yaml_manifest, svc_yaml_manifest
+) -> str:
     """
     Create dos arbitrator according to the params.
 
     :param v1: CoreV1Api
     :param apps_v1_api: AppsV1Api
     :param namespace: namespace name
+    :param deployment_yaml_manifest:  arbitrator deployment yaml file
+    :param svc_yaml_manifest: arbitrator svc yaml file
     :return: str
     """
-    yaml_manifest = f"{DEPLOYMENTS}/deployment/appprotect-dos-arb.yaml"
-    with open(yaml_manifest) as f:
+
+    with open(deployment_yaml_manifest) as f:
         dep = yaml.safe_load(f)
 
     name = create_deployment(apps_v1_api, namespace, dep)
@@ -1151,7 +1155,7 @@ def create_dos_arbitrator(v1: CoreV1Api, apps_v1_api: AppsV1Api, namespace) -> s
     svc_name = create_service_from_yaml(
         v1,
         namespace,
-        f"{DEPLOYMENTS}/service/appprotect-dos-arb-svc.yaml",
+        svc_yaml_manifest,
     )
     print(f"Dos arbitrator svc was created with name '{svc_name}'")
     return name
@@ -1192,7 +1196,7 @@ def create_ns_and_sa_from_yaml(v1: CoreV1Api, yaml_manifest) -> str:
     return res["namespace"]
 
 
-def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
+def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> {}:
     """
     Apply yaml manifest with multiple items.
 
@@ -1201,22 +1205,27 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
     :param namespace:
     :return:
     """
+    res = {}
     print("Load yaml:")
     with open(yaml_manifest) as f:
         docs = yaml.safe_load_all(f)
         for doc in docs:
             if doc["kind"] == "Secret":
-                create_secret(kube_apis.v1, namespace, doc)
+                res["Secret"] = create_secret(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "ConfigMap":
-                create_configmap(kube_apis.v1, namespace, doc)
+                res["ConfigMap"] = create_configmap(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "Ingress":
-                create_ingress(kube_apis.networking_v1, namespace, doc)
+                res["Ingress"] = create_ingress(kube_apis.networking_v1, namespace, doc)
             elif doc["kind"] == "Service":
-                create_service(kube_apis.v1, namespace, doc)
+                res["Service"] = create_service(kube_apis.v1, namespace, doc)
             elif doc["kind"] == "Deployment":
-                create_deployment(kube_apis.apps_v1_api, namespace, doc)
+                res["Deployment"] = create_deployment(kube_apis.apps_v1_api, namespace, doc)
             elif doc["kind"] == "DaemonSet":
-                create_daemon_set(kube_apis.apps_v1_api, namespace, doc)
+                res["DaemonSet"] = create_daemon_set(kube_apis.apps_v1_api, namespace, doc)
+            elif doc["kind"] == "Namespace":
+                res["Namespace"] = create_namespace(kube_apis.v1, doc)
+
+    return res
 
 
 def create_ingress_with_ap_annotations(
