@@ -1,59 +1,40 @@
 """Describe project shared pytest fixtures."""
 
-import time
 import os
+import subprocess
+import time
+
 import pytest
 import yaml
-import subprocess
-
-from kubernetes import config, client
+from kubernetes import client, config
 from kubernetes.client import (
-    CoreV1Api,
-    NetworkingV1Api,
-    RbacAuthorizationV1Api,
-    CustomObjectsApi,
     ApiextensionsV1Api,
     AppsV1Api,
+    CoreV1Api,
+    CustomObjectsApi,
+    NetworkingV1Api,
+    RbacAuthorizationV1Api,
 )
 from kubernetes.client.rest import ApiException
-
-from suite.custom_resources_utils import (
-    create_crd_from_yaml,
-    delete_crd,
-)
+from settings import ALLOWED_DEPLOYMENT_TYPES, ALLOWED_IC_TYPES, ALLOWED_SERVICE_TYPES, DEPLOYMENTS, TEST_DATA
+from suite.custom_resources_utils import create_crd_from_yaml, delete_crd
 from suite.kube_config_utils import ensure_context_in_config, get_current_context_name
 from suite.resources_utils import (
-    create_namespace_with_name_from_yaml,
-    delete_namespace,
-    create_ns_and_sa_from_yaml,
-    replace_configmap_from_yaml,
-    delete_testing_namespaces,
-    wait_before_test,
-)
-from suite.resources_utils import (
-    configure_rbac,
     cleanup_rbac,
-)
-from suite.resources_utils import (
+    configure_rbac,
+    create_configmap_from_yaml,
+    create_namespace_with_name_from_yaml,
+    create_ns_and_sa_from_yaml,
+    create_secret_from_yaml,
     create_service_from_yaml,
+    delete_namespace,
+    delete_testing_namespaces,
     get_service_node_ports,
+    replace_configmap_from_yaml,
+    wait_before_test,
     wait_for_public_ip,
 )
-from suite.resources_utils import (
-    create_configmap_from_yaml,
-    create_secret_from_yaml,
-)
-from suite.yaml_utils import (
-    get_name_from_yaml,
-)
-
-from settings import (
-    ALLOWED_SERVICE_TYPES,
-    ALLOWED_IC_TYPES,
-    DEPLOYMENTS,
-    TEST_DATA,
-    ALLOWED_DEPLOYMENT_TYPES,
-)
+from suite.yaml_utils import get_name_from_yaml
 
 
 class KubeApis:
@@ -95,7 +76,16 @@ class PublicEndpoint:
         port_ssl (int):
     """
 
-    def __init__(self, public_ip, port=80, port_ssl=443, api_port=8080, metrics_port=9113, tcp_server_port=3333, udp_server_port=3334):
+    def __init__(
+        self,
+        public_ip,
+        port=80,
+        port_ssl=443,
+        api_port=8080,
+        metrics_port=9113,
+        tcp_server_port=3333,
+        udp_server_port=3334,
+    ):
         self.public_ip = public_ip
         self.port = port
         self.port_ssl = port_ssl
@@ -155,18 +145,14 @@ def delete_test_namespaces(kube_apis, request) -> None:
     """
 
     def fin():
-        print(
-            "------------------------- Delete All Test Namespaces -----------------------------------"
-        )
+        print("------------------------- Delete All Test Namespaces -----------------------------------")
         delete_testing_namespaces(kube_apis.v1)
 
     request.addfinalizer(fin)
 
 
 @pytest.fixture(scope="session")
-def ingress_controller_endpoint(
-    cli_arguments, kube_apis, ingress_controller_prerequisites
-) -> PublicEndpoint:
+def ingress_controller_endpoint(cli_arguments, kube_apis, ingress_controller_prerequisites) -> PublicEndpoint:
     """
     Create an entry point for the IC.
 
@@ -201,9 +187,7 @@ def ingress_controller_endpoint(
 
 
 @pytest.fixture(scope="session")
-def ingress_controller_prerequisites(
-    cli_arguments, kube_apis, request
-) -> IngressControllerPrerequisites:
+def ingress_controller_prerequisites(cli_arguments, kube_apis, request) -> IngressControllerPrerequisites:
     """
     Create RBAC, SA, IC namespace and default-secret.
 
@@ -229,9 +213,7 @@ def ingress_controller_prerequisites(
     create_configmap_from_yaml(kube_apis.v1, namespace, config_map_yaml)
     with open(config_map_yaml) as f:
         config_map = yaml.safe_load(f)
-    create_secret_from_yaml(
-        kube_apis.v1, namespace, f"{DEPLOYMENTS}/common/default-server-secret.yaml"
-    )
+    create_secret_from_yaml(kube_apis.v1, namespace, f"{DEPLOYMENTS}/common/default-server-secret.yaml")
 
     def fin():
         print("Clean up prerequisites")
@@ -270,9 +252,7 @@ def kube_apis(cli_arguments) -> KubeApis:
     rbac_v1 = client.RbacAuthorizationV1Api()
     api_extensions_v1 = client.ApiextensionsV1Api()
     custom_objects = client.CustomObjectsApi()
-    return KubeApis(
-        v1, networking_v1, apps_v1_api, rbac_v1, api_extensions_v1, custom_objects
-    )
+    return KubeApis(v1, networking_v1, apps_v1_api, rbac_v1, api_extensions_v1, custom_objects)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -328,9 +308,7 @@ def cli_arguments(request) -> {}:
 
 
 @pytest.fixture(scope="class")
-def crds(
-        kube_apis, request
-) -> None:
+def crds(kube_apis, request) -> None:
     """
     Create an Ingress Controller with CRD enabled.
 
@@ -342,16 +320,10 @@ def crds(
     :return:
     """
     vs_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualservers.yaml")
-    vsr_crd_name = get_name_from_yaml(
-        f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml"
-    )
+    vsr_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_virtualserverroutes.yaml")
     pol_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_policies.yaml")
-    ts_crd_name = get_name_from_yaml(
-        f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml"
-    )
-    gc_crd_name = get_name_from_yaml(
-        f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_globalconfigurations.yaml"
-    )
+    ts_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_transportservers.yaml")
+    gc_crd_name = get_name_from_yaml(f"{DEPLOYMENTS}/common/crds/k8s.nginx.org_globalconfigurations.yaml")
 
     try:
         print("------------------------- Register CRDs -----------------------------------")
@@ -422,6 +394,7 @@ def restore_configmap(request, kube_apis, ingress_controller_prerequisites, test
 
     request.addfinalizer(fin)
 
+
 @pytest.fixture(scope="class")
 def create_certmanager(request):
     """
@@ -467,6 +440,7 @@ def create_generic_from_yaml(file_path, request):
         subprocess.run(["kubectl", "delete", "-f", f"{file_path}"])
 
     request.addfinalizer(fin)
+
 
 @pytest.fixture(scope="class")
 def create_externaldns(request):

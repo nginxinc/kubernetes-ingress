@@ -1,23 +1,16 @@
+import time
+
 import pytest
 import requests
-import time
-from suite.resources_utils import (
-    wait_before_test,
-)
-from suite.custom_resources_utils import (
-    read_custom_resource,
-)
+from settings import TEST_DATA
+from suite.custom_resources_utils import read_custom_resource
+from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
+from suite.resources_utils import wait_before_test
 from suite.vs_vsr_resources_utils import (
-    delete_virtual_server,
     create_virtual_server_from_yaml,
+    delete_virtual_server,
     patch_virtual_server_from_yaml,
 )
-from suite.policy_resources_utils import (
-    create_policy_from_yaml,
-    delete_policy,
-    read_policy,
-)
-from settings import TEST_DATA
 
 vs_src = f"{TEST_DATA}/policy-ingress-class/virtual-server.yaml"
 vs_policy_src = f"{TEST_DATA}/policy-ingress-class/virtual-server-policy.yaml"
@@ -39,7 +32,10 @@ policy_other_ingress_class_src = f"{TEST_DATA}/policy-ingress-class/policy-other
                     f"-enable-leader-election=false",
                 ],
             },
-            {"example": "rate-limit", "app_type": "simple",},
+            {
+                "example": "rate-limit",
+                "app_type": "simple",
+            },
         )
     ],
     indirect=True,
@@ -49,17 +45,18 @@ class TestRateLimitingPolicies:
         """
         Restore VirtualServer without policy spec
         """
-        delete_virtual_server(
-            kube_apis.custom_objects, virtual_server_setup.vs_name, virtual_server_setup.namespace
-        )
-        create_virtual_server_from_yaml(
-            kube_apis.custom_objects, vs_src, virtual_server_setup.namespace
-        )
+        delete_virtual_server(kube_apis.custom_objects, virtual_server_setup.vs_name, virtual_server_setup.namespace)
+        create_virtual_server_from_yaml(kube_apis.custom_objects, vs_src, virtual_server_setup.namespace)
         wait_before_test()
 
     @pytest.mark.parametrize("src", [vs_policy_src])
     def test_policy_empty_ingress_class(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, src,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        src,
     ):
         """
         Test if policy with no ingress class is applied to vs
@@ -70,9 +67,9 @@ class TestRateLimitingPolicies:
         wait_before_test()
         policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         assert (
-                policy_info["status"]
-                and policy_info["status"]["reason"] == "AddedOrUpdated"
-                and policy_info["status"]["state"] == "Valid"
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
         )
 
         print(f"Patch vs with policy: {src}")
@@ -84,11 +81,13 @@ class TestRateLimitingPolicies:
         )
         wait_before_test()
 
-        vs_info = read_custom_resource(kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name)
+        vs_info = read_custom_resource(
+            kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name
+        )
         assert (
-                vs_info["status"]
-                and vs_info["status"]["reason"] == "AddedOrUpdated"
-                and vs_info["status"]["state"] == "Valid"
+            vs_info["status"]
+            and vs_info["status"]["reason"] == "AddedOrUpdated"
+            and vs_info["status"]["state"] == "Valid"
         )
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
@@ -96,7 +95,12 @@ class TestRateLimitingPolicies:
 
     @pytest.mark.parametrize("src", [vs_policy_src])
     def test_policy_matching_ingress_class(
-            self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, src,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        src,
     ):
         """
         Test if policy with matching ingress class is applied to vs
@@ -107,9 +111,9 @@ class TestRateLimitingPolicies:
         wait_before_test()
         policy_info = read_custom_resource(kube_apis.custom_objects, test_namespace, "policies", pol_name)
         assert (
-                policy_info["status"]
-                and policy_info["status"]["reason"] == "AddedOrUpdated"
-                and policy_info["status"]["state"] == "Valid"
+            policy_info["status"]
+            and policy_info["status"]["reason"] == "AddedOrUpdated"
+            and policy_info["status"]["state"] == "Valid"
         )
 
         print(f"Patch vs with policy: {src}")
@@ -121,11 +125,13 @@ class TestRateLimitingPolicies:
         )
         wait_before_test()
 
-        vs_info = read_custom_resource(kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name)
+        vs_info = read_custom_resource(
+            kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name
+        )
         assert (
-                vs_info["status"]
-                and vs_info["status"]["reason"] == "AddedOrUpdated"
-                and vs_info["status"]["state"] == "Valid"
+            vs_info["status"]
+            and vs_info["status"]["reason"] == "AddedOrUpdated"
+            and vs_info["status"]["state"] == "Valid"
         )
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
@@ -133,7 +139,12 @@ class TestRateLimitingPolicies:
 
     @pytest.mark.parametrize("src", [vs_policy_src])
     def test_policy_non_matching_ingress_class(
-            self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, src,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        src,
     ):
         """
         Test if non matching policy gets caught by vc validation
@@ -155,14 +166,15 @@ class TestRateLimitingPolicies:
         )
         wait_before_test()
 
-        vs_info = read_custom_resource(kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name)
+        vs_info = read_custom_resource(
+            kube_apis.custom_objects, virtual_server_setup.namespace, "virtualservers", virtual_server_setup.vs_name
+        )
         assert (
-                vs_info["status"]
-                and "rate-limit-primary is missing or invalid" in vs_info["status"]["message"]
-                and vs_info["status"]["reason"] == "AddedOrUpdatedWithWarning"
-                and vs_info["status"]["state"] == "Warning"
+            vs_info["status"]
+            and "rate-limit-primary is missing or invalid" in vs_info["status"]["message"]
+            and vs_info["status"]["reason"] == "AddedOrUpdatedWithWarning"
+            and vs_info["status"]["state"] == "Warning"
         )
 
         delete_policy(kube_apis.custom_objects, pol_name, test_namespace)
         self.restore_default_vs(kube_apis, virtual_server_setup)
-

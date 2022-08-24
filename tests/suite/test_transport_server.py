@@ -1,26 +1,21 @@
 import pytest
-
-from suite.resources_utils import (
-    wait_before_test,
-    get_ts_nginx_template_conf,
-)
-from suite.custom_resources_utils import (
-    patch_ts_from_yaml,
-)
 from settings import TEST_DATA
+from suite.custom_resources_utils import patch_ts_from_yaml
+from suite.resources_utils import get_ts_nginx_template_conf, wait_before_test
+
 
 @pytest.mark.ts
 @pytest.mark.parametrize(
     "crd_ingress_controller, transport_server_setup",
     [
         (
-            {   "type": "complete",
-                "extra_args":
-                    [
-                        "-global-configuration=nginx-ingress/nginx-configuration",
-                        "-enable-leader-election=false",
-                        "-enable-snippets",
-                    ]
+            {
+                "type": "complete",
+                "extra_args": [
+                    "-global-configuration=nginx-ingress/nginx-configuration",
+                    "-enable-leader-election=false",
+                    "-enable-snippets",
+                ],
             },
             {"example": "transport-server-status"},
         )
@@ -28,7 +23,6 @@ from settings import TEST_DATA
     indirect=True,
 )
 class TestTransportServer:
-
     def test_snippets(
         self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
@@ -49,7 +43,7 @@ class TestTransportServer:
             transport_server_setup.namespace,
             transport_server_setup.name,
             transport_server_setup.ingress_pod_name,
-            ingress_controller_prerequisites.namespace
+            ingress_controller_prerequisites.namespace,
         )
         print(conf)
 
@@ -62,8 +56,8 @@ class TestTransportServer:
         )
 
         assert (
-            "limit_conn_zone $binary_remote_addr zone=addr:10m;" in conf # stream-snippets
-            and "limit_conn addr 1;" in conf # server-snippets
+            "limit_conn_zone $binary_remote_addr zone=addr:10m;" in conf  # stream-snippets
+            and "limit_conn addr 1;" in conf  # server-snippets
         )
 
     def test_configurable_timeout_directives(
@@ -86,7 +80,7 @@ class TestTransportServer:
             transport_server_setup.namespace,
             transport_server_setup.name,
             transport_server_setup.ingress_pod_name,
-            ingress_controller_prerequisites.namespace
+            ingress_controller_prerequisites.namespace,
         )
         print(conf)
 
@@ -98,11 +92,9 @@ class TestTransportServer:
             transport_server_setup.namespace,
         )
 
+        assert "proxy_timeout 2s;" in conf  # sessionParameters
         assert (
-            "proxy_timeout 2s;" in conf # sessionParameters
-        )
-        assert (
-            "proxy_connect_timeout 5s;" in conf # upstreamParameters
+            "proxy_connect_timeout 5s;" in conf  # upstreamParameters
             and "proxy_next_upstream on;" in conf
             and "proxy_next_upstream_timeout 4s;" in conf
             and "proxy_next_upstream_tries 3;" in conf

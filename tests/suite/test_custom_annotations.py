@@ -1,8 +1,14 @@
 import pytest
-from settings import TEST_DATA, DEPLOYMENTS
+from settings import DEPLOYMENTS, TEST_DATA
 from suite.fixtures import PublicEndpoint
-from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml, replace_configmap_from_yaml, \
-    get_ingress_nginx_template_conf, get_first_pod_name, wait_before_test
+from suite.resources_utils import (
+    create_items_from_yaml,
+    delete_items_from_yaml,
+    get_first_pod_name,
+    get_ingress_nginx_template_conf,
+    replace_configmap_from_yaml,
+    wait_before_test,
+)
 from suite.yaml_utils import get_first_ingress_host_from_yaml, get_name_from_yaml
 
 
@@ -15,6 +21,7 @@ class CustomAnnotationsSetup:
         namespace (str):
         ingress_host (str):
     """
+
     def __init__(self, public_endpoint: PublicEndpoint, ingress_name, namespace, ingress_host, ic_pod_name):
         self.public_endpoint = public_endpoint
         self.namespace = namespace
@@ -26,14 +33,17 @@ class CustomAnnotationsSetup:
 
 
 @pytest.fixture(scope="class")
-def custom_annotations_setup(request, kube_apis, ingress_controller_prerequisites,
-                             ingress_controller_endpoint, test_namespace) -> CustomAnnotationsSetup:
+def custom_annotations_setup(
+    request, kube_apis, ingress_controller_prerequisites, ingress_controller_endpoint, test_namespace
+) -> CustomAnnotationsSetup:
     ing_type = request.param
     print("------------------------- Deploy ConfigMap with custom template -----------------------------------")
-    replace_configmap_from_yaml(kube_apis.v1,
-                                ingress_controller_prerequisites.config_map['metadata']['name'],
-                                ingress_controller_prerequisites.namespace,
-                                f"{TEST_DATA}/custom-annotations/{ing_type}/nginx-config.yaml")
+    replace_configmap_from_yaml(
+        kube_apis.v1,
+        ingress_controller_prerequisites.config_map["metadata"]["name"],
+        ingress_controller_prerequisites.namespace,
+        f"{TEST_DATA}/custom-annotations/{ing_type}/nginx-config.yaml",
+    )
     print("------------------------- Deploy Custom Annotations Ingress -----------------------------------")
     ing_src = f"{TEST_DATA}/custom-annotations/{ing_type}/annotations-ingress.yaml"
     create_items_from_yaml(kube_apis, ing_src, test_namespace)
@@ -45,10 +55,12 @@ def custom_annotations_setup(request, kube_apis, ingress_controller_prerequisite
 
     def fin():
         print("Clean up Custom Annotations Example:")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    f"{DEPLOYMENTS}/common/nginx-config.yaml")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{DEPLOYMENTS}/common/nginx-config.yaml",
+        )
         delete_items_from_yaml(kube_apis, ing_src, test_namespace)
 
     request.addfinalizer(fin)
@@ -57,31 +69,46 @@ def custom_annotations_setup(request, kube_apis, ingress_controller_prerequisite
 
 
 @pytest.mark.ingresses
-@pytest.mark.parametrize('custom_annotations_setup, expected_texts',
-                         [
-                             pytest.param("standard",
-                                          ["# This is TEST configuration for custom-annotations-ingress/",
-                                           "# Insert config for test-split-feature: 192.168.1.1;",
-                                           "# Insert config for test-split-feature: some-ip;",
-                                           "# Insert config for feature A if the annotation is set",
-                                           "# Print the value assigned to the annotation: 512"], id="standard-ingress"),
-                             pytest.param("mergeable",
-                                          ["# This is TEST configuration for custom-annotations-ingress-master/",
-                                           "# Insert config for test-split-feature: master.ip;",
-                                           "# Insert config for test-split-feature: master;",
-                                           "# Insert config for test-split-feature minion: minion1;",
-                                           "# Insert config for test-split-feature minion: minion2;",
-                                           "# Insert config for feature A if the annotation is set",
-                                           "# Print the value assigned to the annotation: 512"], id="mergeable-ingress")
-                          ],
-                         indirect=["custom_annotations_setup"])
+@pytest.mark.parametrize(
+    "custom_annotations_setup, expected_texts",
+    [
+        pytest.param(
+            "standard",
+            [
+                "# This is TEST configuration for custom-annotations-ingress/",
+                "# Insert config for test-split-feature: 192.168.1.1;",
+                "# Insert config for test-split-feature: some-ip;",
+                "# Insert config for feature A if the annotation is set",
+                "# Print the value assigned to the annotation: 512",
+            ],
+            id="standard-ingress",
+        ),
+        pytest.param(
+            "mergeable",
+            [
+                "# This is TEST configuration for custom-annotations-ingress-master/",
+                "# Insert config for test-split-feature: master.ip;",
+                "# Insert config for test-split-feature: master;",
+                "# Insert config for test-split-feature minion: minion1;",
+                "# Insert config for test-split-feature minion: minion2;",
+                "# Insert config for feature A if the annotation is set",
+                "# Print the value assigned to the annotation: 512",
+            ],
+            id="mergeable-ingress",
+        ),
+    ],
+    indirect=["custom_annotations_setup"],
+)
 class TestCustomAnnotations:
-    def test_nginx_config(self, kube_apis, ingress_controller_prerequisites,
-                          ingress_controller, custom_annotations_setup, expected_texts):
-        result_conf = get_ingress_nginx_template_conf(kube_apis.v1,
-                                                      custom_annotations_setup.namespace,
-                                                      custom_annotations_setup.ingress_name,
-                                                      custom_annotations_setup.ic_pod_name,
-                                                      ingress_controller_prerequisites.namespace)
+    def test_nginx_config(
+        self, kube_apis, ingress_controller_prerequisites, ingress_controller, custom_annotations_setup, expected_texts
+    ):
+        result_conf = get_ingress_nginx_template_conf(
+            kube_apis.v1,
+            custom_annotations_setup.namespace,
+            custom_annotations_setup.ingress_name,
+            custom_annotations_setup.ic_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
         for line in expected_texts:
             assert line in result_conf

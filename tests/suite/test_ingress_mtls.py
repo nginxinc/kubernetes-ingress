@@ -1,23 +1,11 @@
 import mock
 import pytest
 import requests
-from suite.resources_utils import (
-    wait_before_test,
-    create_secret_from_yaml,
-    delete_secret,
-)
-from suite.ssl_utils import create_sni_session
-from suite.vs_vsr_resources_utils import (
-    read_vs,
-    read_vsr,
-    patch_virtual_server_from_yaml,
-    patch_v_s_route_from_yaml,
-)
-from suite.policy_resources_utils import (
-    create_policy_from_yaml,
-    delete_policy,
-)
 from settings import TEST_DATA
+from suite.policy_resources_utils import create_policy_from_yaml, delete_policy
+from suite.resources_utils import create_secret_from_yaml, delete_secret, wait_before_test
+from suite.ssl_utils import create_sni_session
+from suite.vs_vsr_resources_utils import patch_v_s_route_from_yaml, patch_virtual_server_from_yaml, read_vs, read_vsr
 
 std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
 std_vsr_src = f"{TEST_DATA}/virtual-server-route/route-multiple.yaml"
@@ -230,11 +218,8 @@ class TestIngressMtlsPolicyVS:
             std_vs_src,
             virtual_server_setup.namespace,
         )
-        assert (
-            resp.status_code == expected_code
-            and expected_text in resp.text
-            and exception in ssl_exception
-        )
+        assert resp.status_code == expected_code and expected_text in resp.text and exception in ssl_exception
+
 
 @pytest.mark.policies
 @pytest.mark.parametrize(
@@ -271,9 +256,7 @@ class TestIngressMtlsPolicyVSR:
             tls_sec_valid_src,
             mtls_pol_valid_src,
         )
-        print(
-            f"Patch vsr with policy: {mtls_vsr_subroute_src} and vs with tls secret: {tls_secret}"
-        )
+        print(f"Patch vsr with policy: {mtls_vsr_subroute_src} and vs with tls secret: {tls_secret}")
         patch_virtual_server_from_yaml(
             kube_apis.custom_objects,
             v_s_route_setup.vs_name,
@@ -292,9 +275,7 @@ class TestIngressMtlsPolicyVSR:
             v_s_route_setup.route_m.namespace,
             v_s_route_setup.route_m.name,
         )
-        teardown_policy(
-            kube_apis, v_s_route_setup.route_m.namespace, tls_secret, pol_name, mtls_secret
-        )
+        teardown_policy(kube_apis, v_s_route_setup.route_m.namespace, tls_secret, pol_name, mtls_secret)
         patch_v_s_route_from_yaml(
             kube_apis.custom_objects,
             v_s_route_setup.route_m.name,
