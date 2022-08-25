@@ -857,7 +857,7 @@ func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) fi
 		for _, path := range r.HTTP.Paths {
 			idxPath := idxRule.Child("http").Child("path").Index(i)
 
-			allErrs = append(allErrs, validatePath(path.Path, fieldPath)...)
+			allErrs = append(allErrs, validatePath(path.Path, idxPath.Child("path"))...)
 			allErrs = append(allErrs, validateBackend(&path.Backend, idxPath.Child("backend"))...)
 		}
 	}
