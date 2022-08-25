@@ -135,7 +135,7 @@ require (
 )
 
 replace (
-	github.com/golang/glog v1.0.0 => github.com/nginxinc/glog v1.1.2
+	github.com/golang/glog => github.com/nginxinc/glog v1.1.2
 	// theses are needed until https://github.com/kubernetes/kubernetes/issues/106536 gets fixed
 	go.opentelemetry.io/contrib => go.opentelemetry.io/contrib v0.20.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.20.0
