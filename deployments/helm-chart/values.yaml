@@ -12,11 +12,11 @@ controller:
   # Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start.
   nginxReloadTimeout: 60000
 
-  ## Support for App Protect
+  ## Support for App Protect WAF
   appprotect:
-    ## Enable the App Protect module in the Ingress Controller.
+    ## Enable the App Protect WAF module in the Ingress Controller.
     enable: false
-    ## Sets log level for App Protect. Allowed values: fatal, error, warn, info, debug, trace
+    ## Sets log level for App Protect WAF. Allowed values: fatal, error, warn, info, debug, trace
     # logLevel: fatal
 
   ## Support for App Protect Dos

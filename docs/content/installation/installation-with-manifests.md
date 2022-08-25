@@ -92,7 +92,7 @@ If you would like to use the TCP and UDP load balancing features of the Ingress 
 
 ### Resources for NGINX App Protect
 
-If you would like to use the App Protect module, create the following additional resources:
+If you would like to use the App Protect WAF module, create the following additional resources:
 
 1. Create a custom resource definition for `APPolicy`, `APLogConf` and `APUserSig`:
 
