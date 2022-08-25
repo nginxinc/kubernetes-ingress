@@ -1570,9 +1570,15 @@ def write_to_json(fname, data) -> None:
     file_path = f"{PROJECT_ROOT}/json_files/"
     if not os.path.isdir(file_path):
         os.mkdir(file_path)
-
+    if os.path.exists(f"{file_path}/{fname}"):
+        with open(f"json_files/{fname}") as f:
+            contents = json.load(f)
+        contents.update(data)
+        file = contents
+    else:
+        file = data
     with open(f"json_files/{fname}", "w+") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+        json.dump(file, f, ensure_ascii=False, indent=4)
 
 
 def get_last_log_entry(kube_apis, pod_name, namespace) -> str:
