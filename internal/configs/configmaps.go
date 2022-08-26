@@ -524,6 +524,13 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 				cfgParams.MainAppProtectDosLogFormatEscaping = appProtectDosLogFormatEscaping
 			}
 		}
+
+		if appProtectDosArbFqdn, exists := cfgm.Data["app-protect-dos-arb-fqdn"]; exists {
+			appProtectDosArbFqdn = strings.TrimSpace(appProtectDosArbFqdn)
+			if appProtectDosArbFqdn != "" {
+				cfgParams.MainAppProtectDosArbFqdn = appProtectDosArbFqdn
+			}
+		}
 	}
 
 	return cfgParams
@@ -590,6 +597,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		AppProtectReconnectPeriod:          config.MainAppProtectReconnectPeriod,
 		AppProtectDosLogFormat:             config.MainAppProtectDosLogFormat,
 		AppProtectDosLogFormatEscaping:     config.MainAppProtectDosLogFormatEscaping,
+		AppProtectDosArbFqdn:               config.MainAppProtectDosArbFqdn,
 		InternalRouteServer:                staticCfgParams.EnableInternalRoutes,
 		InternalRouteServerName:            staticCfgParams.InternalRouteServerName,
 		LatencyMetrics:                     staticCfgParams.EnableLatencyMetrics,

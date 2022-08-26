@@ -1,6 +1,6 @@
 # PROXY Protocol
 
-Proxies and load balancers, such as HAProxy or ELB, can pass the client's information (the IP address and the port) to the next proxy or load balancer via the PROXY Protocol. To enable NGINX Ingress Controller to receive that information, use the `proxy-protocol` ConfigMaps configuration key as well as the `real-ip-header` and the `set-real-ip-from` keys. Once you enable the PROXY Protocol, it is enabled for every Ingress resource.
+Proxies and load balancers, such as HAProxy or ELB, can pass the client's information (the IP address and the port) to the next proxy or load balancer via the PROXY Protocol. To enable NGINX Ingress Controller to receive that information, use the `proxy-protocol` ConfigMaps configuration key as well as the `real-ip-header` and the `set-real-ip-from` keys. Once you enable the PROXY Protocol, it is enabled for every Ingress and VirtualServer resource.
 
 ## Syntax
 

@@ -15,9 +15,14 @@ DEFAULT_SERVICE = "nodeport"
 ALLOWED_SERVICE_TYPES = ["nodeport", "loadbalancer"]
 DEFAULT_DEPLOYMENT_TYPE = "deployment"
 ALLOWED_DEPLOYMENT_TYPES = ["deployment", "daemon-set"]
-BATCH_START = "False"
-# Number of Ingress/VS resources to deploy based on BATCH_START value, ref. line #264 in resource_utils.py
-BATCH_RESOURCES = 1
 # Time in seconds to ensure reconfiguration changes in cluster
 RECONFIGURATION_DELAY = 3
 NGINX_API_VERSION = 4
+
+"""Settings below are test specific"""
+# Determines if batch reload tests will be ran or not
+BATCH_START = "False"
+# Number of Ingress/VS resources to deploy based on BATCH_START value, used in test_batch_startup_times.py
+BATCH_RESOURCES = 1
+# Number of namespaces to deploy to measure Pod performance, used in test_multiple_ns_perf.py
+NS_COUNT = 0
