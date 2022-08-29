@@ -22,7 +22,9 @@ NGINX_API_VERSION = 4
 """Settings below are test specific"""
 # Determines if batch reload tests will be ran or not
 BATCH_START = "False"
-# Number of Ingress/VS resources to deploy based on BATCH_START value, used in test_batch_startup_times.py
+# Number of Ingress/VS resources to deploy based on BATCH_START value, used in test_batch_startup_times.py and test_batch_reloads.py
 BATCH_RESOURCES = 1
+# Threshold for batch reloads (reloads for batch requests should be at or below this number). Used in test_batch_reloads.py
+BATCH_RELOAD_NUMBER = 2
 # Number of namespaces to deploy to measure Pod performance, used in test_multiple_ns_perf.py
 NS_COUNT = 0
