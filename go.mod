@@ -16,7 +16,7 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.1
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.49.0
 	k8s.io/api v0.24.4
 	k8s.io/apimachinery v0.24.4
 	k8s.io/client-go v0.24.4
@@ -135,7 +135,7 @@ require (
 )
 
 replace (
-	github.com/golang/glog v1.0.0 => github.com/nginxinc/glog v1.1.2
+	github.com/golang/glog => github.com/nginxinc/glog v1.1.2
 	// theses are needed until https://github.com/kubernetes/kubernetes/issues/106536 gets fixed
 	go.opentelemetry.io/contrib => go.opentelemetry.io/contrib v0.20.0
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc => go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.20.0
