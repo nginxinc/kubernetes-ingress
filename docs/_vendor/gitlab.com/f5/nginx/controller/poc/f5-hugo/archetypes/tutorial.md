@@ -1,11 +1,14 @@
 ---
 title: "{{ replace .Name "-" " " | title }}"
 date: {{ .Date }}
+# Change draft status to false to publish doc
 draft: true
+# Description
+# Add a short description (150 chars) for the doc. Include keywords for SEO. 
+# The description text appears in search results and at the top of the doc.
 description: ""
 # Assign weights in increments of 100
 weight: 
-draft: false
 toc: true
 tags: [ "docs" ]
 # Create a new entry in the Jira DOCS Catalog and add the ticket ID (DOCS-<number>) below
@@ -24,14 +27,17 @@ authors: []
 
 ## Overview
 
-Provide a brief introduction to the subject matter, in the context of the product. You do not have to provide background information on the subject in general.
+Briefly describe the goal of this document, that is, what the user will learn or accomplish by reading what follows.
 
-For example, if you're writing about how the controller uses RBAC to authenticate users, you don't have to explain the concept of RBAC.
+Introduce and explain any new concepts the user may need to understand before proceeding.
 
 ## Before You Begin
 
+To complete the instructions in this guide, you need the following:
+
 1. Provide any prerequisites here.
 2. Format as a numbered or bulleted list as appropriate.
+3. Keep the list entries grammatically parallel.
 
 ## Lesson 1
 

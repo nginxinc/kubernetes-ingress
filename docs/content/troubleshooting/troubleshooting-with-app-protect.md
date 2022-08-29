@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting with NGINX App Protect
-description: "This document describes how to troubleshoot problems with the Ingress Controller with the App Protect module enabled."
+description: "This document describes how to troubleshoot problems when using NGINX Ingress Controller with the NGINX App Protect WAF module enabled."
 weight: 2000
 doctypes: [""]
 aliases:
@@ -13,11 +13,11 @@ This document describes how to troubleshoot problems with the Ingress Controller
 
 For general troubleshooting of the Ingress Controller, check the general [troubleshooting]({{< relref "troubleshooting/troubleshoot-ingress-controller.md" >}}) documentation.
 
-For additional troubleshooting of the App Protect module itself, check the [troubleshooting](/nginx-app-protect/troubleshooting/) guide in the App Protect module documentation. 
+{{< see-also >}}You can find more troubleshooting tips in the NGINX App Protect WAF [troubleshooting guide](/nginx-app-protect/troubleshooting/) {{< /see-also >}}. 
 
 ## Potential Problems
 
-The table below categorizes some potential problems with the Ingress Controller when App Protect module is enabled. It suggests how to troubleshoot those problems, using one or more methods from the next section.
+The table below categorizes some potential problems with the Ingress Controller when App Protect WAF module is enabled. It suggests how to troubleshoot those problems, using one or more methods from the next section.
 
 {{% table %}} 
 |Problem area | Symptom | Troubleshooting method | Common cause | 
@@ -100,13 +100,13 @@ curl -w '%{time_total}' http://192.168.100.100/resources/headersettings.txt
 
 ## Run App Protect in Debug Mode
 
-When you set the Ingress Controller to use debug mode, the setting also applies to the App Protect module.  See  [Running NGINX in the Debug Mode]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#running-nginx-in-the-debug-mode" >}}) for instructions.
+When you set the Ingress Controller to use debug mode, the setting also applies to the App Protect WAF module.  See  [Running NGINX in the Debug Mode]({{< relref "troubleshooting/troubleshoot-ingress-controller.md#running-nginx-in-the-debug-mode" >}}) for instructions.
 
 ## Known Issues
 
-When using the Ingress Controller with the App Protect module, the following issues have been reported. The occurrence of these issues is commonly related to a higher number of Ingress Resources with App Protect being enabled in a cluster.
+When using the Ingress Controller with the App Protect WAF module, the following issues have been reported. The occurrence of these issues is commonly related to a higher number of Ingress Resources with App Protect being enabled in a cluster.
 
-When you make a change that requires NGINX to apply a new configuration, the Ingress Controller reloads NGINX automatically. Without the App Protect module enabled, usual reload times are around 150ms. If App Protect module is enabled and is being used by any number of Ingress Resources, these reloads might take a few seconds instead. 
+When you make a change that requires NGINX to apply a new configuration, the Ingress Controller reloads NGINX automatically. Without the App Protect WAF module enabled, usual reload times are around 150ms. If App Protect WAF module is enabled and is being used by any number of Ingress Resources, these reloads might take a few seconds instead. 
 
 ### NGINX Configuration Skew
 

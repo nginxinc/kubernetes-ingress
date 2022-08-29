@@ -150,7 +150,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.kind`` | The kind of the Ingress Controller installation - deployment or daemonset. | deployment |
 |``controller.nginxplus`` | Deploys the Ingress Controller for NGINX Plus. | false |
 |``controller.nginxReloadTimeout`` | The timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start. | 60000 |
-|``controller.appprotect.enable`` | Enables the App Protect module in the Ingress Controller. | false |
+|``controller.appprotect.enable`` | Enables the App Protect WAF module in the Ingress Controller. | false |
 |``controller.appprotectdos.enable`` | Enables the App Protect DoS module in the Ingress Controller. | false |
 |``controller.appprotectdos.debug`` | Enables App Protect DoS debug logs. | false |
 |``controller.appprotectdos.maxWorkers`` | Max number of nginx processes to support. | Number of CPU cores in the machine
@@ -183,7 +183,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.replicaCount`` | The number of replicas of the Ingress Controller deployment. | 1 |
 |``controller.ingressClass`` | A class of the Ingress Controller. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start. The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class. The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of kubernetes. | nginx |
 |``controller.setAsDefaultIngress`` | New Ingresses without an ingressClassName field specified will be assigned the class specified in `controller.ingressClass`. | false |
-|``controller.watchNamespace`` | Namespace to watch for Ingress resources. By default the Ingress Controller watches all namespaces. | "" |
+|``controller.watchNamespace`` | Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces. | "" |
 |``controller.enableCustomResources`` | Enable the custom resources. | true |
 |``controller.enablePreviewPolicies`` | Enable preview policies. This parameter is deprecated. To enable OIDC Policies please use ``controller.enableOIDC`` instead. | false |
 |``controller.enableOIDC`` | Enable OIDC policies. | false |
@@ -232,6 +232,8 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.readyStatus.port`` | The HTTP port for the readiness endpoint. | 8081 |
 |``controller.readyStatus.initialDelaySeconds`` | The number of seconds after the Ingress Controller pod has started before readiness probes are initiated. | 0 |
 |``controller.enableLatencyMetrics`` | Enable collection of latency metrics for upstreams. Requires ``prometheus.create``. | false |
+|``controller.minReadySeconds`` | Specifies the minimum number of seconds for which a newly created Pod should be ready, without any of its containers crashing, for it to be considered available. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#min-ready-seconds) | 0 |
+|``controller.strategy`` | Specifies the strategy used to replace old Pods with new ones. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) | {} |
 |``rbac.create`` | Configures RBAC. | true |
 |``prometheus.create`` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | false |
 |``prometheus.port`` | Configures the port to scrape the metrics. | 9113 |

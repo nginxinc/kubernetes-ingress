@@ -13,7 +13,7 @@ docs: "DOCS-616"
 OVERVIEW:
 
 * Support making VirtualServer resources discoverable via public DNS servers using [external-dns](https://kubernetes-sigs.github.io/external-dns). Examples for configuring external-dns with NGINX Ingress Controller can be found [here](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/external-dns).
-* Improved annotation validation.
+* Resolves [CVE-2022-30535](https://support.f5.com/csp/article/K52125139). This vulnerability impacted the visibility of secrets accessible by NGINX Ingress Controller. In some cases, secrets visible to NGINX Ingress Controller could be exposed to any authenticated user with permission to create and update Ingress objects. This vulnerability affected Ingress objects only - our Custom Resources (VirtualServer and TransportServer) were not affected. Customers unable to upgrade should migrate any Ingress resources to VirtualServer resources where possible, and use RBAC to restrict write access for users for Ingress objects.
 * Support using HTTP basic authentication with [VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/basic-auth) and [Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/basic-auth) resources. Special thanks to [Simon Wachter](https://github.com/svvac).
 * Support HTTP01 type ACME Issuers for use with VirtualServer resources with [cert-manager](https://cert-manager.io/docs/).
 

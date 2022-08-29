@@ -102,29 +102,29 @@ type LoadBalancerController struct {
 	dynClient                     dynamic.Interface
 	restConfig                    *rest.Config
 	cacheSyncs                    []cache.InformerSynced
-	sharedInformerFactory         informers.SharedInformerFactory
-	confSharedInformerFactory     k8s_nginx_informers.SharedInformerFactory
+	sharedInformerFactory         []informers.SharedInformerFactory
+	confSharedInformerFactory     []k8s_nginx_informers.SharedInformerFactory
 	configMapController           cache.Controller
-	dynInformerFactory            dynamicinformer.DynamicSharedInformerFactory
+	dynInformerFactory            []dynamicinformer.DynamicSharedInformerFactory
 	globalConfigurationController cache.Controller
 	ingressLinkInformer           cache.SharedIndexInformer
-	ingressLister                 storeToIngressLister
-	svcLister                     cache.Store
-	endpointLister                storeToEndpointLister
+	ingressLister                 []storeToIngressLister
+	svcLister                     []cache.Store
+	endpointLister                []storeToEndpointLister
 	configMapLister               storeToConfigMapLister
-	podLister                     indexerToPodLister
-	secretLister                  cache.Store
-	virtualServerLister           cache.Store
-	virtualServerRouteLister      cache.Store
-	appProtectPolicyLister        cache.Store
-	appProtectLogConfLister       cache.Store
-	appProtectDosPolicyLister     cache.Store
-	appProtectDosLogConfLister    cache.Store
-	appProtectDosProtectedLister  cache.Store
+	podLister                     []indexerToPodLister
+	secretLister                  []cache.Store
+	virtualServerLister           []cache.Store
+	virtualServerRouteLister      []cache.Store
+	appProtectPolicyLister        []cache.Store
+	appProtectLogConfLister       []cache.Store
+	appProtectDosPolicyLister     []cache.Store
+	appProtectDosLogConfLister    []cache.Store
+	appProtectDosProtectedLister  []cache.Store
 	globalConfigurationLister     cache.Store
-	appProtectUserSigLister       cache.Store
-	transportServerLister         cache.Store
-	policyLister                  cache.Store
+	appProtectUserSigLister       []cache.Store
+	transportServerLister         []cache.Store
+	policyLister                  []cache.Store
 	ingressLinkLister             cache.Store
 	syncQueue                     *taskQueue
 	ctx                           context.Context
@@ -145,7 +145,7 @@ type LoadBalancerController struct {
 	isLeaderElectionEnabled       bool
 	leaderElectionLockName        string
 	resync                        time.Duration
-	namespace                     string
+	namespaceList                 []string
 	controllerNamespace           string
 	wildcardTLSSecret             string
 	areCustomResourcesEnabled     bool
@@ -177,7 +177,7 @@ type NewLoadBalancerControllerInput struct {
 	DynClient                    dynamic.Interface
 	RestConfig                   *rest.Config
 	ResyncPeriod                 time.Duration
-	Namespace                    string
+	Namespace                    []string
 	NginxConfigurator            *configs.Configurator
 	DefaultServerSecret          string
 	AppProtectEnabled            bool
@@ -226,7 +226,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		isLeaderElectionEnabled:      input.IsLeaderElectionEnabled,
 		leaderElectionLockName:       input.LeaderElectionLockName,
 		resync:                       input.ResyncPeriod,
-		namespace:                    input.Namespace,
+		namespaceList:                input.Namespace,
 		controllerNamespace:          input.ControllerNamespace,
 		wildcardTLSSecret:            input.WildcardTLSSecret,
 		areCustomResourcesEnabled:    input.AreCustomResourcesEnabled,
@@ -257,16 +257,18 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	if input.CertManagerEnabled {
-		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespace, lbc.recorder, lbc.confClient))
+		lbc.certManagerController = cm_controller.NewCmController(cm_controller.BuildOpts(context.TODO(), lbc.restConfig, lbc.client, lbc.namespaceList, lbc.recorder, lbc.confClient))
 	}
 
 	if input.ExternalDNSEnabled {
-		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespace, lbc.recorder, lbc.confClient, input.ResyncPeriod))
+		lbc.externalDNSController = ed_controller.NewController(ed_controller.BuildOpts(context.TODO(), lbc.namespaceList, lbc.recorder, lbc.confClient, input.ResyncPeriod))
 	}
 
 	glog.V(3).Infof("Nginx Ingress Controller has class: %v", input.IngressClass)
 
-	lbc.sharedInformerFactory = informers.NewSharedInformerFactoryWithOptions(lbc.client, input.ResyncPeriod, informers.WithNamespace(lbc.namespace))
+	for _, ns := range lbc.namespaceList {
+		lbc.sharedInformerFactory = append(lbc.sharedInformerFactory, informers.NewSharedInformerFactoryWithOptions(lbc.client, input.ResyncPeriod, informers.WithNamespace(ns)))
+	}
 
 	// create handlers for resources we care about
 	lbc.addSecretHandler(createSecretHandlers(lbc))
@@ -276,7 +278,9 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	lbc.addPodHandler()
 
 	if lbc.areCustomResourcesEnabled {
-		lbc.confSharedInformerFactory = k8s_nginx_informers.NewSharedInformerFactoryWithOptions(lbc.confClient, input.ResyncPeriod, k8s_nginx_informers.WithNamespace(lbc.namespace))
+		for _, ns := range lbc.namespaceList {
+			lbc.confSharedInformerFactory = append(lbc.confSharedInformerFactory, k8s_nginx_informers.NewSharedInformerFactoryWithOptions(lbc.confClient, input.ResyncPeriod, k8s_nginx_informers.WithNamespace(ns)))
+		}
 
 		lbc.addVirtualServerHandler(createVirtualServerHandlers(lbc))
 		lbc.addVirtualServerRouteHandler(createVirtualServerRouteHandlers(lbc))
@@ -291,8 +295,9 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	if lbc.appProtectEnabled || lbc.appProtectDosEnabled {
-		lbc.dynInformerFactory = dynamicinformer.NewFilteredDynamicSharedInformerFactory(lbc.dynClient, 0, lbc.namespace, nil)
-
+		for _, ns := range lbc.namespaceList {
+			lbc.dynInformerFactory = append(lbc.dynInformerFactory, dynamicinformer.NewFilteredDynamicSharedInformerFactory(lbc.dynClient, 0, ns, nil))
+		}
 		if lbc.appProtectEnabled {
 			lbc.addAppProtectPolicyHandler(createAppProtectPolicyHandlers(lbc))
 			lbc.addAppProtectLogConfHandler(createAppProtectLogConfHandlers(lbc))
@@ -329,7 +334,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		client:                   input.KubeClient,
 		namespace:                input.ControllerNamespace,
 		externalServiceName:      input.ExternalServiceName,
-		ingressLister:            &lbc.ingressLister,
+		ingressLister:            lbc.ingressLister,
 		virtualServerLister:      lbc.virtualServerLister,
 		virtualServerRouteLister: lbc.virtualServerRouteLister,
 		transportServerLister:    lbc.transportServerLister,
@@ -377,92 +382,114 @@ func (lbc *LoadBalancerController) AddSyncQueue(item interface{}) {
 
 // addAppProtectPolicyHandler creates dynamic informers for custom appprotect policy resource
 func (lbc *LoadBalancerController) addAppProtectPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.dynInformerFactory.ForResource(appprotect.PolicyGVR).Informer()
-	informer.AddEventHandler(handlers)
-	lbc.appProtectPolicyLister = informer.GetStore()
+	for _, dif := range lbc.dynInformerFactory {
+		informer := dif.ForResource(appprotect.PolicyGVR).Informer()
+		informer.AddEventHandler(handlers)
+		lbc.appProtectPolicyLister = append(lbc.appProtectPolicyLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 // addAppProtectLogConfHandler creates dynamic informer for custom appprotect logging config resource
 func (lbc *LoadBalancerController) addAppProtectLogConfHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.dynInformerFactory.ForResource(appprotect.LogConfGVR).Informer()
-	informer.AddEventHandler(handlers)
-	lbc.appProtectLogConfLister = informer.GetStore()
+	for _, dif := range lbc.dynInformerFactory {
+		informer := dif.ForResource(appprotect.LogConfGVR).Informer()
+		informer.AddEventHandler(handlers)
+		lbc.appProtectLogConfLister = append(lbc.appProtectLogConfLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 // addAppProtectUserSigHandler creates dynamic informer for custom appprotect user defined signature resource
 func (lbc *LoadBalancerController) addAppProtectUserSigHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.dynInformerFactory.ForResource(appprotect.UserSigGVR).Informer()
-	informer.AddEventHandler(handlers)
-	lbc.appProtectUserSigLister = informer.GetStore()
+	for _, dif := range lbc.dynInformerFactory {
+		informer := dif.ForResource(appprotect.UserSigGVR).Informer()
+		informer.AddEventHandler(handlers)
+		lbc.appProtectUserSigLister = append(lbc.appProtectUserSigLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 // addAppProtectDosPolicyHandler creates dynamic informers for custom appprotectdos policy resource
 func (lbc *LoadBalancerController) addAppProtectDosPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.dynInformerFactory.ForResource(appprotectdos.DosPolicyGVR).Informer()
-	informer.AddEventHandler(handlers)
-	lbc.appProtectDosPolicyLister = informer.GetStore()
+	for _, dif := range lbc.dynInformerFactory {
+		informer := dif.ForResource(appprotectdos.DosPolicyGVR).Informer()
+		informer.AddEventHandler(handlers)
+		lbc.appProtectDosPolicyLister = append(lbc.appProtectDosPolicyLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 // addAppProtectDosLogConfHandler creates dynamic informer for custom appprotectdos logging config resource
 func (lbc *LoadBalancerController) addAppProtectDosLogConfHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.dynInformerFactory.ForResource(appprotectdos.DosLogConfGVR).Informer()
-	informer.AddEventHandler(handlers)
-	lbc.appProtectDosLogConfLister = informer.GetStore()
+	for _, dif := range lbc.dynInformerFactory {
+		informer := dif.ForResource(appprotectdos.DosLogConfGVR).Informer()
+		informer.AddEventHandler(handlers)
+		lbc.appProtectDosLogConfLister = append(lbc.appProtectDosLogConfLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
-// addAppProtectDosLogConfHandler creates dynamic informer for custom appprotectdos logging config resource
+// addAppProtectDosLogConfHandler creates dynamic informers for custom appprotectdos logging config resource
 func (lbc *LoadBalancerController) addAppProtectDosProtectedResourceHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactory.Appprotectdos().V1beta1().DosProtectedResources().Informer()
-	informer.AddEventHandler(handlers)
-	lbc.appProtectDosProtectedLister = informer.GetStore()
+	for _, cif := range lbc.confSharedInformerFactory {
+		informer := cif.Appprotectdos().V1beta1().DosProtectedResources().Informer()
+		informer.AddEventHandler(handlers)
+		lbc.appProtectDosProtectedLister = append(lbc.appProtectDosProtectedLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 // addSecretHandler adds the handler for secrets to the controller
 func (lbc *LoadBalancerController) addSecretHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.sharedInformerFactory.Core().V1().Secrets().Informer()
-	informer.AddEventHandler(handlers)
-	lbc.secretLister = informer.GetStore()
+	for _, sif := range lbc.sharedInformerFactory {
+		informer := sif.Core().V1().Secrets().Informer()
+		informer.AddEventHandler(handlers)
+		lbc.secretLister = append(lbc.secretLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 // addServiceHandler adds the handler for services to the controller
 func (lbc *LoadBalancerController) addServiceHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.sharedInformerFactory.Core().V1().Services().Informer()
-	informer.AddEventHandler(handlers)
-	lbc.svcLister = informer.GetStore()
+	for _, sif := range lbc.sharedInformerFactory {
+		informer := sif.Core().V1().Services().Informer()
+		informer.AddEventHandler(handlers)
+		lbc.svcLister = append(lbc.svcLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 // addIngressHandler adds the handler for ingresses to the controller
 func (lbc *LoadBalancerController) addIngressHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.sharedInformerFactory.Networking().V1().Ingresses().Informer()
-	informer.AddEventHandler(handlers)
-	lbc.ingressLister.Store = informer.GetStore()
+	for _, sif := range lbc.sharedInformerFactory {
+		informer := sif.Networking().V1().Ingresses().Informer()
+		informer.AddEventHandler(handlers)
+		lbc.ingressLister = append(lbc.ingressLister, storeToIngressLister{Store: informer.GetStore()})
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 // addEndpointHandler adds the handler for endpoints to the controller
 func (lbc *LoadBalancerController) addEndpointHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.sharedInformerFactory.Core().V1().Endpoints().Informer()
-	informer.AddEventHandler(handlers)
-	lbc.endpointLister.Store = informer.GetStore()
+	for _, sif := range lbc.sharedInformerFactory {
+		informer := sif.Core().V1().Endpoints().Informer()
+		informer.AddEventHandler(handlers)
+		var el storeToEndpointLister
+		el.Store = informer.GetStore()
+		lbc.endpointLister = append(lbc.endpointLister, el)
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 // addConfigMapHandler adds the handler for config maps to the controller
@@ -481,34 +508,42 @@ func (lbc *LoadBalancerController) addConfigMapHandler(handlers cache.ResourceEv
 }
 
 func (lbc *LoadBalancerController) addPodHandler() {
-	informer := lbc.sharedInformerFactory.Core().V1().Pods().Informer()
-	lbc.podLister.Indexer = informer.GetIndexer()
+	for _, sif := range lbc.sharedInformerFactory {
+		informer := sif.Core().V1().Pods().Informer()
+		lbc.podLister = append(lbc.podLister, indexerToPodLister{Indexer: informer.GetIndexer()})
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 func (lbc *LoadBalancerController) addVirtualServerHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactory.K8s().V1().VirtualServers().Informer()
-	informer.AddEventHandler(handlers)
-	lbc.virtualServerLister = informer.GetStore()
+	for _, cif := range lbc.confSharedInformerFactory {
+		informer := cif.K8s().V1().VirtualServers().Informer()
+		informer.AddEventHandler(handlers)
+		lbc.virtualServerLister = append(lbc.virtualServerLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 func (lbc *LoadBalancerController) addVirtualServerRouteHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactory.K8s().V1().VirtualServerRoutes().Informer()
-	informer.AddEventHandler(handlers)
-	lbc.virtualServerRouteLister = informer.GetStore()
+	for _, cif := range lbc.confSharedInformerFactory {
+		informer := cif.K8s().V1().VirtualServerRoutes().Informer()
+		informer.AddEventHandler(handlers)
+		lbc.virtualServerRouteLister = append(lbc.virtualServerRouteLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 func (lbc *LoadBalancerController) addPolicyHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactory.K8s().V1().Policies().Informer()
-	informer.AddEventHandler(handlers)
-	lbc.policyLister = informer.GetStore()
+	for _, cif := range lbc.confSharedInformerFactory {
+		informer := cif.K8s().V1().Policies().Informer()
+		informer.AddEventHandler(handlers)
+		lbc.policyLister = append(lbc.policyLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.ResourceEventHandlerFuncs, namespace string, name string) {
@@ -526,11 +561,13 @@ func (lbc *LoadBalancerController) addGlobalConfigurationHandler(handlers cache.
 }
 
 func (lbc *LoadBalancerController) addTransportServerHandler(handlers cache.ResourceEventHandlerFuncs) {
-	informer := lbc.confSharedInformerFactory.K8s().V1alpha1().TransportServers().Informer()
-	informer.AddEventHandler(handlers)
-	lbc.transportServerLister = informer.GetStore()
+	for _, cif := range lbc.confSharedInformerFactory {
+		informer := cif.K8s().V1alpha1().TransportServers().Informer()
+		informer.AddEventHandler(handlers)
+		lbc.transportServerLister = append(lbc.transportServerLister, informer.GetStore())
 
-	lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+		lbc.cacheSyncs = append(lbc.cacheSyncs, informer.HasSynced)
+	}
 }
 
 func (lbc *LoadBalancerController) addIngressLinkHandler(handlers cache.ResourceEventHandlerFuncs, name string) {
@@ -569,12 +606,16 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.leaderElector.Run(lbc.ctx)
 	}
 
-	go lbc.sharedInformerFactory.Start(lbc.ctx.Done())
+	for _, sif := range lbc.sharedInformerFactory {
+		go sif.Start(lbc.ctx.Done())
+	}
 	if lbc.watchNginxConfigMaps {
 		go lbc.configMapController.Run(lbc.ctx.Done())
 	}
 	if lbc.areCustomResourcesEnabled {
-		go lbc.confSharedInformerFactory.Start(lbc.ctx.Done())
+		for _, cif := range lbc.confSharedInformerFactory {
+			go cif.Start(lbc.ctx.Done())
+		}
 	}
 	if lbc.watchGlobalConfiguration {
 		go lbc.globalConfigurationController.Run(lbc.ctx.Done())
@@ -583,7 +624,9 @@ func (lbc *LoadBalancerController) Run() {
 		go lbc.ingressLinkInformer.Run(lbc.ctx.Done())
 	}
 	if lbc.appProtectEnabled || lbc.appProtectDosEnabled {
-		go lbc.dynInformerFactory.Start(lbc.ctx.Done())
+		for _, dif := range lbc.dynInformerFactory {
+			go dif.Start(lbc.ctx.Done())
+		}
 	}
 
 	glog.V(3).Infof("Waiting for %d caches to sync", len(lbc.cacheSyncs))
@@ -609,9 +652,18 @@ func (lbc *LoadBalancerController) Stop() {
 
 func (lbc *LoadBalancerController) syncEndpoints(task task) {
 	key := task.Key
+	var obj interface{}
+	var endpExists bool
+	var err error
 	glog.V(3).Infof("Syncing endpoints %v", key)
 
-	obj, endpExists, err := lbc.endpointLister.GetByKey(key)
+	for _, el := range lbc.endpointLister {
+		obj, endpExists, err = el.GetByKey(key)
+		if endpExists {
+			break
+		}
+	}
+
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -765,19 +817,21 @@ func (lbc *LoadBalancerController) updateAllConfigs() {
 // As a result, the IC will generate configuration for that resource assuming that the Secret is missing and
 // it will report warnings. (See https://github.com/nginxinc/kubernetes-ingress/issues/1448 )
 func (lbc *LoadBalancerController) preSyncSecrets() {
-	objects := lbc.secretLister.List()
-	glog.V(3).Infof("PreSync %d Secrets", len(objects))
+	for _, sl := range lbc.secretLister {
+		objects := sl.List()
+		glog.V(3).Infof("PreSync %d Secrets", len(objects))
 
-	for _, obj := range objects {
-		secret := obj.(*api_v1.Secret)
+		for _, obj := range objects {
+			secret := obj.(*api_v1.Secret)
 
-		if !secrets.IsSupportedSecretType(secret.Type) {
-			glog.V(3).Infof("Ignoring Secret %s/%s of unsupported type %s", secret.Namespace, secret.Name, secret.Type)
-			continue
+			if !secrets.IsSupportedSecretType(secret.Type) {
+				glog.V(3).Infof("Ignoring Secret %s/%s of unsupported type %s", secret.Namespace, secret.Name, secret.Type)
+				continue
+			}
+
+			glog.V(3).Infof("Adding Secret: %s/%s", secret.Namespace, secret.Name)
+			lbc.secretStore.AddOrUpdateSecret(secret)
 		}
-
-		glog.V(3).Infof("Adding Secret: %s/%s", secret.Namespace, secret.Name)
-		lbc.secretStore.AddOrUpdateSecret(secret)
 	}
 }
 
@@ -898,7 +952,17 @@ func (lbc *LoadBalancerController) syncIngressLink(task task) {
 
 func (lbc *LoadBalancerController) syncPolicy(task task) {
 	key := task.Key
-	obj, polExists, err := lbc.policyLister.GetByKey(key)
+	var obj interface{}
+	var polExists bool
+	var err error
+
+	for _, pl := range lbc.policyLister {
+		obj, polExists, err = pl.GetByKey(key)
+		if polExists {
+			break
+		}
+	}
+
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -951,7 +1015,17 @@ func (lbc *LoadBalancerController) syncPolicy(task task) {
 
 func (lbc *LoadBalancerController) syncTransportServer(task task) {
 	key := task.Key
-	obj, tsExists, err := lbc.transportServerLister.GetByKey(key)
+	var obj interface{}
+	var tsExists bool
+	var err error
+
+	for _, tl := range lbc.transportServerLister {
+		obj, tsExists, err = tl.GetByKey(key)
+		if tsExists {
+			break
+		}
+	}
+
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1024,7 +1098,17 @@ func (lbc *LoadBalancerController) syncGlobalConfiguration(task task) {
 
 func (lbc *LoadBalancerController) syncVirtualServer(task task) {
 	key := task.Key
-	obj, vsExists, err := lbc.virtualServerLister.GetByKey(key)
+	var obj interface{}
+	var vsExists bool
+	var err error
+
+	for _, vl := range lbc.virtualServerLister {
+		obj, vsExists, err = vl.GetByKey(key)
+		if vsExists {
+			break
+		}
+	}
+
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1128,7 +1212,16 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 					glog.Errorf("Error when deleting configuration for VirtualServer %v: %v", key, deleteErr)
 				}
 
-				_, vsExists, err := lbc.virtualServerLister.GetByKey(key)
+				var vsExists bool
+				var err error
+
+				for _, vl := range lbc.virtualServerLister {
+					_, vsExists, err = vl.GetByKey(key)
+					if vsExists {
+						break
+					}
+				}
+
 				if err != nil {
 					glog.Errorf("Error when getting VirtualServer for %v: %v", key, err)
 				}
@@ -1146,7 +1239,16 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 					glog.Errorf("Error when deleting configuration for Ingress %v: %v", key, deleteErr)
 				}
 
-				_, ingExists, err := lbc.ingressLister.GetByKeySafe(key)
+				var ingExists bool
+				var err error
+
+				for _, il := range lbc.ingressLister {
+					_, ingExists, err = il.GetByKeySafe(key)
+					if ingExists {
+						break
+					}
+				}
+
 				if err != nil {
 					glog.Errorf("Error when getting Ingress for %v: %v", key, err)
 				}
@@ -1163,7 +1265,16 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 					glog.Errorf("Error when deleting configuration for TransportServer %v: %v", key, deleteErr)
 				}
 
-				_, tsExists, err := lbc.transportServerLister.GetByKey(key)
+				var tsExists bool
+				var err error
+
+				for _, tl := range lbc.transportServerLister {
+					_, tsExists, err = tl.GetByKey(key)
+					if tsExists {
+						break
+					}
+				}
+
 				if err != nil {
 					glog.Errorf("Error when getting TransportServer for %v: %v", key, err)
 				}
@@ -1727,7 +1838,17 @@ func (lbc *LoadBalancerController) updateVirtualServerStatusAndEvents(vsConfig *
 
 func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 	key := task.Key
-	obj, exists, err := lbc.virtualServerRouteLister.GetByKey(key)
+	var obj interface{}
+	var exists bool
+	var err error
+
+	for _, vrl := range lbc.virtualServerRouteLister {
+		obj, exists, err = vrl.GetByKey(key)
+		if exists {
+			break
+		}
+	}
+
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1753,7 +1874,16 @@ func (lbc *LoadBalancerController) syncVirtualServerRoute(task task) {
 
 func (lbc *LoadBalancerController) syncIngress(task task) {
 	key := task.Key
-	ing, ingExists, err := lbc.ingressLister.GetByKeySafe(key)
+	var ing *networking.Ingress
+	var ingExists bool
+	var err error
+
+	for _, il := range lbc.ingressLister {
+		ing, ingExists, err = il.GetByKeySafe(key)
+		if ingExists {
+			break
+		}
+	}
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1802,7 +1932,17 @@ func (lbc *LoadBalancerController) syncService(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing service %v", key)
 
-	obj, exists, err := lbc.svcLister.GetByKey(key)
+	var obj interface{}
+	var exists bool
+	var err error
+
+	for _, sl := range lbc.svcLister {
+		obj, exists, err = sl.GetByKey(key)
+		if exists {
+			break
+		}
+	}
+
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -1898,7 +2038,16 @@ func (lbc *LoadBalancerController) reportCustomResourceStatusEnabled() bool {
 
 func (lbc *LoadBalancerController) syncSecret(task task) {
 	key := task.Key
-	obj, secrExists, err := lbc.secretLister.GetByKey(key)
+	var obj interface{}
+	var secrExists bool
+	var err error
+
+	for _, sl := range lbc.secretLister {
+		obj, secrExists, err = sl.GetByKey(key)
+		if secrExists {
+			break
+		}
+	}
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -2038,36 +2187,38 @@ func getStatusFromEventTitle(eventTitle string) string {
 
 func (lbc *LoadBalancerController) updateVirtualServersStatusFromEvents() error {
 	var allErrs []error
-	for _, obj := range lbc.virtualServerLister.List() {
-		vs := obj.(*conf_v1.VirtualServer)
+	for _, vl := range lbc.virtualServerLister {
+		for _, obj := range vl.List() {
+			vs := obj.(*conf_v1.VirtualServer)
 
-		if !lbc.HasCorrectIngressClass(vs) {
-			glog.V(3).Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
-			continue
-		}
-
-		events, err := lbc.client.CoreV1().Events(vs.Namespace).List(context.TODO(),
-			meta_v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%v,involvedObject.uid=%v", vs.Name, vs.UID)})
-		if err != nil {
-			allErrs = append(allErrs, fmt.Errorf("error trying to get events for VirtualServer %v/%v: %w", vs.Namespace, vs.Name, err))
-			break
-		}
-
-		if len(events.Items) == 0 {
-			continue
-		}
-
-		var timestamp time.Time
-		var latestEvent api_v1.Event
-		for _, event := range events.Items {
-			if event.CreationTimestamp.After(timestamp) {
-				latestEvent = event
+			if !lbc.HasCorrectIngressClass(vs) {
+				glog.V(3).Infof("Ignoring VirtualServer %v based on class %v", vs.Name, vs.Spec.IngressClass)
+				continue
 			}
-		}
 
-		err = lbc.statusUpdater.UpdateVirtualServerStatus(vs, getStatusFromEventTitle(latestEvent.Reason), latestEvent.Reason, latestEvent.Message)
-		if err != nil {
-			allErrs = append(allErrs, err)
+			events, err := lbc.client.CoreV1().Events(vs.Namespace).List(context.TODO(),
+				meta_v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%v,involvedObject.uid=%v", vs.Name, vs.UID)})
+			if err != nil {
+				allErrs = append(allErrs, fmt.Errorf("error trying to get events for VirtualServer %v/%v: %w", vs.Namespace, vs.Name, err))
+				break
+			}
+
+			if len(events.Items) == 0 {
+				continue
+			}
+
+			var timestamp time.Time
+			var latestEvent api_v1.Event
+			for _, event := range events.Items {
+				if event.CreationTimestamp.After(timestamp) {
+					latestEvent = event
+				}
+			}
+
+			err = lbc.statusUpdater.UpdateVirtualServerStatus(vs, getStatusFromEventTitle(latestEvent.Reason), latestEvent.Reason, latestEvent.Message)
+			if err != nil {
+				allErrs = append(allErrs, err)
+			}
 		}
 	}
 
@@ -2080,36 +2231,38 @@ func (lbc *LoadBalancerController) updateVirtualServersStatusFromEvents() error 
 
 func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() error {
 	var allErrs []error
-	for _, obj := range lbc.virtualServerRouteLister.List() {
-		vsr := obj.(*conf_v1.VirtualServerRoute)
+	for _, vsrl := range lbc.virtualServerRouteLister {
+		for _, obj := range vsrl.List() {
+			vsr := obj.(*conf_v1.VirtualServerRoute)
 
-		if !lbc.HasCorrectIngressClass(vsr) {
-			glog.V(3).Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
-			continue
-		}
-
-		events, err := lbc.client.CoreV1().Events(vsr.Namespace).List(context.TODO(),
-			meta_v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%v,involvedObject.uid=%v", vsr.Name, vsr.UID)})
-		if err != nil {
-			allErrs = append(allErrs, fmt.Errorf("error trying to get events for VirtualServerRoute %v/%v: %w", vsr.Namespace, vsr.Name, err))
-			break
-		}
-
-		if len(events.Items) == 0 {
-			continue
-		}
-
-		var timestamp time.Time
-		var latestEvent api_v1.Event
-		for _, event := range events.Items {
-			if event.CreationTimestamp.After(timestamp) {
-				latestEvent = event
+			if !lbc.HasCorrectIngressClass(vsr) {
+				glog.V(3).Infof("Ignoring VirtualServerRoute %v based on class %v", vsr.Name, vsr.Spec.IngressClass)
+				continue
 			}
-		}
 
-		err = lbc.statusUpdater.UpdateVirtualServerRouteStatus(vsr, getStatusFromEventTitle(latestEvent.Reason), latestEvent.Reason, latestEvent.Message)
-		if err != nil {
-			allErrs = append(allErrs, err)
+			events, err := lbc.client.CoreV1().Events(vsr.Namespace).List(context.TODO(),
+				meta_v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%v,involvedObject.uid=%v", vsr.Name, vsr.UID)})
+			if err != nil {
+				allErrs = append(allErrs, fmt.Errorf("error trying to get events for VirtualServerRoute %v/%v: %w", vsr.Namespace, vsr.Name, err))
+				break
+			}
+
+			if len(events.Items) == 0 {
+				continue
+			}
+
+			var timestamp time.Time
+			var latestEvent api_v1.Event
+			for _, event := range events.Items {
+				if event.CreationTimestamp.After(timestamp) {
+					latestEvent = event
+				}
+			}
+
+			err = lbc.statusUpdater.UpdateVirtualServerRouteStatus(vsr, getStatusFromEventTitle(latestEvent.Reason), latestEvent.Reason, latestEvent.Message)
+			if err != nil {
+				allErrs = append(allErrs, err)
+			}
 		}
 	}
 
@@ -2122,21 +2275,23 @@ func (lbc *LoadBalancerController) updateVirtualServerRoutesStatusFromEvents() e
 
 func (lbc *LoadBalancerController) updatePoliciesStatus() error {
 	var allErrs []error
-	for _, obj := range lbc.policyLister.List() {
-		pol := obj.(*conf_v1.Policy)
+	for _, pl := range lbc.policyLister {
+		for _, obj := range pl.List() {
+			pol := obj.(*conf_v1.Policy)
 
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
-		if err != nil {
-			msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
-			err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
+			err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
 			if err != nil {
-				allErrs = append(allErrs, err)
-			}
-		} else {
-			msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
-			err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
-			if err != nil {
-				allErrs = append(allErrs, err)
+				msg := fmt.Sprintf("Policy %v/%v is invalid and was rejected: %v", pol.Namespace, pol.Name, err)
+				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateInvalid, "Rejected", msg)
+				if err != nil {
+					allErrs = append(allErrs, err)
+				}
+			} else {
+				msg := fmt.Sprintf("Policy %v/%v was added or updated", pol.Namespace, pol.Name)
+				err = lbc.statusUpdater.UpdatePolicyStatus(pol, conf_v1.StateValid, "AddedOrUpdated", msg)
+				if err != nil {
+					allErrs = append(allErrs, err)
+				}
 			}
 		}
 	}
@@ -2150,31 +2305,33 @@ func (lbc *LoadBalancerController) updatePoliciesStatus() error {
 
 func (lbc *LoadBalancerController) updateTransportServersStatusFromEvents() error {
 	var allErrs []error
-	for _, obj := range lbc.transportServerLister.List() {
-		ts := obj.(*conf_v1alpha1.TransportServer)
+	for _, tl := range lbc.transportServerLister {
+		for _, obj := range tl.List() {
+			ts := obj.(*conf_v1alpha1.TransportServer)
 
-		events, err := lbc.client.CoreV1().Events(ts.Namespace).List(context.TODO(),
-			meta_v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%v,involvedObject.uid=%v", ts.Name, ts.UID)})
-		if err != nil {
-			allErrs = append(allErrs, fmt.Errorf("error trying to get events for TransportServer %v/%v: %w", ts.Namespace, ts.Name, err))
-			break
-		}
-
-		if len(events.Items) == 0 {
-			continue
-		}
-
-		var timestamp time.Time
-		var latestEvent api_v1.Event
-		for _, event := range events.Items {
-			if event.CreationTimestamp.After(timestamp) {
-				latestEvent = event
+			events, err := lbc.client.CoreV1().Events(ts.Namespace).List(context.TODO(),
+				meta_v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%v,involvedObject.uid=%v", ts.Name, ts.UID)})
+			if err != nil {
+				allErrs = append(allErrs, fmt.Errorf("error trying to get events for TransportServer %v/%v: %w", ts.Namespace, ts.Name, err))
+				break
 			}
-		}
 
-		err = lbc.statusUpdater.UpdateTransportServerStatus(ts, getStatusFromEventTitle(latestEvent.Reason), latestEvent.Reason, latestEvent.Message)
-		if err != nil {
-			allErrs = append(allErrs, err)
+			if len(events.Items) == 0 {
+				continue
+			}
+
+			var timestamp time.Time
+			var latestEvent api_v1.Event
+			for _, event := range events.Items {
+				if event.CreationTimestamp.After(timestamp) {
+					latestEvent = event
+				}
+			}
+
+			err = lbc.statusUpdater.UpdateTransportServerStatus(ts, getStatusFromEventTitle(latestEvent.Reason), latestEvent.Reason, latestEvent.Message)
+			if err != nil {
+				allErrs = append(allErrs, err)
+			}
 		}
 	}
 
@@ -2688,16 +2845,18 @@ func createPolicyMap(policies []*conf_v1.Policy) map[string]*conf_v1.Policy {
 func (lbc *LoadBalancerController) getAllPolicies() []*conf_v1.Policy {
 	var policies []*conf_v1.Policy
 
-	for _, obj := range lbc.policyLister.List() {
-		pol := obj.(*conf_v1.Policy)
+	for _, pl := range lbc.policyLister {
+		for _, obj := range pl.List() {
+			pol := obj.(*conf_v1.Policy)
 
-		err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
-		if err != nil {
-			glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
-			continue
+			err := validation.ValidatePolicy(pol, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
+			if err != nil {
+				glog.V(3).Infof("Skipping invalid Policy %s/%s: %v", pol.Namespace, pol.Name, err)
+				continue
+			}
+
+			policies = append(policies, pol)
 		}
-
-		policies = append(policies, pol)
 	}
 
 	return policies
@@ -2715,7 +2874,16 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 
 		policyKey := fmt.Sprintf("%s/%s", polNamespace, p.Name)
 
-		policyObj, exists, err := lbc.policyLister.GetByKey(policyKey)
+		var policyObj interface{}
+		var exists bool
+		var err error
+
+		for _, pl := range lbc.policyLister {
+			policyObj, exists, err = pl.GetByKey(policyKey)
+			if exists {
+				break
+			}
+		}
 		if err != nil {
 			errors = append(errors, fmt.Errorf("Failed to get policy %s: %w", policyKey, err))
 			continue
@@ -3060,12 +3228,24 @@ func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, 
 }
 
 func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetPort int32, subselector map[string]string, svc *api_v1.Service) (endps []podEndpoint, err error) {
-	pods, err := lbc.podLister.ListByNamespace(svc.Namespace, labels.Merge(svc.Spec.Selector, subselector).AsSelector())
+	var pods []*api_v1.Pod
+	for _, pl := range lbc.podLister {
+		pods, err = pl.ListByNamespace(svc.Namespace, labels.Merge(svc.Spec.Selector, subselector).AsSelector())
+		if len(pods) > 0 {
+			break
+		}
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error getting pods in namespace %v that match the selector %v: %w", svc.Namespace, labels.Merge(svc.Spec.Selector, subselector), err)
 	}
 
-	svcEps, err := lbc.endpointLister.GetServiceEndpoints(svc)
+	var svcEps api_v1.Endpoints
+	for _, el := range lbc.endpointLister {
+		svcEps, err = el.GetServiceEndpoints(svc)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("Error getting endpoints for service %s from the cache: %v", svc.Name, err)
 		return nil, err
@@ -3124,7 +3304,13 @@ func (lbc *LoadBalancerController) getHealthChecksForIngressBackend(backend *net
 	if svcPort == nil {
 		return nil
 	}
-	pods, err := lbc.podLister.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
+	var pods []*api_v1.Pod
+	for _, pl := range lbc.podLister {
+		pods, err = pl.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
+		if len(pods) > 0 {
+			break
+		}
+	}
 	if err != nil {
 		glog.V(3).Infof("Error fetching pods for namespace %v: %v", svc.Namespace, err)
 		return nil
@@ -3175,7 +3361,13 @@ func (lbc *LoadBalancerController) getExternalEndpointsForIngressBackend(backend
 }
 
 func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networking.IngressBackend, svc *api_v1.Service) (result []podEndpoint, isExternal bool, err error) {
-	endps, err := lbc.endpointLister.GetServiceEndpoints(svc)
+	var endps api_v1.Endpoints
+	for _, el := range lbc.endpointLister {
+		endps, err = el.GetServiceEndpoints(svc)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		if svc.Spec.Type == api_v1.ServiceTypeExternalName {
 			if !lbc.isNginxPlus {
@@ -3240,7 +3432,15 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, b
 }
 
 func (lbc *LoadBalancerController) getPodOwnerTypeAndNameFromAddress(ns, name string) (parentType, parentName string) {
-	obj, exists, err := lbc.podLister.GetByKey(fmt.Sprintf("%s/%s", ns, name))
+	var obj interface{}
+	var exists bool
+	var err error
+	for _, pl := range lbc.podLister {
+		obj, exists, err = pl.GetByKey(fmt.Sprintf("%s/%s", ns, name))
+		if exists {
+			break
+		}
+	}
 	if err != nil {
 		glog.Warningf("could not get pod by key %s/%s: %v", ns, name, err)
 		return "", ""
@@ -3286,7 +3486,14 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort api_v1.ServicePort, svc
 		return int32(svcPort.TargetPort.IntValue()), nil
 	}
 
-	pods, err := lbc.podLister.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
+	var pods []*api_v1.Pod
+	var err error
+	for _, pl := range lbc.podLister {
+		pods, err = pl.ListByNamespace(svc.Namespace, labels.Set(svc.Spec.Selector).AsSelector())
+		if len(pods) > 0 {
+			break
+		}
+	}
 	if err != nil {
 		return 0, fmt.Errorf("Error getting pod information: %w", err)
 	}
@@ -3319,7 +3526,15 @@ func (lbc *LoadBalancerController) getServiceForUpstream(namespace string, upstr
 
 func (lbc *LoadBalancerController) getServiceForIngressBackend(backend *networking.IngressBackend, namespace string) (*api_v1.Service, error) {
 	svcKey := namespace + "/" + backend.Service.Name
-	svcObj, svcExists, err := lbc.svcLister.GetByKey(svcKey)
+	var svcObj interface{}
+	var svcExists bool
+	var err error
+	for _, sl := range lbc.svcLister {
+		svcObj, svcExists, err = sl.GetByKey(svcKey)
+		if svcExists {
+			break
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -3388,7 +3603,16 @@ func (lbc *LoadBalancerController) syncSVIDRotation(svidResponse *workloadapi.X5
 func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing AppProtectPolicy %v", key)
-	obj, polExists, err := lbc.appProtectPolicyLister.GetByKey(key)
+
+	var obj interface{}
+	var polExists bool
+	var err error
+	for _, apl := range lbc.appProtectPolicyLister {
+		obj, polExists, err = apl.GetByKey(key)
+		if polExists {
+			break
+		}
+	}
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -3414,7 +3638,15 @@ func (lbc *LoadBalancerController) syncAppProtectPolicy(task task) {
 func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing AppProtectLogConf %v", key)
-	obj, confExists, err := lbc.appProtectLogConfLister.GetByKey(key)
+	var obj interface{}
+	var confExists bool
+	var err error
+	for _, apl := range lbc.appProtectLogConfLister {
+		obj, confExists, err = apl.GetByKey(key)
+		if confExists {
+			break
+		}
+	}
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -3440,7 +3672,15 @@ func (lbc *LoadBalancerController) syncAppProtectLogConf(task task) {
 func (lbc *LoadBalancerController) syncAppProtectUserSig(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing AppProtectUserSig %v", key)
-	obj, sigExists, err := lbc.appProtectUserSigLister.GetByKey(key)
+	var obj interface{}
+	var sigExists bool
+	var err error
+	for _, apl := range lbc.appProtectUserSigLister {
+		obj, sigExists, err = apl.GetByKey(key)
+		if sigExists {
+			break
+		}
+	}
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -3466,7 +3706,15 @@ func (lbc *LoadBalancerController) syncAppProtectUserSig(task task) {
 func (lbc *LoadBalancerController) syncAppProtectDosPolicy(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing AppProtectDosPolicy %v", key)
-	obj, polExists, err := lbc.appProtectDosPolicyLister.GetByKey(key)
+	var obj interface{}
+	var polExists bool
+	var err error
+	for _, apl := range lbc.appProtectDosPolicyLister {
+		obj, polExists, err = apl.GetByKey(key)
+		if polExists {
+			break
+		}
+	}
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -3490,7 +3738,15 @@ func (lbc *LoadBalancerController) syncAppProtectDosPolicy(task task) {
 func (lbc *LoadBalancerController) syncAppProtectDosLogConf(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing APDosLogConf %v", key)
-	obj, confExists, err := lbc.appProtectDosLogConfLister.GetByKey(key)
+	var obj interface{}
+	var confExists bool
+	var err error
+	for _, apl := range lbc.appProtectDosLogConfLister {
+		obj, confExists, err = apl.GetByKey(key)
+		if confExists {
+			break
+		}
+	}
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return
@@ -3514,7 +3770,15 @@ func (lbc *LoadBalancerController) syncAppProtectDosLogConf(task task) {
 func (lbc *LoadBalancerController) syncDosProtectedResource(task task) {
 	key := task.Key
 	glog.V(3).Infof("Syncing DosProtectedResource %v", key)
-	obj, confExists, err := lbc.appProtectDosProtectedLister.GetByKey(key)
+	var obj interface{}
+	var confExists bool
+	var err error
+	for _, apl := range lbc.appProtectDosProtectedLister {
+		obj, confExists, err = apl.GetByKey(key)
+		if confExists {
+			break
+		}
+	}
 	if err != nil {
 		lbc.syncQueue.Requeue(task, err)
 		return

@@ -24,6 +24,8 @@
       
       {{ partial "trustarc.html" . }}
 
+      {{ partial "tealium-profile.html" . }}
+
     {{ end }}
 
 {{ end }}
@@ -32,7 +34,7 @@
 
 <body>
   {{ if or ( not .Site.IsServer ) ( not ( in .Site.Params.buildtype "package" ) ) }} 
-    {{ partial "gtm.html" . }}
+    {{ partial "universal-tag.html" . }}
   {{ end }}
 
   <header>
@@ -45,7 +47,7 @@
     {{ end }}
   {{ end }}
 
-  <div class="main container-fluid min-page-height" data-menu-id="{{.Title | urlize}}">
+  <div class="main container-fluid min-page-height" data-menu-id="{{.RelPermalink}}">
     
     {{ block "main" . }}{{ end }}
 

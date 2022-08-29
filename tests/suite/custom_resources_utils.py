@@ -1,13 +1,12 @@
 """Describe methods to utilize the kubernetes-client."""
-import pytest
-import time
-import yaml
 import logging
-
+import time
 from pprint import pprint
-from kubernetes.client import CustomObjectsApi, ApiextensionsV1Api, CoreV1Api
-from kubernetes.client.rest import ApiException
 
+import pytest
+import yaml
+from kubernetes.client import ApiextensionsV1Api, CoreV1Api, CustomObjectsApi
+from kubernetes.client.rest import ApiException
 from suite.resources_utils import ensure_item_removal, get_file_contents
 
 
@@ -30,9 +29,7 @@ def create_crd(api_extensions_v1: ApiextensionsV1Api, body) -> None:
             pytest.fail(f"An unexpected exception {ex} occurred. Exiting...")
 
 
-def create_crd_from_yaml(
-    api_extensions_v1: ApiextensionsV1Api, name, yaml_manifest
-) -> None:
+def create_crd_from_yaml(api_extensions_v1: ApiextensionsV1Api, name, yaml_manifest) -> None:
     """
     Create a specific CRD based on yaml file.
 
@@ -63,26 +60,27 @@ def delete_crd(api_extensions_v1: ApiextensionsV1Api, name) -> None:
     print(f"CRD was removed with name '{name}'")
 
 
-def read_custom_resource(custom_objects: CustomObjectsApi, namespace, plural, name, api_group="k8s.nginx.org") -> object:
+def read_custom_resource(
+    custom_objects: CustomObjectsApi, namespace, plural, name, api_group="k8s.nginx.org"
+) -> object:
     """
     Get CRD information (kubectl describe output)
 
     :param custom_objects: CustomObjectsApi
-    :param namespace: The custom resource's namespace	
+    :param namespace: The custom resource's namespace
     :param plural: the custom resource's plural name
     :param name: the custom object's name
     :return: object
     """
     print(f"Getting info for {name} in namespace {namespace}")
     try:
-        response = custom_objects.get_namespaced_custom_object(
-            api_group, "v1", namespace, plural, name
-        )
+        response = custom_objects.get_namespaced_custom_object(api_group, "v1", namespace, plural, name)
         return response
 
     except ApiException:
         logging.exception(f"Exception occurred while reading CRD")
         raise
+
 
 def is_dnsendpoint_present(custom_objects: CustomObjectsApi, name, namespace) -> bool:
     """
@@ -101,6 +99,7 @@ def is_dnsendpoint_present(custom_objects: CustomObjectsApi, name, namespace) ->
             return False
     return True
 
+
 def read_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:
     """
     Get CRD information (kubectl describe output)
@@ -113,9 +112,7 @@ def read_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, namespace, p
     """
     print(f"Getting info for v1alpha1 crd {name} in namespace {namespace}")
     try:
-        response = custom_objects.get_namespaced_custom_object(
-            "k8s.nginx.org", "v1alpha1", namespace, plural, name
-        )
+        response = custom_objects.get_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, plural, name)
         pprint(response)
         return response
 
@@ -171,15 +168,11 @@ def create_resource_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, n
     try:
         print("Create a Custom Resource: " + body["kind"])
         group, version = body["apiVersion"].split("/")
-        custom_objects.create_namespaced_custom_object(
-             group, version, namespace, plural, body
-        )
+        custom_objects.create_namespaced_custom_object(group, version, namespace, plural, body)
         print(f"Custom resource {body['kind']} created with name '{body['metadata']['name']}'")
         return body
     except ApiException as ex:
-        logging.exception(
-            f"Exception: {ex} occurred while creating {body['kind']}: {body['metadata']['name']}"
-        )
+        logging.exception(f"Exception: {ex} occurred while creating {body['kind']}: {body['metadata']['name']}")
         raise
 
 
@@ -221,15 +214,13 @@ def delete_resource(custom_objects: CustomObjectsApi, resource, namespace, plura
     :return:
     """
 
-    name = resource['metadata']['name']
-    kind = resource['kind']
+    name = resource["metadata"]["name"]
+    kind = resource["kind"]
     group, version = resource["apiVersion"].split("/")
 
     print(f"Delete a '{kind}' with name '{name}'")
 
-    custom_objects.delete_namespaced_custom_object(
-        group, version, namespace, plural, name
-    )
+    custom_objects.delete_namespaced_custom_object(group, version, namespace, plural, name)
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         group,
@@ -252,9 +243,7 @@ def create_dos_logconf_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest
     print("Create DOS logconf:")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-    custom_objects.create_namespaced_custom_object(
-        "appprotectdos.f5.com", "v1beta1", namespace, "apdoslogconfs", dep
-    )
+    custom_objects.create_namespaced_custom_object("appprotectdos.f5.com", "v1beta1", namespace, "apdoslogconfs", dep)
     print(f"DOS logconf created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
 
@@ -270,9 +259,7 @@ def create_dos_policy_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest,
     print("Create Dos Policy:")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-    custom_objects.create_namespaced_custom_object(
-        "appprotectdos.f5.com", "v1beta1", namespace, "apdospolicies", dep
-    )
+    custom_objects.create_namespaced_custom_object("appprotectdos.f5.com", "v1beta1", namespace, "apdospolicies", dep)
     print(f"DOS Policy created with name '{dep['metadata']['name']}'")
     return dep["metadata"]["name"]
 
@@ -288,9 +275,13 @@ def create_dos_protected_from_yaml(custom_objects: CustomObjectsApi, yaml_manife
     print("Create Dos Protected:")
     with open(yaml_manifest) as f:
         dep = yaml.safe_load(f)
-        dep['spec']['dosSecurityLog']['apDosLogConf'] = dep['spec']['dosSecurityLog']['apDosLogConf'].replace("<NAMESPACE>", namespace)
-        dep['spec']['dosSecurityLog']['dosLogDest'] = dep['spec']['dosSecurityLog']['dosLogDest'].replace("<NAMESPACE>", ing_namespace)
-        dep['spec']['apDosPolicy'] = dep['spec']['apDosPolicy'].replace("<NAMESPACE>", namespace)
+        dep["spec"]["dosSecurityLog"]["apDosLogConf"] = dep["spec"]["dosSecurityLog"]["apDosLogConf"].replace(
+            "<NAMESPACE>", namespace
+        )
+        dep["spec"]["dosSecurityLog"]["dosLogDest"] = dep["spec"]["dosSecurityLog"]["dosLogDest"].replace(
+            "<NAMESPACE>", ing_namespace
+        )
+        dep["spec"]["apDosPolicy"] = dep["spec"]["apDosPolicy"].replace("<NAMESPACE>", namespace)
     custom_objects.create_namespaced_custom_object(
         "appprotectdos.f5.com", "v1beta1", namespace, "dosprotectedresources", dep
     )
@@ -307,9 +298,7 @@ def delete_dos_logconf(custom_objects: CustomObjectsApi, name, namespace) -> Non
     :return:
     """
     print(f"Delete DOS logconf: {name}")
-    custom_objects.delete_namespaced_custom_object(
-        "appprotectdos.f5.com", "v1beta1", namespace, "apdoslogconfs", name
-    )
+    custom_objects.delete_namespaced_custom_object("appprotectdos.f5.com", "v1beta1", namespace, "apdoslogconfs", name)
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotectdos.f5.com",
@@ -353,9 +342,7 @@ def delete_dos_policy(custom_objects: CustomObjectsApi, name, namespace) -> None
     :return:
     """
     print(f"Delete a DOS policy: {name}")
-    custom_objects.delete_namespaced_custom_object(
-        "appprotectdos.f5.com", "v1beta1", namespace, "apdospolicies", name
-    )
+    custom_objects.delete_namespaced_custom_object("appprotectdos.f5.com", "v1beta1", namespace, "apdospolicies", name)
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "appprotectdos.f5.com",
@@ -368,9 +355,7 @@ def delete_dos_policy(custom_objects: CustomObjectsApi, name, namespace) -> None
     print(f"DOS policy was removed with name: {name}")
 
 
-def patch_ts_from_yaml(
-        custom_objects: CustomObjectsApi, name, yaml_manifest, namespace
-) -> None:
+def patch_ts_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manifest, namespace) -> None:
     """
     Patch a TransportServer based on yaml manifest
     """
@@ -386,18 +371,17 @@ def patch_custom_resource_v1alpha1(custom_objects: CustomObjectsApi, name, yaml_
         dep = yaml.safe_load(f)
 
     try:
-        custom_objects.patch_namespaced_custom_object(
-            "k8s.nginx.org", "v1alpha1", namespace, plural, name, dep
-        )
+        custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1alpha1", namespace, plural, name, dep)
     except ApiException:
         logging.exception(f"Failed with exception while patching custom resource: {name}")
         raise
+
 
 def patch_ts(custom_objects: CustomObjectsApi, namespace, body) -> None:
     """
     Patch a TransportServer
     """
-    name = body['metadata']['name']
+    name = body["metadata"]["name"]
 
     print(f"Update a Resource: {name}")
 
@@ -424,3 +408,17 @@ def generate_item_with_upstream_options(yaml_manifest, options) -> dict:
     for upstream in dep["spec"]["upstreams"]:
         upstream.update(options)
     return dep
+
+
+def get_pod_metrics(request, namespace) -> list:
+    retries = 0
+    pod_count = int(request.config.getoption("--replicas"))
+    metrics = []
+    while (not metrics) and retries <= (pod_count * 60):
+        metrics = CustomObjectsApi().list_namespaced_custom_object("metrics.k8s.io", "v1beta1", namespace, "pods")[
+            "items"
+        ]
+        time.sleep(1)
+        retries += 1
+        print(f"Retry #{retries}")
+    return metrics

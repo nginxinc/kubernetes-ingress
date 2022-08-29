@@ -181,7 +181,7 @@ Parameter | Description | Default
 `controller.replicaCount` | The number of replicas of the Ingress Controller deployment. | 1
 `controller.ingressClass` | A class of the Ingress Controller. An IngressClass resource with the name equal to the class must be deployed. Otherwise, the Ingress Controller will fail to start. The Ingress Controller only processes resources that belong to its class - i.e. have the "ingressClassName" field resource equal to the class. The Ingress Controller processes all the VirtualServer/VirtualServerRoute/TransportServer resources that do not have the "ingressClassName" field for all versions of kubernetes. | nginx
 `controller.setAsDefaultIngress` | New Ingresses without an `"ingressClassName"` field specified will be assigned the class specified in `controller.ingressClass`. | false
-`controller.watchNamespace` | Namespace to watch for Ingress resources. By default the Ingress Controller watches all namespaces. | ""
+`controller.watchNamespace` | Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces. | ""
 `controller.enableCustomResources` | Enable the custom resources. | true
 `controller.enablePreviewPolicies` | Enable preview policies. This parameter is deprecated. To enable OIDC Policies please use `controller.enableOIDC` instead. | false
 `controller.enableOIDC` | Enable OIDC policies. | false
@@ -230,7 +230,7 @@ Parameter | Description | Default
 `controller.reportIngressStatus.annotations` | The annotations of the leader election configmap. | {}
 `controller.pod.annotations` | The annotations of the Ingress Controller pod. | {}
 `controller.pod.extraLabels` | The additional extra labels of the Ingress Controller pod. | {}
-`controller.appprotect.enable` | Enables the App Protect module in the Ingress Controller. | false
+`controller.appprotect.enable` | Enables the App Protect WAF module in the Ingress Controller. | false
 `controller.appprotectdos.enable` | Enables the App Protect DoS module in the Ingress Controller. | false
 `controller.appprotectdos.debug` | Enable debugging for App Protect DoS. | false
 `controller.appprotectdos.maxDaemons` | Max number of ADMD instances. | 1

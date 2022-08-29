@@ -36,7 +36,9 @@ var (
 	The Ingress Controller does not start NGINX and does not write any generated NGINX configuration files to disk`)
 
 	watchNamespace = flag.String("watch-namespace", api_v1.NamespaceAll,
-		`Namespace to watch for Ingress resources. By default the Ingress Controller watches all namespaces`)
+		`Comma separated list of namespaces the Ingress Controller should watch for resources. By default the Ingress Controller watches all namespaces`)
+
+	watchNamespaces []string
 
 	nginxConfigMaps = flag.String("nginx-configmaps", "",
 		`A ConfigMap resource for customizing NGINX configuration. If a ConfigMap is set,
@@ -194,6 +196,8 @@ func parseFlags(versionInfo string, binaryInfo string) {
 	glog.Infof("Starting NGINX Ingress Controller %v PlusFlag=%v", versionInfo, *nginxPlus)
 	glog.Info(binaryInfo)
 
+	watchNamespaces = strings.Split(*watchNamespace, ",")
+
 	validationChecks()
 
 	if *enableTLSPassthrough && !*enableCustomResources {
@@ -302,6 +306,11 @@ func validationChecks() {
 		glog.Fatalf("Invalid value for leader-election-lock-name: %v", statusLockNameValidationError)
 	}
 
+	namespacesNameValidationError := validateNamespaceNames(watchNamespaces)
+	if namespacesNameValidationError != nil {
+		glog.Fatalf("Invalid values for namespaces: %v", namespacesNameValidationError)
+	}
+
 	statusPortValidationError := validatePort(*nginxStatusPort)
 	if statusPortValidationError != nil {
 		glog.Fatalf("Invalid value for nginx-status-port: %v", statusPortValidationError)
@@ -331,11 +340,31 @@ func validationChecks() {
 	}
 }
 
-// validateResourceName validates the name of a resource
-func validateResourceName(lock string) error {
-	allErrs := validation.IsDNS1123Subdomain(lock)
+// validateNamespaceNames validates the namespaces are in the correct format
+func validateNamespaceNames(namespaces []string) error {
+	var allErrs []error
+
+	for _, ns := range namespaces {
+		if ns != "" {
+			ns = strings.TrimSpace(ns)
+			err := validateResourceName(ns)
+			if err != nil {
+				allErrs = append(allErrs, err)
+				fmt.Printf("error %v ", err)
+			}
+		}
+	}
 	if len(allErrs) > 0 {
-		return fmt.Errorf("invalid resource name %v: %v", lock, allErrs)
+		return fmt.Errorf("errors validating namespaces: %v", allErrs)
+	}
+	return nil
+}
+
+// validateResourceName validates the name of a resource
+func validateResourceName(name string) error {
+	allErrs := validation.IsDNS1123Subdomain(name)
+	if len(allErrs) > 0 {
+		return fmt.Errorf("invalid resource name %v: %v", name, allErrs)
 	}
 	return nil
 }

@@ -94,19 +94,11 @@ jobs:
         with:
           fetch-depth: 0
           ref: refs/tags/v${{ needs.variables.outputs.kic-tag }}
-      - name: Cache Go build
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-build-
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod
+          cache: true
       - name: Determine GOPATH
         id: go
         run: echo "::set-output name=go_path::$(go env GOPATH)"
@@ -136,11 +128,11 @@ jobs:
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-debian }}
           - image: alpine
-            marker: "vs or vsr"
+            marker: "vs" # add vsr after 2.3.1/2.4 release
             platforms: linux/arm,linux/arm64,linux/amd64,linux/ppc64le,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-alpine }}
           - image: ubi
-            marker: "policies or ts"
+            marker: "policies" # add ts after 2.3.1/2.4 release
             platforms: linux/arm64,linux/amd64,linux/s390x
             needs-updating: ${{ needs.check.outputs.needs-updating-ubi }}
     steps:
@@ -246,7 +238,7 @@ jobs:
             IC_VERSION=v${{ needs.variables.outputs.kic-tag }}
         if: ${{ matrix.needs-updating == 'true' }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.6.1
+        uses: aquasecurity/trivy-action@0.7.1
         continue-on-error: true
         with:
           image-ref: nginx/nginx-ingress:${{ steps.meta.outputs.version }}

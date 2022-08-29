@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	extdns_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	listersV1 "github.com/nginxinc/kubernetes-ingress/pkg/client/listers/configuration/v1"
@@ -27,21 +28,21 @@ const (
 
 // ExtDNSController represents ExternalDNS controller.
 type ExtDNSController struct {
-	vsLister              listersV1.VirtualServerLister
+	vsLister              []listersV1.VirtualServerLister
 	sync                  SyncFn
 	ctx                   context.Context
 	mustSync              []cache.InformerSynced
 	queue                 workqueue.RateLimitingInterface
-	sharedInformerFactory k8s_nginx_informers.SharedInformerFactory
+	sharedInformerFactory []k8s_nginx_informers.SharedInformerFactory
 	recorder              record.EventRecorder
 	client                k8s_nginx.Interface
-	extdnslister          extdnslisters.DNSEndpointLister
+	extdnslister          []extdnslisters.DNSEndpointLister
 }
 
 // ExtDNSOpts represents config required for building the External DNS Controller.
 type ExtDNSOpts struct {
 	context       context.Context
-	namespace     string
+	namespace     []string
 	eventRecorder record.EventRecorder
 	client        k8s_nginx.Interface
 	resyncPeriod  time.Duration
@@ -49,7 +50,11 @@ type ExtDNSOpts struct {
 
 // NewController takes external dns config and return a new External DNS Controller.
 func NewController(opts *ExtDNSOpts) *ExtDNSController {
-	sharedInformerFactory := k8s_nginx_informers.NewSharedInformerFactoryWithOptions(opts.client, opts.resyncPeriod, k8s_nginx_informers.WithNamespace(opts.namespace))
+	var sharedInformerFactory []k8s_nginx_informers.SharedInformerFactory
+	for _, ns := range opts.namespace {
+		sif := k8s_nginx_informers.NewSharedInformerFactoryWithOptions(opts.client, opts.resyncPeriod, k8s_nginx_informers.WithNamespace(ns))
+		sharedInformerFactory = append(sharedInformerFactory, sif)
+	}
 
 	c := &ExtDNSController{
 		ctx:                   opts.context,
@@ -63,25 +68,26 @@ func NewController(opts *ExtDNSOpts) *ExtDNSController {
 }
 
 func (c *ExtDNSController) register() workqueue.Interface {
-	c.vsLister = c.sharedInformerFactory.K8s().V1().VirtualServers().Lister()
-	c.extdnslister = c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Lister()
+	for _, sif := range c.sharedInformerFactory {
+		c.vsLister = append(c.vsLister, sif.K8s().V1().VirtualServers().Lister())
+		c.extdnslister = append(c.extdnslister, sif.Externaldns().V1().DNSEndpoints().Lister())
 
-	c.sharedInformerFactory.K8s().V1().VirtualServers().Informer().AddEventHandler(
-		&QueuingEventHandler{
-			Queue: c.queue,
-		},
-	)
+		sif.K8s().V1().VirtualServers().Informer().AddEventHandler(
+			&QueuingEventHandler{
+				Queue: c.queue,
+			},
+		)
 
-	c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().AddEventHandler(&BlockingEventHandler{
-		WorkFunc: externalDNSHandler(c.queue),
-	})
+		sif.Externaldns().V1().DNSEndpoints().Informer().AddEventHandler(&BlockingEventHandler{
+			WorkFunc: externalDNSHandler(c.queue),
+		})
 
-	c.sync = SyncFnFor(c.recorder, c.client, c.extdnslister)
-
-	c.mustSync = []cache.InformerSynced{
-		c.sharedInformerFactory.K8s().V1().VirtualServers().Informer().HasSynced,
-		c.sharedInformerFactory.Externaldns().V1().DNSEndpoints().Informer().HasSynced,
+		c.mustSync = append(c.mustSync,
+			sif.K8s().V1().VirtualServers().Informer().HasSynced,
+			sif.Externaldns().V1().DNSEndpoints().Informer().HasSynced,
+		)
 	}
+	c.sync = SyncFnFor(c.recorder, c.client, c.extdnslister)
 	return c.queue
 }
 
@@ -95,7 +101,9 @@ func (c *ExtDNSController) Run(stopCh <-chan struct{}) {
 
 	glog.Infof("Starting external-dns control loop")
 
-	go c.sharedInformerFactory.Start(c.ctx.Done())
+	for _, sif := range c.sharedInformerFactory {
+		go sif.Start(c.ctx.Done())
+	}
 
 	// wait for all informer caches to be synced
 	glog.V(3).Infof("Waiting for %d caches to sync", len(c.mustSync))
@@ -145,7 +153,13 @@ func (c *ExtDNSController) processItem(ctx context.Context, key string) error {
 		runtime.HandleError(fmt.Errorf("invalid resource key: %s", key))
 		return err
 	}
-	vs, err := c.vsLister.VirtualServers(namespace).Get(name)
+	var vs *conf_v1.VirtualServer
+	for _, vl := range c.vsLister {
+		vs, err = vl.VirtualServers(namespace).Get(name)
+		if err == nil {
+			break
+		}
+	}
 	if err != nil {
 		return err
 	}
@@ -182,7 +196,7 @@ func externalDNSHandler(queue workqueue.RateLimitingInterface) func(obj interfac
 // BuildOpts builds the externalDNS controller options
 func BuildOpts(
 	ctx context.Context,
-	namespace string,
+	namespace []string,
 	recorder record.EventRecorder,
 	k8sNginxClient k8s_nginx.Interface,
 	resync time.Duration,

@@ -1,0 +1,13 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: nginx-config
+  namespace: nginx-ingress
+data:
+  real-ip-header: "X-Forwarded-For"
+  real-ip-recursive: "True"
+  set-real-ip-from: "0.0.0.0/0"
+  worker-connections: "30000"
+  worker-rlimit-nofile: "65535"
+  worker-rlimit-core: "500M"
+  app-protect-dos-arb-fqdn: "svc-appprotect-dos-arb.arbitrator.svc.cluster.local"
