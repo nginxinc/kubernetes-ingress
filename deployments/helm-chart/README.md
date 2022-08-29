@@ -155,6 +155,7 @@ Parameter | Description | Default
 `controller.hostNetwork` | Enables the Ingress Controller pods to use the host's network namespace. | false
 `controller.nginxDebug` | Enables debugging for NGINX. Uses the `nginx-debug` binary. Requires `error-log-level: debug` in the ConfigMap via `controller.config.entries`. | false
 `controller.logLevel` | The log level of the Ingress Controller. | 1
+`controller.image.digest ` | The image digest of the Ingress Controller. | None
 `controller.image.repository` | The image repository of the Ingress Controller. | nginx/nginx-ingress
 `controller.image.tag` | The tag of the Ingress Controller image. | 2.3.0
 `controller.image.pullPolicy` | The pull policy for the Ingress Controller image. | IfNotPresent

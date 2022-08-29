@@ -69,7 +69,7 @@ spec:
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:
       - name: {{ include "nginx-ingress.name" . }}
-        image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
+        image: {{ include "nginx-ingress.image" . }}
         imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
         ports:
         - name: http

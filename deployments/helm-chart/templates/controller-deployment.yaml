@@ -73,7 +73,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:
-      - image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
+      - image: {{ include "nginx-ingress.image" . }}
         name: {{ include "nginx-ingress.name" . }}
         imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
         ports:
