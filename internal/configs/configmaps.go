@@ -10,7 +10,7 @@ import (
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
-func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool) *ConfigParams {
+func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool) *ConfigParams {
 	cfgParams := NewDefaultConfigParams(nginxPlus)
 
 	if serverTokens, exists, err := GetMapKeyAsBool(cfgm.Data, "server-tokens", cfgm); exists {
@@ -156,7 +156,12 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 	}
 
 	if realIPHeader, exists := cfgm.Data["real-ip-header"]; exists {
-		cfgParams.RealIPHeader = realIPHeader
+		if hasTLSPassthrough {
+			// check correct value and return error
+			glog.Infof("Configmap %s/%s: real-ip-header is ignored. real_ip_header is automatically set to 'proxy_protocol' when TLS passthrough is enabled.", cfgm.GetNamespace(), cfgm.GetName())
+		} else {
+			cfgParams.RealIPHeader = realIPHeader
+		}
 	}
 
 	if setRealIPFrom, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "set-real-ip-from", cfgm, ","); exists {
