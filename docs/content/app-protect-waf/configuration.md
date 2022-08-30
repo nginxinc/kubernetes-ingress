@@ -227,7 +227,7 @@ It contains violations related to OpenAPI set to blocking (enforced).
 
 ### Types of OpenAPI References
 
-There are different ways of referencing OpenAPI Specification files. The configuration is similar to [External References](#external-references).
+There are different ways of referencing OpenAPI Specification files. The configuration is similar to [External References](/nginx-app-protect/configuration-guide/configuration/#external-references).
 
 **Note**: Any update of an OpenAPI Specification file referenced in the policy will not trigger a policy compilation. This action needs to be done actively by reloading the NGINX configuration.
 
@@ -235,7 +235,7 @@ There are different ways of referencing OpenAPI Specification files. The configu
 
 URL reference is the method of referencing an external source by providing its full URL.
 
-Make sure to configure certificates prior to using the HTTPS protocol - see the [External References](#https-reference) for details.
+Make sure to configure certificates prior to using the HTTPS protocol - see the [External References](/nginx-app-protect/configuration-guide/configuration/#types-of-references) for details.
 
 ## Configuration in NGINX Ingress Controller
 
