@@ -225,7 +225,7 @@ It contains violations related to OpenAPI set to blocking (enforced).
 
 ### Types of OpenAPI References
 
-There are different ways of referencing OpenAPI Specification files. The configuration is similar to [External References](#external-references).
+There are different ways of referencing OpenAPI Specification files. The configuration is similar to [External References](/nginx-app-protect/configuration-guide/configuration/#external-references).
 
 **Note**: Any update of an OpenAPI Specification file referenced in the policy will not trigger a policy compilation. This action needs to be done actively by reloading the NGINX configuration.
 
@@ -233,7 +233,7 @@ There are different ways of referencing OpenAPI Specification files. The configu
 
 URL reference is the method of referencing an external source by providing its full URL.
 
-Make sure to configure certificates prior to using the HTTPS protocol - see the [External References](#https-reference) for details.
+Make sure to configure certificates prior to using the HTTPS protocol - see the [External References](/nginx-app-protect/configuration-guide/configuration/#types-of-references) for details.
 
 ## Configuration in NGINX Ingress Controller
 
@@ -244,8 +244,8 @@ These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingr
 3. Make other custom changes if needed (e.g. enable Data Guard protection).
 4. Use a tool to convert the result to YAML. There are many, for example: [`yq` utility](https://github.com/mikefarah/yq).
 5. Add the YAML properties to create an `APPolicy` Custom Resource putting the policy itself (as in step 4) within the `spec` property of the Custom Resource. Refer to [App Protect Policies](#app-protect-policies) section above.
-6. Create a `Policy` object which references the `APPolicy` Custom Resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/main/examples/custom-resources/waf/waf.yaml).
-7. Finally, attach the `Policy` object to a `VirtualServer` resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/main/examples/custom-resources/waf/virtual-server.yaml).
+6. Create a `Policy` object which references the `APPolicy` Custom Resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/v2.3.0/examples/custom-resources/waf/waf.yaml).
+7. Finally, attach the `Policy` object to a `VirtualServer` resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/v2.3.0/examples/custom-resources/waf/virtual-server.yaml).
 
 **Note**:  You need to make sure that the server where the resource files are located is always available when you are compiling your policy.
 
