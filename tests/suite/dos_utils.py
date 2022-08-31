@@ -98,3 +98,10 @@ def clean_good_bad_clients():
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
+
+
+def print_admd_log(log):
+    matches = ["ADMD", "DAEMONLESS"]
+    for line in log.splitlines():
+        if any(x in line for x in matches):
+            print(line)
