@@ -157,8 +157,12 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 
 	if realIPHeader, exists := cfgm.Data["real-ip-header"]; exists {
 		if hasTLSPassthrough {
-			// check correct value and return error
-			glog.Infof("Configmap %s/%s: real-ip-header is ignored. real_ip_header is automatically set to 'proxy_protocol' when TLS passthrough is enabled.", cfgm.GetNamespace(), cfgm.GetName())
+			msg := "Configmap %s/%s: key real-ip-header is ignored, directive real_ip_header is automatically set to 'proxy_protocol' when TLS passthrough is enabled."
+			if realIPHeader != "proxy_protocol" {
+				glog.Warningf(msg, cfgm.GetNamespace(), cfgm.GetName())
+			} else {
+				glog.Infof(msg, cfgm.GetNamespace(), cfgm.GetName())
+			}
 		} else {
 			cfgParams.RealIPHeader = realIPHeader
 		}
