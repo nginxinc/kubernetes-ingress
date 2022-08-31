@@ -37,13 +37,14 @@ func TestParseConfigMapWithAppProtectCompressedRequestsAction(t *testing.T) {
 	nginxPlus := true
 	hasAppProtect := true
 	hasAppProtectDos := false
+	hasTLSPassthrough := false
 	for _, test := range tests {
 		cm := &v1.ConfigMap{
 			Data: map[string]string{
 				"app-protect-compressed-requests-action": test.action,
 			},
 		}
-		result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, false)
+		result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
 		if result.MainAppProtectCompressedRequestsAction != test.expect {
 			t.Errorf("ParseConfigMap() returned %q but expected %q for the case %s", result.MainAppProtectCompressedRequestsAction, test.expect, test.msg)
 		}
@@ -105,13 +106,14 @@ func TestParseConfigMapWithAppProtectReconnectPeriod(t *testing.T) {
 	nginxPlus := true
 	hasAppProtect := true
 	hasAppProtectDos := false
+	hasTLSPassthrough := false
 	for _, test := range tests {
 		cm := &v1.ConfigMap{
 			Data: map[string]string{
 				"app-protect-reconnect-period-seconds": test.period,
 			},
 		}
-		result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, false)
+		result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
 		if result.MainAppProtectReconnectPeriod != test.expect {
 			t.Errorf("ParseConfigMap() returned %q but expected %q for the case %s", result.MainAppProtectReconnectPeriod, test.expect, test.msg)
 		}
