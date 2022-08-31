@@ -236,8 +236,8 @@ stream {
     }
 
     server {
-        listen 443;
-        listen [::]:443;
+        listen 443{{if .ProxyProtocol}} proxy_protocol{{end}};
+        listen [::]:443{{if .ProxyProtocol}} proxy_protocol{{end}};
 
         ssl_preread on;
 
