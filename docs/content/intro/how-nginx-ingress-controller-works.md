@@ -93,7 +93,7 @@ The numbered list that follows describes each connection with its type in curly 
 
 The preceding diagram depicts the IC with NGINX. The IC also supports NGINX Plus with the following important differences:
 
-* To configure NGINX Plus, in addition to [configuration reloads](#reloading-nginx), the IC uses the [NGINX Plus API](http://nginx.org/en/docs/http/ngx_http_api_module.html#api), which allows the IC to dynamically change the upstream servers of an upstream.
+* To configure NGINX Plus, Ingress Controller uses [configuration reloads](#reloading-nginx) and the [NGINX Plus API](http://nginx.org/en/docs/http/ngx_http_api_module.html#api). The latter allows the Ingress Controller to dynamically change the upstream servers of an upstream.
 * Instead of the stub status metrics, the extended metrics are used, which are available via NGINX Plus API.
 * In addition to TLS certs and keys, the IC writes JWKs from the secrets of the type `nginx.org/jwk`, and NGINX workers read them.
 
@@ -258,20 +258,20 @@ When *Controller* processes a change to a configuration resource like Ingress, i
 
 ## Reloading NGINX
 
-In this section, we will cover reloading NGINX: both in general and specifically how the IC implements it.
+The following section covers reloading NGINX in general and specifically how the Ingress Controller implements it.
 
 ### Reloading in General
 
-Reloading NGINX is necessary to apply the new configuration. It involves:
-1. The administrator sends a HUP signal to the NGINX master process to trigger a reload.
+Reloading NGINX is necessary to apply the new configuration and involves the following actions:
+1. The administrator sends a HUP (hangup) signal to the NGINX master process to trigger a reload.
 1. The master process brings down the worker processes with the old configuration and starts worker processes with the new configuration.
 1. The administrator verifies the reload has successfully finished.
   
-> See [NGINX documentation](https://nginx.org/en/docs/control.html#reconfiguration) for more details about reloading. See also [this blog post](https://www.nginx.com/blog/inside-nginx-how-we-designed-for-performance-scale/) for an overview of the NGINX architecture.
+> Refer to the [NGINX documentation](https://nginx.org/en/docs/control.html#reconfiguration) for more details about reloading. See also [this blog post](https://www.nginx.com/blog/inside-nginx-how-we-designed-for-performance-scale/) for an overview of the NGINX architecture.
 
 #### How to Reload
 
-The NGINX binary (`nginx`) supports the reload operation via `-s reload` option. When you run it:
+The NGINX binary (`nginx`) supports the reload operation with the `-s reload` option. When you run this option:
 1. It validates the new NGINX configuration and exits if it is invalid printing the error messages to the stderr.
 1. It sends a HUP signal to the NGINX master process and exits.
 
@@ -281,9 +281,9 @@ Alternatively, you can send a HUP signal to the NGINX master process directly.
 
 `nginx -s reload` doesn't wait for NGINX to finish reloading. As a result, it is the responsibility of the administrator to confirm it. There are a few options:
 * Check if the master process created new worker processes. For example, by running `ps` or reading the `/proc` file system.
-* Send an HTTP request to NGINX, and if a new worker process responds, we will know NGINX was reloaded successfully. Note: this requires additional NGINX config, see the [Reloading in the IC section](#reloading-in-the-ic).
+* Send an HTTP request to NGINX, and if a new worker process responds, you'll know the NGINX reloaded successfully. Note: this requires additional NGINX config, see the [Reloading in the Ingress Controller section](#reloading-in-the-ic).
 
-Reloading takes time, usually, it is at least 200ms. The time depends on the size of the configuration, the number of TLS certificates/keys, enabled modules, configuration details, the available CPU resources.
+Reloading takes time, usually at least 200ms. The time depends on the configuration size, the number of TLS certificates/keys, enabled modules, configuration details, and the available CPU resources.
 
 #### Potential Problems
 
@@ -292,29 +292,29 @@ Most of the time, if `nginx -s reload` succeeds, the reload will also succeed. I
 2022/07/09 00:56:42 [emerg] 1353#1353: limit_req "one" uses the "$remote_addr" key while previously it used the "$binary_remote_addr" key
 ```
 
-Reloading doesn't lead to any traffic loss by NGINX -- the operation is graceful. However, frequent reloads can lead to high memory utilization and potentially NGINX being killed with the OOM (Out-Of-Memory) error, which will result in traffic loss. This can happen if you (1) proxy traffic that utilizes long-lived connections (ex: Websockets, gRPC) and (2) reload frequently. In this case, you can end up with multiple generations of NGINX worker processes that are shutting down (old NGINX workers will not shut down until all connections are terminated either by clients or backends, unless you configure [worker_shutdown_timeout](https://nginx.org/en/docs/ngx_core_module.html#worker_shutdown_timeout) which will force old workers to shut down after the timeout). Eventually, all those worker processes can exhaust the system's available memory.
+The operation is graceful; reloading doesn't lead to any traffic loss by NGINX. However, frequent reloads can lead to high memory utilization and potentially NGINX stopping with an OOM (Out-Of-Memory) error, resulting in traffic loss. This can happen if you (1) proxy traffic that utilizes long-lived connections (ex: Websockets, gRPC) and (2) reload frequently. In this case, you can end up with multiple generations of NGINX worker processes that are shutting down (old NGINX workers will not shut down until all connections are terminated either by clients or backends, unless you configure [worker_shutdown_timeout](https://nginx.org/en/docs/ngx_core_module.html#worker_shutdown_timeout) which will force old workers to shut down after the timeout). Eventually, all those worker processes can exhaust the system's available memory.
 
-Since during a reload both the old and new NGINX worker processes coexist, reloading can lead to a spike in memory utilization up to 2 times. Because of that, the NGINX master process can fail to create new worker processes because of the lack of available memory.
+Since both the old and new NGINX worker processes coexist during a reload, reloading can lead to a spike in memory utilization up to two times. Because of the lack of available memory, the NGINX master process can fail to create new worker processes.
 
 ### Reloading in the IC
 
-The IC reloads NGINX to apply configuration changes. 
+The Ingress Controller reloads NGINX to apply configuration changes. 
 
-To facilitate reloading, the IC configures a server listening on the unix socket `unix:/var/lib/nginx/nginx-config-version.sock` that responds with the config version for `/configVersion` URI. The IC writes the config to  `/etc/nginx/config-version.conf`. 
+To facilitate reloading, the Ingress Controller configures a server listening on the Unix socket `unix:/var/lib/nginx/nginx-config-version.sock` that responds with the config version for `/configVersion` URI. The Ingress Controller writes the config to  `/etc/nginx/config-version.conf`. 
 
 A reload involves multiple steps:
-1. The IC updates generated configuration files including any secrets.
-1. The IC updates the config version in `/etc/nginx/config-version.conf`. 
-1. The IC runs `nginx -s reload`. If the command fails, the IC logs the error and considers the reload failed.
-2. Assuming the command succeeds, the IC starts periodically checking for the config version by sending an HTTP request to the config version server on  `unix:/var/lib/nginx/nginx-config-version.sock`.
-3. Once the IC sees the correct config version returned by NGINX, it considers the reload successful. If it doesn't see the correct config version after the configurable timeout (see `-nginx-reload-timeout` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments), the IC considers the reload failed.
+1. The Ingress Controller updates generated configuration files, including any secrets.
+1. The Ingress Controller updates the config version in `/etc/nginx/config-version.conf`. 
+1. The Ingress Controller runs `nginx -s reload`. If the command fails, the Ingress Controller logs the error and considers the reload failed.
+2. Assuming the command succeeds, the Ingress Controller periodically checks for the config version by sending an HTTP request to the config version server on  `unix:/var/lib/nginx/nginx-config-version.sock`.
+3. Once the Ingress Controller sees the correct config version returned by NGINX, it considers the reload successful. If it doesn't see the correct config version after the configurable timeout (see `-nginx-reload-timeout` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments), the Ingress Controller considers the reload failed.
 
-> The [IC Control Loop](#the-control-loop) stops during a reload so that it cannot change any configuration files or reload NGINX until the current reload succeeds or fails.
+> The [Ingress Controler Control Loop](#the-control-loop) stops during a reload so that it cannot change any configuration files or reload NGINX until the current reload succeeds or fails.
 
-### When the IC Reloads NGINX
+### When the Ingress Controller Reloads NGINX
 
-The IC reloads NGINX every time the Control Loop processes a change that affects the generated NGINX configuration. In general, every time a resource is changed, the IC will regenerate the configuration and reload NGINX. A resource could be of any type the IC monitors -- see [The Ingress Controller is a Kubernetes Controller](#the-ingress-controller-is-a-kubernetes-controller) section.
+The Ingress Controller reloads NGINX every time the Control Loop processes a change that affects the generated NGINX configuration. In general, every time a resource is changed, the Ingress Controller will regenerate the configuration and reload NGINX. A resource could be of any type the Ingress Controller monitors -- see [The Ingress Controller is a Kubernetes Controller](#the-ingress-controller-is-a-kubernetes-controller) section.
 
 There are two special cases:
-- *Start*. When the IC starts, it processes all resources in the cluster and only then reloads NGINX. This avoids creating a "reload storm" by only reloading once.
-- *NGINX Plus*. If the IC uses NGINX Plus, it will not reload NGINX Plus for changes to the Endpoints resources. In this case, the IC will use NGINX Plus API to update the corresponding upstreams and skip reloading.
+- *Start*. When the Ingress Controller starts, it processes all resources in the cluster and only then reloads NGINX. This avoids creating a "reload storm" by reloading only once.
+- *NGINX Plus*. If the Ingress Controller uses NGINX Plus, it will not reload NGINX Plus for changes to the Endpoints resources. In this case, the Ingress Controller will use the NGINX Plus API to update the corresponding upstreams and skip reloading.
