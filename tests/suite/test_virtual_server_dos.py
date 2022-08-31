@@ -215,11 +215,11 @@ class TestDos:
         print(f"log_loc: {log_loc} syslog_pod: {syslog_pod} namespace: {ingress_controller_prerequisites.namespace}")
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
 
-        print("\n===================== IC Logs Start =====================")
-        pod_name = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "nginx-ingress")
-        admd_log = kube_apis.v1.read_namespaced_pod_log(pod_name, ingress_controller_prerequisites.namespace)
-        print_admd_log(admd_log)
-        print("\n===================== IC Logs End =====================")
+        # print("\n===================== ADMD Logs Start =====================")
+        # pod_name = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "nginx-ingress")
+        # admd_log = kube_apis.v1.read_namespaced_pod_log(pod_name, ingress_controller_prerequisites.namespace)
+        # print_admd_log(admd_log)
+        # print("\n===================== ADMD Logs End =====================")
 
         assert 'product="app-protect-dos"' in log_contents
         assert f'vs_name="{test_namespace}/dos-protected/name"' in log_contents
@@ -284,10 +284,10 @@ class TestDos:
             "nginx-ingress",
         )
 
-        print("\n===================== IC Logs Start =====================")
-        admd_log = kube_apis.v1.read_namespaced_pod_log(pod_name, ingress_controller_prerequisites.namespace)
-        print_admd_log(admd_log)
-        print("\n===================== IC Logs End =====================")
+        # print("\n===================== ADMD Logs Start =====================")
+        # admd_log = kube_apis.v1.read_namespaced_pod_log(pod_name, ingress_controller_prerequisites.namespace)
+        # print_admd_log(admd_log)
+        # print("\n===================== ADMD Logs End =====================")
 
         for _ in conf_directives:
             assert _ in result_conf
@@ -342,11 +342,11 @@ class TestDos:
             'attack_event="Attack ended"',
         )
 
-        print("\n===================== IC Logs Start =====================")
-        pod_name = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "nginx-ingress")
-        admd_log = kube_apis.v1.read_namespaced_pod_log(pod_name, ingress_controller_prerequisites.namespace)
-        print_admd_log(admd_log)
-        print("\n===================== IC Logs End =====================")
+        # print("\n===================== ADMD Logs Start =====================")
+        # pod_name = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "nginx-ingress")
+        # admd_log = kube_apis.v1.read_namespaced_pod_log(pod_name, ingress_controller_prerequisites.namespace)
+        # print_admd_log(admd_log)
+        # print("\n===================== ADMD Logs End =====================")
 
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
         log_info_dic = log_content_to_dic(log_contents)
@@ -448,11 +448,11 @@ class TestDos:
         print("Stop Good Client")
         p_good_client.terminate()
 
-        print("\n===================== IC Logs Start =====================")
-        pod_name = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "nginx-ingress")
-        admd_log = kube_apis.v1.read_namespaced_pod_log(pod_name, ingress_controller_prerequisites.namespace)
-        print_admd_log(admd_log)
-        print("\n===================== IC Logs End =====================")
+        # print("\n===================== ADMD Logs Start =====================")
+        # pod_name = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "nginx-ingress")
+        # admd_log = kube_apis.v1.read_namespaced_pod_log(pod_name, ingress_controller_prerequisites.namespace)
+        # print_admd_log(admd_log)
+        # print("\n===================== ADMD Logs End =====================")
 
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
         log_info_dic = log_content_to_dic(log_contents)
