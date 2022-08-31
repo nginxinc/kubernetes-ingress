@@ -431,9 +431,10 @@ class TestAppProtect:
         wait_before_test(120)
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
         print("----------------------- Send request ----------------------")
-        response = requests.get(appprotect_setup.req_url, headers={"host": ingress_host}, verify=False, data="kic")
-        print(response.text)
-
+        response1 = requests.get(appprotect_setup.req_url, headers={"host": ingress_host}, verify=False, data="kic")
+        print(response1.text)
+        response2 = requests.get(appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False)
+        print(response2.text)
         reload_ms = get_last_reload_time(appprotect_setup.metrics_url, "nginx")
         print(f"last reload duration: {reload_ms} ms")
         reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
@@ -448,4 +449,5 @@ class TestAppProtect:
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
         assert_ap_crd_info(ap_crd_info, ap_policy)
-        assert_invalid_responses(response)
+        assert_invalid_responses(response1)
+        assert_invalid_responses(response2)
