@@ -230,6 +230,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.pod.annotations`` | The annotations of the Ingress Controller pod. | {} |
 |``controller.readyStatus.enable`` | Enables the readiness endpoint `"/nginx-ready"`. The endpoint returns a success code when NGINX has loaded all the config after the startup. This also configures a readiness probe for the Ingress Controller pods that uses the readiness endpoint. | true |
 |``controller.readyStatus.port`` | The HTTP port for the readiness endpoint. | 8081 |
+|``controller.readyStatus.initialDelaySeconds`` | The number of seconds after the Ingress Controller pod has started before readiness probes are initiated. | 0 |
 |``controller.enableLatencyMetrics`` | Enable collection of latency metrics for upstreams. Requires ``prometheus.create``. | false |
 |``controller.minReadySeconds`` | Specifies the minimum number of seconds for which a newly created Pod should be ready, without any of its containers crashing, for it to be considered available. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#min-ready-seconds) | 0 |
 |``controller.strategy`` | Specifies the strategy used to replace old Pods with new ones. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) | {} |

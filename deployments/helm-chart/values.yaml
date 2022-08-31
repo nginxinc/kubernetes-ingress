@@ -366,6 +366,9 @@ controller:
     ## Set the port where the readiness endpoint is exposed.
     port: 8081
 
+    ## The number of seconds after the Ingress Controller pod has started before readiness probes are initiated.
+    initialDelaySeconds: 0
+
   ## Enable collection of latency metrics for upstreams. Requires prometheus.create.
   enableLatencyMetrics: false
 
