@@ -10,6 +10,8 @@ import (
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
+//
+//nolint:gocyclo
 func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool) *ConfigParams {
 	cfgParams := NewDefaultConfigParams(nginxPlus)
 
