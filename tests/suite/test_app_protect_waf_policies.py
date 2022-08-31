@@ -291,7 +291,6 @@ class TestAppProtectWAFPolicyVS:
         assert_valid_responses(response1)
         assert_valid_responses(response2)
 
-
     def test_ap_waf_policy_multi_logs(
         self,
         kube_apis,
