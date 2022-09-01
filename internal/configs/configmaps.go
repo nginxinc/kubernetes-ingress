@@ -163,7 +163,7 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 			if realIPHeader == "proxy_protocol" {
 				glog.Infof(msg, cfgm.GetNamespace(), cfgm.GetName())
 			} else {
-				glog.Warningf(msg, cfgm.GetNamespace(), cfgm.GetName())
+				glog.Errorf(msg, cfgm.GetNamespace(), cfgm.GetName())
 			}
 		} else {
 			cfgParams.RealIPHeader = realIPHeader
