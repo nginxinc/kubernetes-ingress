@@ -10,6 +10,12 @@ upstream {{$upstream.Name}} {
 
 {{range $server := .Servers}}
 server {
+	{{if index $.Ingress.Annotations "custom.nginx.org/cors-allow-origin"}} 
+	# replace Access-Control-Allow-Origin header 
+	proxy_hide_header "Access-Control-Allow-Origin"; 
+	add_header Access-Control-Allow-Origin "{{ index $.Ingress.Annotations "custom.nginx.org/cors-allow-origin"}}"; 
+	{{end}}
+
 	{{if not $server.GRPCOnly}}
 	{{range $port := $server.Ports}}
 	listen {{$port}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
