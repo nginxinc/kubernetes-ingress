@@ -1209,8 +1209,8 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> {}:
     print("Load yaml:")
     with open(yaml_manifest) as f:
         docs = yaml.safe_load_all(f)
-        try:
-            for doc in docs:
+        for doc in docs:
+            if doc:
                 if doc["kind"] == "Secret":
                     res["Secret"] = create_secret(kube_apis.v1, namespace, doc)
                 elif doc["kind"] == "ConfigMap":
@@ -1225,8 +1225,6 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> {}:
                     res["DaemonSet"] = create_daemon_set(kube_apis.apps_v1_api, namespace, doc)
                 elif doc["kind"] == "Namespace":
                     res["Namespace"] = create_namespace(kube_apis.v1, doc)
-        except Exception:
-            pass
 
     return res
 
@@ -1325,8 +1323,8 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
     print("Load yaml:")
     with open(yaml_manifest) as f:
         docs = yaml.safe_load_all(f)
-        try:
-            for doc in docs:
+        for doc in docs:
+            if doc:
                 if doc["kind"] == "Namespace":
                     delete_namespace(kube_apis.v1, doc["metadata"]["name"])
                 elif doc["kind"] == "Secret":
@@ -1341,8 +1339,6 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
                     delete_daemon_set(kube_apis.apps_v1_api, doc["metadata"]["name"], namespace)
                 elif doc["kind"] == "ConfigMap":
                     delete_configmap(kube_apis.v1, doc["metadata"]["name"], namespace)
-        except Exception:
-            pass
 
 
 def ensure_connection(request_url, expected_code=404, headers={}) -> None:

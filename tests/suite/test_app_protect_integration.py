@@ -285,6 +285,7 @@ class TestAppProtect:
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
 
         print("----------------------- Send request ----------------------")
+        wait_before_test(5)
         response = requests.get(appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False)
         print(response.text)
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
