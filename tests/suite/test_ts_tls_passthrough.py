@@ -1,18 +1,17 @@
 from pprint import pprint
 
 import pytest
-
-from settings import TEST_DATA, DEPLOYMENTS
+from settings import DEPLOYMENTS, TEST_DATA
 from suite.custom_resources_utils import create_ts_from_yaml, delete_ts, read_ts
 from suite.fixtures import PublicEndpoint
 from suite.resources_utils import (
     create_items_from_yaml,
     delete_items_from_yaml,
+    get_file_contents,
     get_first_pod_name,
+    replace_configmap_from_yaml,
     wait_before_test,
     wait_until_all_pods_are_ready,
-    replace_configmap_from_yaml,
-    get_file_contents,
 )
 from suite.ssl_utils import create_sni_session
 from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server, read_vs
