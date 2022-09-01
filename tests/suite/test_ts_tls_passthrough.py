@@ -155,10 +155,7 @@ class TestTransportServerTlsPassthrough:
             f"{TEST_DATA}/transport-server-tls-passthrough/nginx-config.yaml",
         )
         wait_before_test(1)
-        config = get_file_contents(kube_apis.v1,
-                                   config_path,
-                                   ic_pod_name,
-                                   ingress_controller_prerequisites.namespace)
+        config = get_file_contents(kube_apis.v1, config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
         assert "listen 443 proxy_protocol;" in config
         assert "listen [::]:443 proxy_protocol;" in config
         std_cm_src = f"{DEPLOYMENTS}/common/nginx-config.yaml"
