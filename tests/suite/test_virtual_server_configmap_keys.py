@@ -1,8 +1,13 @@
 import pytest
-
-from settings import TEST_DATA, DEPLOYMENTS
-from suite.resources_utils import wait_before_test, replace_configmap_from_yaml, get_events, get_first_pod_name, \
-    get_file_contents, get_pods_amount
+from settings import DEPLOYMENTS, TEST_DATA
+from suite.resources_utils import (
+    get_events,
+    get_file_contents,
+    get_first_pod_name,
+    get_pods_amount,
+    replace_configmap_from_yaml,
+    wait_before_test,
+)
 from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf
 from suite.yaml_utils import get_configmap_fields_from_yaml
 
@@ -28,7 +33,7 @@ def assert_update_event_count_increased(virtual_server_setup, new_list, previous
     item_name = f"{virtual_server_setup.namespace}/{virtual_server_setup.vs_name}"
     text_valid = f"Configuration for {item_name} was added or updated"
     text_invalid = "but was not applied"
-    for i in range(len(previous_list)-1, 0, -1):
+    for i in range(len(previous_list) - 1, 0, -1):
         if text_valid in previous_list[i].message and text_invalid not in previous_list[i].message:
             assert new_list[i].count - previous_list[i].count == 1, "We expect the counter to increase"
 
@@ -67,25 +72,26 @@ def assert_keys_with_validation_in_main_config(config, expected_values):
 def assert_specific_keys_for_nginx_plus(config, expected_values):
     # based on f"{TEST_DATA}/virtual-server-configmap-keys/configmap-validation-keys.yaml"
     assert f"server_tokens \"{expected_values['server-tokens']}\";" in config
-    assert "random two least_conn;" not in config \
-           and expected_values['lb-method'] in config
+    assert "random two least_conn;" not in config and expected_values["lb-method"] in config
     assert "zone " in config and " 512k;" in config
 
 
 def assert_specific_keys_for_nginx_oss(config, expected_values):
     # based on f"{TEST_DATA}/virtual-server-configmap-keys/configmap-validation-keys-oss.yaml"
-    assert "server_tokens \"off\"" in config
-    assert "random two least_conn;" not in config \
-           and expected_values['lb-method'] in config
+    assert 'server_tokens "off"' in config
+    assert "random two least_conn;" not in config and expected_values["lb-method"] in config
     assert "zone " not in config and " 256k;" not in config
+
 
 def assert_defaults_of_keys_with_validation_for_nginx_plus(config, unexpected_values):
     assert_common_defaults_of_keys_with_validation(config, unexpected_values)
     assert "zone " in config and " 512k;" in config
 
+
 def assert_defaults_of_keys_with_validation_for_nginx_oss(config, unexpected_values):
     assert_common_defaults_of_keys_with_validation(config, unexpected_values)
     assert "zone " in config and " 256k;" in config
+
 
 def assert_common_defaults_of_keys_with_validation(config, unexpected_values):
     assert "proxy_buffering on;" in config
@@ -93,8 +99,8 @@ def assert_common_defaults_of_keys_with_validation(config, unexpected_values):
     assert "max_fails=1" in config
     assert "keepalive" not in config
     assert "listen 80;" in config
-    assert "server_tokens \"on\"" in config
-    assert "random two least_conn;" in config and unexpected_values['lb-method'] not in config
+    assert 'server_tokens "on"' in config
+    assert "random two least_conn;" in config and unexpected_values["lb-method"] not in config
     assert f"proxy_send_timeout 60s;" in config
 
 
@@ -130,63 +136,88 @@ def clean_up(request, kube_apis, ingress_controller_prerequisites, test_namespac
     """
 
     def fin():
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    f"{DEPLOYMENTS}/common/nginx-config.yaml")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{DEPLOYMENTS}/common/nginx-config.yaml",
+        )
 
     request.addfinalizer(fin)
 
 
 @pytest.mark.vs
-@pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
-                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
-                           {"example": "virtual-server-configmap-keys", "app_type": "simple"})],
-                         indirect=True)
+@pytest.mark.parametrize(
+    "crd_ingress_controller, virtual_server_setup",
+    [
+        (
+            {"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+            {"example": "virtual-server-configmap-keys", "app_type": "simple"},
+        )
+    ],
+    indirect=True,
+)
 class TestVirtualServerConfigMapNoTls:
-    def test_keys(self, cli_arguments, kube_apis, ingress_controller_prerequisites,
-                  crd_ingress_controller, virtual_server_setup, clean_up):
+    def test_keys(
+        self,
+        cli_arguments,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        virtual_server_setup,
+        clean_up,
+    ):
         ic_pods_amount = get_pods_amount(kube_apis.v1, ingress_controller_prerequisites.namespace)
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         initial_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
 
         print("Step 1: update ConfigMap with valid keys without validation rules")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    f"{TEST_DATA}/virtual-server-configmap-keys/configmap-no-validation-keys.yaml")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/virtual-server-configmap-keys/configmap-no-validation-keys.yaml",
+        )
         expected_values = get_configmap_fields_from_yaml(
-            f"{TEST_DATA}/virtual-server-configmap-keys/configmap-no-validation-keys.yaml")
+            f"{TEST_DATA}/virtual-server-configmap-keys/configmap-no-validation-keys.yaml"
+        )
         wait_before_test(1)
         step_1_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        step_1_config = get_vs_nginx_template_conf(kube_apis.v1,
-                                                   virtual_server_setup.namespace,
-                                                   virtual_server_setup.vs_name,
-                                                   ic_pod_name,
-                                                   ingress_controller_prerequisites.namespace)
+        step_1_config = get_vs_nginx_template_conf(
+            kube_apis.v1,
+            virtual_server_setup.namespace,
+            virtual_server_setup.vs_name,
+            ic_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
         assert_update_event_count_increased(virtual_server_setup, step_1_events, initial_list)
         assert_keys_without_validation(step_1_config, expected_values)
 
         print("Step 2: update ConfigMap with invalid keys without validation rules")
         cm_src = f"{TEST_DATA}/virtual-server-configmap-keys/configmap-no-validation-keys-invalid.yaml"
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    cm_src)
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            cm_src,
+        )
         expected_values = get_configmap_fields_from_yaml(
-            f"{TEST_DATA}/virtual-server-configmap-keys/configmap-no-validation-keys-invalid.yaml")
+            f"{TEST_DATA}/virtual-server-configmap-keys/configmap-no-validation-keys-invalid.yaml"
+        )
         wait_before_test(1)
         step_2_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        step_2_config = get_vs_nginx_template_conf(kube_apis.v1,
-                                                   virtual_server_setup.namespace,
-                                                   virtual_server_setup.vs_name,
-                                                   ic_pod_name,
-                                                   ingress_controller_prerequisites.namespace)
+        step_2_config = get_vs_nginx_template_conf(
+            kube_apis.v1,
+            virtual_server_setup.namespace,
+            virtual_server_setup.vs_name,
+            ic_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
         assert_not_applied_events_emitted(virtual_server_setup, step_2_events, step_1_events, ic_pods_amount)
         assert_keys_without_validation(step_2_config, expected_values)
 
         # to cover the OSS case, this will be changed in the future
-        if cli_arguments['ic-type'] == "nginx-ingress":
+        if cli_arguments["ic-type"] == "nginx-ingress":
             data_file = f"{TEST_DATA}/virtual-server-configmap-keys/configmap-validation-keys-oss.yaml"
             data_file_invalid = f"{TEST_DATA}/virtual-server-configmap-keys/configmap-validation-keys-invalid-oss.yaml"
         else:
@@ -194,47 +225,62 @@ class TestVirtualServerConfigMapNoTls:
             data_file_invalid = f"{TEST_DATA}/virtual-server-configmap-keys/configmap-validation-keys-invalid.yaml"
 
         print("Step 3: update ConfigMap with valid keys with validation rules")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    data_file)
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            data_file,
+        )
         expected_values = get_configmap_fields_from_yaml(data_file)
         wait_before_test(1)
-        step_3_config = get_vs_nginx_template_conf(kube_apis.v1,
-                                                   virtual_server_setup.namespace,
-                                                   virtual_server_setup.vs_name,
-                                                   ic_pod_name,
-                                                   ingress_controller_prerequisites.namespace)
+        step_3_config = get_vs_nginx_template_conf(
+            kube_apis.v1,
+            virtual_server_setup.namespace,
+            virtual_server_setup.vs_name,
+            ic_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
         step_3_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_update_event_count_increased(virtual_server_setup, step_3_events, step_2_events)
         assert_keys_with_validation(step_3_config, expected_values)
         # to cover the OSS case, this will be changed in the future
-        if cli_arguments['ic-type'] == "nginx-ingress":
+        if cli_arguments["ic-type"] == "nginx-ingress":
             assert_specific_keys_for_nginx_oss(step_3_config, expected_values)
         else:
             assert_specific_keys_for_nginx_plus(step_3_config, expected_values)
 
         print("Step 4: update ConfigMap with invalid keys")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    data_file_invalid)
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            data_file_invalid,
+        )
         expected_values = get_configmap_fields_from_yaml(data_file_invalid)
         wait_before_test(1)
-        step_4_config = get_vs_nginx_template_conf(kube_apis.v1,
-                                                   virtual_server_setup.namespace,
-                                                   virtual_server_setup.vs_name,
-                                                   ic_pod_name,
-                                                   ingress_controller_prerequisites.namespace)
+        step_4_config = get_vs_nginx_template_conf(
+            kube_apis.v1,
+            virtual_server_setup.namespace,
+            virtual_server_setup.vs_name,
+            ic_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
         step_4_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_update_event_count_increased(virtual_server_setup, step_4_events, step_3_events)
-        if cli_arguments['ic-type'] == "nginx-ingress":
+        if cli_arguments["ic-type"] == "nginx-ingress":
             assert_defaults_of_keys_with_validation_for_nginx_oss(step_4_config, expected_values)
         else:
             assert_defaults_of_keys_with_validation_for_nginx_plus(step_4_config, expected_values)
 
-    def test_keys_in_main_config(self, cli_arguments, kube_apis, ingress_controller_prerequisites,
-                                 crd_ingress_controller, virtual_server_setup, clean_up):
+    def test_keys_in_main_config(
+        self,
+        cli_arguments,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        virtual_server_setup,
+        clean_up,
+    ):
         wait_before_test(1)
         ic_pods_amount = get_pods_amount(kube_apis.v1, ingress_controller_prerequisites.namespace)
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
@@ -244,27 +290,33 @@ class TestVirtualServerConfigMapNoTls:
         config_path = "/etc/nginx/nginx.conf"
 
         print("Step 5: main config: update ConfigMap with valid keys with validation rules")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    data_file)
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            data_file,
+        )
         expected_values = get_configmap_fields_from_yaml(data_file)
         wait_before_test(1)
-        step_5_config = get_file_contents(kube_apis.v1,
-                                          config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
+        step_5_config = get_file_contents(
+            kube_apis.v1, config_path, ic_pod_name, ingress_controller_prerequisites.namespace
+        )
         step_5_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_update_event_count_increased(virtual_server_setup, step_5_events, initial_list)
         assert_keys_with_validation_in_main_config(step_5_config, expected_values)
 
         print("Step 6: main config: update ConfigMap with invalid keys")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    data_file_invalid)
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            data_file_invalid,
+        )
         unexpected_values = get_configmap_fields_from_yaml(data_file_invalid)
         wait_before_test(1)
-        step_6_config = get_file_contents(kube_apis.v1,
-                                          config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
+        step_6_config = get_file_contents(
+            kube_apis.v1, config_path, ic_pod_name, ingress_controller_prerequisites.namespace
+        )
         step_6_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_update_event_count_increased(virtual_server_setup, step_6_events, step_5_events)
         assert_defaults_of_keys_with_validation_in_main_config(step_6_config, unexpected_values)
@@ -272,56 +324,80 @@ class TestVirtualServerConfigMapNoTls:
         print("Step 7: main config: special case for hash variables")
         data_file = f"{TEST_DATA}/virtual-server-configmap-keys/configmap-global-variables.yaml"
         expected_values = get_configmap_fields_from_yaml(data_file)
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    data_file)
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            data_file,
+        )
         wait_before_test(1)
-        step_7_config = get_file_contents(kube_apis.v1,
-                                          config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
+        step_7_config = get_file_contents(
+            kube_apis.v1, config_path, ic_pod_name, ingress_controller_prerequisites.namespace
+        )
         step_7_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
         assert_not_applied_events_emitted(virtual_server_setup, step_7_events, step_6_events, ic_pods_amount)
         assert_keys_with_validation_in_main_config(step_7_config, expected_values)
 
 
 @pytest.mark.vs
-@pytest.mark.parametrize('crd_ingress_controller, virtual_server_setup',
-                         [({"type": "complete", "extra_args": [f"-enable-custom-resources"]},
-                           {"example": "virtual-server-tls", "app_type": "simple"})],
-                         indirect=True)
+@pytest.mark.parametrize(
+    "crd_ingress_controller, virtual_server_setup",
+    [
+        (
+            {"type": "complete", "extra_args": [f"-enable-custom-resources"]},
+            {"example": "virtual-server-tls", "app_type": "simple"},
+        )
+    ],
+    indirect=True,
+)
 class TestVirtualServerConfigMapWithTls:
-    def test_ssl_keys(self, cli_arguments, kube_apis, ingress_controller_prerequisites, crd_ingress_controller,
-                      virtual_server_setup, clean_up):
+    def test_ssl_keys(
+        self,
+        cli_arguments,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        virtual_server_setup,
+        clean_up,
+    ):
         ic_pods_amount = get_pods_amount(kube_apis.v1, ingress_controller_prerequisites.namespace)
         ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
         initial_list = get_events(kube_apis.v1, virtual_server_setup.namespace)
 
         print("Step 1: update ConfigMap with valid ssl keys")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    f"{TEST_DATA}/virtual-server-configmap-keys/configmap-ssl-keys.yaml")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/virtual-server-configmap-keys/configmap-ssl-keys.yaml",
+        )
         wait_before_test(1)
         step_1_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        step_1_config = get_vs_nginx_template_conf(kube_apis.v1,
-                                                   virtual_server_setup.namespace,
-                                                   virtual_server_setup.vs_name,
-                                                   ic_pod_name,
-                                                   ingress_controller_prerequisites.namespace)
+        step_1_config = get_vs_nginx_template_conf(
+            kube_apis.v1,
+            virtual_server_setup.namespace,
+            virtual_server_setup.vs_name,
+            ic_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
         assert_update_event_count_increased(virtual_server_setup, step_1_events, initial_list)
         assert_ssl_keys(step_1_config)
 
         print("Step 2: update ConfigMap with invalid ssl keys")
-        replace_configmap_from_yaml(kube_apis.v1,
-                                    ingress_controller_prerequisites.config_map['metadata']['name'],
-                                    ingress_controller_prerequisites.namespace,
-                                    f"{TEST_DATA}/virtual-server-configmap-keys/configmap-ssl-keys-invalid.yaml")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/virtual-server-configmap-keys/configmap-ssl-keys-invalid.yaml",
+        )
         wait_before_test(1)
         step_2_events = get_events(kube_apis.v1, virtual_server_setup.namespace)
-        step_2_config = get_vs_nginx_template_conf(kube_apis.v1,
-                                                   virtual_server_setup.namespace,
-                                                   virtual_server_setup.vs_name,
-                                                   ic_pod_name,
-                                                   ingress_controller_prerequisites.namespace)
+        step_2_config = get_vs_nginx_template_conf(
+            kube_apis.v1,
+            virtual_server_setup.namespace,
+            virtual_server_setup.vs_name,
+            ic_pod_name,
+            ingress_controller_prerequisites.namespace,
+        )
         assert_update_event_count_increased(virtual_server_setup, step_2_events, step_1_events)
         assert_defaults_of_ssl_keys(step_2_config)

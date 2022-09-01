@@ -4,7 +4,7 @@ on:
   workflow_run:
     branches: main
     workflows:
-      - "Continuous Integration"
+      - "CI"
     types:
       - completed
 
@@ -35,11 +35,10 @@ jobs:
       matrix:
         repo:
           - nginxinc/kubernetes-ingress
-          - nginxinc/nginx-ingress-operator
+          - nginxinc/nginx-ingress-helm-operator
           - nginxinc/nginx-prometheus-exporter
           - nginxinc/nginx-plus-go-client
           - nginxinc/nginx-asg-sync
-          - nginxinc/nginx-ns1-gslb
     runs-on: ubuntu-20.04
     if: ${{ github.event.repository.fork == false }}
     steps:

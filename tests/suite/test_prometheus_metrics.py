@@ -1,31 +1,28 @@
 import pytest
 import requests
-
-from kubernetes.client import V1ContainerPort
-
+from settings import TEST_DATA
 from suite.custom_resources_utils import (
-    create_ts_from_yaml,
-    patch_ts_from_yaml,
-    patch_ts, delete_ts,
     create_gc_from_yaml,
+    create_ts_from_yaml,
     delete_gc,
+    delete_ts,
+    patch_ts,
+    patch_ts_from_yaml,
 )
 from suite.resources_utils import (
-    ensure_connection_to_public_endpoint,
-    create_items_from_yaml,
     create_example_app,
+    create_items_from_yaml,
+    create_secret_from_yaml,
     delete_common_app,
     delete_items_from_yaml,
-    wait_until_all_pods_are_ready,
+    delete_secret,
+    ensure_connection,
+    ensure_connection_to_public_endpoint,
     ensure_response_from_backend,
     wait_before_test,
     wait_until_all_pods_are_ready,
-    ensure_connection,
-    delete_secret,
-    create_secret_from_yaml,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
-from settings import TEST_DATA
 
 
 class IngressSetup:
@@ -58,15 +55,9 @@ def prometheus_secret_setup(request, kube_apis, test_namespace):
 @pytest.fixture(scope="class")
 def ingress_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> IngressSetup:
     print("------------------------- Deploy Ingress Example -----------------------------------")
-    secret_name = create_secret_from_yaml(
-        kube_apis.v1, test_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml"
-    )
-    create_items_from_yaml(
-        kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace
-    )
-    ingress_host = get_first_ingress_host_from_yaml(
-        f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml"
-    )
+    secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml")
+    create_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
+    ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml")
     create_example_app(kube_apis, "simple", test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(
@@ -79,15 +70,12 @@ def ingress_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
     def fin():
         print("Clean up simple app")
         delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace
-        )
+        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
         delete_secret(kube_apis.v1, secret_name, test_namespace)
 
     request.addfinalizer(fin)
 
     return IngressSetup(req_url, ingress_host)
-
 
 
 @pytest.mark.ingresses
@@ -123,7 +111,7 @@ class TestPrometheusExporter:
         ingress_controller,
         expected_metrics,
         ingress_setup,
-    ):  
+    ):
         ensure_connection(ingress_setup.req_url, 200, {"host": ingress_setup.ingress_host})
         resp = requests.get(ingress_setup.req_url, headers={"host": ingress_setup.ingress_host}, verify=False)
         assert resp.status_code == 200
@@ -172,7 +160,13 @@ class TestPrometheusExporter:
         "ingress_controller, expected_metrics",
         [
             pytest.param(
-                {"extra_args": ["-enable-prometheus-metrics", "-enable-latency-metrics", "-prometheus-tls-secret=nginx-ingress/prometheus-test-secret"]},
+                {
+                    "extra_args": [
+                        "-enable-prometheus-metrics",
+                        "-enable-latency-metrics",
+                        "-prometheus-tls-secret=nginx-ingress/prometheus-test-secret",
+                    ]
+                },
                 [
                     'nginx_ingress_controller_ingress_resources_total{class="nginx",type="master"} 0',
                     'nginx_ingress_controller_ingress_resources_total{class="nginx",type="minion"} 0',
@@ -182,21 +176,20 @@ class TestPrometheusExporter:
         indirect=["ingress_controller"],
     )
     def test_https_metrics(
-            self,
-            prometheus_secret_setup,
-            ingress_controller_endpoint,
-            ingress_controller,
-            expected_metrics,
-            ingress_setup,
+        self,
+        prometheus_secret_setup,
+        ingress_controller_endpoint,
+        ingress_controller,
+        expected_metrics,
+        ingress_setup,
     ):
         # assert http fails
         req_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         ensure_connection(req_url, 400)
         resp = requests.get(req_url, verify=False)
         assert (
-            "Client sent an HTTP request to an HTTPS server" in resp.text and
-            resp.status_code == 400, f"Expected 400 code for http request to /metrics and got {resp.status_code}"
-        )
+            "Client sent an HTTP request to an HTTPS server" in resp.text and resp.status_code == 400
+        ), f"Expected 400 code for http request to /metrics and got {resp.status_code}"
 
         # assert https succeeds
         req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
@@ -228,7 +221,10 @@ def assert_ts_total_metric(ingress_controller_endpoint, ts_type, value):
     resp_content = resp.content.decode("utf-8")
 
     assert resp.status_code == 200, f"Expected 200 code for /metrics but got {resp.status_code}"
-    assert f'nginx_ingress_controller_transportserver_resources_total{{class="nginx",type="{ts_type}"}} {value}' in resp_content
+    assert (
+        f'nginx_ingress_controller_transportserver_resources_total{{class="nginx",type="{ts_type}"}} {value}'
+        in resp_content
+    )
 
 
 @pytest.mark.ts
@@ -238,31 +234,27 @@ def assert_ts_total_metric(ingress_controller_endpoint, ts_type, value):
         pytest.param(
             {
                 "type": "complete",
-                "extra_args":
-                    [
-                        "-global-configuration=nginx-ingress/nginx-configuration",
-                        "-enable-tls-passthrough",
-                        "-enable-prometheus-metrics"
-                    ]
+                "extra_args": [
+                    "-global-configuration=nginx-ingress/nginx-configuration",
+                    "-enable-tls-passthrough",
+                    "-enable-prometheus-metrics",
+                ],
             },
         )
     ],
     indirect=True,
 )
 class TestTransportServerMetrics:
-    @pytest.mark.parametrize("ts", [
-        (f"{TEST_DATA}/prometheus/transport-server/passthrough.yaml", "passthrough"),
-        (f"{TEST_DATA}/prometheus/transport-server/tcp.yaml", "tcp"),
-        (f"{TEST_DATA}/prometheus/transport-server/udp.yaml", "udp")
-    ])
+    @pytest.mark.parametrize(
+        "ts",
+        [
+            (f"{TEST_DATA}/prometheus/transport-server/passthrough.yaml", "passthrough"),
+            (f"{TEST_DATA}/prometheus/transport-server/tcp.yaml", "tcp"),
+            (f"{TEST_DATA}/prometheus/transport-server/udp.yaml", "udp"),
+        ],
+    )
     def test_total_metrics(
-            self,
-            crd_ingress_controller,
-            ts_setup,
-            ingress_controller_endpoint,
-            kube_apis,
-            test_namespace,
-            ts
+        self, crd_ingress_controller, ts_setup, ingress_controller_endpoint, kube_apis, test_namespace, ts
     ):
         """
         Tests nginx_ingress_controller_transportserver_resources_total metric for a given TransportServer type.
@@ -292,9 +284,7 @@ class TestTransportServerMetrics:
 
         # restore the TS and check the metric is 1
 
-        patch_ts_from_yaml(
-            kube_apis.custom_objects, ts_resource["metadata"]["name"], ts_file, test_namespace
-        )
+        patch_ts_from_yaml(kube_apis.custom_objects, ts_resource["metadata"]["name"], ts_file, test_namespace)
         wait_before_test()
 
         assert_ts_total_metric(ingress_controller_endpoint, ts_type, 1)

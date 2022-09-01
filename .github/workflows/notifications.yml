@@ -4,7 +4,7 @@ on:
   workflow_run:
     branches: [main, release-*]
     workflows:
-      - "Continuous Integration"
+      - "CI"
       - "CodeQL"
       - "Fossa"
       - "Lint"

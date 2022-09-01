@@ -71,7 +71,7 @@ If you try to create (or update) a resource that violates the structural schema 
 * Example of `kubectl` validation:
     ```
     $ kubectl apply -f apdos-protected.yaml
-    error: error validating "examples/appprotect-dos/apdos-protected.yaml": error validating data: ValidationError(DosProtectedResource.spec.enable): invalid type for com.f5.appprotectdos.v1beta1.DosProtectedResource.spec.enable: got "string", expected "boolean"; if you choose to ignore these errors, turn validation off with --validate=false
+    error: error validating "examples/app-protect-dos/apdos-protected.yaml": error validating data: ValidationError(DosProtectedResource.spec.enable): invalid type for com.f5.appprotectdos.v1beta1.DosProtectedResource.spec.enable: got "string", expected "boolean"; if you choose to ignore these errors, turn validation off with --validate=false
     ```
 * Example of Kubernetes API server validation:
     ```

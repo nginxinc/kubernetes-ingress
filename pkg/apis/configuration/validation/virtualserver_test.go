@@ -74,6 +74,7 @@ func TestValidateHost(t *testing.T) {
 		"hello",
 		"example.com",
 		"hello-world-1",
+		"*.example.com",
 	}
 
 	for _, h := range validHosts {
@@ -89,6 +90,7 @@ func TestValidateHost(t *testing.T) {
 		"..",
 		".example.com",
 		"-hello-world-1",
+		"*.-example.com",
 	}
 
 	for _, h := range invalidHosts {

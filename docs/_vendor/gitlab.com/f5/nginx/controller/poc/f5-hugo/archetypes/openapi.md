@@ -1,11 +1,14 @@
 ---
 title: "{{ replace .Name "-" " " | title }}"
 date: {{ .Date }}
+# Change draft status to false to publish doc
 draft: true
+# Description
+# Add a short description (150 chars) for the doc. Include keywords for SEO. 
+# The description text appears in search results and at the top of the doc.
 description: ""
 # Assign weights in increments of 100
 weight: 
-draft: false
 doctypes: ["reference"]
 toc: true
 tags: [ "api" ]
