@@ -1,30 +1,29 @@
-import requests
-import pytest, json
+import json
 
-from settings import TEST_DATA, DEPLOYMENTS
+import pytest
+import requests
+from settings import DEPLOYMENTS, TEST_DATA
 from suite.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
-    delete_ap_policy,
     delete_ap_logconf,
+    delete_ap_policy,
 )
 from suite.resources_utils import (
-    wait_before_test,
     create_example_app,
-    wait_until_all_pods_are_ready,
-    create_items_from_yaml,
-    delete_items_from_yaml,
-    delete_common_app,
-    ensure_connection_to_public_endpoint,
     create_ingress_with_ap_annotations,
+    create_items_from_yaml,
+    delete_common_app,
+    delete_items_from_yaml,
+    ensure_connection_to_public_endpoint,
     ensure_response_from_backend,
-    wait_before_test,
     get_last_reload_time,
     get_test_file_name,
+    wait_before_test,
+    wait_until_all_pods_are_ready,
     write_to_json,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
-
 
 ap_policies_under_test = ["dataguard-alarm", "file-block", "malformed-block"]
 valid_resp_addr = "Server address:"
@@ -89,9 +88,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
     print("------------------------- Deploy ingress -----------------------------")
     ingress_host = {}
     src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
-    create_ingress_with_ap_annotations(
-        kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", "127.0.0.1:514"
-    )
+    create_ingress_with_ap_annotations(kube_apis, src_ing_yaml, test_namespace, policy, "True", "True", "127.0.0.1:514")
     ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
     wait_before_test()
 
@@ -104,10 +101,7 @@ def backend_setup(request, kube_apis, ingress_controller_endpoint, test_namespac
         delete_common_app(kube_apis, "simple", test_namespace)
         src_sec_yaml = f"{TEST_DATA}/appprotect/appprotect-secret.yaml"
         delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
-        write_to_json(
-            f"reload-{get_test_file_name(request.node.fspath)}.json",
-            reload_times
-        )
+        write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
 
     request.addfinalizer(fin)
 
@@ -141,14 +135,10 @@ class TestAppProtect:
         print("------------- Run test for AP policy: dataguard-alarm --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        ensure_response_from_backend(
-            backend_setup.req_url, backend_setup.ingress_host, check404=True
-        )
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send valid request ----------------------")
-        resp_valid = requests.get(
-            backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False
-        )
+        resp_valid = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False)
 
         print(resp_valid.text)
         reload_ms = get_last_reload_time(backend_setup.metrics_url, "nginx")
@@ -180,14 +170,10 @@ class TestAppProtect:
         print("------------- Run test for AP policy: file-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        ensure_response_from_backend(
-            backend_setup.req_url, backend_setup.ingress_host, check404=True
-        )
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send valid request ----------------------")
-        resp_valid = requests.get(
-            backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False
-        )
+        resp_valid = requests.get(backend_setup.req_url, headers={"host": backend_setup.ingress_host}, verify=False)
         print(resp_valid.text)
 
         reload_ms = get_last_reload_time(backend_setup.metrics_url, "nginx")
@@ -210,18 +196,14 @@ class TestAppProtect:
         assert resp_invalid.status_code == 200
 
     @pytest.mark.parametrize("backend_setup", [{"policy": "malformed-block"}], indirect=True)
-    def test_responses_malformed_block(
-        self, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace
-    ):
+    def test_responses_malformed_block(self, kube_apis, crd_ingress_controller_with_ap, backend_setup, test_namespace):
         """
         Test malformed-block blocking AppProtect policy: Block requests with invalid json or xml body
         """
         print("------------- Run test for AP policy: malformed-block --------------")
         print(f"Request URL: {backend_setup.req_url} and Host: {backend_setup.ingress_host}")
 
-        ensure_response_from_backend(
-            backend_setup.req_url, backend_setup.ingress_host, check404=True
-        )
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send valid request with no body ----------------------")
         headers = {"host": backend_setup.ingress_host}
@@ -267,9 +249,7 @@ class TestAppProtect:
         print(f"Request URL without CSRF protection: {backend_setup.req_url}")
         print(f"Request URL with CSRF protection: {backend_setup.req_url_2}")
 
-        ensure_response_from_backend(
-            backend_setup.req_url_2, backend_setup.ingress_host, check404=True
-        )
+        ensure_response_from_backend(backend_setup.req_url_2, backend_setup.ingress_host, check404=True)
 
         print("----------------------- Send request with http origin header ----------------------")
 
@@ -303,13 +283,9 @@ class TestAppProtect:
         print("------------- Run test for AP policy: User Defined Browser --------------")
         print(f"Request URL: {backend_setup.req_url}")
 
-        ensure_response_from_backend(
-            backend_setup.req_url, backend_setup.ingress_host, check404=True
-        )
+        ensure_response_from_backend(backend_setup.req_url, backend_setup.ingress_host, check404=True)
 
-        print(
-            "----------------------- Send request with User-Agent: browser ----------------------"
-        )
+        print("----------------------- Send request with User-Agent: browser ----------------------")
 
         headers_firefox = {
             "host": backend_setup.ingress_host,

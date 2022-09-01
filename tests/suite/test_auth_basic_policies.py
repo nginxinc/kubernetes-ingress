@@ -1,27 +1,23 @@
-import pytest, requests
 from base64 import b64encode
+
+import pytest
+import requests
 from kubernetes.client.rest import ApiException
+from settings import DEPLOYMENTS, TEST_DATA
+from suite.custom_resources_utils import read_custom_resource
+from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
 from suite.resources_utils import (
-    wait_before_test,
-    replace_configmap_from_yaml,
     create_secret_from_yaml,
     delete_secret,
+    replace_configmap_from_yaml,
     replace_secret,
-)
-from suite.custom_resources_utils import (
-    read_custom_resource,
+    wait_before_test,
 )
 from suite.vs_vsr_resources_utils import (
-    delete_virtual_server,
     create_virtual_server_from_yaml,
     delete_and_create_vs_from_yaml,
+    delete_virtual_server,
 )
-from suite.policy_resources_utils import (
-    create_policy_from_yaml,
-    delete_policy,
-    read_policy,
-)
-from settings import TEST_DATA, DEPLOYMENTS
 
 std_vs_src = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
 htpasswd_sec_valid_src = f"{TEST_DATA}/auth-basic-policy/secret/htpasswd-secret-valid.yaml"
@@ -60,10 +56,10 @@ invalid_credentials_list = [
 ]
 valid_credentials = valid_credentials_list[0]
 
+
 def to_base64(b64_string):
-    return b64encode(
-        b64_string.encode('ascii')
-    ).decode('ascii')
+    return b64encode(b64_string.encode("ascii")).decode("ascii")
+
 
 @pytest.mark.policies
 @pytest.mark.parametrize(
@@ -78,7 +74,10 @@ def to_base64(b64_string):
                     f"-enable-leader-election=false",
                 ],
             },
-            {"example": "virtual-server", "app_type": "simple",},
+            {
+                "example": "virtual-server",
+                "app_type": "simple",
+            },
         )
     ],
     indirect=True,
@@ -93,7 +92,7 @@ class TestAuthBasicPolicies:
         wait_before_test()
 
         # generate header without auth
-        if credentials == None :
+        if credentials == None:
             return secret_name, pol_name, {"host": vs_host}
 
         with open(credentials, "r") as file:
@@ -102,16 +101,12 @@ class TestAuthBasicPolicies:
 
         return secret_name, pol_name, headers
 
-    def setup_multiple_policies(
-        self, kube_apis, test_namespace, credentials, secret_list, policy_1, policy_2, vs_host
-    ):
+    def setup_multiple_policies(self, kube_apis, test_namespace, credentials, secret_list, policy_1, policy_2, vs_host):
         print(f"Create {len(secret_list)} htpasswd secrets")
         # secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, secret)
         secret_name_list = []
         for secret in secret_list:
-            secret_name_list.append(
-                create_secret_from_yaml(kube_apis.v1, test_namespace, secret)
-            )
+            secret_name_list.append(create_secret_from_yaml(kube_apis.v1, test_namespace, secret))
 
         print(f"Create auth basic policy #1")
         pol_name_1 = create_policy_from_yaml(kube_apis.custom_objects, policy_1, test_namespace)
@@ -125,12 +120,17 @@ class TestAuthBasicPolicies:
 
         return secret_name_list, pol_name_1, pol_name_2, headers
 
-    @pytest.mark.parametrize("credentials", valid_credentials_list + invalid_credentials_list + [None] )
+    @pytest.mark.parametrize("credentials", valid_credentials_list + invalid_credentials_list + [None])
     def test_auth_basic_policy_credentials(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, credentials,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        credentials,
     ):
         """
-            Test auth-basic-policy with no credentials, valid credentials and invalid credentials
+        Test auth-basic-policy with no credentials, valid credentials and invalid credentials
         """
         secret, pol_name, headers = self.setup_single_policy(
             kube_apis,
@@ -172,10 +172,15 @@ class TestAuthBasicPolicies:
 
     @pytest.mark.parametrize("htpasswd_secret", [htpasswd_sec_valid_src, htpasswd_sec_invalid_src])
     def test_auth_basic_policy_secret(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, htpasswd_secret,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        htpasswd_secret,
     ):
         """
-            Test auth-basic-policy with a valid and an invalid secret
+        Test auth-basic-policy with a valid and an invalid secret
         """
         if htpasswd_secret == htpasswd_sec_valid_src:
             pol = auth_basic_pol_valid_src
@@ -186,7 +191,12 @@ class TestAuthBasicPolicies:
         else:
             pytest.fail("Invalid configuration")
         secret, pol_name, headers = self.setup_single_policy(
-            kube_apis, test_namespace, valid_credentials, htpasswd_secret, pol, virtual_server_setup.vs_host,
+            kube_apis,
+            test_namespace,
+            valid_credentials,
+            htpasswd_secret,
+            pol,
+            virtual_server_setup.vs_host,
         )
 
         print(f"Patch vs with policy: {pol}")
@@ -231,10 +241,15 @@ class TestAuthBasicPolicies:
     @pytest.mark.smoke
     @pytest.mark.parametrize("policy", [auth_basic_pol_valid_src, auth_basic_pol_invalid_src])
     def test_auth_basic_policy(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace, policy,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
+        policy,
     ):
         """
-            Test auth-basic-policy with a valid and an invalid policy
+        Test auth-basic-policy with a valid and an invalid policy
         """
         secret, pol_name, headers = self.setup_single_policy(
             kube_apis,
@@ -301,10 +316,14 @@ class TestAuthBasicPolicies:
             pytest.fail(f"Not a valid case or parameter")
 
     def test_auth_basic_policy_delete_secret(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
     ):
         """
-            Test if requests result in 500 when secret is deleted
+        Test if requests result in 500 when secret is deleted
         """
         secret, pol_name, headers = self.setup_single_policy(
             kube_apis,
@@ -344,10 +363,14 @@ class TestAuthBasicPolicies:
         assert resp2.status_code == 500
 
     def test_auth_basic_policy_delete_policy(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
     ):
         """
-            Test if requests result in 500 when policy is deleted
+        Test if requests result in 500 when policy is deleted
         """
         secret, pol_name, headers = self.setup_single_policy(
             kube_apis,
@@ -388,16 +411,20 @@ class TestAuthBasicPolicies:
         assert resp2.status_code == 500
 
     def test_auth_basic_policy_override(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
     ):
         """
-            Test if first reference to a policy in the same context takes precedence
+        Test if first reference to a policy in the same context takes precedence
         """
         secret_list, pol_name_1, pol_name_2, headers = self.setup_multiple_policies(
             kube_apis,
             test_namespace,
             valid_credentials,
-            [ htpasswd_sec_valid_src, htpasswd_sec_valid_empty_src ],
+            [htpasswd_sec_valid_src, htpasswd_sec_valid_empty_src],
             auth_basic_pol_valid_src,
             auth_basic_pol_multi_src,
             virtual_server_setup.vs_host,
@@ -450,25 +477,27 @@ class TestAuthBasicPolicies:
             virtual_server_setup.namespace,
         )
 
-        assert (
-            resp1.status_code == 401
-        )  # 401 unauthorized, since no credentials are attached to policy in spec context
+        assert resp1.status_code == 401  # 401 unauthorized, since no credentials are attached to policy in spec context
         assert resp2.status_code == 200
         assert (
             resp3.status_code == 401
         )  # 401 unauthorized, since no credentials are attached to policy in route context
 
     def test_auth_basic_policy_override_spec(
-        self, kube_apis, crd_ingress_controller, virtual_server_setup, test_namespace,
+        self,
+        kube_apis,
+        crd_ingress_controller,
+        virtual_server_setup,
+        test_namespace,
     ):
         """
-            Test if policy reference in route takes precedence over policy in spec
+        Test if policy reference in route takes precedence over policy in spec
         """
         secret_list, pol_name_1, pol_name_2, headers = self.setup_multiple_policies(
             kube_apis,
             test_namespace,
             valid_credentials,
-            [ htpasswd_sec_valid_src, htpasswd_sec_valid_empty_src ],
+            [htpasswd_sec_valid_src, htpasswd_sec_valid_empty_src],
             auth_basic_pol_valid_src,
             auth_basic_pol_multi_src,
             virtual_server_setup.vs_host,

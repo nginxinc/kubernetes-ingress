@@ -1,19 +1,27 @@
-import requests
-import pytest
-
 from base64 import b64encode
-from suite.fixtures import PublicEndpoint
-from suite.resources_utils import create_secret_from_yaml, delete_secret, replace_secret,\
-    ensure_connection_to_public_endpoint, wait_before_test
-from suite.resources_utils import create_items_from_yaml, delete_items_from_yaml, create_example_app, delete_common_app
-from suite.resources_utils import wait_until_all_pods_are_ready, is_secret_present
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+
+import pytest
+import requests
 from settings import TEST_DATA
+from suite.fixtures import PublicEndpoint
+from suite.resources_utils import (
+    create_example_app,
+    create_items_from_yaml,
+    create_secret_from_yaml,
+    delete_common_app,
+    delete_items_from_yaml,
+    delete_secret,
+    ensure_connection_to_public_endpoint,
+    is_secret_present,
+    replace_secret,
+    wait_before_test,
+    wait_until_all_pods_are_ready,
+)
+from suite.yaml_utils import get_first_ingress_host_from_yaml
+
 
 def to_base64(b64_string):
-    return b64encode(
-        b64_string.encode('ascii')
-    ).decode('ascii')
+    return b64encode(b64_string.encode("ascii")).decode("ascii")
 
 
 class AuthBasicAuthMergeableSetup:
@@ -25,9 +33,12 @@ class AuthBasicAuthMergeableSetup:
         ingress_host (str): a hostname from Ingress resource
         master_secret_name (str):
         minion_secret_name (str):
-        credentials_dict ([]): a dictionnary of credentials for testing
+        credentials_dict ([]): a dictionary of credentials for testing
     """
-    def __init__(self, public_endpoint: PublicEndpoint, ingress_host, master_secret_name, minion_secret_name, credentials_dict):
+
+    def __init__(
+        self, public_endpoint: PublicEndpoint, ingress_host, master_secret_name, minion_secret_name, credentials_dict
+    ):
         self.public_endpoint = public_endpoint
         self.ingress_host = ingress_host
         self.master_secret_name = master_secret_name
@@ -36,20 +47,30 @@ class AuthBasicAuthMergeableSetup:
 
 
 @pytest.fixture(scope="class")
-def auth_basic_auth_setup(request, kube_apis, ingress_controller_endpoint, ingress_controller, test_namespace) -> AuthBasicAuthMergeableSetup:
+def auth_basic_auth_setup(
+    request, kube_apis, ingress_controller_endpoint, ingress_controller, test_namespace
+) -> AuthBasicAuthMergeableSetup:
     credentials_dict = {"master": get_credentials_from_file("master"), "minion": get_credentials_from_file("minion")}
-    master_secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace,
-                                                 f"{TEST_DATA}/auth-basic-auth-mergeable/auth-basic-master-secret.yaml")
-    minion_secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace,
-                                                 f"{TEST_DATA}/auth-basic-auth-mergeable/auth-basic-minion-secret.yaml")
-    print("------------------------- Deploy Auth Basic Auth Mergeable Minions Example -----------------------------------")
-    create_items_from_yaml(kube_apis, f"{TEST_DATA}/auth-basic-auth-mergeable/mergeable/auth-basic-auth-ingress.yaml", test_namespace)
-    ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/auth-basic-auth-mergeable/mergeable/auth-basic-auth-ingress.yaml")
+    master_secret_name = create_secret_from_yaml(
+        kube_apis.v1, test_namespace, f"{TEST_DATA}/auth-basic-auth-mergeable/auth-basic-master-secret.yaml"
+    )
+    minion_secret_name = create_secret_from_yaml(
+        kube_apis.v1, test_namespace, f"{TEST_DATA}/auth-basic-auth-mergeable/auth-basic-minion-secret.yaml"
+    )
+    print(
+        "------------------------- Deploy Auth Basic Auth Mergeable Minions Example -----------------------------------"
+    )
+    create_items_from_yaml(
+        kube_apis, f"{TEST_DATA}/auth-basic-auth-mergeable/mergeable/auth-basic-auth-ingress.yaml", test_namespace
+    )
+    ingress_host = get_first_ingress_host_from_yaml(
+        f"{TEST_DATA}/auth-basic-auth-mergeable/mergeable/auth-basic-auth-ingress.yaml"
+    )
     create_example_app(kube_apis, "simple", test_namespace)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
-    ensure_connection_to_public_endpoint(ingress_controller_endpoint.public_ip,
-                                         ingress_controller_endpoint.port,
-                                         ingress_controller_endpoint.port_ssl)
+    ensure_connection_to_public_endpoint(
+        ingress_controller_endpoint.public_ip, ingress_controller_endpoint.port, ingress_controller_endpoint.port_ssl
+    )
     wait_before_test(2)
 
     def fin():
@@ -63,12 +84,15 @@ def auth_basic_auth_setup(request, kube_apis, ingress_controller_endpoint, ingre
 
         print("Clean up the Auth Basic Auth Mergeable Minions Application:")
         delete_common_app(kube_apis, "simple", test_namespace)
-        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/auth-basic-auth-mergeable/mergeable/auth-basic-auth-ingress.yaml",
-                               test_namespace)
+        delete_items_from_yaml(
+            kube_apis, f"{TEST_DATA}/auth-basic-auth-mergeable/mergeable/auth-basic-auth-ingress.yaml", test_namespace
+        )
 
     request.addfinalizer(fin)
 
-    return AuthBasicAuthMergeableSetup(ingress_controller_endpoint, ingress_host, master_secret_name, minion_secret_name, credentials_dict)
+    return AuthBasicAuthMergeableSetup(
+        ingress_controller_endpoint, ingress_host, master_secret_name, minion_secret_name, credentials_dict
+    )
 
 
 def get_credentials_from_file(creds_type) -> str:
@@ -78,44 +102,56 @@ def get_credentials_from_file(creds_type) -> str:
     :param creds_type: 'master' or 'minion'
     :return: str
     """
-    with open(f"{TEST_DATA}/auth-basic-auth-mergeable/credentials/auth-basic-auth-{creds_type}-credentials.txt", "r") as credentials_file:
-        return credentials_file.read().replace('\n', '')
+    with open(
+        f"{TEST_DATA}/auth-basic-auth-mergeable/credentials/auth-basic-auth-{creds_type}-credentials.txt", "r"
+    ) as credentials_file:
+        return credentials_file.read().replace("\n", "")
 
 
-step_1_expected_results = [{"creds_type": "master", "path": "", "response_code": 404},
-                           {"creds_type": "master", "path": "backend1", "response_code": 401},
-                           {"creds_type": "master", "path": "backend2", "response_code": 200},
-                           {"creds_type": "minion", "path": "", "response_code": 401},
-                           {"creds_type": "minion", "path": "backend1", "response_code": 200},
-                           {"creds_type": "minion", "path": "backend2", "response_code": 401}]
+step_1_expected_results = [
+    {"creds_type": "master", "path": "", "response_code": 404},
+    {"creds_type": "master", "path": "backend1", "response_code": 401},
+    {"creds_type": "master", "path": "backend2", "response_code": 200},
+    {"creds_type": "minion", "path": "", "response_code": 401},
+    {"creds_type": "minion", "path": "backend1", "response_code": 200},
+    {"creds_type": "minion", "path": "backend2", "response_code": 401},
+]
 
-step_2_expected_results = [{"creds_type": "master", "path": "", "response_code": 401},
-                           {"creds_type": "master", "path": "backend1", "response_code": 401},
-                           {"creds_type": "master", "path": "backend2", "response_code": 401},
-                           {"creds_type": "minion", "path": "", "response_code": 404},
-                           {"creds_type": "minion", "path": "backend1", "response_code": 200},
-                           {"creds_type": "minion", "path": "backend2", "response_code": 200}]
+step_2_expected_results = [
+    {"creds_type": "master", "path": "", "response_code": 401},
+    {"creds_type": "master", "path": "backend1", "response_code": 401},
+    {"creds_type": "master", "path": "backend2", "response_code": 401},
+    {"creds_type": "minion", "path": "", "response_code": 404},
+    {"creds_type": "minion", "path": "backend1", "response_code": 200},
+    {"creds_type": "minion", "path": "backend2", "response_code": 200},
+]
 
-step_3_expected_results = [{"creds_type": "master", "path": "", "response_code": 401},
-                           {"creds_type": "master", "path": "backend1", "response_code": 200},
-                           {"creds_type": "master", "path": "backend2", "response_code": 401},
-                           {"creds_type": "minion", "path": "", "response_code": 404},
-                           {"creds_type": "minion", "path": "backend1", "response_code": 401},
-                           {"creds_type": "minion", "path": "backend2", "response_code": 200}]
+step_3_expected_results = [
+    {"creds_type": "master", "path": "", "response_code": 401},
+    {"creds_type": "master", "path": "backend1", "response_code": 200},
+    {"creds_type": "master", "path": "backend2", "response_code": 401},
+    {"creds_type": "minion", "path": "", "response_code": 404},
+    {"creds_type": "minion", "path": "backend1", "response_code": 401},
+    {"creds_type": "minion", "path": "backend2", "response_code": 200},
+]
 
-step_4_expected_results = [{"creds_type": "master", "path": "", "response_code": 401},
-                           {"creds_type": "master", "path": "backend1", "response_code": 403},
-                           {"creds_type": "master", "path": "backend2", "response_code": 401},
-                           {"creds_type": "minion", "path": "", "response_code": 404},
-                           {"creds_type": "minion", "path": "backend1", "response_code": 403},
-                           {"creds_type": "minion", "path": "backend2", "response_code": 200}]
+step_4_expected_results = [
+    {"creds_type": "master", "path": "", "response_code": 401},
+    {"creds_type": "master", "path": "backend1", "response_code": 403},
+    {"creds_type": "master", "path": "backend2", "response_code": 401},
+    {"creds_type": "minion", "path": "", "response_code": 404},
+    {"creds_type": "minion", "path": "backend1", "response_code": 403},
+    {"creds_type": "minion", "path": "backend2", "response_code": 200},
+]
 
-step_5_expected_results = [{"creds_type": "master", "path": "", "response_code": 403},
-                           {"creds_type": "master", "path": "backend1", "response_code": 403},
-                           {"creds_type": "master", "path": "backend2", "response_code": 403},
-                           {"creds_type": "minion", "path": "", "response_code": 403},
-                           {"creds_type": "minion", "path": "backend1", "response_code": 403},
-                           {"creds_type": "minion", "path": "backend2", "response_code": 403}]
+step_5_expected_results = [
+    {"creds_type": "master", "path": "", "response_code": 403},
+    {"creds_type": "master", "path": "backend1", "response_code": 403},
+    {"creds_type": "master", "path": "backend2", "response_code": 403},
+    {"creds_type": "minion", "path": "", "response_code": 403},
+    {"creds_type": "minion", "path": "backend1", "response_code": 403},
+    {"creds_type": "minion", "path": "backend2", "response_code": 403},
+]
 
 
 @pytest.mark.ingresses
@@ -125,14 +161,22 @@ class TestAuthBasicAuthMergeableMinions:
         execute_checks(auth_basic_auth_setup, step_1_expected_results)
 
         print("Step 2: replace master secret")
-        replace_secret(kube_apis.v1, auth_basic_auth_setup.master_secret_name, test_namespace,
-                       f"{TEST_DATA}/auth-basic-auth-mergeable/auth-basic-master-secret-updated.yaml")
+        replace_secret(
+            kube_apis.v1,
+            auth_basic_auth_setup.master_secret_name,
+            test_namespace,
+            f"{TEST_DATA}/auth-basic-auth-mergeable/auth-basic-master-secret-updated.yaml",
+        )
         wait_before_test(1)
         execute_checks(auth_basic_auth_setup, step_2_expected_results)
 
         print("Step 3: now replace minion secret as well")
-        replace_secret(kube_apis.v1, auth_basic_auth_setup.minion_secret_name, test_namespace,
-                       f"{TEST_DATA}/auth-basic-auth-mergeable/auth-basic-minion-secret-updated.yaml")
+        replace_secret(
+            kube_apis.v1,
+            auth_basic_auth_setup.minion_secret_name,
+            test_namespace,
+            f"{TEST_DATA}/auth-basic-auth-mergeable/auth-basic-minion-secret-updated.yaml",
+        )
         wait_before_test(1)
         execute_checks(auth_basic_auth_setup, step_3_expected_results)
 
@@ -157,9 +201,12 @@ def execute_checks(auth_basic_auth_setup, expected_results) -> None:
     """
     for expected in expected_results:
         req_url = f"http://{auth_basic_auth_setup.public_endpoint.public_ip}:{auth_basic_auth_setup.public_endpoint.port}/{expected['path']}"
-        resp = requests.get(req_url, headers={
-                                "host": auth_basic_auth_setup.ingress_host,
-                                "authorization": f"Basic {to_base64(auth_basic_auth_setup.credentials_dict[expected['creds_type']])}",
-                            },
-                            allow_redirects=False)
-        assert resp.status_code == expected['response_code']
+        resp = requests.get(
+            req_url,
+            headers={
+                "host": auth_basic_auth_setup.ingress_host,
+                "authorization": f"Basic {to_base64(auth_basic_auth_setup.credentials_dict[expected['creds_type']])}",
+            },
+            allow_redirects=False,
+        )
+        assert resp.status_code == expected["response_code"]

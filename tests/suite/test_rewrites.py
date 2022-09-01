@@ -1,11 +1,17 @@
 import pytest
 import requests
-
 from settings import TEST_DATA
-from suite.resources_utils import create_items_from_yaml, wait_until_all_pods_are_ready, \
-    delete_items_from_yaml, wait_before_test
+from suite.resources_utils import (
+    create_items_from_yaml,
+    delete_items_from_yaml,
+    wait_before_test,
+    wait_until_all_pods_are_ready,
+)
 from suite.vs_vsr_resources_utils import (
-    create_virtual_server_from_yaml, delete_virtual_server, create_v_s_route_from_yaml, delete_v_s_route,
+    create_v_s_route_from_yaml,
+    create_virtual_server_from_yaml,
+    delete_v_s_route,
+    delete_virtual_server,
 )
 
 hello_app_yaml = f"{TEST_DATA}/rewrites/hello.yaml"
@@ -31,8 +37,9 @@ vs_yaml = f"{TEST_DATA}/rewrites/virtual-server-rewrite.yaml"
 
 
 @pytest.fixture(scope="class")
-def vs_rewrites_setup(request, kube_apis, test_namespace, hello_app, ingress_controller_endpoint,
-                      crd_ingress_controller):
+def vs_rewrites_setup(
+    request, kube_apis, test_namespace, hello_app, ingress_controller_endpoint, crd_ingress_controller
+):
     vs = create_virtual_server_from_yaml(kube_apis.custom_objects, vs_yaml, test_namespace)
     wait_before_test()
 
@@ -51,8 +58,9 @@ vsr_regex2_yaml = f"{TEST_DATA}/rewrites/virtual-server-route-regex2.yaml"
 
 
 @pytest.fixture(scope="class")
-def vsr_rewrites_setup(request, kube_apis, test_namespace, hello_app, ingress_controller_endpoint,
-                       crd_ingress_controller):
+def vsr_rewrites_setup(
+    request, kube_apis, test_namespace, hello_app, ingress_controller_endpoint, crd_ingress_controller
+):
     vs_parent = create_virtual_server_from_yaml(kube_apis.custom_objects, vs_parent_yaml, test_namespace)
     vsr_prefixes = create_v_s_route_from_yaml(kube_apis.custom_objects, vsr_prefixes_yaml, test_namespace)
     vsr_regex1 = create_v_s_route_from_yaml(kube_apis.custom_objects, vsr_regex1_yaml, test_namespace)
@@ -70,21 +78,23 @@ def vsr_rewrites_setup(request, kube_apis, test_namespace, hello_app, ingress_co
     return RewritesSetup(ingress_controller_endpoint)
 
 
-test_data = [("/backend1/", {"arg": "value"}, {}, "/?arg=value"),
-             ("/backend1/abc", {"arg": "value"}, {}, "/abc?arg=value"),
-             ("/backend2", {"arg": "value"}, {}, "/backend2_1?arg=value"),
-             ("/backend2/", {"arg": "value"}, {}, "/backend2_1/?arg=value"),
-             ("/backend2/abc", {"arg": "value"}, {}, "/backend2_1/abc?arg=value"),
-             ("/match/", {"arg": "value"}, {}, "/?arg=value"),
-             ("/match/abc", {"arg": "value"}, {},  "/abc?arg=value"),
-             ("/match/", {"arg": "value"}, {"user": "john"}, "/user/john/?arg=value"),
-             ("/match/abc", {"arg": "value"}, {"user": "john"}, "/user/john/abc?arg=value"),
-             ("/regex1/", {"arg": "value"}, {}, "/?arg=value"),
-             ("/regex1//", {"arg": "value"}, {}, "/?arg=value"),
-             ("/regex2/abc", {"arg": "value"}, {}, "/abc?arg=value")]
+test_data = [
+    ("/backend1/", {"arg": "value"}, {}, "/?arg=value"),
+    ("/backend1/abc", {"arg": "value"}, {}, "/abc?arg=value"),
+    ("/backend2", {"arg": "value"}, {}, "/backend2_1?arg=value"),
+    ("/backend2/", {"arg": "value"}, {}, "/backend2_1/?arg=value"),
+    ("/backend2/abc", {"arg": "value"}, {}, "/backend2_1/abc?arg=value"),
+    ("/match/", {"arg": "value"}, {}, "/?arg=value"),
+    ("/match/abc", {"arg": "value"}, {}, "/abc?arg=value"),
+    ("/match/", {"arg": "value"}, {"user": "john"}, "/user/john/?arg=value"),
+    ("/match/abc", {"arg": "value"}, {"user": "john"}, "/user/john/abc?arg=value"),
+    ("/regex1/", {"arg": "value"}, {}, "/?arg=value"),
+    ("/regex1//", {"arg": "value"}, {}, "/?arg=value"),
+    ("/regex2/abc", {"arg": "value"}, {}, "/abc?arg=value"),
+]
 
 
-@pytest.mark.parametrize('crd_ingress_controller', [({'type': 'complete'})], indirect=True)
+@pytest.mark.parametrize("crd_ingress_controller", [({"type": "complete"})], indirect=True)
 class TestRewrites:
     @pytest.mark.vs
     @pytest.mark.parametrize("path,args,cookies,expected", test_data)

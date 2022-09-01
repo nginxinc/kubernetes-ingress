@@ -1,24 +1,18 @@
-import pytest
 import re
 import socket
 import time
 
-from urllib3.exceptions import NewConnectionError
-
+import pytest
+from settings import TEST_DATA
+from suite.custom_resources_utils import create_ts_from_yaml, delete_ts, patch_ts_from_yaml, read_ts
 from suite.resources_utils import (
-    wait_before_test,
+    get_events,
     get_ts_nginx_template_conf,
     scale_deployment,
-    get_events,
+    wait_before_test,
     wait_for_event_increment,
 )
-from suite.custom_resources_utils import (
-    patch_ts_from_yaml,
-    read_ts,
-    delete_ts,
-    create_ts_from_yaml,
-)
-from settings import TEST_DATA
+from urllib3.exceptions import NewConnectionError
 
 
 @pytest.mark.ts
@@ -29,11 +23,10 @@ from settings import TEST_DATA
         (
             {
                 "type": "complete",
-                "extra_args":
-                    [
-                        "-global-configuration=nginx-ingress/nginx-configuration",
-                        "-enable-leader-election=false"
-                    ]
+                "extra_args": [
+                    "-global-configuration=nginx-ingress/nginx-configuration",
+                    "-enable-leader-election=false",
+                ],
             },
             {"example": "transport-server-tcp-load-balance"},
         )
@@ -41,7 +34,6 @@ from settings import TEST_DATA
     indirect=True,
 )
 class TestTransportServerTcpLoadBalance:
-
     def restore_ts(self, kube_apis, transport_server_setup) -> None:
         """
         Function to revert a TransportServer resource to a valid state.
@@ -61,42 +53,42 @@ class TestTransportServerTcpLoadBalance:
         """
         The load balancing of TCP should result in 4 servers to match the 4 replicas of a service.
         """
-        original = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api,
-                                    "tcp-service", transport_server_setup.namespace, 4)
+        original = scale_deployment(
+            kube_apis.v1, kube_apis.apps_v1_api, "tcp-service", transport_server_setup.namespace, 4
+        )
 
         num_servers = 0
         retry = 0
 
-        while(num_servers is not 4 and retry <= 30):
+        while num_servers != 4 and retry <= 30:
             result_conf = get_ts_nginx_template_conf(
                 kube_apis.v1,
                 transport_server_setup.namespace,
                 transport_server_setup.name,
                 transport_server_setup.ingress_pod_name,
-                ingress_controller_prerequisites.namespace
+                ingress_controller_prerequisites.namespace,
             )
 
-            pattern = 'server .*;'
+            pattern = "server .*;"
             num_servers = len(re.findall(pattern, result_conf))
             retry += 1
             wait_before_test(1)
             print(f"Retry #{retry}")
 
-        assert num_servers is 4
+        assert num_servers == 4
 
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "tcp-service",
-                         transport_server_setup.namespace, original)
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "tcp-service", transport_server_setup.namespace, original)
         retry = 0
-        while(num_servers is not original and retry <= 50):
+        while num_servers is not original and retry <= 50:
             result_conf = get_ts_nginx_template_conf(
                 kube_apis.v1,
                 transport_server_setup.namespace,
                 transport_server_setup.name,
                 transport_server_setup.ingress_pod_name,
-                ingress_controller_prerequisites.namespace
+                ingress_controller_prerequisites.namespace,
             )
 
-            pattern = 'server .*;'
+            pattern = "server .*;"
             num_servers = len(re.findall(pattern, result_conf))
             retry += 1
             wait_before_test(1)
@@ -105,7 +97,7 @@ class TestTransportServerTcpLoadBalance:
         assert num_servers is original
 
     def test_tcp_request_load_balanced(
-            self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+        self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
         """
         Requests to the load balanced TCP service should result in responses from 3 different endpoints.
@@ -118,14 +110,14 @@ class TestTransportServerTcpLoadBalance:
 
         endpoints = {}
         retry = 0
-        while(len(endpoints) is not 3 and retry <= 30):
+        while len(endpoints) != 3 and retry <= 30:
             for i in range(20):
                 host = host.strip("[]")
-                client = socket.create_connection((host,port))
-                client.sendall(b'connect')
+                client = socket.create_connection((host, port))
+                client.sendall(b"connect")
                 response = client.recv(4096)
                 endpoint = response.decode()
-                print(f' req number {i}; response: {endpoint}')
+                print(f" req number {i}; response: {endpoint}")
                 if endpoint not in endpoints:
                     endpoints[endpoint] = 1
                 else:
@@ -135,17 +127,17 @@ class TestTransportServerTcpLoadBalance:
             wait_before_test(1)
             print(f"Retry #{retry}")
 
-        assert len(endpoints) is 3
+        assert len(endpoints) == 3
 
         result_conf = get_ts_nginx_template_conf(
             kube_apis.v1,
             transport_server_setup.namespace,
             transport_server_setup.name,
             transport_server_setup.ingress_pod_name,
-            ingress_controller_prerequisites.namespace
+            ingress_controller_prerequisites.namespace,
         )
 
-        pattern = 'server .*;'
+        pattern = "server .*;"
         servers = re.findall(pattern, result_conf)
         for key in endpoints.keys():
             found = False
@@ -154,9 +146,7 @@ class TestTransportServerTcpLoadBalance:
                     found = True
             assert found
 
-    def test_tcp_request_load_balanced_multiple(
-            self, kube_apis, crd_ingress_controller, transport_server_setup
-    ):
+    def test_tcp_request_load_balanced_multiple(self, kube_apis, crd_ingress_controller, transport_server_setup):
         """
         Requests to the load balanced TCP service should result in responses from 3 different endpoints.
         """
@@ -166,13 +156,13 @@ class TestTransportServerTcpLoadBalance:
         # Step 1, confirm load balancing is working.
         print(f"sending tcp requests to: {host}:{port}")
         host = host.strip("[]")
-        client = socket.create_connection((host,port))
-        client.sendall(b'connect')
+        client = socket.create_connection((host, port))
+        client.sendall(b"connect")
         response = client.recv(4096)
         endpoint = response.decode()
-        print(f'response: {endpoint}')
+        print(f"response: {endpoint}")
         client.close()
-        assert endpoint is not ""
+        assert endpoint != ""
 
         # Step 2, add a second TransportServer with the same port and confirm the collision
         transport_server_file = f"{TEST_DATA}/transport-server-tcp-load-balance/second-transport-server.yaml"
@@ -181,7 +171,7 @@ class TestTransportServerTcpLoadBalance:
         )
         wait_before_test()
 
-        second_ts_name = ts_resource['metadata']['name']
+        second_ts_name = ts_resource["metadata"]["name"]
         response = read_ts(
             kube_apis.custom_objects,
             transport_server_setup.namespace,
@@ -195,8 +185,7 @@ class TestTransportServerTcpLoadBalance:
         )
 
         # Step 3, remove the default TransportServer with the same port
-        delete_ts(kube_apis.custom_objects, transport_server_setup.resource,
-                  transport_server_setup.namespace)
+        delete_ts(kube_apis.custom_objects, transport_server_setup.resource, transport_server_setup.namespace)
 
         wait_before_test()
         response = read_ts(
@@ -213,25 +202,21 @@ class TestTransportServerTcpLoadBalance:
         # Step 4, confirm load balancing is still working.
         print(f"sending tcp requests to: {host}:{port}")
         host = host.strip("[]")
-        client = socket.create_connection((host,port))
-        client.sendall(b'connect')
+        client = socket.create_connection((host, port))
+        client.sendall(b"connect")
         response = client.recv(4096)
         endpoint = response.decode()
-        print(f'response: {endpoint}')
+        print(f"response: {endpoint}")
         client.close()
-        assert endpoint is not ""
+        assert endpoint != ""
 
         # cleanup
         delete_ts(kube_apis.custom_objects, ts_resource, transport_server_setup.namespace)
         transport_server_file = f"{TEST_DATA}/transport-server-tcp-load-balance/standard/transport-server.yaml"
-        create_ts_from_yaml(
-            kube_apis.custom_objects, transport_server_file, transport_server_setup.namespace
-        )
+        create_ts_from_yaml(kube_apis.custom_objects, transport_server_file, transport_server_setup.namespace)
         wait_before_test()
 
-    def test_tcp_request_load_balanced_wrong_port(
-            self, kube_apis, crd_ingress_controller, transport_server_setup
-    ):
+    def test_tcp_request_load_balanced_wrong_port(self, kube_apis, crd_ingress_controller, transport_server_setup):
         """
         Requests to the load balanced TCP service should result in responses from 3 different endpoints.
         """
@@ -253,16 +238,14 @@ class TestTransportServerTcpLoadBalance:
         for i in range(3):
             try:
                 host = host.strip("[]")
-                client = socket.create_connection((host,port))
-                client.sendall(b'connect')
+                client = socket.create_connection((host, port))
+                client.sendall(b"connect")
             except ConnectionResetError as E:
                 print("The expected exception occurred:", E)
 
         self.restore_ts(kube_apis, transport_server_setup)
 
-    def test_tcp_request_load_balanced_missing_service(
-            self, kube_apis, crd_ingress_controller, transport_server_setup
-    ):
+    def test_tcp_request_load_balanced_missing_service(self, kube_apis, crd_ingress_controller, transport_server_setup):
         """
         Requests to the load balanced TCP service should result in responses from 3 different endpoints.
         """
@@ -284,8 +267,8 @@ class TestTransportServerTcpLoadBalance:
         for i in range(3):
             try:
                 host = host.strip("[]")
-                client = socket.create_connection((host,port))
-                client.sendall(b'connect')
+                client = socket.create_connection((host, port))
+                client.sendall(b"connect")
             except ConnectionResetError as E:
                 print("The expected exception occurred:", E)
 
@@ -294,15 +277,15 @@ class TestTransportServerTcpLoadBalance:
     def make_holding_connection(self, host, port):
         print(f"sending tcp requests to: {host}:{port}")
         host = host.strip("[]")
-        client = socket.create_connection((host,port))
-        client.sendall(b'hold')
+        client = socket.create_connection((host, port))
+        client.sendall(b"hold")
         response = client.recv(4096)
         endpoint = response.decode()
-        print(f'response: {endpoint}')
+        print(f"response: {endpoint}")
         return client
 
     def test_tcp_request_max_connections(
-            self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+        self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
         """
         The config, maxConns, should limit the number of open TCP connections.
@@ -320,22 +303,22 @@ class TestTransportServerTcpLoadBalance:
         wait_before_test()
         configs = 0
         retry = 0
-        while(configs is not 3 and retry <= 30):
+        while configs != 3 and retry <= 30:
             result_conf = get_ts_nginx_template_conf(
                 kube_apis.v1,
                 transport_server_setup.namespace,
                 transport_server_setup.name,
                 transport_server_setup.ingress_pod_name,
-                ingress_controller_prerequisites.namespace
+                ingress_controller_prerequisites.namespace,
             )
 
-            pattern = 'max_conns=2'
+            pattern = "max_conns=2"
             configs = len(re.findall(pattern, result_conf))
             retry += 1
             wait_before_test(1)
             print(f"Retry #{retry}")
 
-        assert configs is 3
+        assert configs == 3
 
         # step 2 - make the number of allowed connections
         port = transport_server_setup.public_endpoint.tcp_server_port
@@ -377,7 +360,7 @@ class TestTransportServerTcpLoadBalance:
             c.close()
 
     def test_tcp_request_load_balanced_method(
-            self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+        self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
         """
         Update load balancing method to 'hash'. This send requests to a specific pod based on it's IP. In this case
@@ -396,22 +379,22 @@ class TestTransportServerTcpLoadBalance:
         wait_before_test()
         num_servers = 0
         retry = 0
-        while(num_servers is not 3 and retry <= 30):
+        while num_servers != 3 and retry <= 30:
             result_conf = get_ts_nginx_template_conf(
                 kube_apis.v1,
                 transport_server_setup.namespace,
                 transport_server_setup.name,
                 transport_server_setup.ingress_pod_name,
-                ingress_controller_prerequisites.namespace
+                ingress_controller_prerequisites.namespace,
             )
 
-            pattern = 'server .*;'
+            pattern = "server .*;"
             num_servers = len(re.findall(pattern, result_conf))
             retry += 1
             wait_before_test(1)
             print(f"Retry #{retry}")
 
-        assert num_servers is 3
+        assert num_servers == 3
 
         # Step 2 - confirm all request go to the same endpoint.
 
@@ -419,14 +402,14 @@ class TestTransportServerTcpLoadBalance:
         host = transport_server_setup.public_endpoint.public_ip
         endpoints = {}
         retry = 0
-        while(len(endpoints) is not 1 and retry <= 30):
+        while len(endpoints) != 1 and retry <= 30:
             for i in range(20):
                 host = host.strip("[]")
-                client = socket.create_connection((host,port))
-                client.sendall(b'connect')
+                client = socket.create_connection((host, port))
+                client.sendall(b"connect")
                 response = client.recv(4096)
                 endpoint = response.decode()
-                print(f' req number {i}; response: {endpoint}')
+                print(f" req number {i}; response: {endpoint}")
                 if endpoint not in endpoints:
                     endpoints[endpoint] = 1
                 else:
@@ -436,7 +419,7 @@ class TestTransportServerTcpLoadBalance:
             wait_before_test(1)
             print(f"Retry #{retry}")
 
-        assert len(endpoints) is 1
+        assert len(endpoints) == 1
 
         # Step 3 - restore to default load balancing method and confirm requests are balanced.
 
@@ -445,14 +428,14 @@ class TestTransportServerTcpLoadBalance:
 
         endpoints = {}
         retry = 0
-        while(len(endpoints) is not 3 and retry <= 30):
+        while len(endpoints) != 3 and retry <= 30:
             for i in range(20):
                 host = host.strip("[]")
-                client = socket.create_connection((host,port))
-                client.sendall(b'connect')
+                client = socket.create_connection((host, port))
+                client.sendall(b"connect")
                 response = client.recv(4096)
                 endpoint = response.decode()
-                print(f' req number {i}; response: {endpoint}')
+                print(f" req number {i}; response: {endpoint}")
                 if endpoint not in endpoints:
                     endpoints[endpoint] = 1
                 else:
@@ -462,11 +445,11 @@ class TestTransportServerTcpLoadBalance:
             wait_before_test(1)
             print(f"Retry #{retry}")
 
-        assert len(endpoints) is 3
+        assert len(endpoints) == 3
 
     @pytest.mark.skip_for_nginx_oss
     def test_tcp_passing_healthcheck_with_match(
-            self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+        self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
         """
         Configure a passing health check and check that all backend pods return responses.
@@ -489,7 +472,7 @@ class TestTransportServerTcpLoadBalance:
             transport_server_setup.namespace,
             transport_server_setup.name,
             transport_server_setup.ingress_pod_name,
-            ingress_controller_prerequisites.namespace
+            ingress_controller_prerequisites.namespace,
         )
 
         match = f"match_ts_{transport_server_setup.namespace}_transport-server_tcp-app"
@@ -507,14 +490,14 @@ class TestTransportServerTcpLoadBalance:
 
         endpoints = {}
         retry = 0
-        while(len(endpoints) is not 3 and retry <= 30):
+        while len(endpoints) != 3 and retry <= 30:
             for i in range(20):
                 host = host.strip("[]")
-                client = socket.create_connection((host,port))
-                client.sendall(b'connect')
+                client = socket.create_connection((host, port))
+                client.sendall(b"connect")
                 response = client.recv(4096)
                 endpoint = response.decode()
-                print(f' req number {i}; response: {endpoint}')
+                print(f" req number {i}; response: {endpoint}")
                 if endpoint not in endpoints:
                     endpoints[endpoint] = 1
                 else:
@@ -523,7 +506,7 @@ class TestTransportServerTcpLoadBalance:
             retry += 1
             wait_before_test(1)
             print(f"Retry #{retry}")
-        assert len(endpoints) is 3
+        assert len(endpoints) == 3
 
         # Step 3 - restore
 
@@ -531,7 +514,7 @@ class TestTransportServerTcpLoadBalance:
 
     @pytest.mark.skip_for_nginx_oss
     def test_tcp_failing_healthcheck_with_match(
-            self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
+        self, kube_apis, crd_ingress_controller, transport_server_setup, ingress_controller_prerequisites
     ):
         """
         Configure a failing health check and check that NGINX Plus resets connections.
@@ -554,7 +537,7 @@ class TestTransportServerTcpLoadBalance:
             transport_server_setup.namespace,
             transport_server_setup.name,
             transport_server_setup.ingress_pod_name,
-            ingress_controller_prerequisites.namespace
+            ingress_controller_prerequisites.namespace,
         )
 
         match = f"match_ts_{transport_server_setup.namespace}_transport-server_tcp-app"
@@ -571,8 +554,8 @@ class TestTransportServerTcpLoadBalance:
         host = transport_server_setup.public_endpoint.public_ip
 
         host = host.strip("[]")
-        client = socket.create_connection((host,port))
-        client.sendall(b'connect')
+        client = socket.create_connection((host, port))
+        client.sendall(b"connect")
 
         try:
             client.recv(4096)  # must return ConnectionResetError

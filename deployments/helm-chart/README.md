@@ -230,7 +230,7 @@ Parameter | Description | Default
 `controller.reportIngressStatus.annotations` | The annotations of the leader election configmap. | {}
 `controller.pod.annotations` | The annotations of the Ingress Controller pod. | {}
 `controller.pod.extraLabels` | The additional extra labels of the Ingress Controller pod. | {}
-`controller.appprotect.enable` | Enables the App Protect module in the Ingress Controller. | false
+`controller.appprotect.enable` | Enables the App Protect WAF module in the Ingress Controller. | false
 `controller.appprotectdos.enable` | Enables the App Protect DoS module in the Ingress Controller. | false
 `controller.appprotectdos.debug` | Enable debugging for App Protect DoS. | false
 `controller.appprotectdos.maxDaemons` | Max number of ADMD instances. | 1
@@ -238,6 +238,7 @@ Parameter | Description | Default
 `controller.appprotectdos.memory` | RAM memory size to consume in MB. | 50% of free RAM in the container or 80MB, the smaller
 `controller.readyStatus.enable` | Enables the readiness endpoint `"/nginx-ready"`. The endpoint returns a success code when NGINX has loaded all the config after the startup. This also configures a readiness probe for the Ingress Controller pods that uses the readiness endpoint. | true
 `controller.readyStatus.port` | The HTTP port for the readiness endpoint. | 8081
+`controller.readyStatus.initialDelaySeconds` | The number of seconds after the Ingress Controller pod has started before readiness probes are initiated. | 0
 `controller.enableLatencyMetrics` | Enable collection of latency metrics for upstreams. Requires `prometheus.create`. | false
 `controller.minReadySeconds` | Specifies the minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing, for it to be considered available. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#min-ready-seconds) | 0
 `controller.strategy` | Specifies the strategy used to replace old Pods by new ones. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) | {}

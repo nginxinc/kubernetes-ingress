@@ -71,6 +71,9 @@ http {
                         'ip_tls=$remote_addr:$app_protect_dos_tls_fp, ';
 
     {{- end}}
+    {{- if .AppProtectDosArbFqdn}}
+    app_protect_dos_arb_fqdn {{.AppProtectDosArbFqdn}};
+    {{- end}}
     {{- end}}
 
     {{if .AccessLogOff}}

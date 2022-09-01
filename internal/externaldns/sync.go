@@ -142,7 +142,7 @@ func buildDNSEndpoint(extdnsLister []extdnslisters.DNSEndpointLister, vs *vsapi.
 	var existingDNSEndpoint *extdnsapi.DNSEndpoint
 	var err error
 	for _, el := range extdnsLister {
-		existingDNSEndpoint, err = el.DNSEndpoints(vs.Namespace).Get(vs.Spec.Host)
+		existingDNSEndpoint, err = el.DNSEndpoints(vs.Namespace).Get(vs.ObjectMeta.Name)
 		if err == nil {
 			break
 		}
@@ -154,7 +154,7 @@ func buildDNSEndpoint(extdnsLister []extdnslisters.DNSEndpointLister, vs *vsapi.
 
 	dnsEndpoint := &extdnsapi.DNSEndpoint{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            vs.Spec.Host,
+			Name:            vs.ObjectMeta.Name,
 			Namespace:       vs.Namespace,
 			Labels:          vs.Labels,
 			OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(vs, controllerGVK)},

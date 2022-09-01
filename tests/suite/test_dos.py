@@ -4,8 +4,7 @@ from datetime import datetime
 
 import pytest
 import requests
-
-from settings import TEST_DATA
+from settings import DEPLOYMENTS, TEST_DATA
 from suite.custom_resources_utils import (
     create_dos_logconf_from_yaml,
     create_dos_policy_from_yaml,
@@ -14,13 +13,15 @@ from suite.custom_resources_utils import (
     delete_dos_policy,
     delete_dos_protected,
 )
-from suite.dos_utils import find_in_log, log_content_to_dic
+from suite.dos_utils import check_learning_status_with_admd_s, find_in_log, log_content_to_dic
 from suite.resources_utils import (
     clear_file_contents,
+    create_dos_arbitrator,
     create_example_app,
     create_ingress_with_dos_annotations,
     create_items_from_yaml,
     delete_common_app,
+    delete_dos_arbitrator,
     delete_items_from_yaml,
     ensure_connection_to_public_endpoint,
     ensure_response_from_backend,
@@ -326,14 +327,15 @@ class TestDos:
             stderr=subprocess.DEVNULL,
         )
 
-        print("Learning for max 10 minutes")
-        find_in_log(
+        print("Learning for max 15 minutes")
+        nginx_ingress_pod_name = self.getPodNameThatContains(
+            kube_apis, ingress_controller_prerequisites.namespace, "nginx"
+        )
+        check_learning_status_with_admd_s(
             kube_apis,
-            log_loc,
-            syslog_pod,
+            nginx_ingress_pod_name,
             ingress_controller_prerequisites.namespace,
-            600,
-            'learning_confidence="Ready"',
+            900,
         )
 
         print("------------------------- Attack -----------------------------")
@@ -346,8 +348,15 @@ class TestDos:
             stderr=subprocess.DEVNULL,
         )
 
-        print("Attack for 300 seconds")
-        wait_before_test(300)
+        print("Wait max 5 Min until finding 3 bad clients")
+        find_in_log(
+            kube_apis,
+            log_loc,
+            syslog_pod,
+            ingress_controller_prerequisites.namespace,
+            300,
+            'bad_actors="3"',
+        )
 
         print("Stop Attack")
         p_attack.terminate()
@@ -391,8 +400,8 @@ class TestDos:
                 if not health_ok and float(log["stress_level"]) < 0.6:
                     health_ok = True
                     health_ok_time = datetime.strptime(log["date_time"], fmt)
-            elif log["attack_event"] == "Attack signature detected":
-                signature_detected = True
+                if not signature_detected and int(log["mitigated_by_signatures"]) > 0:
+                    signature_detected = True
             elif log["attack_event"] == "Bad actors detected":
                 if under_attack:
                     bad_actor_detected = True
@@ -413,7 +422,7 @@ class TestDos:
             and (health_ok_time - start_attack_time).total_seconds() < 150
             and signature_detected
             and bad_actor_detected
-            and len(bad_ip) == 0
+            and len(bad_ip) <= 1
         )
 
     def test_dos_arbitrator(
@@ -422,6 +431,95 @@ class TestDos:
         """
         Test App Protect Dos: Check new IC pod get learning info
         """
+        print("----------------------- Get syslog pod name ----------------------")
+        syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
+        assert "syslog" in syslog_pod
+        log_loc = f"/var/log/messages"
+        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
+
+        print("------------------------- Deploy ingress -----------------------------")
+        create_ingress_with_dos_annotations(kube_apis, src_ing_yaml, test_namespace, test_namespace + "/dos-protected")
+        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
+
+        print("------------------------- Learning Phase -----------------------------")
+        print("start good clients requests")
+        p_good_client = subprocess.Popen(
+            [f"exec {TEST_DATA}/dos/good_clients_xff.sh {ingress_host} {dos_setup.req_url}"],
+            preexec_fn=os.setsid,
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+        print("Learning for max 15 minutes")
+        find_in_log(
+            kube_apis,
+            log_loc,
+            syslog_pod,
+            ingress_controller_prerequisites.namespace,
+            900,
+            'learning_confidence="Ready"',
+        )
+
+        print("------------------------- Check new IC pod get info from arbitrator -----------------------------")
+        ic_ns = ingress_controller_prerequisites.namespace
+        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 2)
+        while get_pods_amount_with_name(kube_apis.v1, "nginx-ingress", "nginx-ingress") != 2:
+            print(f"Number of replicas is not 2, retrying...")
+            wait_before_test()
+
+        print("------------------------- Check if new pod receive info from arbitrator -----------------------------")
+        print("Wait for 60 seconds")
+        wait_before_test(60)
+
+        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
+        log_info_dic = log_content_to_dic(log_contents)
+
+        print("Stop Good Client")
+        p_good_client.terminate()
+
+        learning_units_hostname = []
+        for log in log_info_dic:
+            if log["unit_hostname"] not in learning_units_hostname and log["learning_confidence"] == "Ready":
+                learning_units_hostname.append(log["unit_hostname"])
+
+        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+
+        assert len(learning_units_hostname) == 2
+
+    def test_dos_arbitrator_different_ns(
+        self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, dos_setup, test_namespace
+    ):
+        """
+        Test App Protect Dos: Check new IC pod get learning info with arbitrator from different namespace
+        """
+
+        print("Remove dos arbitrator from namesapce: ", ingress_controller_prerequisites.namespace)
+        delete_dos_arbitrator(
+            kube_apis.v1, kube_apis.apps_v1_api, "appprotect-dos-arb", ingress_controller_prerequisites.namespace
+        )
+
+        print("------------------------- Create dos arbitrator Namespace -----------------------")
+        arbitrator_ns_yaml = f"{TEST_DATA}/dos/arbitrator_ns.yaml"
+        res = create_items_from_yaml(kube_apis, arbitrator_ns_yaml, "")
+
+        print("------------------------- Create dos arbitrator in arbitrator namespace -----------------------")
+        create_dos_arbitrator(
+            kube_apis.v1,
+            kube_apis.apps_v1_api,
+            res["Namespace"],
+            f"{TEST_DATA}/dos/appprotect-dos-arb.yaml",
+            f"{TEST_DATA}/dos/appprotect-dos-arb-svc.yaml",
+        )
+
+        print(f"------------- Replace ConfigMap --------------")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/dos/nginx-config-arb-dif-ns.yaml",
+        )
+
         print("----------------------- Get syslog pod name ----------------------")
         syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
         assert "syslog" in syslog_pod
@@ -442,13 +540,13 @@ class TestDos:
             stderr=subprocess.DEVNULL,
         )
 
-        print("Learning for max 10 minutes")
+        print("Learning for max 15 minutes")
         find_in_log(
             kube_apis,
             log_loc,
             syslog_pod,
             ingress_controller_prerequisites.namespace,
-            600,
+            900,
             'learning_confidence="Ready"',
         )
 
@@ -460,8 +558,8 @@ class TestDos:
             wait_before_test()
 
         print("------------------------- Check if new pod receive info from arbitrator -----------------------------")
-        print("Wait for 30 seconds")
-        wait_before_test(30)
+        print("Wait for 60 seconds")
+        wait_before_test(60)
 
         log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
         log_info_dic = log_content_to_dic(log_contents)
@@ -475,5 +573,25 @@ class TestDos:
                 learning_units_hostname.append(log["unit_hostname"])
 
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
+
+        print("Delete namespace: arbitrator")
+        delete_items_from_yaml(kube_apis, arbitrator_ns_yaml, "")
+
+        print("------------------------- Restore dos arbitrator in nginx namespace -----------------------")
+        create_dos_arbitrator(
+            kube_apis.v1,
+            kube_apis.apps_v1_api,
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/dos/appprotect-dos-arb.yaml",
+            f"{TEST_DATA}/dos/appprotect-dos-arb-svc.yaml",
+        )
+
+        print(f"------------- Restore ConfigMap --------------")
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/dos/nginx-config.yaml",
+        )
 
         assert len(learning_units_hostname) == 2

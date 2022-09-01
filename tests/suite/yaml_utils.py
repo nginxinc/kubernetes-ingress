@@ -13,7 +13,7 @@ def get_first_ingress_host_from_yaml(file) -> str:
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            return dep['spec']['rules'][0]['host']
+            return dep["spec"]["rules"][0]["host"]
 
 
 def get_name_from_yaml(file) -> str:
@@ -27,8 +27,9 @@ def get_name_from_yaml(file) -> str:
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            return dep['metadata']['name']
+            return dep["metadata"]["name"]
     return res
+
 
 def get_namespace_from_yaml(file) -> str:
     """
@@ -42,11 +43,12 @@ def get_namespace_from_yaml(file) -> str:
         docs = yaml.safe_load_all(f)
         for dep in docs:
             try:
-                res = dep['metadata']['namespace']
+                res = dep["metadata"]["namespace"]
                 break
             except KeyError:
                 continue
     return res
+
 
 def get_paths_from_vs_yaml(file) -> []:
     """
@@ -59,8 +61,8 @@ def get_paths_from_vs_yaml(file) -> []:
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            for route in dep['spec']['routes']:
-                res.append(route['path'])
+            for route in dep["spec"]["routes"]:
+                res.append(route["path"])
     return res
 
 
@@ -74,7 +76,7 @@ def get_first_host_from_yaml(file) -> str:
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            return dep['spec']['host']
+            return dep["spec"]["host"]
 
 
 def get_configmap_fields_from_yaml(file) -> {}:
@@ -86,7 +88,7 @@ def get_configmap_fields_from_yaml(file) -> {}:
     """
     with open(file) as f:
         dep = yaml.safe_load(f)
-        return dep['data']
+        return dep["data"]
 
 
 def get_route_namespace_from_vs_yaml(file) -> []:
@@ -100,8 +102,8 @@ def get_route_namespace_from_vs_yaml(file) -> []:
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            for route in dep['spec']['routes']:
-                res.append(route['route'].split('/')[0])
+            for route in dep["spec"]["routes"]:
+                res.append(route["route"].split("/")[0])
     return res
 
 
@@ -116,8 +118,8 @@ def get_paths_from_vsr_yaml(file) -> []:
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            for route in dep['spec']['subroutes']:
-                res.append(route['path'])
+            for route in dep["spec"]["subroutes"]:
+                res.append(route["path"])
     return res
 
 
@@ -132,5 +134,5 @@ def get_secret_name_from_vs_yaml(file) -> str:
     with open(file) as f:
         docs = yaml.safe_load_all(f)
         for dep in docs:
-            return dep['spec']['tls']['secret']
+            return dep["spec"]["tls"]["secret"]
     return res

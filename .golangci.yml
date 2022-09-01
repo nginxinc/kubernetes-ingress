@@ -34,7 +34,6 @@ linters-settings:
 linters:
     enable:
     - asciicheck
-    - deadcode
     - errcheck
     - errorlint
     - gocyclo
@@ -53,12 +52,10 @@ linters:
     - promlinter
     - revive
     - staticcheck
-    - structcheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - wastedassign
     disable-all: true
 issues:
