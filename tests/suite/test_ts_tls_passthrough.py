@@ -7,8 +7,8 @@ from suite.fixtures import PublicEndpoint
 from suite.resources_utils import (
     create_items_from_yaml,
     delete_items_from_yaml,
-    get_file_contents,
     get_first_pod_name,
+    get_nginx_template_conf,
     replace_configmap_from_yaml,
     wait_before_test,
     wait_until_all_pods_are_ready,
@@ -143,11 +143,8 @@ class TestTransportServerTlsPassthrough:
         test_namespace,
     ):
         """
-        Test TransportServer TLS passthrough on https port with proxy
-        protocol enabled.
+        Test TransportServer TLS passthrough on https port with proxy protocol enabled.
         """
-        ic_pod_name = get_first_pod_name(kube_apis.v1, ingress_controller_prerequisites.namespace)
-        config_path = "/etc/nginx/nginx.conf"
         replace_configmap_from_yaml(
             kube_apis.v1,
             ingress_controller_prerequisites.config_map["metadata"]["name"],
@@ -155,7 +152,7 @@ class TestTransportServerTlsPassthrough:
             f"{TEST_DATA}/transport-server-tls-passthrough/nginx-config.yaml",
         )
         wait_before_test(1)
-        config = get_file_contents(kube_apis.v1, config_path, ic_pod_name, ingress_controller_prerequisites.namespace)
+        config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
         assert "listen 443 proxy_protocol;" in config
         assert "listen [::]:443 proxy_protocol;" in config
         std_cm_src = f"{DEPLOYMENTS}/common/nginx-config.yaml"
