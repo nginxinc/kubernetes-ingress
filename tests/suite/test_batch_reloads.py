@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 import pytest
 import requests
 import yaml
@@ -11,10 +14,9 @@ from suite.ap_resources_utils import (
     delete_ap_policy,
     delete_ap_usersig,
 )
-from suite.policy_resources_utils import delete_policy
+from suite.policy_resources_utils import create_policy_from_yaml, delete_policy
 from suite.resources_utils import (
     create_example_app,
-    create_ingress,
     create_ingress_with_ap_annotations,
     create_items_from_yaml,
     create_secret_from_yaml,
@@ -25,16 +27,14 @@ from suite.resources_utils import (
     ensure_connection_to_public_endpoint,
     ensure_response_from_backend,
     get_last_reload_status,
-    get_pods_amount,
+    get_last_reload_time,
+    get_reload_count,
     get_total_ingresses,
-    get_total_vs,
-    get_total_vsr,
-    scale_deployment,
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
 from suite.vs_vsr_resources_utils import (
-    create_v_s_route,
+    create_custom_items_from_yaml,
     create_virtual_server,
     delete_virtual_server,
     patch_virtual_server_from_yaml,
@@ -127,29 +127,29 @@ class TestMultipleSimpleIngress:
 
         total_ing = int(request.config.getoption("--batch-resources"))
         manifest = f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml"
-        for i in range(1, total_ing + 1):
-            with open(manifest) as f:
-                doc = yaml.safe_load(f)
-                doc["metadata"]["name"] = f"smoke-ingress-{i}"
-                doc["spec"]["rules"][0]["host"] = f"smoke-{i}.example.com"
-                create_ingress(kube_apis.networking_v1, test_namespace, doc)
-        print(f"Total resources deployed is {total_ing}")
-        wait_before_test()
-        ic_ns = ingress_controller_prerequisites.namespace
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
-            print(f"Number of replicas not 0, retrying...")
-            wait_before_test()
-        num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
+        count_before = get_reload_count(simple_ingress_setup.metrics_url)
+        with open(manifest) as f:
+            doc = yaml.safe_load(f)
+            with tempfile.NamedTemporaryFile(mode="w+", suffix=".yml", delete=False) as temp:
+                for i in range(1, total_ing + 1):
+                    doc["metadata"]["name"] = f"smoke-ingress-{i}"
+                    doc["spec"]["rules"][0]["host"] = f"smoke-{i}.example.com"
+                    temp.write(yaml.safe_dump(doc) + "---\n")
+        create_items_from_yaml(kube_apis, temp.name, test_namespace)
+        os.remove(temp.name)
+        wait_before_test(5)
+        count_after = get_reload_count(simple_ingress_setup.metrics_url)
+        new_reloads = count_after - count_before
         assert (
             get_total_ingresses(simple_ingress_setup.metrics_url, "nginx") == str(total_ing + 1)
             and get_last_reload_status(simple_ingress_setup.metrics_url, "nginx") == "1"
+            and new_reloads <= int(request.config.getoption("--batch-reload-number"))
         )
+        reload_ms = get_last_reload_time(simple_ingress_setup.metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms")
 
         for i in range(1, total_ing + 1):
             delete_ingress(kube_apis.networking_v1, f"smoke-ingress-{i}", test_namespace)
-
-        assert num is None
 
 
 ##############################################################################################################
@@ -248,33 +248,31 @@ class TestAppProtect:
         ensure_response_from_backend(ap_ingress_setup.req_url, ap_ingress_setup.ingress_host, check404=True)
 
         total_ing = int(request.config.getoption("--batch-resources"))
+        count_before = get_reload_count(ap_ingress_setup.metrics_url)
 
         manifest = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
-        for i in range(1, total_ing + 1):
-            with open(manifest) as f:
-                doc = yaml.safe_load(f)
-                doc["metadata"]["name"] = f"appprotect-ingress-{i}"
-                doc["spec"]["rules"][0]["host"] = f"appprotect-{i}.example.com"
-                create_ingress(kube_apis.networking_v1, test_namespace, doc)
+        with open(manifest) as f:
+            doc = yaml.safe_load(f)
+            with tempfile.NamedTemporaryFile(mode="w+", suffix=".yml", delete=False) as temp:
+                for i in range(1, total_ing + 1):
+                    doc["metadata"]["name"] = f"appprotect-ingress-{i}"
+                    doc["spec"]["rules"][0]["host"] = f"appprotect-{i}.example.com"
+                    temp.write(yaml.safe_dump(doc) + "---\n")
+        create_items_from_yaml(kube_apis, temp.name, test_namespace)
+        os.remove(temp.name)
         print(f"Total resources deployed is {total_ing}")
-        wait_before_test()
-        ic_ns = ingress_controller_prerequisites.namespace
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
-            print(f"Number of replicas not 0, retrying...")
-            wait_before_test()
-        num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
         wait_before_test(30)
-
-        assert (
-            get_total_ingresses(ap_ingress_setup.metrics_url, "nginx") == str(total_ing + 1)
-            and get_last_reload_status(ap_ingress_setup.metrics_url, "nginx") == "1"
+        count_after = get_reload_count(ap_ingress_setup.metrics_url)
+        print(f"total reloads: {count_after} ")
+        new_reloads = count_after - count_before
+        assert get_last_reload_status(ap_ingress_setup.metrics_url, "nginx") == "1" and new_reloads <= int(
+            request.config.getoption("--batch-reload-number")
         )
+        reload_ms = get_last_reload_time(ap_ingress_setup.metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms")
 
         for i in range(1, total_ing + 1):
             delete_ingress(kube_apis.networking_v1, f"appprotect-ingress-{i}", test_namespace)
-
-        assert num is None
 
 
 ##############################################################################################################
@@ -311,32 +309,28 @@ class TestVirtualServer:
         assert resp.status_code == 200
         total_vs = int(request.config.getoption("--batch-resources"))
         manifest = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
-        for i in range(1, total_vs + 1):
-            with open(manifest) as f:
-                doc = yaml.safe_load(f)
-                doc["metadata"]["name"] = f"virtual-server-{i}"
-                doc["spec"]["host"] = f"virtual-server-{i}.example.com"
-                kube_apis.custom_objects.create_namespaced_custom_object(
-                    "k8s.nginx.org", "v1", test_namespace, "virtualservers", doc
-                )
-                print(f"VirtualServer created with name '{doc['metadata']['name']}'")
+        count_before = get_reload_count(virtual_server_setup.metrics_url)
+        with open(manifest) as f:
+            doc = yaml.safe_load(f)
+            with tempfile.NamedTemporaryFile(mode="w+", suffix=".yml", delete=False) as temp:
+                for i in range(1, total_vs + 1):
+                    doc["metadata"]["name"] = f"virtual-server-{i}"
+                    doc["spec"]["host"] = f"virtual-server-{i}.example.com"
+                    temp.write(yaml.safe_dump(doc) + "---\n")
+            create_custom_items_from_yaml(kube_apis.custom_objects, temp.name, test_namespace)
+        os.remove(temp.name)
         print(f"Total resources deployed is {total_vs}")
-        wait_before_test()
-        ic_ns = ingress_controller_prerequisites.namespace
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
-            print(f"Number of replicas not 0, retrying...")
-            wait_before_test()
-        num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
-        assert (
-            get_total_vs(virtual_server_setup.metrics_url, "nginx") == str(total_vs + 1)
-            and get_last_reload_status(virtual_server_setup.metrics_url, "nginx") == "1"
+        wait_before_test(5)
+        count_after = get_reload_count(virtual_server_setup.metrics_url)
+        new_reloads = count_after - count_before
+        assert get_last_reload_status(virtual_server_setup.metrics_url, "nginx") == "1" and new_reloads <= int(
+            request.config.getoption("--batch-reload-number")
         )
+        reload_ms = get_last_reload_time(virtual_server_setup.metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms; total new reloads: {new_reloads}")
 
         for i in range(1, total_vs + 1):
             delete_virtual_server(kube_apis.custom_objects, f"virtual-server-{i}", test_namespace)
-
-        assert num is None
 
 
 ##############################################################################################################
@@ -452,80 +446,34 @@ class TestAppProtectWAFPolicyVS:
         )
 
         total_vs = int(request.config.getoption("--batch-resources"))
+        count_before = get_reload_count(virtual_server_setup.metrics_url)
         print(response2.status_code)
-        for i in range(1, total_vs + 1):
-            with open(waf_spec_vs_src) as f:
-                doc = yaml.safe_load(f)
-                doc["metadata"]["name"] = f"virtual-server-{i}"
-                doc["spec"]["host"] = f"virtual-server-{i}.example.com"
-                kube_apis.custom_objects.create_namespaced_custom_object(
-                    "k8s.nginx.org", "v1", test_namespace, "virtualservers", doc
-                )
-                print(f"VirtualServer created with name '{doc['metadata']['name']}'")
+        with open(waf_spec_vs_src) as f:
+            doc = yaml.safe_load(f)
+            with tempfile.NamedTemporaryFile(mode="w+", suffix=".yml", delete=False) as temp:
+                for i in range(1, total_vs + 1):
+                    doc["metadata"]["name"] = f"virtual-server-{i}"
+                    doc["spec"]["host"] = f"virtual-server-{i}.example.com"
+                    temp.write(yaml.safe_dump(doc) + "---\n")
+        create_custom_items_from_yaml(kube_apis.custom_objects, temp.name, test_namespace)
+        os.remove(temp.name)
 
         print(f"Total resources deployed is {total_vs}")
-        wait_before_test()
-        ic_ns = ingress_controller_prerequisites.namespace
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
-            print(f"Number of replicas not 0, retrying...")
-            wait_before_test()
-        num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
-        assert (
-            get_total_vs(virtual_server_setup.metrics_url, "nginx") == str(total_vs + 1)
-            and get_last_reload_status(virtual_server_setup.metrics_url, "nginx") == "1"
+        wait_before_test(5)
+        count_after = get_reload_count(virtual_server_setup.metrics_url)
+        new_reloads = count_after - count_before
+        assert get_last_reload_status(virtual_server_setup.metrics_url, "nginx") == "1" and new_reloads <= int(
+            request.config.getoption("--batch-reload-number")
         )
+        reload_ms = get_last_reload_time(virtual_server_setup.metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms")
 
         for i in range(1, total_vs + 1):
             delete_virtual_server(kube_apis.custom_objects, f"virtual-server-{i}", test_namespace)
         delete_policy(kube_apis.custom_objects, "waf-policy", test_namespace)
 
-        assert num is None
-
 
 ##############################################################################################################
-
-
-@pytest.fixture(scope="class")
-def vs_vsr_setup(
-    request,
-    kube_apis,
-    test_namespace,
-    ingress_controller_endpoint,
-):
-    """
-    Deploy one VS with multiple VSRs.
-
-    :param kube_apis: client apis
-    :param test_namespace:
-    :param ingress_controller_endpoint: public endpoint
-    :return:
-    """
-    total_vsr = int(request.config.getoption("--batch-resources"))
-
-    vsr_source = f"{TEST_DATA}/startup/virtual-server-routes/route.yaml"
-
-    with open(vsr_source) as f:
-        vsr = yaml.safe_load(f)
-
-        for i in range(1, total_vsr + 1):
-            vsr["metadata"]["name"] = f"route-{i}"
-            vsr["spec"]["subroutes"][0]["path"] = f"/route-{i}"
-
-            create_v_s_route(kube_apis.custom_objects, vsr, test_namespace)
-
-    vs_source = f"{TEST_DATA}/startup/virtual-server-routes/virtual-server.yaml"
-
-    with open(vs_source) as f:
-        vs = yaml.safe_load(f)
-
-        routes = []
-        for i in range(1, total_vsr + 1):
-            route = {"path": f"/route-{i}", "route": f"route-{i}"}
-            routes.append(route)
-
-        vs["spec"]["routes"] = routes
-        create_virtual_server(kube_apis.custom_objects, vs, test_namespace)
 
 
 @pytest.mark.batch_start
@@ -550,31 +498,51 @@ class TestSingleVSMultipleVSRs:
         self,
         request,
         kube_apis,
+        test_namespace,
         ingress_controller_prerequisites,
         crd_ingress_controller,
         ingress_controller_endpoint,
-        vs_vsr_setup,
     ):
         """
         Pod startup time with 1 VS and multiple VSRs.
         """
         total_vsr = int(request.config.getoption("--batch-resources"))
 
-        ic_ns = ingress_controller_prerequisites.namespace
-        scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
-            print(f"Number of replicas not 0, retrying...")
-            wait_before_test()
-        num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
+        vsr_source = f"{TEST_DATA}/startup/virtual-server-routes/route.yaml"
+
+        with open(vsr_source) as f:
+            vsr = yaml.safe_load(f)
+            with tempfile.NamedTemporaryFile(mode="w+", suffix=".yml", delete=False) as temp:
+                for i in range(1, total_vsr + 1):
+                    vsr["metadata"]["name"] = f"route-{i}"
+                    vsr["spec"]["subroutes"][0]["path"] = f"/route-{i}"
+                    temp.write(yaml.safe_dump(vsr) + "---\n")
+        create_custom_items_from_yaml(kube_apis.custom_objects, temp.name, test_namespace)
+        os.remove(temp.name)
+
+        vs_source = f"{TEST_DATA}/startup/virtual-server-routes/virtual-server.yaml"
+
+        with open(vs_source) as f:
+            vs = yaml.safe_load(f)
+
+            routes = []
+            for i in range(1, total_vsr + 1):
+                route = {"path": f"/route-{i}", "route": f"route-{i}"}
+                routes.append(route)
+
+            vs["spec"]["routes"] = routes
+            create_virtual_server(kube_apis.custom_objects, vs, test_namespace)
 
         metrics_url = (
             f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
         )
+        count_before = get_reload_count(metrics_url)
+        wait_before_test(5)
+        count_after = get_reload_count(metrics_url)
+        new_reloads = count_after - count_before
 
-        assert (
-            get_total_vs(metrics_url, "nginx") == "1"
-            and get_total_vsr(metrics_url, "nginx") == str(total_vsr)
-            and get_last_reload_status(metrics_url, "nginx") == "1"
+        assert get_last_reload_status(metrics_url, "nginx") == "1" and new_reloads <= int(
+            request.config.getoption("--batch-reload-number")
         )
-
-        assert num is None
+        reload_ms = get_last_reload_time(metrics_url, "nginx")
+        print(f"last reload duration: {reload_ms} ms")

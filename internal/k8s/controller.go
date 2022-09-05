@@ -166,6 +166,7 @@ type LoadBalancerController struct {
 	configMap                     *api_v1.ConfigMap
 	certManagerController         *cm_controller.CmController
 	externalDNSController         *ed_controller.ExtDNSController
+	batchSyncEnabled              bool
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -764,6 +765,11 @@ func (lbc *LoadBalancerController) syncConfigMap(task task) {
 		return
 	}
 
+	if lbc.batchSyncEnabled {
+		glog.V(3).Infof("Skipping ConfigMap update because batch sync is on")
+		return
+	}
+
 	lbc.updateAllConfigs()
 }
 
@@ -836,6 +842,12 @@ func (lbc *LoadBalancerController) preSyncSecrets() {
 }
 
 func (lbc *LoadBalancerController) sync(task task) {
+	if lbc.isNginxReady && lbc.syncQueue.Len() > 1 && !lbc.batchSyncEnabled {
+		lbc.configurator.DisableReloads()
+		lbc.batchSyncEnabled = true
+
+		glog.V(3).Infof("Batch processing %v items", lbc.syncQueue.Len())
+	}
 	glog.V(3).Infof("Syncing %v", task.Key)
 	if lbc.spiffeCertFetcher != nil {
 		lbc.syncLock.Lock()
@@ -891,6 +903,14 @@ func (lbc *LoadBalancerController) sync(task task) {
 
 		lbc.isNginxReady = true
 		glog.V(3).Infof("NGINX is ready")
+	}
+
+	if lbc.batchSyncEnabled && lbc.syncQueue.Len() == 0 {
+		lbc.batchSyncEnabled = false
+		lbc.configurator.EnableReloads()
+		lbc.updateAllConfigs()
+
+		glog.V(3).Infof("Batch sync completed")
 	}
 }
 

@@ -1039,6 +1039,11 @@ func (cnf *Configurator) EnableReloads() {
 	cnf.isReloadsEnabled = true
 }
 
+// DisableReloads disables NGINX reloads meaning that configuration changes will not be followed by a reload.
+func (cnf *Configurator) DisableReloads() {
+	cnf.isReloadsEnabled = false
+}
+
 func (cnf *Configurator) reload(isEndpointsUpdate bool) error {
 	if !cnf.isReloadsEnabled {
 		return nil
