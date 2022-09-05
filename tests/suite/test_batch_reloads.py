@@ -1,6 +1,5 @@
 import os
 import tempfile
-import time
 
 import pytest
 import requests
@@ -29,20 +28,14 @@ from suite.resources_utils import (
     ensure_response_from_backend,
     get_last_reload_status,
     get_last_reload_time,
-    get_pods_amount,
     get_reload_count,
     get_total_ingresses,
-    get_total_vs,
-    get_total_vsr,
-    scale_deployment,
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
 from suite.vs_vsr_resources_utils import (
     create_custom_items_from_yaml,
-    create_v_s_route,
     create_virtual_server,
-    create_virtual_server_from_yaml,
     delete_virtual_server,
     patch_virtual_server_from_yaml,
 )
@@ -141,7 +134,6 @@ class TestMultipleSimpleIngress:
                 for i in range(1, total_ing + 1):
                     doc["metadata"]["name"] = f"smoke-ingress-{i}"
                     doc["spec"]["rules"][0]["host"] = f"smoke-{i}.example.com"
-                    # create_ingress(kube_apis.networking_v1, test_namespace, doc)
                     temp.write(yaml.safe_dump(doc) + "---\n")
         create_items_from_yaml(kube_apis, temp.name, test_namespace)
         os.remove(temp.name)

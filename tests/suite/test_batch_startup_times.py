@@ -1,5 +1,3 @@
-import time
-
 import pytest
 import requests
 import yaml
@@ -13,7 +11,7 @@ from suite.ap_resources_utils import (
     delete_ap_policy,
     delete_ap_usersig,
 )
-from suite.policy_resources_utils import create_policy_from_yaml, delete_policy
+from suite.policy_resources_utils import delete_policy
 from suite.resources_utils import (
     create_example_app,
     create_ingress,
@@ -38,7 +36,6 @@ from suite.resources_utils import (
 from suite.vs_vsr_resources_utils import (
     create_v_s_route,
     create_virtual_server,
-    create_virtual_server_from_yaml,
     delete_virtual_server,
     patch_virtual_server_from_yaml,
 )
