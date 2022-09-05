@@ -2,7 +2,7 @@ import grpc
 import pytest
 import requests
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_assertions import assert_grpc_entries_exist, assert_proxy_entries_exist
+from suite.custom_assertions import assert_grpc_entries_exist, assert_proxy_entries_exist, wait_and_assert_status_code
 from suite.grpc.helloworld_pb2 import HelloRequest
 from suite.grpc.helloworld_pb2_grpc import GreeterStub
 from suite.resources_utils import (
@@ -98,9 +98,7 @@ class TestVirtualServerMixedUpstreamType:
 
         print("\nStep 2: check connection to http backend")
         print("\nrequest URL: ", virtual_server_setup.backend_2_url)
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        print("Response from http backend: {}".format(resp))
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
         print("\nStep 3: Check connection to app")
         cert = get_certificate(

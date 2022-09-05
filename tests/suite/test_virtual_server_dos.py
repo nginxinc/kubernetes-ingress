@@ -5,6 +5,7 @@ from datetime import datetime
 import pytest
 import requests
 from settings import TEST_DATA
+from suite.custom_assertions import wait_and_assert_status_code
 from suite.custom_resources_utils import (
     create_dos_logconf_from_yaml,
     create_dos_policy_from_yaml,
@@ -171,8 +172,7 @@ class TestDos:
         self, kube_apis, crd_ingress_controller_with_dos, dos_setup, virtual_server_setup_dos
     ):
         print("\nStep 1: initial check")
-        resp = requests.get(virtual_server_setup_dos.backend_1_url, headers={"host": virtual_server_setup_dos.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup_dos.backend_1_url, virtual_server_setup_dos.vs_host)
 
     def test_dos_vs_logs(
         self,
@@ -233,8 +233,7 @@ class TestDos:
         ]
 
         print("\n confirm response for standard request")
-        resp = requests.get(virtual_server_setup_dos.backend_1_url, headers={"host": virtual_server_setup_dos.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup_dos.backend_1_url, virtual_server_setup_dos.vs_host)
 
         pod_name = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "nginx-ingress")
 
@@ -258,8 +257,7 @@ class TestDos:
         wait_before_test(5)
 
         print("\n confirm response for standard request")
-        resp = requests.get(virtual_server_setup_dos.backend_1_url, headers={"host": virtual_server_setup_dos.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup_dos.backend_1_url, virtual_server_setup_dos.vs_host)
 
         result_conf = get_vs_nginx_template_conf(
             kube_apis.v1,

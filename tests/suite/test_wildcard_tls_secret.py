@@ -1,6 +1,7 @@
 import pytest
 import requests
 from settings import TEST_DATA
+from suite.custom_assertions import wait_and_assert_status_code
 from suite.fixtures import PublicEndpoint
 from suite.resources_utils import (
     create_example_app,
@@ -120,8 +121,7 @@ class TestTLSWildcardSecrets:
             f"https://{wildcard_tls_secret_setup.public_endpoint.public_ip}:"
             f"{wildcard_tls_secret_setup.public_endpoint.port_ssl}/{path}"
         )
-        resp = requests.get(req_url, headers={"host": wildcard_tls_secret_setup.ingress_host}, verify=False)
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, req_url, wildcard_tls_secret_setup.ingress_host, verify=False)
 
     def test_certificate_subject(self, wildcard_tls_secret_ingress_controller, wildcard_tls_secret_setup):
         subject_dict = get_server_certificate_subject(
@@ -200,8 +200,8 @@ class TestTLSWildcardSecrets:
             f"https://{wildcard_tls_secret_setup.public_endpoint.public_ip}:"
             f"{wildcard_tls_secret_setup.public_endpoint.port_ssl}/backend1"
         )
-        resp = requests.get(req_url, headers={"host": wildcard_tls_secret_setup.ingress_host}, verify=False)
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, req_url, wildcard_tls_secret_setup.ingress_host, verify=False)
+
         subject_dict = get_server_certificate_subject(
             wildcard_tls_secret_setup.public_endpoint.public_ip,
             wildcard_tls_secret_setup.ingress_host,

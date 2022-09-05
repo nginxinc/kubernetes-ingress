@@ -3,6 +3,7 @@ import json
 import pytest
 import requests
 from settings import TEST_DATA
+from suite.custom_assertions import wait_and_assert_status_code
 from suite.fixtures import PublicEndpoint
 from suite.resources_utils import (
     create_example_app,
@@ -89,12 +90,10 @@ class TestSmoke:
             f"http://{smoke_setup.public_endpoint.public_ip}:{smoke_setup.public_endpoint.metrics_port}/metrics"
         )
         ensure_response_from_backend(req_url, smoke_setup.ingress_host)
-        resp = requests.get(req_url, headers={"host": smoke_setup.ingress_host}, verify=False)
         reload_ms = get_last_reload_time(metrics_url, "nginx")
         print(f"last reload duration: {reload_ms} ms")
         reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
-        assert resp.status_code == 200
-        assert f"Server name: {path}" in resp.text
+        wait_and_assert_status_code(200, req_url, smoke_setup.ingress_host, verify=False)
 
     @pytest.mark.parametrize(
         "ingress_controller",

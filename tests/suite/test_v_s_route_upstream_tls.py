@@ -12,6 +12,7 @@ from suite.custom_assertions import (
 from suite.resources_utils import (
     create_items_from_yaml,
     delete_items_from_yaml,
+    ensure_response_from_backend,
     get_events,
     get_first_pod_name,
     wait_before_test,
@@ -86,8 +87,15 @@ class TestVSRouteUpstreamTls:
             ingress_controller_prerequisites.namespace,
         )
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
+        ensure_response_from_backend(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}", v_s_route_setup.vs_host, check404=True
+        )
         resp_1 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers={"host": v_s_route_setup.vs_host})
+        ensure_response_from_backend(
+            f"{req_url}{v_s_route_setup.route_s.paths[0]}", v_s_route_setup.vs_host, check404=True
+        )
         resp_2 = requests.get(f"{req_url}{v_s_route_setup.route_s.paths[0]}", headers={"host": v_s_route_setup.vs_host})
+
         vs_line = f"vs_{v_s_route_setup.namespace}_{v_s_route_setup.vs_name}"
         proxy_host_s = f"{vs_line}_vsr_{v_s_route_setup.route_s.namespace}_{v_s_route_setup.route_s.name}"
         proxy_host_m = f"{vs_line}_vsr_{v_s_route_setup.route_m.namespace}_{v_s_route_setup.route_m.name}"
@@ -149,7 +157,13 @@ class TestVSRouteUpstreamTls:
             ingress_controller_prerequisites.namespace,
         )
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
+        ensure_response_from_backend(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}", v_s_route_setup.vs_host, check404=True
+        )
         resp_1 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers={"host": v_s_route_setup.vs_host})
+        ensure_response_from_backend(
+            f"{req_url}{v_s_route_setup.route_s.paths[0]}", v_s_route_setup.vs_host, check404=True
+        )
         resp_2 = requests.get(f"{req_url}{v_s_route_setup.route_s.paths[0]}", headers={"host": v_s_route_setup.vs_host})
         new_events_ns_m = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
         new_events_ns_s = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
@@ -198,7 +212,13 @@ class TestVSRouteUpstreamTls:
             ingress_controller_prerequisites.namespace,
         )
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
+        ensure_response_from_backend(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}", v_s_route_setup.vs_host, check404=True
+        )
         resp_1 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers={"host": v_s_route_setup.vs_host})
+        ensure_response_from_backend(
+            f"{req_url}{v_s_route_setup.route_s.paths[0]}", v_s_route_setup.vs_host, check404=True
+        )
         resp_2 = requests.get(f"{req_url}{v_s_route_setup.route_s.paths[0]}", headers={"host": v_s_route_setup.vs_host})
         new_events_ns_m = get_events(kube_apis.v1, v_s_route_setup.route_m.namespace)
         new_events_ns_s = get_events(kube_apis.v1, v_s_route_setup.route_s.namespace)
