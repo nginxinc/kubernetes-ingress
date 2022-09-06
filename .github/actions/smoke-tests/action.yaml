@@ -112,7 +112,8 @@ runs:
         --service=nodeport --node-ip=${{ steps.k8s.outputs.cluster_ip }} \
         --html=tests-${{ steps.k8s.outputs.cluster }}.html \
         --self-contained-html \
+        --durations=10 \
         --show-ic-logs=yes \
-        -m ${{ inputs.marker != '' && inputs.marker || '""' }}
+        -m ${{ inputs.marker != '' && inputs.marker || '""' }} 
       working-directory: ./tests
       shell: bash

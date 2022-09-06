@@ -5,6 +5,7 @@ import os
 import pytest
 from kubernetes.config.kube_config import KUBE_CONFIG_DEFAULT_LOCATION
 from settings import (
+    BATCH_RELOAD_NUMBER,
     BATCH_RESOURCES,
     BATCH_START,
     DEFAULT_DEPLOYMENT_TYPE,
@@ -94,6 +95,12 @@ def pytest_addoption(parser) -> None:
         action="store",
         default=BATCH_RESOURCES,
         help="Number of VS/Ingress resources to deploy",
+    )
+    parser.addoption(
+        "--batch-reload-number",
+        action="store",
+        default=BATCH_RELOAD_NUMBER,
+        help="Number of reloads expected for batch reload test",
     )
     parser.addoption(
         "--ns-count",
