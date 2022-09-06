@@ -57,7 +57,7 @@ spec:
 |``dos`` | A reference to a DosProtectedResource, setting this enables DOS protection of the VirtualServer. | ``string`` | No |
 |``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
-|``routes`` | A list of routes. | [[]route](#virtualserver-route) | No |
+|``routes`` | A list of routes. | [[]route](#virtualserverroute) | No |
 |``ingressClassName`` | Specifies which Ingress Controller must handle the VirtualServer resource. | ``string`` | No |
 |``http-snippets`` | Sets a custom snippet in the http context. | ``string`` | No |
 |``server-snippets`` | Sets a custom snippet in server context. Overrides the ``server-snippets`` ConfigMap key. | ``string`` | No |
