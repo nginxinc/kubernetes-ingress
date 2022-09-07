@@ -282,8 +282,8 @@ func initialChecks() {
 	}
 
 	unparsed := flag.Args()
-	if unparsed != nil {
-		glog.Warningf("Ignoring unhandled arguments: %v", unparsed)
+	if len(unparsed) > 0 {
+		glog.Warningf("Ignoring unhandled arguments: %+q", unparsed)
 	}
 }
 
