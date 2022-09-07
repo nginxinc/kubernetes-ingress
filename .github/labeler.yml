@@ -1,0 +1,23 @@
+enhancement:
+- branch: ['feature/**', 'feat/**', 'enhancement/**', 'enh/**']
+
+bug:
+- branch: ['fix/**', 'bug/**']
+
+chore:
+- branch: ['chore/**']
+
+tests:
+- branch: ['tests/**', 'test/**']
+- tests/**/*
+- perf-tests/**/*
+- '**/*_test.go'
+
+docs:
+- branch: ['docs/**', 'doc/**']
+- '**/*.md'
+
+dependencies:
+- branch: ['deps/**', 'dep/**']
+- go.mod
+- go.sum
