@@ -18,13 +18,11 @@ func TestUpstreamNamerForTransportServer(t *testing.T) {
 		},
 	}
 	upstreamNamer := newUpstreamNamerForTransportServer(&transportServer)
-	upstream := "test"
-
 	expected := "ts_default_tcp-app_test"
 
-	result := upstreamNamer.GetNameForUpstream(upstream)
+	result := upstreamNamer.GetNameForUpstream("test")
 	if result != expected {
-		t.Errorf("GetNameForUpstream() returned %s but expected %v", result, expected)
+		t.Errorf("GetNameForUpstream() got %s, want %v", result, expected)
 	}
 }
 
@@ -58,7 +56,7 @@ func TestTransportServerExString(t *testing.T) {
 	for _, test := range tests {
 		result := test.input.String()
 		if result != test.expected {
-			t.Errorf("TransportServerEx.String() returned %v but expected %v", result, test.expected)
+			t.Errorf("TransportServerEx.String() got %v, want %v", result, test.expected)
 		}
 	}
 }
@@ -138,8 +136,8 @@ func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 	}
 
 	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
 	}
 }
 
@@ -225,8 +223,8 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 	}
 
 	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
 	}
 }
 
@@ -314,8 +312,8 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 	}
 
 	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
 	}
 }
 
@@ -401,8 +399,8 @@ func TestGenerateTransportServerConfigForTLSPassthrough(t *testing.T) {
 	}
 
 	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
 	}
 }
 
@@ -493,8 +491,95 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 	}
 
 	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
+	}
+}
+
+func TestGenerateTransportServerConfigForExternalNameService(t *testing.T) {
+	t.Parallel()
+	transportServerEx := TransportServerEx{
+		TransportServer: &conf_v1alpha1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "tcp-server",
+				Namespace: "default",
+			},
+			Spec: conf_v1alpha1.TransportServerSpec{
+				Listener: conf_v1alpha1.TransportServerListener{
+					Name:     "tcp-listener",
+					Protocol: "TCP",
+				},
+				Upstreams: []conf_v1alpha1.Upstream{
+					{
+						Name:        "tcp-app",
+						Service:     "tcp-app-svc",
+						Port:        5001,
+						MaxFails:    intPointer(3),
+						FailTimeout: "40s",
+					},
+				},
+				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+					ConnectTimeout: "30s",
+					NextUpstream:   false,
+				},
+				SessionParameters: &conf_v1alpha1.SessionParameters{
+					Timeout: "50s",
+				},
+				Action: &conf_v1alpha1.Action{
+					Pass: "tcp-app",
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tcp-app-svc:5001": {
+				"10.0.0.20:5001",
+			},
+		},
+		ExternalNameSvcs: map[string]bool{"default/tcp-app-svc": true},
+	}
+
+	expected := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address:     "10.0.0.20:5001",
+						MaxFails:    3,
+						FailTimeout: "40s",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+				LoadBalancingMethod: "random two least_conn",
+				Resolve:             true,
+			},
+		},
+		Server: version2.StreamServer{
+			Port:                     2020,
+			UDP:                      false,
+			StatusZone:               "tcp-listener",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "30s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTries:   0,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyTimeout:             "50s",
+			HealthCheck:              nil,
+			ServerSnippets:           []string{},
+		},
+		StreamSnippets: []string{},
+	}
+
+	result := generateTransportServerConfig(&transportServerEx, 2020, true)
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
 	}
 }
 
@@ -518,7 +603,7 @@ func TestGenerateUnixSocket(t *testing.T) {
 
 	result := generateUnixSocket(transportServerEx)
 	if result != expected {
-		t.Errorf("generateUnixSocket() returned %q but expected %q", result, expected)
+		t.Errorf("generateUnixSocket() got %q, want %q", result, expected)
 	}
 
 	transportServerEx.TransportServer.Spec.Listener.Name = "some-listener"
@@ -526,15 +611,12 @@ func TestGenerateUnixSocket(t *testing.T) {
 
 	result = generateUnixSocket(transportServerEx)
 	if result != expected {
-		t.Errorf("generateUnixSocket() returned %q but expected %q", result, expected)
+		t.Errorf("generateUnixSocket() got %q, want %q", result, expected)
 	}
 }
 
 func TestGenerateTransportServerHealthChecks(t *testing.T) {
 	t.Parallel()
-	upstreamName := "dns-tcp"
-	generatedUpsteamName := "ts_namespace_name_dns-tcp"
-
 	tests := []struct {
 		upstreams     []conf_v1alpha1.Upstream
 		expectedHC    *version2.StreamHealthCheck
@@ -692,12 +774,13 @@ func TestGenerateTransportServerHealthChecks(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		hc, match := generateTransportServerHealthCheck(upstreamName, generatedUpsteamName, test.upstreams)
-		if diff := cmp.Diff(test.expectedHC, hc); diff != "" {
-			t.Errorf("generateTransportServerHealthCheck() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		hc, match := generateTransportServerHealthCheck("dns-tcp", "ts_namespace_name_dns-tcp", test.upstreams)
+
+		if !cmp.Equal(test.expectedHC, hc) {
+			t.Errorf("generateTransportServerHealthCheck()\n%s", cmp.Diff(test.expectedHC, hc))
 		}
-		if diff := cmp.Diff(test.expectedMatch, match); diff != "" {
-			t.Errorf("generateTransportServerHealthCheck() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		if !cmp.Equal(test.expectedMatch, match) {
+			t.Errorf("generateTransportServerHealthCheck()\n%s", cmp.Diff(test.expectedMatch, match))
 		}
 	}
 }
@@ -762,12 +845,11 @@ func TestGenerateHealthCheckMatch(t *testing.T) {
 			msg: "match with all fields and case insensitive regexp",
 		},
 	}
-	name := "match"
 
 	for _, test := range tests {
-		result := generateHealthCheckMatch(test.match, name)
-		if diff := cmp.Diff(test.expected, result); diff != "" {
-			t.Errorf("generateHealthCheckMatch() '%v' mismatch (-want +got):\n%s", test.msg, diff)
+		result := generateHealthCheckMatch(test.match, "match")
+		if !cmp.Equal(test.expected, result) {
+			t.Errorf("generateHealthCheckMatch()\n%s", cmp.Diff(test.expected, result))
 		}
 	}
 }

@@ -115,12 +115,7 @@ func newAppProtectVSResourcesForVS() *appProtectResourcesForVS {
 }
 
 // GenerateEndpointsKey generates a key for the Endpoints map in VirtualServerEx.
-func GenerateEndpointsKey(
-	serviceNamespace string,
-	serviceName string,
-	subselector map[string]string,
-	port uint16,
-) string {
+func GenerateEndpointsKey(serviceNamespace string, serviceName string, subselector map[string]string, port uint16) string {
 	if len(subselector) > 0 {
 		return fmt.Sprintf("%s/%s_%s:%d", serviceNamespace, serviceName, labels.Set(subselector).String(), port)
 	}
@@ -139,10 +134,7 @@ func newUpstreamNamerForVirtualServer(virtualServer *conf_v1.VirtualServer) *ups
 	}
 }
 
-func newUpstreamNamerForVirtualServerRoute(
-	virtualServer *conf_v1.VirtualServer,
-	virtualServerRoute *conf_v1.VirtualServerRoute,
-) *upstreamNamer {
+func newUpstreamNamerForVirtualServerRoute(virtualServer *conf_v1.VirtualServer, virtualServerRoute *conf_v1.VirtualServerRoute) *upstreamNamer {
 	return &upstreamNamer{
 		prefix: fmt.Sprintf(
 			"vs_%s_%s_vsr_%s_%s",

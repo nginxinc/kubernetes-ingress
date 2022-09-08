@@ -1069,6 +1069,7 @@ func (cnf *Configurator) updateStreamServersInPlus(upstream string, servers []st
 }
 
 // UpdateConfig updates NGINX configuration parameters.
+//
 //gocyclo:ignore
 func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources ExtendedResources) (Warnings, error) {
 	cnf.cfgParams = cfgParams

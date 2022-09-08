@@ -2332,7 +2332,7 @@ func (lbc *LoadBalancerController) updateTransportServersStatusFromEvents() erro
 			events, err := lbc.client.CoreV1().Events(ts.Namespace).List(context.TODO(),
 				meta_v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%v,involvedObject.uid=%v", ts.Name, ts.UID)})
 			if err != nil {
-				allErrs = append(allErrs, fmt.Errorf("error trying to get events for TransportServer %v/%v: %w", ts.Namespace, ts.Name, err))
+				allErrs = append(allErrs, fmt.Errorf("trying to get events for TransportServer %v/%v: %w", ts.Namespace, ts.Name, err))
 				break
 			}
 
@@ -2571,19 +2571,19 @@ func (lbc *LoadBalancerController) createIngressEx(ing *networking.Ingress, vali
 func (lbc *LoadBalancerController) getAppProtectLogConfAndDst(ing *networking.Ingress) ([]configs.AppProtectLog, error) {
 	var apLogs []configs.AppProtectLog
 	if _, exists := ing.Annotations[configs.AppProtectLogConfDstAnnotation]; !exists {
-		return apLogs, fmt.Errorf("Error: %v requires %v in %v", configs.AppProtectLogConfAnnotation, configs.AppProtectLogConfDstAnnotation, ing.Name)
+		return apLogs, fmt.Errorf("%v requires %v in %v", configs.AppProtectLogConfAnnotation, configs.AppProtectLogConfDstAnnotation, ing.Name)
 	}
 
 	logDsts := strings.Split(ing.Annotations[configs.AppProtectLogConfDstAnnotation], ",")
 	logConfNsNs := appprotectcommon.ParseResourceReferenceAnnotationList(ing.Namespace, ing.Annotations[configs.AppProtectLogConfAnnotation])
 	if len(logDsts) != len(logConfNsNs) {
-		return apLogs, fmt.Errorf("Error Validating App Protect Destination and Config for Ingress %v: LogConf and LogDestination must have equal number of items", ing.Name)
+		return apLogs, fmt.Errorf("validating App Protect Destination and Config for Ingress %v: LogConf and LogDestination must have equal number of items", ing.Name)
 	}
 
 	for i, logConfNsN := range logConfNsNs {
 		logConf, err := lbc.appProtectConfiguration.GetAppResource(appprotect.LogConfGVK.Kind, logConfNsN)
 		if err != nil {
-			return apLogs, fmt.Errorf("Error retrieving App Protect Log Config for Ingress %v: %w", ing.Name, err)
+			return apLogs, fmt.Errorf("retrieving App Protect Log Config for Ingress %v: %w", ing.Name, err)
 		}
 		apLogs = append(apLogs, configs.AppProtectLog{
 			LogConf: logConf,
@@ -2599,7 +2599,7 @@ func (lbc *LoadBalancerController) getAppProtectPolicy(ing *networking.Ingress) 
 
 	apPolicy, err = lbc.appProtectConfiguration.GetAppResource(appprotect.PolicyGVK.Kind, polNsN)
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving App Protect Policy for Ingress %v: %w", ing.Name, err)
+		return nil, fmt.Errorf("retrieving App Protect Policy for Ingress %v: %w", ing.Name, err)
 	}
 
 	return apPolicy, nil
@@ -2905,12 +2905,12 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 			}
 		}
 		if err != nil {
-			errors = append(errors, fmt.Errorf("Failed to get policy %s: %w", policyKey, err))
+			errors = append(errors, fmt.Errorf("failed to get policy %s: %w", policyKey, err))
 			continue
 		}
 
 		if !exists {
-			errors = append(errors, fmt.Errorf("Policy %s doesn't exist", policyKey))
+			errors = append(errors, fmt.Errorf("policy %s doesn't exist", policyKey))
 			continue
 		}
 
@@ -2923,7 +2923,7 @@ func (lbc *LoadBalancerController) getPolicies(policies []conf_v1.PolicyReferenc
 
 		err = validation.ValidatePolicy(policy, lbc.isNginxPlus, lbc.enableOIDC, lbc.appProtectEnabled)
 		if err != nil {
-			errors = append(errors, fmt.Errorf("Policy %s is invalid: %w", policyKey, err))
+			errors = append(errors, fmt.Errorf("policy %s is invalid: %w", policyKey, err))
 			continue
 		}
 
@@ -3161,16 +3161,16 @@ func isMatchingResourceRef(ownerNs, resRef, key string) bool {
 
 func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1alpha1.TransportServer, listenerPort int) *configs.TransportServerEx {
 	endpoints := make(map[string][]string)
+	externalNameSvcs := make(map[string]bool)
 	podsByIP := make(map[string]string)
 
 	for _, u := range transportServer.Spec.Upstreams {
 		podEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port))
+		if err == nil && external && lbc.isNginxPlus {
+			externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Service)] = true
+		}
 		if err != nil {
 			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-		}
-
-		if external {
-			glog.Warningf("ExternalName services are not yet supported in TransportServer upstreams")
 		}
 
 		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
@@ -3187,17 +3187,18 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 	}
 
 	return &configs.TransportServerEx{
-		ListenerPort:    listenerPort,
-		TransportServer: transportServer,
-		Endpoints:       endpoints,
-		PodsByIP:        podsByIP,
+		ListenerPort:     listenerPort,
+		TransportServer:  transportServer,
+		Endpoints:        endpoints,
+		PodsByIP:         podsByIP,
+		ExternalNameSvcs: externalNameSvcs,
 	}
 }
 
 func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, upstreamService string, upstreamPort uint16) (endps []podEndpoint, isExternal bool, err error) {
 	svc, err := lbc.getServiceForUpstream(namespace, upstreamService, upstreamPort)
 	if err != nil {
-		return nil, false, fmt.Errorf("Error getting service %v: %w", upstreamService, err)
+		return nil, false, fmt.Errorf("getting service %v: %w", upstreamService, err)
 	}
 
 	backend := &networking.IngressBackend{
@@ -3211,7 +3212,7 @@ func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, ups
 
 	endps, isExternal, err = lbc.getEndpointsForIngressBackend(backend, svc)
 	if err != nil {
-		return nil, false, fmt.Errorf("Error retrieving endpoints for the service %v: %w", upstreamService, err)
+		return nil, false, fmt.Errorf("retrieving endpoints for the service %v: %w", upstreamService, err)
 	}
 
 	return endps, isExternal, err
@@ -3220,7 +3221,7 @@ func (lbc *LoadBalancerController) getEndpointsForUpstream(namespace string, ups
 func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, upstream conf_v1.Upstream) (endps []podEndpoint, err error) {
 	svc, err := lbc.getServiceForUpstream(namespace, upstream.Service, upstream.Port)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting service %v: %w", upstream.Service, err)
+		return nil, fmt.Errorf("getting service %v: %w", upstream.Service, err)
 	}
 
 	var targetPort int32
@@ -3229,19 +3230,19 @@ func (lbc *LoadBalancerController) getEndpointsForSubselector(namespace string, 
 		if port.Port == int32(upstream.Port) {
 			targetPort, err = lbc.getTargetPort(port, svc)
 			if err != nil {
-				return nil, fmt.Errorf("Error determining target port for port %v in service %v: %w", upstream.Port, svc.Name, err)
+				return nil, fmt.Errorf("determining target port for port %v in service %v: %w", upstream.Port, svc.Name, err)
 			}
 			break
 		}
 	}
 
 	if targetPort == 0 {
-		return nil, fmt.Errorf("No port %v in service %s", upstream.Port, svc.Name)
+		return nil, fmt.Errorf("no port %v in service %s", upstream.Port, svc.Name)
 	}
 
 	endps, err = lbc.getEndpointsForServiceWithSubselector(targetPort, upstream.Subselector, svc)
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving endpoints for the service %v: %w", upstream.Service, err)
+		return nil, fmt.Errorf("retrieving endpoints for the service %v: %w", upstream.Service, err)
 	}
 
 	return endps, err
@@ -3256,7 +3257,7 @@ func (lbc *LoadBalancerController) getEndpointsForServiceWithSubselector(targetP
 		}
 	}
 	if err != nil {
-		return nil, fmt.Errorf("Error getting pods in namespace %v that match the selector %v: %w", svc.Namespace, labels.Merge(svc.Spec.Selector, subselector), err)
+		return nil, fmt.Errorf("getting pods in namespace %v that match the selector %v: %w", svc.Namespace, labels.Merge(svc.Spec.Selector, subselector), err)
 	}
 
 	var svcEps api_v1.Endpoints
@@ -3391,7 +3392,7 @@ func (lbc *LoadBalancerController) getEndpointsForIngressBackend(backend *networ
 	if err != nil {
 		if svc.Spec.Type == api_v1.ServiceTypeExternalName {
 			if !lbc.isNginxPlus {
-				return nil, false, fmt.Errorf("Type ExternalName Services feature is only available in NGINX Plus")
+				return nil, false, fmt.Errorf("type ExternalName Services feature is only available in NGINX Plus")
 			}
 			result = lbc.getExternalEndpointsForIngressBackend(backend, svc)
 			return result, true, nil
@@ -3416,14 +3417,14 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, b
 		if (backendPort.Name == "" && port.Port == backendPort.Number) || port.Name == backendPort.Name {
 			targetPort, err = lbc.getTargetPort(port, svc)
 			if err != nil {
-				return nil, fmt.Errorf("Error determining target port for port %v in Ingress: %w", backendPort, err)
+				return nil, fmt.Errorf("determining target port for port %v in Ingress: %w", backendPort, err)
 			}
 			break
 		}
 	}
 
 	if targetPort == 0 {
-		return nil, fmt.Errorf("No port %v in service %s", backendPort, svc.Name)
+		return nil, fmt.Errorf("no port %v in service %s", backendPort, svc.Name)
 	}
 
 	for _, subset := range endps.Subsets {
@@ -3448,7 +3449,7 @@ func (lbc *LoadBalancerController) getEndpointsForPort(endps api_v1.Endpoints, b
 		}
 	}
 
-	return nil, fmt.Errorf("No endpoints for target port %v in service %s", targetPort, svc.Name)
+	return nil, fmt.Errorf("no endpoints for target port %v in service %s", targetPort, svc.Name)
 }
 
 func (lbc *LoadBalancerController) getPodOwnerTypeAndNameFromAddress(ns, name string) (parentType, parentName string) {
@@ -3515,18 +3516,18 @@ func (lbc *LoadBalancerController) getTargetPort(svcPort api_v1.ServicePort, svc
 		}
 	}
 	if err != nil {
-		return 0, fmt.Errorf("Error getting pod information: %w", err)
+		return 0, fmt.Errorf("getting pod information: %w", err)
 	}
 
 	if len(pods) == 0 {
-		return 0, fmt.Errorf("No pods of service %s", svc.Name)
+		return 0, fmt.Errorf("no pods of service %s", svc.Name)
 	}
 
 	pod := pods[0]
 
 	portNum, err := findPort(pod, svcPort)
 	if err != nil {
-		return 0, fmt.Errorf("Error finding named port %v in pod %s: %w", svcPort, pod.Name, err)
+		return 0, fmt.Errorf("finding named port %v in pod %s: %w", svcPort, pod.Name, err)
 	}
 
 	return portNum, nil

@@ -12,10 +12,11 @@ const nginxNonExistingUnixSocket = "unix:/var/lib/nginx/non-existing-unix-socket
 
 // TransportServerEx holds a TransportServer along with the resources referenced by it.
 type TransportServerEx struct {
-	ListenerPort    int
-	TransportServer *conf_v1alpha1.TransportServer
-	Endpoints       map[string][]string
-	PodsByIP        map[string]string
+	ListenerPort     int
+	TransportServer  *conf_v1alpha1.TransportServer
+	Endpoints        map[string][]string
+	PodsByIP         map[string]string
+	ExternalNameSvcs map[string]bool
 }
 
 func (tsEx *TransportServerEx) String() string {
@@ -36,7 +37,8 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 
 	upstreams := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus)
 
-	healthCheck, match := generateTransportServerHealthCheck(transportServerEx.TransportServer.Spec.Action.Pass,
+	healthCheck, match := generateTransportServerHealthCheck(
+		transportServerEx.TransportServer.Spec.Action.Pass,
 		upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
 		transportServerEx.TransportServer.Spec.Upstreams)
 
@@ -111,6 +113,7 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 	var upstreams []version2.StreamUpstream
 
 	for _, u := range transportServerEx.TransportServer.Spec.Upstreams {
+		_, isExternal := transportServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(transportServerEx.TransportServer.Namespace, u.Service)]
 
 		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
 		endpointsKey := GenerateEndpointsKey(transportServerEx.TransportServer.Namespace, u.Service, nil, uint16(u.Port))
@@ -118,6 +121,7 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 
 		ups := generateStreamUpstream(u, upstreamNamer, endpoints, isPlus)
 
+		ups.Resolve = isExternal
 		ups.UpstreamLabels.Service = u.Service
 		ups.UpstreamLabels.ResourceType = "transportserver"
 		ups.UpstreamLabels.ResourceName = transportServerEx.TransportServer.Name
