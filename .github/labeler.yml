@@ -11,13 +11,12 @@ tests:
 - branch: ['tests/**', 'test/**']
 - tests/**/*
 - perf-tests/**/*
-- '**/*_test.go'
 
-docs:
+documentation:
 - branch: ['docs/**', 'doc/**']
 - '**/*.md'
 
 dependencies:
-- branch: ['deps/**', 'dep/**']
+- branch: ['deps/**', 'dep/**', 'dependabot/**']
 - go.mod
 - go.sum
