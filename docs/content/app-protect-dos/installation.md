@@ -48,6 +48,9 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
     ```bash
     make debian-image-dos-plus PREFIX=<your Docker registry domain>/nginx-plus-ingress
     ```
+    Alternatively, if you want to run on an [OpenShift](https://www.openshift.com/) cluster, use the `ubi-image-dos-plus` target.
+
+    If you want to include the App Protect WAF module in the image, you can use the `debian-image-nap-dos-plus` target or the `ubi-image-nap-dos-plus` target for OpenShift.
 
 - [Push the image to your local Docker registry](/nginx-ingress-controller/installation/building-ingress-controller-image/#building-the-image-and-pushing-it-to-the-private-registry).
 
