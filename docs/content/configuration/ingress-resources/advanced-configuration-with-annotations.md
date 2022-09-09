@@ -91,14 +91,6 @@ The table below summarizes the available annotations.
 
 **Note**: The annotations that start with `nginx.com` are only supported with NGINX Plus.
 
-### Ingress Controller (Not Related to NGINX Configuration)
-
-{{% table %}}
-|Annotation | ConfigMap Key | Description | Default | Example |
-| ---| ---| ---| ---| --- |
-|``kubernetes.io/ingress.class`` | N/A | Specifies which Ingress Controller must handle the Ingress resource. Set to ``nginx`` to make NGINX Ingress Controller handle it. | N/A | [Multiple Ingress Controllers](/nginx-ingress-controller/installation/running-multiple-ingress-controllers). |
-{{% /table %}}
-
 ### General Customization
 
 {{% table %}}

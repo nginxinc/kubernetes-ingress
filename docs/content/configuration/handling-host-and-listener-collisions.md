@@ -31,9 +31,8 @@ Consider the following two resources:
     kind: Ingress
     metadata:
       name: cafe-ingress
-      annotations:
-        kubernetes.io/ingress.class: "nginx"
     spec:
+      ingressClassName: nginx
       rules:
       - host: cafe.example.com
         . . .
