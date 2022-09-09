@@ -449,45 +449,36 @@ func TestVirtualServerForNginxPlus(t *testing.T) {
 	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
 	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
+		t.Fatal(err)
 	}
-
-	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
+	_, err = executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
 	if err != nil {
-		t.Fatalf("Failed to execute template: %v", err)
+		t.Fatal(err)
 	}
-
-	t.Log(string(data))
 }
 
 func TestVirtualServerForNginx(t *testing.T) {
 	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
 	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
+		t.Fatal(err)
 	}
-
-	data, err := executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
+	_, err = executor.ExecuteVirtualServerTemplate(&virtualServerCfg)
 	if err != nil {
-		t.Fatalf("Failed to execute template: %v", err)
+		t.Fatal(err)
 	}
-
-	t.Log(string(data))
 }
 
 func TestTransportServerForNginxPlus(t *testing.T) {
 	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
 	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
+		t.Fatal(err)
 	}
-
-	data, err := executor.ExecuteTransportServerTemplate(&transportServerCfg)
+	_, err = executor.ExecuteTransportServerTemplate(&transportServerCfg)
 	if err != nil {
-		t.Fatalf("Failed to execute template: %v", err)
+		t.Fatal(err)
 	}
-
-	t.Log(string(data))
 }
 
 func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
@@ -496,9 +487,9 @@ func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	data, err := executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
+	_, err = executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
 	if err != nil {
-		t.Fatalf("%v\n%#v", err, string(data))
+		t.Fatal(err)
 	}
 }
 
@@ -506,32 +497,25 @@ func TestTransportServerForNginx(t *testing.T) {
 	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
 	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
+		t.Fatal(err)
 	}
-
-	data, err := executor.ExecuteTransportServerTemplate(&transportServerCfg)
+	_, err = executor.ExecuteTransportServerTemplate(&transportServerCfg)
 	if err != nil {
-		t.Fatalf("Failed to execute template: %v", err)
+		t.Fatal(err)
 	}
-
-	t.Log(string(data))
 }
 
 func TestTLSPassthroughHosts(t *testing.T) {
 	t.Parallel()
 	executor, err := NewTemplateExecutor(nginxVirtualServerTmpl, nginxTransportServerTmpl)
 	if err != nil {
-		t.Fatalf("Failed to create template executor: %v", err)
+		t.Fatal(err)
 	}
-
 	unixSocketsCfg := TLSPassthroughHostsConfig{
 		"app.example.com": "unix:/var/lib/nginx/passthrough-default_secure-app.sock",
 	}
-
-	data, err := executor.ExecuteTLSPassthroughHostsTemplate(&unixSocketsCfg)
+	_, err = executor.ExecuteTLSPassthroughHostsTemplate(&unixSocketsCfg)
 	if err != nil {
-		t.Fatalf("Failed to execute template: %v", err)
+		t.Fatal(err)
 	}
-
-	t.Log(string(data))
 }

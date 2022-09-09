@@ -53,31 +53,33 @@ func (te *TemplateExecutor) UpdateVirtualServerTemplate(templateString *string) 
 		return err
 	}
 	te.virtualServerTemplate = newTemplate
-
 	return nil
 }
 
 // ExecuteVirtualServerTemplate generates the content of an NGINX configuration file for a VirtualServer resource.
 func (te *TemplateExecutor) ExecuteVirtualServerTemplate(cfg *VirtualServerConfig) ([]byte, error) {
 	var configBuffer bytes.Buffer
-	err := te.virtualServerTemplate.Execute(&configBuffer, cfg)
-
-	return configBuffer.Bytes(), err
+	if err := te.virtualServerTemplate.Execute(&configBuffer, cfg); err != nil {
+		return nil, err
+	}
+	return configBuffer.Bytes(), nil
 }
 
 // ExecuteTransportServerTemplate generates the content of an NGINX configuration file for a TransportServer resource.
 func (te *TemplateExecutor) ExecuteTransportServerTemplate(cfg *TransportServerConfig) ([]byte, error) {
 	var configBuffer bytes.Buffer
-	err := te.transportServerTemplate.Execute(&configBuffer, cfg)
-
-	return configBuffer.Bytes(), err
+	if err := te.transportServerTemplate.Execute(&configBuffer, cfg); err != nil {
+		return nil, err
+	}
+	return configBuffer.Bytes(), nil
 }
 
 // ExecuteTLSPassthroughHostsTemplate generates the content of an NGINX configuration file for mapping between
 // TLS Passthrough hosts and the corresponding unix sockets.
 func (te *TemplateExecutor) ExecuteTLSPassthroughHostsTemplate(cfg *TLSPassthroughHostsConfig) ([]byte, error) {
 	var configBuffer bytes.Buffer
-	err := te.tlsPassthroughHostsTemplate.Execute(&configBuffer, cfg)
-
-	return configBuffer.Bytes(), err
+	if err := te.tlsPassthroughHostsTemplate.Execute(&configBuffer, cfg); err != nil {
+		return nil, err
+	}
+	return configBuffer.Bytes(), nil
 }
