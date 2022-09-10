@@ -38,6 +38,7 @@ spec:
 {{- end }}
     spec:
       serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.controller.automountServiceAccountToken }}
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
 {{- if .Values.controller.nodeSelector }}
       nodeSelector:

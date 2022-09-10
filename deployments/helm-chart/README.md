@@ -168,6 +168,7 @@ Parameter | Description | Default
 `controller.wildcardTLS.cert` | The base64-encoded TLS certificate for every Ingress/VirtualServer host that has TLS enabled but no secret specified. If the parameter is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection. | None
 `controller.wildcardTLS.key` | The base64-encoded TLS key for every Ingress/VirtualServer host that has TLS enabled but no secret specified. If the parameter is not set, for such Ingress/VirtualServer hosts NGINX will break any attempt to establish a TLS connection. | None
 `controller.wildcardTLS.secret` | The secret with a TLS certificate and key for every Ingress/VirtualServer host that has TLS enabled but no secret specified. The value must follow the following format: `<namespace>/<name>`. Used as an alternative to specifying a certificate and key using `controller.wildcardTLS.cert` and `controller.wildcardTLS.key` parameters. | None
+`controller.automountServiceAccountToken` | Setting for automountServiceAccountToken for NGINX Ingress. | true
 `controller.nodeSelector` | The node selector for pod assignment for the Ingress Controller pods. | {}
 `controller.terminationGracePeriodSeconds` | The termination grace period of the Ingress Controller pod. | 30
 `controller.tolerations` | The tolerations of the Ingress Controller pods. | []
