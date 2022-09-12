@@ -1,51 +1,45 @@
-import time
-
-import requests
 import pytest
+import requests
 import yaml
-
+from settings import TEST_DATA
 from suite.ap_resources_utils import (
-    create_ap_usersig_from_yaml,
-    delete_ap_usersig,
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
-    delete_ap_policy,
-    delete_ap_logconf,
+    create_ap_usersig_from_yaml,
     create_ap_waf_policy_from_yaml,
+    delete_ap_logconf,
+    delete_ap_policy,
+    delete_ap_usersig,
 )
+from suite.policy_resources_utils import delete_policy
 from suite.resources_utils import (
-    ensure_connection_to_public_endpoint,
-    create_items_from_yaml,
     create_example_app,
-    delete_common_app,
-    delete_items_from_yaml,
-    wait_until_all_pods_are_ready,
-    create_secret_from_yaml,
-    delete_secret,
-    ensure_response_from_backend,
     create_ingress,
     create_ingress_with_ap_annotations,
+    create_items_from_yaml,
+    create_secret_from_yaml,
+    delete_common_app,
     delete_ingress,
-    wait_before_test,
-    scale_deployment,
+    delete_items_from_yaml,
+    delete_secret,
+    ensure_connection_to_public_endpoint,
+    ensure_response_from_backend,
+    get_last_reload_status,
+    get_pods_amount,
     get_total_ingresses,
     get_total_vs,
-    get_last_reload_status,
-    get_pods_amount, get_total_vsr,
+    get_total_vsr,
+    scale_deployment,
+    wait_before_test,
+    wait_until_all_pods_are_ready,
 )
 from suite.vs_vsr_resources_utils import (
-    create_virtual_server_from_yaml,
+    create_v_s_route,
+    create_virtual_server,
     delete_virtual_server,
     patch_virtual_server_from_yaml,
-    create_virtual_server,
-    create_v_s_route,
-)
-from suite.policy_resources_utils import (
-    create_policy_from_yaml,
-    delete_policy,
 )
 from suite.yaml_utils import get_first_ingress_host_from_yaml
-from settings import TEST_DATA
 
 
 class IngressSetup:
@@ -83,17 +77,11 @@ def simple_ingress_setup(
     req_url = f"https://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.port_ssl}/backend1"
     metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
 
-    secret_name = create_secret_from_yaml(
-        kube_apis.v1, test_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml"
-    )
+    secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml")
     create_example_app(kube_apis, "simple", test_namespace)
-    create_items_from_yaml(
-        kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace
-    )
+    create_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
 
-    ingress_host = get_first_ingress_host_from_yaml(
-        f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml"
-    )
+    ingress_host = get_first_ingress_host_from_yaml(f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml")
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
     ensure_connection_to_public_endpoint(
         ingress_controller_endpoint.public_ip,
@@ -105,9 +93,7 @@ def simple_ingress_setup(
         print("Clean up the Application:")
         delete_common_app(kube_apis, "simple", test_namespace)
         delete_secret(kube_apis.v1, secret_name, test_namespace)
-        delete_items_from_yaml(
-            kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace
-        )
+        delete_items_from_yaml(kube_apis, f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml", test_namespace)
 
     request.addfinalizer(fin)
 
@@ -137,9 +123,7 @@ class TestMultipleSimpleIngress:
         """
         Pod startup time with simple Ingress
         """
-        ensure_response_from_backend(
-            simple_ingress_setup.req_url, simple_ingress_setup.ingress_host, check404=True
-        )
+        ensure_response_from_backend(simple_ingress_setup.req_url, simple_ingress_setup.ingress_host, check404=True)
 
         total_ing = int(request.config.getoption("--batch-resources"))
         manifest = f"{TEST_DATA}/smoke/standard/smoke-ingress.yaml"
@@ -153,7 +137,7 @@ class TestMultipleSimpleIngress:
         wait_before_test()
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
             print(f"Number of replicas not 0, retrying...")
             wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
@@ -172,9 +156,7 @@ class TestMultipleSimpleIngress:
 
 
 @pytest.fixture(scope="class")
-def ap_ingress_setup(
-    request, kube_apis, ingress_controller_endpoint, test_namespace
-) -> IngressSetup:
+def ap_ingress_setup(request, kube_apis, ingress_controller_endpoint, test_namespace) -> IngressSetup:
     """
     Deploy a simple application and AppProtect manifests.
 
@@ -263,9 +245,7 @@ class TestAppProtect:
         print("------------- Run test for AP policy: dataguard-alarm --------------")
         print(f"Request URL: {ap_ingress_setup.req_url} and Host: {ap_ingress_setup.ingress_host}")
 
-        ensure_response_from_backend(
-            ap_ingress_setup.req_url, ap_ingress_setup.ingress_host, check404=True
-        )
+        ensure_response_from_backend(ap_ingress_setup.req_url, ap_ingress_setup.ingress_host, check404=True)
 
         total_ing = int(request.config.getoption("--batch-resources"))
 
@@ -280,10 +260,11 @@ class TestAppProtect:
         wait_before_test()
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
             print(f"Number of replicas not 0, retrying...")
             wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
+        wait_before_test(30)
 
         assert (
             get_total_ingresses(ap_ingress_setup.metrics_url, "nginx") == str(total_ing + 1)
@@ -326,10 +307,8 @@ class TestVirtualServer:
         """
         Pod startup time with simple VS
         """
-        resp = requests.get(
-            virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host}
-        )
-        assert resp.status_code is 200
+        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
+        assert resp.status_code == 200
         total_vs = int(request.config.getoption("--batch-resources"))
         manifest = f"{TEST_DATA}/virtual-server/standard/virtual-server.yaml"
         for i in range(1, total_vs + 1):
@@ -345,7 +324,7 @@ class TestVirtualServer:
         wait_before_test()
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
             print(f"Number of replicas not 0, retrying...")
             wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
@@ -381,9 +360,7 @@ def appprotect_waf_setup(request, kube_apis, test_namespace) -> None:
     log_name = create_ap_logconf_from_yaml(kube_apis.custom_objects, src_log_yaml, test_namespace)
 
     print("------------------------- Create UserSig CRD resource-----------------------------")
-    usersig_name = create_ap_usersig_from_yaml(
-        kube_apis.custom_objects, uds_crd_resource, test_namespace
-    )
+    usersig_name = create_ap_usersig_from_yaml(kube_apis.custom_objects, uds_crd_resource, test_namespace)
 
     print(f"------------------------- Deploy dataguard-alarm appolicy ---------------------------")
     src_pol_yaml = f"{TEST_DATA}/ap-waf/{ap_policy_uds}.yaml"
@@ -460,18 +437,14 @@ class TestAppProtectWAFPolicyVS:
             virtual_server_setup.namespace,
         )
         wait_before_test(120)
-        print(
-            "----------------------- Send request with embedded malicious script----------------------"
-        )
+        print("----------------------- Send request with embedded malicious script----------------------")
         response1 = requests.get(
             virtual_server_setup.backend_1_url + "</script>",
             headers={"host": virtual_server_setup.vs_host},
         )
         print(response1.status_code)
 
-        print(
-            "----------------------- Send request with blocked keyword in UDS----------------------"
-        )
+        print("----------------------- Send request with blocked keyword in UDS----------------------")
         response2 = requests.get(
             virtual_server_setup.backend_1_url,
             headers={"host": virtual_server_setup.vs_host},
@@ -494,7 +467,7 @@ class TestAppProtectWAFPolicyVS:
         wait_before_test()
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
             print(f"Number of replicas not 0, retrying...")
             wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
@@ -511,6 +484,7 @@ class TestAppProtectWAFPolicyVS:
 
 
 ##############################################################################################################
+
 
 @pytest.fixture(scope="class")
 def vs_vsr_setup(
@@ -561,7 +535,11 @@ def vs_vsr_setup(
         pytest.param(
             {
                 "type": "complete",
-                "extra_args": ["-enable-custom-resources","-enable-prometheus-metrics", "-enable-leader-election=false"]
+                "extra_args": [
+                    "-enable-custom-resources",
+                    "-enable-prometheus-metrics",
+                    "-enable-leader-election=false",
+                ],
             },
         )
     ],
@@ -575,7 +553,8 @@ class TestSingleVSMultipleVSRs:
         ingress_controller_prerequisites,
         crd_ingress_controller,
         ingress_controller_endpoint,
-         vs_vsr_setup):
+        vs_vsr_setup,
+    ):
         """
         Pod startup time with 1 VS and multiple VSRs.
         """
@@ -583,12 +562,14 @@ class TestSingleVSMultipleVSRs:
 
         ic_ns = ingress_controller_prerequisites.namespace
         scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 0)
-        while get_pods_amount(kube_apis.v1, ic_ns) is not 0:
+        while get_pods_amount(kube_apis.v1, ic_ns) != 0:
             print(f"Number of replicas not 0, retrying...")
             wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
 
-        metrics_url = f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        metrics_url = (
+            f"http://{ingress_controller_endpoint.public_ip}:{ingress_controller_endpoint.metrics_port}/metrics"
+        )
 
         assert (
             get_total_vs(metrics_url, "nginx") == "1"

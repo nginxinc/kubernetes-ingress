@@ -2,10 +2,11 @@
 
 import socket
 import ssl
+from urllib.parse import urlparse
+
 import OpenSSL
 import requests
 from requests.adapters import HTTPAdapter
-from urllib.parse import urlparse
 
 
 def get_certificate(ip_address, host, port, timeout=10) -> str:
@@ -44,6 +45,7 @@ def get_server_certificate_subject(ip_address, host, port=443) -> dict:
     x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, certificate)
     return dict(x509.get_subject().get_components())
 
+
 class SNIAdapter(HTTPAdapter):
     """
     An HTTP adapter for the requests library that ensures that the SNI of a TLS connection is set to the custom host
@@ -53,6 +55,7 @@ class SNIAdapter(HTTPAdapter):
       >>> s.mount("https://", SNIAdapter())
       >>> resp = s.get("https://127.0.0.1:8443", headers={"host": "webapp.example.com"}, verify=False)
     """
+
     def send(self, request, **kwargs):
         # overrides the SNI to the value of the host header
         # See urllib3.connection.HTTPSConnection.connect

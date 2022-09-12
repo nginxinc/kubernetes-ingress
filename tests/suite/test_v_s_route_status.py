@@ -1,23 +1,25 @@
 import pytest
 from kubernetes.client.rest import ApiException
-from suite.resources_utils import wait_before_test
-from suite.custom_resources_utils import (
-    read_custom_resource,
-)
-from suite.vs_vsr_resources_utils import (
-    patch_virtual_server_from_yaml,
-    patch_v_s_route_from_yaml,
-    delete_virtual_server,
-    create_virtual_server_from_yaml,
-)
 from settings import TEST_DATA
+from suite.custom_resources_utils import read_custom_resource
+from suite.resources_utils import wait_before_test
+from suite.vs_vsr_resources_utils import (
+    create_virtual_server_from_yaml,
+    delete_virtual_server,
+    patch_v_s_route_from_yaml,
+    patch_virtual_server_from_yaml,
+)
+
 
 @pytest.mark.vsr
 @pytest.mark.parametrize(
     "crd_ingress_controller, v_s_route_setup",
     [
         (
-            {"type": "complete", "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],},
+            {
+                "type": "complete",
+                "extra_args": [f"-enable-custom-resources", f"-enable-leader-election=false"],
+            },
             {"example": "virtual-server-route-status"},
         )
     ],
@@ -51,14 +53,15 @@ class TestVirtualServerRouteStatus:
         """
         patch_src = f"{TEST_DATA}/virtual-server-route-status/standard/virtual-server.yaml"
         patch_virtual_server_from_yaml(
-            kube_apis.custom_objects, v_s_route_setup.vs_name, patch_src, v_s_route_setup.namespace,
+            kube_apis.custom_objects,
+            v_s_route_setup.vs_name,
+            patch_src,
+            v_s_route_setup.namespace,
         )
         wait_before_test()
 
     @pytest.mark.smoke
-    def test_status_valid(
-        self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup
-    ):
+    def test_status_valid(self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup):
         """
         Test VirtualServerRoute status with a valid fields in yaml
         """
@@ -88,9 +91,7 @@ class TestVirtualServerRouteStatus:
             and response_s["status"]["state"] == "Valid"
         )
 
-    def test_status_invalid(
-        self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup
-    ):
+    def test_status_invalid(self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup):
         """
         Test VirtualServerRoute status with a invalid paths in vsr yaml
         """
@@ -138,10 +139,8 @@ class TestVirtualServerRouteStatus:
             and not response_s["status"]["referencedBy"]
             and response_s["status"]["state"] == "Invalid"
         )
-    
-    def test_status_invalid_prefix(
-        self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup
-    ):
+
+    def test_status_invalid_prefix(self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup):
         """
         Test VirtualServerRoute status with a invalid path /prefix in vsr yaml
         i.e. referring to non-existing path
@@ -191,16 +190,17 @@ class TestVirtualServerRouteStatus:
             and response_s["status"]["state"] == "Warning"
         )
 
-    def test_status_invalid_vsr_in_vs(
-        self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup
-    ):
+    def test_status_invalid_vsr_in_vs(self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup):
         """
         Test VirtualServerRoute status with invalid vsr reference in vs yaml
         """
 
         patch_src = f"{TEST_DATA}/virtual-server-route-status/virtual-server-invalid.yaml"
         patch_virtual_server_from_yaml(
-            kube_apis.custom_objects, v_s_route_setup.vs_name, patch_src, v_s_route_setup.namespace,
+            kube_apis.custom_objects,
+            v_s_route_setup.vs_name,
+            patch_src,
+            v_s_route_setup.namespace,
         )
         wait_before_test()
 
@@ -231,14 +231,14 @@ class TestVirtualServerRouteStatus:
             and response_s["status"]["state"] == "Warning"
         )
 
-    def test_status_remove_vs(
-        self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup
-    ):
+    def test_status_remove_vs(self, kube_apis, crd_ingress_controller, v_s_route_setup, v_s_route_app_setup):
         """
         Test VirtualServerRoute status after deleting referenced VirtualServer
         """
         delete_virtual_server(
-            kube_apis.custom_objects, v_s_route_setup.vs_name, v_s_route_setup.namespace,
+            kube_apis.custom_objects,
+            v_s_route_setup.vs_name,
+            v_s_route_setup.namespace,
         )
 
         response_m = read_custom_resource(

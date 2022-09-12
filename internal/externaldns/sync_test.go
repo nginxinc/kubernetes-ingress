@@ -276,7 +276,7 @@ func TestSync_ReturnsErrorOnFailure(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := EventRecorder{}
-			eplister := DNSEPLister{}
+			eplister := []extdnsclient.DNSEndpointLister{DNSEPLister{}}
 			fn := SyncFnFor(rec, nil, eplister)
 			err := fn(context.TODO(), tc.input)
 			if err == nil {

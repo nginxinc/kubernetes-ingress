@@ -2,13 +2,13 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
 	"github.com/golang/glog"
 
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/leaderelection"
@@ -26,18 +26,25 @@ func newLeaderElector(client kubernetes.Interface, callbacks leaderelection.Lead
 	source := v1.EventSource{Component: "nginx-ingress-leader-elector", Host: hostname}
 	recorder := broadcaster.NewRecorder(scheme.Scheme, source)
 
-	lock := resourcelock.ConfigMapLock{
-		ConfigMapMeta: metav1.ObjectMeta{Namespace: namespace, Name: lockName},
-		Client:        client.CoreV1(),
-		LockConfig: resourcelock.ResourceLockConfig{
-			Identity:      podName,
-			EventRecorder: recorder,
-		},
+	lc := resourcelock.ResourceLockConfig{
+		Identity:      podName,
+		EventRecorder: recorder,
+	}
+
+	lock, err := resourcelock.New(resourcelock.ConfigMapsLeasesResourceLock,
+		namespace,
+		lockName,
+		client.CoreV1(),
+		client.CoordinationV1(),
+		lc,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating leader election lock: %w", err)
 	}
 
 	ttl := 30 * time.Second
 	return leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
-		Lock:          &lock,
+		Lock:          lock,
 		LeaseDuration: ttl,
 		RenewDeadline: ttl / 2,
 		RetryPeriod:   ttl / 4,

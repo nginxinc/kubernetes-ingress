@@ -1,27 +1,23 @@
-import pytest, requests
 from base64 import b64encode
+
+import pytest
+import requests
 from kubernetes.client.rest import ApiException
+from settings import DEPLOYMENTS, TEST_DATA
+from suite.custom_resources_utils import read_custom_resource
+from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
 from suite.resources_utils import (
-    wait_before_test,
-    replace_configmap_from_yaml,
     create_secret_from_yaml,
     delete_secret,
+    replace_configmap_from_yaml,
     replace_secret,
-)
-from suite.custom_resources_utils import (
-    read_custom_resource,
-)
-from suite.policy_resources_utils import (
-    create_policy_from_yaml,
-    delete_policy,
-    read_policy,
+    wait_before_test,
 )
 from suite.vs_vsr_resources_utils import (
     delete_virtual_server,
-    patch_virtual_server_from_yaml,
     patch_v_s_route_from_yaml,
+    patch_virtual_server_from_yaml,
 )
-from settings import TEST_DATA, DEPLOYMENTS
 
 std_vs_src = f"{TEST_DATA}/virtual-server-route/standard/virtual-server.yaml"
 std_vsr_src = f"{TEST_DATA}/virtual-server-route/route-multiple.yaml"
@@ -32,34 +28,28 @@ auth_basic_pol_valid_src = f"{TEST_DATA}/auth-basic-policy/policies/auth-basic-p
 auth_basic_pol_multi_src = f"{TEST_DATA}/auth-basic-policy/policies/auth-basic-policy-valid-multi.yaml"
 auth_basic_pol_invalid_src = f"{TEST_DATA}/auth-basic-policy/policies/auth-basic-policy-invalid.yaml"
 auth_basic_pol_invalid_sec_src = f"{TEST_DATA}/auth-basic-policy/policies/auth-basic-policy-invalid-secret.yaml"
-auth_basic_vsr_invalid_src = (
-    f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-route-invalid-subroute.yaml"
-)
+auth_basic_vsr_invalid_src = f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-route-invalid-subroute.yaml"
 auth_basic_vsr_invalid_sec_src = (
     f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-route-invalid-subroute-secret.yaml"
 )
 auth_basic_vsr_override_src = (
     f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-route-override-subroute.yaml"
 )
-auth_basic_vsr_valid_src = (
-    f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-route-valid-subroute.yaml"
-)
+auth_basic_vsr_valid_src = f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-route-valid-subroute.yaml"
 auth_basic_vsr_valid_multi_src = (
     f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-route-valid-subroute-multi.yaml"
 )
-auth_basic_vs_override_spec_src = (
-    f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-vsr-spec-override.yaml"
-)
+auth_basic_vs_override_spec_src = f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-vsr-spec-override.yaml"
 auth_basic_vs_override_route_src = (
     f"{TEST_DATA}/auth-basic-policy/route-subroute/virtual-server-vsr-route-override.yaml"
 )
 valid_credentials = f"{TEST_DATA}/auth-basic-policy/credentials.txt"
 invalid_credentials = f"{TEST_DATA}/auth-basic-policy/invalid-credentials.txt"
 
+
 def to_base64(b64_string):
-    return b64encode(
-        b64_string.encode('ascii')
-    ).decode('ascii')
+    return b64encode(b64_string.encode("ascii")).decode("ascii")
+
 
 @pytest.mark.policies
 @pytest.mark.parametrize(
@@ -90,7 +80,7 @@ class TestAuthBasicPoliciesVsr:
         wait_before_test()
 
         # generate header without auth
-        if credentials == None :
+        if credentials == None:
             return secret_name, pol_name, {"host": vs_host}
 
         with open(credentials, "r") as file:
@@ -99,16 +89,12 @@ class TestAuthBasicPoliciesVsr:
 
         return secret_name, pol_name, headers
 
-    def setup_multiple_policies(
-        self, kube_apis, namespace, credentials, secret_list, policy_1, policy_2, vs_host
-    ):
+    def setup_multiple_policies(self, kube_apis, namespace, credentials, secret_list, policy_1, policy_2, vs_host):
         print(f"Create {len(secret_list)} htpasswd secrets")
         # secret_name = create_secret_from_yaml(kube_apis.v1, namespace, secret)
         secret_name_list = []
         for secret in secret_list:
-            secret_name_list.append(
-                create_secret_from_yaml(kube_apis.v1, namespace, secret)
-            )
+            secret_name_list.append(create_secret_from_yaml(kube_apis.v1, namespace, secret))
 
         print(f"Create auth basic policy #1")
         pol_name_1 = create_policy_from_yaml(kube_apis.custom_objects, policy_1, namespace)
@@ -133,7 +119,7 @@ class TestAuthBasicPoliciesVsr:
         credentials,
     ):
         """
-            Test auth-basic-policy with no credentials, valid credentials and invalid credentials
+        Test auth-basic-policy with no credentials, valid credentials and invalid credentials
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret, pol_name, headers = self.setup_single_policy(
@@ -185,7 +171,7 @@ class TestAuthBasicPoliciesVsr:
         htpasswd_secret,
     ):
         """
-            Test auth-basic-policy with a valid and an invalid secret
+        Test auth-basic-policy with a valid and an invalid secret
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         if htpasswd_secret == htpasswd_sec_valid_src:
@@ -215,7 +201,10 @@ class TestAuthBasicPoliciesVsr:
         )
         wait_before_test()
 
-        resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp.status_code)
 
         crd_info = read_custom_resource(
@@ -257,7 +246,7 @@ class TestAuthBasicPoliciesVsr:
         policy,
     ):
         """
-            Test auth-basic-policy with a valid and an invalid policy
+        Test auth-basic-policy with a valid and an invalid policy
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         if policy == auth_basic_pol_valid_src:
@@ -336,7 +325,7 @@ class TestAuthBasicPoliciesVsr:
         test_namespace,
     ):
         """
-            Test if requests result in 500 when secret is deleted
+        Test if requests result in 500 when secret is deleted
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret, pol_name, headers = self.setup_single_policy(
@@ -357,11 +346,17 @@ class TestAuthBasicPoliciesVsr:
         )
         wait_before_test()
 
-        resp1 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp1 = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp1.status_code)
 
         delete_secret(kube_apis.v1, secret, v_s_route_setup.route_m.namespace)
-        resp2 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp2 = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp2.status_code)
         crd_info = read_custom_resource(
             kube_apis.custom_objects,
@@ -396,7 +391,7 @@ class TestAuthBasicPoliciesVsr:
         test_namespace,
     ):
         """
-            Test if requests result in 500 when policy is deleted
+        Test if requests result in 500 when policy is deleted
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret, pol_name, headers = self.setup_single_policy(
@@ -417,11 +412,17 @@ class TestAuthBasicPoliciesVsr:
         )
         wait_before_test()
 
-        resp1 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp1 = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp1.status_code)
         delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
 
-        resp2 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp2 = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp2.status_code)
         crd_info = read_custom_resource(
             kube_apis.custom_objects,
@@ -440,10 +441,7 @@ class TestAuthBasicPoliciesVsr:
         assert resp1.status_code == 200
         assert f"Request ID:" in resp1.text
         assert crd_info["status"]["state"] == "Warning"
-        assert (
-            f"{v_s_route_setup.route_m.namespace}/{pol_name} is missing"
-            in crd_info["status"]["message"]
-        )
+        assert f"{v_s_route_setup.route_m.namespace}/{pol_name} is missing" in crd_info["status"]["message"]
         assert resp2.status_code == 500
         assert f"Internal Server Error" in resp2.text
 
@@ -456,15 +454,15 @@ class TestAuthBasicPoliciesVsr:
         test_namespace,
     ):
         """
-            Test if first reference to a policy in the same context(subroute) takes precedence,
-            i.e. in this case, policy with empty htpasswd over policy with htpasswd.
+        Test if first reference to a policy in the same context(subroute) takes precedence,
+        i.e. in this case, policy with empty htpasswd over policy with htpasswd.
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret_list, pol_name_1, pol_name_2, headers = self.setup_multiple_policies(
             kube_apis,
             v_s_route_setup.route_m.namespace,
             valid_credentials,
-            [ htpasswd_sec_valid_src, htpasswd_sec_valid_empty_src ],
+            [htpasswd_sec_valid_src, htpasswd_sec_valid_empty_src],
             auth_basic_pol_valid_src,
             auth_basic_pol_multi_src,
             v_s_route_setup.vs_host,
@@ -501,10 +499,7 @@ class TestAuthBasicPoliciesVsr:
         )
         assert resp.status_code == 401
         assert f"Authorization Required" in resp.text
-        assert (
-            f"Multiple basic auth policies in the same context is not valid."
-            in crd_info["status"]["message"]
-        )
+        assert f"Multiple basic auth policies in the same context is not valid." in crd_info["status"]["message"]
 
     @pytest.mark.parametrize("vs_src", [auth_basic_vs_override_route_src, auth_basic_vs_override_spec_src])
     def test_auth_basic_policy_override_vs_vsr(
@@ -517,16 +512,16 @@ class TestAuthBasicPoliciesVsr:
         vs_src,
     ):
         """
-            Test if policy specified in vsr:subroute (policy without $httptoken) takes preference over policy specified in:
-            1. vs:spec (policy with $httptoken)
-            2. vs:route (policy with $httptoken)
+        Test if policy specified in vsr:subroute (policy without $httptoken) takes preference over policy specified in:
+        1. vs:spec (policy with $httptoken)
+        2. vs:route (policy with $httptoken)
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret_list, pol_name_1, pol_name_2, headers = self.setup_multiple_policies(
             kube_apis,
             v_s_route_setup.route_m.namespace,
             valid_credentials,
-            [ htpasswd_sec_valid_src, htpasswd_sec_valid_empty_src ],
+            [htpasswd_sec_valid_src, htpasswd_sec_valid_empty_src],
             auth_basic_pol_valid_src,
             auth_basic_pol_multi_src,
             v_s_route_setup.vs_host,
@@ -540,11 +535,17 @@ class TestAuthBasicPoliciesVsr:
             v_s_route_setup.route_m.namespace,
         )
         patch_virtual_server_from_yaml(
-            kube_apis.custom_objects, v_s_route_setup.vs_name, vs_src, v_s_route_setup.namespace,
+            kube_apis.custom_objects,
+            v_s_route_setup.vs_name,
+            vs_src,
+            v_s_route_setup.namespace,
         )
         wait_before_test()
 
-        resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp.status_code)
 
         delete_policy(kube_apis.custom_objects, pol_name_1, v_s_route_setup.route_m.namespace)

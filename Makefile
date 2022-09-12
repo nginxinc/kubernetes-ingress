@@ -31,6 +31,13 @@ lint: ## Run linter
 	@git fetch
 	docker run --pull always --rm -v $(shell pwd):/kubernetes-ingress -w /kubernetes-ingress -v $(shell go env GOCACHE):/cache/go -e GOCACHE=/cache/go -e GOLANGCI_LINT_CACHE=/cache/go -v $(shell go env GOPATH)/pkg:/go/pkg golangci/golangci-lint:latest git diff -p origin/main > /tmp/diff.patch && golangci-lint --color always run -v --new-from-patch=/tmp/diff.patch
 
+.PHONY: lint-python
+lint-python: ## Run linter for python tests
+	@isort -V || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with isort, use 'brew install isort' to install it\n"; exit $$code)
+	@black --version || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with black, use 'brew install black' to install it\n"; exit $$code)
+	@isort .
+	@black .
+
 .PHONY: test
 test: ## Run tests
 	go test -tags=aws -shuffle=on -race ./...
@@ -52,7 +59,7 @@ update-codegen: ## Generate code
 
 .PHONY: update-crds
 update-crds: ## Update CRDs
-	go run sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 schemapatch:manifests=./deployments/common/crds/ paths=./pkg/apis/configuration/... output:dir=./deployments/common/crds
+	go run sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 schemapatch:manifests=./deployments/common/crds/ paths=./pkg/apis/... output:dir=./deployments/common/crds
 	@cp -Rp deployments/common/crds/* deployments/helm-chart/crds/
 
 .PHONY: certificate-and-key

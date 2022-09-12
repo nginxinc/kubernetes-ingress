@@ -21,7 +21,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/golang/glog"
 	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 
@@ -164,7 +163,5 @@ func GetK8sVersion(client kubernetes.Interface) (v *version.Version, err error) 
 	if err != nil {
 		return nil, fmt.Errorf("unexpected error parsing running Kubernetes version: %w", err)
 	}
-	glog.V(3).Infof("Kubernetes version: %v", runningVersion)
-
 	return runningVersion, nil
 }

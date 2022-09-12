@@ -29,14 +29,19 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Output Variables
-        id: vars
-        run: echo "::set-output name=go_version::$(grep "go 1." go.mod | cut -d " " -f 2)"
       - name: Setup Golang Environment
         uses: actions/setup-go@v3
         with:
-          go-version: ${{ steps.vars.outputs.go_version }}
+          go-version-file: go.mod
+          cache: true
       - name: Lint Code
         uses: golangci/golangci-lint-action@v3
         with:
           only-new-issues: true
+
+  lint-python:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: isort/isort-action@v1.0.0
+      - uses: psf/black@stable

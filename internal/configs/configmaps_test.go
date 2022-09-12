@@ -37,13 +37,14 @@ func TestParseConfigMapWithAppProtectCompressedRequestsAction(t *testing.T) {
 	nginxPlus := true
 	hasAppProtect := true
 	hasAppProtectDos := false
+	hasTLSPassthrough := false
 	for _, test := range tests {
 		cm := &v1.ConfigMap{
 			Data: map[string]string{
 				"app-protect-compressed-requests-action": test.action,
 			},
 		}
-		result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos)
+		result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
 		if result.MainAppProtectCompressedRequestsAction != test.expect {
 			t.Errorf("ParseConfigMap() returned %q but expected %q for the case %s", result.MainAppProtectCompressedRequestsAction, test.expect, test.msg)
 		}
@@ -105,15 +106,100 @@ func TestParseConfigMapWithAppProtectReconnectPeriod(t *testing.T) {
 	nginxPlus := true
 	hasAppProtect := true
 	hasAppProtectDos := false
+	hasTLSPassthrough := false
 	for _, test := range tests {
 		cm := &v1.ConfigMap{
 			Data: map[string]string{
 				"app-protect-reconnect-period-seconds": test.period,
 			},
 		}
-		result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos)
+		result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
 		if result.MainAppProtectReconnectPeriod != test.expect {
 			t.Errorf("ParseConfigMap() returned %q but expected %q for the case %s", result.MainAppProtectReconnectPeriod, test.expect, test.msg)
 		}
+	}
+}
+
+func TestParseConfigMapWithTLSPassthroughProxyProtocol(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		realIPheader string
+		want         string
+		msg          string
+	}{
+		{
+			realIPheader: "proxy_protocol",
+			want:         "",
+			msg:          "valid realIPheader proxy_protocol, ignored when TLS Passthrough is enabled",
+		},
+		{
+			realIPheader: "X-Forwarded-For",
+			want:         "",
+			msg:          "invalid realIPheader X-Forwarded-For, ignored when TLS Passthrough is enabled",
+		},
+		{
+			realIPheader: "",
+			want:         "",
+			msg:          "empty real-ip-header",
+		},
+	}
+	nginxPlus := true
+	hasAppProtect := true
+	hasAppProtectDos := false
+	hasTLSPassthrough := true
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			cm := &v1.ConfigMap{
+				Data: map[string]string{
+					"real-ip-header": test.realIPheader,
+				},
+			}
+			result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+			if result.RealIPHeader != test.want {
+				t.Errorf("want %q, got %q", test.want, result.RealIPHeader)
+			}
+		})
+	}
+}
+
+func TestParseConfigMapWithoutTLSPassthroughProxyProtocol(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		realIPheader string
+		want         string
+		msg          string
+	}{
+		{
+			realIPheader: "proxy_protocol",
+			want:         "proxy_protocol",
+			msg:          "valid real-ip-header proxy_protocol",
+		},
+		{
+			realIPheader: "X-Forwarded-For",
+			want:         "X-Forwarded-For",
+			msg:          "valid real-ip-header X-Forwarded-For",
+		},
+		{
+			realIPheader: "",
+			want:         "",
+			msg:          "empty real-ip-header",
+		},
+	}
+	nginxPlus := true
+	hasAppProtect := true
+	hasAppProtectDos := false
+	hasTLSPassthrough := false
+	for _, test := range tests {
+		t.Run(test.msg, func(t *testing.T) {
+			cm := &v1.ConfigMap{
+				Data: map[string]string{
+					"real-ip-header": test.realIPheader,
+				},
+			}
+			result := ParseConfigMap(cm, nginxPlus, hasAppProtect, hasAppProtectDos, hasTLSPassthrough)
+			if result.RealIPHeader != test.want {
+				t.Errorf("want %q, got %q", test.want, result.RealIPHeader)
+			}
+		})
 	}
 }

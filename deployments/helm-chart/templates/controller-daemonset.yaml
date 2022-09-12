@@ -70,7 +70,7 @@ spec:
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:
       - name: {{ include "nginx-ingress.name" . }}
-        image: "{{ .Values.controller.image.repository }}:{{ .Values.controller.image.tag }}"
+        image: {{ include "nginx-ingress.image" . }}
         imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
         ports:
         - name: http
@@ -88,12 +88,13 @@ spec:
 {{- end }}
 {{- if .Values.controller.readyStatus.enable }}
         - name: readiness-port
-          containerPort: {{ .Values.controller.readyStatus.port}}
+          containerPort: {{ .Values.controller.readyStatus.port }}
         readinessProbe:
           httpGet:
             path: /nginx-ready
             port: readiness-port
           periodSeconds: 1
+          initialDelaySeconds: {{ .Values.controller.readyStatus.initialDelaySeconds }}
 {{- end }}
         securityContext:
           allowPrivilegeEscalation: true
@@ -186,6 +187,7 @@ spec:
           - -prometheus-tls-secret={{ .Values.prometheus.secret }}
           - -enable-custom-resources={{ .Values.controller.enableCustomResources }}
           - -enable-snippets={{ .Values.controller.enableSnippets }}
+          - -include-year={{ .Values.controller.includeYear }}
 {{- if .Values.controller.enableCustomResources }}
           - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}
           - -enable-preview-policies={{ .Values.controller.enablePreviewPolicies }}

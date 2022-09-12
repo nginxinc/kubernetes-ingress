@@ -1,28 +1,22 @@
-import pytest, ssl
-import requests
 from pprint import pprint
+
+import pytest
+from settings import DEPLOYMENTS, TEST_DATA
+from suite.custom_resources_utils import create_ts_from_yaml, delete_ts, read_ts
 from suite.fixtures import PublicEndpoint
 from suite.resources_utils import (
-    wait_before_test,
     create_items_from_yaml,
     delete_items_from_yaml,
-    wait_until_all_pods_are_ready,
     get_first_pod_name,
+    get_nginx_template_conf,
+    replace_configmap_from_yaml,
+    wait_before_test,
+    wait_until_all_pods_are_ready,
 )
-from suite.custom_resources_utils import (
-    read_ts,
-    delete_ts,
-    create_ts_from_yaml,
-
-)
-from suite.vs_vsr_resources_utils import (
-    read_vs,
-    create_virtual_server_from_yaml,
-    delete_virtual_server,
-)
+from suite.ssl_utils import create_sni_session
+from suite.vs_vsr_resources_utils import create_virtual_server_from_yaml, delete_virtual_server, read_vs
 from suite.yaml_utils import get_first_host_from_yaml
-from suite.ssl_utils import get_server_certificate_subject, create_sni_session
-from settings import TEST_DATA
+
 
 class TransportServerTlsSetup:
     """
@@ -57,18 +51,14 @@ def transport_server_tls_passthrough_setup(
     :param ingress_controller_endpoint: ip and port information
     :return TransportServerTlsSetup:
     """
-    print(
-        "------------------------- Deploy Transport Server with tls passthrough -----------------------------------"
-    )
+    print("------------------------- Deploy Transport Server with tls passthrough -----------------------------------")
     # deploy secure_app
     secure_app_file = f"{TEST_DATA}/{request.param['example']}/standard/secure-app.yaml"
     create_items_from_yaml(kube_apis, secure_app_file, test_namespace)
 
     # deploy transport server
     transport_server_std_src = f"{TEST_DATA}/{request.param['example']}/standard/transport-server.yaml"
-    ts_resource = create_ts_from_yaml(
-        kube_apis.custom_objects, transport_server_std_src, test_namespace
-    )
+    ts_resource = create_ts_from_yaml(kube_apis.custom_objects, transport_server_std_src, test_namespace)
     ts_host = get_first_host_from_yaml(transport_server_std_src)
     wait_until_all_pods_are_ready(kube_apis.v1, test_namespace)
 
@@ -112,10 +102,10 @@ class TestTransportServerTlsPassthrough:
         """
         ts_std_src = f"{TEST_DATA}/transport-server-tls-passthrough/standard/transport-server.yaml"
         ts_std_res = create_ts_from_yaml(
-                        kube_apis.custom_objects,
-                        ts_std_src,
-                        transport_server_tls_passthrough_setup.namespace,
-                    )
+            kube_apis.custom_objects,
+            ts_std_src,
+            transport_server_tls_passthrough_setup.namespace,
+        )
         wait_before_test(1)
         pprint(ts_std_res)
 
@@ -128,7 +118,7 @@ class TestTransportServerTlsPassthrough:
         test_namespace,
     ):
         """
-            Test TransportServer TLS passthrough on https port.
+        Test TransportServer TLS passthrough on https port.
         """
         session = create_sni_session()
         req_url = (
@@ -143,7 +133,36 @@ class TestTransportServerTlsPassthrough:
         )
         assert resp.status_code == 200
         assert f"hello from pod {get_first_pod_name(kube_apis.v1, test_namespace)}" in resp.text
-    
+
+    def test_tls_passthrough_proxy_protocol_config(
+        self,
+        kube_apis,
+        ingress_controller_prerequisites,
+        crd_ingress_controller,
+        transport_server_tls_passthrough_setup,
+        test_namespace,
+    ):
+        """
+        Test TransportServer TLS passthrough on https port with proxy protocol enabled.
+        """
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            f"{TEST_DATA}/transport-server-tls-passthrough/nginx-config.yaml",
+        )
+        wait_before_test(1)
+        config = get_nginx_template_conf(kube_apis.v1, ingress_controller_prerequisites.namespace)
+        assert "listen 443 proxy_protocol;" in config
+        assert "listen [::]:443 proxy_protocol;" in config
+        std_cm_src = f"{DEPLOYMENTS}/common/nginx-config.yaml"
+        replace_configmap_from_yaml(
+            kube_apis.v1,
+            ingress_controller_prerequisites.config_map["metadata"]["name"],
+            ingress_controller_prerequisites.namespace,
+            std_cm_src,
+        )
+
     def test_tls_passthrough_host_collision_ts(
         self,
         kube_apis,
@@ -152,19 +171,13 @@ class TestTransportServerTlsPassthrough:
         test_namespace,
     ):
         """
-            Test host collision handling in TransportServer with another TransportServer.
+        Test host collision handling in TransportServer with another TransportServer.
         """
         print("Step 1: Create second TS with same host")
-        ts_src_same_host = (
-            f"{TEST_DATA}/transport-server-tls-passthrough/transport-server-same-host.yaml"
-        )
-        ts_same_host = create_ts_from_yaml(
-            kube_apis.custom_objects, ts_src_same_host, test_namespace
-        )
+        ts_src_same_host = f"{TEST_DATA}/transport-server-tls-passthrough/transport-server-same-host.yaml"
+        ts_same_host = create_ts_from_yaml(kube_apis.custom_objects, ts_src_same_host, test_namespace)
         wait_before_test()
-        response = read_ts(
-            kube_apis.custom_objects, test_namespace, ts_same_host["metadata"]["name"]
-        )
+        response = read_ts(kube_apis.custom_objects, test_namespace, ts_same_host["metadata"]["name"])
         assert (
             response["status"]["reason"] == "Rejected"
             and response["status"]["message"] == "Host is taken by another resource"
@@ -177,27 +190,13 @@ class TestTransportServerTlsPassthrough:
             test_namespace,
         )
         wait_before_test(1)
-        response = read_ts(
-            kube_apis.custom_objects, test_namespace, ts_same_host["metadata"]["name"]
-        )
-        assert (
-            response["status"]["reason"] == "AddedOrUpdated"
-            and response["status"]["state"] == "Valid"
-        )
+        response = read_ts(kube_apis.custom_objects, test_namespace, ts_same_host["metadata"]["name"])
+        assert response["status"]["reason"] == "AddedOrUpdated" and response["status"]["state"] == "Valid"
         print("Step 3: Delete second TS and re-create standard one")
-        delete_ts(
-            kube_apis.custom_objects,
-            ts_same_host,
-            test_namespace
-        )
+        delete_ts(kube_apis.custom_objects, ts_same_host, test_namespace)
         self.restore_ts(kube_apis, transport_server_tls_passthrough_setup)
-        response = read_ts(
-            kube_apis.custom_objects, test_namespace, transport_server_tls_passthrough_setup.name
-        )
-        assert (
-            response["status"]["reason"] == "AddedOrUpdated"
-            and response["status"]["state"] == "Valid"
-        )
+        response = read_ts(kube_apis.custom_objects, test_namespace, transport_server_tls_passthrough_setup.name)
+        assert response["status"]["reason"] == "AddedOrUpdated" and response["status"]["state"] == "Valid"
 
     def test_tls_passthrough_host_collision_vs(
         self,
@@ -207,15 +206,11 @@ class TestTransportServerTlsPassthrough:
         test_namespace,
     ):
         """
-            Test host collision handling in TransportServer with VirtualServer.
+        Test host collision handling in TransportServer with VirtualServer.
         """
         print("Step 1: Create VirtualServer with same host")
-        vs_src_same_host = (
-            f"{TEST_DATA}/transport-server-tls-passthrough/virtual-server-same-host.yaml"
-        )
-        vs_same_host_name = create_virtual_server_from_yaml(
-            kube_apis.custom_objects, vs_src_same_host, test_namespace
-        )
+        vs_src_same_host = f"{TEST_DATA}/transport-server-tls-passthrough/virtual-server-same-host.yaml"
+        vs_same_host_name = create_virtual_server_from_yaml(kube_apis.custom_objects, vs_src_same_host, test_namespace)
         wait_before_test(1)
         response = read_vs(kube_apis.custom_objects, test_namespace, vs_same_host_name)
         delete_virtual_server(kube_apis.custom_objects, vs_same_host_name, test_namespace)

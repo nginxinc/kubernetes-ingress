@@ -23,9 +23,7 @@ def read_vsr(custom_objects: CustomObjectsApi, namespace, name) -> object:
     return read_custom_resource(custom_objects, namespace, "virtualserverroutes", name)
 
 
-def create_virtual_server_from_yaml(
-    custom_objects: CustomObjectsApi, yaml_manifest, namespace
-) -> str:
+def create_virtual_server_from_yaml(custom_objects: CustomObjectsApi, yaml_manifest, namespace) -> str:
     """
     Create a VirtualServer based on yaml file.
 
@@ -41,6 +39,31 @@ def create_virtual_server_from_yaml(
     return create_virtual_server(custom_objects, dep, namespace)
 
 
+def create_custom_items_from_yaml(custom_objects, yaml_manifest, namespace) -> {}:
+    """
+    Apply yaml manifest with multiple items.
+
+    :param kube_apis: KubeApis
+    :param yaml_manifest: an absolute path to a file
+    :param namespace:
+    :return:
+    """
+    res = {}
+    print("Load yaml:")
+    with open(yaml_manifest) as f:
+        docs = yaml.safe_load_all(f)
+        try:
+            for doc in docs:
+                if doc["kind"] == "VirtualServer":
+                    res["VirtualServer"] = create_virtual_server(custom_objects, doc, namespace)
+                elif doc["kind"] == "VirtualServerRoute":
+                    res["VirtualServerRoute"] = create_v_s_route(custom_objects, doc, namespace)
+        except Exception:
+            pass
+
+    return res
+
+
 def create_virtual_server(custom_objects: CustomObjectsApi, vs, namespace) -> str:
     """
     Create a VirtualServer.
@@ -52,15 +75,11 @@ def create_virtual_server(custom_objects: CustomObjectsApi, vs, namespace) -> st
     """
     print("Create a VirtualServer:")
     try:
-        custom_objects.create_namespaced_custom_object(
-            "k8s.nginx.org", "v1", namespace, "virtualservers", vs
-        )
+        custom_objects.create_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualservers", vs)
         print(f"VirtualServer created with name '{vs['metadata']['name']}'")
         return vs["metadata"]["name"]
     except ApiException as ex:
-        logging.exception(
-            f"Exception: {ex} occurred while creating VirtualServer: {vs['metadata']['name']}"
-        )
+        logging.exception(f"Exception: {ex} occurred while creating VirtualServer: {vs['metadata']['name']}")
         raise
 
 
@@ -75,9 +94,7 @@ def delete_virtual_server(custom_objects: CustomObjectsApi, name, namespace) -> 
     """
     print(f"Delete a VirtualServer: {name}")
 
-    custom_objects.delete_namespaced_custom_object(
-        "k8s.nginx.org", "v1", namespace, "virtualservers", name
-    )
+    custom_objects.delete_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualservers", name)
     ensure_item_removal(
         custom_objects.get_namespaced_custom_object,
         "k8s.nginx.org",
@@ -89,9 +106,7 @@ def delete_virtual_server(custom_objects: CustomObjectsApi, name, namespace) -> 
     print(f"VirtualServer was removed with name '{name}'")
 
 
-def patch_virtual_server_from_yaml(
-    custom_objects: CustomObjectsApi, name, yaml_manifest, namespace
-) -> None:
+def patch_virtual_server_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manifest, namespace) -> None:
     """
     Patch a VS based on yaml manifest
     :param custom_objects: CustomObjectsApi
@@ -106,9 +121,7 @@ def patch_virtual_server_from_yaml(
 
     try:
         print(f"Try to patch VirtualServer: {dep}")
-        custom_objects.patch_namespaced_custom_object(
-            "k8s.nginx.org", "v1", namespace, "virtualservers", name, dep
-        )
+        custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualservers", name, dep)
         print(f"VirtualServer updated with name '{dep['metadata']['name']}'")
     except ApiException:
         logging.exception(f"Failed with exception while patching VirtualServer: {name}")
@@ -118,9 +131,7 @@ def patch_virtual_server_from_yaml(
         raise
 
 
-def delete_and_create_vs_from_yaml(
-    custom_objects: CustomObjectsApi, name, yaml_manifest, namespace
-) -> None:
+def delete_and_create_vs_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manifest, namespace) -> None:
     """
     Perform delete and create for vs with same name based on yaml
 
@@ -149,16 +160,12 @@ def patch_virtual_server(custom_objects: CustomObjectsApi, name, namespace, body
     :return: str
     """
     print("Update a VirtualServer:")
-    custom_objects.patch_namespaced_custom_object(
-        "k8s.nginx.org", "v1", namespace, "virtualservers", name, body
-    )
+    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualservers", name, body)
     print(f"VirtualServer updated with a name '{body['metadata']['name']}'")
     return body["metadata"]["name"]
 
 
-def patch_v_s_route_from_yaml(
-    custom_objects: CustomObjectsApi, name, yaml_manifest, namespace
-) -> None:
+def patch_v_s_route_from_yaml(custom_objects: CustomObjectsApi, name, yaml_manifest, namespace) -> None:
     """
     Update a VirtualServerRoute based on yaml manifest
 
@@ -182,13 +189,12 @@ def patch_v_s_route_from_yaml(
         raise
     except Exception as ex:
         logging.exception(
-            f"Failed with exception while patching VirtualServerRoute: {name}, Exception: {ex.with_traceback}")
+            f"Failed with exception while patching VirtualServerRoute: {name}, Exception: {ex.with_traceback}"
+        )
         raise
 
 
-def get_vs_nginx_template_conf(
-    v1: CoreV1Api, vs_namespace, vs_name, pod_name, pod_namespace
-) -> str:
+def get_vs_nginx_template_conf(v1: CoreV1Api, vs_namespace, vs_name, pod_name, pod_namespace) -> str:
     """
     Get contents of /etc/nginx/conf.d/vs_{namespace}_{vs_name}.conf in the pod.
 
@@ -229,9 +235,7 @@ def create_v_s_route(custom_objects: CustomObjectsApi, vsr, namespace) -> str:
     :return: str
     """
     print("Create a VirtualServerRoute:")
-    custom_objects.create_namespaced_custom_object(
-        "k8s.nginx.org", "v1", namespace, "virtualserverroutes", vsr
-    )
+    custom_objects.create_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualserverroutes", vsr)
     print(f"VirtualServerRoute created with a name '{vsr['metadata']['name']}'")
     return vsr["metadata"]["name"]
 
@@ -247,9 +251,7 @@ def patch_v_s_route(custom_objects: CustomObjectsApi, name, namespace, body) -> 
     :return: str
     """
     print("Update a VirtualServerRoute:")
-    custom_objects.patch_namespaced_custom_object(
-        "k8s.nginx.org", "v1", namespace, "virtualserverroutes", name, body
-    )
+    custom_objects.patch_namespaced_custom_object("k8s.nginx.org", "v1", namespace, "virtualserverroutes", name, body)
     print(f"VirtualServerRoute updated with a name '{body['metadata']['name']}'")
     return body["metadata"]["name"]
 

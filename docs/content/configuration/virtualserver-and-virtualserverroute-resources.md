@@ -1,6 +1,6 @@
 ---
 title: VirtualServer and VirtualServerRoute Resources
-description: "The VirtualServer and VirtualServerRoute resources are new load balancing configuration offered as an alternative to the Ingress resource."
+description: "The VirtualServer and VirtualServerRoute resources are load balancing configurations recommended as an alternative to the Ingress resource."
 weight: 1600
 doctypes: [""]
 aliases:
@@ -10,7 +10,7 @@ docs: "DOCS-599"
 ---
 
 
-The VirtualServer and VirtualServerRoute resources are new load balancing configuration, introduced in release 1.5 as an alternative to the Ingress resource. The resources enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
+The VirtualServer and VirtualServerRoute resources, introduced in release 1.5, enable use cases not supported with the Ingress resource, such as traffic splitting and advanced content-based routing. The resources are implemented as [Custom Resources](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/).
 
 This document is the reference documentation for the resources. To see additional examples of using the resources for specific use cases, go to the [examples/custom-resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources) folder in our GitHub repo.
 
@@ -51,13 +51,13 @@ spec:
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
+|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. When using a wildcard domain like ``*.example.com`` the domain must be contained in double quotes.  The ``host`` value needs to be unique among all Ingress and VirtualServer resources. See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions). | ``string`` | Yes |
 |``tls`` | The TLS termination configuration. | [tls](#virtualservertls) | No |
 |``externalDNS`` | The externalDNS configuration for a VirtualServer. | [externalDNS](#virtualserverexternaldns) | No |
 |``dos`` | A reference to a DosProtectedResource, setting this enables DOS protection of the VirtualServer. | ``string`` | No |
 |``policies`` | A list of policies. | [[]policy](#virtualserverpolicy) | No |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
-|``routes`` | A list of routes. | [[]route](#virtualserver-route) | No |
+|``routes`` | A list of routes. | [[]route](#virtualserverroute) | No |
 |``ingressClassName`` | Specifies which Ingress Controller must handle the VirtualServer resource. | ``string`` | No |
 |``http-snippets`` | Sets a custom snippet in the http context. | ``string`` | No |
 |``server-snippets`` | Sets a custom snippet in server context. Overrides the ``server-snippets`` ConfigMap key. | ``string`` | No |
@@ -249,7 +249,7 @@ Note that each subroute must have a `path` that starts with the same prefix (her
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. Wildcard domains like ``*.example.com`` are not allowed. Must be the same as the ``host`` of the VirtualServer that references this resource. | ``string`` | Yes |
+|``host`` | The host (domain name) of the server. Must be a valid subdomain as defined in RFC 1123, such as ``my-app`` or ``hello.example.com``. When using a wildcard domain like ``*.example.com`` the domain must be contained in double quotes. Must be the same as the ``host`` of the VirtualServer that references this resource. | ``string`` | Yes |
 |``upstreams`` | A list of upstreams. | [[]upstream](#upstream) | No |
 |``subroutes`` | A list of subroutes. | [[]subroute](#virtualserverroutesubroute) | No |
 |``ingressClassName`` | Specifies which Ingress Controller must handle the VirtualServerRoute resource. Must be the same as the ``ingressClassName`` of the VirtualServer that references this resource. | ``string``_ | No |
@@ -312,7 +312,7 @@ tls:
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
 |``name`` | The name of the upstream. Must be a valid DNS label as defined in RFC 1035. For example, ``hello`` and ``upstream-123`` are valid. The name must be unique among all upstreams of the resource. | ``string`` | Yes |
-|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/externalname-services#prerequisites) ). | ``string`` | Yes |
+|``service`` | The name of a [service](https://kubernetes.io/docs/concepts/services-networking/service/). The service must belong to the same namespace as the resource. If the service doesn't exist, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. For NGINX Plus only, services of type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) are also supported (check the [prerequisites](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/ingress-resources/externalname-services#prerequisites) ). | ``string`` | Yes |
 |``subselector`` | Selects the pods within the service using label keys and values. By default, all pods of the service are selected. Note: the specified labels are expected to be present in the pods when they are created. If the pod labels are updated, the Ingress Controller will not see that change until the number of the pods is changed. | ``map[string]string`` | No |
 |``use-cluster-ip`` | Enables using the Cluster IP and port of the service instead of the default behavior of using the IP and port of the pods. When this field is enabled, the fields that configure NGINX behavior related to multiple upstream servers (like ``lb-method`` and ``next-upstream``) will have no effect, as the Ingress Controller will configure NGINX with only one upstream server that will match the service Cluster IP. | ``boolean`` | No |
 |``port`` | The port of the service. If the service doesn't define that port, NGINX will assume the service has zero endpoints and return a ``502`` response for requests for this upstream. The port must fall into the range ``1..65535``. | ``uint16`` | Yes |

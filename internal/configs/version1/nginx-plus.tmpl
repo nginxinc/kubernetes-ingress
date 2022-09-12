@@ -71,6 +71,9 @@ http {
                         'ip_tls=$remote_addr:$app_protect_dos_tls_fp, ';
 
     {{- end}}
+    {{- if .AppProtectDosArbFqdn}}
+    app_protect_dos_arb_fqdn {{.AppProtectDosArbFqdn}};
+    {{- end}}
     {{- end}}
 
     {{if .AccessLogOff}}
@@ -294,8 +297,8 @@ stream {
     }
 
     server {
-        listen 443;
-        listen [::]:443;
+        listen 443{{if .ProxyProtocol}} proxy_protocol{{end}};
+        listen [::]:443{{if .ProxyProtocol}} proxy_protocol{{end}};
 
         ssl_preread on;
 

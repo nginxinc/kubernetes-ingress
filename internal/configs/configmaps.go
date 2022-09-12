@@ -10,7 +10,9 @@ import (
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
-func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool) *ConfigParams {
+//
+//nolint:gocyclo
+func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool) *ConfigParams {
 	cfgParams := NewDefaultConfigParams(nginxPlus)
 
 	if serverTokens, exists, err := GetMapKeyAsBool(cfgm.Data, "server-tokens", cfgm); exists {
@@ -156,7 +158,16 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 	}
 
 	if realIPHeader, exists := cfgm.Data["real-ip-header"]; exists {
-		cfgParams.RealIPHeader = realIPHeader
+		if hasTLSPassthrough {
+			msg := "Configmap %s/%s: key real-ip-header is ignored, directive real_ip_header is automatically set to 'proxy_protocol' when TLS passthrough is enabled."
+			if realIPHeader == "proxy_protocol" {
+				glog.Infof(msg, cfgm.GetNamespace(), cfgm.GetName())
+			} else {
+				glog.Errorf(msg, cfgm.GetNamespace(), cfgm.GetName())
+			}
+		} else {
+			cfgParams.RealIPHeader = realIPHeader
+		}
 	}
 
 	if setRealIPFrom, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "set-real-ip-from", cfgm, ","); exists {
@@ -524,6 +535,13 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 				cfgParams.MainAppProtectDosLogFormatEscaping = appProtectDosLogFormatEscaping
 			}
 		}
+
+		if appProtectDosArbFqdn, exists := cfgm.Data["app-protect-dos-arb-fqdn"]; exists {
+			appProtectDosArbFqdn = strings.TrimSpace(appProtectDosArbFqdn)
+			if appProtectDosArbFqdn != "" {
+				cfgParams.MainAppProtectDosArbFqdn = appProtectDosArbFqdn
+			}
+		}
 	}
 
 	return cfgParams
@@ -590,6 +608,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		AppProtectReconnectPeriod:          config.MainAppProtectReconnectPeriod,
 		AppProtectDosLogFormat:             config.MainAppProtectDosLogFormat,
 		AppProtectDosLogFormatEscaping:     config.MainAppProtectDosLogFormatEscaping,
+		AppProtectDosArbFqdn:               config.MainAppProtectDosArbFqdn,
 		InternalRouteServer:                staticCfgParams.EnableInternalRoutes,
 		InternalRouteServerName:            staticCfgParams.InternalRouteServerName,
 		LatencyMetrics:                     staticCfgParams.EnableLatencyMetrics,

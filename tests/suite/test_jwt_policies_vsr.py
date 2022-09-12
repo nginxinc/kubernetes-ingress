@@ -1,26 +1,23 @@
-import pytest, requests, time
+import time
+
+import pytest
+import requests
 from kubernetes.client.rest import ApiException
+from settings import DEPLOYMENTS, TEST_DATA
+from suite.custom_resources_utils import read_custom_resource
+from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
 from suite.resources_utils import (
-    wait_before_test,
-    replace_configmap_from_yaml,
     create_secret_from_yaml,
     delete_secret,
+    replace_configmap_from_yaml,
     replace_secret,
-)
-from suite.custom_resources_utils import (
-    read_custom_resource,
-)
-from suite.policy_resources_utils import (
-    create_policy_from_yaml,
-    delete_policy,
-    read_policy,
+    wait_before_test,
 )
 from suite.vs_vsr_resources_utils import (
     delete_virtual_server,
-    patch_virtual_server_from_yaml,
     patch_v_s_route_from_yaml,
+    patch_virtual_server_from_yaml,
 )
-from settings import TEST_DATA, DEPLOYMENTS
 
 std_vs_src = f"{TEST_DATA}/virtual-server-route/standard/virtual-server.yaml"
 std_vsr_src = f"{TEST_DATA}/virtual-server-route/route-multiple.yaml"
@@ -30,27 +27,13 @@ jwt_pol_valid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-valid.yaml"
 jwt_pol_multi_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-valid-multi.yaml"
 jwt_pol_invalid_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-invalid.yaml"
 jwt_pol_invalid_sec_src = f"{TEST_DATA}/jwt-policy/policies/jwt-policy-invalid-secret.yaml"
-jwt_vsr_invalid_src = (
-    f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-invalid-subroute.yaml"
-)
-jwt_vsr_invalid_sec_src = (
-    f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-invalid-subroute-secret.yaml"
-)
-jwt_vsr_override_src = (
-    f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-override-subroute.yaml"
-)
-jwt_vsr_valid_src = (
-    f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-valid-subroute.yaml"
-)
-jwt_vsr_valid_multi_src = (
-    f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-valid-subroute-multi.yaml"
-)
-jwt_vs_override_spec_src = (
-    f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-vsr-spec-override.yaml"
-)
-jwt_vs_override_route_src = (
-    f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-vsr-route-override.yaml"
-)
+jwt_vsr_invalid_src = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-invalid-subroute.yaml"
+jwt_vsr_invalid_sec_src = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-invalid-subroute-secret.yaml"
+jwt_vsr_override_src = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-override-subroute.yaml"
+jwt_vsr_valid_src = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-valid-subroute.yaml"
+jwt_vsr_valid_multi_src = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-route-valid-subroute-multi.yaml"
+jwt_vs_override_spec_src = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-vsr-spec-override.yaml"
+jwt_vs_override_route_src = f"{TEST_DATA}/jwt-policy/route-subroute/virtual-server-vsr-route-override.yaml"
 valid_token = f"{TEST_DATA}/jwt-policy/token.jwt"
 invalid_token = f"{TEST_DATA}/jwt-policy/invalid-token.jwt"
 
@@ -88,9 +71,7 @@ class TestJWTPoliciesVsr:
 
         return secret_name, pol_name, headers
 
-    def setup_multiple_policies(
-        self, kube_apis, namespace, token, secret, policy_1, policy_2, vs_host
-    ):
+    def setup_multiple_policies(self, kube_apis, namespace, token, secret, policy_1, policy_2, vs_host):
         print(f"Create jwk secret")
         secret_name = create_secret_from_yaml(kube_apis.v1, namespace, secret)
 
@@ -117,7 +98,7 @@ class TestJWTPoliciesVsr:
         token,
     ):
         """
-            Test jwt-policy with no token, valid token and invalid token
+        Test jwt-policy with no token, valid token and invalid token
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret, pol_name, headers = self.setup_single_policy(
@@ -178,7 +159,7 @@ class TestJWTPoliciesVsr:
         jwk_secret,
     ):
         """
-            Test jwt-policy with a valid and an invalid secret
+        Test jwt-policy with a valid and an invalid secret
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         if jwk_secret == jwk_sec_valid_src:
@@ -208,7 +189,10 @@ class TestJWTPoliciesVsr:
         )
         wait_before_test()
 
-        resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp.status_code)
 
         crd_info = read_custom_resource(
@@ -250,7 +234,7 @@ class TestJWTPoliciesVsr:
         policy,
     ):
         """
-            Test jwt-policy with a valid and an invalid policy
+        Test jwt-policy with a valid and an invalid policy
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         if policy == jwt_pol_valid_src:
@@ -278,7 +262,10 @@ class TestJWTPoliciesVsr:
         )
         wait_before_test()
 
-        resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp.status_code)
         policy_info = read_custom_resource(
             kube_apis.custom_objects, v_s_route_setup.route_m.namespace, "policies", pol_name
@@ -329,7 +316,7 @@ class TestJWTPoliciesVsr:
         test_namespace,
     ):
         """
-            Test if requests result in 500 when secret is deleted
+        Test if requests result in 500 when secret is deleted
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret, pol_name, headers = self.setup_single_policy(
@@ -350,11 +337,17 @@ class TestJWTPoliciesVsr:
         )
         wait_before_test()
 
-        resp1 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp1 = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp1.status_code)
 
         delete_secret(kube_apis.v1, secret, v_s_route_setup.route_m.namespace)
-        resp2 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp2 = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp2.status_code)
         crd_info = read_custom_resource(
             kube_apis.custom_objects,
@@ -389,7 +382,7 @@ class TestJWTPoliciesVsr:
         test_namespace,
     ):
         """
-            Test if requests result in 500 when policy is deleted
+        Test if requests result in 500 when policy is deleted
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret, pol_name, headers = self.setup_single_policy(
@@ -410,11 +403,17 @@ class TestJWTPoliciesVsr:
         )
         wait_before_test()
 
-        resp1 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp1 = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp1.status_code)
         delete_policy(kube_apis.custom_objects, pol_name, v_s_route_setup.route_m.namespace)
 
-        resp2 = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp2 = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp2.status_code)
         crd_info = read_custom_resource(
             kube_apis.custom_objects,
@@ -433,10 +432,7 @@ class TestJWTPoliciesVsr:
         assert resp1.status_code == 200
         assert f"Request ID:" in resp1.text
         assert crd_info["status"]["state"] == "Warning"
-        assert (
-            f"{v_s_route_setup.route_m.namespace}/{pol_name} is missing"
-            in crd_info["status"]["message"]
-        )
+        assert f"{v_s_route_setup.route_m.namespace}/{pol_name} is missing" in crd_info["status"]["message"]
         assert resp2.status_code == 500
         assert f"Internal Server Error" in resp2.text
 
@@ -449,8 +445,8 @@ class TestJWTPoliciesVsr:
         test_namespace,
     ):
         """
-            Test if first reference to a policy in the same context(subroute) takes precedence,
-            i.e. in this case, policy without $httptoken over policy with $httptoken.
+        Test if first reference to a policy in the same context(subroute) takes precedence,
+        i.e. in this case, policy without $httptoken over policy with $httptoken.
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret, pol_name_1, pol_name_2, headers = self.setup_multiple_policies(
@@ -472,7 +468,10 @@ class TestJWTPoliciesVsr:
         )
         wait_before_test()
 
-        resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp.status_code)
 
         crd_info = read_custom_resource(
@@ -493,10 +492,7 @@ class TestJWTPoliciesVsr:
         )
         assert resp.status_code == 401
         assert f"Authorization Required" in resp.text
-        assert (
-            f"Multiple jwt policies in the same context is not valid."
-            in crd_info["status"]["message"]
-        )
+        assert f"Multiple jwt policies in the same context is not valid." in crd_info["status"]["message"]
 
     @pytest.mark.parametrize("vs_src", [jwt_vs_override_route_src, jwt_vs_override_spec_src])
     def test_jwt_policy_override_vs_vsr(
@@ -509,9 +505,9 @@ class TestJWTPoliciesVsr:
         vs_src,
     ):
         """
-            Test if policy specified in vsr:subroute (policy without $httptoken) takes preference over policy specified in:
-            1. vs:spec (policy with $httptoken)
-            2. vs:route (policy with $httptoken)
+        Test if policy specified in vsr:subroute (policy without $httptoken) takes preference over policy specified in:
+        1. vs:spec (policy with $httptoken)
+        2. vs:route (policy with $httptoken)
         """
         req_url = f"http://{v_s_route_setup.public_endpoint.public_ip}:{v_s_route_setup.public_endpoint.port}"
         secret, pol_name_1, pol_name_2, headers = self.setup_multiple_policies(
@@ -532,11 +528,17 @@ class TestJWTPoliciesVsr:
             v_s_route_setup.route_m.namespace,
         )
         patch_virtual_server_from_yaml(
-            kube_apis.custom_objects, v_s_route_setup.vs_name, vs_src, v_s_route_setup.namespace,
+            kube_apis.custom_objects,
+            v_s_route_setup.vs_name,
+            vs_src,
+            v_s_route_setup.namespace,
         )
         wait_before_test()
 
-        resp = requests.get(f"{req_url}{v_s_route_setup.route_m.paths[0]}", headers=headers,)
+        resp = requests.get(
+            f"{req_url}{v_s_route_setup.route_m.paths[0]}",
+            headers=headers,
+        )
         print(resp.status_code)
 
         delete_policy(kube_apis.custom_objects, pol_name_1, v_s_route_setup.route_m.namespace)
