@@ -250,6 +250,10 @@ func validateOIDC(oidc *v1.OIDC, fieldPath *field.Path) field.ErrorList {
 		allErrs = append(allErrs, validatePositiveIntOrZero(*oidc.ZoneSyncLeeway, fieldPath.Child("zoneSyncLeeway"))...)
 	}
 
+	if oidc.AuthExtraArgs != "" {
+		allErrs = append(allErrs, validateQueryString(oidc.AuthExtraArgs, fieldPath.Child("authExtraArgs"))...)
+	}
+
 	allErrs = append(allErrs, validateURL(oidc.AuthEndpoint, fieldPath.Child("authEndpoint"))...)
 	allErrs = append(allErrs, validateURL(oidc.TokenEndpoint, fieldPath.Child("tokenEndpoint"))...)
 	allErrs = append(allErrs, validateURL(oidc.JWKSURI, fieldPath.Child("jwksURI"))...)
@@ -362,6 +366,17 @@ func validateURL(name string, fieldPath *field.Path) field.ErrorList {
 	allErrs = append(allErrs, validateSSLName(host, fieldPath)...)
 	if port != "" {
 		allErrs = append(allErrs, validatePortNumber(port, fieldPath)...)
+	}
+
+	return allErrs
+}
+
+func validateQueryString(queryString string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	_, err := url.ParseQuery(queryString)
+	if err != nil {
+		return append(allErrs, field.Invalid(fieldPath, queryString, err.Error()))
 	}
 
 	return allErrs

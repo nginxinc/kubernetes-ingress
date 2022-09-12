@@ -480,6 +480,7 @@ type OIDC struct {
 	Scope          string `json:"scope"`
 	RedirectURI    string `json:"redirectURI"`
 	ZoneSyncLeeway *int   `json:"zoneSyncLeeway"`
+	AuthExtraArgs  string `json:"authExtraArgs"`
 }
 
 // WAF defines an WAF policy.

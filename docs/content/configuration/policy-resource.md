@@ -343,6 +343,7 @@ The OIDC policy defines a few internal locations that can't be customized: `/_jw
 |``clientID`` | The client ID provided by your OpenID Connect provider. | ``string`` | Yes |
 |``clientSecret`` | The name of the Kubernetes secret that stores the client secret provided by your OpenID Connect provider. It must be in the same namespace as the Policy resource. The secret must be of the type ``nginx.org/oidc``, and the secret under the key ``client-secret``, otherwise the secret will be rejected as invalid. | ``string`` | Yes |
 |``authEndpoint`` | URL for the authorization endpoint provided by your OpenID Connect provider. | ``string`` | Yes |
+|``authExtraArgs`` | Extra URL arguments to pass to the authorization endpoint provided by your OpenID Connect provider. Arguments must be URL encoded, multiple arguments may be provided by concatenating them with ``&``, for example ``arg1=value1&arg2=value2`` | ``string`` | No |
 |``tokenEndpoint`` | URL for the token endpoint provided by your OpenID Connect provider. | ``string`` | Yes |
 |``jwksURI`` | URL for the JSON Web Key Set (JWK) document provided by your OpenID Connect provider. | ``string`` | Yes |
 |``scope`` | List of OpenID Connect scopes. Possible values are ``openid``, ``profile``, ``email``, ``address`` and ``phone``. The scope ``openid`` always needs to be present and others can be added concatenating them with a ``+`` sign, for example ``openid+profile+email``. The default is ``openid``. | ``string`` | No |

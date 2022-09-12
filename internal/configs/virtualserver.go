@@ -1029,6 +1029,7 @@ func (p *policiesCfg) addOIDCConfig(
 
 		oidcPolCfg.oidc = &version2.OIDC{
 			AuthEndpoint:   oidc.AuthEndpoint,
+			AuthExtraArgs:  oidc.AuthExtraArgs,
 			TokenEndpoint:  oidc.TokenEndpoint,
 			JwksURI:        oidc.JWKSURI,
 			ClientID:       oidc.ClientID,

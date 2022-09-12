@@ -118,6 +118,7 @@ type OIDC struct {
 	TokenEndpoint  string
 	RedirectURI    string
 	ZoneSyncLeeway int
+	AuthExtraArgs  string
 }
 
 // WAF defines WAF configuration.
