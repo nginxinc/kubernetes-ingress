@@ -39,6 +39,31 @@ def create_virtual_server_from_yaml(custom_objects: CustomObjectsApi, yaml_manif
     return create_virtual_server(custom_objects, dep, namespace)
 
 
+def create_custom_items_from_yaml(custom_objects, yaml_manifest, namespace) -> {}:
+    """
+    Apply yaml manifest with multiple items.
+
+    :param kube_apis: KubeApis
+    :param yaml_manifest: an absolute path to a file
+    :param namespace:
+    :return:
+    """
+    res = {}
+    print("Load yaml:")
+    with open(yaml_manifest) as f:
+        docs = yaml.safe_load_all(f)
+        try:
+            for doc in docs:
+                if doc["kind"] == "VirtualServer":
+                    res["VirtualServer"] = create_virtual_server(custom_objects, doc, namespace)
+                elif doc["kind"] == "VirtualServerRoute":
+                    res["VirtualServerRoute"] = create_v_s_route(custom_objects, doc, namespace)
+        except Exception:
+            pass
+
+    return res
+
+
 def create_virtual_server(custom_objects: CustomObjectsApi, vs, namespace) -> str:
     """
     Create a VirtualServer.

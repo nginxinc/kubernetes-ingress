@@ -373,8 +373,3 @@ Note how the events section includes a Warning event with the Rejected reason.
 ## Customization via ConfigMap
 
 The [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource) keys (except for `stream-snippets` and `stream-log-format`) do not affect TransportServer resources.
-
-## Limitations
-
-The TransportServer resource currently comes with the following limitation:
-* When using TLS Passthrough, it is not possible to configure [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.0.1/examples/proxy-protocol) for port 443 both for regular HTTPS and TLS Passthrough traffic.

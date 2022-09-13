@@ -72,3 +72,8 @@ create-kind-cluster: ## Create Kind cluster
 .PHONY: delete-kind-cluster
 delete-kind-cluster: ## Delete Kind cluster
 	kind delete cluster
+
+.PHONY: test-lint
+test-lint: ## Run Python linting tools
+	isort .
+	black .

@@ -4,7 +4,7 @@ from suite.custom_assertions import assert_event
 from suite.custom_resources_utils import is_dnsendpoint_present
 from suite.resources_utils import get_events, wait_before_test
 from suite.vs_vsr_resources_utils import patch_virtual_server_from_yaml
-from suite.yaml_utils import get_first_host_from_yaml, get_namespace_from_yaml
+from suite.yaml_utils import get_name_from_yaml, get_namespace_from_yaml
 
 VS_YAML = f"{TEST_DATA}/virtual-server-external-dns/standard/virtual-server.yaml"
 
@@ -27,11 +27,11 @@ class TestExternalDNSVirtualServer:
         self, kube_apis, crd_ingress_controller_with_ed, create_externaldns, virtual_server_setup
     ):
         print("\nStep 1: Verify DNSEndpoint exists")
-        dns_name = get_first_host_from_yaml(VS_YAML)
+        dns_ep_name = get_name_from_yaml(VS_YAML)
         retry = 0
-        dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_name, virtual_server_setup.namespace)
+        dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_ep_name, virtual_server_setup.namespace)
         while dep == False and retry <= 60:
-            dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_name, virtual_server_setup.namespace)
+            dep = is_dnsendpoint_present(kube_apis.custom_objects, dns_ep_name, virtual_server_setup.namespace)
             retry += 1
             wait_before_test(1)
             print(f"DNSEndpoint not created, retrying... #{retry}")

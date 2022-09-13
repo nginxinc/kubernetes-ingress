@@ -933,6 +933,18 @@ def clear_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace):
     )
 
 
+def get_nginx_template_conf(v1: CoreV1Api, ingress_namespace) -> str:
+    """
+    Get contents of /etc/nginx/nginx.conf in the pod
+    :param v1: CoreV1Api
+    :param ingress_namespace:
+    :return: str
+    """
+    ic_pod_name = get_first_pod_name(v1, ingress_namespace)
+    file_path = "/etc/nginx/nginx.conf"
+    return get_file_contents(v1, file_path, ic_pod_name, ingress_namespace)
+
+
 def get_ingress_nginx_template_conf(v1: CoreV1Api, ingress_namespace, ingress_name, pod_name, pod_namespace) -> str:
     """
     Get contents of /etc/nginx/conf.d/{namespace}-{ingress_name}.conf in the pod.
@@ -1210,20 +1222,21 @@ def create_items_from_yaml(kube_apis, yaml_manifest, namespace) -> {}:
     with open(yaml_manifest) as f:
         docs = yaml.safe_load_all(f)
         for doc in docs:
-            if doc["kind"] == "Secret":
-                res["Secret"] = create_secret(kube_apis.v1, namespace, doc)
-            elif doc["kind"] == "ConfigMap":
-                res["ConfigMap"] = create_configmap(kube_apis.v1, namespace, doc)
-            elif doc["kind"] == "Ingress":
-                res["Ingress"] = create_ingress(kube_apis.networking_v1, namespace, doc)
-            elif doc["kind"] == "Service":
-                res["Service"] = create_service(kube_apis.v1, namespace, doc)
-            elif doc["kind"] == "Deployment":
-                res["Deployment"] = create_deployment(kube_apis.apps_v1_api, namespace, doc)
-            elif doc["kind"] == "DaemonSet":
-                res["DaemonSet"] = create_daemon_set(kube_apis.apps_v1_api, namespace, doc)
-            elif doc["kind"] == "Namespace":
-                res["Namespace"] = create_namespace(kube_apis.v1, doc)
+            if doc:
+                if doc["kind"] == "Secret":
+                    res["Secret"] = create_secret(kube_apis.v1, namespace, doc)
+                elif doc["kind"] == "ConfigMap":
+                    res["ConfigMap"] = create_configmap(kube_apis.v1, namespace, doc)
+                elif doc["kind"] == "Ingress":
+                    res["Ingress"] = create_ingress(kube_apis.networking_v1, namespace, doc)
+                elif doc["kind"] == "Service":
+                    res["Service"] = create_service(kube_apis.v1, namespace, doc)
+                elif doc["kind"] == "Deployment":
+                    res["Deployment"] = create_deployment(kube_apis.apps_v1_api, namespace, doc)
+                elif doc["kind"] == "DaemonSet":
+                    res["DaemonSet"] = create_daemon_set(kube_apis.apps_v1_api, namespace, doc)
+                elif doc["kind"] == "Namespace":
+                    res["Namespace"] = create_namespace(kube_apis.v1, doc)
 
     return res
 
@@ -1323,20 +1336,21 @@ def delete_items_from_yaml(kube_apis, yaml_manifest, namespace) -> None:
     with open(yaml_manifest) as f:
         docs = yaml.safe_load_all(f)
         for doc in docs:
-            if doc["kind"] == "Namespace":
-                delete_namespace(kube_apis.v1, doc["metadata"]["name"])
-            elif doc["kind"] == "Secret":
-                delete_secret(kube_apis.v1, doc["metadata"]["name"], namespace)
-            elif doc["kind"] == "Ingress":
-                delete_ingress(kube_apis.networking_v1, doc["metadata"]["name"], namespace)
-            elif doc["kind"] == "Service":
-                delete_service(kube_apis.v1, doc["metadata"]["name"], namespace)
-            elif doc["kind"] == "Deployment":
-                delete_deployment(kube_apis.apps_v1_api, doc["metadata"]["name"], namespace)
-            elif doc["kind"] == "DaemonSet":
-                delete_daemon_set(kube_apis.apps_v1_api, doc["metadata"]["name"], namespace)
-            elif doc["kind"] == "ConfigMap":
-                delete_configmap(kube_apis.v1, doc["metadata"]["name"], namespace)
+            if doc:
+                if doc["kind"] == "Namespace":
+                    delete_namespace(kube_apis.v1, doc["metadata"]["name"])
+                elif doc["kind"] == "Secret":
+                    delete_secret(kube_apis.v1, doc["metadata"]["name"], namespace)
+                elif doc["kind"] == "Ingress":
+                    delete_ingress(kube_apis.networking_v1, doc["metadata"]["name"], namespace)
+                elif doc["kind"] == "Service":
+                    delete_service(kube_apis.v1, doc["metadata"]["name"], namespace)
+                elif doc["kind"] == "Deployment":
+                    delete_deployment(kube_apis.apps_v1_api, doc["metadata"]["name"], namespace)
+                elif doc["kind"] == "DaemonSet":
+                    delete_daemon_set(kube_apis.apps_v1_api, doc["metadata"]["name"], namespace)
+                elif doc["kind"] == "ConfigMap":
+                    delete_configmap(kube_apis.v1, doc["metadata"]["name"], namespace)
 
 
 def ensure_connection(request_url, expected_code=404, headers={}) -> None:

@@ -76,3 +76,14 @@ Expand app name.
 {{- define "nginx-ingress.appName" -}}
 {{- default (include "nginx-ingress.name" .) .Values.controller.name -}}
 {{- end -}}
+
+{{/*
+Expand image name.
+*/}}
+{{- define "nginx-ingress.image" -}}
+{{- if .Values.controller.image.digest -}}
+{{- printf "%s@%s" .Values.controller.image.repository .Values.controller.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.controller.image.repository .Values.controller.image.tag -}}
+{{- end -}}
+{{- end -}}

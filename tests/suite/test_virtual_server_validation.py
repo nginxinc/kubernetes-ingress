@@ -1,7 +1,7 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.custom_assertions import assert_vs_conf_exists, assert_vs_conf_not_exists
+from suite.custom_assertions import assert_vs_conf_exists, assert_vs_conf_not_exists, wait_and_assert_status_code
 from suite.resources_utils import get_events, get_first_pod_name, get_pods_amount, wait_before_test
 from suite.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
@@ -27,17 +27,13 @@ def assert_event_count_increased_in_list(virtual_server_setup, new_list, previou
 
 
 def assert_response_200(virtual_server_setup):
-    resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-    assert resp.status_code == 200
-    resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-    assert resp.status_code == 200
+    wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+    wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
 
 def assert_response_404(virtual_server_setup):
-    resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-    assert resp.status_code == 404
-    resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-    assert resp.status_code == 404
+    wait_and_assert_status_code(404, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+    wait_and_assert_status_code(404, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
 
 @pytest.mark.vs
