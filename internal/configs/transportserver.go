@@ -23,11 +23,9 @@ func (tsEx *TransportServerEx) String() string {
 	if tsEx == nil {
 		return "<nil>"
 	}
-
 	if tsEx.TransportServer == nil {
 		return "TransportServerEx has no TransportServer"
 	}
-
 	return fmt.Sprintf("%s/%s", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name)
 }
 
@@ -35,7 +33,7 @@ func (tsEx *TransportServerEx) String() string {
 func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool, isResolverConfigured bool) *version2.TransportServerConfig {
 	upstreamNamer := newUpstreamNamerForTransportServer(transportServerEx.TransportServer)
 
-	upstreams := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus)
+	upstreams := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus, isResolverConfigured)
 
 	healthCheck, match := generateTransportServerHealthCheck(
 		transportServerEx.TransportServer.Spec.Action.Pass,
@@ -65,7 +63,6 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 	}
 
 	serverSnippets := generateSnippets(true, transportServerEx.TransportServer.Spec.ServerSnippets, []string{})
-
 	streamSnippets := generateSnippets(true, transportServerEx.TransportServer.Spec.StreamSnippets, []string{})
 
 	statusZone := transportServerEx.TransportServer.Spec.Listener.Name
@@ -109,19 +106,26 @@ func generateUnixSocket(transportServerEx *TransportServerEx) string {
 	return ""
 }
 
-func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool) []version2.StreamUpstream {
+func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool, isResolverConfigured bool) []version2.StreamUpstream {
 	var upstreams []version2.StreamUpstream
 
 	for _, u := range transportServerEx.TransportServer.Spec.Upstreams {
-		_, isExternal := transportServerEx.ExternalNameSvcs[GenerateExternalNameSvcKey(transportServerEx.TransportServer.Namespace, u.Service)]
 
 		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
 		endpointsKey := GenerateEndpointsKey(transportServerEx.TransportServer.Namespace, u.Service, nil, uint16(u.Port))
+		externalNameSvcKey := GenerateExternalNameSvcKey(transportServerEx.TransportServer.Namespace, u.Service)
 		endpoints := transportServerEx.Endpoints[endpointsKey]
+
+		_, isExternalNameSvc := transportServerEx.ExternalNameSvcs[externalNameSvcKey]
+		if isExternalNameSvc && !isResolverConfigured {
+			// Note(!) Shall we implement warnings as it is in VirtualServer?
+			// Message: "Type ExternalName service %v" in upstream %v will be ignored. To use ExternalName services, a resolver must be configured in the ConfigMap"
+			endpoints = []string{}
+		}
 
 		ups := generateStreamUpstream(u, upstreamNamer, endpoints, isPlus)
 
-		ups.Resolve = isExternal
+		ups.Resolve = isExternalNameSvc
 		ups.UpstreamLabels.Service = u.Service
 		ups.UpstreamLabels.ResourceType = "transportserver"
 		ups.UpstreamLabels.ResourceName = transportServerEx.TransportServer.Name
@@ -220,7 +224,6 @@ func generateStreamUpstream(upstream conf_v1alpha1.Upstream, upstreamNamer *upst
 			FailTimeout:    failTimeout,
 			MaxConnections: maxConns,
 		}
-
 		upsServers = append(upsServers, s)
 	}
 

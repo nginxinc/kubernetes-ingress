@@ -496,7 +496,7 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForUDP(t *
 	}
 }
 
-func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExternalNameService(t *testing.T) {
+func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExternalNameServiceAndConfiguredResolver(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
@@ -577,7 +577,7 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExterna
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, 2020, true, false)
+	result := generateTransportServerConfig(&transportServerEx, 2020, true, true)
 	if !cmp.Equal(expected, result) {
 		t.Error(cmp.Diff(expected, result))
 	}
