@@ -9,7 +9,7 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func TestUpstreamNamerForTransportServer(t *testing.T) {
+func TestUpstreamNamerForTransportServer_GeneratesValidNameOnValidInput(t *testing.T) {
 	t.Parallel()
 	transportServer := conf_v1alpha1.TransportServer{
 		ObjectMeta: meta_v1.ObjectMeta{
@@ -22,11 +22,11 @@ func TestUpstreamNamerForTransportServer(t *testing.T) {
 
 	result := upstreamNamer.GetNameForUpstream("test")
 	if result != expected {
-		t.Errorf("GetNameForUpstream() got %s, want %v", result, expected)
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 
-func TestTransportServerExString(t *testing.T) {
+func TestTransportServerEx_StringGeneratesValidOutput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		input    *TransportServerEx
@@ -56,12 +56,12 @@ func TestTransportServerExString(t *testing.T) {
 	for _, test := range tests {
 		result := test.input.String()
 		if result != test.expected {
-			t.Errorf("TransportServerEx.String() got %v, want %v", result, test.expected)
+			t.Error(cmp.Diff(result, test.expected))
 		}
 	}
 }
 
-func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
+func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForTCPSnippets(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
@@ -135,13 +135,13 @@ func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 		StreamSnippets: []string{"limit_conn_zone $binary_remote_addr zone=addr:10m;"},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
 	if !cmp.Equal(expected, result) {
-		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 
-func TestGenerateTransportServerConfigForTCP(t *testing.T) {
+func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForTCP(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
@@ -222,13 +222,13 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
 	if !cmp.Equal(expected, result) {
-		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 
-func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
+func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForTCPMaxConnections(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
@@ -311,13 +311,13 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
 	if !cmp.Equal(expected, result) {
-		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 
-func TestGenerateTransportServerConfigForTLSPassthrough(t *testing.T) {
+func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForTLSPassthrough(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
@@ -398,13 +398,13 @@ func TestGenerateTransportServerConfigForTLSPassthrough(t *testing.T) {
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
 	if !cmp.Equal(expected, result) {
-		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 
-func TestGenerateTransportServerConfigForUDP(t *testing.T) {
+func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForUDP(t *testing.T) {
 	t.Parallel()
 	udpRequests := 1
 	udpResponses := 5
@@ -490,13 +490,13 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
+	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
 	if !cmp.Equal(expected, result) {
-		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 
-func TestGenerateTransportServerConfigForExternalNameService(t *testing.T) {
+func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExternalNameService(t *testing.T) {
 	t.Parallel()
 	transportServerEx := TransportServerEx{
 		TransportServer: &conf_v1alpha1.TransportServer{
@@ -577,10 +577,14 @@ func TestGenerateTransportServerConfigForExternalNameService(t *testing.T) {
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, 2020, true)
+	result := generateTransportServerConfig(&transportServerEx, 2020, true, false)
 	if !cmp.Equal(expected, result) {
-		t.Errorf("generateTransportServerConfig()\n%s", cmp.Diff(expected, result))
+		t.Error(cmp.Diff(expected, result))
 	}
+}
+
+func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForConfiguredResolver(t *testing.T) {
+	t.Parallel()
 }
 
 func TestGenerateUnixSocket(t *testing.T) {

@@ -29,58 +29,51 @@ func createTestStaticConfigParams() *StaticConfigParams {
 	}
 }
 
-func createTestConfigurator() (*Configurator, error) {
+func createTestConfigurator(t *testing.T) *Configurator {
 	templateExecutor, err := version1.NewTemplateExecutor("version1/nginx-plus.tmpl", "version1/nginx-plus.ingress.tmpl")
 	if err != nil {
-		return nil, err
+		t.Fatal(err)
 	}
 
 	templateExecutorV2, err := version2.NewTemplateExecutor("version2/nginx-plus.virtualserver.tmpl", "version2/nginx-plus.transportserver.tmpl")
 	if err != nil {
-		return nil, err
+		t.Fatal(err)
 	}
 
 	manager := nginx.NewFakeManager("/etc/nginx")
 
 	cnf, err := NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(false), templateExecutor, templateExecutorV2, false, false, nil, false, nil, false), nil
 	if err != nil {
-		return nil, err
+		t.Fatal(err)
 	}
-
 	cnf.isReloadsEnabled = true
-
-	return cnf, nil
+	return cnf
 }
 
-func createTestConfiguratorInvalidIngressTemplate() (*Configurator, error) {
+func createTestConfiguratorInvalidIngressTemplate(t *testing.T) *Configurator {
 	templateExecutor, err := version1.NewTemplateExecutor("version1/nginx-plus.tmpl", "version1/nginx-plus.ingress.tmpl")
 	if err != nil {
-		return nil, err
+		t.Fatal(err)
 	}
 
 	invalidIngressTemplate := "{{.Upstreams.This.Field.Does.Not.Exist}}"
 	if err := templateExecutor.UpdateIngressTemplate(&invalidIngressTemplate); err != nil {
-		return nil, err
+		t.Fatal(err)
 	}
 
 	manager := nginx.NewFakeManager("/etc/nginx")
 
 	cnf, err := NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(false), templateExecutor, &version2.TemplateExecutor{}, false, false, nil, false, nil, false), nil
 	if err != nil {
-		return nil, err
+		t.Fatal(err)
 	}
-
 	cnf.isReloadsEnabled = true
-
-	return cnf, nil
+	return cnf
 }
 
 func TestAddOrUpdateIngress(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfigurator()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfigurator(t)
 
 	ingress := createCafeIngressEx()
 
@@ -100,10 +93,7 @@ func TestAddOrUpdateIngress(t *testing.T) {
 
 func TestAddOrUpdateMergeableIngress(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfigurator()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfigurator(t)
 
 	mergeableIngress := createMergeableCafeIngress()
 
@@ -123,10 +113,7 @@ func TestAddOrUpdateMergeableIngress(t *testing.T) {
 
 func TestAddOrUpdateIngressFailsWithInvalidIngressTemplate(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfiguratorInvalidIngressTemplate()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfiguratorInvalidIngressTemplate(t)
 
 	ingress := createCafeIngressEx()
 
@@ -141,10 +128,7 @@ func TestAddOrUpdateIngressFailsWithInvalidIngressTemplate(t *testing.T) {
 
 func TestAddOrUpdateMergeableIngressFailsWithInvalidIngressTemplate(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfiguratorInvalidIngressTemplate()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfiguratorInvalidIngressTemplate(t)
 
 	mergeableIngress := createMergeableCafeIngress()
 
@@ -159,15 +143,12 @@ func TestAddOrUpdateMergeableIngressFailsWithInvalidIngressTemplate(t *testing.T
 
 func TestUpdateEndpoints(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfigurator()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfigurator(t)
 
 	ingress := createCafeIngressEx()
 	ingresses := []*IngressEx{&ingress}
 
-	err = cnf.UpdateEndpoints(ingresses)
+	err := cnf.UpdateEndpoints(ingresses)
 	if err != nil {
 		t.Errorf("UpdateEndpoints returned\n%v, but expected \n%v", err, nil)
 	}
@@ -180,15 +161,12 @@ func TestUpdateEndpoints(t *testing.T) {
 
 func TestUpdateEndpointsMergeableIngress(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfigurator()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfigurator(t)
 
 	mergeableIngress := createMergeableCafeIngress()
 	mergeableIngresses := []*MergeableIngresses{mergeableIngress}
 
-	err = cnf.UpdateEndpointsMergeableIngress(mergeableIngresses)
+	err := cnf.UpdateEndpointsMergeableIngress(mergeableIngresses)
 	if err != nil {
 		t.Errorf("UpdateEndpointsMergeableIngress returned \n%v, but expected \n%v", err, nil)
 	}
@@ -201,15 +179,12 @@ func TestUpdateEndpointsMergeableIngress(t *testing.T) {
 
 func TestUpdateEndpointsFailsWithInvalidTemplate(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfiguratorInvalidIngressTemplate()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfiguratorInvalidIngressTemplate(t)
 
 	ingress := createCafeIngressEx()
 	ingresses := []*IngressEx{&ingress}
 
-	err = cnf.UpdateEndpoints(ingresses)
+	err := cnf.UpdateEndpoints(ingresses)
 	if err == nil {
 		t.Errorf("UpdateEndpoints returned\n%v, but expected \n%v", nil, "template execution error")
 	}
@@ -217,15 +192,12 @@ func TestUpdateEndpointsFailsWithInvalidTemplate(t *testing.T) {
 
 func TestUpdateEndpointsMergeableIngressFailsWithInvalidTemplate(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfiguratorInvalidIngressTemplate()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfiguratorInvalidIngressTemplate(t)
 
 	mergeableIngress := createMergeableCafeIngress()
 	mergeableIngresses := []*MergeableIngresses{mergeableIngress}
 
-	err = cnf.UpdateEndpointsMergeableIngress(mergeableIngresses)
+	err := cnf.UpdateEndpointsMergeableIngress(mergeableIngresses)
 	if err == nil {
 		t.Errorf("UpdateEndpointsMergeableIngress returned \n%v, but expected \n%v", nil, "template execution error")
 	}
@@ -330,12 +302,10 @@ func TestGenerateTLSPassthroughHostsConfig(t *testing.T) {
 
 func TestAddInternalRouteConfig(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfigurator()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfigurator(t)
+
 	// set service account in env
-	err = os.Setenv("POD_SERVICEACCOUNT", "nginx-ingress")
+	err := os.Setenv("POD_SERVICEACCOUNT", "nginx-ingress")
 	if err != nil {
 		t.Errorf("Failed to set pod name in environment: %v", err)
 	}
@@ -550,10 +520,7 @@ func (u *mockLatencyCollector) RecordLatency(string) {}
 func (u *mockLatencyCollector) Register(*prometheus.Registry) error { return nil }
 
 func TestUpdateIngressMetricsLabels(t *testing.T) {
-	cnf, err := createTestConfigurator()
-	if err != nil {
-		t.Fatalf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfigurator(t)
 
 	cnf.isPlus = true
 	cnf.labelUpdater = newFakeLabelUpdater()
@@ -721,10 +688,7 @@ func TestUpdateIngressMetricsLabels(t *testing.T) {
 
 func TestUpdateVirtualServerMetricsLabels(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfigurator()
-	if err != nil {
-		t.Fatalf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfigurator(t)
 
 	cnf.isPlus = true
 	cnf.labelUpdater = newFakeLabelUpdater()
@@ -891,10 +855,7 @@ func TestUpdateVirtualServerMetricsLabels(t *testing.T) {
 
 func TestUpdateTransportServerMetricsLabels(t *testing.T) {
 	t.Parallel()
-	cnf, err := createTestConfigurator()
-	if err != nil {
-		t.Fatalf("Failed to create a test configurator: %v", err)
-	}
+	cnf := createTestConfigurator(t)
 
 	cnf.isPlus = true
 	cnf.labelUpdater = newFakeLabelUpdater()
@@ -1189,10 +1150,7 @@ func TestUpdateApResources(t *testing.T) {
 		},
 	}
 
-	conf, err := createTestConfigurator()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	conf := createTestConfigurator(t)
 
 	for _, test := range tests {
 		result := conf.updateApResources(test.ingEx)
@@ -1312,10 +1270,7 @@ func TestUpdateApResourcesForVs(t *testing.T) {
 		},
 	}
 
-	conf, err := createTestConfigurator()
-	if err != nil {
-		t.Errorf("Failed to create a test configurator: %v", err)
-	}
+	conf := createTestConfigurator(t)
 
 	for _, test := range tests {
 		result := conf.updateApResourcesForVs(test.vsEx)
