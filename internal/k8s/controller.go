@@ -1219,8 +1219,8 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 			case *TransportServerConfiguration:
 				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
 
-				addOrUpdateErr := lbc.configurator.AddOrUpdateTransportServer(tsEx)
-				lbc.updateTransportServerStatusAndEvents(impl, addOrUpdateErr)
+				warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateTransportServer(tsEx)
+				lbc.updateTransportServerStatusAndEvents(impl, warnings, addOrUpdateErr)
 			}
 		} else if c.Op == Delete {
 			switch impl := c.Resource.(type) {
@@ -1329,9 +1329,9 @@ func (lbc *LoadBalancerController) processChangesFromGlobalConfiguration(changes
 		}
 	}
 
-	updateErr := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedKeys)
+	warnings, updateErr := lbc.configurator.UpdateTransportServers(updatedTSExes, deletedKeys)
 
-	lbc.updateResourcesStatusAndEvents(updatedResources, configs.Warnings{}, updateErr)
+	lbc.updateResourcesStatusAndEvents(updatedResources, warnings, updateErr)
 
 	return updateErr
 }
@@ -1631,7 +1631,7 @@ func (lbc *LoadBalancerController) updateResourcesStatusAndEvents(resources []Re
 				lbc.updateRegularIngressStatusAndEvents(impl, warnings, operationErr)
 			}
 		case *TransportServerConfiguration:
-			lbc.updateTransportServerStatusAndEvents(impl, operationErr)
+			lbc.updateTransportServerStatusAndEvents(impl, warnings, operationErr)
 		}
 	}
 }
@@ -1755,9 +1755,9 @@ func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(ingConfig
 	}
 }
 
-func (lbc *LoadBalancerController) updateTransportServerStatusAndEvents(tsConfig *TransportServerConfiguration, operationErr error) {
-	eventTitle := "AddedOrUpdated"
+func (lbc *LoadBalancerController) updateTransportServerStatusAndEvents(tsConfig *TransportServerConfiguration, warnings configs.Warnings, operationErr error) {
 	eventType := api_v1.EventTypeNormal
+	eventTitle := "AddedOrUpdated"
 	eventWarningMessage := ""
 	state := conf_v1.StateValid
 
@@ -1765,6 +1765,13 @@ func (lbc *LoadBalancerController) updateTransportServerStatusAndEvents(tsConfig
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
 		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(tsConfig.Warnings))
+		state = conf_v1.StateWarning
+	}
+
+	if messages, ok := warnings[tsConfig.TransportServer]; ok {
+		eventType = api_v1.EventTypeWarning
+		eventTitle = "AddedOrUpdatedWithWarning"
+		eventWarningMessage = fmt.Sprintf("%s; with warning(s): %v", eventWarningMessage, formatWarningMessages(messages))
 		state = conf_v1.StateWarning
 	}
 

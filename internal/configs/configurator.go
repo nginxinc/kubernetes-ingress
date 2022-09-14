@@ -573,27 +573,27 @@ func (cnf *Configurator) deleteTransportServerMetricsLabels(key string) {
 
 // AddOrUpdateTransportServer adds or updates NGINX configuration for the TransportServer resource.
 // It is a responsibility of the caller to check that the TransportServer references an existing listener.
-func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *TransportServerEx) error {
-	err := cnf.addOrUpdateTransportServer(transportServerEx)
+func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *TransportServerEx) (Warnings, error) {
+	warnings, err := cnf.addOrUpdateTransportServer(transportServerEx)
 	if err != nil {
-		return fmt.Errorf("error adding or updating TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
+		return warnings, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("error reloading NGINX for TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
+		return warnings, fmt.Errorf("error reloading NGINX for TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
 	}
 
-	return nil
+	return warnings, nil
 }
 
-func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *TransportServerEx) error {
+func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *TransportServerEx) (Warnings, error) {
 	name := getFileNameForTransportServer(transportServerEx.TransportServer)
 
-	tsCfg := generateTransportServerConfig(transportServerEx, transportServerEx.ListenerPort, cnf.isPlus, cnf.IsResolverConfigured())
+	tsCfg, warnings := generateTransportServerConfig(transportServerEx, transportServerEx.ListenerPort, cnf.isPlus, cnf.IsResolverConfigured())
 
 	content, err := cnf.templateExecutorV2.ExecuteTransportServerTemplate(tsCfg)
 	if err != nil {
-		return fmt.Errorf("error generating TransportServer config %v: %w", name, err)
+		return warnings, fmt.Errorf("error generating TransportServer config %v: %w", name, err)
 	}
 
 	if cnf.isPlus && cnf.isPrometheusEnabled {
@@ -611,10 +611,10 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 			UnixSocket: generateUnixSocket(transportServerEx),
 		}
 
-		return cnf.updateTLSPassthroughHostsConfig()
+		return warnings, cnf.updateTLSPassthroughHostsConfig()
 	}
 
-	return nil
+	return warnings, nil
 }
 
 // GetVirtualServerRoutesForVirtualServer returns the virtualServerRoutes that a virtualServer
@@ -697,10 +697,11 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources) (Warn
 	}
 
 	for _, tsEx := range resources.TransportServerExes {
-		err := cnf.addOrUpdateTransportServer(tsEx)
+		warnings, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
 			return allWarnings, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
 		}
+		allWarnings.Add(warnings)
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
@@ -939,7 +940,8 @@ func (cnf *Configurator) UpdateEndpointsForTransportServers(transportServerExes 
 	reloadPlus := false
 
 	for _, tsEx := range transportServerExes {
-		err := cnf.addOrUpdateTransportServer(tsEx)
+		// Ignore warnings here as no new warnings should appear when updating Endpoints for TransportServers
+		_, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
 			return fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
 		}
@@ -1153,26 +1155,29 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 }
 
 // UpdateTransportServers updates TransportServers.
-func (cnf *Configurator) UpdateTransportServers(updatedTSExes []*TransportServerEx, deletedKeys []string) error {
+func (cnf *Configurator) UpdateTransportServers(updatedTSExes []*TransportServerEx, deletedKeys []string) (Warnings, error) {
+	allWarnings := newWarnings()
+
 	for _, tsEx := range updatedTSExes {
-		err := cnf.addOrUpdateTransportServer(tsEx)
+		warnings, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
-			return fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
+			return allWarnings, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
 		}
+		allWarnings.Add(warnings)
 	}
 
 	for _, key := range deletedKeys {
 		err := cnf.deleteTransportServer(key)
 		if err != nil {
-			return fmt.Errorf("error when removing TransportServer %v: %w", key, err)
+			return allWarnings, fmt.Errorf("error when removing TransportServer %v: %w", key, err)
 		}
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("error when updating TransportServers: %w", err)
+		return allWarnings, fmt.Errorf("error when updating TransportServers: %w", err)
 	}
 
-	return nil
+	return allWarnings, nil
 }
 
 func keyToFileName(key string) string {

@@ -26,7 +26,7 @@ func TestUpstreamNamerForTransportServer_GeneratesValidNameOnValidInput(t *testi
 	}
 }
 
-func TestTransportServerEx_StringGeneratesValidOutput(t *testing.T) {
+func TestTransportServerEx_GeneratesValidStringOutput(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		input    *TransportServerEx
@@ -135,7 +135,10 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForTCPSnip
 		StreamSnippets: []string{"limit_conn_zone $binary_remote_addr zone=addr:10m;"},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
 	if !cmp.Equal(expected, result) {
 		t.Error(cmp.Diff(expected, result))
 	}
@@ -222,7 +225,10 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForTCP(t *
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
 	if !cmp.Equal(expected, result) {
 		t.Error(cmp.Diff(expected, result))
 	}
@@ -311,7 +317,10 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForTCPMaxC
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
 	if !cmp.Equal(expected, result) {
 		t.Error(cmp.Diff(expected, result))
 	}
@@ -398,7 +407,10 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForTLSPass
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
 	if !cmp.Equal(expected, result) {
 		t.Error(cmp.Diff(expected, result))
 	}
@@ -490,7 +502,10 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForUDP(t *
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
 	if !cmp.Equal(expected, result) {
 		t.Error(cmp.Diff(expected, result))
 	}
@@ -577,7 +592,10 @@ func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExterna
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, 2020, true, true)
+	result, warnings := generateTransportServerConfig(&transportServerEx, 2020, true, true)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
 	if !cmp.Equal(expected, result) {
 		t.Error(cmp.Diff(expected, result))
 	}

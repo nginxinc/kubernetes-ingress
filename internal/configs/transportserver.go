@@ -30,10 +30,10 @@ func (tsEx *TransportServerEx) String() string {
 }
 
 // generateTransportServerConfig generates a full configuration for a TransportServer.
-func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool, isResolverConfigured bool) *version2.TransportServerConfig {
+func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool, isResolverConfigured bool) (*version2.TransportServerConfig, Warnings) {
 	upstreamNamer := newUpstreamNamerForTransportServer(transportServerEx.TransportServer)
 
-	upstreams := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus, isResolverConfigured)
+	upstreams, warnings := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus, isResolverConfigured)
 
 	healthCheck, match := generateTransportServerHealthCheck(
 		transportServerEx.TransportServer.Spec.Action.Pass,
@@ -95,7 +95,7 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 		StreamSnippets: streamSnippets,
 	}
 
-	return tsConfig
+	return tsConfig, warnings
 }
 
 func generateUnixSocket(transportServerEx *TransportServerEx) string {
@@ -106,7 +106,8 @@ func generateUnixSocket(transportServerEx *TransportServerEx) string {
 	return ""
 }
 
-func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool, isResolverConfigured bool) []version2.StreamUpstream {
+func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool, isResolverConfigured bool) ([]version2.StreamUpstream, Warnings) {
+	warnings := newWarnings()
 	var upstreams []version2.StreamUpstream
 
 	for _, u := range transportServerEx.TransportServer.Spec.Upstreams {
@@ -118,8 +119,8 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 
 		_, isExternalNameSvc := transportServerEx.ExternalNameSvcs[externalNameSvcKey]
 		if isExternalNameSvc && !isResolverConfigured {
-			// Note(!) Shall we implement warnings as it is in VirtualServer?
-			// Message: "Type ExternalName service %v" in upstream %v will be ignored. To use ExternalName services, a resolver must be configured in the ConfigMap"
+			msgFmt := "Type ExternalName service %v in upstream %v will be ignored. To use ExternalName services, a resolver must be configured in the ConfigMap"
+			warnings.AddWarningf(transportServerEx.TransportServer, msgFmt, u.Service, u.Name)
 			endpoints = []string{}
 		}
 
@@ -134,7 +135,7 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 		upstreams = append(upstreams, ups)
 	}
 
-	return upstreams
+	return upstreams, warnings
 }
 
 func generateTransportServerHealthCheck(upstreamName string, generatedUpstreamName string, upstreams []conf_v1alpha1.Upstream) (*version2.StreamHealthCheck, *version2.Match) {
