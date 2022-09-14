@@ -167,6 +167,7 @@ type LoadBalancerController struct {
 	certManagerController         *cm_controller.CmController
 	externalDNSController         *ed_controller.ExtDNSController
 	batchSyncEnabled              bool
+	isIPV6Disabled                bool
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -208,6 +209,7 @@ type NewLoadBalancerControllerInput struct {
 	SnippetsEnabled              bool
 	CertManagerEnabled           bool
 	ExternalDNSEnabled           bool
+	IsIPV6Disabled               bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -238,6 +240,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		internalRoutesEnabled:        input.InternalRoutesEnabled,
 		isPrometheusEnabled:          input.IsPrometheusEnabled,
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
+		isIPV6Disabled:               input.IsIPV6Disabled,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()

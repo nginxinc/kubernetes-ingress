@@ -1,12 +1,13 @@
+{{- /*gotype:github.com/nginxinc/kubernetes-ingress/internal/configs/version2.TransportServerConfig*/ -}} #gitignore
 {{ range $u := .Upstreams }}
 upstream {{ $u.Name }} {
     zone {{ $u.Name }} 256k;
 
-    {{ if $u.LoadBalancingMethod }}
-    {{ $u.LoadBalancingMethod }};
-    {{ end }}
+{{ if $u.LoadBalancingMethod }}
+{{ $u.LoadBalancingMethod }};
+{{ end }}
 
-    {{ range $s := $u.Servers }}
+{{ range $s := $u.Servers }}
     server {{ $s.Address }} max_fails={{ $s.MaxFails }} fail_timeout={{ $s.FailTimeout }} max_conns={{ $s.MaxConnections }};
     {{ end }}
 }
@@ -35,7 +36,7 @@ server {
     set_real_ip_from unix:;
     {{ else }}
     listen {{ $s.Port }}{{ if $s.UDP }} udp{{ end }};
-    listen [::]:{{ $s.Port }}{{ if $s.UDP }} udp{{ end }};
+    {{if not $s.DisableIPV6}}listen [::]:{{ $s.Port }}{{ if $s.UDP }} udp{{ end }};{{end}}
     {{ end }}
 
     status_zone {{ $s.StatusZone }};

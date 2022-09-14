@@ -553,6 +553,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		AccessLogOff:                       config.MainAccessLogOff,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,
 		DefaultServerReturn:                config.DefaultServerReturn,
+		DisableIPV6:                        staticCfgParams.DisableIPV6,
 		ErrorLogLevel:                      config.MainErrorLogLevel,
 		HealthStatus:                       staticCfgParams.HealthStatus,
 		HealthStatusURI:                    staticCfgParams.HealthStatusURI,
