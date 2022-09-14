@@ -100,9 +100,6 @@ controller:
     ## Format: <namespace>/<secret_name>
     secret:
 
-  ## The option to toggle automountServiceAccountToken at the pod level. 
-  automountServiceAccountToken: true 
-
   ## The node selector for pod assignment for the Ingress Controller pods.
   nodeSelector: {}
 
