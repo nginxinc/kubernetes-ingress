@@ -573,29 +573,25 @@ func (cnf *Configurator) deleteTransportServerMetricsLabels(key string) {
 
 // AddOrUpdateTransportServer adds or updates NGINX configuration for the TransportServer resource.
 // It is a responsibility of the caller to check that the TransportServer references an existing listener.
-func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *TransportServerEx) error {
-	err := cnf.addOrUpdateTransportServer(transportServerEx)
+func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *TransportServerEx) (Warnings, error) {
+	warnings, err := cnf.addOrUpdateTransportServer(transportServerEx)
 	if err != nil {
-		return fmt.Errorf("Error adding or updating TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
+		return warnings, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
 	}
-
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return fmt.Errorf("Error reloading NGINX for TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
+		return warnings, fmt.Errorf("error reloading NGINX for TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
 	}
-
-	return nil
+	return warnings, nil
 }
 
-func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *TransportServerEx) error {
+func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *TransportServerEx) (Warnings, error) {
 	name := getFileNameForTransportServer(transportServerEx.TransportServer)
-
-	tsCfg := generateTransportServerConfig(transportServerEx, transportServerEx.ListenerPort, cnf.isPlus)
+	tsCfg, warnings := generateTransportServerConfig(transportServerEx, transportServerEx.ListenerPort, cnf.isPlus, cnf.IsResolverConfigured())
 
 	content, err := cnf.templateExecutorV2.ExecuteTransportServerTemplate(tsCfg)
 	if err != nil {
-		return fmt.Errorf("Error generating TransportServer config %v: %w", name, err)
+		return warnings, fmt.Errorf("error generating TransportServer config %v: %w", name, err)
 	}
-
 	if cnf.isPlus && cnf.isPrometheusEnabled {
 		cnf.updateTransportServerMetricsLabels(transportServerEx, tsCfg.Upstreams)
 	}
@@ -610,11 +606,9 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 			Host:       transportServerEx.TransportServer.Spec.Host,
 			UnixSocket: generateUnixSocket(transportServerEx),
 		}
-
-		return cnf.updateTLSPassthroughHostsConfig()
+		return warnings, cnf.updateTLSPassthroughHostsConfig()
 	}
-
-	return nil
+	return warnings, nil
 }
 
 // GetVirtualServerRoutesForVirtualServer returns the virtualServerRoutes that a virtualServer
@@ -697,16 +691,16 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources) (Warn
 	}
 
 	for _, tsEx := range resources.TransportServerExes {
-		err := cnf.addOrUpdateTransportServer(tsEx)
+		warnings, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
-			return allWarnings, fmt.Errorf("Error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
+			return allWarnings, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
 		}
+		allWarnings.Add(warnings)
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
 		return allWarnings, fmt.Errorf("Error when reloading NGINX when updating resources: %w", err)
 	}
-
 	return allWarnings, nil
 }
 
@@ -939,11 +933,11 @@ func (cnf *Configurator) UpdateEndpointsForTransportServers(transportServerExes 
 	reloadPlus := false
 
 	for _, tsEx := range transportServerExes {
-		err := cnf.addOrUpdateTransportServer(tsEx)
+		// Ignore warnings here as no new warnings should appear when updating Endpoints for TransportServers
+		_, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
-			return fmt.Errorf("Error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
+			return fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
 		}
-
 		if cnf.isPlus {
 			err := cnf.updatePlusEndpointsForTransportServer(tsEx)
 			if err != nil {
@@ -957,11 +951,9 @@ func (cnf *Configurator) UpdateEndpointsForTransportServers(transportServerExes 
 		glog.V(3).Info("No need to reload nginx")
 		return nil
 	}
-
 	if err := cnf.reload(nginx.ReloadForEndpointsUpdate); err != nil {
-		return fmt.Errorf("Error reloading NGINX when updating endpoints: %w", err)
+		return fmt.Errorf("error reloading NGINX when updating endpoints: %w", err)
 	}
-
 	return nil
 }
 
@@ -1069,6 +1061,7 @@ func (cnf *Configurator) updateStreamServersInPlus(upstream string, servers []st
 }
 
 // UpdateConfig updates NGINX configuration parameters.
+//
 //gocyclo:ignore
 func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources ExtendedResources) (Warnings, error) {
 	cnf.cfgParams = cfgParams
@@ -1077,7 +1070,7 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 	if cnf.cfgParams.MainServerSSLDHParamFileContent != nil {
 		fileName, err := cnf.nginxManager.CreateDHParam(*cnf.cfgParams.MainServerSSLDHParamFileContent)
 		if err != nil {
-			return allWarnings, fmt.Errorf("Error when updating dhparams: %w", err)
+			return allWarnings, fmt.Errorf("error when updating dhparams: %w", err)
 		}
 		cfgParams.MainServerSSLDHParam = fileName
 	}
@@ -1085,28 +1078,28 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 	if cfgParams.MainTemplate != nil {
 		err := cnf.templateExecutor.UpdateMainTemplate(cfgParams.MainTemplate)
 		if err != nil {
-			return allWarnings, fmt.Errorf("Error when parsing the main template: %w", err)
+			return allWarnings, fmt.Errorf("error when parsing the main template: %w", err)
 		}
 	}
 
 	if cfgParams.IngressTemplate != nil {
 		err := cnf.templateExecutor.UpdateIngressTemplate(cfgParams.IngressTemplate)
 		if err != nil {
-			return allWarnings, fmt.Errorf("Error when parsing the ingress template: %w", err)
+			return allWarnings, fmt.Errorf("error when parsing the ingress template: %w", err)
 		}
 	}
 
 	if cfgParams.VirtualServerTemplate != nil {
 		err := cnf.templateExecutorV2.UpdateVirtualServerTemplate(cfgParams.VirtualServerTemplate)
 		if err != nil {
-			return allWarnings, fmt.Errorf("Error when parsing the VirtualServer template: %w", err)
+			return allWarnings, fmt.Errorf("error when parsing the VirtualServer template: %w", err)
 		}
 	}
 
 	mainCfg := GenerateNginxMainConfig(cnf.staticCfgParams, cfgParams)
 	mainCfgContent, err := cnf.templateExecutor.ExecuteMainConfigTemplate(mainCfg)
 	if err != nil {
-		return allWarnings, fmt.Errorf("Error when writing main Config")
+		return allWarnings, fmt.Errorf("error when writing main Config")
 	}
 	cnf.nginxManager.CreateMainConfig(mainCfgContent)
 
@@ -1137,15 +1130,24 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 	// (2) addOrUpdateTransportServer doesn't return any warnings that we need to propagate to the caller.
 	// if (1) and (2) is no longer the case, we need to generate the config for TransportServers
 
+	// Since we are adding support for resolving external names we need to generate TS config.
+	for _, tsEx := range resources.TransportServerExes {
+		warnings, err := cnf.addOrUpdateTransportServer(tsEx)
+		if err != nil {
+			return allWarnings, err
+		}
+		allWarnings.Add(warnings)
+	}
+
 	if mainCfg.OpenTracingLoadModule {
 		if err := cnf.addOrUpdateOpenTracingTracerConfig(mainCfg.OpenTracingTracerConfig); err != nil {
-			return allWarnings, fmt.Errorf("Error when updating OpenTracing tracer config: %w", err)
+			return allWarnings, fmt.Errorf("error when updating OpenTracing tracer config: %w", err)
 		}
 	}
 
 	cnf.nginxManager.SetOpenTracing(mainCfg.OpenTracingLoadModule)
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return allWarnings, fmt.Errorf("Error when updating config from ConfigMap: %w", err)
+		return allWarnings, fmt.Errorf("error when updating config from ConfigMap: %w", err)
 	}
 
 	return allWarnings, nil
@@ -1154,7 +1156,7 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 // UpdateTransportServers updates TransportServers.
 func (cnf *Configurator) UpdateTransportServers(updatedTSExes []*TransportServerEx, deletedKeys []string) error {
 	for _, tsEx := range updatedTSExes {
-		err := cnf.addOrUpdateTransportServer(tsEx)
+		_, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
 			return fmt.Errorf("Error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
 		}

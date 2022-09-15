@@ -1219,8 +1219,8 @@ func (lbc *LoadBalancerController) processChanges(changes []ResourceChange) {
 			case *TransportServerConfiguration:
 				tsEx := lbc.createTransportServerEx(impl.TransportServer, impl.ListenerPort)
 
-				addOrUpdateErr := lbc.configurator.AddOrUpdateTransportServer(tsEx)
-				lbc.updateTransportServerStatusAndEvents(impl, addOrUpdateErr)
+				warnings, addOrUpdateErr := lbc.configurator.AddOrUpdateTransportServer(tsEx)
+				lbc.updateTransportServerStatusAndEvents(impl, warnings, addOrUpdateErr)
 			}
 		} else if c.Op == Delete {
 			switch impl := c.Resource.(type) {
@@ -1631,7 +1631,7 @@ func (lbc *LoadBalancerController) updateResourcesStatusAndEvents(resources []Re
 				lbc.updateRegularIngressStatusAndEvents(impl, warnings, operationErr)
 			}
 		case *TransportServerConfiguration:
-			lbc.updateTransportServerStatusAndEvents(impl, operationErr)
+			lbc.updateTransportServerStatusAndEvents(impl, warnings, operationErr)
 		}
 	}
 }
@@ -1755,7 +1755,7 @@ func (lbc *LoadBalancerController) updateRegularIngressStatusAndEvents(ingConfig
 	}
 }
 
-func (lbc *LoadBalancerController) updateTransportServerStatusAndEvents(tsConfig *TransportServerConfiguration, operationErr error) {
+func (lbc *LoadBalancerController) updateTransportServerStatusAndEvents(tsConfig *TransportServerConfiguration, warnings configs.Warnings, operationErr error) {
 	eventTitle := "AddedOrUpdated"
 	eventType := api_v1.EventTypeNormal
 	eventWarningMessage := ""
@@ -1765,6 +1765,13 @@ func (lbc *LoadBalancerController) updateTransportServerStatusAndEvents(tsConfig
 		eventType = api_v1.EventTypeWarning
 		eventTitle = "AddedOrUpdatedWithWarning"
 		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(tsConfig.Warnings))
+		state = conf_v1.StateWarning
+	}
+
+	if messages, ok := warnings[tsConfig.TransportServer]; ok {
+		eventType = api_v1.EventTypeWarning
+		eventTitle = "AddedOrUpdatedWithWarning"
+		eventWarningMessage = fmt.Sprintf("with warning(s): %s", formatWarningMessages(messages))
 		state = conf_v1.StateWarning
 	}
 
@@ -3161,16 +3168,16 @@ func isMatchingResourceRef(ownerNs, resRef, key string) bool {
 
 func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1alpha1.TransportServer, listenerPort int) *configs.TransportServerEx {
 	endpoints := make(map[string][]string)
+	externalNameSvcs := make(map[string]bool)
 	podsByIP := make(map[string]string)
 
 	for _, u := range transportServer.Spec.Upstreams {
 		podEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port))
+		if err == nil && external && lbc.isNginxPlus {
+			externalNameSvcs[configs.GenerateExternalNameSvcKey(transportServer.Namespace, u.Service)] = true
+		}
 		if err != nil {
 			glog.Warningf("Error getting Endpoints for Upstream %v: %v", u.Name, err)
-		}
-
-		if external {
-			glog.Warningf("ExternalName services are not yet supported in TransportServer upstreams")
 		}
 
 		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
@@ -3187,10 +3194,11 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 	}
 
 	return &configs.TransportServerEx{
-		ListenerPort:    listenerPort,
-		TransportServer: transportServer,
-		Endpoints:       endpoints,
-		PodsByIP:        podsByIP,
+		ListenerPort:     listenerPort,
+		TransportServer:  transportServer,
+		Endpoints:        endpoints,
+		PodsByIP:         podsByIP,
+		ExternalNameSvcs: externalNameSvcs,
 	}
 }
 
