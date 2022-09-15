@@ -18,6 +18,7 @@ spec:
        #prometheus.io/scheme: http
     spec:
       serviceAccountName: nginx-ingress
+      automountServiceAccountToken: true
       containers:
       - image: nginx/nginx-ingress:2.3.0
         imagePullPolicy: IfNotPresent
