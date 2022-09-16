@@ -3,12 +3,12 @@ module github.com/nginxinc/kubernetes-ingress
 go 1.18
 
 require (
-	github.com/aws/aws-sdk-go-v2/config v1.15.13
-	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.13.8
+	github.com/aws/aws-sdk-go-v2/config v1.15.17
+	github.com/aws/aws-sdk-go-v2/service/marketplacemetering v1.13.18
 	github.com/cert-manager/cert-manager v1.8.2
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang/glog v1.0.0
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/kr/pretty v0.3.0
 	github.com/nginxinc/nginx-plus-go-client v0.9.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.10.0
@@ -17,10 +17,10 @@ require (
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	google.golang.org/grpc v1.47.0
-	k8s.io/api v0.23.6
-	k8s.io/apimachinery v0.23.6
-	k8s.io/client-go v0.23.6
-	k8s.io/code-generator v0.23.6
+	k8s.io/api v0.23.11
+	k8s.io/apimachinery v0.23.11
+	k8s.io/client-go v0.23.11
+	k8s.io/code-generator v0.23.11
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 	sigs.k8s.io/controller-tools v0.8.0
 )
@@ -29,16 +29,16 @@ require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.16.7 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.12.8 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.14 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.11.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.16.9 // indirect
-	github.com/aws/smithy-go v1.12.0 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.16.15 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.12.12 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.11 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.22 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.16 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.3.18 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.9.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.11.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.16.12 // indirect
+	github.com/aws/smithy-go v1.13.3 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
@@ -103,7 +103,7 @@ require (
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
+	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
@@ -128,4 +128,9 @@ require (
 	sigs.k8s.io/json v0.0.0-20211020170558-c049b76a60c6 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.1 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
+)
+
+replace (
+	golang.org/x/net => golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
+	golang.org/x/sys => golang.org/x/sys v0.0.0-20220412211240-33da011f77ad
 )
