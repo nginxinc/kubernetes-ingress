@@ -10,6 +10,11 @@ docs: "DOCS-616"
 
 16 Sep 2022
 
+CHANGES:
+* [3048](https://github.com/nginxinc/kubernetes-ingress/pull/3048) Bump NGINX to 1.23.1
+* [3049](https://github.com/nginxinc/kubernetes-ingress/pull/3049) Update Go dependencies.
+* [3031](https://github.com/nginxinc/kubernetes-ingress/pull/3031) Add automountServiceAccountToken to helm chart
+
 HELM CHART:
 * The version of the Helm chart is now 0.14.1.
 
