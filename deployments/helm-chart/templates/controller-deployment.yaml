@@ -70,6 +70,7 @@ spec:
       priorityClassName: {{ .Values.controller.priorityClassName }}
 {{- end }}
       serviceAccountName: {{ include "nginx-ingress.serviceAccountName" . }}
+      automountServiceAccountToken: true
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
       containers:
