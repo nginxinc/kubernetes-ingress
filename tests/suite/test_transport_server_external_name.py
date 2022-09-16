@@ -71,7 +71,8 @@ def ts_externalname_setup(
     return ExternalNameSetup(ic_pod_name, external_svc, external_host)
 
 
-@pytest.mark.test
+@pytest.mark.ts
+@pytest.mark.skip_for_nginx_oss
 @pytest.mark.parametrize(
     "crd_ingress_controller, transport_server_setup",
     [
