@@ -1125,12 +1125,6 @@ func (cnf *Configurator) UpdateConfig(cfgParams *ConfigParams, resources Extende
 		allWarnings.Add(warnings)
 	}
 
-	// we don't need to regenerate config for TransportServers, because:
-	// (1) Changes to the ConfigMap don't affect TransportServer configs directly
-	// (2) addOrUpdateTransportServer doesn't return any warnings that we need to propagate to the caller.
-	// if (1) and (2) is no longer the case, we need to generate the config for TransportServers
-
-	// Since we are adding support for resolving external names we need to generate TS config.
 	for _, tsEx := range resources.TransportServerExes {
 		warnings, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
