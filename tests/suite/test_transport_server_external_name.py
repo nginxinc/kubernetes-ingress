@@ -113,7 +113,7 @@ class TestTransportServerStatus:
             kube_apis.v1, ts_file_path, ts_externalname_setup.ic_pod_name, ingress_controller_prerequisites.namespace
         )
 
-        assert resolver_count == 2 # one for http and other for stream context
+        assert resolver_count == 2  # one for http and other for stream context
         assert (
             f"server {ts_externalname_setup.external_host}:5353 max_fails=1 fail_timeout=10s max_conns=0 resolve;"
             in ts_conf
