@@ -1,0 +1,14 @@
+name: "Pull Request Labeler"
+on:
+  - pull_request_target
+
+jobs:
+  triage:
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+    - uses: joshdales/labeler@0861fa5accbc36878f85f40b98a9f40b15fe0429 # if https://github.com/actions/labeler/pull/203 is merged, use the official action actions/labeler
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
