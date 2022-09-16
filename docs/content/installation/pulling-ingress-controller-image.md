@@ -45,7 +45,7 @@ Before you can pull the image, make sure that the following software is installe
 
    For NGINX Plus Ingress Controller with App Protect DoS, pull from `private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress`. For example:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:2.3.0
+   $ docker pull private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:2.3.1
    ```
 
    To list the available image tags for the repositories, you can also use the Docker registry API. For example:
@@ -54,9 +54,9 @@ Before you can pull the image, make sure that the following software is installe
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "2.3.0-alpine",
-        "2.3.0-ubi",
-        "2.3.0"
+        "2.3.1-alpine",
+        "2.3.1-ubi",
+        "2.3.1"
     ]
     }
 
@@ -73,8 +73,8 @@ Before you can pull the image, make sure that the following software is installe
    {
     "name": "nginx-ic-dos/nginx-plus-ingress",
     "tags": [
-        "2.3.0-ubi",
-        "2.3.0"
+        "2.3.1-ubi",
+        "2.3.1"
     ]
     }
    ```
@@ -97,6 +97,6 @@ Before you can pull the image, make sure that the following software is installe
 
    or for NGINX App Protect DoS enabled image
    ```
-   $ docker tag private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:2.3.0 <my-docker-registry>/nginx-ic-dos/nginx-plus-ingress:2.3.0
-   $ docker push <my-docker-registry>/nginx-ic-dos/nginx-plus-ingress:2.3.0
+   $ docker tag private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:2.3.1 <my-docker-registry>/nginx-ic-dos/nginx-plus-ingress:2.3.1
+   $ docker push <my-docker-registry>/nginx-ic-dos/nginx-plus-ingress:2.3.1
    ```

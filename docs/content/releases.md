@@ -8,7 +8,7 @@ docs: "DOCS-616"
 ---
 ## NGINX Ingress Controller 2.3.1
 
-15 Sep 2022
+16 Sep 2022
 
 HELM CHART:
 * The version of the Helm chart is now 0.14.1.
