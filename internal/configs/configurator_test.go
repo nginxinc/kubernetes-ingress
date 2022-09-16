@@ -44,7 +44,7 @@ func createTestConfigurator(t *testing.T) *Configurator {
 	manager := nginx.NewFakeManager("/etc/nginx")
 	cnf, err := NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(false), templateExecutor, templateExecutorV2, false, false, nil, false, nil, false), nil
 	if err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	cnf.isReloadsEnabled = true
 	return cnf
@@ -65,7 +65,7 @@ func createTestConfiguratorInvalidIngressTemplate(t *testing.T) *Configurator {
 	manager := nginx.NewFakeManager("/etc/nginx")
 	cnf, err := NewConfigurator(manager, createTestStaticConfigParams(), NewDefaultConfigParams(false), templateExecutor, &version2.TemplateExecutor{}, false, false, nil, false, nil, false), nil
 	if err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	cnf.isReloadsEnabled = true
 	return cnf
