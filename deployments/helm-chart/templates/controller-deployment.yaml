@@ -77,6 +77,10 @@ spec:
       - image: {{ include "nginx-ingress.image" . }}
         name: {{ include "nginx-ingress.name" . }}
         imagePullPolicy: "{{ .Values.controller.image.pullPolicy }}"
+{{- if .Values.controller.lifecycle }}
+        lifecycle:
+{{ toYaml .Values.controller.lifecycle | indent 10 }}
+{{- end }}
         ports:
         - name: http
           containerPort: 80

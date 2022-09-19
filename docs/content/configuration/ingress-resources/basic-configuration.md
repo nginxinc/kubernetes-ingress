@@ -105,6 +105,7 @@ Starting from Kubernetes 1.18, you can use the following new features:
 The NGINX Ingress Controller imposes the following restrictions on Ingress resources:
 * When defining an Ingress resource, the `host` field is required.
 * The `host` value needs to be unique among all Ingress and VirtualServer resources unless the Ingress resource is a [mergeable minion](/nginx-ingress-controller/configuration/ingress-resources/cross-namespace-configuration/). See also [Handling Host and Listener Collisions](/nginx-ingress-controller/configuration/handling-host-and-listener-collisions).
+* The `path` field in `spec.rules[].http.paths[]` is required.
 
 ## Advanced Configuration
 
