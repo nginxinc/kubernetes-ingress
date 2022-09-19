@@ -2838,6 +2838,54 @@ func TestValidateIngressSpec(t *testing.T) {
 							HTTP: &networking.HTTPIngressRuleValue{
 								Paths: []networking.HTTPIngressPath{
 									{
+										Path: `~/regex/[0-9a-z]{4}[0-9]+`,
+										Backend: networking.IngressBackend{
+											Service: &networking.IngressServiceBackend{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrors: nil,
+			msg:            "valid regex input",
+		},
+		{
+			spec: &networking.IngressSpec{
+				Rules: []networking.IngressRule{
+					{
+						Host: "foo.example.com",
+						IngressRuleValue: networking.IngressRuleValue{
+							HTTP: &networking.HTTPIngressRuleValue{
+								Paths: []networking.HTTPIngressPath{
+									{
+										Path: `/regex/[0-9a-z]{4}[0-9]+`,
+										Backend: networking.IngressBackend{
+											Service: &networking.IngressServiceBackend{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErrors: []field.ErrorType{
+				field.ErrorTypeInvalid,
+			},
+			msg: "test regex path without preceding '~*' modifier",
+		},
+		{
+			spec: &networking.IngressSpec{
+				Rules: []networking.IngressRule{
+					{
+						Host: "foo.example.com",
+						IngressRuleValue: networking.IngressRuleValue{
+							HTTP: &networking.HTTPIngressRuleValue{
+								Paths: []networking.HTTPIngressPath{
+									{
 										Path: `/tea\{custom_value}`,
 										Backend: networking.IngressBackend{
 											Service: &networking.IngressServiceBackend{},
@@ -3332,6 +3380,135 @@ func TestGetSpecServices(t *testing.T) {
 		result := getSpecServices(test.spec)
 		if !reflect.DeepEqual(result, test.expected) {
 			t.Errorf("getSpecServices() returned %v but expected %v for the case of %s", result, test.expected, test.msg)
+		}
+	}
+}
+
+func TestValidateRegexPath(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		regexPath string
+		msg       string
+	}{
+		{
+			regexPath: "~ ^/foo.*\\.jpg",
+			msg:       "case sensitive regexp",
+		},
+		{
+			regexPath: "~* ^/Bar.*\\.jpg",
+			msg:       "case insensitive regexp",
+		},
+		{
+			regexPath: `~ ^/f\"oo.*\\.jpg`,
+			msg:       "regexp with escaped double quotes",
+		},
+		{
+			regexPath: "~ [0-9a-z]{4}[0-9]+",
+			msg:       "regexp with brackets",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateRegexPath(test.regexPath, field.NewPath("path"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateRegexPath(%v) returned errors for valid input for the case of %v", test.regexPath, test.msg)
+		}
+	}
+}
+
+func TestValidateRegexPathFails(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		regexPath string
+		msg       string
+	}{
+		{
+			regexPath: "~ [{",
+			msg:       "invalid regexp",
+		},
+		{
+			regexPath: `~ /foo"`,
+			msg:       "unescaped double quotes",
+		},
+		{
+			regexPath: `~"`,
+			msg:       "empty regex",
+		},
+		{
+			regexPath: `~ /foo\`,
+			msg:       "ending in backslash",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateRegexPath(test.regexPath, field.NewPath("path"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateRegexPath(%v) returned no errors for invalid input for the case of %v", test.regexPath, test.msg)
+		}
+	}
+}
+
+func TestValidateRoutePath(t *testing.T) {
+	t.Parallel()
+	validPaths := []string{
+		"/",
+		"~ /^foo.*\\.jpg",
+		"~* /^Bar.*\\.jpg",
+		"=/exact/match",
+	}
+
+	for _, path := range validPaths {
+		allErrs := validateRoutePath(path, field.NewPath("path"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateRoutePath(%v) returned errors for valid input", path)
+		}
+	}
+
+	invalidPaths := []string{
+		"",
+		"invalid",
+		// regex without preceding "~*" modifier
+		"^/foo.*\\.jpg",
+	}
+
+	for _, path := range invalidPaths {
+		allErrs := validateRoutePath(path, field.NewPath("path"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateRoutePath(%v) returned no errors for invalid input", path)
+		}
+	}
+}
+
+func TestValidatePath(t *testing.T) {
+	t.Parallel()
+	validPaths := []string{
+		"/",
+		"/path",
+		"/a-1/_A/",
+	}
+
+	for _, path := range validPaths {
+		allErrs := validatePath(path, field.NewPath("path"))
+		if len(allErrs) > 0 {
+			t.Errorf("validatePath(%q) returned errors %v for valid input", path, allErrs)
+		}
+	}
+
+	invalidPaths := []string{
+		"",
+		" /",
+		"/ ",
+		"/{",
+		"/}",
+		"/abc;",
+		`/path\`,
+		`/path\n`,
+	}
+
+	for _, path := range invalidPaths {
+		allErrs := validatePath(path, field.NewPath("path"))
+		if len(allErrs) == 0 {
+			t.Errorf("validatePath(%q) returned no errors for invalid input", path)
 		}
 	}
 }

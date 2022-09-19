@@ -72,18 +72,15 @@ const (
 const (
 	commaDelimiter     = ","
 	annotationValueFmt = `([^"$\\]|\\[^$])*`
-	pathFmt            = `/[^\s{};\\]*`
 	jwtTokenValueFmt   = "\\$" + annotationValueFmt
 )
 
 const (
 	annotationValueFmtErrMsg = `a valid annotation value must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
-	pathErrMsg               = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
 	jwtTokenValueFmtErrMsg   = `a valid annotation value must start with '$', have all '"' escaped, and must not contain any '$' or end with an unescaped '\'`
 )
 
 var (
-	pathRegexp                        = regexp.MustCompile("^" + pathFmt + "$")
 	validAnnotationValueRegex         = regexp.MustCompile("^" + annotationValueFmt + "$")
 	validJWTTokenAnnotationValueRegex = regexp.MustCompile("^" + jwtTokenValueFmt + "$")
 )
@@ -857,7 +854,7 @@ func validateIngressSpec(spec *networking.IngressSpec, fieldPath *field.Path) fi
 		for _, path := range r.HTTP.Paths {
 			idxPath := idxRule.Child("http").Child("path").Index(i)
 
-			allErrs = append(allErrs, validatePath(path.Path, fieldPath)...)
+			allErrs = append(allErrs, validateRoutePath(path.Path, idxPath.Child("path"))...)
 			allErrs = append(allErrs, validateBackend(&path.Backend, idxPath.Child("backend"))...)
 		}
 	}
@@ -875,6 +872,50 @@ func validateBackend(backend *networking.IngressBackend, fieldPath *field.Path) 
 	return allErrs
 }
 
+// We support prefix-based NGINX locations, positive case-sensitive/insensitive regular expressions matches and exact matches.
+// More info http://nginx.org/en/docs/http/ngx_http_core_module.html#location
+// follows the same logic in https://github.com/nginxinc/kubernetes-ingress/blob/main/pkg/apis/configuration/validation/virtualserver.go
+func validateRoutePath(path string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if path == "" {
+		return append(allErrs, field.Required(fieldPath, ""))
+	}
+
+	if strings.HasPrefix(path, "~") {
+		allErrs = append(allErrs, validateRegexPath(path, fieldPath)...)
+	} else if strings.HasPrefix(path, "/") {
+		allErrs = append(allErrs, validatePath(path, fieldPath)...)
+	} else if strings.HasPrefix(path, "=") {
+		allErrs = append(allErrs, validatePath(strings.TrimPrefix(path, "="), fieldPath)...)
+	} else {
+		allErrs = append(allErrs, field.Invalid(fieldPath, path, "must start with /, ~ or ="))
+	}
+
+	return allErrs
+}
+
+func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if _, err := regexp.Compile(path); err != nil {
+		return append(allErrs, field.Invalid(fieldPath, path, fmt.Sprintf("must be a valid regular expression: %v", err)))
+	}
+
+	if err := ValidateEscapedString(path, "*.jpg", "^/images/image_*.png$"); err != nil {
+		return append(allErrs, field.Invalid(fieldPath, path, err.Error()))
+	}
+
+	return allErrs
+}
+
+const (
+	pathFmt    = `/[^\s{};\\]*`
+	pathErrMsg = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
+)
+
+var pathRegexp = regexp.MustCompile("^" + pathFmt + "$")
+
 func validatePath(path string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -888,6 +929,22 @@ func validatePath(path string, fieldPath *field.Path) field.ErrorList {
 	}
 
 	return allErrs
+}
+
+const (
+	escapedStringsFmt    = `([^"\\]|\\.)*`
+	escapedStringsErrMsg = `must have all '"' (double quotes) escaped and must not end with an unescaped '\' (backslash)`
+)
+
+var escapedStringsFmtRegexp = regexp.MustCompile("^" + escapedStringsFmt + "$")
+
+// ValidateEscapedString validates an escaped string.
+func ValidateEscapedString(body string, examples ...string) error {
+	if !escapedStringsFmtRegexp.MatchString(body) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, examples...)
+		return fmt.Errorf(msg)
+	}
+	return nil
 }
 
 func validateMasterSpec(spec *networking.IngressSpec, fieldPath *field.Path) field.ErrorList {
