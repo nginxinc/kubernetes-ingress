@@ -8,3 +8,4 @@ kind: ServiceAccount
 metadata:
   name: nginx-ingress 
   namespace: nginx-ingress
+#automountServiceAccountToken: false
