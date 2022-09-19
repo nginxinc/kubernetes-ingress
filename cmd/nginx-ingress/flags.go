@@ -24,9 +24,6 @@ var (
 	commitTime = "unknown"
 	dirtyBuild = true
 
-	disableIPV6 = flag.Bool("disable-ipv6", false,
-		`Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack`)
-
 	healthStatus = flag.Bool("health-status", false,
 		`Add a location based on the value of health-status-uri to the default server. The location responds with the 200 status code for any request.
 	Useful for external health-checking of the Ingress Controller`)
@@ -182,6 +179,9 @@ var (
 
 	includeYearInLogs = flag.Bool("include-year", false,
 		"Option to include the year in the log header")
+
+	disableIPV6 = flag.Bool("disable-ipv6", false,
+		`Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack`)
 
 	startupCheckFn func() error
 )
