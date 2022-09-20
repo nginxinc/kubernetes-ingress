@@ -123,10 +123,89 @@ jobs:
         with:
           files: ./coverage.txt
 
+  helm-tests:
+    name: Helm Tests
+    runs-on: ubuntu-20.04
+    needs: [binary, unit-tests, checks]
+    strategy:
+      matrix:
+        include:
+         - image: debian
+           type: oss
+         - image: debian-plus
+           type: plus
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Fetch Cached Artifacts
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/dist
+          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
+      - name: Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build Docker Image ${{ matrix.image }}
+        uses: docker/build-push-action@v3
+        with:
+          file: build/Dockerfile
+          context: '.'
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max
+          target: goreleaser
+          tags: ${{ matrix.type }}:${{ github.sha }}
+          pull: true
+          load: true
+          build-args: |
+            BUILD_OS=${{ matrix.image }}
+            IC_VERSION=CI
+          secrets: |
+            ${{ contains(matrix.type, 'plus') && '"nginx-repo.crt=secrets.NGINX_CRT"' || '' }}
+            ${{ contains(matrix.type, 'plus') && '"nginx-repo.key=secrets.NGINX_KEY"' || '' }}
+      - name: Deploy Kubernetes
+        id: k8s
+        run: |
+          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
+          kind load docker-image ${{ matrix.type }}:${{ github.sha }} --name ${{ github.run_id }}
+      - name: Install Chart
+        run: >
+          helm install
+          ${{ matrix.type }}
+          .
+          --set controller.image.repository=${{ matrix.type }}
+          --set controller.image.tag=${{ github.sha }}
+          --set controller.service.type=NodePort
+          --set controller.nginxplus=${{ contains(matrix.type, 'plus') && 'true' || 'false' }}
+          --wait
+        working-directory: ${{ github.workspace }}/deployments/helm-chart
+      - name: Expose Test Ingresses
+        run: |
+          kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8080:80 &
+          kubectl port-forward service/${{ matrix.type }}-nginx-ingress 8443:443 &
+      - name: Test HTTP
+        run: |
+          counter=0
+          max_attempts=5
+          until [ $(curl --write-out %{http_code} -s --output /dev/null http://localhost:8080) -eq 404 ]; do
+            if [ ${counter} -eq ${max_attempts} ]; then
+              exit 1
+            fi
+            printf '.'; counter=$(($counter+1)); sleep 5;
+          done
+      - name: Test HTTPS
+        run: |
+          counter=0
+          max_attempts=5
+          until [ $(curl --write-out %{http_code} -ks --output /dev/null https://localhost:8443) -eq 404 ]; do
+            if [ ${counter} -eq ${max_attempts} ]; then
+              exit 1
+            fi
+            printf '.'; counter=$(($counter+1)); sleep 5;
+          done
+
   setup-matrix:
     name: Setup Matrix for Smoke Tests
     runs-on: ubuntu-20.04
-    needs: [binary, unit-tests, checks]
+    needs: [checks, helm-tests]
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -176,64 +255,6 @@ jobs:
           name: ${{ steps.smoke-tests.outputs.test-results-name }}
           path: ${{ github.workspace }}/tests/${{ steps.smoke-tests.outputs.test-results-name }}.html
         if: always()
-
-  helm-tests:
-    name: Helm Tests
-    runs-on: ubuntu-20.04
-    needs: [binary, unit-tests, checks]
-    env:
-      NGINX_HTTP_PORT: 8080
-      NGINX_HTTPS_PORT: 8443
-      HELM_TEST_RETRIES: 5
-      HELM_HTTP_POSTFIX: s
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-      - name: Fetch Cached Artifacts
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/dist
-          key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
-      - name: Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Build Docker Image nginx-ingress
-        uses: docker/build-push-action@v3
-        with:
-          file: build/Dockerfile
-          context: '.'
-          cache-from: type=gha,scope=debian
-          cache-to: type=gha,scope=debian,mode=max
-          target: goreleaser
-          tags: nginx-ingress:${{ github.sha }}
-          pull: true
-          load: true
-          build-args: BUILD_OS=debian
-      - name: Deploy Kubernetes
-        id: k8s
-        run: |
-          kind create cluster --name ${{ github.run_id }} --image=kindest/node:v${{ needs.checks.outputs.k8s_latest }} --wait 75s
-          kind load docker-image nginx-ingress:${{ github.sha }} --name ${{ github.run_id }}
-      - name: Install Chart
-        run: >
-          helm install
-          oss
-          .
-          --set controller.image.repository=nginx-ingress
-          --set controller.image.tag=${{ github.sha }}
-          --set controller.service.type=NodePort
-          --set controller.nginxplus=false
-          --wait
-        working-directory: ${{ github.workspace }}/deployments/helm-chart
-      - name: Expose Test Ingresses
-        run: |
-          kubectl port-forward service/oss-nginx-ingress ${{ env.NGINX_HTTP_PORT }}:80 &
-          kubectl port-forward service/oss-nginx-ingress ${{ env.NGINX_HTTPS_PORT }}:443 &
-      - name: Test HTTP
-        run: |
-          . tests/ci-files/helm-http-test.sh ${{ env.HELM_TEST_RETRIES }} ${{ env.NGINX_HTTP_PORT }}
-      - name: Test HTTPS
-        run: |
-          . tests/ci-files/helm-http-test.sh ${{ env.HELM_TEST_RETRIES }} ${{ env.NGINX_HTTPS_PORT }} ${{ env.HELM_HTTP_POSTFIX }}
 
   build-binaries:
     name: Build Binaries
