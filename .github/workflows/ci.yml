@@ -159,8 +159,8 @@ jobs:
             BUILD_OS=${{ matrix.image }}
             IC_VERSION=CI
           secrets: |
-            ${{ contains(matrix.type, 'plus') && '"nginx-repo.crt=secrets.NGINX_CRT"' || '' }}
-            ${{ contains(matrix.type, 'plus') && '"nginx-repo.key=secrets.NGINX_KEY"' || '' }}
+            ${{ contains(matrix.type, 'plus') && format('"nginx-repo.crt={0}"', secrets.NGINX_CRT) || '' }}
+            ${{ contains(matrix.type, 'plus') && format('"nginx-repo.key={0}"', secrets.NGINX_KEY) || '' }}
       - name: Deploy Kubernetes
         id: k8s
         run: |
