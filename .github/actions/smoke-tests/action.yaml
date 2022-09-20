@@ -64,8 +64,8 @@ runs:
           IC_VERSION=CI
           ${{ contains(inputs.image, 'nap') && 'NAP_MODULES=dos' || '' }}
         secrets: |
-          ${{ contains(inputs.image, 'plus') && '"nginx-repo.crt=${{ inputs.nginx-crt }}"' || '' }}
-          ${{ contains(inputs.image, 'plus') && '"nginx-repo.key=${{ inputs.nginx-key }}"' || '' }}
+          ${{ contains(inputs.image, 'plus') && format('"nginx-repo.crt={0}"', inputs.nginx-crt) || '' }}
+          ${{ contains(inputs.image, 'plus') && format('"nginx-repo.key={0}"', inputs.nginx-key) || '' }}
 
     - name: Build Test-Runner Container
       uses: docker/build-push-action@v2
