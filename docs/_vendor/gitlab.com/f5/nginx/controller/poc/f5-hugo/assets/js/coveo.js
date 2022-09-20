@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
-  Coveo.SearchEndpoint.configureCloudV2Endpoint("", 'xx79df1e1f-11e4-4da5-8ea8-2ed7e24cca6a');
+  Coveo.SearchEndpoint.configureCloudV2Endpoint("", 'xx79df1e1f-11e4-4da5-8ea8-2ed7e24cca6a');  // Prod API key
+  // Coveo.SearchEndpoint.configureCloudV2Endpoint("", 'xxe1e9046f-585c-4518-a14a-6b986a5efffd'); // test API key
   const root = document.getElementById("search");
   const searchBoxRoot = document.getElementById("searchbox");
   Coveo.initSearchbox(searchBoxRoot, "/search.html");
@@ -23,6 +24,16 @@ document.addEventListener('DOMContentLoaded', function () {
       Coveo.$('.CoveoResultLink').removeAttr('title');         
     }
   });
-  Coveo.init(root);
+  Coveo.init(root, {
+    f5_product_module: {
+      dependsOn: "@f5_product",
+      dependsOnCondition: (parentFacet) => {
+        const id = parentFacet.options.id;
+        const value = "NGINX Management Suite";
+        const selected = parentFacet.queryStateModel.get(`f:${id}`)
+        return selected.includes(value);
+      }
+    }
+  });
 })
 
