@@ -1,1 +1,1 @@
-# gitlab.com/f5/nginx/controller/poc/f5-hugo v0.22.2
+# gitlab.com/f5/nginx/controller/poc/f5-hugo v0.23.3

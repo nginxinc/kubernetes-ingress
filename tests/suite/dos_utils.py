@@ -1,3 +1,6 @@
+import os
+import subprocess
+
 from kubernetes.client import CoreV1Api
 from kubernetes.stream import stream
 from suite.resources_utils import get_file_contents, wait_before_test
@@ -74,3 +77,31 @@ def get_admd_s_contents(v1: CoreV1Api, pod_name, pod_namespace, time):
     )
     admd_contents = str(resp)
     return admd_contents
+
+
+def clean_good_bad_clients():
+    command = "exec ps -aux | grep good_clients_xff.sh | awk '{print $2}' | xargs kill -9"
+
+    subprocess.Popen(
+        [command],
+        preexec_fn=os.setsid,
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    command = "exec ps -aux | grep bad_clients_xff.sh | awk '{print $2}' | xargs kill -9"
+    subprocess.Popen(
+        [command],
+        preexec_fn=os.setsid,
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def print_admd_log(log):
+    matches = ["ADMD", "DAEMONLESS"]
+    for line in log.splitlines():
+        if any(x in line for x in matches):
+            print(line)

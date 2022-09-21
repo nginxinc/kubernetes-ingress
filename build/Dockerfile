@@ -16,8 +16,6 @@ FROM nginx:1.23.1 AS debian
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
-	# temp fix for CVE-2022-2509, CVE-2021-46828
-	&& apt-get install -y libgnutls30 libtirpc3 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
@@ -30,8 +28,8 @@ FROM nginx:1.23.1-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
-	# temp fix for CVE-2022-3209
-	&& apk upgrade --no-cache libxml2 \
+	# temp fix for CVE-2022-3209 and CVE-2022-35252
+	&& apk upgrade --no-cache libxml2 curl libcurl \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
 	&& ldconfig /usr/local/lib/
@@ -63,8 +61,6 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	--mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y ca-certificates gnupg curl apt-transport-https libcap2-bin \
-	# temp fix for CVE-2022-2509, CVE-2021-46828
-	&& apt-get install -y libgnutls30 libtirpc3 \
 	&& curl -fsSL https://cs.nginx.com/static/keys/nginx_signing.key | gpg --dearmor > /etc/apt/trusted.gpg.d/nginx_signing.gpg \
 	&& curl -fsSL -o /etc/apt/apt.conf.d/90pkgs-nginx https://cs.nginx.com/static/files/90pkgs-nginx \
 	&& DEBIAN_VERSION=$(awk -F '=' '/^VERSION_CODENAME=/ {print $2}' /etc/os-release) \
@@ -93,6 +89,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	&& printf "%s\n" "deb https://pkgs.nginx.com/app-protect/${NGINX_PLUS_VERSION}/debian ${DEBIAN_VERSION} nginx-plus" \
 	"deb https://pkgs.nginx.com/app-protect-security-updates/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect.list \
 	&& apt-get update \
+	# temp fix for CVE-2022-37434 and DLA-3112-1
+	&& apt-get install zlib1g libbz2-1.0 \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect app-protect-attack-signatures app-protect-threat-campaigns \
 	&& apt-get purge --auto-remove -y curl; \
 	fi \
@@ -126,8 +124,6 @@ LABEL name="NGINX Ingress Controller" \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 RUN dnf --nodocs install -y shadow-utils ca-certificates \
-	# temp fix for CVE-2022-1271, CVE-2022-22576, CVE-2022-25313, CVE-2022-22576, CVE-2021-40528, CVE-2021-3634, CVE-2022-29824, CVE-2021-4189, CVE-2021-4189, CVE-2022-29824, CVE-2022-1621
-	&& dnf --nodocs upgrade -y xz-libs curl expat libcurl libgcrypt libssh libssh-config libxml2 platform-python python3-libs python3-libxml2 vim-minimal \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
