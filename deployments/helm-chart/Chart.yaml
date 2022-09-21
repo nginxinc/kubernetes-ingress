@@ -1,5 +1,5 @@
 name: nginx-ingress
-version: 0.14.1
+version: 0.14.0
 appVersion: 2.3.0
 apiVersion: v1
 kubeVersion: ">= 1.19.0-0"
