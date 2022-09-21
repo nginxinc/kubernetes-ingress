@@ -2,13 +2,13 @@
 upstream {{ $u.Name }} {
     zone {{ $u.Name }} 256k;
 
-{{ if $u.LoadBalancingMethod }}
-{{ $u.LoadBalancingMethod }};
-{{ end }}
+    {{ if $u.LoadBalancingMethod }}
+    {{ $u.LoadBalancingMethod }};
+    {{ end }}
 
-{{ range $s := $u.Servers }}
+    {{ range $s := $u.Servers }}
     server {{ $s.Address }} max_fails={{ $s.MaxFails }} fail_timeout={{ $s.FailTimeout }} max_conns={{ $s.MaxConnections }};
-{{ end }}
+    {{ end }}
 }
 {{ end }}
 
