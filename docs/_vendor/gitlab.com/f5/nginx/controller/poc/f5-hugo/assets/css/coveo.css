@@ -236,9 +236,6 @@
   width: 15px
 }
 
-.coveo-facet-value[data-value="No Product"] {
-  display: none
-}
 .coveo-modal-backdrop{
 z-index: 1072
 }
