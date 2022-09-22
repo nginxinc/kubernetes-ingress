@@ -28,7 +28,7 @@ This step is required if you're installing the chart using its sources. Addition
 
 1. Clone the Ingress Controller repo:
     ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.3.0
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.3.1
     ```
 2. Change your working directory to /deployments/helm-chart:
     ```console
@@ -161,7 +161,7 @@ The following tables lists the configurable parameters of the NGINX Ingress Cont
 |``controller.logLevel`` | The log level of the Ingress Controller. | 1 |
 |``controller.image.repository`` | The image repository of the Ingress Controller. | nginx/nginx-ingress |
 |``controller.image.digest`` | The digest of the Ingress Controller image. Digest has precedence over tag | None |
-|``controller.image.tag`` | The tag of the Ingress Controller image. | 2.3.0 |
+|``controller.image.tag`` | The tag of the Ingress Controller image. | 2.3.1 |
 |``controller.image.pullPolicy`` | The pull policy for the Ingress Controller image. | IfNotPresent |
 |``controller.lifecycle`` | The lifecycle of the Ingress Controller pods. | {} |
 |``controller.customConfigMap`` | The name of the custom ConfigMap used by the Ingress Controller. If set, then the default config is ignored. | "" |
