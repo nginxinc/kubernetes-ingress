@@ -21,7 +21,11 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 Expand the name of the configmap.
 */}}
 {{- define "nginx-ingress.configName" -}}
+{{- if .Values.controller.customConfigMap -}}
+{{ .Values.controller.customConfigMap }}
+{{- else -}}
 {{- default (include "nginx-ingress.name" .) .Values.controller.config.name -}}
+{{- end -}}
 {{- end -}}
 
 {{/*

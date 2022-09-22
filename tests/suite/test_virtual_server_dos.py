@@ -316,13 +316,13 @@ class TestDos:
         print("Stop Attack")
         p_attack.terminate()
 
-        print("wait max 140 seconds after attack stop, to get attack ended")
+        print("wait max 200 seconds after attack stop, to get attack ended")
         find_in_log(
             kube_apis,
             log_loc,
             syslog_pod,
             ingress_controller_prerequisites.namespace,
-            140,
+            200,
             'attack_event="Attack ended"',
         )
 
@@ -413,13 +413,13 @@ class TestDos:
         print("Stop Attack")
         p_attack.terminate()
 
-        print("wait max 140 seconds after attack stop, to get attack ended")
+        print("wait max 200 seconds after attack stop, to get attack ended")
         find_in_log(
             kube_apis,
             log_loc,
             syslog_pod,
             ingress_controller_prerequisites.namespace,
-            140,
+            200,
             'attack_event="Attack ended"',
         )
 
