@@ -104,6 +104,7 @@ type LoadBalancerController struct {
 	cacheSyncs                    []cache.InformerSynced
 	sharedInformerFactory         []informers.SharedInformerFactory
 	confSharedInformerFactory     []k8s_nginx_informers.SharedInformerFactory
+	secretInformerFactory         []informers.SharedInformerFactory
 	configMapController           cache.Controller
 	dynInformerFactory            []dynamicinformer.DynamicSharedInformerFactory
 	globalConfigurationController cache.Controller
@@ -272,11 +273,30 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	// create handlers for resources we care about
-	lbc.addSecretHandler(createSecretHandlers(lbc))
+	//lbc.addSecretHandler(createSecretHandlers(lbc))
 	lbc.addIngressHandler(createIngressHandlers(lbc))
 	lbc.addServiceHandler(createServiceHandlers(lbc))
 	lbc.addEndpointHandler(createEndpointHandlers(lbc))
 	lbc.addPodHandler()
+
+	// As of HELM >= v3 helm releases are stored using Secrets instead of ConfigMaps.
+	// In order to avoid listing those secrets we discard type "helm.sh/release.v1"
+	secretsTweakListOptionsFunc := func(options *meta_v1.ListOptions) {
+		helmAntiSelector := fields.OneTermNotEqualSelector("type", "helm.sh/release.v1")
+		baseSelector, err := fields.ParseSelector(options.FieldSelector)
+
+		if err != nil {
+			options.FieldSelector = helmAntiSelector.String()
+		} else {
+			options.FieldSelector = fields.AndSelectors(baseSelector, helmAntiSelector).String()
+		}
+	}
+
+	for _, ns := range lbc.namespaceList {
+		lbc.secretInformerFactory = append(lbc.secretInformerFactory, informers.NewSharedInformerFactoryWithOptions(lbc.client, input.ResyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(secretsTweakListOptionsFunc)))
+	}
+
+	lbc.addSecretHandler(createSecretHandlers(lbc))
 
 	if lbc.areCustomResourcesEnabled {
 		for _, ns := range lbc.namespaceList {
@@ -449,7 +469,7 @@ func (lbc *LoadBalancerController) addAppProtectDosProtectedResourceHandler(hand
 
 // addSecretHandler adds the handler for secrets to the controller
 func (lbc *LoadBalancerController) addSecretHandler(handlers cache.ResourceEventHandlerFuncs) {
-	for _, sif := range lbc.sharedInformerFactory {
+	for _, sif := range lbc.secretInformerFactory {
 		informer := sif.Core().V1().Secrets().Informer()
 		informer.AddEventHandler(handlers)
 		lbc.secretLister = append(lbc.secretLister, informer.GetStore())
@@ -610,6 +630,11 @@ func (lbc *LoadBalancerController) Run() {
 	for _, sif := range lbc.sharedInformerFactory {
 		go sif.Start(lbc.ctx.Done())
 	}
+
+	for _, secif := range lbc.secretInformerFactory {
+		go secif.Start(lbc.ctx.Done())
+	}
+
 	if lbc.watchNginxConfigMaps {
 		go lbc.configMapController.Run(lbc.ctx.Done())
 	}
