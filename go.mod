@@ -17,10 +17,10 @@ require (
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
 	google.golang.org/grpc v1.49.0
-	k8s.io/api v0.25.1
-	k8s.io/apimachinery v0.25.1
-	k8s.io/client-go v0.25.1
-	k8s.io/code-generator v0.25.1
+	k8s.io/api v0.25.2
+	k8s.io/apimachinery v0.25.2
+	k8s.io/client-go v0.25.2
+	k8s.io/code-generator v0.25.2
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
 	sigs.k8s.io/controller-tools v0.10.0
 )
@@ -150,5 +150,5 @@ replace (
 	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v0.20.0
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v0.7.0
 	// temporary fix for CVE-2022-27664
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f => golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
+	golang.org/x/net => golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
 )
