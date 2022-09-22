@@ -1,92 +1,101 @@
 # Support for Type ExternalName Services
+
 The Ingress Controller supports routing requests to services of the type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname).
 
 An ExternalName service is defined by an external DNS name that is resolved into the IP addresses, typically external to the cluster. This enables to use the Ingress Controller to route requests to the destinations outside of the cluster.
 
 **Note:** This feature is only available in NGINX Plus.
 
-# Prerequisites:
+# Prerequisites
 
-For the illustration purpose we will run NGINX Ingress Controller with the ```- -watch-namespace=nginx-ingress,default``` option. The option enables NIC to watch selected namespaces.
 
-We will use the tls-passthrough application example as our backend app that will be responding to requests.
+For the illustration purpose we will run NGINX Ingress Controller (refered as NIC in the examples) with the ```-watch-namespace=nginx-ingress,default``` option. The option enables NIC to watch selected namespaces.
 
-## Steps
+Any application deployed in other namespaces will be treated as an external service.
 
-- Deploy the backend application as described in the ```examples/custom-resources/tls-passthrough```, and make sure it is working as described.
+We will use the [tls-passthrough](../../tls-passthrough/README.md) application example as our backend app that will be responding to requests.
 
-- Navigate to the external-name example ```examples/custom-resources/externalname-services```
+# Example
 
-- Deploy backend application to the ```external-ns```. Note that the namespace is not being watched by ```KIC```
+## 1. Deploy the tls-passthrough application
 
-```bash
-kubectl apply -f transport-server/secure-app-external.yaml
-```
+1. Deploy the backend application as described in the [tls-passthrough example](../../tls-passthrough/README.md), and make sure it is working as described.
 
-- Refer the newly created service in the external name svc ```secure-app-external-backend-svc``` in the spec section
+## 2. Deploy external service to external namespace
 
-```yaml
-kind: Service
-apiVersion: v1
-metadata:
-  name: externalname-service
-spec:
-  type: ExternalName
-  externalName: secure-app-external-backend-svc.external-ns.svc.cluster.local
-```
+1. Navigate to the [external-name example](../../../custom-resources/externalname-services/README.md)
 
-- Create the service
+2. Deploy external namespace (```external-ns```) and the backend application. Note that the namespace is not being watched by ```NIC```
+    ```
+    $ kubectl apply -f transport-server/secure-app-external.yaml
+    ```
 
-```bash
-kubectl apply -f externalname-svc.yaml
-```
+## 3. Setup ExternalName service
 
-- Update config map ```nginx-config.yaml``` with the resolver address.
+1. Refer the newly created service in the file [externalname-svc.yaml](../../../custom-resources/externalname-services/externalname-svc.yaml) in the spec section
+    ```yaml
+    kind: Service
+    apiVersion: v1
+    metadata:
+      name: externalname-service
+    spec:
+      type: ExternalName
+      externalName: secure-app-external-backend-svc.external-ns.svc.cluster.local
+    ```
 
-```yaml
-kind: ConfigMap
-apiVersion: v1
-metadata:
-  name: nginx-config
-  namespace: nginx-ingress
-data:
-  resolver-addresses: "kube-dns.kube-system.svc.cluster.local"
-```
+2. Create the service of type ```ExternalName```
+    ```
+    $ kubectl apply -f externalname-svc.yaml
+    ```
 
-- Apply the change
+3. Update config map [nginx-config.yaml](../../../custom-resources/externalname-services/nginx-config.yaml) with the resolver address
+    ```yaml
+    kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: nginx-config
+      namespace: nginx-ingress
+    data:
+      resolver-addresses: "kube-dns.kube-system.svc.cluster.local"
+    ```
 
-```bash
-kubectl apply -f nginx-config.yaml
-```
+4. Apply the change
+    ```bash
+    $ kubectl apply -f nginx-config.yaml
+    ```
 
-- Add the ```externalname-service``` to the TransportServer deployed in the tls-passthrough example
+## 4. Change the TS to point to the ExternalName and verify if it is working correctly
 
-```yaml
-apiVersion: k8s.nginx.org/v1alpha1
-kind: TransportServer
-metadata:
-  name: secure-app
-spec:
-  listener:
-    name: tls-passthrough
-    protocol: TLS_PASSTHROUGH
-  host: app.example.com
-  upstreams:
-    - name: secure-app
-      service: externalname-service
-      port: 8443
-  action:
-    pass: secure-app
-```
+1. Navigate to the example [tls-passthrough](../../../custom-resources/tls-passthrough/README.md) and open the ```transport-server.yaml``` file.
 
-- Apply the change
+2. Replace the service name ```secure-app``` with ```externalname-service``` and apply the change.
+    ```yaml
+    apiVersion: k8s.nginx.org/v1alpha1
+    kind: TransportServer
+    metadata:
+      name: secure-app
+    spec:
+      listener:
+        name: tls-passthrough
+        protocol: TLS_PASSTHROUGH
+      host: app.example.com
+      upstreams:
+      - name: secure-app
+        service: externalname-service
+        port: 8443
+      action:
+        pass: secure-app
+    ```
 
-```bash
-kubectl apply -f transport-server-passthrough.yaml
-```
+    ```
+    $ kubectl apply -f transport-server-passthrough.yaml
+    ```
 
-- Send a request to verify the response is comming from the "external" pod (refer to to the tls-passthrough example)
-
-```bash
-curl --resolve app.example.com:$IC_HTTPS_PORT:$IC_IP https://app.example.com:$IC_HTTPS_PORT --insecure
-```
+3. Verify if the application is working by sending a request and check if the response is coming from the "external backend pod" (refer to to the tls-passthrough example)
+    ```bash
+    $ curl --resolve app.example.com:$IC_HTTPS_PORT:$IC_IP https://app.example.com:$IC_HTTPS_PORT --insecure
+    ```
+    Response
+    ```
+    hello from pod secure-app-external-backend-5fbf4fb494-x7bkl
+    ```
