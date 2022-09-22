@@ -13,17 +13,17 @@ For the illustration purpose we will run NGINX Ingress Controller (refered as NI
 
 Any application deployed in other namespaces will be treated as an external service.
 
-We will use the [tls-passthrough](../../tls-passthrough/README.md) application example as our backend app that will be responding to requests.
+We will use the ```examples/custom-resources/tls-passthrough``` application example as our backend app that will be responding to requests.
 
 # Example
 
 ## 1. Deploy the tls-passthrough application
 
-1. Deploy the backend application as described in the [tls-passthrough example](../../tls-passthrough/README.md), and make sure it is working as described.
+1. Deploy the backend application as described in the ```examples/custom-resources/tls-passthrough``` example, and make sure it is working as described.
 
 ## 2. Deploy external service to external namespace
 
-1. Navigate to the [external-name example](../../../custom-resources/externalname-services/README.md)
+1. Navigate to the external-name example ```examples/custom-resources/externalname-services/transport-server```
 
 2. Deploy external namespace (```external-ns```) and the backend application. Note that the namespace is not being watched by ```NIC```
     ```
@@ -32,7 +32,7 @@ We will use the [tls-passthrough](../../tls-passthrough/README.md) application e
 
 ## 3. Setup ExternalName service
 
-1. Refer the newly created service in the file [externalname-svc.yaml](../../../custom-resources/externalname-services/externalname-svc.yaml) in the spec section
+1. Refer the newly created service in the file ```examples/custom-resources/externalname-services/externalname-svc.yaml``` in the spec section
     ```yaml
     kind: Service
     apiVersion: v1
@@ -48,7 +48,7 @@ We will use the [tls-passthrough](../../tls-passthrough/README.md) application e
     $ kubectl apply -f externalname-svc.yaml
     ```
 
-3. Update config map [nginx-config.yaml](../../../custom-resources/externalname-services/nginx-config.yaml) with the resolver address
+3. Update config map ```examples/custom-resources/externalname-services/nginx-config.yaml``` with the resolver address
     ```yaml
     kind: ConfigMap
     apiVersion: v1
@@ -66,7 +66,7 @@ We will use the [tls-passthrough](../../tls-passthrough/README.md) application e
 
 ## 4. Change the TS to point to the ExternalName and verify if it is working correctly
 
-1. Navigate to the example [tls-passthrough](../../../custom-resources/tls-passthrough/README.md) and open the ```transport-server.yaml``` file.
+1. Navigate to the tls-passthrough example ```examples/custom-resources/tls-passthrough``` and open the ```transport-server-passthrough.yaml``` file.
 
 2. Replace the service name ```secure-app``` with ```externalname-service``` and apply the change.
     ```yaml
