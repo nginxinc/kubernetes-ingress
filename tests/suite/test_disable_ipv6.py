@@ -1,4 +1,5 @@
 import pytest
+
 from suite.resources_utils import (
     get_first_pod_name,
     get_nginx_template_conf,
@@ -53,6 +54,6 @@ class TestDisableIpv6:
             ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
-        assert "listen [::]:" not in nginx_config and "allow ::1" not in nginx_config
+        assert "listen [::]:" not in nginx_config
         assert "listen [::]:" not in vs_config
         assert "listen [::]:" not in ts_config

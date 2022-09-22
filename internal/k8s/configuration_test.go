@@ -24,6 +24,7 @@ func createTestConfiguration() *Configuration {
 	isTLSPassthroughEnabled := true
 	certManagerEnabled := true
 	snippetsEnabled := true
+	isIPV6Disabled := false
 	return NewConfiguration(
 		lbc.HasCorrectIngressClass,
 		isPlus,
@@ -39,6 +40,7 @@ func createTestConfiguration() *Configuration {
 		isTLSPassthroughEnabled,
 		snippetsEnabled,
 		certManagerEnabled,
+		isIPV6Disabled,
 	)
 }
 

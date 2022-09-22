@@ -360,6 +360,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		input.IsTLSPassthroughEnabled,
 		input.SnippetsEnabled,
 		input.CertManagerEnabled,
+		input.IsIPV6Disabled,
 	)
 
 	lbc.appProtectConfiguration = appprotect.NewConfiguration()
@@ -3165,6 +3166,7 @@ func isMatchingResourceRef(ownerNs, resRef, key string) bool {
 func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1alpha1.TransportServer, listenerPort int) *configs.TransportServerEx {
 	endpoints := make(map[string][]string)
 	podsByIP := make(map[string]string)
+	disableIPV6 := lbc.configuration.isIPV6Disabled
 
 	for _, u := range transportServer.Spec.Upstreams {
 		podEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port))
@@ -3194,6 +3196,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		TransportServer: transportServer,
 		Endpoints:       endpoints,
 		PodsByIP:        podsByIP,
+		DisableIPV6:     disableIPV6,
 	}
 }
 
