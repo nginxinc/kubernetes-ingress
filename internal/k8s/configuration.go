@@ -359,6 +359,7 @@ type Configuration struct {
 	isTLSPassthroughEnabled bool
 	snippetsEnabled         bool
 	isCertManagerEnabled    bool
+	isIPV6Disabled          bool
 
 	lock sync.RWMutex
 }
@@ -376,6 +377,7 @@ func NewConfiguration(
 	isTLSPassthroughEnabled bool,
 	snippetsEnabled bool,
 	isCertManagerEnabled bool,
+	isIPV6Disabled bool,
 ) *Configuration {
 	return &Configuration{
 		hosts:                        make(map[string]Resource),
@@ -403,6 +405,7 @@ func NewConfiguration(
 		isTLSPassthroughEnabled:      isTLSPassthroughEnabled,
 		snippetsEnabled:              snippetsEnabled,
 		isCertManagerEnabled:         isCertManagerEnabled,
+		isIPV6Disabled:               isIPV6Disabled,
 	}
 }
 

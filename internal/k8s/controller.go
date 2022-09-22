@@ -167,6 +167,7 @@ type LoadBalancerController struct {
 	certManagerController         *cm_controller.CmController
 	externalDNSController         *ed_controller.ExtDNSController
 	batchSyncEnabled              bool
+	isIPV6Disabled                bool
 }
 
 var keyFunc = cache.DeletionHandlingMetaNamespaceKeyFunc
@@ -208,6 +209,7 @@ type NewLoadBalancerControllerInput struct {
 	SnippetsEnabled              bool
 	CertManagerEnabled           bool
 	ExternalDNSEnabled           bool
+	IsIPV6Disabled               bool
 }
 
 // NewLoadBalancerController creates a controller
@@ -238,6 +240,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		internalRoutesEnabled:        input.InternalRoutesEnabled,
 		isPrometheusEnabled:          input.IsPrometheusEnabled,
 		isLatencyMetricsEnabled:      input.IsLatencyMetricsEnabled,
+		isIPV6Disabled:               input.IsIPV6Disabled,
 	}
 
 	eventBroadcaster := record.NewBroadcaster()
@@ -357,6 +360,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		input.IsTLSPassthroughEnabled,
 		input.SnippetsEnabled,
 		input.CertManagerEnabled,
+		input.IsIPV6Disabled,
 	)
 
 	lbc.appProtectConfiguration = appprotect.NewConfiguration()
@@ -3162,6 +3166,7 @@ func isMatchingResourceRef(ownerNs, resRef, key string) bool {
 func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf_v1alpha1.TransportServer, listenerPort int) *configs.TransportServerEx {
 	endpoints := make(map[string][]string)
 	podsByIP := make(map[string]string)
+	disableIPV6 := lbc.configuration.isIPV6Disabled
 
 	for _, u := range transportServer.Spec.Upstreams {
 		podEndps, external, err := lbc.getEndpointsForUpstream(transportServer.Namespace, u.Service, uint16(u.Port))
@@ -3191,6 +3196,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		TransportServer: transportServer,
 		Endpoints:       endpoints,
 		PodsByIP:        podsByIP,
+		DisableIPV6:     disableIPV6,
 	}
 }
 

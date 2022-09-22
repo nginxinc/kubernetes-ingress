@@ -382,6 +382,9 @@ controller:
   ## Enable collection of latency metrics for upstreams. Requires prometheus.create.
   enableLatencyMetrics: false
 
+  ## Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack.
+  disableIPV6: false
+
 rbac:
   ## Configures RBAC.
   create: true

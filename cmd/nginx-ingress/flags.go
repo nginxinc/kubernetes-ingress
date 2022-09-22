@@ -180,6 +180,9 @@ var (
 	includeYearInLogs = flag.Bool("include-year", false,
 		"Option to include the year in the log header")
 
+	disableIPV6 = flag.Bool("disable-ipv6", false,
+		`Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack`)
+
 	startupCheckFn func() error
 )
 

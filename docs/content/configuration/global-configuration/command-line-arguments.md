@@ -459,3 +459,11 @@ The HTTP port for the readiness endpoint.
 
 Format: `[1024 - 65535]` (default `8081`)
 &nbsp;
+
+### -disable-ipv6
+
+Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack.
+
+Default `false`.
+&nbsp;
+<a name="cmdoption-disable-ipv6"></a>
