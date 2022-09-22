@@ -1,5 +1,4 @@
 import pytest
-
 from suite.resources_utils import (
     get_first_pod_name,
     get_nginx_template_conf,
