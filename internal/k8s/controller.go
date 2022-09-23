@@ -72,6 +72,9 @@ const (
 	ingressClassKey = "kubernetes.io/ingress.class"
 	// IngressControllerName holds Ingress Controller name
 	IngressControllerName = "nginx.org/ingress-controller"
+
+	typeKeyword     = "type"
+	helmReleaseType = "helm.sh/release.v1"
 )
 
 var (
@@ -273,25 +276,24 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	// create handlers for resources we care about
-	//lbc.addSecretHandler(createSecretHandlers(lbc))
 	lbc.addIngressHandler(createIngressHandlers(lbc))
 	lbc.addServiceHandler(createServiceHandlers(lbc))
 	lbc.addEndpointHandler(createEndpointHandlers(lbc))
 	lbc.addPodHandler()
 
-	// As of HELM >= v3 helm releases are stored using Secrets instead of ConfigMaps.
-	// In order to avoid listing those secrets we discard type "helm.sh/release.v1"
 	secretsTweakListOptionsFunc := func(options *meta_v1.ListOptions) {
-		helmAntiSelector := fields.OneTermNotEqualSelector("type", "helm.sh/release.v1")
+		// Filter for helm release secrets.
+		helmSecretSelector := fields.OneTermNotEqualSelector(typeKeyword, helmReleaseType)
 		baseSelector, err := fields.ParseSelector(options.FieldSelector)
 
 		if err != nil {
-			options.FieldSelector = helmAntiSelector.String()
+			options.FieldSelector = helmSecretSelector.String()
 		} else {
-			options.FieldSelector = fields.AndSelectors(baseSelector, helmAntiSelector).String()
+			options.FieldSelector = fields.AndSelectors(baseSelector, helmSecretSelector).String()
 		}
 	}
 
+	// Creating a separate informer for secrets.
 	for _, ns := range lbc.namespaceList {
 		lbc.secretInformerFactory = append(lbc.secretInformerFactory, informers.NewSharedInformerFactoryWithOptions(lbc.client, input.ResyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(secretsTweakListOptionsFunc)))
 	}
