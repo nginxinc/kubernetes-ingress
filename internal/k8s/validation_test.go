@@ -3343,20 +3343,20 @@ func TestValidateRegexPath(t *testing.T) {
 		msg       string
 	}{
 		{
-			regexPath: "~ ^/foo.*\\.jpg",
+			regexPath: "/foo.*\\.jpg",
 			msg:       "case sensitive regexp",
 		},
 		{
-			regexPath: "~* ^/Bar.*\\.jpg",
+			regexPath: "/Bar.*\\.jpg",
 			msg:       "case insensitive regexp",
 		},
 		{
-			regexPath: `~ ^/f\"oo.*\\.jpg`,
+			regexPath: `/f\"oo.*\\.jpg`,
 			msg:       "regexp with escaped double quotes",
 		},
 		{
-			regexPath: "~ [0-9a-z]{4}[0-9]+",
-			msg:       "regexp with brackets",
+			regexPath: "/[0-9a-z]{4}[0-9]+",
+			msg:       "regexp with curly braces",
 		},
 	}
 
@@ -3375,19 +3375,19 @@ func TestValidateRegexPathFails(t *testing.T) {
 		msg       string
 	}{
 		{
-			regexPath: "~ [{",
+			regexPath: "[{",
 			msg:       "invalid regexp",
 		},
 		{
-			regexPath: `~ /foo"`,
+			regexPath: `/foo"`,
 			msg:       "unescaped double quotes",
 		},
 		{
-			regexPath: `~"`,
+			regexPath: `"`,
 			msg:       "empty regex",
 		},
 		{
-			regexPath: `~ /foo\`,
+			regexPath: `/foo\`,
 			msg:       "ending in backslash",
 		},
 	}
@@ -3409,6 +3409,15 @@ func TestValidatePath(t *testing.T) {
 		"/a-1/_A/",
 		"/[A-Za-z]{6}/[a-z]{1,2}",
 		"/[0-9a-z]{4}[0-9]",
+		"/foo.*\\.jpg",
+		"/Bar.*\\.jpg",
+		`/f\"oo.*\\.jpg`,
+		"/[0-9a-z]{4}[0-9]+",
+		"/[a-z]{1,2}",
+		"/[A-Z]{6}",
+		"/[A-Z]{6}/[a-z]{1,2}",
+		"/path",
+		"/abc}{abc",
 	}
 
 	for _, path := range validPaths {
@@ -3425,7 +3434,9 @@ func TestValidatePath(t *testing.T) {
 		"/abc;",
 		`/path\`,
 		`/path\n`,
-		`/etc/nginx/secrets`,
+		`/var/run/secrets`,
+		"/{autoindex on; root /var/run/secrets;}location /tea",
+		"/{root}",
 	}
 
 	for _, path := range invalidPaths {
@@ -3475,6 +3486,9 @@ func TestValidateIllegalKeywords(t *testing.T) {
 		"/root",
 		"/etc/nginx/secrets",
 		"/etc/passwd",
+		"/var/run/secrets",
+		`\n`,
+		`\r`,
 	}
 
 	for _, path := range invalidPaths {

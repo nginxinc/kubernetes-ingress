@@ -873,7 +873,7 @@ func validateBackend(backend *networking.IngressBackend, fieldPath *field.Path) 
 }
 
 const (
-	pathFmt    = `/[^\s;\\]*`
+	pathFmt    = `/[^\s;]*`
 	pathErrMsg = "must start with / and must not include any whitespace character or `;`"
 )
 
@@ -950,7 +950,7 @@ func ValidateEscapedString(body string, examples ...string) error {
 }
 
 const (
-	illegalKeywordFmt    = `/etc|/root`
+	illegalKeywordFmt    = `/etc/|/root|/var|\\n|\\r`
 	illegalKeywordErrMsg = `must not contain invalid paths`
 )
 

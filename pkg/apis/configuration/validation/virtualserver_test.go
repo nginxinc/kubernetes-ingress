@@ -1467,7 +1467,7 @@ func TestValidateRegexPath(t *testing.T) {
 		},
 		{
 			regexPath: "~ [0-9a-z]{4}[0-9]+",
-			msg:       "regexp with brackets",
+			msg:       "regexp with curly braces",
 		},
 	}
 
