@@ -17,7 +17,7 @@ type TransportServerEx struct {
 	Endpoints        map[string][]string
 	PodsByIP         map[string]string
 	ExternalNameSvcs map[string]bool
-  DisableIPV6      bool
+	DisableIPV6      bool
 }
 
 func (tsEx *TransportServerEx) String() string {

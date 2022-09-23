@@ -576,10 +576,10 @@ func (cnf *Configurator) deleteTransportServerMetricsLabels(key string) {
 func (cnf *Configurator) AddOrUpdateTransportServer(transportServerEx *TransportServerEx) (Warnings, error) {
 	warnings, err := cnf.addOrUpdateTransportServer(transportServerEx)
 	if err != nil {
-		return warnings, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
+		return nil, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
 	}
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return warnings, fmt.Errorf("error reloading NGINX for TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
+		return nil, fmt.Errorf("error reloading NGINX for TransportServer %v/%v: %w", transportServerEx.TransportServer.Namespace, transportServerEx.TransportServer.Name, err)
 	}
 	return warnings, nil
 }
@@ -590,7 +590,7 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 
 	content, err := cnf.templateExecutorV2.ExecuteTransportServerTemplate(tsCfg)
 	if err != nil {
-		return warnings, fmt.Errorf("error generating TransportServer config %v: %w", name, err)
+		return nil, fmt.Errorf("error generating TransportServer config %v: %w", name, err)
 	}
 	if cnf.isPlus && cnf.isPrometheusEnabled {
 		cnf.updateTransportServerMetricsLabels(transportServerEx, tsCfg.Upstreams)
@@ -606,7 +606,11 @@ func (cnf *Configurator) addOrUpdateTransportServer(transportServerEx *Transport
 			Host:       transportServerEx.TransportServer.Spec.Host,
 			UnixSocket: generateUnixSocket(transportServerEx),
 		}
-		return warnings, cnf.updateTLSPassthroughHostsConfig()
+		err := cnf.updateTLSPassthroughHostsConfig()
+		if err != nil {
+			return nil, err
+		}
+		return warnings, nil
 	}
 	return warnings, nil
 }
@@ -669,7 +673,7 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources) (Warn
 	for _, ingEx := range resources.IngressExes {
 		warnings, err := cnf.addOrUpdateIngress(ingEx)
 		if err != nil {
-			return allWarnings, fmt.Errorf("Error adding or updating ingress %v/%v: %w", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
+			return nil, fmt.Errorf("Error adding or updating ingress %v/%v: %w", ingEx.Ingress.Namespace, ingEx.Ingress.Name, err)
 		}
 		allWarnings.Add(warnings)
 	}
@@ -677,7 +681,7 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources) (Warn
 	for _, m := range resources.MergeableIngresses {
 		warnings, err := cnf.addOrUpdateMergeableIngress(m)
 		if err != nil {
-			return allWarnings, fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %w", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
+			return nil, fmt.Errorf("Error adding or updating mergeableIngress %v/%v: %w", m.Master.Ingress.Namespace, m.Master.Ingress.Name, err)
 		}
 		allWarnings.Add(warnings)
 	}
@@ -685,7 +689,7 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources) (Warn
 	for _, vsEx := range resources.VirtualServerExes {
 		warnings, err := cnf.addOrUpdateVirtualServer(vsEx)
 		if err != nil {
-			return allWarnings, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %w", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
+			return nil, fmt.Errorf("Error adding or updating VirtualServer %v/%v: %w", vsEx.VirtualServer.Namespace, vsEx.VirtualServer.Name, err)
 		}
 		allWarnings.Add(warnings)
 	}
@@ -693,13 +697,13 @@ func (cnf *Configurator) AddOrUpdateResources(resources ExtendedResources) (Warn
 	for _, tsEx := range resources.TransportServerExes {
 		warnings, err := cnf.addOrUpdateTransportServer(tsEx)
 		if err != nil {
-			return allWarnings, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
+			return nil, fmt.Errorf("error adding or updating TransportServer %v/%v: %w", tsEx.TransportServer.Namespace, tsEx.TransportServer.Name, err)
 		}
 		allWarnings.Add(warnings)
 	}
 
 	if err := cnf.reload(nginx.ReloadForOtherUpdate); err != nil {
-		return allWarnings, fmt.Errorf("Error when reloading NGINX when updating resources: %w", err)
+		return nil, fmt.Errorf("Error when reloading NGINX when updating resources: %w", err)
 	}
 	return allWarnings, nil
 }

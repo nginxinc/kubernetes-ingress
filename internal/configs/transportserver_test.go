@@ -222,9 +222,12 @@ func TestGenerateTransportServerConfigForIPV6Disabled(t *testing.T) {
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfigForIPV6Disabled() mismatch (-want +got):\n%s", diff)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfigForIPV6Disabled() mismatch (-want +got):\n%s", cmp.Diff(expected, result))
 	}
 }
 
