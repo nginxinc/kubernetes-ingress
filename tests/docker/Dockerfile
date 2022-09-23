@@ -21,4 +21,6 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 
 COPY --link tests /workspace/tests
 
+COPY --link pyproject.toml /workspace/
+
 ENTRYPOINT ["python3", "-m", "pytest"]
