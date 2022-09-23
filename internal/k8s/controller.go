@@ -3204,7 +3204,7 @@ func (lbc *LoadBalancerController) createTransportServerEx(transportServer *conf
 		Endpoints:        endpoints,
 		PodsByIP:         podsByIP,
 		ExternalNameSvcs: externalNameSvcs,
-    DisableIPV6:      disableIPV6,
+		DisableIPV6:      disableIPV6,
 	}
 }
 
