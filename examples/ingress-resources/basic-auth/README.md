@@ -78,9 +78,9 @@ In the following example we enable Basic Auth validation for the [mergeable Ingr
   metadata:
     name: cafe-ingress-master
     annotations:
-      kubernetes.io/ingress.class: "nginx"
       nginx.org/mergeable-ingress-type: "master"
   spec:
+    ingressClassName: nginx
     tls:
     - hosts:
       - cafe.example.com
