@@ -11,3 +11,27 @@ skip_gitignore = true
 balanced_wrapping = true
 filter_files = true
 skip_glob = ['*pb2*']
+
+[tool.pytest.ini_options]
+pythonpath = [
+    ".",
+    "tests/suite",
+    "tests/suite/grpc",
+]
+addopts = "--tb=native -ra --disable-warnings -x -l --profile -v"
+log_cli = true
+markers =[
+    "smoke",
+    "vsr",
+    "policies",
+    "vs",
+    "ts",
+    "ingresses",
+    "appprotect",
+    "rewrite",
+    "skip_for_nginx_oss",
+]
+testpaths = [
+    "tests",
+    "perf-tests",
+]

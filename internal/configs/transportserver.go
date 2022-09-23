@@ -17,6 +17,7 @@ type TransportServerEx struct {
 	Endpoints        map[string][]string
 	PodsByIP         map[string]string
 	ExternalNameSvcs map[string]bool
+  DisableIPV6      bool
 }
 
 func (tsEx *TransportServerEx) String() string {
@@ -91,6 +92,7 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			ProxyNextUpstreamTries:   nextUpstreamTries,
 			HealthCheck:              healthCheck,
 			ServerSnippets:           serverSnippets,
+			DisableIPV6:              transportServerEx.DisableIPV6,
 		},
 		Match:          match,
 		Upstreams:      upstreams,
