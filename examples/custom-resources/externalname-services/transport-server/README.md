@@ -1,4 +1,4 @@
-# Support for Type ExternalName Services
+# Support for Type ExternalName Services in Transport Server
 
 The Ingress Controller supports routing requests to services of the type [ExternalName](https://kubernetes.io/docs/concepts/services-networking/service/#externalname).
 
@@ -7,7 +7,6 @@ An ExternalName service is defined by an external DNS name that is resolved into
 **Note:** This feature is only available in NGINX Plus.
 
 # Prerequisites
-
 
 For the illustration purpose we will run NGINX Ingress Controller (refered as NIC in the examples) with the ```-watch-namespace=nginx-ingress,default``` option. The option enables NIC to watch selected namespaces.
 
@@ -23,48 +22,24 @@ We will use the ```examples/custom-resources/tls-passthrough``` application exam
 
 ## 2. Deploy external service to external namespace
 
-1. Navigate to the external-name example ```examples/custom-resources/externalname-services/transport-server```
-
-2. Deploy external namespace (```external-ns```) and the backend application. Note that the namespace is not being watched by ```NIC```
-    ```
-    $ kubectl apply -f transport-server/secure-app-external.yaml
+1. Deploy backend application to external namespace (```external-ns```). Note that the namespace is not being watched by ```NIC```.
+    ```bash
+    $ kubectl apply -f secure-app-external.yaml
     ```
 
 ## 3. Setup ExternalName service
 
-1. Refer the newly created service in the file ```examples/custom-resources/externalname-services/externalname-svc.yaml``` in the spec section
-    ```yaml
-    kind: Service
-    apiVersion: v1
-    metadata:
-      name: externalname-service
-    spec:
-      type: ExternalName
-      externalName: secure-app-external-backend-svc.external-ns.svc.cluster.local
-    ```
-
-2. Create the service of type ```ExternalName```
+1. Create the service of type ```ExternalName```
     ```
     $ kubectl apply -f externalname-svc.yaml
     ```
 
-3. Update config map ```examples/custom-resources/externalname-services/nginx-config.yaml``` with the resolver address
-    ```yaml
-    kind: ConfigMap
-    apiVersion: v1
-    metadata:
-      name: nginx-config
-      namespace: nginx-ingress
-    data:
-      resolver-addresses: "kube-dns.kube-system.svc.cluster.local"
-    ```
-
-4. Apply the change
+2. Apply the config map
     ```bash
     $ kubectl apply -f nginx-config.yaml
     ```
 
-## 4. Change the TS to point to the ExternalName and verify if it is working correctly
+## 4. Change the Transport Server to point to the ExternalName and verify if it is working correctly
 
 1. Navigate to the tls-passthrough example ```examples/custom-resources/tls-passthrough``` and open the ```transport-server-passthrough.yaml``` file.
 
