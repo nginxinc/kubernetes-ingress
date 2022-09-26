@@ -367,7 +367,10 @@ class TestAppProtectWAFPolicyVS:
 
         assert_invalid_responses(response)
 
-        assert f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"' in log_contents
+        assert (
+            f'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS),Other Application Activity"'
+            in log_contents
+        )
         assert f'severity="Critical"' in log_contents
         assert f'request_status="blocked"' in log_contents
         assert f'outcome="REJECTED"' in log_contents
