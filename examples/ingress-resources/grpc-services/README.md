@@ -24,8 +24,8 @@ metadata:
   name: grpc-ingress
   annotations:
     nginx.org/grpc-services: "grpc-svc"
-    kubernetes.io/ingress.class: "nginx"
 spec:
+  ingressClassName: nginx
   tls:
   - hosts:
     - grpc.example.com

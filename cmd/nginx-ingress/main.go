@@ -75,6 +75,7 @@ func main() {
 	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
 
 	staticCfgParams := &configs.StaticConfigParams{
+		DisableIPV6:                    *disableIPV6,
 		HealthStatus:                   *healthStatus,
 		HealthStatusURI:                *healthStatusURI,
 		NginxStatus:                    *nginxStatus,
@@ -149,6 +150,7 @@ func main() {
 		SnippetsEnabled:              *enableSnippets,
 		CertManagerEnabled:           *enableCertManager,
 		ExternalDNSEnabled:           *enableExternalDNS,
+		IsIPV6Disabled:               *disableIPV6,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)

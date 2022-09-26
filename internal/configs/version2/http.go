@@ -77,6 +77,7 @@ type Server struct {
 	PoliciesErrorReturn       *Return
 	VSNamespace               string
 	VSName                    string
+	DisableIPV6               bool
 }
 
 // SSL defines SSL configuration for a server.

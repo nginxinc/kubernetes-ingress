@@ -23,7 +23,7 @@ This step is required if you're installing the chart using its sources. Addition
 
 1. Clone the Ingress Controller repo:
     ```console
-    $ git clone https://github.com/nginxinc/kubernetes-ingress --branch v2.3.0
+    $ git clone https://github.com/nginxinc/kubernetes-ingress --branch v2.3.1
     ```
     **Note**: If you want to use the experimental repository (`edge`), remove the `--branch` flag and value.
 
@@ -157,7 +157,7 @@ Parameter | Description | Default
 `controller.logLevel` | The log level of the Ingress Controller. | 1
 `controller.image.digest ` | The image digest of the Ingress Controller. | None
 `controller.image.repository` | The image repository of the Ingress Controller. | nginx/nginx-ingress
-`controller.image.tag` | The tag of the Ingress Controller image. | 2.3.0
+`controller.image.tag` | The tag of the Ingress Controller image. | 2.3.1
 `controller.image.pullPolicy` | The pull policy for the Ingress Controller image. | IfNotPresent
 `controller.lifecycle` | The lifecycle of the Ingress Controller pods. | {}
 `controller.customConfigMap` | The name of the custom ConfigMap used by the Ingress Controller. If set, then the default config is ignored. | ""
@@ -245,6 +245,7 @@ Parameter | Description | Default
 `controller.enableLatencyMetrics` | Enable collection of latency metrics for upstreams. Requires `prometheus.create`. | false
 `controller.minReadySeconds` | Specifies the minimum number of seconds for which a newly created Pod should be ready without any of its containers crashing, for it to be considered available. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#min-ready-seconds) | 0
 `controller.strategy` | Specifies the strategy used to replace old Pods by new ones. [docs](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy) | {}
+`controller.disableIPV6` | Disable IPV6 listeners explicitly for nodes that do not support the IPV6 stack. | false
 `rbac.create` | Configures RBAC. | true
 `prometheus.create` | Expose NGINX or NGINX Plus metrics in the Prometheus format. | false
 `prometheus.port` | Configures the port to scrape the metrics. | 9113

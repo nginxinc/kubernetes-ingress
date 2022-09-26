@@ -50,12 +50,12 @@ spec:
       serviceAccountName: external-dns
       containers:
       - name: external-dns
-        image: k8s.gcr.io/external-dns/external-dns:v0.12.0
+        image: k8s.gcr.io/external-dns/external-dns:v0.12.2
         args:
         - --source=service
         - --source=ingress
         - --source=crd
-        - --crd-source-apiversion=externaldns.nginx.org/v1 
+        - --crd-source-apiversion=externaldns.nginx.org/v1
         - --crd-source-kind=DNSEndpoint
         - --domain-filter=<MY_DOMAIN> # will make ExternalDNS see only the hosted zones matching provided domain, omit to process all available hosted zones
         - --provider=aws
