@@ -290,6 +290,11 @@ stream {
     {{range $value := .StreamSnippets}}
     {{$value}}{{end}}
 
+    {{if .ResolverAddresses}}
+    resolver {{range $resolver := .ResolverAddresses}}{{$resolver}}{{end}}{{if .ResolverValid}} valid={{.ResolverValid}}{{end}}{{if not .ResolverIPV6}} ipv6=off{{end}};
+    {{if .ResolverTimeout}}resolver_timeout {{.ResolverTimeout}};{{end}}
+    {{end}}
+
     {{if .TLSPassthrough}}
     map $ssl_preread_server_name $dest_internal_passthrough  {
         default unix:/var/lib/nginx/passthrough-https.sock;

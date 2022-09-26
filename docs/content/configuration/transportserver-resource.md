@@ -372,4 +372,4 @@ Note how the events section includes a Warning event with the Rejected reason.
 
 ## Customization via ConfigMap
 
-The [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource) keys (except for `stream-snippets` and `stream-log-format`) do not affect TransportServer resources.
+The [ConfigMap](/nginx-ingress-controller/configuration/global-configuration/configmap-resource) keys (except for `stream-snippets`, `stream-log-format`, `resolver-addresses`, `resolver-ipv6`, `resolver-valid` and `resolver-timeout`) do not affect TransportServer resources.

@@ -1,0 +1,7 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: externalname-service
+spec:
+  type: ExternalName
+  externalName: secure-app-external-backend-svc.external-ns.svc.cluster.local
