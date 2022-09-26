@@ -29,7 +29,7 @@ def setup_single_secret_and_ns(request, kube_apis):
     request.addfinalizer(fin)
 
 
-@pytest.mark.secrets
+@pytest.mark.ingresses
 @pytest.mark.parametrize(
     "ingress_controller",
     [pytest.param({"extra_args": ["-v=3"]})],
@@ -42,7 +42,7 @@ class TestFilterSecret:
         assert "helm.sh/release.v1" not in logs
 
 
-@pytest.mark.secrets
+@pytest.mark.ingresses
 @pytest.mark.parametrize(
     "ingress_controller",
     [pytest.param({"extra_args": ["-v=3"]})],
@@ -95,7 +95,7 @@ def setup_multiple_ns_and_multiple_secrets(request, kube_apis):
     request.addfinalizer(fin)
 
 
-@pytest.mark.secrets
+@pytest.mark.ingresses
 @pytest.mark.parametrize(
     "ingress_controller",
     [pytest.param({"extra_args": ["-v=3", "-watch-namespace=filtered-ns-1,filtered-ns-2"]})],
@@ -110,7 +110,7 @@ class TestFilterSecretMultipuleNamespace:
         assert "helm.sh/release.v1" not in logs
 
 
-@pytest.mark.secrets
+@pytest.mark.ingresses
 @pytest.mark.parametrize(
     "ingress_controller",
     [pytest.param({"extra_args": ["-v=3", "-watch-namespace=filtered-ns-1,filtered-ns-2"]})],
