@@ -75,6 +75,16 @@ rules:
   - patch
   - list
 - apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - create
+- apiGroups:
   - networking.k8s.io
   resources:
   - ingresses
