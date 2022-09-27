@@ -148,20 +148,12 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		}
 	}
 
-	if serverSnippets, exists, err := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/server-snippets", ingEx.Ingress, "\n"); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.ServerSnippets = serverSnippets
-		}
+	if serverSnippets, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/server-snippets", ingEx.Ingress, "\n"); exists {
+		cfgParams.ServerSnippets = serverSnippets
 	}
 
-	if locationSnippets, exists, err := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/location-snippets", ingEx.Ingress, "\n"); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.LocationSnippets = locationSnippets
-		}
+	if locationSnippets, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/location-snippets", ingEx.Ingress, "\n"); exists {
+		cfgParams.LocationSnippets = locationSnippets
 	}
 
 	if proxyConnectTimeout, exists := ingEx.Ingress.Annotations["nginx.org/proxy-connect-timeout"]; exists {
@@ -188,20 +180,12 @@ func parseAnnotations(ingEx *IngressEx, baseCfgParams *ConfigParams, isPlus bool
 		}
 	}
 
-	if proxyHideHeaders, exists, err := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-hide-headers", ingEx.Ingress, ","); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.ProxyHideHeaders = proxyHideHeaders
-		}
+	if proxyHideHeaders, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-hide-headers", ingEx.Ingress, ","); exists {
+		cfgParams.ProxyHideHeaders = proxyHideHeaders
 	}
 
-	if proxyPassHeaders, exists, err := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-pass-headers", ingEx.Ingress, ","); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.ProxyPassHeaders = proxyPassHeaders
-		}
+	if proxyPassHeaders, exists := GetMapKeyAsStringSlice(ingEx.Ingress.Annotations, "nginx.org/proxy-pass-headers", ingEx.Ingress, ","); exists {
+		cfgParams.ProxyPassHeaders = proxyPassHeaders
 	}
 
 	if clientMaxBodySize, exists := ingEx.Ingress.Annotations["nginx.org/client-max-body-size"]; exists {
