@@ -167,7 +167,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/lb-method: Invalid value: "invalid_method": Invalid load balancing method: "invalid_method"`,
+				`annotations.nginx.org/lb-method: Invalid value: "invalid_method": invalid load balancing method: "invalid_method"`,
 				`annotations.nginx.org/mergeable-ingress-type: Invalid value: "invalid": must be one of: 'master' or 'minion'`,
 			},
 			msg: "invalid multiple annotations messages in alphabetical order",
@@ -248,7 +248,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/lb-method: Invalid value: "least_time header": Invalid load balancing method: "least_time header"`,
+				`annotations.nginx.org/lb-method: Invalid value: "least_time header": invalid load balancing method: "least_time header"`,
 			},
 			msg: "invalid nginx.org/lb-method annotation, nginx plus only",
 		},
@@ -262,7 +262,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/lb-method: Invalid value: "least_time header;": Invalid load balancing method: "least_time header;"`,
+				`annotations.nginx.org/lb-method: Invalid value: "least_time header;": invalid load balancing method: "least_time header;"`,
 			},
 			msg: "invalid nginx.org/lb-method annotation",
 		},
@@ -276,7 +276,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/lb-method: Invalid value: "{least_time header}": Invalid load balancing method: "{least_time header}"`,
+				`annotations.nginx.org/lb-method: Invalid value: "{least_time header}": invalid load balancing method: "{least_time header}"`,
 			},
 			msg: "invalid nginx.org/lb-method annotation",
 		},
@@ -290,7 +290,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/lb-method: Invalid value: "$least_time header": Invalid load balancing method: "$least_time header"`,
+				`annotations.nginx.org/lb-method: Invalid value: "$least_time header": invalid load balancing method: "$least_time header"`,
 			},
 			msg: "invalid nginx.org/lb-method annotation",
 		},
@@ -304,7 +304,7 @@ func TestValidateNginxIngressAnnotations(t *testing.T) {
 			appProtectDosEnabled:  false,
 			internalRoutesEnabled: false,
 			expectedErrors: []string{
-				`annotations.nginx.org/lb-method: Invalid value: "invalid_method": Invalid load balancing method: "invalid_method"`,
+				`annotations.nginx.org/lb-method: Invalid value: "invalid_method": invalid load balancing method: "invalid_method"`,
 			},
 			msg: "invalid nginx.org/lb-method annotation",
 		},
