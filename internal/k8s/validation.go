@@ -918,15 +918,17 @@ const (
 	curlyBracesMsg = `must not include curly braces containing alphabetical characters`
 )
 
-var curlyBracesFmtRegexp = regexp.MustCompile(curlyBracesFmt) //nolint:gofumpt
-var alphabetFmtRegex = regexp.MustCompile(alphabetFmt)
+var (
+	curlyBracesFmtRegexp = regexp.MustCompile(curlyBracesFmt)
+	alphabetFmtRegexp    = regexp.MustCompile(alphabetFmt)
+)
 
 func validateCurlyBraces(path string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	bracesContents := curlyBracesFmtRegexp.FindAllStringSubmatch(path, -1)
 	for _, v := range bracesContents {
-		if alphabetFmtRegex.MatchString(v[1]) {
+		if alphabetFmtRegexp.MatchString(v[1]) {
 			return append(allErrs, field.Invalid(fieldPath, path, curlyBracesMsg))
 		}
 	}
