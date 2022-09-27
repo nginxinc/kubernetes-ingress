@@ -79,13 +79,12 @@ func GetMapKeyAsUint64(m map[string]string, key string, context apiObject, nonZe
 }
 
 // GetMapKeyAsStringSlice tries to find and parse a key in the map as string slice splitting it on delimiter.
-func GetMapKeyAsStringSlice(m map[string]string, key string, _ apiObject, delimiter string) ([]string, bool, error) {
+func GetMapKeyAsStringSlice(m map[string]string, key string, _ apiObject, delimiter string) ([]string, bool) {
 	if str, exists := m[key]; exists {
 		slice := strings.Split(str, delimiter)
-		return slice, exists, nil
+		return slice, exists
 	}
-
-	return nil, false, nil
+	return nil, false
 }
 
 // ParseLBMethod parses method and matches it to a corresponding load balancing method in NGINX. An error is returned if method is not valid.

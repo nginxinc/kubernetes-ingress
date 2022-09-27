@@ -229,10 +229,7 @@ func TestGetMapKeyAsStringSlice(t *testing.T) {
 		"key": "1.String,2.String,3.String",
 	}
 
-	slice, exists, err := GetMapKeyAsStringSlice(configMap.Data, "key", &configMap, ",")
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
+	slice, exists := GetMapKeyAsStringSlice(configMap.Data, "key", &configMap, ",")
 	if !exists {
 		t.Errorf("The key 'key' must exist in the configMap")
 	}
@@ -253,10 +250,7 @@ func TestGetMapKeyAsStringSliceMultilineSnippets(t *testing.T) {
 			}`,
 	}
 
-	slice, exists, err := GetMapKeyAsStringSlice(configMap.Data, "server-snippets", &configMap, "\n")
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
+	slice, exists := GetMapKeyAsStringSlice(configMap.Data, "server-snippets", &configMap, "\n")
 	if !exists {
 		t.Errorf("The key 'server-snippets' must exist in the configMap")
 	}
@@ -272,7 +266,7 @@ func TestGetMapKeyAsStringSliceNotFound(t *testing.T) {
 	configMap := configMap
 	configMap.Data = map[string]string{}
 
-	_, exists, _ := GetMapKeyAsStringSlice(configMap.Data, "key", &configMap, ",")
+	_, exists := GetMapKeyAsStringSlice(configMap.Data, "key", &configMap, ",")
 	if exists {
 		t.Errorf("The key 'key' must not exist in the configMap")
 	}
