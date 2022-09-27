@@ -235,7 +235,7 @@ func (lm *LocalManager) CreateDHParam(content string) (string, error) {
 
 	err := createFileAndWrite(lm.dhparamFilename, []byte(content))
 	if err != nil {
-		return lm.dhparamFilename, fmt.Errorf("Failed to write dhparam file from %v: %w", lm.dhparamFilename, err)
+		return lm.dhparamFilename, fmt.Errorf("failed to write dhparam file from %v: %w", lm.dhparamFilename, err)
 	}
 
 	return lm.dhparamFilename, nil
@@ -423,7 +423,7 @@ func (lm *LocalManager) CreateOpenTracingTracerConfig(content string) error {
 	glog.V(3).Infof("Writing OpenTracing tracer config file to %v", jsonFileForOpenTracingTracer)
 	err := createFileAndWrite(jsonFileForOpenTracingTracer, []byte(content))
 	if err != nil {
-		return fmt.Errorf("Failed to write config file: %w", err)
+		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
 	return nil
