@@ -3335,3 +3335,166 @@ func TestGetSpecServices(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateRegexPath(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		regexPath string
+		msg       string
+	}{
+		{
+			regexPath: "/foo.*\\.jpg",
+			msg:       "case sensitive regexp",
+		},
+		{
+			regexPath: "/Bar.*\\.jpg",
+			msg:       "case insensitive regexp",
+		},
+		{
+			regexPath: `/f\"oo.*\\.jpg`,
+			msg:       "regexp with escaped double quotes",
+		},
+		{
+			regexPath: "/[0-9a-z]{4}[0-9]+",
+			msg:       "regexp with curly braces",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateRegexPath(test.regexPath, field.NewPath("path"))
+		if len(allErrs) != 0 {
+			t.Errorf("validateRegexPath(%v) returned errors for valid input for the case of %v", test.regexPath, test.msg)
+		}
+	}
+}
+
+func TestValidateRegexPathFails(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		regexPath string
+		msg       string
+	}{
+		{
+			regexPath: "[{",
+			msg:       "invalid regexp",
+		},
+		{
+			regexPath: `/foo"`,
+			msg:       "unescaped double quotes",
+		},
+		{
+			regexPath: `"`,
+			msg:       "empty regex",
+		},
+		{
+			regexPath: `/foo\`,
+			msg:       "ending in backslash",
+		},
+	}
+
+	for _, test := range tests {
+		allErrs := validateRegexPath(test.regexPath, field.NewPath("path"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateRegexPath(%v) returned no errors for invalid input for the case of %v", test.regexPath, test.msg)
+		}
+	}
+}
+
+func TestValidatePath(t *testing.T) {
+	t.Parallel()
+
+	validPaths := []string{
+		"/",
+		"/path",
+		"/a-1/_A/",
+		"/[A-Za-z]{6}/[a-z]{1,2}",
+		"/[0-9a-z]{4}[0-9]",
+		"/foo.*\\.jpg",
+		"/Bar.*\\.jpg",
+		`/f\"oo.*\\.jpg`,
+		"/[0-9a-z]{4}[0-9]+",
+		"/[a-z]{1,2}",
+		"/[A-Z]{6}",
+		"/[A-Z]{6}/[a-z]{1,2}",
+		"/path",
+		"/abc}{abc",
+	}
+
+	for _, path := range validPaths {
+		allErrs := validatePath(path, field.NewPath("path"))
+		if len(allErrs) > 0 {
+			t.Errorf("validatePath(%q) returned errors %v for valid input", path, allErrs)
+		}
+	}
+
+	invalidPaths := []string{
+		"",
+		" /",
+		"/ ",
+		"/abc;",
+		`/path\`,
+		`/path\n`,
+		`/var/run/secrets`,
+		"/{autoindex on; root /var/run/secrets;}location /tea",
+		"/{root}",
+	}
+
+	for _, path := range invalidPaths {
+		allErrs := validatePath(path, field.NewPath("path"))
+		if len(allErrs) == 0 {
+			t.Errorf("validatePath(%q) returned no errors for invalid input", path)
+		}
+	}
+}
+
+func TestValidateCurlyBraces(t *testing.T) {
+	t.Parallel()
+
+	validPaths := []string{
+		"/[a-z]{1,2}",
+		"/[A-Z]{6}",
+		"/[A-Z]{6}/[a-z]{1,2}",
+		"/path",
+		"/abc}{abc",
+	}
+
+	for _, path := range validPaths {
+		allErrs := validateCurlyBraces(path, field.NewPath("path"))
+		if len(allErrs) > 0 {
+			t.Errorf("validatePath(%q) returned errors %v for valid input", path, allErrs)
+		}
+	}
+
+	invalidPaths := []string{
+		"/[A-Z]{a}",
+		"/{abc}abc",
+		"/abc{a1}",
+	}
+
+	for _, path := range invalidPaths {
+		allErrs := validateCurlyBraces(path, field.NewPath("path"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateCurlyBraces(%q) returned no errors for invalid input", path)
+		}
+	}
+}
+
+func TestValidateIllegalKeywords(t *testing.T) {
+	t.Parallel()
+
+	invalidPaths := []string{
+		"/root",
+		"/etc/nginx/secrets",
+		"/etc/passwd",
+		"/var/run/secrets",
+		`\n`,
+		`\r`,
+	}
+
+	for _, path := range invalidPaths {
+		allErrs := validateIllegalKeywords(path, field.NewPath("path"))
+		if len(allErrs) == 0 {
+			t.Errorf("validateCurlyBraces(%q) returned no errors for invalid input", path)
+		}
+	}
+}
