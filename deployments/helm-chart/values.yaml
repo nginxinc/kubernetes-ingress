@@ -19,11 +19,11 @@ controller:
     ## Sets log level for App Protect WAF. Allowed values: fatal, error, warn, info, debug, trace
     # logLevel: fatal
 
-  ## Support for App Protect Dos
+  ## Support for App Protect DoS
   appprotectdos:
-    ## Enable the App Protect Dos module in the Ingress Controller.
+    ## Enable the App Protect DoS module in the Ingress Controller.
     enable: false
-    ## Enable debugging for App Protect Dos.
+    ## Enable debugging for App Protect DoS.
     debug: false
     ## Max number of nginx processes to support.
     maxWorkers: 0
@@ -90,7 +90,7 @@ controller:
     ## Used as an alternative to specifying a certificate and key using `controller.defaultTLS.cert` and `controller.defaultTLS.key` parameters.
     ## Note: Alternatively, omitting the default server secret completely will configure NGINX to reject TLS connections to the default server.
     ## Format: <namespace>/<secret_name>
-    secret:
+    secret: ""
 
   wildcardTLS:
     ## The base64-encoded TLS certificate for every Ingress/VirtualServer host that has TLS enabled but no secret specified.
@@ -105,10 +105,10 @@ controller:
     ## The value must follow the following format: `<namespace>/<name>`.
     ## Used as an alternative to specifying a certificate and key using `controller.wildcardTLS.cert` and `controller.wildcardTLS.key` parameters.
     ## Format: <namespace>/<secret_name>
-    secret:
+    secret: ""
 
   ## The node selector for pod assignment for the Ingress Controller pods.
-  nodeSelector: {}
+  # nodeSelector: {}
 
   ## The termination grace period of the Ingress Controller pod.
   terminationGracePeriodSeconds: 30
@@ -130,7 +130,7 @@ controller:
   affinity: {}
 
   ## The topology spread constraints of the Ingress controller pods.
-  topologySpreadConstraints: {}
+  # topologySpreadConstraints: {}
 
   ## The volumes of the Ingress Controller pods.
   volumes: []
@@ -284,7 +284,7 @@ controller:
       port: 80
 
       ## The custom NodePort for the HTTP port. Requires controller.service.type set to NodePort.
-      nodePort: ""
+      # nodePort: 80
 
       ## The HTTP port on the POD where the Ingress Controller service is running.
       targetPort: 80
@@ -297,7 +297,7 @@ controller:
       port: 443
 
       ## The custom NodePort for the HTTPS port. Requires controller.service.type set to NodePort.
-      nodePort: ""
+      # nodePort: 443
 
       ## The HTTPS port on the POD where the Ingress Controller service is running.
       targetPort: 443
@@ -330,7 +330,7 @@ controller:
     selectorMatchLabels: {}
 
     ## A list of endpoints allowed as part of this ServiceMonitor.
-    endpoints: {}
+    endpoints: []
 
   reportIngressStatus:
     ## Updates the address field in the status of Ingress resources with an external address of the Ingress Controller.
