@@ -40,7 +40,7 @@ FIXES:
 * [2848](https://github.com/nginxinc/kubernetes-ingress/pull/2848) fix: Change alpine version grab to include a colon in the updater.
 * [2983](https://github.com/nginxinc/kubernetes-ingress/pull/2983) docs: Fix links in the NAP config doc in main.
 * [2971](https://github.com/nginxinc/kubernetes-ingress/pull/2971) fix: Correct error message on missing path in path validation.
-* [3095](https://github.com/nginxinc/kubernetes-ingress/pull/3095) do not create configmap is customConfigMap is used.
+* [3095](https://github.com/nginxinc/kubernetes-ingress/pull/3095) do not create configmap if customConfigMap is used.
 
 HELM CHART:
 
