@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/glog"
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
-	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	k8s_nginx "github.com/nginxinc/kubernetes-ingress/pkg/client/clientset/versioned"
 	api_v1 "k8s.io/api/core/v1"
@@ -35,7 +34,7 @@ type statusUpdater struct {
 	externalServicePorts     string
 	bigIPAddress             string
 	bigIPPorts               string
-	externalEndpoints        []v1.ExternalEndpoint
+	externalEndpoints        []conf_v1.ExternalEndpoint
 	status                   []api_v1.LoadBalancerIngress
 	statusInitialized        bool
 	keyFunc                  func(obj interface{}) (string, error)
@@ -522,7 +521,7 @@ func hasVsrStatusChanged(vsr *conf_v1.VirtualServerRoute, state string, reason s
 }
 
 // UpdateVirtualServerRouteStatusWithReferencedBy updates the status of a VirtualServerRoute, including the referencedBy field.
-func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *conf_v1.VirtualServerRoute, state string, reason string, message string, referencedBy []*v1.VirtualServer) error {
+func (su *statusUpdater) UpdateVirtualServerRouteStatusWithReferencedBy(vsr *conf_v1.VirtualServerRoute, state string, reason string, message string, referencedBy []*conf_v1.VirtualServer) error {
 	var referencedByString string
 	if len(referencedBy) != 0 {
 		vs := referencedBy[0]
@@ -687,12 +686,12 @@ func (su *statusUpdater) generateExternalEndpointsFromStatus(status []api_v1.Loa
 	return externalEndpoints
 }
 
-func hasPolicyStatusChanged(pol *v1.Policy, state string, reason string, message string) bool {
+func hasPolicyStatusChanged(pol *conf_v1.Policy, state string, reason string, message string) bool {
 	return pol.Status.State != state || pol.Status.Reason != reason || pol.Status.Message != message
 }
 
 // UpdatePolicyStatus updates the status of a Policy.
-func (su *statusUpdater) UpdatePolicyStatus(pol *v1.Policy, state string, reason string, message string) error {
+func (su *statusUpdater) UpdatePolicyStatus(pol *conf_v1.Policy, state string, reason string, message string) error {
 	// Get an up-to-date Policy from the Store
 	var polLatest interface{}
 	var exists bool
@@ -717,7 +716,7 @@ func (su *statusUpdater) UpdatePolicyStatus(pol *v1.Policy, state string, reason
 		return nil
 	}
 
-	polCopy := polLatest.(*v1.Policy)
+	polCopy := polLatest.(*conf_v1.Policy)
 
 	if !hasPolicyStatusChanged(polCopy, state, reason, message) {
 		return nil
@@ -736,7 +735,7 @@ func (su *statusUpdater) UpdatePolicyStatus(pol *v1.Policy, state string, reason
 	return nil
 }
 
-func (su *statusUpdater) retryUpdatePolicyStatus(polCopy *v1.Policy) error {
+func (su *statusUpdater) retryUpdatePolicyStatus(polCopy *conf_v1.Policy) error {
 	pol, err := su.confClient.K8sV1().Policies(polCopy.Namespace).Get(context.TODO(), polCopy.Name, metav1.GetOptions{})
 	if err != nil {
 		return err
