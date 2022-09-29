@@ -10,6 +10,15 @@ docs: "DOCS-616"
 
 04 Oct 2022
 
+OVERVIEW:
+
+* Updates to the TransportServer resource to support [proxy_protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.0.1/examples/proxy-protocol) on port 443, both for regular HTTPS and TLS Passthrough traffic.
+* TransportServer now also supports defining and [external name service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname), which will allow you to configure an external resolver for upstreams that use a domain name. For examples, see [externalname-services](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/externalname-services).
+* VirtualServer resource now supports [wildcard hostname](https://kubernetes.io/docs/concepts/services-networking/ingress/#hostname-wildcards).
+- Two new cli arguments have been added to the ingress controller.
+- - [-watch-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-string). This can configured by passing a comma separated list of namespaces to the `-watch-namespace` CLI argument (e.g. `-watch-namespace=ns-1,ns-2`).
+- - [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). When set, this cli argument will append the current year to the log output from the ingress controller. Example output: `I20220512 09:20:42.345457`.
+
 FEATURES:
 
 * [2986](https://github.com/nginxinc/kubernetes-ingress/pull/2986) Batch reloads at runtime.
@@ -17,25 +26,25 @@ FEATURES:
 * [2884](https://github.com/nginxinc/kubernetes-ingress/pull/2884) Include year in logs.
 * [2993](https://github.com/nginxinc/kubernetes-ingress/pull/2993) Accept proxy protocol when TLS passthrough enabled.
 * [3041](https://github.com/nginxinc/kubernetes-ingress/pull/3041) Support external name service for TansportServer.
-* [3087](https://github.com/nginxinc/kubernetes-ingress/pull/3087) Allow omitting the default server secret from Helm installs.
 * [2939](https://github.com/nginxinc/kubernetes-ingress/pull/2939) Add support for wildcard hostname in VirutalServer.
 
 IMPROVEMENTS:
 
 * [2912](https://github.com/nginxinc/kubernetes-ingress/pull/2912) NIC + NAP DoS images.
 * [3040](https://github.com/nginxinc/kubernetes-ingress/pull/3040) Add command line argument to manually disable IPV6 listeners for unsupported clusters.
-* [3088](https://github.com/nginxinc/kubernetes-ingress/pull/3088) Feat/ignore helm secrets.
+* [3088](https://github.com/nginxinc/kubernetes-ingress/pull/3088) Filter secrets of type helm.sh/release.v1.
 
 FIXES:
 
+* [3094](https://github.com/nginxinc/kubernetes-ingress/pull/3094) Optimise path validation.
 * [2848](https://github.com/nginxinc/kubernetes-ingress/pull/2848) fix: Change alpine version grab to include a colon in the updater.
-* [2908](https://github.com/nginxinc/kubernetes-ingress/pull/2908) segregate IC and custom resources fixtures.
 * [2983](https://github.com/nginxinc/kubernetes-ingress/pull/2983) docs: Fix links in the NAP config doc in main.
 * [2971](https://github.com/nginxinc/kubernetes-ingress/pull/2971) fix: Correct error message on missing path in path validation.
 * [3095](https://github.com/nginxinc/kubernetes-ingress/pull/3095) do not create configmap is customConfigMap is used.
 
 HELM CHART:
 
+* [3087](https://github.com/nginxinc/kubernetes-ingress/pull/3087) Allow omitting the default server secret from Helm installs.
 * [2831](https://github.com/nginxinc/kubernetes-ingress/pull/2831) Add ServiceMonitor to Helm Chart.
 * [2855](https://github.com/nginxinc/kubernetes-ingress/pull/2854) Add initialDelaySeconds to helm charts.
 * [2979](https://github.com/nginxinc/kubernetes-ingress/pull/2979) Allow to specify image with digest in helm chart.
