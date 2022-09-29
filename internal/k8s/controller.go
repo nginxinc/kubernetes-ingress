@@ -1506,6 +1506,19 @@ func (lbc *LoadBalancerController) processAppProtectDosChanges(changes []appprot
 				lbc.updateResourcesStatusAndEvents(resources, warnings, err)
 				msg := fmt.Sprintf("Configuration for %s/%s was added or updated", impl.Obj.Namespace, impl.Obj.Name)
 				lbc.recorder.Event(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", msg)
+			case *appprotectdos.DosPolicyEx:
+				msg := "Configuration was added or updated"
+				lbc.recorder.Event(impl.Obj, api_v1.EventTypeNormal, "AddedOrUpdated", msg)
+			case *appprotectdos.DosLogConfEx:
+				eventType := api_v1.EventTypeNormal
+				eventTitle := "AddedOrUpdated"
+				msg := "Configuration was added or updated"
+				if impl.ErrorMsg != "" {
+					msg += fmt.Sprintf(" ; with warning(s): %s", impl.ErrorMsg)
+					eventTitle = "AddedOrUpdatedWithWarning"
+					eventType = api_v1.EventTypeWarning
+				}
+				lbc.recorder.Event(impl.Obj, eventType, eventTitle, msg)
 			}
 		} else if c.Op == appprotectdos.Delete {
 			switch impl := c.Resource.(type) {
