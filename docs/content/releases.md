@@ -16,8 +16,8 @@ OVERVIEW:
 * TransportServer now also supports defining and [external name service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname), which will allow you to configure an external resolver for upstreams that use a domain name. For examples, see [externalname-services](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/externalname-services).
 * VirtualServer resource now supports [wildcard hostname](https://kubernetes.io/docs/concepts/services-networking/ingress/#hostname-wildcards).
 - Two new cli arguments have been added to the ingress controller.
-- - [-watch-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-string). This can configured by passing a comma separated list of namespaces to the `-watch-namespace` CLI argument (e.g. `-watch-namespace=ns-1,ns-2`).
-- - [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). When set, this cli argument will append the current year to the log output from the ingress controller. Example output: `I20220512 09:20:42.345457`.
+  - [-watch-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-string). This can configured by passing a comma separated list of namespaces to the `-watch-namespace` CLI argument (e.g. `-watch-namespace=ns-1,ns-2`).
+  - [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). When set, this cli argument will append the current year to the log output from the ingress controller. Example output: `I20220512 09:20:42.345457`.
 
 FEATURES:
 
