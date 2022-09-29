@@ -35,17 +35,17 @@ Before you can pull the image, make sure that the following software is installe
 2. Use Docker to pull the required image from `private-registry.nginx.com`. Choose the image from the available images listed in the [tech specs guide]({{< relref "technical-specifications#images-with-nginx-plus" >}}).
    For NGINX Plus Ingress Controller, pull from `private-registry.nginx.com/nginx-ic/nginx-plus-ingress`. For example:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.3.1
+   $ docker pull private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.4.0
    ```
 
    For NGINX Plus Ingress Controller with App Protect WAF, pull from `private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress`. For example:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.3.1
+   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.4.0
    ```
 
    For NGINX Plus Ingress Controller with App Protect DoS, pull from `private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress`. For example:
    ```
-   $ docker pull private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:2.3.1
+   $ docker pull private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:2.4.0
    ```
 
 
@@ -55,9 +55,9 @@ Before you can pull the image, make sure that the following software is installe
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "2.3.1-alpine",
-        "2.3.1-ubi",
-        "2.3.1"
+        "2.4.0-alpine",
+        "2.4.0-ubi",
+        "2.4.0"
     ]
     }
 
@@ -65,8 +65,8 @@ Before you can pull the image, make sure that the following software is installe
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "2.3.1-ubi",
-        "2.3.1"
+        "2.4.0-ubi",
+        "2.4.0"
     ]
     }
 
@@ -74,8 +74,8 @@ Before you can pull the image, make sure that the following software is installe
    {
     "name": "nginx-ic-dos/nginx-plus-ingress",
     "tags": [
-        "2.3.1-ubi",
-        "2.3.1"
+        "2.4.0-ubi",
+        "2.4.0"
     ]
     }
    ```
@@ -86,18 +86,18 @@ Before you can pull the image, make sure that the following software is installe
    - Replace `<my-docker-registry>` in the examples below with the correct path to your private Docker registry.
 
    ```
-   $ docker tag private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.3.1 <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.3.1
-   $ docker push <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.3.1
+   $ docker tag private-registry.nginx.com/nginx-ic/nginx-plus-ingress:2.4.0 <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.4.0
+   $ docker push <my-docker-registry>/nginx-ic/nginx-plus-ingress:2.4.0
    ```
 
    or for NGINX App Protect WAF enabled image
    ```
-   $ docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.3.1 <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.3.1
-   $ docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.3.1
+   $ docker tag private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.4.0 <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.4.0
+   $ docker push <my-docker-registry>/nginx-ic-nap/nginx-plus-ingress:2.4.0
    ```
 
    or for NGINX App Protect DoS enabled image
    ```
-   $ docker tag private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:2.3.1 <my-docker-registry>/nginx-ic-dos/nginx-plus-ingress:2.3.1
-   $ docker push <my-docker-registry>/nginx-ic-dos/nginx-plus-ingress:2.3.1
+   $ docker tag private-registry.nginx.com/nginx-ic-dos/nginx-plus-ingress:2.4.0 <my-docker-registry>/nginx-ic-dos/nginx-plus-ingress:2.4.0
+   $ docker push <my-docker-registry>/nginx-ic-dos/nginx-plus-ingress:2.4.0
    ```
