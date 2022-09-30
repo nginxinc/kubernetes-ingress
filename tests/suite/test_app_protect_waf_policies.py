@@ -351,7 +351,6 @@ class TestAppProtectWAFPolicyVS:
             log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
             retry += 1
             wait_before_test(1)
-
             print(f"Security log not updated, retrying... #{retry}")
 
         log_esc_contents = ""
