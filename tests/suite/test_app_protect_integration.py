@@ -340,9 +340,6 @@ class TestAppProtect:
         syslog_dst = f"syslog-svc.{test_namespace}"
         syslog2_dst = f"syslog2-svc.{test_namespace}"
 
-        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-")
-        syslog2_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog2")
-
         with open(src_ing_yaml) as f:
             doc = yaml.safe_load(f)
 
@@ -369,6 +366,8 @@ class TestAppProtect:
         print("----------------------- Send request ----------------------")
         response = requests.get(appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False)
         print(response.text)
+        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-")
+        syslog2_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog2")
         log_contents = ""
         log2_contents = ""
         retry = 0
