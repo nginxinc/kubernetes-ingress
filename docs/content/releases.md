@@ -12,12 +12,12 @@ docs: "DOCS-616"
 
 OVERVIEW:
 
-* Updates to the TransportServer resource to support [proxy_protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.0.1/examples/proxy-protocol) on port 443, both for regular HTTPS and TLS Passthrough traffic.
-* TransportServer now also supports defining and [external name service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname), which will allow you to configure an external resolver for upstreams that use a domain name. For examples, see [externalname-services](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/externalname-services).
+* Added support for enabling [proxy_protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/shared-examples/proxy-protocol) when port 443 is being used for both HTTPS traffic and [TLS Passthrough traffic](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/tls-passthrough).
+* TransportServer now also supports defining and [external name service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname), which will allow you to configure an external resolver for upstreams that use a domain name. For examples, see [externalname-services](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/externalname-services).
 * VirtualServer resource now supports [wildcard hostname](https://kubernetes.io/docs/concepts/services-networking/ingress/#hostname-wildcards).
-- Two new cli arguments have been added to the ingress controller.
-  - [-watch-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-string). This can configured by passing a comma separated list of namespaces to the `-watch-namespace` CLI argument (e.g. `-watch-namespace=ns-1,ns-2`).
-  - [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). When set, this cli argument will append the current year to the log output from the ingress controller. Example output: `I20220512 09:20:42.345457`.
+* NaP + DoS images are now published to our registry. See [Images with NGINX Plus](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#images-with-nginx-plus) for a detials list of images in our registry
+* Added support for watching multiple namespaces using the [-watch-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-string) cli argument. This can configured by passing a comma separated list of namespaces to the `-watch-namespace` CLI argument (e.g. `-watch-namespace=ns-1,ns-2`).
+* A new cli argument has been added. The [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). This will append the current year to the log output from the ingress controller. Example output: `I20220512 09:20:42.345457`.
 
 FEATURES:
 
@@ -30,24 +30,21 @@ FEATURES:
 
 IMPROVEMENTS:
 
-* [2912](https://github.com/nginxinc/kubernetes-ingress/pull/2912) NIC + NAP DoS images.
 * [3040](https://github.com/nginxinc/kubernetes-ingress/pull/3040) Add command line argument to manually disable IPV6 listeners for unsupported clusters.
 * [3088](https://github.com/nginxinc/kubernetes-ingress/pull/3088) Filter secrets of type helm.sh/release.v1.
 
 FIXES:
 
-* [3094](https://github.com/nginxinc/kubernetes-ingress/pull/3094) Optimise path validation.
-* [2848](https://github.com/nginxinc/kubernetes-ingress/pull/2848) fix: Change alpine version grab to include a colon in the updater.
 * [2983](https://github.com/nginxinc/kubernetes-ingress/pull/2983) docs: Fix links in the NAP config doc in main.
-* [2971](https://github.com/nginxinc/kubernetes-ingress/pull/2971) fix: Correct error message on missing path in path validation.
-* [3095](https://github.com/nginxinc/kubernetes-ingress/pull/3095) do not create configmap if customConfigMap is used.
+* [2971](https://github.com/nginxinc/kubernetes-ingress/pull/2971) fix: Correct error message on missing path in path validation. Thanks to [Zachary Seguin](https://github.com/zachomedia).
+* [3095](https://github.com/nginxinc/kubernetes-ingress/pull/3095) do not create configmap if customConfigMap is used. Thanks to [Bryan Hendryx](https://github.com/coolbry95).
 
 HELM CHART:
 
 * [3087](https://github.com/nginxinc/kubernetes-ingress/pull/3087) Allow omitting the default server secret from Helm installs.
-* [2831](https://github.com/nginxinc/kubernetes-ingress/pull/2831) Add ServiceMonitor to Helm Chart.
-* [2855](https://github.com/nginxinc/kubernetes-ingress/pull/2854) Add initialDelaySeconds to helm charts.
-* [2979](https://github.com/nginxinc/kubernetes-ingress/pull/2979) Allow to specify image with digest in helm chart.
+* [2831](https://github.com/nginxinc/kubernetes-ingress/pull/2831) Add ServiceMonitor to Helm Chart. Thanks to [araineUnity](https://github.com/araineUnity).
+* [2855](https://github.com/nginxinc/kubernetes-ingress/pull/2854) Add initialDelaySeconds to helm charts. Thanks to [Daniel Edgar](https://github.com/aknot242).
+* [2979](https://github.com/nginxinc/kubernetes-ingress/pull/2979) Allow to specify image with digest in helm chart. Thanks to [Hans Feldt](https://github.com/hafe).
 * [3031](https://github.com/nginxinc/kubernetes-ingress/pull/3031) Adding automountServiceAccountToken to helm chart.
 
 UPGRADE:
