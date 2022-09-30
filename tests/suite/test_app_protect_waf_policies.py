@@ -24,6 +24,7 @@ from suite.resources_utils import (
     get_file_contents,
     get_service_endpoint,
     wait_before_test,
+    get_pod_name_that_contains,
 )
 from suite.vs_vsr_resources_utils import (
     create_v_s_route_from_yaml,
@@ -311,8 +312,8 @@ class TestAppProtectWAFPolicyVS:
         create_items_from_yaml(kube_apis, src_syslog_yaml_additional, test_namespace)
         syslog_dst1 = f"syslog-svc.{test_namespace}"
         syslog_dst2 = f"syslog-svc-1.{test_namespace}"
-        syslog_pod = kube_apis.v1.list_namespaced_pod(test_namespace, label_selector="app=syslog").items
-        syslog_esc_pod = kube_apis.v1.list_namespaced_pod(test_namespace, label_selector="app=syslog-1").items
+        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog")
+        syslog_esc_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-1")
         print(f"Create waf policy")
         create_ap_multilog_waf_policy_from_yaml(
             kube_apis.custom_objects,
@@ -346,20 +347,18 @@ class TestAppProtectWAFPolicyVS:
         print(response.text)
         log_contents = ""
         retry = 0
-        while "ASM:attack_type" not in log_contents and retry <= 30:
-            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod[0].metadata.name, test_namespace)
+        while "ASM:attack_type" not in log_contents and retry <= 60:
+            log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
             retry += 1
             wait_before_test(1)
-            print(log_contents)
             print(f"Security log not updated, retrying... #{retry}")
 
         log_esc_contents = ""
         retry = 0
-        while "attack_type" not in log_esc_contents and retry <= 30:
-            log_esc_contents = get_file_contents(kube_apis.v1, log_loc, syslog_esc_pod[0].metadata.name, test_namespace)
+        while "attack_type" not in log_esc_contents and retry <= 60:
+            log_esc_contents = get_file_contents(kube_apis.v1, log_loc, syslog_esc_pod, test_namespace)
             retry += 1
             wait_before_test(1)
-            print(log_esc_contents)
             print(f"Security log not updated, retrying... #{retry}")
 
         delete_policy(kube_apis.custom_objects, "waf-policy", test_namespace)

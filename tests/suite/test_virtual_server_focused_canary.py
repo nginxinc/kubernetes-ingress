@@ -60,7 +60,7 @@ class TestVSFocusedCanaryRelease:
         counter_v1, counter_v2 = 0, 0
         for _ in range(100):
             ensure_response_from_backend(
-                virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, check404=True
+                virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"x-version": "canary"}, check404=True
             )
             resp = requests.get(
                 virtual_server_setup.backend_1_url,
