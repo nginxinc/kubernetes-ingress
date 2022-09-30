@@ -312,8 +312,6 @@ class TestAppProtectWAFPolicyVS:
         create_items_from_yaml(kube_apis, src_syslog_yaml_additional, test_namespace)
         syslog_dst1 = f"syslog-svc.{test_namespace}"
         syslog_dst2 = f"syslog-svc-1.{test_namespace}"
-        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog")
-        syslog_esc_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-1")
         print(f"Create waf policy")
         create_ap_multilog_waf_policy_from_yaml(
             kube_apis.custom_objects,
@@ -345,6 +343,8 @@ class TestAppProtectWAFPolicyVS:
             headers={"host": virtual_server_setup.vs_host},
         )
         print(response.text)
+        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog")
+        syslog_esc_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-1")
         log_contents = ""
         retry = 0
         while "ASM:attack_type" not in log_contents and retry <= 60:
