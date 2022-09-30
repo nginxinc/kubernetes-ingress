@@ -22,9 +22,9 @@ from suite.resources_utils import (
     create_items_from_yaml,
     delete_items_from_yaml,
     get_file_contents,
+    get_pod_name_that_contains,
     get_service_endpoint,
     wait_before_test,
-    get_pod_name_that_contains,
 )
 from suite.vs_vsr_resources_utils import (
     create_v_s_route_from_yaml,
