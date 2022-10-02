@@ -334,6 +334,8 @@ spec:
                           type: object
                         settings:
                           properties:
+                            caseSensitiveHttpHeaders:
+                              type: boolean
                             isEnabled:
                               type: boolean
                           type: object
