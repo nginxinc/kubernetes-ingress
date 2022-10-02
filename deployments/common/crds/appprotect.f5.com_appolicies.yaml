@@ -336,6 +336,8 @@ spec:
                           properties:
                             isEnabled:
                               type: boolean
+                            caseSensitiveHttpHeaders:
+                              type: boolean
                           type: object
                       type: object
                     browser-definitions:
