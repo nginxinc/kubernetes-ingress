@@ -13,11 +13,11 @@ docs: "DOCS-616"
 OVERVIEW:
 
 * Added support for enabling [proxy_protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/shared-examples/proxy-protocol) when port 443 is being used for both HTTPS traffic and [TLS Passthrough traffic](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/tls-passthrough).
-* TransportServer now also supports defining and [external name service](https://kubernetes.io/docs/concepts/services-networking/service/#externalname), which will allow you to configure an external resolver for upstreams that use a domain name. For examples, see [externalname-services](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/externalname-services).
+* Updates to the TransportServer resource to support using [ExternalName services] (https://kubernetes.io/docs/concepts/services-networking/service/#externalname). For examples, see [externalname-services](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/externalname-services).
 * VirtualServer resource now supports [wildcard hostname](https://kubernetes.io/docs/concepts/services-networking/ingress/#hostname-wildcards).
-* NaP + DoS images are now published to our registry. See [Images with NGINX Plus](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#images-with-nginx-plus) for a detials list of images in our registry
+* NGINX Ingress Controller images including the combined NGINX AppProtect WAF and NGINX AppProtect DoS solutions are now published to our registry. See [Images with NGINX Plus](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#images-with-nginx-plus) for a detials list of images in our registry
 * Added support for watching multiple namespaces using the [-watch-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-string) cli argument. This can configured by passing a comma separated list of namespaces to the `-watch-namespace` CLI argument (e.g. `-watch-namespace=ns-1,ns-2`).
-* A new cli argument has been added. The [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). This will append the current year to the log output from the ingress controller. Example output: `I20220512 09:20:42.345457`.
+* A new cli argument has been added: [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). This appends the current year to the log output from the ingress controller. Example output: `I20220512 09:20:42.345457`.
 
 FEATURES:
 
@@ -26,7 +26,7 @@ FEATURES:
 * [2884](https://github.com/nginxinc/kubernetes-ingress/pull/2884) Include year in logs.
 * [2993](https://github.com/nginxinc/kubernetes-ingress/pull/2993) Accept proxy protocol when TLS passthrough enabled.
 * [3041](https://github.com/nginxinc/kubernetes-ingress/pull/3041) Support external name service for TansportServer.
-* [2939](https://github.com/nginxinc/kubernetes-ingress/pull/2939) Add support for wildcard hostname in VirutalServer.
+* [2939](https://github.com/nginxinc/kubernetes-ingress/pull/2939) Add support for wildcard hostname in VirtualServer.
 
 IMPROVEMENTS:
 
@@ -54,7 +54,7 @@ UPGRADE:
 
 SUPPORTED PLATFORMS:
 
-We will provide technical support for the NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and which passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.25.
+We will provide technical support for NGINX Ingress Controller on any Kubernetes platform that is currently supported by its provider and that passes the Kubernetes conformance tests. This release was fully tested on the following Kubernetes versions: 1.19-1.25.
 
 ## NGINX Ingress Controller 2.3.1
 
