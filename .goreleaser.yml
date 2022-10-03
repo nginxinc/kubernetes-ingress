@@ -64,3 +64,9 @@ release:
 
 milestones:
   - close: true
+
+announce:
+  slack:
+    enabled: true
+    channel: '#announcements'
+    message_template: 'NGINX Ingress Controller {{ .Tag }} is out! Check it out: {{ .ReleaseURL }}'

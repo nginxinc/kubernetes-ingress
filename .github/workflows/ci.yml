@@ -327,6 +327,7 @@ jobs:
           GOPATH: ${{ needs.checks.outputs.go_path }}
           AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
           AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_COMMUNITY }}
       - name: Store Artifacts in Cache
         uses: actions/cache@v3
         with:
