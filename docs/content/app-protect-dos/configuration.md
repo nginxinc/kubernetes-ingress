@@ -112,12 +112,9 @@ For example, say you want to log state changing requests for your Ingress resour
 ```json
 {
     "filter": {
-        "request_type": "all"
-    },
-    "content": {
-        "format": "default",
-        "max_request_size": "any",
-        "max_message_size": "64k"
+        "traffic-mitigation-stats": "all",
+        "bad-actors": "top 10",
+        "attack-signatures": "top 10"
     }
 }
 ```
@@ -130,9 +127,6 @@ kind: APDosLogConf
 metadata:
    name: doslogconf
 spec:
-   content:
-      format: splunk
-      max_message_size: 64k
    filter:
       traffic-mitigation-stats: all
       bad-actors: top 10

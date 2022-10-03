@@ -16,6 +16,8 @@ FROM nginx:1.23.1 AS debian
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
+	# temp fix for CVE-2022-40674
+	&& apt-get install -y libexpat1 \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
@@ -241,11 +243,12 @@ FROM golang:1.19-alpine AS builder
 ARG IC_VERSION
 ARG TARGETARCH
 
-WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/cmd/nginx-ingress
-RUN --mount=target=/go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+WORKDIR /go/src/github.com/nginxinc/kubernetes-ingress/
+RUN apk add --no-cache git
+RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
 	go mod download
-RUN --mount=target=/go/src/github.com/nginxinc/kubernetes-ingress/nginx-ingress/ --mount=type=cache,target=/root/.cache/go-build \
-	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION}" -o /nginx-ingress
+RUN --mount=type=bind,target=/go/src/github.com/nginxinc/kubernetes-ingress/ --mount=type=cache,target=/root/.cache/go-build \
+	CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -trimpath -ldflags "-s -w -X main.version=${IC_VERSION}" -o /nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 
 
 ############################################# Create image with nginx-ingress built in container #############################################

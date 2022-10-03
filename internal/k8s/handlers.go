@@ -539,7 +539,7 @@ func areResourcesDifferent(oldresource, resource *unstructured.Unstructured) (bo
 		return false, err
 	}
 	if !found {
-		return false, fmt.Errorf("Error, spec has unexpected format")
+		return false, fmt.Errorf("spec has unexpected format")
 	}
 	eq := reflect.DeepEqual(oldSpec, spec)
 	if eq {

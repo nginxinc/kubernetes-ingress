@@ -4,7 +4,9 @@ grafana
 tests/.pytest_cache
 tests/__pycache__
 hack
-.git*
+.git/modules
+.git/rr-cache
+.git/logs
 *.md
 *.crt
 *.key
