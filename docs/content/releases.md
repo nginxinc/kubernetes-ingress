@@ -15,8 +15,8 @@ OVERVIEW:
 * Added support for enabling [proxy_protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/shared-examples/proxy-protocol) when port 443 is being used for both HTTPS traffic and [TLS Passthrough traffic](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/tls-passthrough).
 * Updates to the TransportServer resource to support using [ExternalName services] (https://kubernetes.io/docs/concepts/services-networking/service/#externalname). For examples, see [externalname-services](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/externalname-services).
 * VirtualServer resource now supports [wildcard hostname](https://kubernetes.io/docs/concepts/services-networking/ingress/#hostname-wildcards).
-* NGINX Ingress Controller images including the combined NGINX AppProtect WAF and NGINX AppProtect DoS solutions are now published to our registry. See [Images with NGINX Plus](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#images-with-nginx-plus) for a detials list of images in our registry
-* Added support for watching multiple namespaces using the [-watch-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-string) cli argument. This can configured by passing a comma separated list of namespaces to the `-watch-namespace` CLI argument (e.g. `-watch-namespace=ns-1,ns-2`).
+* NGINX Ingress Controller images including the combined NGINX AppProtect WAF and NGINX AppProtect DoS solutions are now published to our registry. See [Images with NGINX Plus](https://docs.nginx.com/nginx-ingress-controller/technical-specifications/#images-with-nginx-plus) for a detailed list of images in our registry
+* Added support for watching multiple namespaces using the [-watch-namespace](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-watch-namespace-string) cli argument. This can configured by passing a comma-separated list of namespaces to the `-watch-namespace` CLI argument (e.g. `-watch-namespace=ns-1,ns-2`).
 * A new cli argument has been added: [-include-year](https://docs.nginx.com/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#-include-year). This appends the current year to the log output from the ingress controller. Example output: `I20220512 09:20:42.345457`.
 
 FEATURES:
@@ -35,7 +35,6 @@ IMPROVEMENTS:
 
 FIXES:
 
-* [2983](https://github.com/nginxinc/kubernetes-ingress/pull/2983) docs: Fix links in the NAP config doc in main.
 * [2971](https://github.com/nginxinc/kubernetes-ingress/pull/2971) fix: Correct error message on missing path in path validation. Thanks to [Zachary Seguin](https://github.com/zachomedia).
 * [3095](https://github.com/nginxinc/kubernetes-ingress/pull/3095) do not create configmap if customConfigMap is used. Thanks to [Bryan Hendryx](https://github.com/coolbry95).
 
