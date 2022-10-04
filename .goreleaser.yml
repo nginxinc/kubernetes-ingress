@@ -44,7 +44,6 @@ builds:
 
 archives:
   - id: kubernetes-ingress
-    format: binary
     builds: [kubernetes-ingress]
 
 changelog:
@@ -54,13 +53,23 @@ checksum:
   name_template: 'checksums.txt'
 
 sboms:
-  - artifacts: binary
+  - artifacts: archive
     ids: [kubernetes-ingress]
 
 release:
   ids: [kubernetes-ingress]
-  extra_files:
-    - glob: ./dist/**.sbom
+
+blobs:
+  - provider: azblob
+    bucket: '{{.Env.AZURE_BUCKET_NAME}}'
+    extra_files:
+      - glob: ./dist/**.sbom
 
 milestones:
   - close: true
+
+announce:
+  slack:
+    enabled: true
+    channel: '#announcements'
+    message_template: 'NGINX Ingress Controller {{ .Tag }} is out! Check it out: {{ .ReleaseURL }}'
