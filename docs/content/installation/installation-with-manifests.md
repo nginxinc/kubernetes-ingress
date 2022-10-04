@@ -10,8 +10,6 @@ docs: "DOCS-603"
 ---
 
 
-This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using Kubernetes manifests.
-
 ## Prerequisites
 
 1. Make sure you have access to the Ingress Controller image:
@@ -21,7 +19,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
 2. Clone the Ingress Controller repo and change into the deployments folder:
     ```
-    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.3.1
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.4.0
     $ cd kubernetes-ingress/deployments
     ```
 

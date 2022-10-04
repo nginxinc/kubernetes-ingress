@@ -9,7 +9,7 @@ docs: "DOCS-578"
 aliases: ["/app-protect/configuration/"]
 ---
 
-> Check out the complete NGINX Ingress Controller with App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.1/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.1/examples/ingress-resources/app-protect-waf).
+> Check out the complete NGINX Ingress Controller with App Protect WAF example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/ingress-resources/app-protect-waf).
 
 ## Global Configuration
 
@@ -246,8 +246,8 @@ These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingr
 3. Make other custom changes if needed (e.g. enable Data Guard protection).
 4. Use a tool to convert the result to YAML. There are many, for example: [`yq` utility](https://github.com/mikefarah/yq).
 5. Add the YAML properties to create an `APPolicy` Custom Resource putting the policy itself (as in step 4) within the `spec` property of the Custom Resource. Refer to [App Protect Policies](#app-protect-policies) section above.
-6. Create a `Policy` object which references the `APPolicy` Custom Resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/v2.3.1/examples/custom-resources/waf/waf.yaml).
-7. Finally, attach the `Policy` object to a `VirtualServer` resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/v2.3.1/examples/custom-resources/waf/virtual-server.yaml).
+6. Create a `Policy` object which references the `APPolicy` Custom Resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/v2.4.0/examples/custom-resources/waf/waf.yaml).
+7. Finally, attach the `Policy` object to a `VirtualServer` resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/v2.4.0/examples/custom-resources/waf/virtual-server.yaml).
 
 **Note**:  You need to make sure that the server where the resource files are located is always available when you are compiling your policy.
 
@@ -383,7 +383,7 @@ The `link` option is also available in the `openApiFileReference` property and i
 ## Configuration in NGINX Plus Ingress Controller using Virtual Server Resource
 In this example we deploy the NGINX Plus Ingress Controller with NGINX App Protect WAF, a simple web application and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
-**Note:** You can find the example, and the files referenced, on [GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.1/examples/custom-resources/waf).
+**Note:** You can find the example, and the files referenced, on [GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/waf).
 
 ## Prerequisites
 
@@ -402,29 +402,29 @@ In this example we deploy the NGINX Plus Ingress Controller with NGINX App Prote
 
 Create the application deployment and service:
   ```
-  $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.1/examples/custom-resources/waf/webapp.yaml
+  $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.0/examples/custom-resources/waf/webapp.yaml
   ```
 
 ### Step 2. Deploy the AP Policy
 
 1. Create the syslog service and pod for the App Protect security logs:
     ```
-   $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.1/examples/custom-resources/waf/syslog.yaml
+   $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.0/examples/custom-resources/waf/syslog.yaml
    ```
 
 2. Create the User Defined Signature, App Protect WAF policy, and log configuration:
 
     ```
-      $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.1/examples/custom-resources/waf/ap-apple-uds.yaml
-      $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.1/examples/custom-resources/waf/ap-dataguard-alarm-policy.yaml
-      $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.1/examples/custom-resources/waf/ap-logconf.yaml
+      $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.0/examples/custom-resources/waf/ap-apple-uds.yaml
+      $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.0/examples/custom-resources/waf/ap-dataguard-alarm-policy.yaml
+      $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.0/examples/custom-resources/waf/ap-logconf.yaml
     ```
 
 ### Step 3 - Deploy the WAF Policy
 
 Create the WAF policy
  ``` 
-  $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.1/examples/custom-resources/waf/waf.yaml
+  $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.0/examples/custom-resources/waf/waf.yaml
   ```
   Note the App Protect configuration settings in the Policy resource. They enable WAF protection by configuring App Protect with the policy and log configuration created in the previous step.
 
@@ -432,7 +432,7 @@ Create the WAF policy
 
 1. Create the VirtualServer Resource:
     ```
-    $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.1/examples/custom-resources/waf/virtual-server.yaml
+    $ kubectl apply -f https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.0/examples/custom-resources/waf/virtual-server.yaml
     ```
 Note that the VirtualServer references the policy waf-policy created in Step 3.
 
@@ -467,7 +467,7 @@ To access the application, curl the coffee and the tea services. We'll use the -
 
 ### Configuration Example of Virtual Server
 
-Refer to github repo for [Virtual Server example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.1/examples/custom-resources/waf/webapp.yaml).
+Refer to github repo for [Virtual Server example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.0/examples/custom-resources/waf/webapp.yaml).
 
 ```yaml
 apiVersion: k8s.nginx.org/v1
