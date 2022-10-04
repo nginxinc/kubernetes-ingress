@@ -328,6 +328,10 @@ jobs:
           AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
           AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_COMMUNITY }}
+          AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
+          AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
+          AZURE_BUCKET_NAME: ${{ secrets.AZURE_BUCKET_NAME }}
+
       - name: Store Artifacts in Cache
         uses: actions/cache@v3
         with:
