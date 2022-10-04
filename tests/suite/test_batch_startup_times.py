@@ -1,5 +1,3 @@
-import time
-
 import pytest
 import requests
 import yaml
@@ -13,7 +11,7 @@ from suite.ap_resources_utils import (
     delete_ap_policy,
     delete_ap_usersig,
 )
-from suite.policy_resources_utils import create_policy_from_yaml, delete_policy
+from suite.policy_resources_utils import delete_policy
 from suite.resources_utils import (
     create_example_app,
     create_ingress,
@@ -38,7 +36,6 @@ from suite.resources_utils import (
 from suite.vs_vsr_resources_utils import (
     create_v_s_route,
     create_virtual_server,
-    create_virtual_server_from_yaml,
     delete_virtual_server,
     patch_virtual_server_from_yaml,
 )
@@ -267,6 +264,7 @@ class TestAppProtect:
             print(f"Number of replicas not 0, retrying...")
             wait_before_test()
         num = scale_deployment(kube_apis.v1, kube_apis.apps_v1_api, "nginx-ingress", ic_ns, 1)
+        wait_before_test(30)
 
         assert (
             get_total_ingresses(ap_ingress_setup.metrics_url, "nginx") == str(total_ing + 1)

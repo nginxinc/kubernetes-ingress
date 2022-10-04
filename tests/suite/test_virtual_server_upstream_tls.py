@@ -9,7 +9,7 @@ from suite.custom_assertions import (
     assert_no_new_events,
     assert_response_codes,
 )
-from suite.resources_utils import get_events, get_first_pod_name, wait_before_test
+from suite.resources_utils import ensure_response_from_backend, get_events, get_first_pod_name, wait_before_test
 from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_virtual_server_from_yaml
 
 
@@ -37,7 +37,9 @@ class TestVirtualServerUpstreamTls:
             ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
+        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, check404=True)
         resp_1 = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
+        ensure_response_from_backend(virtual_server_setup.backend_2_url, virtual_server_setup.vs_host, check404=True)
         resp_2 = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
 
         proxy_host = f"vs_{virtual_server_setup.namespace}_{virtual_server_setup.vs_name}"
@@ -80,7 +82,9 @@ class TestVirtualServerUpstreamTls:
             ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
+        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, check404=True)
         resp_1 = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
+        ensure_response_from_backend(virtual_server_setup.backend_2_url, virtual_server_setup.vs_host, check404=True)
         resp_2 = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
         new_events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
 
@@ -112,7 +116,9 @@ class TestVirtualServerUpstreamTls:
             ic_pod_name,
             ingress_controller_prerequisites.namespace,
         )
+        ensure_response_from_backend(virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, check404=True)
         resp_1 = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
+        ensure_response_from_backend(virtual_server_setup.backend_2_url, virtual_server_setup.vs_host, check404=True)
         resp_2 = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
         new_events_vs = get_events(kube_apis.v1, virtual_server_setup.namespace)
 

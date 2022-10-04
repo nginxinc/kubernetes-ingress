@@ -13,7 +13,13 @@ from suite.custom_resources_utils import (
     delete_dos_policy,
     delete_dos_protected,
 )
-from suite.dos_utils import check_learning_status_with_admd_s, find_in_log, log_content_to_dic
+from suite.dos_utils import (
+    check_learning_status_with_admd_s,
+    clean_good_bad_clients,
+    find_in_log,
+    log_content_to_dic,
+    print_admd_log,
+)
 from suite.resources_utils import (
     clear_file_contents,
     create_dos_arbitrator,
@@ -27,7 +33,6 @@ from suite.resources_utils import (
     ensure_response_from_backend,
     get_file_contents,
     get_ingress_nginx_template_conf,
-    get_pods_amount,
     get_pods_amount_with_name,
     get_test_file_name,
     nginx_reload,
@@ -77,6 +82,9 @@ def dos_setup(
     :return: DosSetup
     """
 
+    # Clean old scripts if still running
+    clean_good_bad_clients()
+
     print(f"------------- Replace ConfigMap --------------")
     replace_configmap_from_yaml(
         kube_apis.v1,
@@ -125,6 +133,7 @@ def dos_setup(
         delete_common_app(kube_apis, "dos", test_namespace)
         delete_items_from_yaml(kube_apis, src_sec_yaml, test_namespace)
         write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
+        clean_good_bad_clients()
 
     request.addfinalizer(fin)
 
@@ -140,6 +149,7 @@ def dos_setup(
                 f"-enable-custom-resources",
                 f"-enable-app-protect-dos",
                 f"-v=3",
+                f"-app-protect-dos-debug",
             ]
         }
     ],
@@ -233,74 +243,6 @@ class TestDos:
         assert f'vs_name="{test_namespace}/dos-protected/name"' in log_contents
         assert "bad_actor" in log_contents
 
-    def test_dos_under_attack_no_learning(
-        self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, dos_setup, test_namespace
-    ):
-        """
-        Test App Protect Dos: Block bad clients attack
-        """
-        log_loc = f"/var/log/messages"
-        print("----------------------- Get syslog pod name ----------------------")
-        syslog_pod = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "syslog")
-        assert "syslog" in syslog_pod
-        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
-
-        print("------------------------- Deploy ingress -----------------------------")
-        create_ingress_with_dos_annotations(kube_apis, src_ing_yaml, test_namespace, test_namespace + "/dos-protected")
-        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
-
-        print("------------------------- Attack -----------------------------")
-        wait_before_test(10)
-        print("start bad clients requests")
-        p_attack = subprocess.Popen(
-            [f"exec {TEST_DATA}/dos/bad_clients_xff.sh {ingress_host} {dos_setup.req_url}"],
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
-
-        print("Attack for 30 seconds")
-        wait_before_test(30)
-
-        print("Stop Attack")
-        p_attack.terminate()
-
-        print("wait max 140 seconds after attack stop, to get attack ended")
-        find_in_log(
-            kube_apis,
-            log_loc,
-            syslog_pod,
-            ingress_controller_prerequisites.namespace,
-            140,
-            'attack_event="Attack ended"',
-        )
-
-        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, ingress_controller_prerequisites.namespace)
-        log_info_dic = log_content_to_dic(log_contents)
-
-        # Analyze the log
-        no_attack = False
-        attack_started = False
-        under_attack = False
-        attack_ended = False
-        for log in log_info_dic:
-            # Start with no attack
-            if log["attack_event"] == "No Attack" and int(log["dos_attack_id"]) == 0 and not no_attack:
-                no_attack = True
-            # Attack started
-            elif log["attack_event"] == "Attack started" and int(log["dos_attack_id"]) > 0 and not attack_started:
-                attack_started = True
-            # Under attack
-            elif log["attack_event"] == "Under Attack" and int(log["dos_attack_id"]) > 0 and not under_attack:
-                under_attack = True
-            # Attack ended
-            elif log["attack_event"] == "Attack ended" and int(log["dos_attack_id"]) > 0 and not attack_ended:
-                attack_ended = True
-
-        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
-
-        assert no_attack and attack_started and under_attack and attack_ended
-
     def test_dos_under_attack_with_learning(
         self, kube_apis, ingress_controller_prerequisites, crd_ingress_controller_with_dos, dos_setup, test_namespace
     ):
@@ -361,13 +303,13 @@ class TestDos:
         print("Stop Attack")
         p_attack.terminate()
 
-        print("wait max 140 seconds after attack stop, to get attack ended")
+        print("wait max 200 seconds after attack stop, to get attack ended")
         find_in_log(
             kube_apis,
             log_loc,
             syslog_pod,
             ingress_controller_prerequisites.namespace,
-            140,
+            200,
             'attack_event="Attack ended"',
         )
 

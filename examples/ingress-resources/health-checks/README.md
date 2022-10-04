@@ -20,9 +20,9 @@ kind: Ingress
 metadata:
   name: cafe-ingress
   annotations:
-     kubernetes.io/ingress.class: "nginx"
      nginx.com/health-checks: "true"
 spec:
+  ingressClassName: nginx
   rules:
   - host: "cafe.example.com"
     http:

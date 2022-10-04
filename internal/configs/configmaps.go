@@ -10,7 +10,9 @@ import (
 )
 
 // ParseConfigMap parses ConfigMap into ConfigParams.
-func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool) *ConfigParams {
+//
+//nolint:gocyclo
+func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasAppProtectDos bool, hasTLSPassthrough bool) *ConfigParams {
 	cfgParams := NewDefaultConfigParams(nginxPlus)
 
 	if serverTokens, exists, err := GetMapKeyAsBool(cfgm.Data, "server-tokens", cfgm); exists {
@@ -56,20 +58,12 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		cfgParams.ProxySendTimeout = proxySendTimeout
 	}
 
-	if proxyHideHeaders, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "proxy-hide-headers", cfgm, ","); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.ProxyHideHeaders = proxyHideHeaders
-		}
+	if proxyHideHeaders, exists := GetMapKeyAsStringSlice(cfgm.Data, "proxy-hide-headers", cfgm, ","); exists {
+		cfgParams.ProxyHideHeaders = proxyHideHeaders
 	}
 
-	if proxyPassHeaders, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "proxy-pass-headers", cfgm, ","); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.ProxyPassHeaders = proxyPassHeaders
-		}
+	if proxyPassHeaders, exists := GetMapKeyAsStringSlice(cfgm.Data, "proxy-pass-headers", cfgm, ","); exists {
+		cfgParams.ProxyPassHeaders = proxyPassHeaders
 	}
 
 	if clientMaxBodySize, exists := cfgm.Data["client-max-body-size"]; exists {
@@ -156,15 +150,20 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 	}
 
 	if realIPHeader, exists := cfgm.Data["real-ip-header"]; exists {
-		cfgParams.RealIPHeader = realIPHeader
+		if hasTLSPassthrough {
+			msg := "Configmap %s/%s: key real-ip-header is ignored, directive real_ip_header is automatically set to 'proxy_protocol' when TLS passthrough is enabled."
+			if realIPHeader == "proxy_protocol" {
+				glog.Infof(msg, cfgm.GetNamespace(), cfgm.GetName())
+			} else {
+				glog.Errorf(msg, cfgm.GetNamespace(), cfgm.GetName())
+			}
+		} else {
+			cfgParams.RealIPHeader = realIPHeader
+		}
 	}
 
-	if setRealIPFrom, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "set-real-ip-from", cfgm, ","); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.SetRealIPFrom = setRealIPFrom
-		}
+	if setRealIPFrom, exists := GetMapKeyAsStringSlice(cfgm.Data, "set-real-ip-from", cfgm, ","); exists {
+		cfgParams.SetRealIPFrom = setRealIPFrom
 	}
 
 	if realIPRecursive, exists, err := GetMapKeyAsBool(cfgm.Data, "real-ip-recursive", cfgm); exists {
@@ -208,12 +207,8 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		}
 	}
 
-	if logFormat, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "log-format", cfgm, "\n"); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.MainLogFormat = logFormat
-		}
+	if logFormat, exists := GetMapKeyAsStringSlice(cfgm.Data, "log-format", cfgm, "\n"); exists {
+		cfgParams.MainLogFormat = logFormat
 	}
 
 	if logFormatEscaping, exists := cfgm.Data["log-format-escaping"]; exists {
@@ -223,12 +218,8 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		}
 	}
 
-	if streamLogFormat, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "stream-log-format", cfgm, "\n"); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.MainStreamLogFormat = streamLogFormat
-		}
+	if streamLogFormat, exists := GetMapKeyAsStringSlice(cfgm.Data, "stream-log-format", cfgm, "\n"); exists {
+		cfgParams.MainStreamLogFormat = streamLogFormat
 	}
 
 	if streamLogFormatEscaping, exists := cfgm.Data["stream-log-format-escaping"]; exists {
@@ -270,36 +261,20 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		cfgParams.ProxyMaxTempFileSize = proxyMaxTempFileSize
 	}
 
-	if mainMainSnippets, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "main-snippets", cfgm, "\n"); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.MainMainSnippets = mainMainSnippets
-		}
+	if mainMainSnippets, exists := GetMapKeyAsStringSlice(cfgm.Data, "main-snippets", cfgm, "\n"); exists {
+		cfgParams.MainMainSnippets = mainMainSnippets
 	}
 
-	if mainHTTPSnippets, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "http-snippets", cfgm, "\n"); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.MainHTTPSnippets = mainHTTPSnippets
-		}
+	if mainHTTPSnippets, exists := GetMapKeyAsStringSlice(cfgm.Data, "http-snippets", cfgm, "\n"); exists {
+		cfgParams.MainHTTPSnippets = mainHTTPSnippets
 	}
 
-	if locationSnippets, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "location-snippets", cfgm, "\n"); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.LocationSnippets = locationSnippets
-		}
+	if locationSnippets, exists := GetMapKeyAsStringSlice(cfgm.Data, "location-snippets", cfgm, "\n"); exists {
+		cfgParams.LocationSnippets = locationSnippets
 	}
 
-	if serverSnippets, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "server-snippets", cfgm, "\n"); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.ServerSnippets = serverSnippets
-		}
+	if serverSnippets, exists := GetMapKeyAsStringSlice(cfgm.Data, "server-snippets", cfgm, "\n"); exists {
+		cfgParams.ServerSnippets = serverSnippets
 	}
 
 	if _, exists, err := GetMapKeyAsInt(cfgm.Data, "worker-processes", cfgm); exists {
@@ -362,23 +337,15 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 		cfgParams.VirtualServerTemplate = &virtualServerTemplate
 	}
 
-	if mainStreamSnippets, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "stream-snippets", cfgm, "\n"); exists {
-		if err != nil {
-			glog.Error(err)
-		} else {
-			cfgParams.MainStreamSnippets = mainStreamSnippets
-		}
+	if mainStreamSnippets, exists := GetMapKeyAsStringSlice(cfgm.Data, "stream-snippets", cfgm, "\n"); exists {
+		cfgParams.MainStreamSnippets = mainStreamSnippets
 	}
 
-	if resolverAddresses, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "resolver-addresses", cfgm, ","); exists {
-		if err != nil {
-			glog.Error(err)
+	if resolverAddresses, exists := GetMapKeyAsStringSlice(cfgm.Data, "resolver-addresses", cfgm, ","); exists {
+		if nginxPlus {
+			cfgParams.ResolverAddresses = resolverAddresses
 		} else {
-			if nginxPlus {
-				cfgParams.ResolverAddresses = resolverAddresses
-			} else {
-				glog.Warning("ConfigMap key 'resolver-addresses' requires NGINX Plus")
-			}
+			glog.Warning("ConfigMap key 'resolver-addresses' requires NGINX Plus")
 		}
 	}
 
@@ -510,12 +477,8 @@ func ParseConfigMap(cfgm *v1.ConfigMap, nginxPlus bool, hasAppProtect bool, hasA
 	}
 
 	if hasAppProtectDos {
-		if appProtectDosLogFormat, exists, err := GetMapKeyAsStringSlice(cfgm.Data, "app-protect-dos-log-format", cfgm, "\n"); exists {
-			if err != nil {
-				glog.Error(err)
-			} else {
-				cfgParams.MainAppProtectDosLogFormat = appProtectDosLogFormat
-			}
+		if appProtectDosLogFormat, exists := GetMapKeyAsStringSlice(cfgm.Data, "app-protect-dos-log-format", cfgm, "\n"); exists {
+			cfgParams.MainAppProtectDosLogFormat = appProtectDosLogFormat
 		}
 
 		if appProtectDosLogFormatEscaping, exists := cfgm.Data["app-protect-dos-log-format-escaping"]; exists {
@@ -542,6 +505,7 @@ func GenerateNginxMainConfig(staticCfgParams *StaticConfigParams, config *Config
 		AccessLogOff:                       config.MainAccessLogOff,
 		DefaultServerAccessLogOff:          config.DefaultServerAccessLogOff,
 		DefaultServerReturn:                config.DefaultServerReturn,
+		DisableIPV6:                        staticCfgParams.DisableIPV6,
 		ErrorLogLevel:                      config.MainErrorLogLevel,
 		HealthStatus:                       staticCfgParams.HealthStatus,
 		HealthStatusURI:                    staticCfgParams.HealthStatusURI,

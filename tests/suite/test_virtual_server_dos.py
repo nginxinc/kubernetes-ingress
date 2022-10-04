@@ -5,6 +5,7 @@ from datetime import datetime
 import pytest
 import requests
 from settings import TEST_DATA
+from suite.custom_assertions import wait_and_assert_status_code
 from suite.custom_resources_utils import (
     create_dos_logconf_from_yaml,
     create_dos_policy_from_yaml,
@@ -13,7 +14,13 @@ from suite.custom_resources_utils import (
     delete_dos_policy,
     delete_dos_protected,
 )
-from suite.dos_utils import check_learning_status_with_admd_s, find_in_log, log_content_to_dic
+from suite.dos_utils import (
+    check_learning_status_with_admd_s,
+    clean_good_bad_clients,
+    find_in_log,
+    log_content_to_dic,
+    print_admd_log,
+)
 from suite.resources_utils import (
     clear_file_contents,
     create_example_app,
@@ -100,6 +107,8 @@ def dos_setup(
     :return: DosSetup
     """
 
+    # Clean old scripts if still running
+    clean_good_bad_clients()
     print(f"------------- Replace ConfigMap --------------")
     replace_configmap_from_yaml(
         kube_apis.v1,
@@ -133,9 +142,7 @@ def dos_setup(
         delete_dos_policy(kube_apis.custom_objects, pol_name, test_namespace)
         delete_dos_logconf(kube_apis.custom_objects, log_name, test_namespace)
         delete_dos_protected(kube_apis.custom_objects, protected_name, test_namespace)
-        # delete_items_from_yaml(kube_apis, src_webapp_yaml, test_namespace)
-        # delete_common_app(kube_apis, "dos", test_namespace)
-        # write_to_json(f"reload-{get_test_file_name(request.node.fspath)}.json", reload_times)
+        clean_good_bad_clients()
 
     request.addfinalizer(fin)
 
@@ -171,8 +178,7 @@ class TestDos:
         self, kube_apis, crd_ingress_controller_with_dos, dos_setup, virtual_server_setup_dos
     ):
         print("\nStep 1: initial check")
-        resp = requests.get(virtual_server_setup_dos.backend_1_url, headers={"host": virtual_server_setup_dos.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup_dos.backend_1_url, virtual_server_setup_dos.vs_host)
 
     def test_dos_vs_logs(
         self,
@@ -233,8 +239,7 @@ class TestDos:
         ]
 
         print("\n confirm response for standard request")
-        resp = requests.get(virtual_server_setup_dos.backend_1_url, headers={"host": virtual_server_setup_dos.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup_dos.backend_1_url, virtual_server_setup_dos.vs_host)
 
         pod_name = self.getPodNameThatContains(kube_apis, ingress_controller_prerequisites.namespace, "nginx-ingress")
 
@@ -258,8 +263,7 @@ class TestDos:
         wait_before_test(5)
 
         print("\n confirm response for standard request")
-        resp = requests.get(virtual_server_setup_dos.backend_1_url, headers={"host": virtual_server_setup_dos.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup_dos.backend_1_url, virtual_server_setup_dos.vs_host)
 
         result_conf = get_vs_nginx_template_conf(
             kube_apis.v1,
@@ -312,13 +316,13 @@ class TestDos:
         print("Stop Attack")
         p_attack.terminate()
 
-        print("wait max 140 seconds after attack stop, to get attack ended")
+        print("wait max 200 seconds after attack stop, to get attack ended")
         find_in_log(
             kube_apis,
             log_loc,
             syslog_pod,
             ingress_controller_prerequisites.namespace,
-            140,
+            200,
             'attack_event="Attack ended"',
         )
 
@@ -409,13 +413,13 @@ class TestDos:
         print("Stop Attack")
         p_attack.terminate()
 
-        print("wait max 140 seconds after attack stop, to get attack ended")
+        print("wait max 200 seconds after attack stop, to get attack ended")
         find_in_log(
             kube_apis,
             log_loc,
             syslog_pod,
             ingress_controller_prerequisites.namespace,
-            140,
+            200,
             'attack_event="Attack ended"',
         )
 

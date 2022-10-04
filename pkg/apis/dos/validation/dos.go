@@ -19,7 +19,6 @@ var appProtectDosPolicyRequiredFields = [][]string{
 }
 
 var appProtectDosLogConfRequiredFields = [][]string{
-	{"spec", "content"},
 	{"spec", "filter"},
 }
 
@@ -90,15 +89,28 @@ func validateResourceReference(ref string) error {
 	return nil
 }
 
+// checkAppProtectDosLogConfContentField check conetent field doesnt appear in dos log
+func checkAppProtectDosLogConfContentField(obj *unstructured.Unstructured) string {
+	_, found, err := unstructured.NestedMap(obj.Object, "spec", "content")
+	if err == nil && found {
+		unstructured.RemoveNestedField(obj.Object, "spec", "content")
+		msg := "the Content field is not supported, defaulting to splunk format."
+		return msg
+	}
+
+	return ""
+}
+
 // ValidateAppProtectDosLogConf validates LogConfiguration resource
-func ValidateAppProtectDosLogConf(logConf *unstructured.Unstructured) error {
+func ValidateAppProtectDosLogConf(logConf *unstructured.Unstructured) (string, error) {
 	lcName := logConf.GetName()
 	err := validation2.ValidateRequiredFields(logConf, appProtectDosLogConfRequiredFields)
 	if err != nil {
-		return fmt.Errorf("error validating App Protect Dos Log Configuration %v: %w", lcName, err)
+		return "", fmt.Errorf("error validating App Protect Dos Log Configuration %v: %w", lcName, err)
 	}
+	warning := checkAppProtectDosLogConfContentField(logConf)
 
-	return nil
+	return warning, nil
 }
 
 var (

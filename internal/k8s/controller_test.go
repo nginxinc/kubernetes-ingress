@@ -19,7 +19,6 @@ import (
 	conf_v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1"
 	conf_v1alpha1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/configuration/v1alpha1"
 	api_v1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	networking "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -221,43 +220,43 @@ func TestIngressClassForCustomResources(t *testing.T) {
 
 func TestComparePorts(t *testing.T) {
 	scenarios := []struct {
-		sp       v1.ServicePort
-		cp       v1.ContainerPort
+		sp       api_v1.ServicePort
+		cp       api_v1.ContainerPort
 		expected bool
 	}{
 		{
 			// match TargetPort.strval and Protocol
-			v1.ServicePort{
+			api_v1.ServicePort{
 				TargetPort: intstr.FromString("name"),
-				Protocol:   v1.ProtocolTCP,
+				Protocol:   api_v1.ProtocolTCP,
 			},
-			v1.ContainerPort{
+			api_v1.ContainerPort{
 				Name:          "name",
-				Protocol:      v1.ProtocolTCP,
+				Protocol:      api_v1.ProtocolTCP,
 				ContainerPort: 80,
 			},
 			true,
 		},
 		{
 			// don't match Name and Protocol
-			v1.ServicePort{
+			api_v1.ServicePort{
 				Name:     "name",
-				Protocol: v1.ProtocolTCP,
+				Protocol: api_v1.ProtocolTCP,
 			},
-			v1.ContainerPort{
+			api_v1.ContainerPort{
 				Name:          "name",
-				Protocol:      v1.ProtocolTCP,
+				Protocol:      api_v1.ProtocolTCP,
 				ContainerPort: 80,
 			},
 			false,
 		},
 		{
 			// TargetPort intval mismatch, don't match by TargetPort.Name
-			v1.ServicePort{
+			api_v1.ServicePort{
 				Name:       "name",
 				TargetPort: intstr.FromInt(80),
 			},
-			v1.ContainerPort{
+			api_v1.ContainerPort{
 				Name:          "name",
 				ContainerPort: 81,
 			},
@@ -265,23 +264,23 @@ func TestComparePorts(t *testing.T) {
 		},
 		{
 			// match by TargetPort intval
-			v1.ServicePort{
+			api_v1.ServicePort{
 				TargetPort: intstr.IntOrString{
 					IntVal: 80,
 				},
 			},
-			v1.ContainerPort{
+			api_v1.ContainerPort{
 				ContainerPort: 80,
 			},
 			true,
 		},
 		{
 			// Fall back on ServicePort.Port if TargetPort is empty
-			v1.ServicePort{
+			api_v1.ServicePort{
 				Name: "name",
 				Port: 80,
 			},
-			v1.ContainerPort{
+			api_v1.ContainerPort{
 				Name:          "name",
 				ContainerPort: 80,
 			},
@@ -289,18 +288,18 @@ func TestComparePorts(t *testing.T) {
 		},
 		{
 			// TargetPort intval mismatch
-			v1.ServicePort{
+			api_v1.ServicePort{
 				TargetPort: intstr.FromInt(80),
 			},
-			v1.ContainerPort{
+			api_v1.ContainerPort{
 				ContainerPort: 81,
 			},
 			false,
 		},
 		{
 			// don't match empty ports
-			v1.ServicePort{},
-			v1.ContainerPort{},
+			api_v1.ServicePort{},
+			api_v1.ContainerPort{},
 			false,
 		},
 	}
@@ -313,14 +312,14 @@ func TestComparePorts(t *testing.T) {
 }
 
 func TestFindProbeForPods(t *testing.T) {
-	pods := []*v1.Pod{
+	pods := []*api_v1.Pod{
 		{
-			Spec: v1.PodSpec{
-				Containers: []v1.Container{
+			Spec: api_v1.PodSpec{
+				Containers: []api_v1.Container{
 					{
-						ReadinessProbe: &v1.Probe{
-							ProbeHandler: v1.ProbeHandler{
-								HTTPGet: &v1.HTTPGetAction{
+						ReadinessProbe: &api_v1.Probe{
+							ProbeHandler: api_v1.ProbeHandler{
+								HTTPGet: &api_v1.HTTPGetAction{
 									Path: "/",
 									Host: "asdf.com",
 									Port: intstr.IntOrString{
@@ -330,11 +329,11 @@ func TestFindProbeForPods(t *testing.T) {
 							},
 							PeriodSeconds: 42,
 						},
-						Ports: []v1.ContainerPort{
+						Ports: []api_v1.ContainerPort{
 							{
 								Name:          "name",
 								ContainerPort: 80,
-								Protocol:      v1.ProtocolTCP,
+								Protocol:      api_v1.ProtocolTCP,
 								HostIP:        "1.2.3.4",
 							},
 						},
@@ -343,7 +342,7 @@ func TestFindProbeForPods(t *testing.T) {
 			},
 		},
 	}
-	svcPort := v1.ServicePort{
+	svcPort := api_v1.ServicePort{
 		TargetPort: intstr.FromInt(80),
 	}
 	probe := findProbeForPods(pods, &svcPort)
@@ -351,25 +350,25 @@ func TestFindProbeForPods(t *testing.T) {
 		t.Errorf("ServicePort.TargetPort as int match failed: %+v", probe)
 	}
 
-	svcPort = v1.ServicePort{
+	svcPort = api_v1.ServicePort{
 		TargetPort: intstr.FromString("name"),
-		Protocol:   v1.ProtocolTCP,
+		Protocol:   api_v1.ProtocolTCP,
 	}
 	probe = findProbeForPods(pods, &svcPort)
 	if probe == nil || probe.PeriodSeconds != 42 {
 		t.Errorf("ServicePort.TargetPort as string failed: %+v", probe)
 	}
 
-	svcPort = v1.ServicePort{
+	svcPort = api_v1.ServicePort{
 		TargetPort: intstr.FromInt(80),
-		Protocol:   v1.ProtocolTCP,
+		Protocol:   api_v1.ProtocolTCP,
 	}
 	probe = findProbeForPods(pods, &svcPort)
 	if probe == nil || probe.PeriodSeconds != 42 {
 		t.Errorf("ServicePort.TargetPort as int failed: %+v", probe)
 	}
 
-	svcPort = v1.ServicePort{
+	svcPort = api_v1.ServicePort{
 		Port: 80,
 	}
 	probe = findProbeForPods(pods, &svcPort)
@@ -377,7 +376,7 @@ func TestFindProbeForPods(t *testing.T) {
 		t.Errorf("ServicePort.Port should match if TargetPort is not set: %+v", probe)
 	}
 
-	svcPort = v1.ServicePort{
+	svcPort = api_v1.ServicePort{
 		TargetPort: intstr.FromString("wrong_name"),
 	}
 	probe = findProbeForPods(pods, &svcPort)
@@ -385,7 +384,7 @@ func TestFindProbeForPods(t *testing.T) {
 		t.Errorf("ServicePort.TargetPort should not have matched string: %+v", probe)
 	}
 
-	svcPort = v1.ServicePort{
+	svcPort = api_v1.ServicePort{
 		TargetPort: intstr.FromInt(22),
 	}
 	probe = findProbeForPods(pods, &svcPort)
@@ -393,7 +392,7 @@ func TestFindProbeForPods(t *testing.T) {
 		t.Errorf("ServicePort.TargetPort should not have matched int: %+v", probe)
 	}
 
-	svcPort = v1.ServicePort{
+	svcPort = api_v1.ServicePort{
 		Port: 22,
 	}
 	probe = findProbeForPods(pods, &svcPort)
@@ -411,14 +410,14 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 		configurator:     cnf,
 		metricsCollector: collectors.NewControllerFakeCollector(),
 	}
-	svc := v1.Service{
+	svc := api_v1.Service{
 		TypeMeta: meta_v1.TypeMeta{},
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "coffee-svc",
 			Namespace: "default",
 		},
-		Spec: v1.ServiceSpec{
-			Ports: []v1.ServicePort{
+		Spec: api_v1.ServiceSpec{
+			Ports: []api_v1.ServicePort{
 				{
 					Name:       "foo",
 					Port:       80,
@@ -426,7 +425,7 @@ func TestGetServicePortForIngressPort(t *testing.T) {
 				},
 			},
 		},
-		Status: v1.ServiceStatus{},
+		Status: api_v1.ServiceStatus{},
 	}
 	backendPort := networking.ServiceBackendPort{
 		Name: "foo",
@@ -476,7 +475,7 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 	tests := []struct {
 		desc        string
 		targetPort  int32
-		svcEps      v1.Endpoints
+		svcEps      api_v1.Endpoints
 		expectedEps []podEndpoint
 	}{
 		{
@@ -499,7 +498,7 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 		},
 	}
 
-	pods := []*v1.Pod{
+	pods := []*api_v1.Pod{
 		{
 			ObjectMeta: meta_v1.ObjectMeta{
 				OwnerReferences: []meta_v1.OwnerReference{
@@ -510,22 +509,22 @@ func TestGetEndpointsBySubselectedPods(t *testing.T) {
 					},
 				},
 			},
-			Status: v1.PodStatus{
+			Status: api_v1.PodStatus{
 				PodIP: "1.2.3.4",
 			},
 		},
 	}
 
-	svcEps := v1.Endpoints{
-		Subsets: []v1.EndpointSubset{
+	svcEps := api_v1.Endpoints{
+		Subsets: []api_v1.EndpointSubset{
 			{
-				Addresses: []v1.EndpointAddress{
+				Addresses: []api_v1.EndpointAddress{
 					{
 						IP:       "1.2.3.4",
 						Hostname: "asdf.com",
 					},
 				},
-				Ports: []v1.EndpointPort{
+				Ports: []api_v1.EndpointPort{
 					{
 						Port: 80,
 					},
@@ -687,9 +686,9 @@ func TestGetPolicies(t *testing.T) {
 
 	expectedPolicies := []*conf_v1.Policy{validPolicy}
 	expectedErrors := []error{
-		errors.New("Policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`, `jwt`, `oidc`, `waf`"),
-		errors.New("Policy nginx-ingress/valid-policy doesn't exist"),
-		errors.New("Failed to get policy nginx-ingress/some-policy: GetByKey error"),
+		errors.New("policy default/invalid-policy is invalid: spec: Invalid value: \"\": must specify exactly one of: `accessControl`, `rateLimit`, `ingressMTLS`, `egressMTLS`, `basicAuth`, `jwt`, `oidc`, `waf`"),
+		errors.New("policy nginx-ingress/valid-policy doesn't exist"),
+		errors.New("failed to get policy nginx-ingress/some-policy: GetByKey error"),
 		errors.New("referenced policy default/valid-policy-ingress-class has incorrect ingress class: test-class (controller ingress class: )"),
 	}
 
@@ -762,37 +761,37 @@ func TestGetPodOwnerTypeAndName(t *testing.T) {
 		desc    string
 		expType string
 		expName string
-		pod     *v1.Pod
+		pod     *api_v1.Pod
 	}{
 		{
 			desc:    "deployment",
 			expType: "deployment",
 			expName: "deploy-name",
-			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("Deployment", "deploy-name", true)},
+			pod:     &api_v1.Pod{ObjectMeta: createTestObjMeta("Deployment", "deploy-name", true)},
 		},
 		{
 			desc:    "stateful set",
 			expType: "statefulset",
 			expName: "statefulset-name",
-			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("StatefulSet", "statefulset-name", true)},
+			pod:     &api_v1.Pod{ObjectMeta: createTestObjMeta("StatefulSet", "statefulset-name", true)},
 		},
 		{
 			desc:    "daemon set",
 			expType: "daemonset",
 			expName: "daemonset-name",
-			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("DaemonSet", "daemonset-name", true)},
+			pod:     &api_v1.Pod{ObjectMeta: createTestObjMeta("DaemonSet", "daemonset-name", true)},
 		},
 		{
 			desc:    "replica set with no pod hash",
 			expType: "deployment",
 			expName: "replicaset-name",
-			pod:     &v1.Pod{ObjectMeta: createTestObjMeta("ReplicaSet", "replicaset-name", false)},
+			pod:     &api_v1.Pod{ObjectMeta: createTestObjMeta("ReplicaSet", "replicaset-name", false)},
 		},
 		{
 			desc:    "replica set with pod hash",
 			expType: "deployment",
 			expName: "replicaset-name",
-			pod: &v1.Pod{
+			pod: &api_v1.Pod{
 				ObjectMeta: createTestObjMeta("ReplicaSet", "replicaset-name-67c6f7c5fd", true),
 			},
 		},
@@ -800,7 +799,7 @@ func TestGetPodOwnerTypeAndName(t *testing.T) {
 			desc:    "nil controller should use default values",
 			expType: "deployment",
 			expName: "deploy-name",
-			pod: &v1.Pod{
+			pod: &api_v1.Pod{
 				ObjectMeta: meta_v1.ObjectMeta{
 					OwnerReferences: []meta_v1.OwnerReference{
 						{
@@ -1156,14 +1155,14 @@ func errorComparer(e1, e2 error) bool {
 
 func TestAddJWTSecrets(t *testing.T) {
 	invalidErr := errors.New("invalid")
-	validJWKSecret := &v1.Secret{
+	validJWKSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-jwk-secret",
 			Namespace: "default",
 		},
 		Type: secrets.SecretTypeJWK,
 	}
-	invalidJWKSecret := &v1.Secret{
+	invalidJWKSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "invalid-jwk-secret",
 			Namespace: "default",
@@ -1280,14 +1279,14 @@ func TestAddJWTSecrets(t *testing.T) {
 
 func TestAddBasicSecrets(t *testing.T) {
 	invalidErr := errors.New("invalid")
-	validBasicSecret := &v1.Secret{
+	validBasicSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-basic-auth-secret",
 			Namespace: "default",
 		},
 		Type: secrets.SecretTypeJWK,
 	}
-	invalidBasicSecret := &v1.Secret{
+	invalidBasicSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "invalid-basic-auth-secret",
 			Namespace: "default",
@@ -1404,14 +1403,14 @@ func TestAddBasicSecrets(t *testing.T) {
 
 func TestAddIngressMTLSSecret(t *testing.T) {
 	invalidErr := errors.New("invalid")
-	validSecret := &v1.Secret{
+	validSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-ingress-mtls-secret",
 			Namespace: "default",
 		},
 		Type: secrets.SecretTypeCA,
 	}
-	invalidSecret := &v1.Secret{
+	invalidSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "invalid-ingress-mtls-secret",
 			Namespace: "default",
@@ -1526,28 +1525,28 @@ func TestAddIngressMTLSSecret(t *testing.T) {
 
 func TestAddEgressMTLSSecrets(t *testing.T) {
 	invalidErr := errors.New("invalid")
-	validMTLSSecret := &v1.Secret{
+	validMTLSSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-egress-mtls-secret",
 			Namespace: "default",
 		},
 		Type: api_v1.SecretTypeTLS,
 	}
-	validTrustedSecret := &v1.Secret{
+	validTrustedSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-egress-trusted-secret",
 			Namespace: "default",
 		},
 		Type: secrets.SecretTypeCA,
 	}
-	invalidMTLSSecret := &v1.Secret{
+	invalidMTLSSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "invalid-egress-mtls-secret",
 			Namespace: "default",
 		},
 		Type: api_v1.SecretTypeTLS,
 	}
-	invalidTrustedSecret := &v1.Secret{
+	invalidTrustedSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "invalid-egress-trusted-secret",
 			Namespace: "default",
@@ -1743,7 +1742,7 @@ func TestAddEgressMTLSSecrets(t *testing.T) {
 
 func TestAddOidcSecret(t *testing.T) {
 	invalidErr := errors.New("invalid")
-	validSecret := &v1.Secret{
+	validSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "valid-oidc-secret",
 			Namespace: "default",
@@ -1753,7 +1752,7 @@ func TestAddOidcSecret(t *testing.T) {
 		},
 		Type: secrets.SecretTypeOIDC,
 	}
-	invalidSecret := &v1.Secret{
+	invalidSecret := &api_v1.Secret{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "invalid-oidc-secret",
 			Namespace: "default",

@@ -14,33 +14,17 @@ This document provides an overview of the steps required to use NGINX App Protec
 
 You can also [install the Ingress Controller with App Protect WAF by using Helm](/nginx-ingress-controller/installation/installation-with-helm/). Use the `controller.appprotect.*` parameters of the chart.
 
-## Using the Docker Images from the F5 Container registry
+## Prerequisites
 
-Take the steps below to either configure a Docker Registry secret in your Kubernetes cluster, or to pull the Docker image that you'll use to deploy NGINX Ingress Controller with App Protect in Kubernetes.
-
-- Follow the steps to [use the JWT token to create a docker registry secret](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
-
-- Alternatively, follow the steps to [Pull the NGINX Ingress Controller image](/nginx-ingress-controller/installation/pulling-ingress-controller-image).
-
-    For NGINX Plus Ingress Controller with App Protect, pull from `private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress`:
-   ```
-   $ docker pull private-registry.nginx.com/nginx-ic-nap/nginx-plus-ingress:2.3.0
-   ```
-    `2.3.0` will pull down the Debian based image. The other available image tag is `2.3.0-ubi` for the UBI based image.
-
-- Use the docker registry API to list the available image tags for the repository.
-
-   To list the available image tags for the repository, you can use the Docker registry API, e.g.:
-   ```
-   $ curl https://private-registry.nginx.com/v2/nginx-ic-nap/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
-   {
-    "name": "nginx-ic-nap/nginx-plus-ingress",
-    "tags": [
-        "2.3.0-ubi",
-        "2.3.0"
-    ]
-    }
-   ```
+1. Make sure you have access to the Ingress Controller image:
+    * For NGINX Plus Ingress Controller, see [here](/nginx-ingress-controller/installation/pulling-ingress-controller-image) for details on how to pull the image from the F5 Docker registry.
+    * To pull from the F5 Container registry in your Kubernetes cluster, configure a docker registry secret using your JWT token from the MyF5 portal by following the instructions from [here](/nginx-ingress-controller/installation/using-the-jwt-token-docker-secret).
+    * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
+2. Clone the Ingress Controller repo:
+    ```
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.3.1
+    $ cd kubernetes-ingress
+    ```
 
 ## Build the Docker Image
 
@@ -54,6 +38,8 @@ Take the steps below to create the Docker image that you'll use to deploy NGINX 
     make debian-image-nap-plus PREFIX=<your Docker registry domain>/nginx-plus-ingress
     ```
     Alternatively, if you want to run on an [OpenShift](https://www.openshift.com/) cluster, you can use the `ubi-image-nap-plus` target.
+
+    If you want to include the App Protect DoS module in the image, you can use the `debian-image-nap-dos-plus` target or the `ubi-image-nap-dos-plus` target for OpenShift.
 
     If you intend to use [external references](https://docs.nginx.com/nginx-app-protect/configuration/#external-references) in NGINX App Protect WAF policies, you may want to provide a custom CA certificate to authenticate with the hosting server.
     In order to do so, place the `*.crt` file in the build folder and uncomment the lines that follow this comment:
@@ -77,4 +63,4 @@ Take the steps below to set up and deploy the NGINX Ingress Controller and App P
 3. Enable the App Protect WAF module by adding the `enable-app-protect` [cli argument](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments/#cmdoption-enable-app-protect) to your Deployment or DaemonSet file.
 4. [Deploy the Ingress Controller](/nginx-ingress-controller/installation/installation-with-manifests/#3-deploy-the-ingress-controller).
 
-For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/ingress-resources/app-protect-waf).
+For more information, see the [Configuration guide](/nginx-ingress-controller/app-protect/configuration) and the NGINX Ingress Controller with App Protect example resources on GitHub [for VirtualServer resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.1/examples/custom-resources/app-protect-waf) and [for Ingress resources](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.1/examples/ingress-resources/app-protect-waf).

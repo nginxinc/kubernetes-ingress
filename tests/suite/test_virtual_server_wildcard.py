@@ -35,7 +35,7 @@ class TestVirtualServerWildcard:
         )
         wait_before_test()
         response = {}
-        while ("status" not in response) and (retry <= 30):
+        while ("status" not in response) and (retry <= 60):
             print("Waiting for VS status update...")
             time.sleep(1)
             retry += 1

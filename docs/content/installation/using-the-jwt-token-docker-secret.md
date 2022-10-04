@@ -42,10 +42,9 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
    {
     "name": "nginx-ic/nginx-plus-ingress",
     "tags": [
-        "2.3.0-alpine",
-        "2.3.0-ot",
-        "2.3.0-ubi",
-        "2.3.0"
+        "2.3.1-alpine",
+        "2.3.1-ubi",
+        "2.3.1"
     ]
     }
 
@@ -53,8 +52,17 @@ This document explains how to use the NGINX Plus Ingress Controller image from t
    {
     "name": "nginx-ic-nap/nginx-plus-ingress",
     "tags": [
-        "2.3.0-ubi",
-        "2.3.0"
+        "2.3.1-ubi",
+        "2.3.1"
+    ]
+    }
+
+   $ curl https://private-registry.nginx.com/v2/nginx-ic-dos/nginx-plus-ingress/tags/list --key <path-to-client.key> --cert <path-to-client.cert> | jq
+   {
+    "name": "nginx-ic-dos/nginx-plus-ingress",
+    "tags": [
+        "2.3.1-ubi",
+        "2.3.1"
     ]
     }
    ```

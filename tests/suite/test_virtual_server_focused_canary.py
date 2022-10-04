@@ -2,6 +2,7 @@ import pytest
 import requests
 import yaml
 from settings import TEST_DATA
+from suite.resources_utils import ensure_response_from_backend
 
 
 def get_weights_of_splitting(file) -> []:
@@ -58,10 +59,17 @@ class TestVSFocusedCanaryRelease:
 
         counter_v1, counter_v2 = 0, 0
         for _ in range(100):
-            resp = requests.get(
-                virtual_server_setup.backend_1_url,
-                headers={"host": virtual_server_setup.vs_host, "x-version": "canary"},
+            ensure_response_from_backend(
+                virtual_server_setup.backend_1_url, virtual_server_setup.vs_host, {"x-version": "canary"}, check404=True
             )
+            status_code = 502
+            while status_code == 502:
+                resp = requests.get(
+                    virtual_server_setup.backend_1_url,
+                    headers={"host": virtual_server_setup.vs_host, "x-version": "canary"},
+                )
+                status_code = resp.status_code
+
             if upstreams[0] in resp.text in resp.text:
                 counter_v1 = counter_v1 + 1
             elif upstreams[1] in resp.text in resp.text:

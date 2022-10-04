@@ -75,6 +75,7 @@ func main() {
 	cfgParams = processConfigMaps(kubeClient, cfgParams, nginxManager, templateExecutor)
 
 	staticCfgParams := &configs.StaticConfigParams{
+		DisableIPV6:                    *disableIPV6,
 		HealthStatus:                   *healthStatus,
 		HealthStatusURI:                *healthStatusURI,
 		NginxStatus:                    *nginxStatus,
@@ -149,6 +150,7 @@ func main() {
 		SnippetsEnabled:              *enableSnippets,
 		CertManagerEnabled:           *enableCertManager,
 		ExternalDNSEnabled:           *enableExternalDNS,
+		IsIPV6Disabled:               *disableIPV6,
 	}
 
 	lbc := k8s.NewLoadBalancerController(lbcInput)
@@ -668,7 +670,7 @@ func processConfigMaps(kubeClient *kubernetes.Clientset, cfgParams *configs.Conf
 		if err != nil {
 			glog.Fatalf("Error when getting %v: %v", *nginxConfigMaps, err)
 		}
-		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus, *appProtect, *appProtectDos)
+		cfgParams = configs.ParseConfigMap(cfm, *nginxPlus, *appProtect, *appProtectDos, *enableTLSPassthrough)
 		if cfgParams.MainServerSSLDHParamFileContent != nil {
 			fileName, err := nginxManager.CreateDHParam(*cfgParams.MainServerSSLDHParamFileContent)
 			if err != nil {

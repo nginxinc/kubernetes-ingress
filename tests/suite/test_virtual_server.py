@@ -35,10 +35,8 @@ class TestVirtualServer:
     def test_responses_after_setup(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("\nStep 1: initial check")
         wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
     def test_responses_after_virtual_server_update(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("Step 2: update host and paths in the VS and check")
@@ -59,14 +57,12 @@ class TestVirtualServer:
         )
         new_host = get_first_host_from_yaml(f"{TEST_DATA}/virtual-server/standard/virtual-server-updated.yaml")
         wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 404
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 404
-        resp = requests.get(new_backend_1_url, headers={"host": new_host})
-        assert resp.status_code == 200
-        resp = requests.get(new_backend_2_url, headers={"host": new_host})
-        assert resp.status_code == 200
+
+        wait_and_assert_status_code(404, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(404, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
+
+        wait_and_assert_status_code(200, new_backend_1_url, new_host)
+        wait_and_assert_status_code(200, new_backend_2_url, new_host)
 
         print("Step 3: restore VS and check")
         patch_virtual_server_from_yaml(
@@ -76,14 +72,12 @@ class TestVirtualServer:
             virtual_server_setup.namespace,
         )
         wait_before_test(1)
-        resp = requests.get(new_backend_1_url, headers={"host": new_host})
-        assert resp.status_code == 404
-        resp = requests.get(new_backend_2_url, headers={"host": new_host})
-        assert resp.status_code == 404
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+
+        wait_and_assert_status_code(404, new_backend_1_url, new_host)
+        wait_and_assert_status_code(404, new_backend_2_url, new_host)
+
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
     def test_responses_after_backend_update(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("Step 4: update one backend service port and check")
@@ -91,29 +85,26 @@ class TestVirtualServer:
         the_service.spec.ports[0].port = 8080
         replace_service(kube_apis.v1, "backend1-svc", virtual_server_setup.namespace, the_service)
         wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 502
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+
+        wait_and_assert_status_code(502, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
         print("Step 5: restore BE and check")
         the_service = read_service(kube_apis.v1, "backend1-svc", virtual_server_setup.namespace)
         the_service.spec.ports[0].port = 80
         replace_service(kube_apis.v1, "backend1-svc", virtual_server_setup.namespace, the_service)
         wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
     def test_responses_after_virtual_server_removal(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("\nStep 6: delete VS and check")
         delete_virtual_server(kube_apis.custom_objects, virtual_server_setup.vs_name, virtual_server_setup.namespace)
         wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 404
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 404
+
+        wait_and_assert_status_code(404, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(404, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
         print("Step 7: restore VS and check")
         create_virtual_server_from_yaml(
@@ -122,27 +113,24 @@ class TestVirtualServer:
             virtual_server_setup.namespace,
         )
         wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
     def test_responses_after_backend_service_removal(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("\nStep 8: remove one backend service and check")
         delete_service(kube_apis.v1, "backend1-svc", virtual_server_setup.namespace)
         wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 502
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+
+        wait_and_assert_status_code(502, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
         print("\nStep 9: restore backend service and check")
         create_service_from_yaml(kube_apis.v1, virtual_server_setup.namespace, f"{TEST_DATA}/common/backend1-svc.yaml")
-        wait_before_test(3)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+        wait_before_test(1)
+
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
     def test_responses_after_rbac_misconfiguration_on_the_fly(
         self, kube_apis, crd_ingress_controller, virtual_server_setup
@@ -150,18 +138,14 @@ class TestVirtualServer:
         print("Step 10: remove virtualservers from the ClusterRole and check")
         patch_rbac(kube_apis.rbac_v1, f"{TEST_DATA}/virtual-server/rbac-without-vs.yaml")
         wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
         print("Step 11: restore ClusterRole and check")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")
         wait_before_test(1)
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 200
+        wait_and_assert_status_code(200, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(200, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
     def test_responses_after_crd_removal_on_the_fly(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("\nStep 12: remove CRD and check")
@@ -199,10 +183,8 @@ class TestVirtualServerInitialRBACMisconfiguration:
     @pytest.mark.skip(reason="issues with ingressClass")
     def test_responses_after_rbac_misconfiguration(self, kube_apis, crd_ingress_controller, virtual_server_setup):
         print("\nStep 1: rbac misconfiguration from the very start")
-        resp = requests.get(virtual_server_setup.backend_1_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 404
-        resp = requests.get(virtual_server_setup.backend_2_url, headers={"host": virtual_server_setup.vs_host})
-        assert resp.status_code == 404
+        wait_and_assert_status_code(404, virtual_server_setup.backend_1_url, virtual_server_setup.vs_host)
+        wait_and_assert_status_code(404, virtual_server_setup.backend_2_url, virtual_server_setup.vs_host)
 
         print("Step 2: configure RBAC and check")
         patch_rbac(kube_apis.rbac_v1, f"{DEPLOYMENTS}/rbac/rbac.yaml")

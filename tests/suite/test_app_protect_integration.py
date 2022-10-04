@@ -228,6 +228,7 @@ class TestAppProtect:
         ap_crd_info = read_ap_custom_resource(kube_apis.custom_objects, test_namespace, "appolicies", ap_policy)
         assert_ap_crd_info(ap_crd_info, ap_policy)
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
+        wait_before_test(5)
 
         print("----------------------- Send request ----------------------")
         response = requests.get(appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False)
@@ -284,77 +285,11 @@ class TestAppProtect:
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
 
         print("----------------------- Send request ----------------------")
+        wait_before_test(5)
         response = requests.get(appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False)
         print(response.text)
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
         assert_valid_responses(response)
-
-    @pytest.mark.flaky(max_runs=3)
-    def test_ap_sec_logs_on(
-        self,
-        request,
-        kube_apis,
-        ingress_controller_prerequisites,
-        crd_ingress_controller_with_ap,
-        appprotect_setup,
-        test_namespace,
-    ):
-        """
-        Test corresponding log entries with correct policy (includes setting up a syslog server as defined in syslog.yaml)
-        """
-        log_loc = "/var/log/messages"
-        syslog_dst = f"syslog-svc.{test_namespace}"
-        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-")
-
-        create_ingress_with_ap_annotations(
-            kube_apis, src_ing_yaml, test_namespace, ap_policy, "True", "True", f"{syslog_dst}:514"
-        )
-        ingress_host = get_first_ingress_host_from_yaml(src_ing_yaml)
-
-        print("--------- Run test while AppProtect module is enabled with correct policy ---------")
-
-        ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
-
-        print("----------------------- Send invalid request ----------------------")
-        response_block = requests.get(
-            appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False
-        )
-        print(response_block.text)
-        log_contents_block = ""
-        retry = 0
-        while "ASM:attack_type" not in log_contents_block and retry <= 30:
-            log_contents_block = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
-            retry += 1
-            wait_before_test(1)
-            print(f"Security log not updated, retrying... #{retry}")
-
-        print("----------------------- Send valid request ----------------------")
-        headers = {
-            "Host": ingress_host,
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0",
-        }
-        response = requests.get(appprotect_setup.req_url, headers=headers, verify=False)
-        print(response.text)
-        wait_before_test(10)
-        log_contents = get_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
-
-        delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
-        clear_file_contents(kube_apis.v1, log_loc, syslog_pod, test_namespace)
-
-        assert_invalid_responses(response_block)
-        assert (
-            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"'
-            in log_contents_block
-        )
-        assert 'severity="Critical"' in log_contents_block
-        assert 'request_status="blocked"' in log_contents_block
-        assert 'outcome="REJECTED"' in log_contents_block
-
-        assert_valid_responses(response)
-        assert 'ASM:attack_type="N/A"' in log_contents
-        assert 'severity="Informational"' in log_contents
-        assert 'request_status="passed"' in log_contents
-        assert 'outcome="PASSED"' in log_contents
 
     @pytest.mark.startup
     def test_ap_pod_startup(
@@ -405,9 +340,6 @@ class TestAppProtect:
         syslog_dst = f"syslog-svc.{test_namespace}"
         syslog2_dst = f"syslog2-svc.{test_namespace}"
 
-        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-")
-        syslog2_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog2")
-
         with open(src_ing_yaml) as f:
             doc = yaml.safe_load(f)
 
@@ -434,6 +366,8 @@ class TestAppProtect:
         print("----------------------- Send request ----------------------")
         response = requests.get(appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False)
         print(response.text)
+        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-")
+        syslog2_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog2")
         log_contents = ""
         log2_contents = ""
         retry = 0
@@ -455,14 +389,16 @@ class TestAppProtect:
         assert_invalid_responses(response)
         # check logs in dest. #1 i.e. syslog server #1
         assert (
-            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"' in log_contents
+            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS),Other Application Activity"'
+            in log_contents
             and 'severity="Critical"' in log_contents
             and 'request_status="blocked"' in log_contents
             and 'outcome="REJECTED"' in log_contents
         )
         # check logs in dest. #2 i.e. syslog server #2
         assert (
-            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"' in log2_contents
+            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS),Other Application Activity"'
+            in log2_contents
             and 'severity="Critical"' in log2_contents
             and 'request_status="blocked"' in log2_contents
             and 'outcome="REJECTED"' in log2_contents
@@ -498,9 +434,10 @@ class TestAppProtect:
         wait_before_test(120)
         ensure_response_from_backend(appprotect_setup.req_url, ingress_host, check404=True)
         print("----------------------- Send request ----------------------")
-        response = requests.get(appprotect_setup.req_url, headers={"host": ingress_host}, verify=False, data="kic")
-        print(response.text)
-
+        response1 = requests.get(appprotect_setup.req_url, headers={"host": ingress_host}, verify=False, data="kic")
+        print(response1.text)
+        response2 = requests.get(appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False)
+        print(response2.text)
         reload_ms = get_last_reload_time(appprotect_setup.metrics_url, "nginx")
         print(f"last reload duration: {reload_ms} ms")
         reload_times[f"{request.node.name}"] = f"last reload duration: {reload_ms} ms"
@@ -515,4 +452,5 @@ class TestAppProtect:
         delete_items_from_yaml(kube_apis, src_ing_yaml, test_namespace)
 
         assert_ap_crd_info(ap_crd_info, ap_policy)
-        assert_invalid_responses(response)
+        assert_invalid_responses(response1)
+        assert_invalid_responses(response2)

@@ -236,6 +236,7 @@ type virtualServerConfigurator struct {
 	warnings             Warnings
 	spiffeCerts          bool
 	oidcPolCfg           *oidcPolicyCfg
+	isIPV6Disabled       bool
 }
 
 type oidcPolicyCfg struct {
@@ -275,6 +276,7 @@ func newVirtualServerConfigurator(
 		warnings:             make(map[runtime.Object][]string),
 		spiffeCerts:          staticParams.NginxServiceMesh,
 		oidcPolCfg:           &oidcPolicyCfg{},
+		isIPV6Disabled:       staticParams.DisableIPV6,
 	}
 }
 
@@ -675,6 +677,7 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 			PoliciesErrorReturn:       policiesCfg.ErrorReturn,
 			VSNamespace:               vsEx.VirtualServer.Namespace,
 			VSName:                    vsEx.VirtualServer.Name,
+			DisableIPV6:               vsc.isIPV6Disabled,
 		},
 		SpiffeCerts: vsc.spiffeCerts,
 	}
