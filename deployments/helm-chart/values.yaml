@@ -35,6 +35,9 @@ controller:
   ## Enables the Ingress Controller pods to use the host's network namespace.
   hostNetwork: false
 
+  ## DNS policy for the Ingress Controller pods
+  dnsPolicy: ClusterFirst
+
   ## Enables debugging for NGINX. Uses the nginx-debug binary. Requires error-log-level: debug in the ConfigMap via `controller.config.entries`.
   nginxDebug: false
 
