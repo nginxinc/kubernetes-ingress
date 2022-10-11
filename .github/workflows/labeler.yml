@@ -2,6 +2,9 @@ name: "Pull Request Labeler"
 on:
   - pull_request_target
 
+permissions:  # added using https://github.com/step-security/secure-workflows
+  contents: read
+
 jobs:
   triage:
     permissions:
