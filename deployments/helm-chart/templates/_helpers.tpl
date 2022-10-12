@@ -50,7 +50,10 @@ Expand service account name.
 Expand service name.
 */}}
 {{- define "nginx-ingress.serviceName" -}}
-{{- default (include "nginx-ingress.name" .) .Values.controller.service.name }}
+{{- $services := .Values.controller.services.service }}
+{{- with (first $services) }}
+{{- default (include "nginx-ingress.name" $) .name }}
+{{- end }}
 {{- end -}}
 
 {{/*

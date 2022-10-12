@@ -178,7 +178,7 @@ spec:
           - -ingresslink={{ .Values.controller.reportIngressStatus.ingressLink }}
 {{- else if .Values.controller.reportIngressStatus.externalService }}
           - -external-service={{ .Values.controller.reportIngressStatus.externalService }}
-{{- else if and (.Values.controller.service.create) (eq .Values.controller.service.type "LoadBalancer") }}
+{{- else if and (.Values.controller.services.create) (eq .Values.controller.services.type "LoadBalancer") }}
           - -external-service={{ include "nginx-ingress.serviceName" . }}
 {{- end }}
           - -enable-leader-election={{ .Values.controller.reportIngressStatus.enableLeaderElection }}
