@@ -101,7 +101,7 @@ func (c *FakeVirtualServerRoutes) UpdateStatus(ctx context.Context, virtualServe
 // Delete takes name of the virtualServerRoute and deletes it. Returns an error if one occurs.
 func (c *FakeVirtualServerRoutes) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(virtualserverroutesResource, c.ns, name), &configurationv1.VirtualServerRoute{})
+		Invokes(testing.NewDeleteActionWithOptions(virtualserverroutesResource, c.ns, name, opts), &configurationv1.VirtualServerRoute{})
 
 	return err
 }

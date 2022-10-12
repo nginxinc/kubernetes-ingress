@@ -101,7 +101,7 @@ func (c *FakeTransportServers) UpdateStatus(ctx context.Context, transportServer
 // Delete takes name of the transportServer and deletes it. Returns an error if one occurs.
 func (c *FakeTransportServers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(transportserversResource, c.ns, name), &v1alpha1.TransportServer{})
+		Invokes(testing.NewDeleteActionWithOptions(transportserversResource, c.ns, name, opts), &v1alpha1.TransportServer{})
 
 	return err
 }
