@@ -163,8 +163,8 @@ func TestGenerateNginxCfgWithIPV6Disabled(t *testing.T) {
 
 	result, warnings := generateNginxCfg(&cafeIngressEx, nil, nil, false, configParams, isPlus, false, &StaticConfigParams{DisableIPV6: true}, false)
 
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", diff)
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", cmp.Diff(expected, result))
 	}
 	if len(warnings) != 0 {
 		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
