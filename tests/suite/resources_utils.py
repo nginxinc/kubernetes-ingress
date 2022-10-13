@@ -933,7 +933,7 @@ def clear_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace):
     )
 
 
-def get_nginx_template_conf(v1: CoreV1Api, ingress_namespace: str, ic_pod_name: str = None) -> str:
+def get_nginx_template_conf(v1: CoreV1Api, ingress_namespace, ic_pod_name=None) -> str:
     """
     Get contents of /etc/nginx/nginx.conf in the pod
     :param v1: CoreV1Api
