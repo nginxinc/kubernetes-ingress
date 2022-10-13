@@ -35,12 +35,12 @@ class IngressSetup:
 
 @pytest.fixture(scope="class")
 def ingress_setup(
-        request,
-        kube_apis,
-        ingress_controller_prerequisites,
-        ingress_controller_endpoint,
-        ingress_controller,
-        test_namespace,
+    request,
+    kube_apis,
+    ingress_controller_prerequisites,
+    ingress_controller_endpoint,
+    ingress_controller,
+    test_namespace,
 ) -> IngressSetup:
     print("------------------------- Deploy Disable IPV6 Example -----------------------------------")
     secret_name = create_secret_from_yaml(kube_apis.v1, test_namespace, f"{TEST_DATA}/smoke/smoke-secret.yaml")
@@ -77,10 +77,10 @@ class TestDisableIPV6:
         indirect=True,
     )
     def test_ipv6_listeners_not_in_config(
-            self,
-            kube_apis,
-            ingress_setup: IngressSetup,
-            ingress_controller_prerequisites,
+        self,
+        kube_apis,
+        ingress_setup: IngressSetup,
+        ingress_controller_prerequisites,
     ):
         wait_before_test()
         nginx_config = get_nginx_template_conf(
