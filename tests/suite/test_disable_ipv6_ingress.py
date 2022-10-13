@@ -1,5 +1,4 @@
 import pytest
-
 from settings import TEST_DATA
 from suite.resources_utils import (
     create_example_app,
