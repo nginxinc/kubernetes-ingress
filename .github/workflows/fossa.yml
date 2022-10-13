@@ -13,6 +13,9 @@ concurrency:
   group: ${{ github.ref_name }}-fossa
   cancel-in-progress: true
 
+permissions:  # added using https://github.com/step-security/secure-workflows
+  contents: read
+
 jobs:
 
   scan:
