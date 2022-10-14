@@ -39,6 +39,11 @@ lint-python: ## Run linter for python tests
 	@isort .
 	@black .
 
+.PHONY: staticcheck
+staticcheck: ## Run staticcheck linter
+	@staticcheck -version >/dev/null 2>&1 || go install honnef.co/go/tools/cmd/staticcheck@2022.1.3;
+	staticcheck ./...
+
 .PHONY: test
 test: ## Run tests
 	go test -tags=aws -shuffle=on -race ./...
