@@ -73,6 +73,7 @@ spec:
       automountServiceAccountToken: true
       terminationGracePeriodSeconds: {{ .Values.controller.terminationGracePeriodSeconds }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
+      dnsPolicy: {{ .Values.controller.dnsPolicy }}
       containers:
       - image: {{ include "nginx-ingress.image" . }}
         name: {{ include "nginx-ingress.name" . }}
