@@ -156,6 +156,7 @@ func generateNginxCfg(ingEx *IngressEx, apResources *AppProtectResources, dosRes
 			AppProtectEnable:      cfgParams.AppProtectEnable,
 			AppProtectLogEnable:   cfgParams.AppProtectLogEnable,
 			SpiffeCerts:           cfgParams.SpiffeServerCerts,
+			DisableIPV6:           staticParams.DisableIPV6,
 		}
 
 		warnings := addSSLConfig(&server, ingEx.Ingress, rule.Host, ingEx.Ingress.Spec.TLS, ingEx.SecretRefs, isWildcardEnabled)
