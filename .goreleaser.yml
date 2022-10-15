@@ -41,6 +41,23 @@ builds:
     binary: nginx-ingress
     tags:
       - aws
+  - id: aws-nap-dos
+    goos:
+      - linux
+    goarch:
+      - amd64
+    flags:
+      - -trimpath
+    gcflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    asmflags:
+      - all=-trimpath={{.Env.GOPATH}}
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.productCode={{.Env.AWS_NAP_DOS_PRODUCT_CODE}} -X main.pubKeyString={{.Env.AWS_NAP_DOS_PUB_KEY}}
+    main: ./cmd/nginx-ingress/
+    binary: nginx-ingress
+    tags:
+      - aws
 
 archives:
   - id: kubernetes-ingress
