@@ -98,6 +98,8 @@ jobs:
           GOPATH: ${{ needs.checks.outputs.go_path }}
           AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
           AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
+          AWS_NAP_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_DOS_PRODUCT_CODE }}
+          AWS_NAP_DOS_PUB_KEY: ${{ secrets.AWS_NAP_DOS_PUB_KEY }}
       - name: Store Artifacts in Cache
         uses: actions/cache@v3
         with:
@@ -327,6 +329,8 @@ jobs:
           GOPATH: ${{ needs.checks.outputs.go_path }}
           AWS_PRODUCT_CODE: ${{ secrets.AWS_PRODUCT_CODE }}
           AWS_PUB_KEY: ${{ secrets.AWS_PUB_KEY }}
+          AWS_NAP_DOS_PRODUCT_CODE: ${{ secrets.AWS_NAP_DOS_PRODUCT_CODE }}
+          AWS_NAP_DOS_PUB_KEY: ${{ secrets.AWS_NAP_DOS_PUB_KEY }}
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_COMMUNITY }}
           AZURE_STORAGE_ACCOUNT: ${{ secrets.AZURE_STORAGE_ACCOUNT }}
           AZURE_STORAGE_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
@@ -493,6 +497,9 @@ jobs:
             - image: debian-plus-nap
               platforms: "linux/amd64"
               target: goreleaser
+            - image: debian-plus-nap
+              platforms: "linux/amd64"
+              target: aws
 
     steps:
       - name: Checkout Repository
@@ -531,10 +538,9 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/dev/nginx-ic${{ contains(matrix.image, 'nap') && '-dos' || '' }}/nginx-plus-ingress
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/release/nginx-ic${{ contains(matrix.image, 'nap') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') }}
             name=gcr.io/f5-gcs-7899-ptg-ingrss-ctlr/staging/nginx-ic${{ contains(matrix.image, 'nap') && '-dos' || '' }}/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/heads/release') }}
-            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress,enable=${{ startsWith(github.ref, 'refs/tags/') && contains(matrix.target, 'aws') }}
+            name=709825985650.dkr.ecr.us-east-1.amazonaws.com/nginx/nginx-plus-ingress${{ contains(matrix.image, 'nap') && '-dos' || '' }},enable=${{ startsWith(github.ref, 'refs/tags/') && contains(matrix.target, 'aws') }}
           flavor: |
             suffix=${{ contains(matrix.image, 'ubi') && '-ubi' || '' }}${{ contains(matrix.image, 'alpine') && '-alpine' || '' }}${{ contains(matrix.target, 'aws') && '-mktpl' || '' }},onlatest=true
             latest=${{ contains(matrix.target, 'aws') && 'false' || 'auto' }}

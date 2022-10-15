@@ -273,16 +273,17 @@ ARG TARGETARCH
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
-COPY --link --chown=101:0 dist/kubernetes-ingress_linux_$TARGETARCH*/nginx-ingress /
+COPY --link --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
 FROM common AS aws
 ARG TARGETARCH
+ARG NAP_MODULES=
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --link --chown=101:0 dist/aws_linux_$TARGETARCH*/nginx-ingress /
+COPY --link --chown=101:0 dist/aws*${NAP_MODULES}_linux_${TARGETARCH}*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
