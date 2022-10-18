@@ -150,6 +150,7 @@ type LoadBalancerController struct {
 	leaderElectionLockName        string
 	resync                        time.Duration
 	namespaceList                 []string
+	secretNamespaceList           []string
 	controllerNamespace           string
 	wildcardTLSSecret             string
 	areCustomResourcesEnabled     bool
@@ -184,6 +185,7 @@ type NewLoadBalancerControllerInput struct {
 	RestConfig                   *rest.Config
 	ResyncPeriod                 time.Duration
 	Namespace                    []string
+	SecretNamespace              []string
 	NginxConfigurator            *configs.Configurator
 	DefaultServerSecret          string
 	AppProtectEnabled            bool
@@ -234,6 +236,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 		leaderElectionLockName:       input.LeaderElectionLockName,
 		resync:                       input.ResyncPeriod,
 		namespaceList:                input.Namespace,
+		secretNamespaceList:          input.SecretNamespace,
 		controllerNamespace:          input.ControllerNamespace,
 		wildcardTLSSecret:            input.WildcardTLSSecret,
 		areCustomResourcesEnabled:    input.AreCustomResourcesEnabled,
@@ -297,7 +300,7 @@ func NewLoadBalancerController(input NewLoadBalancerControllerInput) *LoadBalanc
 	}
 
 	// Creating a separate informer for secrets.
-	for _, ns := range lbc.namespaceList {
+	for _, ns := range lbc.secretNamespaceList {
 		lbc.secretInformerFactory = append(lbc.secretInformerFactory, informers.NewSharedInformerFactoryWithOptions(lbc.client, input.ResyncPeriod, informers.WithNamespace(ns), informers.WithTweakListOptions(secretsTweakListOptionsFunc)))
 	}
 
