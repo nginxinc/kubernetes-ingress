@@ -5,20 +5,12 @@ on:
     branches:
       - main
       - release-*
-    paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
   pull_request:
     branches:
       - main
       - release-*
-    paths-ignore:
-      - 'docs/**'
-      - 'examples/**'
-      - '**.md'
     types:
       - opened
       - reopened
