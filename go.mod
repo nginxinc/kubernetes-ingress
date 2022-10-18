@@ -151,4 +151,6 @@ replace (
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v0.7.0
 	// temporary fix for CVE-2022-27664
 	golang.org/x/net => golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
+	// temporary fix for CVE-2022-32149
+	golang.org/x/text v0.3.7 => golang.org/x/text v0.3.8
 )

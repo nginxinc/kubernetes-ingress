@@ -631,7 +631,7 @@ The ResponseHeaders field modifies the headers of the response to the client.
 {{% table %}}
 |Field | Description | Type | Required |
 | ---| ---| ---| --- |
-|``hide`` | The headers that will not be passed* in the response to the client from a proxied upstream server. See the [proxy_hide_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header) directive for more information. | ``bool`` | No |
+|``hide`` | The headers that will not be passed* in the response to the client from a proxied upstream server. See the [proxy_hide_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_hide_header) directive for more information. | ``[]string`` | No |
 |``pass`` | Allows passing the hidden header fields* to the client from a proxied upstream server. See the [proxy_pass_header](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_pass_header) directive for more information. | ``[]string`` | No |
 |``ignore`` | Disables processing of certain headers** to the client from a proxied upstream server. See the [proxy_ignore_headers](http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_ignore_headers) directive for more information. | ``[]string`` | No |
 |``add`` | Adds headers to the response to the client. | [[]addHeader](#addheader) | No |
