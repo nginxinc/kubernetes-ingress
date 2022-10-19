@@ -9,6 +9,7 @@ on:
       - "Fossa"
       - "Lint"
       - "Update Docker Images"
+      - "OpenSSF Scorecards"
     types:
       - completed
 
