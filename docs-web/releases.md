@@ -1,5 +1,23 @@
 # Releases
 
+## NGINX Ingress Controller 1.12.5
+
+19 October 2022
+
+CHANGES:
+* Update NGINX version to 1.23.2.
+* Update NGINX Plus version to R27.
+* Update Alpine to 3.16.
+* Update Go to 1.19 and Go dependencies.
+
+HELM CHART:
+* The version of the Helm chart is now 0.10.5.
+
+UPGRADE:
+* For NGINX, use the 1.12.5 image from our DockerHub: `nginx/nginx-ingress:1.12.5`, `nginx/nginx-ingress:1.12.5-alpine` or `nginx/nginx-ingress:1.12.5-ubi`
+* For NGINX Plus, please build your own image using the 1.12.5 source code.
+* For Helm, use version 0.10.5 of the chart.
+
 ## NGINX Ingress Controller 1.12.4
 
 23 March 2022

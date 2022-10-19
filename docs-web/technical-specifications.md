@@ -14,8 +14,8 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX
 
-All images include NGINX 1.21.6.
-The supported architecture is x86-64.
+All images include NGINX 1.23.2.
+The supported architectures are amd64, ppc64le and s390x.
 
 ```eval_rst
 .. list-table::
@@ -26,27 +26,27 @@ The supported architecture is x86-64.
       - Third-party modules
       - DockerHub image
     * - Debian-based image
-      - ``nginx:1.21.6``, which is based on ``debian:bullseye-slim``
+      - ``nginx:1.23.2``, which is based on ``debian:bullseye-slim``
       -
-      - ``nginx/nginx-ingress:1.12.4``
+      - ``nginx/nginx-ingress:1.12.5``
     * - Alpine-based image
-      - ``nginx:1.21.6-alpine``, which is based on ``alpine:3.15``
+      - ``nginx:1.23.2-alpine``, which is based on ``alpine:3.15``
       -
-      - ``nginx/nginx-ingress:1.12.4-alpine``
+      - ``nginx/nginx-ingress:1.12.5-alpine``
     * - Debian-based image with Opentracing
-      - ``nginx:1.21.6``, which is based on ``debian:bullseye-slim``
+      - ``nginx:1.23.2``, which is based on ``debian:bullseye-slim``
       - NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog
       -
     * - Ubi-based image
       - ``redhat/ubi8``
       -
-      - ``nginx/nginx-ingress:1.12.4-ubi``
+      - ``nginx/nginx-ingress:1.12.5-ubi``
 ```
 
 ### Images with NGINX Plus
 
-All images include NGINX Plus R26.
-The supported architecture is x86-64.
+All images include NGINX Plus R27.
+The supported architecture is amd64.
 
 NGINX Plus images are not available through DockerHub.
 
