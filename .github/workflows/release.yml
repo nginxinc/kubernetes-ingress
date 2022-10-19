@@ -39,8 +39,7 @@ jobs:
           go-version-file: go.mod
           cache: true
       - name: Determine GOPATH
-        id: go
-        run: echo "::set-output name=go_path::$(go env GOPATH)"
+        run: echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
 
       - uses: actions/setup-node@v3
       - run: npm install js-yaml
@@ -89,7 +88,7 @@ jobs:
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GOPATH: ${{ steps.go.outputs.go_path }}
+          GOPATH: ${{ env.GOPATH }}
       - name: Store Artifacts in Cache
         uses: actions/cache@v3
         with:

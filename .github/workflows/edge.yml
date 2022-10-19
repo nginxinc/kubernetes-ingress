@@ -52,12 +52,11 @@ jobs:
         id: commit
         run: |
           echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
-      - name: Determine Go version from go.mod
-        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
+          cache: true
       - name: Determine GOPATH
         run: echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
       - name: Check if CRDs changed
@@ -70,7 +69,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: --rm-dist --debug --skip-publish --snapshot
+          args: build --snapshot --rm-dist --single-target
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ env.GOPATH }}
@@ -86,12 +85,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Determine Go version from go.mod
-        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
+          cache: true
       - name: Run Tests
         run: go test ./...
 
@@ -131,7 +129,7 @@ jobs:
             BUILD_OS=${{ matrix.image }}
             NGINX_VERSION=${{ steps.commit.outputs.nginx_version }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@v0.7.1
+        uses: aquasecurity/trivy-action@0.7.1
         continue-on-error: true
         with:
           image-ref: '${{ matrix.image }}:${{ github.sha }}'
