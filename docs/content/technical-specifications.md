@@ -22,7 +22,7 @@ We explicitly test the NGINX Ingress Controller (NIC) on a range of Kubernetes p
 {{% table %}}
 | NIC Version | Supported Kubernetes Version | NIC Helm Chart Version | NIC Operator Version | NGINX / NGINX Plus version |
 | --- | --- | --- | --- | --- |
-| 2.4.1 | 1.25 - 1.19 | 0.15.0 | 1.2.0 | 1.23.1 / R27 |
+| 2.4.1 | 1.25 - 1.19 | 0.15.0 | 1.2.1 | 1.23.2 / R27 |
 | 2.3.1 | 1.24 - 1.19 | 0.14.1 | 1.1.0 | 1.23.1 / R27 |
 | 2.2.2 | 1.23 - 1.19 | 0.13.2 | 1.0.0 | 1.21.6 / R26 |
 | 2.1.2 | 1.23 - 1.19 | 0.12.1 | 0.5.1 | 1.21.6 / R26 |
@@ -41,13 +41,13 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 
 ### Images with NGINX
 
-All images include NGINX 1.23.1.
+All images include NGINX 1.23.2.
 
 {{% table %}}
 |Name | Base image | Third-party modules | DockerHub image | Architectures |
 | ---| ---| ---| --- | --- |
-|Alpine-based image | ``nginx:1.23.1-alpine``, which is based on ``alpine:3.16`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.4.1-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Debian-based image | ``nginx:1.23.1``, which is based on ``debian:bullseye-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.4.1`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Alpine-based image | ``nginx:1.23.2-alpine``, which is based on ``alpine:3.16`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.4.1-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
+|Debian-based image | ``nginx:1.23.2``, which is based on ``debian:bullseye-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.4.1`` | arm/v7, arm64, amd64, ppc64le, s390x |
 |Ubi-based image | ``redhat/ubi8`` |  | ``nginx/nginx-ingress:2.4.1-ubi`` | arm64, amd64, s390x |
 {{% /table %}}
 
