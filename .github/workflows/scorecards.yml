@@ -1,4 +1,4 @@
-name: Scorecards supply-chain security
+name: OpenSSF Scorecards
 on:
   # Only the default branch is supported.
   branch_protection_rule:
