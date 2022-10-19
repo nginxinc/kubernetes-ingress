@@ -6,6 +6,23 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## NGINX Ingress Controller 2.4.1
+
+19 Oct 2022
+
+CHANGES:
+* Update NGINX version to 1.23.2.
+* Update NGINX Plus version to R27 P1.
+* [3180](https://github.com/nginxinc/kubernetes-ingress/pull/3180) Remove all IPV6 listeners in ingress resources with -disable-ipv6 command line.
+
+HELM CHART:
+* The version of the Helm chart is now 0.15.1.
+
+UPGRADE:
+* For NGINX, use the 2.4.1 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.4.1), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 2.4.1 images from the F5 Container registry or build your own image using the 2.4.1 source code.
+* For Helm, use version 0.15.1 of the chart.
+
 ## NGINX Ingress Controller 2.4.0
 
 04 Oct 2022
