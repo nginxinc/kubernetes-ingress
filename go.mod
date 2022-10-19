@@ -9,19 +9,19 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/golang/glog v1.0.0
 	github.com/google/go-cmp v0.5.9
-	github.com/kr/pretty v0.3.0
+	github.com/kr/pretty v0.3.1
 	github.com/nginxinc/nginx-plus-go-client v0.10.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.11.0
 	github.com/prometheus/client_golang v1.13.0
 	github.com/spiffe/go-spiffe/v2 v2.1.1
 	github.com/stretchr/testify v1.8.0
-	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
+	golang.org/x/exp v0.0.0-20221018221608-02f3b879a704
 	google.golang.org/grpc v1.49.0
-	k8s.io/api v0.25.2
-	k8s.io/apimachinery v0.25.2
-	k8s.io/client-go v0.25.2
-	k8s.io/code-generator v0.25.2
-	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed
+	k8s.io/api v0.25.3
+	k8s.io/apimachinery v0.25.3
+	k8s.io/client-go v0.25.3
+	k8s.io/code-generator v0.25.3
+	k8s.io/utils v0.0.0-20221012122500-cfd413dd9e85
 	sigs.k8s.io/controller-tools v0.10.0
 )
 
@@ -83,7 +83,7 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/rogpeppe/go-internal v1.8.0 // indirect
+	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/spf13/cobra v1.4.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/zeebo/errs v1.2.2 // indirect
@@ -124,7 +124,7 @@ require (
 	k8s.io/apiserver v0.25.0 // indirect
 	k8s.io/component-base v0.25.0 // indirect
 	k8s.io/gengo v0.0.0-20211129171323-c02415ce4185 // indirect
-	k8s.io/klog/v2 v2.70.1 // indirect
+	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kube-aggregator v0.24.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.32 // indirect
@@ -151,4 +151,6 @@ replace (
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v0.7.0
 	// temporary fix for CVE-2022-27664
 	golang.org/x/net => golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
+	// temporary fix for CVE-2022-32149
+	golang.org/x/text v0.3.7 => golang.org/x/text v0.3.8
 )
