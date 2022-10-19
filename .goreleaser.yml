@@ -26,7 +26,9 @@ builds:
       - all=-trimpath={{.Env.GOPATH}}
     main: ./cmd/nginx-ingress/main.go
     binary: nginx-ingress
-archives:
-- format: binary
+
 changelog:
   skip: true
+
+sboms:
+  - artifacts: archive

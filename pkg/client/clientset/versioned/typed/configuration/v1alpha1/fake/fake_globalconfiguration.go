@@ -89,7 +89,7 @@ func (c *FakeGlobalConfigurations) Update(ctx context.Context, globalConfigurati
 // Delete takes name of the globalConfiguration and deletes it. Returns an error if one occurs.
 func (c *FakeGlobalConfigurations) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(globalconfigurationsResource, c.ns, name), &v1alpha1.GlobalConfiguration{})
+		Invokes(testing.NewDeleteActionWithOptions(globalconfigurationsResource, c.ns, name, opts), &v1alpha1.GlobalConfiguration{})
 
 	return err
 }

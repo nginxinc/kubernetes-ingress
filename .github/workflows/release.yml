@@ -25,7 +25,7 @@ jobs:
       helmChartVersion: ${{ steps.commit.outputs.helmChartVersion }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Output Variables
@@ -33,24 +33,64 @@ jobs:
         run: |
           echo "::set-output name=version::${GITHUB_REF#refs/tags/v}"
           echo "::set-output name=helmChartVersion::$(helm show chart ${{ env.HELM_CHART_DIR }} | grep 'version:' | cut -d ' ' -f 2)"
-      - name: Determine Go version from go.mod
-        run: echo "GO_VERSION=$(grep "go 1." go.mod | cut -d " " -f 2)" >> $GITHUB_ENV
       - name: Setup Golang Environment
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: go.mod
+          cache: true
       - name: Determine GOPATH
         run: echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v3
+      - run: npm install js-yaml
+        continue-on-error: true
+        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish release on tag
+        uses: actions/github-script@v6
+        continue-on-error: true
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+              const ref = context.ref.split("/")[2]
+              const yaml = require('js-yaml');
+              const releases = (await github.rest.repos.listReleases({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                per_page: 100,
+              })).data
+              const draft_release = releases.find(release => release.draft && release.tag_name === ref)
+              const helm_file = (await github.rest.repos.getContent({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                path: "deployments/helm-chart/Chart.yaml",
+                ref: ref,
+              })).data.content
+              const helm_yaml = yaml.load(Buffer.from(helm_file, 'base64').toString())
+              const helm_version = helm_yaml.version
+              console.log(`Helm version: ${helm_version}`)
+              const update = await github.rest.repos.updateRelease({
+                owner: context.payload.repository.owner.login,
+                repo: context.payload.repository.name,
+                release_id: draft_release.id,
+                body: draft_release.body.replace("%HELM_CHART_VERSION%", helm_version),
+                draft: false
+              });
+              console.log(`Release published: ${update.data.html_url}`)
+              console.log(`Release notes: ${update.data.body}`)
+
+      - name: Download Syft
+        uses: anchore/sbom-action/download-syft@v0.12.0
+
       - name: Build binaries
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v3
         with:
           version: latest
-          args: release --rm-dist --skip-publish
+          args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOPATH: ${{ env.GOPATH }}
       - name: Store Artifacts in Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
@@ -74,48 +114,42 @@ jobs:
             platforms: linux/arm64,linux/amd64,linux/s390x
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Output Variables
         id: commit
         run: |
           echo "::set-output name=date::$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           echo "::set-output name=nginx_version::$(cat build/Dockerfile | grep -m1 "FROM nginx:" | cut -d":" -f2 | cut -d" " -f1)"
       - name: Fetch Cached Artifacts
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ github.workspace }}/dist
           key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
         with:
           platforms: arm,arm64,ppc64le,s390x
       - name: Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
         with:
           driver-opts: network=host
-      - name: Cache Docker layers for ${{ matrix.image }}
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-${{ matrix.image }}-cache
-          key: ${{ runner.os }}-buildx-${{ matrix.image }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-${{ matrix.image }}-
       - name: DockerHub Login
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Push to Dockerhub
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           file: build/Dockerfile
           context: '.'
           no-cache: true
-          cache-to: type=local,dest=/tmp/.buildx-${{ matrix.image }}-cache
+          cache-to: type=gha,scope=${{ matrix.type }},mode=max
           target: goreleaser
           tags: nginx/nginx-ingress:${{ matrix.tag }}
           platforms: ${{ matrix.platforms }}
           push: true
+          pull: true
           build-args: |
             BUILD_OS=${{ matrix.type }}
             IC_VERSION=v${{ needs.binary.outputs.version }}
@@ -129,13 +163,13 @@ jobs:
     needs: [binary, release-docker]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Lint
         run: helm lint ${{ env.HELM_CHART_DIR }}
       - name: Package
         run: helm package --version ${{ needs.binary.outputs.helmChartVersion }} ${{ env.HELM_CHART_DIR }}
       - name: Upload Chart
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: helm-chart
           path: ${{ github.workspace }}/nginx-ingress-${{ needs.binary.outputs.helmChartVersion }}.tgz
@@ -146,7 +180,7 @@ jobs:
     needs: [binary, release-docker, package-helm]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: nginxinc/helm-charts
           fetch-depth: 1
@@ -154,7 +188,7 @@ jobs:
       - name: Remove previous Chart
         run: rm -f ${{ github.workspace }}/stable/nginx-ingress-${{ needs.binary.outputs.helmChartVersion }}.tgz
       - name: Retrieve latest Helm Chart
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: helm-chart
           path: ${{ github.workspace }}/stable
@@ -165,18 +199,6 @@ jobs:
           git -c user.name='${{ env.GIT_NAME }}' -c user.email='${{ env.GIT_MAIL }}' \
           commit -m "NGINX Ingress Controller - Release ${{ needs.binary.outputs.version }}"
           git push -u origin master
-
-  publish-release-notes:
-    name: Publish Release Notes
-    runs-on: ubuntu-20.04
-    needs: [release-helm]
-    steps:
-      - name: Publish Release Notes
-        uses: release-drafter/release-drafter@v5
-        with:
-            publish: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   notify:
     name: Notify

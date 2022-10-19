@@ -101,7 +101,7 @@ func (c *FakeVirtualServers) UpdateStatus(ctx context.Context, virtualServer *co
 // Delete takes name of the virtualServer and deletes it. Returns an error if one occurs.
 func (c *FakeVirtualServers) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(virtualserversResource, c.ns, name), &configurationv1.VirtualServer{})
+		Invokes(testing.NewDeleteActionWithOptions(virtualserversResource, c.ns, name, opts), &configurationv1.VirtualServer{})
 
 	return err
 }

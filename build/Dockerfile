@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1.2
 ARG BUILD_OS=debian
-ARG NGINX_PLUS_VERSION=r26
+ARG NGINX_PLUS_VERSION=r27
 ARG FILES=
 ARG DEBIAN_VERSION=bullseye-slim
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.21.6 AS debian
+FROM nginx:1.23.1 AS debian
 
 RUN apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y libcap2-bin \
@@ -13,24 +13,21 @@ RUN apt-get update \
 
 
 ############################################# Base image for Alpine #############################################
-# docker.io/library/nginx is a temporary workaround for Dependabot to see this as different from the one used in Debian
-FROM docker.io/library/nginx:1.21.6-alpine AS alpine
+FROM nginx:1.23.1-alpine AS alpine
 
 RUN apk add --no-cache libcap \
-	# temp fix for CVE-2022-0778
-	&& apk upgrade --no-cache libretls
+	# temp fix for CVE-2022-40303
+	&& apk upgrade --no-cache libxml2
 
 
 ############################################# Base image for Alpine with NGINX Plus #############################################
-FROM alpine:3.15 as alpine-plus
+FROM alpine:3.16 as alpine-plus
 ARG NGINX_PLUS_VERSION
 
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/apk/cert.key,mode=0644 \
 	wget -nv -O /etc/apk/keys/nginx_signing.rsa.pub https://cs.nginx.com/static/keys/nginx_signing.rsa.pub \
 	&& printf "%s\n" "https://pkgs.nginx.com/plus/alpine/v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)/main" >> /etc/apk/repositories \
-	# temp fix for CVE-2022-0778
-	&& apk upgrade --no-cache libretls \
 	&& apk add --no-cache libcap nginx-plus~${NGINX_PLUS_VERSION#r} nginx-plus-module-njs~${NGINX_PLUS_VERSION#r}
 
 
@@ -71,6 +68,8 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 	"deb https://pkgs.nginx.com/app-protect-security-updates/debian ${DEBIAN_VERSION} nginx-plus" > /etc/apt/sources.list.d/nginx-app-protect.list \
 	&& apt-get update \
 	&& apt-get install --no-install-recommends --no-install-suggests -y app-protect app-protect-attack-signatures app-protect-threat-campaigns \
+	# temp fix for CVE-2021-33574
+	&& apt-get install libc6 libc-bin \
 	&& apt-get purge --auto-remove -y apt-transport-https gnupg curl \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& rm /etc/apt/sources.list.d/nginx-app-protect.list
@@ -96,8 +95,6 @@ LABEL name="NGINX Ingress Controller" \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
 RUN dnf --nodocs install -y shadow-utils ca-certificates \
-	# temporary fix for CVE-2022-24407
-	&& dnf --nodocs install -y cyrus-sasl-lib \
 	&& groupadd --system --gid 101 nginx \
 	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
 
@@ -247,7 +244,7 @@ LABEL org.nginx.kic.image.build.nginx.version="${NGINX_PLUS_VERSION}${NGINX_VERS
 
 
 ############################################# Build nginx-ingress in golang container #############################################
-FROM golang:1.17-alpine AS builder
+FROM golang:1.19-alpine AS builder
 ARG IC_VERSION
 ARG GIT_COMMIT
 ARG DATE
@@ -275,4 +272,4 @@ FROM common AS goreleaser
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-COPY --chown=nginx:0 dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+COPY --chown=nginx:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
