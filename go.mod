@@ -16,7 +16,7 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.1.1
 	github.com/stretchr/testify v1.8.0
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
-	google.golang.org/grpc v1.50.0
+	google.golang.org/grpc v1.50.1
 	k8s.io/api v0.25.3
 	k8s.io/apimachinery v0.25.3
 	k8s.io/client-go v0.25.3
@@ -151,4 +151,6 @@ replace (
 	go.opentelemetry.io/proto/otlp => go.opentelemetry.io/proto/otlp v0.7.0
 	// temporary fix for CVE-2022-27664
 	golang.org/x/net => golang.org/x/net v0.0.0-20220906165146-f3363e06e74c
+	// temporary fix for CVE-2022-32149
+	golang.org/x/text v0.3.7 => golang.org/x/text v0.3.8
 )
