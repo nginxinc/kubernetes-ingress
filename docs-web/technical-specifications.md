@@ -15,7 +15,7 @@ We provide the following Docker images, which include NGINX/NGINX Plus bundled w
 ### Images with NGINX
 
 All images include NGINX 1.23.2.
-The supported architectures are amd64, ppc64le and s390x.
+The supported architectures are amd64, arm64, ppc64le and s390x.
 
 ```eval_rst
 .. list-table::
