@@ -272,4 +272,4 @@ FROM common AS goreleaser
 ARG TARGETARCH
 ARG TARGETVARIANT
 
-COPY --chown=nginx:0 dist/kubernetes-ingress_linux_$TARGETARCH${TARGETVARIANT:+_7}/nginx-ingress /
+COPY --chown=nginx:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
