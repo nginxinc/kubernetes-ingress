@@ -302,7 +302,7 @@ controller:
     customPorts: []
 
   serviceAccount:
-    ## The annotations of the Ingress Controller service.
+    ## The annotations of the service account of the Ingress Controller pods.
     annotations: {}
 
     ## The name of the service account of the Ingress Controller pods. Used for RBAC.
