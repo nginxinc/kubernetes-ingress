@@ -1,9 +1,9 @@
 {{ $css1 := resources.Get "css/docs-nginx-com/nginx-site-header.css" }}
 {{ $css2 := resources.Get "css/docs-nginx-com/style.css" }}
 {{ $css3 := resources.Get "css/bootstrap-docs.css" }}
-{{ $css5 := resources.Get "css/coveo.css" }}
 {{ $css4 := resources.Get "css/f5-hugo.css" }}
 {{ $css5 := resources.Get "css/highlight.css" }}
+{{ $css6 := resources.Get "css/coveo.css" }}
 
 {{ if in .Site.Params.buildtype "package" }}
 
@@ -38,7 +38,7 @@
 <link href="{{ $bootstrapDocs.RelPermalink }}" rel="stylesheet" type="text/css">
 
 {{ if ( not ( in .Site.Params.buildtype "package" ) ) }}
-{{ $cssCoveo := $css5 | minify | fingerprint "sha512"}}
+{{ $cssCoveo := $css6 | minify | fingerprint "sha512"}}
 <link href="{{ $cssCoveo.RelPermalink }}" rel="stylesheet" type="text/css">
 {{ end }}
 

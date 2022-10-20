@@ -95,6 +95,7 @@ func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 				"10.0.0.20:5001",
 			},
 		},
+		DisableIPV6: false,
 	}
 
 	listenerPort := 2020
@@ -132,14 +133,101 @@ func TestGenerateTransportServerConfigForTCPSnippets(t *testing.T) {
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyTimeout:             "10m",
 			HealthCheck:              nil,
+			DisableIPV6:              false,
 			ServerSnippets:           []string{"deny  192.168.1.1;", "allow 192.168.1.0/24;"},
 		},
 		StreamSnippets: []string{"limit_conn_zone $binary_remote_addr zone=addr:10m;"},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", cmp.Diff(expected, result))
+	}
+}
+
+func TestGenerateTransportServerConfigForIPV6Disabled(t *testing.T) {
+	t.Parallel()
+	transportServerEx := TransportServerEx{
+		TransportServer: &conf_v1alpha1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "tcp-server",
+				Namespace: "default",
+			},
+			Spec: conf_v1alpha1.TransportServerSpec{
+				Listener: conf_v1alpha1.TransportServerListener{
+					Name:     "tcp-listener",
+					Protocol: "TCP",
+				},
+				Upstreams: []conf_v1alpha1.Upstream{
+					{
+						Name:    "tcp-app",
+						Service: "tcp-app-svc",
+						Port:    5001,
+					},
+				},
+				Action: &conf_v1alpha1.Action{
+					Pass: "tcp-app",
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tcp-app-svc:5001": {
+				"10.0.0.20:5001",
+			},
+		},
+		DisableIPV6: true,
+	}
+
+	listenerPort := 2020
+
+	expected := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address:     "10.0.0.20:5001",
+						MaxFails:    1,
+						FailTimeout: "10s",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+				LoadBalancingMethod: "random two least_conn",
+			},
+		},
+		Server: version2.StreamServer{
+			Port:                     listenerPort,
+			UDP:                      false,
+			StatusZone:               "tcp-listener",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "60s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTries:   0,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyTimeout:             "10m",
+			HealthCheck:              nil,
+			ServerSnippets:           []string{},
+			DisableIPV6:              true,
+		},
+		StreamSnippets: []string{},
+	}
+
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfigForIPV6Disabled() mismatch (-want +got):\n%s", cmp.Diff(expected, result))
 	}
 }
 
@@ -182,6 +270,7 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 				"10.0.0.20:5001",
 			},
 		},
+		DisableIPV6: false,
 	}
 
 	listenerPort := 2020
@@ -224,9 +313,12 @@ func TestGenerateTransportServerConfigForTCP(t *testing.T) {
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", cmp.Diff(expected, result))
 	}
 }
 
@@ -270,6 +362,7 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 				"10.0.0.20:5001",
 			},
 		},
+		DisableIPV6: false,
 	}
 
 	listenerPort := 2020
@@ -308,14 +401,18 @@ func TestGenerateTransportServerConfigForTCPMaxConnections(t *testing.T) {
 			ProxyNextUpstreamTimeout: "0s",
 			ProxyTimeout:             "50s",
 			HealthCheck:              nil,
+			DisableIPV6:              false,
 			ServerSnippets:           []string{},
 		},
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", cmp.Diff(expected, result))
 	}
 }
 
@@ -356,6 +453,7 @@ func TestGenerateTransportServerConfigForTLSPassthrough(t *testing.T) {
 				"10.0.0.20:5001",
 			},
 		},
+		DisableIPV6: false,
 	}
 
 	listenerPort := 2020
@@ -397,12 +495,16 @@ func TestGenerateTransportServerConfigForTLSPassthrough(t *testing.T) {
 			HealthCheck:              nil,
 			ServerSnippets:           []string{},
 		},
+		DisableIPV6:    false,
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", cmp.Diff(expected, result))
 	}
 }
 
@@ -448,6 +550,7 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 				"10.0.0.20:5001",
 			},
 		},
+		DisableIPV6: false,
 	}
 
 	listenerPort := 2020
@@ -487,14 +590,275 @@ func TestGenerateTransportServerConfigForUDP(t *testing.T) {
 			ProxyNextUpstreamTries:   0,
 			ProxyTimeout:             "10m",
 			HealthCheck:              nil,
+			DisableIPV6:              false,
 			ServerSnippets:           []string{},
 		},
 		StreamSnippets: []string{},
 	}
 
-	result := generateTransportServerConfig(&transportServerEx, listenerPort, true)
-	if diff := cmp.Diff(expected, result); diff != "" {
-		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", diff)
+	result, warnings := generateTransportServerConfig(&transportServerEx, listenerPort, true, false)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateTransportServerConfig() mismatch (-want +got):\n%s", cmp.Diff(expected, result))
+	}
+}
+
+func TestGenerateTransportServerConfig_ProducesValidConfigOnValidInputForExternalNameServiceAndConfiguredResolver(t *testing.T) {
+	t.Parallel()
+	transportServerEx := TransportServerEx{
+		TransportServer: &conf_v1alpha1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "tcp-server",
+				Namespace: "default",
+			},
+			Spec: conf_v1alpha1.TransportServerSpec{
+				Listener: conf_v1alpha1.TransportServerListener{
+					Name:     "tcp-listener",
+					Protocol: "TCP",
+				},
+				Upstreams: []conf_v1alpha1.Upstream{
+					{
+						Name:        "tcp-app",
+						Service:     "tcp-app-svc",
+						Port:        5001,
+						MaxFails:    intPointer(3),
+						FailTimeout: "40s",
+					},
+				},
+				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+					ConnectTimeout: "30s",
+					NextUpstream:   false,
+				},
+				SessionParameters: &conf_v1alpha1.SessionParameters{
+					Timeout: "50s",
+				},
+				Action: &conf_v1alpha1.Action{
+					Pass: "tcp-app",
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tcp-app-svc:5001": {
+				"10.0.0.20:5001",
+			},
+		},
+		ExternalNameSvcs: map[string]bool{"default/tcp-app-svc": true},
+	}
+	expected := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address:     "10.0.0.20:5001",
+						MaxFails:    3,
+						FailTimeout: "40s",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+				LoadBalancingMethod: "random two least_conn",
+				Resolve:             true,
+			},
+		},
+		Server: version2.StreamServer{
+			Port:                     2020,
+			UDP:                      false,
+			StatusZone:               "tcp-listener",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "30s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTries:   0,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyTimeout:             "50s",
+			HealthCheck:              nil,
+			ServerSnippets:           []string{},
+		},
+		StreamSnippets: []string{},
+	}
+
+	result, warnings := generateTransportServerConfig(&transportServerEx, 2020, true, true)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Error(cmp.Diff(expected, result))
+	}
+}
+
+func TestGenerateTransportServerConfig_GeneratesWarningOnNotConfiguredResolver(t *testing.T) {
+	t.Parallel()
+	transportServerEx := TransportServerEx{
+		TransportServer: &conf_v1alpha1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "tcp-server",
+				Namespace: "default",
+			},
+			Spec: conf_v1alpha1.TransportServerSpec{
+				Listener: conf_v1alpha1.TransportServerListener{
+					Name:     "tcp-listener",
+					Protocol: "TCP",
+				},
+				Upstreams: []conf_v1alpha1.Upstream{
+					{
+						Name:        "tcp-app",
+						Service:     "tcp-app-svc",
+						Port:        5001,
+						MaxFails:    intPointer(3),
+						FailTimeout: "40s",
+					},
+				},
+				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+					ConnectTimeout: "30s",
+					NextUpstream:   false,
+				},
+				SessionParameters: &conf_v1alpha1.SessionParameters{
+					Timeout: "50s",
+				},
+				Action: &conf_v1alpha1.Action{
+					Pass: "tcp-app",
+				},
+			},
+		},
+		Endpoints: map[string][]string{
+			"default/tcp-app-svc:5001": {
+				"10.0.0.20:5001",
+			},
+		},
+		ExternalNameSvcs: map[string]bool{"default/tcp-app-svc": true},
+	}
+	expected := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name:    "ts_default_tcp-server_tcp-app",
+				Servers: nil,
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+				LoadBalancingMethod: "random two least_conn",
+				Resolve:             true,
+			},
+		},
+		Server: version2.StreamServer{
+			Port:                     2020,
+			UDP:                      false,
+			StatusZone:               "tcp-listener",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "30s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTries:   0,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyTimeout:             "50s",
+			HealthCheck:              nil,
+			ServerSnippets:           []string{},
+		},
+		StreamSnippets: []string{},
+	}
+
+	result, warnings := generateTransportServerConfig(&transportServerEx, 2020, true, false)
+	if len(warnings) == 0 {
+		t.Errorf("want warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Error(cmp.Diff(expected, result))
+	}
+}
+
+func TestGenerateTransportServerConfig_UsesNotExistignSocketOnNotPlusAndNoEndpoints(t *testing.T) {
+	t.Parallel()
+	transportServerEx := TransportServerEx{
+		TransportServer: &conf_v1alpha1.TransportServer{
+			ObjectMeta: meta_v1.ObjectMeta{
+				Name:      "tcp-server",
+				Namespace: "default",
+			},
+			Spec: conf_v1alpha1.TransportServerSpec{
+				Listener: conf_v1alpha1.TransportServerListener{
+					Name:     "tcp-listener",
+					Protocol: "TCP",
+				},
+				Upstreams: []conf_v1alpha1.Upstream{
+					{
+						Name:        "tcp-app",
+						Service:     "tcp-app-svc",
+						Port:        5001,
+						MaxFails:    intPointer(3),
+						FailTimeout: "40s",
+					},
+				},
+				UpstreamParameters: &conf_v1alpha1.UpstreamParameters{
+					ConnectTimeout: "30s",
+					NextUpstream:   false,
+				},
+				SessionParameters: &conf_v1alpha1.SessionParameters{
+					Timeout: "50s",
+				},
+				Action: &conf_v1alpha1.Action{
+					Pass: "tcp-app",
+				},
+			},
+		},
+		Endpoints:        map[string][]string{},
+		ExternalNameSvcs: map[string]bool{"default/tcp-app-svc": true},
+	}
+	expected := &version2.TransportServerConfig{
+		Upstreams: []version2.StreamUpstream{
+			{
+				Name: "ts_default_tcp-server_tcp-app",
+				Servers: []version2.StreamUpstreamServer{
+					{
+						Address:     nginxNonExistingUnixSocket,
+						MaxFails:    3,
+						FailTimeout: "40s",
+					},
+				},
+				UpstreamLabels: version2.UpstreamLabels{
+					ResourceName:      "tcp-server",
+					ResourceType:      "transportserver",
+					ResourceNamespace: "default",
+					Service:           "tcp-app-svc",
+				},
+				LoadBalancingMethod: "random two least_conn",
+				Resolve:             true,
+			},
+		},
+		Server: version2.StreamServer{
+			Port:                     2020,
+			UDP:                      false,
+			StatusZone:               "tcp-listener",
+			ProxyPass:                "ts_default_tcp-server_tcp-app",
+			Name:                     "tcp-server",
+			Namespace:                "default",
+			ProxyConnectTimeout:      "30s",
+			ProxyNextUpstream:        false,
+			ProxyNextUpstreamTries:   0,
+			ProxyNextUpstreamTimeout: "0s",
+			ProxyTimeout:             "50s",
+			HealthCheck:              nil,
+			ServerSnippets:           []string{},
+		},
+		StreamSnippets: []string{},
+	}
+
+	result, warnings := generateTransportServerConfig(&transportServerEx, 2020, false, true)
+	if len(warnings) != 0 {
+		t.Errorf("want no warnings, got %v", warnings)
+	}
+	if !cmp.Equal(expected, result) {
+		t.Error(cmp.Diff(expected, result))
 	}
 }
 

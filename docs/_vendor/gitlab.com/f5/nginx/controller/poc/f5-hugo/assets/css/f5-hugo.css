@@ -502,7 +502,7 @@ blockquote {
 
 }
 
-.warning {
+.warning, .important {
     border-left: 4px solid #c20025;
 }
 

@@ -72,18 +72,15 @@ const (
 const (
 	commaDelimiter     = ","
 	annotationValueFmt = `([^"$\\]|\\[^$])*`
-	pathFmt            = `/[^\s{};\\]*`
 	jwtTokenValueFmt   = "\\$" + annotationValueFmt
 )
 
 const (
 	annotationValueFmtErrMsg = `a valid annotation value must have all '"' escaped and must not contain any '$' or end with an unescaped '\'`
-	pathErrMsg               = "must start with / and must not include any whitespace character, `{`, `}` or `;`"
 	jwtTokenValueFmtErrMsg   = `a valid annotation value must start with '$', have all '"' escaped, and must not contain any '$' or end with an unescaped '\'`
 )
 
 var (
-	pathRegexp                        = regexp.MustCompile("^" + pathFmt + "$")
 	validAnnotationValueRegex         = regexp.MustCompile("^" + annotationValueFmt + "$")
 	validJWTTokenAnnotationValueRegex = regexp.MustCompile("^" + jwtTokenValueFmt + "$")
 )
@@ -875,6 +872,13 @@ func validateBackend(backend *networking.IngressBackend, fieldPath *field.Path) 
 	return allErrs
 }
 
+const (
+	pathFmt    = `/[^\s;]*`
+	pathErrMsg = "must start with / and must not include any whitespace character or `;`"
+)
+
+var pathRegexp = regexp.MustCompile("^" + pathFmt + "$")
+
 func validatePath(path string, fieldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -885,6 +889,80 @@ func validatePath(path string, fieldPath *field.Path) field.ErrorList {
 	if !pathRegexp.MatchString(path) {
 		msg := validation.RegexError(pathErrMsg, pathFmt, "/", "/path", "/path/subpath-123")
 		return append(allErrs, field.Invalid(fieldPath, path, msg))
+	}
+
+	allErrs = append(allErrs, validateRegexPath(path, fieldPath)...)
+	allErrs = append(allErrs, validateCurlyBraces(path, fieldPath)...)
+	allErrs = append(allErrs, validateIllegalKeywords(path, fieldPath)...)
+
+	return allErrs
+}
+
+func validateRegexPath(path string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if _, err := regexp.Compile(path); err != nil {
+		return append(allErrs, field.Invalid(fieldPath, path, fmt.Sprintf("must be a valid regular expression: %v", err)))
+	}
+
+	if err := ValidateEscapedString(path, "*.jpg", "^/images/image_*.png$"); err != nil {
+		return append(allErrs, field.Invalid(fieldPath, path, err.Error()))
+	}
+
+	return allErrs
+}
+
+const (
+	curlyBracesFmt = `\{(.*?)\}`
+	alphabetFmt    = `[A-Za-z]`
+	curlyBracesMsg = `must not include curly braces containing alphabetical characters`
+)
+
+var (
+	curlyBracesFmtRegexp = regexp.MustCompile(curlyBracesFmt)
+	alphabetFmtRegexp    = regexp.MustCompile(alphabetFmt)
+)
+
+func validateCurlyBraces(path string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	bracesContents := curlyBracesFmtRegexp.FindAllStringSubmatch(path, -1)
+	for _, v := range bracesContents {
+		if alphabetFmtRegexp.MatchString(v[1]) {
+			return append(allErrs, field.Invalid(fieldPath, path, curlyBracesMsg))
+		}
+	}
+	return allErrs
+}
+
+const (
+	escapedStringsFmt    = `([^"\\]|\\.)*`
+	escapedStringsErrMsg = `must have all '"' (double quotes) escaped and must not end with an unescaped '\' (backslash)`
+)
+
+var escapedStringsFmtRegexp = regexp.MustCompile("^" + escapedStringsFmt + "$")
+
+// ValidateEscapedString validates an escaped string.
+func ValidateEscapedString(body string, examples ...string) error {
+	if !escapedStringsFmtRegexp.MatchString(body) {
+		msg := validation.RegexError(escapedStringsErrMsg, escapedStringsFmt, examples...)
+		return fmt.Errorf(msg)
+	}
+	return nil
+}
+
+const (
+	illegalKeywordFmt    = `/etc/|/root|/var|\\n|\\r`
+	illegalKeywordErrMsg = `must not contain invalid paths`
+)
+
+var illegalKeywordFmtRegexp = regexp.MustCompile("^" + illegalKeywordFmt + "$")
+
+func validateIllegalKeywords(path string, fieldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if illegalKeywordFmtRegexp.MatchString(path) {
+		return append(allErrs, field.Invalid(fieldPath, path, illegalKeywordErrMsg))
 	}
 
 	return allErrs

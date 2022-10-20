@@ -56,9 +56,9 @@ In the following example we enable JWT validation for the [mergeable Ingresses](
   metadata:
     name: cafe-ingress-master
     annotations:
-      kubernetes.io/ingress.class: "nginx"
       nginx.org/mergeable-ingress-type: "master"
   spec:
+    ingressClassName: nginx
     tls:
     - hosts:
       - cafe.example.com
@@ -74,13 +74,13 @@ In the following example we enable JWT validation for the [mergeable Ingresses](
   metadata:
     name: cafe-ingress-tea-minion
     annotations:
-      kubernetes.io/ingress.class: "nginx"
       nginx.org/mergeable-ingress-type: "minion"
       nginx.com/jwt-key: "tea-jwk"
       nginx.com/jwt-realm: "Tea"
       nginx.com/jwt-token: "$cookie_auth_token"
       nginx.com/jwt-login-url: "https://login-tea.cafe.example.com"
   spec:
+    ingressClassName: nginx
     rules:
     - host: cafe.example.com
       http:
@@ -101,13 +101,13 @@ In the following example we enable JWT validation for the [mergeable Ingresses](
   metadata:
     name: cafe-ingress-coffee-minion
     annotations:
-      kubernetes.io/ingress.class: "nginx"
       nginx.org/mergeable-ingress-type: "minion"
       nginx.com/jwt-key: "coffee-jwk"
       nginx.com/jwt-realm: "Coffee"
       nginx.com/jwt-token: "$cookie_auth_token"
       nginx.com/jwt-login-url: "https://login-coffee.cafe.example.com"
   spec:
+    ingressClassName: nginx
     rules:
     - host: cafe.example.com
       http:

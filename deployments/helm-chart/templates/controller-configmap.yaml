@@ -1,3 +1,4 @@
+{{- if not .Values.controller.customConfigMap -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -12,4 +13,5 @@ metadata:
 data:
 {{- if .Values.controller.config.entries }}
 {{ toYaml .Values.controller.config.entries | indent 2 }}
+{{- end }}
 {{- end }}

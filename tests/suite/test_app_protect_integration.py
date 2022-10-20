@@ -340,9 +340,6 @@ class TestAppProtect:
         syslog_dst = f"syslog-svc.{test_namespace}"
         syslog2_dst = f"syslog2-svc.{test_namespace}"
 
-        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-")
-        syslog2_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog2")
-
         with open(src_ing_yaml) as f:
             doc = yaml.safe_load(f)
 
@@ -369,6 +366,8 @@ class TestAppProtect:
         print("----------------------- Send request ----------------------")
         response = requests.get(appprotect_setup.req_url + "/<script>", headers={"host": ingress_host}, verify=False)
         print(response.text)
+        syslog_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog-")
+        syslog2_pod = get_pod_name_that_contains(kube_apis.v1, test_namespace, "syslog2")
         log_contents = ""
         log2_contents = ""
         retry = 0
@@ -390,14 +389,16 @@ class TestAppProtect:
         assert_invalid_responses(response)
         # check logs in dest. #1 i.e. syslog server #1
         assert (
-            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"' in log_contents
+            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS),Other Application Activity"'
+            in log_contents
             and 'severity="Critical"' in log_contents
             and 'request_status="blocked"' in log_contents
             and 'outcome="REJECTED"' in log_contents
         )
         # check logs in dest. #2 i.e. syslog server #2
         assert (
-            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS)"' in log2_contents
+            'ASM:attack_type="Non-browser Client,Abuse of Functionality,Cross Site Scripting (XSS),Other Application Activity"'
+            in log2_contents
             and 'severity="Critical"' in log2_contents
             and 'request_status="blocked"' in log2_contents
             and 'outcome="REJECTED"' in log2_contents

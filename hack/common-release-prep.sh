@@ -44,7 +44,7 @@ sed -i "" -e "s/%%TITLE%%/### $ic_version/g" -e "s/%%IC_VERSION%%/$ic_version/g"
 # update docs
 find $DOCS_TO_UPDATE_FOLDER -type f -name "*.md" -exec sed -i "" "s/v$prev_ic_version/v$ic_version/g" {} +
 find $DOCS_TO_UPDATE_FOLDER/installation -type f -name "*.md" -exec sed -i "" "s/$prev_ic_version/$ic_version/g" {} +
-find $DOCS_TO_UPDATE_FOLDER/app-protect -type f -name "*.md" -exec sed -i "" "s/$prev_ic_version/$ic_version/g" {} +
+find $DOCS_TO_UPDATE_FOLDER/app-protect-* -type f -name "*.md" -exec sed -i "" "s/$prev_ic_version/$ic_version/g" {} +
 
 # update IC version in the technical-specification doc
 sed -i "" "s/$prev_ic_version/$ic_version/g" $DOCS_TO_UPDATE_FOLDER/technical-specifications.md

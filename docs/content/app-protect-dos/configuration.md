@@ -9,7 +9,7 @@ docs: "DOCS-580"
 ---
 
 This document describes how to configure the NGINX App Protect DoS module
-> Check out the complete [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/ingress-resources/app-protect-dos).
+> Check out the complete [NGINX Ingress Controller with App Protect DoS example for VirtualServer](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/custom-resources/app-protect-dos) and the [NGINX Ingress Controller with App Protect DoS example for Ingress](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/examples/ingress-resources/app-protect-dos).
 
 ## App Protect DoS Configuration
 
@@ -112,12 +112,9 @@ For example, say you want to log state changing requests for your Ingress resour
 ```json
 {
     "filter": {
-        "request_type": "all"
-    },
-    "content": {
-        "format": "default",
-        "max_request_size": "any",
-        "max_message_size": "64k"
+        "traffic-mitigation-stats": "all",
+        "bad-actors": "top 10",
+        "attack-signatures": "top 10"
     }
 }
 ```
@@ -130,9 +127,6 @@ kind: APDosLogConf
 metadata:
    name: doslogconf
 spec:
-   content:
-      format: splunk
-      max_message_size: 64k
    filter:
       traffic-mitigation-stats: all
       bad-actors: top 10

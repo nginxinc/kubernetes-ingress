@@ -111,6 +111,7 @@ type ConfigParams struct {
 
 // StaticConfigParams holds immutable NGINX configuration parameters that affect the main NGINX config.
 type StaticConfigParams struct {
+	DisableIPV6                    bool
 	HealthStatus                   bool
 	HealthStatusURI                string
 	NginxStatus                    bool

@@ -1,0 +1,1595 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "type": "object",
+  "default": {},
+  "title": "Root Schema",
+  "required": [
+    "controller",
+    "rbac",
+    "prometheus",
+    "nginxServiceMesh"
+  ],
+  "properties": {
+    "controller": {
+      "type": "object",
+      "default": {},
+      "title": "The Ingress Controller Helm Schema",
+      "required": [
+        "kind",
+        "image"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "",
+          "title": "The name of the Ingress Controller",
+          "examples": [
+            "nginx-ingress"
+          ]
+        },
+        "kind": {
+          "type": "string",
+          "default": "",
+          "title": "The kind of the Ingress Controller",
+          "enum": [
+            "deployment",
+            "daemonset"
+          ],
+          "examples": [
+            "deployment",
+            "daemonset"
+          ]
+        },
+        "nginxplus": {
+          "type": "boolean",
+          "default": false,
+          "title": "Deploys the Ingress Controller for NGINX Plus",
+          "examples": [
+            false,
+            true
+          ]
+        },
+        "nginxReloadTimeout": {
+          "type": "integer",
+          "default": 0,
+          "title": "Timeout in milliseconds which the Ingress Controller will wait for a successful NGINX reload after a change or at the initial start",
+          "examples": [
+            60000
+          ]
+        },
+        "appprotect": {
+          "type": "object",
+          "default": {},
+          "title": "The App Protect WAF Schema",
+          "required": [
+            "enable"
+          ],
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "default": false,
+              "title": "Enable the App Protect WAF module in the Ingress Controller",
+              "examples": [
+                false,
+                true
+              ]
+            },
+            "logLevel": {
+              "type": "string",
+              "default": "",
+              "title": "The logLevel for App Protect WAF",
+              "enum": [
+                "fatal",
+                "error",
+                "warn",
+                "info",
+                "debug",
+                "trace"
+              ],
+              "examples": [
+                "fatal",
+                "error",
+                "warn",
+                "info",
+                "debug",
+                "trace"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "enable": true,
+              "logLevel": "fatal"
+            }
+          ]
+        },
+        "appprotectdos": {
+          "type": "object",
+          "default": {},
+          "title": "The  App Protect DoS Schema",
+          "required": [
+            "enable"
+          ],
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "default": false,
+              "title": "Enable the App Protect DoS module in the Ingress Controller",
+              "examples": [
+                false,
+                true
+              ]
+            },
+            "debug": {
+              "type": "boolean",
+              "default": false,
+              "title": "debugging for App Protect DoS",
+              "examples": [
+                false,
+                true
+              ]
+            },
+            "maxWorkers": {
+              "type": "integer",
+              "default": 0,
+              "title": "Max number of nginx processes to support",
+              "examples": [
+                0
+              ]
+            },
+            "maxDaemons": {
+              "type": "integer",
+              "default": 0,
+              "title": "Max number of ADMD instances",
+              "examples": [
+                0
+              ]
+            },
+            "memory": {
+              "type": "integer",
+              "default": 0,
+              "title": "RAM memory size to consume in MB",
+              "examples": [
+                0
+              ]
+            }
+          },
+          "examples": [
+            {
+              "enable": true,
+              "debug": false,
+              "maxWorkers": 0,
+              "maxDaemons": 0,
+              "memory": 0
+            }
+          ]
+        },
+        "hostNetwork": {
+          "type": "boolean",
+          "default": false,
+          "title": "The hostNetwork Schema",
+          "examples": [
+            false,
+            true
+          ]
+        },
+        "nginxDebug": {
+          "type": "boolean",
+          "default": false,
+          "title": "Enables debugging for NGINX",
+          "examples": [
+            false,
+            true
+          ]
+        },
+        "logLevel": {
+          "type": "integer",
+          "default": 1,
+          "title": "The logLevel of the Ingress Controller",
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "examples": [
+            1
+          ]
+        },
+        "customPorts": {
+          "type": "array",
+          "default": [],
+          "title": "The customPorts to expose on the NGINX ingress controller pod",
+          "items": {
+            "type": "object",
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ContainerPort"
+          },
+          "examples": [
+            [
+              {
+                "name": "http",
+                "containerPort": 80,
+                "protocol": "TCP"
+              },
+              {
+                "name": "https",
+                "containerPort": 443,
+                "protocol": "TCP"
+              }
+            ]
+          ]
+        },
+        "image": {
+          "type": "object",
+          "default": {},
+          "title": "The image Schema",
+          "required": [
+            "repository",
+            "tag"
+          ],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "default": "nginx/nginx-ingress",
+              "title": "The repository of the Ingress Controller",
+              "examples": [
+                "nginx/nginx-ingress"
+              ]
+            },
+            "tag": {
+              "type": "string",
+              "default": "2.3.1",
+              "title": "The tag of the Ingress Controller image",
+              "examples": [
+                "2.3.1"
+              ]
+            },
+            "digest": {
+              "type": "string",
+              "default": "",
+              "title": "The digest of the Ingress Controller image",
+              "examples": [
+                "sha256:2710c264e8eaeb663cee63db37b75a1ac1709f63a130fb091c843a6c3a4dc572"
+              ]
+            },
+            "pullPolicy": {
+              "type": "string",
+              "default": "IfNotPresent",
+              "title": "The pullPolicy for the Ingress Controller image",
+              "allOf": [
+                {
+                  "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Container/properties/imagePullPolicy"
+                },
+                {
+                  "enum": [
+                    "Always",
+                    "IfNotPresent",
+                    "Never"
+                  ]
+                }
+              ],
+              "examples": [
+                "Always",
+                "IfNotPresent",
+                "Never"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "repository": "nginx/nginx-ingress",
+              "tag": "2.3.1",
+              "pullPolicy": "IfNotPresent"
+            }
+          ]
+        },
+        "lifecycle": {
+          "type": "object",
+          "default": {},
+          "title": "The lifecycle Schema",
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Lifecycle"
+        },
+        "customConfigMap": {
+          "type": "string",
+          "default": "",
+          "title": "The customConfigMap Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "config": {
+          "type": "object",
+          "default": {},
+          "title": "The config Schema",
+          "required": [],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "annotations": {
+              "type": "object",
+              "default": {},
+              "title": "The annotations Schema",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+            },
+            "entries": {
+              "type": "object",
+              "default": {},
+              "title": "The entries Schema",
+              "required": [],
+              "properties": {},
+              "examples": [
+                {}
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "",
+              "annotations": {},
+              "entries": {}
+            }
+          ]
+        },
+        "defaultTLS": {
+          "type": "object",
+          "default": {},
+          "title": "The defaultTLS Schema",
+          "required": [],
+          "properties": {
+            "cert": {
+              "type": "string",
+              "default": "",
+              "title": "The cert Schema",
+              "examples": []
+            },
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": []
+            },
+            "secret": {
+              "type": "string",
+              "default": "",
+              "title": "The secret Schema",
+              "examples": [
+                ""
+              ]
+            }
+          },
+          "examples": []
+        },
+        "wildcardTLS": {
+          "type": "object",
+          "default": {},
+          "title": "The wildcardTLS Schema",
+          "required": [],
+          "properties": {
+            "cert": {
+              "type": "string",
+              "default": "",
+              "title": "The cert Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "key": {
+              "type": "string",
+              "default": "",
+              "title": "The key Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "secret": {
+              "type": "string",
+              "default": "",
+              "title": "The secret Schema",
+              "examples": [
+                ""
+              ]
+            }
+          },
+          "examples": []
+        },
+        "nodeSelector": {
+          "type": "object",
+          "default": {},
+          "title": "The nodeSelector Schema",
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.NodeSelector"
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer",
+          "default": 30,
+          "title": "The terminationGracePeriodSeconds Schema",
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.PodSpec/properties/terminationGracePeriodSeconds"
+        },
+        "resources": {
+          "type": "object",
+          "default": {},
+          "title": "The resources Schema",
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ResourceRequirements"
+        },
+        "tolerations": {
+          "type": "array",
+          "default": [],
+          "title": "The tolerations Schema",
+          "items": {
+            "type": "object",
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Toleration"
+          }
+        },
+        "affinity": {
+          "type": "object",
+          "default": {},
+          "title": "The affinity Schema",
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Affinity"
+        },
+        "topologySpreadConstraints": {
+          "type": "object",
+          "default": {},
+          "title": "The topologySpreadConstraints Schema",
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.TopologySpreadConstraint"
+        },
+        "volumes": {
+          "type": "array",
+          "default": [],
+          "title": "The volumes Schema",
+          "items": {
+            "type": "object",
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Volume"
+          }
+        },
+        "volumeMounts": {
+          "type": "array",
+          "default": [],
+          "title": "The volumeMounts Schema",
+          "items": {
+            "type": "object",
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.VolumeMount"
+          }
+        },
+        "initContainers": {
+          "type": "array",
+          "default": [],
+          "title": "The initContainers Schema",
+          "items": {
+            "type": "object",
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Container"
+          }
+        },
+        "minReadySeconds": {
+          "type": "integer",
+          "default": 0,
+          "title": "The minReadySeconds Schema",
+          "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.apps.v1.DeploymentSpec/properties/minReadySeconds"
+        },
+        "strategy": {
+          "type": "object",
+          "default": {},
+          "title": "The strategy Schema",
+          "allOf": [
+            {
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.apps.v1.DeploymentStrategy"
+            },
+            {
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "Recreate",
+                    "RollingUpdate"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "extraContainers": {
+          "type": "array",
+          "default": [],
+          "title": "The extraContainers Schema",
+          "items": {
+            "type": "object",
+            "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Container"
+          }
+        },
+        "replicaCount": {
+          "type": "integer",
+          "default": 1,
+          "title": "The replicaCount",
+          "examples": [
+            1
+          ]
+        },
+        "ingressClass": {
+          "type": "string",
+          "default": "",
+          "title": "The ingressClass",
+          "examples": [
+            "nginx"
+          ]
+        },
+        "setAsDefaultIngress": {
+          "type": "boolean",
+          "default": false,
+          "title": "The setAsDefaultIngress",
+          "examples": [
+            false
+          ]
+        },
+        "watchNamespace": {
+          "type": "string",
+          "default": "",
+          "title": "The watchNamespace",
+          "examples": [
+            ""
+          ]
+        },
+        "enableCustomResources": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableCustomResources",
+          "examples": [
+            true
+          ]
+        },
+        "enablePreviewPolicies": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enablePreviewPolicies",
+          "examples": [
+            false
+          ]
+        },
+        "enableOIDC": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableOIDC",
+          "examples": [
+            false
+          ]
+        },
+        "includeYear": {
+          "type": "boolean",
+          "default": false,
+          "title": "The includeYear",
+          "examples": [
+            false
+          ]
+        },
+        "enableTLSPassthrough": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableTLSPassthrough",
+          "examples": [
+            false
+          ]
+        },
+        "enableCertManager": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableCertManager",
+          "examples": [
+            false
+          ]
+        },
+        "enableExternalDNS": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableExternalDNS",
+          "examples": [
+            false
+          ]
+        },
+        "globalConfiguration": {
+          "type": "object",
+          "default": {},
+          "title": "The globalConfiguration Schema",
+          "required": [
+            "create",
+            "spec"
+          ],
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": false,
+              "title": "The create Schema",
+              "examples": [
+                false
+              ]
+            },
+            "spec": {
+              "type": "object",
+              "default": {},
+              "title": "The spec Schema",
+              "required": [],
+              "properties": {
+                "listeners": {
+                  "type": "array",
+                  "default": [],
+                  "title": "The listeners Schema",
+                  "items": {
+                    "type": "object",
+                    "default": {},
+                    "properties": {
+                      "port": {
+                        "type": "integer",
+                        "default": 0,
+                        "title": "The port",
+                        "examples": [
+                          5353
+                        ]
+                      },
+                      "protocol": {
+                        "type": "string",
+                        "default": "",
+                        "title": "The protocol",
+                        "examples": [
+                          "TCP"
+                        ]
+                      },
+                      "name": {
+                        "type": "string",
+                        "default": "",
+                        "title": "The name",
+                        "examples": [
+                          "dns-tcp"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "examples": [
+                {}
+              ]
+            }
+          },
+          "examples": [
+            {
+              "create": false,
+              "spec": {}
+            }
+          ]
+        },
+        "enableSnippets": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableSnippets",
+          "examples": [
+            false
+          ]
+        },
+        "healthStatus": {
+          "type": "boolean",
+          "default": false,
+          "title": "The healthStatus",
+          "examples": [
+            false
+          ]
+        },
+        "healthStatusURI": {
+          "type": "string",
+          "format": "uri-reference",
+          "default": "/nginx-health",
+          "title": "The healthStatusURI Schema",
+          "examples": [
+            "/nginx-health"
+          ]
+        },
+        "nginxStatus": {
+          "type": "object",
+          "default": {},
+          "title": "The nginxStatus Schema",
+          "required": [],
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enable",
+              "examples": [
+                true
+              ]
+            },
+            "port": {
+              "type": "integer",
+              "default": 8080,
+              "title": "The port",
+              "examples": [
+                8080
+              ]
+            },
+            "allowCidrs": {
+              "type": "string",
+              "default": "127.0.0.1",
+              "title": "The allowCidrs",
+              "examples": [
+                "127.0.0.1"
+              ]
+            }
+          },
+          "examples": [
+            {
+              "enable": true,
+              "port": 8080,
+              "allowCidrs": "127.0.0.1"
+            }
+          ]
+        },
+        "service": {
+          "type": "object",
+          "default": {},
+          "title": "The service Schema",
+          "required": [],
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": false,
+              "title": "The create",
+              "examples": [
+                true
+              ]
+            },
+            "type": {
+              "type": "string",
+              "default": "",
+              "title": "The type",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/type"
+            },
+            "externalTrafficPolicy": {
+              "type": "string",
+              "default": "",
+              "title": "The externalTrafficPolicy",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/externalTrafficPolicy"
+            },
+            "annotations": {
+              "type": "object",
+              "default": {},
+              "title": "The annotations",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+            },
+            "extraLabels": {
+              "type": "object",
+              "default": {},
+              "title": "The extraLabels",
+              "required": [],
+              "properties": {},
+              "examples": [
+                {}
+              ]
+            },
+            "loadBalancerIP": {
+              "type": "string",
+              "default": "",
+              "title": "The loadBalancerIP",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/loadBalancerIP"
+            },
+            "externalIPs": {
+              "type": "array",
+              "default": [],
+              "title": "The externalIPs",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/externalIPs"
+            },
+            "loadBalancerSourceRanges": {
+              "type": "array",
+              "default": [],
+              "title": "The loadBalancerSourceRanges",
+              "items": {},
+              "examples": [
+                []
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name",
+              "examples": [
+                ""
+              ]
+            },
+            "allocateLoadBalancerNodePorts": {
+              "type": "boolean",
+              "default": false,
+              "title": "The allocateLoadBalancerNodePorts Schema",
+              "ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/allocateLoadBalancerNodePorts"
+            },
+            "ipFamilyPolicy": {
+              "type": "string",
+              "default": "",
+              "title": "The ipFamilyPolicy Schema",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/ipFamilyPolicy",
+              "examples": [
+                ""
+              ]
+            },
+            "ipFamilies": {
+              "type": "array",
+              "default": [],
+              "title": "The ipFamilies Schema",
+              "ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServiceSpec/properties/ipFamilies"
+            },
+            "httpPort": {
+              "type": "object",
+              "default": {},
+              "title": "The httpPort",
+              "required": [],
+              "properties": {
+                "enable": {
+                  "type": "boolean",
+                  "default": false,
+                  "title": "The enable",
+                  "examples": [
+                    true
+                  ]
+                },
+                "port": {
+                  "type": "integer",
+                  "default": 0,
+                  "title": "The port",
+                  "examples": [
+                    80
+                  ]
+                },
+                "nodePort": {
+                  "type": "integer",
+                  "default": 0,
+                  "title": "The nodePort",
+                  "examples": [
+                    443
+                  ]
+                },
+                "targetPort": {
+                  "type": "integer",
+                  "default": 0,
+                  "title": "The targetPort",
+                  "examples": [
+                    80
+                  ]
+                }
+              },
+              "examples": [
+                {
+                  "enable": true,
+                  "port": 80,
+                  "nodePort": "",
+                  "targetPort": 80
+                }
+              ]
+            },
+            "httpsPort": {
+              "type": "object",
+              "default": {},
+              "title": "The httpsPort",
+              "required": [],
+              "properties": {
+                "enable": {
+                  "type": "boolean",
+                  "default": false,
+                  "title": "The enable",
+                  "examples": [
+                    true
+                  ]
+                },
+                "port": {
+                  "type": "integer",
+                  "default": 0,
+                  "title": "The port",
+                  "examples": [
+                    443
+                  ]
+                },
+                "nodePort": {
+                  "type": "integer",
+                  "default": 0,
+                  "title": "The nodePort",
+                  "examples": [
+                    443
+                  ]
+                },
+                "targetPort": {
+                  "type": "integer",
+                  "default": 0,
+                  "title": "The targetPort",
+                  "examples": [
+                    443
+                  ]
+                }
+              },
+              "examples": [
+                {
+                  "enable": true,
+                  "port": 443,
+                  "nodePort": "",
+                  "targetPort": 443
+                }
+              ]
+            },
+            "customPorts": {
+              "type": "array",
+              "default": [],
+              "title": "The customPorts",
+              "items": {
+                "type": "object",
+                "ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.ServicePort"
+              }
+            }
+          },
+          "examples": [
+            {
+              "create": true,
+              "type": "LoadBalancer",
+              "externalTrafficPolicy": "Local",
+              "annotations": {},
+              "extraLabels": {},
+              "loadBalancerIP": "",
+              "externalIPs": [],
+              "loadBalancerSourceRanges": [],
+              "name": "",
+              "allocateLoadBalancerNodePorts": false,
+              "ipFamilyPolicy": "",
+              "ipFamilies": [],
+              "httpPort": {
+                "enable": true,
+                "port": 80,
+                "targetPort": 80
+              },
+              "httpsPort": {
+                "enable": true,
+                "port": 443,
+                "targetPort": 443
+              },
+              "customPorts": []
+            }
+          ]
+        },
+        "serviceAccount": {
+          "type": "object",
+          "default": {},
+          "title": "The serviceAccount Schema",
+          "required": [],
+          "properties": {
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "imagePullSecretName": {
+              "type": "string",
+              "default": "",
+              "title": "The imagePullSecretName",
+              "examples": [
+                ""
+              ]
+            }
+          },
+          "examples": [
+            {
+              "name": "",
+              "imagePullSecretName": ""
+            }
+          ]
+        },
+        "serviceMonitor": {
+          "type": "object",
+          "default": {},
+          "title": "The serviceMonitor Schema",
+          "required": [],
+          "properties": {
+            "create": {
+              "type": "boolean",
+              "default": false,
+              "title": "The create",
+              "examples": [
+                false
+              ]
+            },
+            "name": {
+              "type": "string",
+              "default": "",
+              "title": "The name",
+              "examples": [
+                ""
+              ]
+            },
+            "labels": {
+              "type": "object",
+              "default": {},
+              "title": "The labels Schema",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
+            },
+            "selectorMatchLabels": {
+              "type": "object",
+              "default": {},
+              "title": "The selectorMatchLabels Schema",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector/properties/matchLabels"
+            },
+            "endpoints": {
+              "type": "array",
+              "default": [],
+              "title": "The endpoints",
+              "required": [],
+              "items": {}
+            }
+          },
+          "examples": [
+            {
+              "create": false,
+              "name": "",
+              "labels": {},
+              "selectorMatchLabels": {},
+              "endpoints": []
+            }
+          ]
+        },
+        "reportIngressStatus": {
+          "type": "object",
+          "default": {},
+          "title": "The reportIngressStatus Schema",
+          "required": [
+            "enable"
+          ],
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enable",
+              "examples": [
+                true
+              ]
+            },
+            "externalService": {
+              "type": "string",
+              "default": "",
+              "title": "The externalService",
+              "examples": [
+                ""
+              ]
+            },
+            "ingressLink": {
+              "type": "string",
+              "default": "",
+              "title": "The ingressLink",
+              "examples": [
+                ""
+              ]
+            },
+            "enableLeaderElection": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enableLeaderElection",
+              "examples": [
+                true
+              ]
+            },
+            "leaderElectionLockName": {
+              "type": "string",
+              "default": "",
+              "title": "The leaderElectionLockName",
+              "examples": [
+                ""
+              ]
+            },
+            "annotations": {
+              "type": "object",
+              "default": {},
+              "title": "The annotations Schema",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+            }
+          },
+          "examples": [
+            {
+              "enable": true,
+              "externalService": "",
+              "ingressLink": "",
+              "enableLeaderElection": true,
+              "leaderElectionLockName": "",
+              "annotations": {}
+            }
+          ]
+        },
+        "pod": {
+          "type": "object",
+          "default": {},
+          "title": "The pod Schema",
+          "required": [],
+          "properties": {
+            "annotations": {
+              "type": "object",
+              "default": {},
+              "title": "The annotations Schema",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/annotations"
+            },
+            "extraLabels": {
+              "type": "object",
+              "default": {},
+              "title": "The extraLabels Schema",
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta/properties/labels"
+            }
+          },
+          "examples": [
+            {
+              "annotations": {},
+              "extraLabels": {}
+            }
+          ]
+        },
+        "priorityClassName": {
+          "type": "null",
+          "default": null,
+          "title": "The priorityClassName",
+          "examples": [
+            null
+          ]
+        },
+        "readyStatus": {
+          "type": "object",
+          "default": {},
+          "title": "The readyStatus",
+          "required": [],
+          "properties": {
+            "enable": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enable",
+              "examples": [
+                true
+              ]
+            },
+            "port": {
+              "type": "integer",
+              "default": 0,
+              "title": "The port",
+              "examples": [
+                8081
+              ]
+            },
+            "initialDelaySeconds": {
+              "type": "integer",
+              "default": 0,
+              "$ref": "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.25.2/_definitions.json#/definitions/io.k8s.api.core.v1.Probe/properties/initialDelaySeconds"
+            }
+          },
+          "examples": [
+            {
+              "enable": true,
+              "port": 8081,
+              "initialDelaySeconds": 0
+            }
+          ]
+        },
+        "enableLatencyMetrics": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableLatencyMetrics",
+          "examples": [
+            false
+          ]
+        },
+        "disableIPV6": {
+          "type": "boolean",
+          "default": false,
+          "title": "The disableIPV6",
+          "examples": [
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "name": "",
+          "kind": "deployment",
+          "nginxplus": false,
+          "nginxReloadTimeout": 60000,
+          "appprotect": {
+            "enable": false,
+            "logLevel": "fatal"
+          },
+          "appprotectdos": {
+            "enable": false,
+            "debug": false,
+            "maxWorkers": 0,
+            "maxDaemons": 0,
+            "memory": 0
+          },
+          "hostNetwork": false,
+          "nginxDebug": false,
+          "logLevel": 1,
+          "customPorts": [],
+          "image": {
+            "repository": "nginx/nginx-ingress",
+            "tag": "2.3.1",
+            "digest": "",
+            "pullPolicy": "IfNotPresent"
+          },
+          "lifecycle": {},
+          "customConfigMap": "",
+          "config": {
+            "name": "",
+            "annotations": {},
+            "entries": {}
+          },
+          "defaultTLS": {
+            "cert": "",
+            "key": "",
+            "secret": ""
+          },
+          "wildcardTLS": {
+            "cert": "",
+            "key": "",
+            "secret": ""
+          },
+          "nodeSelector": {},
+          "terminationGracePeriodSeconds": 30,
+          "resources": {
+            "requests": {
+              "cpu": "100m",
+              "memory": "128Mi"
+            }
+          },
+          "tolerations": [],
+          "affinity": {},
+          "topologySpreadConstraints": {},
+          "volumes": [],
+          "volumeMounts": [],
+          "initContainers": [],
+          "minReadySeconds": 0,
+          "strategy": {},
+          "extraContainers": [],
+          "replicaCount": 1,
+          "ingressClass": "nginx",
+          "setAsDefaultIngress": false,
+          "watchNamespace": "",
+          "enableCustomResources": true,
+          "enablePreviewPolicies": false,
+          "enableOIDC": false,
+          "includeYear": false,
+          "enableTLSPassthrough": false,
+          "enableCertManager": false,
+          "enableExternalDNS": false,
+          "globalConfiguration": {
+            "create": false,
+            "spec": {}
+          },
+          "enableSnippets": false,
+          "healthStatus": false,
+          "healthStatusURI": "/nginx-health",
+          "nginxStatus": {
+            "enable": true,
+            "port": 8080,
+            "allowCidrs": "127.0.0.1"
+          },
+          "service": {
+            "create": true,
+            "type": "LoadBalancer",
+            "externalTrafficPolicy": "Local",
+            "annotations": {},
+            "extraLabels": {},
+            "loadBalancerIP": "",
+            "externalIPs": [],
+            "loadBalancerSourceRanges": [],
+            "name": "",
+            "allocateLoadBalancerNodePorts": false,
+            "ipFamilyPolicy": "",
+            "ipFamilies": [],
+            "httpPort": {
+              "enable": true,
+              "port": 80,
+              "targetPort": 80
+            },
+            "httpsPort": {
+              "enable": true,
+              "port": 443,
+              "targetPort": 443
+            },
+            "customPorts": []
+          },
+          "serviceAccount": {
+            "name": "",
+            "imagePullSecretName": ""
+          },
+          "serviceMonitor": {
+            "create": false,
+            "name": "",
+            "labels": {},
+            "selectorMatchLabels": {},
+            "endpoints": {}
+          },
+          "reportIngressStatus": {
+            "enable": true,
+            "externalService": "",
+            "ingressLink": "",
+            "enableLeaderElection": true,
+            "leaderElectionLockName": "",
+            "annotations": {}
+          },
+          "pod": {
+            "annotations": {},
+            "extraLabels": {}
+          },
+          "priorityClassName": null,
+          "readyStatus": {
+            "enable": true,
+            "port": 8081,
+            "initialDelaySeconds": 0
+          },
+          "enableLatencyMetrics": false,
+          "disableIPV6": false
+        }
+      ]
+    },
+    "rbac": {
+      "type": "object",
+      "default": {},
+      "title": "The rbac Schema",
+      "required": [
+        "create"
+      ],
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": false,
+          "title": "The create Schema",
+          "examples": [
+            true
+          ]
+        }
+      },
+      "examples": [
+        {
+          "create": true
+        }
+      ]
+    },
+    "prometheus": {
+      "type": "object",
+      "default": {},
+      "title": "The prometheus Schema",
+      "required": [
+        "create"
+      ],
+      "properties": {
+        "create": {
+          "type": "boolean",
+          "default": false,
+          "title": "The create",
+          "examples": [
+            true
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "default": 9113,
+          "title": "The port",
+          "examples": [
+            9113
+          ]
+        },
+        "secret": {
+          "type": "string",
+          "default": "",
+          "title": "The secret",
+          "examples": [
+            ""
+          ]
+        },
+        "scheme": {
+          "type": "string",
+          "default": "http",
+          "title": "The scheme",
+          "examples": [
+            "http"
+          ]
+        }
+      },
+      "examples": [
+        {
+          "create": true,
+          "port": 9113,
+          "secret": "",
+          "scheme": "http"
+        }
+      ]
+    },
+    "nginxServiceMesh": {
+      "type": "object",
+      "default": {},
+      "title": "The nginxServiceMesh Schema",
+      "required": [
+        "enable"
+      ],
+      "properties": {
+        "enable": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enable",
+          "examples": [
+            false
+          ]
+        },
+        "enableEgress": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enableEgress",
+          "examples": [
+            false
+          ]
+        }
+      },
+      "examples": [
+        {
+          "enable": false,
+          "enableEgress": false
+        }
+      ]
+    }
+  },
+  "examples": [
+    {
+      "controller": {
+        "name": "",
+        "kind": "deployment",
+        "nginxplus": false,
+        "nginxReloadTimeout": 60000,
+        "appprotect": {
+          "enable": false,
+          "logLevel": "fatal"
+        },
+        "appprotectdos": {
+          "enable": false,
+          "debug": false,
+          "maxWorkers": 0,
+          "maxDaemons": 0,
+          "memory": 0
+        },
+        "hostNetwork": false,
+        "nginxDebug": false,
+        "logLevel": 1,
+        "customPorts": [],
+        "image": {
+          "repository": "nginx/nginx-ingress",
+          "tag": "2.3.1",
+          "digest": "",
+          "pullPolicy": "IfNotPresent"
+        },
+        "lifecycle": {},
+        "customConfigMap": "",
+        "config": {
+          "name": "",
+          "annotations": {},
+          "entries": {}
+        },
+        "defaultTLS": {
+          "cert": "",
+          "key": "",
+          "secret": ""
+        },
+        "wildcardTLS": {
+          "cert": "",
+          "key": "",
+          "secret": ""
+        },
+        "nodeSelector": {},
+        "terminationGracePeriodSeconds": 30,
+        "resources": {
+          "requests": {
+            "cpu": "100m",
+            "memory": "128Mi"
+          }
+        },
+        "tolerations": [],
+        "affinity": {},
+        "topologySpreadConstraints": {},
+        "volumes": [],
+        "volumeMounts": [],
+        "initContainers": [],
+        "minReadySeconds": 0,
+        "strategy": {},
+        "extraContainers": [],
+        "replicaCount": 1,
+        "ingressClass": "nginx",
+        "setAsDefaultIngress": false,
+        "watchNamespace": "",
+        "enableCustomResources": true,
+        "enablePreviewPolicies": false,
+        "enableOIDC": false,
+        "includeYear": false,
+        "enableTLSPassthrough": false,
+        "enableCertManager": false,
+        "enableExternalDNS": false,
+        "globalConfiguration": {
+          "create": false,
+          "spec": {}
+        },
+        "enableSnippets": false,
+        "healthStatus": false,
+        "healthStatusURI": "/nginx-health",
+        "nginxStatus": {
+          "enable": true,
+          "port": 8080,
+          "allowCidrs": "127.0.0.1"
+        },
+        "service": {
+          "create": true,
+          "type": "LoadBalancer",
+          "externalTrafficPolicy": "Local",
+          "annotations": {},
+          "extraLabels": {},
+          "loadBalancerIP": "",
+          "externalIPs": [],
+          "loadBalancerSourceRanges": [],
+          "name": "",
+          "allocateLoadBalancerNodePorts": false,
+          "ipFamilyPolicy": "",
+          "ipFamilies": [],
+          "httpPort": {
+            "enable": true,
+            "port": 80,
+            "nodePort": "",
+            "targetPort": 80
+          },
+          "httpsPort": {
+            "enable": true,
+            "port": 443,
+            "nodePort": "",
+            "targetPort": 443
+          },
+          "customPorts": []
+        },
+        "serviceAccount": {
+          "name": "",
+          "imagePullSecretName": ""
+        },
+        "serviceMonitor": {
+          "create": false,
+          "name": "",
+          "labels": {},
+          "selectorMatchLabels": {},
+          "endpoints": {}
+        },
+        "reportIngressStatus": {
+          "enable": true,
+          "externalService": "",
+          "ingressLink": "",
+          "enableLeaderElection": true,
+          "leaderElectionLockName": "",
+          "annotations": {}
+        },
+        "pod": {
+          "annotations": {},
+          "extraLabels": {}
+        },
+        "priorityClassName": null,
+        "readyStatus": {
+          "enable": true,
+          "port": 8081,
+          "initialDelaySeconds": 0
+        },
+        "enableLatencyMetrics": false,
+        "disableIPV6": false
+      },
+      "rbac": {
+        "create": true
+      },
+      "prometheus": {
+        "create": true,
+        "port": 9113,
+        "secret": "",
+        "scheme": "http"
+      },
+      "nginxServiceMesh": {
+        "enable": false,
+        "enableEgress": false
+      }
+    }
+  ]
+}

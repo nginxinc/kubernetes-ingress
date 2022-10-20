@@ -12,10 +12,12 @@ const nginxNonExistingUnixSocket = "unix:/var/lib/nginx/non-existing-unix-socket
 
 // TransportServerEx holds a TransportServer along with the resources referenced by it.
 type TransportServerEx struct {
-	ListenerPort    int
-	TransportServer *conf_v1alpha1.TransportServer
-	Endpoints       map[string][]string
-	PodsByIP        map[string]string
+	ListenerPort     int
+	TransportServer  *conf_v1alpha1.TransportServer
+	Endpoints        map[string][]string
+	PodsByIP         map[string]string
+	ExternalNameSvcs map[string]bool
+	DisableIPV6      bool
 }
 
 func (tsEx *TransportServerEx) String() string {
@@ -31,10 +33,10 @@ func (tsEx *TransportServerEx) String() string {
 }
 
 // generateTransportServerConfig generates a full configuration for a TransportServer.
-func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool) *version2.TransportServerConfig {
+func generateTransportServerConfig(transportServerEx *TransportServerEx, listenerPort int, isPlus bool, isResolverConfigured bool) (*version2.TransportServerConfig, Warnings) {
 	upstreamNamer := newUpstreamNamerForTransportServer(transportServerEx.TransportServer)
 
-	upstreams := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus)
+	upstreams, warnings := generateStreamUpstreams(transportServerEx, upstreamNamer, isPlus, isResolverConfigured)
 
 	healthCheck, match := generateTransportServerHealthCheck(transportServerEx.TransportServer.Spec.Action.Pass,
 		upstreamNamer.GetNameForUpstream(transportServerEx.TransportServer.Spec.Action.Pass),
@@ -90,13 +92,13 @@ func generateTransportServerConfig(transportServerEx *TransportServerEx, listene
 			ProxyNextUpstreamTries:   nextUpstreamTries,
 			HealthCheck:              healthCheck,
 			ServerSnippets:           serverSnippets,
+			DisableIPV6:              transportServerEx.DisableIPV6,
 		},
 		Match:          match,
 		Upstreams:      upstreams,
 		StreamSnippets: streamSnippets,
 	}
-
-	return tsConfig
+	return tsConfig, warnings
 }
 
 func generateUnixSocket(transportServerEx *TransportServerEx) string {
@@ -107,17 +109,25 @@ func generateUnixSocket(transportServerEx *TransportServerEx) string {
 	return ""
 }
 
-func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool) []version2.StreamUpstream {
+func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer *upstreamNamer, isPlus bool, isResolverConfigured bool) ([]version2.StreamUpstream, Warnings) {
+	warnings := newWarnings()
 	var upstreams []version2.StreamUpstream
 
 	for _, u := range transportServerEx.TransportServer.Spec.Upstreams {
-
 		// subselector is not supported yet in TransportServer upstreams. That's why we pass "nil" here
 		endpointsKey := GenerateEndpointsKey(transportServerEx.TransportServer.Namespace, u.Service, nil, uint16(u.Port))
+		externalNameSvcKey := GenerateExternalNameSvcKey(transportServerEx.TransportServer.Namespace, u.Service)
 		endpoints := transportServerEx.Endpoints[endpointsKey]
 
-		ups := generateStreamUpstream(u, upstreamNamer, endpoints, isPlus)
+		_, isExternalNameSvc := transportServerEx.ExternalNameSvcs[externalNameSvcKey]
+		if isExternalNameSvc && !isResolverConfigured {
+			msgFmt := "Type ExternalName service %v in upstream %v will be ignored. To use ExternalName services, a resolver must be configured in the ConfigMap"
+			warnings.AddWarningf(transportServerEx.TransportServer, msgFmt, u.Service, u.Name)
+			endpoints = []string{}
+		}
 
+		ups := generateStreamUpstream(u, upstreamNamer, endpoints, isPlus)
+		ups.Resolve = isExternalNameSvc
 		ups.UpstreamLabels.Service = u.Service
 		ups.UpstreamLabels.ResourceType = "transportserver"
 		ups.UpstreamLabels.ResourceName = transportServerEx.TransportServer.Name
@@ -125,8 +135,7 @@ func generateStreamUpstreams(transportServerEx *TransportServerEx, upstreamNamer
 
 		upstreams = append(upstreams, ups)
 	}
-
-	return upstreams
+	return upstreams, warnings
 }
 
 func generateTransportServerHealthCheck(upstreamName string, generatedUpstreamName string, upstreams []conf_v1alpha1.Upstream) (*version2.StreamHealthCheck, *version2.Match) {

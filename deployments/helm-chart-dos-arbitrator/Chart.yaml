@@ -4,10 +4,10 @@ appVersion: 1.1.0
 apiVersion: v1
 kubeVersion: ">= 1.19.0-0"
 description: NGINX App Protect Dos arbitrator
-icon: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/deployments/helm-chart-dos-arbitrator/chart-icon.png
+icon: https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.4.0/deployments/helm-chart-dos-arbitrator/chart-icon.png
 home: https://github.com/nginxinc/kubernetes-ingress
 sources:
-  - https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/deployments/helm-chart-dos-arbitrator
+  - https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.0/deployments/helm-chart-dos-arbitrator
 keywords:
   - appprotect-dos
   - nginx

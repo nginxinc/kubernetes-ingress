@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: syslog
-        image: balabit/syslog-ng:3.35.1
+        image: balabit/syslog-ng:3.38.1
         ports:
         - containerPort: 514
         - containerPort: 601

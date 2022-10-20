@@ -10,8 +10,6 @@ docs: "DOCS-603"
 ---
 
 
-This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using Kubernetes manifests.
-
 ## Prerequisites
 
 1. Make sure you have access to the Ingress Controller image:
@@ -21,7 +19,7 @@ This document describes how to install the NGINX Ingress Controller in your Kube
     * It is also possible to build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/installation/building-ingress-controller-image).
 2. Clone the Ingress Controller repo and change into the deployments folder:
     ```
-    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.3.0
+    $ git clone https://github.com/nginxinc/kubernetes-ingress.git --branch v2.4.0
     $ cd kubernetes-ingress/deployments
     ```
 
@@ -72,11 +70,12 @@ In this section, we create resources common for most of the Ingress Controller i
 
     **Note**: The Ingress Controller will fail to start without an IngressClass resource.
 
-### Create Custom Resources
+## 3. Create Custom Resources
 
 > **Note**: By default, it is required to create custom resource definitions for VirtualServer, VirtualServerRoute, TransportServer and Policy. Otherwise, the Ingress Controller pods will not become `Ready`. If you'd like to disable that requirement, configure [`-enable-custom-resources`](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments#cmdoption-global-configuration) command-line argument to `false` and skip this section.
 
 1. Create custom resource definitions for [VirtualServer and VirtualServerRoute](/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources), [TransportServer](/nginx-ingress-controller/configuration/transportserver-resource) and [Policy](/nginx-ingress-controller/configuration/policy-resource) resources:
+
     ```
     $ kubectl apply -f common/crds/k8s.nginx.org_virtualservers.yaml
     $ kubectl apply -f common/crds/k8s.nginx.org_virtualserverroutes.yaml
@@ -84,17 +83,15 @@ In this section, we create resources common for most of the Ingress Controller i
     $ kubectl apply -f common/crds/k8s.nginx.org_policies.yaml
     ```
 
-If you would like to use the TCP and UDP load balancing features of the Ingress Controller, create the following additional resources:
-1. Create a custom resource definition for [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resource:
-    ```
+2. If you would like to use the TCP and UDP load balancing features of the Ingress Controller, create the following additional resources:
+
+Create a custom resource definition for [GlobalConfiguration](/nginx-ingress-controller/configuration/global-configuration/globalconfiguration-resource) resource:
+  
     $ kubectl apply -f common/crds/k8s.nginx.org_globalconfigurations.yaml
-    ```
+    
+3. If you would like to use the App Protect WAF module, create the following additional resources:
 
-### Resources for NGINX App Protect
-
-If you would like to use the App Protect WAF module, create the following additional resources:
-
-1. Create a custom resource definition for `APPolicy`, `APLogConf` and `APUserSig`:
+Create a custom resource definition for `APPolicy`, `APLogConf` and `APUserSig`:
 
    ```
    $ kubectl apply -f common/crds/appprotect.f5.com_aplogconfs.yaml
@@ -102,11 +99,9 @@ If you would like to use the App Protect WAF module, create the following additi
    $ kubectl apply -f common/crds/appprotect.f5.com_apusersigs.yaml
    ```
 
-### Resources for NGINX App Protect DoS
+4. If you would like to use the App Protect DoS module, create the following additional resources:
 
-If you would like to use the App Protect DoS module, create the following additional resources:
-
-1. Create a custom resource definition for `APDosPolicy`, `APDosLogConf` and `DosProtectedResource`:
+Create a custom resource definition for `APDosPolicy`, `APDosLogConf` and `DosProtectedResource`:
 
    ```
    $ kubectl apply -f common/crds/appprotectdos.f5.com_apdoslogconfs.yaml
@@ -123,11 +118,11 @@ We include two options for deploying the Ingress Controller:
 > Before creating a Deployment or Daemonset resource, make sure to update the  [command-line arguments](/nginx-ingress-controller/configuration/global-configuration/command-line-arguments) of the Ingress Controller container in the corresponding manifest file according to your requirements.
 
 ### Deploy Arbitrator for NGINX App Protect DoS
-If you would like to use the App Protect DoS module, need to add arbitrator deployment.
+If you would like to use the App Protect DoS module, you will need to deploy the Arbitrator.
 
-* build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/app-protect-dos/installation#Build-the-app-protect-dos-arb-Docker-Image).
+* Build your own image and push it to your private Docker registry by following the instructions from [here](/nginx-ingress-controller/app-protect-dos/installation#Build-the-app-protect-dos-arb-Docker-Image).
 
-* run the Arbitrator by using a Deployment and Service
+* Run the Arbitrator by using a Deployment and Service
 
    ```
    $ kubectl apply -f deployment/appprotect-dos-arb.yaml

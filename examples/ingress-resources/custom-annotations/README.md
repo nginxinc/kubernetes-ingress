@@ -86,11 +86,11 @@ Customize the template for Ingress resources to include the logic to handle and 
     metadata:
       name: cafe-ingress
       annotations:
-        kubernetes.io/ingress.class: "nginx"
         custom.nginx.org/rate-limiting: "on"
         custom.nginx.org/rate-limiting-rate: "5r/s"
         custom.nginx.org/rate-limiting-burst: "1"
     spec:
+      ingressClassName: nginx
       rules:
       - host: "cafe.example.com"
         http:

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.4
 # this is here so we can grab the latest version of kind and have dependabot keep it up to date
-FROM kindest/node:v1.25.0
+FROM kindest/node:v1.25.2
 
 FROM python:3.10
 
@@ -20,5 +20,7 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
 	&& apt-get update && apt-get install -y apache2-utils
 
 COPY --link tests /workspace/tests
+
+COPY --link pyproject.toml /workspace/
 
 ENTRYPOINT ["python3", "-m", "pytest"]

@@ -68,6 +68,7 @@ spec:
       priorityClassName: {{ .Values.controller.priorityClassName }}
 {{- end }}
       hostNetwork: {{ .Values.controller.hostNetwork }}
+      dnsPolicy: {{ .Values.controller.dnsPolicy }}
       containers:
       - name: {{ include "nginx-ingress.name" . }}
         image: {{ include "nginx-ingress.image" . }}
@@ -153,7 +154,7 @@ spec:
           - -nginx-configmaps=$(POD_NAMESPACE)/{{ include "nginx-ingress.configName" . }}
 {{- if .Values.controller.defaultTLS.secret }}
           - -default-server-tls-secret={{ .Values.controller.defaultTLS.secret }}
-{{ else }}
+{{ else if and (.Values.controller.defaultTLS.cert) (.Values.controller.defaultTLS.key) }}
           - -default-server-tls-secret=$(POD_NAMESPACE)/{{ include "nginx-ingress.defaultTLSName" . }}
 {{- end }}
           - -ingress-class={{ .Values.controller.ingressClass }}
@@ -192,6 +193,7 @@ spec:
           - -enable-custom-resources={{ .Values.controller.enableCustomResources }}
           - -enable-snippets={{ .Values.controller.enableSnippets }}
           - -include-year={{ .Values.controller.includeYear }}
+          - -disable-ipv6={{ .Values.controller.disableIPV6 }}
 {{- if .Values.controller.enableCustomResources }}
           - -enable-tls-passthrough={{ .Values.controller.enableTLSPassthrough }}
           - -enable-preview-policies={{ .Values.controller.enablePreviewPolicies }}
@@ -215,11 +217,11 @@ spec:
 {{- if .Values.controller.initContainers }}
       initContainers: {{ toYaml .Values.controller.initContainers | nindent 8 }}
 {{- end }}
-{{- end }}
 {{- if .Values.controller.strategy }}
   updateStrategy:
 {{ toYaml .Values.controller.strategy | indent 4 }}
 {{- end }}
 {{- if .Values.controller.minReadySeconds }}
   minReadySeconds: {{ .Values.controller.minReadySeconds }}
+{{- end }}
 {{- end }}
