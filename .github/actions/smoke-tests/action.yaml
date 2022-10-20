@@ -33,7 +33,7 @@ runs:
   using: composite
   steps:
     - name: Fetch Cached Artifacts
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ${{ github.workspace }}/dist
         key: nginx-ingress-${{ github.run_id }}-${{ github.run_number }}-single
@@ -41,15 +41,15 @@ runs:
     - name: Ingress type
       id: ingress-type
       run: |
-        echo ::set-output name=name::nginx${{ contains(inputs.image, 'plus') && '-plus' || '' }}-ingress
-        echo ::set-output name=tag::${{ inputs.image }}${{ contains(inputs.image, 'nap') && '-dos' || '' }}-${{ github.sha }}
+        echo "name=nginx${{ contains(inputs.image, 'plus') && '-plus' || '' }}-ingress" >> $GITHUB_OUTPUT
+        echo "tag=${{ inputs.image }}${{ contains(inputs.image, 'nap') && '-dos' || '' }}-${{ github.sha }}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v2
 
     - name: Build ${{ inputs.image }} Container
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         file: build/Dockerfile
         context: '.'
@@ -68,7 +68,7 @@ runs:
           ${{ contains(inputs.image, 'plus') && format('"nginx-repo.key={0}"', inputs.nginx-key) || '' }}
 
     - name: Build Test-Runner Container
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       with:
         file: tests/docker/Dockerfile
         context: '.'
@@ -88,8 +88,8 @@ runs:
         marker="${{ inputs.marker }}"
         sanitized_marker="${marker// /_}"
         name="${sanitized_marker:-${{ inputs.k8s-version }}}"
-        echo ::set-output name=cluster_ip::$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)
-        echo ::set-output name=cluster::$(echo nginx-${{ inputs.image }}-$name)
+        echo "cluster_ip=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ github.run_id }}-control-plane)" >> $GITHUB_OUTPUT
+        echo "cluster=$(echo nginx-${{ inputs.image }}-$name)" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Setup Kubeconfig
