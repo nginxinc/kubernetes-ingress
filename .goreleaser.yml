@@ -58,6 +58,8 @@ sboms:
 
 release:
   ids: [kubernetes-ingress]
+  extra_files:
+    - glob: ./dist/**.sbom
 
 blobs:
   - provider: azblob
