@@ -142,7 +142,7 @@ See the doc about [VirtualServer and VirtualServerRoute resources](/nginx-ingres
 |ConfigMap Key | Description | Default | Example |
 | ---| ---| ---| --- |
 |``http2`` | Enables HTTP/2 in servers with SSL enabled. | ``False`` |  |
-|``proxy-protocol`` | Enables PROXY Protocol for incoming connections. | ``False`` | [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.1/examples/ingress-resources/proxy-protocol). |
+|``proxy-protocol`` | Enables PROXY Protocol for incoming connections. | ``False`` | [Proxy Protocol](https://github.com/nginxinc/kubernetes-ingress/tree/v2.4.1/examples/shared-examples/proxy-protocol). |
 {{% /table %}}
 
 ### Backend Services (Upstreams)
