@@ -6,6 +6,9 @@ controller:
   ## The kind of the Ingress Controller installation - deployment or daemonset.
   kind: deployment
 
+  ## Annotations for deployments and daemonsets
+  annotations: {}
+
   ## Deploys the Ingress Controller for NGINX Plus.
   nginxplus: false
 
