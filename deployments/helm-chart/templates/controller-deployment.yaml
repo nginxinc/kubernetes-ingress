@@ -6,6 +6,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "nginx-ingress.labels" . | nindent 4 }}
+{{- if .Values.controller.annotations }}
+  annotations: {{ toYaml .Values.controller.annotations | nindent 4 }}
+{{- end }}
 spec:
   replicas: {{ .Values.controller.replicaCount }}
   selector:
