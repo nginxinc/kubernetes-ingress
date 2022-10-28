@@ -7,4 +7,4 @@ certifi==2022.9.24
 urllib3==1.26.12
 pytest-html==3.2.0
 pytest-repeat==0.9.1
-locust==2.12.2
+locust==2.13.0
