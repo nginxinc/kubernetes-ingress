@@ -21,8 +21,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	&& rm -rf /var/lib/apt/lists/* \
 	&& cp -av /tmp/ot/usr/local/lib/libopentracing.so* /tmp/ot/usr/local/lib/libjaegertracing*so* /tmp/ot/usr/local/lib/libzipkin*so* /tmp/ot/usr/local/lib/libdd*so* /tmp/ot/usr/local/lib/libyaml*so* /usr/local/lib/ \
 	&& cp -av /tmp/ot/usr/lib/nginx/modules/ngx_http_opentracing_module.so /usr/lib/nginx/modules/ \
-	&& ldconfig \
-	&& echo $NGINX_VERSION > nginx_version
+	&& ldconfig
 
 
 ############################################# Base image for Alpine #############################################
@@ -111,10 +110,9 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode
 
 
 ############################################# Base image for UBI #############################################
-FROM redhat/ubi8 AS ubi-base
+FROM nginxcontrib/nginx:1.23.1-ubi AS ubi
 ARG IC_VERSION
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 LABEL name="NGINX Ingress Controller" \
 	maintainer="kubernetes@nginx.com" \
 	vendor="NGINX Inc" \
@@ -125,34 +123,20 @@ LABEL name="NGINX Ingress Controller" \
 	io.k8s.description="The NGINX Ingress Controller is an application that runs in a cluster and configures an HTTP load balancer according to Ingress resources." \
 	io.openshift.tags="nginx,ingress-controller,ingress,controller,kubernetes,openshift"
 
-RUN dnf --nodocs install -y shadow-utils ca-certificates \
-	&& groupadd --system --gid 101 nginx \
-	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx
-
 COPY --link --chown=101:0 LICENSE /licenses/
 
 
-############################################# Base image for UBI OSS #############################################
-FROM ubi-base AS ubi
-
-RUN --mount=type=bind,from=debian,source=/nginx_version,target=/tmp/nginx_version \
-	export NGINX_VERSION=$(</tmp/nginx_version) \
-	&& rpm --import https://nginx.org/keys/nginx_signing.key \
-	&& version=$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1) \
-	&& printf "%s\n" "[nginx]" "name=nginx repo" \
-	"baseurl=https://nginx.org/packages/mainline/centos/${version}/\$basearch/" \
-	"gpgcheck=1" "enabled=1" "module_hotfixes=true" > /etc/yum.repos.d/nginx.repo \
-	&& dnf --nodocs install -y nginx-${NGINX_VERSION} \
-	&& rm /etc/yum.repos.d/nginx.repo
-
-
 ############################################# Base image for UBI with NGINX Plus #############################################
-FROM ubi-base AS ubi-plus
+FROM redhat/ubi8 AS ubi-plus
 ARG NGINX_PLUS_VERSION
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/ssl/nginx/nginx-repo.crt,mode=0644 \
 	--mount=type=secret,id=nginx-repo.key,dst=/etc/ssl/nginx/nginx-repo.key,mode=0644 \
-	rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
+	dnf --nodocs install -y shadow-utils ca-certificates \
+	&& groupadd --system --gid 101 nginx \
+	&& useradd --system --gid nginx --no-create-home --home-dir /nonexistent --comment "nginx user" --shell /bin/false --uid 101 nginx \
+	&& rpm --import https://cs.nginx.com/static/keys/nginx_signing.key \
 	&& curl -fsSL "https://cs.nginx.com/static/files/nginx-plus-$(grep -E -o '[0-9]+\.[0-9]+' /etc/redhat-release | cut -d"." -f1).repo" | tr 0 1 > /etc/yum.repos.d/nginx-plus.repo \
 	&& sed -i "0,/centos/s;;${NGINX_PLUS_VERSION}/centos;" /etc/yum.repos.d/nginx-plus.repo \
 	&& dnf --nodocs install -y nginx-plus nginx-plus-module-njs
