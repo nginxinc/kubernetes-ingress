@@ -12,7 +12,7 @@ require (
 	github.com/kr/pretty v0.3.1
 	github.com/nginxinc/nginx-plus-go-client v0.10.0
 	github.com/nginxinc/nginx-prometheus-exporter v0.11.0
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/spiffe/go-spiffe/v2 v2.1.1
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20220613132600-b0d781184e0d
