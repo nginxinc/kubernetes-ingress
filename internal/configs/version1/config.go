@@ -15,7 +15,6 @@ type IngressNginxConfig struct {
 	Keepalive         string
 	Ingress           Ingress
 	SpiffeClientCerts bool
-	DisableIPV6       bool
 }
 
 // Ingress holds information about an Ingress resource.

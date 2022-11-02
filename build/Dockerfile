@@ -6,12 +6,12 @@ ARG DEBIAN_VERSION=bullseye-slim
 
 
 ############################################# Base images containing libs for Opentracing #############################################
-FROM opentracing/nginx-opentracing:nginx-1.23.1 as opentracing-lib
-FROM opentracing/nginx-opentracing:nginx-1.23.1-alpine as alpine-opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.23.2 as opentracing-lib
+FROM opentracing/nginx-opentracing:nginx-1.23.2-alpine as alpine-opentracing-lib
 
 
 ############################################# Base image for Debian #############################################
-FROM nginx:1.23.1 AS debian
+FROM nginx:1.23.2 AS debian
 
 RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 	apt-get update \
@@ -25,7 +25,7 @@ RUN --mount=type=bind,from=opentracing-lib,target=/tmp/ot/ \
 
 
 ############################################# Base image for Alpine #############################################
-FROM nginx:1.23.1-alpine AS alpine
+FROM nginx:1.23.2-alpine AS alpine
 
 RUN --mount=type=bind,from=alpine-opentracing-lib,target=/tmp/ot/ \
 	apk add --no-cache libcap libstdc++ \
@@ -257,16 +257,17 @@ ARG TARGETARCH
 
 LABEL org.nginx.kic.image.build.version="goreleaser"
 
-COPY --link --chown=101:0 dist/kubernetes-ingress_linux_$TARGETARCH*/nginx-ingress /
+COPY --link --chown=101:0 dist/kubernetes-ingress_linux_${TARGETARCH}*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress built by GoReleaser for AWS Marketplace #############################################
 FROM common AS aws
 ARG TARGETARCH
+ARG NAP_MODULES=
 
 LABEL org.nginx.kic.image.build.version="aws"
 
-COPY --link --chown=101:0 dist/aws_linux_$TARGETARCH*/nginx-ingress /
+COPY --link --chown=101:0 dist/aws*${NAP_MODULES}_linux_${TARGETARCH}*/nginx-ingress /
 
 
 ############################################# Create image with nginx-ingress extracted from image on Docker Hub #############################################
