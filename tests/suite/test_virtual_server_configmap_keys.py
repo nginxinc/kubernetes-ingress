@@ -1,6 +1,6 @@
 import pytest
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     get_events,
     get_file_contents,
     get_first_pod_name,
@@ -8,8 +8,8 @@ from suite.resources_utils import (
     replace_configmap_from_yaml,
     wait_before_test,
 )
-from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf
-from suite.yaml_utils import get_configmap_fields_from_yaml
+from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf
+from suite.utils.yaml_utils import get_configmap_fields_from_yaml
 
 
 def assert_update_events_emitted(virtual_server_setup, new_list, previous_list, expected_amount):

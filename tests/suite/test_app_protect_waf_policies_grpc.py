@@ -1,18 +1,18 @@
 import grpc
 import pytest
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.ap_resources_utils import (
+from suite.fixtures.custom_resource_fixtures import VirtualServerRoute, VirtualServerRouteSetup, VirtualServerSetup
+from suite.grpc.helloworld_pb2 import HelloRequest
+from suite.grpc.helloworld_pb2_grpc import GreeterStub
+from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
     create_ap_waf_policy_from_yaml,
     delete_ap_logconf,
     delete_ap_policy,
 )
-from suite.custom_resource_fixtures import VirtualServerRoute, VirtualServerRouteSetup, VirtualServerSetup
-from suite.grpc.helloworld_pb2 import HelloRequest
-from suite.grpc.helloworld_pb2_grpc import GreeterStub
-from suite.policy_resources_utils import delete_policy
-from suite.resources_utils import (
+from suite.utils.policy_resources_utils import delete_policy
+from suite.utils.resources_utils import (
     create_example_app,
     create_items_from_yaml,
     create_namespace_with_name_from_yaml,
@@ -26,13 +26,13 @@ from suite.resources_utils import (
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.ssl_utils import get_certificate
-from suite.vs_vsr_resources_utils import (
+from suite.utils.ssl_utils import get_certificate
+from suite.utils.vs_vsr_resources_utils import (
     create_v_s_route_from_yaml,
     create_virtual_server_from_yaml,
     delete_virtual_server,
 )
-from suite.yaml_utils import get_first_host_from_yaml, get_paths_from_vs_yaml, get_paths_from_vsr_yaml
+from suite.utils.yaml_utils import get_first_host_from_yaml, get_paths_from_vs_yaml, get_paths_from_vsr_yaml
 
 log_loc = f"/var/log/messages"
 valid_resp_txt = "Hello"

@@ -1,7 +1,7 @@
 import pytest
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.custom_assertions import assert_event
-from suite.resources_utils import (
+from suite.utils.custom_assertions import assert_event
+from suite.utils.resources_utils import (
     create_items_from_yaml,
     create_namespace_with_name_from_yaml,
     create_service_from_yaml,

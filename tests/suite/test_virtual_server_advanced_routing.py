@@ -1,8 +1,8 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.resources_utils import ensure_response_from_backend, wait_before_test
-from suite.vs_vsr_resources_utils import patch_virtual_server_from_yaml
+from suite.utils.resources_utils import ensure_response_from_backend, wait_before_test
+from suite.utils.vs_vsr_resources_utils import patch_virtual_server_from_yaml
 
 
 def execute_assertions(resp_1, resp_2, resp_3):

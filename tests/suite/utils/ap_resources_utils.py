@@ -3,12 +3,10 @@
 import logging
 import time
 
-import pytest
 import yaml
-from kubernetes import client
-from kubernetes.client import ApiextensionsV1Api, CoreV1Api, CustomObjectsApi
+from kubernetes.client import CustomObjectsApi
 from kubernetes.client.rest import ApiException
-from suite.resources_utils import ensure_item_removal, get_file_contents
+from suite.utils.resources_utils import ensure_item_removal
 
 
 def read_ap_custom_resource(custom_objects: CustomObjectsApi, namespace, plural, name) -> object:

@@ -96,7 +96,7 @@ server {
 
 	{{range $location := $server.Locations}}
 	location {{$location.Path}} {
-		set $service "{{$location.ServiceName}}"; 
+		set $service "{{$location.ServiceName}}";
 		{{with $location.MinionIngress}}
 		# location for minion {{$location.MinionIngress.Namespace}}/{{$location.MinionIngress.Name}}
 		set $resource_name "{{$location.MinionIngress.Name}}";

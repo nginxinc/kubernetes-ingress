@@ -60,7 +60,7 @@ class SNIAdapter(HTTPAdapter):
         # overrides the SNI to the value of the host header
         # See urllib3.connection.HTTPSConnection.connect
         self.poolmanager.connection_pool_kw["server_hostname"] = request.headers["host"]
-        return super(SNIAdapter, self).send(request, **kwargs)
+        return super().send(request, **kwargs)
 
 
 def create_sni_session():

@@ -274,10 +274,10 @@ func certNeedsUpdate(a, b *cmapi.Certificate) bool {
 // Certificate created for the given VirtualServer resource. We look up the following
 // VS TLS Cert-Manager fields:
 //
-//   cluster-issuer
-//   issuer
-//   issuer-kind
-//   issuer-group
+//	cluster-issuer
+//	issuer
+//	issuer-kind
+//	issuer-group
 func issuerForVirtualServer(vs *vsapi.VirtualServer) (name, kind, group string, err error) {
 	var errs []string
 	vsCmSpec := vs.Spec.TLS.CertManager

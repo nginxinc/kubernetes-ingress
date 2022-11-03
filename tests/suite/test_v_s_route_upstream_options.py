@@ -2,7 +2,7 @@ import pytest
 import requests
 from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
-from suite.custom_assertions import (
+from suite.utils.custom_assertions import (
     assert_event,
     assert_event_and_get_count,
     assert_event_count_increased,
@@ -10,9 +10,9 @@ from suite.custom_assertions import (
     assert_response_codes,
     wait_for_event_count_increases,
 )
-from suite.custom_resources_utils import generate_item_with_upstream_options
-from suite.resources_utils import get_events, get_first_pod_name, replace_configmap_from_yaml, wait_before_test
-from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_v_s_route, patch_v_s_route_from_yaml
+from suite.utils.custom_resources_utils import generate_item_with_upstream_options
+from suite.utils.resources_utils import get_events, get_first_pod_name, replace_configmap_from_yaml, wait_before_test
+from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_v_s_route, patch_v_s_route_from_yaml
 
 
 @pytest.mark.parametrize(

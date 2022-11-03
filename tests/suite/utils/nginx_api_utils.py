@@ -4,7 +4,7 @@ import ast
 import pytest
 import requests
 from settings import NGINX_API_VERSION
-from suite.resources_utils import wait_before_test
+from suite.utils.resources_utils import wait_before_test
 
 
 def get_nginx_generation_value(host) -> int:

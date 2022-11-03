@@ -2,14 +2,14 @@ import pytest
 import requests
 from kubernetes.client.rest import ApiException
 from settings import TEST_DATA
-from suite.custom_assertions import (
+from suite.utils.custom_assertions import (
     assert_event,
     assert_event_and_get_count,
     assert_event_count_increased,
     assert_no_new_events,
     assert_response_codes,
 )
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     create_items_from_yaml,
     delete_items_from_yaml,
     ensure_response_from_backend,
@@ -18,7 +18,7 @@ from suite.resources_utils import (
     wait_before_test,
     wait_until_all_pods_are_ready,
 )
-from suite.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_v_s_route_from_yaml
+from suite.utils.vs_vsr_resources_utils import get_vs_nginx_template_conf, patch_v_s_route_from_yaml
 
 
 @pytest.fixture(scope="class")

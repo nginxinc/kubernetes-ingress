@@ -2,7 +2,7 @@ import pytest
 import requests
 import yaml
 from settings import DEPLOYMENTS, TEST_DATA
-from suite.ap_resources_utils import (
+from suite.utils.ap_resources_utils import (
     create_ap_logconf_from_yaml,
     create_ap_policy_from_yaml,
     create_ap_usersig_from_yaml,
@@ -11,7 +11,7 @@ from suite.ap_resources_utils import (
     delete_ap_policy,
     read_ap_custom_resource,
 )
-from suite.resources_utils import (
+from suite.utils.resources_utils import (
     clear_file_contents,
     create_example_app,
     create_ingress,
@@ -33,7 +33,7 @@ from suite.resources_utils import (
     wait_until_all_pods_are_ready,
     write_to_json,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 src_ing_yaml = f"{TEST_DATA}/appprotect/appprotect-ingress.yaml"
 ap_policy = "dataguard-alarm"

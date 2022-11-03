@@ -4,8 +4,8 @@ from typing import Dict
 import pytest
 import yaml
 from settings import TEST_DATA
-from suite.custom_resources_utils import get_pod_metrics
-from suite.resources_utils import (
+from suite.utils.custom_resources_utils import get_pod_metrics
+from suite.utils.resources_utils import (
     create_example_app,
     create_ingress,
     create_ingress_controller,
@@ -17,7 +17,7 @@ from suite.resources_utils import (
     wait_until_all_pods_are_ready,
     write_to_json,
 )
-from suite.vs_vsr_resources_utils import create_virtual_server
+from suite.utils.vs_vsr_resources_utils import create_virtual_server
 
 watched_namespaces = ""
 

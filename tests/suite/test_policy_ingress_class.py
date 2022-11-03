@@ -1,12 +1,9 @@
-import time
-
 import pytest
-import requests
 from settings import TEST_DATA
-from suite.custom_resources_utils import read_custom_resource
-from suite.policy_resources_utils import create_policy_from_yaml, delete_policy, read_policy
-from suite.resources_utils import wait_before_test
-from suite.vs_vsr_resources_utils import (
+from suite.utils.custom_resources_utils import read_custom_resource
+from suite.utils.policy_resources_utils import create_policy_from_yaml, delete_policy
+from suite.utils.resources_utils import wait_before_test
+from suite.utils.vs_vsr_resources_utils import (
     create_virtual_server_from_yaml,
     delete_virtual_server,
     patch_virtual_server_from_yaml,

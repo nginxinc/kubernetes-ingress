@@ -1,8 +1,8 @@
 import pytest
 import requests
 from settings import TEST_DATA
-from suite.fixtures import PublicEndpoint
-from suite.resources_utils import (
+from suite.fixtures.fixtures import PublicEndpoint
+from suite.utils.resources_utils import (
     create_deployment_with_name,
     create_ingress_from_yaml,
     create_namespace_with_name_from_yaml,
@@ -19,7 +19,7 @@ from suite.resources_utils import (
     replace_configmap_from_yaml,
     wait_before_test,
 )
-from suite.yaml_utils import get_first_ingress_host_from_yaml
+from suite.utils.yaml_utils import get_first_ingress_host_from_yaml
 
 
 class ExternalNameSetup:
