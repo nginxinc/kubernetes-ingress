@@ -12,5 +12,5 @@ pytest-profiling==1.7.0
 more-itertools==9.0.0
 mock==4.0.3
 grpcio==1.50.0
-grpcio-tools==1.48.1
+grpcio-tools==1.50.0
 flaky==3.7.0
