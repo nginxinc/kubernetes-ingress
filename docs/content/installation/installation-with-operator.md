@@ -8,10 +8,6 @@ toc: true
 docs: "DOCS-604"
 ---
 
-{{< note >}}
-An NGINX Ingress Operator version compatible with the 2.4.0 NGINX Ingress Controller release is not available yet. We will update this document and remove this note once we publish a compatible Operator version.
-{{< /note >}}
-
 This document describes how to install the NGINX Ingress Controller in your Kubernetes cluster using the NGINX Ingress Operator.
 
 ## Prerequisites
@@ -41,7 +37,7 @@ spec:
     image:
       pullPolicy: IfNotPresent
       repository: nginx/nginx-ingress
-      tag: 2.4.0-ubi
+      tag: 2.4.1-ubi
     ingressClass: nginx
     kind: deployment
     nginxplus: false
