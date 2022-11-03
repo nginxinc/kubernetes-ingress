@@ -6,9 +6,47 @@ doctypes: ["concept"]
 toc: true
 docs: "DOCS-616"
 ---
+## NGINX Ingress Controller 2.4.1
+
+19 October 2022
+
+CHANGES:
+* [3183](https://github.com/nginxinc/kubernetes-ingress/pull/3183) Update NGINX version to 1.23.2.
+* [3175](https://github.com/nginxinc/kubernetes-ingress/pull/3175) Update Go dependencies.
+* Update NGINX Plus version to R27 P1.
+
+FIXES:
+* [3139](https://github.com/nginxinc/kubernetes-ingress/pull/3139) Remove all IPV6 listeners in ingress resources with -disable-ipv6 command line.
+
+HELM CHART:
+* The version of the Helm chart is now 0.15.1.
+
+UPGRADE:
+* For NGINX, use the 2.4.1 images from our [DockerHub](https://hub.docker.com/r/nginx/nginx-ingress/tags?page=1&ordering=last_updated&name=2.4.1), [GitHub Container](https://github.com/nginxinc/kubernetes-ingress/pkgs/container/kubernetes-ingress), [Amazon ECR Public Gallery](https://gallery.ecr.aws/nginx/nginx-ingress) or [Quay.io](https://quay.io/repository/nginx/nginx-ingress).
+* For NGINX Plus, use the 2.4.1 images from the F5 Container registry or the [AWS Marketplace](https://aws.amazon.com/marketplace/search/?CREATOR=741df81b-dfdc-4d36-b8da-945ea66b522c&FULFILLMENT_OPTION_TYPE=CONTAINER&filters=CREATOR%2CFULFILLMENT_OPTION_TYPE) or build your own image using the 2.4.1 source code.
+* For Helm, use version 0.15.1 of the chart.
+
+## NGINX Ingress Controller 1.12.5
+
+19 October 2022
+
+CHANGES:
+* Update NGINX version to 1.23.2.
+* Update NGINX Plus version to R27 P1.
+* Update Alpine to 3.16.
+* Update Go to 1.19 and Go dependencies.
+
+HELM CHART:
+* The version of the Helm chart is now 0.10.5.
+
+UPGRADE:
+* For NGINX, use the 1.12.5 image from our DockerHub: `nginx/nginx-ingress:1.12.5`, `nginx/nginx-ingress:1.12.5-alpine` or `nginx/nginx-ingress:1.12.5-ubi`
+* For NGINX Plus, please build your own image using the 1.12.5 source code.
+* For Helm, use version 0.10.5 of the chart.
+
 ## NGINX Ingress Controller 2.4.0
 
-04 Oct 2022
+04 October 2022
 
 OVERVIEW:
 
@@ -58,7 +96,7 @@ We will provide technical support for NGINX Ingress Controller on any Kubernetes
 
 ## NGINX Ingress Controller 2.3.1
 
-16 Sep 2022
+16 September 2022
 
 CHANGES:
 * [3048](https://github.com/nginxinc/kubernetes-ingress/pull/3048) Bump NGINX to 1.23.1
@@ -171,7 +209,7 @@ UPGRADE:
 
 ## NGINX Ingress Controller 2.2.0
 
-12 Apr 2022
+12 April 2022
 
 OVERVIEW:
 
@@ -221,7 +259,7 @@ We will provide technical support for the NGINX Ingress Controller on any Kubern
 
 ## NGINX Ingress Controller 2.1.2
 
-29 Mar 2022
+29 March 2022
 
 CHANGES:
 * Update UBI based images to 8.
@@ -259,7 +297,7 @@ UPGRADE:
 
 ## NGINX Ingress Controller 2.1.1
 
-17 Feb 2022
+17 February 2022
 
 CHANGES:
 * Update NGINX version to 1.21.6.
@@ -275,7 +313,7 @@ UPGRADE:
 
 ## NGINX Ingress Controller 2.1.0
 
-06 Jan 2022
+06 January 2022
 
 OVERVIEW:
 
@@ -335,7 +373,7 @@ We will provide technical support for the NGINX Ingress Controller on any Kubern
 
 ## NGINX Ingress Controller 2.0.3
 
-28 Oct 2021
+28 October 2021
 
 CHANGES:
 * [2124](https://github.com/nginxinc/kubernetes-ingress/pull/2124) Apply -enable-snippets cli arg to Ingresses. This PR extends the existing -enable-snippets cli argument to apply to Ingress resources. If snippets are not enabled, the Ingress Controller will reject any Ingress resources with snippets annotations. Previously, the argument only applied to VirtualServer, VirtualServerRoute and TransportServer resources. Please Note: this is a breaking change. See the `UPGRADE` instructions below.
@@ -369,7 +407,7 @@ UPGRADE:
 
 ## NGINX Ingress Controller 2.0.2
 
-13 Oct 2021
+13 October 2021
 
 CHANGES:
 * Update NGINX App Protect version to 3.6.
@@ -386,7 +424,7 @@ UPGRADE:
 
 ## NGINX Ingress Controller 2.0.1
 
-07 Oct 2021
+07 October 2021
 
 FIXES:
 * [2051](https://github.com/nginxinc/kubernetes-ingress/pull/2051) Use release specific repo for NGINX Plus on Debian. This fixes an error when building the Debian-based image with NGINX Plus and App Protect: previously, building the image would fail with the error `Package 'nginx-plus-r24' has no installation candidate`.
