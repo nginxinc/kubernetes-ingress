@@ -114,10 +114,13 @@ func (ci *Configuration) AddOrUpdatePolicy(policyObj *unstructured.Unstructured)
 	resNsName := appprotectcommon.GetNsName(policyObj)
 	policy, err := createAppProtectDosPolicyEx(policyObj)
 	ci.dosPolicies[resNsName] = policy
+	op := AddOrUpdate
 	if err != nil {
-		changes = append(changes, Change{Op: Delete, Resource: policy})
+		op = Delete
 		problems = append(problems, Problem{Object: policyObj, Reason: "Rejected", Message: err.Error()})
 	}
+
+	changes = append(changes, Change{Op: op, Resource: policy})
 
 	protectedResources := ci.GetDosProtectedThatReferencedDosPolicy(resNsName)
 	for _, p := range protectedResources {
@@ -134,10 +137,13 @@ func (ci *Configuration) AddOrUpdateLogConf(logConfObj *unstructured.Unstructure
 	resNsName := appprotectcommon.GetNsName(logConfObj)
 	logConf, err := createAppProtectDosLogConfEx(logConfObj)
 	ci.dosLogConfs[resNsName] = logConf
+	op := AddOrUpdate
 	if err != nil {
-		changes = append(changes, Change{Op: Delete, Resource: logConf})
+		op = Delete
 		problems = append(problems, Problem{Object: logConfObj, Reason: "Rejected", Message: err.Error()})
 	}
+
+	changes = append(changes, Change{Op: op, Resource: logConf})
 
 	protectedResources := ci.GetDosProtectedThatReferencedDosLogConf(resNsName)
 	for _, p := range protectedResources {
@@ -357,13 +363,20 @@ func createAppProtectDosPolicyEx(policyObj *unstructured.Unstructured) (*DosPoli
 }
 
 func createAppProtectDosLogConfEx(dosLogConfObj *unstructured.Unstructured) (*DosLogConfEx, error) {
-	err := validation.ValidateAppProtectDosLogConf(dosLogConfObj)
+	warning, err := validation.ValidateAppProtectDosLogConf(dosLogConfObj)
 	if err != nil {
 		return &DosLogConfEx{
 			Obj:      dosLogConfObj,
 			IsValid:  false,
 			ErrorMsg: fmt.Sprintf("failed to store ApDosLogconf: %v", err),
 		}, err
+	}
+	if warning != "" {
+		return &DosLogConfEx{
+			Obj:      dosLogConfObj,
+			IsValid:  true,
+			ErrorMsg: warning,
+		}, nil
 	}
 	return &DosLogConfEx{
 		Obj:     dosLogConfObj,

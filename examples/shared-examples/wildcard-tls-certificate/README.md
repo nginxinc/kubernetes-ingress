@@ -26,9 +26,8 @@ kind: Ingress
 metadata:
   name: foo
   namespace: foo
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
 spec:
+  ingressClassName: nginx
   tls:
   - hosts:
     - foo.example.com
@@ -56,9 +55,9 @@ metadata:
 spec:
   host: bar.example.com
   tls:
-    secret: "" 
+    secret: ""
   upstreams:
-  - name: bar 
+  - name: bar
     service: bar-service
     port: 80
   routes:

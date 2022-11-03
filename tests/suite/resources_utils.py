@@ -239,7 +239,7 @@ def scale_deployment(v1: CoreV1Api, apps_v1_api: AppsV1Api, name, namespace, val
         now = time.time()
         wait_until_all_pods_are_ready(v1, namespace)
         later = time.time()
-        print(f"All pods came up in {int(later-now)} seconds")
+        print(f"All pods came up in {int(later - now)} seconds")
 
     elif value == 0:
         replica_num = (apps_v1_api.read_namespaced_deployment_scale(name, namespace)).spec.replicas
@@ -933,14 +933,16 @@ def clear_file_contents(v1: CoreV1Api, file_path, pod_name, pod_namespace):
     )
 
 
-def get_nginx_template_conf(v1: CoreV1Api, ingress_namespace) -> str:
+def get_nginx_template_conf(v1: CoreV1Api, ingress_namespace, ic_pod_name=None) -> str:
     """
     Get contents of /etc/nginx/nginx.conf in the pod
     :param v1: CoreV1Api
-    :param ingress_namespace:
+    :param ingress_namespace: str
+    :param ic_pod_name: str
     :return: str
     """
-    ic_pod_name = get_first_pod_name(v1, ingress_namespace)
+    if ic_pod_name is None:
+        ic_pod_name = get_first_pod_name(v1, ingress_namespace)
     file_path = "/etc/nginx/nginx.conf"
     return get_file_contents(v1, file_path, ic_pod_name, ingress_namespace)
 
@@ -1117,7 +1119,7 @@ def create_ingress_controller(v1: CoreV1Api, apps_v1_api: AppsV1Api, cli_argumen
     before = time.time()
     wait_until_all_pods_are_ready(v1, namespace)
     after = time.time()
-    print(f"All pods came up in {int(after-before)} seconds")
+    print(f"All pods came up in {int(after - before)} seconds")
     print(f"Ingress Controller was created with name '{name}'")
     return name
 
@@ -1160,7 +1162,7 @@ def create_dos_arbitrator(
     before = time.time()
     wait_until_all_pods_are_ready(v1, namespace)
     after = time.time()
-    print(f"All pods came up in {int(after-before)} seconds")
+    print(f"All pods came up in {int(after - before)} seconds")
     print(f"Dos arbitrator was created with name '{name}'")
 
     print("create dos svc")

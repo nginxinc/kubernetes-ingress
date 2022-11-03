@@ -317,5 +317,5 @@ The Ingress Controller reloads NGINX every time the Control Loop processes a cha
 
 There are three special cases:
 - *Start*. When the Ingress Controller starts, it processes all resources in the cluster and only then reloads NGINX. This avoids creating a "reload storm" by reloading only once.
-- *Batch updates*. When the Ingress Controller receives a number of concurrent requests from the Kubernetes API, it will pause NGINX reloads untill the task queue is empty. This reduces the number of reloads to minimize the impact of batch updates and reduce the risk of OOM (Out of Memory) errors.
+- *Batch updates*. When the Ingress Controller receives a number of concurrent requests from the Kubernetes API, it will pause NGINX reloads until the task queue is empty. This reduces the number of reloads to minimize the impact of batch updates and reduce the risk of OOM (Out of Memory) errors.
 - *NGINX Plus*. If the Ingress Controller uses NGINX Plus, it will not reload NGINX Plus for changes to the Endpoints resources. In this case, the Ingress Controller will use the NGINX Plus API to update the corresponding upstreams and skip reloading.

@@ -79,13 +79,12 @@ func GetMapKeyAsUint64(m map[string]string, key string, context apiObject, nonZe
 }
 
 // GetMapKeyAsStringSlice tries to find and parse a key in the map as string slice splitting it on delimiter.
-func GetMapKeyAsStringSlice(m map[string]string, key string, _ apiObject, delimiter string) ([]string, bool, error) {
+func GetMapKeyAsStringSlice(m map[string]string, key string, _ apiObject, delimiter string) ([]string, bool) {
 	if str, exists := m[key]; exists {
 		slice := strings.Split(str, delimiter)
-		return slice, exists, nil
+		return slice, exists
 	}
-
-	return nil, false, nil
+	return nil, false
 }
 
 // ParseLBMethod parses method and matches it to a corresponding load balancing method in NGINX. An error is returned if method is not valid.
@@ -105,7 +104,7 @@ func ParseLBMethod(method string) (string, error) {
 		return method, nil
 	}
 
-	return "", fmt.Errorf("Invalid load balancing method: %q", method)
+	return "", fmt.Errorf("invalid load balancing method: %q", method)
 }
 
 var nginxLBValidInput = map[string]bool{
@@ -147,7 +146,7 @@ func ParseLBMethodForPlus(method string) (string, error) {
 		return method, nil
 	}
 
-	return "", fmt.Errorf("Invalid load balancing method: %q", method)
+	return "", fmt.Errorf("invalid load balancing method: %q", method)
 }
 
 func validateHashLBMethod(method string) (string, error) {
@@ -222,7 +221,7 @@ func ParseOffset(s string) (string, error) {
 	if offsetRegexp.MatchString(s) {
 		return s, nil
 	}
-	return "", errors.New("Invalid offset string")
+	return "", errors.New("invalid offset string")
 }
 
 // SizeFmt http://nginx.org/en/docs/syntax.html
@@ -237,7 +236,7 @@ func ParseSize(s string) (string, error) {
 	if sizeRegexp.MatchString(s) {
 		return s, nil
 	}
-	return "", errors.New("Invalid size string")
+	return "", errors.New("invalid size string")
 }
 
 // https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffers
@@ -250,7 +249,7 @@ func ParseProxyBuffersSpec(s string) (string, error) {
 	if proxyBuffersRegexp.MatchString(s) {
 		return s, nil
 	}
-	return "", errors.New("Invalid proxy buffers string")
+	return "", errors.New("invalid proxy buffers string")
 }
 
 // ParsePortList ensures that the string is a comma-separated list of port numbers
@@ -269,11 +268,11 @@ func ParsePortList(s string) ([]int, error) {
 func parsePort(value string) (int, error) {
 	port, err := strconv.ParseInt(value, 10, 16)
 	if err != nil {
-		return 0, fmt.Errorf("Unable to parse port as integer: %w", err)
+		return 0, fmt.Errorf("unable to parse port as integer: %w", err)
 	}
 
 	if port <= 0 {
-		return 0, fmt.Errorf("Port number should be greater than zero: %q", port)
+		return 0, fmt.Errorf("port number should be greater than zero: %q", port)
 	}
 
 	return int(port), nil

@@ -398,6 +398,49 @@ var transportServerCfg = TransportServerConfig{
 	},
 }
 
+var transportServerCfgWithResolver = TransportServerConfig{
+	Upstreams: []StreamUpstream{
+		{
+			Name: "udp-upstream",
+			Servers: []StreamUpstreamServer{
+				{
+					Address: "10.0.0.20:5001",
+				},
+			},
+			Resolve: true,
+		},
+	},
+	Match: &Match{
+		Name:                "match_udp-upstream",
+		Send:                `GET / HTTP/1.0\r\nHost: localhost\r\n\r\n`,
+		ExpectRegexModifier: "~*",
+		Expect:              "200 OK",
+	},
+	Server: StreamServer{
+		Port:                     1234,
+		UDP:                      true,
+		StatusZone:               "udp-app",
+		ProxyRequests:            createPointerFromInt(1),
+		ProxyResponses:           createPointerFromInt(2),
+		ProxyPass:                "udp-upstream",
+		ProxyTimeout:             "10s",
+		ProxyConnectTimeout:      "10s",
+		ProxyNextUpstream:        true,
+		ProxyNextUpstreamTimeout: "10s",
+		ProxyNextUpstreamTries:   5,
+		HealthCheck: &StreamHealthCheck{
+			Enabled:  false,
+			Timeout:  "5s",
+			Jitter:   "0",
+			Port:     8080,
+			Interval: "5s",
+			Passes:   1,
+			Fails:    1,
+			Match:    "match_udp-upstream",
+		},
+	},
+}
+
 func createPointerFromInt(n int) *int {
 	return &n
 }
@@ -445,6 +488,18 @@ func TestTransportServerForNginxPlus(t *testing.T) {
 	}
 
 	t.Log(string(data))
+}
+
+func TestExecuteTemplateForTransportServerWithResolver(t *testing.T) {
+	t.Parallel()
+	executor, err := NewTemplateExecutor(nginxPlusVirtualServerTmpl, nginxPlusTransportServerTmpl)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = executor.ExecuteTransportServerTemplate(&transportServerCfgWithResolver)
+	if err != nil {
+		t.Errorf("Failed to execute template: %v", err)
+	}
 }
 
 func TestTransportServerForNginx(t *testing.T) {

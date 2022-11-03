@@ -152,6 +152,25 @@ func TestGenerateNginxCfgWithWildcardTLSSecret(t *testing.T) {
 	}
 }
 
+func TestGenerateNginxCfgWithIPV6Disabled(t *testing.T) {
+	t.Parallel()
+	cafeIngressEx := createCafeIngressEx()
+	isPlus := false
+	configParams := NewDefaultConfigParams(isPlus)
+
+	expected := createExpectedConfigForCafeIngressEx(isPlus)
+	expected.Servers[0].DisableIPV6 = true
+
+	result, warnings := generateNginxCfg(&cafeIngressEx, nil, nil, false, configParams, isPlus, false, &StaticConfigParams{DisableIPV6: true}, false)
+
+	if !cmp.Equal(expected, result) {
+		t.Errorf("generateNginxCfg() returned unexpected result (-want +got):\n%s", cmp.Diff(expected, result))
+	}
+	if len(warnings) != 0 {
+		t.Errorf("generateNginxCfg() returned warnings: %v", warnings)
+	}
+}
+
 func TestPathOrDefaultReturnDefault(t *testing.T) {
 	t.Parallel()
 	path := ""

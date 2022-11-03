@@ -3,9 +3,6 @@ kind: APDosLogConf
 metadata:
   name: doslogconf
 spec:
-  content:
-    format: splunk
-    max_message_size: 64k
   filter:
     traffic-mitigation-stats: all
     bad-actors: top 10

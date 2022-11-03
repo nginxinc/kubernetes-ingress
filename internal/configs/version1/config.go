@@ -110,6 +110,8 @@ type Server struct {
 	AppProtectDosAccessLogDst    string
 
 	SpiffeCerts bool
+
+	DisableIPV6 bool
 }
 
 // JWTRedirectLocation describes a location for redirecting client requests to a login URL for JWT Authentication.
@@ -162,6 +164,7 @@ type MainConfig struct {
 	AccessLogOff                       bool
 	DefaultServerAccessLogOff          bool
 	DefaultServerReturn                string
+	DisableIPV6                        bool
 	ErrorLogLevel                      string
 	HealthStatus                       bool
 	HealthStatusURI                    string

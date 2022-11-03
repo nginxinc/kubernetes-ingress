@@ -6,7 +6,7 @@ metadata:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: external-dns 
+  name: external-dns
   namespace: external-dns
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -62,7 +62,7 @@ spec:
       serviceAccountName: external-dns
       containers:
       - name: external-dns
-        image: k8s.gcr.io/external-dns/external-dns:v0.12.0
+        image: k8s.gcr.io/external-dns/external-dns:v0.12.2
         args:
         - --source=crd
         - --crd-source-apiversion=externaldns.nginx.org/v1

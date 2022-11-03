@@ -69,11 +69,29 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - events
   verbs:
   - create
   - patch
   - list
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - create
 - apiGroups:
   - networking.k8s.io
   resources:

@@ -13,7 +13,7 @@ server {
 	{{if not $server.GRPCOnly}}
 	{{range $port := $server.Ports}}
 	listen {{$port}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
-	listen [::]:{{$port}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
+	{{if not $server.DisableIPV6}}listen [::]:{{$port}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};{{end}}
 	{{- end}}
 	{{end}}
 
@@ -25,7 +25,7 @@ server {
 	{{else}}
 	{{- range $port := $server.SSLPorts}}
 	listen {{$port}} ssl{{if $server.HTTP2}} http2{{end}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
-	listen [::]:{{$port}} ssl{{if $server.HTTP2}} http2{{end}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};
+	{{if not $server.DisableIPV6}}listen [::]:{{$port}} ssl{{if $server.HTTP2}} http2{{end}}{{if $server.ProxyProtocol}} proxy_protocol{{end}};{{end}}
 	{{- end}}
 	{{end}}
 	{{if $server.SSLRejectHandshake}}

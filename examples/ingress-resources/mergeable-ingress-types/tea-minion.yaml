@@ -3,9 +3,9 @@ kind: Ingress
 metadata:
   name: cafe-ingress-tea-minion
   annotations:
-    kubernetes.io/ingress.class: "nginx"
     nginx.org/mergeable-ingress-type: "minion"
 spec:
+  ingressClassName: nginx
   rules:
   - host: cafe.example.com
     http:

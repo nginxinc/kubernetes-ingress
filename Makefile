@@ -10,9 +10,10 @@ PREFIX = nginx/nginx-ingress## The name of the image. For example, nginx/nginx-i
 TAG = $(VERSION:v%=%)## The tag of the image. For example, 2.0.0
 TARGET ?= local## The target of the build. Possible values: local, container and download
 override DOCKER_BUILD_OPTIONS += --build-arg IC_VERSION=$(VERSION) --build-arg GIT_COMMIT=$(GIT_COMMIT)## The options for the docker build command. For example, --pull.
+ARCH ?= amd64## The architecture of the image or binary. For example: amd64, arm64, ppc64le, s390x. Not all architectures are supported for all targets.
 
 # final docker build command
-DOCKER_CMD = docker build $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
+DOCKER_CMD = docker build --platform linux/$(ARCH) $(strip $(DOCKER_BUILD_OPTIONS)) --target $(strip $(TARGET)) -f build/Dockerfile -t $(strip $(PREFIX)):$(strip $(TAG)) .
 
 export DOCKER_BUILDKIT = 1
 
@@ -37,6 +38,11 @@ lint-python: ## Run linter for python tests
 	@black --version || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with black, use 'brew install black' to install it\n"; exit $$code)
 	@isort .
 	@black .
+
+.PHONY: staticcheck
+staticcheck: ## Run staticcheck linter
+	@staticcheck -version >/dev/null 2>&1 || go install honnef.co/go/tools/cmd/staticcheck@2022.1.3;
+	staticcheck ./...
 
 .PHONY: test
 test: ## Run tests
@@ -71,7 +77,7 @@ build: ## Build Ingress Controller binary
 	@docker -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with Docker\n"; exit $$code)
 ifeq (${TARGET},local)
 	@go version || (code=$$?; printf "\033[0;31mError\033[0m: unable to build locally, try using the parameter TARGET=container or TARGET=download\n"; exit $$code)
-	CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
+	CGO_ENABLED=0 GOOS=linux GOARCH=$(ARCH) go build -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o nginx-ingress github.com/nginxinc/kubernetes-ingress/cmd/nginx-ingress
 else ifeq (${TARGET},download)
 	@$(MAKE) download-binary-docker
 endif
@@ -89,7 +95,7 @@ endif
 .PHONY: build-goreleaser
 build-goreleaser: ## Build Ingress Controller binary using GoReleaser
 	@goreleaser -v || (code=$$?; printf "\033[0;31mError\033[0m: there was a problem with GoReleaser. Follow the docs to install it https://goreleaser.com/install\n"; exit $$code)
-	GOOS=linux GOPATH=$(shell go env GOPATH) goreleaser build --rm-dist --debug --snapshot --id kubernetes-ingress --single-target
+	GOOS=linux GOPATH=$(shell go env GOPATH) GOARCH=$(ARCH) goreleaser build --rm-dist --debug --snapshot --id kubernetes-ingress --single-target
 
 .PHONY: debian-image
 debian-image: build ## Create Docker image for Ingress Controller (Debian)
