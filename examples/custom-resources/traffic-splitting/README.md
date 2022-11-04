@@ -1,10 +1,10 @@
-# Traffic Splitting 
+# Traffic Splitting
 
 In this example we use the [VirtualServer](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/) resource to configure traffic splitting for the cafe application from the [Basic Configuration](../basic-configuration/) example, for which we have introduced the following changes:
 * Instead of one version of the coffee service, we have two: `coffee-v1-svc` and `coffee-v2-svc`. We send 90% of the coffee traffic to `coffee-v1-svc` and the remaining 10% to `coffee-v2-svc`.
 * To simplify the example, we have removed TLS termination and the tea service.
 
-## Prerequisites  
+## Prerequisites
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller with custom resources enabled.
 1. Save the public IP address of the Ingress Controller into a shell variable:

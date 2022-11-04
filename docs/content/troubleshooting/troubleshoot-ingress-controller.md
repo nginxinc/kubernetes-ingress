@@ -23,16 +23,16 @@ This document describes how to troubleshoot problems with the Ingress Controller
 
 The table below categorizes some potential problems with the Ingress Controller you may encounter and suggests how to troubleshoot those problems using one or more methods from the next section.
 
-{{% table %}} 
+{{% table %}}
 | Problem Area | Symptom | Troubleshooting Method | Common Cause |
 |-----|-----|-----|-----|
 | Start | The Ingress Controller fails to start. | Check the logs. | Misconfigured RBAC, a missing default server TLS Secret.|
 | Ingress Resource and Annotations | The configuration is not applied | Check the events of the Ingress resource, check the logs, check the generated config. | Invalid values of annotations. |
-| VirtualServer and VirtualServerRoute Resources | The configuration is not applied. | Check the events of the VirtualServer and VirtualServerRoutes, check the logs, check the generated config. | VirtualServer or VirtualServerRoute is invalid. | 
+| VirtualServer and VirtualServerRoute Resources | The configuration is not applied. | Check the events of the VirtualServer and VirtualServerRoutes, check the logs, check the generated config. | VirtualServer or VirtualServerRoute is invalid. |
 | Policy Resource | The configuration is not applied. | Check the events of the Policy resource as well as the events of the VirtualServers that reference that policy, check the logs, check the generated config. | Policy is invalid. |
 | ConfigMap Keys | The configuration is not applied. | Check the events of the ConfigMap, check the logs, check the generated config.  | Invalid values of ConfigMap keys. |
 | NGINX | NGINX responds with unexpected responses. | Check the logs, check the generated config, check the live activity dashboard (NGINX Plus only), run NGINX in the debug mode. | Unhealthy backend pods, a misconfigured backend service. |
-{{% /table %}} 
+{{% /table %}}
 
 ## Troubleshooting Methods
 
@@ -81,7 +81,7 @@ Note that in the events section, we have a `Normal` event with the `AddedOrUpdat
 
 Checking the events of a VirtualServerRoute is similar:
 ```
-$ kubectl describe vsr coffee 
+$ kubectl describe vsr coffee
 . . .
 Events:
   Type     Reason                 Age   From                      Message
@@ -129,7 +129,7 @@ You can view the content of the main configuration file by running:
 $ kubectl exec <nginx-ingress-pod> -n nginx-ingress -- cat /etc/nginx/nginx.conf
 ```
 
-Similarly, you can view the content of any generated configuration file in the `/etc/nginx/conf.d` folder. 
+Similarly, you can view the content of any generated configuration file in the `/etc/nginx/conf.d` folder.
 
 You can also print all NGINX configuration files together:
 ```

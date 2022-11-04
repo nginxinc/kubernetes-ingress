@@ -8,11 +8,11 @@ We will deploy a backend application (we call it the *secure app*) that exposes 
 
 ## About the Secure App
 
-The secure app is an NGINX pod (not to be confused with the Ingress Controller pod, which also includes NGINX) configured to serve HTTPS traffic on port 8443 for the host `app.example.com`. For TLS termination, a self-signed TLS certificate and key are used. The app responds to clients HTTPS requests with a simple text response `hello from pod <hostname of the pod>`. 
+The secure app is an NGINX pod (not to be confused with the Ingress Controller pod, which also includes NGINX) configured to serve HTTPS traffic on port 8443 for the host `app.example.com`. For TLS termination, a self-signed TLS certificate and key are used. The app responds to clients HTTPS requests with a simple text response `hello from pod <hostname of the pod>`.
 
 You can see how the Secure App is implemented in the `secure-app.yaml` file.
 
-## Prerequisites  
+## Prerequisites
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller:
     * As part of Step 2 of those instructions, make sure to deploy the custom resource definition for the TransportServer resource.

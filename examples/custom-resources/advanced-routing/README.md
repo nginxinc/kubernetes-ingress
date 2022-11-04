@@ -5,7 +5,7 @@ In this example we use the [VirtualServer](https://docs.nginx.com/nginx-ingress-
 * Instead of one version of the coffee service, we have two: `coffee-v1-svc` and `coffee-v2-svc`. We send requests that include the cookie `version` set to `v2` to `coffee-v2-svc` and all other requests to `coffee-v1-svc`.
 * To simplify the example, we have removed TLS termination.
 
-## Prerequisites  
+## Prerequisites
 
 1. Follow the [installation](https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-manifests/) instructions to deploy the Ingress Controller with custom resources enabled.
 1. Save the public IP address of the Ingress Controller into a shell variable:
@@ -43,7 +43,7 @@ $ kubectl create -f cafe-virtual-server.yaml
       Normal  AddedOrUpdated  2s    nginx-ingress-controller  Configuration for default/cafe was added or updated
     ```
 1. Access the tea service using curl. We'll use curl's `--resolve` option to set the IP address and HTTP port of the Ingress Controller to the domain name of the cafe application:
-    
+
     Send a POST request and confirm that the response comes from `tea-post-svc`:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTP_PORT:$IC_IP http://cafe.example.com:$IC_HTTP_PORT/tea -X POST
@@ -61,7 +61,7 @@ $ kubectl create -f cafe-virtual-server.yaml
     ```
 
 1.  Access the coffee service:
-    
+
     Send a request with the cookie `version=v2` and confirm that the response comes from `coffee-v2-svc`:
     ```
     $ curl --resolve cafe.example.com:$IC_HTTP_PORT:$IC_IP http://cafe.example.com:$IC_HTTP_PORT/coffee --cookie "version=v2"

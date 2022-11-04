@@ -1,13 +1,13 @@
 apiVersion: k8s.nginx.org/v1
 kind: VirtualServer
 metadata:
-  name: webapp 
+  name: webapp
 spec:
   host: webapp.example.com
   policies:
   - name: webapp-policy
   upstreams:
-  - name: webapp 
+  - name: webapp
     service: webapp-svc
     port: 80
   routes:

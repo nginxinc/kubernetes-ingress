@@ -1,6 +1,6 @@
 ---
 title: NGINX Ingress Controller
-description: 
+description:
 linkTitle: "NGINX Ingress Controller"
 menu: docs
 ---

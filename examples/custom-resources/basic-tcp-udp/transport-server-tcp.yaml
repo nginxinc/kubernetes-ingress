@@ -4,7 +4,7 @@ metadata:
   name: dns-tcp
 spec:
   listener:
-    name: dns-tcp 
+    name: dns-tcp
     protocol: TCP
   upstreams:
   - name: dns-app

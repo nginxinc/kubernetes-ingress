@@ -1,6 +1,6 @@
 ---
 title: Installation
-description: 
+description:
 weight: 1300
 menu:
   docs:

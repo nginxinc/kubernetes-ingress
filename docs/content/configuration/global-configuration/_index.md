@@ -1,6 +1,6 @@
 ---
 title: Global Configuration
-description: 
+description:
 weight: 1400
 menu:
   docs:

@@ -1,6 +1,6 @@
 arbitrator:
   ## The resources of the Arbitrator pods.
-  resources: 
+  resources:
     limits:
       cpu: 500m
       memory: 128Mi

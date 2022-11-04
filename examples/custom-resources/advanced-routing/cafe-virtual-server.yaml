@@ -14,7 +14,7 @@ spec:
   - name: coffee-v1
     service: coffee-v1-svc
     port: 80
-  - name: coffee-v2 
+  - name: coffee-v2
     service: coffee-v2-svc
     port: 80
   routes:
