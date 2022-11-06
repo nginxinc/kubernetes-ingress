@@ -16,6 +16,7 @@ import (
 	"github.com/nginxinc/kubernetes-ingress/internal/configs"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version1"
 	"github.com/nginxinc/kubernetes-ingress/internal/configs/version2"
+	"github.com/nginxinc/kubernetes-ingress/internal/healthcheck"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s"
 	"github.com/nginxinc/kubernetes-ingress/internal/k8s/secrets"
 	"github.com/nginxinc/kubernetes-ingress/internal/metrics"
@@ -121,6 +122,8 @@ func main() {
 
 	transportServerValidator := cr_validation.NewTransportServerValidator(*enableTLSPassthrough, *enableSnippets, *nginxPlus)
 	virtualServerValidator := cr_validation.NewVirtualServerValidator(cr_validation.IsPlus(*nginxPlus), cr_validation.IsDosEnabled(*appProtectDos), cr_validation.IsCertManagerEnabled(*enableCertManager), cr_validation.IsExternalDNSEnabled(*enableExternalDNS))
+
+	createHealthEndpoint(plusClient, cnf)
 
 	lbcInput := k8s.NewLoadBalancerControllerInput{
 		KubeClient:                   kubeClient,
@@ -654,6 +657,14 @@ func createPlusAndLatencyCollectors(
 	}
 
 	return plusCollector, syslogListener, lc
+}
+
+func createHealthEndpoint(
+	plusClient *client.NginxClient,
+	cnf *configs.Configurator,
+) {
+	glog.Infof("Starting Health Endpoint")
+	go healthcheck.RunHealthCheck(plusClient, cnf)
 }
 
 func processGlobalConfiguration() {

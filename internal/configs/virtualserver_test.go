@@ -96,7 +96,7 @@ func TestUpstreamNamerForVirtualServer(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	upstream := "test"
 
 	expected := "vs_default_cafe_test"
@@ -121,7 +121,7 @@ func TestUpstreamNamerForVirtualServerRoute(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServerRoute(&virtualServer, &virtualServerRoute)
+	upstreamNamer := NewUpstreamNamerForVirtualServerRoute(&virtualServer, &virtualServerRoute)
 	upstream := "test"
 
 	expected := "vs_default_cafe_vsr_default_coffee_test"
@@ -5675,7 +5675,7 @@ func TestGenerateSplits(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	variableNamer := newVariableNamer(&virtualServer)
 	scIndex := 1
 	cfgParams := ConfigParams{}
@@ -5886,7 +5886,7 @@ func TestGenerateDefaultSplitsConfig(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	variableNamer := newVariableNamer(&virtualServer)
 	index := 1
 
@@ -6072,7 +6072,7 @@ func TestGenerateMatchesConfig(t *testing.T) {
 			},
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	variableNamer := newVariableNamer(&virtualServer)
 	index := 1
 	scIndex := 2
@@ -6454,7 +6454,7 @@ func TestGenerateMatchesConfigWithMultipleSplits(t *testing.T) {
 			Namespace: "default",
 		},
 	}
-	upstreamNamer := newUpstreamNamerForVirtualServer(&virtualServer)
+	upstreamNamer := NewUpstreamNamerForVirtualServer(&virtualServer)
 	variableNamer := newVariableNamer(&virtualServer)
 	index := 1
 	scIndex := 2

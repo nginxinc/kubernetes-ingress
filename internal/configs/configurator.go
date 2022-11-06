@@ -265,6 +265,43 @@ func (cnf *Configurator) AddOrUpdateIngress(ingEx *IngressEx) (Warnings, error) 
 	return warnings, nil
 }
 
+func (cnf *Configurator) GetVirtualServer(hostname string) *conf_v1.VirtualServer {
+	for _, vsEx := range cnf.virtualServers {
+		if vsEx.VirtualServer.Spec.Host == hostname {
+			return vsEx.VirtualServer
+		}
+	}
+	return nil
+}
+
+func (cnf *Configurator) GetUpstreamsforVirtualServer(vs *conf_v1.VirtualServer) []string {
+
+	glog.Infof("Get upstreamName for vs: %s", vs.Spec.Host)
+
+	var upstreamNames = make([]string, 0)
+
+	virtualServerUpstreamNamer := NewUpstreamNamerForVirtualServer(vs)
+
+	for _, u := range vs.Spec.Upstreams {
+		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
+		glog.Infof("upstream: %s, upstreamName: %s", u.Name, upstreamName)
+		upstreamNames = append(upstreamNames, upstreamName)
+	}
+
+	return upstreamNames
+}
+
+func (cnf *Configurator) GetUpstreamsforHost(hostname string) []string {
+
+	glog.Infof("Get upstream for host: %s", hostname)
+	var vs = cnf.GetVirtualServer(hostname)
+
+	if vs != nil {
+		return cnf.GetUpstreamsforVirtualServer(vs)
+	}
+	return nil
+}
+
 func (cnf *Configurator) addOrUpdateIngress(ingEx *IngressEx) (Warnings, error) {
 	apResources := cnf.updateApResources(ingEx)
 
